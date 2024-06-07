@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.BinaryExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
@@ -36,9 +35,9 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 	}
 
 	@Override
-	public AssemblyResolution solve(T exp, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
-			throws NeedsBackfillException {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			T exp, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) throws NeedsBackfillException {
 		MaskedLong lval = solver.getValue(exp.getLeft(), vals, cur);
 		MaskedLong rval = solver.getValue(exp.getRight(), vals, cur);
 
@@ -58,26 +57,27 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 		try {
 			if (lval != null && rval != null) {
 				MaskedLong cval = compute(lval, rval);
-				return ConstantValueSolver.checkConstAgrees(cval, goal, description);
+				return ConstantValueSolver.checkConstAgrees(factory, cval, goal, description);
 			}
 			else if (lval != null) {
-				return solveRightSide(exp.getRight(), lval, goal, vals, cur, hints,
+				return solveRightSide(factory, exp.getRight(), lval, goal, vals, cur, hints,
 					description);
 			}
 			else if (rval != null) {
-				return solveLeftSide(exp.getLeft(), rval, goal, vals, cur, hints, description);
+				return solveLeftSide(factory, exp.getLeft(), rval, goal, vals, cur, hints,
+					description);
 			}
 			else {
 				// Each solver may provide a strategy for solving expression where both sides are
 				// variable, e.g., two fields being concatenated via OR.
-				return solveTwoSided(exp, goal, vals, cur, hints, description);
+				return solveTwoSided(factory, exp, goal, vals, cur, hints, description);
 			}
 		}
 		catch (NeedsBackfillException e) {
 			throw e;
 		}
 		catch (SolverException e) {
-			return AssemblyResolution.error(e.getMessage(), description);
+			return factory.newErrorBuilder().error(e.getMessage()).description(description).build();
 		}
 		catch (AssertionError e) {
 			dbg.println("While solving: " + exp + " (" + description + ")");
@@ -85,22 +85,24 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 		}
 	}
 
-	protected AssemblyResolution solveLeftSide(PatternExpression lexp, MaskedLong rval,
-			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
-			Set<SolverHint> hints, String description)
-			throws NeedsBackfillException, SolverException {
-		return solver.solve(lexp, computeLeft(rval, goal), vals, cur, hints, description);
-	}
-
-	protected AssemblyResolution solveRightSide(PatternExpression rexp, MaskedLong lval,
-			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
-			Set<SolverHint> hints, String description)
-			throws NeedsBackfillException, SolverException {
-		return solver.solve(rexp, computeRight(lval, goal), vals, cur, hints, description);
-	}
-
-	protected AssemblyResolution solveTwoSided(T exp, MaskedLong goal, Map<String, Long> vals,
+	protected AssemblyResolution solveLeftSide(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression lexp, MaskedLong rval, MaskedLong goal, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
+		return solver.solve(factory, lexp, computeLeft(rval, goal), vals, cur, hints, description);
+	}
+
+	protected AssemblyResolution solveRightSide(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression rexp, MaskedLong lval, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
+		return solver.solve(factory, rexp, computeRight(lval, goal), vals, cur, hints,
+			description);
+	}
+
+	protected AssemblyResolution solveTwoSided(AbstractAssemblyResolutionFactory<?, ?> factory,
+			T exp, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
 		throw new NeedsBackfillException("_two_sided_");
 	}

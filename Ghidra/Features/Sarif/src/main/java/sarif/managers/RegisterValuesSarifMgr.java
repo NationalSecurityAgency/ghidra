@@ -62,13 +62,10 @@ public class RegisterValuesSarifMgr extends SarifMgr {
 	// SARIF READ CURRENT DTD //
 	////////////////////////////
 
-	/**
-	 * Process the entry point section of the SARIF file.
-	 */
 	@Override
 	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
 			throws CancelledException {
-		processRegisterValues(result, result);
+		processRegisterValues(result);
 		return true;
 	}
 
@@ -93,7 +90,7 @@ public class RegisterValuesSarifMgr extends SarifMgr {
 		return regs;
 	}
 
-	private void processRegisterValues(Map<String, Object> result, Map<String, Object> result2) {
+	private void processRegisterValues(Map<String, Object> result) {
 		try {
 			AddressSet set = getLocations(result, null);
 			Address addr = set.getMinAddress();

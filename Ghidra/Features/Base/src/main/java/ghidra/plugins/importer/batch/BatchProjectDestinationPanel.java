@@ -21,8 +21,7 @@ import javax.swing.*;
 
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
-import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.*;
 import ghidra.framework.model.*;
 
 class BatchProjectDestinationPanel extends JPanel {
@@ -96,7 +95,7 @@ class BatchProjectDestinationPanel extends JPanel {
 
 	private void browseFolders() {
 		DataTreeDialog dataTreeDialog =
-			new DataTreeDialog(parent, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			new DataTreeDialog(parent, "Choose a project folder", DataTreeDialogType.CHOOSE_FOLDER);
 		dataTreeDialog.addOkActionListener(e -> {
 			dataTreeDialog.close();
 			setFolder(dataTreeDialog.getDomainFolder());

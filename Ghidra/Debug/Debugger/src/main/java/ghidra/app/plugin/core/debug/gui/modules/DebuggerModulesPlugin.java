@@ -20,6 +20,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -32,10 +33,12 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
 		ProgramActivatedPluginEvent.class,
 		ProgramLocationPluginEvent.class,
 		ProgramClosedPluginEvent.class,
 		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
 		DebuggerStaticMappingService.class,
@@ -65,21 +68,23 @@ public class DebuggerModulesPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramOpenedPluginEvent ev) {
+			provider.programOpened(ev.getProgram());
+		}
+		else if (event instanceof ProgramActivatedPluginEvent ev) {
 			provider.setProgram(ev.getActiveProgram());
 		}
-		else if (event instanceof ProgramLocationPluginEvent) {
-			ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
+		else if (event instanceof ProgramLocationPluginEvent ev) {
 			provider.setLocation(ev.getLocation());
 		}
-		else if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
+		else if (event instanceof ProgramClosedPluginEvent ev) {
 			provider.programClosed(ev.getProgram());
 		}
-		else if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		else if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.coordinatesActivated(ev.getActiveCoordinates());
+		}
+		else if (event instanceof TraceClosedPluginEvent ev) {
+			provider.traceClosed(ev.getTrace());
 		}
 	}
 

@@ -164,6 +164,54 @@ ext.deps = [
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vsOlder_x86.fidb",
 		sha256: "98605c6b6b9214a945d844e41c85860d54649a45bca7873ef6991c0e93720787",
 		destination: FID_DIR
+	],
+	[
+		name: "protobuf-3.20.3-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/8d/14/619e24a4c70df2901e1f4dbc50a6291eb63a759172558df326347dce1f0d/protobuf-3.20.3-py2.py3-none-any.whl",
+		sha256: "a7ca6d488aa8ff7f329d4c545b2dbad8ac31464f1d8b1c87ad1346717731e4db",
+		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
+	],
+	[
+		name: "psutil-5.9.8.tar.gz",
+		url: "https://files.pythonhosted.org/packages/90/c7/6dc0a455d111f68ee43f27793971cf03fe29b6ef972042549db29eec39a2/psutil-5.9.8.tar.gz",
+		sha256: "6be126e3225486dff286a8fb9a06246a5253f4c7c53b475ea5f5ac934e64194c",
+		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
+	],
+	[
+		name: "setuptools-68.0.0-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/c7/42/be1c7bbdd83e1bfb160c94b9cafd8e25efc7400346cf7ccdbdb452c467fa/setuptools-68.0.0-py3-none-any.whl",
+		sha256: "11e52c67415a381d10d6b462ced9cfb97066179f0e871399e006c4ab101fc85f",
+		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
+	],
+	[
+		name: "wheel-0.37.1-py2.py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/27/d6/003e593296a85fd6ed616ed962795b2f87709c3eee2bca4f6d0fe55c6d00/wheel-0.37.1-py2.py3-none-any.whl",
+		sha256: "4bdcd7d840138086126cd09254dc6195fb4fc6f01c050a1d7236f2630db1d22a",
+		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
+	],
+	[
+		name: "Pybag-2.2.10-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/2d/e0/f877c91e036fcaed2a827f80d6cbdf1d26cffc3333c9ebda31c55c45f050/Pybag-2.2.10-py3-none-any.whl",
+		sha256: "81cf1e33dd667dd217dc56a123326796e6799b8569f2c6efb78c16375caf9b2b",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "capstone-5.0.1-py3-none-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/d0/dd/b28df50316ca193dd1275a4c47115a720796d9e1501c1888c4bfa5dc2260/capstone-5.0.1-py3-none-win_amd64.whl",
+		sha256: "1bfa5c81e6880caf41a31946cd6d2d069c048bcc22edf121254b501a048de675",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "comtypes-1.4.1-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/50/8f/518a37381e55a8857a638afa86143efa5508434613541402d20611a1b322/comtypes-1.4.1-py3-none-any.whl",
+		sha256: "a208a0e3ca1c0a5362735da0ff661822801dce87312b894d7d752add010a21b0",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
+		name: "pywin32-306-cp312-cp312-win_amd64.whl",
+		url: "https://files.pythonhosted.org/packages/83/1c/25b79fc3ec99b19b0a0730cc47356f7e2959863bf9f3cd314332bddb4f68/pywin32-306-cp312-cp312-win_amd64.whl",
+		sha256: "37257794c1ad39ee9be652da0462dc2e394c8159dfd913a8a4e8eb6fd346da0e",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	]
 ]
 

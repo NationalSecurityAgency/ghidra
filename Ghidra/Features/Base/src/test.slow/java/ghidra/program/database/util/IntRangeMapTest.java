@@ -28,7 +28,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.DuplicateNameException;
@@ -38,9 +38,8 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	private TestEnv env;
 	private Program program;
-	private AddressFactory addrFactory;
 	private int transactionID;
-	private int eventType;
+	private EventType eventType;
 	private String mapName;
 
 	private Program buildProgram(String programName) throws Exception {
@@ -53,7 +52,6 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		program = buildProgram("notepad");
-		addrFactory = program.getAddressFactory();
 		transactionID = program.startTransaction("test");
 	}
 
@@ -66,19 +64,19 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testGetNonExistentMap() throws Exception {
+	public void testGetNonExistentMap() throws Exception {
 		IntRangeMap map = program.getIntRangeMap("MyMap");
 		assertNull(map);
 	}
 
 	@Test
-    public void testCreateAddressSetMap() throws Exception {
+	public void testCreateAddressSetMap() throws Exception {
 		IntRangeMap map = program.createIntRangeMap("MyMap");
 		assertNotNull(map);
 	}
 
 	@Test
-    public void testDuplicateName() throws Exception {
+	public void testDuplicateName() throws Exception {
 		IntRangeMap map = program.createIntRangeMap("MyMap");
 		map.setValue(getAddr(0x100), getAddr(0x200), 0x11223344);
 		try {
@@ -91,7 +89,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testSetValueOverRange() throws Exception {
+	public void testSetValueOverRange() throws Exception {
 		Address start = getAddr(0x1001000);
 		Address end = getAddr(0x1001005);
 		IntRangeMap map = program.createIntRangeMap("MyMap");
@@ -108,7 +106,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testSetValueOverAddressSet() throws Exception {
+	public void testSetValueOverAddressSet() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0x100), getAddr(0x200));
 		set.addRange(getAddr(0x400), getAddr(0x500));
@@ -126,7 +124,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testRemoveRange() throws Exception {
+	public void testRemoveRange() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0x100), getAddr(0x200));
 		set.addRange(getAddr(0x400), getAddr(0x500));
@@ -145,7 +143,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testRemoveSet() throws Exception {
+	public void testRemoveSet() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x200));
 		set.addRange(getAddr(0x205), getAddr(0x1000));
@@ -166,7 +164,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testClearAll() throws Exception {
+	public void testClearAll() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x200));
 		set.addRange(getAddr(0x205), getAddr(0x1000));
@@ -181,7 +179,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testRemoveAddressSetMap() throws Exception {
+	public void testRemoveAddressSetMap() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x10));
 		set.addRange(getAddr(20), getAddr(0x25));
@@ -204,21 +202,19 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testSaveProgram() throws Exception {
+	public void testSaveProgram() throws Exception {
 		Project project = env.getProject();
 		DomainFolder rootFolder = project.getProjectData().getRootFolder();
 		program.endTransaction(transactionID, true);
 		transactionID = -1;
 
-		DomainFile df =
-			rootFolder.createFile("mynotepad", program, TaskMonitor.DUMMY);
+		DomainFile df = rootFolder.createFile("mynotepad", program, TaskMonitor.DUMMY);
 		env.release(program);
 
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x40));
 
-		Program p =
-			(Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
+		Program p = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		int txID = p.startTransaction("test");
 		int value = 0x11223344;
 		int otherValue = 0x44332211;
@@ -249,13 +245,13 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testEvents() throws Exception {
+	public void testEvents() throws Exception {
 		MyDomainObjectListener dol = new MyDomainObjectListener();
 		program.addListener(dol);
 		IntRangeMap map = program.createIntRangeMap("MyMap");
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_ADDED, eventType);
+		assertEquals(ProgramEvent.INT_PROPERTY_MAP_ADDED, eventType);
 		assertEquals("MyMap", mapName);
 		int value = 0x11223344;
 
@@ -267,13 +263,13 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		map.setValue(set, value);
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.INT_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		map.clearValue(getAddr(0), getAddr(0x15));
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.INT_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		set = new AddressSet();
@@ -281,25 +277,25 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		map.clearValue(set);
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.INT_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		map.clearAll();
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.INT_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		// map removed
 		program.deleteIntRangeMap("MyMap");
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_REMOVED, eventType);
+		assertEquals(ProgramEvent.INT_PROPERTY_MAP_REMOVED, eventType);
 		assertEquals("MyMap", mapName);
 	}
 
 	@Test
-    public void testMoveRange() throws Exception {
+	public void testMoveRange() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock(".test", getAddr(0), 0x23, (byte) 0xa,
 			TaskMonitor.DUMMY, false);
@@ -335,7 +331,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@Test
-    public void testDeleteBlockRange() throws Exception {
+	public void testDeleteBlockRange() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock(".test", getAddr(5), 0x20, (byte) 0xa,
 			TaskMonitor.DUMMY, false);

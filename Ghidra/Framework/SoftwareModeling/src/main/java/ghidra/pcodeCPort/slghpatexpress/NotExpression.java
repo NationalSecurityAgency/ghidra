@@ -15,10 +15,13 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class NotExpression extends UnaryExpression {
@@ -38,10 +41,10 @@ public class NotExpression extends UnaryExpression {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<not_exp>\n");
-		super.saveXml(s);
-		s.append("</not_exp>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_NOT_EXP);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_NOT_EXP);
 	}
 
 }

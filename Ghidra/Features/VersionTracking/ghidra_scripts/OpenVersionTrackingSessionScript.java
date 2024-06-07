@@ -20,10 +20,10 @@
 import java.util.Collection;
 import java.util.List;
 
-import ghidra.feature.vt.GhidraVersionTrackingScript;
+import ghidra.feature.vt.AbstractGhidraVersionTrackingScript;
 import ghidra.feature.vt.api.main.*;
 
-public class OpenVersionTrackingSessionScript extends GhidraVersionTrackingScript {
+public class OpenVersionTrackingSessionScript extends AbstractGhidraVersionTrackingScript {
 
 	@Override
 	protected void run() throws Exception {
@@ -33,6 +33,9 @@ public class OpenVersionTrackingSessionScript extends GhidraVersionTrackingScrip
 	}
 
 	private void acceptMatchesWithGoodConfidence() throws Exception {
+
+		VTSession vtSession = getVTSession();
+
 		println("Working on session: " + vtSession);
 
 		List<VTMatchSet> matchSets = vtSession.getMatchSets();

@@ -13,14 +13,9 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Registers</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerRegistersPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerRegistersPlugin.png">
+    </DIV>
 
     <P>Registers refer to the target processor's register banks. In multi-threaded environments, it
     is assumed that each thread has its own register context. The register window presents a subset
@@ -30,15 +25,15 @@
 
     <P>The register window uses colors to hint about the state of registers and their values. By
     default, changed registers are displayed in red, and stale registers are displayed in dark
-    grey. A "stale" register is one whose current value is not known. The value displayed is the
-    last recorded value or the default value 0. Simply, a "changed" register is one whose value has
-    just changed. For example, if a register is modified as result of stepping, then that register
-    is changed. However, given the possibility of rewinding, changing thread focus, etc., "changed"
-    is actually subtly more flexible. The registers window remembers the user's last coordinates
-    (time, thread, frame, etc.) as well as the current coordinates. So, "changed" more precisely
-    refers to a register whose value differs between those two coordinates. This permits the user
-    to switch focus between different coordinates and quickly identify what is different, so long
-    as those coordinates pertain to the same processor language.</P>
+    grey. A <EM>stale</EM> register is one whose current value is not known. The value displayed is
+    the last recorded value or the default value 0. A <EM>changed</EM> register is one whose value
+    has just changed. For example, if a register is modified as result of stepping, then that
+    register is changed. However, given the possibility of rewinding, changing thread focus, etc.,
+    "changed" is actually subtly more flexible. The registers window remembers the user's last
+    coordinates (time, thread, frame, etc.) as well as the current coordinates. So, "changed" more
+    precisely refers to a register whose value differs between those two coordinates. This permits
+    the user to switch focus between different coordinates and quickly identify what is different,
+    so long as those coordinates pertain to the same processor language.</P>
 
     <H2>Table Columns</H2>
 
@@ -48,24 +43,24 @@
     <UL>
       <LI>Favorite - a toggle to mark the register as a favorite. By default this includes the
       program counter and stack pointer. Favorites are sorted to the top, by default. The list of
-      favorite registers is memorized per compiler specification.</LI>
+      favorite registers is memorized per platform.</LI>
 
       <LI>Number - the index of the register in Ghidra's language model. By default, this is the
       second sort column.</LI>
 
       <LI>Name - the name of the register in Ghidra's language model.</LI>
 
-      <LI>Value - the value of the register as recorded in the trace. When the value refers to a
-      valid memory offset, right-clicking the row allows the user to navigate to that offset in a
+      <LI>Value - the value of the register recorded in the trace. When the value refers to a valid
+      memory offset, right-clicking the row allows the user to navigate to that offset in a
       selected memory space. This field is user modifiable when the <B>Enable Edits</B> toggle is
       on, and the register is modifiable. Edits may be directed toward a live target, the trace, or
       the emulator. Values changed by the last event are displayed in <FONT color=
       "red">red</FONT>.</LI>
 
       <LI>Type - the type of the register as marked up in the trace. There is generally no default
-      here. Either the user or some automation, e.g., analysis, may set this value. Changes to this
-      field <EM>do not</EM> affect the target. The selected type is saved to the trace "from this
-      time on."</LI>
+      here. Either the user or some automation may set the type. Changes to this field <EM>do
+      not</EM> affect the target. The selected type is saved to the trace for the current and
+      future snapshots.</LI>
 
       <LI>Representation - the value of the register as interpreted by its data type. If the value
       is an address, double-clicking this field will navigate to it. This field is user modifiable
@@ -77,44 +72,38 @@
     <P>The register window provides the following actions:</P>
 
     <H3><A name="select_registers"></A><A name="add"></A><A name="remove"></A><IMG alt="" src=
-    "images/select-registers.png"> Select Registers</H3>
+    "icon.debugger.select.registers"> Select Registers</H3>
 
     <P>This displays a dialog for selecting which registers to display in the table.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerAvailableRegistersDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerAvailableRegistersDialog.png">
+    </DIV>
 
-    <P>The dialog provides more information about each register, potentially displays a larger set
-    of registers, and permits the precise selection of registers to include in the window. This
-    varies from using the table filter in that the register window will not query the target for a
-    register unless it is selected. Note that deselecting a register does not prohibit other
-    components from reading that register. For example, the program counter and stack pointer are
-    read by the recorder whether or not they're displayed in the table. The actions allow for the
-    addition and subtraction of selections from the register set. Most columns are self-explanatory
-    or duplicate the same column in the main window. The "Known" column indicates whether Ghidra
-    was able to find the same register on the target. Unknown registers are never populated by the
-    recorder, but they can still be populated by the user. Modifying the values of unknown
-    registers cannot affect the target. Register sets are memorized per compiler specification.</P>
+    <P>The dialog provides more information about each register, displays a potentially larger set
+    of registers, and permits the selection of registers to include in the window. This is a more
+    persistent and more precise means of removing registers from the window, compared with
+    filtering. Note that deselecting a register does not necessarily prevent that register from
+    being read. Nor does it prohibit other components from reading that register. For example, the
+    program counter and stack pointer are recorded by the target whether or not they're displayed
+    in the table. The actions allow for the addition and subtraction of selections from the
+    register set. Most columns are self-explanatory or duplicate the same column in the main
+    window. The Known column indicates whether Ghidra was able to find the same register on the
+    target. Modifying the values of unknown registers cannot affect the target. Selected registers
+    are memorized per platform.</P>
 
     <H3><A name="type_settings"></A>Register Type Settings</H3>
 
     <P>This action is available on the context menu when there is a single register selected with a
     data type assigned. It permits the adjustment of that data type's settings, e.g., to display
-    decimal vs hexadecimal. The settings are saved to the data unit for the register.</P>
+    decimal vs hexadecimal. The settings are saved to the trace's data unit for the register.</P>
 
-    <H3><A name="enable_edits"></A>Enable Edits</H3>
+    <H3><A name="enable_edits"></A><IMG alt="" src="icon.debugger.enable.edits"> Enable Edits</H3>
 
     <P>This toggle is a write protector for machine state. To modify register values, this toggle
     must be enabled. Edits are directed according the to <A href=
     "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
-    Plugin</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr" column
-    cannot be edited, yet.</P>
+    Plugin</A>.</P>
 
     <H3><A name="clone_window"></A>Clone Window</H3>
 

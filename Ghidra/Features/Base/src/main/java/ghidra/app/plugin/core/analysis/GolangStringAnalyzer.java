@@ -63,9 +63,8 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * elements that the slice points to.
  */
 public class GolangStringAnalyzer extends AbstractAnalyzer {
-	private final static String NAME = "Golang String Analyzer";
-	private final static String DESCRIPTION =
-		"Finds and labels Go string structures that have been referenced from a function.";
+	private final static String NAME = "Golang Strings";
+	private final static String DESCRIPTION = "Finds and labels Golang string structures.";
 
 	private GolangStringAnalyzerOptions analyzerOptions = new GolangStringAnalyzerOptions();
 	private GoRttiMapper goBinary;
@@ -99,7 +98,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
-			Msg.error(this, "Golang analyzer error: unable to get GoRttiMapper");
+			Msg.error(this, "Golang string analyzer error: unable to get GoRttiMapper");
 			return false;
 		}
 		markupSession = goBinary.createMarkupSession(monitor);

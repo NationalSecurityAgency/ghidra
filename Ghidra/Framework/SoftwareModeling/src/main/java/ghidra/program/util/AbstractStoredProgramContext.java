@@ -143,7 +143,7 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 		}
 
 		RegisterValueStore store = map.get(register.getBaseRegister());
-		if (store == null) {
+		if (store == null || store.isEmpty()) {
 			return null;
 		}
 
@@ -153,8 +153,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	@Override
 	public AddressRangeIterator getRegisterValueAddressRanges(Register register) {
 		RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
-		if (store == null) {
-			return new AddressSet().getAddressRanges();
+		if (store == null || store.isEmpty()) {
+			return new EmptyAddressRangeIterator();
 		}
 		return new RegisterAddressRangeIterator(register, store.getAddressRangeIterator(),
 			registerValueMap);
@@ -163,7 +163,7 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	@Override
 	public AddressRange getRegisterValueRangeContaining(Register register, Address addr) {
 		RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
-		if (store == null) {
+		if (store == null || store.isEmpty()) {
 			return new AddressRangeImpl(addr, addr);
 		}
 		return store.getValueRangeContaining(addr);
@@ -173,8 +173,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	public AddressRangeIterator getRegisterValueAddressRanges(Register register, Address start,
 			Address end) {
 		RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
-		if (store == null) {
-			return new AddressSet().getAddressRanges();
+		if (store == null || store.isEmpty()) {
+			return new EmptyAddressRangeIterator();
 		}
 		return new RegisterAddressRangeIterator(register, store.getAddressRangeIterator(start, end),
 			registerValueMap);
@@ -183,8 +183,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	@Override
 	public AddressRangeIterator getDefaultRegisterValueAddressRanges(Register register) {
 		RegisterValueStore store = defaultRegisterValueMap.get(register.getBaseRegister());
-		if (store == null) {
-			return new AddressSet().getAddressRanges();
+		if (store == null || store.isEmpty()) {
+			return new EmptyAddressRangeIterator();
 		}
 		return new RegisterAddressRangeIterator(register, store.getAddressRangeIterator(),
 			defaultRegisterValueMap);
@@ -194,8 +194,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	public AddressRangeIterator getDefaultRegisterValueAddressRanges(Register register,
 			Address start, Address end) {
 		RegisterValueStore store = defaultRegisterValueMap.get(register.getBaseRegister());
-		if (store == null) {
-			return new AddressSet().getAddressRanges();
+		if (store == null || store.isEmpty()) {
+			return new EmptyAddressRangeIterator();
 		}
 		return new RegisterAddressRangeIterator(register, store.getAddressRangeIterator(start, end),
 			defaultRegisterValueMap);

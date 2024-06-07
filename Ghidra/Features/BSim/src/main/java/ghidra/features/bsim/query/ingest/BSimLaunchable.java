@@ -1061,9 +1061,6 @@ public class BSimLaunchable implements GhidraLaunchable {
 		System.setProperty(LoggingInitialization.LOG4J2_CONFIGURATION_PROPERTY,
 			BSIM_LOGGING_CONFIGURATION_FILE); 
 
-		// Allows handling of old content which did not have a content type property
-		DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 		ApplicationConfiguration config;
 		switch (type) {
 			case 2:

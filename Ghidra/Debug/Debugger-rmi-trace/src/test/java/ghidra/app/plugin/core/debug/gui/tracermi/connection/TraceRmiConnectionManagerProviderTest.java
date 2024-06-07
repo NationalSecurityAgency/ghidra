@@ -208,7 +208,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor));
 	}
 
-	record Cx(SocketChannel channel, TestTraceRmiClient client,
+	public record Cx(SocketChannel channel, TestTraceRmiClient client,
 			TraceRmiConnection connection)
 			implements AutoCloseable {
 		public static Cx complete(TraceRmiAcceptor acceptor, String description)
@@ -398,6 +398,8 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 			waitForPass(
 				() -> assertEquals(node, Unique.assertOne(provider.tree.getSelectedNodes())));
 
+			controlService.setCurrentMode(target.getTrace(), ControlMode.RO_TRACE);
+			waitForSwing();
 			traceManager.activateSnap(0);
 			waitForPass(() -> {
 				assertEquals(0, traceManager.getCurrentSnap());

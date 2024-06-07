@@ -21,13 +21,14 @@ import java.lang.reflect.InvocationTargetException;
 
 import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
+import ghidra.app.plugin.core.disassembler.EntryPointAnalyzer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.pdb.pdbapplicator.*;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
@@ -133,7 +134,7 @@ class LoadPdbTask extends Task {
 	}
 
 	private boolean parseWithNewParser(MessageLog log, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws CancelledException {
 
 		PdbReaderOptions pdbReaderOptions = new PdbReaderOptions(); // use defaults
 
@@ -141,20 +142,8 @@ class LoadPdbTask extends Task {
 
 		pdbApplicatorOptions.setProcessingControl(control);
 
-		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(pdbFile,
-			pdbReaderOptions, monitor)) {
-			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize();
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, log);
-
-			return true;
-		}
-		catch (ghidra.app.util.bin.format.pdb2.pdbreader.PdbException e) {
-			log.appendMsg("PDB Error: " + e.getMessage());
-		}
-		return false;
+		return PdbUniversalAnalyzer.doAnalysis(program, pdbFile, pdbReaderOptions,
+			pdbApplicatorOptions, log, monitor);
 	}
 
 	// We need to kick off any byte analyzers (like getting import symbols), as they typically
@@ -165,21 +154,34 @@ class LoadPdbTask extends Task {
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 		Options analysisProperties = program.getOptions(Program.ANALYSIS_PROPERTIES);
 
-		//other planned analysis here.
+		if (!useMsDiaParser && control == PdbApplicatorControl.ALL) {
+			// one-byte functions could have been laid down
+			scheduleEntryPointAnalyzer(manager, analysisProperties, addrs);
+		}
+		if (useMsDiaParser || control != PdbApplicatorControl.DATA_TYPES_ONLY) {
+			// mangled symbols could have been laid down
+			scheduleDemanglerAnalyzer(manager, analysisProperties, addrs);
+		}
 
-		scheduleDemangler(manager, analysisProperties, addrs);
 	}
 
-	private void scheduleDemangler(AutoAnalysisManager manager, Options analysisProperties,
+	private void scheduleEntryPointAnalyzer(AutoAnalysisManager manager, Options analysisProperties,
 			AddressSetView addrs) {
-		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
-		String analyzerName = demanglerAnalyzer.getName();
-		String valueAsString = analysisProperties.getValueAsString(analyzerName);
-
 		// Only schedule analyzer if enabled
-		if (!Boolean.parseBoolean(valueAsString)) {
+		if (!analysisProperties.getBoolean(EntryPointAnalyzer.NAME, false)) {
 			return;
 		}
+		EntryPointAnalyzer entryPointAnalyzer = new EntryPointAnalyzer();
+		manager.scheduleOneTimeAnalysis(entryPointAnalyzer, addrs);
+	}
+
+	private void scheduleDemanglerAnalyzer(AutoAnalysisManager manager, Options analysisProperties,
+			AddressSetView addrs) {
+		// Only schedule analyzer if enabled
+		if (!analysisProperties.getBoolean(MicrosoftDemanglerAnalyzer.NAME, false)) {
+			return;
+		}
+		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
 		manager.scheduleOneTimeAnalysis(demanglerAnalyzer, addrs);
 	}
 

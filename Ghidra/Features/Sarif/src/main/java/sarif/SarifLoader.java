@@ -149,7 +149,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		}
 
 		if (loadSpecs.isEmpty() && provider.getName().endsWith(FILE_EXTENSION)) {
-			// just put 'em all in (give endianess preference)
+			// just put 'em all in (give endianness preference)
 			List<LanguageDescription> languageDescriptions =
 				getLanguageService().getLanguageDescriptions(false);
 			for (LanguageDescription languageDescription : languageDescriptions) {
@@ -311,7 +311,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		}
 	}
 
-	private ParseResult parse(ByteProvider provider) {
+	private ParseResult parse(ByteProvider provider) throws IOException {
 		try {
 			ProgramSarifMgr lastSarifMgr = new ProgramSarifMgr(provider);
 			ProgramInfo lastInfo = lastSarifMgr.getProgramInfo();
@@ -321,8 +321,9 @@ public class SarifLoader extends AbstractProgramLoader {
 			// This can happen during the import process when this loader attempts to load 
 			// a non-SARIF file (there really should be 2 methods, a speculative version and 
 			// a version that expects no exception)
-			Msg.trace(this, "Unable to parse SARIF for " + provider.getName(), e);
-			return new ParseResult(null, null);
+			
+			// This will get caught and discarded by the opinion logic
+			throw new IOException("Unable to parse "+provider.getName()+"as SARIF");
 		}
 	}
 

@@ -15,8 +15,8 @@
  */
 package docking.widgets;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.Color;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -24,6 +24,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import generic.theme.GColor;
 import ghidra.docking.util.LookAndFeelUtils;
 import resources.ResourceManager;
 
@@ -35,6 +36,8 @@ import resources.ResourceManager;
 public class EmptyBorderButton extends JButton {
 
 	private ButtonStateListener emptyBorderButtonChangeListener;
+
+	private ButtonFocusListener emptyBorderButtonFocusListener;
 
 	/**
 	 * A raised beveled border.
@@ -53,6 +56,13 @@ public class EmptyBorderButton extends JButton {
 	 */
 	public static final Border LOWERED_BUTTON_BORDER = BorderFactory.createCompoundBorder(
 		BorderFactory.createLoweredBevelBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+
+	/**
+	 * A border to signal when the button has focus.
+	 */
+	private static final Color FOCUS_COLOR = new GColor("color.border.button.focused");
+	public static final Border FOCUSED_BUTTON_BORDER = BorderFactory.createCompoundBorder(
+		BorderFactory.createEmptyBorder(2, 2, 2, 2), BorderFactory.createLineBorder(FOCUS_COLOR));
 
 	/**
 	 * Construct a new EmptyBorderButton.
@@ -105,7 +115,10 @@ public class EmptyBorderButton extends JButton {
 		installLookAndFeelFix();
 		clearBorder();
 		emptyBorderButtonChangeListener = new ButtonStateListener();
+		emptyBorderButtonFocusListener = new ButtonFocusListener();
+
 		addChangeListener(emptyBorderButtonChangeListener);
+		addFocusListener(emptyBorderButtonFocusListener);
 	}
 
 	@Override
@@ -164,9 +177,16 @@ public class EmptyBorderButton extends JButton {
 		else if (rollover) {
 			setBorder(getRaisedBorder());
 		}
+		else if (isFocusOwner()) {
+			setBorder(getFocusedBorder());
+		}
 		else {
 			setBorder(NO_BUTTON_BORDER);
 		}
+	}
+
+	protected Border getFocusedBorder() {
+		return FOCUSED_BUTTON_BORDER;
 	}
 
 	protected Border getRaisedBorder() {
@@ -179,6 +199,7 @@ public class EmptyBorderButton extends JButton {
 
 	public void removeListeners() {
 		removeChangeListener(emptyBorderButtonChangeListener);
+		removeFocusListener(emptyBorderButtonFocusListener);
 	}
 
 	private class ButtonStateListener implements ChangeListener {
@@ -186,5 +207,19 @@ public class EmptyBorderButton extends JButton {
 		public void stateChanged(ChangeEvent e) {
 			updateBorderBasedOnState();
 		}
+	}
+
+	private class ButtonFocusListener implements FocusListener {
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			updateBorderBasedOnState();
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			updateBorderBasedOnState();
+		}
+
 	}
 }

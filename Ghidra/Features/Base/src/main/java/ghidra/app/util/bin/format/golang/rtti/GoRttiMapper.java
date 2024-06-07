@@ -22,31 +22,29 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.help.UnsupportedOperationException;
-
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.analysis.TransientProgramProperties;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeConflictHandler;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
+import ghidra.app.util.bin.format.dwarf.DWARFDataTypeConflictHandler;
+import ghidra.app.util.bin.format.dwarf.DWARFProgram;
 import ghidra.app.util.bin.format.golang.*;
 import ghidra.app.util.bin.format.golang.rtti.types.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.PeLoader;
-import ghidra.framework.store.LockException;
+import ghidra.app.util.opinion.*;
+import ghidra.framework.Platform;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
-import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
+import ghidra.program.model.lang.Endian;
+import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -112,36 +110,37 @@ public class GoRttiMapper extends DataTypeMapper {
 					GoRttiMapper supplier_result = getGoBinary(program);
 					if (supplier_result != null) {
 						supplier_result.init(monitor);
+						return supplier_result;
 					}
-					return supplier_result;
 				}
-				catch (IllegalArgumentException | IOException e) {
-					TransientProgramProperties.getProperty(program, FAILED_FLAG,
-						TransientProgramProperties.SCOPE.PROGRAM, Boolean.class, () -> true); // also sets it
-
-					if (e instanceof IOException) {
-						// this is a more serious error, and the stack trace should be written
-						// to the application log
-						Msg.error(GoRttiMapper.class,
-							"Failed to read golang info for: " + program.getName(), e);
-
-					}
-					AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
-					if (aam.isAnalyzing()) {
-						// should cause a modal popup at end of analysis that the go binary wasn't
-						// supported
-						MessageLog log = aam.getMessageLog();
-						log.appendMsg(e.getMessage());
-					}
-					else {
-						Msg.warn(GoRttiMapper.class, "Golang program: " + e.getMessage());
-					}
-
-					return null;
+				catch (BootstrapInfoException mbie) {
+					Msg.warn(GoRttiMapper.class, mbie.getMessage());
+					logAnalyzerMsg(program, mbie.getMessage());
 				}
+				catch (IOException e) {
+					// this is a more serious error, and the stack trace should be written
+					// to the application log
+					Msg.error(GoRttiMapper.class, "Failed to read golang info", e);
+					logAnalyzerMsg(program, e.getMessage());
+				}
+
+				// this sets the failed flag
+				TransientProgramProperties.getProperty(program, FAILED_FLAG,
+					TransientProgramProperties.SCOPE.PROGRAM, Boolean.class, () -> true);
+
+				return null;
 			});
 
 		return goBinary;
+	}
+
+	private static void logAnalyzerMsg(Program program, String msg) {
+		AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
+		if (aam.isAnalyzing()) {
+			// should cause a modal popup at end of analysis that will show the message
+			MessageLog log = aam.getMessageLog();
+			log.appendMsg(msg);
+		}
 	}
 
 	/**
@@ -150,16 +149,24 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @param program {@link Program}
 	 * @return new {@link GoRttiMapper}, or null if basic golang information is not found in the
 	 * binary
-	 * @throws IllegalArgumentException if the golang binary is an unsupported version
+	 * @throws BootstrapInfoException if it is a golang binary and has an unsupported or
+	 * unparseable version number or if there was a missing golang bootstrap .gdt file
 	 * @throws IOException if there was an error in the Ghidra golang rtti reading logic 
 	 */
 	public static GoRttiMapper getGoBinary(Program program)
-			throws IllegalArgumentException, IOException {
+			throws BootstrapInfoException, IOException {
 		GoBuildInfo buildInfo = GoBuildInfo.fromProgram(program);
-		GoVer goVer;
-		if (buildInfo == null || (goVer = buildInfo.getVerEnum()) == GoVer.UNKNOWN) {
+		if (buildInfo == null) {
+			// probably not a golang binary
 			return null;
 		}
+
+		GoVer goVer = buildInfo.getVerEnum();
+		if (goVer == GoVer.UNKNOWN) {
+			throw new BootstrapInfoException(
+				"Unsupported Golang version, version info: '%s'".formatted(buildInfo.getVersion()));
+		}
+
 		ResourceFile gdtFile =
 			findGolangBootstrapGDT(goVer, buildInfo.getPointerSize(), getGolangOSString(program));
 		if (gdtFile == null) {
@@ -201,9 +208,13 @@ public class GoRttiMapper extends DataTypeMapper {
 		else if (PeLoader.PE_NAME.equals(loaderName)) {
 			return "win";
 		}
-		else {
-			return null;
+		else if (MachoLoader.MACH_O_NAME.equals(loaderName)) {
+			LanguageID languageID = program.getLanguageCompilerSpecPair().getLanguageID();
+			if ("AARCH64:LE:64:AppleSilicon".equals(languageID.getIdAsString())) {
+				return Platform.MAC_ARM_64.getDirectoryName(); // mac_arm_64
+			}
 		}
+		return null;
 	}
 
 	/**
@@ -243,6 +254,58 @@ public class GoRttiMapper extends DataTypeMapper {
 			program.getCompilerSpec().getCompilerSpecDescription().getCompilerSpecName());
 	}
 
+	public static boolean hasGolangSections(List<String> sectionNames) {
+		for (String sectionName : sectionNames) {
+			if (sectionName.contains("gopclntab") ||
+				sectionName.contains(GoBuildInfo.MACHO_SECTION_NAME) ||
+				sectionName.contains(GoBuildInfo.SECTION_NAME)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
+	private static final List<String> SECTION_PREFIXES =
+		List.of("." /* ELF */, "__" /* macho sections */);
+
+	/**
+	 * Returns a matching symbol from the specified program, using golang specific logic.
+	 * 
+	 * @param program {@link Program}
+	 * @param symbolName name of golang symbol
+	 * @return {@link Symbol}, or null if not found
+	 */
+	public static Symbol getGoSymbol(Program program, String symbolName) {
+		for (String prefix : SYMBOL_SEARCH_PREFIXES) {
+			List<Symbol> symbols = program.getSymbolTable().getSymbols(prefix + symbolName, null);
+			if (symbols.size() == 1) {
+				return symbols.get(0);
+			}
+		}
+		return null;
+	}
+
+	public static MemoryBlock getGoSection(Program program, String sectionName) {
+		for (String prefix : SECTION_PREFIXES) {
+			MemoryBlock memBlock = program.getMemory().getBlock(prefix + sectionName);
+			if (memBlock != null) {
+				return memBlock;
+			}
+		}
+		return null;
+	}
+
+	public static MemoryBlock getFirstGoSection(Program program, String... blockNames) {
+		for (String blockToSearch : blockNames) {
+			MemoryBlock memBlock = getGoSection(program, blockToSearch);
+			if (memBlock != null) {
+				return memBlock;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Return the address of the golang zerobase symbol, or an artificial substitute.
 	 * <p>
@@ -252,7 +315,7 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link Address} of the runtime.zerobase, or artificial substitute
 	 */
 	public static Address getZerobaseAddress(Program prog) {
-		Symbol zerobaseSym = SymbolUtilities.getUniqueSymbol(prog, "runtime.zerobase");
+		Symbol zerobaseSym = getGoSymbol(prog, "runtime.zerobase");
 		Address zerobaseAddr =
 			zerobaseSym != null ? zerobaseSym.getAddress() : getArtificalZerobaseAddress(prog);
 		if (zerobaseAddr == null) {
@@ -267,8 +330,7 @@ public class GoRttiMapper extends DataTypeMapper {
 		"ARTIFICIAL.runtime.zerobase";
 
 	private static Address getArtificalZerobaseAddress(Program program) {
-		Symbol zerobaseSym =
-			SymbolUtilities.getUniqueSymbol(program, ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME);
+		Symbol zerobaseSym = getGoSymbol(program, ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME);
 		return zerobaseSym != null ? zerobaseSym.getAddress() : null;
 	}
 
@@ -324,11 +386,11 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * if not present and types recovered via DWARF should be used instead
 	 * @throws IOException if error linking a structure mapped structure to its matching
 	 * ghidra structure, which is a programming error or a corrupted bootstrap gdt
-	 * @throws IllegalArgumentException if there is no matching bootstrap gdt for this specific
+	 * @throws BootstrapInfoException if there is no matching bootstrap gdt for this specific
 	 * type of golang binary
 	 */
 	public GoRttiMapper(Program program, int ptrSize, Endian endian, GoVer goVersion,
-			ResourceFile archiveGDT) throws IOException, IllegalArgumentException {
+			ResourceFile archiveGDT) throws IOException, BootstrapInfoException {
 		super(program, archiveGDT);
 
 		this.goVersion = goVersion;
@@ -357,13 +419,15 @@ public class GoRttiMapper extends DataTypeMapper {
 			if (archiveGDT == null) {
 				// a normal'ish situation where there isn't a .gdt for this arch/binary and there
 				// isn't any DWARF.
-				throw new IllegalArgumentException(
-					"Missing golang .gdt archive for %s, no fallback DWARF info, unable to extract golang RTTI info."
+				throw new BootstrapInfoException(
+					"Missing golang .gdt archive for %s, no fallback DWARF info, unable to extract Golang RTTI info."
 							.formatted(goVersion));
 			}
-			// a bad situation where the data type info is corrupted 
-			throw new IOException("Invalid or missing Golang bootstrap GDT file: %s"
-					.formatted(archiveGDT.getAbsolutePath()));
+
+			// we have a .gdt, but something failed. 
+			throw new IOException("Invalid Golang bootstrap GDT file or struct mapping info: %s"
+					.formatted(archiveGDT.getAbsolutePath()),
+				e);
 		}
 	}
 
@@ -468,7 +532,7 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link GoModuledata}
 	 */
 	public GoModuledata getFirstModule() {
-		return modules.get(0);
+		return !modules.isEmpty() ? modules.get(0) : null;
 	}
 
 	/**
@@ -745,8 +809,7 @@ public class GoRttiMapper extends DataTypeMapper {
 		// to avoid traces of the original program name as a deleted source archive link in the
 		// gdt data base.  This method only leaves the target gdt filename + ".step1" in the db.
 		File tmpGDTFile = new File(gdtFile.getParentFile(), gdtFile.getName() + ".step1.gdt");
-		FileDataTypeManager tmpFdtm = createFileArchive(tmpGDTFile, program.getLanguage(),
-			program.getCompilerSpec().getCompilerSpecID(), monitor);
+		FileDataTypeManager tmpFdtm = FileDataTypeManager.createFileArchive(tmpGDTFile);
 		int tx = -1;
 		try {
 			tx = tmpFdtm.startTransaction("Import");
@@ -791,8 +854,7 @@ public class GoRttiMapper extends DataTypeMapper {
 
 		tmpFdtm.save();
 
-		FileDataTypeManager fdtm = createFileArchive(gdtFile, program.getLanguage(),
-			program.getCompilerSpec().getCompilerSpecID(), monitor);
+		FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
 		tx = -1;
 		try {
 			tx = fdtm.startTransaction("Import");
@@ -815,19 +877,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		fdtm.close();
 
 		tmpGDTFile.delete();
-	}
-
-	private FileDataTypeManager createFileArchive(File gdtFile, Language lang,
-			CompilerSpecID compilerId, TaskMonitor monitor) throws IOException {
-		try {
-			FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
-			fdtm.setProgramArchitecture(lang, compilerId, LanguageUpdateOption.CLEAR, monitor);
-			return fdtm;
-		}
-		catch (IOException | CancelledException | LockException | UnsupportedOperationException
-				| IncompatibleLanguageException e) {
-			throw new IOException("Failed to create file data type manager: " + gdtFile, e);
-		}
 	}
 
 	private DataType structMappingInfoToDataType(StructureMappingInfo<?> smi) {
@@ -1359,14 +1408,14 @@ public class GoRttiMapper extends DataTypeMapper {
 	}
 
 	private AddressRange getPclntabSearchRange() {
-		MemoryBlock memBlock = getFirstMemoryBlock(program, ".noptrdata", ".rdata");
+		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "rdata");
 		return memBlock != null
 				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
 	}
 
 	private AddressRange getModuledataSearchRange() {
-		MemoryBlock memBlock = getFirstMemoryBlock(program, ".noptrdata", ".data");
+		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "data");
 		return memBlock != null
 				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
@@ -1378,15 +1427,11 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link AddressSetView} of range that is valid to find string structs in
 	 */
 	public AddressSetView getStringStructRange() {
-		MemoryBlock datamb = program.getMemory().getBlock(".data");
-		MemoryBlock rodatamb = getFirstMemoryBlock(program, ".rodata", ".rdata");
-
-		if (datamb == null || rodatamb == null) {
-			return new AddressSet();
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getDataRange());
+			result.add(moduledata.getRoDataRange());
 		}
-
-		AddressSet result = new AddressSet(datamb.getStart(), datamb.getEnd());
-		result.add(rodatamb.getStart(), rodatamb.getEnd());
 		return result;
 	}
 
@@ -1396,21 +1441,29 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link AddressSetView} of range that is valid for string char[] data
 	 */
 	public AddressSetView getStringDataRange() {
-		MemoryBlock rodatamb = getFirstMemoryBlock(program, ".rodata", ".rdata");
-		return rodatamb != null
-				? new AddressSet(rodatamb.getStart(), rodatamb.getEnd())
-				: new AddressSet();
+		// TODO: initialized []byte("stringchars") slices can have data in noptrdata section
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getRoDataRange());
+		}
+		return result;
 	}
 
-	private static MemoryBlock getFirstMemoryBlock(Program program, String... blockNames) {
-		Memory memory = program.getMemory();
-		for (String blockToSearch : blockNames) {
-			MemoryBlock memBlock = memory.getBlock(blockToSearch);
-			if (memBlock != null) {
-				return memBlock;
-			}
+	public AddressSetView getTextAddresses() {
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getTextRange());
 		}
-		return null;
+		return result;
+	}
+
+
+	public Symbol getGoSymbol(String symbolName) {
+		return getGoSymbol(program, symbolName);
+	}
+
+	public MemoryBlock getGoSection(String sectionName) {
+		return getGoSection(program, sectionName);
 	}
 
 	//--------------------------------------------------------------------------------------------

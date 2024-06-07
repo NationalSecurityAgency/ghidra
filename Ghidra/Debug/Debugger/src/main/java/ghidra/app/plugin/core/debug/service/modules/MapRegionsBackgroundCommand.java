@@ -20,11 +20,11 @@ import java.util.Collection;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
+import ghidra.trace.model.Trace;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class MapRegionsBackgroundCommand extends BackgroundCommand {
+public class MapRegionsBackgroundCommand extends BackgroundCommand<Trace> {
 	private final DebuggerStaticMappingService service;
 	private final Collection<RegionMapEntry> entries;
 
@@ -36,7 +36,7 @@ public class MapRegionsBackgroundCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Trace trace, TaskMonitor monitor) {
 		try {
 			service.addRegionMappings(entries, monitor, true);
 		}

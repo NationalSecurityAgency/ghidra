@@ -159,7 +159,7 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 	}
 
 	/**
-	 * Get the function corresponding to the specified decompiler context.
+	 * Get the function corresponding to the specified decompiler context token.
 	 * 
 	 * @param context decompiler action context
 	 * @return the function associated with the current context token or null if none identified.

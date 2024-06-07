@@ -28,7 +28,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.AddressSetPropertyMap;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.DuplicateNameException;
@@ -40,7 +40,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 	private Program program;
 	private AddressFactory addrFactory;
 	private int transactionID;
-	private int eventType;
+	private EventType eventType;
 	private String mapName;
 
 	public AddressSetPropertyMapTest() {
@@ -53,36 +53,36 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		return builder.getProgram();
 	}
 
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		env = new TestEnv();
 		program = buildProgram("notepad");
 		addrFactory = program.getAddressFactory();
 		transactionID = program.startTransaction("test");
 	}
 
-    @After
-    public void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		if (transactionID >= 0) {
 			program.endTransaction(transactionID, true);
 		}
 		env.dispose();
 	}
 
-@Test
-    public void testGetNonExistentMap() throws Exception {
+	@Test
+	public void testGetNonExistentMap() throws Exception {
 		AddressSetPropertyMap pm = program.getAddressSetPropertyMap("MyMap");
 		assertNull(pm);
 	}
 
-@Test
-    public void testCreateAddressSetMap() throws Exception {
+	@Test
+	public void testCreateAddressSetMap() throws Exception {
 		AddressSetPropertyMap pm = program.createAddressSetPropertyMap("MyMap");
 		assertNotNull(pm);
 	}
 
-@Test
-    public void testDuplicateName() throws Exception {
+	@Test
+	public void testDuplicateName() throws Exception {
 		AddressSetPropertyMap pm = program.createAddressSetPropertyMap("MyMap");
 		pm.add(getAddr(0x100), getAddr(0x200));
 		try {
@@ -93,8 +93,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
-@Test
-    public void testAddRange() throws Exception {
+	@Test
+	public void testAddRange() throws Exception {
 		Address start = getAddr(0x1001000);
 		Address end = getAddr(0x1001005);
 		AddressSetPropertyMap pm = program.createAddressSetPropertyMap("MyMap");
@@ -107,8 +107,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertTrue(set.isEmpty());
 	}
 
-@Test
-    public void testAddSet() throws Exception {
+	@Test
+	public void testAddSet() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0x100), getAddr(0x200));
 		set.addRange(getAddr(0x400), getAddr(0x500));
@@ -122,8 +122,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(set, pset);
 	}
 
-@Test
-    public void testRemoveRange() throws Exception {
+	@Test
+	public void testRemoveRange() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0x100), getAddr(0x200));
 		set.addRange(getAddr(0x400), getAddr(0x500));
@@ -140,8 +140,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(s, pset);
 	}
 
-@Test
-    public void testRemoveSet() throws Exception {
+	@Test
+	public void testRemoveSet() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x200));
 		set.addRange(getAddr(0x205), getAddr(0x1000));
@@ -160,8 +160,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 
 	}
 
-@Test
-    public void testContainsAddress() throws Exception {
+	@Test
+	public void testContainsAddress() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x200));
 		set.addRange(getAddr(0x205), getAddr(0x1000));
@@ -175,8 +175,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 
 	}
 
-@Test
-    public void testClear() throws Exception {
+	@Test
+	public void testClear() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x200));
 		set.addRange(getAddr(0x205), getAddr(0x1000));
@@ -188,8 +188,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertTrue(pm.getAddressSet().isEmpty());
 	}
 
-@Test
-    public void testAddressRangeIterator() throws Exception {
+	@Test
+	public void testAddressRangeIterator() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x200));
 		set.addRange(getAddr(0x205), getAddr(0x1000));
@@ -223,8 +223,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(4, count);
 	}
 
-@Test
-    public void testAddressIterator() throws Exception {
+	@Test
+	public void testAddressIterator() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x10));
 		set.addRange(getAddr(20), getAddr(0x25));
@@ -241,8 +241,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertNull(iter.next());
 	}
 
-@Test
-    public void testRemoveAddressSetMap() throws Exception {
+	@Test
+	public void testRemoveAddressSetMap() throws Exception {
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x10));
 		set.addRange(getAddr(20), getAddr(0x25));
@@ -263,15 +263,14 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 
 	}
 
-@Test
-    public void testSaveProgram() throws Exception {
+	@Test
+	public void testSaveProgram() throws Exception {
 		Project project = env.getProject();
 		DomainFolder rootFolder = project.getProjectData().getRootFolder();
 		program.endTransaction(transactionID, true);
 		transactionID = -1;
 
-		DomainFile df =
-			rootFolder.createFile("mynotepad", program, TaskMonitor.DUMMY);
+		DomainFile df = rootFolder.createFile("mynotepad", program, TaskMonitor.DUMMY);
 		env.release(program);
 
 		AddressSet set = new AddressSet();
@@ -279,8 +278,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		set.addRange(getAddr(20), getAddr(0x25));
 		set.addRange(getAddr(26), getAddr(0x30));
 
-		Program p =
-			(Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
+		Program p = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		int txID = p.startTransaction("test");
 		try {
 			AddressSetPropertyMap pm = p.createAddressSetPropertyMap("MyMap");
@@ -309,14 +307,14 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		p.release(this);
 	}
 
-@Test
-    public void testEvents() throws Exception {
+	@Test
+	public void testEvents() throws Exception {
 		MyDomainObjectListener dol = new MyDomainObjectListener();
 		program.addListener(dol);
 		AddressSetPropertyMap pm = program.createAddressSetPropertyMap("MyMap");
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_ADDED, eventType);
+		assertEquals(ProgramEvent.ADDRESS_PROPERTY_MAP_ADDED, eventType);
 		assertEquals("MyMap", mapName);
 
 		// map changed
@@ -327,13 +325,13 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		pm.add(set);
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		pm.remove(getAddr(0), getAddr(0x15));
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		set = new AddressSet();
@@ -341,25 +339,25 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		pm.remove(set);
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		pm.clear();
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
+		assertEquals(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		// map removed
 		program.deleteAddressSetPropertyMap("MyMap");
 		program.flushEvents();
 		waitForSwing();
-		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_REMOVED, eventType);
+		assertEquals(ProgramEvent.ADDRESS_PROPERTY_MAP_REMOVED, eventType);
 		assertEquals("MyMap", mapName);
 	}
 
-@Test
-    public void testMoveRange() throws Exception {
+	@Test
+	public void testMoveRange() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock(".test", getAddr(0), 0x23, (byte) 0xa,
 			TaskMonitor.DUMMY, false);
@@ -393,8 +391,8 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(s, pmSet);
 	}
 
-@Test
-    public void testDeleteBlockRange() throws Exception {
+	@Test
+	public void testDeleteBlockRange() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock(".test", getAddr(5), 0x20, (byte) 0xa,
 			TaskMonitor.DUMMY, false);

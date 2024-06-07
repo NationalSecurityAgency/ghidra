@@ -124,7 +124,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 	 * @throws Throwable if anything goes wrong
 	 */
 	protected TargetMemory findMemory(List<String> seedPath) throws Throwable {
-		return m.find(TargetMemory.class, seedPath);
+		return m.suitable(TargetMemory.class, seedPath);
 	}
 
 	/**

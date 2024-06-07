@@ -193,6 +193,26 @@ public interface Tool extends ServiceProvider {
 	public Set<DockingActionIf> getAllActions();
 
 	/**
+	 * Return a set of all global actions in the tool.
+	 * 
+	 * <p>
+	 * Note: the result may contain conceptually duplicate actions, which is when multiple actions
+	 * exist that share the same full name (the full name is the action name with the owner name,
+	 * such as "My Action (MyPlugin)".
+	 * 
+	 * @return set of all global actions
+	 */
+	public Set<DockingActionIf> getGlobalActions();
+
+	/**
+	 * Return a set of all local actions for the given {@link ComponentProvider}.
+	 * @param componentProvider the component provider from which to get local actions
+	 * 
+	 * @return set of all local actions for the given provider
+	 */
+	public Set<DockingActionIf> getLocalActions(ComponentProvider componentProvider);
+
+	/**
 	 * Returns all actions for the given owner
 	 * 
 	 * <p>
@@ -340,5 +360,4 @@ public interface Tool extends ServiceProvider {
 	 * systems).
 	 */
 	public void close();
-
 }

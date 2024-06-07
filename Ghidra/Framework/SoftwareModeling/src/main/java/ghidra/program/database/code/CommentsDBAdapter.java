@@ -18,6 +18,7 @@ package ghidra.program.database.code;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -72,10 +73,10 @@ abstract class CommentsDBAdapter {
 //	/** repeatable comment type */
 //	static final int REPEATABLE_COMMENT = 4;
 
-	static CommentsDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static CommentsDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new CommentsDBAdapterV1(dbHandle, addrMap, true);
 		}
 
@@ -87,11 +88,11 @@ abstract class CommentsDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			CommentsDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;

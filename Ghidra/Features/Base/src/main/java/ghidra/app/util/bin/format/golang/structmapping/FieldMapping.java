@@ -15,8 +15,8 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -44,10 +44,10 @@ public @interface FieldMapping {
 	 * Overrides the field name that is matched in the structure.
 	 * <p>
 	 * Can be a single name, or a list of names that will be used to find the structure
-	 * field. 
+	 * field.  The name is case-insensitive.
 	 * 
-	 * @return name, or list of names, of the structure field to map, or unset to use the 
-	 * java field's name
+	 * @return name, or list of names (case insensitive), of the structure field to map,
+	 * or unset to use the java field's name
 	 */
 	String[] fieldName() default "";
 

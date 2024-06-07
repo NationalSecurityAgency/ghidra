@@ -541,14 +541,8 @@ public class PcodeDataTypeManager {
 	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
+		String metatype = type.isSigned() ? "int" : "uint";
 		long[] keys = type.getValues();
-		String metatype = "uint";
-		for (long key : keys) {
-			if (key < 0) {
-				metatype = "int";
-				break;
-			}
-		}
 		encoder.writeString(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		encoder.writeBool(ATTRIB_ENUM, true);
@@ -1291,6 +1285,19 @@ public class PcodeDataTypeManager {
 		}
 		if (tp instanceof Array) {
 			return TYPE_ARRAY;
+		}
+		if (tp instanceof CharDataType) {
+			return ((CharDataType) tp).isSigned() ? TYPE_INT : TYPE_UINT;
+		}
+		if (tp instanceof WideCharDataType || tp instanceof WideChar16DataType ||
+			tp instanceof WideChar32DataType) {
+			return TYPE_INT;
+		}
+		if (tp instanceof Enum) {
+			return ((Enum) tp).isSigned() ? TYPE_INT : TYPE_UINT;
+		}
+		if (tp instanceof FunctionDefinition) {
+			return TYPE_CODE;
 		}
 		return TYPE_UNKNOWN;
 	}

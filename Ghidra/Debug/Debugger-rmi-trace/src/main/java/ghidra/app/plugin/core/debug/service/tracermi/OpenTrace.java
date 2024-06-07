@@ -23,6 +23,7 @@ import ghidra.rmi.trace.TraceRmi.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.util.Msg;
 
 class OpenTrace implements ValueDecoder {
 	final DoId doId;
@@ -84,19 +85,47 @@ class OpenTrace implements ValueDecoder {
 
 	@Override
 	public Address toAddress(Addr addr, boolean required) {
+		/**
+		 * Do not clamp here, like we do for ranges. The purpose of the given address is more
+		 * specific here. Plus, we're not just omitting some addresses (like we would for ranges),
+		 * we'd be moving the address. Thus, we'd be applying some attribute to a location that was
+		 * never intended.
+		 */
 		AddressSpace space = getSpace(addr.getSpace(), required);
 		return space.getAddress(addr.getOffset());
 	}
 
 	@Override
-	public AddressRange toRange(AddrRange range, boolean required)
-			throws AddressOverflowException {
+	public AddressRange toRange(AddrRange range, boolean required) {
 		AddressSpace space = getSpace(range.getSpace(), required);
 		if (space == null) {
 			return null;
 		}
-		Address min = space.getAddress(range.getOffset());
-		Address max = space.getAddress(range.getOffset() + range.getExtend());
+		/**
+		 * Clamp to only the valid addresses, but do at least warn.
+		 */
+		long minOffset = range.getOffset();
+		if (Long.compareUnsigned(minOffset, space.getMinAddress().getOffset()) < 0) {
+			Msg.warn(this, "Range [%s:%x+%x] partially exceeds space min. Clamping."
+					.formatted(range.getSpace(), range.getOffset(), range.getExtend()));
+			minOffset = space.getMinAddress().getOffset();
+		}
+		else if (Long.compareUnsigned(minOffset, space.getMaxAddress().getOffset()) > 0) {
+			throw new AddressOutOfBoundsException("Range [%s:%x+%x] entirely exceeds space max"
+					.formatted(range.getSpace(), range.getOffset(), range.getExtend()));
+		}
+		long maxOffset = range.getOffset() + range.getExtend(); // Use the requested offset, not adjusted
+		if (Long.compareUnsigned(maxOffset, space.getMaxAddress().getOffset()) > 0) {
+			Msg.warn(this, "Range [%s:%x+%x] partially exceeds space max. Clamping."
+					.formatted(range.getSpace(), range.getOffset(), range.getExtend()));
+			maxOffset = space.getMaxAddress().getOffset();
+		}
+		else if (Long.compareUnsigned(maxOffset, space.getMinAddress().getOffset()) < 0) {
+			throw new AddressOutOfBoundsException("Range [%s:%x+%x] entirely exceeds space min"
+					.formatted(range.getSpace(), range.getOffset(), range.getExtend()));
+		}
+		Address min = space.getAddress(minOffset);
+		Address max = space.getAddress(maxOffset);
 		return new AddressRangeImpl(min, max);
 	}
 

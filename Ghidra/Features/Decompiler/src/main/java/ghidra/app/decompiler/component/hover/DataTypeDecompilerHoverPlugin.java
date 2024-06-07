@@ -29,7 +29,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.DECOMPILER,
+	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Data Type Hover",
 	description = "Displays data type information in a tooltip as you hover over a data type name in the decompiler.",
 	servicesProvided = { DecompilerHoverService.class }

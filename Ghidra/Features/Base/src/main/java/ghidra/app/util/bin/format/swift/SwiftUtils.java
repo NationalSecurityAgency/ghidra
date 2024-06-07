@@ -29,6 +29,8 @@ import ghidra.program.model.mem.MemoryBlock;
  */
 public class SwiftUtils {
 
+	public static final String SWIFT_COMPILER = "swift";
+
 	/**
 	 * A {@link PointerTypedef pointer} to a relative 4-byte offset
 	 */
@@ -51,6 +53,23 @@ public class SwiftUtils {
 		List<String> prefixes = List.of("__swift", "swift", ".sw5");
 		for (MemoryBlock block : program.getMemory().getBlocks()) {
 			if (prefixes.stream().anyMatch(prefix -> block.getName().startsWith(prefix))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if the given {@List} of section names contains a Swift section name
+	 * 
+	 * @param sectionNames The {@link List} of section names to check
+	 * @return True if the given {@List} of section names contains a Swift section name; otherwise, 
+	 *   false
+	 */
+	public static boolean isSwift(List<String> sectionNames) {
+		List<String> prefixes = List.of("__swift", "swift", ".sw5");
+		for (String sectionName : sectionNames) {
+			if (prefixes.stream().anyMatch(prefix -> sectionName.startsWith(prefix))) {
 				return true;
 			}
 		}

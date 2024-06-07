@@ -369,7 +369,8 @@ public class MDMangGhidra extends MDMang {
 		MDArgumentsList args = functionType.getArgumentsList();
 		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
-				function.addParameter(processDataType(null, args.getArg(index)));
+				function.addParameter(
+					new DemangledParameter(processDataType(null, args.getArg(index))));
 			}
 		}
 		if (functionType.isTypeCast()) {

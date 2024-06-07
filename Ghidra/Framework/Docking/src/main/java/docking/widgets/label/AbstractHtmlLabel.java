@@ -76,6 +76,18 @@ public abstract class AbstractHtmlLabel extends JLabel
 		updateHtmlView();
 	}
 
+	/**
+	 * Returns the original text of the label.
+	 * <p>
+	 * The {@link #getText()} method for this class can return a value that is missing the leading
+	 * &lt;html&gt; tag.
+	 * 
+	 * @return text of this label
+	 */
+	public String getOriginalText() {
+		return isHtml ? HTML_TAG + getText() : getText();
+	}
+
 	@Override
 	public void updateUI() {
 		super.updateUI();

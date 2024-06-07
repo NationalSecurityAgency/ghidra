@@ -1,0 +1,1208 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	uuid(95F974F5-B0AE-44A4-8EB9-FEC4E8136427),
+	helpstring("DbgMod Type Library")
+]
+library DbgMod
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	///////////////////////////////////////////////////////////
+	// interface forward declaration
+	interface IHostDataModelAccess;
+	interface IKeyStore;
+	interface IModelObject;
+	interface IDataModelManager;
+	interface IModelKeyReference;
+	interface IModelPropertyAccessor;
+	interface IModelMethod;
+	interface IKeyEnumerator;
+	interface IRawEnumerator;
+	interface IDataModelConcept;
+	interface IStringDisplayableConcept;
+	interface ICodeAddressConcept;
+	interface IModelIterator;
+	interface IIterableConcept;
+	interface IIndexableConcept;
+	interface IPreferredRuntimeTypeConcept;
+	interface IDebugHost;
+	interface IDebugHostContext;
+	interface IDebugHostSymbols;
+	interface IDebugHostModuleSignature;
+	interface IDebugHostTypeSignature;
+	interface IDebugHostMemory;
+	interface IDebugHostErrorSink;
+	interface IDebugHostEvaluator;
+	interface IDebugHostSymbolEnumerator;
+	interface IDebugHostSymbol;
+	interface IDebugHostModule;
+	interface IDebugHostType;
+	interface IDebugHostConstant;
+	interface IDebugHostField;
+	interface IDebugHostData;
+	interface IDebugHostBaseClass;
+	interface IDebugHostPublic;
+	interface IDebugHostType2;
+	interface IDebugHostStatus;
+	interface IDataModelScriptClient;
+	interface IDataModelScriptTemplate;
+	interface IDataModelScript;
+	interface IDataModelScriptProvider;
+	interface IDataModelScriptManager;
+	interface IDataModelScriptProviderEnumerator;
+	interface IDebugHostScriptHost;
+	interface IDataModelScriptHostContext;
+	interface IDataModelNameBinder;
+	interface IDataModelScriptTemplateEnumerator;
+	interface IDynamicKeyProviderConcept;
+	interface IDynamicConceptProviderConcept;
+	interface IModelKeyReference2;
+	interface IDebugHostEvaluator2;
+	interface IDebugHostSymbol2;
+	interface IDataModelManager2;
+	interface IDebugHostMemory2;
+	interface IDebugHostExtensibility;
+	interface IDataModelScriptDebug;
+	interface IDataModelScriptDebugClient;
+	interface IDataModelScriptDebugStack;
+	interface IDataModelScriptDebugStackFrame;
+	interface IDataModelScriptDebugVariableSetEnumerator;
+	interface IDataModelScriptDebugBreakpoint;
+	interface IDataModelScriptDebugBreakpointEnumerator;
+	interface IDataModelScriptDebug2;
+	interface IComparableConcept;
+	interface IEquatableConcept;
+	interface IDebugHostModule2;
+
+	///////////////////////////////////////////////////////////
+	// missing structs
+	enum {EXCEPTION_MAXIMUM_PARAMETERS = 15}; // maximum number of exception parameters
+
+	typedef struct _EXCEPTION_RECORD64 {
+		DWORD    ExceptionCode;
+		DWORD ExceptionFlags;
+		LONGLONG ExceptionRecord;
+		LONGLONG ExceptionAddress;
+		DWORD NumberParameters;
+		DWORD __unusedAlignment;
+		LONGLONG ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+	} EXCEPTION_RECORD64, *PEXCEPTION_RECORD64;
+
+	typedef struct _IMAGE_FILE_HEADER {
+		WORD    Machine;
+		WORD    NumberOfSections;
+		DWORD   TimeDateStamp;
+		DWORD   PointerToSymbolTable;
+		DWORD   NumberOfSymbols;
+		WORD    SizeOfOptionalHeader;
+		WORD    Characteristics;
+	} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
+
+	typedef struct _IMAGE_DATA_DIRECTORY {
+		DWORD   VirtualAddress;
+		DWORD   Size;
+	} IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
+
+	enum { IMAGE_NUMBEROF_DIRECTORY_ENTRIES  = 16};
+
+	typedef struct _IMAGE_OPTIONAL_HEADER64 {
+		WORD        Magic;
+		BYTE        MajorLinkerVersion;
+		BYTE        MinorLinkerVersion;
+		DWORD       SizeOfCode;
+		DWORD       SizeOfInitializedData;
+		DWORD       SizeOfUninitializedData;
+		DWORD       AddressOfEntryPoint;
+		DWORD       BaseOfCode;
+		ULONGLONG   ImageBase;
+		DWORD       SectionAlignment;
+		DWORD       FileAlignment;
+		WORD        MajorOperatingSystemVersion;
+		WORD        MinorOperatingSystemVersion;
+		WORD        MajorImageVersion;
+		WORD        MinorImageVersion;
+		WORD        MajorSubsystemVersion;
+		WORD        MinorSubsystemVersion;
+		DWORD       Win32VersionValue;
+		DWORD       SizeOfImage;
+		DWORD       SizeOfHeaders;
+		DWORD       CheckSum;
+		WORD        Subsystem;
+		WORD        DllCharacteristics;
+		ULONGLONG   SizeOfStackReserve;
+		ULONGLONG   SizeOfStackCommit;
+		ULONGLONG   SizeOfHeapReserve;
+		ULONGLONG   SizeOfHeapCommit;
+		DWORD       LoaderFlags;
+		DWORD       NumberOfRvaAndSizes;
+		IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+	} IMAGE_OPTIONAL_HEADER64, *PIMAGE_OPTIONAL_HEADER64;
+
+	typedef struct _IMAGE_NT_HEADERS64 {
+		DWORD Signature;
+		IMAGE_FILE_HEADER FileHeader;
+		IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+	} IMAGE_NT_HEADERS64, *PIMAGE_NT_HEADERS64;
+
+	struct _WINDBG_EXTENSION_APIS32 {
+		DWORD NotSupported;
+	};
+
+	struct _WINDBG_EXTENSION_APIS64 {
+		DWORD NotSupported;
+	};
+
+/*
+	struct _MEMORY_BASIC_INFORMATION64 {
+		ULONGLONG BaseAddress;
+		ULONGLONG AllocationBase;
+		DWORD     AllocationProtect;
+		DWORD     __alignment1;
+		ULONGLONG RegionSize;
+		DWORD     State;
+		DWORD     Protect;
+		DWORD     Type;
+		DWORD     __alignment2;
+	};
+*/
+
+	typedef struct _Location {
+		ULONG64 HostDefined;
+		ULONG64 Offset;
+	} Location, *PLocation;
+	
+	typedef struct _ArrayDimension {
+		LONG64 LowerBound;
+		ULONG64 Length;
+		ULONG64 Stride;
+	} ArrayDimension, *PArrayDimension;
+	
+	typedef struct _SymbolSearchInfo {
+		ULONG HeaderSize; // sizeof(SymbolSearchInfo)
+		ULONG InfoSize;   // sizeof(* by int *)
+		ULONG SearchOptions;
+	} SymbolSearchInfo, *PSymbolSearchInfo;
+
+	typedef struct _TypeSearchInfo {
+		int SearchType;
+	} TypeSearchInfo, *PTypeSearchInfo;
+
+	typedef struct _ScriptDebugPosition {
+		ULONG Line;
+		ULONG Column;
+	} ScriptDebugPosition, *PScriptDebugPosition;
+
+	typedef struct _ScriptDebugEventInformation {
+		int DebugEvent;
+		ScriptDebugPosition EventPosition;          // The line/column of script at which the debug event occurred (0 values : cannot determine)
+		ScriptDebugPosition EventSpanEnd;           // The ending line/column of script at which the debug event occurred (0 values : cannot determine)
+
+		union
+		{
+			struct
+			{
+				bool IsUncaught;
+			} ExceptionInformation;
+
+			struct
+			{
+				ULONG64 BreakpointId;
+			} BreakpointInformation;
+
+		} u;
+	} ScriptDebugEventInformation, *PScriptDebugEventInformation;
+
+
+	///////////////////////////////////////////////////////////
+	// missing defines
+
+	//
+	// dwCreationFlag values
+	//
+
+	enum {DEBUG_PROCESS                     =0x00000001};
+	enum {DEBUG_ONLY_THIS_PROCESS           =0x00000002};
+
+	enum {CREATE_SUSPENDED                  =0x00000004};
+
+	enum {DETACHED_PROCESS                  =0x00000008};
+
+	enum {CREATE_NEW_CONSOLE                =0x00000010};
+
+	enum {NORMAL_PRIORITY_CLASS             =0x00000020};
+	enum {IDLE_PRIORITY_CLASS               =0x00000040};
+	enum {HIGH_PRIORITY_CLASS               =0x00000080};
+	enum {REALTIME_PRIORITY_CLASS           =0x00000100};
+
+	enum {CREATE_NEW_PROCESS_GROUP          =0x00000200};
+	enum {CREATE_UNICODE_ENVIRONMENT        =0x00000400};
+
+	enum {CREATE_SEPARATE_WOW_VDM           =0x00000800};
+	enum {CREATE_SHARED_WOW_VDM             =0x00001000};
+	enum {CREATE_FORCEDOS                   =0x00002000};
+
+	enum {BELOW_NORMAL_PRIORITY_CLASS       =0x00004000};
+	enum {ABOVE_NORMAL_PRIORITY_CLASS       =0x00008000};
+	enum {STACK_SIZE_PARAM_IS_A_RESERVATION =0x00010000};
+
+	enum {CREATE_BREAKAWAY_FROM_JOB         =0x01000000};
+	enum {CREATE_PRESERVE_CODE_AUTHZ_LEVEL  =0x02000000};
+
+	enum {CREATE_DEFAULT_ERROR_MODE         =0x04000000};
+	enum {CREATE_NO_WINDOW                  =0x08000000};
+
+	enum {PROFILE_USER                      =0x10000000};
+	enum {PROFILE_KERNEL                    =0x20000000};
+	enum {PROFILE_SERVER                    =0x40000000};
+
+	enum {CREATE_IGNORE_SYSTEM_DEFAULT      =0x80000000};
+
+
+	///////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(F2BCE54E-4835-4f8a-836E-7981E29904D1),
+	helpstring("IHostDataModelAccess")
+]
+interface IHostDataModelAccess : IUnknown {
+	HRESULT GetDataModel(  IDataModelManager** manager, IDebugHost** host );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(0FC7557D-401D-4fca-9365-DA1E9850697C),
+	helpstring("IKeyStore")
+]
+interface IKeyStore : IUnknown {
+	HRESULT GetKey(  const wchar_t* key, IModelObject** object, IKeyStore** metadata );
+	HRESULT SetKey(  const wchar_t* key, IModelObject* object, IKeyStore* metadata );
+	HRESULT GetKeyValue(  const wchar_t* key, IModelObject** object, IKeyStore** metadata );
+	HRESULT SetKeyValue(  const wchar_t* key, IModelObject* object );
+	HRESULT ClearKeys(  );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(E28C7893-3F4B-4b96-BACA-293CDC55F45D),
+	helpstring("IModelObject")
+]
+interface IModelObject : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT GetKind(  int *kind );
+	HRESULT GetIntrinsicValue(  VARIANT* intrinsicData );
+	HRESULT GetIntrinsicValueAs(  VARTYPE vt, VARIANT* intrinsicData );
+	HRESULT GetKeyValue(  const wchar_t* key, IModelObject** object, IKeyStore** metadata );
+	HRESULT SetKeyValue(  const wchar_t* key, IModelObject* object );
+	HRESULT EnumerateKeyValues(  IKeyEnumerator** enumerator );
+	HRESULT GetRawValue(  int kind, const wchar_t* name, unsigned long searchFlags, IModelObject** object );
+	HRESULT EnumerateRawValues(  int kind, unsigned long searchFlags, IRawEnumerator** enumerator );
+	HRESULT Dereference(  IModelObject** object );
+	HRESULT TryCastToRuntimeType(  IModelObject** runtimeTypedObject );
+	HRESULT GetConcept(  REFIID conceptId, IUnknown** conceptInterface, IKeyStore** conceptMetadata );
+	HRESULT GetLocation(  Location* location );
+	HRESULT GetTypeInfo(  IDebugHostType** type );
+	HRESULT GetTargetInfo(  Location* location, IDebugHostType** type );
+	HRESULT GetNumberOfParentModels( ULONG64* numModels );
+	HRESULT GetParentModel( unsigned __int64 i, IModelObject **model, IModelObject **contextObject );
+	HRESULT AddParentModel(  IModelObject* model, IModelObject* contextObject, bool override);
+	HRESULT RemoveParentModel(  IModelObject* model );
+	HRESULT GetKey(  const wchar_t* key, IModelObject** object, IKeyStore** metadata );
+	HRESULT GetKeyReference(  const wchar_t* key, IModelObject** objectReference, IKeyStore** metadata );
+	HRESULT SetKey(  const wchar_t* key, IModelObject* object, IKeyStore* metadata );
+	HRESULT ClearKeys(  );
+	HRESULT EnumerateKeys(  IKeyEnumerator** enumerator );
+	HRESULT EnumerateKeyReferences(  IKeyEnumerator** enumerator );
+	HRESULT SetConcept(  REFIID conceptId, IUnknown* conceptInterface, IKeyStore* conceptMetadata );
+	HRESULT ClearConcepts(  );
+	HRESULT GetRawReference(  int kind, const wchar_t* name, unsigned long searchFlags, IModelObject** object );
+	HRESULT EnumerateRawReferences(  int kind, unsigned long searchFlags, IRawEnumerator** enumerator );
+	HRESULT SetContextForDataModel(  IModelObject* dataModelObject, IUnknown* context );
+	HRESULT GetContextForDataModel(  IModelObject* dataModelObject, IUnknown** context );
+	HRESULT Compare(  IModelObject* other, IModelObject **ppResult );
+	HRESULT IsEqualTo(  IModelObject* other, bool* equal );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(73FE19F4-A110-4500-8ED9-3C28896F508C),
+	helpstring("IDataModelManager")
+]
+interface IDataModelManager : IUnknown {
+	HRESULT Close(  );
+	HRESULT CreateNoValue(  IModelObject** object );
+	HRESULT CreateErrorObject(  HRESULT hrError, const wchar_t* pwszMessage, IModelObject** object );
+	HRESULT CreateTypedObject(  IDebugHostContext* context, Location objectLocation, IDebugHostType* objectType, IModelObject** object );
+	HRESULT CreateTypedObjectReference(  IDebugHostContext* context, Location objectLocation, IDebugHostType* objectType, IModelObject** object );
+	HRESULT CreateSyntheticObject(  IDebugHostContext* context, IModelObject** object );
+	HRESULT CreateDataModelObject(  IDataModelConcept* dataModel, IModelObject** object );
+	HRESULT CreateIntrinsicObject(  int objectKind, VARIANT* intrinsicData, IModelObject** object );
+	HRESULT CreateTypedIntrinsicObject(  VARIANT* intrinsicData, IDebugHostType* type, IModelObject** object );
+	HRESULT GetModelForTypeSignature(  IDebugHostTypeSignature* typeSignature, IModelObject** dataModel );
+	HRESULT GetModelForType(  IDebugHostType* type, IModelObject** dataModel, IDebugHostTypeSignature** typeSignature, IDebugHostSymbolEnumerator** wildcardMatches );
+	HRESULT RegisterModelForTypeSignature(  IDebugHostTypeSignature* typeSignature, IModelObject* dataModel );
+	HRESULT UnregisterModelForTypeSignature(  IModelObject* dataModel, IDebugHostTypeSignature* typeSignature );
+	HRESULT RegisterExtensionForTypeSignature(  IDebugHostTypeSignature* typeSignature, IModelObject* dataModel );
+	HRESULT UnregisterExtensionForTypeSignature(  IModelObject* dataModel, IDebugHostTypeSignature* typeSignature );
+	HRESULT CreateMetadataStore(  IKeyStore* parentStore, IKeyStore** metadataStore );
+	HRESULT GetRootNamespace(  IModelObject** rootNamespace );
+	HRESULT RegisterNamedModel(  const wchar_t* modelName, IModelObject *modeObject );
+	HRESULT UnregisterNamedModel(  const wchar_t* modelName );
+	HRESULT AcquireNamedModel(  const wchar_t* modelName, IModelObject **modelObject );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(5253DCF8-5AFF-4c62-B302-56A289E00998),
+	helpstring("IModelKeyReference")
+]
+interface IModelKeyReference : IUnknown {
+	HRESULT GetKeyName(  BSTR* keyName );
+	HRESULT GetOriginalObject(  IModelObject** originalObject );
+	HRESULT GetContextObject(  IModelObject** containingObject );
+	HRESULT GetKey(  IModelObject** object, IKeyStore** metadata );
+	HRESULT GetKeyValue(  IModelObject** object, IKeyStore** metadata );
+	HRESULT SetKey(  IModelObject* object, IKeyStore* metadata );
+	HRESULT SetKeyValue(  IModelObject* object );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(5A0C63D9-0526-42b8-960C-9516A3254C85),
+	helpstring("IModelPropertyAccessor")
+]
+interface IModelPropertyAccessor : IUnknown {
+	HRESULT GetValue(  const wchar_t* key, IModelObject* contextObject, IModelObject** value );
+	HRESULT SetValue(  const wchar_t* key, IModelObject* contextObject, IModelObject* value );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(80600C1F-B90B-4896-82AD-1C00207909E8),
+	helpstring("IModelMethod")
+]
+interface IModelMethod : IUnknown {
+	HRESULT Call(  IModelObject *pContextObject, unsigned __int64 argCount, IModelObject **ppArguments, IModelObject **ppResult, IKeyStore **ppMetadata );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(345FA92E-5E00-4319-9CAE-971F7601CDCF),
+	helpstring("IKeyEnumerator")
+]
+interface IKeyEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext( BSTR* key, IModelObject** value, IKeyStore** metadata );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(E13613F9-3A3C-40b5-8F48-1E5EBFB9B21B),
+	helpstring("IRawEnumerator")
+]
+interface IRawEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext( BSTR* name, int *kind, IModelObject** value );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(FCB98D1D-1114-4fbf-B24C-EFFCB5DEF0D3),
+	helpstring("IDataModelConcept")
+]
+interface IDataModelConcept : IUnknown {
+	HRESULT InitializeObject(  IModelObject* modelObject, IDebugHostTypeSignature* matchingTypeSignature, IDebugHostSymbolEnumerator* wildcardMatches );
+	HRESULT GetName(  BSTR* modelName );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(D28E8D70-6C00-4205-940D-501016601EA3),
+	helpstring("IStringDisplayableConcept")
+]
+interface IStringDisplayableConcept : IUnknown {
+	HRESULT ToDisplayString(  IModelObject* contextObject, IKeyStore* metadata, BSTR* displayString );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(C7371568-5C78-4A00-A4AB-6EF8823184CB),
+	helpstring("ICodeAddressConcept")
+]
+interface ICodeAddressConcept : IUnknown {
+	HRESULT GetContainingSymbol(  IModelObject* pContextObject, IDebugHostSymbol **ppSymbol );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(E4622136-927D-4490-874F-581F3E4E3688),
+	helpstring("IModelIterator")
+]
+interface IModelIterator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext( IModelObject** object, unsigned __int64 dimensions, IModelObject** indexers, IKeyStore** metadata );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(F5D49D0C-0B02-4301-9C9B-B3A6037628F3),
+	helpstring("IIterableConcept")
+]
+interface IIterableConcept : IUnknown {
+	HRESULT GetDefaultIndexDimensionality(  IModelObject* contextObject, ULONG64* dimensionality );
+	HRESULT GetIterator(  IModelObject* contextObject, IModelIterator** iterator );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(D1FAD99F-3F53-4457-850C-8051DF2D3FB5),
+	helpstring("IIndexableConcept")
+]
+interface IIndexableConcept : IUnknown {
+	HRESULT GetDimensionality(  IModelObject* contextObject, ULONG64* dimensionality );
+	HRESULT GetAt(  IModelObject* contextObject, unsigned __int64 indexerCount, IModelObject** indexers, IModelObject** object, IKeyStore** metadata );
+	HRESULT SetAt(  IModelObject* contextObject, unsigned __int64 indexerCount, IModelObject** indexers, IModelObject *value );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(9D6C1D7B-A76F-4618-8068-5F76BD9A4E8A),
+	helpstring("IPreferredRuntimeTypeConcept")
+]
+interface IPreferredRuntimeTypeConcept : IUnknown {
+	HRESULT CastToPreferredRuntimeType(  IModelObject* contextObject, IModelObject** object );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(B8C74943-6B2C-4eeb-B5C5-35D378A6D99D),
+	helpstring("IDebugHost")
+]
+interface IDebugHost : IUnknown {
+	HRESULT GetHostDefinedInterface(  IUnknown** hostUnk );
+	HRESULT GetCurrentContext(  IDebugHostContext** context );
+	HRESULT GetDefaultMetadata(  IKeyStore** defaultMetadataStore );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(A68C70D8-5EC0-46e5-B775-3134A48EA2E3),
+	helpstring("IDebugHostContext")
+]
+interface IDebugHostContext : IUnknown {
+	HRESULT IsEqualTo(  IDebugHostContext *pContext, bool *pIsEqual );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(C8FF0F0B-FCE9-467e-8BB3-5D69EF109C00),
+	helpstring("IDebugHostErrorSink")
+]
+interface IDebugHostErrorSink : IUnknown {
+	HRESULT ReportError(  int errClass, HRESULT hrError, const wchar_t* message );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(0F819103-87DE-4e96-8277-E05CD441FB22),
+	helpstring("IDebugHostSymbol")
+]
+interface IDebugHostSymbol : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT CompareAgainst(  IDebugHostSymbol *pComparisonSymbol, unsigned long comparisonFlags, bool *pMatches );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(28D96C86-10A3-4976-B14E-EAEF4790AA1F),
+	helpstring("IDebugHostSymbolEnumerator")
+]
+interface IDebugHostSymbolEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext(  IDebugHostSymbol** symbol );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(C9BA3E18-D070-4378-BBD0-34613B346E1E),
+	helpstring("IDebugHostModule")
+]
+interface IDebugHostModule : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetImageName(  bool allowPath, BSTR* imageName );
+	HRESULT GetBaseLocation(  Location* moduleBaseLocation );
+	HRESULT GetVersion(  ULONG64* fileVersion, ULONG64* productVersion );
+	HRESULT FindTypeByName(  const wchar_t* typeName, IDebugHostType** type );
+	HRESULT FindSymbolByRVA(  unsigned __int64 rva, IDebugHostSymbol** symbol );
+	HRESULT FindSymbolByName(  const wchar_t* symbolName, IDebugHostSymbol** symbol );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(F219B848-63B2-4A43-A6C9-72ABF25A9711),
+	helpstring("IDebugHostType")
+]
+interface IDebugHostType : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetTypeKind(  TypeKind *kind );
+	HRESULT GetSize(  ULONG64* size );
+	HRESULT GetBaseType(  IDebugHostType** baseType );
+	HRESULT GetHashCode(  ULONG* hashCode );
+	HRESULT GetIntrinsicType(  int *intrinsicKind, VARTYPE *carrierType );
+	HRESULT GetBitField(  ULONG* lsbOfField, ULONG* lengthOfField );
+	HRESULT GetPointerKind(  int* pointerKind );
+	HRESULT GetMemberType(  IDebugHostType** memberType );
+	HRESULT CreatePointerTo(  int kind, IDebugHostType** newType );
+	HRESULT GetArrayDimensionality(  ULONG64* arrayDimensionality );
+	HRESULT GetArrayDimensions(  unsigned __int64 dimensions, ArrayDimension *pDimensions );
+	HRESULT CreateArrayOf(  unsigned __int64 dimensions, ArrayDimension *pDimensions, IDebugHostType** newType );
+	HRESULT GetFunctionCallingConvention(  int* conventionKind );
+	HRESULT GetFunctionReturnType(  IDebugHostType** returnType );
+	HRESULT GetFunctionParameterTypeCount(  ULONG64* count );
+	HRESULT GetFunctionParameterTypeAt(  unsigned __int64 i, IDebugHostType** parameterType );
+	HRESULT IsGeneric(  bool* isGeneric );
+	HRESULT GetGenericArgumentCount(  ULONG64* argCount );
+	HRESULT GetGenericArgumentAt(  unsigned __int64 i, IDebugHostSymbol** argument );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(62787EDC-FA76-4690-BD71-5E8C3E2937EC),
+	helpstring("IDebugHostConstant")
+]
+interface IDebugHostConstant : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetValue(  VARIANT* value );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(E06F6495-16BC-4cc9-B11D-2A6B23FA72F3),
+	helpstring("IDebugHostField")
+]
+interface IDebugHostField : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetLocationKind(  int *locationKind );
+	HRESULT GetOffset(  ULONG64* offset );
+	HRESULT GetLocation(  Location* location );
+	HRESULT GetValue(  VARIANT* value );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(A3D64993-826C-44fa-897D-926F2FE7AD0B),
+	helpstring("IDebugHostData")
+]
+interface IDebugHostData : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetLocationKind(  int *locationKind );
+	HRESULT GetLocation(  Location* location );
+	HRESULT GetValue(  VARIANT* value );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(6C597AC9-FB4D-4f6d-9F39-22488539F8F4),
+	helpstring("IDebugHostPublic")
+]
+interface IDebugHostPublic : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetLocationKind(  int *locationKind );
+	HRESULT GetLocation(  Location* location );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(B94D57D2-390B-40f7-B5B4-B6DB897D974B),
+	helpstring("IDebugHostBaseClass")
+]
+interface IDebugHostBaseClass : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetOffset(  ULONG64* offset );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(854FD751-C2E1-4eb2-B525-6619CB97A588),
+	helpstring("IDebugHostSymbols")
+]
+interface IDebugHostSymbols : IUnknown {
+	HRESULT CreateModuleSignature(  const wchar_t* pwszModuleName, const wchar_t* pwszMinVersion, const wchar_t* pwszMaxVersion, IDebugHostModuleSignature** ppModuleSignature );
+	HRESULT CreateTypeSignature(  const wchar_t* signatureSpecification, IDebugHostModule* hmodule, IDebugHostTypeSignature** typeSignature );
+	HRESULT CreateTypeSignatureForModuleRange(  const wchar_t* signatureSpecification, const wchar_t* moduleName, const wchar_t* minVersion, const wchar_t* maxVersion, IDebugHostTypeSignature** typeSignature );
+	HRESULT EnumerateModules(  IDebugHostContext* context, IDebugHostSymbolEnumerator** moduleEnum );
+	HRESULT FindModuleByName(  IDebugHostContext* context, const wchar_t* moduleName, IDebugHostModule **hmodule );
+	HRESULT FindModuleByLocation(  IDebugHostContext* context, Location moduleLocation, IDebugHostModule **hmodule );
+	HRESULT GetMostDerivedObject(  IDebugHostContext *pContext, Location location, IDebugHostType* objectType, Location* derivedLocation, IDebugHostType** derivedType );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(212149C9-9183-4a3e-B00E-4FD1DC95339B),
+	helpstring("IDebugHostMemory")
+]
+interface IDebugHostMemory : IUnknown {
+	HRESULT ReadBytes(  IDebugHostContext* context, Location location, void* buffer, unsigned __int64 bufferSize, ULONG64* bytesRead );
+	HRESULT WriteBytes(  IDebugHostContext* context, Location location, void* buffer, unsigned __int64 bufferSize, ULONG64* bytesWritten );
+	HRESULT ReadPointers(  IDebugHostContext* context, Location location, unsigned __int64 count, ULONG64* pointers );
+	HRESULT WritePointers(  IDebugHostContext* context, Location location, unsigned __int64 count, ULONG64* pointers );
+	HRESULT GetDisplayStringForLocation( IDebugHostContext* context, Location location, bool verbose, BSTR* locationName );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(0FEF9A21-577E-4997-AC7B-1C4883241D99),
+	helpstring("IDebugHostEvaluator")
+]
+interface IDebugHostEvaluator : IUnknown {
+	HRESULT EvaluateExpression(  IDebugHostContext* context, const wchar_t* expression, IModelObject* bindingContext, IModelObject** result, IKeyStore** metadata );
+	HRESULT EvaluateExtendedExpression(  IDebugHostContext* context, const wchar_t* expression, IModelObject* bindingContext, IModelObject** result, IKeyStore** metadata );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(31E53A5A-01EE-4BBB-B899-4B46AE7D595C),
+	helpstring("IDebugHostModuleSignature")
+]
+interface IDebugHostModuleSignature : IUnknown {
+	HRESULT IsMatch(  IDebugHostModule* pModule, bool* isMatch );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(3AADC353-2B14-4abb-9893-5E03458E07EE),
+	helpstring("IDebugHostTypeSignature")
+]
+interface IDebugHostTypeSignature : IUnknown {
+	HRESULT GetHashCode(  ULONG* hashCode );
+	HRESULT IsMatch(  IDebugHostType* type, bool* isMatch, IDebugHostSymbolEnumerator** wildcardMatches );
+	HRESULT CompareAgainst(  IDebugHostTypeSignature* typeSignature, int* result );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(21515B67-6720-4257-8A68-077DC944471C),
+	helpstring("IDebugHostSymbol2")
+]
+interface IDebugHostSymbol2 : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT CompareAgainst(  IDebugHostSymbol *pComparisonSymbol, unsigned long comparisonFlags, bool *pMatches );
+	HRESULT EnumerateChildrenEx(  int kind, const wchar_t* name, SymbolSearchInfo* searchInfo, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT GetLanguage(  int *pKind );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(B28632B9-8506-4676-87CE-8F7E05E59876),
+	helpstring("IDebugHostType2")
+]
+interface IDebugHostType2 : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetTypeKind(  TypeKind *kind );
+	HRESULT GetSize(  ULONG64* size );
+	HRESULT GetBaseType(  IDebugHostType** baseType );
+	HRESULT GetHashCode(  ULONG* hashCode );
+	HRESULT GetIntrinsicType(  int *intrinsicKind, VARTYPE *carrierType );
+	HRESULT GetBitField(  ULONG* lsbOfField, ULONG* lengthOfField );
+	HRESULT GetPointerKind(  int* pointerKind );
+	HRESULT GetMemberType(  IDebugHostType** memberType );
+	HRESULT CreatePointerTo(  int kind, IDebugHostType** newType );
+	HRESULT GetArrayDimensionality(  ULONG64* arrayDimensionality );
+	HRESULT GetArrayDimensions(  unsigned __int64 dimensions, ArrayDimension *pDimensions );
+	HRESULT CreateArrayOf(  unsigned __int64 dimensions, ArrayDimension *pDimensions, IDebugHostType** newType );
+	HRESULT GetFunctionCallingConvention(  int* conventionKind );
+	HRESULT GetFunctionReturnType(  IDebugHostType** returnType );
+	HRESULT GetFunctionParameterTypeCount(  ULONG64* count );
+	HRESULT GetFunctionParameterTypeAt(  unsigned __int64 i, IDebugHostType** parameterType );
+	HRESULT IsGeneric(  bool* isGeneric );
+	HRESULT GetGenericArgumentCount(  ULONG64* argCount );
+	HRESULT GetGenericArgumentAt(  unsigned __int64 i, IDebugHostSymbol** argument );
+	HRESULT IsTypedef(  bool* isTypedef );
+	HRESULT GetTypedefBaseType(  IDebugHostType2** baseType );
+	HRESULT GetTypedefFinalBaseType(  IDebugHostType2** finalBaseType );
+	HRESULT GetFunctionVarArgsKind(  int* varArgsKind );
+	HRESULT GetFunctionInstancePointerType(  IDebugHostType2** instancePointerType );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(4F3E1CE2-86B2-4C7A-9C65-D0A9D0EECF44),
+	helpstring("IDebugHostStatus")
+]
+interface IDebugHostStatus : IUnknown {
+	HRESULT PollUserInterrupt(  bool* interruptRequested );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(3B362B0E-89F0-46c6-A663-DFDC95194AEF),
+	helpstring("IDataModelScriptClient")
+]
+interface IDataModelScriptClient : IUnknown {
+	HRESULT ReportError(  int errClass, HRESULT hrFail, const wchar_t* message, unsigned long line, unsigned long position );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(1303DEC4-FA3B-4F1B-9224-B953D16BABB5),
+	helpstring("IDataModelScriptTemplate")
+]
+interface IDataModelScriptTemplate : IUnknown {
+	HRESULT GetName(  BSTR *templateName );
+	HRESULT GetDescription(  BSTR *templateDescription );
+	HRESULT GetContent(  IStream **contentStream );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(7B4D30FC-B14A-49f8-8D87-D9A1480C97F7),
+	helpstring("IDataModelScript")
+]
+interface IDataModelScript : IUnknown {
+	HRESULT GetName(  BSTR *scriptName );
+	HRESULT Rename(  const wchar_t* scriptName );
+	HRESULT Populate(  IStream *contentStream );
+	HRESULT Execute(  IDataModelScriptClient *client );
+	HRESULT Unlink(  );
+	HRESULT IsInvocable(  bool *isInvocable );
+	HRESULT InvokeMain(  IDataModelScriptClient *client );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(69CE6AE2-2268-4e6f-B062-20CE62BFE677),
+	helpstring("IDataModelScriptTemplateEnumerator")
+]
+interface IDataModelScriptTemplateEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext(  IDataModelScriptTemplate **templateContent );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(513461E0-4FCA-48ce-8658-32F3E2056F3B),
+	helpstring("IDataModelScriptProvider")
+]
+interface IDataModelScriptProvider : IUnknown {
+	HRESULT GetName(  BSTR *name );
+	HRESULT GetExtension(  BSTR *extension );
+	HRESULT CreateScript(  IDataModelScript **script );
+	HRESULT GetDefaultTemplateContent(  IDataModelScriptTemplate **templateContent );
+	HRESULT EnumerateTemplates(  IDataModelScriptTemplateEnumerator **enumerator );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(95BA00E2-704A-4fe2-A8F1-A7E7D8FB0941),
+	helpstring("IDataModelScriptProviderEnumerator")
+]
+interface IDataModelScriptProviderEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext(  IDataModelScriptProvider **provider );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(6FD11E33-E5AD-410b-8011-68C6BC4BF80D),
+	helpstring("IDataModelScriptManager")
+]
+interface IDataModelScriptManager : IUnknown {
+	HRESULT GetDefaultNameBinder(  IDataModelNameBinder **ppNameBinder );
+	HRESULT RegisterScriptProvider(  IDataModelScriptProvider *provider );
+	HRESULT UnregisterScriptProvider(  IDataModelScriptProvider *provider );
+	HRESULT FindProviderForScriptType(  const wchar_t* scriptType, IDataModelScriptProvider **provider );
+	HRESULT FindProviderForScriptExtension(  const wchar_t* scriptExtension, IDataModelScriptProvider **provider );
+	HRESULT EnumerateScriptProviders(  IDataModelScriptProviderEnumerator **enumerator );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(E7983FA1-80A7-498c-988F-518DDC5D4025),
+	helpstring("IDynamicKeyProviderConcept")
+]
+interface IDynamicKeyProviderConcept : IUnknown {
+	HRESULT GetKey(  IModelObject *contextObject, const wchar_t* key, IModelObject** keyValue, IKeyStore** metadata, bool *hasKey );
+	HRESULT SetKey(  IModelObject *contextObject, const wchar_t* key, IModelObject *keyValue, IKeyStore *metadata );
+	HRESULT EnumerateKeys(  IModelObject *contextObject, IKeyEnumerator **ppEnumerator );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(95A7F7DD-602E-483f-9D06-A15C0EE13174),
+	helpstring("IDynamicConceptProviderConcept")
+]
+interface IDynamicConceptProviderConcept : IUnknown {
+	HRESULT GetConcept(  IModelObject *contextObject, REFIID conceptId, IUnknown **conceptInterface, IKeyStore **conceptMetadata, bool *hasConcept );
+	HRESULT SetConcept(  IModelObject *contextObject, REFIID conceptId, IUnknown *conceptInterface, IKeyStore *conceptMetadata );
+	HRESULT NotifyParent(  IModelObject *parentModel );
+	HRESULT NotifyParentChange(  IModelObject *parentModel );
+	HRESULT NotifyDestruct(  );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(014D366A-1F23-4981-9219-B2DB8B402054),
+	helpstring("IDataModelScriptHostContext")
+]
+interface IDataModelScriptHostContext : IUnknown {
+	HRESULT NotifyScriptChange(  IDataModelScript* script, int changeKind );
+	HRESULT GetNamespaceObject(  IModelObject** namespaceObject );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(B70334A4-B92C-4570-93A1-D3EB686649A0),
+	helpstring("IDebugHostScriptHost")
+]
+interface IDebugHostScriptHost : IUnknown {
+	HRESULT CreateContext(  IDataModelScript* script, IDataModelScriptHostContext** scriptContext );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(AF352B7B-8292-4c01-B360-2DC3696C65E7),
+	helpstring("IDataModelNameBinder")
+]
+interface IDataModelNameBinder : IUnknown {
+	HRESULT BindValue(  IModelObject* contextObject, const wchar_t* name, IModelObject** value, IKeyStore** metadata );
+	HRESULT BindReference(  IModelObject* contextObject, const wchar_t* name, IModelObject** reference, IKeyStore** metadata );
+	HRESULT EnumerateValues(  IModelObject* contextObject, IKeyEnumerator** enumerator );
+	HRESULT EnumerateReferences(  IModelObject* contextObject, IKeyEnumerator** enumerator );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(80E2F7C5-7159-4e92-887E-7E0347E88406),
+	helpstring("IModelKeyReference2")
+]
+interface IModelKeyReference2 : IUnknown {
+	HRESULT GetKeyName(  BSTR* keyName );
+	HRESULT GetOriginalObject(  IModelObject** originalObject );
+	HRESULT GetContextObject(  IModelObject** containingObject );
+	HRESULT GetKey(  IModelObject** object, IKeyStore** metadata );
+	HRESULT GetKeyValue(  IModelObject** object, IKeyStore** metadata );
+	HRESULT SetKey(  IModelObject* object, IKeyStore* metadata );
+	HRESULT SetKeyValue(  IModelObject* object );
+	HRESULT OverrideContextObject(  IModelObject* newContextObject );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(A117A435-1FB4-4092-A2AB-A929576C1E87),
+	helpstring("IDebugHostEvaluator2")
+]
+interface IDebugHostEvaluator2 : IUnknown {
+	HRESULT EvaluateExpression(  IDebugHostContext* context, const wchar_t* expression, IModelObject* bindingContext, IModelObject** result, IKeyStore** metadata );
+	HRESULT EvaluateExtendedExpression(  IDebugHostContext* context, const wchar_t* expression, IModelObject* bindingContext, IModelObject** result, IKeyStore** metadata );
+	HRESULT AssignTo(  IModelObject* assignmentReference, IModelObject* assignmentValue, IModelObject** assignmentResult, IKeyStore** assignmentMetadata );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(F412C5EA-2284-4622-A660-A697160D3312),
+	helpstring("IDataModelManager2")
+]
+interface IDataModelManager2 : IUnknown {
+	HRESULT Close(  );
+	HRESULT CreateNoValue(  IModelObject** object );
+	HRESULT CreateErrorObject(  HRESULT hrError, const wchar_t* pwszMessage, IModelObject** object );
+	HRESULT CreateTypedObject(  IDebugHostContext* context, Location objectLocation, IDebugHostType* objectType, IModelObject** object );
+	HRESULT CreateTypedObjectReference(  IDebugHostContext* context, Location objectLocation, IDebugHostType* objectType, IModelObject** object );
+	HRESULT CreateSyntheticObject(  IDebugHostContext* context, IModelObject** object );
+	HRESULT CreateDataModelObject(  IDataModelConcept* dataModel, IModelObject** object );
+	HRESULT CreateIntrinsicObject(  int objectKind, VARIANT* intrinsicData, IModelObject** object );
+	HRESULT CreateTypedIntrinsicObject(  VARIANT* intrinsicData, IDebugHostType* type, IModelObject** object );
+	HRESULT GetModelForTypeSignature(  IDebugHostTypeSignature* typeSignature, IModelObject** dataModel );
+	HRESULT GetModelForType(  IDebugHostType* type, IModelObject** dataModel, IDebugHostTypeSignature** typeSignature, IDebugHostSymbolEnumerator** wildcardMatches );
+	HRESULT RegisterModelForTypeSignature(  IDebugHostTypeSignature* typeSignature, IModelObject* dataModel );
+	HRESULT UnregisterModelForTypeSignature(  IModelObject* dataModel, IDebugHostTypeSignature* typeSignature );
+	HRESULT RegisterExtensionForTypeSignature(  IDebugHostTypeSignature* typeSignature, IModelObject* dataModel );
+	HRESULT UnregisterExtensionForTypeSignature(  IModelObject* dataModel, IDebugHostTypeSignature* typeSignature );
+	HRESULT CreateMetadataStore(  IKeyStore* parentStore, IKeyStore** metadataStore );
+	HRESULT GetRootNamespace(  IModelObject** rootNamespace );
+	HRESULT RegisterNamedModel(  const wchar_t* modelName, IModelObject *modeObject );
+	HRESULT UnregisterNamedModel(  const wchar_t* modelName );
+	HRESULT AcquireNamedModel(  const wchar_t* modelName, IModelObject **modelObject );
+	HRESULT AcquireSubNamespace(  const wchar_t* modelName, const wchar_t* subNamespaceModelName, const wchar_t* accessName, IKeyStore *metadata, IModelObject **namespaceModelObject );
+	HRESULT CreateTypedIntrinsicObjectEx(  IDebugHostContext* context, VARIANT* intrinsicData, IDebugHostType* type, IModelObject** object );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(EEA033DE-38F6-416b-A251-1D3771001270),
+	helpstring("IDebugHostMemory2")
+]
+interface IDebugHostMemory2 : IUnknown {
+	HRESULT ReadBytes(  IDebugHostContext* context, Location location, void* buffer, unsigned __int64 bufferSize, ULONG64* bytesRead );
+	HRESULT WriteBytes(  IDebugHostContext* context, Location location, void* buffer, unsigned __int64 bufferSize, ULONG64* bytesWritten );
+	HRESULT ReadPointers(  IDebugHostContext* context, Location location, unsigned __int64 count, ULONG64* pointers );
+	HRESULT WritePointers(  IDebugHostContext* context, Location location, unsigned __int64 count, ULONG64* pointers );
+	HRESULT GetDisplayStringForLocation( IDebugHostContext* context, Location location, bool verbose, BSTR* locationName );
+	HRESULT LinearizeLocation( IDebugHostContext* context, Location location, Location *pLinearizedLocation );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(3C2B24E1-11D0-4f86-8AE5-4DF166F73253),
+	helpstring("IDebugHostExtensibility")
+]
+interface IDebugHostExtensibility : IUnknown {
+	HRESULT CreateFunctionAlias(  const wchar_t* aliasName, IModelObject *functionObject );
+	HRESULT DestroyFunctionAlias(  const wchar_t* aliasName );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(53159B6D-D4C4-471b-A863-5B110CA800CA),
+	helpstring("IDataModelScriptDebugClient")
+]
+interface IDataModelScriptDebugClient : IUnknown {
+	HRESULT NotifyDebugEvent( ScriptDebugEventInformation *pEventInfo, IDataModelScript *pScript, IModelObject *pEventDataObject, int *resumeEventKind );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(0F9FEED7-D045-4ac3-98A8-A98942CF6A35),
+	helpstring("IDataModelScriptDebugVariableSetEnumerator")
+]
+interface IDataModelScriptDebugVariableSetEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext(  BSTR *variableName, IModelObject **variableValue, IKeyStore **variableMetadata );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(DEC6ED5E-6360-4941-AB4C-A26409DE4F82),
+	helpstring("IDataModelScriptDebugStackFrame")
+]
+interface IDataModelScriptDebugStackFrame : IUnknown {
+	HRESULT GetName(  BSTR *name );
+	HRESULT GetPosition(  ScriptDebugPosition *position, ScriptDebugPosition *positionSpanEnd, BSTR *lineText );
+	HRESULT IsTransitionPoint(  bool *isTransitionPoint );
+	HRESULT GetTransition(  IDataModelScript **transitionScript, bool *isTransitionContiguous );
+	HRESULT Evaluate(  const wchar_t* pwszExpression, IModelObject **ppResult );
+	HRESULT EnumerateLocals(  IDataModelScriptDebugVariableSetEnumerator **variablesEnum );
+	HRESULT EnumerateArguments(  IDataModelScriptDebugVariableSetEnumerator **variablesEnum );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(051364DD-E449-443e-9762-FE578F4A5473),
+	helpstring("IDataModelScriptDebugStack")
+]
+interface IDataModelScriptDebugStack : IUnknown {
+	HRESULT GetStackFrame(  unsigned __int64 frameNumber, IDataModelScriptDebugStackFrame **stackFrame );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(6BB27B35-02E6-47cb-90A0-5371244032DE),
+	helpstring("IDataModelScriptDebugBreakpoint")
+]
+interface IDataModelScriptDebugBreakpoint : IUnknown {
+	HRESULT GetPosition( ScriptDebugPosition *position, ScriptDebugPosition *positionSpanEnd, BSTR *lineText );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(39484A75-B4F3-4799-86DA-691AFA57B299),
+	helpstring("IDataModelScriptDebugBreakpointEnumerator")
+]
+interface IDataModelScriptDebugBreakpointEnumerator : IUnknown {
+	HRESULT Reset(  );
+	HRESULT GetNext(  IDataModelScriptDebugBreakpoint **breakpoint );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(DE8E0945-9750-4471-AB76-A8F79D6EC350),
+	helpstring("IDataModelScriptDebug")
+]
+interface IDataModelScriptDebug : IUnknown {
+	HRESULT GetCurrentPosition(  ScriptDebugPosition *currentPosition, ScriptDebugPosition *positionSpanEnd, BSTR *lineText );
+	HRESULT GetStack(  IDataModelScriptDebugStack **stack );
+	HRESULT SetBreakpoint(  unsigned long linePosition, unsigned long columnPosition, IDataModelScriptDebugBreakpoint **breakpoint );
+	HRESULT FindBreakpointById(  unsigned __int64 breakpointId, IDataModelScriptDebugBreakpoint **breakpoint );
+	HRESULT EnumerateBreakpoints(  IDataModelScriptDebugBreakpointEnumerator **breakpointEnum );
+	HRESULT GetEventFilter(  int eventFilter, bool *isBreakEnabled );
+	HRESULT SetEventFilter(  int eventFilter, bool isBreakEnabled );
+	HRESULT StartDebugging(  IDataModelScriptDebugClient *debugClient );
+	HRESULT StopDebugging(  IDataModelScriptDebugClient *debugClient );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(CBB10ED3-839E-426c-9243-E23535C1AE1A),
+	helpstring("IDataModelScriptDebug2")
+]
+interface IDataModelScriptDebug2 : IUnknown {
+	HRESULT GetCurrentPosition(  ScriptDebugPosition *currentPosition, ScriptDebugPosition *positionSpanEnd, BSTR *lineText );
+	HRESULT GetStack(  IDataModelScriptDebugStack **stack );
+	HRESULT SetBreakpoint(  unsigned long linePosition, unsigned long columnPosition, IDataModelScriptDebugBreakpoint **breakpoint );
+	HRESULT FindBreakpointById(  unsigned __int64 breakpointId, IDataModelScriptDebugBreakpoint **breakpoint );
+	HRESULT EnumerateBreakpoints(  IDataModelScriptDebugBreakpointEnumerator **breakpointEnum );
+	HRESULT GetEventFilter(  int eventFilter, bool *isBreakEnabled );
+	HRESULT SetEventFilter(  int eventFilter, bool isBreakEnabled );
+	HRESULT StartDebugging(  IDataModelScriptDebugClient *debugClient );
+	HRESULT StopDebugging(  IDataModelScriptDebugClient *debugClient );
+	HRESULT SetBreakpointAtFunction(  const wchar_t* functionName, IDataModelScriptDebugBreakpoint **breakpoint );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(B51887E8-BCD0-4e8f-A8C7-434398B78C37),
+	helpstring("IDebugHostModule2")
+]
+interface IDebugHostModule2 : IUnknown {
+	HRESULT GetContext(  IDebugHostContext** context );
+	HRESULT EnumerateChildren(  int kind, const wchar_t* name, IDebugHostSymbolEnumerator **ppEnum );
+	HRESULT Getint(  int *kind );
+	HRESULT GetName(  BSTR* symbolName );
+	HRESULT GetType(  IDebugHostType** type );
+	HRESULT GetContainingModule(  IDebugHostModule **containingModule );
+	HRESULT GetImageName(  bool allowPath, BSTR* imageName );
+	HRESULT GetBaseLocation(  Location* moduleBaseLocation );
+	HRESULT GetVersion(  ULONG64* fileVersion, ULONG64* productVersion );
+	HRESULT FindTypeByName(  const wchar_t* typeName, IDebugHostType** type );
+	HRESULT FindSymbolByRVA(  unsigned __int64 rva, IDebugHostSymbol** symbol );
+	HRESULT FindSymbolByName(  const wchar_t* symbolName, IDebugHostSymbol** symbol );
+	HRESULT FindContainingSymbolByRVA(  unsigned __int64 rva, IDebugHostSymbol** symbol, unsigned __int64 *offset );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(A7830646-9F0C-4a31-BA19-503F33E6C8A3),
+	helpstring("IComparableConcept")
+]
+interface IComparableConcept : IUnknown {
+	HRESULT CompareObjects(  IModelObject *contextObject, IModelObject *otherObject, int *comparisonResult );
+};
+
+///////////////////////////////////////////////////////////
+[
+	object,
+	uuid(C52D5D3D-609D-4d5d-8A82-46B0ACDEC4F4),
+	helpstring("IEquatableConcept")
+]
+interface IEquatableConcept : IUnknown {
+	HRESULT AreObjectsEqual(  IModelObject *contextObject, IModelObject *otherObject, bool *isEqual );
+};
+
+};
+

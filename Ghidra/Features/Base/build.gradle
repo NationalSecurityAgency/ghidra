@@ -41,11 +41,11 @@ dependencies {
 	api project(':SoftwareModeling')
 	api project(':Emulation')
 
-	api 'org.apache.felix:org.apache.felix.framework:7.0.3'
+	api 'org.apache.felix:org.apache.felix.framework:7.0.5'
 	api 'com.github.rotty3000:phidias:0.3.7'
-	api 'biz.aQute.bnd:biz.aQute.bnd.util:6.2.0'
-	api ('biz.aQute.bnd:biz.aQute.bndlib:6.2.0') {exclude group: 'org.osgi'}
-	api ('org.osgi:org.osgi.util.promise:1.2.0') {exclude group: 'org.osgi'}
+	api 'biz.aQute.bnd:biz.aQute.bnd.util:7.0.0'
+	api ('biz.aQute.bnd:biz.aQute.bndlib:7.0.0') {exclude group: 'org.osgi'}
+	api ('org.osgi:org.osgi.util.promise:1.3.0') {exclude group: 'org.osgi'}
 	api 'org.slf4j:slf4j-api:1.7.25'
 	
 	runtimeOnly "org.slf4j:slf4j-nop:1.7.25"

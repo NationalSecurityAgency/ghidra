@@ -37,18 +37,26 @@ public abstract class AbstractVirtualFunctionTablePointerMsType extends Abstract
 		super(pdb, reader);
 	}
 
-	@Override
-	public void emit(StringBuilder builder, Bind bind) {
-		builder.append("VFTablePtr: ");
-		builder.append(pdb.getTypeRecord(pointerTypeRecordNumber));
-	}
-
 	/**
 	 * Returns the record number of the pointer type.
 	 * @return the record number of the pointer type.
 	 */
 	public RecordNumber getPointerTypeRecordNumber() {
 		return pointerTypeRecordNumber;
+	}
+
+	/**
+	 * Returns the pointer offset.
+	 * @return the offset.
+	 */
+	public int getOffset() {
+		return 0;
+	}
+
+	@Override
+	public void emit(StringBuilder builder, Bind bind) {
+		builder.append("VFTablePtr: ");
+		builder.append(pdb.getTypeRecord(pointerTypeRecordNumber));
 	}
 
 }

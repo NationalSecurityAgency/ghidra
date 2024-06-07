@@ -28,7 +28,7 @@ import docking.widgets.checkbox.GCheckBox;
 import generic.concurrent.GThreadPool;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.Application;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -193,8 +193,7 @@ public class TaskSimulator {
 		}
 
 		@Override
-		public void run(UndoableDomainObject domainObject, TaskMonitor monitor)
-				throws CancelledException {
+		public void run(DomainObject domainObject, TaskMonitor monitor) throws CancelledException {
 
 			monitor.initialize(count);
 

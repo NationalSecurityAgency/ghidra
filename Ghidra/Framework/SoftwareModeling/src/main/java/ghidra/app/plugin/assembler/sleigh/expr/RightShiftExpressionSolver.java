@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.RightShiftExpression;
 import ghidra.util.Msg;
 
@@ -61,15 +60,16 @@ public class RightShiftExpressionSolver
 	}
 
 	@Override
-	protected AssemblyResolution solveTwoSided(RightShiftExpression exp, MaskedLong goal,
-			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException, SolverException {
+	protected AssemblyResolution solveTwoSided(AbstractAssemblyResolutionFactory<?, ?> factory,
+			RightShiftExpression exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
 		// Do the similar thing as in {@link LeftShiftExpressionSolver}
 
 		// Do not guess the same parameter recursively
 		if (hints.contains(DefaultSolverHint.GUESSING_RIGHT_SHIFT_AMOUNT)) {
 			// NOTE: Nested right shifts ought to be written as a right shift by a sum
-			return super.solveTwoSided(exp, goal, vals, cur, hints, description);
+			return super.solveTwoSided(factory, exp, goal, vals, cur, hints, description);
 		}
 
 		int maxShift = Long.numberOfLeadingZeros(goal.val);
@@ -80,13 +80,13 @@ public class RightShiftExpressionSolver
 				MaskedLong reqr = MaskedLong.fromLong(shift);
 				MaskedLong reql = computeLeft(reqr, goal);
 
-				AssemblyResolution lres =
-					solver.solve(exp.getLeft(), reql, vals, cur, hintsWithRShift, description);
+				AssemblyResolution lres = solver.solve(factory, exp.getLeft(), reql, vals, cur,
+					hintsWithRShift, description);
 				if (lres.isError()) {
 					throw new SolverException("Solving left failed");
 				}
 				AssemblyResolution rres =
-					solver.solve(exp.getRight(), reqr, vals, cur, hints, description);
+					solver.solve(factory, exp.getRight(), reqr, vals, cur, hints, description);
 				if (rres.isError()) {
 					throw new SolverException("Solving right failed");
 				}
@@ -104,6 +104,6 @@ public class RightShiftExpressionSolver
 				// try the next
 			}
 		}
-		return super.solveTwoSided(exp, goal, vals, cur, hints, description);
+		return super.solveTwoSided(factory, exp, goal, vals, cur, hints, description);
 	}
 }

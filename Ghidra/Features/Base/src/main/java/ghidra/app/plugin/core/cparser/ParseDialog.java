@@ -39,6 +39,7 @@ import docking.widgets.pathmanager.PathnameTablePanel;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
 import generic.jar.ResourceFile;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.processors.SetLanguageDialog;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.framework.Application;
@@ -371,8 +372,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		updateArchitectureDescription();
 
 		languageButton.setName("Set Processor Architecture");
-		Font font = languageButton.getFont();
-		languageButton.setFont(font.deriveFont(Font.BOLD));
+		Gui.registerFont(languageButton, Font.BOLD);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(languageTextField, BorderLayout.CENTER);

@@ -26,9 +26,4 @@ public class SshPtyParent extends SshPtyEndpoint implements PtyParent {
 	public SshPtyParent(ChannelExec channel, OutputStream outputStream, InputStream inputStream) {
 		super(channel, outputStream, inputStream);
 	}
-
-	@Override
-	public void setWindowSize(short cols, short rows) {
-		channel.setPtySize(Short.toUnsignedInt(cols), Short.toUnsignedInt(rows), 0, 0);
-	}
 }

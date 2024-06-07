@@ -20,43 +20,74 @@
 import java.io.File;
 import java.io.IOException;
 
+import db.Transaction;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.pdbapplicator.DefaultPdbApplicator;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
+import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageService;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.DefaultLanguageService;
-import ghidra.util.Msg;
+import ghidra.util.MessageType;
 
 public class PdbDeveloperApplyDummyScript extends GhidraScript {
 
+	private static final String PDB_PROMPT = "Choose a PDB file";
+	private static final String IMAGE_BASE_PROMPT = "Image Base";
+
 	@Override
 	protected void run() throws Exception {
-		File pdbFile = askFile("Choose a PDB file", "OK");
-		if (pdbFile == null) {
-			Msg.info(this, "Canceled execution due to no input file");
-			return;
-		}
-		if (!pdbFile.exists()) {
-			String message = pdbFile.getAbsolutePath() + " is not a valid file.";
-			Msg.info(this, message);
-			popup(message);
-			return;
-		}
+
+		LanguageService ls = DefaultLanguageService.getLanguageService();
+		Processor processor_x86 = Processor.findOrPossiblyCreateProcessor("x86");
+		Language x86 = ls.getDefaultLanguage(processor_x86);
+		ProgramDB program = new ProgramDB("Test", x86, x86.getDefaultCompilerSpec(), this);
+		Address imageBase =
+			program.getAddressFactory().getDefaultAddressSpace().getAddress(0x400000L);
+
+		GhidraValuesMap values = new GhidraValuesMap();
+
+		values.defineFile(PDB_PROMPT, null);
+		values.defineAddress(IMAGE_BASE_PROMPT, imageBase, program);
+
+		// Validator for values
+		values.setValidator((valueMap, status) -> {
+			File file = valueMap.getFile(PDB_PROMPT);
+			if (file == null) {
+				status.setStatusText("PDB file must be selected.", MessageType.ERROR);
+				return false;
+			}
+			if (!file.exists()) {
+				status.setStatusText(file.getAbsolutePath() + " is not a valid file.",
+					MessageType.ERROR);
+				return false;
+			}
+			String fileName = file.getAbsolutePath();
+			if (!fileName.endsWith(".pdb") && !fileName.endsWith(".PDB")) {
+				status.setStatusText("Expected .pdb file extenstion (got '" + fileName + "').",
+					MessageType.ERROR);
+				return false;
+			}
+			// We do not need to check the existence of an image base because we provide a default
+			//  value
+			return true;
+		});
+
+		// asks the script to show a dialog where the user can give values for all the items
+		// in the ValuesMap.
+
+		values = askValues("Enter Values", null, values);
+
+		File pdbFile = values.getFile(PDB_PROMPT);
 		String pdbFileName = pdbFile.getAbsolutePath();
-		if (!pdbFileName.endsWith(".pdb") && !pdbFileName.endsWith(".PDB")) {
-			String message = "Aborting: Expected input file to have extension of type .pdb (got '" +
-				pdbFileName + "').";
-			Msg.info(this, message);
-			popup(message);
-			return;
-		}
+		imageBase = values.getAddress(IMAGE_BASE_PROMPT);
 
 		MessageLog log = new MessageLog();
 
@@ -64,10 +95,9 @@ public class PdbDeveloperApplyDummyScript extends GhidraScript {
 		PdbReaderOptions pdbReaderOptions = new PdbReaderOptions();
 		PdbApplicatorOptions pdbApplicatorOptions = new PdbApplicatorOptions();
 
-		LanguageService ls = DefaultLanguageService.getLanguageService();
-		Processor processor_x86 = Processor.findOrPossiblyCreateProcessor("x86");
-		Language x86 = ls.getDefaultLanguage(processor_x86);
-		ProgramDB program = new ProgramDB("Test", x86, x86.getDefaultCompilerSpec(), this);
+		try (Transaction tx = program.openTransaction("Set Image Base")) {
+			program.setImageBase(imageBase, true);
+		}
 
 		ProgramManager programManager = state.getTool().getService(ProgramManager.class);
 		programManager.openProgram(program);
@@ -80,9 +110,9 @@ public class PdbDeveloperApplyDummyScript extends GhidraScript {
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile, pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, log);
+			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb, program,
+				program.getDataTypeManager(), program.getImageBase(), pdbApplicatorOptions, log);
+			applicator.applyNoAnalysisState();
 		}
 		catch (PdbException | IOException e) {
 			log.appendMsg(getClass().getName(),

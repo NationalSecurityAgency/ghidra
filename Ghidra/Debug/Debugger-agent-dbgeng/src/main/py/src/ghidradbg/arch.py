@@ -14,13 +14,14 @@
 #  limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
-
 from pybag import pydbg
 
 from . import util
 
+
 language_map = {
-    'ARM': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A', 'ARM:BE:64:v8', 'ARM:LE:64:v8'],
+    'AARCH64': ['AARCH64:LE:64:AppleSilicon'],
+    'ARM': ['ARM:LE:32:v8'],
     'Itanium': [],
     'x86': ['x86:LE:32:default'],
     'x86_64': ['x86:LE:64:default'],
@@ -36,6 +37,10 @@ x86_compiler_map = {
     'Cygwin': 'windows',
 }
 
+aarch64_compiler_map = {
+    'windows': 'default',
+}
+
 arm_compiler_map = {
     'windows': 'windows',
 }
@@ -45,23 +50,23 @@ compiler_map = {
     'DATA:LE:64:default': data64_compiler_map,
     'x86:LE:32:default': x86_compiler_map,
     'x86:LE:64:default': x86_compiler_map,
-    'AARCH64:BE:64:v8A': arm_compiler_map,
-    'AARCH64:LE:64:AppleSilicon': arm_compiler_map,
-    'AARCH64:LE:64:v8A': arm_compiler_map,
-    'ARM:BE:64:v8': arm_compiler_map,
-    'ARM:LE:64:v8': arm_compiler_map,
+    'AARCH64:LE:64:AppleSilicon': aarch64_compiler_map,
+    'ARM:LE:32:v8': arm_compiler_map,
 }
 
 
 def get_arch():
     try:
-        type = util.get_debugger()._control.GetActualProcessorType()
+        type = util.dbg.get_actual_processor_type()
     except Exception:
+        print("Error getting actual processor type.")
         return "Unknown"
     if type is None:
         return "x86_64"
     if type == 0x8664:
         return "x86_64"
+    if type == 0xAA64:
+        return "AARCH64"
     if type == 0x014c:
         return "x86"
     if type == 0x01c0:
@@ -85,10 +90,11 @@ def get_osabi():
     if not parm in ['auto', 'default']:
         return parm
     try:
-        os = util.get_debugger().cmd("vertarget")
-        if "Windows" not in  os:
+        os = util.dbg.cmd("vertarget")
+        if "Windows" not in os:
             return "default"
     except Exception:
+        print("Error getting target OS/ABI")
         pass
     return "windows"
 
@@ -154,7 +160,8 @@ class DefaultMemoryMapper(object):
     def map_back(self, proc: int, address: Address) -> int:
         if address.space == self.defaultSpace:
             return address.offset
-        raise ValueError(f"Address {address} is not in process {proc.GetProcessID()}")
+        raise ValueError(
+            f"Address {address} is not in process {proc.GetProcessID()}")
 
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
@@ -179,14 +186,13 @@ class DefaultRegisterMapper(object):
     def map_name(self, proc, name):
         return name
 
-
     def map_value(self, proc, name, value):
         try:
-            ### TODO: this seems half-baked
+            # TODO: this seems half-baked
             av = value.to_bytes(8, "big")
         except Exception:
             raise ValueError("Cannot convert {}'s value: '{}', type: '{}'"
-                                .format(name, value, type(value)))
+                             .format(name, value, type(value)))
         return RegVal(self.map_name(proc, name), av)
 
     def map_name_back(self, proc, name):
@@ -237,4 +243,3 @@ def compute_register_mapper(lang):
         if ':LE:' in lang:
             return DEFAULT_LE_REGISTER_MAPPER
     return register_mappers[lang]
-    

@@ -4,6 +4,7 @@
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
+##MODULE IP: zlib License
 Module.manifest||GHIDRA||||END|
 data/decompiler.theme.properties||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
@@ -18,6 +19,7 @@ src/decompile/datatests/convert.xml||GHIDRA||||END|
 src/decompile/datatests/deadvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect.xml||GHIDRA||||END|
 src/decompile/datatests/displayformat.xml||GHIDRA||||END|
+src/decompile/datatests/divopt.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
 src/decompile/datatests/elseif.xml||GHIDRA||||END|
 src/decompile/datatests/floatprint.xml||GHIDRA||||END|
@@ -26,6 +28,8 @@ src/decompile/datatests/forloop_loaditer.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_thruspecial.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_varused.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_withskip.xml||GHIDRA||||END|
+src/decompile/datatests/gp.xml||GHIDRA||||END|
+src/decompile/datatests/ifswitch.xml||GHIDRA||||END|
 src/decompile/datatests/impliedfield.xml||GHIDRA||||END|
 src/decompile/datatests/indproto.xml||GHIDRA||||END|
 src/decompile/datatests/injectoverride.xml||GHIDRA||||END|
@@ -60,6 +64,7 @@ src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/stackreturn.xml||GHIDRA||||END|
 src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
+src/decompile/datatests/switchhide.xml||GHIDRA||||END|
 src/decompile/datatests/switchind.xml||GHIDRA||||END|
 src/decompile/datatests/switchreturn.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
@@ -67,6 +72,7 @@ src/decompile/datatests/twodim.xml||GHIDRA||||END|
 src/decompile/datatests/union_datatype.xml||GHIDRA||||END|
 src/decompile/datatests/varcross.xml||GHIDRA||||END|
 src/decompile/datatests/wayoffarray.xml||GHIDRA||||END|
+src/decompile/zlib/README.txt||GHIDRA||||END|
 src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/cspec.xml||GHIDRA||||END|
 src/main/doc/cspec_html.xsl||GHIDRA||||END|

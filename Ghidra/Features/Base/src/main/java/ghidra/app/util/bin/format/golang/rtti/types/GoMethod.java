@@ -28,7 +28,7 @@ import ghidra.util.NumericUtilities;
 /**
  * Structure that defines a method for a GoType, found in the type's {@link GoUncommonType} struct.
  */
-@StructureMapping(structureName = "runtime.method")
+@StructureMapping(structureName = {"runtime.method", "internal/abi.Method"})
 public class GoMethod implements StructureMarkup<GoMethod> {
 	@ContextField
 	private GoRttiMapper programContext;

@@ -103,4 +103,5 @@ public interface IndexedScrollable {
 	 * @param isHorizontal true if the rotation was horizontal, false for vertical
 	 */
 	public void mouseWheelMoved(double preciseWheelRotation, boolean isHorizontal);
+
 }

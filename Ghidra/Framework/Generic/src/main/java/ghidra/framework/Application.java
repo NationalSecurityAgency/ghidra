@@ -29,6 +29,7 @@ import util.CollectionUtils;
 import utilities.util.FileUtilities;
 import utilities.util.reflection.ReflectionUtilities;
 import utility.application.ApplicationLayout;
+import utility.application.ApplicationUtilities;
 import utility.module.ModuleUtilities;
 
 /**
@@ -72,14 +73,6 @@ public class Application {
 	}
 
 	private void initialize() {
-
-		// Create application's user directories
-		try {
-			layout.createUserDirs();
-		}
-		catch (IOException e) {
-			throw new AssertException(e.getMessage());
-		}
 
 		// Set headless property
 		String isHeadless = Boolean.toString(configuration.isHeadless());
@@ -667,7 +660,6 @@ public class Application {
 
 	/**
 	 * Returns the temporary directory specific to the user and the application.
-	 * Directory has name of &lt;username&gt;-&lt;appname&gt;
 	 * This directory may be removed at system reboot or during periodic
 	 * system cleanup of unused temp files.
 	 * This directory is specific to the application name but not the version.
@@ -677,15 +669,22 @@ public class Application {
 	 * @return temp directory
 	 */
 	public static File getUserTempDirectory() {
-		checkAppInitialized();
-		return app.layout.getUserTempDir();
+		try {
+			// 'app' will be null when the application has not been initialized yet.  In this case,
+			// we provide the default user temp directory.
+			return app != null ? app.layout.getUserTempDir()
+					: ApplicationUtilities.getDefaultUserTempDir("ghidra");
+		}
+		catch (IOException e) {
+			throw new AssertException(e);
+		}
 	}
 
 	/**
 	 * Returns the cache directory specific to the user and the application.
 	 * The intention is for directory contents to be preserved, however the
 	 * specific location is platform specific and contents may be removed when
-	 * not in use and may in fact be the same directory the user temp directory.
+	 * not in use.
 	 * This directory is specific to the application name but not the version.
 	 * Resources stored within this directory should utilize some
 	 * form of access locking and/or unique naming.
@@ -694,6 +693,24 @@ public class Application {
 	public static File getUserCacheDirectory() {
 		checkAppInitialized();
 		return app.layout.getUserCacheDir();
+	}
+
+	/**
+	 * Creates a new empty file in the Application's temp directory, using the given prefix and 
+	 * suffix strings to generate its name.  
+	 * 
+	 * @param prefix The prefix string to be used in generating the file's name; must be at least 
+	 *   three characters long
+	 * @param suffix The suffix string to be used in generating the file's name; may be 
+	 *   {@code null}, in which case the suffix {@code ".tmp"} will be used
+	 * @return A {@link File} denoting a newly-created empty file
+	 * @throws IllegalArgumentException If the {@code prefix} argument contains fewer than three 
+	 *   characters
+	 * @throws IOException If a file could not be created
+	 * @see File#createTempFile(String, String, File)
+	 */
+	public static File createTempFile(String prefix, String suffix) throws IOException {
+		return File.createTempFile(prefix, suffix, getUserTempDirectory());
 	}
 
 	/**

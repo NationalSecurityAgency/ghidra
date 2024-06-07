@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="tricore:LE:32:*">
+    <patternfile>tricore_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

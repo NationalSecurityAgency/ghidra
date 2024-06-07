@@ -57,6 +57,13 @@ public interface RemoteMethod {
 	ActionName action();
 
 	/**
+	 * A title to display in the UI for this action.
+	 * 
+	 * @return the title
+	 */
+	String display();
+
+	/**
 	 * A description of the method.
 	 * 
 	 * <p>
@@ -99,23 +106,28 @@ public interface RemoteMethod {
 	 * primitive. We instead need {@link TraceObject}. I'd add the method to the schema, except that
 	 * trace stuff is not in its dependencies.
 	 * 
-	 * @param name the name of the parameter
+	 * @param paramName the name of the parameter
+	 * @param schName the name of the parameter's schema
 	 * @param sch the type of the parameter
 	 * @param arg the argument
 	 */
-	static void checkType(String name, TargetObjectSchema sch, Object arg) {
-		if (sch.getType() != TargetObject.class) {
-			if (sch.getType().isInstance(arg)) {
-				return;
+	static void checkType(String paramName, SchemaName schName, TargetObjectSchema sch,
+			Object arg) {
+		// if sch is null, it was definitely an object-type schema without context
+		if (sch != null) {
+			if (sch.getType() != TargetObject.class) {
+				if (sch.getType().isInstance(arg)) {
+					return;
+				}
 			}
-		}
-		else if (arg instanceof TraceObject obj) {
-			if (sch.equals(obj.getTargetSchema())) {
-				return;
+			else if (arg instanceof TraceObject obj) {
+				if (sch.isAssignableFrom(obj.getTargetSchema())) {
+					return;
+				}
 			}
 		}
 		throw new IllegalArgumentException(
-			"For parameter %s: argument %s is not a %s".formatted(name, arg, sch));
+			"For parameter %s: argument %s is not a %s".formatted(paramName, arg, schName));
 	}
 
 	/**
@@ -152,8 +164,9 @@ public interface RemoteMethod {
 						"All TraceObject parameters must come from the same trace");
 				}
 			}
-			TargetObjectSchema sch = ctx.getSchema(ent.getValue().type());
-			checkType(ent.getKey(), sch, arg);
+			SchemaName schName = ent.getValue().type();
+			TargetObjectSchema sch = ctx.getSchemaOrNull(schName);
+			checkType(ent.getKey(), schName, sch, arg);
 		}
 		for (Map.Entry<String, Object> ent : arguments.entrySet()) {
 			if (!parameters().containsKey(ent.getKey())) {
@@ -191,6 +204,7 @@ public interface RemoteMethod {
 	 * 
 	 * @param arguments the keyword arguments to the remote method
 	 * @throws IllegalArgumentException if the arguments are not valid
+	 * @return the returned value
 	 */
 	default Object invoke(Map<String, Object> arguments) {
 		try {

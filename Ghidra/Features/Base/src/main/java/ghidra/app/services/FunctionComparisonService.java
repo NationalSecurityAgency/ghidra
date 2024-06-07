@@ -64,6 +64,19 @@ public interface FunctionComparisonService {
 	public FunctionComparisonProvider compareFunctions(Set<Function> functions);
 
 	/**
+	 * Creates a comparison between two sets of functions, where all the functions in source list can 
+	 * be compared against all functions in the destination list. 
+	 * <p>
+	 * Note that this method will always create a new provider.
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions);
+
+	/**
 	 * Creates a comparison between two functions, where the source function
 	 * will be shown on the left side of the comparison dialog and the target 
 	 * on the right. 

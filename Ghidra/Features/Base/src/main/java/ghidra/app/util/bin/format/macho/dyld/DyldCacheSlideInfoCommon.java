@@ -81,6 +81,8 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 					mappingFileOffset);
 				case 4 -> new DyldCacheSlideInfo4(reader, mappingAddress, mappingSize,
 					mappingFileOffset);
+				case 5 -> new DyldCacheSlideInfo5(reader, mappingAddress, mappingSize,
+					mappingFileOffset);
 				default -> throw new IOException(); // will be caught and version will be added to message
 			};
 			monitor.incrementProgress(1);
@@ -109,8 +111,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info
 	 */
 	public DyldCacheSlideInfoCommon(BinaryReader reader, long mappingAddress, long mappingSize,
-			long mappingFileOffset)
-			throws IOException {
+			long mappingFileOffset) throws IOException {
 		this.mappingAddress = mappingAddress;
 		this.mappingSize = mappingSize;
 		this.mappingFileOffset = mappingFileOffset;
@@ -153,22 +154,22 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	}
 
 	/**
-	 * Walks the slide fixup information and collects a {@link List} of {@link DyldCacheSlideFixup}s
-	 * that will need to be applied to the image
+	 * Walks the slide fixup information and collects a {@link List} of {@link DyldFixup}s that will
+	 * need to be applied to the image
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the segment to fix up
 	 * @param pointerSize The size of a pointer in bytes
 	 * @param log The log
 	 * @param monitor A cancellable monitor
-	 * @return A {@link List} of {@link DyldCacheSlideFixup}s
+	 * @return A {@link List} of {@link DyldFixup}s
 	 * @throws IOException If there was an IO-related issue
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public abstract List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
+	public abstract List<DyldFixup> getSlideFixups(BinaryReader reader, int pointerSize,
 			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
-	 * Fixes up the programs slide pointers
+	 * Fixes up the program's slide pointers
 	 * 
 	 * @param program The {@link Program}
 	 * @param markup True if the slide pointers should be marked up; otherwise, false
@@ -189,11 +190,11 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 		try (ByteProvider provider = new MemoryByteProvider(memory, dataPageAddr)) {
 			BinaryReader reader = new BinaryReader(provider, !memory.isBigEndian());
 			
-			List<DyldCacheSlideFixup> fixups =
+			List<DyldFixup> fixups =
 				getSlideFixups(reader, program.getDefaultPointerSize(), log, monitor);
 
 			monitor.initialize(fixups.size(), "Fixing DYLD Cache slide pointers...");
-			for (DyldCacheSlideFixup fixup : fixups) {
+			for (DyldFixup fixup : fixups) {
 				monitor.increment();
 				Address addr = dataPageAddr.add(fixup.offset());
 				if (fixup.size() == 8) {
@@ -206,7 +207,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
 			if (markup) {
 				monitor.initialize(fixups.size(), "Marking up DYLD Cache slide pointers...");
-				for (DyldCacheSlideFixup fixup : fixups) {
+				for (DyldFixup fixup : fixups) {
 					monitor.increment();
 					Address addr = dataPageAddr.add(fixup.offset());
 					if (addRelocations) {

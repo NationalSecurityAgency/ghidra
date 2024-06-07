@@ -20,6 +20,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
   
   <language processor="ARM"
@@ -39,6 +40,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
   
   <language processor="ARM"
@@ -75,6 +77,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
   
   <language processor="ARM"
@@ -92,6 +95,7 @@
     <external_name tool="gnu" name="arm_any"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
   
   <language processor="ARM"
@@ -111,6 +115,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -145,6 +150,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
 
   <language processor="ARM"
@@ -166,6 +172,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -186,6 +193,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
   
   <language processor="ARM"
@@ -241,6 +249,7 @@
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
     <!-- change DWARF register mapping to ARMneon.dwarf if VFPv2 is enabled --> 
     <!-- <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/> -->
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -261,6 +270,7 @@
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
     <!-- change DWARF register mapping to ARMneon.dwarf if VFPv2 is enabled --> 
     <!-- <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/> -->
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
 
   <language processor="ARM"
@@ -279,6 +289,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -297,6 +308,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
 
   <language processor="ARM"
@@ -313,6 +325,7 @@
     <external_name tool="gnu" name="armv5"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -329,6 +342,7 @@
     <external_name tool="gnu" name="armv5"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
 
   <language processor="ARM"
@@ -346,6 +360,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -363,6 +378,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
 
   <language processor="ARM"
@@ -383,6 +399,7 @@
     <external_name tool="gnu" name="armv3m"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-arm"/>
   </language>
 
   <language processor="ARM"
@@ -403,6 +420,7 @@
     <external_name tool="gnu" name="armv3m"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
+    <external_name tool="qemu" name="qemu-armeb"/>
   </language>
   
 </language_definitions>

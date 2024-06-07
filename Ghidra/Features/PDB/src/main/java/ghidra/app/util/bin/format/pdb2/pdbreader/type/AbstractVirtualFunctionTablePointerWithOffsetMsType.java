@@ -23,9 +23,9 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  * Note: we do not necessarily understand each of these data type classes.  Refer to the
  *  base class for more information.
  */
-public abstract class AbstractVirtualFunctionTablePointerWithOffsetMsType extends AbstractMsType {
+public abstract class AbstractVirtualFunctionTablePointerWithOffsetMsType
+		extends AbstractVirtualFunctionTablePointerMsType {
 
-	protected RecordNumber pointerTypeRecordNumber;
 	protected int offset;
 
 	/**
@@ -45,18 +45,11 @@ public abstract class AbstractVirtualFunctionTablePointerWithOffsetMsType extend
 		offset = reader.parseInt();
 	}
 
-	@Override
-	public void emit(StringBuilder builder, Bind bind) {
-		builder.append("VFTablePtr<off=");
-		builder.append(offset);
-		builder.append(">: ");
-		builder.append(pdb.getTypeRecord(pointerTypeRecordNumber));
-	}
-
 	/**
 	 * Returns the record number of the pointer type.
 	 * @return the record number of the pointer type.
 	 */
+	@Override
 	public RecordNumber getPointerTypeRecordNumber() {
 		return pointerTypeRecordNumber;
 	}
@@ -65,8 +58,17 @@ public abstract class AbstractVirtualFunctionTablePointerWithOffsetMsType extend
 	 * Returns the pointer offset.
 	 * @return the offset.
 	 */
+	@Override
 	public int getOffset() {
 		return offset;
+	}
+
+	@Override
+	public void emit(StringBuilder builder, Bind bind) {
+		builder.append("VFTablePtr<off=");
+		builder.append(offset);
+		builder.append(">: ");
+		builder.append(pdb.getTypeRecord(pointerTypeRecordNumber));
 	}
 
 }

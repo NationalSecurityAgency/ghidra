@@ -18,8 +18,6 @@ package sarif.export.mm;
 import java.io.IOException;
 
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.data.ISF.IsfObject;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.mem.MemoryBlockSourceInfo;
@@ -30,14 +28,14 @@ public class ExtMemoryMap implements IsfObject {
 
 	String name;
 	String kind;
-	String overlaySpace;
-	String overlayedSpace;
 	String comment;
 	boolean isVolatile;
+	boolean isArtificial;
 	String type;
 	String location;
 
-	public ExtMemoryMap(AddressRange range, MemoryBlock block, MemoryMapBytesFile bf, boolean write) throws IOException {
+	public ExtMemoryMap(AddressRange range, MemoryBlock block, MemoryMapBytesFile bf, boolean write)
+			throws IOException {
 
 		String permissions = "";
 		if (block.isRead()) {
@@ -52,24 +50,23 @@ public class ExtMemoryMap implements IsfObject {
 
 		name = block.getName();
 		kind = permissions;
-		AddressSpace space = range.getAddressSpace();
-		if (space instanceof OverlayAddressSpace) {
-			OverlayAddressSpace oSpace = (OverlayAddressSpace) space;
-			overlaySpace = oSpace.getName();
-			overlayedSpace = oSpace.getOverlayedSpace().getName();
-		}
 		if (block.getComment() != null) {
 			comment = block.getComment();
 		}
 		if (block.isVolatile()) {
 			isVolatile = true;
 		}
+		if (block.isArtificial()) {
+			isArtificial = true;
+		}
 		type = block.getType().name();
-		if (block.getType() == MemoryBlockType.BIT_MAPPED || block.getType() == MemoryBlockType.BYTE_MAPPED) {
+		if (block.getType() == MemoryBlockType.BIT_MAPPED ||
+			block.getType() == MemoryBlockType.BYTE_MAPPED) {
 			// bit mapped blocks can only have one sub-block
 			MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 			location = info.getMappedRange().get().getMinAddress().toString();
-		} else if (block.isInitialized() && write) {
+		}
+		else if (block.isInitialized() && write) {
 			location = bf.getFileName() + ":" + bf.getOffset();
 			bf.writeBytes(range);
 		}

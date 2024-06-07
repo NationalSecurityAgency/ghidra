@@ -28,10 +28,13 @@ public class ListingFieldDescriptionProvider implements FieldDescriptionProvider
 		if (field instanceof ListingField listingField) {
 			FieldFactory fieldFactory = listingField.getFieldFactory();
 			ProgramLocation location = fieldFactory.getProgramLocation(0, 0, listingField);
-			Address address = location.getAddress();
-			String addressString = address.toString(address.getAddressSpace().showSpaceName(), 1);
-			return fieldFactory.getFieldName() + " Field at Address " + addressString;
+			if (location != null) {
+				Address address = location.getAddress();
+				String addressString =
+					address.toString(address.getAddressSpace().showSpaceName(), 1);
+				return fieldFactory.getFieldName() + " Field at Address " + addressString;
+			}
 		}
-		return "Unknown Field";
+		return "No program open";
 	}
 }

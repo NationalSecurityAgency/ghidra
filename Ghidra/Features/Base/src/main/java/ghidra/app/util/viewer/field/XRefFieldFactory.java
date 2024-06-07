@@ -545,7 +545,7 @@ public class XRefFieldFactory extends FieldFactory {
 			int lastRow = list.size() - 1;
 			AttributedString as =
 				new AttributedString(MORE_XREFS_STRING, XrefColors.DEFAULT, getMetrics());
-			fieldElements.add(new TextFieldElement(as, lastRow, 0));
+			fieldElements.add(new TextFieldElement(as, lastRow + 1, 0));
 		}
 		return fieldElements;
 	}

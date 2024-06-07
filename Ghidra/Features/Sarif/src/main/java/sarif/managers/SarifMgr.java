@@ -22,24 +22,13 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.contrastsecurity.sarif.ArtifactLocation;
-import com.contrastsecurity.sarif.Location;
-import com.contrastsecurity.sarif.PhysicalLocation;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressFormatException;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressRangeIterator;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
@@ -52,6 +41,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import sarif.SarifProgramOptions;
+import sarif.SarifUtils;
 
 public abstract class SarifMgr {
 
@@ -89,89 +79,8 @@ public abstract class SarifMgr {
 		columnKeys.put("typeLocation", true);
 	}
 
-	protected void writeLocation(JsonObject result, Address start, Address end) {
-		JsonArray locs = new JsonArray();
-		result.add("locations", locs);
-		JsonObject element = new JsonObject();
-		locs.add(element);
-		JsonObject ploc = new JsonObject();
-		element.add("physicalLocation", ploc);
-		JsonObject address = new JsonObject();
-		ploc.add("address", address);
-		address.addProperty("absoluteAddress", start.getOffset());
-		if (end != null) {
-			address.addProperty("length", end.subtract(start) + 1);
-			if (!start.getAddressSpace().equals(program.getAddressFactory().getDefaultAddressSpace())) {
-				JsonObject artifact = new JsonObject();
-				ploc.add("artifactLocation", artifact);
-				artifact.addProperty("uri", start.toString());
-			}
-		}
-	}
-
-	protected void writeLocations(JsonObject result, AddressSetView set) {
-		JsonArray locs = new JsonArray();
-		result.add("locations", locs);
-		AddressRangeIterator addressRanges = set.getAddressRanges();
-		while (addressRanges.hasNext()) {
-			JsonObject element = new JsonObject();
-			locs.add(element);
-			AddressRange next = addressRanges.next();
-			JsonObject ploc = new JsonObject();
-			element.add("physicalLocation", ploc);
-			JsonObject address = new JsonObject();
-			ploc.add("address", address);
-			address.addProperty("absoluteAddress", next.getMinAddress().getOffset());
-			address.addProperty("length", next.getLength());
-			Address minAddress = next.getMinAddress();
-			if (!minAddress.getAddressSpace().equals(program.getAddressFactory().getDefaultAddressSpace())) {
-				JsonObject artifact = new JsonObject();
-				ploc.add("artifactLocation", artifact);
-				artifact.addProperty("uri", minAddress.toString());
-			}
-		}
-	}
-
-	@SuppressWarnings("unchecked")
 	protected AddressSet getLocations(Map<String, Object> result, AddressSet set) throws AddressOverflowException {
-		if (set == null) {
-			set = new AddressSet();
-		}
-		AddressFactory af = program.getAddressFactory();
-		AddressSpace space = af.getDefaultAddressSpace();
-		String namespace = (String) result.get("location");
-		if (namespace != null) {
-			boolean isExternal = namespace.contains("<EXTERNAL>");
-			if (isExternal) {
-				space = af.getAddressSpace("EXTERNAL");
-			}
-		}
-		String ospace = (String) result.get("overlayedSpace");
-		if (ospace != null) {
-			space = af.getAddressSpace(ospace);
-		}
-		List<Location> locations = (List<Location>) result.get("Locations");
-		if (locations == null) {
-			return set;
-		}
-		for (Location location : locations) {
-			PhysicalLocation physicalLocation = location.getPhysicalLocation();
-			Object addr = physicalLocation.getAddress().getAbsoluteAddress();
-			Address address = longToAddress(space, addr);
-			long len = (long) physicalLocation.getAddress().getLength();
-			ArtifactLocation artifact = physicalLocation.getArtifactLocation();
-			if (artifact != null) {
-				String uri = artifact.getUri();
-				if (uri != null) {
-					Address test = program.getAddressFactory().getAddress(uri);
-					if (test != null) {
-						address = test;
-					}
-				}
-			}
-			set.add(new AddressRangeImpl(address, len));
-		}
-		return set;
+		return SarifUtils.getLocations(result, program, set);
 	}
 
 	protected Address getLocation(Map<String, Object> result) throws AddressOverflowException {
@@ -194,6 +103,16 @@ public abstract class SarifMgr {
 		}
 	}
 
+	/**
+	 * Read results from an SARIF file.
+	 * 
+	 * @param result       parsed SARIF results
+	 * @param options      for import/export
+	 * @param monitor      monitor that can be canceled
+	 * @throws AddressFormatException for bad locations
+	 * @throws CancelledException if cancelled
+	 */
+	
 	public abstract boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
 			throws AddressFormatException, CancelledException;
 
@@ -259,10 +178,7 @@ public abstract class SarifMgr {
 		}
 		Address addr = factory.getAddress(addrString);
 		if (addr == null) {
-			int index = addrString.indexOf("::");
-			if (index > 0) {
-				addr = factory.getAddress(addrString.substring(index + 2));
-			}
+			throw new RuntimeException("Error converting "+addrString+" to address");
 		}
 		return addr;
 	}
@@ -311,13 +227,6 @@ public abstract class SarifMgr {
 		unescapedStr = unescapedStr.replaceAll(AMPERSAND, "&");
 
 		return unescapedStr;
-	}
-
-	public Address longToAddress(AddressSpace space, Object addr) {
-		if (addr instanceof Long) {
-			return space.getAddress((Long) addr);
-		}
-		return space.getAddress((Integer) addr);
 	}
 
 }

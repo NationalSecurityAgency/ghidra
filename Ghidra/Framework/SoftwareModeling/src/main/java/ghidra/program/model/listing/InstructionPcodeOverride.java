@@ -45,7 +45,18 @@ public class InstructionPcodeOverride implements PcodeOverride {
 	 */
 	public InstructionPcodeOverride(Instruction instr) {
 		this.instr = instr;
+	}
 
+	/**
+	 * Initialize the cache or any references on an instruction that would cause an override.
+	 * 
+	 * @return list of any program overrides
+	 */
+	private List<Reference> getPrimaryOverridingReferences() {
+		if (primaryOverridingReferences != null) {
+			return primaryOverridingReferences;
+		}
+		
 		primaryOverridingReferences = new ArrayList<>();
 		for (Reference ref : instr.getReferencesFrom()) {
 			if (!ref.isPrimary() || !ref.getToAddress().isMemoryAddress()) {
@@ -59,6 +70,8 @@ public class InstructionPcodeOverride implements PcodeOverride {
 				primaryCallAddress = ref.getToAddress();
 			}
 		}
+		
+		return primaryOverridingReferences;
 	}
 
 	@Override
@@ -86,8 +99,10 @@ public class InstructionPcodeOverride implements PcodeOverride {
 		if (!type.isOverride()) {
 			return null;
 		}
+		
+		List<Reference> overridingRefs = getPrimaryOverridingReferences();
 		Address overrideAddress = null;
-		for (Reference ref : primaryOverridingReferences) {
+		for (Reference ref : overridingRefs) {
 			if (ref.getReferenceType().equals(type)) {
 				if (overrideAddress == null) {
 					overrideAddress = ref.getToAddress();
@@ -102,6 +117,7 @@ public class InstructionPcodeOverride implements PcodeOverride {
 
 	@Override
 	public Address getPrimaryCallReference() {
+		getPrimaryOverridingReferences();
 		return primaryCallAddress;
 	}
 
@@ -180,6 +196,7 @@ public class InstructionPcodeOverride implements PcodeOverride {
 
 	@Override
 	public boolean hasPotentialOverride() {
-		return !primaryOverridingReferences.isEmpty();
+		List<Reference> overridingRefs = getPrimaryOverridingReferences();
+		return !overridingRefs.isEmpty();
 	}
 }

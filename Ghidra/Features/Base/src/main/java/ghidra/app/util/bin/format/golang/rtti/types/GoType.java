@@ -69,7 +69,7 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	@ContextField
 	protected StructureContext<GoType> context;
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"typ", "Type"})
 	@Markup
 	@FieldOutput
 	protected GoBaseType typ;

@@ -45,7 +45,7 @@ import ghidra.util.task.SwingUpdateManager;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Results table service",
 	description = "Provides a generic results service that takes a list of information "
 			+ "and displays the list to user in the form of a table",

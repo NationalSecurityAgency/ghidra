@@ -325,7 +325,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// test that the label was made
 		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr(0x404f10));
-		assertEquals("pu__String9", sym.getName());
+		assertEquals("pu_String9", sym.getName());
 
 		AddressBasedLocation location =
 			(AddressBasedLocation) getModelValue(model, selectedRow, addressColumnIndex);
@@ -344,7 +344,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		// test that the table was updated with the label and preview
-		assertEquals("pu__String9", getModelValue(model, selectedRow, labelColumnIndex).toString());
+		assertEquals("pu_String9", getModelValue(model, selectedRow, labelColumnIndex).toString());
 
 		data = (CodeUnitTableCellData) getModelValue(model, selectedRow, previewColumnIndex);
 		assertEquals("p_unicode u\"\\rString9\\n\\r\"", data.getDisplayString());
@@ -661,10 +661,10 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// test that the label was made correctly
 		sym = program.getSymbolTable().getPrimarySymbol(addr(0x404f41));
-		assertEquals("u__String10", sym.getName());
+		assertEquals("u_String10", sym.getName());
 
 		// test that the table was updated with the label and preview
-		assertEquals("u__String10", getModelValue(model, row, labelColumnIndex).toString());
+		assertEquals("u_String10", getModelValue(model, row, labelColumnIndex).toString());
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
 		assertEquals("unicode u\"\\n\\rString10\\n\\r\"", data.getDisplayString());
@@ -692,10 +692,10 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// test that the label was made correctly
 		sym = program.getSymbolTable().getPrimarySymbol(addr(0x405423));
-		assertEquals("u__String9", sym.getName());
+		assertEquals("u_String9", sym.getName());
 
 		// test that the table was updated with the label and preview
-		assertEquals("u__String9", getModelValue(model, row, labelColumnIndex).toString());
+		assertEquals("u_String9", getModelValue(model, row, labelColumnIndex).toString());
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
 		assertEquals("unicode32 U\"\\n\\rString9\\n\\r\"", data.getDisplayString());

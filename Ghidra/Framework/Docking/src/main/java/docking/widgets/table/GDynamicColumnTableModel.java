@@ -207,6 +207,13 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 */
 	@SuppressWarnings("unchecked") // the column provides the values itself; safe cast
 	protected Comparator<Object> createSortComparatorForColumn(int columnIndex) {
+		if (columnIndex < 0 || columnIndex >= tableColumns.size()) {
+			// We have seen this sporadically.  Assume for now there is some sort of timing issue.
+			// Although, it is possible for any client to call this on a table without columns.
+			Msg.debug(this, "Invalid sort comparator request on %s at index %d (column count %d)"
+					.formatted(getName(), columnIndex, tableColumns.size()));
+			return null;
+		}
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = getColumn(columnIndex);
 		Comparator<Object> comparator =
 			(Comparator<Object>) column.getComparator(this, columnIndex);

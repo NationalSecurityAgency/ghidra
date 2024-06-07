@@ -54,7 +54,7 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 
 	@Override
 	public void init(IWorkbench wb, IStructuredSelection selection) {
-		projectPage = new CreateGhidraProjectWizardPage("GhidraScripts");
+		projectPage = new CreateGhidraProjectWizardPage("GhidraScripts", true);
 		projectConfigPage = new ConfigureGhidraScriptProjectWizardPage();
 		ghidraInstallationPage = new ChooseGhidraInstallationWizardPage();
 		pythonPage = new EnablePythonWizardPage(ghidraInstallationPage);

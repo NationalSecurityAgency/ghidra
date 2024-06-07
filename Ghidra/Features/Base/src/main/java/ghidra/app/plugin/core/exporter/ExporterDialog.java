@@ -64,12 +64,12 @@ import ghidra.util.task.*;
 public class ExporterDialog extends DialogComponentProvider implements AddressFactoryService {
 
 	private static final String XML_WARNING =
-			"   Warning: XML is lossy and intended only for transfering data to external tools. " +
-				"GZF is the recommended format for saving and sharing program data.";
+		"   Warning: XML is lossy and intended only for transfering data to external tools. " +
+			"GZF is the recommended format for saving and sharing program data.";
 
 	private static final String SARIF_WARNING =
-			"   Warning: SARIF is lossy and intended only for transfering data to external tools. " +
-				"GZF is the recommended format for saving and sharing program data.";
+		"   Warning: SARIF is lossy and intended only for transfering data to external tools. " +
+			"GZF is the recommended format for saving and sharing program data.";
 
 	private static String lastUsedExporterName = GzfExporter.NAME; // default to GZF first time
 
@@ -216,6 +216,8 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		selectionOnlyLabel = new GLabel("Selection Only:");
 		if (!isFrontEndPlugin()) {
 			selectionCheckBox = new GCheckBox("");
+			selectionCheckBox.setToolTipText("Select to only export from selected program areas");
+			selectionCheckBox.getAccessibleContext().setAccessibleName("Selection Only");
 			updateSelectionCheckbox();
 			panel.add(selectionOnlyLabel);
 			panel.add(selectionCheckBox);
@@ -226,6 +228,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	private Component buildFilePanel() {
 		filePathTextField = new JTextField();
 		filePathTextField.setName("OUTPUT_FILE_TEXTFIELD");
+		filePathTextField.getAccessibleContext().setAccessibleName("Output File");
 		filePathTextField.setText(getFileName());
 		filePathTextField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
@@ -246,6 +249,8 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		});
 
 		fileChooserButton = new BrowseButton();
+		fileChooserButton.getAccessibleContext()
+				.setAccessibleDescription("Invoke file chooser dialog to pick output file");
 		fileChooserButton.addActionListener(e -> chooseDestinationFile());
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -308,6 +313,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			comboBox.setSelectedItem(defaultExporter);
 		}
 		comboBox.addItemListener(e -> selectedFormatChanged());
+		comboBox.getAccessibleContext().setAccessibleName("Format");
 		return comboBox;
 	}
 
@@ -490,10 +496,8 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			String msg = "Could not open file: " + domainFile.getName() +
 				"\n\nAvailable export options will be limited.";
 			if (e.isUpgradable()) {
-				msg +=
-					"\n\nA data upgrade is required.  You may open file" +
-						"\nin a tool first then Export if a different exporter" +
-						"\nis required.";
+				msg += "\n\nA data upgrade is required.  You may open file" +
+					"\nin a tool first then Export if a different exporter" + "\nis required.";
 			}
 			else {
 				msg += "\nFile was created with a newer version of Ghidra";
@@ -553,7 +557,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			}
 
 			// Program selection only relavent if isFrontEndPlugin() is false
-			ProgramSelection selection = getApplicableProgramSeletion();
+			ProgramSelection selection = getApplicableProgramSelection();
 			File outputFile = getSelectedOutputFile();
 
 			try {
@@ -593,7 +597,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		}
 	}
 
-	private ProgramSelection getApplicableProgramSeletion() {
+	private ProgramSelection getApplicableProgramSelection() {
 		if (selectionCheckBox != null && selectionCheckBox.isSelected()) {
 			return currentSelection;
 		}
@@ -621,9 +625,8 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			try {
 				Map<String, String> metadata =
 					domainObject != null ? domainObject.getMetadata() : domainFile.getMetadata();
-				AboutDomainObjectUtils.displayInformation(tool, domainFile,
-					metadata, "Export Results Summary", resultsBuffer.toString(),
-					helpLocation);
+				AboutDomainObjectUtils.displayInformation(tool, domainFile, metadata,
+					"Export Results Summary", resultsBuffer.toString(), helpLocation);
 			}
 			finally {
 				if (domainObject != null) {

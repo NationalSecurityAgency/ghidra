@@ -30,7 +30,6 @@ import com.google.gson.JsonArray;
 import generic.stl.Pair;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressOverflowException;
@@ -39,17 +38,14 @@ import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.address.AddressRangeIterator;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import sarif.SarifProgramOptions;
+import sarif.SarifUtils;
 import sarif.export.SarifWriterTask;
 import sarif.export.mm.SarifMemoryMapWriter;
 
@@ -72,24 +68,29 @@ public class MemoryMapSarifMgr extends SarifMgr {
 	////////////////////////////
 
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
-			throws CancelledException {
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor) throws CancelledException {
 		try {
-			processMemoryBlock(result, result, programMgr.getDirectory(), program, monitor);
+			processMemoryBlock(result, programMgr.getDirectory(), program, monitor);
 			return true;
-		} catch (FileNotFoundException | AddressOverflowException e) {
+		}
+		catch (FileNotFoundException | AddressOverflowException e) {
 			log.appendException(e);
 		}
 		return false;
 	}
 
-	private void processMemoryBlock(Map<String, Object> result, Map<String, Object> result2, String directory,
-			Program program, TaskMonitor monitor) throws FileNotFoundException, AddressOverflowException {
+	private void processMemoryBlock(Map<String, Object> result, String directory, Program program,
+			TaskMonitor monitor) throws FileNotFoundException, AddressOverflowException {
 
 		String name = (String) result.get("name");
-		AddressSet set = getLocations(result, null);
-		Address addr = set.getMinAddress();
-		int length = (int) set.getMaxAddress().subtract(addr) + 1;
+		AddressSet set = SarifUtils.getLocations(result, program, null);
+		Address blockAddress = set.getMinAddress();
+		if (set.getNumAddressRanges() != 1) {
+			throw new RuntimeException("Unexpected number of ranges for block @ " + blockAddress +
+				": " + set.getNumAddressRanges());
+		}
+		int length = (int) set.getMaxAddress().subtract(blockAddress) + 1;
 
 		String permissions = (String) result.get("kind");
 		if (permissions == null) {
@@ -100,67 +101,62 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		boolean x = permissions.indexOf("x") >= 0;
 
 		boolean isVolatile = (boolean) result.get("isVolatile");
+		boolean isArtificial = (boolean) result.get("isArtificial");
 
 		String comment = (String) result.get("comment");
 		String type = (String) result.get("type");
-		String loc = (String) result.get("location");
-		String overlayName = (String) result.get("overlaySpace");
-
-		Address blockAddress = addr;
-		if (overlayName != null) {
-			AddressSpace addressSpace = program.getAddressFactory().getAddressSpace(overlayName);
-			if (addressSpace == null) {
-				try {
-					addressSpace = program.createOverlaySpace(overlayName, addr.getAddressSpace());
-				} catch (IllegalStateException | DuplicateNameException | InvalidNameException | LockException e) {
-					throw new RuntimeException("Attempt to create " + overlayName + " failed!");
-				}
-			} else if (!addressSpace.isOverlaySpace()) {
-				throw new RuntimeException(overlayName + " is not a valid overlay space!");
-			}
-			blockAddress = ((OverlayAddressSpace) addressSpace).getAddressInThisSpaceOnly(addr.getOffset());
-		}
+		String loc = (String) result.get("location"); // location == position of the bytes w/i file (file::pos)
+		// TODO: Explore the possibility of using FileBytes in the future?
 
 		try {
-			byte[] bytes = new byte[length];
-			Arrays.fill(bytes, (byte) 0xff);
 			MemoryBlock block = null;
-			if (type.equals("DEFAULT") && (loc != null)) {
-				Address startAddr = addr;
-				String[] split = loc.split(":");
-				String fileName = split[0];
-				int fileOffset = Integer.parseInt(split[1]);
-				setData(bytes, (int) startAddr.subtract(addr), directory, fileName, fileOffset, length, log);
-
-				block = MemoryBlockUtils.createInitializedBlock(program, false, name, blockAddress,
-						new ByteArrayInputStream(bytes), bytes.length, comment, null, r, w, x, log, monitor);
-			} else if (type.equals("BIT_MAPPED")) {
+			if (type.equals("DEFAULT")) {
+				if (loc == null) {
+					block = MemoryBlockUtils.createUninitializedBlock(program, false, name,
+						blockAddress, length, comment, null, r, w, x, log);
+				}
+				else {
+					String[] split = loc.split(":");
+					String fileName = split[0];
+					int fileOffset = Integer.parseInt(split[1]);
+					byte[] bytes = setData(directory, fileName, fileOffset, length, log);
+					block = MemoryBlockUtils.createInitializedBlock(program, false, name,
+						blockAddress, new ByteArrayInputStream(bytes), bytes.length, comment, null,
+						r, w, x, log, monitor);
+				}
+			}
+			else if (type.equals("BIT_MAPPED")) {
 				Address sourceAddr = factory.getAddress(loc);
-				block = MemoryBlockUtils.createBitMappedBlock(program, name, blockAddress, sourceAddr, length, comment,
-						comment, r, w, x, false, log);
-			} else if (type.equals("BYTE_MAPPED")) {
+				block = MemoryBlockUtils.createBitMappedBlock(program, name, blockAddress,
+					sourceAddr, length, comment, comment, r, w, x, false, log);
+			}
+			else if (type.equals("BYTE_MAPPED")) {
 				Address sourceAddr = factory.getAddress(loc);
-				block = MemoryBlockUtils.createByteMappedBlock(program, name, blockAddress, sourceAddr, length, comment,
-						comment, r, w, x, false, log);
-			} else {
-				block = MemoryBlockUtils.createUninitializedBlock(program, false, name, blockAddress, length, comment,
-						null, r, w, x, log);
+				block = MemoryBlockUtils.createByteMappedBlock(program, name, blockAddress,
+					sourceAddr, length, comment, comment, r, w, x, false, log);
+			}
+			else {
+				throw new RuntimeException("Unexpected type value - " + type);
 			}
 			if (block != null) {
 				block.setVolatile(isVolatile);
+				block.setArtificial(isArtificial);
 			}
-		} catch (FileNotFoundException e) {
+		}
+		catch (FileNotFoundException e) {
 			throw e;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			log.appendException(e);
 		}
 	}
 
-	private void setData(byte[] bytes, int offset, String directory, String fileName, int fileOffset, int length,
+	private byte[] setData(String directory, String fileName, int fileOffset, int length,
 			MessageLog log) throws IOException {
+		byte[] bytes = new byte[length];
+		Arrays.fill(bytes, (byte) 0xff);
 		File f = new File(directory, fileName);
-		RandomAccessFile binfile = new RandomAccessFile(f, "r");
-		try {
+		try (RandomAccessFile binfile = new RandomAccessFile(f, "r")) {
 			int pos = 0;
 			while (pos < length) {
 				int readLen = (512 * 1024);
@@ -168,34 +164,34 @@ public class MemoryMapSarifMgr extends SarifMgr {
 					readLen = length - pos;
 				}
 				binfile.seek(fileOffset + pos);
-				readLen = binfile.read(bytes, offset + pos, readLen);
+				readLen = binfile.read(bytes, pos, readLen);
 				if (readLen <= 0) {
 					break;
 				}
 				pos += readLen;
 			}
-		} catch (IndexOutOfBoundsException e) {
-			log.appendMsg("Invalid bin file offset " + offset + " with length " + length);
 		}
-		binfile.close();
+		catch (IndexOutOfBoundsException e) {
+			log.appendMsg("Read exceeded array length " + length);
+		}
+		return bytes;
 	}
 
 	/////////////////////////////
 	// SARIF WRITE CURRENT DTD //
 	/////////////////////////////
 
-	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor, boolean isWriteContents, String filePath)
-			throws IOException, CancelledException {
+	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor,
+			boolean isWriteContents, String filePath) throws IOException, CancelledException {
 		monitor.setMessage("Writing MEMORY MAP ...");
-
-		bf = isWriteContents ? new MemoryMapBytesFile(program, filePath) : null;
 
 		List<Pair<AddressRange, MemoryBlock>> request = new ArrayList<>();
 		AddressRangeIterator iter = addrs.getAddressRanges();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			AddressRange ranges = iter.next();
-			RangeBlock rb = new RangeBlock(program.getAddressFactory(), program.getMemory(), ranges);
+			RangeBlock rb =
+				new RangeBlock(program.getAddressFactory(), program.getMemory(), ranges);
 			for (int i = 0; i < rb.getRanges().length; ++i) {
 				AddressRange range = rb.getRanges()[i];
 				MemoryBlock block = rb.getBlocks()[i];
@@ -203,16 +199,22 @@ public class MemoryMapSarifMgr extends SarifMgr {
 			}
 		}
 
-		writeAsSARIF(request, bf, isWriteContents, results);
-
-		if (isWriteContents) {
-			bf.close();
+		try {
+			bf = isWriteContents ? new MemoryMapBytesFile(program, filePath) : null;
+			writeAsSARIF(request, bf, isWriteContents, results);
+		}
+		finally {
+			if (isWriteContents) {
+				bf.close();
+			}
 		}
 	}
 
-	public static void writeAsSARIF(List<Pair<AddressRange, MemoryBlock>> request, MemoryMapBytesFile bytes,
-			boolean isWriteContents, JsonArray results) throws IOException {
-		SarifMemoryMapWriter writer = new SarifMemoryMapWriter(request, null, bytes, isWriteContents);
+	public static void writeAsSARIF(List<Pair<AddressRange, MemoryBlock>> request,
+			MemoryMapBytesFile bytes, boolean isWriteContents, JsonArray results)
+			throws IOException {
+		SarifMemoryMapWriter writer =
+			new SarifMemoryMapWriter(request, null, bytes, isWriteContents);
 		new TaskLauncher(new SarifWriterTask(SUBKEY, writer, results), null);
 	}
 

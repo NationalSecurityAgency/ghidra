@@ -282,4 +282,9 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void setCloseListener(Callback closeListener) {
 		this.closeListener = Callback.dummyIfNull(closeListener);
 	}
+
+	public void dispose() {
+		functionComparisonPanel.dispose();
+	}
+
 }

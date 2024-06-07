@@ -16,15 +16,12 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
-import ghidra.program.database.ProgramDB;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.FunctionTagManager;
+import ghidra.program.model.listing.*;
 
 /**
  * Command for assigning a tag to a function
  */
-public class CreateFunctionTagCmd implements Command {
+public class CreateFunctionTagCmd implements Command<Program> {
 
 	private String name;
 	private String comment;
@@ -51,8 +48,7 @@ public class CreateFunctionTagCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		ProgramDB program = (ProgramDB) obj;
+	public boolean applyTo(Program program) {
 		FunctionManager functionManager = program.getFunctionManager();
 		FunctionTagManager tagManager = functionManager.getFunctionTagManager();
 		tagManager.createFunctionTag(name, comment);

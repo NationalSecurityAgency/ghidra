@@ -386,7 +386,7 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 						symbolTableAddr.add(nlistIndex * nlist.getSize()), RefType.DATA,
 						SourceType.IMPORTED, 0);
 					referenceManager.setPrimary(ref, true);
-					if (stringTableAddr != null) {
+					if (stringTableAddr != null && nlist.getStringTableIndex() != 0) {
 						Address strAddr = stringTableAddr.add(nlist.getStringTableIndex());
 						referenceManager.addMemoryReference(dataAddr, strAddr, RefType.DATA,
 							SourceType.IMPORTED, 0);

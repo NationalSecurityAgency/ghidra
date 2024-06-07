@@ -65,10 +65,12 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	protected AbstractVariableFieldFactory(String name, FieldFormatModel model,
-			ListingHighlightProvider highlightProvider, Options displayOptions, Options fieldOptions) {
+			ListingHighlightProvider highlightProvider, Options displayOptions,
+			Options fieldOptions) {
 		super(name, model, highlightProvider, displayOptions, fieldOptions);
 	}
 
+	@Override
 	protected void initDisplayOptions(Options displayOptions) {
 
 		// display options for local variables handled by FieldFactory base class
@@ -110,8 +112,7 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
 	}
 
-	@SuppressWarnings("deprecation")
-	// we know
+	@SuppressWarnings("deprecation") // ignore getFontMetrics() deprecation warning
 	private void setMetrics(Font newFont, ParameterFieldOptions paramFieldOptions) {
 		paramFieldOptions.defaultMetrics = Toolkit.getDefaultToolkit().getFontMetrics(newFont);
 		for (int i = 0; i < paramFieldOptions.fontMetrics.length; i++) {

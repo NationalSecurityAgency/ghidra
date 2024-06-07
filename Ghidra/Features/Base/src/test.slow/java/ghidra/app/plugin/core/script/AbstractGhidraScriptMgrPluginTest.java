@@ -122,11 +122,11 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		ConsoleComponentProvider consoleProvider =
 			waitForComponentProvider(ConsoleComponentProvider.class);
 		consoleTextPane =
-			(JTextPane) findComponentByName(consoleProvider.getComponent(), "CONSOLE");
+			(JTextPane) findComponentByName(consoleProvider.getComponent(), "Console Text Pane");
 		assertNotNull(consoleTextPane);
 
 		scriptTable =
-			(DraggableScriptTable) findComponentByName(provider.getComponent(), "SCRIPT_TABLE");
+			(DraggableScriptTable) findComponentByName(provider.getComponent(), "Scripts Table");
 		assertNotNull(scriptTable);
 
 		clearConsole();
@@ -211,11 +211,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void selectCategory(String category) {
-
-		GTree categoryTree = (GTree) findComponentByName(provider.getComponent(), "CATEGORY_TREE");
+		GTree categoryTree = provider.getTree();
 		waitForTree(categoryTree);
-		JTree jTree = (JTree) invokeInstanceMethod("getJTree", categoryTree);
-		assertNotNull(jTree);
 		GTreeNode child = categoryTree.getModelRoot().getChild(category);
 		categoryTree.setSelectedNode(child);
 		waitForTree(categoryTree);

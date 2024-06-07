@@ -305,7 +305,10 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public ProgramContext getProgramContext();
 
 	/**
-	 * get the program's minimum address.
+	 * Get the program's minimum address.
+	 * NOTE: An {@link AddressRange} should generally not be formed using this address
+	 * and {@link #getMaxAddress()} since it may span multiple {@link AddressSpace}s.
+	 * 
 	 * @return the program's minimum address or null if no memory blocks
 	 * have been defined in the program.
 	 */
@@ -313,6 +316,9 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 
 	/**
 	 * Get the programs maximum address.
+	 * NOTE: An {@link AddressRange} should generally not be formed using this address
+	 * and {@link #getMinAddress()} since it may span multiple {@link AddressSpace}s.
+	 * 
 	 * @return the program's maximum address or null if no memory blocks
 	 * have been defined in the program.
 	 */
@@ -349,12 +355,6 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * no matching addresses were found or if the address is improperly formatted.
 	 */
 	public Address[] parseAddress(String addrStr, boolean caseSensitive);
-
-	/**
-	 * Invalidates any caching in a program.
-	 * NOTE: Over-using this method can adversely affect system performance.
-	 */
-	public void invalidate();
 
 	/**
 	 * Create a new overlay space based upon the given base AddressSpace

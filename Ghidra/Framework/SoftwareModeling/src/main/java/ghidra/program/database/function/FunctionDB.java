@@ -15,6 +15,8 @@
  */
 package ghidra.program.database.function;
 
+import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -30,7 +32,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.StringPropertyMap;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -342,7 +344,17 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public AddressSetView getBody() {
-		return program.getNamespaceManager().getAddressSet(this);
+		manager.lock.acquire();
+		try {
+			if (!checkIsValid()) {
+				// Function or its symbol has been deleted
+				return new AddressSet(entryPoint, entryPoint);
+			}
+			return program.getNamespaceManager().getAddressSet(this);
+		}
+		finally {
+			manager.lock.release();
+		}
 	}
 
 	@Override
@@ -666,7 +678,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			try {
 				rec.setIntValue(FunctionAdapter.STACK_PURGE_COL, change);
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PURGE);
+				manager.functionChanged(this, PURGE_CHANGED);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -995,7 +1007,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				if (var.getComment() != null) {
 					v.symbol.setSymbolStringData(var.getComment());
 				}
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 				return v;
 			}
 			finally {
@@ -1479,7 +1491,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			// assign dynamic storage
 			updateParametersAndReturn();
 
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+			manager.functionChanged(this, PARAMETERS_CHANGED);
 		}
 		finally {
 			frame.setInvalid();
@@ -1653,7 +1665,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 						params.add(ordinal, p);
 						updateParametersAndReturn();
-						manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+						manager.functionChanged(this, PARAMETERS_CHANGED);
 					}
 					if (!DEFAULT_PARAM_PREFIX.equals(name)) {
 						p.setName(name, paramSource);
@@ -1683,7 +1695,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					params.add(ordinal, p);
 					updateParametersAndReturn();
 					symbolMap.put(p.symbol, p);
-					manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+					manager.functionChanged(this, PARAMETERS_CHANGED);
 				}
 				if (var.getComment() != null) {
 					p.symbol.setSymbolStringData(var.getComment());
@@ -1830,8 +1842,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				}
 			}
 
-			manager.functionChanged(this,
-				(var instanceof Parameter) ? ChangeManager.FUNCTION_CHANGED_PARAMETERS : 0);
+			manager.functionChanged(this, (var instanceof Parameter) ? PARAMETERS_CHANGED : null);
 			frame.setInvalid();
 		}
 		finally {
@@ -1954,7 +1965,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				params.add(toOrdinal, param);
 			}
 			updateParametersAndReturn();
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+			manager.functionChanged(this, PARAMETERS_CHANGED);
 			return param;
 		}
 		finally {
@@ -1996,7 +2007,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			rec.setIntValue(FunctionAdapter.STACK_LOCAL_SIZE_COL, size);
 			try {
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -2050,7 +2061,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			rec.setIntValue(FunctionAdapter.STACK_RETURN_OFFSET_COL, offset);
 			try {
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -2132,7 +2143,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 			else if (hasVarArgs != hasVarArgs()) {
 				setFunctionFlag(FunctionAdapter.FUNCTION_VARARG_FLAG, hasVarArgs);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+				manager.functionChanged(this, PARAMETERS_CHANGED);
 			}
 		}
 		finally {
@@ -2158,7 +2169,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			else if (!isExternal() && isInline != isInline()) {
 				// only non-external functions may be inline
 				setFunctionFlag(FunctionAdapter.FUNCTION_INLINE_FLAG, isInline);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_INLINE);
+				manager.functionChanged(this, INLINE_CHANGED);
 			}
 		}
 		finally {
@@ -2183,7 +2194,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 			else if (hasNoReturn != hasNoReturn()) {
 				setFunctionFlag(FunctionAdapter.FUNCTION_NO_RETURN_FLAG, hasNoReturn);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_NORETURN);
+				manager.functionChanged(this, NO_RETURN_CHANGED);
 			}
 		}
 		finally {
@@ -2384,7 +2395,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				updateParametersAndReturn(); // assign dynamic storage
 			}
 
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+			manager.functionChanged(this, PARAMETERS_CHANGED);
 		}
 		catch (InvalidInputException e) {
 			throw new AssertException(e); // should not occur
@@ -2501,7 +2512,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			rec.setByteValue(FunctionAdapter.FUNCTION_FLAGS_COL, flags);
 			try {
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -2602,11 +2613,11 @@ public class FunctionDB extends DatabaseObject implements Function {
 				loadVariables();
 				removeExplicitThisParameter();
 				updateParametersAndReturn(); // assign dynamic storage
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_RETURN);
+				manager.functionChanged(this, PARAMETERS_CHANGED);
+				manager.functionChanged(this, RETURN_TYPE_CHANGED);
 			}
 			else {
-				manager.functionChanged(this, 0); // change did not affect parameters
+				manager.functionChanged(this, null); // change did not affect parameters
 			}
 		}
 		catch (IOException e) {
@@ -2645,8 +2656,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	}
 
 	void dataTypeChanged(VariableDB var) {
-		manager.functionChanged(this,
-			(var instanceof Parameter) ? ChangeManager.FUNCTION_CHANGED_PARAMETERS : 0);
+		manager.functionChanged(this, (var instanceof Parameter) ? PARAMETERS_CHANGED : null);
 	}
 
 	@Override
@@ -2696,7 +2706,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				}
 				callFixupMap.add(entryPoint, name);
 			}
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_CALL_FIXUP);
+			manager.functionChanged(this, CALL_FIXUP_CHANGED);
 		}
 		finally {
 			endUpdate();
@@ -2808,7 +2818,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				tagManager.applyFunctionTag(getID(), tag.getId());
 
 				Address addr = getEntryPoint();
-				program.setChanged(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION, addr, addr, tag, tag);
+				program.setChanged(ProgramEvent.FUNCTION_TAG_APPLIED, addr, addr, tag, tag);
 			}
 
 			// Add to local cache
@@ -2841,8 +2851,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 			if (removed) {
 				Address addr = getEntryPoint();
-				program.setChanged(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION, addr, addr, tag,
-					tag);
+				program.setChanged(ProgramEvent.FUNCTION_TAG_UNAPPLIED, addr, addr, tag, tag);
 
 				// Remove from the local cache.
 				if (tags != null) {

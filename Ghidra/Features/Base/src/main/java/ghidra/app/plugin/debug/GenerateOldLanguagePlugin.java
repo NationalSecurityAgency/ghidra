@@ -56,7 +56,7 @@ import ghidra.util.xml.GenericXMLOutputter;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Generate Old Language File",
 	description = "This plugin allows the user to generate an old-language XML " +
 			"file from the current version of a loaded language.  " +
@@ -545,7 +545,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements ApplicationLeve
 		 */
 		@Override
 		public List<LanguageDescription> getLanguageDescriptions(Processor processor,
-				Endian endianess, Integer size, String variant) {
+				Endian endianness, Integer size, String variant) {
 			throw new UnsupportedOperationException();
 		}
 

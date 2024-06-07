@@ -52,6 +52,7 @@ import ghidra.dbg.target.TargetThread;
 import ghidra.debug.api.action.ActionSource;
 import ghidra.debug.api.model.*;
 import ghidra.debug.api.model.DebuggerProgramLaunchOffer.PromptMode;
+import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
@@ -230,6 +231,8 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerTargetService targetService;
+	@AutoServiceConsumed
+	private ProgressService progressService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -371,27 +374,41 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program,
 			PromptMode prompt) {
-		BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
-			List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
-			recent.remove(offer.getConfigName());
-			recent.add(offer.getConfigName());
-			writeMostRecentLaunches(program, recent);
-			CompletableFuture.runAsync(() -> {
-				updateActionDebugProgram();
-			}, AsyncUtils.SWING_EXECUTOR).exceptionally(ex -> {
-				Msg.error(this, "Trouble writing recent launches to program user data");
-				return null;
+
+		List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
+		recent.remove(offer.getConfigName());
+		recent.add(offer.getConfigName());
+		writeMostRecentLaunches(program, recent);
+		updateActionDebugProgram();
+
+		if (progressService == null) {
+			BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
+				return offer.launchProgram(m, prompt).exceptionally(ex -> {
+					Throwable t = AsyncUtils.unwrapThrowable(ex);
+					if (t instanceof CancellationException || t instanceof CancelledException) {
+						return null;
+					}
+					return ExceptionUtils.rethrow(ex);
+				}).whenCompleteAsync((v, e) -> {
+					updateActionDebugProgram();
+				}, AsyncUtils.SWING_EXECUTOR);
 			});
-			return offer.launchProgram(m, prompt).exceptionally(ex -> {
+		}
+		else {
+			@SuppressWarnings("resource")
+			CloseableTaskMonitor monitor = progressService.publishTask();
+			offer.launchProgram(monitor, prompt).exceptionally(ex -> {
 				Throwable t = AsyncUtils.unwrapThrowable(ex);
 				if (t instanceof CancellationException || t instanceof CancelledException) {
 					return null;
 				}
+				monitor.reportError(t);
 				return ExceptionUtils.rethrow(ex);
 			}).whenCompleteAsync((v, e) -> {
+				monitor.close();
 				updateActionDebugProgram();
 			}, AsyncUtils.SWING_EXECUTOR);
-		});
+		}
 	}
 
 	private void debugProgramButtonActivated(ActionContext ctx) {

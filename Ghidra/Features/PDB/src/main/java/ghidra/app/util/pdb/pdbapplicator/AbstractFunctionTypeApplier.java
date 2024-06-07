@@ -30,13 +30,13 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Applier for certain function types.
  */
-public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
+public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 
 	// Intended for: see children
 	/**
 	 * Constructor for the applicator that applies a "function" type, transforming it into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public AbstractFunctionTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
@@ -52,28 +52,29 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	/**
 	 * Returns the function "this" pointer
 	 * @param type the PDB type being inspected
-	 * @param fixupContext the fixup context to use; or pass in null during fixup process
-	 * @param breakCycle specify {@code true} when employing break-cycle logic (pointers to
 	 * Composites within composites)
 	 * @return the "this" pointer or null if does not have or is not a recognized type
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon processing error
 	 */
-	protected abstract Pointer getThisPointer(AbstractMsType type, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException;
+	protected abstract Pointer getThisPointer(AbstractMsType type)
+			throws CancelledException, PdbException;
 
 	/**
-	 * Returns the containing class if function member of class
+	 * Returns the RecordNumber of the function "this" pointer; {@code null} if not this pointer
 	 * @param type the PDB type being inspected
-	 * @param fixupContext the fixup context to use; or pass in null during fixup process
-	 * @param breakCycle specify {@code true} when employing break-cycle logic (pointers to
-	 * Composites within composites)
-	 * @return the containing class composite type
-	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException upon processing error
+	 * @return the record number of the "this" pointer or null if does not have or is not a
+	 *  recognized type
 	 */
-	protected abstract Composite getContainingComplexApplier(AbstractMsType type,
-			FixupContext fixupContext, boolean breakCycle) throws CancelledException, PdbException;
+	protected abstract RecordNumber getThisPointerRecordNumber(AbstractMsType type);
+
+	/**
+	 * Returns the RecordNumber of the containing class if function member of class; {@code null}
+	 *  if no containing class
+	 * @param type the PDB type being inspected
+	 * @return the record number of the containing class composite type or {@code null} if none
+	 */
+	protected abstract RecordNumber getContainingComplexRecordNumber(AbstractMsType type);
 
 	/**
 	 * Processes containing class if one exists
@@ -105,21 +106,13 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	protected abstract RecordNumber getArgListRecordNumber(AbstractMsType type);
 
 	private boolean setReturnType(FunctionDefinitionDataType functionDefinition,
-			AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws CancelledException, PdbException {
+			AbstractMsType type) {
 		if (isConstructor(type)) {
 			return true;
 		}
 		RecordNumber returnRecord = getReturnRecordNumber(type);
-		if (returnRecord == null) {
-			return false;
-		}
-		DataType returnType =
-			applicator.getProcessedDataType(returnRecord, fixupContext, breakCycle);
+		DataType returnType = applicator.getDataType(returnRecord);
 		if (returnType == null) {
-			return false;
-		}
-		if (applicator.isPlaceholderPointer(returnType)) {
 			return false;
 		}
 		functionDefinition.setReturnType(returnType);
@@ -160,43 +153,30 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 		}
 	}
 
-	private boolean setArguments(FunctionDefinitionDataType functionDefinition, AbstractMsType type,
-			FixupContext fixupContext, boolean breakCycle) throws CancelledException, PdbException {
+	private boolean setArguments(FunctionDefinitionDataType functionDefinition, AbstractMsType type)
+			throws CancelledException, PdbException {
 
-		RecordNumber argsRecord = getArgListRecordNumber(type);
-		AbstractMsType aType = applicator.getPdb().getTypeRecord(argsRecord);
-		if (!(aType instanceof AbstractArgumentsListMsType argsList)) {
-			applicator.appendLogMsg(
-				"PDB Warning: expecting args list but found " + aType.getClass().getSimpleName() +
-					" for parameter list of " + functionDefinition.getName());
-			return false;
-		}
+		List<RecordNumber> args = getArgsRecordNumbers(type);
 
-		boolean hasPlaceholder = false;
-
-		List<RecordNumber> args = argsList.getArgRecordNumbers();
 		List<ParameterDefinition> parameterDefinitionList = new ArrayList<>();
 		int parameterCount = 0;
 		for (RecordNumber arg : args) {
 			applicator.checkCancelled();
 
-			AbstractMsType argMsType = applicator.getPdb().getTypeRecord(arg);
+			AbstractMsType argMsType = applicator.getTypeRecord(arg);
 			if (argMsType instanceof PrimitiveMsType primitive && primitive.isNoType()) {
 				// Arguments list is empty. (There better not have been any arguments up until
 				//  now.)
 				break;
 			}
 
-			DataType argDataType = applicator.getProcessedDataType(arg, fixupContext, breakCycle);
+			DataType argDataType = applicator.getDataType(arg);
 			if (argDataType == null) {
 				applicator.appendLogMsg(
 					"PDB Warning: No type conversion for " + argMsType.toString() +
 						" for parameter " + parameterCount + " of " + functionDefinition.getName());
 			}
 			else {
-				if (applicator.isPlaceholderPointer(argDataType)) {
-					hasPlaceholder = true;
-				}
 				try {
 					ParameterDefinition parameterDefinition =
 						new ParameterDefinitionImpl(null, argDataType, "");
@@ -225,49 +205,90 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 				}
 			}
 		}
-		if (hasPlaceholder) {
-			return false;
-		}
 		functionDefinition.setArguments(parameterDefinitionList
 				.toArray(new ParameterDefinition[parameterDefinitionList.size()]));
 		return true;
 	}
 
 	@Override
-	public DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+	boolean apply(AbstractMsType type)
 			throws CancelledException, PdbException {
-		DataType existing = applicator.getDataType(type);
-		if (existing != null) {
-			return existing;
+
+		if (!precheckOrScheduleDependencies(type)) {
+			return false;
 		}
+
 		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
 			applicator.getAnonymousFunctionsCategory(), "_func", applicator.getDataTypeManager());
 
-		boolean hasPlaceholder = false;
-
 		processContainingType(type);
+		setReturnType(functionDefinition, type);
+		setArguments(functionDefinition, type);
+		Pointer thisPointer = getThisPointer(type);
 
-		if (!setReturnType(functionDefinition, type, fixupContext, breakCycle)) {
-			hasPlaceholder = true;
-		}
-
-		if (!setArguments(functionDefinition, type, fixupContext, breakCycle)) {
-			hasPlaceholder = true;
-		}
-
-		if (hasPlaceholder) {
-			return null;
-		}
-
-		Pointer thisPointer = getThisPointer(type, fixupContext, breakCycle);
 		CallingConvention convention = getCallingConvention(type);
 		setCallingConvention(functionDefinition, convention, thisPointer);
 
 		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition);
+		DataType dataType = functionDefinition;
 
-		DataType resolvedType = applicator.resolve(functionDefinition);
-		applicator.putDataType(type, resolvedType);
-		return resolvedType;
+		applicator.putDataType(type, dataType);
+		return true;
+	}
+
+	/**
+	 * Uses {@link DefaultPdbApplicator#getDataTypeOrSchedule(RecordNumber)}) on all underlying
+	 *  types to ensure that the types get scheduled... and detects whether any types were not yet
+	 *  available so that this composite type is denoted as not done.
+	 * @param type the MS type of the function
+	 * @return {@code true} if all underlying types are already available
+	 * @throws PdbException upon processing issue
+	 */
+	private boolean precheckOrScheduleDependencies(AbstractMsType type)
+			throws PdbException {
+		boolean done = true;
+
+		RecordNumber returnRecordNumber = getReturnRecordNumber(type);
+		DataType dt = applicator.getDataTypeOrSchedule(returnRecordNumber);
+		if (dt == null) {
+			done = false;
+		}
+
+		List<RecordNumber> args = getArgsRecordNumbers(type);
+		for (RecordNumber argRecordNumber : args) {
+			dt = applicator.getDataTypeOrSchedule(argRecordNumber);
+			if (dt == null) {
+				done = false;
+			}
+		}
+
+		RecordNumber thisRecordNumber = getThisPointerRecordNumber(type);
+		if (thisRecordNumber != null) {
+			dt = applicator.getDataTypeOrSchedule(thisRecordNumber);
+			if (dt == null) {
+				done = false;
+			}
+		}
+
+		RecordNumber containerRecordNumber = getContainingComplexRecordNumber(type);
+		if (containerRecordNumber != null) {
+			dt = applicator.getDataTypeOrSchedule(containerRecordNumber);
+			if (dt == null) {
+				done = false;
+			}
+		}
+
+		return done;
+	}
+
+	private List<RecordNumber> getArgsRecordNumbers(AbstractMsType type) throws PdbException {
+		RecordNumber argsRecord = getArgListRecordNumber(type);
+		AbstractMsType aType = applicator.getTypeRecord(argsRecord);
+		if (!(aType instanceof AbstractArgumentsListMsType argsList)) {
+			throw new PdbException(
+				"Expecting arguments list but got: " + aType.getClass().getSimpleName());
+		}
+		return argsList.getArgRecordNumbers();
 	}
 
 }

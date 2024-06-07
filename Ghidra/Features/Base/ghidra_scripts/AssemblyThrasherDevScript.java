@@ -63,8 +63,8 @@ public class AssemblyThrasherDevScript extends GhidraScript {
 		}
 
 		@Override
-		public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-				AssemblyPatternBlock ctx) throws AssemblySemanticException {
+		public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+				throws AssemblySemanticException {
 			StringBuilder sb = new StringBuilder();
 			boolean gotOne = false;
 			boolean failedOne = false;

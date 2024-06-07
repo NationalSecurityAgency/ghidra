@@ -23,8 +23,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
+import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
@@ -158,8 +157,16 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			throws CancelledException, IOException {
 		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
 
-		ExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedPrograms, true, messageLog,
-			monitor);
+		ProjectData projectData = project != null ? project.getProjectData() : null;
+		try (ExternalSymbolResolver esr = new ExternalSymbolResolver(projectData, monitor)) {
+			for (Loaded<Program> loadedProgram : loadedPrograms) {
+				esr.addProgramToFixup(
+					loadedProgram.getProjectFolderPath() + loadedProgram.getName(),
+					loadedProgram.getDomainObject());
+			}
+			esr.fixUnresolvedExternalSymbols();
+			esr.logInfo(messageLog::appendMsg, true);
+		}
 	}
 
 	@Override

@@ -1,26 +1,29 @@
 <noReturnFunctionConstraints>
-  <executable_format name="Executable and Linking Format (ELF)">
-  	<compiler id="golang">
-      <functionNamesFile>GolangFunctionsThatDoNotReturn</functionNamesFile>
-  	</compiler>
-  	<compiler name="rustc">
-      <functionNamesFile>RustFunctionsThatDoNotReturn</functionNamesFile>
-  	</compiler>
-    <functionNamesFile>ElfFunctionsThatDoNotReturn</functionNamesFile>
-  </executable_format>
-  <executable_format name="Mac OS X Mach-O">
-    <functionNamesFile>MachOFunctionsThatDoNotReturn</functionNamesFile>
-  </executable_format>
-  <executable_format name="DYLD Cache">
-    <functionNamesFile>MachOFunctionsThatDoNotReturn</functionNamesFile>
-  </executable_format>
-  <executable_format name="Portable Executable (PE)">
-  	<compiler id="golang">
-      <functionNamesFile>GolangFunctionsThatDoNotReturn</functionNamesFile>
-  	</compiler>
-  	<compiler name="rustc">
-      <functionNamesFile>RustFunctionsThatDoNotReturn</functionNamesFile>
-  	</compiler>
-    <functionNamesFile>PEFunctionsThatDoNotReturn</functionNamesFile>
-  </executable_format>
+	<executable_format name="Executable and Linking Format (ELF)">
+		<compiler id="golang">
+			<functionNamesFile>GolangFunctionsThatDoNotReturn</functionNamesFile>
+		</compiler>
+		<compiler name="rustc">
+			<functionNamesFile>RustFunctionsThatDoNotReturn</functionNamesFile>
+		</compiler>
+		<functionNamesFile>ElfFunctionsThatDoNotReturn</functionNamesFile>
+	</executable_format>
+	<executable_format name="Mac OS X Mach-O">
+		<compiler id="golang">
+			<functionNamesFile>GolangFunctionsThatDoNotReturn</functionNamesFile>
+		</compiler>
+		<functionNamesFile>MachOFunctionsThatDoNotReturn</functionNamesFile>
+	</executable_format>
+	<executable_format name="DYLD Cache">
+		<functionNamesFile>MachOFunctionsThatDoNotReturn</functionNamesFile>
+	</executable_format>
+	<executable_format name="Portable Executable (PE)">
+		<compiler id="golang">
+			<functionNamesFile>GolangFunctionsThatDoNotReturn</functionNamesFile>
+		</compiler>
+		<compiler name="rustc">
+			<functionNamesFile>RustFunctionsThatDoNotReturn</functionNamesFile>
+		</compiler>
+		<functionNamesFile>PEFunctionsThatDoNotReturn</functionNamesFile>
+	</executable_format>
 </noReturnFunctionConstraints>

@@ -26,10 +26,10 @@ import ghidra.program.model.address.AddressSpace;
  * A byte-based encoder designed to marshal to the decompiler efficiently
  * See {@code PackedDecode} for details of the encoding format
  */
-public class PackedEncode implements PatchEncoder {
-	private PackedBytes outStream;
+public class PackedEncode implements Encoder {
+	protected OutputStream outStream;
 
-	private void writeHeader(int header, int id) {
+	protected void writeHeader(int header, int id) throws IOException {
 		if (id > 0x1f) {
 			header |= HEADEREXTEND_MASK;
 			header |= (id >> RAWDATA_BITSPERBYTE);
@@ -43,7 +43,7 @@ public class PackedEncode implements PatchEncoder {
 		}
 	}
 
-	private void writeInteger(int typeByte, long val) {
+	protected void writeInteger(int typeByte, long val) throws IOException {
 		byte lenCode;
 		int sa;
 		if (val <= 0) {
@@ -113,9 +113,8 @@ public class PackedEncode implements PatchEncoder {
 		outStream = null;
 	}
 
-	@Override
-	public void clear() {
-		outStream = new PackedBytes(512);
+	public PackedEncode(OutputStream stream) {
+		outStream = stream;
 	}
 
 	@Override
@@ -196,106 +195,21 @@ public class PackedEncode implements PatchEncoder {
 	}
 
 	@Override
-	public void writeTo(OutputStream stream) throws IOException {
-		outStream.writeTo(stream);
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return (outStream.size() == 0);
-	}
-
-	@Override
-	public int size() {
-		return outStream.size();
-	}
-
-	@Override
-	public void writeSpaceId(AttributeId attribId, long spaceId) {
+	public void writeSpace(AttributeId attribId, int index, String name) throws IOException {
 		writeHeader(ATTRIBUTE, attribId.id());
-		int uniqueId = (int) spaceId >> AddressSpace.ID_UNIQUE_SHIFT;
-		writeInteger((TYPECODE_ADDRESSSPACE << TYPECODE_SHIFT), uniqueId);
-	}
-
-	/**
-	 * Return the position after the open element directive at the given position.
-	 * @param pos is the given position
-	 * @return the next position or -1 if the current byte is not an open directive
-	 */
-	private int skipOpen(int pos) {
-		int val = outStream.getByte(pos) & (HEADER_MASK | HEADEREXTEND_MASK);
-		if (val == ELEMENT_START) {
-			return pos + 1;
-		}
-		else if (val == (ELEMENT_START | HEADEREXTEND_MASK)) {
-			return pos + 2;
-		}
-		return -1;
-	}
-
-	/**
-	 * Read the integer at the given position.
-	 * @param pos is the given position
-	 * @param len is the length of the integer in 7-bit bytes
-	 * @return the integer
-	 */
-	private long readInteger(int pos, int len) {
-		long res = 0;
-		while (len > 0) {
-			res <<= RAWDATA_BITSPERBYTE;
-			res |= (outStream.getByte(pos) & RAWDATA_MASK);
-			pos += 1;
-			len -= 1;
-		}
-		return res;
+		writeInteger((TYPECODE_ADDRESSSPACE << TYPECODE_SHIFT), index);
 	}
 
 	@Override
-	public boolean patchIntegerAttribute(int pos, AttributeId attribId, long val) {
-		int typeByte;
-		int length;
+	public void writeOpcode(AttributeId attribId, int opcode) throws IOException {
+		writeHeader(ATTRIBUTE, attribId.id());
+		writeInteger((TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT), opcode);
+	}
 
-		pos = skipOpen(pos);
-		if (pos < 0) {
-			return false;
-		}
-		for (;;) {
-			int header1 = outStream.getByte(pos);	// Attribute header
-			if ((header1 & HEADER_MASK) != ATTRIBUTE) {
-				return false;
-			}
-			pos += 1;
-			int curid = header1 & ELEMENTID_MASK;
-			if ((header1 & HEADEREXTEND_MASK) != 0) {
-				curid <<= RAWDATA_BITSPERBYTE;
-				curid |= outStream.getByte(pos) & RAWDATA_MASK;
-				pos += 1;				// Extra byte for extended id
-			}
-			typeByte = outStream.getByte(pos) & 0xff;	// Type (and length) byte
-			pos += 1;
-			int attribType = typeByte >> TYPECODE_SHIFT;
-			if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE) {
-				continue;								// has no additional data
-			}
-			length = typeByte & LENGTHCODE_MASK;	// Length of data in bytes
-			if (attribType == TYPECODE_STRING) {			// For a string
-				length = (int) readInteger(pos, length);	// Read length field to get final length of string
-			}
-			if (attribId.id() == curid) {
-				break;
-			}
-			pos += length;			// Skip -length- data	
-		}
-		if (length != 10) {
-			return false;
-		}
-
-		for (int sa = 9 * RAWDATA_BITSPERBYTE; sa >= 0; sa -= RAWDATA_BITSPERBYTE) {
-			long piece = (val >>> sa) & RAWDATA_MASK;
-			piece |= RAWDATA_MARKER;
-			outStream.insertByte(pos, (int) piece);
-			pos += 1;
-		}
-		return true;
+	/**
+	 * @return the underlying stream
+	 */
+	public OutputStream getOutputStream() {
+		return outStream;
 	}
 }

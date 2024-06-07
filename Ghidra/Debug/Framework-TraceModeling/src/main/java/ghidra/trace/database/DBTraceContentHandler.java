@@ -22,15 +22,13 @@ import javax.swing.Icon;
 import db.DBHandle;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
-import ghidra.framework.data.DBWithUserDataContentHandler;
-import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
 import ghidra.trace.model.Trace;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -71,7 +69,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 		try {
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
-			DBOpenMode openMode = DBOpenMode.READ_ONLY;
+			OpenMode openMode = OpenMode.IMMUTABLE;
 			trace = new DBTrace(dbh, openMode, monitor, consumer);
 			getTraceChangeSet(trace, bf);
 			success = true;
@@ -119,7 +117,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 		try {
 			bf = dbItem.open(version);
 			dbh = new DBHandle(bf);
-			DBOpenMode openMode = okToUpgrade ? DBOpenMode.UPGRADE : DBOpenMode.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			trace = new DBTrace(dbh, openMode, monitor, consumer);
 			getTraceChangeSet(trace, bf);
 			trace.setTraceUserData(new DBTraceUserData(trace));
@@ -169,7 +167,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 		try {
 			bf = dbItem.openForUpdate(checkoutId);
 			dbh = new DBHandle(bf, recover, monitor);
-			DBOpenMode openMode = okToUpgrade ? DBOpenMode.UPGRADE : DBOpenMode.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			trace = new DBTrace(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
 				getTraceChangeSet(trace, bf);
@@ -275,7 +273,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 		try {
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
-			DBOpenMode openMode = DBOpenMode.READ_ONLY;
+			OpenMode openMode = OpenMode.IMMUTABLE;
 			trace = new DBTrace(dbh, openMode, null, this);
 			return getTraceChangeSet(trace, bf);
 		}

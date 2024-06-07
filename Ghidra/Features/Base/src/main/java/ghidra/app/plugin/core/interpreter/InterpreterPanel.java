@@ -28,8 +28,7 @@ import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
-import generic.theme.GColor;
-import generic.theme.Gui;
+import generic.theme.*;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.OptionsChangeListener;
@@ -50,9 +49,9 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private static final Color NORMAL_COLOR = new GColor("color.fg.interpreterconsole");
-	private static final Color ERROR_COLOR = new GColor("color.fg.interpreterconsole.error");
-	private static final Color BG_COLOR = new GColor("color.bg.interpreterconsole");
+	private static final GColor NORMAL_COLOR = new GColor("color.fg.interpreterconsole");
+	private static final GColor ERROR_COLOR = new GColor("color.fg.interpreterconsole.error");
+	private static final GColor BG_COLOR = new GColor("color.bg.interpreterconsole");
 
 	public enum TextType {
 		STDOUT, STDERR, STDIN;
@@ -83,16 +82,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private boolean caretGuard = true;
 	private PluginTool tool;
-
-	private static SimpleAttributeSet createAttributes(Font font, Color color) {
-		SimpleAttributeSet attributeSet = new SimpleAttributeSet();
-		attributeSet.addAttribute(StyleConstants.FontFamily, font.getFamily());
-		attributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
-		attributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
-		attributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		attributeSet.addAttribute(StyleConstants.Foreground, color);
-		return attributeSet;
-	}
 
 	public InterpreterPanel(PluginTool tool, InterpreterConnection interpreter) {
 		this.tool = tool;
@@ -373,9 +362,11 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private void updateFontAttributes(Font font) {
 		Font boldFont = font.deriveFont(Font.BOLD);
-		STDOUT_SET = createAttributes(font, NORMAL_COLOR);
-		STDERR_SET = createAttributes(font, ERROR_COLOR);
-		STDIN_SET = createAttributes(boldFont, NORMAL_COLOR);
+
+		STDOUT_SET = new GAttributes(font, NORMAL_COLOR);
+		STDOUT_SET = new GAttributes(font, NORMAL_COLOR);
+		STDERR_SET = new GAttributes(font, ERROR_COLOR);
+		STDIN_SET = new GAttributes(boldFont, NORMAL_COLOR);
 
 		setTextPaneFont(inputTextPane, boldFont);
 		setTextPaneFont(promptTextPane, font);
@@ -389,8 +380,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
-		options.registerThemeFontBinding(FONT_OPTION_LABEL, FONT_ID, help,
-			FONT_DESCRIPTION);
+		options.registerThemeFontBinding(FONT_OPTION_LABEL, FONT_ID, help, FONT_DESCRIPTION);
 		options.registerOption(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB, help,
 			COMPLETION_WINDOW_TRIGGER_DESCRIPTION);
 
@@ -490,8 +480,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			completionInsertionPosition = inputTextPane.getCaretPosition();
 
 			String text = getInputTextPaneText();
-			List<CodeCompletion> completions = InterpreterPanel.this.interpreter.getCompletions(
-				text, completionInsertionPosition);
+			List<CodeCompletion> completions =
+				InterpreterPanel.this.interpreter.getCompletions(text, completionInsertionPosition);
 			completionWindow.updateCompletionList(completions);
 		});
 	}

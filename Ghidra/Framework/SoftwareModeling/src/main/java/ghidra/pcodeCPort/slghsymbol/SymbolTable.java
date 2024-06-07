@@ -15,18 +15,14 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.utils.XmlUtils;
-import ghidra.sleigh.grammar.Location;
+import ghidra.program.model.pcode.Encoder;
 
 public class SymbolTable {
 
@@ -187,131 +183,32 @@ public class SymbolTable {
 		}
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<symbol_table");
-		s.append(" scopesize=\"");
-		s.print(table.size());
-		s.append("\"");
-		s.append(" symbolsize=\"");
-		s.print(symbollist.size());
-		s.append("\">\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SYMBOL_TABLE);
+		encoder.writeSignedInteger(ATTRIB_SCOPESIZE, table.size());
+		encoder.writeSignedInteger(ATTRIB_SYMBOLSIZE, symbollist.size());
 		for (int i = 0; i < table.size(); ++i) {
-			s.append("<scope id=\"0x");
-			s.append(Long.toHexString(table.get(i).getId()));
-			s.append("\"");
-			s.append(" parent=\"0x");
-			if (table.get(i).getParent() == null) {
-				s.append("0");
+			encoder.openElement(ELEM_SCOPE);
+			encoder.writeUnsignedInteger(ATTRIB_ID, table.get(i).getId());
+			if (table.get(i).parent == null) {
+				encoder.writeUnsignedInteger(ATTRIB_PARENT, 0);
 			}
 			else {
-				s.append(Long.toHexString(table.get(i).getParent().getId()));
+				encoder.writeUnsignedInteger(ATTRIB_PARENT, table.get(i).parent.getId());
 			}
-			s.append("\"/>\n");
+			encoder.closeElement(ELEM_SCOPE);
 		}
 
 		// First save the headers
 		for (int i = 0; i < symbollist.size(); ++i) {
-			symbollist.get(i).saveXmlHeader(s);
+			symbollist.get(i).encodeHeader(encoder);
 		}
 
 		// Now save the content of each symbol
 		for (int i = 0; i < symbollist.size(); ++i) { // Must save IN ORDER
-			symbollist.get(i).saveXml(s);
+			symbollist.get(i).encode(encoder);
 		}
-		s.append("</symbol_table>\n");
-	}
-
-	public void restoreXml(Element el, SleighBase trans) {
-		int size = XmlUtils.decodeUnknownInt(el.getAttributeValue("scopesize"));
-		for (int i = 0; i < size; i++) {
-			table.push_back(null);
-		}
-		size = XmlUtils.decodeUnknownInt(el.getAttributeValue("symbolsize"));
-		for (int i = 0; i < size; i++) {
-			symbollist.push_back(null);
-		}
-
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		for (int i = 0; i < table.size(); ++i) { // Restore the scopes
-			Element subel = (Element) iter.next();
-			if (!subel.getName().equals("scope")) {
-				throw new SleighError("Misnumbered symbol scopes", null);
-			}
-			int id = XmlUtils.decodeUnknownInt(subel.getAttributeValue("id"));
-			int parent = XmlUtils.decodeUnknownInt(subel.getAttributeValue("parent"));
-			SymbolScope parscope = (parent == id) ? null : table.get(parent);
-			table.set(id, new SymbolScope(parscope, id));
-		}
-		curscope = table.get(0); // Current scope is global
-
-		// Now restore the symbol shells
-		for (int i = 0; i < symbollist.size(); ++i) {
-			Element child = (Element) iter.next();
-			restoreSymbolHeader(child);
-		}
-		// Now restore the symbol content
-		while (iter.hasNext()) {
-			Element subel = (Element) iter.next();
-			int id = XmlUtils.decodeUnknownInt(subel.getAttributeValue("id"));
-			SleighSymbol sym = findSymbol(id);
-			sym.restoreXml(subel, trans);
-		}
-	}
-
-	// Put the shell of a symbol in the symbol table
-	// in order to allow recursion
-	public void restoreSymbolHeader(Element el) {
-		SleighSymbol sym;
-		// this is where you can restore the actual location from in the
-		// future if you so wish (of course, all the saveXml...need
-		// to be updated properly too)
-		Location location = null;
-		if (el.getName().equals("userop_head")) {
-			sym = new UserOpSymbol(location);
-		}
-		else if (el.getName().equals("epsilon_sym_head")) {
-			sym = new EpsilonSymbol(location);
-		}
-		else if (el.getName().equals("value_sym_head")) {
-			sym = new ValueSymbol(location);
-		}
-		else if (el.getName().equals("valuemap_sym_head")) {
-			sym = new ValueMapSymbol(location);
-		}
-		else if (el.getName().equals("name_sym_head")) {
-			sym = new NameSymbol(location);
-		}
-		else if (el.getName().equals("varnode_sym_head")) {
-			sym = new VarnodeSymbol(location);
-		}
-		else if (el.getName().equals("context_sym_head")) {
-			sym = new ContextSymbol(location);
-		}
-		else if (el.getName().equals("varlist_sym_head")) {
-			sym = new VarnodeListSymbol(location);
-		}
-		else if (el.getName().equals("operand_sym_head")) {
-			sym = new OperandSymbol(location);
-		}
-		else if (el.getName().equals("start_sym_head")) {
-			sym = new StartSymbol(location);
-		}
-		else if (el.getName().equals("end_sym_head")) {
-			sym = new EndSymbol(location);
-		}
-		else if (el.getName().equals("next2_sym_head")) {
-			sym = new Next2Symbol(location);
-		}
-		else if (el.getName().equals("subtable_sym_head")) {
-			sym = new SubtableSymbol(location);
-		}
-		else {
-			throw new SleighError("Bad symbol xml", null);
-		}
-		sym.restoreXmlHeader(el); // Restore basic elements of symbol
-		symbollist.set(sym.id, sym); // Put the basic symbol in the table
-		table.get(sym.scopeid).addSymbol(sym); // to allow recursion
+		encoder.closeElement(ELEM_SYMBOL_TABLE);
 	}
 
 	// Get rid of unsavable symbols and scopes

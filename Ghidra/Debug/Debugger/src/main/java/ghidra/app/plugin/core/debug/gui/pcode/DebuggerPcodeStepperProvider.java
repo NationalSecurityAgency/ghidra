@@ -26,7 +26,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import db.Transaction;
 import docking.action.DockingAction;
@@ -265,8 +266,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			setFont(fixedWidthFont);
+		protected Font getDefaultFont() {
+			return fixedWidthFont;
 		}
 
 		@Override
@@ -613,7 +614,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTable.setTableHeader(null);
 		pcodeTable.setBackground(COLOR_BACKGROUND);
 		pcodeTable.setSelectionBackground(COLOR_BACKGROUND_CURSOR);
-		pcodeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		pcodeTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		pcodeTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;

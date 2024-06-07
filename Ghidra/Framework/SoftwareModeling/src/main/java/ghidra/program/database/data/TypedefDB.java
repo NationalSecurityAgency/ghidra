@@ -22,6 +22,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
@@ -249,29 +250,54 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType obj) {
-		if (obj == this) {
+	protected boolean isEquivalent(DataType dt, DataTypeConflictHandler handler) {
+		if (dt == this) {
 			return true;
 		}
-		if (obj == null || !(obj instanceof TypeDef)) {
+		if (dt == null || !(dt instanceof TypeDef)) {
 			return false;
 		}
-		TypeDef td = (TypeDef) obj;
+		TypeDef td = (TypeDef) dt;
 		validate(lock);
 
 		boolean autoNamed = isAutoNamed();
 		if (autoNamed != td.isAutoNamed()) {
 			return false;
 		}
+
 		if (!autoNamed && !DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
 			return false;
 		}
+
 		if (!hasSameTypeDefSettings(td)) {
 			return false;
 		}
-		return DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), td.getDataType());
+
+		if (handler != null && ConflictResult.USE_EXISTING == handler.resolveConflict(td, this)) {
+			// treat this type as equivalent if existing type will be used
+			return true;
+		}
+
+		// TODO: add pointer-post-resolve logic with resolving bypass (similar to StructureDB components)
+
+		DataType dataType = getDataType();
+		DataType otherDataType = td.getDataType();
+		if (DataTypeUtilities.isSameDataType(dataType, otherDataType)) {
+			return true;
+		}
+
+		if (handler != null) {
+			handler = handler.getSubsequentHandler();
+		}
+		return DataTypeDB.isEquivalent(dataType, otherDataType, handler);
 	}
 
+	@Override
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
+	}
+
+	@Override
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
 		if (isAutoNamed()) {
 			return; // ignore category change if auto-naming enabled
@@ -387,6 +413,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		return getDataType().getTypeDefSettingsDefinitions();
 	}
 
+	@Override
 	protected Settings doGetDefaultSettings() {
 		DataTypeSettingsDB settings = new DataTypeSettingsDB(dataMgr, this, key);
 		settings.setLock(dataMgr instanceof BuiltInDataTypeManager);
@@ -591,24 +618,22 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	private String generateTypedefName(CategoryPath path) {
-		String newName = TypedefDataType.generateTypedefName(this);
-		DataType dt = dataMgr.getDataType(path, newName);
-		if (dt == null || dt == this) {
-			return newName;
-		}
-
-		String baseName = newName + DataType.CONFLICT_SUFFIX;
-		newName = baseName;
+		String baseName = TypedefDataType.generateTypedefName(this);
+		String testName = baseName;
 		int count = 0;
-		while (true) {
-			dt = dataMgr.getDataType(path, newName);
-			if (dt == null || dt == this) {
-				break;
+		while (!isNameUnusedOrMine(path, testName)) {
+			testName = baseName + DataType.CONFLICT_SUFFIX;
+			if (count > 0) {
+				testName += Integer.toString(count);
 			}
-			count++;
-			newName = baseName + count;
+			++count;
 		}
-		return newName;
+		return testName;
+	}
+
+	private boolean isNameUnusedOrMine(CategoryPath path, String newName) {
+		DataType dt = dataMgr.getDataType(path, newName);
+		return dt == null || dt == this;
 	}
 
 	boolean updateAutoName(boolean notify) {

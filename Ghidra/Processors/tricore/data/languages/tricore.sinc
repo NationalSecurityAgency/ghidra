@@ -7824,8 +7824,8 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	local EA0:4;
 	local EA4:4;
 	CircularAddressingMode2(Rpe1215, Rpo1215, EA0, EA4, off10, 4);
-	*[ram]:2 EA0 = Rp0811[0,32];
-	*[ram]:2 EA4 = Rp0811[32,32];
+	*[ram]:4 EA0 = Rp0811[0,32];
+	*[ram]:4 EA4 = Rp0811[32,32];
 }
 
 # ST.DA off18, P[a] (ABS)(Absolute Addressing Mode)

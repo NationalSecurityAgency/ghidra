@@ -23,7 +23,7 @@ import java.util.*;
 import org.junit.*;
 
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.db.DummyTestProgramCorrelator;
@@ -317,16 +317,14 @@ public class TagFilterTest extends VTBaseTestCase {
 
 	private void notifyTagAdded(VTMatchTag newTag) throws IOException {
 		List<DomainObjectChangeRecord> subEvents = new ArrayList<>();
-		subEvents.add(new VersionTrackingChangeRecord(VTChangeManager.DOCR_VT_TAG_ADDED, newTag,
-			null, newTag));
+		subEvents.add(new VersionTrackingChangeRecord(VTEvent.TAG_ADDED, newTag, null, newTag));
 		listener.sessionUpdated(
 			new DomainObjectChangedEvent(new DummyDomainObject(this), subEvents));
 	}
 
 	private void notifyTagRemoved(String tagName) throws IOException {
 		List<DomainObjectChangeRecord> subEvents = new ArrayList<>();
-		subEvents.add(new VersionTrackingChangeRecord(VTChangeManager.DOCR_VT_TAG_REMOVED, null,
-			tagName, null));
+		subEvents.add(new VersionTrackingChangeRecord(VTEvent.TAG_REMOVED, null, tagName, null));
 		listener.sessionUpdated(
 			new DomainObjectChangedEvent(new DummyDomainObject(this), subEvents));
 	}

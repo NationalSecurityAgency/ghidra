@@ -28,6 +28,11 @@ public class NoneAutoReadMemorySpec implements AutoReadMemorySpec {
 	public static final String CONFIG_NAME = "0_READ_NONE";
 
 	@Override
+	public boolean equals(Object obj) {
+		return this.getClass() == obj.getClass();
+	}
+
+	@Override
 	public String getConfigName() {
 		return CONFIG_NAME;
 	}

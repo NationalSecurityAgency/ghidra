@@ -38,7 +38,7 @@ import ghidra.program.model.listing.Program;
 @PluginInfo(
 	status = PluginStatus.HIDDEN,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.UNMANAGED,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Program Merge Manager",
 	description = "Manage merge of Programs",
 	servicesProvided = { ProgramManager.class },

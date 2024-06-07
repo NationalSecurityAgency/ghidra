@@ -54,11 +54,9 @@ public class CheckInTask extends VersionControlTask implements CheckinHandler {
 	private void promptUser() throws CancelledException {
 		if (newFile) {
 			newFile = false;
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCancelled();
 			if (actionID != VersionControlDialog.APPLY_TO_ALL) {
-				showDialog(false, df.getName(), df.isLinkFile()); // false==> checking in vs. 
+				showDialog(false, df);
 				// adding to version control
 				if (actionID == VersionControlDialog.CANCEL) {
 					monitor.cancel();
@@ -69,23 +67,16 @@ public class CheckInTask extends VersionControlTask implements CheckinHandler {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.task.Task#run(ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void run(TaskMonitor myMonitor) {
 		this.monitor = myMonitor;
 		myMonitor.setMessage("Examining selected file(s)");
-//		checkFilesInUse();
-
 		String currentName = null;
-		String currentContentType = null;
 		try {
 			for (int i = 0; i < list.size() && actionID != VersionControlDialog.CANCEL; i++) {
 
 				df = list.get(i);
 				currentName = df.getName();
-				currentContentType = df.getContentType();
 				newFile = true;
 
 				if (i != 0) {
@@ -94,26 +85,22 @@ public class CheckInTask extends VersionControlTask implements CheckinHandler {
 						Thread.sleep(200);
 					}
 					catch (InterruptedException e2) {
+						break;
 					}
 				}
 
 				myMonitor.setMessage("Initiating Check In for " + currentName);
 				try {
-					df.checkin(this, false, myMonitor);
+					df.checkin(this, myMonitor);
 				}
 				catch (VersionException e) {
-					if (VersionExceptionHandler.isUpgradeOK(parent, df, "Checkin", e)) {
-						df.checkin(this, true, myMonitor);
-					}
+					VersionExceptionHandler.showVersionError(parent, df.getName(),
+						df.getContentType(), "Checkin", e);
 				}
 				if (myMonitor.isCancelled()) {
 					break;
 				}
 			}
-		}
-		catch (VersionException e) {
-			VersionExceptionHandler.showVersionError(parent, df.getName(), currentContentType,
-				"Checkin", e);
 		}
 		catch (CancelledException e) {
 			Msg.info(this, "Check In Process was canceled");
@@ -125,18 +112,12 @@ public class CheckInTask extends VersionControlTask implements CheckinHandler {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.data.CheckinHandler#getComment()
-	 */
 	@Override
 	public String getComment() throws CancelledException {
 		promptUser();
 		return comments;
 	}
 
-	/*
-	 * @see ghidra.framework.data.CheckinHandler#keepCheckedOut()
-	 */
 	@Override
 	public boolean keepCheckedOut() throws CancelledException {
 		promptUser();

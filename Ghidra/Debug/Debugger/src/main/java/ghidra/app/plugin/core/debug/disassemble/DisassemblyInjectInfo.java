@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.debug.disassemble;
 
 import java.lang.annotation.*;
 
+import ghidra.trace.model.guest.TracePlatform;
+
 /**
  * Information about the applicability of a disassembly inject
  */
@@ -24,9 +26,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DisassemblyInjectInfo {
 	/**
-	 * A language-compiler-ID pair
+	 * A language-compiler-ID pair identifying a trace platform
 	 */
-	public @interface CompilerInfo {
+	public @interface PlatformInfo {
 		/**
 		 * The language ID, e.g., "x86:64:LE:default"
 		 * 
@@ -46,12 +48,12 @@ public @interface DisassemblyInjectInfo {
 	}
 
 	/**
-	 * A list of language-compiler-ID pairs for which this inject applies
+	 * A list of platforms for which this inject applies
 	 * 
-	 * @see DisassemblyInject#isApplicable(ghidra.trace.model.Trace)
-	 * @return the language-compiler-ID pairs
+	 * @see DisassemblyInject#isApplicable(TracePlatform)
+	 * @return the platforms
 	 */
-	CompilerInfo[] compilers();
+	PlatformInfo[] platforms();
 
 	/**
 	 * The "position" of this inject's invocation

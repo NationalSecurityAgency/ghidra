@@ -61,6 +61,7 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 		}
 		add(label);
 		add(component);
+		component.getAccessibleContext().setAccessibleName(label.getText());
 	}
 
 	@Override

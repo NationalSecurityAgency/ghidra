@@ -24,9 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.script.AskDialog;
-import ghidra.pty.Pty;
+import ghidra.pty.*;
 import ghidra.pty.PtyChild.Echo;
-import ghidra.pty.PtySession;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
@@ -47,33 +46,6 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 			throw new CancelledException();
 		}
 		return dialog.getValueAsString();
-	}
-
-	public static class StreamPumper extends Thread {
-		private final InputStream in;
-		private final OutputStream out;
-
-		public StreamPumper(InputStream in, OutputStream out) {
-			setDaemon(true);
-			this.in = in;
-			this.out = out;
-		}
-
-		@Override
-		public void run() {
-			byte[] buf = new byte[1024];
-			try {
-				while (true) {
-					int len = in.read(buf);
-					if (len <= 0) {
-						break;
-					}
-					out.write(buf, 0, len);
-				}
-			}
-			catch (IOException e) {
-			}
-		}
 	}
 
 	@Test

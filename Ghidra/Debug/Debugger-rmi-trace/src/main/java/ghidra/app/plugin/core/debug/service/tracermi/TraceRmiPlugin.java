@@ -31,6 +31,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -62,6 +63,11 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 		@Override
 		public void close() {
 			// Nothing
+		}
+
+		@Override
+		public void reportError(Throwable e) {
+			Msg.error(e.getMessage(), e);
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,15 +175,20 @@ public class SymbolRecords {
 	 * @param streamNumber the stream number
 	 * @return the space
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException upon error reading from file
 	 * @throws PdbException upon processing error
 	 */
 	public int getCvSigLength(int streamNumber)
-			throws CancelledException, IOException, PdbException {
+			throws CancelledException, PdbException {
 		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			return 0; // returning inconsequential value; fact of NIL will be dealt with elsewhere
 		}
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, 4);
+		PdbByteReader reader;
+		try {
+			reader = pdb.getReaderForStreamNumber(streamNumber, 0, 4);
+		}
+		catch (IOException e) {
+			throw new PdbException("PDB Error: Not enough data to read CvSigLength");
+		}
 		if (getSig) {
 			cvSignature = reader.parseInt();
 		}

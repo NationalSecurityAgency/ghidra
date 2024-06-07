@@ -1355,7 +1355,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * @return true if the call also falls through to this instruction
 	 */
 	private boolean isNoReturnCall(Instruction instr, Address target) {
-		// if allready overriden, return
+		// if already overridden, return
 		// is this function a call fixup
 		if (program == null) {
 			return false; // can't tell without program
@@ -1389,7 +1389,12 @@ public class Disassembler implements DisassemblerConflictHandler {
 			RegisterValue contextValue = conflict.getParseContextValue();
 			if (contextValue != null) {
 				try {
-					program.getProgramContext().setRegisterValue(address, address, contextValue);
+					RegisterValue curContextValue = program.getProgramContext().getRegisterValue(contextValue.getRegister(), address);
+
+					// only store if different than what is already there, which could be a default value
+					if (!contextValue.equals(curContextValue)) {
+						program.getProgramContext().setRegisterValue(address, address, contextValue);
+					}
 				}
 				catch (ContextChangeException e) {
 					// ignore - existing instruction likely blocked context modification

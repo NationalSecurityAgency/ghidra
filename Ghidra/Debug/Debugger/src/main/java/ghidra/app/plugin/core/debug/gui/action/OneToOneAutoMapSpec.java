@@ -24,7 +24,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.TraceEvent;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -42,7 +42,7 @@ public class OneToOneAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public Collection<TraceChangeType<?, ?>> getChangeTypes() {
+	public Collection<TraceEvent<?, ?>> getChangeTypes() {
 		return List.of();
 	}
 

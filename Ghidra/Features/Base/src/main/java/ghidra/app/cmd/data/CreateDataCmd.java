@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataUtilities;
@@ -33,7 +32,7 @@ import ghidra.program.model.listing.Program;
  * 
  * @see DataUtilities#createData(Program, Address, DataType, int, boolean, DataUtilities.ClearDataMode)
  */
-public class CreateDataCmd implements Command {
+public class CreateDataCmd implements Command<Program> {
 
 	private Address addr;
 	private DataType newDataType;
@@ -119,10 +118,9 @@ public class CreateDataCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 		try {
-			DataUtilities.createData((Program) obj, addr, newDataType, -1, stackPointers,
-				clearMode);
+			DataUtilities.createData(program, addr, newDataType, -1, stackPointers, clearMode);
 			return true;
 		}
 		catch (Exception e) {

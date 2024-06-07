@@ -54,18 +54,18 @@ public class X86_32_ElfExtension extends ElfExtension {
 		}
 		
 		super.processGotPlt(elfLoadHelper, monitor);
-		
-		processX86Plt(elfLoadHelper, monitor);
+
+		processX86PltSections(elfLoadHelper, monitor);
 	}
 
 	/**
 	 * Handle the case where GOT entry offset are computed based upon EBX.  
 	 * This implementation replaces the old "magic map" which had previously been used.
-	 * @param elfLoadHelper
-	 * @param monitor
-	 * @throws CancelledException
+	 * @param elfLoadHelper ELF load helper
+	 * @param monitor task monitor
+	 * @throws CancelledException thrown if load cancelled
 	 */
-	private void processX86Plt(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) throws CancelledException {
+	private void processX86PltSections(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) throws CancelledException {
 		
 		// TODO: Does 64-bit have a similar mechanism?
 
@@ -73,37 +73,50 @@ public class X86_32_ElfExtension extends ElfExtension {
 		// the unresolved issue is to determine the length of the PLT area without a section
 		
 		ElfHeader elfHeader = elfLoadHelper.getElfHeader();
-		ElfSectionHeader pltSection = elfHeader.getSection(ElfSectionHeaderConstants.dot_plt);
-		if (pltSection == null || !pltSection.isExecutable()) {
-			return;
-		}
-		
 		ElfDynamicTable dynamicTable = elfHeader.getDynamicTable();
 		if (dynamicTable == null || !dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTGOT)) {
 			return; // avoid NotFoundException which causes issues for importer
 		}
 		
-		Program program = elfLoadHelper.getProgram();
-		Memory memory = program.getMemory();
-		
-		// MemoryBlock pltBlock = getBlockPLT(pltSection);
-		MemoryBlock pltBlock = memory.getBlock(pltSection.getNameAsString());
-		if (pltBlock == null) {
-			return;
-		}
-
-		// Paint pltgot base over .plt section to allow thunks to be resolved during analysis
-		Register ebxReg = program.getRegister("EBX");
+		long pltgotOffset;
 		try {
-			long pltgotOffset = elfHeader.adjustAddressForPrelink(dynamicTable.getDynamicValue(
-					ElfDynamicType.DT_PLTGOT));
+			pltgotOffset = elfHeader.adjustAddressForPrelink(dynamicTable.getDynamicValue(
+				ElfDynamicType.DT_PLTGOT));
 			pltgotOffset = elfLoadHelper.getDefaultAddress(pltgotOffset).getOffset(); // adjusted for image base
-			RegisterValue pltgotValue = new RegisterValue(ebxReg, BigInteger.valueOf(pltgotOffset));
-			program.getProgramContext().setRegisterValue(pltBlock.getStart(), pltBlock.getEnd(), pltgotValue);
-		} catch (NotFoundException | ContextChangeException e) {
+		}
+		catch (NotFoundException e) {
 			throw new AssertException("unexpected", e);
 		}
+		
+		Program program = elfLoadHelper.getProgram();
+		Register ebxReg = program.getRegister("EBX");
+		Memory memory = program.getMemory();
+		
+		String pltPrefix = ElfSectionHeaderConstants.dot_plt + ".";
 
+		for (ElfSectionHeader section : elfHeader.getSections()) {
+			monitor.checkCancelled();
+			String sectionName = section.getNameAsString();
+			if (!section.isExecutable()) {
+				continue;
+			}
+			if (sectionName.equals(ElfSectionHeaderConstants.dot_plt) || sectionName.startsWith(pltPrefix)) {
+				
+				MemoryBlock pltBlock = memory.getBlock(sectionName);
+				if (pltBlock == null) {
+					elfLoadHelper.log("Skipped processing of " + sectionName + ": memory block not found");
+					continue;
+				}
+				
+				// Paint pltgot base over .plt section as EBX value to allow thunks to be resolved during analysis
+				try {
+					RegisterValue pltgotValue = new RegisterValue(ebxReg, BigInteger.valueOf(pltgotOffset));
+					program.getProgramContext().setRegisterValue(pltBlock.getStart(), pltBlock.getEnd(), pltgotValue);
+				} catch (ContextChangeException e) {
+					throw new AssertException("unexpected", e);
+				}
+			}
+		}
 	}
 
 }

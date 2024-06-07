@@ -74,6 +74,8 @@ public class DataTypeArchiveGTree extends GTree {
 		}
 
 		addTreeExpansionListener(cleanupListener);
+
+		setAccessibleNamePrefix("Data Type Manager");
 	}
 
 	private int getHeight(GTreeNode rootNode, DataTypeTreeRenderer renderer) {

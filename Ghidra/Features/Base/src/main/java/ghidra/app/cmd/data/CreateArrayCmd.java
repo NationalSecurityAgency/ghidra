@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -27,7 +26,7 @@ import ghidra.util.Msg;
  * Command to create an array.  All conflicting data will be cleared.
  * 
  */
-public class CreateArrayCmd implements Command {
+public class CreateArrayCmd implements Command<Program> {
 	private String msg;
 	private Address addr;
 	private int numElements;
@@ -42,7 +41,7 @@ public class CreateArrayCmd implements Command {
 	 * @param dt the dataType of the elements in the array to be created.
 	 * @param elementLength the size of an element in the array.  Only used for Dynamic
 	 * datatype <code>dt</code> when {@link Dynamic#canSpecifyLength()} returns true.
-	 */	
+	 */
 	public CreateArrayCmd(Address addr, int numElements, DataType dt, int elementLength) {
 		this.addr = addr;
 		this.numElements = numElements;
@@ -51,8 +50,7 @@ public class CreateArrayCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+	public boolean applyTo(Program program) {
 		Listing listing = program.getListing();
 		try {
 			ArrayDataType adt = new ArrayDataType(dataType, numElements, elementLength,
@@ -68,7 +66,8 @@ public class CreateArrayCmd implements Command {
 			}
 			listing.clearCodeUnits(addr, endAddr, false);
 			listing.createData(addr, adt, adt.getLength());
-		} catch (AddressOverflowException e1) {
+		}
+		catch (AddressOverflowException e1) {
 			msg = "Can't create data because length exceeds address space";
 			return false;
 		}
@@ -81,7 +80,7 @@ public class CreateArrayCmd implements Command {
 			Msg.error(this, msg, e);
 			return false;
 		}
-		return true; 
+		return true;
 	}
 
 	@Override

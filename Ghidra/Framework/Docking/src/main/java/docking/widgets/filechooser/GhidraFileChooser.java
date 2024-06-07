@@ -558,7 +558,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 	private JScrollPane buildDirectoryList() {
 		directoryListModel = new DirectoryListModel();
-		directoryList = new DirectoryList(this, directoryListModel, rootPanel.getFont());
+		directoryList = new DirectoryList(this, directoryListModel);
 		directoryList.setName("LIST");
 		directoryList.setBackground(BACKGROUND_COLOR);
 

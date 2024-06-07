@@ -82,6 +82,25 @@ public class Dummy {
 	}
 
 	/**
+	 * Creates a dummy {@link Predicate} that always returns true.
+	 * @param <T> the type of the value being tested
+	 * @return the predicate that always returns true
+	 */
+	public static <T> Predicate<T> predicate() {
+		return t -> true;
+	}
+
+	/**
+	 * Creates a dummy {@link BiPredicate} that always returns true.
+	 * @param <T> the type of the first argument to the predicate
+	 * @param <U> the type of the second argument the predicate
+	 * @return the BiPredicate that always returns true
+	 */
+	public static <T, U> BiPredicate<T, U> biPredicate() {
+		return (t, u) -> true;
+	}
+
+	/**
 	 * Returns the given consumer object if it is not {@code null}.  Otherwise, a {@link #consumer()}
 	 * is returned.  This is useful to avoid using {@code null}.
 	 *
@@ -148,4 +167,29 @@ public class Dummy {
 	public static Runnable ifNull(Runnable r) {
 		return r == null ? runnable() : r;
 	}
+
+	/**
+	 * Returns the given Predicate object if it is not {@code null}.  Otherwise, a 
+	 * {@link #predicate()} (which always returns true) is returned.  This is useful to avoid
+	 * using {@code null}.
+	 *
+	 * @param p the predicate function to check for {@code null}
+	 * @return a non-null predicate
+	 */
+	public static <T> Predicate<T> ifNull(Predicate<T> p) {
+		return p == null ? predicate() : p;
+	}
+
+	/**
+	 * Returns the given BiPredicate object if it is not {@code null}.  Otherwise, a 
+	 * {@link #biPredicate()} (which always returns true) is returned.  This is useful to avoid
+	 * using {@code null}.
+	 *
+	 * @param p the predicate function to check for {@code null}
+	 * @return a non-null predicate
+	 */
+	public static <T, U> BiPredicate<T, U> ifNull(BiPredicate<T, U> p) {
+		return p == null ? biPredicate() : p;
+	}
+
 }

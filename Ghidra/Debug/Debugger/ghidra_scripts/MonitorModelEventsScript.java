@@ -20,9 +20,9 @@ import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetThread;
-import ghidra.debug.flatapi.FlatDebuggerAPI;
+import ghidra.debug.flatapi.FlatDebuggerRecorderAPI;;
 
-public class MonitorModelEventsScript extends GhidraScript implements FlatDebuggerAPI {
+public class MonitorModelEventsScript extends GhidraScript implements FlatDebuggerRecorderAPI {
 	static DebuggerModelListener listener = new DebuggerModelListener() {
 		@Override
 		public void attributesChanged(TargetObject object, Collection<String> removed,

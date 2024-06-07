@@ -16,21 +16,19 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.NotFoundException;
 
 /**
  * Command to reorder children in a module.
- * 
- * 
  */
-public class ReorderModuleCmd implements Command {
+public class ReorderModuleCmd implements Command<Program> {
 	private String moduleName;
 	private String childName;
 	private int index;
-	private String statusMsg; 
+	private String statusMsg;
 	private String treeName;
+
 	/**
 	 * Constructor for ReorderModuleCmd.
 	 * @param treeName tree that contains the parent module identified by
@@ -39,41 +37,33 @@ public class ReorderModuleCmd implements Command {
 	 * @param childName name of the child to move to the new index
 	 * @param index new index for the child
 	 */
-	public ReorderModuleCmd(String treeName, String parentModuleName, 
-							String childName, int index) {
+	public ReorderModuleCmd(String treeName, String parentModuleName, String childName, int index) {
 		this.treeName = treeName;
 		moduleName = parentModuleName;
 		this.childName = childName;
 		this.index = index;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
 		Listing listing = program.getListing();
 		ProgramModule m = listing.getModule(treeName, moduleName);
 		try {
 			m.moveChild(childName, index);
 			return true;
-		} catch (NotFoundException e) {
-			statusMsg = e.getMessage();	
+		}
+		catch (NotFoundException e) {
+			statusMsg = e.getMessage();
 		}
 		return false;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Reorder";
 	}

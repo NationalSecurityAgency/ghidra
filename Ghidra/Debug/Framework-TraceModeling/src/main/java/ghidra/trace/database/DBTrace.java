@@ -15,6 +15,7 @@
  */
 package ghidra.trace.database;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -25,6 +26,7 @@ import db.DBHandle;
 import db.Transaction;
 import generic.depends.DependentService;
 import generic.depends.err.ServiceConstructionException;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.Options;
 import ghidra.lifecycle.Internal;
@@ -59,12 +61,12 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.property.TraceAddressPropertyManager;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.util.*;
 import ghidra.trace.util.CopyOnWrite.WeakHashCowSet;
 import ghidra.trace.util.CopyOnWrite.WeakValueHashCowMap;
-import ghidra.trace.util.TraceChangeManager;
-import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedDomainObjectAdapter;
+import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -150,9 +152,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected ListenerSet<TraceProgramViewListener> viewListeners =
 		new ListenerSet<>(TraceProgramViewListener.class, true);
 
+	private volatile boolean closing;
+
 	public DBTrace(String name, CompilerSpec baseCompilerSpec, Object consumer)
 			throws IOException, LanguageNotFoundException {
-		super(new DBHandle(), DBOpenMode.CREATE, TaskMonitor.DUMMY, name, DB_TIME_INTERVAL,
+		super(new DBHandle(), OpenMode.CREATE, TaskMonitor.DUMMY, name, DB_TIME_INTERVAL,
 			DB_BUFFER_SIZE, consumer);
 
 		this.storeFactory = new DBCachedObjectStoreFactory(this);
@@ -165,7 +169,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			space -> getAddressSet(space));
 
 		try (Transaction tx = this.openTransaction("Create")) {
-			initOptions(DBOpenMode.CREATE);
+			initOptions(OpenMode.CREATE);
 			init();
 		}
 		catch (VersionException | CancelledException e) {
@@ -187,7 +191,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		return new AddressSet(space.getMinAddress(), space.getMaxAddress());
 	}
 
-	public DBTrace(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor, Object consumer)
+	public DBTrace(DBHandle dbh, OpenMode openMode, TaskMonitor monitor, Object consumer)
 			throws CancelledException, VersionException, IOException, LanguageNotFoundException {
 		super(dbh, openMode, monitor, "Untitled", DB_TIME_INTERVAL, DB_BUFFER_SIZE, consumer);
 		this.storeFactory = new DBCachedObjectStoreFactory(this);
@@ -207,9 +211,9 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		programView = createProgramView(0);
 	}
 
-	protected void initOptions(DBOpenMode openMode) throws IOException, CancelledException {
+	protected void initOptions(OpenMode openMode) throws IOException, CancelledException {
 		Options traceInfo = getOptions(TRACE_INFO);
-		if (openMode == DBOpenMode.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			traceInfo.setString(NAME, name);
 			traceInfo.setDate(DATE_CREATED, new Date());
 			traceInfo.setString(BASE_LANGUAGE, baseLanguage.getLanguageID().getIdAsString());
@@ -609,7 +613,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		DBTraceProgramView view;
 		try (LockHold hold = lockRead()) {
 			view = fixedProgramViews.computeIfAbsent(snap, s -> {
-				Msg.debug(this, "Creating fixed view at snap=" + snap);
+				Msg.trace(this, "Creating fixed view at snap=" + snap);
 				return new DBTraceProgramView(this, snap, baseCompilerSpec);
 			});
 		}
@@ -657,8 +661,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.sourceArchiveChanged(sourceArchiveID.getValue());
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceSourceArchiveChangeType.CHANGED, null, sourceArchiveID));
+		setChanged(new TraceChangeRecord<>(TraceEvents.SOURCE_TYPE_ARCHIVE_CHANGED, null,
+			sourceArchiveID));
 	}
 
 	public void sourceArchiveAdded(UniversalID sourceArchiveID) {
@@ -666,7 +670,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			traceChangeSet.sourceArchiveAdded(sourceArchiveID.getValue());
 		}
 		setChanged(
-			new TraceChangeRecord<>(TraceSourceArchiveChangeType.ADDED, null, sourceArchiveID));
+			new TraceChangeRecord<>(TraceEvents.SOURCE_TYPE_ARCHIVE_ADDED, null, sourceArchiveID));
 	}
 
 	public void dataTypeChanged(long changedID, DataType changedType) {
@@ -674,22 +678,21 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			traceChangeSet.dataTypeChanged(changedID);
 		}
 		setChanged(
-			new TraceChangeRecord<>(TraceDataTypeChangeType.CHANGED, null, changedID, changedType));
+			new TraceChangeRecord<>(TraceEvents.DATA_TYPE_CHANGED, null, changedID, changedType));
 	}
 
 	public void dataTypeAdded(long addedID, DataType addedType) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeAdded(addedID);
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceDataTypeChangeType.ADDED, null, addedID, addedType));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_ADDED, null, addedID, addedType));
 	}
 
 	public void dataTypeReplaced(long replacedID, DataTypePath replacedPath, DataTypePath newPath) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(replacedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceDataTypeChangeType.REPLACED, null, replacedID,
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_REPLACED, null, replacedID,
 			replacedPath, newPath));
 	}
 
@@ -697,23 +700,23 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(movedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceDataTypeChangeType.MOVED, null, movedID, oldPath,
-			newPath));
+		setChanged(
+			new TraceChangeRecord<>(TraceEvents.DATA_TYPE_MOVED, null, movedID, oldPath, newPath));
 	}
 
 	public void dataTypeNameChanged(long renamedID, String oldName, String newName) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(renamedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceDataTypeChangeType.RENAMED, null, renamedID,
-			oldName, newName));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_RENAMED, null, renamedID, oldName,
+			newName));
 	}
 
 	public void dataTypeDeleted(long deletedID, DataTypePath deletedPath) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(deletedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceDataTypeChangeType.DELETED, null, deletedID,
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_DELETED, null, deletedID,
 			deletedPath, null));
 	}
 
@@ -722,14 +725,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			traceChangeSet.categoryAdded(addedID);
 		}
 		setChanged(
-			new TraceChangeRecord<>(TraceCategoryChangeType.ADDED, null, addedID, addedCategory));
+			new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_ADDED, null, addedID, addedCategory));
 	}
 
 	public void categoryMoved(long movedID, CategoryPath oldPath, CategoryPath newPath) {
 		if (recordChanges) {
 			traceChangeSet.categoryChanged(movedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceCategoryChangeType.MOVED, null, movedID, oldPath,
+		setChanged(new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_MOVED, null, movedID, oldPath,
 			newPath));
 	}
 
@@ -737,7 +740,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.categoryChanged(renamedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceCategoryChangeType.RENAMED, null, renamedID,
+		setChanged(new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_RENAMED, null, renamedID,
 			oldName, newName));
 	}
 
@@ -745,7 +748,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.categoryChanged(deletedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceCategoryChangeType.DELETED, null, deletedID,
+		setChanged(new TraceChangeRecord<>(TraceEvents.TYPE_CATEGORY_DELETED, null, deletedID,
 			deletedPath, null));
 	}
 
@@ -870,5 +873,30 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	public void updateViewportsSnapshotDeleted(TraceSnapshot snapshot) {
 		allViewports(v -> v.updateSnapshotDeleted(snapshot));
+	}
+
+	@Override
+	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
+		objectManager.flushWbCaches();
+		super.save(comment, monitor);
+	}
+
+	@Override
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		objectManager.flushWbCaches();
+		super.saveToPackedFile(outputFile, monitor);
+	}
+
+	public boolean isClosing() {
+		return closing;
+	}
+
+	@Override
+	protected void close() {
+		closing = true;
+		objectManager.flushWbCaches();
+		super.close();
+		objectManager.waitWbWorkers();
 	}
 }

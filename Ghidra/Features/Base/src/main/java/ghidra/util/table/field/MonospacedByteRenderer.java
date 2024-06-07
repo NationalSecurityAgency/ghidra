@@ -16,10 +16,9 @@
 package ghidra.util.table.field;
 
 import java.awt.Component;
+import java.awt.Font;
 
 import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
 
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.FormatSettingsDefinition;
@@ -29,14 +28,15 @@ import ghidra.util.StringFormat;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class MonospacedByteRenderer extends AbstractGColumnRenderer<Byte[]> {
+
 	@Override
-	protected void configureFont(JTable table, TableModel model, int column) {
-		setFont(getFixedWidthFont());
+	protected Font getDefaultFont() {
+		return fixedWidthFont;
 	}
 
 	private String formatBytes(Byte[] bytes, Settings settings) {
-		boolean bigEndian = (EndianSettingsDefinition.DEF
-				.getChoice(settings) != EndianSettingsDefinition.LITTLE);
+		boolean bigEndian =
+			(EndianSettingsDefinition.DEF.getChoice(settings) != EndianSettingsDefinition.LITTLE);
 
 		int startIx = 0;
 		int endIx = bytes.length;

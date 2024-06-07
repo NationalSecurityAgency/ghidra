@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
-import ghidra.app.plugin.core.reloc.RelocationFixupHandler;
+import ghidra.app.plugin.core.reloc.ElfRelocationFixupHandler;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
@@ -23,51 +23,45 @@ import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.util.CodeUnitInsertionException;
 
-public class Elfx86_32bitRelocationFixupHandler extends RelocationFixupHandler {
+public class Elfx86_32bitRelocationFixupHandler extends ElfRelocationFixupHandler {
+
+	public Elfx86_32bitRelocationFixupHandler() {
+		super(X86_32_ElfRelocationType.class);
+	}
 
 	@Override
 	public boolean processRelocation(Program program, Relocation relocation, Address oldImageBase,
 			Address newImageBase) throws MemoryAccessException, CodeUnitInsertionException {
 
-		switch (relocation.getType()) {
-			case X86_32_ElfRelocationConstants.R_386_NONE:
-			case X86_32_ElfRelocationConstants.R_386_32:
-			case X86_32_ElfRelocationConstants.R_386_PC32:
-			case X86_32_ElfRelocationConstants.R_386_GOT32:
-			case X86_32_ElfRelocationConstants.R_386_PLT32:
-			case X86_32_ElfRelocationConstants.R_386_COPY:
-			case X86_32_ElfRelocationConstants.R_386_GLOB_DAT:
-			case X86_32_ElfRelocationConstants.R_386_JMP_SLOT:
-			case X86_32_ElfRelocationConstants.R_386_RELATIVE:
-			case X86_32_ElfRelocationConstants.R_386_GOTOFF:
-			case X86_32_ElfRelocationConstants.R_386_GOTPC:
-
-			case X86_32_ElfRelocationConstants.R_386_TLS_TPOFF:
-			case X86_32_ElfRelocationConstants.R_386_TLS_IE:
-			case X86_32_ElfRelocationConstants.R_386_TLS_GOTIE:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LE:
-			case X86_32_ElfRelocationConstants.R_386_TLS_GD:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LDM:
-			case X86_32_ElfRelocationConstants.R_386_TLS_GD_32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_GD_PUSH:
-			case X86_32_ElfRelocationConstants.R_386_TLS_GD_CALL:
-			case X86_32_ElfRelocationConstants.R_386_TLS_GD_POP:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LDM_32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LDM_PUSH:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LDM_CALL:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LDM_POP:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LDO_32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_IE_32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_LE_32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_DTPMOD32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_DTPOFF32:
-			case X86_32_ElfRelocationConstants.R_386_TLS_TPOFF32:
-				return process32BitRelocation(program, relocation, oldImageBase, newImageBase);
+		if (relocation.getStatus() != Status.APPLIED) {
+			return false;
 		}
-		return false;
 
+		X86_32_ElfRelocationType type =
+			(X86_32_ElfRelocationType) getRelocationType(relocation.getType());
+		if (type == null) {
+			return false;
+		}
+
+		switch (type) {
+			case R_386_32:
+			case R_386_PC32:
+			case R_386_GOT32:
+			case R_386_PLT32:
+			case R_386_COPY:
+			case R_386_GLOB_DAT:
+			case R_386_JMP_SLOT:
+			case R_386_RELATIVE:
+			case R_386_GOTOFF:
+			case R_386_GOTPC:
+				return process32BitRelocation(program, relocation, oldImageBase, newImageBase);
+
+			default:
+				return false;
+		}
 	}
 
 	@Override

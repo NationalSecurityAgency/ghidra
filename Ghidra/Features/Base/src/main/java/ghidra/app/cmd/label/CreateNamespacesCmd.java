@@ -17,7 +17,6 @@ package ghidra.app.cmd.label;
 
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
@@ -43,7 +42,7 @@ import ghidra.util.exception.InvalidInputException;
  * @since  Tracker Id 619
  * @see    NamespaceUtils
  */
-public class CreateNamespacesCmd implements Command {
+public class CreateNamespacesCmd implements Command<Program> {
 
 	private String statusMsg;
 
@@ -83,11 +82,12 @@ public class CreateNamespacesCmd implements Command {
 	 * @see   <a href="#examples">example format</a>
 	 * @see   <a href="#assumptions">assumptions</a>
 	 */
-	public CreateNamespacesCmd(String namespacesString, Namespace parentNamespace, SourceType source) {
+	public CreateNamespacesCmd(String namespacesString, Namespace parentNamespace,
+			SourceType source) {
 
 		if (namespacesString == null) {
-			throw new NullPointerException("Cannot create namespaces from a "
-					+ "null namespacesString value.");
+			throw new NullPointerException(
+				"Cannot create namespaces from a " + "null namespacesString value.");
 		}
 
 		this.namespacesString = namespacesString;
@@ -95,16 +95,12 @@ public class CreateNamespacesCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
 		try {
-			leafNamespace =
-					NamespaceUtils.createNamespaceHierarchy(namespacesString, rootNamespace,
-						(Program) obj, source);
+			leafNamespace = NamespaceUtils.createNamespaceHierarchy(namespacesString, rootNamespace,
+				program, source);
 
 			if (leafNamespace != null) {
 				return true;

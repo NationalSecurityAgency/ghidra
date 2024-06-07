@@ -84,7 +84,7 @@ bool ArchOption::onOrOff(const string &p)
 void OptionDatabase::registerOption(ArchOption *option)
 
 {
-  uint4 id = ElementId::find(option->getName());	// Option name must match a known element name
+  uint4 id = ElementId::find(option->getName(),0);	// Option name must match a known element name
   optionmap[id] = option;
 }
 

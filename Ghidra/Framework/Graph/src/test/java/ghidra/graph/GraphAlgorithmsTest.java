@@ -320,6 +320,31 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testDominance_GetDominatorGraph_WithDummySource() throws CancelledException {
+
+		TestV v1 = vertex(1);
+		TestV v2 = vertex(2);
+		TestV v3 = vertex(3);
+		TestV v4 = vertex(4);
+
+		//
+		// 3 sources; 1 sink
+		// 
+		// This will trigger the algorithm to use a unifying dummy node for the source.  This used
+		// to lead to a NullPointerException when trying to process the dummy as a dominator.
+		// 
+		edge(v2, v1);
+		edge(v3, v1);
+		edge(v4, v1);
+
+		GDirectedGraph<TestV, GEdge<TestV>> dg =
+			GraphAlgorithms.findDominanceTree(g, TaskMonitor.DUMMY);
+
+		assertContainsEdgesExactly(dg);
+	}
+
 	@Test
 	public void testDominance_GetDominators_Complicated() throws CancelledException {
 
@@ -1924,7 +1949,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 
 		assertThat(entries.size(), is(3));
 		assertThat(entries, hasItems(v1, v4));
-		assertThat(entries, hasItem(isOneOf(v5, v6, v7)));
+		assertThat(entries, hasItem(is(oneOf(v5, v6, v7))));
 
 	}
 

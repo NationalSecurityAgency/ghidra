@@ -19,16 +19,14 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
-import db.DBConstants;
 import db.DBHandle;
-import db.buffers.BufferFile;
-import db.buffers.ManagedBufferFile;
+import db.buffers.*;
 import generic.theme.GIcon;
-import ghidra.framework.data.DBContentHandler;
-import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
+import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -81,8 +79,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 		try {
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, monitor, consumer);
+			dataTypeArchive = new DataTypeArchiveDB(dbh, OpenMode.IMMUTABLE, monitor, consumer);
 			getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 			success = true;
 			return dataTypeArchive;
@@ -136,7 +133,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 		try {
 			bf = dbItem.open(version);
 			dbh = new DBHandle(bf);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, monitor, consumer);
 			getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 			success = true;
@@ -191,7 +188,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 		try {
 			bf = dbItem.openForUpdate(checkoutId);
 			dbh = new DBHandle(bf, recover, monitor);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
 				getDataTypeArchiveChangeSet(dataTypeArchive, bf);
@@ -298,8 +295,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 		try {
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, null, this);
+			dataTypeArchive = new DataTypeArchiveDB(dbh, OpenMode.IMMUTABLE, null, this);
 			return getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 		}
 		catch (VersionException e) {
@@ -369,6 +365,23 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 	@Override
 	public DataTypeArchiveLinkContentHandler getLinkHandler() {
 		return linkHandler;
+	}
+
+	@Override
+	public boolean canResetDBSourceFile() {
+		return true;
+	}
+
+	@Override
+	public void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		if (!(item instanceof LocalDatabaseItem dbItem) ||
+			!(domainObj instanceof DataTypeArchiveDB dataTypeArchive)) {
+			throw new IllegalArgumentException("LocalDatabaseItem and DataTypeArchiveDB required");
+		}
+		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
+		dataTypeArchive.getDBHandle().setDBVersionedSourceFile(bf);
+		getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 	}
 
 }

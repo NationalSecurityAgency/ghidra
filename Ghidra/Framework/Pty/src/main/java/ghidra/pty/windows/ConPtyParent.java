@@ -22,9 +22,4 @@ public class ConPtyParent extends ConPtyEndpoint implements PtyParent {
 			PseudoConsoleHandle pseudoConsoleHandle) {
 		super(writeHandle, readHandle, pseudoConsoleHandle);
 	}
-
-	@Override
-	public void setWindowSize(short cols, short rows) {
-		pseudoConsoleHandle.resize(rows, cols);
-	}
 }

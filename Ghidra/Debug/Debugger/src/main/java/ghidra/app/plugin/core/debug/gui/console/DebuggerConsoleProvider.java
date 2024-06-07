@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.debug.gui.console;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,14 +64,14 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	static final int MIN_ROW_HEIGHT = 16;
 
 	protected enum LogTableColumns implements EnumeratedTableColumn<LogTableColumns, LogRow<?>> {
-		ICON("Icon", Icon.class, LogRow::getIcon, SortDirection.ASCENDING, false),
-		MESSAGE("Message", Object.class, LogRow::getMessage, SortDirection.ASCENDING, false) {
+		ICON("Icon", Icon.class, LogRow::icon, SortDirection.ASCENDING, false),
+		MESSAGE("Message", Object.class, LogRow::message, SortDirection.ASCENDING, false) {
 			@Override
 			public GColumnRenderer<?> getRenderer() {
 				return HtmlOrProgressCellRenderer.INSTANCE;
 			}
 		},
-		ACTIONS("Actions", ActionList.class, LogRow::getActions, SortDirection.DESCENDING, true) {
+		ACTIONS("Actions", ActionList.class, LogRow::actions, SortDirection.DESCENDING, true) {
 			private static final ConsoleActionsCellRenderer RENDERER =
 				new ConsoleActionsCellRenderer();
 
@@ -80,7 +80,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 				return RENDERER;
 			}
 		},
-		TIME("Time", Date.class, LogRow::getDate, SortDirection.DESCENDING, false) {
+		TIME("Time", Date.class, LogRow::date, SortDirection.DESCENDING, false) {
 			@Override
 			public GColumnRenderer<?> getRenderer() {
 				return CustomToStringCellRenderer.TIME_24HMSms;
@@ -187,100 +187,60 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	 * 
 	 * <p>
 	 * This class is public for access by test cases only.
+	 * 
+	 * @param <T> the type of the message
 	 */
 	public interface LogRow<T> {
-		Icon getIcon();
+		Icon icon();
 
-		T getMessage();
+		T message();
 
-		ActionList getActions();
+		ActionList actions();
 
-		Date getDate();
+		Date date();
 
-		ActionContext getActionContext();
+		ActionContext actionContext();
+
+		default boolean activated() {
+			return false;
+		}
 	}
 
-	static class MessageLogRow implements LogRow<String> {
-		private final Icon icon;
-		private final String message;
-		private final Date date;
-		private final ActionContext context;
-		private final ActionList actions;
-
-		public MessageLogRow(Icon icon, String message, Date date, ActionContext context,
-				ActionList actions) {
+	record MessageLogRow(Icon icon, String message, Date date, Throwable error,
+			ActionContext actionContext, ActionList actions) implements LogRow<String> {
+		public MessageLogRow(Icon icon, String message, Date date, Throwable error,
+				ActionContext actionContext, ActionList actions) {
 			this.icon = icon;
 			this.message = message;
 			this.date = date;
-			this.context = context;
+			this.error = error;
+			this.actionContext = actionContext;
 			this.actions = Objects.requireNonNull(actions);
 		}
 
 		@Override
-		public Icon getIcon() {
-			return icon;
-		}
-
-		@Override
-		public String getMessage() {
-			return message;
-		}
-
-		@Override
-		public Date getDate() {
-			return date;
-		}
-
-		@Override
-		public ActionContext getActionContext() {
-			return context;
-		}
-
-		@Override
-		public ActionList getActions() {
-			return actions;
+		public boolean activated() {
+			Msg.showError(this, null, "Inspect error", message, error);
+			return true;
 		}
 	}
 
-	static class MonitorLogRow implements LogRow<MonitorReceiver> {
+	record MonitorLogRow(MonitorReceiver message, Date date, ActionContext actionContext,
+			ActionList actions) implements LogRow<MonitorReceiver> {
+
 		static final GIcon ICON = new GIcon("icon.pending");
 
-		private final MonitorReceiver monitor;
-		private final Date date;
-		private final ActionContext context;
-		private final ActionList actions;
-
-		public MonitorLogRow(MonitorReceiver monitor, Date date, ActionContext context,
+		public MonitorLogRow(MonitorReceiver message, Date date, ActionContext actionContext,
 				ActionList actions) {
-			this.monitor = monitor;
+			this.message = message;
 			this.date = date;
-			this.context = context;
+			this.actionContext = actionContext;
 			this.actions = Objects.requireNonNull(actions);
 		}
 
 		@Override
-		public Icon getIcon() {
+		public Icon icon() {
 			return ICON;
-		}
-
-		@Override
-		public MonitorReceiver getMessage() {
-			return monitor;
-		}
-
-		@Override
-		public ActionList getActions() {
-			return actions;
-		}
-
-		@Override
-		public Date getDate() {
-			return date;
-		}
-
-		@Override
-		public ActionContext getActionContext() {
-			return context;
 		}
 	}
 
@@ -317,6 +277,11 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		public void messageUpdated(MonitorReceiver monitor, String message) {
 			LogRow<?> logRow = logTableModel.getMap().get(contextFor(monitor));
 			logTableModel.updateItem(logRow);
+		}
+
+		@Override
+		public void errorReported(MonitorReceiver monitor, Throwable error) {
+			log(DebuggerResources.ICON_LOG_ERROR, error.getMessage(), error);
 		}
 
 		@Override
@@ -364,7 +329,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			LogTableColumns, ActionContext, LogRow<?>, LogRow<?>> {
 
 		public LogTableModel(PluginTool tool) {
-			super(tool, "Log", LogTableColumns.class, r -> r == null ? null : r.getActionContext(),
+			super(tool, "Log", LogTableColumns.class, r -> r == null ? null : r.actionContext(),
 				r -> r, r -> r);
 		}
 
@@ -435,9 +400,9 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
-		description = "The maximum number of entries in the console log (0 or less for unlimited)",
-		help = @HelpInfo(anchor = "buffer_limit"))
+			name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
+			description = "The maximum number of entries in the console log (0 or less for unlimited)",
+			help = @HelpInfo(anchor = "buffer_limit"))
 	private int logBufferLimit = DebuggerResources.DEFAULT_LOG_BUFFER_LIMIT;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
@@ -492,6 +457,31 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		logFilterPanel = new GhidraTableFilterPanel<>(logTable, logTableModel);
 		mainPanel.add(logFilterPanel, BorderLayout.NORTH);
 
+		String namePrefix = "Debug Console";
+		logTable.setAccessibleNamePrefix(namePrefix);
+		logFilterPanel.setAccessibleNamePrefix(namePrefix);
+
+		logTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON1 & e.getClickCount() == 2) {
+					if (activateSelectedRow()) {
+						e.consume();
+					}
+				}
+			}
+		});
+		logTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (activateSelectedRow()) {
+						e.consume();
+					}
+				}
+			}
+		});
+
 		logTable.setRowHeight(ACTION_BUTTON_SIZE + 2);
 		TableColumnModel columnModel = logTable.getColumnModel();
 
@@ -510,10 +500,17 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		timeCol.setPreferredWidth(15);
 	}
 
+	protected boolean activateSelectedRow() {
+		LogRow<?> row = logFilterPanel.getSelectedItem();
+		if (row == null) {
+			return false;
+		}
+		return row.activated();
+	}
+
 	protected void createActions() {
-		actionClear = ClearAction.builder(plugin)
-				.onAction(this::activatedClear)
-				.buildAndInstallLocal(this);
+		actionClear =
+			ClearAction.builder(plugin).onAction(this::activatedClear).buildAndInstallLocal(this);
 		actionSelectNone = SelectNoneAction.builder(plugin)
 				.popupWhen(ctx -> ctx.getSourceComponent() == logTable)
 				.onAction(this::activatedSelectNone)
@@ -541,7 +538,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			// I guess this can happen because of timing?
 			return super.getActionContext(event);
 		}
-		return sel.getActionContext();
+		return sel.actionContext();
 	}
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT)
@@ -563,17 +560,25 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	}
 
 	protected void log(Icon icon, String message) {
-		log(icon, message, new LogRowConsoleActionContext());
+		log(icon, message, null, new LogRowConsoleActionContext());
 	}
 
 	protected void log(Icon icon, String message, ActionContext context) {
-		logRow(
-			new MessageLogRow(icon, message, new Date(), context, computeToolbarActions(context)));
+		log(icon, message, null, context);
+	}
+
+	protected void log(Icon icon, String message, Throwable error) {
+		log(icon, message, error, new LogRowConsoleActionContext());
+	}
+
+	protected void log(Icon icon, String message, Throwable error, ActionContext context) {
+		logRow(new MessageLogRow(icon, message, new Date(), error, context,
+			computeToolbarActions(context)));
 	}
 
 	protected void logRow(LogRow<?> row) {
 		synchronized (buffer) {
-			LogRow<?> old = logTableModel.deleteKey(row.getActionContext());
+			LogRow<?> old = logTableModel.deleteKey(row.actionContext());
 			if (old != null) {
 				buffer.remove(old);
 			}
@@ -601,7 +606,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		ActionContext context = new LogRowConsoleActionContext();
 		logRow(new MessageLogRow(iconForLevel(event.getLevel()),
 			"<html>" + HTMLUtilities.escapeHTML(event.getMessage().getFormattedMessage()),
-			new Date(event.getTimeMillis()), context, computeToolbarActions(context)));
+			new Date(event.getTimeMillis()), event.getThrown(), context,
+			computeToolbarActions(context)));
 	}
 
 	protected void removeFromLog(ActionContext context) {
@@ -662,16 +668,14 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	}
 
 	protected ActionList computeToolbarActions(ActionContext context) {
-		return streamActions(context)
-				.filter(a -> a.getToolBarData() != null)
+		return streamActions(context).filter(a -> a.getToolBarData() != null)
 				.map(a -> new BoundAction(a, context))
 				.collect(Collectors.toCollection(ActionList::new));
 	}
 
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
-		return streamActions(context)
-				.filter(a -> a.isAddToPopup(context))
+		return streamActions(context).filter(a -> a.isAddToPopup(context))
 				.collect(Collectors.toList());
 	}
 
@@ -679,7 +683,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		synchronized (buffer) {
 			return logTableModel.getModelData()
 					.stream()
-					.filter(r -> ctxCls.isInstance(r.getActionContext()))
+					.filter(r -> ctxCls.isInstance(r.actionContext()))
 					.count();
 		}
 	}

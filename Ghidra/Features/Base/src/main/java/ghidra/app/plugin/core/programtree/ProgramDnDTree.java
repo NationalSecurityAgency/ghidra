@@ -74,6 +74,9 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	/**
 	 * Construct a ProgramDnDTree with the given model.
+	 * @param treeName The name of the tree to show in the tab
+	 * @param model  the tree model
+	 * @param plugin the program tree plugin
 	 */
 	public ProgramDnDTree(String treeName, DefaultTreeModel model, ProgramTreePlugin plugin) {
 		super(model);
@@ -86,6 +89,10 @@ public class ProgramDnDTree extends DragNDropTree {
 
 		mouseListenerDelegate = new JTreeMouseListenerDelegate(this);
 		initializeKeyEvents();
+
+		treeName += " Program Tree";
+		setName(treeName);
+		getAccessibleContext().setAccessibleName(treeName);
 	}
 
 	private void initializeKeyEvents() {
@@ -316,8 +323,7 @@ public class ProgramDnDTree extends DragNDropTree {
 			}
 			try {
 				Object data = e.getTransferable()
-						.getTransferData(
-							SelectionTransferable.localProgramSelectionFlavor);
+						.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
 				SelectionTransferData transferData = (SelectionTransferData) data;
 				return program.getDomainFile().getPathname().equals(transferData.getProgramPath());
 			}
@@ -1285,6 +1291,10 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	void setTreeName(String treeName) {
 		this.treeName = treeName;
+
+		treeName += " Program Tree";
+		setName(treeName);
+		getAccessibleContext().setAccessibleName(treeName);
 	}
 
 	/**

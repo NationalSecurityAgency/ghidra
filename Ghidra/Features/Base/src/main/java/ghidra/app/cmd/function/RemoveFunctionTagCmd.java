@@ -16,16 +16,13 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.*;
 
 /**
  * Command for removing a tag from a function
  */
-public class RemoveFunctionTagCmd implements Command {
+public class RemoveFunctionTagCmd implements Command<Program> {
 
 	private Address entryPoint;
 	private String tagName;
@@ -42,8 +39,7 @@ public class RemoveFunctionTagCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		ProgramDB program = (ProgramDB) obj;
+	public boolean applyTo(Program program) {
 		FunctionManager functionManager = program.getFunctionManager();
 		Function function = functionManager.getFunctionAt(entryPoint);
 		function.removeTag(tagName);

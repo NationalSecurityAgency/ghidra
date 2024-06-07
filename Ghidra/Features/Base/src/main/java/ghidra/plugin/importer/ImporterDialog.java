@@ -15,6 +15,8 @@
  */
 package ghidra.plugin.importer;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -38,6 +40,7 @@ import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
@@ -240,8 +243,7 @@ public class ImporterDialog extends DialogComponentProvider {
 			validateFormInput();
 		});
 
-		Font font = languageButton.getFont();
-		languageButton.setFont(font.deriveFont(Font.BOLD));
+		Gui.registerFont(languageButton, Font.BOLD);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(languageTextField, BorderLayout.CENTER);
@@ -571,7 +573,7 @@ public class ImporterDialog extends DialogComponentProvider {
 
 	private void chooseProjectFolder() {
 		DataTreeDialog dataTreeDialog = new DataTreeDialog(getComponent(),
-			"Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			"Choose a project folder", CHOOSE_FOLDER);
 		dataTreeDialog.setSelectedFolder(destinationFolder);
 		dataTreeDialog.showComponent();
 		DomainFolder folder = dataTreeDialog.getDomainFolder();

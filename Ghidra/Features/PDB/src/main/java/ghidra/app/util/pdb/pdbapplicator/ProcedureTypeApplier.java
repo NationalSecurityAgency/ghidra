@@ -18,7 +18,8 @@ package ghidra.app.util.pdb.pdbapplicator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Pointer;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -29,9 +30,9 @@ public class ProcedureTypeApplier extends AbstractFunctionTypeApplier {
 	// Intended for: AbstractProcedureMsType
 	/**
 	 * Constructor for the applicator that applies {@link AbstractProcedureMsType},
-	 * transforming it into a Ghidra {@link DataType}.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * transforming it into a Ghidra {@link DataType}
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 * @throws IllegalArgumentException Upon invalid arguments
 	 */
 	public ProcedureTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
 		super(applicator);
@@ -43,14 +44,17 @@ public class ProcedureTypeApplier extends AbstractFunctionTypeApplier {
 	}
 
 	@Override
-	protected Pointer getThisPointer(AbstractMsType type, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
+	protected RecordNumber getThisPointerRecordNumber(AbstractMsType type) {
 		return null;
 	}
 
 	@Override
-	protected Composite getContainingComplexApplier(AbstractMsType type, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
+	protected RecordNumber getContainingComplexRecordNumber(AbstractMsType type) {
+		return null;
+	}
+
+	@Override
+	protected Pointer getThisPointer(AbstractMsType type) throws CancelledException, PdbException {
 		return null;
 	}
 

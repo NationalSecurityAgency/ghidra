@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.commentwindow;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.Dimension;
@@ -99,7 +98,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		Container container = commentWindowProvider.getComponent().getParent();
 		assertNotNull(container);
 
-		commentTable = (GTable) findComponentByName(container, "CommentTable");
+		commentTable = (GTable) findComponentByName(container, "Comments Table");
 		assertNotNull(commentTable);
 
 		ThreadedTableModel<?, ?> tableModel = (ThreadedTableModel<?, ?>) commentTable.getModel();

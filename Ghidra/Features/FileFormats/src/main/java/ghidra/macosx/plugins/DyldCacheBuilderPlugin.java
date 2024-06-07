@@ -31,11 +31,9 @@ import ghidra.app.util.opinion.DyldCacheExtractLoader;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.file.formats.ios.dyldcache.DyldCacheFileSystem;
 import ghidra.formats.gfilesystem.*;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugin.importer.ImporterUtilities;
-import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -148,20 +146,17 @@ public class DyldCacheBuilderPlugin extends Plugin {
 	 */
 	private FileSystemRef openDyldCache(Program program, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		FileSystemService fsService = FileSystemService.getInstance();
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		String fsrlProp = props.getString(ProgramMappingService.PROGRAM_SOURCE_FSRL, null);
-		if (fsrlProp == null) {
+		FSRL fsrl = FSRL.fromProgram(program);
+		if (fsrl == null) {
 			throw new IOException("The program does not have an FSRL property");
 		}
-		FSRL fsrl = FSRL.fromString(fsrlProp);
 		String requiredProtocol = DyldCacheFileSystem.DYLD_CACHE_FSTYPE;
 		if (!fsrl.getFS().getProtocol().equals(requiredProtocol)) {
 			throw new IOException("The program's FSRL protocol is '%s' but '%s' is required"
 					.formatted(fsrl.getFS().getProtocol(), requiredProtocol));
 		}
 		FSRLRoot fsrlRoot = fsrl.getFS();
-		return fsService.getFilesystem(fsrlRoot, monitor);
+		return FileSystemService.getInstance().getFilesystem(fsrlRoot, monitor);
 	}
 
 	/**

@@ -117,6 +117,6 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 
 	@Override
 	protected String getDescription() {
-		return "";
+		return "init[0x%x]".formatted(subBlockLength);
 	}
 }

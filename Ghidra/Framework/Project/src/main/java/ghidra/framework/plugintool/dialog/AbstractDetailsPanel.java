@@ -17,79 +17,57 @@ package ghidra.framework.plugintool.dialog;
 
 import static ghidra.util.HTMLUtilities.*;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.*;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 import docking.widgets.label.GDHtmlLabel;
-import generic.theme.GColor;
-import ghidra.util.HTMLUtilities;
+import generic.theme.*;
 
 /**
  * Abstract class that defines a panel for displaying name/value pairs with html-formatting.
  */
 public abstract class AbstractDetailsPanel extends JPanel {
 
+	protected static final String FONT_DEFAULT = "font.panel.details";
+	protected static final String FONT_MONOSPACED = "font.panel.details.monospaced";
+
 	private static final int MIN_WIDTH = 700;
 	protected static final int LEFT_COLUMN_WIDTH = 150;
 	protected static final int RIGHT_MARGIN = 30;
 
 	// Font attributes for the title of each row.
-	protected static SimpleAttributeSet titleAttrSet;
+	protected static GAttributes titleAttrs;
 
 	protected JLabel textLabel;
 	protected JScrollPane sp;
 
+	private ThemeListener themeListener = e -> {
+
+		if (e.isFontChanged(FONT_DEFAULT) || e.isFontChanged(FONT_MONOSPACED)) {
+			updateFieldAttributes();
+		}
+	};
+
+	protected AbstractDetailsPanel() {
+		createFieldAttributes();
+		Gui.addThemeListener(themeListener);
+	}
+
+	private void updateFieldAttributes() {
+		createFieldAttributes();
+		refresh();
+		repaint();
+	}
+
 	/**
-	 * Sets attributes for the different pieces of information being displayed in this 
+	 * Sets attributes for the different pieces of information being displayed in this
 	 * panel.
 	 */
 	protected abstract void createFieldAttributes();
 
-	/**
-	 * Returns a new {@link SimpleAttributeSet} with all attributes set by the caller. 
-	 * 
-	 * @param fontFamily the font to use 
-	 * @param fontSize the font size
-	 * @param bold if true, render text bold
-	 * @param color the foreground text color
-	 * @return a new attribute set
-	 */
-	protected SimpleAttributeSet createAttributeSet(String fontFamily, int fontSize, boolean bold,
-			Color color) {
-
-		SimpleAttributeSet attrSet = new SimpleAttributeSet();
-		attrSet.addAttribute(StyleConstants.FontFamily, fontFamily);
-		attrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(fontSize));
-		attrSet.addAttribute(StyleConstants.Bold, bold);
-		attrSet.addAttribute(StyleConstants.Foreground, color);
-
-		return attrSet;
-	}
-
-	/**
-	 * Returns a new {@link SimpleAttributeSet} with the following default attributes set:
-	 * <ul>
-	 * <li>FontFamily: "Tahoma"</li>
-	 * <li>FontSize: 11</li>
-	 * <li>Bold: True</li>
-	 * </ul>
-	 * 
-	 * @param color the foreground text color
-	 * @return a new attribute set
-	 */
-	protected SimpleAttributeSet createAttributeSet(Color color) {
-
-		SimpleAttributeSet attrSet = new SimpleAttributeSet();
-		attrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		attrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		attrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		attrSet.addAttribute(StyleConstants.Foreground, color);
-
-		return attrSet;
-	}
+	protected abstract void refresh();
 
 	/**
 	 * Clears the text in the details pane.
@@ -127,27 +105,26 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	/**
 	 * Inserts an html-formatted string into the given buffer. This is meant to be used
 	 * for inserting the name of each row in the description text.
-	 * 
+	 *
 	 * @param buffer the string buffer to add to
 	 * @param rowName the name of the row to add
 	 */
 	protected void insertRowTitle(StringBuilder buffer, String rowName) {
 		buffer.append("<TR>");
 		buffer.append("<TD VALIGN=\"TOP\">");
-		insertHTMLLine(buffer, rowName + ":", titleAttrSet);
+		insertHTMLLine(buffer, rowName + ":", titleAttrs);
 		buffer.append("</TD>");
 	}
 
 	/**
 	 * Inserts an html-formatted string into the given buffer. This is meant to be used
 	 * for inserting the value of each row in the description text.
-	 * 
+	 *
 	 * @param buffer the string buffer to add to
 	 * @param value the text to add
-	 * @param attributes the structure containing formatting information 
+	 * @param attributes the structure containing formatting information
 	 */
-	protected void insertRowValue(StringBuilder buffer, String value,
-			SimpleAttributeSet attributes) {
+	protected void insertRowValue(StringBuilder buffer, String value, GAttributes attributes) {
 		buffer.append("<TD VALIGN=\"TOP\" WIDTH=\"80%\">");
 		insertHTMLLine(buffer, value, attributes);
 		buffer.append("</TD>");
@@ -161,33 +138,13 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 * @param string the string to add
 	 * @param attributes the formatting instructions
 	 */
-	protected void insertHTMLString(StringBuilder buffer, String string,
-			SimpleAttributeSet attributes) {
+	protected void insertHTMLString(StringBuilder buffer, String string, GAttributes attributes) {
 
 		if (string == null) {
 			return;
 		}
 
-		buffer.append("<FONT COLOR=\"");
-
-		Color foregroundColor = (Color) attributes.getAttribute(StyleConstants.Foreground);
-		buffer.append(HTMLUtilities.toHexString(foregroundColor));
-
-		buffer.append("\" FACE=\"");
-		buffer.append(attributes.getAttribute(StyleConstants.FontFamily).toString());
-
-		buffer.append("\">");
-
-		Boolean isBold = (Boolean) attributes.getAttribute(StyleConstants.Bold);
-		isBold = (isBold == null) ? Boolean.FALSE : isBold;
-		String text = HTMLUtilities.escapeHTML(string);
-		if (isBold) {
-			text = HTMLUtilities.bold(text);
-		}
-
-		buffer.append(text);
-
-		buffer.append("</FONT>");
+		buffer.append(attributes.toStyledHtml(string));
 	}
 
 	/**
@@ -196,8 +153,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 * @param string the string to insert
 	 * @param attributes the attributes to apply
 	 */
-	protected void insertHTMLLine(StringBuilder buffer, String string,
-			SimpleAttributeSet attributes) {
+	protected void insertHTMLLine(StringBuilder buffer, String string, GAttributes attributes) {
 		if (string == null) {
 			return;
 		}

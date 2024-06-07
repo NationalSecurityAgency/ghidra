@@ -50,7 +50,7 @@ import resources.Icons;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.INTERPRETERS,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Python Interpreter",
 	description = "Provides an interactive Python Interpreter that is tightly integrated with a loaded Ghidra program.",
 	servicesRequired = { InterpreterPanelService.class },

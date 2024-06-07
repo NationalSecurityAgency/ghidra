@@ -60,9 +60,8 @@ public interface FolderItem {
 
 	/**
 	 * Return the file ID if one has been established or null
-	 * @throws IOException thrown if IO or access error occurs
 	 */
-	String getFileID() throws IOException;
+	String getFileID();
 
 	/**
 	 * Assign a new file-ID to this local non-versioned file.
@@ -288,8 +287,8 @@ public interface FolderItem {
 	 * @throws IOException
 	 * @throws CancelledException if monitor cancels operation
 	 */
-	public void output(File outputFile, int version, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	public void output(File outputFile, int version, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Returns this instance after refresh or null if item no longer exists

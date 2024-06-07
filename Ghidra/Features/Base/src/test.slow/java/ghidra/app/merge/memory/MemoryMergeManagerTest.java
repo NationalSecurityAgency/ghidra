@@ -219,7 +219,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				blocks[4].setRead(false);
 				blocks[4].setWrite(false);
 				blocks[4].setExecute(false);
-				
+
 				try {
 					blocks[4].setName("special-debug");
 				}
@@ -269,6 +269,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 		assertTrue(!blocks[4].isWrite());
 		assertTrue(!blocks[4].isExecute());
 		assertTrue(!blocks[4].isVolatile());
+		assertTrue(!blocks[4].isArtificial());
 	}
 
 	@Test

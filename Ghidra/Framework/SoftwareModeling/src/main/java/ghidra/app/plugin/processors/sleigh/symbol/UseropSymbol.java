@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +19,28 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A user-defined pcode operation (PcodeOp)
  * This is implemented as a name and a unique id which is passed
  * as the first parameter to a PcodeOp with the opcode = "CALLOTHER".
  */
 public class UseropSymbol extends Symbol {
 	private int index;			// Unique id for this userop
-	
-	public int getIndex() { return index; }
-	
+
+	public int getIndex() {
+		return index;
+	}
+
 	@Override
-    public void restoreXml(XmlPullParser parser,SleighLanguage sleigh) {
-	    XmlElement el = parser.start("userop");
-		index = SpecXmlUtils.decodeInt(el.getAttribute("index"));
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int el = decoder.openElement(ELEM_USEROP);
+		index = (int) decoder.readSignedInteger(ATTRIB_INDEX);
+		decoder.closeElement(ELEM_USEROP.id());
 	}
 }

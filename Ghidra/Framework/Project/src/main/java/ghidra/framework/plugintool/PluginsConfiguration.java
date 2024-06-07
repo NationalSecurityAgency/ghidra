@@ -268,8 +268,12 @@ public abstract class PluginsConfiguration {
 	}
 
 	public List<PluginDescription> getPluginDescriptions(PluginPackage pluginPackage) {
-		List<PluginDescription> list = descriptionsByPackage.get(pluginPackage);
 		List<PluginDescription> stableList = new ArrayList<>();
+		List<PluginDescription> list = descriptionsByPackage.get(pluginPackage);
+		if (list == null) {
+			// This should not happen.  This implies an environment where no plugins are found,
+			return stableList;
+		}
 		for (PluginDescription pluginDescription : list) {
 			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE ||
 				pluginDescription.getStatus() == PluginStatus.HIDDEN) {

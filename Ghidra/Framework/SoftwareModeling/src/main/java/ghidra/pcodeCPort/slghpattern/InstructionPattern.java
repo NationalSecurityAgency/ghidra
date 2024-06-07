@@ -15,10 +15,11 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import java.io.PrintStream;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 
 public class InstructionPattern extends DisjointPattern {
 
@@ -36,7 +37,7 @@ public class InstructionPattern extends DisjointPattern {
 
 	public InstructionPattern() {
 		maskvalue = null;
-	} // For use with restoreXml
+	}
 
 	public InstructionPattern(PatternBlock mv) {
 		maskvalue = mv;
@@ -169,18 +170,10 @@ public class InstructionPattern extends DisjointPattern {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<instruct_pat>\n");
-		maskvalue.saveXml(s);
-		s.append("</instruct_pat>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el) {
-		List<?> list = el.getChildren();
-		Element child = (Element) list.get(0);
-		maskvalue = new PatternBlock(true);
-		maskvalue.restoreXml(child);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_INSTRUCT_PAT);
+		maskvalue.encode(encoder);
+		encoder.closeElement(ELEM_INSTRUCT_PAT);
 	}
 
 }

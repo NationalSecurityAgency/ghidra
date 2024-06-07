@@ -134,7 +134,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 		}
 	}
 
-	private class SuccessfulDummyCommand extends BackgroundCommand {
+	private class SuccessfulDummyCommand extends BackgroundCommand<DomainObject> {
 
 		SuccessfulDummyCommand() {
 			super("Dummy", true, true, false);
@@ -147,7 +147,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 
 	}
 
-	private class NullPointerExceptionCommand extends BackgroundCommand {
+	private class NullPointerExceptionCommand extends BackgroundCommand<DomainObject> {
 
 		NullPointerExceptionCommand() {
 			super("Dummy", true, true, false);
@@ -160,7 +160,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 
 	}
 
-	private class RollbackExceptionCommand extends BackgroundCommand {
+	private class RollbackExceptionCommand extends BackgroundCommand<DomainObject> {
 		RollbackExceptionCommand() {
 			super("Dummy", true, true, false);
 		}
@@ -171,7 +171,7 @@ public class BackgroundCommandTaskTest extends AbstractGenericTest {
 		}
 	}
 
-	private class DomainObjectLockedExceptionCommand extends BackgroundCommand {
+	private class DomainObjectLockedExceptionCommand extends BackgroundCommand<DomainObject> {
 		DomainObjectLockedExceptionCommand() {
 			super("Dummy", true, true, false);
 		}

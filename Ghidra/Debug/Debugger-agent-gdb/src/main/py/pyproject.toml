@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidragdb"
-version = "10.4"
+version = "11.1"
 authors = [
   { name="Ghidra Development Team" },
 ]
@@ -17,7 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "ghidratrace==10.4",
+    "ghidratrace==11.1",
 ]
 
 [project.urls]

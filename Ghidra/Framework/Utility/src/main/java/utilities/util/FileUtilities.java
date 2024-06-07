@@ -1190,29 +1190,6 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Creates a temporary directory using the given prefix
-	 * @param prefix the prefix
-	 * @return the temp file
-	 */
-	public static File createTempDirectory(String prefix) {
-		try {
-			File temp = File.createTempFile(prefix, Long.toString(System.currentTimeMillis()));
-			if (!temp.delete()) {
-				throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
-			}
-			if (!createDir(temp)) {
-				throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
-			}
-			return temp;
-		}
-		catch (IOException e) {
-			Msg.error(FileUtilities.class, "Error creating temporary directory", e);
-		}
-
-		return null;
-	}
-
-	/**
 	 * Sets the given file (or directory) to readable and writable by only the owner.
 	 *
 	 * @param f The file (or directory) to set the permissions of.

@@ -18,18 +18,17 @@ package ghidra.app.plugin.core.debug.gui.model;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 
-import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.table.GhidraTable;
@@ -42,6 +41,7 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		void cellActivated(JTable table);
 	}
 
+	protected final Plugin plugin;
 	protected final M tableModel;
 	protected final GhidraTable table;
 	protected final GhidraTableFilterPanel<T> filterPanel;
@@ -55,7 +55,9 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 
 	public AbstractQueryTablePanel(Plugin plugin) {
 		super(new BorderLayout());
-		tableModel = createModel(plugin);
+		this.plugin = plugin;
+
+		tableModel = createModel();
 		table = new GhidraTable(tableModel);
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 
@@ -81,7 +83,11 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		});
 	}
 
-	protected abstract M createModel(Plugin plugin);
+	protected abstract M createModel();
+
+	protected void coordinatesChanged() {
+		// Extension point
+	}
 
 	public void goToCoordinates(DebuggerCoordinates coords) {
 		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
@@ -103,14 +109,20 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		if (limitToSnap) {
 			tableModel.setSpan(Lifespan.at(current.getSnap()));
 		}
+		coordinatesChanged();
 	}
 
 	public void reload() {
 		tableModel.reload();
 	}
 
+	protected void queryChanged() {
+		// Extension point
+	}
+
 	public void setQuery(ModelQuery query) {
 		tableModel.setQuery(query);
+		queryChanged();
 	}
 
 	public ModelQuery getQuery() {
@@ -129,12 +141,16 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		return limitToSnap;
 	}
 
+	protected void showHiddenChanged() {
+		tableModel.setShowHidden(showHidden);
+	}
+
 	public void setShowHidden(boolean showHidden) {
 		if (this.showHidden == showHidden) {
 			return;
 		}
 		this.showHidden = showHidden;
-		tableModel.setShowHidden(showHidden);
+		showHiddenChanged();
 	}
 
 	public boolean isShowHidden() {
@@ -207,24 +223,6 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 
 	public List<T> getAllItems() {
 		return List.copyOf(tableModel.getModelData());
-	}
-
-	@SuppressWarnings("unchecked")
-	public <V> Map.Entry<Integer, DynamicTableColumn<T, V, Trace>> getColumnByNameAndType(
-			String name, Class<V> type) {
-		int count = tableModel.getColumnCount();
-		for (int i = 0; i < count; i++) {
-			DynamicTableColumn<T, ?, ?> column = tableModel.getColumn(i);
-			if (!name.equals(column.getColumnName())) {
-				continue;
-			}
-			if (column.getColumnClass() != type) {
-				continue;
-			}
-			return Map.entry(table.convertColumnIndexToView(i),
-				(DynamicTableColumn<T, V, Trace>) column);
-		}
-		return null;
 	}
 
 	public void setDiffColor(Color diffColor) {

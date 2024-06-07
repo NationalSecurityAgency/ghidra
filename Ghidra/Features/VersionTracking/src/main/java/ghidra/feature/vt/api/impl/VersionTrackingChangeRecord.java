@@ -24,19 +24,19 @@ public class VersionTrackingChangeRecord extends DomainObjectChangeRecord {
 
 	private final static long serialVersionUID = 1;
 
-	private Object affectedObj; // may be null
+	private Object affected; // may be null
 
 	/**
-	 * Construct a new ProgramChangeRecord.
-	 * @param type event type
-	 * @param affectedObj the object that is the subject of this change record; may be null.
+	 * Construct a new VersionTrackingChangeRecord.
+	 * @param eventType event type
+	 * @param affected the object that is the subject of this change record; may be null.
 	 * @param oldValue the original value; may be null.
 	 * @param newValue the new value; may be null.
 	 */
-	public VersionTrackingChangeRecord(int type, Object affectedObj, Object oldValue,
+	public VersionTrackingChangeRecord(VTEvent eventType, Object affected, Object oldValue,
 			Object newValue) {
-		super(type, oldValue, newValue);
-		this.affectedObj = affectedObj;
+		super(eventType, oldValue, newValue);
+		this.affected = affected;
 	}
 
 	/**
@@ -46,11 +46,15 @@ public class VersionTrackingChangeRecord extends DomainObjectChangeRecord {
 	 * affected object
 	 */
 	public Object getObject() {
-		return affectedObj;
+		return affected;
 	}
 
 	@Override
 	public String toString() {
-		return Integer.toString(getEventType());
+		String s = super.toString();
+		if (affected != null) {
+			s += ", affected = " + affected;
+		}
+		return s;
 	}
 }

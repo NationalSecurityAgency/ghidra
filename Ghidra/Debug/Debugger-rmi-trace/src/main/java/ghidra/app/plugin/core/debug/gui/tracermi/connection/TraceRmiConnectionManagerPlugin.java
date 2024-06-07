@@ -31,7 +31,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 			""",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.STABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
 		TraceInactiveCoordinatesPluginEvent.class,

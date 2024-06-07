@@ -28,10 +28,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.AutoService.Wiring;
-import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -43,8 +40,6 @@ import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
 
@@ -65,21 +60,6 @@ import ghidra.util.UnionAddressSetView;
 	servicesProvided = {
 	})
 public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionProvider {
-
-	protected static class Reqs {
-		final DebuggerPlatformMapper mapper;
-		final TraceThread thread;
-		final TraceObject object;
-		final TraceProgramView view;
-
-		public Reqs(DebuggerPlatformMapper mapper, TraceThread thread, TraceObject object,
-				TraceProgramView view) {
-			this.mapper = mapper;
-			this.thread = thread;
-			this.object = object;
-			this.view = view;
-		}
-	}
 
 	public static RegisterValue deriveAlternativeDefaultContext(Language language,
 			LanguageID alternative, Address address) {
@@ -188,19 +168,11 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		return disassemblable;
 	}
 
-	@AutoServiceConsumed
-	DebuggerTraceManagerService traceManager;
-	@AutoServiceConsumed
-	DebuggerPlatformService platformService;
-	@SuppressWarnings("unused")
-	private final Wiring autoServiceWiring;
-
 	CurrentPlatformTraceDisassembleAction actionDisassemble;
 	CurrentPlatformTracePatchInstructionAction actionPatchInstruction;
 
 	public DebuggerDisassemblerPlugin(PluginTool tool) {
 		super(tool);
-		this.autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
 	@Override

@@ -2613,30 +2613,47 @@ void BlockBasic::printRaw(ostream &s) const
   }
 }
 
-/// \brief Check if there is meaningful activity between two branch instructions
+/// \brief Check for values created in \b this block that flow outside the block.
 ///
-/// The first branch is assumed to be a CBRANCH one edge of which flows into
-/// the other branch. The flow can be through 1 or 2 blocks.  If either block
-/// performs an operation other than MULTIEQUAL, INDIRECT (or the branch), then
-/// return \b false.
-/// \param first is the CBRANCH operation
-/// \param path is the index of the edge to follow to the other branch
-/// \param last is the other branch operation
-/// \return \b true if there is no meaningful activity
-bool BlockBasic::noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last)
+/// The block can calculate a value for a BRANCHIND or CBRANCH and can copy values and this method will still
+/// return \b true.  But calculating any value used outside the block, writing to an addressable location,
+/// or performing a CALL or STORE causes the method to return \b false.
+/// \return \b true if no value is created that can be used outside of the block
+bool BlockBasic::noInterveningStatement(void) const
 
 {
-  BlockBasic *curbl = (BlockBasic *)first->getParent()->getOut(path);
-  for(int4 i=0;i<2;++i) {
-    if (!curbl->hasOnlyMarkers()) return false;
-    if (curbl != last->getParent()) {
-      if (curbl->sizeOut() != 1) return false; // Intervening conditional branch
+  list<PcodeOp *>::const_iterator iter;
+  const PcodeOp *bop;
+  OpCode opc;
+
+  for(iter=op.begin();iter!=op.end();++iter) {
+    bop = *iter;
+    if (bop->isMarker()) continue;
+    if (bop->isBranch()) continue;
+    if (bop->getEvalType() == PcodeOp::special) {
+      if (bop->isCall())
+	return false;
+      opc = bop->code();
+      if (opc == CPUI_STORE || opc == CPUI_NEW)
+	return false;
     }
-    else
-      return true;
-    curbl = (BlockBasic *)curbl->getOut(0);
+    else {
+      opc = bop->code();
+      if (opc == CPUI_COPY || opc == CPUI_SUBPIECE)
+	continue;
+    }
+    const Varnode *outvn = bop->getOut();
+    if (outvn->isAddrTied())
+      return false;
+    list<PcodeOp *>::const_iterator iter = outvn->beginDescend();
+    while(iter!=outvn->endDescend()) {
+      PcodeOp *op = *iter;
+      if (op->getParent() != this)
+	return false;
+      ++iter;
+    }
   }
-  return false;
+  return true;
 }
 
 /// If there exists a CPUI_MULTIEQUAL PcodeOp in \b this basic block that takes the given exact list of Varnodes

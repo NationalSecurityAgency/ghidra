@@ -13,14 +13,9 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Dynamic Listing</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerListingPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerListingPlugin.png">
+    </DIV>
 
     <P><A name="Toggle_Header"></A>The dynamic listing is analogous to Ghidra's listing for static
     analysis, but in the dynamic context. It displays annotated memory contents from a target. More
@@ -55,14 +50,34 @@
     which have not been read at the current time, are displayed with a darker background. Where
     that memory is marked "read-only" and has been successfully read previously, that coloring is
     subdued, since the contents are not likely to have changed. Where a read was attempted but
-    failed, the first address in the failed range is displayed with a pink background. Otherwise,
-    up-to-date contents are displayed with the default background color.</P>
+    failed, the entire failed range is displayed with a pink background. Otherwise, up-to-date
+    contents are displayed with the default background color.</P>
 
     <P>The dynamic listing supports editing memory. See <A href=
     "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State</A>.
     Such edits are performed as usual: Via the <A href=
     "help/topics/AssemblerPlugin/Assembler.htm">Patch</A> actions, or by pasting byte strings.
     These edits may be directed toward a live target, the trace, or the emulator.</P>
+
+    <H2>Trace Tabs</H2>
+
+    <P>The trace tab bar is displayed when at least one trace is open. It displays the name of each
+    open trace in a tab, where the "current" or "focused" trace is selected. Clicking a tab will
+    select its trace and focus the tool onto it. A trace associated with a live target has a red
+    "recording" icon <IMG alt="" src="icon.debugger.record"> at its left. If that icon is not
+    present, or has disappeared, the trace is dead or terminated. A "dead" trace can still be
+    manipulated and marked up, but it will not record any new target information.</P>
+
+    <H3><A name="close_trace"></A><A name="close_all_traces"></A><A name=
+    "close_other_traces"></A><A name="close_dead_traces"></A>Close Trace / All / Other / Dead
+    Traces</H3>
+
+    <P>In most cases, a trace is ephemeral, but occasionally, interesting behavior is observed that
+    is difficult to store as static mark-up. When traces are no longer needed, they can be closed.
+    Several can be closed at once by right-clicking a tab and selecting one of the actions. See <A
+    href=
+    "help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html#close_trace">Trace
+    Management</A> for details of each action.</P>
 
     <H2>Actions</H2>
 
@@ -71,16 +86,16 @@
 
     <H3><A name="new_listing"></A>New Dynamic Listing</H3>
 
-    <P>This action is always available in the <SPAN class="menu">Window &rarr; Debugger</SPAN>
-    menu. It creates a new listing window with the same configuration as the primary dynamic
-    listing. It is equivalent to cloning the primary dynamic listing.</P>
+    <P>This action is always available in the <B>Window &rarr; Debugger</B> menu. It creates a new
+    listing window with the same configuration as the primary dynamic listing. It is equivalent to
+    cloning the primary dynamic listing.</P>
 
     <H3><A name="export_view"></A>Export Trace View</H3>
 
-    <P>This action is available whenever there is a trace open in the listing. It is analogous to
-    "Export Program," but for the current trace at the current time. This provides a mechanism for
-    capturing a particular point in time from a trace as a static image. The exported image can be
-    analyzed in Ghidra or another tool.</P>
+    <P>This action is available in the <B>Debugger</B> menu whenever there is a trace open in the
+    listing. It is analogous to "Export Program," but for the current trace at the current time.
+    This provides a mechanism for capturing a particular point in time from a trace as a static
+    image. The exported image can be analyzed in Ghidra or another tool.</P>
 
     <H3><A name="follows_thread"></A>Follows Selected Thread</H3>
 
@@ -141,13 +156,9 @@
     of labels, registers, and constants. Labels may come from the current trace or a program mapped
     into the trace. Ambiguities are resolved arbitrarily.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src="images/DebuggerGoToDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerGoToDialog.png">
+    </DIV>
 
     <P>Some examples:</P>
 
@@ -231,30 +242,36 @@
 
     <H3><A name="read_memory"></A>Read Memory</H3>
 
-    <P>This action is available when the current trace is "at the present" with a live target, and
-    there is a selection of addresses in the dynamic listing. It will instruct the recorder to read
-    and record the contents of memory for the selected range(s). Typically, the viewable addresses
-    are automatically read, anyway &mdash; see the Auto-Read action.</P>
+    <P>This action is available when the current trace is "at the present" with a live target. It
+    will instruct the target to read the contents of memory for the selected or visible addresses.
+    Typically, the visible addresses are automatically read &mdash; see the Auto-Read action
+    &mdash; so this action is for refreshing or for reading large selections.</P>
 
     <H3><A name="auto_memory"></A>Auto-Read Memory</H3>
 
     <P>This action is always available on all dynamic listings. It configures whether or not the
-    memory range(s) displayed in the listing are automatically read and recorded. Like the Read
-    Memory action, it is only permitted when the current trace is "at the present" with a live
-    target. It occurs when the user scrolls the listing, or when the listing is otherwise navigated
-    to a new location. Note that other components may read memory, regardless of this listing's
-    configuration. For example, the recorder typically reads the page of memory pointed to by the
+    memory range(s) displayed in the listing are automatically read. Like the Read Memory action,
+    it is only permitted when the current trace is "at the present" with a live target. It occurs
+    when the user scrolls the listing, or when the listing is otherwise navigated to a new
+    location. Note that other components may read memory, regardless of this listing's
+    configuration. For example, the target typically reads the page of memory pointed to by the
     program counter. In other words, this action <EM>cannot</EM> "disable all memory reads." The
     options are pluggable, but currently consist of:</P>
 
     <UL>
-      <LI>Do Not Read Memory - disables automatic memory reads <EM>for this listing only</EM>.</LI>
+      <LI><IMG alt="" src="icon.debugger.delete"> Do Not Read Memory - disables automatic memory
+      reads <EM>for this listing only</EM>.</LI>
 
-      <LI>Read Visible Memory - automatically reads stale ranges that enter this listing's
-      view.</LI>
+      <LI><IMG alt="" src="icon.debugger.autoread" width="16"> Read Visible Memory - automatically
+      reads stale ranges that enter this listing's view.</LI>
 
-      <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
-      neglect read-only ranges that have been read previously.</LI>
+      <LI><IMG alt="" src="icon.debugger.autoread" width="16"> Read Visible Memory, RO Once -
+      (default) behaves like Read Visible Memory, except it will neglect read-only ranges that have
+      been read previously.</LI>
+
+      <LI><IMG alt="" src="icon.debugger.emulate"> Load Emulator from Programs - populates the
+      trace database using mapped program databases. This is often preferred during "pure
+      emulation," so that the dynamic listing's contents match those of the static listing.</LI>
     </UL>
   </BODY>
 </HTML>

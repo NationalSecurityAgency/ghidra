@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
+import generic.jar.ResourceFile;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
@@ -31,7 +32,6 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -76,46 +76,32 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean shouldLoadLibrary(String libName, FSRL libFsrl, ByteProvider provider,
-			LoadSpec loadSpec, MessageLog log) throws IOException {
-
-		if (!super.shouldLoadLibrary(libName, libFsrl, provider, loadSpec, log)) {
-			return false;
-		}
-
-		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
-		File localLibFile = getLocalFile(libFsrl);
-
-		if (localLibFile == null ||
-			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size) &&
-				LibraryLookupTable.libraryLookupTableFileExists(libName, size)) {
-			log.appendMsg("WARNING! Using existing exports file for " + libName +
-				" which may not be an exact match");
-		}
-
-		return true;
-	}
-
-	@Override
 	protected void processLibrary(Program lib, String libName, FSRL libFsrl, ByteProvider provider,
 			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
-		File localLibFile = getLocalFile(libFsrl);
+		ResourceFile existingExportsFile = LibraryLookupTable.getExistingExportsFile(libName, size);
 
-		// Create exports file
-		if (localLibFile == null ||
-			!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
-			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size)) {
-			log.appendMsg("Examining ordinal info in %s...".formatted(libFsrl));
+		if (!shouldPerformOrdinalLookup(options)) {
+			return;
+		}
+
+		// Create exports file if necessary
+		if (existingExportsFile == null) {
 			try {
-				// Need to write correct library exports file (LibrarySymbolTable)
-				// for use with related imports
-				LibraryLookupTable.createFile(lib, true, monitor);
+				ResourceFile newExportsFile = LibraryLookupTable.createFile(lib, true, monitor);
+				log.appendMsg("Created exports file: " + newExportsFile);
 			}
 			catch (IOException e) {
 				log.appendMsg("Unable to create exports file for " + libFsrl);
-				Msg.error(this, "Unable to create exports file for " + libFsrl, e);
+			}
+		}
+		else {
+			log.appendMsg("Using existing exports file: " + existingExportsFile);
+			File localLibFile = getLocalFile(libFsrl);
+			if (localLibFile != null &&
+				!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size)) {
+				log.appendMsg("WARNING: Existing exports file may not be an exact match.");
 			}
 		}
 	}

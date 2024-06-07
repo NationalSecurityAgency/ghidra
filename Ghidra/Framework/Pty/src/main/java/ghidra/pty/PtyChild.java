@@ -101,4 +101,12 @@ public interface PtyChild extends PtyEndpoint {
 	default String nullSession(TermMode... mode) throws IOException {
 		return nullSession(List.of(mode));
 	}
+
+	/**
+	 * Resize the terminal window to the given width and height, in characters
+	 * 
+	 * @param cols the width in characters
+	 * @param rows the height in characters
+	 */
+	void setWindowSize(short cols, short rows);
 }

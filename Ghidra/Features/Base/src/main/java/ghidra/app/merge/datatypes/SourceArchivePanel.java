@@ -16,13 +16,16 @@
 package ghidra.app.merge.datatypes;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.util.Date;
 
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
+import generic.theme.GAttributes;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.Msg;
@@ -35,9 +38,9 @@ class SourceArchivePanel extends JPanel {
 	private SourceArchive sourceArchive;
 	private JTextPane textPane;
 	private StyledDocument doc;
-	private SimpleAttributeSet headingAttrSet;
-	private SimpleAttributeSet valueAttrSet;
-	private SimpleAttributeSet deletedAttrSet;
+	private SimpleAttributeSet headingAttrs;
+	private SimpleAttributeSet valueAttrs;
+	private SimpleAttributeSet deletedAttrs;
 
 	SourceArchivePanel() {
 		super(new BorderLayout());
@@ -57,28 +60,19 @@ class SourceArchivePanel extends JPanel {
 		add(textPane, BorderLayout.CENTER);
 		textPane.setEditable(false);
 
-		headingAttrSet = new SimpleAttributeSet();
-		headingAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		headingAttrSet.addAttribute(StyleConstants.FontSize, 12);
-		headingAttrSet.addAttribute(StyleConstants.Foreground, Palette.BLUE);
+		Font monospaced = Gui.getFont("font.monospaced");
+		Font bold = Gui.getFont("font.standard.bold");
 
-		valueAttrSet = new SimpleAttributeSet();
-		valueAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		valueAttrSet.addAttribute(StyleConstants.FontSize, 11);
-		valueAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-
-		deletedAttrSet = new SimpleAttributeSet();
-		deletedAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		deletedAttrSet.addAttribute(StyleConstants.FontSize, 12);
-		deletedAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		deletedAttrSet.addAttribute(StyleConstants.Foreground, Palette.RED);
+		headingAttrs = new GAttributes(monospaced, Palette.BLUE);
+		valueAttrs = new GAttributes(bold);
+		deletedAttrs = new GAttributes(bold, Palette.RED);
 
 		setSourceArchive(null);
 	}
 
 	private void formatSourceArchive() {
 		if (sourceArchive == null) {
-			insertString("\n\nDeleted", deletedAttrSet);
+			insertString("\n\nDeleted", deletedAttrs);
 			return;
 		}
 //		formatArchiveID();
@@ -91,19 +85,19 @@ class SourceArchivePanel extends JPanel {
 
 	@SuppressWarnings("unused")
 	private void formatArchiveID() {
-		insertString("    Archive ID: ", headingAttrSet);
-		insertString(sourceArchive.getSourceArchiveID().getValue() + "\n", valueAttrSet);
+		insertString("    Archive ID: ", headingAttrs);
+		insertString(sourceArchive.getSourceArchiveID().getValue() + "\n", valueAttrs);
 	}
 
 	private void formatName() {
-		insertString("Name: ", headingAttrSet);
-		insertString(sourceArchive.getName() + "\n", valueAttrSet);
+		insertString("Name: ", headingAttrs);
+		insertString(sourceArchive.getName() + "\n", valueAttrs);
 	}
 
 	@SuppressWarnings("unused")
 	private void formatFileID() {
-		insertString("       File ID: ", headingAttrSet);
-		insertString(sourceArchive.getDomainFileID() + "\n", valueAttrSet);
+		insertString("       File ID: ", headingAttrs);
+		insertString(sourceArchive.getDomainFileID() + "\n", valueAttrs);
 	}
 
 	@SuppressWarnings("unused")
@@ -112,21 +106,20 @@ class SourceArchivePanel extends JPanel {
 		String typeString = (archiveType == ArchiveType.FILE) ? "File Archive"
 				: (archiveType == ArchiveType.PROGRAM) ? "Program"
 						: (archiveType == ArchiveType.PROJECT) ? "Project Archive"
-								: (archiveType == ArchiveType.BUILT_IN) ? "Built-In"
-										: "Invalid";
-		insertString("          Type: ", headingAttrSet);
-		insertString(typeString + "\n", valueAttrSet);
+								: (archiveType == ArchiveType.BUILT_IN) ? "Built-In" : "Invalid";
+		insertString("          Type: ", headingAttrs);
+		insertString(typeString + "\n", valueAttrs);
 	}
 
 	private void formatSyncTime() {
 		String syncTime = new Date(sourceArchive.getLastSyncTime()).toString();
-		insertString("Last Sync Time: ", headingAttrSet);
-		insertString(syncTime + "\n", valueAttrSet);
+		insertString("Last Sync Time: ", headingAttrs);
+		insertString(syncTime + "\n", valueAttrs);
 	}
 
 	private void formatDirtyFlag() {
-		insertString("Changed Since Last Sync? ", headingAttrSet);
-		insertString((sourceArchive.isDirty() ? "yes" : "no") + "\n", valueAttrSet);
+		insertString("Changed Since Last Sync? ", headingAttrs);
+		insertString((sourceArchive.isDirty() ? "yes" : "no") + "\n", valueAttrs);
 	}
 
 	private void insertString(String str, SimpleAttributeSet attributeSet) {

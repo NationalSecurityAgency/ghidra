@@ -68,9 +68,18 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@After
 	public void tearDown() throws Exception {
-		sourceProgram = null;
-		destinationProgram = null;
-		session = null;
+		if (sourceProgram != null) {
+			vtTestEnv.release(sourceProgram);
+			sourceProgram = null;
+		}
+		if (destinationProgram != null) {
+			vtTestEnv.release(destinationProgram);
+			destinationProgram = null;
+		}
+		if (session != null) {
+			session.release(vtTestEnv);
+			session = null;
+		}
 		controller = null;
 		correlator = null;
 		vtTestEnv.dispose();
@@ -129,10 +138,10 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		addProgramCorrelation(new SimilarSymbolNameProgramCorrelatorFactory());
 		useMatch("0x00412690", "0x00412720");
 		checkAddressCorrelation(VTHashedFunctionAddressCorrelation.NAME);
-		checkCommentMarkup(EolCommentMarkupType.INSTANCE, "0x004126dd",
-			"Similar name eol comment.", "0x0041277f");
-		checkCommentMarkup(PreCommentMarkupType.INSTANCE, "0x004126d7",
-			"Similar name pre comment.", "NO_ADDRESS");
+		checkCommentMarkup(EolCommentMarkupType.INSTANCE, "0x004126dd", "Similar name eol comment.",
+			"0x0041277f");
+		checkCommentMarkup(PreCommentMarkupType.INSTANCE, "0x004126d7", "Similar name pre comment.",
+			"NO_ADDRESS");
 		checkMarkupDestinationSource(VTHashedFunctionAddressCorrelation.NAME, true);
 	}
 
@@ -170,8 +179,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		addProgramCorrelation(new SimilarSymbolNameProgramCorrelatorFactory());
 		useMatch("0x00401000", "0x00402000");
 		checkAddressCorrelation(VTHashedFunctionAddressCorrelation.NAME);
-		checkCommentMarkup(EolCommentMarkupType.INSTANCE, "0x00401003",
-			"Similar name eol comment.", "NO_ADDRESS");
+		checkCommentMarkup(EolCommentMarkupType.INSTANCE, "0x00401003", "Similar name eol comment.",
+			"NO_ADDRESS");
 		checkMarkupDestinationSource(VTHashedFunctionAddressCorrelation.NAME, true);
 	}
 
@@ -259,63 +268,66 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	private Program buildProgram1(String name) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(name, ProgramBuilder._X86);
-		Program p = builder.getProgram();
-		builder.createMemory("text", "0x00401000", 0x100);
-		builder.setBytes("0x00401000", "8b ff 55 8b ec c3");
-		builder.disassemble("0x00401000", 6);
-		Function function = builder.createFunction("0x00401000");
-		int txID = p.startTransaction("Setting Function Name");
-		boolean commit = false;
 		try {
-			function.setName("MyFunctionAB", SourceType.USER_DEFINED);
-			Listing listing = p.getListing();
-			CodeUnit cu = listing.getCodeUnitAt(function.getEntryPoint());
-			cu.setComment(CodeUnit.EOL_COMMENT, "A sample end of line comment");
-			commit = true;
+			Program p = builder.getProgram();
+			builder.createMemory("text", "0x00401000", 0x100);
+			builder.setBytes("0x00401000", "8b ff 55 8b ec c3");
+			builder.disassemble("0x00401000", 6);
+			Function function = builder.createFunction("0x00401000");
+			p.withTransaction("Setting Function Name", () -> {
+				function.setName("MyFunctionAB", SourceType.USER_DEFINED);
+				Listing listing = p.getListing();
+				CodeUnit cu = listing.getCodeUnitAt(function.getEntryPoint());
+				cu.setComment(CodeUnit.EOL_COMMENT, "A sample end of line comment");
+			});
+
+			p.addConsumer(vtTestEnv);
+			return p;
 		}
 		finally {
-			p.endTransaction(txID, commit);
+			builder.dispose();
 		}
-		return p;
 	}
 
 	private Program buildProgram2(String name) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(name, ProgramBuilder._TOY_BE);
-		Program p = builder.getProgram();
-		builder.createMemory("text", "0x00402000", 0x100);
-		builder.setBytes("0x00402000", "ff 8b 55 ec 8b c3");
-		builder.disassemble("0x00402000", 6);
-		Function function = builder.createFunction("0x00402000");
-		int txID = p.startTransaction("Setting Function Name");
-		boolean commit = false;
 		try {
-			function.setName("MyFunctionXY", SourceType.USER_DEFINED);
-			commit = true;
+			Program p = builder.getProgram();
+			builder.createMemory("text", "0x00402000", 0x100);
+			builder.setBytes("0x00402000", "ff 8b 55 ec 8b c3");
+			builder.disassemble("0x00402000", 6);
+			Function function = builder.createFunction("0x00402000");
+			p.withTransaction("Setting Function Name", () -> {
+				function.setName("MyFunctionXY", SourceType.USER_DEFINED);
+			});
+
+			p.addConsumer(vtTestEnv);
+			return p;
 		}
 		finally {
-			p.endTransaction(txID, commit);
+			builder.dispose();
 		}
-		return p;
 	}
 
 	private Program buildProgram3(String name) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(name, ProgramBuilder._X64);
-		Program p = builder.getProgram();
-		// Make the instructions differ from program1 above so comments will have a NO_ADDRESS
-		// for the destination address.
-		builder.setBytes("0x00402000", "31 ed 49 89 d0 5e 48 89 e2 c3");
-		builder.disassemble("0x00402000", 10);
-		Function function = builder.createFunction("0x00402000");
-		int txID = p.startTransaction("Setting Function Name");
-		boolean commit = false;
 		try {
-			function.setName("MyFunctionZZ", SourceType.USER_DEFINED);
-			commit = true;
+			Program p = builder.getProgram();
+			// Make the instructions differ from program1 above so comments will have a NO_ADDRESS
+			// for the destination address.
+			builder.setBytes("0x00402000", "31 ed 49 89 d0 5e 48 89 e2 c3");
+			builder.disassemble("0x00402000", 10);
+			Function function = builder.createFunction("0x00402000");
+			p.withTransaction("Setting Function Name", () -> {
+				function.setName("MyFunctionZZ", SourceType.USER_DEFINED);
+			});
+
+			p.addConsumer(vtTestEnv);
+			return p;
 		}
 		finally {
-			p.endTransaction(txID, commit);
+			builder.dispose();
 		}
-		return p;
 	}
 
 	private void createSession(String testSourceProgramName, String testDestinationProgramName)
@@ -347,8 +359,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	 */
 	protected void addProgramCorrelation(VTProgramCorrelatorFactory correlatorFactory) {
 		try {
-			correlator =
-				vtTestEnv.correlate(correlatorFactory, null, TaskMonitor.DUMMY);
+			correlator = vtTestEnv.correlate(correlatorFactory, null, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			Assert.fail(e.getMessage());
@@ -405,9 +416,10 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 				addressCorrelationName.equals(destinationAddressSource);
 			boolean isFunctionCorrelation =
 				VTMarkupItem.FUNCTION_ADDRESS_SOURCE.equals(destinationAddressSource);
-			assertTrue("Unexpected destination address source of " + destinationAddressSource +
-				" for " + vtMarkupItem.getMarkupType().getDisplayName() + " markup @ " +
-				vtMarkupItem.getSourceAddress().toString() + ".",
+			assertTrue(
+				"Unexpected destination address source of " + destinationAddressSource + " for " +
+					vtMarkupItem.getMarkupType().getDisplayName() + " markup @ " +
+					vtMarkupItem.getSourceAddress().toString() + ".",
 				(isExpectedAddressCorrelation || isFunctionCorrelation));
 		}
 	}
@@ -481,10 +493,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	private void checkCommentMarkup(VTMarkupType desiredCommentMarkupType,
 			String sourceAddressString, String comment, String destinationAddressString) {
 		Address srcAddress = addr(sourceAddressString, sourceProgram);
-		Address destAddress =
-			destinationAddressString.equals("NO_ADDRESS") ? Address.NO_ADDRESS
-					: addr(
-						destinationAddressString, destinationProgram);
+		Address destAddress = destinationAddressString.equals("NO_ADDRESS") ? Address.NO_ADDRESS
+				: addr(destinationAddressString, destinationProgram);
 
 		Collection<VTMarkupItem> appliableMarkupItems =
 			controller.getMatchInfo(testMatch).getAppliableMarkupItems(TaskMonitor.DUMMY); // Initialize the cache.
@@ -517,10 +527,11 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 					vtMarkupItem.getSourceAddress().toString() + ".", isNoAddress);
 				return;
 			}
-			assertTrue("Unexpected destination address of " + markupDestAddress.toString() +
-				" when expecting " + destAddress.toString() + " for " +
-				vtMarkupItem.getMarkupType().getDisplayName() + " markup @ " +
-				vtMarkupItem.getSourceAddress().toString() + ".",
+			assertTrue(
+				"Unexpected destination address of " + markupDestAddress.toString() +
+					" when expecting " + destAddress.toString() + " for " +
+					vtMarkupItem.getMarkupType().getDisplayName() + " markup @ " +
+					vtMarkupItem.getSourceAddress().toString() + ".",
 				markupDestAddress.equals(destAddress));
 			return;
 		}

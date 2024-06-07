@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.Icon;
 
 import generic.theme.GIcon;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.*;
-import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.local.LocalFileSystem;
@@ -91,47 +91,56 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 		return getObject(item, version, consumer, monitor, true);
 	}
 
-	@SuppressWarnings("unchecked")
 	private T getObject(FolderItem item, int version, Object consumer, TaskMonitor monitor,
 			boolean immutable) throws IOException, VersionException, CancelledException {
 
-		URL url = getURL(item);
+		URL ghidraUrl = getURL(item);
 
 		Class<?> domainObjectClass = getDomainObjectClass();
 		if (domainObjectClass == null) {
 			throw new UnsupportedOperationException("");
 		}
 
-		GhidraURLWrappedContent wrappedContent = null;
-		Object content = null;
-		final Object transientConsumer = new Object();
-		try {
-			GhidraURLConnection c = (GhidraURLConnection) url.openConnection();
-			Object obj = c.getContent(); // read-only access
-			if (c.getStatusCode() == StatusCode.UNAUTHORIZED) {
+		AtomicReference<VersionException> verExcRef = new AtomicReference<>();
+		AtomicReference<T> domainObjectRef = new AtomicReference<>();
+		GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter(true) {
+
+			@Override
+			public void processResult(DomainFile domainFile, URL url, TaskMonitor m)
+					throws IOException, CancelledException {
+				if (!getDomainObjectClass().isAssignableFrom(domainFile.getDomainObjectClass())) {
+					throw new BadLinkException("Expected " + getDomainObjectClass() +
+						" but linked to " + domainFile.getDomainObjectClass());
+				}
+				try {
+					@SuppressWarnings("unchecked")
+					T linkedObject = immutable
+							? (T) domainFile.getImmutableDomainObject(consumer, version, monitor)
+							: (T) domainFile.getReadOnlyDomainObject(consumer, version, monitor);
+					domainObjectRef.set(linkedObject);
+				}
+				catch (VersionException e) {
+					verExcRef.set(e);
+				}
+			}
+
+			@Override
+			public void handleUnauthorizedAccess(URL url) throws IOException {
 				throw new IOException("Authorization failure");
 			}
-			if (!(obj instanceof GhidraURLWrappedContent)) {
-				throw new IOException("Unsupported linked content");
-			}
-			wrappedContent = (GhidraURLWrappedContent) obj;
-			content = wrappedContent.getContent(transientConsumer);
-			if (!(content instanceof DomainFile)) {
-				throw new IOException("Unsupported linked content: " + content.getClass());
-			}
-			DomainFile linkedFile = (DomainFile) content;
-			if (!getDomainObjectClass().isAssignableFrom(linkedFile.getDomainObjectClass())) {
-				throw new BadLinkException("Expected " + getDomainObjectClass() +
-					" but linked to " + linkedFile.getDomainObjectClass());
-			}
-			return immutable ? (T) linkedFile.getImmutableDomainObject(consumer, version, monitor)
-					: (T) linkedFile.getReadOnlyDomainObject(consumer, version, monitor);
+		}, monitor);
+
+		VersionException versionException = verExcRef.get();
+		if (versionException != null) {
+			throw versionException;
 		}
-		finally {
-			if (content != null) {
-				wrappedContent.release(content, transientConsumer);
-			}
+
+		T domainObj = domainObjectRef.get();
+		if (domainObj == null) {
+			throw new IOException(
+				"Failed to obtain linked object for unknown reason: " + item.getPathName());
 		}
+		return domainObj;
 	}
 
 	@Override
@@ -156,8 +165,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 
 	@Override
 	public final boolean isPrivateContentType() {
-		// NOTE: URL must be checked - only repository-based links may be versioned
-		return true;
+		throw new UnsupportedOperationException("Link file requires checking server vs local URL");
 	}
 
 	/**

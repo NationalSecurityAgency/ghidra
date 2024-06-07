@@ -40,6 +40,9 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.async.AsyncTestUtils;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFolder;
@@ -53,9 +56,11 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -127,11 +132,17 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 			fMan.createFunction("FUN_00404300", addr(0x00404300),
 				set(program, 0x00404300, 0x00404400), SourceType.USER_DEFINED);
 		}
+
+		SchemaContext ctx = XmlSchemaContext.deserialize(DebuggerStackProviderTest.CTX_XML);
+
 		long snap;
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
+			DBTraceObjectManager om = tb.trace.getObjectManager();
+			om.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
-			thread = tb.getOrAddThread("[1]", snap);
+
+			thread = tb.getOrAddThread("Processes[1].Threads[1]", snap);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, snap, true);
 			stack.setDepth(3, true);
 
@@ -154,6 +165,8 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		programManager.openProgram(program);
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
+		traceManager.activateFrame(0);
+		waitForTasks();
 
 		captureIsolatedProvider(DebuggerStackProvider.class, 600, 300);
 	}
@@ -285,12 +298,16 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		Function function = createFibonacciProgramX86_32();
 		Address entry = function.getEntryPoint();
 
+		GhidraProgramUtilities.markProgramNotToAskToAnalyze(program);
 		programManager.openProgram(program);
 
 		tb.close();
 		tb = new ToyDBTraceBuilder(
 			ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
 		tb.trace.release(this);
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		root.createFile("Emulate fibonacci", tb.trace, TaskMonitor.DUMMY);
+
 		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);

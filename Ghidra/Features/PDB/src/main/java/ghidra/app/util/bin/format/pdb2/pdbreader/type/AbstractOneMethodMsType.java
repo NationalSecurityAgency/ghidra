@@ -25,7 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  */
 public abstract class AbstractOneMethodMsType extends AbstractMsType implements MsTypeField {
 
-	protected ClassFieldMsAttributes attribute;
+	protected ClassFieldMsAttributes attributes;
 	protected RecordNumber procedureTypeRecordNumber;
 	protected long offsetInVFTableIfIntroVirtual;
 	protected String name;
@@ -41,11 +41,11 @@ public abstract class AbstractOneMethodMsType extends AbstractMsType implements 
 	public AbstractOneMethodMsType(AbstractPdb pdb, PdbByteReader reader, int recordNumberSize,
 			StringParseType strType) throws PdbException {
 		super(pdb, reader);
-		attribute = new ClassFieldMsAttributes(reader);
+		attributes = new ClassFieldMsAttributes(reader);
 		procedureTypeRecordNumber =
 			RecordNumber.parse(pdb, reader, RecordCategory.TYPE, recordNumberSize);
-		if ((attribute.getProperty() == ClassFieldMsAttributes.Property.INTRO) ||
-			(attribute.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE)) {
+		if ((attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) ||
+			(attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE)) {
 			offsetInVFTableIfIntroVirtual = reader.parseUnsignedIntVal();
 		}
 		else {
@@ -56,11 +56,40 @@ public abstract class AbstractOneMethodMsType extends AbstractMsType implements 
 	}
 
 	@Override
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Returns the record number of the data type for this procedure
+	 * @return the record number
+	 */
+	public RecordNumber getProcedureTypeRecordNumber() {
+		return procedureTypeRecordNumber;
+	}
+
+	/**
+	 * Returns the attributes of this procedure
+	 * @return the attributes
+	 */
+	public ClassFieldMsAttributes getAttributes() {
+		return attributes;
+	}
+
+	/**
+	 * Returns the offset of the procedure in the VFTable if intro/virtual
+	 * @return the offset
+	 */
+	public long getOffsetInVFTableIfIntroVirtual() {
+		return offsetInVFTableIfIntroVirtual;
+	}
+
+	@Override
 	public void emit(StringBuilder builder, Bind bind) {
 		// No API for this.  Just outputting something that might be useful.
 		// At this time, not doing anything with bind here; don't think it is warranted.
 		builder.append("<");
-		builder.append(attribute);
+		builder.append(attributes);
 		builder.append(": ");
 		builder.append(pdb.getTypeRecord(procedureTypeRecordNumber));
 		builder.append(",");

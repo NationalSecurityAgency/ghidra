@@ -13,6 +13,14 @@
     plugins, actions, scripts, etc., that use colors, fonts, or icons. By following these guidelines,
     developers can easily make use of Ghidra's theming capabilities.</P>
 
+	<BLOCKQUOTE>
+			<BLOCKQUOTE>
+	<P><IMG border="0" src="help/shared/tip.png" alt="Tip">Most classes referenced in this document
+	live in the <CODE>generic.theme</CODE> package.
+	</P>
+			</BLOCKQUOTE>
+	</BLOCKQUOTE>
+
     <H2>Theme Resource Types</H2>
 
     <P>When developing application code for Ghidra such as plugins, actions, etc., developers often
@@ -123,7 +131,57 @@
         <BLOCKQUOTE>
           <CODE>Gui.registerFont(myLabel, "font.xyz");</CODE>
         </BLOCKQUOTE>
+
+
+		
+		<H3>Font Usage in Tables, Lists and Custom Painting</H3>
+		<P>
+		Ghidra makes great use of tables and to a lesser extent, lists.  Both tables and lists
+		use renderers to paint cell values.  
+		</P> 
+		<UL>
+		<LI>
+		Java - By default, Java will use the font of the table/list as the font used during rendering.
+		</LI>
+		<LI>
+		Ghidra Tables - Ghidra does <U>not</U> use the table's font for rendering by default.  Instead, 
+		the renderer is initialized with the fonts used by <CODE>JLabel</CODE>, with additional 
+		fonts for bold and monospaced text.
+		</LI>
+		<LI>
+		Ghidra Lists - Ghidra does not currently use custom rendering for lists.  Thus, list cell 
+		rendering will make use of the list's font, which is Java's default behavior.
+		</LI>
+		</UL>
+		
+		<P>
+		We point out this difference between Java and Ghidra here so that developers understand 
+		that changing fonts used for tables differs from Java.   Specifically, calling
+		      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+<PRE>
+<CODE>
+     table.setFont(newFont);
+</CODE>
+</PRE>
+        </BLOCKQUOTE>
       </BLOCKQUOTE>
+		<P>
+		will not affect the font used when rendering the table.  To programmatically change the 
+		fonts used for tables, you can set the font directly on each cell renderer.  As with a
+		any custom fonts used, be sure to define theme properties file and register then with the
+		Gui class as outlined above.
+		</P>
+		<P>
+		The fonts used for any painting operations, including table and list cell rendering, as well
+		as any code that overrides <CODE>paint</CODE> will work correctly within the theming 
+		environment as long as the fonts are derived from the default Look and Feel values or are 
+		obtained from the <CODE>Gui</CODE> class.  In other words, as long as the 
+		fonts used in custom painting are not hard-coded, any changes to the fonts via the theming
+		API will appear on the next call to paint the UI.
+		</P>
+	    </BLOCKQUOTE>
+
 
    </BLOCKQUOTE>
 

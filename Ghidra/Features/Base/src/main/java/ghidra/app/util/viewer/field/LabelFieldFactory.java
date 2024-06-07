@@ -181,8 +181,7 @@ public class LabelFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		FieldElement[] textElements = new FieldElement[length];
-		int nextPos = 0;
+		List<FieldElement> elements = new ArrayList<>(length);
 
 		if (hasOffcuts) {
 			for (Address offcut : offcuts) {
@@ -193,7 +192,7 @@ public class LabelFieldFactory extends FieldFactory {
 						inspector.getOffcutSymbolColor(),
 						getMetrics(inspector.getOffcutSymbolStyle()), false, null);
 				}
-				textElements[nextPos++] = new TextFieldElement(as, nextPos, 0);
+				elements.add(new TextFieldElement(as, elements.size(), 0));
 			}
 		}
 
@@ -206,11 +205,11 @@ public class LabelFieldFactory extends FieldFactory {
 			ColorAndStyle c = inspector.getColorAndStyle(symbol);
 			AttributedString as = new AttributedString(icon, checkLabelString(symbol, prog),
 				c.getColor(), getMetrics(c.getStyle()), false, null);
-			textElements[nextPos++] = new TextFieldElement(as, nextPos, 0);
+			elements.add(new TextFieldElement(as, elements.size(), 0));
 		}
 
-		return ListingTextField.createMultilineTextField(this, proxy, textElements, x, width,
-			Integer.MAX_VALUE, hlProvider);
+		return ListingTextField.createMultilineTextField(this, proxy, elements, x, width,
+			hlProvider);
 	}
 
 	private String getOffsetText(CodeUnit cu, Address currAddr, Address offcutAddress) {

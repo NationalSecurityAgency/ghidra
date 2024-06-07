@@ -234,7 +234,7 @@ public class GhidraSshPtyFactory implements PtyFactory {
 		try {
 			SshPty pty = new SshPty((ChannelExec) session.openChannel("exec"));
 			if (cols != 0 && rows != 0) {
-				pty.getParent().setWindowSize(cols, rows);
+				pty.getChild().setWindowSize(cols, rows);
 			}
 			return pty;
 		}

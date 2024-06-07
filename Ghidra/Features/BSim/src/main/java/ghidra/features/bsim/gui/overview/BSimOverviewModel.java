@@ -16,12 +16,11 @@
 package ghidra.features.bsim.gui.overview;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
 
 import docking.widgets.table.*;
 import generic.lsh.vector.LSHVectorFactory;
@@ -233,8 +232,8 @@ public class BSimOverviewModel extends AddressBasedTableModel<BSimOverviewRowObj
 		}
 
 		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			setFont(fixedWidthFont);
+		protected Font getDefaultFont() {
+			return fixedWidthFont;
 		}
 
 		@Override

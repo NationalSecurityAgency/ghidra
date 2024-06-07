@@ -21,7 +21,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import docking.ComponentProviderActivationListener;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
@@ -51,6 +50,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	@Override
 	public void providerClosed(FunctionComparisonProvider provider) {
 		providers.remove(provider);
+		provider.dispose();
 		listeners.stream().forEach(l -> l.componentProviderDeactivated(provider));
 	}
 
@@ -83,14 +83,30 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	}
 
 	/**
+	 * Create a new comparison between two given sets of functions
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		if (sourceFunctions.isEmpty() || destinationFunctions.isEmpty()) {
+			return null;
+		}
+		FunctionComparisonProvider provider = createProvider();
+		provider.getModel().compareFunctions(sourceFunctions, destinationFunctions);
+		return provider;
+	}
+
+	/**
 	 * Creates a new comparison comparison between two functions
 	 * 
 	 * @param source the source function
 	 * @param target the target function
 	 * @return the new comparison provider
 	 */
-	public FunctionComparisonProvider compareFunctions(Function source,
-		Function target) {
+	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
 		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
 		provider.addToTool();
 		provider.getModel().compareFunctions(source, target);
@@ -123,7 +139,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 * @param provider the provider to add the functions to
 	 */
 	public void compareFunctions(Function source, Function target,
-		FunctionComparisonProvider provider) {
+			FunctionComparisonProvider provider) {
 		if (provider == null) {
 			return;
 		}
@@ -199,9 +215,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 */
 	public void dispose() {
 		for (FunctionComparisonProvider provider : providers) {
-			FunctionComparisonPanel panel = provider.getComponent();
-			panel.setVisible(false);
-			panel.dispose();
+			provider.dispose();
 		}
 		providers.clear();
 	}
@@ -215,8 +229,8 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 */
 	public void domainObjectRestored(DomainObjectChangedEvent ev) {
 		for (DomainObjectChangeRecord domainObjectChangeRecord : ev) {
-			int eventType = domainObjectChangeRecord.getEventType();
-			if (eventType != DomainObject.DO_OBJECT_RESTORED) {
+			EventType eventType = domainObjectChangeRecord.getEventType();
+			if (eventType != DomainObjectEvent.RESTORED) {
 				return;
 			}
 			Object source = ev.getSource();

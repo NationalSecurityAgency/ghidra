@@ -40,6 +40,7 @@ import ghidra.app.context.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -190,7 +191,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	private File writeWrapperFile(URL fileURL) throws IOException {
 		File f;
 		if (manualWrapperFiles.size() < MAX_MANUAL_WRAPPER_FILE_COUNT) {
-			f = File.createTempFile("pdfView", ".html");
+			f = Application.createTempFile("pdfView", ".html");
 			f.deleteOnExit();
 		}
 		else {

@@ -196,9 +196,10 @@ public class Pagedump extends DumpFile {
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile, readerOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, dtm, program.getImageBase(), applicatorOptions,
-				(MessageLog) null);
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+					program.getImageBase(), applicatorOptions, (MessageLog) null);
+			applicator.applyNoAnalysisState();
 		}
 		catch (PdbException | IOException | CancelledException e) {
 			Msg.error(this, e.getMessage());
@@ -557,7 +558,7 @@ public class Pagedump extends DumpFile {
 	private boolean isValid(int flags) {
 		return (flags & 0x1) > 0;
 	}
-
+	
 	private void walkPages(int page, long va, int depth, boolean lp) throws IOException {
 		long fileOffset = fileOffset(page);
 		if (fileOffset < 0) {

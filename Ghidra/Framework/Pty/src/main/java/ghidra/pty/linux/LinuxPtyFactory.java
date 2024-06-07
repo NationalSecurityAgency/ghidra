@@ -19,15 +19,16 @@ import java.io.IOException;
 
 import ghidra.pty.Pty;
 import ghidra.pty.PtyFactory;
+import ghidra.pty.unix.UnixPty;
 
 public enum LinuxPtyFactory implements PtyFactory {
 	INSTANCE;
 
 	@Override
 	public Pty openpty(short cols, short rows) throws IOException {
-		LinuxPty pty = LinuxPty.openpty();
+		UnixPty pty = UnixPty.openpty(LinuxIoctls.INSTANCE);
 		if (cols != 0 && rows != 0) {
-			pty.getParent().setWindowSize(cols, rows);
+			pty.getChild().setWindowSize(cols, rows);
 		}
 		return pty;
 	}

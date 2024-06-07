@@ -28,6 +28,7 @@ import javax.swing.event.ChangeListener;
 import docking.DialogComponentProvider;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.*;
@@ -77,8 +78,6 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 
 	private JComponent buildWorkPanel(Register[] registers) {
 		registerComboBox = new GComboBox<>(wrapRegisters(registers));
-		Font f = registerComboBox.getFont().deriveFont(13f);
-		registerComboBox.setFont(f);
 		registerValueField = new FixedBitSizeValueField(32, true, false);
 		registerValueField.addChangeListener(new ChangeListener() {
 			@Override
@@ -93,11 +92,11 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 				registerChanged();
 			}
 		});
-		f = Gui.getFont("font.monospaced");
 
 		addressRangeList = new JList();
 		addressRangeList.setEnabled(false);
-		addressRangeList.setFont(f);
+		Gui.registerFont(addressRangeList, Fonts.MONOSPACED);
+
 		JScrollPane scrollPane = new JScrollPane(addressRangeList);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		Dimension d = scrollPane.getPreferredSize();

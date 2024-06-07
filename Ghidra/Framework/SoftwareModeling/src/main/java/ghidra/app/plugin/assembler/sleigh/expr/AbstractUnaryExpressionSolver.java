@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.UnaryExpression;
 
 /**
@@ -35,18 +34,18 @@ public abstract class AbstractUnaryExpressionSolver<T extends UnaryExpression>
 	}
 
 	@Override
-	public AssemblyResolution solve(T exp, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
-			throws NeedsBackfillException {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory, T exp,
+			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) throws NeedsBackfillException {
 		MaskedLong uval = solver.getValue(exp.getUnary(), vals, cur);
 		try {
 			if (uval != null && uval.isFullyDefined()) {
 				MaskedLong cval = compute(uval);
 				if (cval != null) {
-					return ConstantValueSolver.checkConstAgrees(cval, goal, description);
+					return ConstantValueSolver.checkConstAgrees(factory, cval, goal, description);
 				}
 			}
-			return solver.solve(exp.getUnary(), computeInverse(goal), vals, cur, hints,
+			return solver.solve(factory, exp.getUnary(), computeInverse(goal), vals, cur, hints,
 				description);
 		}
 		/*

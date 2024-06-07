@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
-import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.util.classfinder.ClassSearcher;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.app.util.bin.format.elf.ElfHeader;
+import ghidra.util.classfinder.ClassSearcher;
 
 public final class ElfRelocationHandlerFactory {
 

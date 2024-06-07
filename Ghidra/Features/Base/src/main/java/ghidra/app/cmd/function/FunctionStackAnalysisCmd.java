@@ -15,8 +15,10 @@
  */
 package ghidra.app.cmd.function;
 
+import java.util.ArrayList;
+import java.util.Stack;
+
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -28,14 +30,11 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.ArrayList;
-import java.util.Stack;
-
 /**
  * Command for analyzing the Stack; the command is run in the background.
  * NOTE: referenced thunk-functions should be created prior to this command
  */
-public class FunctionStackAnalysisCmd extends BackgroundCommand {
+public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
 	private boolean forceProcessing = false;
@@ -76,13 +75,9 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 		doLocals = doLocalAnalysis;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		int count = 0;
 		monitor.initialize(entryPoints.getNumAddresses());
@@ -285,7 +280,8 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 //		return true;
 //	}
 
-	private void defineFuncVariable(Function func, Instruction instr, int opIndex, int stackOffset) {
+	private void defineFuncVariable(Function func, Instruction instr, int opIndex,
+			int stackOffset) {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 
@@ -365,9 +361,8 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 					return null;
 				}
 				// only create variables at locations where a variable doesn't exist
-				var =
-					frame.createVariable(null, frameLoc, Undefined.getUndefinedDataType(refSize),
-						SourceType.ANALYSIS);
+				var = frame.createVariable(null, frameLoc, Undefined.getUndefinedDataType(refSize),
+					SourceType.ANALYSIS);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException(e);

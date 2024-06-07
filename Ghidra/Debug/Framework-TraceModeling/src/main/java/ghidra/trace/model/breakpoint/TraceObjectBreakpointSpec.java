@@ -43,5 +43,7 @@ public interface TraceObjectBreakpointSpec extends TraceBreakpoint, TraceObjectI
 
 	Collection<? extends TraceObjectBreakpointLocation> getLocations();
 
+	String getExpression();
+
 	void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds);
 }

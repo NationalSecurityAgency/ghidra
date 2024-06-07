@@ -16,12 +16,16 @@
 package ghidra.app.services;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
+import java.util.function.Function;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import ghidra.debug.api.progress.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -99,4 +103,57 @@ public interface ProgressService {
 	 * @param listener the listener
 	 */
 	void removeProgressListener(ProgressListener listener);
+
+	/**
+	 * A drop-in replacement for {@link PluginTool#execute(Task)} that publishes progress via the
+	 * service rather than displaying a dialog.
+	 * 
+	 * <p>
+	 * In addition to changing how progress is displayed, this also returns a future so that task
+	 * completion can be detected by the caller.
+	 * 
+	 * @param task task to run in a new thread
+	 * @return a future which completes when the task is finished
+	 */
+	default CompletableFuture<Void> execute(Task task) {
+		return CompletableFuture.supplyAsync(() -> {
+			try (CloseableTaskMonitor monitor = publishTask()) {
+				monitor.setCancelEnabled(task.canCancel());
+				try {
+					task.run(monitor);
+				}
+				catch (CancelledException e) {
+					throw new CancellationException("User cancelled");
+				}
+				catch (Throwable e) {
+					monitor.reportError(e);
+					return ExceptionUtils.rethrow(e);
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Similar to {@link #execute(Task)}, but for asynchronous methods
+	 * 
+	 * @param <T> the type of future result
+	 * @param canCancel true if the task can be cancelled
+	 * @param hasProgress true if the task displays progress
+	 * @param isModal true if the task is modal (ignored)
+	 * @param futureSupplier the task which returns a future, given the task monitor
+	 * @return the future returned by the supplier
+	 */
+	default <T> CompletableFuture<T> execute(boolean canCancel, boolean hasProgress,
+			boolean isModal, Function<TaskMonitor, CompletableFuture<T>> futureSupplier) {
+		CloseableTaskMonitor monitor = publishTask();
+		monitor.setCancelEnabled(canCancel);
+		CompletableFuture<T> future = futureSupplier.apply(monitor);
+		future.handle((t, ex) -> {
+			monitor.close();
+			return null;
+		});
+		monitor.addCancelledListener(() -> future.cancel(true));
+		return future;
+	}
 }

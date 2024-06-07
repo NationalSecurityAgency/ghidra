@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.contrastsecurity.sarif.Location;
-import com.contrastsecurity.sarif.LogicalLocation;
 import com.contrastsecurity.sarif.Result;
 import com.contrastsecurity.sarif.SarifSchema210;
 
@@ -35,7 +34,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.BookmarkManager;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.service.graph.AttributedGraph;
 import ghidra.service.graph.EmptyGraphType;
@@ -200,13 +198,6 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 		coloringService.setBackgroundColor(addr, addr, color);
 	}
 
-	public Address longToAddress(Object lval) {
-		if (lval instanceof Long) {
-			return getProgram().getAddressFactory().getDefaultAddressSpace().getAddress((Long) lval);
-		}
-		return getProgram().getAddressFactory().getDefaultAddressSpace().getAddress((Integer) lval);
-	}
-
 	/**
 	 * Get listing addresses associated with a result
 	 *
@@ -227,28 +218,8 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 		return addrs;
 	}
 
-	public Address locationToAddress(Location loc) {
-		if (loc.getPhysicalLocation() != null) {
-			return longToAddress(loc.getPhysicalLocation().getAddress().getAbsoluteAddress());
-		}
-		if (loc.getLogicalLocations() != null) {
-			Set<LogicalLocation> logicalLocations = loc.getLogicalLocations();
-			for (LogicalLocation logLoc : logicalLocations) {
-				switch (logLoc.getKind()) {
-				case "function":
-					String fname = logLoc.getName();
-					for (Function func : getProgram().getFunctionManager().getFunctions(true)) {
-						if (fname.equals(func.getName())) {
-							return func.getEntryPoint();
-						}
-					}
-					break;
-				default:
-					Msg.error(this, "Unknown logical location to handle: " + logLoc.toString());
-				}
-			}
-		}
-		return null;
+	public Address locationToAddress(Location location) {
+		return SarifUtils.locationToAddress(location, program);
 	}
 
 	@SuppressWarnings("unchecked")

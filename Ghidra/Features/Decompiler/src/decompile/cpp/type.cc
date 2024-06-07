@@ -598,8 +598,8 @@ const TypeField *Datatype::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,i
   return (const TypeField *)0;
 }
 
-/// Restore the basic properties (name,size,id) of a data-type from an XML element
-/// Properties are read from the attributes of the element
+/// Restore the basic properties (name,size,id) of a data-type from a stream.
+/// Properties are read from the attributes of the element.
 /// \param decoder is the stream decoder
 void Datatype::decodeBasic(Decoder &decoder)
 
@@ -1507,6 +1507,9 @@ void TypeStruct::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixed
     size = calcSize;
   alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
   calcAlignSize();
+  if (fixedSize <= 0) {	// Unless specifically overridden
+    size = alignSize;	// pad out structure to with alignment bytes
+  }
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -3247,8 +3250,7 @@ void TypeFactory::setDisplayFormat(Datatype *ct,uint4 format)
 /// \param fixedsize is -1 or the forced size of the structure
 /// \param fixedalign is -1 or the forced alignment for the structure
 /// \param flags are other flags to set on the structure
-/// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
+void TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
@@ -3260,8 +3262,10 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   for(iter=fd.begin();iter!=fd.end();++iter) {
     Datatype *ct = (*iter).type;
     // Do some sanity checks on the field
-    if (ct->getMetatype() == TYPE_VOID) return false;
-    if ((*iter).name.size() == 0) return false;
+    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Bad field data-type for structure: "+ot->getName());
+    else if ((*iter).name.size() == 0)
+      throw LowlevelError("Bad field name for structure: "+ot->getName());
 
     if ((*iter).offset != -1) {
       int4 end = (*iter).offset + ct->getSize();
@@ -3281,18 +3285,16 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   tree.insert(ot);
   recalcPointerSubmeta(ot, SUB_PTR);
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
-  return true;
 }
 
-/// If \b fixedsize is greater than 0, force the final structure to have that size.
+/// If \b fixedsize is greater than 0, force the final union to have that size.
 /// This method should only be used on an incomplete union. It will mark the union as complete.
 /// \param fd is the list of fields to set
 /// \param ot is the TypeUnion object to modify
 /// \param fixedsize is -1 or the forced size of the union
 /// \param fixedalign is -1 or the forced alignment for the union
 /// \param flags are other flags to set on the union
-/// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
+void TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
@@ -3302,9 +3304,12 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,i
   for(iter=fd.begin();iter!=fd.end();++iter) {
     Datatype *ct = (*iter).type;
     // Do some sanity checks on the field
-    if (ct->getMetatype() == TYPE_VOID) return false;
-    if ((*iter).offset != 0) return false;
-    if ((*iter).name.size() == 0) return false;
+    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Bad field data-type for union: "+ot->getName());
+    else if ((*iter).offset != 0)
+      throw LowlevelError("Non-zero field offset for union: "+ot->getName());
+    else if ((*iter).name.size() == 0)
+      throw LowlevelError("Bad field name for union: "+ot->getName());
   }
 
   tree.erase(ot);
@@ -3312,7 +3317,6 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,i
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
   tree.insert(ot);
-  return true;
 }
 
 /// The given prototype is copied into the given code data-type
@@ -4098,8 +4102,7 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
       throw LowlevelError("Redefinition of structure: " + ts.name);
   }
   else {		// If structure is a placeholder stub
-    if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.alignment,ts.flags)) // Define structure now by copying fields
-      throw LowlevelError("Bad structure definition");
+    setFields(ts.field,(TypeStruct*)ct,ts.size,ts.alignment,ts.flags);	// Define structure now by copying fields
   }
 //  decoder.closeElement(elemId);
   return ct;
@@ -4129,8 +4132,7 @@ Datatype* TypeFactory::decodeUnion(Decoder &decoder,bool forcecore)
       throw LowlevelError("Redefinition of union: " + tu.name);
   }
   else {		// If structure is a placeholder stub
-    if (!setFields(tu.field,(TypeUnion*)ct,tu.size,tu.alignment,tu.flags)) // Define structure now by copying fields
-      throw LowlevelError("Bad union definition");
+    setFields(tu.field,(TypeUnion*)ct,tu.size,tu.alignment,tu.flags);	// Define structure now by copying fields
   }
 //  decoder.closeElement(elemId);
   return ct;

@@ -50,7 +50,7 @@ public class DBTraceProgramViewMemorySpaceBlock extends AbstractDBTraceProgramVi
 	}
 
 	@Override
-	public int getPermissions() {
+	public int getFlags() {
 		return MemoryBlock.READ | MemoryBlock.WRITE | MemoryBlock.EXECUTE;
 	}
 
@@ -116,6 +116,16 @@ public class DBTraceProgramViewMemorySpaceBlock extends AbstractDBTraceProgramVi
 
 	@Override
 	public void setVolatile(boolean v) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isArtificial() {
+		return false;
+	}
+
+	@Override
+	public void setArtificial(boolean a) {
 		throw new UnsupportedOperationException();
 	}
 

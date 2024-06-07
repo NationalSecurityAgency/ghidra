@@ -807,6 +807,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(button);
 		pressButton(button, false);
 		waitForSwing();
+		waitForBusyTool(tool);
 	}
 
 	private CommentsDialog editComment(Address a) {

@@ -86,7 +86,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * contain the given lifespan. Only the canonical path is considered when looking for existing
 	 * ancestry.
 	 * 
-	 * @param the minimum lifespan of edges from the root to this object
+	 * @param lifespan the minimum lifespan of edges from the root to this object
 	 * @param resolution the rule for handling duplicate keys when setting values.
 	 * @return the value path from root to the newly inserted object
 	 */
@@ -155,6 +155,9 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Get all paths actually leading to this object, from the root, within the given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
 	 * @param span the span which every value entry on each path must intersect
 	 * @return the paths
 	 */
@@ -204,6 +207,9 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Get all values intersecting the given span and whose child is this object
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
 	 * @param span the span
 	 * @return the parent values
 	 */
@@ -212,12 +218,19 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Get all values (elements and attributes) of this object intersecting the given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
+	 * @param span the span
 	 * @return the values
 	 */
 	Collection<? extends TraceObjectValue> getValues(Lifespan span);
 
 	/**
 	 * Get values with the given key intersecting the given span
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's values are retrieved instead.
 	 * 
 	 * @param span the span
 	 * @param key the key
@@ -227,6 +240,9 @@ public interface TraceObject extends TraceUniqueObject {
 
 	/**
 	 * Get values with the given key intersecting the given span ordered by time
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's values are retrieved instead.
 	 * 
 	 * @param span the span
 	 * @param key the key
@@ -239,6 +255,7 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Get all elements of this object intersecting the given span
 	 * 
+	 * @param span the span
 	 * @return the element values
 	 */
 	Collection<? extends TraceObjectValue> getElements(Lifespan span);
@@ -246,12 +263,19 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Get all attributes of this object intersecting the given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
+	 * @param span the span
 	 * @return the attribute values
 	 */
 	Collection<? extends TraceObjectValue> getAttributes(Lifespan span);
 
 	/**
 	 * Get the value for the given snap and key
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's value is retrieved instead.
 	 * 
 	 * @param snap the snap
 	 * @param key the key
@@ -302,6 +326,10 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Stream all ancestor values of this object matching the given predicates, intersecting the
 	 * given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
+	 * 
 	 * @param span a span which values along the path must intersect
 	 * @param rootPredicates the predicates for matching path keys, relative to the root
 	 * @return the stream of matching paths to values
@@ -312,6 +340,10 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Stream all ancestor values of this object matching the given predicates, intersecting the
 	 * given span
+	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
 	 * 
 	 * @param span a span which values along the path must intersect
 	 * @param relativePredicates the predicates for matching path keys, relative to this object
@@ -324,6 +356,10 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Stream all successor values of this object matching the given predicates, intersecting the
 	 * given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
+	 * 
 	 * @param span a span which values along the path must intersect
 	 * @param relativePredicates the predicates for matching path keys, relative to this object
 	 * @return the stream of matching paths to values
@@ -334,6 +370,10 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Stream all successor values of this object at the given relative path, intersecting the given
 	 * span, ordered by time.
+	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
 	 * 
 	 * @param span the span which values along the path must intersect
 	 * @param relativePath the path relative to this object
@@ -348,15 +388,20 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * <p>
 	 * If an object has a disjoint life, i.e., multiple canonical parents, then only the
-	 * least-recent of those is traversed.
+	 * least-recent of those is traversed. Aliased keys are excluded; those can't be canonical
+	 * anyway.
 	 * 
-	 * @param relativePath the path relative to this object
+	 * @param relativePredicates predicates on the relative path from this object to desired
+	 *            successors
 	 * @return the stream of value paths
 	 */
 	Stream<? extends TraceObjectValPath> getCanonicalSuccessors(PathPredicates relativePredicates);
 
 	/**
 	 * Set a value for the given lifespan
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's value is set instead.
 	 * 
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
@@ -374,7 +419,8 @@ public interface TraceObject extends TraceUniqueObject {
 	 * <p>
 	 * Setting a value of {@code null} effectively deletes the value for the given lifespan and
 	 * returns {@code null}. Values of the same key intersecting the given lifespan or either
-	 * truncated or deleted.
+	 * truncated or deleted. If the key is an alias, the target key's value is set instead.
+	 * 
 	 * 
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
@@ -453,7 +499,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Search for ancestors on the canonical path having the given target interface
 	 * 
 	 * <p>
-	 * The object may not yet be inserted at its canonical path
+	 * The object may not yet be inserted at its canonical path.
 	 * 
 	 * @param targetIf the interface class
 	 * @return the stream of objects
@@ -465,7 +511,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Search for ancestors on the canonical path providing the given interface
 	 * 
 	 * <p>
-	 * The object may not yet be inserted at its canonical path
+	 * The object may not yet be inserted at its canonical path.
 	 * 
 	 * @param <I> the interface type
 	 * @param ifClass the interface class

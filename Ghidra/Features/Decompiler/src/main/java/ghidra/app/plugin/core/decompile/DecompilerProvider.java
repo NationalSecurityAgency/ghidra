@@ -165,6 +165,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		plugin.getTool().addServiceListener(serviceListener);
 		programListener = new DecompilerProgramListener(controller, redecompileUpdater);
+		setDefaultFocusComponent(controller.getDecompilerPanel());
 	}
 
 //==================================================================================================
@@ -285,12 +286,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public void setMemento(LocationMemento memento) {
 		DecompilerLocationMemento decompMemento = (DecompilerLocationMemento) memento;
 		pendingViewerPosition = decompMemento.getViewerPosition();
-	}
-
-	@Override
-	public void requestFocus() {
-		controller.getDecompilerPanel().requestFocus();
-		tool.toFront(this);
 	}
 
 //==================================================================================================
@@ -905,6 +900,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		OverridePrototypeAction overrideSigAction = new OverridePrototypeAction();
 		setGroupInfo(overrideSigAction, functionGroup, subGroupPosition++);
 
+		EditPrototypeOverrideAction editOverrideSigAction = new EditPrototypeOverrideAction();
+		setGroupInfo(editOverrideSigAction, functionGroup, subGroupPosition++);
+
 		DeletePrototypeOverrideAction deleteSigAction = new DeletePrototypeOverrideAction();
 		setGroupInfo(deleteSigAction, functionGroup, subGroupPosition++);
 
@@ -1144,6 +1142,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(editDataTypeAction);
 		addLocalAction(specifyCProtoAction);
 		addLocalAction(overrideSigAction);
+		addLocalAction(editOverrideSigAction);
 		addLocalAction(deleteSigAction);
 		addLocalAction(renameFunctionAction);
 		addLocalAction(renameLabelAction);

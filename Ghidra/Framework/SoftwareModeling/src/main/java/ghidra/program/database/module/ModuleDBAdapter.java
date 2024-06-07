@@ -18,6 +18,7 @@ package ghidra.program.database.module;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -40,16 +41,16 @@ abstract class ModuleDBAdapter {
 	 * @throws IOException if there is a problem accessing the database.
 	 * @throws CancelledException if task cancelled
 	 */
-	static ModuleDBAdapter getAdapter(ModuleManager moduleMgr, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException, CancelledException {
+	static ModuleDBAdapter getAdapter(ModuleManager moduleMgr, OpenMode openMode,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		long treeID = moduleMgr.getTreeID();
 		DBHandle handle = moduleMgr.getDatabaseHandle();
 		try {
-			return new ModuleDBAdapterV1(handle, openMode == DBConstants.CREATE, treeID);
+			return new ModuleDBAdapterV1(handle, openMode == OpenMode.CREATE, treeID);
 		}
 		catch (VersionException e) {
 			// V0 read-only is slow - force upgrade
-			if (!e.isUpgradable() || openMode != DBConstants.UPGRADE) {
+			if (!e.isUpgradable() || openMode != OpenMode.UPGRADE) {
 				throw e;
 			}
 			ModuleDBAdapter adapter = findReadOnlyAdapter(moduleMgr);

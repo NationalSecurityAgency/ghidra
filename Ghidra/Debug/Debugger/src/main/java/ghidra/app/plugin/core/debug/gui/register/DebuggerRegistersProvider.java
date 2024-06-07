@@ -52,8 +52,8 @@ import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.*;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -63,16 +63,15 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceRegisterUtils;
+import ghidra.trace.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -104,8 +103,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION);
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION);
 		}
 	}
 
@@ -116,8 +114,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
@@ -152,9 +149,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				RegisterRow::isValueEditable, SortDirection.ASCENDING) {
 			private static final RegisterValueCellRenderer RENDERER =
 				new RegisterValueCellRenderer();
-			private static final SettingsDefinition[] DEFS = new SettingsDefinition[] {
-				FormatSettingsDefinition.DEF_HEX,
-			};
+			private static final SettingsDefinition[] DEFS =
+				new SettingsDefinition[] { FormatSettingsDefinition.DEF_HEX, };
 
 			@Override
 			public GColumnRenderer<BigInteger> getRenderer() {
@@ -186,9 +182,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		@SuppressWarnings("unchecked")
 		<T> RegisterTableColumns(String header, int width, Class<T> cls,
-				Function<RegisterRow, T> getter,
-				BiConsumer<RegisterRow, T> setter, Predicate<RegisterRow> editable,
-				SortDirection direction) {
+				Function<RegisterRow, T> getter, BiConsumer<RegisterRow, T> setter,
+				Predicate<RegisterRow> editable, SortDirection direction) {
 			this.header = header;
 			this.width = width;
 			this.cls = cls;
@@ -277,15 +272,15 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	class TraceChangeListener extends TraceDomainObjectListener {
 		public TraceChangeListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored(e));
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registerValueChanged);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::registerStateChanged);
-			listenFor(TraceCodeChangeType.ADDED, this::registerTypeAdded);
-			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::registerTypeReplaced);
-			listenFor(TraceCodeChangeType.LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
-			listenFor(TraceCodeChangeType.REMOVED, this::registerTypeRemoved);
-			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
-			listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadDestroyed);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored(e));
+			listenFor(TraceEvents.BYTES_CHANGED, this::registerValueChanged);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::registerStateChanged);
+			listenFor(TraceEvents.CODE_ADDED, this::registerTypeAdded);
+			listenFor(TraceEvents.CODE_DATA_TYPE_REPLACED, this::registerTypeReplaced);
+			listenFor(TraceEvents.CODE_LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
+			listenFor(TraceEvents.CODE_REMOVED, this::registerTypeRemoved);
+			listenFor(TraceEvents.THREAD_DELETED, this::threadDeleted);
+			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadDestroyed);
 		}
 
 		private boolean isVisibleObjectsMode(AddressSpace space) {
@@ -486,6 +481,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@AutoServiceConsumed
 	private DebuggerControlService controlService;
 	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
+	@AutoServiceConsumed
 	private MarkerService markerService; // TODO: Mark address types (separate plugin?)
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
@@ -574,6 +571,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		regsFilterPanel = new GhidraTableFilterPanel<>(regsTable, regsTableModel);
 		mainPanel.add(regsFilterPanel, BorderLayout.SOUTH);
 
+		String namePrefix = "Registers";
+		regsTable.setAccessibleNamePrefix(namePrefix);
+		regsFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		regsTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;
@@ -639,7 +640,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				if (listingService == null) {
 					return;
 				}
-				listingService.goTo(address, true);
+				ProgramLocation loc = new ProgramLocation(current.getView(), address);
+				listingService.goTo(loc, true);
 			}).build());
 		}
 		return result;
@@ -658,7 +660,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (address == null) {
 			return;
 		}
-		listingService.goTo(address, true);
+		ProgramLocation loc = new ProgramLocation(current.getView(), address);
+		listingService.goTo(loc, true);
 	}
 
 	@Override
@@ -853,15 +856,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		CompletableFuture<Void> future = editor.setRegister(rv);
 		future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			if (ex instanceof DebuggerModelAccessException) {
-				Msg.error(this, "Could not write target register", ex);
-				plugin.getTool()
-						.setStatusInfo("Could not write target register: " + ex.getMessage());
-			}
-			else {
-				Msg.showError(this, getComponent(), "Edit Register",
-					"Could not write target register", ex);
-			}
+			reportError("Edit Register", "Could not write target register", ex);
 			return null;
 		});
 		return;
@@ -899,8 +894,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				getRegisterMemorySpace(register.getAddressSpace(), true).getCodeSpace(true);
 			long snap = current.getViewSnap();
 			TracePlatform platform = current.getPlatform();
-			code.definedUnits()
-					.clear(platform, Lifespan.at(snap), register, TaskMonitor.DUMMY);
+			code.definedUnits().clear(platform, Lifespan.at(snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
 				code.definedData().create(platform, Lifespan.nowOn(snap), register, dataType);
 			}
@@ -936,8 +930,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return;
 		}
 		try {
-			RegisterValue rv = TraceRegisterUtils.encodeValueRepresentationHackPointer(
-				register, data, representation);
+			RegisterValue rv = TraceRegisterUtils.encodeValueRepresentationHackPointer(register,
+				data, representation);
 			writeRegisterValue(rv);
 		}
 		catch (DataTypeEncodeException e) {
@@ -1109,9 +1103,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	protected static TraceMemorySpace getRegisterMemorySpace(DebuggerCoordinates coords,
 			AddressSpace space, boolean createIfAbsent) {
 		if (!space.isRegisterSpace()) {
-			return coords.getTrace()
-					.getMemoryManager()
-					.getMemorySpace(space, createIfAbsent);
+			return coords.getTrace().getMemoryManager().getMemorySpace(space, createIfAbsent);
 		}
 		TraceThread thread = coords.getThread();
 		if (thread == null) {
@@ -1122,17 +1114,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				.getMemoryRegisterSpace(thread, coords.getFrame(), createIfAbsent);
 	}
 
-	protected TraceMemorySpace getRegisterMemorySpace(AddressSpace space,
-			boolean createIfAbsent) {
+	protected TraceMemorySpace getRegisterMemorySpace(AddressSpace space, boolean createIfAbsent) {
 		return getRegisterMemorySpace(current, space, createIfAbsent);
 	}
 
 	protected static TraceCodeSpace getRegisterCodeSpace(DebuggerCoordinates coords,
 			AddressSpace space, boolean createIfAbsent) {
 		if (!space.isRegisterSpace()) {
-			return coords.getTrace()
-					.getCodeManager()
-					.getCodeSpace(space, createIfAbsent);
+			return coords.getTrace().getCodeManager().getCodeSpace(space, createIfAbsent);
 		}
 		TraceThread thread = coords.getThread();
 		if (thread == null) {
@@ -1290,9 +1279,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			current.getThread(), current.getFrame(), registers);
 		return future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			String msg = "Could not read target registers for selected thread: " + ex.getMessage();
-			Msg.info(this, msg);
-			plugin.getTool().setStatusInfo(msg);
+			reportError(null, "Could not read target registers for selected thread", ex);
 			return ExceptionUtils.rethrow(ex);
 		}).thenApply(__ -> null);
 	}
@@ -1312,5 +1299,18 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	public DebuggerCoordinates getCurrent() {
 		return current;
+	}
+
+	private void reportError(String title, String message, Throwable ex) {
+		plugin.getTool().setStatusInfo(message + ": " + ex.getMessage());
+		if (title != null && !(ex instanceof DebuggerModelAccessException)) {
+			Msg.showError(this, getComponent(), title, message, ex);
+		}
+		else if (consoleService != null) {
+			consoleService.log(DebuggerResources.ICON_LOG_ERROR, message, ex);
+		}
+		else {
+			Msg.error(this, message, ex);
+		}
 	}
 }

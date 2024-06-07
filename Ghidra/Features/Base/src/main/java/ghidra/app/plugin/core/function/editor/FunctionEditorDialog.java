@@ -246,8 +246,6 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		signatureFieldUndoRedoKeeper = DockingUtils.installUndoRedo(signatureTextField);
 
-		Font font = signatureTextField.getFont();
-		signatureTextField.setFont(font.deriveFont(18.0f));
 		panel.add(signatureTextField);
 
 		signatureTextField.setEscapeListener(e -> {

@@ -96,12 +96,19 @@ public class ProjectDataTablePanel extends JPanel {
 			}
 		});
 		gTable.getSelectionModel()
-				.addListSelectionListener(
-					e -> plugin.getTool().contextChanged(null));
+				.addListSelectionListener(e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
 
 		new ProjectDataTableDnDHandler(gTable, model);
+	}
+
+	/**
+	 * Determine if table capacity has been exceeded and files are not shown
+	 * @return true if files are not shown in project data table, else false
+	 */
+	public boolean isCapacityExceeded() {
+		return capacityExceeded;
 	}
 
 	public void dispose() {
@@ -365,11 +372,6 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public void domainFolderSetActive(DomainFolder folder) {
-			// don't care
-		}
-
-		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 			if (ignoreChanges()) {
 				return;
@@ -379,24 +381,6 @@ public class ProjectDataTablePanel extends JPanel {
 			plugin.getTool().contextChanged(null);
 		}
 
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			if (ignoreChanges()) {
-				return;
-			}
-			clearInfo(file);
-			table.repaint();
-		}
-
-		@Override
-		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-			// don't care
-		}
-
-		@Override
-		public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-			// don't care
-		}
 	}
 
 	/**

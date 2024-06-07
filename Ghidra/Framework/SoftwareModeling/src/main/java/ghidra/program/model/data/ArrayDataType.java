@@ -24,6 +24,9 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Basic implementation of the Array interface.
+ * 
+ * NOTE: The use of {@link FactoryDataType} and {@link Dynamic}, where 
+ * {@link Dynamic#canSpecifyLength()} is false, are not supported for array use.
  */
 public class ArrayDataType extends DataTypeImpl implements Array {
 
@@ -33,12 +36,29 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	private boolean deleted = false;
 
 	/**
-	 * Constructs a new Array dataType.
-	 * @param dataType the dataType of the elements in the array (null is not permitted).
+	 * Constructs a new Array dataType for fixed-length datatypes.  The specified datatype's
+	 * {@link DataTypeManager} will be used for its data organization.
+	 * @param dataType the dataType of the elements in the array ({@link FactoryDataType} and
+	 * {@link Dynamic} data types are not permitted).
+	 * @param numElements the number of elements in the array (0 is permitted).
+	 * @throws IllegalArgumentException if invalid datatype is specified or required valid
+	 * {@code elementLength} required.
+	 */
+	public ArrayDataType(DataType dataType, int numElements) {
+		this(dataType, numElements, -1, null);
+	}
+
+	/**
+	 * Constructs a new Array dataType.  The specified datatype's {@link DataTypeManager} will 
+	 * be used for its data organization.
+	 * @param dataType the dataType of the elements in the array. {@link FactoryDataType} and
+	 * {@link Dynamic}, where {@link Dynamic#canSpecifyLength()} is false, are not not permitted.
 	 * @param numElements the number of elements in the array (0 is permitted).
 	 * @param elementLength the length of an individual element in the array.  This value
 	 * is only used for {@link Dynamic} dataType where {@link Dynamic#canSpecifyLength()} 
-	 * returns true.
+	 * returns true.  A -1 value can be specified for fixed-length datatypes.
+	 * @throws IllegalArgumentException if invalid datatype is specified or required valid
+	 * {@code elementLength} required.
 	 */
 	public ArrayDataType(DataType dataType, int numElements, int elementLength) {
 		this(dataType, numElements, elementLength, null);
@@ -46,19 +66,22 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	/**
 	 * Constructs a new Array dataType.
-	 * @param dataType the dataType of the elements in the array.
+	 * @param dataType the dataType of the elements in the array. {@link FactoryDataType} and
+	 * {@link Dynamic}, where {@link Dynamic#canSpecifyLength()} is false, are not not permitted.
 	 * @param numElements the number of elements in the array (0 is permitted).
 	 * @param elementLength the length of an individual element in the array.  This value
 	 * is only used for {@link Dynamic} dataType where {@link Dynamic#canSpecifyLength()} 
-	 * returns true.
-	 * @param dtm datatype manager or null
+	 * returns true.  A -1 value can be specified for fixed-length datatypes.
+	 * @param dataMgr datatype manager or null.  If null, the datatype manager associated with the
+	 * specified datatype will be used.
+	 * @throws IllegalArgumentException if invalid datatype is specified or required valid
+	 * {@code elementLength} required.
 	 */
 	public ArrayDataType(DataType dataType, int numElements, int elementLength,
-			DataTypeManager dtm) {
-		super(dataType.getCategoryPath(), "array", dtm);
+			DataTypeManager dataMgr) {
+		super(dataType.getCategoryPath(), "array", getPreferredDataTypeManager(dataType, dataMgr));
 		if (dataType instanceof FactoryDataType) {
-			throw new IllegalArgumentException(
-				"Factory data type not permitted");
+			throw new IllegalArgumentException("Factory data type not permitted");
 		}
 		if (numElements < 0) {
 			throw new IllegalArgumentException(
@@ -69,7 +92,7 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 			baseDt = ((TypeDef) dataType).getBaseDataType();
 		}
 		validate(baseDt);
-		dataType = dataType.clone(dtm);
+		dataType = dataType.clone(getDataTypeManager());
 		this.elementLength = -1;
 		if (baseDt instanceof Dynamic) {
 			if (elementLength < 0) {
@@ -86,6 +109,13 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 		this.numElements = numElements;
 		name = DataTypeUtilities.getName(this, true);
 		dataType.addParent(this);
+	}
+
+	private static DataTypeManager getPreferredDataTypeManager(DataType dt, DataTypeManager dtm) {
+		if (dtm != null) {
+			return dtm;
+		}
+		return dt.getDataTypeManager();
 	}
 
 	/**
@@ -105,12 +135,13 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 		if (baseDt instanceof Dynamic) {
 			if (!((Dynamic) baseDt).canSpecifyLength()) {
 				throw new IllegalArgumentException(
-					"Array data-type may not be a non-sizable Dynamic data-type: " + baseDt.getName());
+					"Array data-type may not be a non-sizable Dynamic data-type: " +
+						baseDt.getName());
 			}
 		}
 		else if (baseDt.getLength() < 1) { // not Dynamic
-			throw new IllegalArgumentException(
-				"Data type may not report a length less than 1: " + baseDt.getClass().getSimpleName());
+			throw new IllegalArgumentException("Data type may not report a length less than 1: " +
+				baseDt.getClass().getSimpleName());
 		}
 	}
 

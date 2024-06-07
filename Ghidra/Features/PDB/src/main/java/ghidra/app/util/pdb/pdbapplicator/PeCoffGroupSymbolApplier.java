@@ -26,27 +26,23 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link PeCoffGroupMsSymbol} symbols.
  */
-public class PeCoffGroupSymbolApplier extends MsSymbolApplier {
+public class PeCoffGroupSymbolApplier extends MsSymbolApplier implements DirectSymbolApplier {
 
 	private PeCoffGroupMsSymbol symbol;
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working
+	 * @param symbol the symbol for this applier
 	 */
-	public PeCoffGroupSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof PeCoffGroupMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (PeCoffGroupMsSymbol) abstractSymbol;
+	public PeCoffGroupSymbolApplier(DefaultPdbApplicator applicator, PeCoffGroupMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
 		applicator.addMemoryGroupRefinement(symbol);
 		Address symbolAddress = applicator.getAddress(symbol);
 		if (applicator.isInvalidAddress(symbolAddress, symbol.getName())) {
@@ -55,9 +51,13 @@ public class PeCoffGroupSymbolApplier extends MsSymbolApplier {
 		applicator.createSymbol(symbolAddress, symbol.getName(), false);
 	}
 
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing
+	private PeCoffGroupMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof PeCoffGroupMsSymbol peCoffGroupSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return peCoffGroupSymbol;
 	}
 
 }

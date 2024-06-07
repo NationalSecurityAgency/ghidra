@@ -15,19 +15,17 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+
 import java.rmi.NoSuchObjectException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
-
 import ghidra.app.events.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
-import ghidra.app.util.task.OpenProgramRequest;
-import ghidra.app.util.task.OpenProgramTask;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -36,18 +34,16 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.task.TaskLauncher;
 
 /**
  * Class for tracking open programs in the tool.
  */
-class MultiProgramManager implements DomainObjectListener, TransactionListener {
+class MultiProgramManager implements TransactionListener {
 
 	private ProgramManagerPlugin plugin;
 	private PluginTool tool;
 	private ProgramInfo currentInfo;
 	private TransactionMonitor txMonitor;
-	private MyFolderListener folderListener;
 
 	private Runnable programChangedRunnable;
 	private boolean hasUnsavedPrograms;
@@ -60,6 +56,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	// result in a second copy of that program being opened.  This is safe because program opens
 	// and closes are all done from the Swing thread.
 	private Map<Program, ProgramInfo> programMap = new ConcurrentHashMap<>();
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	MultiProgramManager(ProgramManagerPlugin programManagerPlugin) {
 		this.plugin = programManagerPlugin;
@@ -69,8 +66,6 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		txMonitor = new TransactionMonitor();
 		txMonitor.setName("Transaction Open (Program being modified)");
 		tool.addStatusComponent(txMonitor, true, true);
-		folderListener = new MyFolderListener();
-		tool.getProject().getProjectData().addDomainFolderChangeListener(folderListener);
 
 		programChangedRunnable = () -> {
 			if (tool == null) {
@@ -95,7 +90,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 
 			fireOpenEvents(p);
 
-			p.addListener(this);
+			p.addListener(domainObjectListener);
 			p.addTransactionListener(this);
 		}
 		else if (!oldInfo.visible && state != ProgramManager.OPEN_HIDDEN) {
@@ -108,11 +103,10 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	}
 
 	void dispose() {
-		tool.getProject().getProjectData().removeDomainFolderChangeListener(folderListener);
 		fireActivatedEvent(null);
 
 		for (Program p : programMap.keySet()) {
-			p.removeListener(this);
+			p.removeListener(domainObjectListener);
 			p.removeTransactionListener(this);
 			fireCloseEvents(p);
 			p.release(tool);
@@ -141,7 +135,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		else {
 			p.removeTransactionListener(this);
 			programMap.remove(p);
-			p.removeListener(this);
+			p.removeListener(domainObjectListener);
 			if (info == currentInfo) {
 				ProgramInfo newCurrent = findNextCurrent();
 				setCurrentProgram(newCurrent);
@@ -287,50 +281,47 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			new ProgramVisibilityChangePluginEvent(pluginName, program, isVisible));
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!(ev.getSource() instanceof Program)) {
-			return;
+	DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.any(ERROR).terminate(this::handleError)
+			.each(FILE_CHANGED).call(this::handleFileChanged)
+			.build();
+		// @formatter:on
+	}
+
+	private void handleError(DomainObjectChangedEvent event) {
+		DomainObjectChangeRecord rec = event.findFirst(ERROR);
+		if (event.getSource() instanceof Program program) {
+			String msg = getErrorMessage(program, (Throwable) rec.getNewValue());
+			Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
+			removeProgram(program);
 		}
+	}
 
-		Program program = (Program) ev.getSource();
-		if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_ERROR)) {
-			for (int i = 0; i < ev.numRecords(); i++) {
-				DomainObjectChangeRecord docr = ev.getChangeRecord(i);
-				int eventType = docr.getEventType();
-				if (eventType == DomainObject.DO_DOMAIN_FILE_CHANGED) {
-					ProgramInfo info = getInfo(program);
-					if (info != null) {
-						info.programSavedAs(); // updates info to new domain file
-					}
-					if (currentInfo != null && currentInfo.program == program) {
-						String name = program.getDomainFile().toString();
-						tool.setSubTitle(name);
-					}
-				}
-				else if (eventType == DomainObject.DO_OBJECT_ERROR) {
-					String msg;
-					Throwable t = (Throwable) docr.getNewValue();
-					if (t instanceof NoSuchObjectException) {
-						msg = program.getName() + " was closed due to an unrecoverable error!" +
-							"\nThis error could be the result of your computer becoming suspended" +
-							"\nor sleeping allowing the network connection with the Ghidra Server" +
-							"\nto fail.";
-					}
-					else {
-						msg = program.getName() + " was closed due to an unrecoverable error!" +
-							"\n \nSuch failures are generally due to an IO Error caused" +
-							"\nby the local filesystem or server.";
-					}
-
-					Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
-					removeProgram(program);
-					return;
-				}
-
+	private void handleFileChanged(DomainObjectChangedEvent event, DomainObjectChangeRecord rec) {
+		if (event.getSource() instanceof Program program) {
+			ProgramInfo info = getInfo(program);
+			if (info != null) {
+				info.programSavedAs(); // updates info to new domain file
+			}
+			if (currentInfo != null && currentInfo.program == program) {
+				String name = program.getDomainFile().toString();
+				tool.setSubTitle(name);
 			}
 		}
+	}
+
+	private String getErrorMessage(Program program, Throwable t) {
+		if (t instanceof NoSuchObjectException) {
+			return program.getName() + " was closed due to an unrecoverable error!" +
+				"\nThis error could be the result of your computer becoming suspended" +
+				"\nor sleeping allowing the network connection with the Ghidra Server" +
+				"\nto fail.";
+		}
+		return program.getName() + " was closed due to an unrecoverable error!" +
+			"\n \nSuch failures are generally due to an IO Error caused" +
+			"\nby the local filesystem or server.";
 	}
 
 	public boolean isEmpty() {
@@ -442,41 +433,6 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-	private class MyFolderListener extends DomainFolderListenerAdapter {
-
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-
-			/**
-			 * Special handling for when a file is checked-in.  The existing program has be moved
-			 * to a proxy file (no longer in the project) so that it can be closed and the program
-			 * re-opened with the new version after the check-in merge.
-			 */
-
-			if (!programMap.containsKey(oldObject)) {
-				return;
-			}
-			Element dataState = null;
-			if (currentInfo != null && currentInfo.program == oldObject) {
-				// save dataState as though the project state was saved and re-opened to simulate
-				// recovering after closing the program during this swap
-				dataState = tool.saveDataStateToXml(true);
-			}
-			OpenProgramTask openTask = new OpenProgramTask(file, DomainFile.DEFAULT_VERSION, this);
-			openTask.setSilent();
-			new TaskLauncher(openTask, tool.getToolFrame());
-			OpenProgramRequest openProgramReq = openTask.getOpenProgram();
-			if (openProgramReq != null) {
-				plugin.openProgram(openProgramReq.getProgram(),
-					dataState != null ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE);
-				openProgramReq.release();
-				removeProgram((Program) oldObject);
-				if (dataState != null) {
-					tool.restoreDataStateFromXml(dataState);
-				}
-			}
-		}
-	}
 
 	class ProgramInfo implements Comparable<ProgramInfo> {
 

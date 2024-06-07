@@ -17,17 +17,12 @@ package ghidra.trace.database.target;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.target.visitors.TreeTraversal;
-import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.*;
-import ghidra.util.LockHold;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBCachedObjectStoreFactory.*;
 import ghidra.util.database.DBObjectColumn;
@@ -36,8 +31,8 @@ import ghidra.util.database.spatial.DBTreeDataRecord;
 
 @DBAnnotatedObjectInfo(version = 1)
 public class DBTraceObjectValueData
-		extends DBTreeDataRecord<ValueShape, ValueBox, InternalTraceObjectValue>
-		implements InternalTraceObjectValue, ValueShape {
+		extends DBTreeDataRecord<ValueShape, ValueBox, DBTraceObjectValueData>
+		implements TraceObjectValueStorage, ValueShape {
 	static final String TABLE_NAME = "ObjectValue";
 
 	static final String PARENT_COLUMN_NAME = "Parent"; // R*-Tree parent
@@ -89,6 +84,8 @@ public class DBTraceObjectValueData
 	protected Address address;
 	protected AddressRange range;
 
+	private DBTraceObjectValue wrapper;
+
 	public DBTraceObjectValueData(DBTraceObjectManager manager, DBTraceObjectValueRStarTree tree,
 			DBCachedObjectStore<?> store, DBRecord record) {
 		super(store, record);
@@ -96,8 +93,7 @@ public class DBTraceObjectValueData
 		this.tree = tree;
 	}
 
-	@Override
-	public void doSetPrimitive(Object primitive) {
+	void doSetPrimitive(Object primitive) {
 		if (primitive instanceof TraceObject) {
 			throw new AssertionError();
 		}
@@ -194,11 +190,6 @@ public class DBTraceObjectValueData
 	}
 
 	@Override
-	public Trace getTrace() {
-		return manager.trace;
-	}
-
-	@Override
 	public DBTraceObject getParent() {
 		return objParent;
 	}
@@ -208,51 +199,18 @@ public class DBTraceObjectValueData
 		return entryKey;
 	}
 
-	protected TraceObjectKeyPath doGetCanonicalPath() {
-		if (objParent == null) {
-			return TraceObjectKeyPath.of();
-		}
-		return objParent.getCanonicalPath().extend(entryKey);
-	}
-
-	protected boolean doIsCanonical() {
-		if (child == null) {
-			return false;
-		}
-		if (objParent == null) { // We're the root
-			return true;
-		}
-		return doGetCanonicalPath().equals(child.getCanonicalPath());
-	}
-
-	@Override
-	public TraceObjectKeyPath getCanonicalPath() {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return doGetCanonicalPath();
-		}
-	}
-
-	@Override
-	public boolean isCanonical() {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return doIsCanonical();
-		}
-	}
-
 	@Override
 	public Object getValue() {
-		try (LockHold hold = manager.trace.lockRead()) {
-			if (child != null) {
-				return child;
-			}
-			if (address != null) {
-				return address;
-			}
-			if (range != null) {
-				return range;
-			}
-			return child != null ? child : primitive;
+		if (child != null) {
+			return child;
 		}
+		if (address != null) {
+			return address;
+		}
+		if (range != null) {
+			return range;
+		}
+		return child != null ? child : primitive;
 	}
 
 	@Override
@@ -261,63 +219,8 @@ public class DBTraceObjectValueData
 	}
 
 	@Override
-	public boolean isObject() {
-		return child != null;
-	}
-
-	@Override
 	public Lifespan getLifespan() {
-		try (LockHold hold = manager.trace.lockRead()) {
-			return lifespan;
-		}
-	}
-
-	@Override
-	public void setMinSnap(long minSnap) {
-		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(Lifespan.span(minSnap, maxSnap));
-		}
-	}
-
-	@Override
-	public long getMinSnap() {
-		try (LockHold hold = manager.trace.lockRead()) {
-			return minSnap;
-		}
-	}
-
-	@Override
-	public void setMaxSnap(long maxSnap) {
-		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(Lifespan.span(minSnap, maxSnap));
-		}
-	}
-
-	@Override
-	public long getMaxSnap() {
-		try (LockHold hold = manager.trace.lockRead()) {
-			return maxSnap;
-		}
-	}
-
-	@Override
-	public void delete() {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			if (objParent == null) {
-				throw new IllegalArgumentException("Cannot delete root value");
-			}
-			doDeleteAndEmit();
-		}
-	}
-
-	@Override
-	public TraceObjectValue truncateOrDelete(Lifespan span) {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			if (objParent == null) {
-				throw new IllegalArgumentException("Cannot truncate or delete root value");
-			}
-			return doTruncateOrDeleteAndEmitLifeChange(span);
-		}
+		return lifespan;
 	}
 
 	@Override
@@ -335,12 +238,12 @@ public class DBTraceObjectValueData
 	}
 
 	@Override
-	protected void setRecordValue(InternalTraceObjectValue value) {
+	protected void setRecordValue(DBTraceObjectValueData value) {
 		// Nothing. Entry is the value
 	}
 
 	@Override
-	protected InternalTraceObjectValue getRecordValue() {
+	protected DBTraceObjectValueData getRecordValue() {
 		return this;
 	}
 
@@ -396,38 +299,34 @@ public class DBTraceObjectValueData
 
 	@Override
 	public void doSetLifespan(Lifespan lifespan) {
-		if (minSnap == lifespan.lmin() && maxSnap == lifespan.lmax()) {
-			return;
-		}
+		// NB. Wrapper would not call if lifespan weren't different
 		DBTraceObjectValueRStarTree tree = this.tree;
 		tree.doUnparentEntry(this);
-		objParent.notifyValueDeleted(this);
-		if (child != null) {
-			child.notifyParentValueDeleted(this);
-		}
 		minSnap = lifespan.lmin();
 		maxSnap = lifespan.lmax();
 		update(MIN_SNAP_COLUMN, MAX_SNAP_COLUMN);
 		this.lifespan = lifespan;
 		updateBounds();
 		tree.doInsertDataEntry(this);
-		objParent.notifyValueCreated(this);
-		if (child != null) {
-			child.notifyParentValueCreated(this);
-		}
 	}
 
 	@Override
 	public void doDelete() {
-		objParent.notifyValueDeleted(this);
-		if (child != null) {
-			child.notifyParentValueDeleted(this);
-		}
-		manager.doDeleteEdge(this);
+		manager.doDeleteValue(this);
 	}
 
-	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Lifespan span,
-			Visitor visitor) {
-		return TreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
+	@Override
+	public DBTraceObjectValue getWrapper() {
+		if (wrapper == null) {
+			wrapper = new DBTraceObjectValue(manager, this);
+		}
+		return wrapper;
+	}
+
+	void setWrapper(DBTraceObjectValue wrapper) {
+		if (this.wrapper != null) {
+			throw new AssertionError();
+		}
+		this.wrapper = wrapper;
 	}
 }

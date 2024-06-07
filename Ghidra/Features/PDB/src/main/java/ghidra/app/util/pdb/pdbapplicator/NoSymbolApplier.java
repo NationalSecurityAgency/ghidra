@@ -16,35 +16,33 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.util.exception.CancelledException;
 
 /**
  * A dummy {@link MsSymbolApplier}, which, at a minimum, reads the symbol from the
  * {@link SymbolGroup}, allowing proper sequencing of other symbols within the
  * {@link SymbolGroup}.
  */
-public class NoSymbolApplier extends MsSymbolApplier {
+public class NoSymbolApplier extends MsSymbolApplier implements DirectSymbolApplier {
 
 	private AbstractMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public NoSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		symbol = iter.next();
+	public NoSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing.
-	}
-
-	@Override
-	void apply() {
-		// Do nothing.
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		iter.next();
+		// Do nothing
 	}
 
 }

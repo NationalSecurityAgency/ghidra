@@ -11,8 +11,11 @@
             id="AARCH64:LE:64:AppleSilicon">
     <description>AppleSilicon ARM v8.5-A LE instructions, LE data, AMX extensions</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <compiler name="Swift" spec="AARCH64_swift.cspec" id="swift"/>
+    <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="Golang.register.info.file" name="AARCH64_golang.register.info"/>
   </language>
 </language_definitions>

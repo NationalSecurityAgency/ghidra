@@ -17,9 +17,7 @@ package ghidra.app.util.bin;
 
 import java.io.IOException;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.LEB128;
-import ghidra.program.model.listing.Program;
 
 /**
  * Class to hold result of reading a {@link LEB128} value, along with size and position metadata.

@@ -23,10 +23,12 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.map.AbstractDBTracePropertyMap.DBTraceSaveablePropertyMapEntry;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.thread.DBTraceThreadManager;
@@ -45,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
 public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
 		extends DBTraceAddressSnapRangePropertyMap<T, DR> implements TracePropertyMap<T> {
 
-	public AbstractDBTracePropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+	public AbstractDBTracePropertyMap(String name, DBHandle dbh, OpenMode openMode,
 			ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, Class<DR> dataType,
 			DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
@@ -120,17 +122,16 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
-	protected DBTracePropertyMapSpace createSpace(AddressSpace space,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTracePropertyMapSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
+			throws VersionException, IOException {
 		return new DBTracePropertyMapSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
 			lock, space, null, 0, dataType, dataFactory);
 	}
 
 	@Override
-	protected DBTracePropertyMapSpace createRegisterSpace(
-			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
-			throws VersionException, IOException {
+	protected DBTracePropertyMapSpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTracePropertyMapSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
 			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
@@ -143,10 +144,9 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
-	public TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceThread thread,
-			int frameLevel, boolean createIfAbsent) {
-		return (DBTracePropertyMapSpace) getForRegisterSpace(thread, frameLevel,
-			createIfAbsent);
+	public TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceThread thread, int frameLevel,
+			boolean createIfAbsent) {
+		return (DBTracePropertyMapSpace) getForRegisterSpace(thread, frameLevel, createIfAbsent);
 	}
 
 	@Override
@@ -154,8 +154,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		throw new NotYetImplementedException();
 	}
 
-	public class DBTracePropertyMapSpace
-			extends DBTraceAddressSnapRangePropertyMapSpace<T, DR>
+	public class DBTracePropertyMapSpace extends DBTraceAddressSnapRangePropertyMapSpace<T, DR>
 			implements TracePropertyMapSpace<T> {
 
 		public DBTracePropertyMapSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
@@ -242,7 +241,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceIntPropertyMap
 			extends AbstractDBTracePropertyMap<Integer, DBTraceIntPropertyMapEntry> {
 
-		public DBTraceIntPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceIntPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -287,7 +286,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceLongPropertyMap
 			extends AbstractDBTracePropertyMap<Long, DBTraceLongPropertyMapEntry> {
 
-		public DBTraceLongPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceLongPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -340,7 +339,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			return (Class) DBTraceSaveablePropertyMapEntry.class;
 		}
 
-		public DBTraceSaveablePropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceSaveablePropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager, Class<T> valueClass)
 				throws IOException, VersionException {
@@ -456,7 +455,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceStringPropertyMap
 			extends AbstractDBTracePropertyMap<String, DBTraceStringPropertyMapEntry> {
 
-		public DBTraceStringPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceStringPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -501,7 +500,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceVoidPropertyMap
 			extends AbstractDBTracePropertyMap<Void, DBTraceVoidPropertyMapEntry> {
 
-		public DBTraceVoidPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceVoidPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,

@@ -24,7 +24,6 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.DataType;
@@ -36,7 +35,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.task.TaskMonitor;
 
-public class ConvertCommand extends BackgroundCommand {
+public class ConvertCommand extends BackgroundCommand<Program> {
 	private Program program;
 	private AbstractConvertAction action;
 	private ListingActionContext context;
@@ -66,7 +65,7 @@ public class ConvertCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		try {
 			CodeUnit cu = action.plugin.getCodeUnit(context);

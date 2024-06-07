@@ -16,16 +16,17 @@
 package ghidra.app.cmd.function;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.block.*;
+import ghidra.program.model.block.FollowFlow;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -33,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
  * parameters used to create the function (Selection or just an address) and
  * create the function on redo and clear on undo.
  */
-public class CreateFunctionCmd extends BackgroundCommand {
+public class CreateFunctionCmd extends BackgroundCommand<Program> {
 
 	private AddressSetView origEntries;
 	private AddressSetView origBody;
@@ -143,13 +144,9 @@ public class CreateFunctionCmd extends BackgroundCommand {
 		this(null, entry, null, SourceType.DEFAULT, findEntryPoint, false);
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		Namespace globalNameSpace = program.getGlobalNamespace();
 
@@ -181,7 +178,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 						extFunc = ((ExternalLocation) symObj).createFunction();
 					}
 					else {
-						Msg.error(this, "Unexpected external symbol object: " + obj.getClass());
+						Msg.error(this, "Unexpected external symbol object: " + symObj.getClass());
 						continue;
 					}
 					if (funcName != null) {
@@ -210,12 +207,13 @@ public class CreateFunctionCmd extends BackgroundCommand {
 					}
 
 					monitor.setMessage("Function " + funcName);
-					
+
 					boolean didCreate = false;
 					try {
 						didCreate = createFunction(monitor, funcName, nameSpace, origEntry,
 							origBody, tmpSource);
-					} catch (OverlappingFunctionException e) {
+					}
+					catch (OverlappingFunctionException e) {
 						// try to create again, sometimes thunks can get resolved that
 						// can't be detected, for example a thunk->function->thunk
 						// where the final thunk gets created
@@ -274,10 +272,9 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 * @throws OverlappingFunctionException if new function overlaps with existing and couldn't fix
 	 * @throws InvalidInputException bad characters in function name
 	 */
-	private boolean createFunction(TaskMonitor monitor, String funcName,
-			Namespace nameSpace, Address entry, AddressSetView body,
-			SourceType nameSource) throws InvalidInputException,
-			OverlappingFunctionException, CancelledException {
+	private boolean createFunction(TaskMonitor monitor, String funcName, Namespace nameSpace,
+			Address entry, AddressSetView body, SourceType nameSource)
+			throws InvalidInputException, OverlappingFunctionException, CancelledException {
 
 		FunctionManager functionMgr = program.getFunctionManager();
 
@@ -356,8 +353,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 */
 	private boolean createFunction(Namespace nameSpace, String funcName, Address entry,
 			AddressSetView body, SourceType nameSource, Map<Function, AddressSetView> bodyChangeMap,
-			TaskMonitor monitor)
-			throws OverlappingFunctionException, InvalidInputException {
+			TaskMonitor monitor) throws OverlappingFunctionException, InvalidInputException {
 
 		Listing listing = program.getListing();
 
@@ -408,9 +404,9 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 * @throws CancelledException user cancelled
 	 * @throws OverlappingFunctionException existing functions overlap and couldn't reconcile
 	 */
-	private static AddressSetView subtractBodyFromExisting(Program program, Address entry, AddressSetView newFuncBody,
-			Map<Function, AddressSetView> bodyChangeMap, TaskMonitor monitor)
-			throws CancelledException, OverlappingFunctionException {
+	private static AddressSetView subtractBodyFromExisting(Program program, Address entry,
+			AddressSetView newFuncBody, Map<Function, AddressSetView> bodyChangeMap,
+			TaskMonitor monitor) throws CancelledException, OverlappingFunctionException {
 		// get all functions that overlap new function body
 		Iterator<Function> iter = program.getFunctionManager().getFunctionsOverlapping(newFuncBody);
 
@@ -437,26 +433,29 @@ public class CreateFunctionCmd extends BackgroundCommand {
 			if (overlapEntryPoint.compareTo(entry) < 0) {
 				// overlap function is before, subtract from entry to end of new function
 				overlapEndAddr = newFuncBody.getMaxAddress();
-			} else {
+			}
+			else {
 				// overlap function is after, subtract from entry to entry of overlapping function
 				overlapEndAddr = overlapEntryPoint.previous();
 			}
-			AddressSet overlapAddrsShouldBeInNewFunction = new AddressSet(entry,overlapEndAddr);
-			AddressSetView newOverlapFuncBody = overlapFuncBody.subtract(overlapAddrsShouldBeInNewFunction);
+			AddressSet overlapAddrsShouldBeInNewFunction = new AddressSet(entry, overlapEndAddr);
+			AddressSetView newOverlapFuncBody =
+				overlapFuncBody.subtract(overlapAddrsShouldBeInNewFunction);
 			try {
 				if (!overlapFuncBody.equals(newOverlapFuncBody)) {
 					overlapFunc.setBody(newOverlapFuncBody); // set overlap body with new function body addresses removed
 					bodyChangeMap.put(overlapFunc, overlapFuncBody); // save old overlap body
 				}
 				overlapFuncBody = newOverlapFuncBody;
-			} catch (OverlappingFunctionException oe) {
+			}
+			catch (OverlappingFunctionException oe) {
 				// do nothing, will just subtract entire overlapping body from new function body
 			}
 
 			// remove overlapping functions body from new function body
 			newFuncBody = newFuncBody.subtract(overlapFuncBody);
 		}
-		
+
 		return newFuncBody;
 	}
 
@@ -524,9 +523,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 */
 	private static void restoreOriginalBodies(Map<Function, AddressSetView> bodyChangeMap) {
 		Set<Map.Entry<Function, AddressSetView>> entries = bodyChangeMap.entrySet();
-		Iterator<Map.Entry<Function, AddressSetView>> iter = entries.iterator();
-		while (iter.hasNext()) {
-			Map.Entry<Function, AddressSetView> entry = iter.next();
+		for (Entry<Function, AddressSetView> entry : entries) {
 			try {
 				entry.getKey().setBody(entry.getValue());
 			}
@@ -689,16 +686,16 @@ public class CreateFunctionCmd extends BackgroundCommand {
 			func.setBody(newBody); // trigger analysis
 		}
 		catch (OverlappingFunctionException e) {
-			
+
 			Map<Function, AddressSetView> bodyChangeMap = new HashMap<>();
 			try {
 				newBody = subtractBodyFromExisting(program, entry, newBody, bodyChangeMap, monitor);
-				
+
 				func.setBody(newBody); // trigger analysis
 			}
 			catch (CancelledException | OverlappingFunctionException e1) {
 				// something went wrong, put things back the way they were
-				
+
 				restoreOriginalBodies(bodyChangeMap);
 				return false;
 			}

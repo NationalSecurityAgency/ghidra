@@ -197,7 +197,7 @@ public:
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
   void encode(Encoder &encoder,uint8 id,bool savetree) const;	///< Encode a description of \b this function to stream
-  uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from an XML description
+  uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from a stream
   void encodeJumpTable(Encoder &encoder) const;		///< Encode a description of jump-tables to stream
   void decodeJumpTable(Decoder &decoder);		///< Decode jump-tables from a stream
   void encodeTree(Encoder &encoder) const;		///< Encode a description of the p-code tree to stream
@@ -286,6 +286,7 @@ public:
   Varnode *newUnique(int4 s,Datatype *ct=(Datatype *)0);	///< Create a new \e temporary Varnode
   Varnode *newCodeRef(const Address &m);			///< Create a code address \e annotation Varnode
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
+  Varnode *newExtendedConstant(int4 s,uint8 *val,PcodeOp *op);	///< Create extended precision constant
   void adjustInputVarnodes(const Address &addr,int4 sz);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
 

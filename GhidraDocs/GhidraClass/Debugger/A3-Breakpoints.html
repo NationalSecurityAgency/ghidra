@@ -158,28 +158,24 @@ several ways to set a new breakpoint:</p>
 <li>From any static or dynamic listing window, including Disassembly,
 Memory/Hex, and the Decompiler, right-click and select <img
 src="images/breakpoint-enable.png" alt="set breakpoint" /> Set
-Breakpoint, press <strong>K</strong> on the keyboard, or double-click
-the margin.</li>
-<li>From the Objects window click the <img
-src="images/breakpoint-enable.png" alt="add breakpoint" /> Add
-Breakpoint button or press <strong>F3</strong> on the keyboard.</li>
-<li>From the Interpreter window, use the GDB command, e.g.,
+Breakpoint, press <strong><code>K</code></strong> on the keyboard, or
+double-click the margin.</li>
+<li>From the Terminal window, use the GDB command, e.g.,
 <code>break main</code>.</li>
 </ol>
 <p>The advantage of using the listings is that you can quickly set a
-breakpoint at any address. The advantage of using the Objects or
-Interpreter window is that you can specify something other than an
-address. Often, those specifications still resolve to addresses, and
-Ghidra will display them. Ghidra will memorize breakpoints by recording
-them as special bookmarks in the imported program. There is some
-iconography to communicate the various states of a breakpoint. When all
-is well and normal, you should only see enabled <img
-src="images/breakpoint-enable.png" alt="enabled breakpoint" /> and
-disabled <img src="images/breakpoint-disable.png"
-alt="disabled breakpoint" /> breakpoints. If the target is terminated
-(or not launched yet), you may also see ineffective <img
-src="images/breakpoint-enable-ineff.png" alt="ineffective breakpoint" />
-breakpoints.</p>
+breakpoint at any address. The advantage of using the Terminal window is
+that you can specify something other than an address. Often, those
+specifications still resolve to addresses, and Ghidra will display them.
+Ghidra will memorize breakpoints by recording them as special bookmarks
+in the program database. There is some iconography to communicate the
+various states of a breakpoint. When all is well and normal, you should
+only see enabled <img src="images/breakpoint-enable.png"
+alt="enabled breakpoint" /> and disabled <img
+src="images/breakpoint-disable.png" alt="disabled breakpoint" />
+breakpoints. If the target is terminated (or not launched yet), you may
+also see ineffective <img src="images/breakpoint-enable-ineff.png"
+alt="ineffective breakpoint" /> breakpoints.</p>
 </section>
 <section id="examining-minesweeper-board-setup" class="level2">
 <h2>Examining Minesweeper Board Setup</h2>
@@ -195,7 +191,7 @@ breakpoint on <code>rand</code> will help us find the algorithm that
 places the mines.</p>
 <section id="set-the-breakpoints" class="level3">
 <h3>Set the Breakpoints</h3>
-<p>In the Interpreter, type the GDB commands to set breakpoints on
+<p>In the Terminal, type the GDB commands to set breakpoints on
 <code>srand</code> and <code>rand</code>:</p>
 <div class="sourceCode" id="cb1"><pre
 class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">break</span> srand</span>
@@ -208,15 +204,15 @@ alt="Populated breakpoints window" />
 </figure>
 <p>For a single target, the lower panel of the Breakpoints window does
 not add much information, but it does have some. We will start with the
-top panel. This lists the “logical” breakpoints, preferring static
-addresses.</p>
+top panel. This lists the <em>logical</em> breakpoints, preferring
+static addresses.</p>
 <ul>
-<li>The left-most column <strong>Enabled</strong> indicates the
+<li>The left-most column <strong>State</strong> indicates the
 breakpoint’s state. Here, we see the inconsistent <img
 src="images/breakpoint-overlay-inconsistent.png" alt="inconsistent" />
-overlay, because Ghidra cannot save the breakpoint without a module
-image. That is because <code>srand</code> and <code>rand</code> are in a
-different module, and we have not yet imported it into Ghidra.</li>
+overlay, because Ghidra cannot save the breakpoint without a program
+database. That is because <code>srand</code> and <code>rand</code> are
+in a different module, and we have not yet imported it into Ghidra.</li>
 <li>The next column <strong>Name</strong> is the name of the breakpoint.
 This is for informational purposes only. You can rename a breakpoint
 however you like, and it will have no effect on the target nor back-end
@@ -227,44 +223,43 @@ breakpoints were specified by symbol. Typically, this is the
 <em>static</em> address of the breakpoint; however, if the module image
 is not imported, yet, this will be the <em>dynamic</em> address, subject
 to relocation or ASLR.</li>
-<li>The next column <strong>Image</strong> gives the name of the
-imported image containing the breakpoint. Again, because the module has
-not been imported yet, this column is blank.</li>
+<li>The next column <strong>Image</strong> gives the name of the program
+database containing the breakpoint. Again, because the module has not
+been imported yet, this column is blank.</li>
 <li>The next column <strong>Length</strong> gives the length of the
 breakpoint. In GDB, this generally applies to watchpoints only.</li>
 <li>The next column <strong>Kinds</strong> gives the kinds of
 breakpoint. Most breakpoints are software execution breakpoints,
 indicated by “SW_EXECUTE.” That is, they are implemented by patching the
-target’s memory with a special instruction (<code>INT3</code> on x86)
-that traps execution. There are also hardware execution breakpoints
+target’s memory with a special instruction that traps execution —
+<code>INT3</code> on x86. There are also hardware execution breakpoints
 indicated by “HW_EXECUTE,” and access breakpoints indicated by “HW_READ”
-and/or “HW_WRITE”. <strong>NOTE</strong>: GDB would call these
-“watchpoints.” An advantage to software breakpoints is that you can have
-a practically unlimited number of them. Some disadvantages are they can
-be detected easily, and they are limited to execution breakpoints.</li>
+and/or “HW_WRITE”. <strong>NOTE</strong>: GDB would call access
+breakpoints <em>watchpoints</em>. An advantage to software breakpoints
+is that you can have a practically unlimited number of them. Some
+disadvantages are they can be detected easily, and they are limited to
+execution breakpoints.</li>
 <li>The next column <strong>Locations</strong> counts the number of
-locations for the breakpoint. For a single-target session, this should
-always be 1.</li>
+locations for the breakpoint. For a single-target session, this is most
+likely 1.</li>
 <li>The final column <strong>Sleigh</strong> is only applicable to the
 emulator. It indicates that the breakpoint’s behavior has been
 customized with Sleigh code. This is covered in <a
 href="B2-Emulation.html">Emulation</a>.</li>
 </ul>
 <p>Now, we move to the bottom panel. This lists the breakpoint
-locations, as reported by the back-end debugger(s). The Enabled,
-Address, and Sleigh columns are the same as the top, but for the
-individual <em>dynamic</em> addresses.</p>
+locations, as reported by the back-end debugger(s). The State, Address,
+and Sleigh columns are the same as the top, but for the individual
+<em>dynamic</em> addresses.</p>
 <ul>
 <li>The <strong>Name</strong> column is the name as designated by the
 back-end.</li>
 <li>The <strong>Trace</strong> column indicates which target contains
 the location. The text here should match one of the tabs from the
-Threads panel.</li>
+Dynamic Listing panel.</li>
 <li>The <strong>Comment</strong> column is a user-defined comment. Its
 default value is the specification that generated it, e.g.,
 <code>srand</code>.</li>
-<li>The <strong>Threads</strong> column indicates if the breakpoint is
-scoped to a limited set of threads. Its use is atypical.</li>
 </ul>
 </section>
 <section id="toggling-the-breakpoints" class="level3">
@@ -274,25 +269,35 @@ good time to demonstrate the feature. There are several ways to toggle a
 breakpoint:</p>
 <ol type="1">
 <li>In any listing, as in setting a breakpoint, right-click and select a
-toggle action, press <strong>K</strong> on the keyboard, or double-click
-its icon in the margin.</li>
-<li>From the Objects window, expand the Breakpoints node, right-click a
-breakpoint and select Toggle or press <strong>T</strong> on the
-keyboard.</li>
+toggle action, press <strong><code>K</code></strong> on the keyboard, or
+double-click its icon in the margin.</li>
+<li>From the Model window, expand the <em>Breakpoints</em> node and
+double-click a breakpoint, or select one with the keyboard and press
+<strong><code>ENTER</code></strong>.</li>
 <li>From the Breakpoints window, single-click the breakpoint’s status
 icon, right-click an entry and select a toggle action, or create a
 selection and use a toggling action from the local toolbar. Either panel
 works, but the top panel is preferred to keep the breakpoints
 consistent. The local toolbar also has actions for toggling all
 breakpoints in the session.</li>
-<li>From the Interpreter window, use the GDB commands, e.g.,
+<li>From the Terminal window, use the GDB commands, e.g.,
 <code>disable 2</code>.</li>
 </ol>
 <p>Practice toggling them. Notice that no matter how you toggle the
 breakpoints, the display updates. You might also type
-<code>info break</code> into the Interpreter to confirm the effect of
+<code>info break</code> into the Terminal to confirm the effect of
 toggling breakpoints in the GUI. When you are finished, ensure both
 breakpoints are enabled.</p>
+<p><strong>NOTE</strong>: In all parts of the GUI, except the Model
+window, Ghidra prefers to toggle breakpoint locations. Without getting
+into details, this is the second level down of breakpoints shown in the
+Model tree. If you set a breakpoint, and GDB calls this breakpoint 2,
+then you toggle it in the listing, Ghidra will toggle, e.g., breakpoint
+<em>location</em> 2.1, not the breakpoint <em>specification</em> 2. If
+you disable breakpoint 2 using the Model or Terminal window, it may
+become impossible to toggle the breakpoint in the Listing or Breakpoints
+windows. If you find your session in this condition, just re-enable the
+troublesome breakpoints in the Model or Terminal window.</p>
 </section>
 <section id="importing-libc" class="level3">
 <h3>Importing <code>libc</code></h3>
@@ -323,13 +328,32 @@ CodeBrowser.</p></li>
 <p>Once imported, the Breakpoints window should update to reflect the
 static addresses, the breakpoints should become consistent, and the
 Static Listing should now be synchronized when navigating within
-<code>libc</code>.</p>
+<code>libc</code>. <strong>NOTE</strong>: Ghidra has not automatically
+disassembled the dynamic listing, because the program counter has not
+actually landed there, yet.</p>
 <figure>
 <img src="images/Breakpoints_SyncedAfterImportLibC.png"
 alt="The debugger tool with breakpoints synchronized after importing libc" />
 <figcaption aria-hidden="true">The debugger tool with breakpoints
 synchronized after importing libc</figcaption>
 </figure>
+<section id="troubleshooting" class="level4">
+<h4>Troubleshooting</h4>
+<p>If it seems nothing has changed, except now you have a second program
+database open, then the new module may not be successfully mapped.</p>
+<ol type="1">
+<li>Re-check the Debug Console window and verify the note has been
+removed.</li>
+<li>If not, it might be because the module is symlinked in the file
+system, so the name of the module and the name of the program database
+do not match.</li>
+<li>Ensure that <code>libc</code> is the current program (tab) in the
+Static Listing.</li>
+<li>In the Modules window, right-click on <code>libc</code>, and select
+<strong>Map Module to libc</strong>. (Names and titles will likely
+differ.)</li>
+</ol>
+</section>
 </section>
 <section id="capturing-the-random-seed" class="level3">
 <h3>Capturing the Random Seed</h3>
@@ -388,18 +412,27 @@ course.</p>
 </section>
 <section id="exercise-diagram-the-mines" class="level3">
 <h3>Exercise: Diagram the Mines</h3>
-<p>You goal is to capture the location of all the mines. So that you can
-check your work later, you should run <code>termmines</code> in a
-terminal and attach to it from Ghidra. You will probably want to disable
-the breakpoints on <code>rand</code> and <code>srand</code> for now.
-Devise a strategy using breakpoints and the control buttons (Step,
-Resume, etc.) so that you can observe the location of each mine. Use pen
-and paper to draw a diagram of the board, and mark the location of each
-mine as you observe the algorithm placing it. There should only be 10
-mines in Beginner mode. Once the mines are placed, press <img
-src="images/resume.png" alt="resume" /> Resume. Check you work by
-winning the game. Alternatively, you can intentionally lose to have the
-game reveal the mines.</p>
+<p>You goal is to capture the location of all the mines. You will
+probably want to disable the breakpoints on <code>rand</code> and
+<code>srand</code> for now. Devise a strategy using breakpoints and the
+control buttons (Step, Resume, etc.) so that you can observe the
+location of each mine. Use pen and paper to draw a diagram of the board,
+and mark the location of each mine as you observe the algorithm placing
+it. There should only be 10 mines in Beginner mode. Once the mines are
+placed, press <img src="images/resume.png" alt="resume" /> Resume. Check
+you work by winning the game. Alternatively, you can intentionally lose
+to have the game reveal the mines.</p>
+<section id="troubleshooting-1" class="level4">
+<h4>Troubleshooting</h4>
+<p>You may find that running both GDB and <code>termmines</code> in the
+same Terminal makes viewing the game board difficult. The next time you
+launch, be sure to use the <strong>Configure and Launch</strong>
+sub-menu, then enable the <strong>Inferior TTY</strong> option. This
+should start two Terminals, one with GDB and a second dedicated to
+<code>termmines</code>. The game board will no longer be corrupted by
+GDB’s prompts and diagnostics. You will probably want to undock the
+<code>termmines</code> Terminal and resize it to fit the board.</p>
+</section>
 </section>
 <section id="optional-exercise-replicate-the-boards-forward-engineering"
 class="level3">
@@ -412,77 +445,11 @@ the placement algorithm, we can perfectly replicate the sequence of game
 boards for any <code>termmines</code> session.</p>
 <p>Write a program that takes a seed from the user and prints a diagram
 of the first game board with the mines indicated. Optionally, have it
-print each subsequent game board when the user presses ENTER. Check your
-work by re-launching <code>termmines</code> (see note about attaching
-below), capturing its seed, inputting it into your program, and then
-winning the game. Optionally, win 2 more games in the same session.</p>
-<p><strong>NOTE</strong>: We will need a more advanced attaching
-technique to check your work, because you will need both to break on
-<code>srand</code> (which happens early in the process’ execution,
-ruling out our usual attach technique) and to interact with it in the
-terminal (which rules out launching in Ghidra). There are a few ways
-around this, including using <code>gdbserver</code> or using
-<code>set inferior-tty</code>. If you are already familiar with those,
-you can try one. The technique we recommend here is using a stub that
-will suspend itself and then execute <code>termmines</code>. We can then
-run the stub in a terminal outside of Ghidra, attach to that stub, and
-then allow it to proceed into <code>termmines</code>. In this way, we
-can attach to the process in the terminal before it reaches
-<code>srand</code>. The stub is fairly easy to write in Bash and should
-be similar in other shells.</p>
-<ol type="1">
-<li><p>In a terminal running Bash (see note if you’re using
-<code>anyptracer</code>):</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span><span class="bu">echo</span> <span class="va">$BASHPID</span><span class="kw">;</span> <span class="bu">kill</span> <span class="at">-SIGSTOP</span> <span class="va">$BASHPID</span><span class="kw">;</span> <span class="bu">exec</span> ./termmines<span class="kw">)</span></span></code></pre></div>
-<p>The parentheses will start <code>bash</code> in a new subprocess. The
-first two commands cause it to print its own process ID and then suspend
-itself. Your terminal should display the PID and report the stopped
-process.</p>
-<p><strong>NOTE</strong>: If you need to use the <code>anyptracer</code>
-stub, then the invocation is more complicated:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./anyptracer</span> <span class="st">&#39;exec bash -c &quot;echo $BASHPID; kill -SIGSTOP $BASHPID; exec ./termmines&quot;&#39;</span></span></code></pre></div>
-<p>In principle, it works the same except wrapped in the
-<code>anyptracer</code> stub. The parentheses are no longer needed, nor
-allowed, since <code>anyptracer</code> is already a subprocess of your
-shell. If you include parentheses, you will get a second sub-subprocess
-to which you cannot attach.</p></li>
-<li><p>In Ghidra, follow the usual steps to attach, but use the PID
-printed in your terminal. <strong>NOTE</strong>: The process is still
-technically running <code>bash</code> when you attach to it.</p></li>
-<li><p>In the Interpreter panel:</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">break</span> main</span></code></pre></div>
-<p><strong>NOTE</strong>: At this point <code>main</code> technically
-refers to the symbol in <code>bash</code>, but GDB will adjust its
-location once the target loads <code>termmines</code>.</p></li>
-<li><p>Back in your terminal running Bash:</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">fg</span></span></code></pre></div>
-<p>This will cause Bash to return the stub to the foreground of the
-terminal. Without this step, the system will repeatedly suspend the
-process whenever it attempts any I/O on that terminal.</p></li>
-<li><p>In Ghidra, press Resume (or use <code>continue</code> in the
-Interpreter) until you hit the breakpoint at <code>main</code>. This
-permits the stub to complete its third command
-<code>exec ./termmines</code>. The <code>exec</code> command is
-different than normal command execution. Instead of creating a
-subprocess, it <em>replaces</em> the image of the stub process, so the
-process is now running <code>termmines</code>.</p></li>
-<li><p>Refresh the Modules node in the Objects window. You may need to
-clear your filter text. Expand the Modules node and verify it lists
-<code>termmines</code> instead of <code>bash</code>. Without this step,
-your listings may go out of sync.</p></li>
-</ol>
-<p>At this point, you are attached to your target running in the
-terminal, and you have trapped it at <code>main</code>. Because you were
-attached to it when it was still <code>bash</code>, you will likely see
-a lot of extraneous history. For example, the Modules panel will report
-many of the modules that had been loaded by <code>bash</code>. Please
-note their lifespans, however. They should correctly indicate those
-modules are no longer loaded. In any case, you now have the tools needed
-to check your work for this exercise.</p>
+print each subsequent game board when the user presses
+<strong>ENTER</strong>. Check your work by re-launching
+<code>termmines</code>, capturing its seed, inputting it into your
+program, and then winning the game. Optionally, win 2 more games in the
+same session.</p>
 </section>
 </section>
 </section>

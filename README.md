@@ -31,6 +31,9 @@ of how you might be impacted.
 To install an official pre-built multi-platform Ghidra release:  
 * Install [JDK 17 64-bit][jdk17]
 * Download a Ghidra [release file][releases]
+  - **NOTE:** The official multi-platform release file is named 
+    `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
+    Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
 
@@ -45,6 +48,7 @@ To create the latest development build for your platform from this source reposi
 ##### Install build tools:
 * [JDK 17 64-bit][jdk17]
 * [Gradle 7.3+][gradle]
+* [Python3][python3] (version 3.7 to 3.12) with bundled pip
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
@@ -125,6 +129,7 @@ source project.
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
 [jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
+[python3]: https://www.python.org/downloads/
 [vs]: https://visualstudio.microsoft.com/vs/community/
 [vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/

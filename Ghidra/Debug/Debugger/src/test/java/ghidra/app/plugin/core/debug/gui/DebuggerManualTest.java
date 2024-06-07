@@ -38,7 +38,7 @@ import ghidra.app.plugin.core.equate.EquatePlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.app.plugin.core.label.LabelMgrPlugin;
 import ghidra.app.plugin.core.symtable.SymbolTablePlugin;
-import ghidra.app.plugin.debug.MemoryUsagePlugin;
+import ghidra.app.plugin.runtimeinfo.RuntimeInfoPlugin;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.Undefined4DataType;
@@ -109,7 +109,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugin(tool, LabelMgrPlugin.class);
 		//addPlugin(tool, LocationReferencesPlugin.class);
 		//addPlugin(tool, MarkerManagerPlugin.class);
-		addPlugin(tool, MemoryUsagePlugin.class);
+		addPlugin(tool, RuntimeInfoPlugin.class);
 		//addPlugin(tool, MemSearchPlugin.class);
 		//addPlugin(tool, MnemonicSearchPlugin.class);
 		//addPlugin(tool, NextPrevAddressPlugin.class);

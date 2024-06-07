@@ -21,6 +21,7 @@ import java.nio.charset.Charset;
 
 import ghidra.app.plugin.core.terminal.TerminalPlugin;
 import ghidra.app.plugin.core.terminal.vt.VtOutput;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceInfo;
 
 /**
@@ -95,10 +96,20 @@ public interface TerminalService {
 	 * To display application output, use {@link Terminal#injectDisplayOutput(java.nio.ByteBuffer)}.
 	 * Application input is delivered to the given terminal output callback. If the application is
 	 * connected via streams, esp., those from a pty, consider using
-	 * {@link #createWithStreams(Charset, InputStream, OutputStream)}, instead.
+	 * {@link #createWithStreams(Plugin, Charset, InputStream, OutputStream)}, instead.
 	 * 
+	 * @param helpPlugin the invoking plugin, which ought to provide a help topic for this terminal.
 	 * @param charset the character set for the terminal. See note in
-	 *            {@link #createWithStreams(Charset, InputStream, OutputStream)}.
+	 *            {@link #createWithStreams(Plugin, Charset, InputStream, OutputStream)}.
+	 * @param outputCb callback for output from the terminal, i.e., the application's input.
+	 * @return the terminal
+	 */
+	Terminal createNullTerminal(Plugin helpPlugin, Charset charset, VtOutput outputCb);
+
+	/**
+	 * @see #createNullTerminal(Plugin, Charset, VtOutput)
+	 * @param charset the character set for the terminal. See note in
+	 *            {@link #createWithStreams(Plugin, Charset, InputStream, OutputStream)}.
 	 * @param outputCb callback for output from the terminal, i.e., the application's input.
 	 * @return the terminal
 	 */
@@ -107,6 +118,20 @@ public interface TerminalService {
 	/**
 	 * Create a terminal connected to the application (or pty session) via the given streams.
 	 * 
+	 * @param helpPlugin the invoking plugin, which ought to provide a help topic for this terminal.
+	 * @param charset the character set for the terminal. <b>NOTE:</b> Only US-ASCII and UTF-8 have
+	 *            been tested. So long as the bytes 0x00-0x7f map one-to-one with characters with
+	 *            the same code point, it'll probably work. Charsets that require more than one byte
+	 *            to decode those characters will almost certainly break things.
+	 * @param in the application's output, i.e., input for the terminal to display.
+	 * @param out the application's input, i.e., output from the terminal's keyboard and mouse.
+	 * @return the terminal
+	 */
+	Terminal createWithStreams(Plugin helpPlugin, Charset charset, InputStream in,
+			OutputStream out);
+
+	/**
+	 * @see #createWithStreams(Plugin, Charset, InputStream, OutputStream)
 	 * @param charset the character set for the terminal. <b>NOTE:</b> Only US-ASCII and UTF-8 have
 	 *            been tested. So long as the bytes 0x00-0x7f map one-to-one with characters with
 	 *            the same code point, it'll probably work. Charsets that require more than one byte

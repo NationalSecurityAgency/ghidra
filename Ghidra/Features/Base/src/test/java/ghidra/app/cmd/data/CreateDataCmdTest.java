@@ -483,16 +483,17 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		pdt = (Pointer) dt;
 		assertNull(pdt.getDataType());
 
+		// When default pointer is stacked, the resulting pointer size will match
+		// the outmost pointer size - in this case that is 1-byte
 		cmd = new CreateDataCmd(addr, false, true, new PointerDataType());
 		cmd.applyTo(program);
-
 		d = listing.getDataAt(addr);
 		assertNotNull(d);
 		assertTrue(d.isDefined());
-		assertEquals(addr.getPointerSize(), d.getLength());
+		assertEquals(1, d.getLength());
 		dt = d.getDataType();
 		assertTrue(dt instanceof Pointer);
-		assertEquals(addr.getPointerSize(), dt.getLength());
+		assertEquals(1, dt.getLength());
 
 		pdt = (Pointer) dt;
 		dt = pdt.getDataType();
@@ -557,16 +558,17 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		pdt = (Pointer) dt;
 		assertTrue(pdt.getDataType() instanceof ByteDataType);
 
+		// When default pointer is stacked, the resulting pointer size will match
+		// the outmost pointer size - in this case that is 1-byte
 		cmd = new CreateDataCmd(addr, false, true, new PointerDataType());
 		cmd.applyTo(program);
-
 		d = listing.getDataAt(addr);
 		assertNotNull(d);
 		assertTrue(d.isDefined());
-		assertEquals(addr.getPointerSize(), d.getLength());
+		assertEquals(1, d.getLength());
 		dt = d.getDataType();
 		assertTrue(dt instanceof Pointer);
-		assertEquals(addr.getPointerSize(), dt.getLength());
+		assertEquals(1, dt.getLength());
 
 		pdt = (Pointer) dt;
 		dt = pdt.getDataType();
@@ -630,8 +632,8 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		// Add external reference from pointer
 		program.getReferenceManager()
-				.addExternalReference(addr, "OtherFile", "ExtLabel", null,
-					SourceType.USER_DEFINED, 0, RefType.DATA);
+				.addExternalReference(addr, "OtherFile", "ExtLabel", null, SourceType.USER_DEFINED,
+					0, RefType.DATA);
 
 		// Undefined* becomes Byte*
 		cmd = new CreateDataCmd(addr, false, true, new ByteDataType());

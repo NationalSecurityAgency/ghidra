@@ -353,6 +353,14 @@ task assembleDistribution (type: Copy) {
 		include "settings.gradle"
 		into "Ghidra"
 	}
+	
+	/////////////////////////////////
+	// Eclipse formatters
+	/////////////////////////////////
+	from (ROOT_PROJECT_DIR + "/eclipse") {
+		exclude "certification.manifest"
+		into "support/eclipse"
+	}
 
 	//////////////////////////////////////
 	// Software Bill of Materials (SBOM)

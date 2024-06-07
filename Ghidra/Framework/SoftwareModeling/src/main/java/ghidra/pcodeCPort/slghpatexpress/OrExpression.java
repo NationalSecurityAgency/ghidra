@@ -15,10 +15,13 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class OrExpression extends BinaryExpression {
@@ -39,12 +42,12 @@ public class OrExpression extends BinaryExpression {
 	}
 
 	@Override
-	public void saveXml(PrintStream s)
+	public void encode(Encoder encoder) throws IOException
 
 	{
-		s.append("<or_exp>\n");
-		super.saveXml(s);
-		s.append("</or_exp>\n");
+		encoder.openElement(ELEM_OR_EXP);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_OR_EXP);
 	}
 
 }

@@ -42,7 +42,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class GolangElfInfoProducer implements ElfInfoProducer {
 	private static final Map<String, ReaderFunc<ElfInfoItem>> GOLANGINFO_READERS = Map.of(
-		GoBuildInfo.SECTION_NAME, GoBuildInfo::read,
+		GoBuildInfo.ELF_SECTION_NAME, GoBuildInfo::read,
 		NoteGoBuildId.SECTION_NAME, NoteGoBuildId::read);
 
 	private ElfLoadHelper elfLoadHelper;

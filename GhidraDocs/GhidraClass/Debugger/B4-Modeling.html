@@ -266,19 +266,20 @@ depending on where the breakpoint was placed.</p>
 <section id="modeling-by-sleigh-semantics" class="level3">
 <h3>Modeling by Sleigh Semantics</h3>
 <p>The advantage to Java callbacks is that things are relatively
-intuitive to do, but the temptation, which we intentionally demonstrate
-here, is to make everything concrete. You may notice the library uses a
+intuitive to do, but the temptation, which we intentionally demonstrated
+above, is to make everything concrete. You may notice the library uses a
 type parameter <code>T</code>, which specifies the type of all variables
 in the emulator’s state. Leaving it as <code>T</code> indicates the
 library is compatible with any type. For a concrete emulator,
-<code>T = byte[]</code>, and so there is no loss in making things
+<code>T := byte[]</code>, and so there is no loss in making things
 concrete, and then converting back to <code>T</code> using the
-arithmetic object. However, if the emulator has been augmented, as we
-will discuss below, the model may become confused, because values
-computed by a careless userop will appear to the model a literal
-constant. To avoid this, you should keep everything a T and use the
-arithmetic object to perform any arithmetic operations. Alternatively,
-you can implement the userop using pre-compiled Sleigh code:</p>
+<code>arithmetic</code> object. However, if the emulator has been
+augmented, as we will discuss below, the model may become confused,
+because values computed by a careless userop will appear to the model a
+literal constant. To avoid this, you should keep everything a T and use
+the <code>arithmetic</code> object to perform any arithmetic operations.
+Alternatively, you can implement the userop using pre-compiled Sleigh
+code:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> SleighStdLibPcodeUseropLibrary<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="kw">extends</span> AnnotatedPcodeUseropLibrary<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
 <span id="cb2-2"><a href="#cb2-2"></a>    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="bu">String</span> SRC_RET <span class="op">=</span> <span class="st">&quot;&quot;&quot;</span></span>
@@ -341,9 +342,9 @@ target architectures. We then lazily compile each userop upon its first
 invocation. These are technically still Java callbacks, but our
 implementation delegates to the executor, giving it the compiled p-code
 program.</p>
-<p>The advantage here is that the code will properly use the underlying
+<p>The advantage here is that the p-code will use the underlying
 arithmetic appropriately. However, for some models, that may actually
-not be desired. Some symbolic models might just like to see a literal
+not be desired. Some symbolic models might just like to see an abstract
 call to <code>strlen()</code>.</p>
 </section>
 <section id="modeling-by-structured-sleigh" class="level3">
@@ -466,7 +467,7 @@ into its state, and you should choose a different location for the
 injection. Refer to the example scripts in Ghidra’s
 <code>SystemEmulation</code> module.</p>
 <p>If you would like to (temporarily) override the GUI with a custom
-userop library, you can by overriding the GUI’s emulator factory:</p>
+userop library, you can by setting the GUI’s emulator factory:</p>
 <div class="sourceCode" id="cb5"><pre
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">public</span> <span class="kw">class</span> InstallCustomLibraryScript <span class="kw">extends</span> GhidraScript <span class="kw">implements</span> FlatDebuggerAPI <span class="op">{</span></span>
 <span id="cb5-2"><a href="#cb5-2"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> CustomBytesDebuggerPcodeEmulator <span class="kw">extends</span> BytesDebuggerPcodeEmulator <span class="op">{</span></span>
@@ -738,7 +739,7 @@ one we actually implement, by extending from
 <code>AbstractLongOffsetPcodeExecutorStatePiece</code>.</p>
 <p><strong>NOTE</strong>: If you do not desire a concrete address model,
 then you should implement <code>PcodeExecutorState&lt;Expr&gt;</code>
-directly. A “state” is also “state piece” whose address model is the
+directly. A “state” is also a “state piece” whose address model is the
 same as its value model, so states can still be composed. On one hand,
 the abstractly-addressed state provides a component that is readily used
 in both static and dynamic analysis; whereas, the concretely-addressed
@@ -772,81 +773,85 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb8-20"><a href="#cb8-20"></a>        map<span class="op">.</span><span class="fu">put</span><span class="op">(</span>offset<span class="op">,</span> val<span class="op">);</span></span>
 <span id="cb8-21"><a href="#cb8-21"></a>    <span class="op">}</span></span>
 <span id="cb8-22"><a href="#cb8-22"></a></span>
-<span id="cb8-23"><a href="#cb8-23"></a>    <span class="kw">public</span> Expr <span class="fu">get</span><span class="op">(</span><span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-24"><a href="#cb8-24"></a>        <span class="co">// </span><span class="al">TODO</span><span class="co">: Handle overlaps / offcut gets and sets</span></span>
-<span id="cb8-25"><a href="#cb8-25"></a>        Expr expr <span class="op">=</span> map<span class="op">.</span><span class="fu">get</span><span class="op">(</span>offset<span class="op">);</span></span>
-<span id="cb8-26"><a href="#cb8-26"></a>        <span class="cf">return</span> expr <span class="op">!=</span> <span class="kw">null</span> <span class="op">?</span> expr <span class="op">:</span> <span class="kw">new</span> <span class="fu">VarExpr</span><span class="op">(</span>space<span class="op">,</span> offset<span class="op">,</span> size<span class="op">);</span></span>
-<span id="cb8-27"><a href="#cb8-27"></a>    <span class="op">}</span></span>
-<span id="cb8-28"><a href="#cb8-28"></a><span class="op">}</span></span>
-<span id="cb8-29"><a href="#cb8-29"></a></span>
-<span id="cb8-30"><a href="#cb8-30"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">abstract</span> <span class="kw">class</span> AbstractExprPcodeExecutorStatePiece<span class="op">&lt;</span>S <span class="kw">extends</span> ExprSpace<span class="op">&gt;</span> <span class="kw">extends</span></span>
-<span id="cb8-31"><a href="#cb8-31"></a>        AbstractLongOffsetPcodeExecutorStatePiece<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">,</span> S<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb8-32"><a href="#cb8-32"></a></span>
-<span id="cb8-33"><a href="#cb8-33"></a>    <span class="kw">protected</span> <span class="dt">final</span> AbstractSpaceMap<span class="op">&lt;</span>S<span class="op">&gt;</span> spaceMap <span class="op">=</span> <span class="fu">newSpaceMap</span><span class="op">();</span></span>
-<span id="cb8-34"><a href="#cb8-34"></a></span>
-<span id="cb8-35"><a href="#cb8-35"></a>    <span class="kw">public</span> <span class="fu">AbstractExprPcodeExecutorStatePiece</span><span class="op">(</span>Language language<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-36"><a href="#cb8-36"></a>        <span class="kw">super</span><span class="op">(</span>language<span class="op">,</span> BytesPcodeArithmetic<span class="op">.</span><span class="fu">forLanguage</span><span class="op">(</span>language<span class="op">),</span></span>
-<span id="cb8-37"><a href="#cb8-37"></a>            ExprPcodeArithmetic<span class="op">.</span><span class="fu">forLanguage</span><span class="op">(</span>language<span class="op">));</span></span>
-<span id="cb8-38"><a href="#cb8-38"></a>    <span class="op">}</span></span>
-<span id="cb8-39"><a href="#cb8-39"></a></span>
-<span id="cb8-40"><a href="#cb8-40"></a>    <span class="kw">protected</span> <span class="kw">abstract</span> AbstractSpaceMap<span class="op">&lt;</span>S<span class="op">&gt;</span> <span class="fu">newSpaceMap</span><span class="op">();</span></span>
-<span id="cb8-41"><a href="#cb8-41"></a></span>
-<span id="cb8-42"><a href="#cb8-42"></a>    <span class="at">@Override</span></span>
-<span id="cb8-43"><a href="#cb8-43"></a>    <span class="kw">public</span> MemBuffer <span class="fu">getConcreteBuffer</span><span class="op">(</span>Address address<span class="op">,</span> Purpose purpose<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-44"><a href="#cb8-44"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
-<span id="cb8-45"><a href="#cb8-45"></a>    <span class="op">}</span></span>
-<span id="cb8-46"><a href="#cb8-46"></a></span>
-<span id="cb8-47"><a href="#cb8-47"></a>    <span class="at">@Override</span></span>
-<span id="cb8-48"><a href="#cb8-48"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">clear</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb8-49"><a href="#cb8-49"></a>        <span class="cf">for</span> <span class="op">(</span>S space <span class="op">:</span> spaceMap<span class="op">.</span><span class="fu">values</span><span class="op">())</span> <span class="op">{</span></span>
-<span id="cb8-50"><a href="#cb8-50"></a>            space<span class="op">.</span><span class="fu">clear</span><span class="op">();</span></span>
-<span id="cb8-51"><a href="#cb8-51"></a>        <span class="op">}</span></span>
-<span id="cb8-52"><a href="#cb8-52"></a>    <span class="op">}</span></span>
-<span id="cb8-53"><a href="#cb8-53"></a></span>
-<span id="cb8-54"><a href="#cb8-54"></a>    <span class="at">@Override</span></span>
-<span id="cb8-55"><a href="#cb8-55"></a>    <span class="kw">protected</span> S <span class="fu">getForSpace</span><span class="op">(</span>AddressSpace space<span class="op">,</span> <span class="dt">boolean</span> toWrite<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-56"><a href="#cb8-56"></a>        <span class="cf">return</span> spaceMap<span class="op">.</span><span class="fu">getForSpace</span><span class="op">(</span>space<span class="op">,</span> toWrite<span class="op">);</span></span>
-<span id="cb8-57"><a href="#cb8-57"></a>    <span class="op">}</span></span>
-<span id="cb8-58"><a href="#cb8-58"></a></span>
-<span id="cb8-59"><a href="#cb8-59"></a>    <span class="at">@Override</span></span>
-<span id="cb8-60"><a href="#cb8-60"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">setInSpace</span><span class="op">(</span>ExprSpace space<span class="op">,</span> <span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> Expr val<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-61"><a href="#cb8-61"></a>        space<span class="op">.</span><span class="fu">set</span><span class="op">(</span>offset<span class="op">,</span> val<span class="op">);</span></span>
-<span id="cb8-62"><a href="#cb8-62"></a>    <span class="op">}</span></span>
-<span id="cb8-63"><a href="#cb8-63"></a></span>
-<span id="cb8-64"><a href="#cb8-64"></a>    <span class="at">@Override</span></span>
-<span id="cb8-65"><a href="#cb8-65"></a>    <span class="kw">protected</span> Expr <span class="fu">getFromSpace</span><span class="op">(</span>S space<span class="op">,</span> <span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> Reason reason<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-66"><a href="#cb8-66"></a>        <span class="cf">return</span> space<span class="op">.</span><span class="fu">get</span><span class="op">(</span>offset<span class="op">,</span> size<span class="op">);</span></span>
-<span id="cb8-67"><a href="#cb8-67"></a>    <span class="op">}</span></span>
-<span id="cb8-68"><a href="#cb8-68"></a></span>
-<span id="cb8-69"><a href="#cb8-69"></a>    <span class="at">@Override</span></span>
-<span id="cb8-70"><a href="#cb8-70"></a>    <span class="kw">protected</span> <span class="bu">Map</span><span class="op">&lt;</span>Register<span class="op">,</span> Expr<span class="op">&gt;</span> <span class="fu">getRegisterValuesFromSpace</span><span class="op">(</span>S s<span class="op">,</span> <span class="bu">List</span><span class="op">&lt;</span>Register<span class="op">&gt;</span> registers<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-71"><a href="#cb8-71"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
-<span id="cb8-72"><a href="#cb8-72"></a>    <span class="op">}</span></span>
-<span id="cb8-73"><a href="#cb8-73"></a><span class="op">}</span></span>
-<span id="cb8-74"><a href="#cb8-74"></a></span>
-<span id="cb8-75"><a href="#cb8-75"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> ExprPcodeExecutorStatePiece</span>
-<span id="cb8-76"><a href="#cb8-76"></a>        <span class="kw">extends</span> AbstractExprPcodeExecutorStatePiece<span class="op">&lt;</span>ExprSpace<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb8-77"><a href="#cb8-77"></a>    <span class="kw">public</span> <span class="fu">ExprPcodeExecutorStatePiece</span><span class="op">(</span>Language language<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-78"><a href="#cb8-78"></a>        <span class="kw">super</span><span class="op">(</span>language<span class="op">);</span></span>
-<span id="cb8-79"><a href="#cb8-79"></a>    <span class="op">}</span></span>
-<span id="cb8-80"><a href="#cb8-80"></a></span>
-<span id="cb8-81"><a href="#cb8-81"></a>    <span class="at">@Override</span></span>
-<span id="cb8-82"><a href="#cb8-82"></a>    <span class="kw">protected</span> AbstractSpaceMap<span class="op">&lt;</span>ExprSpace<span class="op">&gt;</span> <span class="fu">newSpaceMap</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb8-83"><a href="#cb8-83"></a>        <span class="cf">return</span> <span class="kw">new</span> SimpleSpaceMap<span class="op">&lt;</span>ExprSpace<span class="op">&gt;()</span> <span class="op">{</span></span>
-<span id="cb8-84"><a href="#cb8-84"></a>            <span class="at">@Override</span></span>
-<span id="cb8-85"><a href="#cb8-85"></a>            <span class="kw">protected</span> ExprSpace <span class="fu">newSpace</span><span class="op">(</span>AddressSpace space<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-86"><a href="#cb8-86"></a>                <span class="cf">return</span> <span class="kw">new</span> <span class="fu">ExprSpace</span><span class="op">(</span>space<span class="op">);</span></span>
-<span id="cb8-87"><a href="#cb8-87"></a>            <span class="op">}</span></span>
-<span id="cb8-88"><a href="#cb8-88"></a>        <span class="op">};</span></span>
-<span id="cb8-89"><a href="#cb8-89"></a>    <span class="op">}</span></span>
-<span id="cb8-90"><a href="#cb8-90"></a><span class="op">}</span></span>
-<span id="cb8-91"><a href="#cb8-91"></a></span>
-<span id="cb8-92"><a href="#cb8-92"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> BytesExprPcodeExecutorState <span class="kw">extends</span> PairedPcodeExecutorState<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb8-93"><a href="#cb8-93"></a>    <span class="kw">public</span> <span class="fu">BytesExprPcodeExecutorState</span><span class="op">(</span>PcodeExecutorStatePiece<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> <span class="dt">byte</span><span class="op">[]&gt;</span> concrete<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb8-94"><a href="#cb8-94"></a>        <span class="kw">super</span><span class="op">(</span><span class="kw">new</span> PairedPcodeExecutorStatePiece<span class="op">&lt;&gt;(</span>concrete<span class="op">,</span></span>
-<span id="cb8-95"><a href="#cb8-95"></a>            <span class="kw">new</span> <span class="fu">ExprPcodeExecutorStatePiece</span><span class="op">(</span>concrete<span class="op">.</span><span class="fu">getLanguage</span><span class="op">())));</span></span>
-<span id="cb8-96"><a href="#cb8-96"></a>    <span class="op">}</span></span>
-<span id="cb8-97"><a href="#cb8-97"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb8-23"><a href="#cb8-23"></a>    <span class="kw">protected</span> Expr <span class="fu">whenNull</span><span class="op">(</span><span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-24"><a href="#cb8-24"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">VarExpr</span><span class="op">(</span>space<span class="op">,</span> offset<span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb8-25"><a href="#cb8-25"></a>    <span class="op">}</span></span>
+<span id="cb8-26"><a href="#cb8-26"></a></span>
+<span id="cb8-27"><a href="#cb8-27"></a>    <span class="kw">public</span> Expr <span class="fu">get</span><span class="op">(</span><span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-28"><a href="#cb8-28"></a>        <span class="co">// </span><span class="al">TODO</span><span class="co">: Handle overlaps / offcut gets and sets</span></span>
+<span id="cb8-29"><a href="#cb8-29"></a>        Expr expr <span class="op">=</span> map<span class="op">.</span><span class="fu">get</span><span class="op">(</span>offset<span class="op">);</span></span>
+<span id="cb8-30"><a href="#cb8-30"></a>        <span class="cf">return</span> expr <span class="op">!=</span> <span class="kw">null</span> <span class="op">?</span> expr <span class="op">:</span> <span class="fu">whenNull</span><span class="op">(</span>offset<span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb8-31"><a href="#cb8-31"></a>    <span class="op">}</span></span>
+<span id="cb8-32"><a href="#cb8-32"></a><span class="op">}</span></span>
+<span id="cb8-33"><a href="#cb8-33"></a></span>
+<span id="cb8-34"><a href="#cb8-34"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">abstract</span> <span class="kw">class</span> AbstractExprPcodeExecutorStatePiece<span class="op">&lt;</span>S <span class="kw">extends</span> ExprSpace<span class="op">&gt;</span> <span class="kw">extends</span></span>
+<span id="cb8-35"><a href="#cb8-35"></a>        AbstractLongOffsetPcodeExecutorStatePiece<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">,</span> S<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb8-36"><a href="#cb8-36"></a></span>
+<span id="cb8-37"><a href="#cb8-37"></a>    <span class="kw">protected</span> <span class="dt">final</span> AbstractSpaceMap<span class="op">&lt;</span>S<span class="op">&gt;</span> spaceMap <span class="op">=</span> <span class="fu">newSpaceMap</span><span class="op">();</span></span>
+<span id="cb8-38"><a href="#cb8-38"></a></span>
+<span id="cb8-39"><a href="#cb8-39"></a>    <span class="kw">public</span> <span class="fu">AbstractExprPcodeExecutorStatePiece</span><span class="op">(</span>Language language<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-40"><a href="#cb8-40"></a>        <span class="kw">super</span><span class="op">(</span>language<span class="op">,</span> BytesPcodeArithmetic<span class="op">.</span><span class="fu">forLanguage</span><span class="op">(</span>language<span class="op">),</span></span>
+<span id="cb8-41"><a href="#cb8-41"></a>            ExprPcodeArithmetic<span class="op">.</span><span class="fu">forLanguage</span><span class="op">(</span>language<span class="op">));</span></span>
+<span id="cb8-42"><a href="#cb8-42"></a>    <span class="op">}</span></span>
+<span id="cb8-43"><a href="#cb8-43"></a></span>
+<span id="cb8-44"><a href="#cb8-44"></a>    <span class="kw">protected</span> <span class="kw">abstract</span> AbstractSpaceMap<span class="op">&lt;</span>S<span class="op">&gt;</span> <span class="fu">newSpaceMap</span><span class="op">();</span></span>
+<span id="cb8-45"><a href="#cb8-45"></a></span>
+<span id="cb8-46"><a href="#cb8-46"></a>    <span class="at">@Override</span></span>
+<span id="cb8-47"><a href="#cb8-47"></a>    <span class="kw">public</span> MemBuffer <span class="fu">getConcreteBuffer</span><span class="op">(</span>Address address<span class="op">,</span> Purpose purpose<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-48"><a href="#cb8-48"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
+<span id="cb8-49"><a href="#cb8-49"></a>    <span class="op">}</span></span>
+<span id="cb8-50"><a href="#cb8-50"></a></span>
+<span id="cb8-51"><a href="#cb8-51"></a>    <span class="at">@Override</span></span>
+<span id="cb8-52"><a href="#cb8-52"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">clear</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-53"><a href="#cb8-53"></a>        <span class="cf">for</span> <span class="op">(</span>S space <span class="op">:</span> spaceMap<span class="op">.</span><span class="fu">values</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb8-54"><a href="#cb8-54"></a>            space<span class="op">.</span><span class="fu">clear</span><span class="op">();</span></span>
+<span id="cb8-55"><a href="#cb8-55"></a>        <span class="op">}</span></span>
+<span id="cb8-56"><a href="#cb8-56"></a>    <span class="op">}</span></span>
+<span id="cb8-57"><a href="#cb8-57"></a></span>
+<span id="cb8-58"><a href="#cb8-58"></a>    <span class="at">@Override</span></span>
+<span id="cb8-59"><a href="#cb8-59"></a>    <span class="kw">protected</span> S <span class="fu">getForSpace</span><span class="op">(</span>AddressSpace space<span class="op">,</span> <span class="dt">boolean</span> toWrite<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-60"><a href="#cb8-60"></a>        <span class="cf">return</span> spaceMap<span class="op">.</span><span class="fu">getForSpace</span><span class="op">(</span>space<span class="op">,</span> toWrite<span class="op">);</span></span>
+<span id="cb8-61"><a href="#cb8-61"></a>    <span class="op">}</span></span>
+<span id="cb8-62"><a href="#cb8-62"></a></span>
+<span id="cb8-63"><a href="#cb8-63"></a>    <span class="at">@Override</span></span>
+<span id="cb8-64"><a href="#cb8-64"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">setInSpace</span><span class="op">(</span>ExprSpace space<span class="op">,</span> <span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> Expr val<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-65"><a href="#cb8-65"></a>        space<span class="op">.</span><span class="fu">set</span><span class="op">(</span>offset<span class="op">,</span> val<span class="op">);</span></span>
+<span id="cb8-66"><a href="#cb8-66"></a>    <span class="op">}</span></span>
+<span id="cb8-67"><a href="#cb8-67"></a></span>
+<span id="cb8-68"><a href="#cb8-68"></a>    <span class="at">@Override</span></span>
+<span id="cb8-69"><a href="#cb8-69"></a>    <span class="kw">protected</span> Expr <span class="fu">getFromSpace</span><span class="op">(</span>S space<span class="op">,</span> <span class="dt">long</span> offset<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> Reason reason<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-70"><a href="#cb8-70"></a>        <span class="cf">return</span> space<span class="op">.</span><span class="fu">get</span><span class="op">(</span>offset<span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb8-71"><a href="#cb8-71"></a>    <span class="op">}</span></span>
+<span id="cb8-72"><a href="#cb8-72"></a></span>
+<span id="cb8-73"><a href="#cb8-73"></a>    <span class="at">@Override</span></span>
+<span id="cb8-74"><a href="#cb8-74"></a>    <span class="kw">protected</span> <span class="bu">Map</span><span class="op">&lt;</span>Register<span class="op">,</span> Expr<span class="op">&gt;</span> <span class="fu">getRegisterValuesFromSpace</span><span class="op">(</span>S s<span class="op">,</span> <span class="bu">List</span><span class="op">&lt;</span>Register<span class="op">&gt;</span> registers<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-75"><a href="#cb8-75"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
+<span id="cb8-76"><a href="#cb8-76"></a>    <span class="op">}</span></span>
+<span id="cb8-77"><a href="#cb8-77"></a><span class="op">}</span></span>
+<span id="cb8-78"><a href="#cb8-78"></a></span>
+<span id="cb8-79"><a href="#cb8-79"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> ExprPcodeExecutorStatePiece</span>
+<span id="cb8-80"><a href="#cb8-80"></a>        <span class="kw">extends</span> AbstractExprPcodeExecutorStatePiece<span class="op">&lt;</span>ExprSpace<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb8-81"><a href="#cb8-81"></a>    <span class="kw">public</span> <span class="fu">ExprPcodeExecutorStatePiece</span><span class="op">(</span>Language language<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-82"><a href="#cb8-82"></a>        <span class="kw">super</span><span class="op">(</span>language<span class="op">);</span></span>
+<span id="cb8-83"><a href="#cb8-83"></a>    <span class="op">}</span></span>
+<span id="cb8-84"><a href="#cb8-84"></a></span>
+<span id="cb8-85"><a href="#cb8-85"></a>    <span class="at">@Override</span></span>
+<span id="cb8-86"><a href="#cb8-86"></a>    <span class="kw">protected</span> AbstractSpaceMap<span class="op">&lt;</span>ExprSpace<span class="op">&gt;</span> <span class="fu">newSpaceMap</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-87"><a href="#cb8-87"></a>        <span class="cf">return</span> <span class="kw">new</span> SimpleSpaceMap<span class="op">&lt;</span>ExprSpace<span class="op">&gt;()</span> <span class="op">{</span></span>
+<span id="cb8-88"><a href="#cb8-88"></a>            <span class="at">@Override</span></span>
+<span id="cb8-89"><a href="#cb8-89"></a>            <span class="kw">protected</span> ExprSpace <span class="fu">newSpace</span><span class="op">(</span>AddressSpace space<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-90"><a href="#cb8-90"></a>                <span class="cf">return</span> <span class="kw">new</span> <span class="fu">ExprSpace</span><span class="op">(</span>space<span class="op">);</span></span>
+<span id="cb8-91"><a href="#cb8-91"></a>            <span class="op">}</span></span>
+<span id="cb8-92"><a href="#cb8-92"></a>        <span class="op">};</span></span>
+<span id="cb8-93"><a href="#cb8-93"></a>    <span class="op">}</span></span>
+<span id="cb8-94"><a href="#cb8-94"></a><span class="op">}</span></span>
+<span id="cb8-95"><a href="#cb8-95"></a></span>
+<span id="cb8-96"><a href="#cb8-96"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> BytesExprPcodeExecutorState <span class="kw">extends</span> PairedPcodeExecutorState<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb8-97"><a href="#cb8-97"></a>    <span class="kw">public</span> <span class="fu">BytesExprPcodeExecutorState</span><span class="op">(</span>PcodeExecutorStatePiece<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> <span class="dt">byte</span><span class="op">[]&gt;</span> concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-98"><a href="#cb8-98"></a>        <span class="kw">super</span><span class="op">(</span><span class="kw">new</span> PairedPcodeExecutorStatePiece<span class="op">&lt;&gt;(</span>concrete<span class="op">,</span></span>
+<span id="cb8-99"><a href="#cb8-99"></a>            <span class="kw">new</span> <span class="fu">ExprPcodeExecutorStatePiece</span><span class="op">(</span>concrete<span class="op">.</span><span class="fu">getLanguage</span><span class="op">())));</span></span>
+<span id="cb8-100"><a href="#cb8-100"></a>    <span class="op">}</span></span>
+<span id="cb8-101"><a href="#cb8-101"></a><span class="op">}</span></span></code></pre></div>
 <p>The abstract class implements a strategy where a dedicated object
 handles each address space. Each object typically maintains of map of
 offsets (type <code>long</code>) to the model type, i.e.,
@@ -859,7 +864,8 @@ from the variables actually stored there. This may not seem like a huge
 problem, but it is actually quite common, esp., since x86 registers are
 structured. A write to <code>RAX</code> followed by a read from
 <code>EAX</code> will immediately demonstrate this issue. Nevertheless,
-we leave those details as an exercise.</p>
+we leave those details as an exercise. We factor <code>whenNull</code>
+so that it can be overridden later.</p>
 <p>The remaining parts are mostly boilerplate. We implement the “state
 piece” interface by creating another abstract class. An abstract class
 is not absolutely necessary, but it will be useful when we integrate the
@@ -1001,8 +1007,8 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb10-19"><a href="#cb10-19"></a><span class="op">}</span></span></code></pre></div>
 <p><strong>NOTE</strong>: When accessed as a paired state, all sets will
 affect both pieces. If you use the arithmetic to generate them, remember
-that it will use <code>fromConst</code> on both arithmetics to generate
-the pair, so you may be setting the right side to a
+that it will use <code>fromConst</code> on both sub-arithmetics to
+generate the pair, so you may be setting the right side to a
 <code>LitExpr</code>. To modify just one side of the pair, cast the
 state to <code>PairedPcodeExecutorState</code>, and then use
 <code>getLeft()</code>, and <code>getRight()</code> to retrieve the
@@ -1072,7 +1078,7 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb11-35"><a href="#cb11-35"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> ExprTracePcodeExecutorStatePiece</span>
 <span id="cb11-36"><a href="#cb11-36"></a>        <span class="kw">extends</span> AbstractExprPcodeExecutorStatePiece<span class="op">&lt;</span>ExprTraceSpace<span class="op">&gt;</span></span>
 <span id="cb11-37"><a href="#cb11-37"></a>        <span class="kw">implements</span> TracePcodeExecutorStatePiece<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb11-38"><a href="#cb11-38"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">final</span> <span class="bu">String</span> NAME <span class="op">=</span> <span class="st">&quot;Taint&quot;</span><span class="op">;</span></span>
+<span id="cb11-38"><a href="#cb11-38"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">final</span> <span class="bu">String</span> NAME <span class="op">=</span> <span class="st">&quot;Expr&quot;</span><span class="op">;</span></span>
 <span id="cb11-39"><a href="#cb11-39"></a></span>
 <span id="cb11-40"><a href="#cb11-40"></a>    <span class="kw">protected</span> <span class="dt">final</span> PcodeTraceDataAccess data<span class="op">;</span></span>
 <span id="cb11-41"><a href="#cb11-41"></a>    <span class="kw">protected</span> <span class="dt">final</span> PcodeTracePropertyAccess<span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;</span> property<span class="op">;</span></span>
@@ -1116,7 +1122,15 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb11-79"><a href="#cb11-79"></a>            space<span class="op">.</span><span class="fu">writeDown</span><span class="op">(</span>property<span class="op">);</span></span>
 <span id="cb11-80"><a href="#cb11-80"></a>        <span class="op">}</span></span>
 <span id="cb11-81"><a href="#cb11-81"></a>    <span class="op">}</span></span>
-<span id="cb11-82"><a href="#cb11-82"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb11-82"><a href="#cb11-82"></a><span class="op">}</span></span>
+<span id="cb11-83"><a href="#cb11-83"></a></span>
+<span id="cb11-84"><a href="#cb11-84"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> ExprTracePcodeExecutorState</span>
+<span id="cb11-85"><a href="#cb11-85"></a>        <span class="kw">extends</span> PairedTracePcodeExecutorState<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb11-86"><a href="#cb11-86"></a>    <span class="kw">public</span> <span class="fu">ExprTracePcodeExecutorState</span><span class="op">(</span>TracePcodeExecutorStatePiece<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> <span class="dt">byte</span><span class="op">[]&gt;</span> concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb11-87"><a href="#cb11-87"></a>        <span class="kw">super</span><span class="op">(</span><span class="kw">new</span> PairedTracePcodeExecutorStatePiece<span class="op">&lt;&gt;(</span>concrete<span class="op">,</span></span>
+<span id="cb11-88"><a href="#cb11-88"></a>            <span class="kw">new</span> <span class="fu">ExprTracePcodeExecutorStatePiece</span><span class="op">(</span>concrete<span class="op">.</span><span class="fu">getData</span><span class="op">())));</span></span>
+<span id="cb11-89"><a href="#cb11-89"></a>    <span class="op">}</span></span>
+<span id="cb11-90"><a href="#cb11-90"></a><span class="op">}</span></span></code></pre></div>
 <p>Because we do not need any additional logic for target integration,
 we do not need to extend the state pieces any further. The concrete
 pieces that we augment will contain all the target integration needed.
@@ -1124,30 +1138,101 @@ We have left the serialization as an exercise, though. Last, we
 implement the full parts factory and use it to construct and install a
 full <code>Expr</code>-augmented emulator factory:</p>
 <div class="sourceCode" id="cb12"><pre
-class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> BytesExprDebuggerPcodeEmulator <span class="kw">extends</span> AuxDebuggerPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> <span class="op">{</span></span>
-<span id="cb12-2"><a href="#cb12-2"></a>    <span class="kw">public</span> <span class="fu">BytesExprDebuggerPcodeEmulator</span><span class="op">(</span>PcodeDebuggerAccess access<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb12-3"><a href="#cb12-3"></a>        <span class="kw">super</span><span class="op">(</span>access<span class="op">);</span></span>
-<span id="cb12-4"><a href="#cb12-4"></a>    <span class="op">}</span></span>
-<span id="cb12-5"><a href="#cb12-5"></a></span>
-<span id="cb12-6"><a href="#cb12-6"></a>    <span class="at">@Override</span></span>
-<span id="cb12-7"><a href="#cb12-7"></a>    <span class="kw">protected</span> AuxDebuggerEmulatorPartsFactory<span class="op">&lt;</span>Expr<span class="op">&gt;</span> <span class="fu">getPartsFactory</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb12-8"><a href="#cb12-8"></a>        <span class="cf">return</span> BytesExprDebuggerEmulatorPartsFactory<span class="op">.</span><span class="fu">INSTANCE</span><span class="op">;</span></span>
-<span id="cb12-9"><a href="#cb12-9"></a>    <span class="op">}</span></span>
-<span id="cb12-10"><a href="#cb12-10"></a><span class="op">}</span></span>
-<span id="cb12-11"><a href="#cb12-11"></a></span>
-<span id="cb12-12"><a href="#cb12-12"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> BytesExprDebuggerPcodeEmulatorFactory</span>
-<span id="cb12-13"><a href="#cb12-13"></a>        <span class="kw">implements</span> DebuggerPcodeEmulatorFactory <span class="op">{</span></span>
-<span id="cb12-14"><a href="#cb12-14"></a></span>
-<span id="cb12-15"><a href="#cb12-15"></a>    <span class="at">@Override</span></span>
-<span id="cb12-16"><a href="#cb12-16"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">getTitle</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb12-17"><a href="#cb12-17"></a>        <span class="cf">return</span> <span class="st">&quot;Expr&quot;</span><span class="op">;</span></span>
-<span id="cb12-18"><a href="#cb12-18"></a>    <span class="op">}</span></span>
-<span id="cb12-19"><a href="#cb12-19"></a></span>
-<span id="cb12-20"><a href="#cb12-20"></a>    <span class="at">@Override</span></span>
-<span id="cb12-21"><a href="#cb12-21"></a>    <span class="kw">public</span> DebuggerPcodeMachine<span class="op">&lt;?&gt;</span> <span class="fu">create</span><span class="op">(</span>PcodeDebuggerAccess access<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb12-22"><a href="#cb12-22"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BytesExprDebuggerPcodeEmulator</span><span class="op">(</span>access<span class="op">);</span></span>
-<span id="cb12-23"><a href="#cb12-23"></a>    <span class="op">}</span></span>
-<span id="cb12-24"><a href="#cb12-24"></a><span class="op">}</span></span></code></pre></div>
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1"></a><span class="kw">public</span> <span class="kw">enum</span> BytesExprDebuggerEmulatorPartsFactory</span>
+<span id="cb12-2"><a href="#cb12-2"></a>    <span class="kw">implements</span> AuxDebuggerEmulatorPartsFactory<span class="op">&lt;</span>Expr<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3"></a>    INSTANCE<span class="op">;</span></span>
+<span id="cb12-4"><a href="#cb12-4"></a></span>
+<span id="cb12-5"><a href="#cb12-5"></a>    <span class="at">@Override</span></span>
+<span id="cb12-6"><a href="#cb12-6"></a>    <span class="kw">public</span> PcodeArithmetic<span class="op">&lt;</span>Expr<span class="op">&gt;</span> <span class="fu">getArithmetic</span><span class="op">(</span>Language language<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-7"><a href="#cb12-7"></a>        <span class="cf">return</span> ExprPcodeArithmetic<span class="op">.</span><span class="fu">forLanguage</span><span class="op">(</span>language<span class="op">);</span></span>
+<span id="cb12-8"><a href="#cb12-8"></a>    <span class="op">}</span></span>
+<span id="cb12-9"><a href="#cb12-9"></a></span>
+<span id="cb12-10"><a href="#cb12-10"></a>    <span class="at">@Override</span></span>
+<span id="cb12-11"><a href="#cb12-11"></a>    <span class="kw">public</span> PcodeUseropLibrary<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> <span class="fu">createSharedUseropLibrary</span><span class="op">(</span></span>
+<span id="cb12-12"><a href="#cb12-12"></a>            AuxPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> emulator<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-13"><a href="#cb12-13"></a>        <span class="cf">return</span> PcodeUseropLibrary<span class="op">.</span><span class="fu">nil</span><span class="op">();</span></span>
+<span id="cb12-14"><a href="#cb12-14"></a>    <span class="op">}</span></span>
+<span id="cb12-15"><a href="#cb12-15"></a></span>
+<span id="cb12-16"><a href="#cb12-16"></a>    <span class="at">@Override</span></span>
+<span id="cb12-17"><a href="#cb12-17"></a>    <span class="kw">public</span> PcodeUseropLibrary<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> <span class="fu">createLocalUseropStub</span><span class="op">(</span></span>
+<span id="cb12-18"><a href="#cb12-18"></a>            AuxPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> emulator<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-19"><a href="#cb12-19"></a>        <span class="cf">return</span> PcodeUseropLibrary<span class="op">.</span><span class="fu">nil</span><span class="op">();</span></span>
+<span id="cb12-20"><a href="#cb12-20"></a>    <span class="op">}</span></span>
+<span id="cb12-21"><a href="#cb12-21"></a></span>
+<span id="cb12-22"><a href="#cb12-22"></a>    <span class="at">@Override</span></span>
+<span id="cb12-23"><a href="#cb12-23"></a>    <span class="kw">public</span> PcodeUseropLibrary<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> <span class="fu">createLocalUseropLibrary</span><span class="op">(</span></span>
+<span id="cb12-24"><a href="#cb12-24"></a>            AuxPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> emulator<span class="op">,</span> PcodeThread<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> thread<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-25"><a href="#cb12-25"></a>        <span class="cf">return</span> PcodeUseropLibrary<span class="op">.</span><span class="fu">nil</span><span class="op">();</span></span>
+<span id="cb12-26"><a href="#cb12-26"></a>    <span class="op">}</span></span>
+<span id="cb12-27"><a href="#cb12-27"></a></span>
+<span id="cb12-28"><a href="#cb12-28"></a>    <span class="at">@Override</span></span>
+<span id="cb12-29"><a href="#cb12-29"></a>    <span class="kw">public</span> PcodeExecutorState<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> <span class="fu">createSharedState</span><span class="op">(</span></span>
+<span id="cb12-30"><a href="#cb12-30"></a>            AuxPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> emulator<span class="op">,</span> BytesPcodeExecutorStatePiece concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-31"><a href="#cb12-31"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BytesExprPcodeExecutorState</span><span class="op">(</span>concrete<span class="op">);</span></span>
+<span id="cb12-32"><a href="#cb12-32"></a>    <span class="op">}</span></span>
+<span id="cb12-33"><a href="#cb12-33"></a></span>
+<span id="cb12-34"><a href="#cb12-34"></a>    <span class="at">@Override</span></span>
+<span id="cb12-35"><a href="#cb12-35"></a>    <span class="kw">public</span> PcodeExecutorState<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> <span class="fu">createLocalState</span><span class="op">(</span></span>
+<span id="cb12-36"><a href="#cb12-36"></a>            AuxPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> emulator<span class="op">,</span> PcodeThread<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> Expr<span class="op">&gt;&gt;</span> thread<span class="op">,</span></span>
+<span id="cb12-37"><a href="#cb12-37"></a>            BytesPcodeExecutorStatePiece concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-38"><a href="#cb12-38"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BytesExprPcodeExecutorState</span><span class="op">(</span>concrete<span class="op">);</span></span>
+<span id="cb12-39"><a href="#cb12-39"></a>    <span class="op">}</span></span>
+<span id="cb12-40"><a href="#cb12-40"></a></span>
+<span id="cb12-41"><a href="#cb12-41"></a>    <span class="at">@Override</span></span>
+<span id="cb12-42"><a href="#cb12-42"></a>    <span class="kw">public</span> TracePcodeExecutorState<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;&gt;</span> <span class="fu">createTraceSharedState</span><span class="op">(</span></span>
+<span id="cb12-43"><a href="#cb12-43"></a>            AuxTracePcodeEmulator<span class="op">&lt;</span>ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;</span> emulator<span class="op">,</span></span>
+<span id="cb12-44"><a href="#cb12-44"></a>            BytesTracePcodeExecutorStatePiece concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-45"><a href="#cb12-45"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">ExprTracePcodeExecutorState</span><span class="op">(</span>concrete<span class="op">);</span></span>
+<span id="cb12-46"><a href="#cb12-46"></a>    <span class="op">}</span></span>
+<span id="cb12-47"><a href="#cb12-47"></a></span>
+<span id="cb12-48"><a href="#cb12-48"></a>    <span class="at">@Override</span></span>
+<span id="cb12-49"><a href="#cb12-49"></a>    <span class="kw">public</span> TracePcodeExecutorState<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;&gt;</span> <span class="fu">createTraceLocalState</span><span class="op">(</span></span>
+<span id="cb12-50"><a href="#cb12-50"></a>            AuxTracePcodeEmulator<span class="op">&lt;</span>ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;</span> emulator<span class="op">,</span></span>
+<span id="cb12-51"><a href="#cb12-51"></a>            PcodeThread<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;&gt;</span> thread<span class="op">,</span></span>
+<span id="cb12-52"><a href="#cb12-52"></a>            BytesTracePcodeExecutorStatePiece concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-53"><a href="#cb12-53"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">ExprTracePcodeExecutorState</span><span class="op">(</span>concrete<span class="op">);</span></span>
+<span id="cb12-54"><a href="#cb12-54"></a>    <span class="op">}</span></span>
+<span id="cb12-55"><a href="#cb12-55"></a></span>
+<span id="cb12-56"><a href="#cb12-56"></a>    <span class="at">@Override</span></span>
+<span id="cb12-57"><a href="#cb12-57"></a>    <span class="kw">public</span> TracePcodeExecutorState<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;&gt;</span> <span class="fu">createDebuggerSharedState</span><span class="op">(</span></span>
+<span id="cb12-58"><a href="#cb12-58"></a>            AuxDebuggerPcodeEmulator<span class="op">&lt;</span>ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;</span> emulator<span class="op">,</span></span>
+<span id="cb12-59"><a href="#cb12-59"></a>            RWTargetMemoryPcodeExecutorStatePiece concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-60"><a href="#cb12-60"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">ExprTracePcodeExecutorState</span><span class="op">(</span>concrete<span class="op">);</span></span>
+<span id="cb12-61"><a href="#cb12-61"></a>    <span class="op">}</span></span>
+<span id="cb12-62"><a href="#cb12-62"></a></span>
+<span id="cb12-63"><a href="#cb12-63"></a>    <span class="at">@Override</span></span>
+<span id="cb12-64"><a href="#cb12-64"></a>    <span class="kw">public</span> TracePcodeExecutorState<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;&gt;</span> <span class="fu">createDebuggerLocalState</span><span class="op">(</span></span>
+<span id="cb12-65"><a href="#cb12-65"></a>            AuxDebuggerPcodeEmulator<span class="op">&lt;</span>ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;</span> emulator<span class="op">,</span></span>
+<span id="cb12-66"><a href="#cb12-66"></a>            PcodeThread<span class="op">&lt;</span>Pair<span class="op">&lt;</span><span class="dt">byte</span><span class="op">[],</span> ModelingScript<span class="op">.</span><span class="fu">Expr</span><span class="op">&gt;&gt;</span> thread<span class="op">,</span></span>
+<span id="cb12-67"><a href="#cb12-67"></a>            RWTargetRegistersPcodeExecutorStatePiece concrete<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-68"><a href="#cb12-68"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">ExprTracePcodeExecutorState</span><span class="op">(</span>concrete<span class="op">);</span></span>
+<span id="cb12-69"><a href="#cb12-69"></a>    <span class="op">}</span></span>
+<span id="cb12-70"><a href="#cb12-70"></a><span class="op">}</span></span>
+<span id="cb12-71"><a href="#cb12-71"></a></span>
+<span id="cb12-72"><a href="#cb12-72"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> BytesExprDebuggerPcodeEmulator <span class="kw">extends</span> AuxDebuggerPcodeEmulator<span class="op">&lt;</span>Expr<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb12-73"><a href="#cb12-73"></a>    <span class="kw">public</span> <span class="fu">BytesExprDebuggerPcodeEmulator</span><span class="op">(</span>PcodeDebuggerAccess access<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-74"><a href="#cb12-74"></a>        <span class="kw">super</span><span class="op">(</span>access<span class="op">);</span></span>
+<span id="cb12-75"><a href="#cb12-75"></a>    <span class="op">}</span></span>
+<span id="cb12-76"><a href="#cb12-76"></a></span>
+<span id="cb12-77"><a href="#cb12-77"></a>    <span class="at">@Override</span></span>
+<span id="cb12-78"><a href="#cb12-78"></a>    <span class="kw">protected</span> AuxDebuggerEmulatorPartsFactory<span class="op">&lt;</span>Expr<span class="op">&gt;</span> <span class="fu">getPartsFactory</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb12-79"><a href="#cb12-79"></a>        <span class="cf">return</span> BytesExprDebuggerEmulatorPartsFactory<span class="op">.</span><span class="fu">INSTANCE</span><span class="op">;</span></span>
+<span id="cb12-80"><a href="#cb12-80"></a>    <span class="op">}</span></span>
+<span id="cb12-81"><a href="#cb12-81"></a><span class="op">}</span></span>
+<span id="cb12-82"><a href="#cb12-82"></a></span>
+<span id="cb12-83"><a href="#cb12-83"></a><span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> BytesExprDebuggerPcodeEmulatorFactory</span>
+<span id="cb12-84"><a href="#cb12-84"></a>        <span class="kw">extends</span> AbstractDebuggerPcodeEmulatorFactory <span class="op">{</span></span>
+<span id="cb12-85"><a href="#cb12-85"></a></span>
+<span id="cb12-86"><a href="#cb12-86"></a>    <span class="at">@Override</span></span>
+<span id="cb12-87"><a href="#cb12-87"></a>    <span class="kw">public</span> <span class="bu">String</span> <span class="fu">getTitle</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb12-88"><a href="#cb12-88"></a>        <span class="cf">return</span> <span class="st">&quot;Expr&quot;</span><span class="op">;</span></span>
+<span id="cb12-89"><a href="#cb12-89"></a>    <span class="op">}</span></span>
+<span id="cb12-90"><a href="#cb12-90"></a></span>
+<span id="cb12-91"><a href="#cb12-91"></a>    <span class="at">@Override</span></span>
+<span id="cb12-92"><a href="#cb12-92"></a>    <span class="kw">public</span> DebuggerPcodeMachine<span class="op">&lt;?&gt;</span> <span class="fu">create</span><span class="op">(</span>PcodeDebuggerAccess access<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-93"><a href="#cb12-93"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">BytesExprDebuggerPcodeEmulator</span><span class="op">(</span>access<span class="op">);</span></span>
+<span id="cb12-94"><a href="#cb12-94"></a>    <span class="op">}</span></span>
+<span id="cb12-95"><a href="#cb12-95"></a><span class="op">}</span></span></code></pre></div>
 <p>The factory can then be installed using a script. The script will set
 your factory as the current emulator factory for the whole tool;
 however, your script-based factory will not be listed in the menus.

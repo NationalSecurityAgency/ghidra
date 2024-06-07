@@ -26,7 +26,7 @@ import org.junit.Test;
 import db.Transaction;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncUtils.TemperamentalRunnable;
 import ghidra.dbg.target.TargetRegisterBank;
@@ -73,15 +73,14 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerTest
 	<E extends Throwable> E expecting(Class<E> cls, TemperamentalRunnable action) {
 		try {
 			action.run();
-			fail("Expected exception type " + cls + ", but got no error.");
 		}
 		catch (Throwable e) {
 			if (cls.isInstance(e)) {
 				return cls.cast(e);
 			}
-			fail("Expection exception type " + cls + ", but got " + e);
+			throw new AssertionError("Expection exception type " + cls + ", but got " + e, e);
 		}
-		throw new AssertionError();
+		throw new AssertionError("Expected exception type " + cls + ", but got no error.");
 	}
 
 	@Before
@@ -469,6 +468,15 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerTest
 
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
 		waitForSwing();
+		assertEquals(
+			"Cannot navigate time in Control Target mode. Switch to Trace or Emulate mode first.",
+			tool.getStatusInfo());
+		assertEquals(recorder.getSnap(), traceManager.getCurrentSnap());
+
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		waitForSwing();
+		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
+		waitForSwing();
 		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
@@ -509,6 +517,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerTest
 	@Test
 	public void testWriteReadOnlyMemoryErr() throws Throwable {
 		createAndOpenTrace();
+		targetService.publishTarget(new MockTarget(tb.trace));
 		activateTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
 
@@ -522,6 +531,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerTest
 	@Test
 	public void testWriteReadOnlyRegisterErr() throws Throwable {
 		createAndOpenTrace();
+		targetService.publishTarget(new MockTarget(tb.trace));
 		activateTrace();
 		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
 

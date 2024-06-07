@@ -64,12 +64,10 @@ public class DebuggerStaticMappingPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.setTrace(ev.getActiveCoordinates().getTrace());
 		}
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramActivatedPluginEvent ev) {
 			provider.setProgram(ev.getActiveProgram());
 		}
 	}

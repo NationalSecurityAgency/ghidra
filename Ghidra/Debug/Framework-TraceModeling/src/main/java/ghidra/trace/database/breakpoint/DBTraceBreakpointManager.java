@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import ghidra.dbg.target.TargetBreakpointLocation;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -33,7 +34,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -43,7 +43,7 @@ public class DBTraceBreakpointManager
 		implements TraceBreakpointManager, DBTraceDelegatingManager<DBTraceBreakpointSpace> {
 	protected static final String NAME = "Breakpoint";
 
-	public DBTraceBreakpointManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceBreakpointManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws VersionException, IOException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
@@ -129,8 +129,7 @@ public class DBTraceBreakpointManager
 					.getObjectByPath(snap, path, TraceObjectBreakpointLocation.class);
 		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			return getBreakpointsByPath(path)
-					.stream()
+			return getBreakpointsByPath(path).stream()
 					.filter(b -> b.getLifespan().contains(snap))
 					.findAny()
 					.orElse(null);

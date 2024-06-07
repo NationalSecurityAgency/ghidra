@@ -65,10 +65,10 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 		}
 	}
 
-	public TerminalProvider createProvider(Charset charset, VtOutput outputCb) {
+	public TerminalProvider createProvider(Plugin helpPlugin, Charset charset, VtOutput outputCb) {
 		return Swing.runNow(() -> {
 			cleanTerminated();
-			TerminalProvider provider = new TerminalProvider(this, charset);
+			TerminalProvider provider = new TerminalProvider(this, charset, helpPlugin);
 			provider.setOutputCallback(outputCb);
 			provider.addToTool();
 			provider.setVisible(true);
@@ -80,14 +80,20 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 	}
 
 	@Override
-	public Terminal createNullTerminal(Charset charset, VtOutput outputCb) {
-		return new DefaultTerminal(createProvider(charset, outputCb));
+	public Terminal createNullTerminal(Plugin helpPlugin, Charset charset, VtOutput outputCb) {
+		return new DefaultTerminal(createProvider(helpPlugin, charset, outputCb));
 	}
 
 	@Override
-	public Terminal createWithStreams(Charset charset, InputStream in, OutputStream out) {
+	public Terminal createNullTerminal(Charset charset, VtOutput outputCb) {
+		return createNullTerminal(this, charset, outputCb);
+	}
+
+	@Override
+	public Terminal createWithStreams(Plugin helpPlugin, Charset charset, InputStream in,
+			OutputStream out) {
 		WritableByteChannel channel = Channels.newChannel(out);
-		return new ThreadedTerminal(createProvider(charset, buf -> {
+		return new ThreadedTerminal(createProvider(helpPlugin, charset, buf -> {
 			while (buf.hasRemaining()) {
 				try {
 					//ThreadedTerminal.printBuffer(">> ", buf);
@@ -98,6 +104,11 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 				}
 			}
 		}), in);
+	}
+
+	@Override
+	public Terminal createWithStreams(Charset charset, InputStream in, OutputStream out) {
+		return createWithStreams(this, charset, in, out);
 	}
 
 	@Override

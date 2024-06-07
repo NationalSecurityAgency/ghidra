@@ -109,6 +109,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 	public static enum Alignment {
 		ALIGN_1(1), ALIGN_2(2), ALIGN_4(4);
+
 		private int alignment;
 
 		Alignment(int alignment) {
@@ -349,7 +350,10 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 		AddressSet addresses = new AddressSet();
 		for (MemoryBlock memBlock : blocks) {
-			if (memBlock.getPermissions() > 0) {
+			if (!memBlock.isLoaded()) {
+				continue;
+			}
+			if (memBlock.isWrite() || memBlock.isRead() || memBlock.isExecute()) {
 				addresses = addresses.union(new AddressSet(memBlock.getStart(), memBlock.getEnd()));
 			}
 		}
@@ -581,14 +585,15 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 		modelName = options.getString(MODELFILE_OPTION_NAME, MODEL_DEFAULT_NAME);
 		setTrigramFileName(modelName);
 
-		minStringLength = options.getEnum(MINIMUM_STRING_LENGTH_OPTION_NAME,
-			MINIMUM_STRING_LENGTH_DEFAULT_VALUE).getMinLength();
+		minStringLength =
+			options.getEnum(MINIMUM_STRING_LENGTH_OPTION_NAME, MINIMUM_STRING_LENGTH_DEFAULT_VALUE)
+					.getMinLength();
 
 		requireNullEnd = options.getBoolean(REQUIRE_NULL_TERMINATION_OPTION_NAME,
 			REQUIRE_NULL_TERMINATION_DEFAULT_VALUE);
 
-		startAlignment = options.getEnum(START_ALIGNMENT_OPTION_NAME,
-			START_ALIGNMENT_DEFAULT_VALUE).getAlignment();
+		startAlignment = options.getEnum(START_ALIGNMENT_OPTION_NAME, START_ALIGNMENT_DEFAULT_VALUE)
+				.getAlignment();
 
 		setStringEndAlignment(
 			options.getInt(END_ALIGNMENT_OPTION_NAME, END_ALIGNMENT_DEFAULT_VALUE));

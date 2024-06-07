@@ -55,7 +55,7 @@ import resources.Icons;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Show Program Tree Views",
 	description = "This plugin shows a view for " +
 			" each tree in the program. A tree can be organized into " +

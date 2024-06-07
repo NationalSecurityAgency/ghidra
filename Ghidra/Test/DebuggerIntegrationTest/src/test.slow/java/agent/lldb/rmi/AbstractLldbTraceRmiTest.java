@@ -20,7 +20,8 @@ import static org.junit.Assert.*;
 
 import java.io.*;
 import java.net.*;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -28,8 +29,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
@@ -45,6 +49,7 @@ import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.pty.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
@@ -54,56 +59,70 @@ import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
+
+	record PlatDep(String name, String endian, String lang, String cSpec, String callMne,
+			String intReg, String floatReg) {
+		static final PlatDep ARM64 =
+			new PlatDep("arm64", "little", "AARCH64:LE:64:v8A", "default", "bl", "x0", "s0");
+		static final PlatDep X8664 = // Note AT&T callq
+			new PlatDep("x86_64", "little", "x86:LE:64:default", "gcc", "callq", "rax", "st0");
+	}
+
+	public static final PlatDep PLAT = computePlat();
+
+	static PlatDep computePlat() {
+		return switch (System.getProperty("os.arch")) {
+			case "aarch64" -> PlatDep.ARM64;
+			case "x86" -> PlatDep.X8664;
+			case "amd64" -> PlatDep.X8664;
+			default -> throw new AssertionError(
+				"Unrecognized arch: " + System.getProperty("os.arch"));
+		};
+	}
+
+	static String getSpecimenClone() {
+		return DummyProc.which("expCloneExit");
+	}
+
+	static String getSpecimenPrint() {
+		return DummyProc.which("expPrint");
+	}
+
+	static String getSpecimenRead() {
+		return DummyProc.which("expRead");
+	}
+
 	/**
 	 * Some features have to be disabled to avoid permissions issues in the test container. Namely,
 	 * don't try to disable ASLR.
+	 * 
+	 * Color codes mess up the address parsing.
 	 */
 	public static final String PREAMBLE = """
 			script import ghidralldb
+			settings set use-color false
 			settings set target.disable-aslr false
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
 	protected static final int TIMEOUT_SECONDS = 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
-	public static final String INSTRUMENT_STOPPED =
-		"""
-				ghidra_trace_txopen "Fake" 'ghidra_trace_create_obj Processes[1]'
-				define do-set-stopped
-				  ghidra_trace_set_value Processes[1] _state '"STOPPED"'
-				end
-				define set-stopped
-				  ghidra_trace_txopen Stopped do-set-stopped
-				end
-				         #lldb.debugger.HandleCommand('target stop-hook add -P ghidralldb.hooks.StopHook')
-				#python lldb.events.stop.connect(lambda e: lldb.execute("set-stopped"))""";
-	public static final String INSTRUMENT_RUNNING =
-		"""
-				ghidra_trace_txopen "Fake" 'ghidra_trace_create_obj Processes[1]'
-				define do-set-running
-				  ghidra_trace_set_value Processes[1] _state '"RUNNING"'
-				end
-				define set-running
-				  ghidra_trace_txopen Running do-set-running
-				end
-				         #lldb.debugger.HandleCommand('target stop-hook add -P ghidralldb.hooks.StopHook')
-				#python lldb.events.cont.connect(lambda e: lldb.execute("set-running"))""";
 
 	protected TraceRmiService traceRmi;
 	private Path lldbPath;
-	private Path outFile;
-	private Path errFile;
 
 	// @BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle", "Debugger-agent-lldb:assemblePyPackage")
-				.directory(TestApplicationUtils.getInstallationDirectory())
-				.inheritIO()
-				.start()
-				.waitFor();
+		new ProcessBuilder("gradle",
+			"Debugger-rmi-trace:assemblePyPackage",
+			"Debugger-agent-lldb:assemblePyPackage")
+					.directory(TestApplicationUtils.getInstallationDirectory())
+					.inheritIO()
+					.start()
+					.waitFor();
 	}
 
-	protected void setPythonPath(ProcessBuilder pb) throws IOException {
+	protected void setPythonPath(Map<String, String> env) throws IOException {
 		String sep =
 			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS ? ";" : ":";
 		String rmiPyPkg = Application.getModuleSubDirectory("Debugger-rmi-trace",
@@ -111,7 +130,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		String gdbPyPkg = Application.getModuleSubDirectory("Debugger-agent-lldb",
 			"build/pypkg/src").getAbsolutePath();
 		String add = rmiPyPkg + sep + gdbPyPkg;
-		pb.environment().compute("PYTHONPATH", (k, v) -> v == null ? add : (v + sep + add));
+		env.compute("PYTHONPATH", (k, v) -> v == null ? add : (v + sep + add));
 	}
 
 	@Before
@@ -124,8 +143,6 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		catch (RuntimeException e) {
 			lldbPath = Paths.get(DummyProc.which("lldb"));
 		}
-		outFile = Files.createTempFile("lldbout", null);
-		errFile = Files.createTempFile("lldberr", null);
 	}
 
 	protected void addAllDebuggerPlugins() throws PluginException {
@@ -156,71 +173,70 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		throw new AssertionError("Unhandled address type " + address);
 	}
 
-	protected record LldbResult(boolean timedOut, int exitCode, String stdout, String stderr) {
+	protected record LldbResult(boolean timedOut, int exitCode, String out) {
 		protected String handle() {
-			if (!"".equals(stderr) || (0 != exitCode && 143 != exitCode)) {
-				throw new LldbError(exitCode, stdout, stderr);
+			if (0 != exitCode && 143 != exitCode) {
+				throw new LldbError(exitCode, out);
 			}
-			return stdout;
+			return out;
 		}
 	}
 
-	protected record ExecInLldb(Process lldb, CompletableFuture<LldbResult> future) {
-	}
+	protected record ExecInLldb(Pty pty, PtySession lldb, CompletableFuture<LldbResult> future,
+			Thread pumper) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInLldb execInLldb(String script) throws IOException {
-		ProcessBuilder pb = new ProcessBuilder(lldbPath.toString());
-		setPythonPath(pb);
+		Pty pty = PtyFactory.local().openpty();
+		Map<String, String> env = new HashMap<>(System.getenv());
+		setPythonPath(env);
+		env.put("TERM", "xterm-256color");
+		ByteArrayOutputStream capture = new ByteArrayOutputStream();
+		OutputStream tee = new TeeOutputStream(System.out, capture);
+		Thread pumper = new StreamPumper(pty.getParent().getInputStream(), tee);
+		pumper.start();
+		PtySession lldbSession = pty.getChild().session(new String[] { lldbPath.toString() }, env);
 
-		// If commands come from file, LLDB will quit after EOF.
-		Msg.info(this, "outFile: " + outFile);
-		Msg.info(this, "errFile: " + errFile);
-		pb.redirectInput(ProcessBuilder.Redirect.PIPE);
-		pb.redirectOutput(outFile.toFile());
-		pb.redirectError(errFile.toFile());
-		Process lldbProc = pb.start();
-		OutputStream stdin = lldbProc.getOutputStream();
+		OutputStream stdin = pty.getParent().getOutputStream();
 		stdin.write(script.getBytes());
 		stdin.flush();
-		return new ExecInLldb(lldbProc, CompletableFuture.supplyAsync(() -> {
+		return new ExecInLldb(pty, lldbSession, CompletableFuture.supplyAsync(() -> {
 			try {
-				if (!lldbProc.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-					Msg.error(this, "Timed out waiting for LLDB");
-					lldbProc.destroyForcibly();
-					lldbProc.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-					return new LldbResult(true, -1, Files.readString(outFile),
-						Files.readString(errFile));
-				}
-				Msg.info(this, "LLDB exited with code " + lldbProc.exitValue());
-				return new LldbResult(false, lldbProc.exitValue(), Files.readString(outFile),
-					Files.readString(errFile));
+				int exitVal = lldbSession.waitExited(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+				Msg.info(this, "LLDB exited with code " + exitVal);
+				return new LldbResult(false, exitVal, capture.toString());
+			}
+			catch (TimeoutException e) {
+				return new LldbResult(true, -1, capture.toString());
 			}
 			catch (Exception e) {
 				return ExceptionUtils.rethrow(e);
 			}
 			finally {
-				lldbProc.destroyForcibly();
+				try {
+					pty.close();
+				}
+				catch (IOException e) {
+					Msg.warn(this, "Couldn't close pty: " + e);
+				}
+				lldbSession.destroyForcibly();
+				pumper.interrupt();
 			}
-		}));
+		}), pumper);
 	}
 
 	public static class LldbError extends RuntimeException {
 		public final int exitCode;
-		public final String stdout;
-		public final String stderr;
+		public final String out;
 
-		public LldbError(int exitCode, String stdout, String stderr) {
+		public LldbError(int exitCode, String out) {
 			super("""
 					exitCode=%d:
-					----stdout----
+					----out----
 					%s
-					----stderr----
-					%s
-					""".formatted(exitCode, stdout, stderr));
+					""".formatted(exitCode, out));
 			this.exitCode = exitCode;
-			this.stdout = stdout;
-			this.stderr = stderr;
+			this.out = out;
 		}
 	}
 
@@ -250,17 +266,32 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			return (String) execute.invoke(Map.of("cmd", cmd, "to_string", true));
 		}
 
+		public Object evaluate(String expr) {
+			RemoteMethod evaluate = getMethod("evaluate");
+			return evaluate.invoke(Map.of("expr", expr));
+		}
+
+		public Object pyeval(String expr) {
+			RemoteMethod pyeval = getMethod("pyeval");
+			return pyeval.invoke(Map.of("expr", expr));
+		}
+
 		@Override
 		public void close() throws Exception {
 			Msg.info(this, "Cleaning up lldb");
-			exec.lldb().destroy();
+			execute("settings set auto-confirm true");
+			exec.pty.getParent().getOutputStream().write("""
+					quit
+					""".getBytes());
 			try {
 				LldbResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				r.handle();
 				waitForPass(() -> assertTrue(connection.isClosed()));
 			}
 			finally {
+				exec.pty.close();
 				exec.lldb.destroyForcibly();
+				exec.pumper.interrupt();
 			}
 		}
 	}
@@ -276,8 +307,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			return new LldbAndConnection(exec, connection);
 		}
 		catch (SocketTimeoutException e) {
+			exec.pty.close();
 			exec.lldb.destroyForcibly();
 			exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
+			exec.pumper.interrupt();
 			throw e;
 		}
 	}
@@ -285,7 +318,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected LldbAndConnection startAndConnectLldb() throws Exception {
 		return startAndConnectLldb(addr -> """
 				%s
-				ghidra_trace_connect %s
+				ghidra trace connect %s
 				""".formatted(PREAMBLE, addr));
 	}
 
@@ -294,36 +327,56 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			throws Exception {
 		LldbAndConnection conn = startAndConnectLldb(scriptSupplier);
 		LldbResult r = conn.exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		conn.exec.pty.close();
+		conn.exec.pumper.interrupt();
 		String stdout = r.handle();
 		waitForPass(() -> assertTrue(conn.connection.isClosed()));
 		return stdout;
 	}
 
-	protected void waitStopped() {
+	protected void waitState(String state) {
 		TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
-		waitForPass(() -> assertEquals("STOPPED", tb.objValue(proc, 0, "_state")));
+		for (int i = 0; i < 5; i++) {
+			try {
+				waitForPass(() -> {
+					Long snap = tb.trace.getTimeManager().getMaxSnap();
+					assertEquals(state, tb.objValue(proc, snap != null ? snap : 0, "_state"));
+				});
+				break;
+			}
+			catch (AssertionError e) {
+				if (i == 4) {
+					throw e;
+				}
+			}
+		}
 		waitTxDone();
 	}
 
-	protected void waitRunning() {
-		TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
-		waitForPass(() -> assertEquals("RUNNING", tb.objValue(proc, 0, "_state")));
-		waitTxDone();
+	protected void waitStopped(LldbAndConnection conn) {
+		waitForPass(() -> assertEquals(Boolean.TRUE,
+			conn.pyeval("util.get_debugger().GetTargetAtIndex(0).GetProcess().is_stopped")));
+		// waitState("STOPPED");
+	}
+
+	protected void waitRunning(LldbAndConnection conn) {
+		waitForPass(() -> assertEquals(Boolean.TRUE,
+			conn.pyeval("util.get_debugger().GetTargetAtIndex(0).GetProcess().is_running")));
+		// waitState("RUNNING");
 	}
 
 	protected String extractOutSection(String out, String head) {
-		String[] split = out.split("\n");
+		String[] split = out.replace("\r", "").split("\n");
 		String xout = "";
 		for (String s : split) {
-			if (!s.startsWith("(lldb)") && !s.equals("")) {
+			if (!s.startsWith("(lldb)") && !s.contains("script print(") && !s.equals("")) {
 				xout += s + "\n";
 			}
 		}
 		return xout.split(head)[1].split("---")[0].replace("(lldb)", "").trim();
 	}
 
-	record MemDump(long address, byte[] data) {
-	}
+	record MemDump(long address, byte[] data) {}
 
 	protected MemDump parseHexDump(String dump) throws IOException {
 		// First, get the address. Assume contiguous, so only need top line.
@@ -348,13 +401,6 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return new MemDump(address, buf.toByteArray());
 	}
 
-	record RegDump() {
-	}
-
-	protected RegDump parseRegDump(String dump) {
-		return new RegDump();
-	}
-
 	protected ManagedDomainObject openDomainObject(String path) throws Exception {
 		DomainFile df = env.getProject().getProjectData().getFile(path);
 		assertNotNull(df);
@@ -374,6 +420,14 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 				throw new TimeoutException("30 seconds expired waiting for domain file");
 			}
 		}
+	}
+
+	protected void assertLocalOs(String actual) {
+		assertThat(actual, Matchers.startsWith(switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+			case LINUX -> "linux";
+			case MAC_OS_X -> "macos";
+			default -> throw new AssertionError("What OS?");
+		}));
 	}
 
 	protected void assertBreakLoc(TraceObjectValue locVal, String key, Address addr, int len,

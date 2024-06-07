@@ -168,7 +168,7 @@ public class ImportBatchTask extends Task {
 
 				Msg.info(this, "Imported " + destInfo.first + "/ " + destInfo.second + ", " +
 					totalAppsImported + " of " + totalEnabledApps);
-				if (messageLog.hasMessages()) {
+				if (!Loader.loggingDisabled && messageLog.hasMessages()) {
 					Msg.info(this, "Additional info:\n" + messageLog.toString());
 				}
 			}

@@ -26,6 +26,7 @@ import javax.swing.event.ListDataListener;
 
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Tooltips;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 
@@ -34,23 +35,25 @@ import ghidra.app.plugin.core.console.CodeCompletion;
  */
 public class CodeCompletionWindow extends JDialog {
 
+	private static final String FONT_ID = "font.plugin.terminal.completion.list";
+
 	protected final InterpreterPanel console;
 	protected final JTextPane outputTextField;
 	/* List of CodeCompletions.
 	 * If the substitution value is null, then that attribute will not be
 	 * selectable for substitution.
 	 */
-	protected List<CodeCompletion> completion_list;
+	protected List<CodeCompletion> completionData;
 	/* current list of completions */
-	protected JList jlist;
+	protected JList<CodeCompletion> jlist;
 
 	public CodeCompletionWindow(Window parent, InterpreterPanel cp, JTextPane textField) {
 		super(parent);
 
 		this.console = cp;
 		outputTextField = textField;
-		jlist = new JList();
-		completion_list = null;
+		jlist = new JList<>();
+		completionData = null;
 
 		setUndecorated(true);
 		/* don't steal focus from text input! */
@@ -58,14 +61,14 @@ public class CodeCompletionWindow extends JDialog {
 
 		jlist.setBackground(Tooltips.BACKGROUND);
 		jlist.setCellRenderer(new CodeCompletionListCellRenderer());
-		/* add the ability to double-click a code completion */
+
+		// add the ability to double-click a code completion
 		MouseListener mouseListener = new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				/* when the user clicks the popup window, make sure
-				 * that the outputTextField gets the focus (so that the escape
-				 * key and other hotkeys to manage the popup work correctly
-				 */
+				// when the user clicks the popup window, make sure that the outputTextField gets
+				// the focus (so that the escape key and other hotkeys to manage the popup work
+				// correctly
 				outputTextField.requestFocusInWindow();
 				/* double-click inserts a completion */
 				if (e.getClickCount() == 2) {
@@ -74,9 +77,9 @@ public class CodeCompletionWindow extends JDialog {
 			}
 		};
 		jlist.addMouseListener(mouseListener);
-		/* actually put the components together */
+
 		getContentPane().add(new JScrollPane(jlist));
-		updateCompletionList(completion_list);
+		updateCompletionList(completionData);
 
 		jlist.addKeyListener(new KeyAdapter() {
 			@Override
@@ -121,7 +124,7 @@ public class CodeCompletionWindow extends JDialog {
 	 * @param list List of code completions
 	 */
 	public void updateCompletionList(List<CodeCompletion> list) {
-		completion_list = list;
+		completionData = list;
 		jlist.setModel(new CodeCompletionListModel(list));
 		jlist.setSelectionModel(new CodeCompletionListSelectionModel(list));
 		jlist.clearSelection();
@@ -247,7 +250,7 @@ public class CodeCompletionWindow extends JDialog {
 	 */
 	@Override
 	public void setFont(Font font) {
-		jlist.setFont(font);
+		Gui.registerFont(jlist, FONT_ID);
 	}
 
 	/**
@@ -256,7 +259,7 @@ public class CodeCompletionWindow extends JDialog {
 	 */
 	public void selectPrevious() {
 		for (int i = jlist.getSelectedIndex() - 1; i >= 0; i--) {
-			CodeCompletion completion = completion_list.get(i);
+			CodeCompletion completion = completionData.get(i);
 			if (CodeCompletion.isValid(completion)) {
 				jlist.setSelectedIndex(i);
 				jlist.ensureIndexIsVisible(i);
@@ -271,11 +274,11 @@ public class CodeCompletionWindow extends JDialog {
 	 */
 	public void selectNext() {
 
-		if (null == completion_list) {
+		if (null == completionData) {
 			return;
 		}
-		for (int i = jlist.getSelectedIndex() + 1; i < completion_list.size(); i++) {
-			CodeCompletion completion = completion_list.get(i);
+		for (int i = jlist.getSelectedIndex() + 1; i < completionData.size(); i++) {
+			CodeCompletion completion = completionData.get(i);
 			if (CodeCompletion.isValid(completion)) {
 				jlist.setSelectedIndex(i);
 				jlist.ensureIndexIsVisible(i);
@@ -296,18 +299,18 @@ public class CodeCompletionWindow extends JDialog {
 		if (-1 == i) {
 			return null;
 		}
-		return completion_list.get(i);
+		return completionData.get(i);
 	}
 }
 
 /**
  * Code completion ListModel.
  */
-class CodeCompletionListModel implements ListModel {
-	List<CodeCompletion> completion_list;
+class CodeCompletionListModel implements ListModel<CodeCompletion> {
+	List<CodeCompletion> completionData;
 
 	public CodeCompletionListModel(List<CodeCompletion> completion_list) {
-		this.completion_list = completion_list;
+		this.completionData = completion_list;
 	}
 
 	@Override
@@ -321,22 +324,22 @@ class CodeCompletionListModel implements ListModel {
 	}
 
 	@Override
-	public Object getElementAt(int index) {
-		if ((null == completion_list) || completion_list.isEmpty()) {
+	public CodeCompletion getElementAt(int index) {
+		if ((null == completionData) || completionData.isEmpty()) {
 			if (0 == index) {
 				return new CodeCompletion("(no completions available)", null, null);
 			}
 			return null;
 		}
-		return completion_list.get(index);
+		return completionData.get(index);
 	}
 
 	@Override
 	public int getSize() {
-		if ((null == completion_list) || completion_list.isEmpty()) {
+		if ((null == completionData) || completionData.isEmpty()) {
 			return 1;
 		}
-		return completion_list.size();
+		return completionData.size();
 	}
 }
 
@@ -405,12 +408,8 @@ class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 	@Override
 	public Component getListCellRendererComponent(JList<? extends CodeCompletion> list,
 			CodeCompletion codeCompletion, int index, boolean isSelected, boolean cellHasFocus) {
-		if (codeCompletion.getComponent() == null) {
-			return super.getListCellRendererComponent(list, codeCompletion, index, isSelected,
-				cellHasFocus);
-		}
-
-		JComponent component = codeCompletion.getComponent();
+		JLabel component = (JLabel) super.getListCellRendererComponent(list, codeCompletion, index,
+			isSelected, cellHasFocus);
 
 		// if it's selected, make sure it shows up that way
 		component.setOpaque(true);

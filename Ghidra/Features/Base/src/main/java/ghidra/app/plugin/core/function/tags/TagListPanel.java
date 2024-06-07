@@ -60,9 +60,9 @@ public abstract class TagListPanel extends JPanel {
 	 * 
 	 * @param provider the display provider
 	 * @param tool the plugin tool
-	 * @param title the title of the panel
+	 * @param name the name of the panel
 	 */
-	public TagListPanel(FunctionTagProvider provider, PluginTool tool, String title) {
+	public TagListPanel(FunctionTagProvider provider, PluginTool tool, String name) {
 		this.tool = tool;
 		this.provider = provider;
 
@@ -77,12 +77,14 @@ public abstract class TagListPanel extends JPanel {
 			};
 		table = (FunctionTagTable) tablePanel.getTable();
 		filterPanel = new GhidraTableFilterPanel<>(table, model);
-
-		titleLabel = new JLabel(title);
+		titleLabel = new JLabel(name);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
 		add(titleLabel, BorderLayout.NORTH);
 		add(tablePanel, BorderLayout.CENTER);
 		add(filterPanel, BorderLayout.SOUTH);
+
+		table.setAccessibleNamePrefix(name);
+		filterPanel.setAccessibleNamePrefix(name);
 
 		table.addMouseListener(new MouseAdapter() {
 
@@ -128,9 +130,8 @@ public abstract class TagListPanel extends JPanel {
 
 		FunctionTagRowObject rowObject = model.getRowObject(row);
 		if (rowObject.isImmutable()) {
-			Msg.showWarn(this, table, "Tag Not Editable",
-				"Tag " + "\"" + rowObject.getName() + "\"" +
-					" must be added to the program before it can be modified/deleted");
+			Msg.showWarn(this, table, "Tag Not Editable", "Tag " + "\"" + rowObject.getName() +
+				"\"" + " must be added to the program before it can be modified/deleted");
 			return;
 		}
 
@@ -172,8 +173,8 @@ public abstract class TagListPanel extends JPanel {
 
 		// Only process the name edit if the name actually changed.
 		if (!newName.equals(tagName)) {
-			Command cmd = new ChangeFunctionTagCmd(tagName, newName,
-				ChangeFunctionTagCmd.TAG_NAME_CHANGED);
+			Command cmd =
+				new ChangeFunctionTagCmd(tagName, newName, ChangeFunctionTagCmd.TAG_NAME_CHANGED);
 			tool.execute(cmd, program);
 		}
 

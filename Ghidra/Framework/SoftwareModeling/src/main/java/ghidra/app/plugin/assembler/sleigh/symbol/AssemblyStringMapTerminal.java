@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 
 import org.apache.commons.collections4.MultiValuedMap;
@@ -65,5 +66,9 @@ public class AssemblyStringMapTerminal extends AssemblyTerminal {
 	@Override
 	public String toString() {
 		return "[list:" + name + "]";
+	}
+
+	public MultiValuedMap<String, Integer> getMap() {
+		return map;
 	}
 }

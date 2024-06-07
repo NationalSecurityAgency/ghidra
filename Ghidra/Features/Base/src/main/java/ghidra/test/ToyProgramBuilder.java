@@ -53,7 +53,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Construct toy program builder using toy language "builder" variant.
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
-	 * @param bigEndian language endianess
+	 * @param bigEndian language endianness
 	 * @throws Exception
 	 */
 	public ToyProgramBuilder(String name, boolean bigEndian) throws Exception {
@@ -64,7 +64,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Construct toy program builder using toy language "builder" variant.
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
-	 * @param bigEndian language endianess
+	 * @param bigEndian language endianness
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
 	 * @throws Exception
 	 */
@@ -76,7 +76,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Construct toy program builder using toy language "builder" variant.
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
-	 * @param bigEndian language endianess
+	 * @param bigEndian language endianness
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
 	 * @throws Exception
 	 */

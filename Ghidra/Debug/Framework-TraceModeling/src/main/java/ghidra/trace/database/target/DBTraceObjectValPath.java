@@ -28,18 +28,18 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 		return EMPTY;
 	}
 
-	public static DBTraceObjectValPath of(Collection<InternalTraceObjectValue> entryList) {
+	public static DBTraceObjectValPath of(Collection<DBTraceObjectValue> entryList) {
 		return new DBTraceObjectValPath(List.copyOf(entryList));
 	}
 
-	public static DBTraceObjectValPath of(InternalTraceObjectValue... entries) {
+	public static DBTraceObjectValPath of(DBTraceObjectValue... entries) {
 		return DBTraceObjectValPath.of(Arrays.asList(entries));
 	}
 
-	private final List<InternalTraceObjectValue> entryList;
+	private final List<DBTraceObjectValue> entryList;
 	private List<String> keyList; // lazily computed
 
-	private DBTraceObjectValPath(List<InternalTraceObjectValue> entryList) {
+	private DBTraceObjectValPath(List<DBTraceObjectValue> entryList) {
 		this.entryList = entryList;
 	}
 
@@ -49,7 +49,7 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 	}
 
 	@Override
-	public List<? extends InternalTraceObjectValue> getEntryList() {
+	public List<DBTraceObjectValue> getEntryList() {
 		return entryList;
 	}
 
@@ -77,10 +77,10 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 		if (!entryList.isEmpty() && entry.getTrace() != entryList.get(0).getTrace()) {
 			throw new IllegalArgumentException("All values in path must be from the same trace");
 		}
-		if (!(entry instanceof InternalTraceObjectValue val)) {
+		if (!(entry instanceof DBTraceObjectValue val)) {
 			throw new IllegalArgumentException("Value must be in the database");
 		}
-		InternalTraceObjectValue[] arr = new InternalTraceObjectValue[1 + entryList.size()];
+		DBTraceObjectValue[] arr = new DBTraceObjectValue[1 + entryList.size()];
 		arr[0] = val;
 		for (int i = 1; i < arr.length; i++) {
 			arr[i] = entryList.get(i - 1);
@@ -93,10 +93,10 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 		if (!entryList.isEmpty() && entry.getTrace() != entryList.get(0).getTrace()) {
 			throw new IllegalArgumentException("All values in path must be from the same trace");
 		}
-		if (!(entry instanceof InternalTraceObjectValue val)) {
+		if (!(entry instanceof DBTraceObjectValue val)) {
 			throw new IllegalArgumentException("Value must be in the database");
 		}
-		InternalTraceObjectValue[] arr = new InternalTraceObjectValue[1 + entryList.size()];
+		DBTraceObjectValue[] arr = new DBTraceObjectValue[1 + entryList.size()];
 		for (int i = 0; i < arr.length - 1; i++) {
 			arr[i] = entryList.get(i);
 		}
@@ -105,7 +105,7 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 	}
 
 	@Override
-	public InternalTraceObjectValue getFirstEntry() {
+	public DBTraceObjectValue getFirstEntry() {
 		if (entryList.isEmpty()) {
 			return null;
 		}
@@ -114,12 +114,12 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 
 	@Override
 	public TraceObject getSource(TraceObject ifEmpty) {
-		InternalTraceObjectValue first = getFirstEntry();
+		DBTraceObjectValue first = getFirstEntry();
 		return first == null ? ifEmpty : first.getParent();
 	}
 
 	@Override
-	public InternalTraceObjectValue getLastEntry() {
+	public DBTraceObjectValue getLastEntry() {
 		if (entryList.isEmpty()) {
 			return null;
 		}
@@ -128,13 +128,13 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 
 	@Override
 	public Object getDestinationValue(Object ifEmpty) {
-		InternalTraceObjectValue last = getLastEntry();
+		DBTraceObjectValue last = getLastEntry();
 		return last == null ? ifEmpty : last.getValue();
 	}
 
 	@Override
 	public TraceObject getDestination(TraceObject ifEmpty) {
-		InternalTraceObjectValue last = getLastEntry();
+		DBTraceObjectValue last = getLastEntry();
 		return last == null ? ifEmpty : last.getChild();
 	}
 }

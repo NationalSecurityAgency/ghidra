@@ -5,98 +5,73 @@
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Debugger: Threads and Traces</TITLE>
+    <TITLE>Debugger: Threads</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
-    <H1><A name="plugin"></A>Debugger: Threads and Traces</H1>
+    <H1><A name="plugin"></A>Debugger: Threads</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerThreadsPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerThreadsPlugin.png">
+    </DIV>
 
     <P>In general, a thread refers to a unit of concurrent execution within a target. Typically,
     each thread carries its own execution context, so this window provides a means of navigating
-    those contexts. Furthermore, this window provides a means of navigating and managing open
-    traces, much like the static listing provides a means of navigating open programs. The window
-    also plots a timeline showing thread lifespans, and displays a caret which can be used to
-    navigate the current point in time. This window, the <A href=
-    "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html">Stack</A> window, and the <A href=
+    those contexts. The window also plots a timeline showing thread lifespans, and displays a caret
+    which can be used to navigate the current point in time. This window, the <A href=
+    "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html">Stack</A> window, the <A href=
+    "help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A> window, and the <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> window
     provide a complete trace navigation system.</P>
 
-    <H2>Trace Tabs</H2>
+    <H2>Table Columns</H2>
 
-    <P>The trace tab bar is displayed when at least one trace is open. It displays the name of each
-    open trace in a button, where the "current" or "focused" trace is selected. Clicking a tab will
-    select its trace and focus the tool onto it. A trace associated with a live target has a red
-    "recording" icon at its left. If that icon is not present, or has disappeared, the trace is
-    dead or terminated. A "dead" trace can still be manipulated and marked up, but it will not
-    record any new target information.</P>
+    <UL>
+      <LI>Name - the name or summary of the thread given by the debugger. If a name is not given,
+      this is just an index or unique id assigned to the thread. This field can be modified, but it
+      has no effect on the target.</LI>
 
-    <H3><A name="close_trace"></A><A name="close_all_traces"></A><A name=
-    "close_other_traces"></A><A name="close_dead_traces"></A>Close Trace / All / Other / Dead
-    Traces</H3>
+      <LI>PC - the program counter of the thread. This is typically the address of the next
+      instruction it will execute. If the debugger records frames, this is the PC of the innermost
+      frame.</LI>
 
-    <P>In most cases, a trace is ephemeral, but occasionally, interesting behavior is observed that
-    is difficult to store as static mark-up. When traces are no longer needed, they can be closed
-    by right-clicking a tab and selecting one of the actions. See <A href=
-    "help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html#close_trace">Trace
-    Management</A> for details of each action.</P>
+      <LI>Function - the name of the function containing the PC, if Ghidra has the corresponding
+      module image imported, analyzed, and mapped.</LI>
+
+      <LI>Module - the name of the module containing the PC. This column is hidden by default.</LI>
+
+      <LI>SP - the stack pointer for the thread. If the debugger records per-frame registers, this
+      is the SP from the innermost frame. This column is hidden by default.</LI>
+
+      <LI>State - the thread's current state. Depending on what is reported by the debugger, this
+      should be either RUNNING, STOPPED, or TERMINATED. It might also be ALIVE, if the debugger
+      cannot determine whether or not it is running; or UNKNOWN, if the debugger has lost
+      track.</LI>
+
+      <LI>Plot - a graphical representation of the thread's lifespan. Threads which are alive will
+      appear to extend to the end of time. Unlike other column headers, clicking and dragging in
+      this one may navigate trace snapshots. To rearrange this column, hold <B>SHIFT</B> while
+      dragging.</LI>
+
+      <LI>Comment - a user-modifiable comment about the thread. This column is hidden by
+      default.</LI>
+
+      <LI>Path - the path of the thread object in the target's model. This is hidden by default.
+      See the <A href="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A>
+      window.</LI>
+    </UL>
 
     <H2>Navigating Threads</H2>
 
-    <P>Double-clicking a thread in the table will navigate to (or "activate" or "focus") that
-    thread. Windows which are sensitive to the current thread will update. Notably, the <A href=
+    <P>Double-clicking a thread in the table will <EM>activate</EM> that thread, i.e., it becomes
+    the current thread throughout the Debugger UI, usually including the debugger's command-line
+    interface. Notably, the <A href=
     "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window will
     display the activated thread's register values. <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A> windows with
     configured location tracking will re-compute that location with the thread's context and
-    navigate to it. The thread timeline plots all recorded threads. Threads which are alive will
-    appear to extend "to the end of time." The threads table displays more detailed information in
-    the following columns:</P>
-
-    <UL>
-      <LI>Name - the name of the thread given by the debugger. Often, this is just an index or
-      unique id assigned to the thread. This field can be modified, but it has no effect on the
-      target.</LI>
-
-      <LI>Created - the snapshot when this thread was first observed. If the thread's creation was
-      observed, then it is its creation time.</LI>
-
-      <LI>Destroyed - if destroyed, the snapshot when this thread was last observed. If the
-      thread's destruction was observed, then it is its destruction time.</LI>
-
-      <LI>State - the thread's current state. For a dead trace, this is either ALIVE or TERMINATED,
-      and depends solely on whether or not a destruction time was recorded. For a live trace, this
-      may also take RUNNING, STOPPED, or UNKNOWN, depending on what is reported by the debugger.
-      The state always reflects the present, or latest known, state.</LI>
-
-      <LI>Comment - a user-modifiable comment about the thread.</LI>
-
-      <LI>Plot - a graphical representation of the thread's lifespan. Unlike other column headers,
-      clicking and dragging in this one will navigate trace snapshots. To rearrange this column,
-      hold SHIFT while dragging.</LI>
-    </UL>
-
-    <H2>Actions</H2>
-
-    <H3><A name="sync_target"></A>Synchronize Trace and Target Activation</H3>
-
-    <P>This toggle is always available and is enabled by default. While enabled, any changes in
-    navigation coordinates are translated, to the extent possible, and sent to the connected
-    debugger. This may, for example, issue <CODE>thread</CODE> and/or <CODE>frame</CODE> commands
-    to GDB so that commands typed into its CLI will refer to the same thread and frame as is active
-    in Ghidra. Conversely, any target events which indicate a change in activation are translated,
-    to the extent possible, into navigation coordinates and activated in Ghidra. For example, if
-    the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then Ghidra will
-    navigate to that same frame.</P>
+    navigate to it.</P>
   </BODY>
 </HTML>

@@ -1081,9 +1081,9 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Returns the function defined before the specified function in address order.
+	 * Returns the function defined after the specified function in address order.
 	 * @param function the function
-	 * @return the function defined before the specified function
+	 * @return the function defined after the specified function
 	 */
 	public final Function getFunctionAfter(Function function) {
 		if (function == null) {

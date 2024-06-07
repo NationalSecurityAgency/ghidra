@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.remote.User;
@@ -33,9 +34,9 @@ import ghidra.framework.remote.User;
  */
 public class ViewProjectAccessPanel extends ProjectAccessPanel {
 
-	/** 
+	/**
 	 * Construct a new panel.
-	 * 
+	 *
 	 * @param repository handle to the repository adapter
 	 * @param tool the plugin tool
 	 * @throws IOException if there's an error processing repository information
@@ -47,13 +48,13 @@ public class ViewProjectAccessPanel extends ProjectAccessPanel {
 
 	/**
 	 * Constructs a new panel.
-	 * 
+	 *
 	* @param knownUsers names of the users that are known to the remote server
 	 * @param currentUser the current user
 	 * @param allUsers all users known to the repository
 	 * @param repositoryName the name of the repository
 	 * @param anonymousServerAccessAllowed true if the server allows anonymous access
-	 * @param anonymousAccessEnabled true if the repository allows anonymous access 
+	 * @param anonymousAccessEnabled true if the repository allows anonymous access
 	 * (ignored if anonymousServerAccessAllowed is false)
 	 * @param tool the current tool
 	 */
@@ -66,7 +67,7 @@ public class ViewProjectAccessPanel extends ProjectAccessPanel {
 	}
 
 	/**
-	 * Creates the main gui panel, containing the known users, button, and user access 
+	 * Creates the main gui panel, containing the known users, button, and user access
 	 * panels.
 	 */
 	@Override
@@ -82,9 +83,7 @@ public class ViewProjectAccessPanel extends ProjectAccessPanel {
 		if (anonymousServerAccessAllowed && origAnonymousAccessEnabled) {
 			JLabel anonymousAccessLabel = new GDLabel("Anonymous Read-Only Access Enabled");
 			anonymousAccessLabel.setBorder(BorderFactory.createEmptyBorder(5, 2, 0, 0));
-			Font f = anonymousAccessLabel.getFont().deriveFont(Font.ITALIC);
-			anonymousAccessLabel.setFont(f);
-
+			Gui.registerFont(anonymousAccessLabel, Font.ITALIC);
 			mainPanel.add(anonymousAccessLabel, BorderLayout.SOUTH);
 		}
 

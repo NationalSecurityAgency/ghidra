@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.disassemble.*;
-import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.CompilerInfo;
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.PlatformInfo;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemBufferByteProvider;
@@ -35,6 +35,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
@@ -42,9 +43,9 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 @DisassemblyInjectInfo(
-	compilers = {
-		@CompilerInfo(langID = "x86:LE:64:default", compilerID = "windows"),
-		@CompilerInfo(langID = "x86:LE:64:default", compilerID = "clangwindows"),
+	platforms = {
+		@PlatformInfo(langID = "x86:LE:64:default", compilerID = "windows"),
+		@PlatformInfo(langID = "x86:LE:64:default", compilerID = "clangwindows"),
 	})
 public class DbgengX64DisassemblyInject implements DisassemblyInject {
 
@@ -53,13 +54,13 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 	}
 
 	@Override
-	public void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
-			Language language, long snap, TraceThread thread, AddressSetView startSet,
-			AddressSetView restricted) {
+	public void pre(PluginTool tool, TraceDisassembleCommand command, TracePlatform platform,
+			long snap, TraceThread thread, AddressSetView startSet, AddressSetView restricted) {
 		AddressRange first = startSet.getFirstRange();
 		if (first == null) {
 			return;
 		}
+		Trace trace = platform.getTrace();
 		DebuggerTargetService targetService = tool.getService(DebuggerTargetService.class);
 		Target target = targetService == null ? null : targetService.getTarget(trace);
 		Collection<? extends TraceModule> modules =
@@ -75,6 +76,8 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 			return;
 		}
 		Mode mode = modes.iterator().next();
+
+		Language language = platform.getLanguage();
 		Register longModeReg = language.getRegister("longMode");
 		Register addrsizeReg = language.getRegister("addrsize");
 		Register opsizeReg = language.getRegister("opsize");

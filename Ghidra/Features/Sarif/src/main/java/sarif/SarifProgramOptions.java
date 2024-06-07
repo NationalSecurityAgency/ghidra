@@ -20,6 +20,7 @@ import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
+import ghidra.app.util.opinion.AbstractProgramLoader;
 
 /**
  * A class to hold SARIF options.
@@ -94,6 +95,8 @@ public class SarifProgramOptions {
 	private boolean relocationTable = true;
 	private boolean entryPoints = true;
 	private boolean externalLibraries = true;
+	private boolean applyProcDefinedLabels = false;
+	private boolean anchorProcDefinedLabels = true;
 
 	/**
 	 * Returns an array of importer options representing
@@ -146,6 +149,8 @@ public class SarifProgramOptions {
 		optionList.add(new Option("Relocation Table", Boolean.valueOf(isRelocationTable())));
 		optionList.add(new Option("Entry Points", Boolean.valueOf(isEntryPoints())));
 		optionList.add(new Option("External Libraries", Boolean.valueOf(isExternalLibraries())));
+		optionList.add(new Option(AbstractProgramLoader.APPLY_LABELS_OPTION_NAME, Boolean.valueOf(applyProcDefinedLabels())));
+		optionList.add(new Option(AbstractProgramLoader.ANCHOR_LABELS_OPTION_NAME, Boolean.valueOf(anchorProcDefinedLabels())));
 
 		return optionList;
 	}
@@ -232,6 +237,12 @@ public class SarifProgramOptions {
 				setEntryPoints(val);
 			}
 			else if (optName.equals("External Libraries")) {
+				setExternalLibraries(val);
+			}
+			else if (optName.equals("Apply Processor Defined Labels")) {
+				setExternalLibraries(val);
+			}
+			else if (optName.equals("Anchor Processor Defined Labels")) {
 				setExternalLibraries(val);
 			}
 			else {
@@ -602,6 +613,34 @@ public class SarifProgramOptions {
 	 */
 	public void setOverwriteSymbolConflicts(boolean b) {
 		overwriteSymbolConflicts = b;
+	}
+
+	/**
+	 * @return true if the processor-defined labels should be applied
+	 */
+	public boolean applyProcDefinedLabels() {
+		return applyProcDefinedLabels;
+	}
+
+	/**
+	 * @param b true if the processor-defined labels should be applied
+	 */
+	public void setApplyProcDefinedLabels(boolean b) {
+		applyProcDefinedLabels = b;
+	}
+
+	/**
+	 * @param b trueif the processor-defined labels should be anchored
+	 */
+	public void setAnchorProcDefinedLabels(boolean b) {
+		anchorProcDefinedLabels = b;
+	}
+
+	/**
+	 * @return true true if the processor-defined labels should be anchored
+	 */
+	public boolean anchorProcDefinedLabels() {
+		return anchorProcDefinedLabels;
 	}
 
 	public void setAddToProgram(boolean addToProgram) {

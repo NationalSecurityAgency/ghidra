@@ -13,21 +13,16 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Memory Regions</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerRegionsPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerRegionsPlugin.png">
+    </DIV>
 
-    <P>Regions refer to ranges of allocated or reserved memory reported by the target. The precise
-    meaning of these regions may vary depending on the nature of the target. For user-mode
-    applications, this is generally pages of memory allocated for image sections, the stack, the
-    heap, etc. The regions manager allows the user to rename pages and modify the recorded
-    permissions. Note that such modifications <EM>do not</EM> affect the target; but only the
-    recording.</P>
+    <P>Regions refer to ranges of allocated or reserved memory reported by the target, i.e., the
+    target's memory map. The precise meaning of these regions may vary depending on the nature of
+    the target. For user-mode applications, this is generally pages of memory allocated for image
+    sections, the stack, the heap, etc. The regions manager allows the user to rename pages and
+    modify the recorded permissions. Note that such modifications <EM>do not</EM> affect the
+    target; but only the recorded trace.</P>
 
     <H2>Table Columns</H2>
 
@@ -35,8 +30,6 @@
 
     <UL>
       <LI>Name - the name given to the region by the target. This field is user modifiable.</LI>
-
-      <LI>Lifespan - the creation and destruction time of the region.</LI>
 
       <LI>Start - the minimum address of the region. Double-clicking this field navigates to the
       address.</LI>
@@ -46,14 +39,17 @@
 
       <LI>Length - the length of the region in bytes.</LI>
 
-      <LI>Read,Write,Execute,Volatile - various flags of the region. These flags only affect local
+      <LI>Read, Write, Execute - various flags of the region. These flags only affect Ghidra's
       analysis. Toggling these <EM>do not</EM> affect the target.</LI>
+
+      <LI>Key, Path - descriptions the region object in the target's model. These are hidden by
+      default. See the <A href="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A>
+      window.</LI>
     </UL>
 
     <H2>Actions</H2>
 
-    <P>Other than modifications enabled by the table, the Regions window provides the following
-    actions:</P>
+    <P>The Regions window provides the following actions:</P>
 
     <H3><A name="map_regions"></A>Map Regions</H3>
 
@@ -68,14 +64,9 @@
     include the module's file name, otherwise the matcher has no means to identify a corresponding
     program.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerRegionMapProposalDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerRegionMapProposalDialog.png">
+    </DIV>
 
     <H3><A name="map_regions_to"></A>Map Regions to Current Program</H3>
 
@@ -91,12 +82,13 @@
     It behaves like Map Regions, except that it will propose the selected region be mapped to the
     block containing the cursor in the static listing.</P>
 
-    <H3><A name="select_addresses"></A>Select Addresses</H3>
+    <H3><A name="select_addresses"></A><IMG alt="" src="icon.debugger.select.addresses"> Select
+    Addresses</H3>
 
     <P>This action is available when at least one region is selected. It selects all addresses in
     the dynamic listing contained by the selected regions.</P>
 
-    <H3><A name="select_rows"></A>Select Rows</H3>
+    <H3><A name="select_rows"></A><IMG alt="" src="icon.debugger.select.rows"> Select Rows</H3>
 
     <P>This action is available when the dynamic listing's cursor is at a valid location. It
     selects the region containing that cursor. If the dynamic listing has a selection, it selects
@@ -105,7 +97,7 @@
     <H3><A name="add_region"></A>Add Region</H3>
 
     <P>This action is available when a trace is active. It adds a new region to the memory map. It
-    should only be used for emulation or to correct or diagnose trace recording issues.</P>
+    should only be used for emulation or to correct a recorded trace.</P>
 
     <H3><A name="delete_regions"></A>Delete Regions</H3>
 
@@ -116,10 +108,10 @@
     <H3><A name="force_full_view"></A>Force Full View</H3>
 
     <P>This action is available when a trace is active. It forces all physical address spaces into
-    the view. Ordinarily, only those addresses contained in a region at the active snap are
-    presented in the listing and memory windows. When this toggle is on, regions are ignored.
-    Instead, all physical addresses are presented. (Here "physical" includes all memory spaces
-    except <CODE>OTHER</CODE>.) This toggle applies only to the current trace for the duration it
-    is open.</P>
+    the view. By default, only those addresses in the memory map &mdash; as recorded in the trace
+    at the current snapshot &mdash; are displayed in the listing and memory windows. When this
+    toggle is on, regions are ignored. Instead, all physical addresses are displayed. ("Physical"
+    includes all Sleigh memory spaces except <CODE>OTHER</CODE>.) This toggle applies only to the
+    current trace.</P>
   </BODY>
 </HTML>

@@ -39,7 +39,7 @@ import ghidra.util.exception.AssertException;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Generates recovery snapshot files",
 	description = "Facilitates the periodic creation of recovery snapshot files.  " +
 			"In the event of a crash or application hang, these files may be used to " +

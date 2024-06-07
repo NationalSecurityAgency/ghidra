@@ -184,6 +184,7 @@ public:
   virtual PcodeOp *getStartOp(void) const=0;		///< Get the PcodeOp associated with the current value
   virtual bool isReversible(void) const=0;	///< Return \b true if the current value can be reversed to get a label
   virtual JumpValues *clone(void) const=0;	///< Clone \b this iterator
+  static const uint8 NO_LABEL;			///< Jump-table label reserved to indicate \e no \e label
 };
 
 /// \brief single entry switch variable that can take a range of values
@@ -533,10 +534,12 @@ public:
 
 /// \brief A map from values to control-flow targets within a function
 ///
-/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all
-/// the information necessary to model the indirect jump as a \e switch statement.
-/// It knows how to map from specific switch variable values to the destination
-/// \e case block and how to label the value.
+/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all the information necessary
+/// to model the indirect jump as a \e switch statement. It knows how to map from specific switch variable
+/// values to the destination \e case block and how to label the value.  The table also establishes a
+/// \e default target which is either
+///   - the \e default case of the switch or
+///   - the exit point of the switch
 class JumpTable {
 public:
   /// \brief Recovery status for a specific JumpTable
@@ -574,6 +577,7 @@ private:
   uint4 maxext;			///< Maximum extensions to normalize
   int4 recoverystage;		///< 0=no stages recovered, 1=additional stage needed, 2=complete
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
+  bool defaultIsFolded;		///< The \e default block is the target of a folded CBRANCH (and cannot have a label)
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
   void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
@@ -600,9 +604,11 @@ public:
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
-  void setLastAsMostCommon(void);		///< Set the most common jump-table target to be the last address in the table
+  void setLastAsDefault(void);		///< Set the \e default jump-table target to be the last address in the table
   void setDefaultBlock(int4 bl) { defaultBlock = bl; }		///< Set out-edge of the switch destination considered to be \e default
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected
+  void setFoldedDefault(void) { defaultIsFolded = true; }	///< Mark that the \e default block is a folded CBRANCH target
+  bool hasFoldedDefault(void) const { return defaultIsFolded; }	///< Return \b true if the \e default block is a folded CBRANCH target
   void addBlockToSwitch(BlockBasic *bl,uintb lab);		///< Force a given basic-block to be a switch destination
   void switchOver(const FlowInfo &flow);				///< Convert absolute addresses to block indices
   uintb getLabelByIndex(int4 index) const { return label[index]; }	///< Given a \e case index, get its label

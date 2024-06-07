@@ -64,6 +64,11 @@ public interface DisplaysObjectValues {
 				.collect(Collectors.joining(":"));
 	}
 
+	default String getStringsDisplay(String[] strings) {
+		return Stream.of(strings)
+				.collect(Collectors.joining(":"));
+	}
+
 	default String getPrimitiveValueDisplay(Object value) {
 		assert !(value instanceof TraceObject);
 		assert !(value instanceof TraceObjectValue);
@@ -88,6 +93,9 @@ public interface DisplaysObjectValues {
 		}
 		if (value instanceof long[] longs) {
 			return getLongsDisplay(longs);
+		}
+		if (value instanceof String[] strings) {
+			return getStringsDisplay(strings);
 		}
 		return value.toString();
 	}
@@ -163,12 +171,13 @@ public interface DisplaysObjectValues {
 			return "";
 		}
 		if (!edge.isObject()) {
-			return "<html>" + HTMLUtilities.escapeHTML(getPrimitiveValueDisplay(edge.getValue()));
+			return "<html>" +
+				HTMLUtilities.escapeHTML(getPrimitiveValueDisplay(edge.getValue()), true);
 		}
 		if (edge.isCanonical()) {
-			return "<html>" + HTMLUtilities.escapeHTML(getObjectDisplay(edge));
+			return "<html>" + HTMLUtilities.escapeHTML(getObjectDisplay(edge), true);
 		}
-		return "<html><em>" + HTMLUtilities.escapeHTML(getObjectLinkDisplay(edge)) + "</em>";
+		return "<html><em>" + HTMLUtilities.escapeHTML(getObjectLinkDisplay(edge), true) + "</em>";
 	}
 
 	default String getEdgeToolTip(TraceObjectValue edge) {

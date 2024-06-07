@@ -16,13 +16,12 @@
 package ghidra.app.cmd.label;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 
-public class PinSymbolCmd implements Command {
+public class PinSymbolCmd implements Command<Program> {
 
 	private Address addr;
 	private String name;
@@ -36,8 +35,8 @@ public class PinSymbolCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		SymbolTable symbolTable = ((Program) obj).getSymbolTable();
+	public boolean applyTo(Program program) {
+		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol symbol = symbolTable.getGlobalSymbol(name, addr);
 		if (symbol == null) {
 			message = "Could not find symbol named " + name + " at address " + addr;

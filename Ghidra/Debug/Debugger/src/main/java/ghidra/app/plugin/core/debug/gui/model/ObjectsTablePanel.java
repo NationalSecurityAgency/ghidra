@@ -16,16 +16,24 @@
 package ghidra.app.plugin.core.debug.gui.model;
 
 import java.awt.Component;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.table.TableColumn;
 
+import docking.widgets.table.GTableColumnModel;
 import docking.widgets.table.GTableTextCellEditor;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 
 public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectTableModel> {
+
+	private static final String DEFAULT_PREF_KEY = "DEFAULT";
 
 	private static class PropertyEditor extends GTableTextCellEditor {
 		private final JTextField textField;
@@ -61,7 +69,7 @@ public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectT
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ObjectTableModel(plugin);
 	}
 
@@ -72,5 +80,72 @@ public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectT
 		}
 		setSelectedItem(row);
 		return true;
+	}
+
+	protected String computePreferenceKey() {
+		Trace trace = tableModel.getTrace();
+		if (trace == null) {
+			return DEFAULT_PREF_KEY;
+		}
+		ModelQuery query = tableModel.getQuery();
+		if (query == null) {
+			return DEFAULT_PREF_KEY;
+		}
+		List<TargetObjectSchema> schemas = query.computeSchemas(trace);
+		if (schemas.isEmpty()) {
+			return DEFAULT_PREF_KEY;
+		}
+		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		if (rootSchema == null) {
+			return DEFAULT_PREF_KEY;
+		}
+		return rootSchema.getName() + ":" + schemas
+				.stream()
+				.map(s -> s.getName().toString())
+				.collect(Collectors.joining(",")) +
+			":" + (isShowHidden() ? "show" : "hide");
+	}
+
+	protected void showHiddenColumns(boolean show) {
+		if (table.getColumnModel() instanceof GTableColumnModel columnModel) {
+			for (TableColumn tCol : columnModel.getAllColumns()) {
+				int modelIndex = tCol.getModelIndex();
+				if (tableModel
+						.getColumn(modelIndex) instanceof AutoAttributeColumn<?> attrCol) {
+					if (attrCol.isHidden()) {
+						columnModel.setVisible(tCol, show);
+					}
+				}
+			}
+		}
+	}
+
+	protected void reloadPreferences() {
+		String prefKey = computePreferenceKey();
+		if (!prefKey.equals(table.getPreferenceKey())) {
+			table.setPreferenceKey(prefKey);
+		}
+	}
+
+	protected void resyncAttributeVisibility() {
+		showHiddenColumns(isShowHidden());
+	}
+
+	@Override
+	protected void coordinatesChanged() {
+		super.coordinatesChanged();
+		reloadPreferences();
+	}
+
+	@Override
+	protected void queryChanged() {
+		super.queryChanged();
+		reloadPreferences();
+	}
+
+	@Override
+	protected void showHiddenChanged() {
+		super.showHiddenChanged();
+		resyncAttributeVisibility();
 	}
 }

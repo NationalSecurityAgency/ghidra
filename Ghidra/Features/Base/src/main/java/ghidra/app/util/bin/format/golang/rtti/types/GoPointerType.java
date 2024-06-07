@@ -26,7 +26,7 @@ import ghidra.program.model.data.PointerDataType;
 /**
  * {@link GoType} structure that defines a pointer.
  */
-@StructureMapping(structureName = "runtime.ptrtype")
+@StructureMapping(structureName = {"runtime.ptrtype", "internal/abi.PtrType"})
 public class GoPointerType extends GoType {
 	@FieldMapping
 	@MarkupReference("getElement")

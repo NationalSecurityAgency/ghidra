@@ -212,7 +212,7 @@ public class LibraryLookupTable {
 	 * 
 	 * @param dllName The DLL name (including extension)
 	 * @param size The architecture size of the DLL (e.g., 32 or 64).
-	 * @param log The message log
+	 * @param log The message log (could be null)
 	 * @return LibrarySymbolTable associated with dllName
 	 */
 	synchronized static LibrarySymbolTable getSymbolTable(String dllName, int size,
@@ -220,6 +220,9 @@ public class LibraryLookupTable {
 		String cacheKey = LibrarySymbolTable.getCacheKey(dllName, size);
 		LibrarySymbolTable symTab = cacheMap.get(cacheKey);
 		if (symTab != null) {
+			if (log != null) {
+				log.appendMsg("Applying cached symbols from " + dllName);
+			}
 			return symTab;
 		}
 

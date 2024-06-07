@@ -35,10 +35,7 @@ import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.*;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.HelpLocation;
 
@@ -189,25 +186,5 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			legacyPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 		}
-	}
-
-	public Function getFunction(Address pc) {
-		if (pc == null) {
-			return null;
-		}
-		if (mappingService == null) {
-			return null;
-		}
-		TraceThread curThread = current.getThread();
-		if (curThread == null) {
-			return null;
-		}
-		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
-			curThread, Lifespan.at(current.getSnap()), pc);
-		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
-		if (sloc == null) {
-			return null;
-		}
-		return sloc.getProgram().getFunctionManager().getFunctionContaining(sloc.getAddress());
 	}
 }

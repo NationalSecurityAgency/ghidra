@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.function;
 
 import ghidra.app.cmd.analysis.SharedReturnAnalysisCmd;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -87,7 +88,7 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 
 		boolean sharedReturnEnabled = language.getPropertyAsBoolean(
 			GhidraLanguagePropertyKeys.ENABLE_SHARED_RETURN_ANALYSIS, true);
-		if ("golang".equals(program.getCompilerSpec().getCompilerSpecID().toString())) {
+		if (GoRttiMapper.isGolangProgram(program)) {
 			sharedReturnEnabled = false;
 		}
 	

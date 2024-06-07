@@ -15,6 +15,8 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
@@ -38,15 +40,15 @@ public class OpenVersionTrackingSessionAction extends DockingAction {
 		String[] menuPath = { ToolConstants.MENU_FILE, "Open Session..." };
 		setMenuBarData(new MenuData(menuPath, "AAA"));
 		setDescription("Opens a Version Tracking Session");
-		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Open_Session"));
+		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Version_Tracking_Tool"));
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		PluginTool tool = controller.getTool();
 		DataTreeDialog dialog =
-			new DataTreeDialog(tool.getToolFrame(), "Open Version Tracking Session",
-				DataTreeDialog.OPEN, new VTDomainFileFilter());
+			new DataTreeDialog(tool.getToolFrame(), "Open Version Tracking Session", OPEN,
+				new VTDomainFileFilter());
 
 		tool.showDialog(dialog);
 		if (!dialog.wasCancelled()) {
@@ -56,6 +58,7 @@ public class OpenVersionTrackingSessionAction extends DockingAction {
 	}
 
 	class VTDomainFileFilter implements DomainFileFilter {
+		@Override
 		public boolean accept(DomainFile f) {
 			Class<?> c = f.getDomainObjectClass();
 			return VTSession.class.isAssignableFrom(c);

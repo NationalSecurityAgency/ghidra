@@ -50,8 +50,9 @@ public class DataTypeNode extends DataTypeTreeNode {
 
 	@Override
 	public int compareTo(GTreeNode node) {
-		if (node instanceof DataTypeNode) {
-			return super.compareTo(node);
+		if (node instanceof DataTypeNode other) {
+			return DataTypeNameComparator.INSTANCE.compare(dataType.getName(),
+				other.dataType.getName());
 		}
 
 		return 1; // DataTypeNodes always come after ****everything else****

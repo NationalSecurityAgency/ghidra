@@ -16,6 +16,7 @@
 package ghidra.framework;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +25,7 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import utilities.util.FileUtilities;
+import utility.application.ApplicationUtilities;
 import utility.module.ModuleUtilities;
 
 public class TestApplicationUtils {
@@ -127,13 +129,13 @@ public class TestApplicationUtils {
 	}
 
 	/**
-	 * Creates a folder that is unique for the current installation. This allows clients to 
+	 * Creates a directory that is unique for the current installation. This allows clients to 
 	 * have multiple clones (for development mode) or multiple installations (for release mode)
 	 * on their machine, running tests from each repo simultaneously.
 	 * 
-	 * @return a folder that is unique for the current installation
+	 * @return an absolute form directory that is unique for the current installation
 	 */
-	public static File getUniqueTempFolder() {
+	public static File getUniqueTempDir() {
 
 		//
 		// Create a unique name based upon the repo from which we are running.
@@ -144,14 +146,18 @@ public class TestApplicationUtils {
 			reposContainer = installDir;
 		}
 
-		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-		String tempName = tmpDir.getName();
+		try {
+			File tmpDir = ApplicationUtilities.getDefaultUserTempDir("ghidra");
 
-		//
-		// The container name makes this name unique across multiple Eclipses; the system temp 
-		// name makes this name unique across multiple runs from the same Eclipse
-		//
-		String name = reposContainer.getName() + tempName;
-		return new File(tmpDir, name);
+			//
+			// The container name makes this name unique across multiple Eclipses; the system temp 
+			// name makes this name unique across multiple runs from the same Eclipse
+			//
+			String name = reposContainer.getName();
+			return new File(tmpDir, name);
+		}
+		catch (IOException e) {
+			throw new AssertException(e);
+		}
 	}
 }

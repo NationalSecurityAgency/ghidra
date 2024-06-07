@@ -100,6 +100,10 @@ public class CachedAddressSetView implements AddressSetView {
 		if (minAddress == null) {
 			return;
 		}
+		if (minAddress.compareTo(max) > 0 ||
+			maxAddress.compareTo(min) < 0) {
+			return;
+		}
 		min = cmax(min, minAddress);
 		max = cmin(max, maxAddress);
 		if (known.contains(min, max)) {

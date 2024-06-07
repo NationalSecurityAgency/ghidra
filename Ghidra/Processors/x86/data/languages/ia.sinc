@@ -136,6 +136,17 @@ define register offset=0x1100 size=1   [
   MM7_Ba MM7_Bb MM7_Bc MM7_Bd MM7_Be MM7_Bf MM7_Bg MM7_Bh _ _ _ _ _ _ _ _
 ];
 
+
+define register offset=0x1180 size=16  [ xmmTmp1 xmmTmp2 ];
+define register offset=0x1180 size=8   [
+  xmmTmp1_Qa  xmmTmp1_Qb
+  xmmTmp2_Qa  xmmTmp2_Qb
+];
+define register offset=0x1180 size=4   [
+  xmmTmp1_Da  xmmTmp1_Db  xmmTmp1_Dc  xmmTmp1_Dd
+  xmmTmp2_Da  xmmTmp2_Db  xmmTmp2_Dc  xmmTmp2_Dd
+];
+
 #
 # YMM0 - YMM7    - available in 32 bit mode
 # YMM0 - YMM15   - available in 64 bit mode
@@ -143,111 +154,229 @@ define register offset=0x1100 size=1   [
 
 # YMMx_H is the formal name for the high double quadword of the YMMx register, XMMx is the overlay in the XMM register set
 define register offset=0x1200 size=16  [
-	XMM0 YMM0_H
-	XMM1 YMM1_H 
-	XMM2 YMM2_H 
-	XMM3 YMM3_H 
-	XMM4 YMM4_H
-	XMM5 YMM5_H
-	XMM6 YMM6_H
-	XMM7 YMM7_H
-	XMM8 YMM8_H
-	XMM9 YMM9_H
-	XMM10 YMM10_H
-	XMM11 YMM11_H
-	XMM12 YMM12_H
-	XMM13 YMM13_H
-	XMM14 YMM14_H
-	XMM15 YMM15_H
+	XMM0 YMM0_H	_	_
+	XMM1 YMM1_H	_	_
+	XMM2 YMM2_H	_	_
+	XMM3 YMM3_H	_	_
+	XMM4 YMM4_H	_	_
+	XMM5 YMM5_H	_	_
+	XMM6 YMM6_H	_	_
+	XMM7 YMM7_H	_	_
+	XMM8 YMM8_H	_	_
+	XMM9 YMM9_H	_	_
+	XMM10 YMM10_H	_	_
+	XMM11 YMM11_H	_	_
+	XMM12 YMM12_H	_	_
+	XMM13 YMM13_H	_	_
+	XMM14 YMM14_H	_	_
+	XMM15 YMM15_H	_	_
+	XMM16 YMM16_H	_	_
+	XMM17 YMM17_H	_	_
+	XMM18 YMM18_H	_	_
+	XMM19 YMM19_H	_	_
+	XMM20 YMM20_H	_	_
+	XMM21 YMM21_H	_	_
+	XMM22 YMM22_H	_	_
+	XMM23 YMM23_H	_	_
+	XMM24 YMM24_H	_	_
+	XMM25 YMM25_H	_	_
+	XMM26 YMM26_H	_	_
+	XMM27 YMM27_H	_	_
+	XMM28 YMM28_H	_	_
+	XMM29 YMM29_H	_	_
+	XMM30 YMM30_H	_	_
+	XMM31 YMM31_H	_	_
+	
 ];
 
 define register offset=0x1200 size=8   [
-  XMM0_Qa  XMM0_Qb  _ _
-  XMM1_Qa  XMM1_Qb  _ _
-  XMM2_Qa  XMM2_Qb  _ _
-  XMM3_Qa  XMM3_Qb  _ _
-  XMM4_Qa  XMM4_Qb  _ _
-  XMM5_Qa  XMM5_Qb  _ _
-  XMM6_Qa  XMM6_Qb  _ _
-  XMM7_Qa  XMM7_Qb  _ _
-  XMM8_Qa  XMM8_Qb  _ _
-  XMM9_Qa  XMM9_Qb  _ _
-  XMM10_Qa XMM10_Qb _ _
-  XMM11_Qa XMM11_Qb _ _
-  XMM12_Qa XMM12_Qb _ _
-  XMM13_Qa XMM13_Qb _ _
-  XMM14_Qa XMM14_Qb _ _
-  XMM15_Qa XMM15_Qb _ _
+	XMM0_Qa  XMM0_Qb  _ _ _ _ _ _
+	XMM1_Qa  XMM1_Qb  _ _ _ _ _ _
+	XMM2_Qa  XMM2_Qb  _ _ _ _ _ _
+	XMM3_Qa  XMM3_Qb  _ _ _ _ _ _
+	XMM4_Qa  XMM4_Qb  _ _ _ _ _ _
+	XMM5_Qa  XMM5_Qb  _ _ _ _ _ _
+	XMM6_Qa  XMM6_Qb  _ _ _ _ _ _
+	XMM7_Qa  XMM7_Qb  _ _ _ _ _ _
+	XMM8_Qa  XMM8_Qb  _ _ _ _ _ _
+	XMM9_Qa  XMM9_Qb  _ _ _ _ _ _
+	XMM10_Qa XMM10_Qb _ _ _ _ _ _
+	XMM11_Qa XMM11_Qb _ _ _ _ _ _
+	XMM12_Qa XMM12_Qb _ _ _ _ _ _
+	XMM13_Qa XMM13_Qb _ _ _ _ _ _
+	XMM14_Qa XMM14_Qb _ _ _ _ _ _
+	XMM15_Qa XMM15_Qb _ _ _ _ _ _
+	XMM16_Qa XMM16_Qb _ _ _ _ _ _
+	XMM17_Qa XMM17_Qb _ _ _ _ _ _
+	XMM18_Qa XMM18_Qb _ _ _ _ _ _
+	XMM19_Qa XMM19_Qb _ _ _ _ _ _
+	XMM20_Qa XMM20_Qb _ _ _ _ _ _
+	XMM21_Qa XMM21_Qb _ _ _ _ _ _
+	XMM22_Qa XMM22_Qb _ _ _ _ _ _
+	XMM23_Qa XMM23_Qb _ _ _ _ _ _
+	XMM24_Qa XMM24_Qb _ _ _ _ _ _
+	XMM25_Qa XMM25_Qb _ _ _ _ _ _
+	XMM26_Qa XMM26_Qb _ _ _ _ _ _
+	XMM27_Qa XMM27_Qb _ _ _ _ _ _
+	XMM28_Qa XMM28_Qb _ _ _ _ _ _
+	XMM29_Qa XMM29_Qb _ _ _ _ _ _
+	XMM30_Qa XMM30_Qb _ _ _ _ _ _
+	XMM31_Qa XMM31_Qb _ _ _ _ _ _
 ];
 define register offset=0x1200 size=4   [
-  XMM0_Da  XMM0_Db  XMM0_Dc  XMM0_Dd  _ _ _ _
-  XMM1_Da  XMM1_Db  XMM1_Dc  XMM1_Dd  _ _ _ _
-  XMM2_Da  XMM2_Db  XMM2_Dc  XMM2_Dd  _ _ _ _
-  XMM3_Da  XMM3_Db  XMM3_Dc  XMM3_Dd  _ _ _ _
-  XMM4_Da  XMM4_Db  XMM4_Dc  XMM4_Dd  _ _ _ _
-  XMM5_Da  XMM5_Db  XMM5_Dc  XMM5_Dd  _ _ _ _
-  XMM6_Da  XMM6_Db  XMM6_Dc  XMM6_Dd  _ _ _ _
-  XMM7_Da  XMM7_Db  XMM7_Dc  XMM7_Dd  _ _ _ _
-  XMM8_Da  XMM8_Db  XMM8_Dc  XMM8_Dd  _ _ _ _
-  XMM9_Da  XMM9_Db  XMM9_Dc  XMM9_Dd  _ _ _ _
-  XMM10_Da XMM10_Db XMM10_Dc XMM10_Dd _ _ _ _
-  XMM11_Da XMM11_Db XMM11_Dc XMM11_Dd _ _ _ _
-  XMM12_Da XMM12_Db XMM12_Dc XMM12_Dd _ _ _ _
-  XMM13_Da XMM13_Db XMM13_Dc XMM13_Dd _ _ _ _
-  XMM14_Da XMM14_Db XMM14_Dc XMM14_Dd _ _ _ _
-  XMM15_Da XMM15_Db XMM15_Dc XMM15_Dd _ _ _ _
+	XMM0_Da  XMM0_Db  XMM0_Dc  XMM0_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM1_Da  XMM1_Db  XMM1_Dc  XMM1_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM2_Da  XMM2_Db  XMM2_Dc  XMM2_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM3_Da  XMM3_Db  XMM3_Dc  XMM3_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM4_Da  XMM4_Db  XMM4_Dc  XMM4_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM5_Da  XMM5_Db  XMM5_Dc  XMM5_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM6_Da  XMM6_Db  XMM6_Dc  XMM6_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM7_Da  XMM7_Db  XMM7_Dc  XMM7_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM8_Da  XMM8_Db  XMM8_Dc  XMM8_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM9_Da  XMM9_Db  XMM9_Dc  XMM9_Dd  _ _ _ _ _ _ _ _ _ _ _ _
+	XMM10_Da XMM10_Db XMM10_Dc XMM10_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM11_Da XMM11_Db XMM11_Dc XMM11_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM12_Da XMM12_Db XMM12_Dc XMM12_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM13_Da XMM13_Db XMM13_Dc XMM13_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM14_Da XMM14_Db XMM14_Dc XMM14_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM15_Da XMM15_Db XMM15_Dc XMM15_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM16_Da XMM16_Db XMM16_Dc XMM16_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM17_Da XMM17_Db XMM17_Dc XMM17_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM18_Da XMM18_Db XMM18_Dc XMM18_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM19_Da XMM19_Db XMM19_Dc XMM19_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM20_Da XMM20_Db XMM20_Dc XMM20_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM21_Da XMM21_Db XMM21_Dc XMM21_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM22_Da XMM22_Db XMM22_Dc XMM22_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM23_Da XMM23_Db XMM23_Dc XMM23_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM24_Da XMM24_Db XMM24_Dc XMM24_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM25_Da XMM25_Db XMM25_Dc XMM25_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM26_Da XMM26_Db XMM26_Dc XMM26_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM27_Da XMM27_Db XMM27_Dc XMM27_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM28_Da XMM28_Db XMM28_Dc XMM28_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM29_Da XMM29_Db XMM29_Dc XMM29_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM30_Da XMM30_Db XMM30_Dc XMM30_Dd _ _ _ _ _ _ _ _ _ _ _ _
+	XMM31_Da XMM31_Db XMM31_Dc XMM31_Dd _ _ _ _ _ _ _ _ _ _ _ _
 ];
 define register offset=0x1200 size=2   [
-  XMM0_Wa  XMM0_Wb  XMM0_Wc  XMM0_Wd  XMM0_We  XMM0_Wf  XMM0_Wg  XMM0_Wh  _ _ _ _ _ _ _ _
-  XMM1_Wa  XMM1_Wb  XMM1_Wc  XMM1_Wd  XMM1_We  XMM1_Wf  XMM1_Wg  XMM1_Wh  _ _ _ _ _ _ _ _
-  XMM2_Wa  XMM2_Wb  XMM2_Wc  XMM2_Wd  XMM2_We  XMM2_Wf  XMM2_Wg  XMM2_Wh  _ _ _ _ _ _ _ _
-  XMM3_Wa  XMM3_Wb  XMM3_Wc  XMM3_Wd  XMM3_We  XMM3_Wf  XMM3_Wg  XMM3_Wh  _ _ _ _ _ _ _ _
-  XMM4_Wa  XMM4_Wb  XMM4_Wc  XMM4_Wd  XMM4_We  XMM4_Wf  XMM4_Wg  XMM4_Wh  _ _ _ _ _ _ _ _
-  XMM5_Wa  XMM5_Wb  XMM5_Wc  XMM5_Wd  XMM5_We  XMM5_Wf  XMM5_Wg  XMM5_Wh  _ _ _ _ _ _ _ _
-  XMM6_Wa  XMM6_Wb  XMM6_Wc  XMM6_Wd  XMM6_We  XMM6_Wf  XMM6_Wg  XMM6_Wh  _ _ _ _ _ _ _ _
-  XMM7_Wa  XMM7_Wb  XMM7_Wc  XMM7_Wd  XMM7_We  XMM7_Wf  XMM7_Wg  XMM7_Wh  _ _ _ _ _ _ _ _
-  XMM8_Wa  XMM8_Wb  XMM8_Wc  XMM8_Wd  XMM8_We  XMM8_Wf  XMM8_Wg  XMM8_Wh  _ _ _ _ _ _ _ _
-  XMM9_Wa  XMM9_Wb  XMM9_Wc  XMM9_Wd  XMM9_We  XMM9_Wf  XMM9_Wg  XMM9_Wh  _ _ _ _ _ _ _ _
-  XMM10_Wa XMM10_Wb XMM10_Wc XMM10_Wd XMM10_We XMM10_Wf XMM10_Wg XMM10_Wh _ _ _ _ _ _ _ _
-  XMM11_Wa XMM11_Wb XMM11_Wc XMM11_Wd XMM11_We XMM11_Wf XMM11_Wg XMM11_Wh _ _ _ _ _ _ _ _
-  XMM12_Wa XMM12_Wb XMM12_Wc XMM12_Wd XMM12_We XMM12_Wf XMM12_Wg XMM12_Wh _ _ _ _ _ _ _ _
-  XMM13_Wa XMM13_Wb XMM13_Wc XMM13_Wd XMM13_We XMM13_Wf XMM13_Wg XMM13_Wh _ _ _ _ _ _ _ _
-  XMM14_Wa XMM14_Wb XMM14_Wc XMM14_Wd XMM14_We XMM14_Wf XMM14_Wg XMM14_Wh _ _ _ _ _ _ _ _
-  XMM15_Wa XMM15_Wb XMM15_Wc XMM15_Wd XMM15_We XMM15_Wf XMM15_Wg XMM15_Wh _ _ _ _ _ _ _ _
+	XMM0_Wa  XMM0_Wb  XMM0_Wc  XMM0_Wd  XMM0_We  XMM0_Wf  XMM0_Wg  XMM0_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM1_Wa  XMM1_Wb  XMM1_Wc  XMM1_Wd  XMM1_We  XMM1_Wf  XMM1_Wg  XMM1_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM2_Wa  XMM2_Wb  XMM2_Wc  XMM2_Wd  XMM2_We  XMM2_Wf  XMM2_Wg  XMM2_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM3_Wa  XMM3_Wb  XMM3_Wc  XMM3_Wd  XMM3_We  XMM3_Wf  XMM3_Wg  XMM3_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM4_Wa  XMM4_Wb  XMM4_Wc  XMM4_Wd  XMM4_We  XMM4_Wf  XMM4_Wg  XMM4_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM5_Wa  XMM5_Wb  XMM5_Wc  XMM5_Wd  XMM5_We  XMM5_Wf  XMM5_Wg  XMM5_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM6_Wa  XMM6_Wb  XMM6_Wc  XMM6_Wd  XMM6_We  XMM6_Wf  XMM6_Wg  XMM6_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM7_Wa  XMM7_Wb  XMM7_Wc  XMM7_Wd  XMM7_We  XMM7_Wf  XMM7_Wg  XMM7_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM8_Wa  XMM8_Wb  XMM8_Wc  XMM8_Wd  XMM8_We  XMM8_Wf  XMM8_Wg  XMM8_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM9_Wa  XMM9_Wb  XMM9_Wc  XMM9_Wd  XMM9_We  XMM9_Wf  XMM9_Wg  XMM9_Wh  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM10_Wa XMM10_Wb XMM10_Wc XMM10_Wd XMM10_We XMM10_Wf XMM10_Wg XMM10_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM11_Wa XMM11_Wb XMM11_Wc XMM11_Wd XMM11_We XMM11_Wf XMM11_Wg XMM11_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM12_Wa XMM12_Wb XMM12_Wc XMM12_Wd XMM12_We XMM12_Wf XMM12_Wg XMM12_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM13_Wa XMM13_Wb XMM13_Wc XMM13_Wd XMM13_We XMM13_Wf XMM13_Wg XMM13_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM14_Wa XMM14_Wb XMM14_Wc XMM14_Wd XMM14_We XMM14_Wf XMM14_Wg XMM14_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM15_Wa XMM15_Wb XMM15_Wc XMM15_Wd XMM15_We XMM15_Wf XMM15_Wg XMM15_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM16_Wa XMM16_Wb XMM16_Wc XMM16_Wd XMM16_We XMM16_Wf XMM16_Wg XMM16_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM17_Wa XMM17_Wb XMM17_Wc XMM17_Wd XMM17_We XMM17_Wf XMM17_Wg XMM17_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM18_Wa XMM18_Wb XMM18_Wc XMM18_Wd XMM18_We XMM18_Wf XMM18_Wg XMM18_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM19_Wa XMM19_Wb XMM19_Wc XMM19_Wd XMM19_We XMM19_Wf XMM19_Wg XMM19_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM20_Wa XMM20_Wb XMM20_Wc XMM20_Wd XMM20_We XMM20_Wf XMM20_Wg XMM20_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM21_Wa XMM21_Wb XMM21_Wc XMM21_Wd XMM21_We XMM21_Wf XMM21_Wg XMM21_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM22_Wa XMM22_Wb XMM22_Wc XMM22_Wd XMM22_We XMM22_Wf XMM22_Wg XMM22_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM23_Wa XMM23_Wb XMM23_Wc XMM23_Wd XMM23_We XMM23_Wf XMM23_Wg XMM23_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM24_Wa XMM24_Wb XMM24_Wc XMM24_Wd XMM24_We XMM24_Wf XMM24_Wg XMM24_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM25_Wa XMM25_Wb XMM25_Wc XMM25_Wd XMM25_We XMM25_Wf XMM25_Wg XMM25_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM26_Wa XMM26_Wb XMM26_Wc XMM26_Wd XMM26_We XMM26_Wf XMM26_Wg XMM26_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM27_Wa XMM27_Wb XMM27_Wc XMM27_Wd XMM27_We XMM27_Wf XMM27_Wg XMM27_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM28_Wa XMM28_Wb XMM28_Wc XMM28_Wd XMM28_We XMM28_Wf XMM28_Wg XMM28_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM29_Wa XMM29_Wb XMM29_Wc XMM29_Wd XMM29_We XMM29_Wf XMM29_Wg XMM29_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM30_Wa XMM30_Wb XMM30_Wc XMM30_Wd XMM30_We XMM30_Wf XMM30_Wg XMM30_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM31_Wa XMM31_Wb XMM31_Wc XMM31_Wd XMM31_We XMM31_Wf XMM31_Wg XMM31_Wh _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ];
 define register offset=0x1200 size=1   [
-  XMM0_Ba  XMM0_Bb  XMM0_Bc  XMM0_Bd  XMM0_Be  XMM0_Bf  XMM0_Bg  XMM0_Bh  XMM0_Bi  XMM0_Bj  XMM0_Bk  XMM0_Bl  XMM0_Bm  XMM0_Bn  XMM0_Bo  XMM0_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM1_Ba  XMM1_Bb  XMM1_Bc  XMM1_Bd  XMM1_Be  XMM1_Bf  XMM1_Bg  XMM1_Bh  XMM1_Bi  XMM1_Bj  XMM1_Bk  XMM1_Bl  XMM1_Bm  XMM1_Bn  XMM1_Bo  XMM1_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM2_Ba  XMM2_Bb  XMM2_Bc  XMM2_Bd  XMM2_Be  XMM2_Bf  XMM2_Bg  XMM2_Bh  XMM2_Bi  XMM2_Bj  XMM2_Bk  XMM2_Bl  XMM2_Bm  XMM2_Bn  XMM2_Bo  XMM2_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM3_Ba  XMM3_Bb  XMM3_Bc  XMM3_Bd  XMM3_Be  XMM3_Bf  XMM3_Bg  XMM3_Bh  XMM3_Bi  XMM3_Bj  XMM3_Bk  XMM3_Bl  XMM3_Bm  XMM3_Bn  XMM3_Bo  XMM3_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM4_Ba  XMM4_Bb  XMM4_Bc  XMM4_Bd  XMM4_Be  XMM4_Bf  XMM4_Bg  XMM4_Bh  XMM4_Bi  XMM4_Bj  XMM4_Bk  XMM4_Bl  XMM4_Bm  XMM4_Bn  XMM4_Bo  XMM4_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM5_Ba  XMM5_Bb  XMM5_Bc  XMM5_Bd  XMM5_Be  XMM5_Bf  XMM5_Bg  XMM5_Bh  XMM5_Bi  XMM5_Bj  XMM5_Bk  XMM5_Bl  XMM5_Bm  XMM5_Bn  XMM5_Bo  XMM5_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM6_Ba  XMM6_Bb  XMM6_Bc  XMM6_Bd  XMM6_Be  XMM6_Bf  XMM6_Bg  XMM6_Bh  XMM6_Bi  XMM6_Bj  XMM6_Bk  XMM6_Bl  XMM6_Bm  XMM6_Bn  XMM6_Bo  XMM6_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM7_Ba  XMM7_Bb  XMM7_Bc  XMM7_Bd  XMM7_Be  XMM7_Bf  XMM7_Bg  XMM7_Bh  XMM7_Bi  XMM7_Bj  XMM7_Bk  XMM7_Bl  XMM7_Bm  XMM7_Bn  XMM7_Bo  XMM7_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM8_Ba  XMM8_Bb  XMM8_Bc  XMM8_Bd  XMM8_Be  XMM8_Bf  XMM8_Bg  XMM8_Bh  XMM8_Bi  XMM8_Bj  XMM8_Bk  XMM8_Bl  XMM8_Bm  XMM8_Bn  XMM8_Bo  XMM8_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM9_Ba  XMM9_Bb  XMM9_Bc  XMM9_Bd  XMM9_Be  XMM9_Bf  XMM9_Bg  XMM9_Bh  XMM9_Bi  XMM9_Bj  XMM9_Bk  XMM9_Bl  XMM9_Bm  XMM9_Bn  XMM9_Bo  XMM9_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM10_Ba XMM10_Bb XMM10_Bc XMM10_Bd XMM10_Be XMM10_Bf XMM10_Bg XMM10_Bh XMM10_Bi XMM10_Bj XMM10_Bk XMM10_Bl XMM10_Bm XMM10_Bn XMM10_Bo XMM10_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM11_Ba XMM11_Bb XMM11_Bc XMM11_Bd XMM11_Be XMM11_Bf XMM11_Bg XMM11_Bh XMM11_Bi XMM11_Bj XMM11_Bk XMM11_Bl XMM11_Bm XMM11_Bn XMM11_Bo XMM11_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM12_Ba XMM12_Bb XMM12_Bc XMM12_Bd XMM12_Be XMM12_Bf XMM12_Bg XMM12_Bh XMM12_Bi XMM12_Bj XMM12_Bk XMM12_Bl XMM12_Bm XMM12_Bn XMM12_Bo XMM12_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM13_Ba XMM13_Bb XMM13_Bc XMM13_Bd XMM13_Be XMM13_Bf XMM13_Bg XMM13_Bh XMM13_Bi XMM13_Bj XMM13_Bk XMM13_Bl XMM13_Bm XMM13_Bn XMM13_Bo XMM13_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM14_Ba XMM14_Bb XMM14_Bc XMM14_Bd XMM14_Be XMM14_Bf XMM14_Bg XMM14_Bh XMM14_Bi XMM14_Bj XMM14_Bk XMM14_Bl XMM14_Bm XMM14_Bn XMM14_Bo XMM14_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-  XMM15_Ba XMM15_Bb XMM15_Bc XMM15_Bd XMM15_Be XMM15_Bf XMM15_Bg XMM15_Bh XMM15_Bi XMM15_Bj XMM15_Bk XMM15_Bl XMM15_Bm XMM15_Bn XMM15_Bo XMM15_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM0_Ba  XMM0_Bb  XMM0_Bc  XMM0_Bd  XMM0_Be  XMM0_Bf  XMM0_Bg  XMM0_Bh  XMM0_Bi  XMM0_Bj  XMM0_Bk  XMM0_Bl  XMM0_Bm  XMM0_Bn  XMM0_Bo  XMM0_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM1_Ba  XMM1_Bb  XMM1_Bc  XMM1_Bd  XMM1_Be  XMM1_Bf  XMM1_Bg  XMM1_Bh  XMM1_Bi  XMM1_Bj  XMM1_Bk  XMM1_Bl  XMM1_Bm  XMM1_Bn  XMM1_Bo  XMM1_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM2_Ba  XMM2_Bb  XMM2_Bc  XMM2_Bd  XMM2_Be  XMM2_Bf  XMM2_Bg  XMM2_Bh  XMM2_Bi  XMM2_Bj  XMM2_Bk  XMM2_Bl  XMM2_Bm  XMM2_Bn  XMM2_Bo  XMM2_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM3_Ba  XMM3_Bb  XMM3_Bc  XMM3_Bd  XMM3_Be  XMM3_Bf  XMM3_Bg  XMM3_Bh  XMM3_Bi  XMM3_Bj  XMM3_Bk  XMM3_Bl  XMM3_Bm  XMM3_Bn  XMM3_Bo  XMM3_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM4_Ba  XMM4_Bb  XMM4_Bc  XMM4_Bd  XMM4_Be  XMM4_Bf  XMM4_Bg  XMM4_Bh  XMM4_Bi  XMM4_Bj  XMM4_Bk  XMM4_Bl  XMM4_Bm  XMM4_Bn  XMM4_Bo  XMM4_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM5_Ba  XMM5_Bb  XMM5_Bc  XMM5_Bd  XMM5_Be  XMM5_Bf  XMM5_Bg  XMM5_Bh  XMM5_Bi  XMM5_Bj  XMM5_Bk  XMM5_Bl  XMM5_Bm  XMM5_Bn  XMM5_Bo  XMM5_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM6_Ba  XMM6_Bb  XMM6_Bc  XMM6_Bd  XMM6_Be  XMM6_Bf  XMM6_Bg  XMM6_Bh  XMM6_Bi  XMM6_Bj  XMM6_Bk  XMM6_Bl  XMM6_Bm  XMM6_Bn  XMM6_Bo  XMM6_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM7_Ba  XMM7_Bb  XMM7_Bc  XMM7_Bd  XMM7_Be  XMM7_Bf  XMM7_Bg  XMM7_Bh  XMM7_Bi  XMM7_Bj  XMM7_Bk  XMM7_Bl  XMM7_Bm  XMM7_Bn  XMM7_Bo  XMM7_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM8_Ba  XMM8_Bb  XMM8_Bc  XMM8_Bd  XMM8_Be  XMM8_Bf  XMM8_Bg  XMM8_Bh  XMM8_Bi  XMM8_Bj  XMM8_Bk  XMM8_Bl  XMM8_Bm  XMM8_Bn  XMM8_Bo  XMM8_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM9_Ba  XMM9_Bb  XMM9_Bc  XMM9_Bd  XMM9_Be  XMM9_Bf  XMM9_Bg  XMM9_Bh  XMM9_Bi  XMM9_Bj  XMM9_Bk  XMM9_Bl  XMM9_Bm  XMM9_Bn  XMM9_Bo  XMM9_Bp  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM10_Ba XMM10_Bb XMM10_Bc XMM10_Bd XMM10_Be XMM10_Bf XMM10_Bg XMM10_Bh XMM10_Bi XMM10_Bj XMM10_Bk XMM10_Bl XMM10_Bm XMM10_Bn XMM10_Bo XMM10_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM11_Ba XMM11_Bb XMM11_Bc XMM11_Bd XMM11_Be XMM11_Bf XMM11_Bg XMM11_Bh XMM11_Bi XMM11_Bj XMM11_Bk XMM11_Bl XMM11_Bm XMM11_Bn XMM11_Bo XMM11_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM12_Ba XMM12_Bb XMM12_Bc XMM12_Bd XMM12_Be XMM12_Bf XMM12_Bg XMM12_Bh XMM12_Bi XMM12_Bj XMM12_Bk XMM12_Bl XMM12_Bm XMM12_Bn XMM12_Bo XMM12_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM13_Ba XMM13_Bb XMM13_Bc XMM13_Bd XMM13_Be XMM13_Bf XMM13_Bg XMM13_Bh XMM13_Bi XMM13_Bj XMM13_Bk XMM13_Bl XMM13_Bm XMM13_Bn XMM13_Bo XMM13_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM14_Ba XMM14_Bb XMM14_Bc XMM14_Bd XMM14_Be XMM14_Bf XMM14_Bg XMM14_Bh XMM14_Bi XMM14_Bj XMM14_Bk XMM14_Bl XMM14_Bm XMM14_Bn XMM14_Bo XMM14_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM15_Ba XMM15_Bb XMM15_Bc XMM15_Bd XMM15_Be XMM15_Bf XMM15_Bg XMM15_Bh XMM15_Bi XMM15_Bj XMM15_Bk XMM15_Bl XMM15_Bm XMM15_Bn XMM15_Bo XMM15_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM16_Ba XMM16_Bb XMM16_Bc XMM16_Bd XMM16_Be XMM16_Bf XMM16_Bg XMM16_Bh XMM16_Bi XMM16_Bj XMM16_Bk XMM16_Bl XMM16_Bm XMM16_Bn XMM16_Bo XMM16_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM17_Ba XMM17_Bb XMM17_Bc XMM17_Bd XMM17_Be XMM17_Bf XMM17_Bg XMM17_Bh XMM17_Bi XMM17_Bj XMM17_Bk XMM17_Bl XMM17_Bm XMM17_Bn XMM17_Bo XMM17_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM18_Ba XMM18_Bb XMM18_Bc XMM18_Bd XMM18_Be XMM18_Bf XMM18_Bg XMM18_Bh XMM18_Bi XMM18_Bj XMM18_Bk XMM18_Bl XMM18_Bm XMM18_Bn XMM18_Bo XMM18_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM19_Ba XMM19_Bb XMM19_Bc XMM19_Bd XMM19_Be XMM19_Bf XMM19_Bg XMM19_Bh XMM19_Bi XMM19_Bj XMM19_Bk XMM19_Bl XMM19_Bm XMM19_Bn XMM19_Bo XMM19_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM20_Ba XMM20_Bb XMM20_Bc XMM20_Bd XMM20_Be XMM20_Bf XMM20_Bg XMM20_Bh XMM20_Bi XMM20_Bj XMM20_Bk XMM20_Bl XMM20_Bm XMM20_Bn XMM20_Bo XMM20_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM21_Ba XMM21_Bb XMM21_Bc XMM21_Bd XMM21_Be XMM21_Bf XMM21_Bg XMM21_Bh XMM21_Bi XMM21_Bj XMM21_Bk XMM21_Bl XMM21_Bm XMM21_Bn XMM21_Bo XMM21_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM22_Ba XMM22_Bb XMM22_Bc XMM22_Bd XMM22_Be XMM22_Bf XMM22_Bg XMM22_Bh XMM22_Bi XMM22_Bj XMM22_Bk XMM22_Bl XMM22_Bm XMM22_Bn XMM22_Bo XMM22_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM23_Ba XMM23_Bb XMM23_Bc XMM23_Bd XMM23_Be XMM23_Bf XMM23_Bg XMM23_Bh XMM23_Bi XMM23_Bj XMM23_Bk XMM23_Bl XMM23_Bm XMM23_Bn XMM23_Bo XMM23_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM24_Ba XMM24_Bb XMM24_Bc XMM24_Bd XMM24_Be XMM24_Bf XMM24_Bg XMM24_Bh XMM24_Bi XMM24_Bj XMM24_Bk XMM24_Bl XMM24_Bm XMM24_Bn XMM24_Bo XMM24_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM25_Ba XMM25_Bb XMM25_Bc XMM25_Bd XMM25_Be XMM25_Bf XMM25_Bg XMM25_Bh XMM25_Bi XMM25_Bj XMM25_Bk XMM25_Bl XMM25_Bm XMM25_Bn XMM25_Bo XMM25_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM26_Ba XMM26_Bb XMM26_Bc XMM26_Bd XMM26_Be XMM26_Bf XMM26_Bg XMM26_Bh XMM26_Bi XMM26_Bj XMM26_Bk XMM26_Bl XMM26_Bm XMM26_Bn XMM26_Bo XMM26_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM27_Ba XMM27_Bb XMM27_Bc XMM27_Bd XMM27_Be XMM27_Bf XMM27_Bg XMM27_Bh XMM27_Bi XMM27_Bj XMM27_Bk XMM27_Bl XMM27_Bm XMM27_Bn XMM27_Bo XMM27_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM28_Ba XMM28_Bb XMM28_Bc XMM28_Bd XMM28_Be XMM28_Bf XMM28_Bg XMM28_Bh XMM28_Bi XMM28_Bj XMM28_Bk XMM28_Bl XMM28_Bm XMM28_Bn XMM28_Bo XMM28_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM29_Ba XMM29_Bb XMM29_Bc XMM29_Bd XMM29_Be XMM29_Bf XMM29_Bg XMM29_Bh XMM29_Bi XMM29_Bj XMM29_Bk XMM29_Bl XMM29_Bm XMM29_Bn XMM29_Bo XMM29_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM30_Ba XMM30_Bb XMM30_Bc XMM30_Bd XMM30_Be XMM30_Bf XMM30_Bg XMM30_Bh XMM30_Bi XMM30_Bj XMM30_Bk XMM30_Bl XMM30_Bm XMM30_Bn XMM30_Bo XMM30_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+	XMM31_Ba XMM31_Bb XMM31_Bc XMM31_Bd XMM31_Be XMM31_Bf XMM31_Bg XMM31_Bh XMM31_Bi XMM31_Bj XMM31_Bk XMM31_Bl XMM31_Bm XMM31_Bn XMM31_Bo XMM31_Bp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ];
-define register offset=0x1200 size=32  [ YMM0   YMM1   YMM2   YMM3   YMM4    YMM5    YMM6    YMM7    YMM8    YMM9   YMM10    YMM11    YMM12    YMM13    YMM14    YMM15 ];
 
-# 0x1400 is next spot
-define register offset=0x1400 size=16  [ xmmTmp1 xmmTmp2 ];
-define register offset=0x1400 size=8   [
-  xmmTmp1_Qa  xmmTmp1_Qb
-  xmmTmp2_Qa  xmmTmp2_Qb
+define register offset=0x1200 size=32  [
+	YMM0	_	YMM1	_
+	YMM2	_	YMM3	_
+	YMM4	_	YMM5	_
+	YMM6	_	YMM7	_
+	YMM8	_	YMM9	_
+	YMM10	_	YMM11	_
+	YMM12	_	YMM13	_
+	YMM14	_	YMM15	_
+	YMM16	_	YMM17	_
+	YMM18	_	YMM19	_
+	YMM20	_	YMM21	_
+	YMM22	_	YMM23	_
+	YMM24	_	YMM25	_
+	YMM26	_	YMM27	_
+	YMM28	_	YMM29	_
+	YMM30	_	YMM31	_
 ];
-define register offset=0x1400 size=4   [
-  xmmTmp1_Da  xmmTmp1_Db  xmmTmp1_Dc  xmmTmp1_Dd
-  xmmTmp2_Da  xmmTmp2_Db  xmmTmp2_Dc  xmmTmp2_Dd
+
+define register offset=0x1200 size=64  [
+	ZMM0	ZMM1
+	ZMM2	ZMM3
+	ZMM4	ZMM5
+	ZMM6	ZMM7
+	ZMM8	ZMM9
+	ZMM10	ZMM11
+	ZMM12	ZMM13
+	ZMM14	ZMM15
+	ZMM16	ZMM17
+	ZMM18	ZMM19
+	ZMM20	ZMM21
+	ZMM22	ZMM23
+	ZMM24	ZMM25
+	ZMM26	ZMM27
+	ZMM28	ZMM29
+	ZMM30	ZMM31
 ];
 
 # Define context bits
 define register offset=0x2000 size=8   contextreg;
+
+# AVX-512 opmask registers
+define register offset=2100 size=8  [
+	K0  K1  K2  K3  K4  K5  K6  K7
+];
+
+# dummy registers for managing broadcast data for AVX512
+define register offset=2200 size=8 [ BCST8 ];
+define register offset=2200 size=16 [ BCST16 ];
+define register offset=2200 size=32 [ BCST32 ];
+define register offset=2200 size=64 [ BCST64 ];
 
 #
 #
@@ -278,35 +407,62 @@ define context contextreg
   protectedMode=(11,11)   # 0 for real mode, 1 for protected mode
   # End stored context
 
-  repneprefx=(12,12)      # 0xf2 REPNE prefix
-  repprefx=(13,13)        # 0xf3 REP prefix
-  xacquireprefx=(12,12)   # 0xf2 XACQUIRE prefix
-  xreleaseprefx=(13,13)   # 0xf3 XRELEASE prefix
-  prefix_66=(14,14)       # This is not really a OPSIZE override, it means there is an real(read)/implied(vex) 66 byte
-  prefix_f3=(13,13)       # This is not really a REP override, it means there is an real(read)/implied(vex) f3 byte
-  prefix_f2=(12,12)       # This is not really a REPNE override, it means there is a real(read)/implied(vex) f2 byte
-  mandover=(12,14)        # 0x66 0xf2 or 0xf3 overrides (for mandatory prefixes)
+  mandover=(12,14)          # 0x66 0xf2 or 0xf3 overrides (for mandatory prefixes)
+    repneprefx=(12,12)      # 0xf2 REPNE prefi
+    repprefx=(13,13)        # 0xf3 REP prefix
+    xacquireprefx=(12,12)   # 0xf2 XACQUIRE prefix
+    xreleaseprefx=(13,13)   # 0xf3 XRELEASE prefix
+    prefix_f2=(12,12)       # This is not really a REPNE override, it means there is a real(read)/implied(vex) f2 byte
+    prefix_f3=(13,13)       # This is not really a REP override, it means there is an real(read)/implied(vex) f3 byte
+    prefix_66=(14,14)       # This is not really a OPSIZE override, it means there is an real(read)/implied(vex) 66 byte
 
-  rexWprefix=(15,15)    # REX.W bit prefix (opsize=2 when REX.W is set)
-  rexRprefix=(16,16)    # REX.R bit prefix extend r
-  rexXprefix=(17,17)    # REX.X bit prefix extend SIB index field to 4 bits
-  rexBprefix=(18,18)    # REX.B bit prefix extend r/m, SIB base, Reg operand
-  rexWRXBprefix=(15,18) # REX.WRXB bits
-  rexprefix=(19,19)     # True if the Rex prefix is present - note, if present, vex_mode is not supported
-                        #   rexWRXB bits can be re-used since they are incompatible.
-  vexMode=(20,20)       # 1 for vex instruction, 0 for normal
-  vexL=(21,21)          # 0 for 128, 1 for 256
-  vexVVVV=(22,25)       # value of vex byte for matching
-  vexVVVV_r32=(22,25)   # value of vex byte for matching a normal 32 bit register
-  vexVVVV_r64=(22,25)   # value of vex byte for matching a normal 64 bit register
-  vexVVVV_XmmReg=(22,25)       # value of vex byte for matching XmmReg
-  vexVVVV_YmmReg=(22,25)       # value of vex byte for matching YmmReg
-  vexMMMMM=(26,30)      # need to match for preceding bytes 1=0x0F, 2=0x0F 0x38, 3=0x0F 0x3A
+  rexWRXBprefix=(15,18)     # REX.WRXB bits
+    rexWprefix=(15,15)      # REX.W bit prefix (opsize=2 when REX.W is set)
+    rexRprefix=(16,16)      # REX.R bit prefix extend r
+    rexXprefix=(17,17)      # REX.X bit prefix extend SIB index field to 4 bits
+    rexBprefix=(18,18)      # REX.B bit prefix extend r/m, SIB base, Reg operand
+  rexprefix=(19,19)         # True if the Rex prefix is present - note, if present, vex_mode is not supported
+                            #   rexWRXB bits can be re-used since they are incompatible.
+
+  vexMode=(20,21)          # 2 for evex instruction, 1 for vexMode, 0 for normal
   
-  suffix3D=(21,28)      # 3DNow suffix byte (overlaps un-modified vex context region)
-  instrPhase=(31,31)    # 0: initial/prefix phase, 1: primary instruction phase
+  evexL = (22,23)           # 0 for 128, 1 for 256, 2 for 512 (also used for rounding control)
+    evexLp=(22,22)          # EVEX.L'
+    vexL=(23,23)            # 0 for 128, 1 for 256
 
-  lockprefx=(32,32)     # 0xf0 LOCK prefix
+  evexV5_XmmReg=(24,28)        # evex byte for matching ZmmReg
+  evexV5_YmmReg=(24,28)        # evex byte for matching ZmmReg
+  evexV5_ZmmReg=(24,28)        # evex byte for matching ZmmReg
+  evexV5=(24,28)        # EVEX.V' combined with EVEX.vvvv
+    evexVp=(24,24)        # EVEX.V' bit prefix extends EVEX.vvvv (stored inverted)
+  vexVVVV=(25,28)       # value of vex byte for matching
+  vexVVVV_r32=(25,28)   # value of vex byte for matching a normal 32 bit register
+  vexVVVV_r64=(25,28)   # value of vex byte for matching a normal 64 bit register
+  vexVVVV_XmmReg=(25,28)       # value of vex byte for matching XmmReg
+  vexVVVV_YmmReg=(25,28)       # value of vex byte for matching YmmReg
+  vexVVVV_ZmmReg=(25,28)       # value of vex byte for matching ZmmReg
+    vexHighV=(25,25)
+  evexVopmask=(26,28)  # VEX.vvvv opmask
+
+  suffix3D=(22,29)      # 3DNow suffix byte (overlaps un-modified vex context region)
+  
+  instrPhase=(30,30)    # 0: initial/prefix phase, 1: primary instruction phase
+
+  lockprefx=(31,31)     # 0xf0 LOCK prefix
+  
+  vexMMMMM=(32,36)      # need to match for preceding bytes 1=0x0F, 2=0x0F 0x38, 3=0x0F 0x3A
+
+  evexRp=(37,37)        # EVEX.R' bit prefix extends r
+  evexB = (38,38)       # EVEX.b Broadcast
+  evexZ = (39,39)       # Opmask behavior 1 for zeroing-masking, 0 for merging-masking
+  evexAAA=(40,42)       # Opmask selector
+  evexOpmask=(40,42)    # Used for attaching Opmask registers
+  evexD8Type=(43,43)    # Used for compressed Disp8*N, can range from 1 to 64
+  evexBType=(47,47)     # Used for Disp8*N (see table 2-34 in 325462-sdm-vol-1-2abcd-3abcd-4.pdf)
+  evexTType=(44,47)     # Used for Disp8*N (see table 2-35 in 325462-sdm-vol-1-2abcd-3abcd-4.pdf)
+  evexDisp8=(44,46)
+  reservedHigh=(46,63)  # reserved for future use
+
 ;
 
 
@@ -415,18 +571,24 @@ define token modrm (8)
   xmmmod        = (6,7)
   xmmreg        = (3,5)
   ymmreg        = (3,5)
-
+  zmmreg        = (3,5)
+  
   xmmreg1       = (3,5)
   ymmreg1       = (3,5)
+  zmmreg1       = (3,5)
   xmmreg2       = (0,2)
   ymmreg2       = (0,2)
+  zmmreg2       = (0,2)
 
   xmmreg_x      = (3,5)
   ymmreg_x      = (3,5)
+  zmmreg_x      = (3,5)
   xmmreg1_x     = (3,5)
   ymmreg1_x     = (3,5)
+  zmmreg1_x     = (3,5)
   xmmreg2_x     = (0,2)
   ymmreg2_x     = (0,2)
+  zmmreg2_x     = (0,2)
   vex_pp        = (0,1)
   vex_l         = (2,2)
   vex_vvvv      = (3,6)
@@ -435,6 +597,21 @@ define token modrm (8)
   vex_b         = (5,5)
   vex_w         = (7,7)
   vex_mmmmm     = (0,4)
+  
+  evex_rp       = (4,4)
+  evex_res      = (3,3)
+  evex_res2     = (2,2)
+  evex_mmm       = (0,2)
+  
+  evex_z        = (7,7)
+  evex_lp       = (6,6)
+  evex_l        = (5,5)
+  evex_b        = (4,4)
+  evex_vp       = (3,3)
+  evex_aaa      = (0,2)
+  opmaskreg     = (3,5)
+  opmaskrm      = (0,2)
+  
   bnd1          = (3,5)
   bnd1_lb       = (3,5)
   bnd1_ub       = (3,5)
@@ -453,6 +630,8 @@ define token sib (8)
   xmm_vsib_x	= (3,5)
   ymm_vsib		= (3,5)
   ymm_vsib_x	= (3,5)
+  zmm_vsib		= (3,5)
+  zmm_vsib_x	= (3,5)
   base			= (0,2)
   base_x		= (0,2)
   base64		= (0,2)
@@ -508,6 +687,17 @@ attach variables [ vexVVVV_XmmReg Xmm_imm8_7_4 ] [ XMM0 XMM1 XMM2 XMM3 XMM4 XMM5
 
 attach variables [ vexVVVV_YmmReg Ymm_imm8_7_4 ] [ YMM0 YMM1 YMM2 YMM3 YMM4 YMM5 YMM6 YMM7 YMM8 YMM9 YMM10 YMM11 YMM12 YMM13 YMM14 YMM15 ];
 
+attach variables [ vexVVVV_ZmmReg ] [ ZMM0  ZMM1  ZMM2  ZMM3  ZMM4  ZMM5  ZMM6  ZMM7  ZMM8  ZMM9  ZMM10 ZMM11 ZMM12 ZMM13 ZMM14 ZMM15 ];
+
+attach variables [ evexV5_XmmReg ] [ XMM0  XMM1  XMM2  XMM3  XMM4  XMM5  XMM6  XMM7  XMM8  XMM9  XMM10 XMM11 XMM12 XMM13 XMM14 XMM15
+	                                 XMM16 XMM17 XMM18 XMM19 XMM20 XMM21 XMM22 XMM23 XMM24 XMM25 XMM26 XMM27 XMM28 XMM29 XMM30 XMM31 ];
+
+attach variables [ evexV5_YmmReg ] [ YMM0  YMM1  YMM2  YMM3  YMM4  YMM5  YMM6  YMM7  YMM8  YMM9  YMM10 YMM11 YMM12 YMM13 YMM14 YMM15
+	                                 YMM16 YMM17 YMM18 YMM19 YMM20 YMM21 YMM22 YMM23 YMM24 YMM25 YMM26 YMM27 YMM28 YMM29 YMM30 YMM31 ];
+
+attach variables [ evexV5_ZmmReg ] [ ZMM0  ZMM1  ZMM2  ZMM3  ZMM4  ZMM5  ZMM6  ZMM7  ZMM8  ZMM9  ZMM10 ZMM11 ZMM12 ZMM13 ZMM14 ZMM15
+	                                 ZMM16 ZMM17 ZMM18 ZMM19 ZMM20 ZMM21 ZMM22 ZMM23 ZMM24 ZMM25 ZMM26 ZMM27 ZMM28 ZMM29 ZMM30 ZMM31 ];
+
 @ifdef IA64
 attach variables [ vexVVVV_r32 ] [ EAX  ECX  EDX  EBX  ESP  EBP  ESI  EDI R8D  R9D  R10D R11D R12D R13D R14D R15D ];
 attach variables [ vexVVVV_r64 ] [ RAX  RCX  RDX  RBX  RSP  RBP  RSI  RDI R8   R9   R10  R11  R12  R13  R14  R15 ];
@@ -515,9 +705,13 @@ attach variables [ vexVVVV_r64 ] [ RAX  RCX  RDX  RBX  RSP  RBP  RSI  RDI R8   R
 attach variables [ vexVVVV_r32 ] [ EAX  ECX  EDX  EBX  ESP  EBP  ESI  EDI _    _    _    _    _    _    _    _ ];
 @endif
 
+attach variables [ evexOpmask opmaskreg opmaskrm evexVopmask ] [ K0  K1  K2  K3  K4  K5  K6  K7 ];
 
 attach variables [ ymmreg ymmreg1 ymmreg2 ymm_vsib ]			[ YMM0 YMM1  YMM2  YMM3  YMM4  YMM5  YMM6  YMM7 ];
 attach variables [ ymmreg_x ymmreg1_x ymmreg2_x ymm_vsib_x ]	[ YMM8 YMM9 YMM10 YMM11 YMM12 YMM13 YMM14 YMM15 ];
+
+attach variables [ zmmreg zmmreg1 zmmreg2 zmm_vsib ]			[ ZMM0 ZMM1  ZMM2  ZMM3  ZMM4  ZMM5  ZMM6  ZMM7 ];
+attach variables [ zmmreg_x zmmreg1_x zmmreg2_x zmm_vsib_x ]	[ ZMM8 ZMM9 ZMM10 ZMM11 ZMM12 ZMM13 ZMM14 ZMM15 ];
 
 attach variables [ bnd1 bnd2 ]       [ BND0 BND1 BND2 BND3 _ _ _ _ ];
 attach variables [ bnd1_lb bnd2_lb ] [ BND0_LB BND1_LB BND2_LB BND3_LB _ _ _ _ ];
@@ -578,6 +772,15 @@ define pcodeop vmxon;    # Enter VMX operation; opcode f3 0f C7 /6
 @define LONGMODE_OFF "opsize=opsize" # NOP
 @endif
 
+#when not in 64-bit mode, opcode 0x82 results in the same instruction as opcode 0x80
+#in 64-bit mode, opcode 0x82 results in #UD
+#see 22.15 "Undefined Opcodes" of the intel manual
+@ifdef IA64
+@define BYTE_80_82 "(byte=0x80 | (longMode=0 & byte=0x82))"
+@else
+@define BYTE_80_82 "(byte=0x80 | byte=0x82)"
+@endif
+
 @ifdef IA64
 Reg8:   reg8        is rexprefix=0 & reg8                               { export reg8; }
 Reg8:   reg8_x0     is rexprefix=1 & rexRprefix=0 & reg8_x0             { export reg8_x0; }
@@ -623,10 +826,18 @@ YmmReg1:  ymmreg1   is rexRprefix=0 & ymmreg1                           { export
 YmmReg1:  ymmreg1_x is rexRprefix=1 & ymmreg1_x                         { export ymmreg1_x; }
 YmmReg2:  ymmreg2   is rexBprefix=0 & ymmreg2                           { export ymmreg2; }
 YmmReg2:  ymmreg2_x is rexBprefix=1 & ymmreg2_x                         { export ymmreg2_x; }
+
+ZmmReg1:  zmmreg1   is rexRprefix=0 & zmmreg1                           { export zmmreg1; }
+ZmmReg1:  zmmreg1_x is rexRprefix=1 & zmmreg1_x                         { export zmmreg1_x; }
+ZmmReg2:  zmmreg2   is rexBprefix=0 & zmmreg2                           { export zmmreg2; }
+ZmmReg2:  zmmreg2_x is rexBprefix=1 & zmmreg2_x                         { export zmmreg2_x; }
+
 Xmm_vsib:  xmm_vsib       is rexXprefix=0 & xmm_vsib                             { export xmm_vsib; }
 Xmm_vsib:  xmm_vsib_x     is rexXprefix=1 & xmm_vsib_x                           { export xmm_vsib_x; }
 Ymm_vsib:  ymm_vsib       is rexXprefix=0 & ymm_vsib                             { export ymm_vsib; }
 Ymm_vsib:  ymm_vsib_x     is rexXprefix=1 & ymm_vsib_x                           { export ymm_vsib_x; }
+Zmm_vsib:  zmm_vsib       is rexXprefix=0 & zmm_vsib                             { export zmm_vsib; }
+Zmm_vsib:  zmm_vsib_x     is rexXprefix=1 & zmm_vsib_x                           { export zmm_vsib_x; }
 @else
 Reg8:   reg8        is reg8                              { export reg8; }
 Reg16:  reg16       is reg16                             { export reg16; }
@@ -644,6 +855,8 @@ XmmReg1:  xmmreg1   is xmmreg1                           { export xmmreg1; }
 XmmReg2:  xmmreg2   is xmmreg2                           { export xmmreg2; }
 YmmReg1:  ymmreg1   is ymmreg1                           { export ymmreg1; }
 YmmReg2:  ymmreg2   is ymmreg2                           { export ymmreg2; }
+ZmmReg1:  zmmreg1   is zmmreg1                           { export zmmreg1; }
+ZmmReg2:  zmmreg2   is zmmreg2                           { export zmmreg2; }
 Xmm_vsib:  xmm_vsib       is xmm_vsib                    { export xmm_vsib; }
 Ymm_vsib:  ymm_vsib       is ymm_vsib                    { export ymm_vsib; }
 @endif
@@ -660,6 +873,83 @@ simm32_32: simm32 is simm32 { export *[const]:4 simm32; }
 @ifdef IA64
 simm32_64: simm32 is simm32 { export *[const]:8 simm32; }
 imm32_64: imm32 is imm32 { export *[const]:8 imm32; }
+@endif
+
+# EVEX used a compressed Disp8*N format
+
+# Table 2-35:
+# TupleType       | EVEX.B | InputSize | EVEX.W | Broadcast |N (VL=128) | N (VL=256) | N (VL=512) | evexBType
+# Full Mem        |    0   |   32bit   |     0  |    none   |    16     |     32     |     64     | 0
+# Full Mem        |    1   |   32bit   |     0  |   {1tox}  |     4     |      4     |      4     | 0
+# Full Mem        |    0   |   64bit   |     1  |    none   |    16     |     32     |     64     | 0
+# Full Mem        |    1   |   64bit   |     1  |   {1tox}  |     8     |      8     |      8     | 0
+# Half Mem        |    0   |   32bit   |     0  |    none   |     8     |     16     |     32     | 1
+# Half Mem        |    1   |   32bit   |     0  |   {1tox}  |     4     |      4     |      4     | 1
+
+evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=0 & evexL=0       [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=0 & evexL=1       [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=0 & evexL=2       [ offs = 6; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=0 & evexB=1 & rexWprefix=0  [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 &               evexB=1 & rexWprefix=1  [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=0 & evexL=0       [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=0 & evexL=1       [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=0 & evexBType=1 & evexB=0 & evexL=2       [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+
+# Table 2-35:
+# TupleType       | InputSize | EVEX.W | N (VL=128) | N (VL=256) | N (VL=512) | evexTType
+# Full Mem        |     N/A   |   N/A  |     16     |     32     |     64     | 0
+# Tuple 1 Scalar  |    8bit   |   N/A  |      1     |      1     |      1     | 1
+# Tuple 1 Scalar  |   16bit   |   N/A  |      2     |      2     |      2     | 2
+# Tuple 1 Scalar  |   32bit   |    0   |      4     |      4     |      4     | 3
+# Tuple 1 Scalar  |   64bit   |    1   |      8     |      8     |      8     | 3
+# Tuple 1 Fixed   |   32bit   |   N/A  |      4     |      4     |      4     | 4
+# Tuple 1 Fixed   |   64bit   |   N/A  |      8     |      8     |      8     | 5
+# Tuple 2         |   32bit   |    0   |      8     |      8     |      8     | 6
+# Tuple 2         |   64bit   |    1   |    N/A     |     16     |     16     | 6
+# Tuple 4         |   32bit   |    0   |    N/A     |     16     |     16     | 7
+# Tuple 4         |   64bit   |    1   |    N/A     |    N/A     |     32     | 7
+# Tuple 8         |   32bit   |    0   |    N/A     |    N/A     |     32     | 8
+# Half Mem        |     N/A   |   N/A  |      8     |     16     |     32     | 9
+# Quarter Mem     |     N/A   |   N/A  |      4     |      8     |     16     | A
+# Eighth Mem      |     N/A   |   N/A  |      2     |      4     |      8     | B
+# Mem128          |     N/A   |    1   |     16     |     16     |     16     | C
+# MOVDDUP         |     N/A   |   N/A  |      8     |     32     |     64     | D
+
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x0 & evexL=0 [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x0 & evexL=1 [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x0 & evexL=2 [ offs = 6; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x9 & evexL=0 [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x9 & evexL=1 [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x9 & evexL=2 [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xa & evexL=0 [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xa & evexL=1 [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xa & evexL=2 [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xb & evexL=0 [ offs = 1; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xb & evexL=1 [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xb & evexL=2 [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x1           [ offs = 0; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x2           [ offs = 1; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x3 & rexWprefix=0 [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x3 & rexWprefix=1 [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x4           [ offs = 2; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x5           [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x6 & rexWprefix=0 [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x6 & rexWprefix=1 [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x7 & rexWprefix=0 [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x7 & rexWprefix=1 [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0x8           [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xc           [ offs = 4; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xd & evexL=0 [ offs = 3; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xd & evexL=1 [ offs = 5; evexDisp8=offs; ] { export *[const]:1 offs; }
+evexDisp8N: offs is evexD8Type=1 & evexTType=0xd & evexL=2 [ offs = 6; evexDisp8=offs; ] { export *[const]:1 offs; }
+
+
+simm8_16: disp8N is vexMode=2 & evexDisp8N & simm8 [ disp8N = simm8 << evexDisp8; ] { export *[const]:2 disp8N; }
+simm8_32: disp8N is vexMode=2 & evexDisp8N & simm8 [ disp8N = simm8 << evexDisp8; ] { export *[const]:4 disp8N; }
+@ifdef IA64
+simm8_64: disp8N is vexMode=2 & evexDisp8N & simm8 [ disp8N = simm8 << evexDisp8; ] { export *[const]:8 disp8N; }
 @endif
 
 usimm8_16: imm8 is imm8 & imm8_7=0 { export *[const]:2 imm8; }
@@ -729,7 +1019,8 @@ addr32: [pcRelSimm32]					is bit64=1 & mod=0 & r_m=4; index=4 & base=5; pcRelSim
 Addr32_64: [pcRelSimm32]				is mod=0 & r_m=5; pcRelSimm32                { export *[const]:8 pcRelSimm32; }
 Addr32_64: [imm32]						is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
 Addr32_64: addr32						is addr32									 { tmp:8 = sext(addr32); export tmp; }
-	
+
+
 @endif
 
 # 64-bit addressing modes   (the offset portion)
@@ -806,10 +1097,9 @@ m8:   "byte ptr" Mem   	is Mem      { export *:1 Mem; }
 m16:  "word ptr" Mem  	is Mem      { export *:2 Mem; }
 m32:  "dword ptr" Mem  	is Mem      { export *:4 Mem; }
 m64:  "qword ptr" Mem  	is Mem      { export *:8 Mem; }
-# m80: Mem    is Mem      { export *:10 Mem; }
 m128: "xmmword ptr" Mem	is Mem      { export *:16 Mem; }
 m256: "ymmword ptr" Mem	is Mem      { export *:32 Mem; }
-m512: "64b ptr" Mem	    is Mem      { export *:64 Mem; }
+m512: "zmmword ptr" Mem is Mem      { export *:64 Mem; }
 
 # spec versions of the m8/m16/m32/... tables explicitly print the operand size
 spec_m8: "byte ptr "^Mem     is Mem      { export *:1 Mem; }
@@ -817,10 +1107,6 @@ spec_m16: "word ptr "^Mem    is Mem      { export *:2 Mem; }
 spec_m32: "dword ptr "^Mem    is Mem      { export *:4 Mem; }
 spec_m64: "qword ptr "^Mem    is Mem      { export *:8 Mem; }
 spec_m80: "tword ptr "^Mem    is Mem      { export *:10 Mem; }
-# spec_m128: "16-byte ptr "^Mem   is Mem      { export *:16 Mem; }
-# spec_m512: "64-byte ptr "^Mem   is Mem      { export *:64 Mem; }
-
-
 
 ##
 ## VSIB
@@ -922,6 +1208,63 @@ XmmReg2_m128: m128      is m128                              { export m128; }
 
 YmmReg2_m256: YmmReg2   is mod=3 & YmmReg2                   { export YmmReg2; }
 YmmReg2_m256: m256      is m256                              { export m256; }
+
+ZmmReg2_m512: ZmmReg2   is mod=3 & ZmmReg2                   { export ZmmReg2; }
+ZmmReg2_m512: m512      is m512                              { export m512; }
+
+m32bcst64:  m32 is m32 { local tmp:4 = m32; BCST8[0,32] = tmp; BCST8[32,32] = tmp; export BCST8; }
+m32bcst128: m32 is m32 { local tmp:4 = m32; BCST16[0,32] = tmp; BCST16[32,32] = tmp; BCST16[64,32] = tmp; BCST16[96,32] = tmp; export BCST16; }
+m32bcst256: m32 is m32 {
+	local tmp:4 = m32;
+	BCST32[0,32]   = tmp; BCST32[32,32]  = tmp; BCST32[64,32]  = tmp; BCST32[96,32]  = tmp;
+	BCST32[128,32] = tmp; BCST32[160,32] = tmp; BCST32[192,32] = tmp; BCST32[224,32] = tmp;
+	export BCST32;
+}
+m32bcst512: m32 is m32 {
+	local tmp:4 = m32;
+	BCST64[0,32]   = tmp;  BCST64[32,32] = tmp;  BCST64[64,32] = tmp;  BCST64[96,32] = tmp;
+	BCST64[128,32] = tmp; BCST64[160,32] = tmp; BCST64[192,32] = tmp; BCST64[224,32] = tmp;
+	BCST64[256,32] = tmp; BCST64[288,32] = tmp; BCST64[320,32] = tmp; BCST64[352,32] = tmp;
+	BCST64[384,32] = tmp; BCST64[416,32] = tmp; BCST64[448,32] = tmp; BCST64[480,32] = tmp;
+	export BCST64;
+}
+
+m64bcst128: m64 is m64 { local tmp:8 = m64; BCST16[0,64] = tmp; BCST16[64,64] = tmp; export BCST16; }
+m64bcst256: m64 is m64 { local tmp:8 = m64; BCST32[0,64] = tmp; BCST32[64,64] = tmp; BCST32[128,64] = tmp; BCST32[192,64] = tmp; export BCST32; }
+m64bcst512: m64 is m64 {
+	local tmp:8 = m64;
+	BCST64[0,64] = tmp;   BCST64[64,64] = tmp;  BCST64[128,64] = tmp; BCST64[192,64] = tmp;
+	BCST64[256,64] = tmp; BCST64[320,64] = tmp; BCST64[384,64] = tmp; BCST64[448,64] = tmp;
+	export BCST64;
+}
+
+XmmReg2_m64_m32bcst:  XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
+XmmReg2_m64_m32bcst:  m64        is m64 & evexDisp8N                   { local tmp:16 = zext(m64); export tmp; }
+XmmReg2_m64_m32bcst:  m32bcst64  is evexB=1 & m32bcst64 & evexDisp8N   { local tmp:16 = zext(m32bcst64); export tmp; }
+
+XmmReg2_m128_m32bcst: XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
+XmmReg2_m128_m32bcst: m128       is m128& evexDisp8N                   { export m128; }
+XmmReg2_m128_m32bcst: m32bcst128 is evexB=1 & m32bcst128 & evexDisp8N  { export m32bcst128; }
+
+XmmReg2_m128_m64bcst: XmmReg2    is mod=3 & XmmReg2             { export XmmReg2; }
+XmmReg2_m128_m64bcst: m128       is m128 & evexDisp8N                  { export m128; }
+XmmReg2_m128_m64bcst: m64bcst128 is evexB=1 & m64bcst128 & evexDisp8N  { export m64bcst128; }
+
+YmmReg2_m256_m32bcst: YmmReg2    is mod=3 & YmmReg2             { export YmmReg2; }
+YmmReg2_m256_m32bcst: m256       is m256 & evexDisp8N                  { export m256; }
+YmmReg2_m256_m32bcst: m32bcst256 is evexB=1 & m32bcst256 & evexDisp8N  { export m32bcst256; }
+
+YmmReg2_m256_m64bcst: YmmReg2    is mod=3 & YmmReg2             { export YmmReg2; }
+YmmReg2_m256_m64bcst: m256       is m256 & evexDisp8N                  { export m256; }
+YmmReg2_m256_m64bcst: m64bcst256 is evexB=1 & m64bcst256 & evexDisp8N  { export m64bcst256; }
+
+ZmmReg2_m512_m32bcst: ZmmReg2    is mod=3 & ZmmReg2             { export ZmmReg2; }
+ZmmReg2_m512_m32bcst: m512       is m512 & evexDisp8N                  { export m512; }
+ZmmReg2_m512_m32bcst: m32bcst512 is evexB=1 & m32bcst512 & evexDisp8N  { export m32bcst512; }
+
+ZmmReg2_m512_m64bcst: ZmmReg2    is mod=3 & ZmmReg2             { export ZmmReg2; }
+ZmmReg2_m512_m64bcst: m512       is m512 & evexDisp8N                  { export m512; }
+ZmmReg2_m512_m64bcst: m64bcst512 is evexB=1 & m64bcst512 & evexDisp8N  { export m64bcst512; }
 
 moffs8: seg16^[imm16]   is addrsize=0 & seg16 & imm16                   { tmp:$(SIZE) = segment(seg16,imm16:2); export *:1 tmp; }
 moffs8: segWide^[imm32]   is addrsize=1 & highseg=1 & segWide & imm32   { tmp:$(SIZE) = segWide + imm32; export *:1 tmp; }
@@ -1104,6 +1447,23 @@ lockx: 		                    is epsilon { }
 #"unlock" constructor is used to pair every LOCK pcodeop with a matching UNLOCK pcodeop
 unlock:		is lockprefx=1 { UNLOCK(); }
 unlock:		is epsilon { }
+
+KReg_reg: opmaskreg is opmaskreg { export opmaskreg; }
+KReg_rm: opmaskrm   is opmaskrm  { export opmaskrm; }
+vexVVVV_KReg: evexVopmask is evexVopmask              { export evexVopmask; }
+vex1VVV_KReg: evexVopmask is evexVopmask & vexHighV=1 { export evexVopmask; }
+
+KWriteMask: "{"^evexOpmask^"}" is evexOpmask { export evexOpmask; }
+KWriteMask: is evexOpmask=0 { local tmp:8 = 0; export tmp; }
+
+RegK_m8:  KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
+RegK_m8:  m8      is m8              { tmp:8 = zext(m8); export tmp; }
+RegK_m16: KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
+RegK_m16: m16     is m16             { tmp:8 = zext(m16); export tmp; }
+RegK_m32: KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
+RegK_m32: m32     is m32             { tmp:8 = zext(m32); export tmp; }
+RegK_m64: KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
+RegK_m64: m64     is m64             { export m64; }
 
 # Some macros
 
@@ -1577,7 +1937,7 @@ macro fucompe(val1, val2) {
 
 # VEX encoding for type of VEX data flow.
 # Specification is "VEX.", "VEX.NDS", "VEX.NDD", or "VEX.DDS". If only "VEX." is present, then "VEX_NONE" must be used. 
-@define VEX_NONE	"vexMode=1 & vexVVVV=0"
+@define VEX_NONE	"vexMode=1"
 @define VEX_NDS		"vexMode=1"
 @define VEX_NDD		"vexMode=1"
 @define VEX_DDS		"vexMode=1"
@@ -1587,6 +1947,8 @@ macro fucompe(val1, val2) {
 @define VEX_LZ		"vexL=0"
 @define VEX_L128	"vexL=0"
 @define VEX_L256	"vexL=1"
+@define EVEX_L512	"evexLp=1 & vexL=0"
+@define EVEX_LIG	"evexLp & vexL"
 
 # These are only to be used with VEX or EVEX decoding, where only one "mandatory" prefix is encoded in the VEX or EVEX.
 # If no prefix is specified, then VEX_PRE_NONE must be used.
@@ -1601,13 +1963,17 @@ macro fucompe(val1, val2) {
 @define VEX_0F		"vexMMMMM=1"
 @define VEX_0F38	"vexMMMMM=2"
 @define VEX_0F3A	"vexMMMMM=3"
+#TODO: later extensions such as AVX10 and APX allow evex maps 4, 5 and 6
 
 # Specification is "WIG", "W0", or "W1".
 @define VEX_WIG		"rexWprefix"
 @define VEX_W0		"rexWprefix=0"
 @define VEX_W1		"rexWprefix=1"
 
-
+@define EVEX_NONE	"vexMode=2"
+@define EVEX_NDS	"vexMode=2"
+@define EVEX_NDD	"vexMode=2"
+@define EVEX_DDS	"vexMode=2"
 
 @ifdef IA64
 
@@ -1631,6 +1997,23 @@ macro fucompe(val1, val2) {
 :^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r & vex_vvvv & vex_l & vex_pp=3; instruction
                        [ instrPhase=1; vexMode=1; rexRprefix=~vex_r; vexVVVV=~vex_vvvv; vexL=vex_l; vexMMMMM=0x1; prefix_f2=1; ] {}
 
+# 4-byte EVEX prefix
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r & vex_x & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=0; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; rexRprefix=~vex_r; rexXprefix=~vex_x; rexBprefix=~vex_b; rexWprefix=vex_w; vexVVVV=~vex_vvvv;  vexMMMMM=evex_mmm;
+                         evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; ] {}
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r & vex_x & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=1; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; rexRprefix=~vex_r; rexXprefix=~vex_x; rexBprefix=~vex_b; rexWprefix=vex_w; vexVVVV=~vex_vvvv; vexMMMMM=evex_mmm;
+                         evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; prefix_66=1; ] {}
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r & vex_x & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=2; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; rexRprefix=~vex_r; rexXprefix=~vex_x; rexBprefix=~vex_b; rexWprefix=vex_w; vexVVVV=~vex_vvvv; vexMMMMM=evex_mmm;
+                         evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; prefix_f3=1; ] {}
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r & vex_x & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=3; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; rexRprefix=~vex_r; rexXprefix=~vex_x; rexBprefix=~vex_b; rexWprefix=vex_w; vexVVVV=~vex_vvvv; vexMMMMM=evex_mmm;
+                         evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; prefix_f2=1; ] {}
 @endif
 
 # 32-bit 3-byte VEX
@@ -1653,6 +2036,18 @@ macro fucompe(val1, val2) {
 :^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_x=1 & vex_vvvv & vex_l & vex_pp=3; instruction
                        [ instrPhase=1; vexMode=1; vexVVVV=~vex_vvvv; vexL=vex_l; vexMMMMM=0x1; prefix_f2=1; ] {}
 
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r=1 & vex_x=1 & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=0; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; vexVVVV=~vex_vvvv; rexBprefix=~vex_b; rexWprefix=vex_w; evexRp=~evex_rp; evexVp=~evex_vp;  evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; vexMMMMM=evex_mmm; ] {}
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r=1 & vex_x=1 & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=1; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; vexVVVV=~vex_vvvv; rexBprefix=~vex_b; rexWprefix=vex_w; evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; vexMMMMM=evex_mmm; prefix_66=1; ] {}
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r=1 & vex_x=1 & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=2; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; vexVVVV=~vex_vvvv; rexBprefix=~vex_b; rexWprefix=vex_w; evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; vexMMMMM=evex_mmm; prefix_f3=1; ] {}
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover & byte=0x62; vex_r=1 & vex_x=1 & vex_b & evex_rp & evex_res=0 & evex_mmm;
+                 vex_w & vex_vvvv & evex_res2=1 & vex_pp=3; evex_z & evex_lp & evex_l & evex_b & evex_vp & evex_aaa; instruction
+                       [ instrPhase=1; vexMode=2; vexVVVV=~vex_vvvv; rexBprefix=~vex_b; rexWprefix=vex_w; evexRp=~evex_rp; evexVp=~evex_vp; evexLp=evex_lp; vexL=evex_l; evexZ=evex_z; evexB=evex_b; evexAAA=evex_aaa; vexMMMMM=evex_mmm; prefix_f2=1; ] {}
 
 # Many of the multimedia instructions have a "mandatory" prefix, either 0x66, 0xf2 or 0xf3
 # where the prefix really becomes part of the encoding.  We collect the three possible prefixes of this
@@ -1686,7 +2081,7 @@ with : lockprefx=0 {
 @ifdef IA64
 :ADC RAX,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x15; RAX & simm32         { addCarryFlags( RAX, simm32 ); resultflags( RAX ); }
 @endif
-:ADC Rmr8,imm8		is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=2; imm8 { addCarryFlags( Rmr8, imm8:1 ); resultflags( Rmr8 ); }
+:ADC Rmr8,imm8		is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=2; imm8 { addCarryFlags( Rmr8, imm8:1 ); resultflags( Rmr8 ); }
 :ADC Rmr16,imm16	is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=2; imm16 { addCarryFlags( Rmr16, imm16:2 ); resultflags( Rmr16 ); }
 :ADC Rmr32,imm32	is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=2; imm32 { addCarryFlags( Rmr32, imm32:4 ); build check_Rmr32_dest; resultflags( Rmr32 ); }
 @ifdef IA64
@@ -1717,7 +2112,7 @@ with : lockprefx=0 {
 @ifdef IA64
 :ADD RAX,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x5; RAX & simm32          { addflags(  RAX,simm32);   RAX =   RAX + simm32; resultflags(  RAX); }
 @endif
-:ADD Rmr8,imm8		is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=0; imm8		{ addflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 +  imm8; resultflags(  Rmr8); }
+:ADD Rmr8,imm8		is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=0; imm8		{ addflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 +  imm8; resultflags(  Rmr8); }
 :ADD Rmr16,imm16		is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=0; imm16	{ addflags( Rmr16,imm16);  Rmr16 =  Rmr16 + imm16; resultflags( Rmr16); }
 :ADD Rmr32,imm32		is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=0; imm32	{ addflags( Rmr32,imm32);  Rmr32 =  Rmr32 + imm32; build check_Rmr32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -1748,7 +2143,7 @@ with : lockprefx=0 {
 @ifdef IA64
 :AND RAX,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x25; RAX & simm32         { logicalflags();   RAX =   RAX & simm32; resultflags(  RAX); }
 @endif
-:AND Rmr8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=4; imm8     { logicalflags();   Rmr8 =   Rmr8 &  imm8; resultflags(  Rmr8); }
+:AND Rmr8,imm8      is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=4; imm8     { logicalflags();   Rmr8 =   Rmr8 &  imm8; resultflags(  Rmr8); }
 :AND Rmr16,imm16    is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=4; imm16  { logicalflags();  Rmr16 =  Rmr16 & imm16; resultflags( Rmr16); }
 :AND Rmr32,imm32    is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=4; imm32  { logicalflags();  Rmr32 =  Rmr32 & imm32; build check_Rmr32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -1776,8 +2171,8 @@ with : lockprefx=0 {
 :ARPL rm16,Reg16    is $(LONGMODE_OFF) & vexMode=0 & bit64=0 & byte=0x63; rm16 & Reg16 ...                { local rpldest=rm16&3; local rplsrc=Reg16&3; local rpldiff=rplsrc-rpldest;
                                           ZF = rpldiff s> 0; rm16 = rm16 + (zext(CF) * rpldiff); }
 
-:BOUND Reg16,m16    is vexMode=0 & bit64=0 & opsize=0 & byte=0x62; m16 & Reg16 ...      { }
-:BOUND Reg32,m32    is vexMode=0 & bit64=0 & opsize=1 & byte=0x62; m32 & Reg32 ...      { }
+:BOUND Reg16,m16    is $(LONGMODE_OFF) & vexMode=0 & bit64=0 & opsize=0 & byte=0x62; m16 & Reg16 ...      { }
+:BOUND Reg32,m32    is $(LONGMODE_OFF) & vexMode=0 & bit64=0 & opsize=1 & byte=0x62; m32 & Reg32 ...      { }
 
 #:BSF Reg16,rm16     is vexMode=0 & opsize=0 & byte=0xf; byte=0xbc; rm16 & Reg16 ... { ZF = rm16 == 0;
 #                                                  choose = 0xffff * (zext((0xff & rm16) == 0));
@@ -2203,7 +2598,7 @@ define pcodeop clzero;
 @ifdef IA64
 :CMP RAX,simm32      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x3d; RAX & simm32            { subflags(  RAX,simm32); local tmp =   RAX -  simm32; resultflags(tmp); }
 @endif
-:CMP spec_rm8,imm8       is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=7 ...; imm8        { local temp:1 = spec_rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
+:CMP spec_rm8,imm8       is vexMode=0 & $(BYTE_80_82); spec_rm8 & reg_opcode=7 ...; imm8        { local temp:1 = spec_rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
 :CMP spec_rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=7 ...; imm16 { local temp:2 = spec_rm16; subflags(temp,imm16); local diff = temp - imm16; resultflags(diff); }
 :CMP spec_rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & reg_opcode=7 ...; imm32 { local temp:4 = spec_rm32; subflags(temp,imm32); local diff = temp - imm32; resultflags(diff); }
 @ifdef IA64
@@ -3222,7 +3617,8 @@ define pcodeop swap_bytes;
 @ifdef IA64
 :MOVSX Reg64,spec_rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbe; spec_rm8 & Reg64 ...  { Reg64 = sext(spec_rm8); }
 @endif
-:MOVSX Reg32,spec_rm16   is vexMode=0 &            byte=0xf; byte=0xbf; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = sext(spec_rm16); build check_Reg32_dest; }
+:MOVSX Reg16,spec_rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xbf; spec_rm16 & Reg16 ... { Reg16 = spec_rm16; }
+:MOVSX Reg32,spec_rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xbf; spec_rm16 & Reg32 ... & check_Reg32_dest ... { Reg32 = sext(spec_rm16); build check_Reg32_dest; }
 @ifdef IA64
 :MOVSX Reg64,spec_rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbf; spec_rm16 & Reg64 ...     { Reg64 = sext(spec_rm16); }
 @endif
@@ -3237,8 +3633,8 @@ define pcodeop swap_bytes;
 @ifdef IA64
 :MOVZX Reg64,spec_rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb6; spec_rm8 & Reg64 ...  { Reg64 = zext(spec_rm8); }
 @endif
-
-:MOVZX Reg32,spec_rm16   is vexMode=0 &            byte=0xf; byte=0xb7; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = zext(spec_rm16); build check_Reg32_dest; }
+:MOVZX Reg16,spec_rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xb7; spec_rm16 & Reg16 ... { Reg16 = spec_rm16; }
+:MOVZX Reg32,spec_rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xb7; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = zext(spec_rm16); build check_Reg32_dest; }
 @ifdef IA64
 :MOVZX Reg64,spec_rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb7; spec_rm16 & Reg64 ...     { Reg64 = zext(spec_rm16); }
 @endif
@@ -3286,7 +3682,7 @@ define pcodeop swap_bytes;
 @ifdef IA64
 :OR  RAX,simm32        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xd; RAX & simm32         { logicalflags();   RAX =   RAX | simm32; resultflags(  RAX); }
 @endif
-:OR  Rmr8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=1; imm8     { logicalflags();   Rmr8 =   Rmr8 |  imm8; resultflags(  Rmr8); }
+:OR  Rmr8,imm8      is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=1; imm8     { logicalflags();   Rmr8 =   Rmr8 |  imm8; resultflags(  Rmr8); }
 :OR  Rmr16,imm16        is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=1; imm16  { logicalflags();  Rmr16 =  Rmr16 | imm16; resultflags( Rmr16); }
 :OR  Rmr32,imm32        is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=1; imm32  { logicalflags();  Rmr32 =  Rmr32 | imm32; build check_rm32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -3466,8 +3862,32 @@ define pcodeop ptwrite;
 :RCL rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=2 ... ; imm8 { local cnt=imm8&0x1f; tmp:8=(zext(CF)<<32)|zext(rm32); tmp=(tmp<<cnt)|(tmp>>(33-cnt)); rm32=tmp(0); CF=(tmp&0x100000000)!=0; build check_rm32_dest; }
 @ifdef IA64
 :RCL rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=2 ...   { local tmpCF=CF; CF=rm64 s< 0; rm64=(rm64<<1)|zext(tmpCF); OF=CF^(rm64 s< 0);}
-:RCL rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=2 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp<<cnt)|(tmp>>(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-:RCL rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=2 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp<<cnt)|(tmp>>(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
+
+:RCL rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=2 ...   
+{ 
+  local cnt:1=CL&0x3f;
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy << cnt;
+  rotated = rotated | (rm64_copy >>  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << cnt-1;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(64-cnt)) & rm64_copy) != 0);
+  rm64 = rotated; 
+}
+
+:RCL rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=2 ... ; imm8 
+{ 
+  local cnt:1=imm8&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy << cnt;
+  rotated = rotated | (rm64_copy >>  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << cnt-1;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(64-cnt)) & rm64_copy) != 0);
+  rm64 = rotated;
+}
 @endif
 
 :RCR  rm8,n1        is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=3 ...           { local tmpCF=CF; OF=rm8 s< 0; CF=(rm8&1)!=0; rm8=(rm8>>1)|(tmpCF<<7); OF=OF^(rm8 s< 0); }
@@ -3481,8 +3901,32 @@ define pcodeop ptwrite;
 :RCR rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x1f; tmp:8=(zext(CF)<<32)|zext(rm32); tmp=(tmp>>cnt)|(tmp<<(33-cnt)); rm32=tmp(0); CF=(tmp&0x100000000)!=0; build check_rm32_dest; }
 @ifdef IA64
 :RCR rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=3 ...   { local tmpCF=CF; OF=rm64 s< 0; CF=(rm64&1)!=0; rm64=(rm64>>1)|(zext(tmpCF)<<63); OF=OF^(rm64 s< 0); }
-:RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-:RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
+
+:RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   
+{ 
+  local cnt:1=CL&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy >> cnt;
+  rotated = rotated | (rm64_copy <<  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << 64-cnt;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(cnt-1)) & rm64_copy) != 0);
+  rm64 = rotated;
+ }
+
+:RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 
+{ 
+  local cnt:1=imm8&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy >> cnt;
+  rotated = rotated | (rm64_copy <<  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << 64-cnt;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(cnt-1)) & rm64_copy) != 0);
+  rm64 = rotated;
+ }
 @endif
 
 @ifdef IA64
@@ -3631,7 +4075,7 @@ define pcodeop smm_restore_state;
 @ifdef IA64
 :SBB  RAX,imm32    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x1d; RAX & imm32						{ subCarryFlags( RAX, imm32 ); resultflags(RAX); }
 @endif
-:SBB  Rmr8,imm8     is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=3; imm8								{ subCarryFlags( Rmr8, imm8 ); resultflags(Rmr8); }
+:SBB  Rmr8,imm8     is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=3; imm8								{ subCarryFlags( Rmr8, imm8 ); resultflags(Rmr8); }
 :SBB  Rmr16,imm16       is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=3; imm16							{ subCarryFlags( Rmr16, imm16 ); resultflags(Rmr16); }
 :SBB  Rmr32,imm32       is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=3; imm32	{ subCarryFlags( Rmr32, imm32 ); build check_Rmr32_dest; resultflags(Rmr32); }
 @ifdef IA64
@@ -3833,6 +4277,18 @@ define pcodeop skinit;
 @endif
 
 :STR rm16       is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=1 ... { rm16 = TaskRegister(); }
+:STR Rmr32      is vexMode=0 & opsize=1 & byte=0xf; byte=0x0; Rmr32 & mod=3 & reg_opcode=1 & check_Rmr32_dest {
+	local tmp:2 = TaskRegister();
+	Rmr32 = zext(tmp);
+	build check_Rmr32_dest;
+}
+@ifdef IA64
+:STR Rmr64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x0; Rmr64 & mod=3 & reg_opcode=1 {
+	local tmp:2 = TaskRegister();
+	Rmr64 = zext(tmp);
+}
+@endif
+
 
 # See 'lockable.sinc' for memory destination, lockable variants
 :SUB  AL,imm8      is vexMode=0 & byte=0x2c; AL & imm8                          { subflags(   AL,imm8 );    AL =    AL -  imm8; resultflags(   AL); }
@@ -3841,7 +4297,7 @@ define pcodeop skinit;
 @ifdef IA64
 :SUB  RAX,simm32        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x2d; RAX & simm32         { subflags(  RAX,simm32);   RAX =   RAX - simm32; resultflags(  RAX); }
 @endif
-:SUB  Rmr8,imm8     is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=5; imm8     { subflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 -  imm8; resultflags(  Rmr8); }
+:SUB  Rmr8,imm8     is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=5; imm8     { subflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 -  imm8; resultflags(  Rmr8); }
 :SUB  Rmr16,imm16       is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=5; imm16  { subflags( Rmr16,imm16);  Rmr16 =  Rmr16 - imm16; resultflags( Rmr16); }
 :SUB  Rmr32,imm32       is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=5; imm32  { subflags( Rmr32,imm32);  Rmr32 =  Rmr32 - imm32; build check_rm32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -4043,7 +4499,7 @@ define pcodeop xend;
 @ifdef IA64
 :XOR RAX,simm32    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x35; RAX & simm32            { logicalflags();   RAX =   RAX ^ simm32; resultflags(  RAX); }
 @endif
-:XOR Rmr8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=6; imm8     { logicalflags();   Rmr8 =   Rmr8 ^  imm8; resultflags(  Rmr8); }
+:XOR Rmr8,imm8      is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=6; imm8     { logicalflags();   Rmr8 =   Rmr8 ^  imm8; resultflags(  Rmr8); }
 :XOR Rmr16,imm16    is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=6; imm16  { logicalflags();  Rmr16 =  Rmr16 ^ imm16; resultflags( Rmr16); }
 :XOR Rmr32,imm32    is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=6; imm32  { logicalflags();  Rmr32 =  Rmr32 ^ imm32; build check_rm32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -4186,7 +4642,7 @@ define pcodeop fcos;
 :FDIV spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=6 ... & spec_m64            { ST0 = ST0 f/ float2float(spec_m64); }    
 :FDIV ST0,freg      is vexMode=0 & byte=0xD8; frow=15 & fpage=0 & freg & ST0        { ST0 = ST0 f/ freg; }            
 :FDIV freg,ST0      is vexMode=0 & byte=0xDC; frow=15 & fpage=1 & freg & ST0        { freg = freg f/ ST0; }           
-:FDIVP freg,ST0     is vexMode=0 & byte=0xDE; frow=15 & fpage=1 & freg & ST0        { freg = ST0 f/ freg; fpop(); }       
+:FDIVP freg,ST0     is vexMode=0 & byte=0xDE; frow=15 & fpage=1 & freg & ST0        { freg = freg f/ ST0; fpop(); }       
 :FDIVP              is vexMode=0 & byte=0xDE; byte=0xF9                 { ST1 = ST1 f/ ST0; fpop(); }         
 :FIDIV spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=6 ... & spec_m32            { ST0 = ST0 f/ int2float(spec_m32); }      
 :FIDIV spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=6 ... & spec_m16            { ST0 = ST0 f/ int2float(spec_m16); }      
@@ -4195,7 +4651,7 @@ define pcodeop fcos;
 :FDIVR spec_m64     is vexMode=0 & byte=0xDC; reg_opcode=7 ... & spec_m64            { ST0 = float2float(spec_m64) f/ ST0; }    
 :FDIVR ST0,freg     is vexMode=0 & byte=0xD8; frow=15 & fpage=1 & freg & ST0        { ST0 = freg f/ ST0; }            
 :FDIVR freg,ST0     is vexMode=0 & byte=0xDC; frow=15 & fpage=0 & freg & ST0        { freg = ST0 f/ freg; }           
-:FDIVRP freg,ST0    is vexMode=0 & byte=0xDE; frow=15 & fpage=0 & freg & ST0        { freg = freg f/ ST0; fpop(); }       
+:FDIVRP freg,ST0    is vexMode=0 & byte=0xDE; frow=15 & fpage=0 & freg & ST0        { freg = ST0 f/ freg; fpop(); }       
 :FDIVRP             is vexMode=0 & byte=0xDE; byte=0xF1                 { ST1 = ST0 f/ ST1; fpop(); }         
 :FIDIVR spec_m32    is vexMode=0 & byte=0xDA; reg_opcode=7 ... & spec_m32            { ST0 = int2float(spec_m32) f/ ST0; }      
 :FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            { ST0 = int2float(spec_m16) f/ ST0; }      

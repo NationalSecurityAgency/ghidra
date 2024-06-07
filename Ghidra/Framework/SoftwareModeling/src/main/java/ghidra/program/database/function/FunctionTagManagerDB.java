@@ -22,10 +22,12 @@ import org.apache.commons.collections4.map.LazyMap;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.datastruct.Counter;
 import ghidra.util.exception.CancelledException;
@@ -60,7 +62,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @throws IOException if there is a problem accessing the database.
 	 * @throws CancelledException if the program loading is cancelled
 	 */
-	FunctionTagManagerDB(DBHandle handle, int openMode, Lock lock, TaskMonitor monitor)
+	FunctionTagManagerDB(DBHandle handle, OpenMode openMode, Lock lock, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		this.lock = lock;
 
@@ -162,7 +164,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 			DBRecord record = functionTagAdapter.createTagRecord(name, comment);
 			tag = getFunctionTagFromCache(record);
-			fireTagCreatedNotification(ChangeManager.DOCR_FUNCTION_TAG_CREATED, tag);
+			fireTagCreatedNotification(ProgramEvent.FUNCTION_TAG_CREATED, tag);
 
 			return tag;
 		}
@@ -254,8 +256,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		functionTagAdapter.updateRecord(tag.getRecord());
 
 		// Notify subscribers of the change.
-		fireTagChangedNotification(ChangeManager.DOCR_FUNCTION_TAG_CHANGED, tag, oldValue,
-			newValue);
+		fireTagChangedNotification(ProgramEvent.FUNCTION_TAG_CHANGED, tag, oldValue, newValue);
 		invalidateFunctions();
 	}
 
@@ -299,29 +300,29 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @param oldValue the old value
 	 * @param newValue the new value
 	 */
-	private void fireTagChangedNotification(int type, FunctionTag tag, String oldValue,
-			String newValue) {
-		program.tagChanged(tag, type, oldValue, newValue);
+	private void fireTagChangedNotification(ProgramEvent eventType, FunctionTag tag,
+			String oldValue, String newValue) {
+		program.tagChanged(tag, eventType, oldValue, newValue);
 	}
 
 	/**
 	 * Fires off a notification indicating that a new tag has been created.
 	 *
-	 * @param type {@link ChangeManager} change type
+	 * @param eventType {@link ChangeManager} change type
 	 * @param tag the tag that was created
 	 */
-	private void fireTagCreatedNotification(int type, FunctionTag tag) {
-		program.tagCreated(tag, type);
+	private void fireTagCreatedNotification(ProgramEvent eventType, FunctionTag tag) {
+		program.tagCreated(tag, eventType);
 	}
 
 	/**
 	 * Fires off a notification indicating that the given tag has been deleted.
 	 *
-	 * @param type the type of change
+	 * @param eventType the type of change
 	 * @param tag the tag that was deleted
 	 */
-	private void fireTagDeletedNotification(int type, FunctionTag tag) {
-		program.tagChanged(tag, type, tag, null);
+	private void fireTagDeletedNotification(ProgramEvent eventType, FunctionTag tag) {
+		program.tagChanged(tag, eventType, tag, null);
 	}
 
 	/**
@@ -354,7 +355,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		// Removing an object invalidates the db cache.
 		cache.delete(tag.getId());
 
-		fireTagDeletedNotification(ChangeManager.DOCR_FUNCTION_TAG_DELETED, tag);
+		fireTagDeletedNotification(ProgramEvent.FUNCTION_TAG_DELETED, tag);
 		invalidateFunctions();
 	}
 
@@ -365,7 +366,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 *
 	 */
 	private void invalidateFunctions() {
-		FunctionManagerDB functionManager = (FunctionManagerDB) program.getFunctionManager();
+		FunctionManagerDB functionManager = program.getFunctionManager();
 		functionManager.functionTagsChanged();
 	}
 

@@ -168,20 +168,28 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 		if (obj == this) {
 			return true;
 		}
-		if (obj instanceof TypeDef) {
-			TypeDef td = (TypeDef) obj;
-			if (isAutoNamed != td.isAutoNamed()) {
-				return false;
-			}
-			if (!isAutoNamed && !DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
-				return false;
-			}
-			if (!hasSameTypeDefSettings(td)) {
-				return false;
-			}
-			return DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), td.getDataType());
+		if (!(obj instanceof TypeDef td)) {
+			return false;
 		}
-		return false;
+
+		if (isAutoNamed != td.isAutoNamed()) {
+			return false;
+		}
+
+		if (!isAutoNamed && !DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
+			return false;
+		}
+
+		if (!hasSameTypeDefSettings(td)) {
+			return false;
+		}
+
+		DataType otherDataType = td.getDataType();
+		if (DataTypeUtilities.isSameDataType(dataType, otherDataType)) {
+			return true;
+		}
+
+		return dataType.isEquivalent(otherDataType);
 	}
 
 	@Override
@@ -235,8 +243,7 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 		}
 		TypedefDataType newTypedef =
 			new TypedefDataType(typedef.getCategoryPath(), typedef.getName(), typedef.getDataType(),
-				typedef.getUniversalID(),
-				typedef.getSourceArchive(), typedef.getLastChangeTime(),
+				typedef.getUniversalID(), typedef.getSourceArchive(), typedef.getLastChangeTime(),
 				typedef.getLastChangeTimeInSourceArchive(), dtm);
 		copyTypeDefSettings(typedef, newTypedef, false);
 		newTypedef.isAutoNamed = typedef.isAutoNamed();

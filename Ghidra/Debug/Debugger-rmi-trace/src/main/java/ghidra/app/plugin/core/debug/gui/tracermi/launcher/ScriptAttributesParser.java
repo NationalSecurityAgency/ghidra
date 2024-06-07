@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -28,15 +30,13 @@ import generic.theme.Gui;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
 import ghidra.framework.Application;
+import ghidra.framework.plugintool.AutoConfigState.PathIsDir;
+import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 /**
- * Some attributes are required. Others are optional:
- * <ul>
- * <li>{@code @menu-path}: <b>(Required)</b></li>
- * </ul>
- *
+ * A parser for reading attributes from a script header
  */
 public abstract class ScriptAttributesParser {
 	public static final String AT_TITLE = "@title";
@@ -51,6 +51,8 @@ public abstract class ScriptAttributesParser {
 	public static final String AT_ARG = "@arg";
 	public static final String AT_ARGS = "@args";
 	public static final String AT_TTY = "@tty";
+	public static final String AT_TIMEOUT = "@timeout";
+	public static final String AT_NOIMAGE = "@no-image";
 
 	public static final String PREFIX_ENV = "env:";
 	public static final String PREFIX_ARG = "arg:";
@@ -66,6 +68,10 @@ public abstract class ScriptAttributesParser {
 		"%s: Invalid %s syntax. Use :type \"Display\" \"Tool Tip\"";
 	public static final String MSGPAT_INVALID_ARGS_SYNTAX =
 		"%s: Invalid %s syntax. Use \"Display\" \"Tool Tip\"";
+	public static final String MSGPAT_INVALID_TTY_SYNTAX =
+		"%s: Invalid %s syntax. Use TTY_TARGET [if env:OPT_EXTRA_TTY]";
+	public static final String MSGPAT_INVALID_TIMEOUT_SYNTAX = "" +
+		"%s: Invalid %s syntax. Use [milliseconds]";
 
 	protected record Location(String fileName, int lineNo) {
 		@Override
@@ -77,13 +83,11 @@ public abstract class ScriptAttributesParser {
 	protected interface OptType<T> {
 		static OptType<?> parse(Location loc, String typeName,
 				Map<String, UserType<?>> userEnums) {
-			OptType<?> type = switch (typeName) {
-				case "str" -> BaseType.STRING;
-				case "int" -> BaseType.INT;
-				case "bool" -> BaseType.BOOL;
-				default -> userEnums.get(typeName);
-			};
+			OptType<?> type = BaseType.parseNoErr(typeName);
 			if (type == null) {
+				type = userEnums.get(typeName);
+			}
+			if (type == null) { // still
 				Msg.error(ScriptAttributesParser.class,
 					"%s: Invalid type %s".formatted(loc, typeName));
 				return null;
@@ -104,13 +108,20 @@ public abstract class ScriptAttributesParser {
 	}
 
 	protected interface BaseType<T> extends OptType<T> {
-		public static BaseType<?> parse(Location loc, String typeName) {
-			BaseType<?> type = switch (typeName) {
+		public static BaseType<?> parseNoErr(String typeName) {
+			return switch (typeName) {
 				case "str" -> BaseType.STRING;
 				case "int" -> BaseType.INT;
 				case "bool" -> BaseType.BOOL;
+				case "path" -> BaseType.PATH;
+				case "dir" -> BaseType.DIR;
+				case "file" -> BaseType.FILE;
 				default -> null;
 			};
+		}
+
+		public static BaseType<?> parse(Location loc, String typeName) {
+			BaseType<?> type = parseNoErr(typeName);
 			if (type == null) {
 				Msg.error(ScriptAttributesParser.class,
 					"%s: Invalid base type %s".formatted(loc, typeName));
@@ -177,6 +188,42 @@ public abstract class ScriptAttributesParser {
 			}
 		};
 
+		public static final BaseType<Path> PATH = new BaseType<>() {
+			@Override
+			public Class<Path> cls() {
+				return Path.class;
+			}
+
+			@Override
+			public Path decode(Location loc, String str) {
+				return Paths.get(str);
+			}
+		};
+
+		public static final BaseType<PathIsDir> DIR = new BaseType<>() {
+			@Override
+			public Class<PathIsDir> cls() {
+				return PathIsDir.class;
+			}
+
+			@Override
+			public PathIsDir decode(Location loc, String str) {
+				return new PathIsDir(Paths.get(str));
+			}
+		};
+
+		public static final BaseType<PathIsFile> FILE = new BaseType<>() {
+			@Override
+			public Class<PathIsFile> cls() {
+				return PathIsFile.class;
+			}
+
+			@Override
+			public PathIsFile decode(Location loc, String str) {
+				return new PathIsFile(Paths.get(str));
+			}
+		};
+
 		default UserType<T> withCastChoices(List<?> choices) {
 			return new UserType<>(this, choices.stream().map(cls()::cast).toList());
 		}
@@ -228,6 +275,33 @@ public abstract class ScriptAttributesParser {
 		}
 	}
 
+	public interface TtyCondition {
+		boolean isActive(Map<String, ?> args);
+	}
+
+	enum ConstTtyCondition implements TtyCondition {
+		ALWAYS {
+			@Override
+			public boolean isActive(Map<String, ?> args) {
+				return true;
+			}
+		},
+	}
+
+	record EqualsTtyCondition(String key, String repr) implements TtyCondition {
+		@Override
+		public boolean isActive(Map<String, ?> args) {
+			return Objects.toString(args.get(key)).equals(repr);
+		}
+	}
+
+	record BoolTtyCondition(String key) implements TtyCondition {
+		@Override
+		public boolean isActive(Map<String, ?> args) {
+			return args.get(key) instanceof Boolean b && b.booleanValue();
+		}
+	}
+
 	protected static String addrToString(InetAddress address) {
 		if (address.isAnyLocalAddress()) {
 			return "127.0.0.1"; // Can't connect to 0.0.0.0 as such. Choose localhost.
@@ -244,7 +318,8 @@ public abstract class ScriptAttributesParser {
 
 	public record ScriptAttributes(String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
-			Map<String, ParameterDescription<?>> parameters, Collection<String> extraTtys) {
+			Map<String, ParameterDescription<?>> parameters, Map<String, TtyCondition> extraTtys,
+			int timeoutMillis, boolean noImage) {
 	}
 
 	/**
@@ -268,7 +343,7 @@ public abstract class ScriptAttributesParser {
 		if (address != null) {
 			env.put("GHIDRA_TRACE_RMI_ADDR", sockToString(address));
 			if (address instanceof InetSocketAddress tcp) {
-				env.put("GHIDRA_TRACE_RMI_HOST", tcp.getAddress().toString());
+				env.put("GHIDRA_TRACE_RMI_HOST", tcp.getAddress().getHostAddress());
 				env.put("GHIDRA_TRACE_RMI_PORT", Integer.toString(tcp.getPort()));
 			}
 		}
@@ -302,7 +377,9 @@ public abstract class ScriptAttributesParser {
 	private HelpLocation helpLocation;
 	private final Map<String, UserType<?>> userTypes = new HashMap<>();
 	private final Map<String, ParameterDescription<?>> parameters = new LinkedHashMap<>();
-	private final Set<String> extraTtys = new LinkedHashSet<>();
+	private final Map<String, TtyCondition> extraTtys = new LinkedHashMap<>();
+	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_TIMEOUT_MILLIS;
+	private boolean noImage = false;
 
 	/**
 	 * Check if a line should just be ignored, e.g., blank lines, or the "shebang" line on UNIX.
@@ -352,7 +429,8 @@ public abstract class ScriptAttributesParser {
 	/**
 	 * Process a line in the metadata comment block
 	 * 
-	 * @param line the line, excluding any comment delimiters
+	 * @param loc the location, for error reporting
+	 * @param comment the comment, excluding any comment delimiters
 	 */
 	public void parseComment(Location loc, String comment) {
 		if (comment.isBlank()) {
@@ -362,24 +440,29 @@ public abstract class ScriptAttributesParser {
 		if (!parts[0].startsWith("@")) {
 			return;
 		}
-		if (parts.length < 2) {
-			Msg.error(this, "%s: Too few tokens: %s".formatted(loc, comment));
-			return;
+		if (parts.length == 1) {
+			switch (parts[0].trim()) {
+				case AT_NOIMAGE -> parseNoImage(loc);
+				default -> parseUnrecognized(loc, comment);
+			}
 		}
-		switch (parts[0].trim()) {
-			case AT_TITLE -> parseTitle(loc, parts[1]);
-			case AT_DESC -> parseDesc(loc, parts[1]);
-			case AT_MENU_PATH -> parseMenuPath(loc, parts[1]);
-			case AT_MENU_GROUP -> parseMenuGroup(loc, parts[1]);
-			case AT_MENU_ORDER -> parseMenuOrder(loc, parts[1]);
-			case AT_ICON -> parseIcon(loc, parts[1]);
-			case AT_HELP -> parseHelp(loc, parts[1]);
-			case AT_ENUM -> parseEnum(loc, parts[1]);
-			case AT_ENV -> parseEnv(loc, parts[1]);
-			case AT_ARG -> parseArg(loc, parts[1], ++argc);
-			case AT_ARGS -> parseArgs(loc, parts[1]);
-			case AT_TTY -> parseTty(loc, parts[1]);
-			default -> parseUnrecognized(loc, comment);
+		else {
+			switch (parts[0].trim()) {
+				case AT_TITLE -> parseTitle(loc, parts[1]);
+				case AT_DESC -> parseDesc(loc, parts[1]);
+				case AT_MENU_PATH -> parseMenuPath(loc, parts[1]);
+				case AT_MENU_GROUP -> parseMenuGroup(loc, parts[1]);
+				case AT_MENU_ORDER -> parseMenuOrder(loc, parts[1]);
+				case AT_ICON -> parseIcon(loc, parts[1]);
+				case AT_HELP -> parseHelp(loc, parts[1]);
+				case AT_ENUM -> parseEnum(loc, parts[1]);
+				case AT_ENV -> parseEnv(loc, parts[1]);
+				case AT_ARG -> parseArg(loc, parts[1], ++argc);
+				case AT_ARGS -> parseArgs(loc, parts[1]);
+				case AT_TTY -> parseTty(loc, parts[1]);
+				case AT_TIMEOUT -> parseTimeout(loc, parts[1]);
+				default -> parseUnrecognized(loc, comment);
+			}
 		}
 	}
 
@@ -531,10 +614,43 @@ public abstract class ScriptAttributesParser {
 		}
 	}
 
-	protected void parseTty(Location loc, String str) {
-		if (!extraTtys.add(str)) {
+	protected void putTty(Location loc, String name, TtyCondition condition) {
+		if (extraTtys.put(name, condition) != null) {
 			Msg.warn(this, "%s: Duplicate %s. Ignored".formatted(loc, AT_TTY));
 		}
+	}
+
+	protected void parseTty(Location loc, String str) {
+		List<String> parts = ShellUtils.parseArgs(str);
+		switch (parts.size()) {
+			case 1:
+				putTty(loc, parts.get(0), ConstTtyCondition.ALWAYS);
+				return;
+			case 3:
+				if ("if".equals(parts.get(1))) {
+					putTty(loc, parts.get(0), new BoolTtyCondition(parts.get(2)));
+					return;
+				}
+			case 5:
+				if ("if".equals(parts.get(1)) && "==".equals(parts.get(3))) {
+					putTty(loc, parts.get(0), new EqualsTtyCondition(parts.get(2), parts.get(4)));
+					return;
+				}
+		}
+		Msg.error(this, MSGPAT_INVALID_TTY_SYNTAX.formatted(loc, AT_TTY));
+	}
+
+	protected void parseTimeout(Location loc, String str) {
+		try {
+			timeoutMillis = Integer.parseInt(str);
+		}
+		catch (NumberFormatException e) {
+			Msg.error(this, MSGPAT_INVALID_TIMEOUT_SYNTAX.formatted(loc, AT_TIMEOUT));
+		}
+	}
+
+	protected void parseNoImage(Location loc) {
+		noImage = true;
 	}
 
 	protected void parseUnrecognized(Location loc, String line) {
@@ -560,7 +676,8 @@ public abstract class ScriptAttributesParser {
 		}
 		return new ScriptAttributes(title, getDescription(), List.copyOf(menuPath), menuGroup,
 			menuOrder, new GIcon(iconId), helpLocation,
-			Collections.unmodifiableMap(new LinkedHashMap<>(parameters)), List.copyOf(extraTtys));
+			Collections.unmodifiableMap(new LinkedHashMap<>(parameters)),
+			Collections.unmodifiableMap(new LinkedHashMap<>(extraTtys)), timeoutMillis, noImage);
 	}
 
 	private String getDescription() {

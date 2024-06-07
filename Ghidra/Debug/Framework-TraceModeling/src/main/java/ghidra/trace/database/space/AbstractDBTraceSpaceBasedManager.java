@@ -24,6 +24,7 @@ import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
 import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
@@ -125,7 +126,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected final Collection<M> allSpacesView =
 		new CatenatedCollection<>(memSpacesView, regSpacesView);
 
-	public AbstractDBTraceSpaceBasedManager(String name, DBHandle dbh, DBOpenMode openMode,
+	public AbstractDBTraceSpaceBasedManager(String name, DBHandle dbh, OpenMode openMode,
 			ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
 		this.name = name;

@@ -241,7 +241,13 @@ public class ImpliedMatchUtils {
 			if (sourceFunction.getProgram()
 					.getFunctionManager()
 					.getFunctionAt(srcRefToAddress) == null) {
-				return null; // function may not have been created here.
+				return null; // source function may not have been created here.
+			}
+
+			if (destinationFunction.getProgram()
+					.getFunctionManager()
+					.getFunctionAt(destRefToAddress) == null) {
+				return null; // destination function may not have been created here.
 			}
 		}
 

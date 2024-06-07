@@ -19,8 +19,6 @@ import java.awt.Component;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.KeyStroke;
-
 import org.jdom.Document;
 import org.jdom.output.XMLOutputter;
 
@@ -38,7 +36,7 @@ import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.duallisting.VTDualListingHighlightProvider;
@@ -51,7 +49,6 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.project.tool.GhidraTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
@@ -144,8 +141,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			toolTemplate = ToolUtils.readToolTemplate(toolFileName);
 		}
 
-		PluginTool newTool =
-			(GhidraTool) toolTemplate.createTool(controller.getTool().getProject());
+		PluginTool newTool = toolTemplate.createTool(controller.getTool().getProject());
 		try {
 			VersionTrackingSubordinatePluginX pluginX =
 				new VersionTrackingSubordinatePluginX(newTool, isSourceTool);
@@ -190,30 +186,35 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		if (processingOptions) {
 			return;
 		}
+
+		if (!(newValue instanceof ActionTrigger)) {
+			return;
+		}
+
 		processingOptions = true;
 		try {
-			if (!(newValue instanceof KeyStroke)) {
-				return;
-			}
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			if (sourceTool != null) {
-				Options sourceOptions = sourceTool.getOptions(ToolConstants.KEY_BINDINGS);
-				if (sourceOptions != options) {
-					sourceOptions.setKeyStroke(optionName, keyStroke);
-					sourceTool.refreshKeybindings();
-					return;
-				}
-			}
-			if (destinationTool != null) {
-				Options destinationOptions = destinationTool.getOptions(ToolConstants.KEY_BINDINGS);
-				if (destinationOptions != options) {
-					destinationOptions.setKeyStroke(optionName, keyStroke);
-					destinationTool.refreshKeybindings();
-				}
-			}
+			updateActionTrigger(options, optionName, (ActionTrigger) newValue);
 		}
 		finally {
 			processingOptions = false;
+		}
+	}
+
+	private void updateActionTrigger(ToolOptions options, String optionName,
+			ActionTrigger trigger) {
+		if (sourceTool != null) {
+			Options sourceOptions = sourceTool.getOptions(DockingToolConstants.KEY_BINDINGS);
+			if (sourceOptions != options) {
+				sourceOptions.setActionTrigger(optionName, trigger);
+				return;
+			}
+		}
+		if (destinationTool != null) {
+			Options destinationOptions =
+				destinationTool.getOptions(DockingToolConstants.KEY_BINDINGS);
+			if (destinationOptions != options) {
+				destinationOptions.setActionTrigger(optionName, trigger);
+			}
 		}
 	}
 
@@ -352,7 +353,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	@Override
 	public void sessionUpdated(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_STATUS_CHANGED)) {
+		if (ev.contains(VTEvent.MARKUP_ITEM_STATUS_CHANGED)) {
 			CodeViewerService service = sourceTool.getService(CodeViewerService.class);
 			if (service == null) {
 				return;
@@ -363,7 +364,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			ListingPanel listingPanel = service.getListingPanel();
 			listingPanel.repaint();
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			// This kicks the sub-tool highlight providers so each gets fresh
 			// markup item information.
 			for (VersionTrackingSubordinatePluginX pluginX : pluginList) {
@@ -658,7 +659,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	 * 
 	 * @return The source tool from the VT session.
 	 */
-	PluginTool getSourceTool() {
+	public PluginTool getSourceTool() {
 		return sourceTool;
 	}
 

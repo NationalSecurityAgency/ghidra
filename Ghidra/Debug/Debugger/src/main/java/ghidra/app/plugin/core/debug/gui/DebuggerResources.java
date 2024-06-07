@@ -62,6 +62,7 @@ import ghidra.util.exception.CancelledException;
 import resources.MultiIcon;
 
 public interface DebuggerResources {
+
 	String OPTIONS_CATEGORY_DEBUGGER = "Debugger";
 	String OPTIONS_CATEGORY_WORKFLOW = "Workflow";
 
@@ -118,7 +119,7 @@ public interface DebuggerResources {
 	Icon ICON_STACK = new GIcon("icon.debugger.provider.stack");
 	Icon ICON_BREAKPOINTS = new GIcon("icon.debugger.provider.breakpoints");
 	Icon ICON_MODULES = new GIcon("icon.debugger.provider.modules");
-	Icon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
+	Icon ICON_MAPPINGS = new GIcon("icon.debugger.provider.mappings"); // TODO: A better icon
 	Icon ICON_PCODE = new GIcon("icon.debugger.provider.pcode"); // TODO
 	Icon ICON_REGIONS = new GIcon("icon.debugger.provider.regions");
 	Icon ICON_TIME = new GIcon("icon.debugger.provider.time");
@@ -131,7 +132,7 @@ public interface DebuggerResources {
 	Icon ICON_DELETE = new GIcon("icon.debugger.delete");
 	Icon ICON_CLEAR = new GIcon("icon.debugger.clear");
 	Icon ICON_REFRESH = new GIcon("icon.debugger.refresh");
-	Icon ICON_FILTER = new GIcon("icon.debugger.filter"); // Eww.
+	Icon ICON_FILTER = new GIcon("icon.debugger.filter");
 	Icon ICON_SELECT_ROWS = new GIcon("icon.debugger.select.rows");
 	Icon ICON_AUTOREAD = new GIcon("icon.debugger.autoread");
 
@@ -148,6 +149,8 @@ public interface DebuggerResources {
 	Icon ICON_MAP_MODULES = new GIcon("icon.debugger.map.modules");
 	Icon ICON_MAP_SECTIONS = new GIcon("icon.debugger.map.sections"); // TODO
 	Icon ICON_MAP_REGIONS = new GIcon("icon.debugger.map.regions"); // TODO
+	Icon ICON_MAP_AUTO = new GIcon("icon.debugger.map.auto");
+	Icon ICON_MAP_MANUALLY = new GIcon("icon.debugger.map.manual");
 	Icon ICON_BLOCK = new GIcon("icon.debugger.block"); // TODO
 	// TODO: Draw an icon
 	Icon ICON_SELECT_ADDRESSES = new GIcon("icon.debugger.select.addresses");
@@ -809,40 +812,6 @@ public interface DebuggerResources {
 			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.menuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ImportMissingModuleAction {
-		String NAME = "Import Missing Module";
-		String DESCRIPTION = "Import the missing module from disk";
-		Icon ICON = ICON_IMPORT;
-		String HELP_ANCHOR = "import_missing_module";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapMissingModuleAction {
-		String NAME = "Map Missing Module";
-		String DESCRIPTION = "Map the missing module to an existing import";
-		Icon ICON = ICON_MAP_MODULES;
-		String HELP_ANCHOR = "map_missing_module";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1547,21 +1516,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface SynchronizeTargetAction {
-		String NAME = "Synchronize Target Activation";
-		String DESCRIPTION = "Synchronize trace activation with debugger focus/select";
-		Icon ICON = ICON_SYNC;
-		String HELP_ANCHOR = "sync_target";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	interface SaveByDefaultAction {
 		String NAME = "Save Traces By Default";
 		String DESCRIPTION = "Automatically save traces to the project";
@@ -1647,7 +1601,7 @@ public interface DebuggerResources {
 	}
 
 	interface CloseAllTracesAction extends CloseTraceAction {
-		String NAME = NAME_PREFIX + " All Traces";
+		String NAME = NAME_PREFIX + "All Traces";
 		String DESCRIPTION = "Close all traces";
 		String HELP_ANCHOR = "close_all_traces";
 
@@ -1674,7 +1628,7 @@ public interface DebuggerResources {
 	}
 
 	interface CloseOtherTracesAction extends CloseTraceAction {
-		String NAME = NAME_PREFIX + " Other Traces";
+		String NAME = NAME_PREFIX + "Other Traces";
 		String DESCRIPTION = "Close all traces except the current one";
 		String HELP_ANCHOR = "close_other_traces";
 
@@ -1701,7 +1655,7 @@ public interface DebuggerResources {
 	}
 
 	interface CloseDeadTracesAction extends CloseTraceAction {
-		String NAME = NAME_PREFIX + " Dead Traces";
+		String NAME = NAME_PREFIX + "Dead Traces";
 		String DESCRIPTION = "Close all traces not being recorded";
 		String HELP_ANCHOR = "close_dead_traces";
 
@@ -1860,87 +1814,6 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface LimitToCurrentSnapAction {
-		String NAME = "Limit to Current Snap";
-		String DESCRIPTION = "Choose whether displayed objects must be alive at the current snap";
-		String GROUP = GROUP_GENERAL;
-		Icon ICON = ICON_TIME; // TODO
-		String HELP_ANCHOR = "limit_to_current_snap";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowHiddenAction {
-		String NAME = "Show Hidden";
-		String DESCRIPTION = "Choose whether to display hidden children";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_hidden";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowPrimitivesInTreeAction {
-		String NAME = "Show Primitives in Tree";
-		String DESCRIPTION = "Choose whether to display primitive values in the tree";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_primitives";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowMethodsInTreeAction {
-		String NAME = "Show Methods in Tree";
-		String DESCRIPTION = "Choose whether to display methods in the tree";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_methods";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface FollowLinkAction {
-		String NAME = "Follow Link";
-		String DESCRIPTION = "Navigate to the link target";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "follow_link";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.popupMenuPath(NAME)
-					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

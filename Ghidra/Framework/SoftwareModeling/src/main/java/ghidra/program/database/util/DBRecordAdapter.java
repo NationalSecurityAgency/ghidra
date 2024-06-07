@@ -33,7 +33,7 @@ public interface DBRecordAdapter {
 	public RecordIterator getRecords() throws IOException;
 
 	/**
-	 * Get the number of records in table
+	 * Get the number of function definition datatype records
 	 * @return total record count
 	 */
 	public int getRecordCount();

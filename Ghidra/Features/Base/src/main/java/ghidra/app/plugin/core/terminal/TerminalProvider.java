@@ -40,6 +40,8 @@ import ghidra.app.plugin.core.terminal.TerminalPanel.FindOptions;
 import ghidra.app.plugin.core.terminal.vt.VtOutput;
 import ghidra.app.services.ClipboardService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 
 /**
@@ -153,6 +155,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	}
 
 	protected final TerminalPlugin plugin;
+	protected final Plugin helpPlugin;
 
 	protected final TerminalPanel panel;
 	protected final FindDialog findDialog = new FindDialog();
@@ -164,9 +167,10 @@ public class TerminalProvider extends ComponentProviderAdapter {
 
 	private boolean terminated = false;
 
-	public TerminalProvider(TerminalPlugin plugin, Charset charset) {
+	public TerminalProvider(TerminalPlugin plugin, Charset charset, Plugin helpPlugin) {
 		super(plugin.getTool(), "Terminal", plugin.getName());
 		this.plugin = plugin;
+		this.helpPlugin = helpPlugin;
 		this.panel = new TerminalPanel(charset, this);
 		this.panel.addTerminalListener(new TerminalListener() {
 			@Override
@@ -177,6 +181,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 		createActions();
 		setWindowMenuGroup("Terminals");
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
+		setHelpLocation(new HelpLocation(helpPlugin.getName(), "plugin"));
 
 		// Avoid change in dimension when "terminated" border is applied
 		panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -225,6 +230,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_F,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "find"))
 				.onAction(this::activatedFind)
 				.buildAndInstallLocal(this);
 		actionFindNext = new ActionBuilder("Find Next", plugin.getName())
@@ -232,6 +238,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_H,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_next"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindNext)
 				.buildAndInstallLocal(this);
@@ -240,6 +247,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_G,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_previous"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindPrevious)
 				.buildAndInstallLocal(this);
@@ -365,6 +373,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			terminated = true;
 			removeLocalAction(actionTerminate);
 			panel.terminalListeners.clear();
+			panel.setOutputCallback(buf -> {
+			});
+			panel.getFieldPanel().setCursorOn(false);
 			setTitle("[Terminal]");
 			setSubTitle("Terminated");
 			if (!isVisible()) {
@@ -389,6 +400,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 					.menuIcon(new GIcon("icon.plugin.terminal.terminate"))
 					.menuPath("Terminate")
 					.menuGroup("Terminate")
+					.helpLocation(new HelpLocation(helpPlugin.getName(), "terminate"))
 					.enabledWhen(ctx -> true)
 					.onAction(ctx -> action.run())
 					.buildAndInstallLocal(this);

@@ -344,6 +344,8 @@ specific_symbol[String purpose] returns [SpecificSymbol symbol]
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
+					&& sym.getType() != symbol_type.flowdest_symbol
+					&& sym.getType() != symbol_type.flowref_symbol
 					&& sym.getType() != symbol_type.operand_symbol
 					&& sym.getType() != symbol_type.epsilon_symbol
 					&& sym.getType() != symbol_type.varnode_symbol) {
@@ -841,6 +843,8 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.flowdest_symbol
+					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
 				SpecificSymbol ss = (SpecificSymbol) sym;
@@ -874,6 +878,8 @@ pattern_symbol2[String purpose] returns [PatternExpression expr]
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.flowdest_symbol
+					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.operand_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
@@ -945,6 +951,8 @@ cstatement[VectorSTL<ContextChange> r]
 							|| sym.getType() == symbol_type.start_symbol
 							|| sym.getType() == symbol_type.end_symbol
 							|| sym.getType() == symbol_type.next2_symbol
+							|| sym.getType() == symbol_type.flowdest_symbol
+							|| sym.getType() == symbol_type.flowref_symbol
 							|| sym.getType() == symbol_type.operand_symbol
 							|| sym.getType() == symbol_type.epsilon_symbol
 							|| sym.getType() == symbol_type.varnode_symbol) {
@@ -1178,6 +1186,8 @@ assignment returns [VectorSTL<OpTpl> value]
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
+					&& sym.getType() != symbol_type.flowdest_symbol
+					&& sym.getType() != symbol_type.flowref_symbol
 					&& sym.getType() != symbol_type.operand_symbol
 					&& sym.getType() != symbol_type.epsilon_symbol
 					&& sym.getType() != symbol_type.varnode_symbol) {
@@ -1313,7 +1323,9 @@ jump_symbol[String purpose] returns [VarnodeTpl value]
 				unknownSymbolError($s.getText(), find($s), "start, end, or operand", purpose);
 			} else if (sym.getType() == symbol_type.start_symbol ||
 					sym.getType() == symbol_type.end_symbol ||
-					sym.getType() == symbol_type.next2_symbol) {
+					sym.getType() == symbol_type.next2_symbol ||
+					sym.getType() == symbol_type.flowdest_symbol ||
+					sym.getType() == symbol_type.flowref_symbol) {
 				SpecificSymbol ss = (SpecificSymbol) sym;
 				$value = new VarnodeTpl(find($s), new ConstTpl(ConstTpl.const_type.j_curspace),
 					ss.getVarnode().getOffset(),
@@ -1518,6 +1530,8 @@ expr_apply returns [Object value]
 				} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
+					|| sym.getType() == symbol_type.flowdest_symbol
+					|| sym.getType() == symbol_type.flowref_symbol
 					|| sym.getType() == symbol_type.operand_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {

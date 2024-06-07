@@ -36,6 +36,7 @@ import docking.tool.util.DockingToolConstants;
 import docking.widgets.table.TableSortState;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.TestDummyNavigatable;
+import ghidra.framework.options.ActionTrigger;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.DummyPluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -466,7 +467,7 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		ToolOptions keyOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		String name = action.getName() + " (" + action.getOwner() + ")";
-		runSwing(() -> keyOptions.setKeyStroke(name, newKs));
+		runSwing(() -> keyOptions.setActionTrigger(name, new ActionTrigger(newKs)));
 		waitForSwing();
 
 		KeyStroke actual = action.getKeyBinding();

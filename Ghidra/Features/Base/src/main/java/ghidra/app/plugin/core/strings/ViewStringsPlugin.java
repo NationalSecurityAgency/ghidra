@@ -15,10 +15,13 @@
  */
 package ghidra.app.plugin.core.strings;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import javax.swing.Icon;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -86,40 +89,36 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	}
 
 	private void createActions() {
-		refreshAction = new DockingAction("Refresh Strings", getName()) {
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return getCurrentProgram() != null;
-			}
-
-			@Override
-			public void actionPerformed(ActionContext context) {
-				getToolBarData().setIcon(REFRESH_NOT_NEEDED_ICON);
-				reload();
-			}
-		};
-		refreshAction.setToolBarData(new ToolBarData(REFRESH_NOT_NEEDED_ICON));
-		refreshAction.setDescription(
-			"<html>Push at any time to refresh the current table of strings.<br>" +
-				"This button is highlighted when the data <i>may</i> be stale.<br>");
-		refreshAction.setHelpLocation(new HelpLocation("ViewStringsPlugin", "Refresh"));
-		tool.addLocalAction(provider, refreshAction);
+		refreshAction = new ActionBuilder("Refresh Strings", getName())
+				.toolBarIcon(REFRESH_NOT_NEEDED_ICON)
+				.description("<html>Push at any time to refresh the current table of strings.<br>" +
+					"This button is highlighted when the data <i>may</i> be stale.<br>")
+				.enabledWhen(ac -> getCurrentProgram() != null)
+				.onAction(ac -> {
+					refreshAction.getToolBarData().setIcon(REFRESH_NOT_NEEDED_ICON);
+					reload();
+				})
+				.helpLocation(new HelpLocation("ViewStringsPlugin", "Refresh"))
+				.buildAndInstallLocal(provider);
 
 		tool.addLocalAction(provider, new MakeProgramSelectionAction(this, provider.getTable()));
 
 		linkNavigationAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, linkNavigationAction);
 
-		DockingAction editDataSettingsAction =
-			new DockingAction("Data Settings", getName(), KeyBindingType.SHARED) {
-				@Override
-				public void actionPerformed(ActionContext context) {
+		new ActionBuilder("Data Settings", getName()) // create pop-up menu item "Settings..."
+				.withContext(ViewStringsContext.class)
+				.popupMenuPath("Settings...")
+				.popupMenuGroup("R")
+				.helpLocation(new HelpLocation("DataPlugin", "Data_Settings"))
+				.sharedKeyBinding()
+				.enabledWhen(vsac -> vsac.getCount() > 0)
+				.onAction(vsac -> {
 					try {
-						DataSettingsDialog dialog = provider.getSelectedRowCount() == 1
-								? new DataSettingsDialog(provider.getSelectedData())
-								: new DataSettingsDialog(currentProgram,
-									provider.getProgramSelection());
+						DataSettingsDialog dialog =
+							vsac.getCount() == 1 ? new DataSettingsDialog(vsac.getSelectedData())
+									: new DataSettingsDialog(vsac.getProgram(),
+										vsac.getProgramSelection());
 
 						tool.showDialog(dialog);
 						dialog.dispose();
@@ -127,51 +126,34 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 					catch (CancelledException e) {
 						// do nothing
 					}
-				}
+				})
+				.buildAndInstallLocal(provider);
 
-			};
-		editDataSettingsAction.setPopupMenuData(new MenuData(new String[] { "Settings..." }, "R"));
-		editDataSettingsAction.setHelpLocation(new HelpLocation("DataPlugin", "Data_Settings"));
-
-		DockingAction editDefaultSettingsAction =
-			new DockingAction("Default Settings", getName(), KeyBindingType.SHARED) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					DataType dt = getSelectedDataType();
-					if (dt == null) {
+		new ActionBuilder("Default Settings", getName()) // create pop-up menu item "Default Settings..."
+				.withContext(ViewStringsContext.class)
+				.popupMenuPath("Default Settings...")
+				.popupMenuGroup("R")
+				.helpLocation(new HelpLocation("DataPlugin", "Default_Settings"))
+				.sharedKeyBinding()
+				.enabledWhen(vsac -> {
+					if (vsac.getCount() != 1) {
+						return false;
+					}
+					Data data = vsac.getSelectedData();
+					return data != null && data.getDataType().getSettingsDefinitions().length != 0;
+				})
+				.onAction(vsac -> {
+					Data data = vsac.getSelectedData();
+					if (data == null) {
 						return;
 					}
-					DataTypeSettingsDialog dataSettingsDialog =
+					DataType dt = data.getDataType();
+					DataTypeSettingsDialog dialog =
 						new DataTypeSettingsDialog(dt, dt.getSettingsDefinitions());
-					tool.showDialog(dataSettingsDialog);
-					dataSettingsDialog.dispose();
-				}
-
-				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					if (provider.getSelectedRowCount() != 1) {
-						return false;
-					}
-					DataType dt = getSelectedDataType();
-					if (dt == null) {
-						return false;
-					}
-					return dt.getSettingsDefinitions().length != 0;
-				}
-
-				private DataType getSelectedDataType() {
-					Data data = provider.getSelectedData();
-					return data != null ? data.getDataType() : null;
-				}
-			};
-		editDefaultSettingsAction.setPopupMenuData(
-			new MenuData(new String[] { "Default Settings..." }, "R"));
-		editDefaultSettingsAction.setHelpLocation(
-			new HelpLocation("DataPlugin", "Default_Settings"));
-
-		tool.addLocalAction(provider, editDataSettingsAction);
-		tool.addLocalAction(provider, editDefaultSettingsAction);
-
+					tool.showDialog(dialog);
+					dialog.dispose();
+				})
+				.buildAndInstallLocal(provider);
 	}
 
 	@Override
@@ -209,10 +191,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED)) {
+		if (ev.contains(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED, DATA_TYPE_CHANGED)) {
 			markDataAsStale();
 			return;
 		}
@@ -221,23 +200,26 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
 			Object newValue = doRecord.getNewValue();
-			switch (doRecord.getEventType()) {
-				case ChangeManager.DOCR_CODE_REMOVED:
-					ProgramChangeRecord pcRec = (ProgramChangeRecord) doRecord;
-					provider.remove(pcRec.getStart(), pcRec.getEnd());
-					break;
-				case ChangeManager.DOCR_CODE_ADDED:
-					if (newValue instanceof Data) {
-						provider.add((Data) newValue);
-					}
-					break;
-				default:
-					//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
-					break;
+			EventType eventType = doRecord.getEventType();
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case CODE_REMOVED:
+						ProgramChangeRecord pcRec = (ProgramChangeRecord) doRecord;
+						provider.remove(pcRec.getStart(), pcRec.getEnd());
+						break;
+					case CODE_ADDED:
+						if (newValue instanceof Data) {
+							provider.add((Data) newValue);
+						}
+						break;
+					default:
+						//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
+						break;
+				}
 			}
 		}
 
-		if (ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED)) {
+		if (ev.contains(ProgramEvent.DATA_TYPE_SETTING_CHANGED)) {
 			// Unusual code: because the table model goes directly to the settings values
 			// during each repaint, we don't need to figure out which row was changed.
 			provider.getComponent().repaint();

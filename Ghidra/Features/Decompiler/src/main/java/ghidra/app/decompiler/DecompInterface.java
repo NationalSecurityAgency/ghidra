@@ -84,10 +84,10 @@ public class DecompInterface {
 
 	public static class EncodeDecodeSet {
 		public OverlayAddressSpace overlay;		// Active overlay space or null
-		public Encoder mainQuery;		// Encoder for main query to decompiler process
+		public CachedEncoder mainQuery;		// Encoder for main query to decompiler process
 		public PackedDecode mainResponse;	// Decoder for main response from the decompiler process
 		public PackedDecode callbackQuery;	// Decoder for queries from the decompiler process
-		public PackedEncode callbackResponse;	// Encode for response to decompiler queries
+		public PatchPackedEncode callbackResponse;	// Encode for response to decompiler queries
 
 		/**
 		 * Set up encoders and decoders for functions that are not in overlay address spaces
@@ -95,10 +95,10 @@ public class DecompInterface {
 		 */
 		public EncodeDecodeSet(Program program) {
 			overlay = null;
-			mainQuery = new PackedEncode();
+			mainQuery = new PatchPackedEncode();
 			mainResponse = new PackedDecode(program.getAddressFactory());
 			callbackQuery = new PackedDecode(program.getAddressFactory());
-			callbackResponse = new PackedEncode();
+			callbackResponse = new PatchPackedEncode();
 		}
 
 		/**
@@ -272,7 +272,7 @@ public class DecompInterface {
 			decompProcess = DecompileProcessFactory.get();
 		}
 		long uniqueBase = UniqueLayout.SLEIGH_BASE.getOffset(pcodelanguage);
-		XmlEncode xmlEncode = new XmlEncode();
+		XmlEncode xmlEncode = new XmlEncode(false);
 		pcodelanguage.encodeTranslator(xmlEncode, program.getAddressFactory(), uniqueBase);
 		String tspec = xmlEncode.toString();
 		xmlEncode.clear();
@@ -776,20 +776,16 @@ public class DecompInterface {
 	public synchronized DecompileResults decompileFunction(Function func, int timeoutSecs,
 			TaskMonitor monitor) {
 
+		dtmanage.clearTemporaryIds();
 		decompileMessage = "";
-		if (monitor != null && monitor.isCancelled()) {
-			return null;
+
+		if (program == null || (monitor != null && monitor.isCancelled())) {
+			return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage,
+				decompileMessage, null, DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		if (monitor != null) {
 			monitor.addCancelledListener(monitorListener);
-		}
-
-		dtmanage.clearTemporaryIds();
-
-		if (program == null) {
-			return new DecompileResults(func, pcodelanguage, null, dtmanage, decompileMessage, null,
-				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		Decoder decoder = null;
