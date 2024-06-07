@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='ISO-8859-1' ?>
-
-<tocroot>
-  <tocref id="Ghidra Functionality">
-    <tocref id="Scripting">
-      <tocdef id="Python Interpreter" sortgroup="z" text="Python Interpreter" target="help/topics/Python/interpreter.html" />
-    </tocref>
-  </tocref>
-</tocroot>
