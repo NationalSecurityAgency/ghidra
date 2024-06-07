@@ -18,7 +18,6 @@ package ghidra.app.util.demangler.gnu;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -166,35 +165,30 @@ public class GnuDemanglerNativeProcess {
 
 		String[] command = buildCommand();
 		IOException exc = null;
-		String err = "";
 		isDisposed = true;
 		try {
 			process = Runtime.getRuntime().exec(command);
-			// Give process time to load and report possible error
-			process.waitFor(200, TimeUnit.MILLISECONDS);
 			InputStream in = process.getInputStream();
 			OutputStream out = process.getOutputStream();
 			reader = new BufferedReader(new InputStreamReader(in));
 			writer = new PrintWriter(out);
-			isDisposed = !process.isAlive();
-			if (isDisposed) {
-				err = new String(process.getErrorStream().readAllBytes());
-				process.destroy();          			
-				process = null;
-			}
+			
+			checkForError(command);
+			
+			isDisposed = false;
 		}
 		catch (IOException e) {
 			exc = e;
 		}
-		catch (InterruptedException e) {
-			// ignore
-		}
 		finally {
 			if (isDisposed) {
+				if (process != null) {
+					process.destroy();
+				}
 				if (!getAndSetErrorDisplayed()) {
-					String errorDetail = err;
+					String errorDetail = "";
 					if (exc != null) {
-						errorDetail = exc.getMessage() + "\n" + errorDetail;
+						errorDetail = exc.getMessage();
 					}
 					errorDetail = "GNU Demangler executable may not be compatible with your system and may need to be rebuilt.\n" +
 							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
@@ -207,8 +201,6 @@ public class GnuDemanglerNativeProcess {
 				throw exc;
 			}
 		}
-		
-		checkForError(command);
 
 		String key = getKey(applicationName, options);
 		processesByName.put(key, this);
