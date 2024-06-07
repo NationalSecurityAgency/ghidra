@@ -178,6 +178,30 @@ public class DataTypeArchiveGTree extends GTree {
 		reloadTree();
 	}
 
+	/**
+	 * Signals to this tree that it should configure itself for use inside of a widget that allows
+	 * the user to choose a data type.
+	 */
+	public void updateFilterForChoosingDataType() {
+
+		// Only filter on the name so that any extra display text will not cause a filter failure
+		// when attempting to pick a type by its name.
+		boolean filterOnNameOnly = true;
+		boolean includeMembers = false;
+
+		DefaultDtTreeDataTransformer transformer;
+		if (includeMembers) {
+			transformer = new DataTypeTransformer(filterOnNameOnly);
+		}
+		else {
+			transformer = new DefaultDtTreeDataTransformer(filterOnNameOnly);
+		}
+
+		setDataTransformer(transformer);
+
+		reloadTree();
+	}
+
 	public Program getProgram() {
 		return plugin.getProgram();
 	}
