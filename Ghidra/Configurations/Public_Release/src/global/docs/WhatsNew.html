@@ -4,15 +4,17 @@
   <HEAD>
     <TITLE> Ghidra What's New</TITLE>
 	<STYLE type="text/css" name="text/css">
-		li { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; margin-bottom: 8px; }
-		h1 { color:#000080; font-family:times new roman; font-size:28pt; font-style:italic; font-weight:bold; text-align:center; color:#000080; font-family:times new roman; }
-		h2 { padding-top:10px; color:#984c4c; font-family:times new roman; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
-		h3 { margin-left:40px; padding-top:10px; font-family:times new roman; font-family:times new roman; font-size:14pt; font-weight:bold; }
-		h4 { margin-left:40px; padding-top:10px; font-family:times new roman; font-family:times new roman; font-size:14pt; font-weight:bold; }
-		p { margin-left:40px; font-family:times new roman; font-size:14pt; }
-		table, th, td { border: 1px solid black; border-collapse: collapse; font-size:10pt; }
-		td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; text-align:left; vertical-align:top; }
-		th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; text-align:left; }
+		body { margin-bottom: 50px; margin-left: 10px; margin-right: 10px; margin-top: 10px; } /* some padding to improve readability */ 
+		li { font-family:times new roman; font-size:14pt; margin-bottom: 8px; }
+		h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+		h2 { margin: 10px; margin-top: 20px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+		h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; `font-size:14pt; font-weight:bold;  }
+		h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:14pt; font-style:italic; }
+		p { margin-left: 40px; font-family:times new roman; font-size:14pt; }
+		blockquote p { margin-left: 10px; }
+		table { margin-left: 20px; margin-top: 10px; width: 80%;}
+		td { font-family:times new roman; font-size:14pt; vertical-align: top; }
+		th { font-family:times new roman; font-size:14pt; font-weight:bold; background-color: #EDF3FE; }
 		code { color:black; font-family:courier new; font-size: 12pt; }
 		span.code { font-family:courier new font-size: 14pt; color:#000000; }
 		.gcode { font-family: courier new; font-weight: bold; font-size: 85%; }
@@ -87,21 +89,25 @@
     <P> We are introducing a new debugger connection system called Trace RMI. This is replacing the older system,
     which we are calling the Recorder system.</P>
     
-    <P>The most noticeable difference will be a new menu for launching targets. It is very similar to the previous system, but with some key differences:
-    <UL style="padding-left:100px">
+    <P>The most noticeable difference will be a new menu for launching targets. It is very similar to the previous system, but with some key differences:</P>
+    <BLOCKQUOTE>
+    <UL>
        <LI>Connection and launching are no longer separated into two different configuration panels. There is one panel to launch your target.</LI>
        <LI>Ghidra will no longer attempt to launch blindly with defaults. The first time you launch a program, you must select a launcher and configure it.</LI>
        <LI>After the initial launch you can re-launch with a previous configuration, without requiring a prompt.</LI>
     </UL>
+    </BLOCKQUOTE>
 
     <P>The next most noticeable difference will be the replacement of the Interpreter window with the Terminal window. This is a proper VT-100
     terminal emulator, so the experience will be much like, if not identical to, how you'd debug in a plain terminal, except embedded into and integrated with Ghidra.
     Some notable improvements that brings:</P>
-    <UL style="padding-left:100px">
+    <BLOCKQUOTE>
+    <UL>
         <LI>Tab completion, history, etc., should all work as implemented by the connected debugger's command-line interface.</LI>
         <LI>When the target is running, it has proper I/O in that terminal.</LI>
         <LI>If connecting goes poorly for some reason, the debugger's command-line interface is likely still operational.</LI>
     </UL>
+    </BLOCKQUOTE>
     
     <P>You may also notice the replacement of the Debugger Targets window with the Connection Manager window, and the replacement
     of the Objects window with the Model window. These are operationally very similar to their previous counterparts.</P>
@@ -169,20 +175,21 @@
     
     <P>There have been many improvements to keyboard only actions and navigation in Ghidra. These changes will be welcome for those who
     prefer to use the keyboard as much as possible and those needing better accessibility.  Improvements include:</P>
-    <UL style="padding-left:100px">
+    <BLOCKQUOTE>
+    <UL>
        <LI>Standard keyboard navigation should now work in most component windows and dialogs. In general, <span class="gtitle">Tab</span> and <span class="gtitle">&lt;CTRL&gt; Tab</span> will
        move focus to the next focusable component and <span class="gtitle">&lt;SHIFT&gt; Tab</span> and <span class="gtitle">&lt;CTRL&gt;&lt;SHIFT&gt; Tab</span> will move to the
        previous focusable component. <span class="gtitle">Tab</span> and <span class="gtitle">&lt;SHIFT&gt; Tab</span> do not always work as some components use those keys internally, but
        <span class="gtitle">&lt;CTRL&gt; Tab,</span> and <span class="gtitle">&lt;SHIFT&gt;&lt;CTRL&gt; Tab</span> should work universally.</LI>
        <LI>Ghidra now provides some convenient keyboard shortcut actions for transferring focus:</LI>
-       <UL style="padding-left:50px">
+       <UL>
         <LI><span class="gtitle">&lt;CTRL&gt; F3</span> - Transfers focus to  the next window or dialog.</LI>
         <LI><span class="gtitle">&lt;CTRL&gt;&lt;SHIFT&gt; F3</span> - Transfers focus to the previous window or dialog.</LI>
         <LI><span class="gtitle">&lt;CTRL&gt; J</span> - Transfers focus to the next titled dockable component (titled windows).</LI>
         <LI><span class="gtitle">&lt;CTRL&gt;&lt;SHIFT&gt; J</span> - Transfers focus to the previous titled dockable component.</LI>
        </UL>
        <LI>All actions can now be accessed via a searchable dialog.</LI>
-       <UL style="padding-left:50px">
+       <UL>
         <LI>Pressing <span class="gtitle">&lt;CTRL&gt; 3</span> will bring up the actions dialog with the local toolbar, popup and keyboard actions.</LI>
         <LI>Pressing <span class="gtitle">&lt;CTRL&gt; 3</span> a second time will add in all the global actions. </LI>
         <LI>Pressing <span class="gtitle">&lt;CTRL&gt; 3</span> a third time will add in the disabled actions as well.</LI>
@@ -190,6 +197,7 @@
         arrow keys allow you to select an action and enter will invoke the selected action </LI>
        </UL>
     </UL>
+    </BLOCKQUOTE>
 
 	<H2>Other Improvements </H2>
 	
