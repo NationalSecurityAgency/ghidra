@@ -19,7 +19,7 @@ import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.util.ArrayList;
 
-import ghidra.app.util.viewer.listingpanel.ListingDiffChangeListener;
+import ghidra.features.base.codecompare.listing.ListingDiffChangeListener;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;

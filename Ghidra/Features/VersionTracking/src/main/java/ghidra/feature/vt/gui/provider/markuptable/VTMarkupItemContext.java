@@ -18,9 +18,9 @@ package ghidra.feature.vt.gui.provider.markuptable;
 import java.util.List;
 
 import docking.DefaultActionContext;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
 import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanelActionContext;
 
 /**
  * Action context for the version tracking markup item provider.

@@ -24,6 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.TitledPanel;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
@@ -41,7 +42,6 @@ import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.multilisting.AddressTranslator;
 import ghidra.app.util.viewer.multilisting.MultiListingLayoutModel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.app.util.viewer.util.TitledPanel;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;

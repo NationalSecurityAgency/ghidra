@@ -36,6 +36,7 @@ import docking.widgets.table.RowObjectTableModel;
 import generic.lsh.vector.LSHVectorFactory;
 import generic.theme.GIcon;
 import ghidra.app.services.*;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.features.bsim.gui.BSimSearchPlugin;
 import ghidra.features.bsim.gui.filters.BSimFilterType;
 import ghidra.features.bsim.gui.filters.Md5BSimFilterType;

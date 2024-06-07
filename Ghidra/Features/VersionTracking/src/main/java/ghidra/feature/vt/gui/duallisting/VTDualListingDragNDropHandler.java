@@ -24,12 +24,12 @@ import java.awt.dnd.*;
 import java.util.ArrayList;
 
 import docking.dnd.*;
-import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.task.ApplyMarkupAtDestinationAddressTask;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
