@@ -37,8 +37,12 @@ x86_compiler_map = {
     'Cygwin': 'windows',
 }
 
-arm_compiler_map = {
+aarch64_compiler_map = {
     'windows': 'default',
+}
+
+arm_compiler_map = {
+    'windows': 'windows',
 }
 
 compiler_map = {
@@ -46,11 +50,8 @@ compiler_map = {
     'DATA:LE:64:default': data64_compiler_map,
     'x86:LE:32:default': x86_compiler_map,
     'x86:LE:64:default': x86_compiler_map,
-    'AARCH64:BE:64:v8A': arm_compiler_map,
-    'AARCH64:LE:64:AppleSilicon': arm_compiler_map,
-    'AARCH64:LE:64:v8A': arm_compiler_map,
-    'ARM:BE:64:v8': arm_compiler_map,
-    'ARM:LE:64:v8': arm_compiler_map,
+    'AARCH64:LE:64:AppleSilicon': aarch64_compiler_map,
+    'ARM:LE:32:v8': arm_compiler_map,
 }
 
 
