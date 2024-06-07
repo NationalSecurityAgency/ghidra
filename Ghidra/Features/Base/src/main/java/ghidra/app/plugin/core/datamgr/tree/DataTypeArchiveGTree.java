@@ -364,7 +364,6 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	private class DataTypeTreeRenderer extends GTreeRenderer {
-		private static final int ICON_WIDTH = 24;
 		private static final int ICON_HEIGHT = 18;
 
 		@Override
