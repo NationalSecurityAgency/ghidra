@@ -63,7 +63,7 @@ public class MDObjectCPP extends MDObject {
 	 */
 	public String getName() {
 		if (hashedObjectFlag) {
-			return hashedObject.toString();
+			return hashedObject.getName();
 		}
 		return getQualifiedName().getBasicName().toString();
 	}
@@ -267,10 +267,19 @@ public class MDObjectCPP extends MDObject {
 			hashString = builder.toString();
 		}
 
+		/**
+		 * Returns the name representation
+		 * @return the name
+		 */
+		public String getName() {
+			// We have made up the name representation with the encompassing tick marks (similar
+			//  to other types).  Nothing is sacrosanct about this output.
+			return "`" + hashString + "'";
+		}
+
 		@Override
 		public void insert(StringBuilder builder) {
-			// We have made up the output format.  Nothing is sacrosanct about this output.
-			builder.append("`" + hashString + "'");
+			builder.append(getName());
 		}
 	}
 

@@ -55,6 +55,11 @@ public class MDNestedName extends MDParsableItem {
 	public String getMangled() {
 		return mangled;
 	}
+
+	public MDObjectCPP getNestedObject() {
+		return objectCPP;
+	}
+
 }
 
 /******************************************************************************/
