@@ -16,7 +16,7 @@
 package wasm.analysis;
 
 import ghidra.app.plugin.core.analysis.DWARFAnalyzer;
-import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 import wasm.WasmLoader;
