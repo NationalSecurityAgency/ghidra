@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,11 +70,26 @@ public class MouseBindingMouseEventDispatcher {
 		toolkit.addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK);
 	}
 
+	private boolean isSettingMouseBinding(MouseEvent e) {
+		Component destination = e.getComponent();
+		if (destination == null) {
+			Component focusOwner = focusProvider.getFocusOwner();
+			destination = focusOwner;
+		}
+
+		// This is the class we use to set mouse bindings
+		return destination instanceof MouseEntryTextField;
+	}
+
 	private void process(MouseEvent e) {
 
 		int id = e.getID();
 		if (id == MouseEvent.MOUSE_ENTERED || id == MouseEvent.MOUSE_EXITED) {
 			return;
+		}
+
+		if (isSettingMouseBinding(e)) {
+			return; // the user is setting the binding; do not process system actions
 		}
 
 		// always let the application finish processing key events that it started
@@ -124,6 +139,16 @@ public class MouseBindingMouseEventDispatcher {
 
 			action.actionPerformed(
 				new ActionEvent(source, ActionEvent.ACTION_PERFORMED, command, when, modifiers));
+		}
+
+		int eventButton = e.getButton();
+		int bindingButton = mouseBinding.getButton();
+		if (eventButton != bindingButton) {
+			// We may have missed an event or the user pressed multiple mouse buttons in an
+			// unexpected sequence.  Clear the in-progress action here so we do not consume all
+			// mouse events indefinitely.
+			inProgressAction = null;
+			return false;
 		}
 
 		e.consume();
