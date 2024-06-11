@@ -25,10 +25,10 @@ import mdemangler.naming.MDFragmentName;
  *  I created, but undname does not support the symbol.  I do not know what to call this type
  *  of object, so the name is descriptive for now.  Some bracketed prefix have been
  *  <b><code>[T2M]</code></b> and <b><code>[MEP]</code></b>, which we have gleaned by searching
- *  the Internet to possibly mean "Transition to Managed (code)" and "Managed Entry Point." 
+ *  the Internet to possibly mean "Transition to Managed (code)" and "Managed Entry Point."
  */
 // TODO: Not sure what this is, so:
-//   - if it really is an object, then it probably needs a better name; 
+//   - if it really is an object, then it probably needs a better name;
 //   - if it doesn't belong here (i.e., might be part of MDObjectCPP), then it should be moved there.
 public class MDObjectBracket extends MDObjectReserved {
 	private MDFragmentName fragmentName;
@@ -65,7 +65,7 @@ public class MDObjectBracket extends MDObjectReserved {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		if ((dmang.peek() != '_') && (dmang.peek(1) != '_')) {
+		if ((dmang.peek() != '_') || (dmang.peek(1) != '_')) {
 			throw new MDException("Missing prefix in MDObjectBracket parsing");
 		}
 		dmang.increment(2); // Skip the two underscores.

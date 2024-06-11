@@ -79,10 +79,6 @@ public class MDDataTypeParser {
 		MDDataType dt;
 		char code = dmang.peek();
 		switch (code) {
-			case '$':
-				dmang.increment();
-				dt = parseSpecialExtendedType(dmang, isHighest);
-				break;
 			case 'A':
 				dmang.increment();
 				dt = new MDReferenceType(dmang, isHighest, false, false);
@@ -139,9 +135,15 @@ public class MDDataTypeParser {
 				break;
 			case 'Y': // UINFO: QualifiedName only (no type)
 				// TODO: implementation. Try symbol like "?var@@3$$Yabc@@"
-			case 'S': // invalid (UINFO)
+				dt = new MDNamedUnspecifiedType(dmang);
+				break;
 			case 'V': // Empty type parameter pack?
+				dt = new MDEmptyParameterType(dmang);
+				break;
 			case 'Z': // End template parameter pack?
+				dt = new MDEndParameterType(dmang);
+				break;
+			case 'S': // invalid (UINFO)
 			case 'F': // Investigate $$F in CVMod processing... does it belong here?
 			default:
 				throw new MDException("SpecialDataType: unrecognized code: " + code);
@@ -162,6 +164,14 @@ public class MDDataTypeParser {
 		MDDataType dt;
 		char code = dmang.getAndIncrement();
 		switch (code) {
+			case '?':
+				// Not sure if this should be here or other place.  I suppose could have a
+				//  reference to one of these, so wouldn't want it in "Primary" data types
+				dt = new MDCustomType(dmang);
+				break;
+			case '$':
+				dt = parseSpecialExtendedType(dmang, isHighest);
+				break;
 			case 'C':
 				dt = new MDCharDataType(dmang);
 				dt.setSigned();

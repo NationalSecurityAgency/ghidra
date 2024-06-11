@@ -96,6 +96,17 @@ public class MDQualification extends MDParsableItem implements Iterable<MDQualif
 
 	@Override
 	protected void parseInternal() throws MDException {
+		// TODO: consider a do-while loop so we do not need this initial test for an empty
+		//  qualification, but also need to make sure MDQualifier logic also handles the first
+		//  '@' in the qualifier, which might not be possible at this time with the immediate
+		//  qualifier creation below (probably should wait to do this until when we refactor
+		//  MDMang to use factory models).  The other solution is to look for any place that an
+		//  MDQualification is used (but not as part of a MDQualfiedName or MDBasicName)
+//		if (dmang.peek() == '@' && dmang.peek(1) == '@') {
+//			// We have an empty qualification.  Remove the first '@' and the second one will
+//			// be handled below.
+//			dmang.increment();
+//		}
 		// We currently have a check to see if the index has moved (loc) to know to abort the
 		//  processing of this loop.  We could have also done a loop check on the '`' character
 		//  from an LLVM suffix on mangled "type" name that looks like:

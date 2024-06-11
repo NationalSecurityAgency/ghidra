@@ -24,7 +24,7 @@ import mdemangler.MDMang;
  *  a CodeView compiler (older version of compiler?).
  */
 // TODO: Not sure what this is, so:
-// - if it really is an object, then it probably needs a better name; 
+// - if it really is an object, then it probably needs a better name;
 // - if it doesn't belong here (i.e., might be part of MDObjectCPP), then it should be moved
 //    there.
 public class MDObjectCodeView extends MDObjectCPP {
@@ -45,11 +45,14 @@ public class MDObjectCodeView extends MDObjectCPP {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		if ((dmang.peek() != '?') && (dmang.peek(1) != '@')) {
+		if ((dmang.peek() != '?') || (dmang.peek(1) != '@')) {
 			throw new MDException("Missing prefix in MDObjectCodeView parsing");
 		}
 		dmang.increment(); // Skip the ?.
 		dmang.increment(); // Skip the @.
+		if ((dmang.peek() == '?') && (dmang.peek(1) == '@')) {
+			throw new MDException("Cannot nest a MDObjectCodeView");
+		}
 		super.parseInternal();
 	}
 }

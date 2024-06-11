@@ -40,16 +40,16 @@ public class MDMang {
 
 	protected String mangled;
 	protected MDCharacterIterator iter;
-	protected String errorMessage = "";
+	protected String errorMessage;
 	protected MDParsableItem item;
 
-	protected List<MDContext> contextStack = new ArrayList<>();
+	protected List<MDContext> contextStack;
 
 	public enum ProcessingMode {
 		DEFAULT_STANDARD, LLVM
 	}
 
-	private ProcessingMode processingMode = ProcessingMode.DEFAULT_STANDARD;
+	private ProcessingMode processingMode;
 
 	public void setProcessingMode(ProcessingMode processingMode) {
 		this.processingMode = processingMode;
@@ -59,14 +59,12 @@ public class MDMang {
 		return processingMode;
 	}
 
-	public boolean isProcessingModeActive(ProcessingMode mode) {
-		switch (mode) {
-			case LLVM:
-				return processingMode == mode && (getIndex() == 0);
-			default:
-				break;
-		}
-		return processingMode == mode;
+	public boolean isLlvmProcessingModeIndex0() {
+		return processingMode == ProcessingMode.LLVM && (getIndex() == 0);
+	}
+
+	public boolean isLlvmProcessingMode() {
+		return processingMode == ProcessingMode.LLVM;
 	}
 
 	/**
@@ -90,6 +88,28 @@ public class MDMang {
 	}
 
 	/**
+	 * Variables that get set at the very beginning.
+	 * @throws MDException if mangled name is not set
+	 */
+	protected void initState() throws MDException {
+		if (mangled == null) {
+			throw new MDException("MDMang: Mangled string is null.");
+		}
+		errorMessage = "";
+		processingMode = ProcessingMode.DEFAULT_STANDARD;
+		iter = new MDCharacterIterator(mangled);
+		resetState();
+	}
+
+	/**
+	 * Variables that can get reset for a second (or more?) passes with different modes.
+	 */
+	public void resetState() {
+		contextStack = new ArrayList<>();
+		setIndex(0);
+	}
+
+	/**
 	 * Demangles the string already stored and returns a parsed item.
 	 *
 	 * @param errorOnRemainingChars
@@ -99,17 +119,13 @@ public class MDMang {
 	 * @throws MDException upon error parsing item
 	 */
 	public MDParsableItem demangle(boolean errorOnRemainingChars) throws MDException {
-		if (mangled == null) {
-			throw new MDException("MDMang: Mangled string is null.");
-		}
-		pushContext();
+		initState();
 		item = MDMangObjectParser.determineItemAndParse(this);
 		if (item instanceof MDObjectCPP) {
 			// MDMANG SPECIALIZATION USED.
 			item = getEmbeddedObject((MDObjectCPP) item);
 		}
 		int numCharsRemaining = getNumCharsRemaining();
-		popContext();
 		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
 			throw new MDException(
 				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
@@ -176,7 +192,6 @@ public class MDMang {
 	 */
 	public void setMangledSymbol(String mangledIn) {
 		this.mangled = mangledIn;
-		iter = new MDCharacterIterator(mangled);
 	}
 
 	/**
