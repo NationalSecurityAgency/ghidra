@@ -1657,11 +1657,11 @@ class FuncCallSpecs : public FuncProto {
   Varnode *getSpacebaseRelative(void) const;	///< Get the active stack-pointer Varnode at \b this call site
   Varnode *buildParam(Funcdata &data,Varnode *vn,ProtoParameter *param,Varnode *stackref);
   int4 transferLockedInputParam(ProtoParameter *param);
-  PcodeOp *transferLockedOutputParam(ProtoParameter *param);
+  void transferLockedOutputParam(ProtoParameter *param,vector<Varnode *> &newoutput);
   bool transferLockedInput(vector<Varnode *> &newinput,const FuncProto &source);
-  bool transferLockedOutput(Varnode *&newoutput,const FuncProto &source);
+  bool transferLockedOutput(vector<Varnode *> &newoutput,const FuncProto &source);
   void commitNewInputs(Funcdata &data,vector<Varnode *> &newinput);
-  void commitNewOutputs(Funcdata &data,Varnode *newout);
+  void commitNewOutputs(Funcdata &data,vector<Varnode *> &newoutput);
   void collectOutputTrialVarnodes(vector<Varnode *> &trialvn);
   void setStackPlaceholderSlot(int4 slot) { stackPlaceholderSlot = slot;
       if (isinputactive) activeinput.setPlaceholderSlot(); }	///< Set the slot of the stack-pointer placeholder
@@ -1702,7 +1702,7 @@ public:
 
   bool checkInputJoin(int4 slot1,bool ishislot,Varnode *vn1,Varnode *vn2) const;
   void doInputJoin(int4 slot1,bool ishislot);
-  bool lateRestriction(const FuncProto &restrictedProto,vector<Varnode *> &newinput,Varnode *&newoutput);
+  bool lateRestriction(const FuncProto &restrictedProto,vector<Varnode *> &newinput,vector<Varnode *> &newoutput);
   void deindirect(Funcdata &data,Funcdata *newfd);
   void forceSet(Funcdata &data,const FuncProto &fp);
   void insertPcode(Funcdata &data);
