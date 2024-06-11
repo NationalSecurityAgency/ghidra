@@ -216,7 +216,7 @@ public class ProgramOpener {
 
 		User user = domainFile.getParent().getProjectData().getUser();
 
-		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
+		CheckoutDialog dialog = Swing.runNow(() -> new CheckoutDialog(domainFile, user));
 		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
 			try {
 				monitor.setMessage("Checking Out " + domainFile.getName());
