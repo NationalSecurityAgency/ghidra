@@ -29,12 +29,21 @@ public class MDMangGenericize extends MDMang {
 	/*
 	 * Used for creating a copy-with-substitutes of the original string
 	 */
-	private StringBuilder genericizedString = new StringBuilder();
-	// uniqueCount must start at -1 as nextUnique() pre-creates a potential
-	// fragment for use.
-	private int uniqueCount = -1;
-	private String nextUnique = nextUnique();
-	private Map<String, String> uniqueFragments = new HashMap<>();
+	private StringBuilder genericizedString;
+	private int uniqueCount;
+	private String nextUnique;
+	private Map<String, String> uniqueFragments;
+
+	@Override
+	public void resetState() {
+		super.resetState();
+		genericizedString = new StringBuilder();
+		// uniqueCount must start at -1 as nextUnique() pre-creates a potential
+		// fragment for use.
+		uniqueCount = -1;
+		nextUnique = nextUnique();
+		uniqueFragments = new HashMap<>();
+	}
 
 	// @Override
 	// public MDParsableItem demangle_orig(Boolean errorOnRemainingChars) {
@@ -59,14 +68,10 @@ public class MDMangGenericize extends MDMang {
 	// }
 	@Override
 	public MDParsableItem demangle(boolean errorOnRemainingChars) throws MDException {
-		// ignoring the parameter (for now)
-		if (mangled == null) {
-			throw new MDException("MDMang: Mangled string is null.");
-		}
-		pushContext();
+		// ignoring the 'errorOnRemainingChars' parameter (for now)
+		initState();
 		item = MDMangObjectParser.determineItemAndParse(this);
 		appendRemainder();
-		popContext();
 		// if (errorOnRemainingChars && (numCharsRemaining > 0)) {
 		// throw new MDException(
 		// "MDMang: characters remain after demangling: " + numCharsRemaining +
