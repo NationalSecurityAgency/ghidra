@@ -1515,6 +1515,8 @@ bool SplitFlow::addOp(PcodeOp *op,TransformVar *rvn,int4 slot)
   if (op->code() == CPUI_INDIRECT) {
     opSetInput(loOp,newIop(op->getIn(1)),1);
     opSetInput(hiOp,newIop(op->getIn(1)),1);
+    loOp->inheritIndirect(op);
+    hiOp->inheritIndirect(op);
     numParam = 1;
   }
   for(int4 i=0;i<numParam;++i) {
