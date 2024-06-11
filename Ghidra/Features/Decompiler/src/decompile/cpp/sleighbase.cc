@@ -199,7 +199,7 @@ void SleighBase::encodeSlaSpace(Encoder &encoder,AddrSpace *spc) const
 //    encoder.writeSignedInteger(sla::ATTRIB_DEADCODEDELAY, spc->getDeadcodeDelay());
   encoder.writeSignedInteger(sla::ATTRIB_SIZE, spc->getAddrSize());
   if (spc->getWordSize() > 1)
-    encoder.writeSignedInteger(sla::ATTRIB_WORDSIZE, spc->getWordSize());
+    encoder.writeUnsignedInteger(sla::ATTRIB_WORDSIZE, spc->getWordSize());
   encoder.writeBool(sla::ATTRIB_PHYSICAL, spc->hasPhysical());
   if (spc->getType() == IPTR_INTERNAL)
     encoder.closeElement(sla::ELEM_SPACE_UNIQUE);
