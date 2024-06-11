@@ -165,6 +165,7 @@ public class MDMang {
 		if (mangled == null) {
 			throw new MDException("MDMang: Mangled string is null.");
 		}
+		initState();
 		pushContext();
 		if (peek() != '.') {
 			throw new MDException("MDMang: Mangled string is not that of a type.");
