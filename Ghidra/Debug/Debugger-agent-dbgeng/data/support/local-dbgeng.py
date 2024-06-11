@@ -39,7 +39,8 @@ else:
 def main():
     # Delay these imports until sys.path is patched
     from ghidradbg import commands as cmd
-    from ghidradbg.hooks import on_stop
+    from pybag.dbgeng import core as DbgEng
+    from ghidradbg.hooks import on_state_changed
     from ghidradbg.util import dbg
 
     # So that the user can re-enter by typing repl()
@@ -62,7 +63,7 @@ def main():
     cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
     cmd.ghidra_trace_sync_enable()
     
-    on_stop()
+    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS, DbgEng.DEBUG_STATUS_BREAK)
     cmd.repl()
 
 
