@@ -18,6 +18,7 @@ src/decompile/datatests/condmulti.xml||GHIDRA||||END|
 src/decompile/datatests/convert.xml||GHIDRA||||END|
 src/decompile/datatests/deadvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect.xml||GHIDRA||||END|
+src/decompile/datatests/deindirect2.xml||GHIDRA||||END|
 src/decompile/datatests/displayformat.xml||GHIDRA||||END|
 src/decompile/datatests/divopt.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
