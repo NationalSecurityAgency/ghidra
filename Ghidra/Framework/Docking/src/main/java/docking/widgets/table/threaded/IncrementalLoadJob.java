@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 		this.incrementalAccumulator = new IncrementalUpdatingAccumulator();
 
 		notifyStarted(monitor);
-
+		boolean error = false;
 		try {
 			doExecute(monitor);
 		}
@@ -70,13 +70,14 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 				// console. Plus, handling it here gives us a chance to notify that the process is
 				// complete.
 				String name = threadedModel.getName();
+				error = true;
 				Msg.showError(this, null, "Unexpected Exception",
 					"Unexpected exception loading table model \"" + name + "\"", e);
 			}
 		}
 
 		boolean interrupted = Thread.currentThread().isInterrupted();
-		notifyCompleted(hasBeenCancelled(monitor) || interrupted);
+		notifyCompleted(hasBeenCancelled(monitor) || interrupted || error);
 
 		// all data should have been posted at this point; clean up any data left in the accumulator
 		incrementalAccumulator.clear();
