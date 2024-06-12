@@ -2654,8 +2654,8 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
       }
       if (preexistingGuard(slot, rvn2)) {
 	TransformOp *rop = newPreexistingOp(2, op->code(), op);
-	opSetInput(rop, rvn, 0);
-	opSetInput(rop, rvn2, 1);
+	opSetInput(rop, rvn, slot);
+	opSetInput(rop, rvn2, 1 - slot);
 	terminatorCount += 1;
       }
       break;
