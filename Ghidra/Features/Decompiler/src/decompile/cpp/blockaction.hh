@@ -55,7 +55,7 @@ class LoopBody {
 public:
   LoopBody(FlowBlock *h) { head=h; immed_container = (LoopBody *)0; depth=0; }	///< Construct with a loop head
   FlowBlock *getHead(void) const { return head; }			///< Return the head FlowBlock of the loop
-  FlowBlock *getCurrentBounds(FlowBlock **top,FlowBlock *graph);	///< Return current loop bounds (\b head and \b bottom).
+  FlowBlock *update(FlowBlock *graph);					///< Update loop body to current view
   void addTail(FlowBlock *bl) { tails.push_back(bl); }			///< Add a \e tail to the loop
   FlowBlock *getExitBlock(void) const { return exitblock; }		///< Get the exit FlowBlock or NULL
   void findBase(vector<FlowBlock *> &body);				///< Mark the body FlowBlocks of \b this loop

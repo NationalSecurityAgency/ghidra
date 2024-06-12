@@ -1674,13 +1674,20 @@ BlockMultiGoto *BlockGraph::newBlockMultiGoto(FlowBlock *bl,int4 outedge)
   }
   else {
     ret = new BlockMultiGoto(bl);
+    int4 origSizeOut = bl->sizeOut();
     vector<FlowBlock *> nodes;
     nodes.push_back(bl);
     identifyInternal(ret,nodes);
     addBlock(ret);
     ret->addEdge(targetbl);
-    if (targetbl != bl)		// If the target is itself, edge is already removed by identifyInternal
-      removeEdge(ret,targetbl);
+    if (targetbl != bl)	{
+      if (ret->sizeOut() != origSizeOut) {	// If there are less out edges after identifyInternal
+	// it must have collapsed a self edge (switch out edges are already deduped)
+	ret->forceOutputNum(ret->sizeOut()+1);	// preserve the self edge (it is not the goto edge)
+      }
+      removeEdge(ret,targetbl);	// Remove the edge to the goto target
+    }
+    // else -- the goto edge is a self edge and will get removed by identifyInternal
     if (isdefaultedge)
       ret->setDefaultGoto();
   }
