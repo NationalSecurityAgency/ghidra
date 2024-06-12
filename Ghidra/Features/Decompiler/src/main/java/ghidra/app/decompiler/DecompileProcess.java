@@ -147,10 +147,16 @@ public class DecompileProcess {
 		IOException exc = null;
 		String err = "";
 		statusGood = false;
+		
 		try {
 			nativeProcess = runtime.exec(exepath);
 			// Give process time to load and report possible error
-			nativeProcess.waitFor(200, TimeUnit.MILLISECONDS);
+			try {
+				nativeProcess.waitFor(200, TimeUnit.MILLISECONDS);
+			}
+			catch (InterruptedException e) {
+				// ignore
+			}
 			nativeIn = nativeProcess.getInputStream();
 			nativeOut = nativeProcess.getOutputStream();
 			statusGood = nativeProcess.isAlive();
@@ -162,9 +168,6 @@ public class DecompileProcess {
 		}
 		catch (IOException e) {
 			exc = e;
-		}
-		catch (InterruptedException e) {
-			// ignore
 		}
 		finally {
 			if (!statusGood) {
