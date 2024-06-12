@@ -37,7 +37,7 @@ public class FlatLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected void fixupLookAndFeelIssues() {
-
+		super.fixupLookAndFeelIssues();
 		// 
 		// The FlatTreeUI class will remove default renderers inside the call to updateRenderer()
 		// if "Tree.showDefaultIcons" is false.  We want the tree to display folder icons.

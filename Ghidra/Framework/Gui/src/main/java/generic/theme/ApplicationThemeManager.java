@@ -45,6 +45,7 @@ public class ApplicationThemeManager extends ThemeManager {
 	// stores the original value for ids whose value has changed from the current theme
 	private GThemeValueMap changedValuesMap = new GThemeValueMap();
 	protected LookAndFeelManager lookAndFeelManager;
+	private boolean blinkingCursors = true;
 
 	/**
 	 * Initialized the Theme and its values for the application.
@@ -126,24 +127,29 @@ public class ApplicationThemeManager extends ThemeManager {
 		}
 
 		update(() -> {
-
 			activeTheme = theme;
 			activeLafType = theme.getLookAndFeelType();
 			useDarkDefaults = theme.useDarkDefaults();
-
-			cleanUiDefaults(); // clear out any values previous themes may have installed
 			lookAndFeelManager = activeLafType.getLookAndFeelManager(this);
-			try {
-				lookAndFeelManager.installLookAndFeel();
+			if (updateLookAndFeel()) {
 				themePreferences.save(theme);
-				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
-			}
-			catch (Exception e) {
-				Msg.error(this, "Error setting Look and Feel: " + activeLafType.getName(), e);
 			}
 		});
 
 		currentValues.checkForUnresolvedReferences();
+	}
+
+	private boolean updateLookAndFeel() {
+		try {
+			cleanUiDefaults(); // clear out any values previous themes may have installed
+			lookAndFeelManager.installLookAndFeel();
+			notifyThemeChanged(new AllValuesChangedThemeEvent(true));
+			return true;
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error setting Look and Feel: " + activeLafType.getName(), e);
+		}
+		return false;
 	}
 
 	@Override
@@ -162,17 +168,29 @@ public class ApplicationThemeManager extends ThemeManager {
 		this.useDarkDefaults = useDarkDefaults;
 
 		update(() -> {
-
-			cleanUiDefaults(); // clear out any values previous themes may have installed
 			lookAndFeelManager = lafType.getLookAndFeelManager(this);
-			try {
-				lookAndFeelManager.installLookAndFeel();
-				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
-			}
-			catch (Exception e) {
-				Msg.error(this, "Error setting Look and Feel: " + lafType.getName(), e);
-			}
+			updateLookAndFeel();
 		});
+	}
+
+	@Override
+	public void setBlinkingCursors(boolean b) {
+		if (blinkingCursors == b) {
+			return;
+		}
+		blinkingCursors = b;
+
+		// Need to reinstall the look and feel so that UIDefaults for cursor blinking are set.
+		// For most look and feels, we could have just updated the UIs, but because Nimbus
+		// doesn't respect UIDefaults changes after loading, it is easier to just reinstall.
+		update(() -> {
+			updateLookAndFeel();
+		});
+	}
+
+	@Override
+	public boolean isBlinkingCursors() {
+		return blinkingCursors;
 	}
 
 	@Override
