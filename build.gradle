@@ -21,9 +21,10 @@ apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
 /***************************************************************************************
-* Print current Gradle version and make sure the correct version of gradle is being used
+* Print current Java and Gradle version and make sure the correct version of gradle is being used
 ***************************************************************************************/
 import org.gradle.util.GradleVersion;
+println "Java: " + JavaVersion.current()
 println "Gradle: " + GradleVersion.current().version
 checkGradleVersion()
 
