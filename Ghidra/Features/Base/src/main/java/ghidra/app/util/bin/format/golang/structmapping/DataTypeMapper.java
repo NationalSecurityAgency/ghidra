@@ -34,8 +34,8 @@ import ghidra.util.task.TaskMonitor;
  * To use the full might and majesty of StructureMapping&trade;, a DataTypeMapper must be created. It
  * must be able to {@link #addArchiveSearchCategoryPath(CategoryPath...) find} 
  * ({@link #addProgramSearchCategoryPath(CategoryPath...) more find}) the Ghidra structure data
- * types being used, and it must {@link #registerStructure(Class) know} about all classes that are
- * going to participate during deserialization and markup.
+ * types being used, and it must {@link #registerStructure(Class, DataTypeMapperContext) know} about
+ * all classes that are going to participate during deserialization and markup.
  * <p>
  * Structure mapped classes can receive a reference to the specific DataTypeMapper type that 
  * created them by declaring a {@code DataTypeMapper} field, and tagging it with 
@@ -217,7 +217,7 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param <T> structure mapped class type
 	 * @param clazz the class
 	 * @return {@link StructureMappingInfo} for the specified class, or null if the class was
-	 * not previously {@link #registerStructure(Class) registered}
+	 * not previously {@link #registerStructure(Class, DataTypeMapperContext) registered}
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> StructureMappingInfo<T> getStructureMappingInfo(Class<T> clazz) {
@@ -232,7 +232,7 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param structureInstance an instance of a previously registered 
 	 * {@link StructureMapping structure mapping} class, or null
 	 * @return {@link StructureMappingInfo} for the instance, or null if the class was
-	 * not previously {@link #registerStructure(Class) registered}
+	 * not previously {@link #registerStructure(Class, DataTypeMapperContext) registered}
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> StructureMappingInfo<T> getStructureMappingInfo(T structureInstance) {
