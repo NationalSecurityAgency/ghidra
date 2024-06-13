@@ -176,6 +176,8 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 		int tx = program.startTransaction("Test");
 		try {
 			callback.accept(program);
+			program.flushEvents();
+			waitForSwing();
 			commit = true;
 		}
 		catch (Exception e) {
@@ -201,6 +203,8 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 		int tx = program.startTransaction("Test");
 		try {
 			result = f.apply(program);
+			program.flushEvents();
+			waitForSwing();
 			commit = true;
 		}
 		catch (Exception e) {
