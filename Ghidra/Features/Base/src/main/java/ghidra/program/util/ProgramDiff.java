@@ -17,8 +17,12 @@ package ghidra.program.util;
 
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
+import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
 import ghidra.program.database.properties.UnsupportedMapDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.ProgramBasedDataTypeManager;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -2964,6 +2968,30 @@ public class ProgramDiff {
 			// Detect that data type name or path differs?
 			if (!dt1.getPathName().equals(dt2.getPathName())) {
 				return false;
+			}
+
+			// assume only top-level data code units are compared
+			// we should not be a DataComponent (i.e., no parent)
+			if (d1.getParent() != null || d2.getParent() != null) {
+				throw new UnsupportedOperationException("Expecting top-level Data only");
+			}
+
+			// Only top-level Data instance Settings are supported 
+
+			String[] settingNames1 = d1.getNames();
+			Arrays.sort(settingNames1);
+			String[] settingNames2 = d2.getNames();
+			Arrays.sort(settingNames2);
+			if (!Arrays.equals(settingNames1, settingNames2)) {
+				return false;
+			}
+
+			for (int i = 0; i < settingNames1.length; i++) {
+				Object v1 = d1.getValue(settingNames1[i]);
+				Object v2 = d2.getValue(settingNames2[i]);
+				if (!Objects.equals(v1, v2)) {
+					return false;
+				}
 			}
 
 			return true;
