@@ -434,7 +434,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseBinding defaultMouseBinding = getMouseBindingFromTable(actionName, actionOwner);
 		assertNull(defaultMouseBinding);
 
-		int button = 1;
+		int button = 4;
 		int modifiers = 0;
 		MouseBinding newMouseBinding = setMouseBinding(actionName, actionOwner, modifiers, button);
 
@@ -462,7 +462,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseBinding defaultMouseBinding = getMouseBindingFromTable(actionName, actionOwner);
 		assertNull(defaultMouseBinding);
 
-		int button = 1;
+		int button = 4;
 		int modifiers = 0;
 		MouseBinding newMouseBinding = setMouseBinding(actionName, actionOwner, modifiers, button);
 
@@ -500,7 +500,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, actionOwner, modifiers, keyCode, 'Q');
 
-		int button = 1;
+		int button = 4;
 		modifiers = 0;
 		MouseBinding newMouseBinding = setMouseBinding(actionName, actionOwner, modifiers, button);
 
@@ -533,7 +533,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		MouseBinding defaultMouseBinding = getMouseBindingFromTable(actionName, actionOwner);
 		assertNull(defaultMouseBinding);
 
-		int button = 1;
+		int button = 4;
 		int modifiers = 0;
 		MouseBinding newMouseBinding = setMouseBinding(actionName, actionOwner, modifiers, button);
 
