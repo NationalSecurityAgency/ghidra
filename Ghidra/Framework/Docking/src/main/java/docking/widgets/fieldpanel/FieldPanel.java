@@ -401,7 +401,8 @@ public class FieldPanel extends JPanel
 	}
 
 	private void initializeCursorBlinking() {
-		boolean blinkingCursors = ThemeManager.getInstance().isBlinkingCursors();
+		ThemeManager themeManager = ThemeManager.getInstance();
+		boolean blinkingCursors = themeManager != null ? themeManager.isBlinkingCursors() : true;
 		setBlinkCursor(blinkingCursors);
 	}
 
