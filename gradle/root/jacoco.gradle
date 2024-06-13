@@ -89,7 +89,7 @@ task jacocoReport(type: JacocoReport, group: 'Coverage reports') {
    reports {
       html {
          required
-         destination new File(rootDir.absolutePath + "/jacocoReport")
+         outputLocation = new File(rootDir.absolutePath + "/jacocoReport")
       }
       xml { }
    }
