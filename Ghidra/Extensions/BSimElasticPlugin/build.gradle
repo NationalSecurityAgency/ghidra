@@ -38,10 +38,6 @@ dependencies {
 	implementation project(':BSim')
 }
 
-base {
-	libsDirectory = file('ziplayout')
-}
-
 task copyGenericTask(type: Copy) {
 	from project(':Generic').file('src/main/java')
 	into 'build/genericSrc'
