@@ -42,8 +42,7 @@ import ghidra.debug.api.modules.*;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
-import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.framework.plugintool.AutoConfigState.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -299,8 +298,18 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				List<String> names =
 					program.getLanguage().getLanguageDescription().getExternalNames(tool);
 				if (names != null && !names.isEmpty()) {
-					var paramStr = (ParameterDescription<String>) param;
-					paramStr.set(map, names.get(0));
+					if (param.type == String.class) {
+						var paramStr = (ParameterDescription<String>) param;
+						paramStr.set(map, names.get(0));
+					}
+					else if (param.type == PathIsFile.class) {
+						var paramPIF = (ParameterDescription<PathIsFile>) param;
+						paramPIF.set(map, PathIsFile.fromString(names.get(0)));
+					}
+					else if (param.type == PathIsDir.class) {
+						var paramPID = (ParameterDescription<PathIsDir>) param;
+						paramPID.set(map, PathIsDir.fromString(names.get(0)));
+					}
 				}
 			}
 		}

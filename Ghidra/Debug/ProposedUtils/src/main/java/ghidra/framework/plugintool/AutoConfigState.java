@@ -305,6 +305,10 @@ public interface AutoConfigState {
 	}
 
 	record PathIsDir(Path path) {
+		public static PathIsDir fromString(String string) {
+			return new PathIsDir(Paths.get(string));
+		}
+
 		@Override
 		public String toString() {
 			return path.toString();
@@ -328,6 +332,10 @@ public interface AutoConfigState {
 	}
 
 	record PathIsFile(Path path) {
+		public static PathIsFile fromString(String string) {
+			return new PathIsFile(Paths.get(string));
+		}
+
 		@Override
 		public String toString() {
 			return path.toString();
