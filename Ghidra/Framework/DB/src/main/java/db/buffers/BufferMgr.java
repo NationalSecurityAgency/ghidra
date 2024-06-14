@@ -78,8 +78,8 @@ public class BufferMgr {
 	 */
 	private BufferNode cacheHead;
 	private BufferNode cacheTail;
-	private int cacheSize = 0;
-	private int buffersOnHand = 0;
+	private int cacheSize;
+	private int buffersOnHand;
 	private int lockCount = 0;
 
 	/**
@@ -235,6 +235,10 @@ public class BufferMgr {
 
 	private void initializeCache() throws IOException {
 
+		if (lockCount != 0) {
+			throw new IOException("Unable to re-initialize buffer cache while in-use");
+		}
+		
 		if (cacheFile != null) {
 			cacheFile.delete();
 		}
@@ -244,6 +248,9 @@ public class BufferMgr {
 		cacheTail = new BufferNode(TAIL, -1);
 		cacheHead.nextCached = cacheTail;
 		cacheTail.prevCached = cacheHead;
+		
+		cacheSize = 0;
+		buffersOnHand = 0;
 
 		// Create disk cache file
 		cacheFile = new LocalBufferFile(bufferSize, CACHE_FILE_PREFIX, CACHE_FILE_EXT);
@@ -257,6 +264,8 @@ public class BufferMgr {
 				cacheFile.setParameter(name, sourceFile.getParameter(name));
 			}
 		}
+		
+		resetCacheStatistics();
 
 		if (alwaysPreCache) {
 			startPreCacheIfNeeded();
@@ -2058,7 +2067,7 @@ public class BufferMgr {
 	public void resetCacheStatistics() {
 		cacheHits = 0;
 		cacheMisses = 0;
-		lowWaterMark = cacheSize;
+		lowWaterMark = cacheSize - 1;
 	}
 
 	public String getStatusInfo() {
