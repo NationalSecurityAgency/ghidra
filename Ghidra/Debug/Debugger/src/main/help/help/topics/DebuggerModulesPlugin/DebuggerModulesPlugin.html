@@ -152,14 +152,51 @@
     <H3><A name="import_missing_module"></A><IMG alt="" src="icon.debugger.import"> Import Missing
     Module</H3>
 
-    <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
-    href="#import_from_fs">Import From File System</A> on the missing module.</P>
+    <P>This action is offered to resolve a "missing module" console message. Such a message is
+    reported in the <A href="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html">Debug
+    Console</A> when the cursor in the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> cannot be
+    synchronized to the static listing for lack of a module mapping. This action is equivalent to
+    <A href="#import_from_fs">Import From File System</A> on the missing module.</P>
 
     <H3><A name="map_missing_module"></A><IMG alt="" src="icon.debugger.map.modules"> Map Missing
     Module</H3>
 
-    <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
-    href="#map_module_to">Map Module To</A> on the missing module.</P>
+    <P>This action is offered to resolve a "missing module" console message. Such a message is
+    reported in the <A href="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html">Debug
+    Console</A> when the cursor in the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> cannot be
+    synchronized to the static listing for lack of a module mapping. This action is equivalent to
+    <A href="#map_module_to">Map Module To</A> on the missing module.</P>
+
+    <H3><A name="map_missing_program_retry"></A><IMG alt="" src="icon.debugger.map.auto"> Retry Map
+    Missing Program</H3>
+
+    <P>This action is offered to resolve a "missing program" console message. Such a message is
+    reported in the <A href="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html">Debug
+    Console</A> when the launcher fails to map the current program database to the launched trace.
+    This action is equivalent to <A href="#map_modules">Map Modules</A>, but considering only the
+    missing program and launched trace.</P>
+
+    <H3><A name="map_missing_program_current"></A><IMG alt="" src="icon.debugger.map.modules"> Map
+    Missing Program to Current Module</H3>
+
+    <P>This action is offered to resolve a "missing program" console message. Such a message is
+    reported in the <A href="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html">Debug
+    Console</A> when the launcher fails to map the current program database to the launched trace.
+    This action is only available when the current trace is the launched trace. It finds the module
+    containing the cursor in the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> and proposes
+    to map it to the missing program.</P>
+
+    <H3><A name="map_missing_program_identically"></A><IMG alt="" src=
+    "icon.debugger.map.identically"> Map Missing Program Identically</H3>
+
+    <P>This action is offered to resolve a "missing program" console message. Such a message is
+    reported in the <A href="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html">Debug
+    Console</A> when the launcher fails to map the current program database to the launched trace.
+    This action is equivalent to <A href="#map_identically">Map Identically</A>, but for the
+    missing program and launched trace.</P>
 
     <H3><A name="show_sections_table"></A><IMG alt="" src="icon.debugger.modules.table.sections">
     Show Sections Table</H3>
@@ -179,12 +216,15 @@
     Addresses</H3>
 
     <P>This action is available when at least one module or section is selected. It selects all
-    addresses in the dynamic listing contained by the selected modules or sections.</P>
+    addresses in the <A href="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic
+    Listing</A> contained by the selected modules or sections.</P>
 
     <H3><A name="select_rows"></A><IMG alt="" src="icon.debugger.select.rows"> Select Rows</H3>
 
-    <P>This action is available when the dynamic listing's cursor is at a valid location. It
-    selects the module and section, if applicable, containing that cursor. If the dynamic listing
-    has a selection, it selects all modules and sections intersecting that selection.</P>
+    <P>This action is available when the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A>'s cursor is
+    at a valid location. It selects the module and section, if applicable, containing that cursor.
+    If the dynamic listing has a selection, it selects all modules and sections intersecting that
+    selection.</P>
   </BODY>
 </HTML>

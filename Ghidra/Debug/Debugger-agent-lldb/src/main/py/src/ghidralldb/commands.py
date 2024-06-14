@@ -858,7 +858,7 @@ def ghidra_trace_putreg(debugger, command, result, internal_dict):
             bank = regs.GetFirstValueByName(group)
             putreg(frame, bank)
             return
-    
+
         for i in range(0, regs.GetSize()):
             bank = regs.GetValueAtIndex(i)
             putreg(frame, bank)
@@ -1637,7 +1637,32 @@ def ghidra_trace_put_environment(debugger, command, result, internal_dict):
         put_environment()
 
 
+def should_update_regions():
+    '''
+    It's possible some targets don't support regions.
+
+    There is also a bug in LLDB that can cause its gdb-remote client
+    to drop support. We need to account for this second case while
+    still ensuring we populate the full range for targets that
+    genuinely don't support it.
+    '''
+    # somewhat crappy heuristic to distinguish remote from local
+    tgt = util.get_target()
+    if tgt.GetNumModules() == 0:
+        # Target genuinely doesn't support regions.
+        # Will update with full_mem
+        return True
+    # Target does support it, but bug might be in play
+    # probe address 0. Should get the invalid region
+    proc = util.get_process()
+    info = lldb.SBMemoryRegionInfo()
+    result = proc.GetMemoryRegionInfo(0, info)
+    return result.Success()
+
+
 def put_regions():
+    if not should_update_regions():
+        return
     proc = util.get_process()
     try:
         regions = util.REGION_INFO_READER.get_regions()
@@ -1975,7 +2000,7 @@ def ghidra_trace_sync_synth_stopped(debugger, command, result, internal_dict):
     """
 
     hooks.on_stop(None)  # Pass a fake event
-    
+
 
 @convert_errors
 def ghidra_util_wait_stopped(debugger, command, result, internal_dict):

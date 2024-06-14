@@ -27,6 +27,7 @@ from ghidratrace.client import Client, Address, AddressRange, TraceObject
 from pybag import pydbg, userdbg, kerneldbg
 from pybag.dbgeng import core as DbgEng
 from pybag.dbgeng import exception
+from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
@@ -256,7 +257,6 @@ def ghidra_trace_create(command=None, initial_break=True, timeout=DbgEng.WAIT_IN
         dbg._client.CreateProcess(command, DbgEng.DEBUG_PROCESS)
         if initial_break:
             dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
-        dbg.wait(timeout)
     if start_trace:
         ghidra_trace_start(command)
 
@@ -841,6 +841,9 @@ def ghidra_trace_disassemble(address):
 
 @util.dbg.eng_thread
 def compute_proc_state(nproc=None):
+    exit_code = util.GetExitCode()
+    if exit_code is not None and exit_code != STILL_ACTIVE:
+        return 'TERMINATED'
     status = util.dbg._base._control.GetExecutionStatus()
     if status == DbgEng.DEBUG_STATUS_BREAK:
         return 'STOPPED'

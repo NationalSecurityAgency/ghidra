@@ -802,7 +802,8 @@ public class VtBuffer {
 				i++;
 			}
 		}
-		for (int i = Math.max(sbSize, startRow); i <= endRow; i++) {
+		int lnSize = lines.size();
+		for (int i = Math.max(sbSize, startRow); i <= Math.min(endRow, sbSize + lnSize - 1); i++) {
 			VtLine line = lines.get(i - sbSize);
 			gatherLineText(buf, startRow, startCol, endRow, endCol, i, line, lineSep);
 		}

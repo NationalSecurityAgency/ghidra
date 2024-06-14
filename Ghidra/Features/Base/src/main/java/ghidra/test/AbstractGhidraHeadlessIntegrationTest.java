@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import org.apache.commons.collections4.BidiMap;
 import org.junit.BeforeClass;
 
 import docking.test.AbstractDockingTest;
@@ -180,7 +179,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @return result of command applyTo method
 	 * @throws RollbackException thrown if thrown by command applyTo method
 	 */
-	public static boolean applyCmd(Program program, Command cmd) throws RollbackException {
+	public static boolean applyCmd(Program program, Command<Program> cmd) throws RollbackException {
 		int txId = program.startTransaction(cmd.getName());
 		boolean commit = true;
 		try {
@@ -432,6 +431,13 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		return null;
 	}
 
+	public AddressSet toAddressSet(Program p, String from, String to) {
+		AddressFactory af = p.getAddressFactory();
+		Address a1 = af.getAddress(from);
+		Address a2 = af.getAddress(to);
+		return af.getAddressSet(a1, a2);
+	}
+
 	public AddressSet toAddressSet(List<Address> addrs) {
 		AddressSet set = new AddressSet();
 		for (Address addr : addrs) {
@@ -496,6 +502,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		ProgramSelection selection = new ProgramSelection(addresses);
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, p));
 		waitForSwing();
+	}
+
+	public void clearSelection(PluginTool tool, Program p) {
+		AddressSet set = new AddressSet();
+		makeSelection(tool, p, set);
 	}
 
 	/**
@@ -613,8 +624,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
 			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
 				ClassSearcher.class);
-		BidiMap<ClassFileInfo, Class<?>> loadedCache =
-			(BidiMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
+		HashMap<ClassFileInfo, Class<?>> loadedCache =
+			(HashMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
 		String suffix = ClassSearcher.getExtensionPointSuffix(service.getSimpleName());
 
 		if (suffix != null) {

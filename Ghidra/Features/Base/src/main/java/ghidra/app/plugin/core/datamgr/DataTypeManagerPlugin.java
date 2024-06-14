@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.Tool;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -47,6 +48,7 @@ import ghidra.app.plugin.core.datamgr.util.DataDropOnBrowserHandler;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
+import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.Application;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
@@ -60,6 +62,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
+import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -83,10 +86,8 @@ import ghidra.util.task.TaskMonitor;
 	servicesProvided = { DataTypeManagerService.class, DataTypeArchiveService.class }
 )
 //@formatter:on
-public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObjectListener,
-		DataTypeManagerService, DataTypeArchiveService, PopupActionProvider {
-
-	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
+public class DataTypeManagerPlugin extends ProgramPlugin
+		implements DomainObjectListener, DataTypeManagerService, PopupActionProvider {
 
 	private static final String SEARCH_PROVIDER_NAME = "Search DataTypes Provider";
 	private static final int RECENTLY_USED_CACHE_SIZE = 10;
@@ -192,6 +193,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObject
 
 		// checking for the value maintains access-order of the archive
 		if (recentlyOpenedArchiveMap.get(absoluteFilePath) == null) {
+
 			RecentlyOpenedArchiveAction action =
 				new RecentlyOpenedArchiveAction(this, absoluteFilePath, RECENTLY_OPENED_MENU);
 			action.setHelpLocation(new HelpLocation(getName(), "Recent_Archives"));
@@ -207,15 +209,17 @@ public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObject
 	 */
 	public void addRecentlyOpenedProjectArchive(String projectName, String pathname) {
 		String projectPathname = DataTypeManagerHandler.getProjectPathname(projectName, pathname);
-		if (recentlyOpenedArchiveMap.get(projectPathname) == null) {
-			RecentlyOpenedArchiveAction action = null;
-			if (getProjectArchiveFile(projectName, pathname) != null) {
-				action =
-					new RecentlyOpenedArchiveAction(this, projectPathname, RECENTLY_OPENED_MENU);
-				action.setHelpLocation(new HelpLocation(getName(), "Recent_Archives"));
-			}
-			recentlyOpenedArchiveMap.put(projectPathname, action);
+		if (recentlyOpenedArchiveMap.get(projectPathname) != null) {
+			return;
 		}
+
+		RecentlyOpenedArchiveAction action = null;
+		if (getProjectArchiveFile(projectName, pathname) != null) {
+			action = new RecentlyOpenedArchiveAction(this, projectPathname, RECENTLY_OPENED_MENU);
+			action.setHelpLocation(new HelpLocation(getName(), "Recent_Archives"));
+		}
+
+		recentlyOpenedArchiveMap.put(projectPathname, action);
 		updateRecentlyOpenedArchivesMenu();
 	}
 
@@ -418,48 +422,23 @@ public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObject
 
 	private void createStandardArchivesMenu() {
 		installArchiveMap = new TreeMap<>();
-		for (ResourceFile archiveFile : Application
-				.findFilesByExtensionInApplication(FileDataTypeManager.SUFFIX)) {
+		String gdt = FileDataTypeManager.SUFFIX;
+		List<ResourceFile> gdts = Application.findFilesByExtensionInApplication(gdt);
+		for (ResourceFile archiveFile : gdts) {
 			Path path = new Path(archiveFile);
-			String absoluteFilePath = path.getPathAsString();
-			if (absoluteFilePath.indexOf("data/typeinfo") < 0) {
+			String absolutePath = path.getPathAsString();
+			if (!absolutePath.contains("/data/typeinfo/")) {
 				continue;
 			}
-			RecentlyOpenedArchiveAction action = new RecentlyOpenedArchiveAction(this,
-				absoluteFilePath, getShortArchivePath(absoluteFilePath), STANDARD_ARCHIVE_MENU);
+
+			RecentlyOpenedArchiveAction action =
+				new RecentlyOpenedArchiveAction(this, absolutePath, STANDARD_ARCHIVE_MENU);
 			action.setHelpLocation(new HelpLocation(getName(), "Standard_Archives"));
-			installArchiveMap.put(absoluteFilePath, action);
+			installArchiveMap.put(absolutePath, action);
 		}
 		for (DockingAction action : installArchiveMap.values()) {
 			tool.addLocalAction(provider, action);
 		}
-	}
-
-	private String getShortArchivePath(String fullPath) {
-		String path = fullPath;
-
-		String extensionPrefix = "";
-		if (fullPath.startsWith(EXTENSIONS_PATH_PREFIX)) {
-			int index = fullPath.indexOf("/", EXTENSIONS_PATH_PREFIX.length() + 1);
-			if (index >= 0) {
-				extensionPrefix =
-					fullPath.substring(EXTENSIONS_PATH_PREFIX.length() + 1, index) + ": ";
-				fullPath = fullPath.substring(index + 1);
-			}
-		}
-
-		int index1 = fullPath.lastIndexOf('/');
-		if (index1 >= 0) {
-			int index2 = fullPath.lastIndexOf('/', index1 - 1);
-			if (index2 >= 0) {
-				path = fullPath.substring(index2 + 1);
-				if (!path.startsWith("typeinfo/")) {
-					return extensionPrefix + path;
-				}
-			}
-			path = fullPath.substring(index1 + 1);
-		}
-		return extensionPrefix + path;
 	}
 
 	/**
@@ -467,10 +446,34 @@ public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObject
 	 */
 	private void createActions() {
 		createStandardArchivesMenu();
+
+		//@formatter:off
+		new ActionBuilder("Edit Data Type", getName())
+			.keyBinding("Control Shift D")
+			.onAction(this::edit)
+			.buildAndInstall(tool);
+		//@formatter:on
 	}
 
 	private void removeRecentAction(DockingAction action) {
 		tool.removeLocalAction(provider, action);
+	}
+
+	private void edit(ActionContext c) {
+		DataType dt = chooseType();
+		if (dt != null) {
+			edit(dt);
+		}
+	}
+
+	private DataType chooseType() {
+
+		int noSizeRestriction = -1;
+		DataTypeSelectionDialog selectionDialog =
+			new DataTypeSelectionDialog(tool, null, noSizeRestriction, AllowedDataTypes.ALL);
+
+		tool.showDialog(selectionDialog);
+		return selectionDialog.getUserChosenDataType();
 	}
 
 //**********************************************************************************************

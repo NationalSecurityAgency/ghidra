@@ -31,7 +31,6 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.services.TextEditorService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.plugin.importer.ProgramMappingService;
@@ -163,8 +162,7 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 			}
 		});
 
-		actionManager = new FSBActionManager(plugin, this,
-			plugin.getTool().getService(TextEditorService.class), gTree);
+		actionManager = new FSBActionManager(plugin, this, gTree);
 
 		// TODO: fix this Help stuff
 		setHelpLocation(

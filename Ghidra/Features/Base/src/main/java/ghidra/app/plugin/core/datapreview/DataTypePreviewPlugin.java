@@ -423,16 +423,6 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-			// don't care
-		}
-
-		@Override
-		public void undoDragUnderFeedback() {
-			// don't care
-		}
-
-		@Override
 		public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
 			if (obj instanceof DataType) {
 				DataType dt = (DataType) obj;
@@ -608,9 +598,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		}
 
 		private boolean contains(DataType dt) {
-			Iterator<Preview> iter = data.iterator();
-			while (iter.hasNext()) {
-				Preview p = iter.next();
+			for (Preview p : data) {
 				if (p.getDataType().equals(dt) || p.getDataType().isEquivalent(dt)) {
 					return true;
 				}

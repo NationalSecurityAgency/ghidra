@@ -15,7 +15,7 @@
  */
 package ghidra.util.classfinder;
 
-import java.util.Set;
+import java.util.List;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -27,5 +27,5 @@ interface ClassLocation {
 
 	public static final String CLASS_EXT = ".class";
 
-	public void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) throws CancelledException;
+	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) throws CancelledException;
 }

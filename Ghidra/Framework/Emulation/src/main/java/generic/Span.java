@@ -1082,7 +1082,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 	}
 
 	/**
-	 * Provides a default {@link #toString} implementation
+	 * Provides a default {@link Object#toString} implementation
 	 * 
 	 * @return the string
 	 */

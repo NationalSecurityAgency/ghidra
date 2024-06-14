@@ -57,6 +57,7 @@ public class PathnameTablePanel extends JPanel {
 	private GhidraFileFilter filter;
 	private boolean addToTop;
 	private boolean ordered;
+	private boolean supportsDotPath;
 
 	private Callback resetCallback;
 
@@ -95,12 +96,15 @@ public class PathnameTablePanel extends JPanel {
 	 *            false.
 	 * @param ordered true if the order of entries matters. If so, up and down buttons are provided
 	 *            so the user may arrange the entries. If not, entries are sorted alphabetically.
+	 * @param supportsDotPath true if the add button should support adding the "." path.  If so,
+	 *            the user will be prompted to choose from a file browser, or adding ".".
 	 */
 	public PathnameTablePanel(String[] paths, Callback resetCallback, boolean enableEdits,
-			boolean addToTop, boolean ordered) {
+			boolean addToTop, boolean ordered, boolean supportsDotPath) {
 		super(new BorderLayout(5, 5));
 		this.addToTop = addToTop;
 		this.ordered = ordered;
+		this.supportsDotPath = supportsDotPath;
 		this.resetCallback = resetCallback;
 		tableModel = new PathnameTableModel(paths, enableEdits);
 		create();
@@ -278,8 +282,10 @@ public class PathnameTablePanel extends JPanel {
 					pathName = "";
 				}
 				else {
-					File file = new File(pathName);
-					fileExists = file.exists();
+					int colonSlashSlash = pathName.indexOf("://");
+					if (colonSlashSlash <= 0) { // Assume FSRL/URLs always exist
+						fileExists = new File(pathName).exists();
+					}
 				}
 
 				label.setText(pathName.toString());
@@ -313,6 +319,17 @@ public class PathnameTablePanel extends JPanel {
 	}
 
 	private void add() {
+
+		if (supportsDotPath && !Arrays.stream(getPaths()).anyMatch(p -> p.equals("."))) {
+			int selection =
+				OptionDialog.showOptionNoCancelDialog(this, "Add Path", "Choose how to add a path:",
+					"File Chooser", "Program's Import Location", OptionDialog.QUESTION_MESSAGE);
+
+			if (selection == OptionDialog.OPTION_TWO) {
+				tableModel.addPaths(new String[] { "." }, addToTop, !ordered);
+				return;
+			}
+		}
 
 		GhidraFileChooser fileChooser = new GhidraFileChooser(this);
 		fileChooser.setMultiSelectionEnabled(allowMultiFileSelection);
@@ -361,7 +378,7 @@ public class PathnameTablePanel extends JPanel {
 		String confirmation = """
 				<html><body width="200px">
 				  Are you sure you would like to reset the paths to the default list?
-				  This will remove all paths manually added.
+				  This will remove all paths manually added and cannot be later cancelled.
 				</html>""";
 		String header = "Reset Paths?";
 

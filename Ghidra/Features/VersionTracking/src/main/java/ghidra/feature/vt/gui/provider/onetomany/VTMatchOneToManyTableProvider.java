@@ -43,6 +43,7 @@ import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.provider.markuptable.DisplayableListingAddress;
 import ghidra.feature.vt.gui.provider.matchtable.MatchTableRenderer;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.util.MatchStatusRenderer;
 import ghidra.framework.model.*;
@@ -156,30 +157,24 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 	private void compareFunctions(VTMatchOneToManyContext c) {
 		List<VTMatch> selectedMatches = c.getSelectedMatches();
-		Set<Function> leftFunctions = new HashSet<>();
-		Set<Function> rightFunctions = new HashSet<>();
 
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
 		for (VTMatch match : selectedMatches) {
 			MatchInfo matchInfo = controller.getMatchInfo(match);
 
-			// Whichever codebrowser we are currently in, is what will be on the left
+			// Whichever side we are currently in, is what will be on the left
 			// side of the compare functions window.
-			Function leftFunction = matchInfo.getSourceFunction(),
-					rightFunction = matchInfo.getDestinationFunction();
+			Function leftFunction = matchInfo.getSourceFunction();
+			Function rightFunction = matchInfo.getDestinationFunction();
 			if (!isSource) {
 				leftFunction = matchInfo.getDestinationFunction();
 				rightFunction = matchInfo.getSourceFunction();
 			}
-			leftFunctions.add(leftFunction);
-			rightFunctions.add(rightFunction);
+			model.addMatch(leftFunction, rightFunction);
 
 		}
-		// NOTE: in this case the left functions will always be the same function (ie the one in the
-		// current codebrowser) so leftFunctions will be size one. The rightFunctions will be one or
-		// more since the src/dst match tables contain all possible matches to the current listing
-		// function.
 		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
-		service.compareFunctions(leftFunctions, rightFunctions);
+		service.createCustomComparison(model, null);
 	}
 
 	@Override

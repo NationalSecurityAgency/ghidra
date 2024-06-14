@@ -166,8 +166,9 @@ public class FillOutStructureHelper {
 	}
 
 	/**
-	 * Retrieve the component map that was generated when structure was created using decomiler info.
-	 * Results are not valid until {@link #processStructure(HighVariable, Function, boolean)} is invoked.
+	 * Retrieve the component map that was generated when structure was created using decompiler 
+	 * info. Results are not valid until 
+	 * {@link #processStructure(HighVariable, Function, boolean, boolean)} is invoked.
 	 * @return componentMap
 	 */
 	public NoisyStructureBuilder getComponentMap() {
@@ -177,7 +178,8 @@ public class FillOutStructureHelper {
 	/**
 	 * Retrieve the offset/pcodeOp pairs that are used to store data into the variable
 	 * used to fill-out structure.
-	 * Results are not valid until {@link #processStructure(HighVariable, Function, boolean)} is invoked.
+	 * Results are not valid until 
+	 * {@link #processStructure(HighVariable, Function, boolean, boolean)} is invoked.
 	 * @return the pcodeOps doing the storing to the associated variable
 	 */
 	public List<OffsetPcodeOpPair> getStorePcodeOps() {
@@ -187,7 +189,8 @@ public class FillOutStructureHelper {
 	/**
 	 * Retrieve the offset/pcodeOp pairs that are used to load data from the variable
 	 * used to fill-out structure.
-	 * Results are not valid until {@link #processStructure(HighVariable, Function, boolean)} is invoked.
+	 * Results are not valid until 
+	 * {@link #processStructure(HighVariable, Function, boolean, boolean)} is invoked.
 	 * @return the pcodeOps doing the loading from the associated variable
 	 */
 	public List<OffsetPcodeOpPair> getLoadPcodeOps() {

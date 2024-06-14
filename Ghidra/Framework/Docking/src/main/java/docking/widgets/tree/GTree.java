@@ -865,7 +865,7 @@ public class GTree extends JPanel implements BusyListener {
 	void swingRestoreNonFilteredRootNode() {
 		realViewRootNode = realModelRootNode;
 		GTreeNode currentRoot = swingSetModelRootNode(realModelRootNode);
-		if (currentRoot != realModelRootNode) {
+		if (currentRoot != realModelRootNode && currentRoot != null) {
 			currentRoot.disposeClones();
 		}
 	}

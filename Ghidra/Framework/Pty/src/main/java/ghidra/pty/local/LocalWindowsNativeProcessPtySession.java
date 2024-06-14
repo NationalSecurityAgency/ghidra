@@ -25,6 +25,7 @@ import com.sun.jna.ptr.IntByReference;
 
 import ghidra.pty.PtySession;
 import ghidra.pty.windows.Handle;
+import ghidra.pty.windows.jna.JobApiNative;
 import ghidra.util.Msg;
 
 public class LocalWindowsNativeProcessPtySession implements PtySession {
@@ -33,14 +34,16 @@ public class LocalWindowsNativeProcessPtySession implements PtySession {
 	private final Handle processHandle;
 	//private final Handle threadHandle;
 	private final String ptyName;
+	private final Handle jobHandle;
 
 	public LocalWindowsNativeProcessPtySession(int pid, int tid, Handle processHandle,
-			Handle threadHandle, String ptyName) {
+			Handle threadHandle, String ptyName, Handle jobHandle) {
 		this.pid = pid;
 		//this.tid = tid;
 		this.processHandle = processHandle;
 		//this.threadHandle = threadHandle;
 		this.ptyName = ptyName;
+		this.jobHandle = jobHandle;
 
 		Msg.info(this, "local Windows Pty session. PID = " + pid);
 	}
@@ -84,17 +87,8 @@ public class LocalWindowsNativeProcessPtySession implements PtySession {
 
 	@Override
 	public void destroyForcibly() {
-		if (!Kernel32.INSTANCE.TerminateProcess(processHandle.getNative(), 1)) {
-			int error = Kernel32.INSTANCE.GetLastError();
-			switch (error) {
-				case Kernel32.ERROR_ACCESS_DENIED:
-					/**
-					 * This indicates the process has already terminated. It's unclear to me whether
-					 * or not that is the only possible cause of this error.
-					 */
-					return;
-			}
-			throw new LastErrorException(error);
+		if (!JobApiNative.INSTANCE.TerminateJobObject(jobHandle.getNative(), 1).booleanValue()) {
+			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
 		}
 	}
 

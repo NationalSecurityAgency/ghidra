@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.tree.TreePath;
 
@@ -71,24 +70,6 @@ public class SymbolTreeActionContext extends ProgramSymbolActionContext {
 	}
 
 	/**
-	 * Returns true if the tree's current selection contains at least one {@link SymbolNode}.
-	 * @return true if the tree's current selection contains at least one {@link SymbolNode}.
-	 */
-	public boolean hasSymbolsSelected() {
-		if (selectionPaths == null) {
-			return false;
-		}
-
-		for (TreePath treePath : selectionPaths) {
-			Object object = treePath.getLastPathComponent();
-			if (object instanceof SymbolNode) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * Returns all selected {@link SymbolNode}s or an empty list.
 	 * @return all selected {@link SymbolNode}s or an empty list.
 	 */
@@ -109,7 +90,7 @@ public class SymbolTreeActionContext extends ProgramSymbolActionContext {
 
 	private static List<Symbol> getSymbols(TreePath[] selectionPaths) {
 		if (selectionPaths == null) {
-			return null;
+			return Collections.emptyList();
 		}
 
 		List<Symbol> symbols = new ArrayList<>();
@@ -118,10 +99,6 @@ public class SymbolTreeActionContext extends ProgramSymbolActionContext {
 			if (object instanceof SymbolNode) {
 				SymbolNode symbolNode = (SymbolNode) object;
 				symbols.add(symbolNode.getSymbol());
-			}
-			else {
-				// Do not return symbols if selection contains non-symbolNodes
-				return null;
 			}
 		}
 		return symbols;

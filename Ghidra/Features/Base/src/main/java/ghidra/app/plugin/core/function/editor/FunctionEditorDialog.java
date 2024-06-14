@@ -889,6 +889,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	private class GlassPaneMouseListener implements MouseListener, MouseMotionListener {
 
+		private boolean armed = false;
+
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			processEvent(e);
@@ -897,10 +899,16 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		@Override
 		public void mousePressed(MouseEvent e) {
 			processEvent(e);
+			armed = !isTextField(e);
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
+			if (!armed) {
+				return;
+			}
+			armed = false;
+
 			if (!processEvent(e)) {
 				try {
 					model.parseSignatureFieldText();
@@ -909,16 +917,24 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					handleParseException(ex);
 				}
 			}
+
 		}
 
 		@Override
 		public void mouseEntered(MouseEvent e) {
-//			processEvent(e);
+			// stub
 		}
 
 		@Override
 		public void mouseExited(MouseEvent e) {
-//			processEvent(e);
+			// stub
+		}
+
+		private boolean isTextField(MouseEvent e) {
+			JDialog window = (JDialog) WindowUtilities.windowForComponent(e.getComponent());
+			Component comp =
+				SwingUtilities.getDeepestComponentAt(window.getContentPane(), e.getX(), e.getY());
+			return comp == signatureTextField;
 		}
 
 		private boolean processEvent(MouseEvent e) {

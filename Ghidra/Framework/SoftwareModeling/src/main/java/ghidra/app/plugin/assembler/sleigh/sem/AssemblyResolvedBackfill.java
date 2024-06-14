@@ -17,6 +17,7 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.util.Map;
 
+import ghidra.app.plugin.assembler.sleigh.expr.NeedsBackfillException;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 
 public interface AssemblyResolvedBackfill extends AssemblyResolution {

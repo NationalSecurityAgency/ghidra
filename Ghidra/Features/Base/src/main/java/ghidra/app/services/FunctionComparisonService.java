@@ -15,125 +15,75 @@
  */
 package ghidra.app.services;
 
-import java.util.Set;
+import java.util.Collection;
 
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
-import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.features.base.codecompare.model.FunctionComparisonModel;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.program.model.listing.Function;
+import utility.function.Callback;
 
 /**
- * Allows users to create comparisons between functions which will be displayed
- * side-by-side in a {@link FunctionComparisonProvider}. Each side in the 
+ * Service interface to create comparisons between functions which will be displayed
+ * side-by-side in a function comparison window. Each side in the 
  * display will allow the user to select one or more functions 
  * 
- * <p>Concurrent usage: All work performed by this service will be done on the Swing thread.  
- * Further, all calls that do not return a value will be run immediately if the caller is on 
- * the Swing thread; otherwise, the work will be done on the Swing thread at a later time.  
- * Contrastingly, any method on this interface that returns a value will be run immediately,
- * regardless of whether the call is on the Swing thread.  Thus, the methods that return a value
- * will always be blocking calls; methods that do not return a value may or may not block, 
- * depending on the client's thread.
+ * <p>Concurrent usage: All work performed by this service will be done asynchronously on the
+ * Swing thread.  
  */
-@ServiceInfo(defaultProvider = FunctionComparisonPlugin.class)
 public interface FunctionComparisonService {
 
 	/**
-	 * Creates a comparison provider that allows comparisons between a functions.
-	 * 
-	 * @return the new comparison provider 
-	 */
-	public FunctionComparisonProvider createFunctionComparisonProvider();
-
-	/**
-	 * Creates a comparison between a set of functions, where each function
-	 * in the list can be compared against any other.
-	 * <p>
-	 * eg: Given a set of 3 functions (f1, f2, f3), the comparison dialog will
-	 * allow the user to display either f1, f2 or f3 on EITHER side of the
-	 * comparison.
-	 * <p>
-	 * Note that this method will always create a new provider; if you want to 
-	 * add functions to an existing comparison, use
-	 * {@link #compareFunctions(Set, FunctionComparisonProvider) this}
-	 * variant that takes a provider.
-	 * 
+	 * Creates a function comparison window where each side can display any of the given functions.
 	 * @param functions the functions to compare
-	 * @return the new comparison provider 
 	 */
-	public FunctionComparisonProvider compareFunctions(Set<Function> functions);
+	public void createComparison(Collection<Function> functions);
 
 	/**
-	 * Creates a comparison between two sets of functions, where all the functions in source list can 
-	 * be compared against all functions in the destination list. 
-	 * <p>
-	 * Note that this method will always create a new provider.
-	 * 
-	 * @param sourceFunctions
-	 * @param destinationFunctions
-	 * @return the new comparison provider
+	 * Creates a function comparison window for the two given functions. Each side can select
+	 * either function, but initially the left function will be shown in the left panel and the
+	 * right function will be shown in the right panel.
+	 * @param left the function to initially show in the left panel
+	 * @param right the function to initially show in the right panel
 	 */
-	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
-			Set<Function> destinationFunctions);
+	public void createComparison(Function left, Function right);
 
 	/**
-	 * Creates a comparison between two functions, where the source function
-	 * will be shown on the left side of the comparison dialog and the target 
-	 * on the right. 
-	 * <p>
-	 * Note that this will always create a new provider; if you want to add 
-	 * functions to an existing comparison, use 
-	 * {@link #compareFunctions(Function, Function, FunctionComparisonProvider) this}
-	 * variant that takes a provider.
-	 * 
-	 * @param source a function in the comparison
-	 * @param target a function in the comparison
-	 * @return the new comparison provider
+	 * Adds the given function to each side the last created comparison window or creates
+	 * a new comparison if none exists. The right panel will be changed to show the new function.
+	 * Note that this method will not add to any provider created via the
+	 * {@link #createCustomComparison(FunctionComparisonModel, Callback)}. Those providers
+	 * are private to the client that created them. They take in a model, so if the client wants
+	 * to add to those providers, it must retain a handle to the model and add functions directly
+	 * to the model.
+	 * @param function the function to be added to the last function comparison window
 	 */
-	public FunctionComparisonProvider compareFunctions(Function source, Function target);
+	public void addToComparison(Function function);
 
 	/**
-	 * Creates a comparison between a set of functions, adding them to the 
-	 * given comparison provider. Each function in the given set will be added 
-	 * to both sides of the comparison, allowing users to compare any functions
-	 * in the existing provider with the new set.
-	 * 
-	 * @see #compareFunctions(Set)
-	 * @param functions the functions to compare
-	 * @param provider the provider to add the comparisons to
+	 * Adds the given functions to each side the last created comparison window or creates
+	 * a new comparison if none exists. The right panel will be change to show a random function
+	 * from the new functions. Note that this method will not add to any comparison windows created
+	 * with a custom comparison model.
+	 * @param functions the functions to be added to the last function comparison window
 	 */
-	public void compareFunctions(Set<Function> functions,
-			FunctionComparisonProvider provider);
+	public void addToComparison(Collection<Function> functions);
 
 	/**
-	 * Creates a comparison between two functions and adds it to a given
-	 * comparison provider. The existing comparisons in the provider will not
-	 * be affected, unless the provider already contains a comparison with 
-	 * the same source function; in this case the given target will be added
-	 * to that comparisons' list of targets.
-	 * 
-	 * @see #compareFunctions(Function, Function)
-	 * @param source a function in the comparison
-	 * @param target a function in the comparison
-	 * @param provider the provider to add the comparison to
+	 * Creates a custom function comparison window. The default model shows all functions on both
+	 * sides. This method allows the client to provide a custom comparison model which can have
+	 * more control over what functions can be selected on each side. One such custom model
+	 * is the {@link MatchedFunctionComparisonModel} which gives a unique set of functions on the
+	 * right side, depending on what is selected on the left side.
+	 * <P>
+	 * Note that function comparison windows created with this method are considered private for the
+	 * client and are not available to be chosen for either of the above "add to" service methods. 
+	 * Instead, the client that uses this model can retain a handle to the model and add or remove
+	 * functions directly on the model.
+	 *
+	 * @param model the custom function comparison model
+	 * @param closeListener an optional callback if the client wants to be notified when the 
+	 * associated function comparison windows is closed.
 	 */
-	public void compareFunctions(Function source, Function target,
-			FunctionComparisonProvider provider);
-
-	/**
-	 * Removes a given function from all comparisons across all comparison 
-	 * providers
-	 * 
-	 * @param function the function to remove
-	 */
-	public void removeFunction(Function function);
-
-	/**
-	 * Removes a given function from all comparisons in the given comparison
-	 * provider only
-	 * 
-	 * @param function the function to remove
-	 * @param provider the comparison provider to remove functions from
-	 */
-	public void removeFunction(Function function, FunctionComparisonProvider provider);
+	public void createCustomComparison(FunctionComparisonModel model,
+			Callback closeListener);
 }

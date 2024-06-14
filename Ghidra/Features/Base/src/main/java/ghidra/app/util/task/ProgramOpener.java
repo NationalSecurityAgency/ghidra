@@ -101,8 +101,9 @@ public class ProgramOpener {
 			}
 			catch (IOException e) {
 				Msg.showError(this, null, "Program Open Failed",
-					"Failed to open Ghidra URL: " + locator.getURL(), e);
+					"Failed to open Ghidra URL: " + locator.getURL());
 			}
+			return null;
 		}
 		return openProgram(locator, locator.getDomainFile(), monitor);
 	}
@@ -215,7 +216,7 @@ public class ProgramOpener {
 
 		User user = domainFile.getParent().getProjectData().getUser();
 
-		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
+		CheckoutDialog dialog = Swing.runNow(() -> new CheckoutDialog(domainFile, user));
 		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
 			try {
 				monitor.setMessage("Checking Out " + domainFile.getName());

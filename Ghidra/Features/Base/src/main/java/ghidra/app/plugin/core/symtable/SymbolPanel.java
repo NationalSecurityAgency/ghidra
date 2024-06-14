@@ -31,7 +31,6 @@ import docking.widgets.table.RowFilterTransformer;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.*;
 
 class SymbolPanel extends JPanel {
@@ -61,7 +60,7 @@ class SymbolPanel extends JPanel {
 		this.listener = e -> symProvider.updateTitle();
 
 		symTable = threadedTablePanel.getTable();
-		symTable.setAutoLookupColumn(SymbolTableModel.LABEL_COL);
+		symTable.setAutoLookupColumn(AbstractSymbolTableModel.LABEL_COL);
 		symTable.setRowSelectionAllowed(true);
 		symTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		symTable.getModel().addTableModelListener(listener);
@@ -79,7 +78,7 @@ class SymbolPanel extends JPanel {
 		for (int i = 0; i < symTable.getColumnCount(); i++) {
 			TableColumn column = symTable.getColumnModel().getColumn(i);
 			column.setCellRenderer(renderer);
-			if (column.getModelIndex() == SymbolTableModel.LABEL_COL) {
+			if (column.getModelIndex() == AbstractSymbolTableModel.LABEL_COL) {
 				column.setCellEditor(new SymbolEditor());
 			}
 		}
@@ -88,6 +87,9 @@ class SymbolPanel extends JPanel {
 		add(createFilterFieldPanel(), BorderLayout.SOUTH);
 
 		filterDialog = new FilterDialog(tool);
+
+		// enable dragging symbols out of the symbol table
+		new SymbolTableDragProvider(symTable, model);
 	}
 
 	private JPanel createFilterFieldPanel() {
@@ -122,10 +124,6 @@ class SymbolPanel extends JPanel {
 		}
 
 		return new DefaultRowFilterTransformer<>(tableModel, symTable.getColumnModel());
-	}
-
-	ProgramSelection getProgramSelection() {
-		return symTable.getProgramSelection();
 	}
 
 	void dispose() {

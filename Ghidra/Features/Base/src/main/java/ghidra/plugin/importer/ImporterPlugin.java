@@ -31,9 +31,9 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.services.*;
+import ghidra.app.services.FileImporterService;
+import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.opinion.LoaderMap;
 import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.FSRL;
@@ -43,7 +43,6 @@ import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
-import ghidra.framework.options.SaveState;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -71,7 +70,6 @@ import ghidra.util.task.*;
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Import External Files (NEW)",
 	description = ImporterPlugin.IMPORTER_PLUGIN_DESC,
-	servicesRequired = { TextEditorService.class },
 	servicesProvided = { FileImporterService.class },
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
@@ -117,23 +115,6 @@ public class ImporterPlugin extends Plugin
 		setupImportSelectionAction();
 		setupAddToProgramAction();
 		setupBatchImportAction();
-	}
-
-	@Override
-	public void readConfigState(SaveState saveState) {
-		super.readConfigState(saveState);
-		String[] paths = saveState.getStrings("library search paths", null);
-		if (paths != null) {
-			LibrarySearchPathManager.setLibraryPaths(paths);
-		}
-	}
-
-	@Override
-	public void writeConfigState(SaveState saveState) {
-		super.writeConfigState(saveState);
-
-		String[] paths = LibrarySearchPathManager.getLibraryPaths();
-		saveState.putStrings("library search paths", paths);
 	}
 
 	@Override
@@ -281,8 +262,7 @@ public class ImporterPlugin extends Plugin
 					}
 					catch (IOException e) {
 						Msg.showError(JavaFileListHandler.class, tool.getToolFrame(),
-							"Packed DB Import Failed",
-							"Failed to import " + f.getName(), e);
+							"Packed DB Import Failed", "Failed to import " + f.getName(), e);
 					}
 				}
 

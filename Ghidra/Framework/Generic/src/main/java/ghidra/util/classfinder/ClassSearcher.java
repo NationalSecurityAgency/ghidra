@@ -30,8 +30,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeListener;
 
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +79,7 @@ public class ClassSearcher {
 	private static List<Class<?>> FILTER_CLASSES = Arrays.asList(ExtensionPoint.class);
 	private static Pattern extensionPointSuffixPattern;
 	private static Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap;
-	private static BidiMap<ClassFileInfo, Class<?>> loadedCache = new DualHashBidiMap<>();
+	private static Map<ClassFileInfo, Class<?>> loadedCache = new HashMap<>();
 	private static Set<ClassFileInfo> falsePositiveCache = new HashSet<>();
 	private static volatile boolean hasSearched;
 	private static volatile boolean isSearching;
@@ -187,12 +185,6 @@ public class ClassSearcher {
 			Class<?> c = loadedCache.get(info);
 			if (c == null) {
 				c = loadExtensionPoint(info.path(), info.name());
-				ClassFileInfo existing = loadedCache.getKey(c);
-				if (existing != null) {
-					log.info(
-						"Skipping load of class '%s' from '%s'. Already loaded from '%s'."
-								.formatted(info.name(), info.path(), existing.path()));
-				}
 				if (c == null) {
 					falsePositiveCache.add(info);
 					continue;
@@ -418,8 +410,8 @@ public class ClassSearcher {
 			throws CancelledException {
 		log.info("Searching for classes...");
 
-		Set<ClassDir> classDirs = new HashSet<>();
-		Set<ClassJar> classJars = new HashSet<>();
+		List<ClassDir> classDirs = new ArrayList<>();
+		List<ClassJar> classJars = new ArrayList<>();
 
 		for (String searchPath : gatherSearchPaths()) {
 			String lcSearchPath = searchPath.toLowerCase();
@@ -441,17 +433,31 @@ public class ClassSearcher {
 			}
 		}
 
-		Set<ClassFileInfo> classSet = new HashSet<>();
+		List<ClassFileInfo> classList = new ArrayList<>();
 		for (ClassDir dir : classDirs) {
 			monitor.checkCancelled();
-			dir.getClasses(classSet, monitor);
+			dir.getClasses(classList, monitor);
 		}
 		for (ClassJar jar : classJars) {
 			monitor.checkCancelled();
-			jar.getClasses(classSet, monitor);
+			jar.getClasses(classList, monitor);
 		}
 
-		return classSet.stream()
+		// We can't load more than one class with the same name, so de-duplicate them
+		Map<String, ClassFileInfo> uniqueClassMap = new HashMap<>();
+		for (ClassFileInfo info : classList) {
+			ClassFileInfo existing = uniqueClassMap.get(info.name());
+			if (existing == null) {
+				uniqueClassMap.put(info.name(), info);
+			}
+			else {
+				log.info("Ignoring class '%s' from '%s'. Already found at '%s'."
+						.formatted(info.name(), info.path(), existing.path()));
+			}
+		}
+
+		return uniqueClassMap.values()
+				.stream()
 				.collect(Collectors.groupingBy(ClassFileInfo::suffix, Collectors.toSet()));
 	}
 

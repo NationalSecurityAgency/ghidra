@@ -71,13 +71,12 @@ public class MicrosoftDemangler implements Demangler {
 
 		MDMangGhidra demangler = new MDMangGhidra();
 		try {
-			demangler.demangle(mangled, demangleOnlyKnownPatterns);
+			demangler.demangle(mangled, true, demangleOnlyKnownPatterns);
 			DemangledObject object = demangler.getObject();
 			return object;
 		}
 		catch (MDException e) {
-			DemangledException de =
-				new DemangledException("Unable to demangle symbol: " + mangled);
+			DemangledException de = new DemangledException("Unable to demangle symbol: " + mangled);
 			de.initCause(e);
 			throw de;
 		}

@@ -165,6 +165,15 @@ public class GhidraLauncher {
 			else { /* Eclipse dev mode */
 				// Support loading pre-built, jar-based, non-repo extensions in Eclipse dev mode
 				addExtensionJarPaths(classpathList, modules, layout);
+
+				// Eclipse launches the Utility module, so it's already on the classpath.  We don't
+				// want to add it a second time, so remove the one we discovered.
+				GModule utilityModule = modules.get("Utility");
+				if (utilityModule == null) {
+					throw new IOException("Failed to find the 'Utility' module!");
+				}
+				classpathList.removeIf(
+					e -> e.startsWith(utilityModule.getModuleRoot().getAbsolutePath()));
 			}
 
 			// In development mode, jars do not live in module directories. Instead, each jar lives

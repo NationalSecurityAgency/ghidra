@@ -273,10 +273,8 @@ public class SquashUtils {
 			// Treat as symbolic link inode
 			SquashSymlinkInode symLinkInode = (SquashSymlinkInode) inode;
 
-			// Store symlink as file. Lookup handled when getting ByteProvider
-			fsih.storeFileWithParent(entry.getFileName(), parentDir, symLinkInode.getNumber(),
-				false, 0, new SquashedFile(symLinkInode, null));
-
+			fsih.storeSymlinkWithParent(entry.getFileName(), parentDir, symLinkInode.getNumber(),
+				symLinkInode.getPath(), 0, new SquashedFile(symLinkInode, null));
 		}
 		else {
 			Msg.info(SquashUtils.class,

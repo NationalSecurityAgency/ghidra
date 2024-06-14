@@ -84,7 +84,7 @@ public class HighFunctionDBUtil {
 		COMMIT,
 
 		/**
-		 * {@value #COMMIT_NO_VOID} - commit return parameter as defined by {@link HighFunction}
+		 * {@link #COMMIT_NO_VOID} - commit return parameter as defined by {@link HighFunction}
 		 * unless it is {@link VoidDataType} in which case keep existing function return parameter.
 		 */
 		COMMIT_NO_VOID;

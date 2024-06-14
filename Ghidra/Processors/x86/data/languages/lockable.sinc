@@ -4,7 +4,7 @@
 #     is used with any instruction not in the above list.
 # The instructions in this file have their non-lockable counterparts in ia.sinc
 
-:ADC^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=2 ... ; imm8 
+:ADC^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & $(BYTE_80_82); spec_m8 & reg_opcode=2 ... ; imm8 
 { 
     build lockx; 
     build spec_m8;
@@ -109,7 +109,7 @@
 }
 @endif
 
-:ADD^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=0 ...; imm8		
+:ADD^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & $(BYTE_80_82); spec_m8 & reg_opcode=0 ...; imm8		
 {
     build lockx;
     build spec_m8;
@@ -225,7 +225,7 @@
 }
 @endif
 
-:AND^lockx m8,imm8      is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); m8 & reg_opcode=4 ...; imm8     
+:AND^lockx m8,imm8      is vexMode=0 & lockx & unlock & $(BYTE_80_82); m8 & reg_opcode=4 ...; imm8     
 {
     build lockx;
     build m8;
@@ -834,7 +834,7 @@
 }
 @endif
 
-:OR^lockx  spec_m8,imm8      is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=1 ...; imm8     
+:OR^lockx  spec_m8,imm8      is vexMode=0 & lockx & unlock & $(BYTE_80_82); spec_m8 & reg_opcode=1 ...; imm8     
 {
     build lockx;
     build spec_m8;
@@ -951,7 +951,7 @@
 }
 @endif
 
-:SBB^lockx  m8,imm8     is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); m8 & reg_opcode=3 ...; imm8								
+:SBB^lockx  m8,imm8     is vexMode=0 & lockx & unlock & $(BYTE_80_82); m8 & reg_opcode=3 ...; imm8								
 {
     build lockx;
     build m8;
@@ -1056,7 +1056,7 @@
 }
 @endif
 
-:SUB^lockx  spec_m8,imm8     is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=5 ...; imm8     
+:SUB^lockx  spec_m8,imm8     is vexMode=0 & lockx & unlock & $(BYTE_80_82); spec_m8 & reg_opcode=5 ...; imm8     
 {
     build lockx;
     build spec_m8;
@@ -1269,7 +1269,7 @@
 }
 @endif
 
-:XOR^lockx spec_m8,imm8      is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=6 ...; imm8     
+:XOR^lockx spec_m8,imm8      is vexMode=0 & lockx & unlock & $(BYTE_80_82); spec_m8 & reg_opcode=6 ...; imm8     
 {
     build lockx;
     build spec_m8;

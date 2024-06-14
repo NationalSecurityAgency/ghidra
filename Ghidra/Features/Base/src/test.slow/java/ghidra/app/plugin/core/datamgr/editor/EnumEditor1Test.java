@@ -1326,15 +1326,15 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAddAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Add Enum Value");
+		return getAction(plugin, "Add Enum Value");
 	}
 
 	private DockingActionIf getApplyAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Apply Enum Changes");
+		return getAction(plugin, "Apply Enum Changes");
 	}
 
 	private DockingActionIf getDeleteAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Delete Enum Value");
+		return getAction(plugin, "Delete Enum Value");
 	}
 
 	private int getRowFor(String theName) {

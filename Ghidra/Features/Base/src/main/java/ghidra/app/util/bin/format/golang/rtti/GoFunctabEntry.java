@@ -32,13 +32,13 @@ public class GoFunctabEntry {
 	@ContextField
 	private StructureContext<GoFunctabEntry> context;
 
-	@FieldMapping(optional = true)
+	@FieldMapping(presentWhen = "1.18+")
 	@MarkupReference("getFuncAddress")
-	private long entryoff;	// valid in >=1.18, relative offset of function
+	private long entryoff;	// relative offset of function
 
-	@FieldMapping(optional = true)
+	@FieldMapping(presentWhen = "-1.17")
 	@MarkupReference("getFuncAddress")
-	private long entry;	// valid in <=1.17, location of function
+	private long entry;	// absolute location of function
 
 	@FieldMapping
 	@MarkupReference("getFuncData")

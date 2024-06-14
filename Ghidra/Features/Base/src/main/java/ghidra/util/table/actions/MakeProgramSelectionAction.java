@@ -67,7 +67,7 @@ public class MakeProgramSelectionAction extends DockingAction {
 
 	/**
 	 * Special constructor for clients that do not have a plugin.  Clients using this 
-	 * constructor must override {@link #makeSelection(ActionContext)}.
+	 * constructor must override {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
 	 * 
 	 * @param navigatable the navigatable that will be used to make selections; may not be null
 	 * @param owner the action's owner
@@ -143,20 +143,8 @@ public class MakeProgramSelectionAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		makeSelection(context);
-	}
-
-	/**
-	 * Deprecated in favor of {@link #makeProgramSelection(ProgramSelection, ActionContext)}.  
-	 * Override that method instead of this one.
-	 * @param context the context
-	 * @return the selection
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	protected ProgramSelection makeSelection(ActionContext context) {
 		ProgramSelection selection = table.getProgramSelection();
 		makeProgramSelection(selection, context);
-		return selection;
 	}
 
 	protected void makeProgramSelection(ProgramSelection selection, ActionContext context) {

@@ -23,6 +23,7 @@ import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.*;
+import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.opinion.Loader;
 import ghidra.framework.*;
 import ghidra.framework.model.DomainFolder;
@@ -340,6 +341,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 			else if ("-okToDelete".equalsIgnoreCase(args[argi])) {
 				options.setOkToDelete(true);
+			}
+			else if (checkArgument("-librarySearchPaths", args, argi)) {
+				LibrarySearchPathManager.setLibraryPaths(args[++argi].split(";"));
 			}
 			else {
 				throw new InvalidInputException("Bad argument: " + arg);

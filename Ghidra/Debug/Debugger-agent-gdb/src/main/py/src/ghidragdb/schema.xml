@@ -53,7 +53,8 @@
 		<attribute-alias from="_kinds" to="Kinds" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="_enabled" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" />
+		<attribute-alias from="_enabled" to="Enabled" />
 		<attribute name="Commands" schema="STRING" />
 		<attribute name="Condition" schema="STRING" />
 		<attribute name="Hit Count" schema="INT" />
@@ -132,6 +133,8 @@
 	<schema name="BreakpointLocation" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="BreakpointLocation" />
 		<element schema="VOID" />
+		<attribute name="Enabled" schema="BOOL" />
+		<attribute-alias from="_enabled" to="Enabled" />
 		<attribute name="Range" schema="RANGE" />
 		<attribute-alias from="_range" to="Range" />
 		<attribute name="_display" schema="STRING" hidden="yes" />

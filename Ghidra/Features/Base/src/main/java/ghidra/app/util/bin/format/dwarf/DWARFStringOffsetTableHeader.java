@@ -36,7 +36,6 @@ public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 	/**
 	 * Reads a string offset table header (found in the .debug_str_offsets section)
 	 * 
-	 * @param dprog {@link DWARFProgram}
 	 * @param reader {@link BinaryReader}
 	 * @return new {@link DWARFStringOffsetTableHeader} instance
 	 * @throws IOException if error reading

@@ -341,11 +341,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		// nothing to do
-	}
-
-	@Override
 	public int getDragAction() {
 		return dragAction;
 	}
@@ -371,11 +366,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void move() {
-		// nothing to do
-	}
-
-	@Override
 	public void add(Object obj, DropTargetDropEvent event, DataFlavor f) {
 		Point p = event.getLocation();
 		ProgramLocation loc = listingPanel.getProgramLocation(p);
@@ -383,11 +373,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		if (loc != null && curDropProvider != null) {
 			curDropProvider.add(context, obj, f);
 		}
-	}
-
-	@Override
-	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		// nothing to do
 	}
 
 	@Override
@@ -429,11 +414,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		if (otherPanel != null) {
 			otherPanel.getFieldPanel().repaint();
 		}
-	}
-
-	@Override
-	public void undoDragUnderFeedback() {
-		// nothing to do
 	}
 
 	protected void doSetProgram(Program newProgram) {
@@ -1112,11 +1092,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
 			List<Highlight> list = new ArrayList<>();
-			ListingHighlightProvider currentExternalHighligter =
-				programHighlighterMap.get(program);
+			ListingHighlightProvider currentExternalHighligter = programHighlighterMap.get(program);
 			if (currentExternalHighligter != null) {
-				Highlight[] highlights = currentExternalHighligter.createHighlights(text, field,
-					cursorTextOffset);
+				Highlight[] highlights =
+					currentExternalHighligter.createHighlights(text, field, cursorTextOffset);
 				for (Highlight highlight : highlights) {
 					list.add(highlight);
 				}

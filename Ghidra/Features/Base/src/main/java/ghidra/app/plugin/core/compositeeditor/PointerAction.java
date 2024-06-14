@@ -15,11 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import static docking.KeyBindingPrecedence.*;
-
 import java.awt.event.KeyEvent;
-
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
@@ -37,12 +33,11 @@ public class PointerAction extends CompositeEditorTableAction {
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Create a pointer(s) on the selection";
 	private final static DataType POINTER_DT = new PointerDataType();
-	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_P, 0);
 
 	public PointerAction(CompositeEditorProvider provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, null, null, null);
 		setDescription(DESCRIPTION);
-		setKeyBindingData(new KeyBindingData(KEY_STROKE, DefaultLevel));
+		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));
 		adjustEnablement();
 	}
 

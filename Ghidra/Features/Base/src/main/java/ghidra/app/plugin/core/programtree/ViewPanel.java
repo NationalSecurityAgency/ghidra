@@ -17,21 +17,23 @@ package ghidra.app.plugin.core.programtree;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ActionContext;
-import docking.EditListener;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -349,6 +351,15 @@ class ViewPanel extends JPanel implements ChangeListener {
 		setPreferredSize(new Dimension(200, 300));
 	}
 
+	void treeViewsRestored(Collection<TreeViewProvider> treeViews) {
+
+		map.clear();
+
+		for (TreeViewProvider treeProvider : treeViews) {
+			addView(treeProvider);
+		}
+	}
+
 	/**
 	 * If the panel is active, then set the current view to be active and all
 	 * others to be inactive.
@@ -448,52 +459,24 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 */
 	private void renameView() {
 		ViewProviderService vps = getCurrentViewProvider();
-		int tabIndex = tabbedPane.getSelectedIndex();
 		String oldName = vps.getViewName();
-		Rectangle rect = tabbedPane.getBoundsAt(tabIndex);
-		tool.showEditWindow(oldName, tabbedPane, rect, new RenameListener(vps, tabIndex));
-	}
+		String newName =
+			OptionDialog.showInputSingleLineDialog(tabbedPane, "Rename Tab", "New name:", oldName);
 
-//==================================================================================================
-// Inner Classes
-//==================================================================================================	
-
-	private class RenameListener implements EditListener {
-
-		private ViewProviderService vps;
-		private int tabIndex;
-
-		RenameListener(ViewProviderService vps, int tabIndex) {
-			this.vps = vps;
-			this.tabIndex = tabIndex;
+		if (StringUtils.isBlank(newName)) {
+			return;
 		}
 
-		@Override
-		public void editCompleted(String newName) {
-
-			if (newName.length() == 0) {
-
-				Msg.showError(getClass(), null, "Invalid Name", "Please enter a valid name.");
-
-				String oldName = vps.getViewName();
-				Rectangle rect = tabbedPane.getBoundsAt(tabIndex);
-				tool.showEditWindow(oldName, tabbedPane, rect, this);
-				return;
+		if (!newName.equals(oldName)) {
+			if (vps.viewRenamed(newName)) {
+				int selectedIndex = tabbedPane.getSelectedIndex();
+				tabbedPane.setTitleAt(selectedIndex, newName);
+				DockingTabRenderer renderer =
+					(DockingTabRenderer) tabbedPane.getTabComponentAt(selectedIndex);
+				renderer.setTitle(newName, newName);
+				map.remove(oldName);
+				map.put(newName, vps);
 			}
-
-			String oldName = vps.getViewName();
-			if (!newName.equals(oldName)) {
-				if (vps.viewRenamed(newName)) {
-					int selectedIndex = tabbedPane.getSelectedIndex();
-					tabbedPane.setTitleAt(selectedIndex, newName);
-					DockingTabRenderer renderer =
-						(DockingTabRenderer) tabbedPane.getTabComponentAt(selectedIndex);
-					renderer.setTitle(newName, newName);
-					map.remove(oldName);
-					map.put(newName, vps);
-				}
-			}
-
 		}
 	}
 

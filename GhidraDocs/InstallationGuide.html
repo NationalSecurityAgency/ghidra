@@ -3,14 +3,15 @@
 <head>
   <title>Ghidra Installation Guide</title>
   <style name="text/css">
-    li { font-family:times new roman; font-size:14pt; margin-bottom: 12px; }
+    li { font-family:times new roman; font-size:14pt; margin-bottom: 6px; }
     h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
     h2 { padding-top:30px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
 	h2 { color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; color:#984c4c; }
 	h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; color:#0000ff; }
     p { font-family:times new roman; font-size:14pt; }
     td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; vertical-align: top; }
-    th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; }    
+    th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; } 
+    pre { font-size:12pt }   
   </style>
 </head>
 
@@ -18,7 +19,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 11.1 and is subject to change with
+The installation information provided is effective as of Ghidra 11.2 and is subject to change with
 future releases.
 </p>
 
@@ -31,7 +32,7 @@ future releases.
     <li><a href="#JavaNotes">Java Notes</a></li>
   </ul>
   <li><a href="#Layout">Ghidra Installation Directory Layout</a></li>
-  <li><a href="#Build">Building Ghidra Native Components</a></li>
+  <li><a href="#Build">Building Native Components</a></li>
   <li><a href="#DebuggerPython">Installing the Debuggers' Python Dependencies</a></li>
   <li><a href="#Run">Running Ghidra</a></li>
   <ul>
@@ -67,7 +68,7 @@ future releases.
 
 <h2><a name="Platforms"></a>Platforms Supported</h2>
 <ul>
-  <li>Windows 7 or later (64-bit)</li>
+  <li>Windows 10 or later (x86 64-bit)</li>
   <li>Linux (64-bit)</li>
   <li>macOS 10.13 or later</li>
 </ul>
@@ -83,23 +84,25 @@ Ghidra team if you have a specific need.</p></blockquote>
 </ul>
 <h3>Software</h3>
 <ul>
-  <li>Java 17 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
+  <li>Java 21 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
   <ul>
-    <li>Free long term support (LTS) versions of JDK 17 are provided by:</li>
+    <li>Free long term support (LTS) versions of JDK 21 are provided by:</li>
     <ul>
       <li>
         <a href="https://adoptium.net/temurin/releases">
         Adoptium Temurin</a>
       </li>
       <li>
-        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html">
+        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html">
         Amazon Corretto</a>
       </li>
     </ul>
   </ul>
-  <li>Python 3.9 or later (for Debugger support)</li>
+  <li>Python3 (3.7 to 3.12; for Debugger support)</li>
   <ul>
-    <li>This is available from <a href="https://python.org">Python.org</a> or most operating system's app stores or software repositories.</li>
+    <li>This is available from <a href="https://python.org">Python.org</a> or most operating system's
+     app stores or software repositories.  For Linux it is recommended that the system's package
+     repository be used to install a suitable version of Python.</li>
   </ul> 
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
@@ -308,11 +311,13 @@ is complete.</p>
 </table>
 <p>(<a href="#top">Back to Top</a>)</p>
 
-<h2><a name="Build"></a>Building Ghidra Native Components</h2>
+<h2><a name="Build"></a>Building Native Components</h2>
 <p>Ghidra requires several native binaries to be present in order to successfully run.  An official
-Ghidra release includes native binaries for the following platforms:</p>
+public Ghidra release includes native binaries for the following platforms.
+</p>
+<p>NOTE: For some non-public Ghidra releases macOS natives may be omitted.</p>
 <ul>
-  <li>Windows x86 64-bit</li>
+  <li>Windows 10 or later, x86 64-bit</li>
   <li>Linux x86 64-bit</li>
   <li>macOS x86 64-bit</li>
   <li>macOS ARM 64-bit</li>
@@ -324,22 +329,38 @@ Ghidra release includes native binaries for the following platforms:</p>
   <li>FreeBSD x86 64-bit (no debugger support)</li>
   <li>FreeBSD ARM 64-bit (no debugger support)</li>
 </ul>
-<p>In order to build native binaries for your platform, you will need the following installed on your
+<p>For supported systems where native binaries have not been supplied, or those that are supplied
+fail to run properly, it may be neccessary to build the native Ghidra binaries.
+In order to build native binaries for your platform, you will need the following installed on your
 system:</p>
 <ul>
   <li>A <a href="#Requirements">supported</a> version of a Java Development Kit</li>
-  <li><a href="https://gradle.org/releases/">Gradle 7.3+</a></li>
-  <li>make, gcc, and g++ (Linux/macOS/FreeBSD-only)</li>
-  <li>
-    <a href="https://visualstudio.microsoft.com/vs/community/">Microsoft Visual Studio</a>
-    2017 or later, or <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/">
-    Microsoft C++ Build Tools</a> with the following components installed (Windows-only):
+  <li><a href="https://gradle.org/releases/">Gradle 8.5+</a></li>
+  <li>Software C/C++ build tools and library packages</li>
+  <ul>
+  	<li>macOS: <I>Xcode</I> or the abbreviated <I>Command Line Tools for Xcode</I> will supply the 
+  	necessary build tools.  Assuming you are connected to the Internet, <I>Xcode</I> 
+  	(which includes the command tools) may be installed directly from the App Store 
+  	while <I>Command Line Tools for Xcode</I> may be installed using the following command:
+  	<pre>    xcode-select --install</pre></li>
+  	<li>Linux/FreeBSD: the 64-bit versions of the following packages should installed:
       <ul>
-        <li>MSVC</li>
-        <li>Windows SDK</li>
-        <li>C++ ATL</li>
+        <li>gcc 8.5 or later</li>
+        <li>gcc-c++ / g++ 8.5 or later</li>
+        <li>make</li>
       </ul>
-  </li>
+  	</li>
+    <li>Windows: 
+      <a href="https://visualstudio.microsoft.com/vs/community/">Microsoft Visual Studio</a>
+      2017 or later, or <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/">
+      Microsoft C++ Build Tools</a> with the following components installed:
+        <ul>
+          <li>MSVC</li>
+          <li>Windows SDK</li>
+          <li>C++ ATL</li>
+        </ul>
+    </li>
+  </ul>
 </ul>
 <p>To build the native binaries for your current platform, execute the following script:</p>
 <pre><blockquote><i>&lt;GhidraInstallDir&gt;</i>/support/buildNatives(.bat)</i></blockquote></pre>
@@ -350,7 +371,7 @@ existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirecto
 
 <h2><a name="DebuggerPython"></a>Installing the Debugger's Python Dependencies</h2>
 <p>The Debugger now uses Python to connect to the host platform's native debuggers. This requires
-Python 3.9 or later and some additional packages. These packages are included in the distribution,
+Python3 (3.7 to 3.12) and some additional packages. These packages are included in the distribution,
 but you may still install them from PyPI if you prefer:</p>
 <ul>
 <li>psutil</li>

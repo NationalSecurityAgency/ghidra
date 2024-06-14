@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.datawindow;
 import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
@@ -31,7 +30,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramTreeService;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
-import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressRangeIterator;
@@ -70,11 +68,16 @@ public class DataWindowPlugin extends ProgramPlugin {
 	private boolean resetTypesNeeded;
 	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
+	private SortedMap<String, Boolean> typeEnablementByDisplayName =
+		new TreeMap<>(new DataTypeNameComparator());
+
+	private boolean isFilterEnabled = false;
+	private Coverage coverage = Coverage.PROGRAM;
+
 	public DataWindowPlugin(PluginTool tool) {
 		super(tool);
 
 		resetUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReset());
-
 		reloadUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReload());
 	}
 
@@ -97,7 +100,7 @@ public class DataWindowPlugin extends ProgramPlugin {
 		super.dispose();
 	}
 
-	DomainObjectListener createDomainObjectListener() {
+	private DomainObjectListener createDomainObjectListener() {
 		// @formatter:off
 		return new DomainObjectListenerBuilder(this)
 			.any(RESTORED)
@@ -119,18 +122,37 @@ public class DataWindowPlugin extends ProgramPlugin {
 		}
 	}
 
-	void reload() {
+	void dataWindowShown() {
+		if (resetTypesNeeded) {
+			resetTypes();
+		}
+
+	}
+
+	void setFilterEnabled(boolean enabled) {
+		isFilterEnabled = enabled;
+		reload();
+	}
+
+	void setFilter(SortedMap<String, Boolean> typeEnabledMap, Coverage coverage) {
+		this.isFilterEnabled = true;
+		this.typeEnablementByDisplayName = new TreeMap<>(typeEnabledMap);
+		this.coverage = coverage;
+		reload();
+	}
+
+	private void reload() {
 		reloadUpdateMgr.update();
 	}
 
-	void doReload() {
+	private void doReload() {
 		provider.reload();
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ViewChangedPluginEvent) {
-			if (filterAction.getViewMode() && provider.isVisible()) {
+			if (isFilterEnabled && provider.isVisible()) {
 				reload();
 			}
 		}
@@ -143,7 +165,7 @@ public class DataWindowPlugin extends ProgramPlugin {
 	protected void programActivated(Program program) {
 		program.addListener(domainObjectListener);
 		provider.programOpened(program);
-		filterAction.programOpened(program);
+		filterAction.setEnabled(true);
 		resetTypes();
 	}
 
@@ -151,7 +173,7 @@ public class DataWindowPlugin extends ProgramPlugin {
 	protected void programDeactivated(Program program) {
 		program.removeListener(domainObjectListener);
 		provider.programClosed();
-		filterAction.programClosed();
+		filterAction.setEnabled(false);
 	}
 
 	Program getProgram() {
@@ -162,14 +184,11 @@ public class DataWindowPlugin extends ProgramPlugin {
 		return currentSelection;
 	}
 
-	// Junit access
+	// test access
 	DataWindowProvider getProvider() {
 		return provider;
 	}
 
-	/**
-	 * Create the action objects for this plugin.
-	 */
 	private void createActions() {
 
 		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
@@ -201,55 +220,85 @@ public class DataWindowPlugin extends ProgramPlugin {
 
 	private void doReset() {
 		resetTypesNeeded = false;
-		ArrayList<String> selectedList = filterAction.getSelectedTypes();
-
-		filterAction.clearTypes();
-		if (currentProgram != null) {
-			DataTypeManager typeManager = currentProgram.getDataTypeManager();
-			Iterator<DataType> itr = typeManager.getAllDataTypes();
-			while (itr.hasNext()) {
-				DataType type = itr.next();
-				filterAction.addType(type.getDisplayName());
-			}
-			filterAction.selectTypes(selectedList);
-			provider.reload();
-		}
-	}
-
-	public boolean typeEnabled(String type) {
-		return filterAction.typeEnabled(type);
-	}
-
-	public AddressSet getLimitedAddresses() {
-		if (filterAction.getSelectionMode()) {
-			AddressSet ret = new AddressSet();
-			AddressRangeIterator itr = currentSelection.getAddressRanges();
-			while (itr.hasNext()) {
-				ret.add(itr.next());
-			}
-
-			return ret;
+		typeEnablementByDisplayName.clear();
+		if (currentProgram == null) {
+			return;
 		}
 
-		if (filterAction.getViewMode()) {
+		DataTypeManager dtm = currentProgram.getDataTypeManager();
+		Iterator<DataType> it = dtm.getAllDataTypes();
+		while (it.hasNext()) {
+			DataType type = it.next();
+			typeEnablementByDisplayName.put(type.getDisplayName(), true);
+		}
+
+		provider.reload();
+	}
+
+	boolean isTypeEnabled(String type) {
+		if (!isFilterEnabled) {
+			return true;
+		}
+
+		Boolean enabled = typeEnablementByDisplayName.get(type);
+		return enabled != null && enabled;
+	}
+
+	SortedMap<String, Boolean> getTypeMap() {
+		return typeEnablementByDisplayName;
+	}
+
+	AddressSet getLimitedAddresses() {
+		if (coverage == Coverage.SELECTION) {
+			AddressSet addrs = new AddressSet();
+			AddressRangeIterator it = currentSelection.getAddressRanges();
+			while (it.hasNext()) {
+				addrs.add(it.next());
+			}
+
+			return addrs;
+		}
+
+		if (coverage == Coverage.VIEW) {
 			ProgramTreeService service = tool.getService(ProgramTreeService.class);
 			if (service != null) {
 				return service.getView();
 			}
 		}
-		return null;
+
+		return null; // PROGRAM
 	}
 
-	@Override
-	public void readConfigState(SaveState saveState) {
-		filterAction.setSelected(true);
+	private static class DataTypeNameComparator implements Comparator<String> {
+
+		@Override
+		public int compare(String o1, String o2) {
+			if (o1 != null) {
+				if (!o1.equalsIgnoreCase(o2)) {
+					return o1.compareToIgnoreCase(o2);
+				}
+				return o1.compareTo(o2);
+			}
+			return -1;
+		}
 	}
 
-	public void dataWindowShown() {
-		if (resetTypesNeeded) {
-			resetTypes();
+	public enum Coverage {
+		//@formatter:off
+		PROGRAM("Entire Program"), 
+		SELECTION("Current Selection"), 
+		VIEW("Current View");
+		//@formatter:on
+
+		private String displayName;
+
+		Coverage(String displayName) {
+			this.displayName = displayName;
 		}
 
+		@Override
+		public String toString() {
+			return displayName;
+		}
 	}
-
 }
