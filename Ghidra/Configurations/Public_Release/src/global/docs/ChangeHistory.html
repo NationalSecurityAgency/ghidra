@@ -22,6 +22,21 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.1.1 Change History (June 2024)</H1>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Debugger</I>. Fixes an error in <span class="gcode">dbgeng</span> launcher. (GP-4674)</li>
+    <li><I>Debugger:GDB</I>. Fixed issue with using QEMU launchers in Trace RMI (<span class="gcode">ClassCastException</span> from <span class="gcode">String</span> to <span class="gcode">PathIsFile</span>) (GP-4690, Issue #6634)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler that could cause it to drop a control-flow edge from a switch's case statement that looped back to the switch. (GP-4582, Issue #6282)</li>
+    <li><I>Decompiler</I>. Fixed bug causing "Undefined Pullsub" exceptions. (GP-4672, Issue #6614)</li>
+    <li><I>Decompiler</I>. Corrected Decompiler process issue which can occur when analysis is cancelled.  Issue would incorrectly popup error indicating <em>"Decompiler executable may not be compatible with your system..."</em>. (GP-4689)</li>
+    <li><I>GUI</I>. Fixed mouse button 4/5 processing failure that caused the left-click to stop working. (GP-4681, Issue #6624)</li>
+    <li><I>Processors</I>. Added support for the Z80 processor undocumented registers. (GP-2881, Issue #4485)</li>
+    <li><I>Processors</I>. Fixed 6805 branch conditional instruction semantics. (GP-4585, Issue #6482)</li>
+    <li><I>Project</I>. Fixed a severe regression bug introduced with Ghidra 11.1 which could prevent a user from completing a project file add-to-version-control, checkin or merge when they currently have the file open in a tool.  The corresponding open project file would remain in a bad state following the operation. (GP-4692)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.1 Change History (June 2024)</H1>
 <blockquote><p><u><B>New Features</B></u></p>
 <ul>
