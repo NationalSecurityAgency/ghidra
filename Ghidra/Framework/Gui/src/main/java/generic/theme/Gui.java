@@ -220,4 +220,28 @@ public class Gui {
 	static void setThemeManager(ThemeManager manager) {
 		themeManager = manager;
 	}
+
+	/**
+	 * Sets application's blinking cursor state. This will affect all JTextFields, JTextAreas, 
+	 * JTextPanes via {@link UIDefaults}. Custom components can also respect this setting by
+	 * either adding a {@link ThemeListener} or overriding {@link JComponent#updateUI()}
+	 * <P> NOTE: This method is a bit odd here as it doesn't really apply to a theme. But it
+	 * requires manipulation of the look and feel which is managed by the theme. If other 
+	 * application level properties  come along and also require changing the UIDefaults, 
+	 * perhaps a more general solution might be to add a way for clients to register a callback
+	 * so that they get a chance to change the UIDefaults map as the look and feel is loaded.
+	 * @param b true for blinking text cursors, false for non-blinking text cursors
+	 */
+	public static void setBlinkingCursors(boolean b) {
+		themeManager.setBlinkingCursors(b);
+	}
+
+	/**
+	 * Returns true if the application should allow blinking cursors, false otherwise. Custom
+	 * components can use this method to determine if they should have a blinking cursor or not.
+	 * @return true if the application should allow blinking cursors, false otherwise.
+	 */
+	public static boolean isBlinkingCursors() {
+		return themeManager.isBlinkingCursors();
+	}
 }

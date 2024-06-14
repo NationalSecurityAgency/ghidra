@@ -42,7 +42,7 @@ import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.ThemeManager;
+import generic.theme.Gui;
 import ghidra.util.*;
 
 public class FieldPanel extends JPanel
@@ -401,9 +401,7 @@ public class FieldPanel extends JPanel
 	}
 
 	private void initializeCursorBlinking() {
-		ThemeManager themeManager = ThemeManager.getInstance();
-		boolean blinkingCursors = themeManager != null ? themeManager.isBlinkingCursors() : true;
-		setBlinkCursor(blinkingCursors);
+		setBlinkCursor(Gui.isBlinkingCursors());
 	}
 
 	@Override

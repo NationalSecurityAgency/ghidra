@@ -42,7 +42,7 @@ import docking.util.AnimationUtils;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
-import generic.theme.ThemeManager;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
@@ -379,7 +379,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
 
 		boolean blink = options.getBoolean(BLINKING_CURSORS_OPTION_NAME, true);
-		ThemeManager.getInstance().setBlinkingCursors(blink);
+		Gui.setBlinkingCursors(blink);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -406,7 +406,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			shouldRestorePreviousProject = (Boolean) newValue;
 		}
 		else if (BLINKING_CURSORS_OPTION_NAME.equals(optionName)) {
-			ThemeManager.getInstance().setBlinkingCursors((Boolean) newValue);
+			Gui.setBlinkingCursors((Boolean) newValue);
 		}
 	}
 
