@@ -181,7 +181,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		if (isVisible()) {
-			// if we are visible, then we don't need to update as the system updates all 
+			// if we are visible, then we don't need to update as the system updates all
 			// visible components
 			return;
 		}
@@ -231,7 +231,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return;
 		}
 
-		dockingTool.toFront();
 		if (defaultFocusComponent != null) {
 			DockingWindowManager.requestFocus(defaultFocusComponent);
 			return;
@@ -848,7 +847,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * will adjust the font for the registered font id if it has been registered using
 	 * {@link #registeredFontId}. Subclasses can override this method to a more comprehensive
 	 * adjustment to multiple fonts if necessary.
-	 * @param bigger if true, the font should be made bigger, otherwise the font should be made 
+	 * @param bigger if true, the font should be made bigger, otherwise the font should be made
 	 * smaller
 	 */
 	public void adjustFontSize(boolean bigger) {

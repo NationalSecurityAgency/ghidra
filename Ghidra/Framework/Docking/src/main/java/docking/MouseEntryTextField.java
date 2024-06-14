@@ -92,6 +92,15 @@ public class MouseEntryTextField extends HintTextField {
 
 			int modifiersEx = e.getModifiersEx();
 			int button = e.getButton();
+
+			int buttonDownMask = InputEvent.getMaskForButton(button);
+			if (button == MouseEvent.BUTTON1 && buttonDownMask == modifiersEx) {
+				// Don't allow the user to bind an unmodified left-click, as odd behavior can ensue.
+				// We can revisit this if a valid use case is found.
+				e.consume();
+				return;
+			}
+
 			processMouseBinding(new MouseBinding(button, modifiersEx), true);
 			e.consume();
 		}

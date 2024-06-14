@@ -145,42 +145,48 @@ public class DecompileProcess {
 			throw new IOException("Could not find decompiler executable");
 		}
 		IOException exc = null;
-		String err = "";
 		statusGood = false;
+		
 		try {
 			nativeProcess = runtime.exec(exepath);
+			
 			// Give process time to load and report possible error
-			nativeProcess.waitFor(200, TimeUnit.MILLISECONDS);
+			try {
+				nativeProcess.waitFor(200, TimeUnit.MILLISECONDS);
+			}
+			catch (InterruptedException e) {
+				// Restore interrupted thread state since we are continuing with setup.
+				// It does not appear that the decompiler interface is affected by an
+				// interrupted thread so why stop here.
+				Thread.currentThread().interrupt();
+			}
+			
 			nativeIn = nativeProcess.getInputStream();
 			nativeOut = nativeProcess.getOutputStream();
+			
 			statusGood = nativeProcess.isAlive();
 			if (!statusGood) {
-				err = new String(nativeProcess.getErrorStream().readAllBytes());
-				nativeProcess.destroy();          			
-				nativeProcess = null;
+				if (!getAndSetErrorDisplayed()) {
+					String err = new String(nativeProcess.getErrorStream().readAllBytes());
+					String errorDetail = "Decompiler executable may not be compatible with your system and may need to be rebuilt.\n" +
+							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
+							err;		
+					Msg.showError(this, null, "Failed to launch Decompiler process", errorDetail);
+				}
 			}
 		}
 		catch (IOException e) {
-			exc = e;
-		}
-		catch (InterruptedException e) {
-			// ignore
+			exc = e; // permission error, etc.
 		}
 		finally {
 			if (!statusGood) {
 				disposestate = DisposeState.DISPOSED_ON_STARTUP_FAILURE;
-				if (!getAndSetErrorDisplayed()) {
-					String errorDetail = err;
-					if (exc != null) {
-						errorDetail = exc.getMessage() + "\n" + errorDetail;
-					}
-					errorDetail = "Decompiler executable may not be compatible with your system and may need to be rebuilt.\n" +
-							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
-							errorDetail;		
-					Msg.showError(this, null, "Failed to launch Decompiler process", errorDetail);
+				if (nativeProcess != null) {
+					nativeProcess.destroy();          			
+					nativeProcess = null;
 				}
 				if (exc == null) {
-					throw new IOException("Decompiler process failed to launch (see log for details)");
+					exc = new IOException("Decompiler process failed to launch (see log for details)");
 				}
 				throw exc;
 			}

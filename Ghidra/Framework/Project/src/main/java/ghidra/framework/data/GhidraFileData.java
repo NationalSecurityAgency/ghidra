@@ -1149,7 +1149,7 @@ public class GhidraFileData {
 
 				if (keepCheckedOut) {
 
-					// Maintain exclusive chekout if private repository or file is open for update
+					// Maintain exclusive checkout if private repository or file is open for update
 					boolean exclusive = !versionedFileSystem.isShared() || (inUseDomainObj != null);
 
 					ProjectLocator projectLocator = parent.getProjectLocator();
@@ -1169,6 +1169,11 @@ public class GhidraFileData {
 							projectLocator.isTransient()));
 					folderItem.setCheckout(checkout.getCheckoutId(), exclusive,
 						checkout.getCheckoutVersion(), folderItem.getCurrentVersion());
+					
+					if (inUseDomainObj != null) {
+						// Reset source file and change-sets for open database
+						getContentHandler().resetDBSourceFile(folderItem, inUseDomainObj);
+					}
 				}
 				else {
 					// NOTE: file open read-only may prevent removal and result in hijack
@@ -1180,10 +1185,7 @@ public class GhidraFileData {
 						// Ignore - should result in Hijacked file
 					}
 				}
-
-				if (inUseDomainObj != null) {
-					getContentHandler().resetDBSourceFile(folderItem, inUseDomainObj);
-				}
+				
 			} // end of synchronized block
 
 			if (inUseDomainObj != null) {
@@ -1535,13 +1537,14 @@ public class GhidraFileData {
 							}
 						}
 					}
+					
+					if (inUseDomainObj != null) {
+						// Reset source file and change-sets for open database
+						contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
+					}
 				}
 				else {
 					undoCheckout(false, true);
-				}
-
-				if (inUseDomainObj != null) {
-					contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
 				}
 
 			} // end of synchronized block
@@ -1915,6 +1918,8 @@ public class GhidraFileData {
 		try {
 			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("merge");
 
+			ContentHandler<?> contentHandler = getContentHandler();
+			
 			if (!modifiedSinceCheckout()) {
 				// Quick merge
 				folderItem.updateCheckout(versionedFolderItem, true, monitor);
@@ -1924,8 +1929,6 @@ public class GhidraFileData {
 				if (SystemUtilities.isInHeadlessMode()) {
 					throw new IOException("Merge failed, merge is not supported in headless mode");
 				}
-
-				ContentHandler<?> contentHandler = getContentHandler();
 
 				// Test versioned file for VersionException
 				int mergeVer = versionedFolderItem.getCurrentVersion();
@@ -1995,14 +1998,13 @@ public class GhidraFileData {
 				versionedFolderItem.updateCheckoutVersion(checkoutId, mergeVer,
 					ClientUtil.getUserName());
 				tmpItem = null;
-				Msg.info(this, "Merge completed for " + name);
-
-				if (inUseDomainObj != null) {
-					contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
-				}
 			}
+			
+			Msg.info(this, "Updated checkout completed for " + name);
 
 			if (inUseDomainObj != null) {
+				// Reset source file and change-sets for open database
+				contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
 				inUseDomainObj.invalidate();
 			}
 		}
