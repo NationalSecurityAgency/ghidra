@@ -18,10 +18,9 @@ package ghidra.feature.vt.gui.provider.markuptable;
 import java.util.List;
 
 import docking.DefaultActionContext;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
 import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanelActionContext;
 
 /**
  * Action context for the version tracking markup item provider.
@@ -30,7 +29,7 @@ public class VTMarkupItemContext extends DefaultActionContext
 		implements CodeComparisonPanelActionContext {
 
 	private final List<VTMarkupItem> selectedItems;
-	private CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel = null;
+	private CodeComparisonPanel codeComparisonPanel = null;
 
 	/**
 	 * Creates an action context for the VT markup item provider.
@@ -55,12 +54,12 @@ public class VTMarkupItemContext extends DefaultActionContext
 	 * @param codeComparisonPanel the code comparison panel.
 	 */
 	public void setCodeComparisonPanel(
-			CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel) {
+			CodeComparisonPanel codeComparisonPanel) {
 		this.codeComparisonPanel = codeComparisonPanel;
 	}
 
 	@Override
-	public CodeComparisonPanel<? extends FieldPanelCoordinator> getCodeComparisonPanel() {
+	public CodeComparisonPanel getCodeComparisonPanel() {
 		return codeComparisonPanel;
 	}
 }

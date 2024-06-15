@@ -17,15 +17,39 @@ package ghidra.debug.api.tracermi;
 
 import java.io.IOException;
 
+import ghidra.app.services.Terminal;
+
 /**
  * A terminal with some back-end element attached to it
  */
 public interface TerminalSession extends AutoCloseable {
 	@Override
-	void close() throws IOException;
+	default void close() throws IOException {
+		terminate();
+		terminal().close();
+	}
+
+	/**
+	 * The handle to the terminal
+	 * 
+	 * @return the handle
+	 */
+	Terminal terminal();
+
+	/**
+	 * Ensure the session is visible
+	 * 
+	 * <p>
+	 * The window should be displayed and brought to the front.
+	 */
+	default void show() {
+		terminal().toFront();
+	}
 
 	/**
 	 * Terminate the session without closing the terminal
+	 * 
+	 * @throws IOException if an I/O issue occurs during termination
 	 */
 	void terminate() throws IOException;
 
@@ -34,7 +58,9 @@ public interface TerminalSession extends AutoCloseable {
 	 * 
 	 * @return true for terminated, false for active
 	 */
-	boolean isTerminated();
+	default boolean isTerminated() {
+		return terminal().isTerminated();
+	}
 
 	/**
 	 * Provide a human-readable description of the session
@@ -42,4 +68,22 @@ public interface TerminalSession extends AutoCloseable {
 	 * @return the description
 	 */
 	String description();
+
+	/**
+	 * Get the terminal contents as a string (no attributes)
+	 * 
+	 * @return the content
+	 */
+	default String content() {
+		return terminal().getFullText();
+	}
+
+	/**
+	 * Get the current title of the terminal
+	 * 
+	 * @return the title
+	 */
+	default String title() {
+		return terminal().getSubTitle();
+	}
 }

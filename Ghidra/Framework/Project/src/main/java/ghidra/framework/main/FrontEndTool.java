@@ -42,6 +42,7 @@ import docking.util.AnimationUtils;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
+import generic.theme.ThemeManager;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
@@ -64,6 +65,7 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraTool;
 import ghidra.framework.project.tool.GhidraToolTemplate;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.classfinder.ClassSearcher;
@@ -90,6 +92,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
 	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
+	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
 
 	// TODO: Experimental Option !!
 	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
@@ -174,6 +177,15 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	protected void shutdown() {
 		System.exit(0);
+	}
+
+	@Override
+	public boolean accept(URL url) {
+		if (!GhidraURL.isLocalProjectURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
+			return false;
+		}
+		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, plugin)));
+		return true;
 	}
 
 	private void ensureSize() {
@@ -343,6 +355,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
 
+		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help, "This controls whether" +
+			" text cursors blink when focused");
+
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
 
@@ -362,6 +377,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
 
 		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
+
+		boolean blink = options.getBoolean(BLINKING_CURSORS_OPTION_NAME, true);
+		ThemeManager.getInstance().setBlinkingCursors(blink);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -386,6 +404,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		}
 		else if (RESTORE_PREVIOUS_PROJECT_NAME.equals(optionName)) {
 			shouldRestorePreviousProject = (Boolean) newValue;
+		}
+		else if (BLINKING_CURSORS_OPTION_NAME.equals(optionName)) {
+			ThemeManager.getInstance().setBlinkingCursors((Boolean) newValue);
 		}
 	}
 

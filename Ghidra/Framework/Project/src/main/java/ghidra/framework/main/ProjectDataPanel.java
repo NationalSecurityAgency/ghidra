@@ -406,6 +406,10 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 		}
 	}
 
+	void showTree() {
+		projectTab.setSelectedIndex(0);
+	}
+
 	private void showTable() {
 		projectTab.setSelectedIndex(1);
 	}

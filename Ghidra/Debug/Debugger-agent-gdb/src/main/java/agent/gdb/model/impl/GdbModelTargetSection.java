@@ -35,7 +35,7 @@ import ghidra.program.model.address.*;
 public class GdbModelTargetSection extends
 		DefaultTargetObject<TargetObject, GdbModelTargetSectionContainer> implements TargetSection {
 
-	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
+	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "Range";
 
 	protected static String indexSection(GdbModuleSection section) {
 		return section.getName();

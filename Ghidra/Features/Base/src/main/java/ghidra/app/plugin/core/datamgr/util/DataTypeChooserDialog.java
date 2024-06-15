@@ -56,7 +56,9 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 		super("Data Type Chooser", true, true, true, false);
 
 		tree = new DataTypeArchiveGTree(plugin);
-		tree.setEditable(isFilterEditable);
+
+		tree.setEditable(false);
+		tree.updateFilterForChoosingDataType();
 
 		tree.addGTreeSelectionListener(e -> setOkEnabled(getSelectedNode() != null));
 

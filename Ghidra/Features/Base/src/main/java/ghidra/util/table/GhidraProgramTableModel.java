@@ -70,4 +70,10 @@ public abstract class GhidraProgramTableModel<ROW_TYPE>
 	public Address getAddress(int row) {
 		return null;
 	}
+
+	@Override
+	public void dispose() {
+		program = null;
+		super.dispose();
+	}
 }

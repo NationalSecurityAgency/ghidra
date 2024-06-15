@@ -79,17 +79,17 @@ public class ScriptPathsPropertyEditor extends AbstractTypedPropertyEditor<Strin
 
 		@Override
 		protected PathnameTablePanel newPathnameTablePanel() {
-			PathnameTablePanel tablePanel = new ScriptPathsPanel(this::reset);
-			tablePanel.setFileChooserProperties(getTitle(), "DebuggerLaunchScriptDirectory",
+			PathnameTablePanel panel = new ScriptPathsPanel(loadPaths(), this::reset);
+			panel.setFileChooserProperties(getTitle(), "DebuggerLaunchScriptDirectory",
 				GhidraFileChooserMode.DIRECTORIES_ONLY, true, null);
-			return tablePanel;
+			return panel;
 		}
 	}
 
 	protected class ScriptPathsPanel extends PathnameTablePanel {
-		public ScriptPathsPanel(Callback resetCallback) {
+		public ScriptPathsPanel(String[] paths, Callback resetCallback) {
 			// disable edits, top/bottom irrelevant, unordered
-			super(null, resetCallback, false, false, false);
+			super(paths, resetCallback, false, false, false, false);
 		}
 
 		@Override

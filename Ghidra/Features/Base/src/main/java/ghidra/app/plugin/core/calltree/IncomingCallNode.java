@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -45,31 +44,26 @@ public class IncomingCallNode extends CallNode {
 	protected final Program program;
 	protected final Function function;
 	protected String name;
-	protected final boolean filterDuplicates;
 	private final Address sourceAddress;
 
 	IncomingCallNode(Program program, Function function, Address sourceAddress,
-			boolean filterDuplicates, AtomicInteger filterDepth) {
-		super(filterDepth);
+			CallTreeOptions callTreeOptions) {
+		super(callTreeOptions);
 		this.program = program;
 		this.function = function;
-		this.name = function.getName();
+		this.name = function.getName(callTreeOptions.showNamespace());
 		this.sourceAddress = sourceAddress;
-		this.filterDuplicates = filterDuplicates;
 		this.functionAddress = function.getEntryPoint();
 
 		MultiIcon incomingFunctionIcon = new MultiIcon(INCOMING_ICON, false, 32, 16);
 		TranslateIcon translateIcon = new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0);
 		incomingFunctionIcon.addIcon(translateIcon);
 		INCOMING_FUNCTION_ICON = incomingFunctionIcon;
-
-		setAllowsDuplicates(!filterDuplicates);
 	}
 
 	@Override
 	CallNode recreate() {
-		return new IncomingCallNode(program, function, sourceAddress, filterDuplicates,
-			filterDepth);
+		return new IncomingCallNode(program, function, sourceAddress, callTreeOptions);
 	}
 
 	@Override
@@ -99,16 +93,15 @@ public class IncomingCallNode extends CallNode {
 				continue;
 			}
 
-			IncomingCallNode node = new IncomingCallNode(program, callerFunction, fromAddress,
-				filterDuplicates, filterDepth);
+			IncomingCallNode node =
+				new IncomingCallNode(program, callerFunction, fromAddress, callTreeOptions);
 			addNode(nodesByFunction, node);
 		}
 
-		List<GTreeNode> children =
-			nodesByFunction.values()
-					.stream()
-					.flatMap(list -> list.stream())
-					.collect(Collectors.toList());
+		List<GTreeNode> children = nodesByFunction.values()
+				.stream()
+				.flatMap(list -> list.stream())
+				.collect(Collectors.toList());
 		Collections.sort(children, new CallNodeComparator());
 
 		return children;

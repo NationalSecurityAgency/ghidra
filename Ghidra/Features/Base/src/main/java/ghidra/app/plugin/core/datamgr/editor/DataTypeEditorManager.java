@@ -22,6 +22,7 @@ import docking.actions.DockingToolActions;
 import docking.actions.SharedDockingActionPlaceholder;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.actions.AbstractFindReferencesToFieldAction;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
@@ -35,8 +36,6 @@ import ghidra.util.exception.*;
  * Manages program and archive data type editors.
  */
 public class DataTypeEditorManager implements EditorListener {
-
-	public static final String EDIT_ACTION_PREFIX = "Editor: ";
 
 	private List<EditorProvider> editorList;
 	private EditorOptionManager editorOptionMgr; // manages editor tool options
@@ -145,7 +144,7 @@ public class DataTypeEditorManager implements EditorListener {
 		registerAction(DeleteAction.ACTION_NAME);
 		registerAction(PointerAction.ACTION_NAME);
 		registerAction(ArrayAction.ACTION_NAME);
-		registerAction(FindReferencesToField.ACTION_NAME);
+		registerAction(AbstractFindReferencesToFieldAction.BASE_ACTION_NAME);
 		registerAction(UnpackageAction.ACTION_NAME);
 		registerAction(EditComponentAction.ACTION_NAME);
 		registerAction(EditFieldAction.ACTION_NAME);
@@ -706,7 +705,7 @@ public class DataTypeEditorManager implements EditorListener {
 		private String name;
 
 		DtSharedActionPlaceholder(String name) {
-			this.name = EDIT_ACTION_PREFIX + name;
+			this.name = name;
 		}
 
 		@Override

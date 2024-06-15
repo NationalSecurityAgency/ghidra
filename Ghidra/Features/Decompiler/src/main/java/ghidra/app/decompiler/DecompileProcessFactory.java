@@ -30,6 +30,14 @@ public class DecompileProcessFactory {
 	private static final String WIN32_EXECNAME = "decompile.exe";
 
 	private static boolean errorDisplayed = false;
+	
+	private static synchronized boolean getAndSetErrorDisplayed() {
+		boolean b = errorDisplayed;
+		if (!b) {
+			errorDisplayed = true;
+		}
+		return b;
+	}
 
 	public synchronized static DecompileProcess get() {
 		getExePath();
@@ -59,9 +67,8 @@ public class DecompileProcessFactory {
 			exepath = file.getAbsolutePath();
 		}
 		catch (OSFileNotFoundException e) {
-			if (!errorDisplayed) {
-				errorDisplayed = true;
-				Msg.showError(DecompileProcessFactory.class, null, "Decompiler missing",
+			if (!getAndSetErrorDisplayed()) {
+				Msg.showError(DecompileProcessFactory.class, null, "Decompiler Not Found",
 					e.getMessage());
 			}
 		}

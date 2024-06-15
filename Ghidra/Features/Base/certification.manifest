@@ -87,11 +87,14 @@ data/symbols/win64/mfc90u.exports||GHIDRA||||END|
 data/symbols/win64/msvcrt.hints||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.15_anybit_any.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.16_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.18_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.19_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.20_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.21_anybit_any.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.22_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/runtimesnapshot.go||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
 data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
@@ -562,6 +565,7 @@ src/main/help/help/topics/SymbolTablePlugin/images/Refs_To.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/images/Symbol_Table.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/symbol_references.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/symbol_table.htm||GHIDRA||||END|
+src/main/help/help/topics/SymbolTablePlugin/symbol_table_transient.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/SymbolTree.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/CreateExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/EditExternalLocation.png||GHIDRA||||END|

@@ -73,7 +73,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private JPanel component;
 	private RootNode scriptRoot;
 	private GTree scriptCategoryTree;
-	private DraggableScriptTable scriptTable;
+	private GTable scriptTable;
 	private final GhidraScriptInfoManager infoManager;
 	private GhidraScriptTableModel tableModel;
 	private BundleStatusComponentProvider bundleStatusComponentProvider;
@@ -185,7 +185,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		tableModel = new GhidraScriptTableModel(this, infoManager);
 
-		scriptTable = new DraggableScriptTable(this, tableModel);
+		scriptTable = new GTable(tableModel);
 		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
 		scriptTable.setRowSelectionAllowed(true);
 		scriptTable.setAutoCreateColumnsFromModel(false);
@@ -461,11 +461,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		setSelectedScript(renameFile);
 	}
 
-	JTable getTable() {
+	public GTable getTable() {
 		return scriptTable;
 	}
 
-	GTree getTree() {
+	public GTree getTree() {
 		return scriptCategoryTree;
 	}
 

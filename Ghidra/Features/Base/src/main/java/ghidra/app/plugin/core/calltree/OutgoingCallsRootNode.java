@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.calltree;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.swing.Icon;
 
 import ghidra.program.model.address.Address;
@@ -26,15 +24,13 @@ import ghidra.program.model.listing.Program;
 public class OutgoingCallsRootNode extends OutgoingCallNode {
 
 	OutgoingCallsRootNode(Program program, Function function, Address sourceAddress,
-			boolean filterDuplicates, AtomicInteger filterDepth) {
-		super(program, function, sourceAddress, CallTreePlugin.FUNCTION_ICON, filterDuplicates,
-			filterDepth);
+			CallTreeOptions callTreeOptions) {
+		super(program, function, sourceAddress, CallTreePlugin.FUNCTION_ICON, callTreeOptions);
 	}
 
 	@Override
 	CallNode recreate() {
-		return new OutgoingCallsRootNode(program, function, getSourceAddress(), filterDuplicates,
-			filterDepth);
+		return new OutgoingCallsRootNode(program, function, getSourceAddress(), callTreeOptions);
 	}
 
 	@Override

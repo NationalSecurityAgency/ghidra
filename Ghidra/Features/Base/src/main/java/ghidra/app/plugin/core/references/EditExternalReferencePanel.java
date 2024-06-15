@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.references;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.*;
@@ -186,7 +188,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 	 */
 	private void popupProgramChooser() {
 		DataTreeDialog d =
-			new DataTreeDialog(this.getParent(), "Choose External Program", DataTreeDialog.OPEN);
+			new DataTreeDialog(this.getParent(), "Choose External Program", OPEN);
 		final DataTreeDialog dialog = d;
 		d.addOkActionListener(new ActionListener() {
 			@Override

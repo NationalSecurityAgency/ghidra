@@ -21,7 +21,6 @@ import javax.swing.*;
 
 import docking.action.*;
 import docking.widgets.table.GTable;
-import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -33,8 +32,6 @@ import ghidra.util.HelpLocation;
  * Note: Any new actions must be registered in the editor manager via the actions's name.
  */
 abstract public class CompositeEditorTableAction extends DockingAction implements EditorAction {
-
-	private static final String PREFIX = DataTypeEditorManager.EDIT_ACTION_PREFIX;
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
@@ -57,8 +54,7 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
 			String[] popupPath, String[] menuPath, Icon icon) {
-		super(PREFIX + name, provider.plugin.getName(),
-			KeyBindingType.SHARED);
+		super(name, provider.plugin.getName(), KeyBindingType.SHARED);
 		init(provider);
 		if (menuPath != null) {
 			setMenuBarData(new MenuData(menuPath, icon, group));
@@ -114,11 +110,7 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 	abstract public void adjustEnablement();
 
 	public String getHelpName() {
-		String actionName = getName();
-		if (actionName.startsWith(PREFIX)) {
-			actionName = actionName.substring(PREFIX.length());
-		}
-		return actionName;
+		return getName();
 	}
 
 	@Override

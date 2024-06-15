@@ -84,7 +84,7 @@ class ProcessState(object):
                 except BaseException as e:
                     print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
-        if first or self.regions or self.threads or self.modules:
+        if first or self.regions or self.modules:
             # Sections, memory syscalls, or stack allocations
             commands.put_regions()
             self.regions = False
@@ -105,8 +105,9 @@ class ProcessState(object):
     def record_exited(self, exit_code):
         proc = util.get_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc.GetProcessID())
-        commands.STATE.trace.proxy_object_path(
-            ipath).set_value('_exit_code', exit_code)
+        procobj = commands.STATE.trace.proxy_object_path(ipath)
+        procobj.set_value('Exit Code', exit_code)
+        procobj.set_value('State', 'TERMINATED')
 
 
 class BrkState(object):
@@ -152,7 +153,7 @@ def process_event(self, listener, event):
             print(f"Ignoring {desc} because target is invalid")
             return
         event_process = util.get_process()
-        if event_process.IsValid() and event_process not in PROC_STATE:
+        if event_process.IsValid() and event_process.GetProcessID() not in PROC_STATE:
             PROC_STATE[event_process.GetProcessID()] = ProcessState()
             rc = event_process.GetBroadcaster().AddListener(listener, ALL_EVENTS)
             if not rc:

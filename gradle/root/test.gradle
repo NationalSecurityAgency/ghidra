@@ -369,7 +369,7 @@ def initTestJVM(Task task, String rootDirName) {
 *********************************************************************************/
 task parallelCombinedTestReport(type: TestReport) { t ->
 		group "test"
-		destinationDir = file("$reportDir")
+		destinationDirectory = file("$reportDir")
 		logger.debug("parallelCombinedTestReport: Using destinationDir = $reportDir")
 		dependsOn ":deleteTestTempAndReportDirs"
 		mustRunAfter ":deleteTestTempAndReportDirs"
@@ -385,7 +385,7 @@ task parallelCombinedTestReport(type: TestReport) { t ->
 task unitTestReport(type: TestReport) { t ->
 	group "test"
     description "Run unit tests and save HTML report."
-    destinationDir = file("$reportDir/unitTests")
+    destinationDirectory = file("$reportDir/unitTests")
 	outputs.upToDateWhen {false}
 }
 
@@ -398,7 +398,7 @@ task unitTestReport(type: TestReport) { t ->
 task integrationTestReport(type: TestReport) { t ->
 	group "test"
     description "Run integration tests and save HTML report."
-    destinationDir = file("$reportDir/integrationTests")
+    destinationDirectory = file("$reportDir/integrationTests")
 	outputs.upToDateWhen {false}
 }
 
@@ -416,7 +416,7 @@ task integrationTestReport(type: TestReport) { t ->
 task targetedTestReport(type: TestReport) { t -> 
     group "test"
     description "Run unit tests against a specific set of projects."
-    destinationDir = file("$reportDir/unitTests")
+    destinationDirectory = file("$reportDir/unitTests")
     outputs.upToDateWhen {false}
     dependsOn ":deleteTestTempAndReportDirs"
 
@@ -560,7 +560,7 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
  *********************************************************************************/
 task combinedTestReport(type: TestReport) { t ->
 	group "test"
-	destinationDir = file("$reportDir")
+	destinationDirectory = file("$reportDir")
 
 	dependsOn ":deleteTestTempAndReportDirs"
 	mustRunAfter ":deleteTestTempAndReportDirs"
@@ -574,7 +574,7 @@ task combinedTestReport(type: TestReport) { t ->
  *********************************************************************************/
 task pcodeTestReport(type: TestReport) { t ->
 	group "pcodeTest"
-	destinationDir = file("$pcodeTestShareDir" + "/reports")
+	destinationDirectory = file("$pcodeTestShareDir" + "/reports")
 }	
 	
 /*********************************************************************************

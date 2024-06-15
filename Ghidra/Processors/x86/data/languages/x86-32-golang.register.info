@@ -5,5 +5,6 @@
 		<stack initialoffset="4" maxalign="4"/>
 		<current_goroutine register=""/>
 		<zero_register register=""/>
+		<duffzero dest="EDI" zero_arg="EAX" zero_type="int"/>		
 	</register_info>
 </golang>

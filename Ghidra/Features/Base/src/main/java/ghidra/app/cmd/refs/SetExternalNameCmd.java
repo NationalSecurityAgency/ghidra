@@ -21,8 +21,6 @@ import ghidra.util.exception.InvalidInputException;
 
 /**
  * Command for setting the external program name and path.
- * 
- * 
  */
 public class SetExternalNameCmd implements Command<Program> {
 
@@ -34,7 +32,7 @@ public class SetExternalNameCmd implements Command<Program> {
 	/**
 	 * Constructs a new command for setting the external program name and path.
 	 * @param externalName the name of the link.
-	 * @param externalPath the path of the file to assocate with this link.
+	 * @param externalPath the path of the file to associate with this link.
 	 */
 	public SetExternalNameCmd(String externalName, String externalPath) {
 		this.externalName = externalName;

@@ -45,11 +45,14 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 			Map.entry(GENERIC_CLIB_32_GDT_PATH, "2644097909188870631"),
 			Map.entry(GENERIC_CLIB_64_GDT_PATH, "3193699959493190971"),
 			Map.entry(MAC_OS_10_9_GDT_PATH, "2650667045259492112"),
+			Map.entry("typeinfo/golang/golang_1.15_anybit_any.gdt", "3600806988729184131"),
+			Map.entry("typeinfo/golang/golang_1.16_anybit_any.gdt", "3597021567582750001"),
 			Map.entry("typeinfo/golang/golang_1.17_anybit_any.gdt", "3533627828569507753"),
 			Map.entry("typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936"),
 			Map.entry("typeinfo/golang/golang_1.19_anybit_any.gdt", "3533812166493410774"),
 			Map.entry("typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616"),
 			Map.entry("typeinfo/golang/golang_1.21_anybit_any.gdt", "3574190573109087960"),
+			Map.entry("typeinfo/golang/golang_1.22_anybit_any.gdt", "3596108668808850319"),
 			Map.entry("typeinfo/rust/rust-common.gdt", "3557867258392862055"));
 	//@formatter:on
 
@@ -64,7 +67,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 		FileDataTypeManager dtm = null;
 		try {
 			dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
-			assertEquals(ArchiveWarning.NONE, dtm.getWarning());
+			assertEquals(dtm.getWarningMessage(true), ArchiveWarning.NONE, dtm.getWarning());
 			return dtm.getUniversalID().toString();
 		}
 		catch (IOException e) {

@@ -27,6 +27,7 @@ import ghidra.util.*;
 
 public class PdbDeveloperDumpScript extends GhidraScript {
 
+	private static final String TITLE = "PDB Dump";
 	private static final String PDB_PROMPT = "Choose a PDB file";
 	private static final String OUTPUT_PROMPT = "Choose an output file";
 
@@ -73,7 +74,7 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		values.setValidator((valueMap, status) -> {
 			return validatePdb(valueMap, status);
 		});
-		values = askValues("Enter Values", null, values);
+		values = askValues(TITLE, null, values);
 		File pdbFile = values.getFile(PDB_PROMPT);
 		String pdbFileName = pdbFile.getAbsolutePath();
 
@@ -82,12 +83,9 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		String outputFileName = pdbFileName + ".txt";
 		values.defineFile(OUTPUT_PROMPT, new File(outputFileName));
 		values.setValidator((valueMap, status) -> {
-			if (!validatePdb(valueMap, status)) {
-				return false;
-			}
-			return validateOutput(valueMap, status);
+			return validatePdb(valueMap, status) && validateOutput(valueMap, status);
 		});
-		values = askValues("Enter Values", null, values);
+		values = askValues(TITLE, null, values);
 		pdbFile = values.getFile(PDB_PROMPT); // might have changed
 		pdbFileName = pdbFile.getAbsolutePath(); // might have changed
 		File dumpFile = values.getFile(OUTPUT_PROMPT);

@@ -17,17 +17,18 @@
 #@title lldb
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>lldb</tt></h3>
-#@desc   <p>This will launch the target on the local machine using <tt>lldb</tt>. LLDB must already
-#@desc   be installed on your system, and it must embed the Python 3 interpreter. You will also
-#@desc   need <tt>protobuf</tt> and <tt>psutil</tt> installed for Python 3.</p>
+#@desc   <p>
+#@desc     This will launch the target on the local machine using <tt>lldb</tt>.
+#@desc     For setup instructions, press <b>F1</b>.
+#@desc   </p>
 #@desc </body></html>
 #@menu-group local
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#lldb
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
-#@arg :str "Image" "The target binary executable image"
+#@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_LLDB_PATH:str="lldb" "Path to lldb" "The path to lldb. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb. Omit the full path to resolve using the system PATH."
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 #@env OPT_EXTRA_TTY:bool=false "Target TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY

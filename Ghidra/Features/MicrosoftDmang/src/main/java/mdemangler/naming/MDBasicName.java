@@ -17,7 +17,6 @@ package mdemangler.naming;
 
 import ghidra.util.Msg;
 import mdemangler.*;
-import mdemangler.MDMang.ProcessingMode;
 import mdemangler.object.MDObjectCPP;
 import mdemangler.template.MDTemplateNameAndArguments;
 
@@ -111,7 +110,7 @@ public class MDBasicName extends MDParsableItem {
 
 	/**
 	 * Return the embedded object (essentially what could stand on its own as a mangled
-	 *  symbol) that is used as part of the name of mangled object 
+	 *  symbol) that is used as part of the name of mangled object
 	 * @return The embedded object that essentially represents this MDBasicName.
 	 */
 	public MDObjectCPP getEmbeddedObject() {
@@ -172,12 +171,7 @@ public class MDBasicName extends MDParsableItem {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		// First pass can only have name fragment of special name
-		if (dmang.isProcessingModeActive(ProcessingMode.LLVM)) {
-			specialName = new MDSpecialName(dmang, 0);
-			specialName.parse();
-		}
-		else if (dmang.peek() == '?') {
+		if (dmang.peek() == '?') {
 			if (dmang.peek(1) == '$') {
 				templateNameAndArguments = new MDTemplateNameAndArguments(dmang);
 				templateNameAndArguments.parse();

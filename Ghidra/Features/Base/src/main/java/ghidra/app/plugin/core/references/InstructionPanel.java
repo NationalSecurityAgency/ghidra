@@ -434,61 +434,34 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	}
 
 	private class InstructionPanelDroppable implements Droppable {
-		/**
-		 * Set drag feedback according to the ok parameter.
-		 * @param ok true means the drop action is OK
-		 * @param e event that has current state of drag and drop operation
-		 */
-		@Override
-		public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-			// stub
-		}
 
-		/**
-		 * Return true if is OK to drop the transferable at the location
-		 * specified the event.
-		 * @param e event that has current state of drag and drop operation
-		 */
 		@Override
 		public boolean isDropOk(DropTargetDragEvent e) {
 
 			Component targetComp = e.getDropTargetContext().getComponent();
-			if (targetComp instanceof JLabel) {
+			if (!(targetComp instanceof JLabel)) {
+				return false;
+			}
 
-				updateActiveIndex(getLabelIndex((JLabel) targetComp), -1);
+			updateActiveIndex(getLabelIndex((JLabel) targetComp), -1);
 
-				try {
-					Object data = e.getTransferable()
-							.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
-					AddressSetView view = ((SelectionTransferData) data).getAddressSet();
-					if (memory.contains(view)) {
-						return true;
-					}
+			try {
+				Object data = e.getTransferable()
+						.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
+				AddressSetView view = ((SelectionTransferData) data).getAddressSet();
+				if (memory.contains(view)) {
+					return true;
 				}
-				catch (UnsupportedFlavorException e1) {
-					// return false
-				}
-				catch (IOException e1) {
-					// return false
-				}
+			}
+			catch (UnsupportedFlavorException e1) {
+				// return false
+			}
+			catch (IOException e1) {
+				// return false
 			}
 			return false;
 		}
 
-		@Override
-		public void undoDragUnderFeedback() {
-			// stub
-		}
-
-		/**
-		 * Add the object to the droppable component. The DropTargetAdapter
-		 * calls this method from its drop() method.
-		 * @param obj Transferable object that is to be dropped; in this
-		 * case, it is an AddressSetView
-		 * @param e  has current state of drop operation
-		 * @param f represents the opaque concept of a data format as
-		 * would appear on a clipboard, during drag and drop.
-		 */
 		@Override
 		public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
 			AddressSetView view = ((SelectionTransferData) obj).getAddressSet();

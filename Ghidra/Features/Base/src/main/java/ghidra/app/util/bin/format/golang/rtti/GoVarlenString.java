@@ -20,11 +20,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
+import ghidra.util.BigEndianDataConverter;
 
 /**
- * A pascal-ish string, using a LEB128 value as the length of the following bytes.
+ * A pascal-ish string, using a LEB128 (or a uint16 in pre-1.16) value as the length of the
+ * following bytes.
  * <p>
  * Used mainly in lower-level RTTI structures, this class is a ghidra'ism used to parse the
  * golang rtti data and does not have a counterpart in the golang src. 
@@ -51,9 +54,16 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 		readFrom(context.getReader());
 	}
 
+	private boolean useLEB128() {
+		return ((GoRttiMapper) context.getDataTypeMapper()).getGolangVersion()
+				.isAtLeast(GoVer.V1_17);
+	}
+
 	private void readFrom(BinaryReader reader) throws IOException {
 		long startPos = reader.getPointerIndex();
-		int strLen = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+		int strLen = useLEB128()
+				? reader.readNextUnsignedVarIntExact(LEB128::unsigned)
+				: reader.readNextUnsignedShort(BigEndianDataConverter.INSTANCE);
 		this.strlenLen = (int) (reader.getPointerIndex() - startPos);
 		this.bytes = reader.readNextByteArray(strLen);
 	}
@@ -68,9 +78,9 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 	}
 
 	/**
-	 * Returns the string length's length (length of the leb128 number)
+	 * Returns the size of the string length field.  
 	 * 
-	 * @return string length's length
+	 * @return size of the string length field
 	 */
 	public int getStrlenLen() {
 		return strlenLen;
@@ -100,8 +110,11 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 	 * @return data type needed to hold the string length field
 	 */
 	public DataTypeInstance getStrlenDataType() {
-		return DataTypeInstance.getDataTypeInstance(UnsignedLeb128DataType.dataType, strlenLen,
-			false);
+		DataType dt = useLEB128()
+				? UnsignedLeb128DataType.dataType
+				: AbstractIntegerDataType.getUnsignedDataType(2, null);
+
+		return DataTypeInstance.getDataTypeInstance(dt, strlenLen, false);
 	}
 
 	/**
@@ -119,5 +132,4 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 		return String.format("GoVarlenString [context=%s, strlenLen=%s, bytes=%s, getString()=%s]",
 			context, strlenLen, Arrays.toString(bytes), getString());
 	}
-
 }

@@ -150,8 +150,7 @@ public class VTPlugin extends Plugin {
 
 	private void addCustomPlugins() {
 
-		List<String> names = new ArrayList<>(
-			List.of("ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin"));
+		List<String> names = new ArrayList<>(List.of("ghidra.features.codecompare.plugin"));
 		List<Plugin> plugins = tool.getManagedPlugins();
 		Set<String> existingNames =
 			plugins.stream().map(c -> c.getName()).collect(Collectors.toSet());

@@ -165,8 +165,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 
 	@Override
 	public final boolean isPrivateContentType() {
-		// NOTE: URL must be checked - only repository-based links may be versioned
-		return true;
+		throw new UnsupportedOperationException("Link file requires checking server vs local URL");
 	}
 
 	/**

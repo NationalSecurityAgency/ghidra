@@ -46,7 +46,7 @@ public class GoPcValueEvaluator {
 		GoModuledata moduledata = func.getModuledata();
 		
 		this.pcquantum = moduledata.getGoBinary().getMinLC();
-		this.reader = moduledata.getPctab().getElementReader(1, (int) offset);
+		this.reader = moduledata.getPcValueTable().getElementReader(1, (int) offset);
 
 		this.funcEntry = func.getFuncAddress().getOffset();
 		this.pc = funcEntry;

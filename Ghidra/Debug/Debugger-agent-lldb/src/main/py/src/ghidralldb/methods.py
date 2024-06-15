@@ -460,7 +460,7 @@ def _continue(process: sch.Schema('Process')):
 
 
 @REGISTRY.method
-def interrupt():
+def interrupt(process: sch.Schema('Process')):
     """Interrupt the execution of the debugged program."""
     exec_convert_errors('process interrupt')
     # util.get_process().SendAsyncInterrupt()
@@ -657,7 +657,7 @@ def read_mem(process: sch.Schema('Process'), range: AddressRange):
             f'ghidra trace putmem 0x{offset_start:x} {range.length()}', result)
         if result.Succeeded():
             return
-        print(f"Could not read 0x{offset_start:x}: {result}")
+        #print(f"Could not read 0x{offset_start:x}: {result}")
         exec_convert_errors(
             f'ghidra trace putmem-state 0x{offset_start:x} {range.length()} error')
 

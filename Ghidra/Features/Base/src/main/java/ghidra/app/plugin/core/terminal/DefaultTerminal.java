@@ -139,4 +139,9 @@ public class DefaultTerminal implements Terminal {
 	public void setTerminateAction(Runnable action) {
 		Swing.runIfSwingOrRunLater(() -> provider.setTerminateAction(action));
 	}
+
+	@Override
+	public void toFront() {
+		provider.toFront();
+	}
 }

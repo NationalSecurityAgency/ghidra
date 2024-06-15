@@ -165,8 +165,9 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * A package-level method.  Subclasses should not call this.
-	 *
+	 * Subclasses should not call this.  Loading for subclasses is done inside their implementation
+	 * of {@link #doLoad(Accumulator, TaskMonitor)}.
+	 * 
 	 * <p>This exists to handle whether this model should load incrementally.
 	 *
 	 * @param monitor the monitor
@@ -182,9 +183,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		}
 
 		// do the load now
-		ListAccumulator<ROW_OBJECT> accumulator = new ListAccumulator<>();
+		ListAccumulator<ROW_OBJECT> accumulator = createAccumulator();
 		doLoad(accumulator, monitor);
 		return accumulator.asList();
+	}
+
+	protected ListAccumulator<ROW_OBJECT> createAccumulator() {
+		return new ListAccumulator<ROW_OBJECT>();
 	}
 
 	private void initializeWorker() {

@@ -28,8 +28,8 @@ import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
-import ghidra.app.util.bin.format.golang.GoBuildInfo;
 import ghidra.app.util.bin.format.golang.GoBuildId;
+import ghidra.app.util.bin.format.golang.GoBuildInfo;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
@@ -433,7 +433,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		log.appendMsg("Delay imports detected...");
+		log.appendMsg("Delay imports detected");
 
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 		Listing listing = program.getListing();
@@ -922,7 +922,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			CLI("cli", "cli"),
 			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
-			Swift("swift", "swift"),
+			Swift(SwiftUtils.SWIFT_COMPILER, SwiftUtils.SWIFT_COMPILER),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators

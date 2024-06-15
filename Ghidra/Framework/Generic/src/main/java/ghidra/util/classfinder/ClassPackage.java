@@ -89,15 +89,16 @@ class ClassPackage implements ClassLocation {
 	}
 
 	@Override
-	public void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) throws CancelledException {
+	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor)
+			throws CancelledException {
 
-		set.addAll(classes);
+		list.addAll(classes);
 
 		Iterator<ClassPackage> it = children.iterator();
 		while (it.hasNext()) {
 			monitor.checkCancelled();
 			ClassPackage subPkg = it.next();
-			subPkg.getClasses(set, monitor);
+			subPkg.getClasses(list, monitor);
 		}
 	}
 

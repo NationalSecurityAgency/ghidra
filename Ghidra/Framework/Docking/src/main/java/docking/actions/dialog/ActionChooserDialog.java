@@ -291,6 +291,10 @@ public class ActionChooserDialog extends DialogComponentProvider {
 				SearchListEntry<DockingActionIf> value, int index, boolean isSelected,
 				boolean hasFocus) {
 			super.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
+			if (model.isDisposed()) {
+				// Some UIs may call the renderer on focus lost after the dialog is closed.
+				return this;
+			}
 			DockingActionIf action = value.value();
 			String category = value.category();
 			Icon icon = getIcon(action, category);

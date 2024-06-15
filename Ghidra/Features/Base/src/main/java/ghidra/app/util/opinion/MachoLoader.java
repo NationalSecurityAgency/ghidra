@@ -84,11 +84,13 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				.flatMap(seg -> seg.getSections().stream())
 				.map(section -> section.getSectionName())
 				.toList();
-		String compiler = SwiftUtils.isSwift(sectionNames) ? "swift" : null;
-		compiler = compiler == null && GoRttiMapper.hasGolangSections(sectionNames)
-				? GoConstants.GOLANG_CSPEC_NAME
-				: null;
-		return compiler;
+		if (SwiftUtils.isSwift(sectionNames)) {
+			return SwiftUtils.SWIFT_COMPILER;
+		}
+		if (GoRttiMapper.hasGolangSections(sectionNames)) {
+			return GoConstants.GOLANG_CSPEC_NAME;
+		}
+		return null;
 	}
 
 	@Override

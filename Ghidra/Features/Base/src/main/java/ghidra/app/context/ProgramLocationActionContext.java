@@ -15,13 +15,16 @@
  */
 package ghidra.app.context;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import docking.ComponentProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.util.*;
 
-public class ProgramLocationActionContext extends ProgramActionContext {
+public class ProgramLocationActionContext extends ProgramActionContext
+		implements FunctionSupplierContext {
 
 	private final ProgramLocation location;
 	private final ProgramSelection selection;
@@ -54,7 +57,6 @@ public class ProgramLocationActionContext extends ProgramActionContext {
 
 	public ProgramSelection getHighlight() {
 		return highlight == null ? new ProgramSelection() : highlight;
-
 	}
 
 	/**
@@ -93,5 +95,40 @@ public class ProgramLocationActionContext extends ProgramActionContext {
 
 	public boolean hasHighlight() {
 		return (highlight != null && !highlight.isEmpty());
+	}
+
+	@Override
+	public boolean hasFunctions() {
+		if (selection == null || selection.isEmpty()) {
+			return getFunctionForLocation() != null;
+		}
+		// see if selection contains at least one function
+		FunctionManager functionManager = program.getFunctionManager();
+		FunctionIterator functionIter = functionManager.getFunctions(selection, true);
+		return functionIter.hasNext();
+	}
+
+	@Override
+	public Set<Function> getFunctions() {
+		Set<Function> functions = new HashSet<>();
+		if (selection == null || selection.isEmpty()) {
+			functions.add(getFunctionForLocation());
+		}
+		else {
+			FunctionManager functionManager = program.getFunctionManager();
+			FunctionIterator functionIter = functionManager.getFunctions(selection, true);
+			for (Function selectedFunction : functionIter) {
+				functions.add(selectedFunction);
+			}
+		}
+		return functions;
+	}
+
+	private Function getFunctionForLocation() {
+		if (!(location instanceof FunctionLocation functionLocation)) {
+			return null;
+		}
+		Address functionAddress = functionLocation.getFunctionAddress();
+		return program.getFunctionManager().getFunctionAt(functionAddress);
 	}
 }

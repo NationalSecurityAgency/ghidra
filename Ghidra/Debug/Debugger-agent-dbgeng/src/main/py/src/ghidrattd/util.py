@@ -51,7 +51,7 @@ class Watchpoint(object):
 
 
 def _compute_pydbg_ver():
-    blurb = ""  # base._control.GetActualProcessorType()
+    blurb = "" #get_debugger()._control.GetActualProcessorType()
     full = ""
     major = 0
     minor = 0

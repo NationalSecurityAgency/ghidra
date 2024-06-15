@@ -41,6 +41,8 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 
 	public FunctionTableModel(PluginTool tool, Program program) {
 		super("Functions", tool, program, null);
+
+		functionMgr = program != null ? program.getFunctionManager() : null;
 	}
 
 	@Override
@@ -82,12 +84,7 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 
 	public void reload(Program newProgram) {
 		this.setProgram(newProgram);
-		if (newProgram != null) {
-			functionMgr = newProgram.getFunctionManager();
-		}
-		else {
-			functionMgr = null;
-		}
+		functionMgr = program != null ? program.getFunctionManager() : null;
 		reload();
 	}
 

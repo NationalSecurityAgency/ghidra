@@ -2930,11 +2930,8 @@ int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
 	return 0;		// Partial overlap, not sure what to do
       }
     }
-    else if (indop->isCall()) {
+    else if (op->getOut()->hasNoLocalAlias()) {
       if (op->isIndirectCreation() || op->noIndirectCollapse())
-	return 0;
-      // If there are no aliases to a local variable, collapse
-      if (!op->getOut()->hasNoLocalAlias())
 	return 0;
     }
     else if (indop->usesSpacebasePtr()) {
@@ -4013,6 +4010,9 @@ int4 RuleStoreVarnode::applyOp(PcodeOp *op,Funcdata &data)
   data.opRemoveInput(op,1);
   data.opRemoveInput(op,0);
   data.opSetOpcode(op, CPUI_COPY );
+  if (op->isStoreUnmapped()) {
+    data.getScopeLocal()->markNotMapped(baseoff, offoff, size, false);
+  }
   return 1;
 }
 
@@ -5644,6 +5644,7 @@ void AddTreeState::clear(void)
 {
   multsum = 0;
   nonmultsum = 0;
+  biggestNonMultCoeff = 0;
   if (pRelType != (const TypePointerRel *)0) {
     nonmultsum = ((TypePointerRel *)ct)->getPointerOffset();
     nonmultsum &= ptrmask;
@@ -5687,6 +5688,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
 {
   baseOp = op;
   baseSlot = slot;
+  biggestNonMultCoeff = 0;
   ptr = op->getIn(slot);
   ct = (const TypePointer *)ptr->getTypeReadFacing(op);
   ptrsize = ptr->getSize();
@@ -5714,36 +5716,6 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   distributeOp = (PcodeOp *)0;
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
-}
-
-/// Even if the current base data-type is not an array, the pointer expression may incorporate
-/// an array access for a sub component.  This manifests as a non-constant non-multiple terms in
-/// the tree.  If this term is itself defined by a CPUI_INT_MULT with a constant, the constant
-/// indicates a likely element size. Return a non-zero value, the likely element size, if there
-/// is evidence of a non-constant non-multiple term. Return zero otherwise.
-/// \return a non-zero value indicating likely element size, or zero
-uint4 AddTreeState::findArrayHint(void) const
-
-{
-  uint4 res = 0;
-  for(int4 i=0;i<nonmult.size();++i) {
-    Varnode *vn = nonmult[i];
-    if (vn->isConstant()) continue;
-    uint4 vncoeff = 1;
-    if (vn->isWritten()) {
-      PcodeOp *op = vn->getDef();
-      if (op->code() == CPUI_INT_MULT) {
-	Varnode *vnconst = op->getIn(1);
-	if (vnconst->isConstant()) {
-	  intb sval = sign_extend(vnconst->getOffset(),vnconst->getSize()*8-1);
-	  vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
-	}
-      }
-    }
-    if (vncoeff > res)
-      res = vncoeff;
-  }
-  return res;
 }
 
 /// \brief Given an offset into the base data-type and array hints find sub-component being referenced
@@ -5838,6 +5810,9 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff)
 	  return spanAddTree(vnterm->getDef(), val);
 	}
       }
+      uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
+      if (vncoeff > biggestNonMultCoeff)
+	biggestNonMultCoeff = vncoeff;
       return true;
     }
     else {
@@ -5848,6 +5823,8 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff)
       return false;
     }
   }
+  if (treeCoeff > biggestNonMultCoeff)
+    biggestNonMultCoeff = treeCoeff;
   return true;
 }
 
@@ -5898,6 +5875,8 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
     valid = false;
     return false;
   }
+  if (treeCoeff > biggestNonMultCoeff)
+    biggestNonMultCoeff = treeCoeff;
   return true;
 }
 
@@ -5956,7 +5935,7 @@ void AddTreeState::calcSubtype(void)
     else {
       // For a negative sum, if the baseType is a structure and there is array hints,
       // we assume the sum is an array index at a lower level
-      if (baseType->getMetatype() == TYPE_STRUCT && findArrayHint() != 0)
+      if (baseType->getMetatype() == TYPE_STRUCT && biggestNonMultCoeff != 0)
 	offset = nonmultsum;
       else
 	offset = (uint8)(snonmult + size);
@@ -5975,9 +5954,8 @@ void AddTreeState::calcSubtype(void)
   else if (baseType->getMetatype() == TYPE_SPACEBASE) {
     int8 nonmultbytes = AddrSpace::addressToByteInt(nonmultsum,ct->getWordSize()); // Convert to bytes
     int8 extra;
-    uint4 arrayHint = findArrayHint();
     // Get offset into mapped variable
-    if (!hasMatchingSubType(nonmultbytes, arrayHint, &extra)) {
+    if (!hasMatchingSubType(nonmultbytes, biggestNonMultCoeff, &extra)) {
       valid = false;		// Cannot find mapped variable but nonmult is non-empty
       return;
     }
@@ -5989,9 +5967,8 @@ void AddTreeState::calcSubtype(void)
     intb snonmult = sign_extend(nonmultsum,ptrsize*8-1);
     int8 nonmultbytes = AddrSpace::addressToByteInt(snonmult,ct->getWordSize()); // Convert to bytes
     int8 extra;
-    uint4 arrayHint = findArrayHint();
     // Get offset into field in structure
-    if (!hasMatchingSubType(nonmultbytes, arrayHint, &extra)) {
+    if (!hasMatchingSubType(nonmultbytes, biggestNonMultCoeff, &extra)) {
       if (nonmultbytes < 0 || nonmultbytes >= baseType->getSize()) {	// Compare as bytes! not address units
 	valid = false; // Out of structure's bounds
 	return;

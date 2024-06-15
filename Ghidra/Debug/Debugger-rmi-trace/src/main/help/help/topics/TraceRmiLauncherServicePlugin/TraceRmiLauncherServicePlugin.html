@@ -83,6 +83,13 @@
     <B>CTRL-SHIFT-H</B> or <B>CTRL-SHIFT-G</B>, respectively. They repeat the last search in the
     forward or backward direction.</P>
 
+    <H3><A name="select_all"></A>Select All</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-A</B>. It
+    selects all text in the terminal, including its scrollback buffer. If all the text is already
+    selected, then this selects nothing, so that pressing the keystroke twice is effectively
+    "Select None."</P>
+
     <H3><A name="terminate"></A>Terminate</H3>
 
     <P>This action is accessed using the local drop-down menu. It will terminate the Terminal's
@@ -105,20 +112,56 @@
     properly-configured build of GDB for your target. If you are working with an embedded system,
     it is probably safest to install the "multiarch" build of GDB from your package manager.</P>
 
-    <P>Once running, you are presented with GDB's command-line interface in Ghidra's Terminal. This
-    is the <EM>bona fide</EM> GDB command-line interface, so it has all the functionality you would
-    expect. If you command GDB from this shell, the plugin will keep Ghidra in sync. The terminal
-    can also be used to interact with the target application when it is running. The plugin
-    provides an additional set of commands for managing the connection to Ghidra, as well as
-    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" command prefix. You
-    can use tab completion to enumerate the available commands and GDB's "<TT>help</TT>" command to
-    examine their documentation.</P>
+    <H4><A name="gdb_setup"></A>Setup</H4>
+
+    <P>You must have GDB installed on the local system, and it must embed the Python 3 interpreter.
+    If you have access to PyPI, setting up your Python 3 environment is done using Pip. Please note
+    the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install psutil protobuf==3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd /path/to/ghidra_<EM>
+version</EM>/Ghidra/Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-gdb/pypkg/dist psutil protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Beware that GDB may embed a different Python interpreter than your system's default. If you
+    are still getting import errors, check the version that GDB embeds:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+(bash)$ gdb
+(gdb) python-interactive
+&gt;&gt;&gt; import sys
+&gt;&gt;&gt; sys.version
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Note the version and ensure that you are invoking Pip with that version. Supposing
+    <TT>sys.version</TT> indicates 3.10, you should invoke Pip using <TT>python3.10 -m
+    pip</TT>.</P>
+
+    <H4>Options</H4>
 
     <DIV class="image">
       <IMG alt="" src="images/GdbLauncher.png">
     </DIV>
-
-    <H4>Options</H4>
 
     <UL>
       <LI><B>Image</B>: This is the path to the target binary image (ELF). Ghidra will try to fill
@@ -132,7 +175,7 @@
       <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
       These are passed as is to GDB's "<TT>set args ...</TT>" command.</LI>
 
-      <LI><B>Path to <TT>gdb</TT></B>: This is the command or path to GDB. We recommend version 13
+      <LI><B><TT>gdb</TT> command</B>: This is the command or path to GDB. We recommend version 13
       or later. We require version 8 or later.</LI>
 
       <LI><B>Run command</B>: This is the GDB command to actually launch the target. In most cases
@@ -145,6 +188,15 @@
       window.</LI>
     </UL>
 
+    <P>Once running, you are presented with GDB's command-line interface in Ghidra's Terminal. This
+    is the <EM>bona fide</EM> GDB command-line interface, so it has all the functionality you would
+    expect. If you command GDB from this shell, the plugin will keep Ghidra in sync. The terminal
+    can also be used to interact with the target application when it is running. The plugin
+    provides an additional set of commands for managing the connection to Ghidra, as well as
+    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" command prefix. You
+    can use tab completion to enumerate the available commands and GDB's "<TT>help</TT>" command to
+    examine their documentation.</P>
+
     <H3><A name="gdb_ssh"></A>GDB via SSH</H3>
 
     <P>This works the same as the GDB launcher, but runs <TT>gdb</TT> on a remote system via
@@ -152,10 +204,30 @@
     launcher uses the <TT>ssh</TT> command on the local system. Thus, it should have broader
     compatibility with remote systems, and it should use the same configuration files as you are
     accustomed to. That said, we developed it using OpenSSH, so your experience will be best if
-    your copy understands the same command-line arguments. It will need to be capable of port
-    forwarding. The remote server must permit remote port forwarding (-R option) and terminal
-    allocation (<TT>-t</TT> option). You will also need to manually install the required Python
-    packages on the target host, comprising our plugin for GDB and its dependencies.</P>
+    your copy understands the same command-line arguments.</P>
+
+    <H4>Setup</H4>
+
+    <P>You must install GDB and an SSH server onto the target host. Your local SSH client must
+    support remote port forwarding (-R option) and terminal allocation (<TT>-t</TT> option), and
+    the remote server must be configured to permit them.</P>
+
+    <P>You will need to manually install the required Python packages on the <EM>target</EM> host,
+    comprising our plugin for GDB and its dependencies. Copy all of the Python packages from
+    <TT>Ghidra/Debug/Debugger-rmi-trace/pypkg/dist/</TT> and
+    <TT>Ghidra/Debug/Debugger-agent-gdb/pypkg/dist/</TT> to the remote system. It is easiest to put
+    them all in one directory, e.g., <TT>~/ghidra-pypgk/</TT>. Then install them:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install --no-index -f ~/ghidra-pypkg/ ghidragdb
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Please see <A href="#gdb_setup">GDB Setup</A> for notes about embedded Python interpreter
+    versions.</P>
 
     <H4>Options</H4>
 
@@ -184,7 +256,7 @@
       that syntax errors may cause strange behavior, and that not all features may be compatible
       with this launcher.</LI>
 
-      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, but with respect to the
+      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB, but with respect to the
       <EM>remote</EM> file system.</LI>
 
       <LI><B>Run command</B>: This works the same as in GDB.</LI>
@@ -195,8 +267,9 @@
     <H3><A name="gdb_gdbserver_ssh"></A>GDB + <TT>gdbserver</TT> via SSH</H3>
 
     <P>This works similarly to the GDB via SSH launcher, but instead of tunneling the Trace RMI
-    connection, tunnels the RSP (gdbserver) connection. There is actually a fairly elegant method
-    of doing this straight from within <TT>gdb</TT>, which is exactly what this launcher does:</P>
+    connection, tunnels the RSP (<TT>gdbserver</TT>) connection. There is actually a fairly elegant
+    method of doing this straight from within <TT>gdb</TT>, which is exactly what this launcher
+    does:</P>
 
     <UL style="list-style-type: none">
       <LI>
@@ -227,6 +300,15 @@ target remote | ssh user@host gdbserver - /path/to/image
       address space, if the map is of interest to your analysis, it may not be available.</LI>
     </OL>
 
+    <H4>Setup</H4>
+
+    <P>You must have GDB installed on the local system and a compatible version of
+    <TT>gdbserver</TT> installed on the target system. You must have an SSH server installed on the
+    target system. It may be worth testing your setup manually (outside of Ghidra) to ensure
+    everything is configured correctly. On the local system, follow the steps given in <A href=
+    "#gdb_setup">GDB Setup</A>. There are no additional Python requirements on the target
+    system.</P>
+
     <H4>Options</H4>
 
     <UL>
@@ -241,7 +323,7 @@ target remote | ssh user@host gdbserver - /path/to/image
 
       <LI><B>Extra <TT>ssh</TT> arguments</B>: This works the same as in GDB via SSH.</LI>
 
-      <LI><B>Path to <TT>gdbserver</TT></B>: This is the command or path to <TT>gdbserver</TT> with
+      <LI><B><TT>gdbserver</TT> command</B>: This is the command or path to <TT>gdbserver</TT> with
       respect to the <EM>remote</EM> file system.</LI>
 
       <LI><B>Extra <TT>gdbserver</TT> arguments</B>: These are extra arguments to pass to
@@ -249,7 +331,7 @@ target remote | ssh user@host gdbserver - /path/to/image
       dash. Beware that syntax errors may cause strange behavior, and that not all features may be
       compatible with this launcher.</LI>
 
-      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, with respect to the
+      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB, with respect to the
       <EM>local</EM> file system.</LI>
 
       <LI>Note there is no option to create a second Terminal (TTY) for the target.</LI>
@@ -258,11 +340,14 @@ target remote | ssh user@host gdbserver - /path/to/image
     <H3><A name="gdb_qemu"></A>QEMU + GDB</H3>
 
     <P>This launcher orchestrates a QEMU user-mode target and connects to it using our Python
-    plugin for GDB. You will almost certainly need the "multiarch" build of GDB, and by default,
-    the launcher will try to use <TT>gdb-multiarch</TT>. You must also install the appropriate
-    build of QEMU for your target architecture. Ghidra will inspect the current program and attempt
-    to map its language to the appropriate QEMU command, but this may fail, or be subtly
-    incorrect.</P>
+    plugin for GDB. Ghidra will inspect the current program and attempt to map its language to the
+    appropriate QEMU command, but this may fail, or be subtly incorrect.</P>
+
+    <H4>Setup</H4>
+
+    <P>You must acquire a version of QEMU and GDB that support the target architecture. On many
+    distributions of Linux, you can install <TT>gdb-multiarch</TT>. Follow the steps given in <A
+    href="#gdb_setup">GDB Setup</A>.</P>
 
     <H4>Options</H4>
 
@@ -274,7 +359,7 @@ target remote | ssh user@host gdbserver - /path/to/image
       <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
       These are passed as is on QEMU's command line.</LI>
 
-      <LI><B>Path to <TT>qemu</TT></B>: The command or path to QEMU.</LI>
+      <LI><B>QEMU command</B>: The command or path to QEMU.</LI>
 
       <LI><B>QEMU Port</B>: An available TCP port for QEMU to listen on for GDB.</LI>
 
@@ -283,7 +368,7 @@ target remote | ssh user@host gdbserver - /path/to/image
       arguments. Beware that syntax errors may cause strange behavior, and that not all features
       may be compatible with this launcher.</LI>
 
-      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, but defaults to
+      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB, but defaults to
       "gdb-multiarch."</LI>
 
       <LI><B>QEMU TTY</B>: This works similarly as in GDB, but just runs QEMU in the second
@@ -294,10 +379,18 @@ target remote | ssh user@host gdbserver - /path/to/image
 
     <P>This launchers runs <TT>wine</TT> in a <TT>gdb</TT> session on Linux and directs it to a
     target Windows executable. There are other ways to rig a Windows target in GDB on Linux, but
-    this is the method we have chosen: You will need to install Wine on your system and locate the
-    actual <TT>wine</TT> executable. These are often in some library directory and named
-    "<TT>wine32</TT>" or "<TT>wine64</TT>." To find them, either examine the file list of the
-    installed package, or dissect the wrapper <TT>wine</TT> script, usually on your path:</P>
+    this is the method we have chosen. This may prevent GDB from processing the object file,
+    because it is a PE file, and most copies of GDB for UNIX will support only ELF. Nevertheless,
+    Ghidra should recognize the target and map it, giving you symbols and debug info in the front
+    end, even if not in the GDB CLI.</P>
+
+    <H4>Setup</H4>
+
+    <P>In addition to the steps given in <A href="#gdb_setup">GDB Setup</A>, you must install Wine
+    on your system. Prepare for configuration by locating the actual <TT>wine</TT> executable.
+    These are often in some library directory and named "<TT>wine32</TT>" or "<TT>wine64</TT>." To
+    find them, either examine the file list of the installed package, or dissect the wrapper
+    <TT>wine</TT> script, usually on your path:</P>
 
     <UL style="list-style-type: none">
       <LI>
@@ -337,7 +430,7 @@ less $(which wine)
       <LI><B>Path to <TT>wine</TT> binary</B>: The path to wine for your target architecture. <FONT
       color="red">See note above!</FONT></LI>
 
-      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB.</LI>
+      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB.</LI>
 
       <LI><B>Inferior TTY</B>: This works the same as in GDB.</LI>
     </UL>
@@ -359,6 +452,15 @@ target remote [host]:[port]
     compatible before using this launcher. This launcher does not require an image, nor does it
     create your target. Thus, it can be used without a current program.</P>
 
+    <H4>Setup</H4>
+
+    <P>On your local system, follow the steps given in <A href="#gdb_setup">GDB Setup</A>. Your
+    version of GDB must be compatible with the stub (e.g., <TT>gdbserver</TT>) on the target
+    system. There are no additional requirements on the target system.</P>
+
+    <P><B>NOTE:</B> The target program image must match that imported in Ghidra, or else things may
+    not map or synchronize correctly.</P>
+
     <H4>Options</H4>
 
     <UL>
@@ -375,7 +477,7 @@ target remote [host]:[port]
       session outside of Ghidra to see the list of available options in your configuration. You may
       want to use <TT>gdb-multiarch</TT>.</LI>
 
-      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, though you may want to use
+      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB, though you may want to use
       <TT>gdb-multiarch</TT>.</LI>
     </UL>
 
@@ -388,17 +490,19 @@ target remote [host]:[port]
     to ensure your target maps to the current program, if you happen to have one. You may have to
     do it manually.</P>
 
+    <H4>Setup</H4>
+
+    <P>Follow the steps given in <A href="#gdb_setup">GDB Setup</A>.</P>
+
     <H4>Options</H4>
 
     <UL>
-      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB.</LI>
+      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB.</LI>
 
       <LI><B>Architecture</B>: Because the trace is created before the target, you must specify the
-      target's architecture.</LI>
-
-      <LI style="list-style: none">This is passed as is to "<TT>set arch ...</TT>" immediately
-      before the "<TT>target ...</TT>" command. Enter "<TT>set arch</TT>" into a GDB session
-      outside of Ghidra to see the list of available options in your configuration.</LI>
+      target's architecture. This is passed as is to "<TT>set arch ...</TT>" immediately before the
+      "<TT>target ...</TT>" command. Enter "<TT>set arch</TT>" into a GDB session outside of Ghidra
+      to see the list of available options in your configuration.</LI>
     </UL>
 
     <H2>Stock LLDB Launchers</H2>
@@ -409,17 +513,53 @@ target remote [host]:[port]
 
     <P>This launcher is a Python plugin for LLDB, and so is well suited for debugging user-space
     targets on a variety of platforms. It is the <EM>de facto</EM> debugger for macOS. It can be
-    obtained by installing XCode from the App Store. Though it may require a bit more careful
+    obtained by installing Xcode from the App Store. Though it may require a bit more careful
     configuration, it can also be obtained from other repositories like <TT>brew</TT>.</P>
 
-    <P>Once running, you are presented with LLDB's command-line interface in Ghidra's Terminal.
-    This is the <EM>bona fide</EM> LLDB command-line interface, so it has all the functionality you
-    would expect. If you command LLDB from this shell, the plugin will keep Ghidra in sync. The
-    terminal can be used to interact with the target application when it is running. The plugin
-    provides an additional set of commands for managing the connection to Ghidra, as well as
-    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" category. You can use
-    tab completion to enumerate the available commands and LLDB's "<TT>help</TT>" command to
-    examine their documentation.</P>
+    <H4><A name="lldb_setup"></A>Setup</H4>
+
+    <P>You must have LLDB installed on the local system, and it must embed the Python 3
+    interpreter. If you have access to PyPI, setting up your Python 3 environment is done using
+    Pip. Please note the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install psutil protobuf==3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd /path/to/ghidra_<EM>
+version</EM>/Ghidra/Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-lldb/pypkg/dist psutil protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Beware that LLDB may embed a different Python interpreter than your system's default. If you
+    are still getting import errors, check the version that LLDB embeds:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+(bash)$ lldb
+(lldb) script
+&gt;&gt;&gt; import sys
+&gt;&gt;&gt; sys.version
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Note the version and ensure that you are invoking Pip with that version. Supposing
+    <TT>sys.version</TT> indicates 3.10, you should invoke Pip using <TT>python3.10 -m
+    pip</TT>.</P>
 
     <H4>Options</H4>
 
@@ -435,7 +575,7 @@ target remote [host]:[port]
       <LI><B>Arguments</B>: These are the command-line arguments to pass into the target. These are
       passed as is to LLDB's "<TT>settings set target.run-args ...</TT>" command.</LI>
 
-      <LI><B>Path to <TT>lldb</TT></B>: This is the command or path to LLDB. We recommend version
+      <LI><B><TT>lldb</TT> command</B>: This is the command or path to LLDB. We recommend version
       15 or later.</LI>
 
       <LI><B>Run command</B>: This is the LLDB command to actually launch the target. In most cases
@@ -447,6 +587,15 @@ target remote [host]:[port]
       LLDB's "<TT>setting set target.output-path ...</TT>" command (and similar for the input) to
       direct the target's I/O to a second Terminal window.</LI>
     </UL>
+
+    <P>Once running, you are presented with LLDB's command-line interface in Ghidra's Terminal.
+    This is the <EM>bona fide</EM> LLDB command-line interface, so it has all the functionality you
+    would expect. If you command LLDB from this shell, the plugin will keep Ghidra in sync. The
+    terminal can be used to interact with the target application when it is running. The plugin
+    provides an additional set of commands for managing the connection to Ghidra, as well as
+    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" category. You can use
+    tab completion to enumerate the available commands and LLDB's "<TT>help</TT>" command to
+    examine their documentation.</P>
 
     <H3><A name="lldb_remote"></A>Remote LLDB</H3>
 
@@ -465,6 +614,15 @@ gdb-remote [host]:[port]
     compatible before using this launcher. This launcher does not require an image, nor does it
     create your target. Thus, it can be used without a current program.</P>
 
+    <H4>Setup</H4>
+
+    <P>On your local system, follow the steps given in <A href="#lldb_setup">LLDB Setup</A>. Your
+    version of LLDB must be compatible with the stub (e.g., <TT>gdbserver</TT>) on the target
+    system. There are no additional requirements on the target system.</P>
+
+    <P><B>NOTE:</B> The target program image must match that imported in Ghidra, or else things may
+    not map or synchronize correctly.</P>
+
     <H4>Options</H4>
 
     <UL>
@@ -476,7 +634,7 @@ gdb-remote [host]:[port]
       you must set it before connecting. This is passed as is to "<TT>setting set
       target.default-arch ...</TT>" immediately before the "<TT>gdb-remote ...</TT>" command.</LI>
 
-      <LI><B>Path to <TT>llddb</TT></B>: This works the same as in LLDB.</LI>
+      <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
     </UL>
 
     <H2>Stock Windows Debugger (WinDbg) Launchers</H2>
@@ -491,26 +649,53 @@ gdb-remote [host]:[port]
     suited for debugging Windows user-space targets. Windows kernel targets are not yet supported.
     This DLL also backs WinDbg and several other debuggers on Windows. By default, the launcher
     will search for this DLL in an installation of the Windows Debugging Kits version 10. If it
-    does not find it there, it will fall back to the one provided with Windows, which is
-    substantially less capable. Installing WinDbg is highly recommended. Please note on some system
-    configurations, one of the debugger's dependencies <TT>dbghelp.dll</TT> may get loaded from the
-    system directory instead of from the WinDbg installation, usually because a security product
-    has pre-loaded it into the Python process. You might work around this by copying the affected
-    DLLs from your WinDbg installation into your Python installation.</P>
+    does not find it there, it will probably crash with a message in the Terminal.</P>
 
-    <P>Once running, you are presented with a command-line interface in Ghidra's Terminal. This CLI
-    accepts your usual WinDbg (kd) commands. You can escape from this CLI and enter a Python 3 REPL
-    by entering "<TT>.exit</TT>". This is not an actual kd command, but our implementation
-    understands this to mean exit the kd REPL. From the Python 3 REPL, you can access the
-    underlying Python-based API <TT>pybag</TT>. This is an uncommon need, but may be useful for
-    diagnostics and/or workarounds. To re-enter the kd REPL, enter "<TT>repl()</TT>".
-    Alternatively, if you are trying to quit, but typed "<TT>.exit</TT>", just type
-    "<TT>quit()</TT>" to terminate the session.</P>
+    <P>Please note on some system configurations, one of the debugger's dependencies
+    <TT>dbghelp.dll</TT> may get loaded from the system directory instead of from the WinDbg
+    installation, usually because a security product has pre-loaded it into the Python process. You
+    might work around this by copying the affected DLLs from your WinDbg installation into your
+    Python installation.</P>
+
+    <H4><A name="dbg_setup"></A>Setup</H4>
+
+    <P>Installing WinDbg is highly recommended. If you wish to forego installing WinDbg, you can
+    use the DLL provided with Windows, which is substantially less capable, by manually pointing
+    this connector to <TT>C:\Windows\system32</TT>. If you do this, some commands, e.g.
+    <TT>.server</TT>, will not be available.</P>
+
+    <P>If you have access to PyPI, setting up your Python 3 environment is done using Pip. Please
+    note the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install pybag protobuf==3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd C:\path\to\ghidra_<EM>
+version</EM>\Ghidra\Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-agent-dbgeng\pypkg\dist pybag protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you get an import error regarding <TT>distutils</TT>, it is due to a transitive
+    dependency on a buggy version of <TT>capstone</TT>. Work around it by installing
+    <TT>setuptools</TT>.</P>
 
     <H4>Options</H4>
 
     <UL>
-      <LI><B>Path to <TT>python</TT></B>: This is the command or path to the Python interpreter. It
+      <LI><B><TT>python</TT> command</B>: This is the command or path to the Python interpreter. It
       must be version 3. Python 2 is not supported.</LI>
 
       <LI><B>Image</B>: This is the path to the target binary image (EXE file). Ghidra will try to
@@ -530,14 +715,23 @@ gdb-remote [host]:[port]
       available from <TT>dbgeng.dll</TT>. Disabling this option will prevent the launcher from
       using <TT>dbgmodel.dll</TT>, even when it is available.</LI>
 
-      <LI><B>Path to <TT>dbgeng</TT></B>: By default, the launcher allows the underlying
-      <TT>pybag</TT> package to locate the Windows Debugger DLLs. This is typically found by
-      examining the registry for a Windows Kits 10 installation. Otherwise, it may check its
-      typical installation directory before falling back to those in the Windows system directory.
-      This option allows you to override this search. For example, if you have installed WinDbg
-      Preview or later from the Microsoft Store and wish to use its DLLs, you will need to fill in
-      this option.</LI>
+      <LI><B>Path to <TT>dbgeng.dll</TT> directory</B>: By default, the launcher allows the
+      underlying <TT>pybag</TT> package to locate the Windows Debugger DLLs. This is typically
+      found by examining the registry for a Windows Kits 10 installation. Otherwise, it may check
+      its typical installation directory. This will <EM>not</EM> search the Windows system
+      directory, but you can configure it manually here. This option allows you to override this
+      search. For example, if you have installed WinDbg Preview or later from the Microsoft Store
+      and wish to use its DLLs, you will need to fill in this option.</LI>
     </UL>
+
+    <P>Once running, you are presented with a command-line interface in Ghidra's Terminal. This CLI
+    accepts your usual WinDbg (kd) commands. You can escape from this CLI and enter a Python 3 REPL
+    by entering "<TT>.exit</TT>". This is not an actual kd command, but our implementation
+    understands this to mean exit the kd REPL. From the Python 3 REPL, you can access the
+    underlying Python-based API <TT>pybag</TT>. This is an uncommon need, but may be useful for
+    diagnostics and/or workarounds. To re-enter the kd REPL, enter "<TT>repl()</TT>".
+    Alternatively, if you are trying to quit, but typed "<TT>.exit</TT>", just type
+    "<TT>quit()</TT>" to terminate the session.</P>
 
     <H3><A name="dbgeng_ttd"></A>TTD (Time-Travel Debugging)</H3>
 
@@ -584,10 +778,36 @@ gdb-remote [host]:[port]
     namespace. Thus, a developer can explore the API, invoke methods, and observer how Ghidra
     reacts.</P>
 
+    <H4><A name="raw_setup"></A>Setup</H4>
+
+    <P>If you have access to PyPI, setting up your Python 3 environment is done using Pip. Please
+    note the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install protobuf==3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd /path/to/ghidra_<EM>
+version</EM>/Ghidra/Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist protobuf
+</PRE>
+      </LI>
+    </UL>
+
     <H4>Options</H4>
 
     <UL>
-      <LI><B>Path to <TT>python</TT></B>: This is the command or path to <TT>python</TT> version 3.
+      <LI><B><TT>python</TT> command</B>: This is the command or path to <TT>python</TT> version 3.
       Python 2 is not supported.</LI>
 
       <LI><B>Ghidra Language</B>: The LanguageID for the blank trace.</LI>

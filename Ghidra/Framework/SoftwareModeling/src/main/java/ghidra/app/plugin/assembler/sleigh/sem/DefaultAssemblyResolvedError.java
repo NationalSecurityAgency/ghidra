@@ -49,9 +49,6 @@ public class DefaultAssemblyResolvedError extends AbstractAssemblyResolution
 		return true;
 	}
 
-	/**
-	 * @see AssemblyResolution#error(String, String, List)
-	 */
 	protected DefaultAssemblyResolvedError(AbstractAssemblyResolutionFactory<?, ?> factory,
 			String description, List<? extends AssemblyResolution> children,
 			AssemblyResolution right, String error) {

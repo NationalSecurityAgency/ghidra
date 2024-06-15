@@ -432,7 +432,7 @@ bool ScopeLocal::isUnmappedUnaliased(Varnode *vn) const
 
 {
   if (vn->getSpace() != space) return false;	// Must be in mapped local (stack) space
-  if (maxParamOffset < minParamOffset) return false;	// If no min/max, then we have no know stack parameters
+  if (maxParamOffset < minParamOffset) return true;	// If no min/max, then we have no know stack parameters
   if (vn->getOffset() < minParamOffset || vn->getOffset() > maxParamOffset)
     return true;
   return false;

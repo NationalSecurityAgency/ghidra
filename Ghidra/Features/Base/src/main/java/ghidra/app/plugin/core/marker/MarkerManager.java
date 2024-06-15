@@ -107,6 +107,11 @@ public class MarkerManager implements MarkerService {
 		Gui.addThemeListener(themeListener);
 	}
 
+	public void clearAll() {
+		programMarkersByGroup.clear();
+		markerSetCache.clear();
+	}
+
 	private void themeChanged(ThemeEvent e) {
 		if (e instanceof ColorChangedThemeEvent) {
 			markerSetCache.clearColors();

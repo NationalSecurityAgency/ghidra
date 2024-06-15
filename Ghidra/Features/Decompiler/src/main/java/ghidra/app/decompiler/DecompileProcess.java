@@ -19,6 +19,7 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectPayload;
@@ -46,6 +47,8 @@ import ghidra.util.timer.GTimerMonitor;
  */
 
 public class DecompileProcess {
+	
+	private static boolean errorDisplayed = false; // launch failure previously displayed
 
 	//	public static DecompileProcess decompProcess = null;
 	private final static byte[] command_start = { 0, 0, 1, 2 };
@@ -103,6 +106,14 @@ public class DecompileProcess {
 		};
 		stringDecoder = new StringIngest();
 	}
+	
+	private static synchronized boolean getAndSetErrorDisplayed() {
+		boolean b = errorDisplayed;
+		if (!b) {
+			errorDisplayed = true;
+		}
+		return b;
+	}
 
 	public void dispose() {
 		if (disposestate != DisposeState.NOT_DISPOSED) {
@@ -133,19 +144,52 @@ public class DecompileProcess {
 		if (exepath == null || exepath.length == 0 || exepath[0] == null) {
 			throw new IOException("Could not find decompiler executable");
 		}
+		IOException exc = null;
+		statusGood = false;
+		
 		try {
 			nativeProcess = runtime.exec(exepath);
-
+			
+			// Give process time to load and report possible error
+			try {
+				nativeProcess.waitFor(200, TimeUnit.MILLISECONDS);
+			}
+			catch (InterruptedException e) {
+				// Restore interrupted thread state since we are continuing with setup.
+				// It does not appear that the decompiler interface is affected by an
+				// interrupted thread so why stop here.
+				Thread.currentThread().interrupt();
+			}
+			
 			nativeIn = nativeProcess.getInputStream();
 			nativeOut = nativeProcess.getOutputStream();
-			statusGood = true;
+			
+			statusGood = nativeProcess.isAlive();
+			if (!statusGood) {
+				if (!getAndSetErrorDisplayed()) {
+					String err = new String(nativeProcess.getErrorStream().readAllBytes());
+					String errorDetail = "Decompiler executable may not be compatible with your system and may need to be rebuilt.\n" +
+							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
+							err;		
+					Msg.showError(this, null, "Failed to launch Decompiler process", errorDetail);
+				}
+			}
 		}
 		catch (IOException e) {
-			disposestate = DisposeState.DISPOSED_ON_STARTUP_FAILURE;
-			statusGood = false;
-			Msg.showError(this, null, "Problem launching decompiler",
-				"Please report this stack trace to the Ghidra Team", e);
-			throw e;
+			exc = e; // permission error, etc.
+		}
+		finally {
+			if (!statusGood) {
+				disposestate = DisposeState.DISPOSED_ON_STARTUP_FAILURE;
+				if (nativeProcess != null) {
+					nativeProcess.destroy();          			
+					nativeProcess = null;
+				}
+				if (exc == null) {
+					exc = new IOException("Decompiler process failed to launch (see log for details)");
+				}
+				throw exc;
+			}
 		}
 	}
 

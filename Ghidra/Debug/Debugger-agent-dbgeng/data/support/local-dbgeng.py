@@ -39,7 +39,13 @@ else:
 def main():
     # Delay these imports until sys.path is patched
     from ghidradbg import commands as cmd
+    from pybag.dbgeng import core as DbgEng
+    from ghidradbg.hooks import on_state_changed
     from ghidradbg.util import dbg
+
+    # So that the user can re-enter by typing repl()
+    global repl
+    repl = cmd.repl
 
     cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
     args = os.getenv('OPT_TARGET_ARGS')
@@ -47,12 +53,17 @@ def main():
         args = ' ' + args
     cmd.ghidra_trace_create(
         os.getenv('OPT_TARGET_IMG') + args, start_trace=False)
+    
+    # TODO: HACK
+    try:
+        dbg.wait()
+    except KeyboardInterrupt as ki:
+        dbg.interrupt()
+
     cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
     cmd.ghidra_trace_sync_enable()
-
-    # TODO: HACK
-    dbg.wait()
-
+    
+    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS, DbgEng.DEBUG_STATUS_BREAK)
     cmd.repl()
 
 

@@ -15,7 +15,7 @@
  */
 package docking.dnd;
 
-import java.awt.Point;
+import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 
@@ -23,37 +23,30 @@ import java.awt.dnd.*;
  * Interface to define a drag source.
  */
 public interface Draggable {
-    
-    /**
-     * Return true if the object at the location in the DragGesture 
-	 * event is draggable.
+
+	/**
+	 * Return true if the object at the location in the DragGesture event is draggable.
 	 *
 	 * @param e event passed to a DragGestureListener via its 
 	 * dragGestureRecognized() method when a particular DragGestureRecognizer 
 	 * detects a platform dependent Drag and Drop action initiating 
 	 * gesture has occurred on the Component it is tracking.  
+	 * @return true if a drag can be starts
 	 * @see docking.dnd.DragGestureAdapter
-     */
-    public boolean isStartDragOk(DragGestureEvent e);
-    
-    /**
-     * Called by the DragGestureAdapter to start the drag.
-     */
-    public DragSourceListener getDragSourceListener();
-    
-    /**
-     * Do the move operation; called when the drag and drop operation
-	 * completes.
-	 * @see docking.dnd.DragSrcAdapter#dragDropEnd
-     */
-    public void move();
-    
-    /**
-     * Method called when the drag operation exits the drop target 
-     * without dropping.
-     * @param event TODO
-     */
-    public void dragCanceled(DragSourceDropEvent event);
+	 */
+	public boolean isStartDragOk(DragGestureEvent e);
+
+	/**
+	 * Called when the drag and drop operation completes.  
+	 * 
+	 * <p>Clients can use this callback to reset visual state.
+	 * @param cancelled true if the drag operation was cancelled
+	 * 
+	 * @see docking.dnd.DragSrcAdapter#dragDropEnd(DragSourceDropEvent)
+	 */
+	public default void dragFinished(boolean cancelled) {
+		// stub
+	}
 
 	/**
 	 * Get the drag actions supported by this drag source:
@@ -65,12 +58,20 @@ public interface Draggable {
 	 * 
 	 * @return the drag actions
 	 */
-    public int getDragAction();
-    
-    /**
-     * Get the object to transfer.
+	public int getDragAction();
+
+	/**
+	 * Get the object to transfer.
 	 * @param p location of object to transfer
 	 * @return object to transfer
-     */
-    public Transferable getTransferable(Point p);
+	 */
+	public Transferable getTransferable(Point p);
+
+	/**
+	 * Called by the DragGestureAdapter when the drag is started.  
+	 * @return the listener
+	 * @see DragGestureEvent#startDrag(Cursor, Image, Point, Transferable, DragSourceListener)
+	 */
+	public DragSourceListener getDragSourceListener();
+
 }

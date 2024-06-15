@@ -15,11 +15,13 @@
  */
 package ghidra.feature.vt.api.correlator.address;
 
+import static ghidra.util.datastruct.Duo.Side.*;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.correlate.HashedFunctionAddressCorrelation;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.util.AddressCorrelation;
+import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -35,14 +37,15 @@ public class VTHashedFunctionAddressCorrelation implements AddressCorrelation {
 
 	private final Function sourceFunction;
 	private final Function destinationFunction;
-	private HashedFunctionAddressCorrelation addressCorrelation;
+	private ListingAddressCorrelation addressCorrelation;
 
 	/**
 	 * Constructs an address correlation between two functions.
 	 * @param sourceFunction the source function
 	 * @param destinationFunction the destination function
 	 */
-	public VTHashedFunctionAddressCorrelation(Function sourceFunction, Function destinationFunction) {
+	public VTHashedFunctionAddressCorrelation(Function sourceFunction,
+			Function destinationFunction) {
 		this.sourceFunction = sourceFunction;
 		this.destinationFunction = destinationFunction;
 		addressCorrelation = null;
@@ -58,7 +61,7 @@ public class VTHashedFunctionAddressCorrelation implements AddressCorrelation {
 			throws CancelledException {
 		try {
 			initializeCorrelation(monitor);
-			Address destinationAddress = addressCorrelation.getAddressInSecond(sourceAddress);
+			Address destinationAddress = addressCorrelation.getAddress(RIGHT, sourceAddress);
 			if (destinationAddress == null) {
 				return null; // No matching destination.
 			}
@@ -83,8 +86,13 @@ public class VTHashedFunctionAddressCorrelation implements AddressCorrelation {
 		if (addressCorrelation != null) {
 			return;
 		}
-		addressCorrelation =
+		if (sourceFunction != null && destinationFunction != null) {
+			addressCorrelation =
 				new HashedFunctionAddressCorrelation(sourceFunction, destinationFunction,
-				monitor);
+					monitor);
+		}
+		else {
+			addressCorrelation = new DummyListingAddressCorrelation();
+		}
 	}
 }

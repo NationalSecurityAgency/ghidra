@@ -557,7 +557,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			}
 
 			// Program selection only relavent if isFrontEndPlugin() is false
-			ProgramSelection selection = getApplicableProgramSeletion();
+			ProgramSelection selection = getApplicableProgramSelection();
 			File outputFile = getSelectedOutputFile();
 
 			try {
@@ -597,7 +597,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		}
 	}
 
-	private ProgramSelection getApplicableProgramSeletion() {
+	private ProgramSelection getApplicableProgramSelection() {
 		if (selectionCheckBox != null && selectionCheckBox.isSelected()) {
 			return currentSelection;
 		}

@@ -37,6 +37,7 @@ import utilities.util.reflection.ReflectionUtilities;
  */
 public abstract class LookAndFeelManager {
 
+	private static final int DEFAULT_CURSOR_BLINK_RATE = 500;
 	private LafType laf;
 	private Map<String, ComponentFontRegistry> fontRegistryMap = new HashMap<>();
 	private Map<Component, String> componentToIdMap = new WeakHashMap<>();
@@ -290,6 +291,7 @@ public abstract class LookAndFeelManager {
 	 */
 	protected void fixupLookAndFeelIssues() {
 		installGlobalFontSizeOverride();
+		installCursorBlinkingProperties();
 	}
 
 	/**
@@ -353,6 +355,15 @@ public abstract class LookAndFeelManager {
 		}
 
 		setGlobalFontSizeOverride(overrideFontInteger);
+	}
+
+	public void installCursorBlinkingProperties() {
+		UIDefaults defaults = UIManager.getDefaults();
+
+		int blinkRate = themeManager.isBlinkingCursors() ? DEFAULT_CURSOR_BLINK_RATE : 0;
+		defaults.put("TextPane.caretBlinkRate", blinkRate);
+		defaults.put("TextField.caretBlinkRate", blinkRate);
+		defaults.put("TextArea.caretBlinkRate", blinkRate);
 	}
 
 	private void installCustomLookAndFeelActions() {

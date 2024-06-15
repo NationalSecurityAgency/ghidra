@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.symboltree.actions;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
@@ -81,7 +83,7 @@ public class SetExternalProgramAction extends SymbolTreeContextAction {
 		final String externalLibraryPath = externalManager.getExternalLibraryPath(externalName);
 
 		final DataTreeDialog dialog = new DataTreeDialog(provider.getComponent(),
-			"Choose External Program (" + externalName + ")", DataTreeDialog.OPEN);
+			"Choose External Program (" + externalName + ")", OPEN);
 
 		dialog.setSearchText(externalName);
 

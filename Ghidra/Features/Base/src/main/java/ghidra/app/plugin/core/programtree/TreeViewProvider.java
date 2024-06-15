@@ -71,6 +71,11 @@ class TreeViewProvider implements ViewProviderService {
 	}
 
 	@Override
+	public String toString() {
+		return treePanel.getTreeName();
+	}
+
+	@Override
 	public JComponent getViewComponent() {
 		return treePanel;
 	}

@@ -76,7 +76,7 @@ public class MDTemplateNameAndArguments extends MDParsableItem {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		if (dmang.peek() != '?' && dmang.peek(1) != '$') {
+		if (dmang.peek() != '?' || dmang.peek(1) != '$') {
 			throw new MDException("Invalid TemplateNameandArguments");
 		}
 		dmang.increment(); // skip the '?'

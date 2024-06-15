@@ -1515,6 +1515,8 @@ bool SplitFlow::addOp(PcodeOp *op,TransformVar *rvn,int4 slot)
   if (op->code() == CPUI_INDIRECT) {
     opSetInput(loOp,newIop(op->getIn(1)),1);
     opSetInput(hiOp,newIop(op->getIn(1)),1);
+    loOp->inheritIndirect(op);
+    hiOp->inheritIndirect(op);
     numParam = 1;
   }
   for(int4 i=0;i<numParam;++i) {
@@ -2652,8 +2654,8 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
       }
       if (preexistingGuard(slot, rvn2)) {
 	TransformOp *rop = newPreexistingOp(2, op->code(), op);
-	opSetInput(rop, rvn, 0);
-	opSetInput(rop, rvn2, 1);
+	opSetInput(rop, rvn, slot);
+	opSetInput(rop, rvn2, 1 - slot);
 	terminatorCount += 1;
       }
       break;

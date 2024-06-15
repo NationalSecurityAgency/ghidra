@@ -24,3 +24,9 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/NationalSecurityAgency/ghidra"
 "Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"
+
+[tool.setuptools.package-data]
+ghidradbg = ["*.tlb"]
+
+[tool.setuptools]
+include-package-data = true

@@ -15,7 +15,8 @@
  */
 package mdemangler.object;
 
-import mdemangler.*;
+import mdemangler.MDException;
+import mdemangler.MDMang;
 
 /**
  * This class represents a MSFT <b><code>__catch$</code></b> (prefix) symbol.  We have created
@@ -29,7 +30,7 @@ import mdemangler.*;
  */
 public class MDObjectCatch extends MDObjectReserved {
 	private String digits;
-	private MDParsableItem internalItem;
+	private MDObjectCPP objCpp;
 
 	public MDObjectCatch(MDMang dmang) {
 		super(dmang);
@@ -38,12 +39,13 @@ public class MDObjectCatch extends MDObjectReserved {
 	@Override
 	public void insert(StringBuilder builder) {
 		super.insert(builder);
-		dmang.appendString(builder, "[Catch," + digits + "]{" + internalItem + "}");
+		dmang.appendString(builder, "[Catch," + digits + "]{" + objCpp + "}");
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		internalItem = MDMangObjectParser.determineItemAndParse(dmang);
+		objCpp = new MDObjectCPP(dmang);
+		objCpp.parse();
 		dmang.increment(); // '$'
 		//We are assuming that we can have more than one digit.
 		//TODO: forward programming to test beyond one digit.

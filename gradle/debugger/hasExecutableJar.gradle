@@ -18,7 +18,7 @@ apply from: "$rootProject.projectDir/gradle/debugger/hasNodepJar.gradle"
 
 task executableJar {
 	ext.execsh = file("src/main/sh/execjar.sh")
-	ext.jarfile = file(nodepJar.archivePath)
+	ext.jarfile = nodepJar.archiveFile
 	ext.outjar = file("${buildDir}/bin/run")
 	dependsOn(nodepJar)
 	inputs.file { execsh }

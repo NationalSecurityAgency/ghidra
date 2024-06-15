@@ -47,13 +47,13 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
-import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.modules.DebuggerMissingModuleActionContext;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
 import ghidra.plugin.importer.ImporterPlugin;
@@ -282,9 +282,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		DebuggerListingProvider extraProvider = SwingExecutorService.LATER
-				.submit(() -> listingPlugin.createListingIfMissing(PCLocationTrackingSpec.INSTANCE,
-					true))
+		DebuggerListingProvider extraProvider = SwingExecutorService.LATER.submit(
+			() -> listingPlugin.createListingIfMissing(PCLocationTrackingSpec.INSTANCE, true))
 				.get();
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
@@ -754,9 +753,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 			waitRecorder(recorder);
 
 			buf.clear();
-			assertEquals(data.length,
-				trace.getMemoryManager()
-						.getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
+			assertEquals(data.length, trace.getMemoryManager()
+					.getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 			assertArrayEquals(data, buf.array());
 		}));
 	}
@@ -803,9 +801,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		assertEquals(traceManager.getCurrentView(), listingProvider.getProgram());
 		assertEquals("(nowhere)", listingProvider.locationLabel.getText());
 
-		DebuggerListingProvider extraProvider =
-			runSwing(() -> listingPlugin.createListingIfMissing(NoneLocationTrackingSpec.INSTANCE,
-				false));
+		DebuggerListingProvider extraProvider = runSwing(
+			() -> listingPlugin.createListingIfMissing(NoneLocationTrackingSpec.INSTANCE, false));
 		waitForSwing();
 		assertEquals(traceManager.getCurrentView(), extraProvider.getProgram());
 		assertEquals("(nowhere)", extraProvider.locationLabel.getText());
@@ -951,8 +948,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
 		setActionStateWithTrigger(listingProvider.actionTrackLocation,
-			SPLocationTrackingSpec.INSTANCE,
-			EventTrigger.GUI_ACTION);
+			SPLocationTrackingSpec.INSTANCE, EventTrigger.GUI_ACTION);
 		waitForSwing();
 		waitForPass(
 			() -> assertEquals(tb.addr(0x1fff8765), listingProvider.getLocation().getAddress()));
@@ -1077,8 +1073,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		performAction(listingProvider.actionSyncSelectionFromStaticListing,
 			codeProvider.getActionContext(null), true);
-		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)),
-			listingPlugin.getCurrentSelection());
+		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
 	}
 
 	@Test
@@ -1104,9 +1099,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		traceManager.activateThread(thread1);
 
 		// NOTE: Action does not exist for main dynamic listing
-		DebuggerListingProvider extraProvider =
-			runSwing(() -> listingPlugin.createListingIfMissing(NoneLocationTrackingSpec.INSTANCE,
-				true));
+		DebuggerListingProvider extraProvider = runSwing(
+			() -> listingPlugin.createListingIfMissing(NoneLocationTrackingSpec.INSTANCE, true));
 		waitForSwing();
 		assertTrue(extraProvider.actionFollowsCurrentThread.isEnabled());
 		assertTrue(extraProvider.actionFollowsCurrentThread.isSelected());
@@ -1150,7 +1144,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		// Still
 		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
-		listingProvider.setSelection(sel);
+		runSwing(() -> listingProvider.setSelection(sel));
 		waitForSwing();
 		// Still
 		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
@@ -1172,7 +1166,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		// Action is still disabled, because it requires a selection
 		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
-		listingProvider.setSelection(sel);
+		runSwing(() -> listingProvider.setSelection(sel));
 		waitForSwing();
 		// Now, it should be enabled
 		assertTrue(listingProvider.actionRefreshSelectedMemory.isEnabled());

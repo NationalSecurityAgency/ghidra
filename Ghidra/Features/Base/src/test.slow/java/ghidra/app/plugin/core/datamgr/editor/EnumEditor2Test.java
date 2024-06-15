@@ -545,7 +545,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			nameField.setText(newName);
 		});
 
-		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
+		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
 		performAction(applyAction);
@@ -566,7 +566,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			nameField.setText(newDescription);
 		});
 
-		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
+		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
 		performAction(applyAction);
@@ -900,15 +900,15 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAddAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Add Enum Value");
+		return getAction(plugin, "Add Enum Value");
 	}
 
 	private DockingActionIf getApplyAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Apply Enum Changes");
+		return getAction(plugin, "Apply Enum Changes");
 	}
 
 	private DockingActionIf getDeleteAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Delete Enum Value");
+		return getAction(plugin, "Delete Enum Value");
 	}
 
 	private Enum editSampleEnum() {
