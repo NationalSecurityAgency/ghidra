@@ -23,6 +23,7 @@ import javax.swing.SwingUtilities;
 import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -35,7 +36,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
-import resources.ResourceManager;
 
 /**
  * Plugin to manage {@link OverviewColorService}s.  It creates actions for each service and installs
@@ -62,7 +62,7 @@ public class OverviewColorPlugin extends ProgramPlugin {
 	private MultiActionDockingAction multiAction;
 
 	public OverviewColorPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public class OverviewColorPlugin extends ProgramPlugin {
 		multiAction = new MultiActionDockingAction("Overview", getName());
 		multiAction.setActions(new ArrayList<DockingActionIf>(actionMap.values()));
 		multiAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/x-office-document-template.png")));
+			new ToolBarData(new GIcon("icon.plugin.overview.provider")));
 		codeViewerService.addLocalAction(multiAction);
 		multiAction.setDescription("Toggles overview margin displays.");
 		multiAction.setHelpLocation(

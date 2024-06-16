@@ -26,6 +26,7 @@ import javax.swing.KeyStroke;
 import org.junit.*;
 
 import generic.stl.Pair;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
@@ -91,7 +92,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		String optionName = " Highlight Color";
 		Color highlightColor = options.getColor(optionName, null);
 		assertNotNull("Existing option has been removed--update test", highlightColor);
-		options.setColor(optionName, Color.RED);
+		options.setColor(optionName, Palette.RED);
 
 		optionName = "Highlight Search Results";
 		boolean highlightResults = options.getBoolean(optionName, true);
@@ -345,9 +346,13 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private String clearKeyBinding(Options options) {
 		String keyBindingName = "Go To Next Function (CodeBrowserPlugin)";
-		KeyStroke ks = options.getKeyStroke(keyBindingName, null);
+		ActionTrigger actionTrigger = options.getActionTrigger(keyBindingName, null);
+		assertNotNull(actionTrigger);
+
+		KeyStroke ks = actionTrigger.getKeyStroke();
 		assertNotNull(ks);
-		options.setKeyStroke(keyBindingName, null);
+
+		options.setActionTrigger(keyBindingName, null);
 		return keyBindingName;
 	}
 
@@ -377,7 +382,12 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void verifyKeyBindingIsStillCleared(Options options, String optionName) {
-		KeyStroke ksValue = options.getKeyStroke(optionName, null);
+		ActionTrigger actionTrigger = options.getActionTrigger(optionName, null);
+		if (actionTrigger == null) {
+			return;
+		}
+
+		KeyStroke ksValue = actionTrigger.getKeyStroke();
 		assertNull(ksValue);
 	}
 

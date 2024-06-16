@@ -25,12 +25,18 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.symbol.DBTraceReference;
-import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 
+/**
+ * A base interface for implementations of {@link TraceData}
+ * 
+ * <p>
+ * This behaves somewhat like a mixin, allowing it to be used on data units as well as data
+ * components, e.g., fields of a struct data unit.
+ */
 public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterMinimal,
 		DataAdapterFromDataType, DataAdapterFromSettings, TraceData {
 	static String[] EMPTY_STRING_ARRAY = new String[] {};
@@ -67,6 +73,12 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		}
 	}
 
+	/**
+	 * Get the same space from the internal settings adapter
+	 * 
+	 * @param createIfAbsent true to create the space if its not already present
+	 * @return the space or null
+	 */
 	DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent);
 
 	@Override
@@ -83,9 +95,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setLong(getLifespan(), getAddress(), name, value);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -108,9 +119,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setString(getLifespan(), getAddress(), name, value);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -134,9 +144,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setValue(getLifespan(), getAddress(), name, value);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -163,9 +172,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			}
 			space.clear(getLifespan(), getAddress(), name);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -177,9 +185,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			}
 			space.clear(getLifespan(), getAddress(), null);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override

@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.viewer.field;
 
+import docking.widgets.fieldpanel.field.AttributedString;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -22,19 +25,42 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-import java.awt.Color;
-
-import docking.widgets.fieldpanel.field.AttributedString;
-
 /**
  * An annotated string handler that allows handles annotations that begin with
  * {@link #SUPPORTED_ANNOTATIONS}.  This class expects one string following the annotation
  * text that is an address string and will display that string as its display text.
  */
 public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
-	private static final String INVALID_SYMBOL_TEXT = "@address annotation must have an address"
-		+ "string";
+	private static final String INVALID_SYMBOL_TEXT =
+		"@address annotation must have an address" + "string";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "address", "addr" };
+
+	/**
+	 * Constructs a well-formed Address Annotation comment string.
+	 * 
+	 * @param destinationAddress destination of the annotation
+	 * @param displayText text that will be used as the body of the annotation.  Problematic
+	 * characters will be escaped
+	 * @return string
+	 */
+	public static String createAddressAnnotationString(Address destinationAddress,
+			String displayText) {
+		return "{@address %s %s}".formatted(destinationAddress.toString(false),
+			AnnotatedStringHandler.escapeAnnotationPart(displayText));
+	}
+
+	/**
+	 * Constructs a well-formed Address Annotation comment string.
+	 * 
+	 * @param addressOffset destination of the annotation
+	 * @param displayText text that will be used as the body of the annotation.  Problematic
+	 * characters will be escaped
+	 * @return string
+	 */
+	public static String createAddressAnnotationString(long addressOffset, String displayText) {
+		return "{@address 0x%x %s}".formatted(addressOffset,
+			AnnotatedStringHandler.escapeAnnotationPart(displayText));
+	}
 
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
@@ -51,13 +77,13 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		Address address = program.getAddressFactory().getAddress(text[1]);
 
 		if (address == null) {
-			return new AttributedString("No address: " + text[1], Color.RED,
+			return new AttributedString("No address: " + text[1], Messages.ERROR,
 				prototypeString.getFontMetrics(0), false, null);
 		}
 
 		String addressText = address.toString();
 		if (text.length > 2) { // address and display text
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			for (int i = 2; i < text.length; i++) {
 				buffer.append(text[i]).append(" ");
 			}
@@ -69,15 +95,17 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 			prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
 	}
 
-	private AttributedString createUndecoratedString(AttributedString prototypeString, String[] text) {
+	private AttributedString createUndecoratedString(AttributedString prototypeString,
+			String[] text) {
 		StringBuilder buffer = new StringBuilder();
 		for (String string : text) {
 			buffer.append(string).append(" ");
 		}
 
-		return new AttributedString(buffer.toString(), Color.LIGHT_GRAY,
+		return new AttributedString(buffer.toString(), Palette.LIGHT_GRAY,
 			prototypeString.getFontMetrics(0));
 	}
+
 	@Override
 	public String[] getSupportedAnnotations() {
 		return SUPPORTED_ANNOTATIONS;
@@ -95,8 +123,8 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 			return goToService.goTo(sourceNavigatable, address);
 		}
 
-		Msg.showInfo(getClass(), null,
-			"No address: " + addressText, "Unable to locate address \"" + addressText + "\"");
+		Msg.showInfo(getClass(), null, "No address: " + addressText,
+			"Unable to locate address \"" + addressText + "\"");
 		return false;
 	}
 
@@ -108,6 +136,11 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 	@Override
 	public String getPrototypeString() {
 		return "{@address 0x00}";
+	}
+
+	@Override
+	public String getPrototypeString(String displayText) {
+		return "{@address " + displayText.trim() + "}";
 	}
 
 }

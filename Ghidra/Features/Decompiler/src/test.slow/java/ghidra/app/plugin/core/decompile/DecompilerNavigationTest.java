@@ -197,9 +197,8 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 	public void testFunctionNavigation_WithAViewThatCachesTheLastValidFunction() throws Exception {
 
 		//
-		// This is testing the case where the user starts on a function foo().  Ancillary windows
-		// will display tool, such as a decompiled view.   Now, if the user clicks to a
-		// non-function location, such as data, the ancillary window may still show foo(), even
+		// This is testing the case where the user starts on a function foo().  When the user clicks
+		// away to a non-function location, such as data, the  window may still show foo(), even
 		// though the user is no longer in foo.  At this point, if the user wishes to go to the
 		// previous function, then from the ancillary window's perspective, it is the function
 		// that came before foo().
@@ -212,12 +211,13 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		goTo(f1);
 		goTo(f2);
 		goTo(nonFunctionAddress);
+		waitForDecompiler();
 
 		String title = provider.getTitle();
-		assertTrue("Decompiler did not retain last function visited", title.contains("sscanf"));
+		assertTrue("Decompiler did not retain last function visited. " +
+			"Expected sscanf, but was '%s'".formatted(title), title.contains("sscanf"));
 
-		provider.requestFocus();
-		waitForSwing();
+		focusDecompiler();
 
 		//
 		// The Decompiler is focused, showing 'entry'.  Going back while it is focused should go
@@ -225,22 +225,6 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		//
 		previousFunction();
 		assertCurrentAddress(f1);
-	}
-
-	private void previousFunction() {
-		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
-		DockingAction previousFunctionAction =
-			(DockingAction) getInstanceField("previousFunctionAction", plugin);
-
-		ActionContext context = provider.getActionContext(null);
-		assertTrue(previousFunctionAction.isEnabledForContext(context));
-		performAction(previousFunctionAction, context, true);
-		waitForSwing();
-	}
-
-	private void assertListingAddress(Address expected) {
-		waitForCondition(() -> expected.equals(codeBrowser.getCurrentLocation().getAddress()),
-			"The Listing is not at the expected address");
 	}
 
 	@Override
@@ -253,6 +237,27 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 			Address actual = loc.getAddress();
 			return expected.equals(actual);
 		}, "Listing is not at the expected address");
+	}
+
+	private void focusDecompiler() {
+		runSwing(() -> provider.requestFocus());
+		waitForSwing();
+	}
+
+	private void previousFunction() {
+		NextPrevAddressPlugin plugin = env.getPlugin(NextPrevAddressPlugin.class);
+		DockingAction previousFunctionAction =
+			(DockingAction) getInstanceField("previousFunctionAction", plugin);
+
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
+		assertTrue(previousFunctionAction.isEnabledForContext(context));
+		performAction(previousFunctionAction, context, true);
+		waitForSwing();
+	}
+
+	private void assertListingAddress(Address expected) {
+		waitForCondition(() -> expected.equals(codeBrowser.getCurrentLocation().getAddress()),
+			"The Listing is not at the expected address");
 	}
 
 	private void assertExternalNavigationPerformed() {
@@ -269,9 +274,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 	private void createThunkToExternal(String addressString) throws Exception {
 
-		int txId = program.startTransaction("Set External Location");
-		try {
-
+		tx(program, () -> {
 			program.getExternalManager().setExternalPath("ADVAPI32.dll", "/FILE1", true);
 
 			Address address = addr(addressString);
@@ -289,12 +292,6 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 			Function function = program.getFunctionManager().getFunctionAt(addr(addressString));
 			function.setThunkedFunction(externalLocation.getFunction());
-		}
-		finally {
-			program.endTransaction(txId, true);
-		}
-
-		program.flushEvents();
-		waitForSwing();
+		});
 	}
 }

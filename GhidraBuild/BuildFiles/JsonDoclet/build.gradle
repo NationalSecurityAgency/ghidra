@@ -18,6 +18,11 @@ eclipse.project.name = '_JsonDoclet'
 
 apply plugin: 'java-library'
 
+java {
+	sourceCompatibility = "${rootProject.JAVA_COMPILER}"
+	targetCompatibility = "${rootProject.JAVA_COMPILER}"
+}
+
 dependencies {
 	api "com.google.code.gson:gson:2.9.0"
 }

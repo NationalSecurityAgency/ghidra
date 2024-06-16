@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import ghidra.dbg.target.*;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.thread.TraceThread;
@@ -41,11 +41,10 @@ public interface ManagedBreakpointRecorder {
 	/**
 	 * The range of a breakpoint location has changed
 	 * 
-	 * @param length the new length
-	 * @param traceAddr the address of the location in the trace
+	 * @param traceRng the address range of the location in the trace
 	 * @param path the dot-separated path of the breakpoint location in the model
 	 */
-	void breakpointLocationChanged(int length, Address traceAddr, String path);
+	void breakpointLocationChanged(AddressRange traceRng, String path);
 
 	/**
 	 * A breakpoint specification has changed (typically, toggled)

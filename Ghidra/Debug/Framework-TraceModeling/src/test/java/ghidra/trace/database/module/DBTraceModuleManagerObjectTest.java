@@ -15,12 +15,12 @@
  */
 package ghidra.trace.database.module;
 
-import org.junit.Before;
+import org.junit.*;
 
+import db.Transaction;
 import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.util.database.UndoableTransaction;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 
 public class DBTraceModuleManagerObjectTest extends DBTraceModuleManagerTest {
 
@@ -50,8 +50,22 @@ public class DBTraceModuleManagerObjectTest extends DBTraceModuleManagerTest {
 			"    </schema>" + //
 			"</context>");
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
+	}
+
+	@Test
+	@Override
+	@Ignore // Undo not supported with object-manager's write-back cache
+	public void testUndoIdentitiesPreserved() throws Exception {
+		super.testUndoIdentitiesPreserved();
+	}
+
+	@Test
+	@Override
+	@Ignore // Undo not supported with object-manager's write-back cache
+	public void testUndoThenRedo() throws Exception {
+		super.testUndoThenRedo();
 	}
 }

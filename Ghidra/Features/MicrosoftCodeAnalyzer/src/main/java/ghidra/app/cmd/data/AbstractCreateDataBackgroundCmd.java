@@ -18,7 +18,6 @@ package ghidra.app.cmd.data;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
@@ -33,9 +32,10 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * This is the abstract command to extend when creating a specific data type or related data type. 
+ * @param <T> {@link AbstractCreateDataTypeModel} implementation class
  */
 public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDataTypeModel>
-		extends BackgroundCommand {
+		extends BackgroundCommand<Program> {
 
 	protected final String name;
 	private Address address;
@@ -99,14 +99,9 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	}
 
 	@Override
-	public final boolean applyTo(DomainObject obj, TaskMonitor taskMonitor) {
+	public final boolean applyTo(Program program, TaskMonitor taskMonitor) {
 		try {
-			if (!(obj instanceof Program)) {
-				String message = "Can only apply a " + name + " data type to a program.";
-				handleError(message);
-				return false;
-			}
-			return doApplyTo((Program) obj, taskMonitor);
+			return doApplyTo(program, taskMonitor);
 		}
 		catch (CancelledException e) {
 			setStatusMsg("User cancelled " + getName() + ".");
@@ -146,7 +141,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 
 		try {
 			monitor = taskMonitor;
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			model = createModel(program);
 			model.validate();
@@ -228,17 +223,17 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			dt = new ArrayDataType(dt, count, dt.getLength(), program.getDataTypeManager());
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Is the data type already applied at the address?
 		if (matchingDataExists(dt, program, address)) {
 			return false;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Create data at the address using the datatype.
-		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
+		DataUtilities.createData(program, address, dt, dt.getLength(), getClearDataMode());
 
 		return true;
 	}
@@ -280,6 +275,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * Also creates references, symbols, and functions as indicated by the options.
 	 * @return true if all associated data was created that was desired.
 	 * throws CancelledException is thrown if the user cancels this command.
+	 * @throws CancelledException if operation is cancelled via monitor
 	 */
 	protected abstract boolean createAssociatedData() throws CancelledException;
 

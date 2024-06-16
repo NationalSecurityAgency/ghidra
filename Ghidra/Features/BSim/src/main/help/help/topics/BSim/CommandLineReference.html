@@ -1,0 +1,816 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+    <TITLE>Command-Line Utility Reference</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/languages.css">
+    <META name="generator" content="DocBook XSL Stylesheets V1.79.1">
+    <LINK rel="home" href="index.html" title="BSim Database">
+    <LINK rel="up" href="index.html" title="BSim Database">
+    <LINK rel="prev" href="FeatureWeight.html" title="Features and Weights">
+  </HEAD>
+
+  <BODY>
+    <DIV class="chapter">
+      <DIV class="titlepage">
+        <DIV>
+          <DIV>
+            <H1 class="title"><A name="CommandLineReference"></A>Command-Line Utility
+            Reference</H1>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="BSimCtl"></A><CODE class=
+              "computeroutput">bsim_ctl</CODE></H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <DIV class="informalexample">
+<PRE>
+<CODE class="computeroutput">
+    bsim_ctl start           &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
+    bsim_ctl stop            &lt;/datadir-path&gt; [--force]
+    bsim_ctl adduser         &lt;/datadir-path&gt; &lt;username&gt; [--dn&nbsp;"&lt;distinguished-name&gt;"]
+    bsim_ctl dropuser        &lt;/datadir-path&gt; &lt;username&gt;
+    bsim_ctl resetpassword   &lt;username&gt;
+    bsim_ctl changeauth      &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
+    bsim_ctl changeprivilege &lt;username&gt; admin|user
+    
+    Global Options:
+        --port|-p&nbsp;&lt;portnum&gt;
+        --user|-u&nbsp;&lt;username&gt;
+        --cert&nbsp;&lt;/certfile-path&gt;
+</CODE>
+</PRE>
+        </DIV>
+
+        <P><SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN> is a command-line utility for
+          starting and stopping a BSim server using the PostgreSQL back-end. The utility cannot be
+	  used with either an Elasticsearch server or a local H2 database.
+	  All commands must be run on the machine hosting the server.
+          Optional parameters for a given command are indicated by square brackets '[' and ']'
+          and always start with either '-' or '--' characters.  If an associated value is required
+          and contains space characters it should be enclosed in double quotes.  Options which require
+          a value may be separated by a space or a equal "=" character (e.g.,
+          <SPAN class="command"><STRONG>--auth=password</STRONG></SPAN>).
+
+        <DIV class="informalexample">
+          <DIV class="variablelist">
+            <DL class="variablelist">
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>start</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Initializes and starts a PostgreSQL server. The command-line must include a path
+                to the data directory for the server, which must exist. If a server had run
+                previously and populated this directory, this command simply restarts the server
+                using the preexisting data and configuration; otherwise, a new database is
+                initialized. The user performing the initial start is automatically added to the
+                database with <SPAN class="emphasis"><EM>admin</EM></SPAN> privileges.</P>
+
+                <P>During a restart, any authentication options (with the exception of the global
+                <SPAN class="bold"><STRONG>--cert</STRONG></SPAN> option) are unnecessary and will
+                be ignored. The PostgreSQL server will be restarted with the already established
+                settings. To actually change the settings, use the <SPAN class=
+                "bold"><STRONG>changeauth</STRONG></SPAN> command before restarting.</P>
+
+                <P><SPAN class="command"><STRONG>--auth|-a&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;type&gt;</EM></SPAN> - specifies the authentication type (<B>pki |
+                password | trust</B>) for a new database: <SPAN class=
+                "emphasis"><EM>trust</EM></SPAN> for no authentication, <SPAN class=
+                "emphasis"><EM>password</EM></SPAN> for password authentication, and <SPAN class=
+                "emphasis"><EM>pki</EM></SPAN> for authentication using public key certificates.
+                With the <SPAN class="emphasis"><EM>pki</EM></SPAN> setting, both the <SPAN class=
+                "bold"><STRONG>--cafile</STRONG></SPAN> and the <SPAN class=
+                "bold"><STRONG>--dn</STRONG></SPAN> options also need to be provided; additionally
+                the <SPAN class="bold"><STRONG>--cert</STRONG></SPAN> option must be provided unless
+                the <SPAN class="bold"><STRONG>--noLocalAuth</STRONG></SPAN> option is also
+                given.</P>
+
+                <P><SPAN class="command"><STRONG>--noLocalAuth</STRONG></SPAN> - used together with
+                the <SPAN class="command"><STRONG>--auth</STRONG></SPAN> option causes
+                authentication to not be required for local connections, i.e. localhost.</P>
+
+                <P><SPAN class="command"><STRONG>--cafile&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;/cafile-path&gt;</EM></SPAN> - specifies an absolute path to a
+                certificate authority file and is required for <SPAN class=
+                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This file should contain the
+                certificates the PostgreSQL server will use to authenticate in PEM format
+                concatenated together.</P>
+
+                <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished 
+                Name for the admin user and is required for 
+                <SPAN class="command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>.</P>
+
+                <P><SPAN class="command"><STRONG>--port|-p&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;portnum&gt;</EM></SPAN> - specifies the port the PostgreSQL server will
+                listen on. For port numbers other than the default 5432, URLs and other
+                command-lines must explicitly specify the port, when connecting to the server. This
+                option only effects the initial start of a server. For subsequent (re)starts this
+                option is ignored, and the server will continue to listen on the same port
+                specified in the initial start. Use <SPAN class=
+                "command"><STRONG>changeauth</STRONG></SPAN> to change the port of a server after
+                its initial start.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>stop</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Stops a currently running PostgreSQL server. The path to the actively used data
+                directory must be provided. By default, shutdown will wait until existing
+                connections to the database have been closed.</P>
+
+                <P><SPAN class="command"><STRONG>--force</STRONG></SPAN> - causes existing
+                connections to be forcibly closed and the PostgreSQL server to shut down
+                immediately.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>adduser</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Give a new user permission to access the PostgreSQL server. The path to the
+                actively used data directory and a single username must be specified. The server
+                must be running. New users are given <SPAN class="emphasis"><EM>user</EM></SPAN>
+                (read-only) privileges, unless a subsequent <SPAN class=
+                "command"><STRONG>changeprivilege</STRONG></SPAN> command is used.</P>
+
+                <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name of the new user,
+                which is required if the database enabled <SPAN class=
+                "command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This option can be used to provide a
+                Distinguished Name to a preexisting user, if the PostgreSQL server's authentication
+                strategy is changed.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>dropuser</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Remove access to the PostgreSQL server for a specific user. The path to the
+                actively used data directory and a single username must be specified. The server
+                must be running.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>changeauth</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Change the configuration of a previously initialized PostgreSQL server. The path
+                to the server's data directory must be specified. The server must not currently be
+                running to use this command, which only takes effect after a restart. Options have
+                the same meaning as for the <SPAN class="command"><STRONG>start</STRONG></SPAN>
+                command.</P>
+
+                <P><SPAN class="command"><STRONG>--port|-p&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;portnum&gt;</EM></SPAN> - changes the port the PostgreSQL server will
+                listen on. If this option is not present, the server will continue to listen on the
+                same port.</P>
+
+                <P><SPAN class="command"><STRONG>--auth|-a&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;type&gt;</EM></SPAN> - changes the authentication type (<B>pki |
+                password | trust</B>) used by the PostgreSQL server. No change is made if the
+                option is not present. If the option is present, omitting the <SPAN class=
+                "command"><STRONG>--noLocalAuth</STRONG></SPAN> causes local connections to require
+                authentication. This command does not affect the presence or absence of passwords
+                or Distinguished Names for existing users.</P>
+
+                <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name for the admin
+                user and is required for <SPAN class="command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>resetpassword</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Reset the password for a user. A single user must be specified, and the
+                PostgreSQL server must be running. The password will be reset to 'changeme'.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>changeprivilege</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Change access privilege for a user. A single user must be specified followed by
+                <SPAN class="command"><STRONG>admin</STRONG></SPAN> or <SPAN class=
+                "command"><STRONG>user</STRONG></SPAN>, and the PostgreSQL server must be
+                running.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>--Global
+              Options--</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>These options apply to all the <SPAN class=
+                "command"><STRONG>bsim_ctl</STRONG></SPAN> commands that connect to an active
+                PostgreSQL server: <SPAN class="command"><STRONG>start</STRONG></SPAN>, <SPAN
+                class="command"><STRONG>adduser</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>dropuser</STRONG></SPAN>, <SPAN class=
+                "command"><STRONG>resetpassword</STRONG></SPAN>, and <SPAN class=
+                "command"><STRONG>changeprivilege</STRONG></SPAN>.</P>
+
+                <P><SPAN class="command"><STRONG>--port|-p&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;portnum&gt;</EM></SPAN> - specifies the port on which to connect with
+                the PostgreSQL server.</P>
+
+                <P><SPAN class="command"><STRONG>--user|-u&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;username&gt;</EM></SPAN> - specifies a user name to use when connecting
+                to the PostgreSQL server.</P>
+
+                <P><SPAN class="command"><STRONG>--cert&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;/certfile-path&gt;</EM></SPAN> - provides the absolute file path to the
+                user's certificate when connecting to a PostgreSQL server that requires PKI
+                authentication.</P>
+              </DD>
+            </DL>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="BSimCommand"></A><CODE class=
+              "computeroutput">bsim</CODE></H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <DIV class="informalexample">
+<PRE>
+<CODE class&nbsp;"computeroutput">
+    bsim createdatabase  &lt;bsimURL&gt; &lt;config_template&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"] [--nocallgraph]
+    bsim setmetadata     &lt;bsimURL&gt; [--name|-n&nbsp;"&lt;name&gt;"] [--owner|-o&nbsp;"&lt;owner&gt;"] [--description|-d&nbsp;"&lt;text&gt;"]\n" + 
+    bsim addexecategory  &lt;bsimURL&gt; &lt;category_name&gt; [--date]
+    bsim addfunctiontag  &lt;bsimURL&gt; &lt;tag_name&gt;
+    bsim dropindex       &lt;bsimURL&gt;
+    bsim rebuildindex    &lt;bsimURL&gt;
+    bsim prewarm         &lt;bsimURL&gt;
+    bsim generatesigs    &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --config|-c&nbsp;&lt;config_template&gt; [--overwrite]
+    bsim generatesigs    &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --bsim|-b&nbsp;&lt;bsimURL&gt; [--commit] [--overwrite]
+    bsim generatesigs    &lt;ghidraURL&gt; --bsim|-b&nbsp;&lt;bsimURL&gt;
+    bsim commitsigs      &lt;bsimURL&gt; &lt;/xmldirectory&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--override&nbsp;&lt;ghidraURL&gt;]
+    bsim generateupdates &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --config|-c&nbsp;&lt;config_template&gt; [--overwrite]
+    bsim generateupdates &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --bsim|-b&nbsp;&lt;bsimURL&gt; [--commit] [--overwrite]
+    bsim generateupdates &lt;ghidraURL&gt; --bsim|-b&nbsp;&lt;bsimURL&gt;
+    bsim commitupdates   &lt;bsimURL&gt; &lt;/xmldirectory&gt;
+    bsim listexes        &lt;bsimURL&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt;] [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;] [--sortcol|-s&nbsp;md5|name] [--limit|-l&nbsp;&lt;exe_count&gt;] [--includelibs]
+    bsim getexecount     &lt;bsimURL&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt;] [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;] [--includelibs]
+    bsim delete          &lt;bsimURL&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt; [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;]]
+    bsim listfuncs       &lt;bsimURL&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt; [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;]] [--printselfsig] [--callgraph] [--printjustexe] [--maxfunc&nbsp;&lt;max_count&gt;]
+    bsim dumpsigs        &lt;bsimURL&gt; &lt;/xmldirectory&gt; [--md5|-m&nbsp;&lt;hash&gt;] [--name|-n&nbsp;&lt;exe_name&gt; [--arch|-a&nbsp;&lt;languageID&gt;] [--compiler&nbsp;&lt;cspecID&gt;]]
+    
+    Global options:
+        --user|-u&nbsp;&lt;username&gt;
+        --cert&nbsp;&lt;certfile-path&gt;
+</CODE>
+</PRE>
+        </DIV>
+
+        <P>See <A class="xref" href="CommandLineReference.html#URLs">&ldquo;Ghidra and BSim
+        URLs&rdquo;</A> below for details about specifying <EM>ghidraURL</EM> and <EM>bsimURL</EM>
+        properly. See <A class="xref" href="DatabaseConfiguration.html">&ldquo;Database
+        Configuration&rdquo;</A> for guidance on the various BSim Databases which are
+        supported.</P>
+
+        <P><SPAN class="command"><STRONG>bsim</STRONG></SPAN> is a command-line utility for
+        managing the generation and ingest of BSim signatures and metadata. Depending on the
+        subcommand, it connects to a Ghidra Server and/or a BSim database server. A <SPAN class=
+        "emphasis"><EM>ghidraURL</EM></SPAN> refers to Ghidra Server or local project using the
+        <SPAN class="command"><STRONG>ghidra:</STRONG></SPAN> protocol, while <SPAN class=
+        "emphasis"><EM>bsimURL</EM></SPAN> refers to a BSim database server with the appropriate
+        <SPAN class="command"><STRONG>postgresql:</STRONG></SPAN>, <SPAN class=
+        "command"><STRONG>https:</STRONG></SPAN>, or <SPAN class=
+        "command"><STRONG>file:</STRONG></SPAN> protocol specified. The <SPAN class=
+        "command"><STRONG>elastic:</STRONG></SPAN> protocol is equivalent to and may be used in
+        place of the <SPAN class="command"><STRONG>https:</STRONG></SPAN> protocol.  
+        Optional parameters for a given command are indicated by square brackets '[' and ']'
+          and always start with either '-' or '--' characters.  If an associated value is required
+          and contains space characters it should be enclosed in double quotes.  Options which require
+          a value may be separated by a space or a equal "=" character (e.g.,
+          <SPAN class="command"><STRONG>--name=myname</STRONG></SPAN>).</P>
+
+        <DIV class="informalexample">
+          <DIV class="variablelist">
+            <DL class="variablelist">
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>createdatabase</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Creates a new empty repository. A URL and configuration template (<SPAN class=
+                "bold"><STRONG>config_template</STRONG></SPAN>) is required. The new database name
+                is taken from the path element of the URL.</P>
+
+                <P>Supported configuration templates (<SPAN class=
+                "bold"><STRONG>config_template</STRONG></SPAN>) are defined within the Ghidra
+                installation in XML form. The following configurations are currently defined:
+                (<SPAN class="bold"><STRONG>large_32, medium_32, medium_64, medium_cpool,
+                medium_nosize</STRONG></SPAN>).</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n </STRONG></SPAN> - specifies a formal, more
+                descriptive, name for the repository that can be used for the BSim client
+                display.</P>
+
+                <P><SPAN class="command"><STRONG>--owner|-o </STRONG></SPAN> - gives a descriptive name
+                for the owner of the repository and/or the data it will contain.</P>
+
+                <P><SPAN class="command"><STRONG>--description|-d </STRONG></SPAN> - specifies a short
+                string describing the intended contents of the new repository.</P>
+
+                <P><SPAN class="command"><STRONG>--nocallgraph</STRONG></SPAN> - disables storing call 
+                relationships between ingested functions. Default is to store call relationships.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>setmetadata</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Change the global <SPAN class="emphasis"><EM>name</EM></SPAN>, <SPAN class=
+                "emphasis"><EM>owner</EM></SPAN>, or <SPAN class=
+                "emphasis"><EM>description</EM></SPAN> metadata associated with a BSim server. A
+                BSim server URL is required.</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n</STRONG></SPAN> - specifies a formal, more
+                descriptive, name for the repository that can be used for the BSim client
+                display.</P>
+
+                <P><SPAN class="command"><STRONG>--owner|-o</STRONG></SPAN> - gives a descriptive name
+                for the owner of the repository and/or the data it will contain.</P>
+
+                <P><SPAN class="command"><STRONG>--description|-d</STRONG></SPAN> - specifies a short
+                string describing the intended contents of the new repository.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>addexecategory</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Specify a new executable category to be included with generated metadata. A BSim
+                server URL and the name of the new category are required. This only affects future
+                ingest commands. Executables that have already been ingested are unaffected,
+                although they can be adjusted with an <SPAN class=
+                "command"><STRONG>updaterepo</STRONG></SPAN> command.</P>
+
+                <P><SPAN class="command"><STRONG>date</STRONG></SPAN> - indicates the new category
+                holds date/time information.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>addfunctiontag</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Specify a new function tag to be included with generated metadata. A BSim server
+                URL and the name of the new tag are required. This only affects future ingest
+                commands. Functions that have already been ingested are unaffected, although they
+                can be adjusted with an <SPAN class="command"><STRONG>updaterepo</STRONG></SPAN>
+                command.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>dropindex</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Delete the main signature index from a BSim repository (in preparation for new
+                ingest). A BSim repository URL is required. Normal queries will not complete or
+                will be extremely slow.</P>
+
+                <P><STRONG>NOTE:</STRONG> Not supported by H2 file database</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>rebuildindex</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Recreate the main signature index (that had previously been dropped) for a BSim
+                repository. A BSim server URL is required. After this command completes, normal
+                function queries should be fast.</P>
+
+                <P><STRONG>NOTE:</STRONG> Not supported by H2 file database</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>prewarm</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Instruct a restarted BSim server to preload pages from the main signature index
+                and function table into RAM. This avoids slow random access disk reads on initial
+                queries. A BSim server URL is required.</P>
+
+                <P><STRONG>NOTE:</STRONG> Not supported by Elasticsearch or H2 file databases</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>generatesigs</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Generates function signatures and metadata for all program files retrieved from
+                a Ghidra Server repository or project as specified by a Ghidra URL. The generated
+                signatures may be retained as XML "sigs_" files within a specified XML storage
+                directory and/or committed to a specified BSim database specified with the <SPAN
+                class="command"><STRONG>--bsim</STRONG></SPAN> option. If an XML storage directory is not
+                specified, a BSim URL must be specified to which the data will be committed.</P>
+
+                <P>The <SPAN class="command"><STRONG>--config|-c&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;config-template&gt;</EM></SPAN> option may be specified when generating
+                XML "sigs_" signature files in the absence of a BSim database (see
+                <STRONG>createdatabase</STRONG> for supported configurations). The generated files
+                will be written to the specified XML storage directory. Creation of the signature
+                files can also be achieved by specifying the <STRONG>--bsim</STRONG>
+                option instead of the <STRONG>--config</STRONG> option.</P>
+
+                <P>The <SPAN class="command"><STRONG>--overwrite</STRONG></SPAN> <SPAN class=
+                "emphasis">option may be specified when an XML storage directory has also been
+                specified to allow conflicting signature files to be overwritten.</SPAN></P>
+
+                <P>The <SPAN class="command"><STRONG>--commit</STRONG></SPAN> <SPAN class=
+                "emphasis">option may be specified when a BSim URL has also been specified to allow
+                generated signatures to be committed to the BSim database. This option is implied
+                when a BSim URL has been specified without an XML storage directory.</SPAN></P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>commitsigs</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Commit previously generated signatures and metadata (see
+                <STRONG>generatesigs</STRONG>) to a BSim repository. A URL specifying the BSim
+                repository and a path to a directory containing the "sigs_" XML files to commit are
+                required.</P>
+
+                <P><SPAN class="command"><STRONG>--override&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;ghidraURL&gt;</EM></SPAN> - causes any Ghidra repository/project URL,
+                describing the storage repository and path of executables that was recorded in the
+                "sigs_" XML files during signature generation, to be overridden during the commit
+                operation with the specified Ghidra URL.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>generateupdates</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Generates updated function metadata for program files from a Ghidra Server
+                repository or project, as specified by a Ghidra URL, which previously had signature
+                and metadata generated (see <STRONG>generatesigs</STRONG>). Only metadata: names,
+                function tags, categories, etc. are changed. Signatures are not affected. The
+                generated updates may be retained as XML "update_" files within a specified XML
+                storage directory and/or committed to a specified BSim database specified with the
+                <SPAN class="command"><STRONG>--bsim</STRONG></SPAN> option. If an XML storage directory is not
+                specified, a BSim URL must be specified to which the data will be committed.</P>
+
+                <P>The <SPAN class="command"><STRONG>--config|-c&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;config-template&gt;</EM></SPAN> option may be specified when generating
+                XML "update_" files in the absence of a BSim database (see
+                <STRONG>createdatabase</STRONG> for supported configurations). The generated files
+                will be written to the specified XML storage directory. Creation of the update
+                files can also be achieved by specifying the <STRONG>--bsim</STRONG>
+                option instead of the <STRONG>--config</STRONG> option.</P>
+
+                <P>The <SPAN class="command"><STRONG>--overwrite</STRONG></SPAN> <SPAN class=
+                "emphasis">option may be specified when an XML storage directory has also been
+                specified to allow conflicting update files to be overwritten.</SPAN></P>
+
+                <P>The <SPAN class="command"><STRONG>--commit</STRONG></SPAN> <SPAN class=
+                "emphasis">option may be specified when a BSim URL has also been specified to allow
+                generated updates to be committed to the BSim database. This option is implied when
+                a BSim URL has been specified without an XML storage directory.</SPAN></P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>commitupdates</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Update a BSim repository with previously generated update metadata (see
+                <STRONG>generateupdates</STRONG>). A URL specifying the BSim repository and a path
+                to a directory containing the "update_" XML files to commit are required.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>listexes</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>List all executable program records within a specified BSim database repository
+                which satisfy the specified criteria. A BSim URL specifying the repository must be
+                provided, and one of two options, <SPAN class=
+                "command"><STRONG>--md5</STRONG></SPAN> or <SPAN class=
+                "command"><STRONG>--name </STRONG></SPAN>, that indicate the specific executable must
+                also be given. All matching executable records will be listed.</P>
+
+                <P><SPAN class="command"><STRONG>--md5|-m</STRONG></SPAN> - specifies an executable via its MD5
+                checksum as 32 hexidecimal digits.</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n</STRONG></SPAN> - specifies an executable 
+                name which may match one or more executable records.</P>
+
+                <P><SPAN class="command"><STRONG>--arch|-a</STRONG></SPAN> - specifies an architecture
+                as a Ghidra processor id which will be used to filter executables.</P>
+
+                <P><SPAN class="command"><STRONG>--compiler</STRONG></SPAN> - specifies a compiler
+                specification id which will be used to filter executables.</P>
+
+                <P><SPAN class="command"><STRONG>--sortcol|-s</STRONG></SPAN> - Specifies which display 
+                column should be used to sort the results (<STRONG>md5 | name</STRONG>; default:
+                <STRONG>md5</STRONG>).</P>
+
+                <P><SPAN class="command"><STRONG>--limit|-l</STRONG></SPAN> - specifies the maximum number of executables
+                to be listed which match the search criteria (default=20, a value of 0 indicates no
+                limit).</P>
+
+                <P><SPAN class="command"><STRONG>--includelibs</STRONG> - If specified, executable
+                records which correspond to a referenced Library will be included. Such records
+                have a fabricated MD5 which is based on its name.</SPAN></P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>getexecount</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Get the total number of executable program records within a specified BSim
+                database repository which satisfy the specified criteria. A BSim URL specifying the
+                repository must be provided, and one of two options, <SPAN class=
+                "command"><STRONG>--md5</STRONG></SPAN> or <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN>, that indicate the specific executable must
+                also be given. All matching executable records will be listed.</P>
+
+                <P><SPAN class="command"><STRONG>--md5|-m</STRONG></SPAN> - specifies an executable via its MD5
+                checksum as 32 hexidecimal digits.</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n</STRONG></SPAN> - specifies an executable 
+                name which may match one or more executable records.</P>
+
+                <P><SPAN class="command"><STRONG>--arch|-a</STRONG></SPAN> - specifies an architecture
+                as a Ghidra processor id which will be used to filter executables.</P>
+
+                <P><SPAN class="command"><STRONG>--compiler</STRONG></SPAN> - specifies a compiler
+                specification id which will be used to filter executables.</P>
+
+                <P><SPAN class="command"><STRONG>--includelibs</STRONG> - If specified, executable
+                records which correspond to a referenced Library will be included. Such records
+                have a fabricated MD5 which is based on its name.</SPAN></P>
+              </DD>
+              
+                            <DT><SPAN class="term"><SPAN class="bold"><STRONG>delete</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Remove all records associated with a specific executable from a BSim repository.
+                A BSim URL specifying the repository must be provided, and one of two options,
+                <SPAN class="command"><STRONG>--md5</STRONG></SPAN> or <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN>, that indicate the specific executable must
+                also be given. All associated executable and function records are removed.
+                If an executable cannot be uniquely identified an error will result.
+                </P>
+
+                <P><SPAN class="command"><STRONG>--md5|-m</STRONG></SPAN> - specifies an executable via its MD5
+                checksum as 32 hexidecimal digits.</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n</STRONG></SPAN> - specifies an executable 
+                name which may match one or more executable records.</P>
+
+                <P><SPAN class="command"><STRONG>--arch|-a</STRONG></SPAN> - specifies an architecture
+                as a Ghidra processor id, when the <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN> option is not enough to uniquely specify the
+                executable.</P>
+
+                <P><SPAN class="command"><STRONG>--compiler</STRONG></SPAN> - specifies a compiler
+                id string, when the <SPAN class="command"><STRONG>--name</STRONG></SPAN> option is
+                not enough to uniquely specify the executable.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>listfuncs</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>List all function records associated with a specific executable from a BSim
+                repository. A BSim URL specifying the repository must be provided, and one of two
+                options, <SPAN class="command"><STRONG>--md5</STRONG></SPAN> or <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN>, that indicate the specific executable must
+                also be given. All associated executable and function records are listed. If an
+                executable cannot be uniquely identified an error will result.</P>
+
+                <P><SPAN class="command"><STRONG>--md5|-m</STRONG></SPAN> - specifies an executable via its MD5
+                checksum as 32 hexidecimal digits.</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n</STRONG></SPAN> - specifies an executable 
+                name which may match one or more executable records.</P>
+
+                <P><SPAN class="command"><STRONG>--arch|-a</STRONG></SPAN> - specifies an architecture
+                as a Ghidra processor id, when the <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN> option is not enough to uniquely specify the
+                executable.</P>
+
+                <P><SPAN class="command"><STRONG>--compiler</STRONG></SPAN> - specifies a compiler
+                id string, when the <SPAN class="command"><STRONG>--name</STRONG></SPAN> option is
+                not enough to uniquely specify the executable.</P>
+
+                <P><SPAN class="command"><STRONG>--printselfsig</STRONG></SPAN> - If specified, each
+                function listed will be prefixed by a calculated self-significance score. This score is
+                expressed as a floating-point value.</P>
+
+                <P><SPAN class="command"><STRONG>--callgraph</STRONG></SPAN> - If specified, a list
+                of all library functions called by the identified executable will be listed after
+                the function list.</P>
+
+                <P><SPAN class="command"><STRONG>--printjustexe</STRONG> - If specified, only a
+                summary of the executable will be displayed. If <STRONG>--callgraph</STRONG> was
+                also specified only the called libraries will be listed and not the specified
+                functions.</SPAN></P>
+
+                <P><SPAN class="command"><STRONG>--maxfunc</STRONG></SPAN> - specifies the maximum number of functions to
+                be listed which correspond to the identified executable (default=1000, a value of 0
+                indicates no limit).</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>dumpsigs</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Dump signature and metadata from a BSim repository for a specific executable to
+                a "sigs_" XML file. A BSim server URL and a path to a directory where the new file
+                will be stored must be given. One of two options, <SPAN class=
+                "command"><STRONG>--md5</STRONG></SPAN> or <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN>, that specify the particular executable
+                must also be given.  If an executable cannot be uniquely identified an error will result.</P>
+
+                <P><SPAN class="command"><STRONG>--md5|-m</STRONG></SPAN> - specifies an executable via its MD5
+                checksum as 32 hexidecimal digits.</P>
+
+                <P><SPAN class="command"><STRONG>--name|-n</STRONG></SPAN> - specifies an executable 
+                name which may match one or more executable records.</P>
+
+                <P><SPAN class="command"><STRONG>--arch|-a</STRONG></SPAN> - specifies an architecture
+                as a Ghidra processor id, when the <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN> option is not enough to uniquely specify the
+                executable.</P>
+
+                <P><SPAN class="command"><STRONG>--compiler</STRONG></SPAN> - specifies a compiler
+                specification id, when the <SPAN class=
+                "command"><STRONG>--name</STRONG></SPAN> option is not enough to uniquely specify the
+                executable.</P>
+
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>--Global
+              Options--</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>These options apply to all <SPAN class="command"><STRONG>bsim</STRONG></SPAN>
+                commands.</P>
+
+                <P><SPAN class="command"><STRONG>--user|-u&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;username&gt;</EM></SPAN> - specifies a user to masquerade as when connecting
+                to the server.</P>
+
+                <P><SPAN class="command"><STRONG>--cert&nbsp;</STRONG></SPAN><SPAN class=
+                "emphasis"><EM>&lt;certfile-path&gt;</EM></SPAN> - provides a path to the user's certificate when
+                connecting to a server that requires PKI authentication.</P>
+              </DD>
+            </DL>
+          </DIV>
+        </DIV>
+      </DIV>
+    </DIV>
+
+    <DIV class="section">
+      <DIV class="titlepage">
+        <DIV>
+          <DIV>
+            <H2 class="title" style="clear: both"><A name="URLs"></A>Ghidra and BSim URLs</H2>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <P>Ghidra utilizes Universal Resource Locators (URLs) to identify both <EM>Ghidra
+      Server/Project Repositories</EM> and <EM>BSim Databases</EM>. See the corresponding sections
+      below for specific formatting details. It is important to note that local <EM>ghidra</EM> and
+      <EM>file</EM> URLs never include a double-slash after the protocol (i.e, "://").</P>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H3 class="title" style="clear: both"><A name="GhidraURLs"></A>Ghidra Server/Project
+              Repository URLs</H3>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>BSim command-line tools, as well as the Ghidra GUI, utilize a URL to specify the
+        location of a remote Ghidra Server repository or a local Ghidra Project. Both cases work in
+        a very similar fashion other than the format of the URL and potential limitations of a
+        local Project URL. Use of a Ghidra Server repository and corresponding URLs is preferred
+        since any Ghidra URL metadata added to a shared BSim database has the ability to be
+        accessed by other users, while a local Ghidra Project URL is very limited in its visibility
+        and path validity on other systems. For this reason, use of a local Ghidra Project URL
+        should be restricted to use with a local H2 BSim Database file.</P>
+
+        <P>The format of a remote <EM>Ghidra Server URL</EM> is distinctly different from a
+        <EM>Local Ghidra Project URL</EM>. These URLs have the following formats:</P>
+
+        <P><STRONG>Remote Ghidra Server Repository</STRONG><BR>
+        </P>
+
+        <DIV class="informalexample">
+          <TABLE border="0" class="simplelist">
+            <TR>
+              <TD><CODE class=
+              "computeroutput">ghidra://&lt;hostname&gt;[:&lt;port&gt;]/&lt;repository_name&gt;[/&lt;folder_path&gt;]</CODE></TD>
+            </TR>
+          </TABLE>
+        </DIV>
+
+        <P>If the default Ghidra Server port (1111) is in use it need not be specified with URL.
+        The <EM>hostname</EM> may specify either a Fully Qualified Domain Name (FQDN, e.g.,
+        <EM>host.abc.com</EM>) or IP v4 Address (e.g., <EM>1.2.3.4</EM>).</P>
+        <STRONG>Local Ghidra Project</STRONG><BR>
+         
+
+        <DIV class="informalexample">
+          <TABLE border="0" class="simplelist">
+            <TR>
+              <TD><CODE class=
+              "computeroutput">ghidra:[/&lt;directory_path&gt;]/&lt;project_name&gt;[?/&lt;folder_path&gt;]</CODE></TD>
+            </TR>
+          </TABLE>
+        </DIV>
+
+        <P>For local project URLs, the absolute directory path containing the project
+        <EM>*.gpr</EM> locator file must be specified with the project name. The project name
+        should exclude any <EM>.gpr/.rep</EM> suffix. Only the '/' character should be used as a
+        directory separator. In addition, when running on Windows, the directory path should
+        include its drive designation preceded by a '/' (e.g., <CODE class=
+        "computeroutput">ghidra:/C:/mydir/myproject?/folderA/folderB</CODE>).</P>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H3 class="title" style="clear: both"><A name="BSimURLs"></A>BSim Database URLs</H3>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>BSim command-line tools utilize a URL to specify the type and specific details required
+        to establish a connection to a specific BSim Database. Within the Ghidra GUI the database
+        details are not specified using a URL and is done using an interactive form. Each BSim
+        database type has a distinct URL format:</P>
+
+        <DIV class="informalexample">
+          <TABLE border="0" cellpadding="2" class="simplelist">
+            <TR>
+              <TH>Database Type</TH>
+
+              <TH align="left">URL Format</TH>
+            </TR>
+
+            <TR>
+              <TD>PostgreSQL</TD>
+
+              <TD><CODE class=
+              "computeroutput">postgresql://&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
+            </TR>
+
+            <TR>
+              <TD>Elasticsearch</TD>
+
+              <TD><CODE class=
+              "computeroutput">https://&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
+            </TR>
+
+            <TR>
+              <TD>Elasticsearch</TD>
+
+              <TD><CODE class=
+              "computeroutput">elastic://&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
+            </TR>
+
+            <TR>
+              <TD>H2 File</TD>
+
+              <TD><CODE class=
+              "computeroutput">file:[/&lt;directory_path&gt;]/&lt;dbname&gt;</CODE></TD>
+            </TR>
+          </TABLE>
+        </DIV>
+
+        <P>The use of the <EM>https</EM> and <EM>elastic</EM> is equivalent.</P>
+
+        <P>For local <EM>file</EM> URLs, the absolute path the H2 database <EM>*.mv.db</EM> file
+        must be specified without the <EM>*.mv.db</EM> extension. Only the '/' character should be
+        used as a directory separator. In addition, when running on Windows, the directory path
+        should include its drive designation preceded by a '/' (e.g., <CODE class=
+        "computeroutput">file:/C:/mydir/mydb</CODE>).</P>
+      </DIV>
+    </DIV>
+  </BODY>
+</HTML>

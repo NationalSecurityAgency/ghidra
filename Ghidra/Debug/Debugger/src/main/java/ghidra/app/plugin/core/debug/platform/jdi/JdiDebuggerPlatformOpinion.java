@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.platform.jdi;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
@@ -29,7 +30,6 @@ public class JdiDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
 	protected static class JdiDebuggerPlatformMapper extends DefaultDebuggerPlatformMapper {
-		// TODO: Delete this class?
 		public JdiDebuggerPlatformMapper(PluginTool tool, Trace trace, CompilerSpec cSpec) {
 			super(tool, trace, cSpec);
 		}
@@ -68,11 +68,16 @@ public class JdiDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 		public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
 			return new JdiDebuggerPlatformMapper(tool, trace, getCompilerSpec());
 		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == JdiDebuggerPlatformMapper.class;
+		}
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
 		if (debugger == null || arch == null || !debugger.contains("Java Debug Interface")) {
 			return Set.of();
 		}

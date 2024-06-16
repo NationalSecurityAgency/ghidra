@@ -15,6 +15,11 @@
  */
 package ghidra.app.plugin.debug.propertymanager;
 
+import javax.swing.Icon;
+import javax.swing.Timer;
+
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -29,16 +34,6 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.ImageIcon;
-import javax.swing.Timer;
-
-import resources.ResourceManager;
-
-
 /**
  * PropertyManagerPlugin
  */
@@ -46,7 +41,7 @@ import resources.ResourceManager;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Show Markers for Properties",
 	description = "This plugin shows a list of properties in the program."+
 			" For each property selected, navigation markers are displayed to indicate "+
@@ -56,46 +51,37 @@ import resources.ResourceManager;
 //@formatter:on
 public class PropertyManagerPlugin extends ProgramPlugin implements DomainObjectListener {
 
-	private static final ImageIcon propIcon = ResourceManager.loadImage("images/searchm_pink.gif");
+	private static final Icon MARKER_ICON = new GIcon("icon.plugin.debug.propertymanager.marker");
 
 	final static String DISPLAY_ACTION_NAME = "Display Property Viewer";
 	final static String PROPERTY_MARKER_NAME = "Property Locations";
 
 	private PropertyManagerProvider propertyViewProvider;
-    private MarkerService markerService;
-    private MarkerSet searchMarks;
-    private Timer updateTimer;
+	private MarkerService markerService;
+	private MarkerSet searchMarks;
+	private Timer updateTimer;
 
 	public PropertyManagerPlugin(PluginTool tool) {
-		super(tool, false, true);
+		super(tool);
 
 		propertyViewProvider = new PropertyManagerProvider(this);
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#init()
-	 */
 	@Override
-    protected void init() {
+	protected void init() {
 
 		markerService = tool.getService(MarkerService.class);
 
-
-		updateTimer = new Timer(500, new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				if (propertyViewProvider != null && propertyViewProvider.isVisible()) {
-					propertyViewProvider.refresh();
-				}
+		updateTimer = new Timer(500, e -> {
+			if (propertyViewProvider != null && propertyViewProvider.isVisible()) {
+				propertyViewProvider.refresh();
 			}
 		});
 		updateTimer.setRepeats(false);
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-	 */
-    public void domainObjectChanged(DomainObjectChangedEvent ev) {
+	@Override
+	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (propertyViewProvider == null || !propertyViewProvider.isVisible()) {
 			return;
 		}
@@ -106,12 +92,11 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 
 			DomainObjectChangeRecord record = ev.getChangeRecord(i);
 
-			int eventType = record.getEventType();
-			if (eventType == DomainObject.DO_OBJECT_RESTORED ||
-				eventType == ChangeManager.DOCR_MEMORY_BLOCK_MOVED ||
-				eventType == ChangeManager.DOCR_MEMORY_BLOCK_REMOVED ||
-				eventType == ChangeManager.DOCR_CODE_UNIT_PROPERTY_ALL_REMOVED)
-			{
+			EventType eventType = record.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == ProgramEvent.MEMORY_BLOCK_MOVED ||
+				eventType == ProgramEvent.MEMORY_BLOCK_REMOVED ||
+				eventType == ProgramEvent.CODE_UNIT_PROPERTY_ALL_REMOVED) {
 				affectedByChange = true;
 				break;
 			}
@@ -124,37 +109,28 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 				break;
 			}
 
-			CodeUnitPropertyChangeRecord pcr = (CodeUnitPropertyChangeRecord)record;
-			Address addr = pcr.getAddress();
-			if (addr != null) {
-				if (currentSelection.contains(addr)) {
-					affectedByChange = true;
-					break;
-				}
-			}
-			else {
-				addr = pcr.getStartAddress();
-				Address endAddr = pcr.getEndAddress();
-				if (addr != null && endAddr != null && currentSelection.intersects(addr, endAddr)) {
-					affectedByChange = true;
-					break;
-				}
+			CodeUnitPropertyChangeRecord pcr = (CodeUnitPropertyChangeRecord) record;
+			Address start = pcr.getStart();
+			Address end = pcr.getEnd();
+			if (start != null && end != null && currentSelection.intersects(start, end)) {
+				affectedByChange = true;
+				break;
 			}
 		}
 
 		if (affectedByChange) {
 			updateTimer.restart();
 		}
-    }
+	}
 
 	@Override
-    protected void programActivated(Program program) {
+	protected void programActivated(Program program) {
 		program.addListener(this);
 		propertyViewProvider.programActivated(program);
 	}
 
 	@Override
-    protected void programDeactivated(Program program) {
+	protected void programDeactivated(Program program) {
 		disposeSearchMarks(program);
 		if (program != null) {
 			program.removeListener(this);
@@ -162,57 +138,48 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 		propertyViewProvider.programDeactivated();
 	}
 
-    @Override
-    protected void selectionChanged(ProgramSelection sel) {
-    	if (propertyViewProvider != null && propertyViewProvider.isVisible()) {
-    		updateTimer.restart();
-    	}
-    }
+	@Override
+	protected void selectionChanged(ProgramSelection sel) {
+		if (propertyViewProvider != null && propertyViewProvider.isVisible()) {
+			updateTimer.restart();
+		}
+	}
 
-	/**
-	 * Initialize search marker manager
-	 */
 	MarkerSet getSearchMarks() {
 		if (searchMarks == null && currentProgram != null) {
 			searchMarks = markerService.createPointMarker(PROPERTY_MARKER_NAME,
-			    "Locations where properties are set", currentProgram,
-			    MarkerService.PROPERTY_PRIORITY, true, true, false, Color.pink, propIcon);
+				"Locations where properties are set", currentProgram,
+				MarkerService.PROPERTY_PRIORITY, true, true, false, Palette.PINK, MARKER_ICON);
 		}
 		return searchMarks;
 	}
 
-	/**
-	 * Dispose search marker manager
-	 */
 	void disposeSearchMarks() {
-		disposeSearchMarks( currentProgram );
+		disposeSearchMarks(currentProgram);
 	}
 
-	private void disposeSearchMarks( Program program ) {
-	    if (searchMarks != null && program != null) {
-            markerService.removeMarker(searchMarks, program);
-            searchMarks = null;
-        }
+	private void disposeSearchMarks(Program program) {
+		if (searchMarks != null && program != null) {
+			markerService.removeMarker(searchMarks, program);
+			searchMarks = null;
+		}
 	}
 
 	void clearSearchMarks() {
-	    if ( searchMarks != null ) {
-	        searchMarks.clearAll();
-	    }
+		if (searchMarks != null) {
+			searchMarks.clearAll();
+		}
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#dispose()
-	 */
 	@Override
-    public void dispose() {
+	public void dispose() {
 		super.dispose();
 
-        disposeSearchMarks();
+		disposeSearchMarks();
 
-        if (currentProgram != null) {
-        	currentProgram.removeListener(this);
-        }
+		if (currentProgram != null) {
+			currentProgram.removeListener(this);
+		}
 
 		if (propertyViewProvider != null) {
 			propertyViewProvider.dispose();

@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_PARAMID__
-#define __CPUI_PARAMID__
+#ifndef __PARAMID_HH__
+#define __PARAMID_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 extern ElementId ELEM_PARAMMEASURES;	///< Marshaling element \<parammeasures>
 extern ElementId ELEM_PROTO;		///< Marshaling element \<proto>
@@ -76,4 +78,5 @@ public:
   void savePretty( ostream &s, bool moredetail ) const;
 };
 
-#endif //ifndef __CPUI_PARAMID__
+} // End namespace ghidra
+#endif //ifndef __PARAMID_HH__

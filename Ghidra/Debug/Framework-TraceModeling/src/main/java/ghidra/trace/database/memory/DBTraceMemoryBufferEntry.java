@@ -125,18 +125,27 @@ public class DBTraceMemoryBufferEntry extends DBAnnotatedObject {
 		return true;
 	}
 
-	public int setBytes(ByteBuffer buf, int dstOffset, int len, int blockNum) throws IOException {
+	public int setBytes(ByteBuffer buf, int dstOffset, int len, int blockNum)
+			throws IndexOutOfBoundsException, IOException {
 		assert isSane(dstOffset, len, blockNum);
 		if (compressed) {
 			decompress();
 		}
-		buffer.put((blockNum << DBTraceMemorySpace.BLOCK_SHIFT) + dstOffset, buf.array(),
-			buf.arrayOffset() + buf.position(), len);
-		buf.position(buf.position() + len);
+		int bufOffset = (blockNum << DBTraceMemorySpace.BLOCK_SHIFT) + dstOffset;
+		if (buf.isReadOnly()) {
+			byte[] temp = new byte[len];
+			buf.get(temp);
+			buffer.put(bufOffset, temp);
+		}
+		else {
+			buffer.put(bufOffset, buf.array(), buf.arrayOffset() + buf.position(), len);
+			buf.position(buf.position() + len);
+		}
 		return len;
 	}
 
-	public int getBytes(ByteBuffer buf, int srcOffset, int len, int blockNum) throws IOException {
+	public int getBytes(ByteBuffer buf, int srcOffset, int len, int blockNum)
+			throws IndexOutOfBoundsException, IOException {
 		assert isSane(srcOffset, len, blockNum);
 		if (compressed) {
 			return doGetCompressedBytes(buf, srcOffset, len, blockNum);
@@ -161,7 +170,8 @@ public class DBTraceMemoryBufferEntry extends DBAnnotatedObject {
 		}
 	}
 
-	protected void doGetBlock(int blockNum, byte[] data) throws IOException {
+	protected void doGetBlock(int blockNum, byte[] data)
+			throws IndexOutOfBoundsException, IOException {
 		assert isInUse(blockNum);
 		if (compressed) {
 			doGetCompressedBlock(blockNum, data);
@@ -180,7 +190,7 @@ public class DBTraceMemoryBufferEntry extends DBAnnotatedObject {
 	}
 
 	public void copyFrom(int dstBlockNum, DBTraceMemoryBufferEntry srcBuf, int srcBlockNum)
-			throws IOException {
+			throws IndexOutOfBoundsException, IOException {
 		assert isInUse(dstBlockNum);
 		if (compressed) {
 			decompress();
@@ -190,7 +200,8 @@ public class DBTraceMemoryBufferEntry extends DBAnnotatedObject {
 		buffer.put(dstBlockNum << DBTraceMemorySpace.BLOCK_SHIFT, data);
 	}
 
-	public int cmpBytes(ByteBuffer buf, int blkOffset, int len, int blockNum) throws IOException {
+	public int cmpBytes(ByteBuffer buf, int blkOffset, int len, int blockNum)
+			throws IndexOutOfBoundsException, IOException {
 		assert isSane(blkOffset, len, blockNum);
 		if (compressed) {
 			return doCmpCompressedBytes(buf, blkOffset, len, blockNum);

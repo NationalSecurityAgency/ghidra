@@ -100,6 +100,11 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	}
 
 	@Override
+	public GTableHeaderRenderer getHeaderRenderer() {
+		return tableColumn.getHeaderRenderer();
+	}
+
+	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
 		return tableColumn.getSettingsDefinitions();
 	}

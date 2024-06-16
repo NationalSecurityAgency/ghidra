@@ -40,7 +40,7 @@ import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.bean.SelectLanguagePanel;
 import ghidra.framework.Application;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSpace;
@@ -56,7 +56,7 @@ import ghidra.util.xml.GenericXMLOutputter;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Generate Old Language File",
 	description = "This plugin allows the user to generate an old-language XML " +
 			"file from the current version of a loaded language.  " +
@@ -64,7 +64,7 @@ import ghidra.util.xml.GenericXMLOutputter;
 			"language which will modify its address spaces or register definitions."
 )
 //@formatter:on
-public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
+public class GenerateOldLanguagePlugin extends Plugin implements ApplicationLevelPlugin {
 
 	private static final ExtensionFileFilter OLD_LANG_FILTER =
 		new ExtensionFileFilter("lang", "Old Language File");
@@ -134,7 +134,6 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 
 		private JPanel panel;
 		private SelectLanguagePanel selectLangPanel;
-		private GhidraFileChooser chooser;
 
 		GenerateOldLanguageDialog(final boolean skipOldLangGeneration) {
 			super("Select Old Language", true, true, true, false);
@@ -169,17 +168,17 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 						return;
 					}
 
-					if (chooser == null) {
-						chooser = new GhidraFileChooser(panel);
-						chooser.setTitle("Specify Old Language Output File");
-						chooser.setFileFilter(OLD_LANG_FILTER);
-						chooser.setApproveButtonText("Create");
-						// there's no single directory; you need to pick it yourself now
+					GhidraFileChooser chooser = new GhidraFileChooser(panel);
+					chooser.setTitle("Specify Old Language Output File");
+					chooser.setFileFilter(OLD_LANG_FILTER);
+					chooser.setApproveButtonText("Create");
+					// there's no single directory; you need to pick it yourself now
 //						chooser.setCurrentDirectory(LANGUAGE_DIR);
-						chooser.setCurrentDirectory(
-							Application.getApplicationRootDirectory().getFile(false));
-					}
+					chooser.setCurrentDirectory(
+						Application.getApplicationRootDirectory().getFile(false));
+
 					File file = chooser.getSelectedFile(true);
+					chooser.dispose();
 					if (file == null) {
 						return;
 					}
@@ -234,7 +233,6 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 
 		private JPanel panel;
 		private SelectLanguagePanel selectLangPanel;
-		private GhidraFileChooser chooser;
 
 		private Language oldLang;
 		private File oldLangFile;
@@ -269,17 +267,18 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 
 					File transFile;
 					if (GenerateTranslatorDialog.this.oldLangFile == null) {
-						if (chooser == null) {
-							chooser = new GhidraFileChooser(panel);
-							chooser.setTitle("Specify Old Language Output File");
-							chooser.setFileFilter(TRANSLATOR_FILTER);
-							chooser.setApproveButtonText("Create");
-							// there's no single directory; you need to pick it yourself now
+
+						GhidraFileChooser chooser = new GhidraFileChooser(panel);
+						chooser.setTitle("Specify Old Language Output File");
+						chooser.setFileFilter(TRANSLATOR_FILTER);
+						chooser.setApproveButtonText("Create");
+						// there's no single directory; you need to pick it yourself now
 //							chooser.setCurrentDirectory(LANGUAGE_DIR);
-							chooser.setCurrentDirectory(
-								Application.getApplicationRootDirectory().getFile(false));
-						}
+						chooser.setCurrentDirectory(
+							Application.getApplicationRootDirectory().getFile(false));
+
 						transFile = chooser.getSelectedFile(true);
+						chooser.dispose();
 						if (transFile == null) {
 							return;
 						}
@@ -533,7 +532,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 		public List<LanguageDescription> getLanguageDescriptions(
 				boolean includeDeprecatedLanguages) {
 			// Include deprecated languages
-			List<LanguageDescription> list = new ArrayList<LanguageDescription>();
+			List<LanguageDescription> list = new ArrayList<>();
 			list.addAll(langService.getLanguageDescriptions(true));
 			if (includeOldLanguages) {
 				list.addAll(Arrays.asList(oldLangFactory.getLatestOldLanaguageDescriptions()));
@@ -546,7 +545,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
 		 */
 		@Override
 		public List<LanguageDescription> getLanguageDescriptions(Processor processor,
-				Endian endianess, Integer size, String variant) {
+				Endian endianness, Integer size, String variant) {
 			throw new UnsupportedOperationException();
 		}
 

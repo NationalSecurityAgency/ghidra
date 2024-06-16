@@ -16,8 +16,10 @@
 #include "callgraph.hh"
 #include "funcdata.hh"
 
-ElementId ELEM_CALLGRAPH = ElementId("callgraph",51);
-ElementId ELEM_NODE = ElementId("node",52);
+namespace ghidra {
+
+ElementId ELEM_CALLGRAPH = ElementId("callgraph",226);
+ElementId ELEM_NODE = ElementId("node",227);
 
 void CallGraphEdge::encode(Encoder &encoder) const
 
@@ -33,12 +35,11 @@ void CallGraphEdge::decode(Decoder &decoder,CallGraph *graph)
 
 {
   uint4 elemId = decoder.openElement(ELEM_EDGE);
-  const AddrSpaceManager *manage = graph->getArch();
   Address fromaddr,toaddr,siteaddr;
   
-  fromaddr = Address::decode(decoder,manage);
-  toaddr = Address::decode(decoder,manage);
-  siteaddr = Address::decode(decoder,manage);
+  fromaddr = Address::decode(decoder);
+  toaddr = Address::decode(decoder);
+  siteaddr = Address::decode(decoder);
   decoder.closeElement(elemId);
 
   CallGraphNode *fromnode = graph->findNode(fromaddr);
@@ -83,7 +84,7 @@ void CallGraphNode::decode(Decoder &decoder,CallGraph *graph)
     if (attribId == ATTRIB_NAME)
       name = decoder.readString();
   }
-  Address addr = Address::decode(decoder,graph->getArch());
+  Address addr = Address::decode(decoder);
   decoder.closeElement(elemId);
   graph->addNode(addr,name);
 }
@@ -212,7 +213,7 @@ CallGraphNode *CallGraph::addNode(Funcdata *f)
     throw LowlevelError("Functions with duplicate entry points: "+f->getName()+" "+node.getFuncdata()->getName());
 
   node.entryaddr = f->getAddress();
-  node.name = f->getName();
+  node.name = f->getDisplayName();
   node.fd = f;
   return &node;
 }
@@ -464,3 +465,4 @@ void CallGraph::decoder(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+} // End namespace ghidra

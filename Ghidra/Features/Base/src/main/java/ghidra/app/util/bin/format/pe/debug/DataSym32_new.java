@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.util.Conv;
 
 /**
  * <pre>
@@ -47,7 +46,7 @@ class DataSym32_new extends DebugSymbol {
 
         byte nameLen = reader.readByte(ptr); ptr += BinaryReader.SIZEOF_BYTE;
 
-        this.name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen));
+		this.name = reader.readAsciiString(ptr, Byte.toUnsignedInt(nameLen));
     }
 
     int getTypeIndex() {

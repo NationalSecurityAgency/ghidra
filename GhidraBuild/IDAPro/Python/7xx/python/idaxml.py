@@ -19,6 +19,7 @@
 """
 """
 
+from __future__ import print_function
 import ida_auto
 import ida_bytes
 import ida_diskio
@@ -52,10 +53,16 @@ import sys
 import time
 from xml.etree import cElementTree
 
+if sys.version_info.major >= 3:
+    import copy
+    time.clock = time.perf_counter
+    _exc_info = copy.copy(sys.exc_info)
+    sys.exc_value = lambda: _exc_info()[1]
+    sys.exc_type = lambda: _exc_info()[0]
 
 DEBUG = False  # print debug statements
 
-IDAXML_VERSION = "5.0.1"
+IDAXML_VERSION = "5.0.2"
 BASELINE_IDA_VERSION = 700
 BASELINE_STR = '7.00'
 IDA_SDK_VERSION = ida_pro.IDA_SDK_VERSION
@@ -166,7 +173,19 @@ class IdaXml:
         Args:
             what: String indicating Exporter, Importer, or Loader 
         """
-        f = ida_diskio.idadir('python') + '/idaxml.py'
+        if os.path.isfile(os.path.join(ida_diskio.idadir('python'), 'idaxml.py')):
+            f = os.path.join(ida_diskio.idadir('python'), 'idaxml.py')
+        elif os.path.isfile(os.path.join(ida_diskio.idadir('python'), '3', 'idaxml.py')):
+            f = os.path.join(ida_diskio.idadir('python'), '3', 'idaxml.py')
+        elif os.path.isfile(os.path.join(ida_diskio.idadir('python'), '2', 'idaxml.py')):
+            f = os.path.join(ida_diskio.idadir('python'), '2', 'idaxml.py')
+        elif os.path.isfile(os.path.join(ida_diskio.get_user_idadir(), 'python', 'idaxml.py')):
+            f = os.path.join(ida_diskio.get_user_idadir(), 'python', 'idaxml.py')
+        else:
+            msg = "Error opening file " + os.path.join(ida_diskio.idadir('python'), 'idaxml.py') + " !\n"
+            idc.msg(msg)
+            raise FileError
+            
         ftime = time.localtime(os.path.getmtime(f))
         ts = time.strftime('%b %d %Y %H:%M:%S', ftime)
         version = "\nXML " + what + " v" + IDAXML_VERSION
@@ -254,7 +273,7 @@ class XmlExporter(IdaXml):
         self.inf = ida_idaapi.get_inf_structure()
         self.min_ea = self.inf.min_ea
         self.max_ea = self.inf.max_ea
-        self.cbsize = (ida_idp.ph_get_cnbits()+7)/8
+        self.cbsize = (ida_idp.ph_get_cnbits()+7)//8
         self.processor = str.upper(ida_idp.get_idp_name())
         self.batch = ida_kernwin.cvar.batch
 
@@ -373,6 +392,8 @@ class XmlExporter(IdaXml):
             String containing either the character or the entity
             substition string.
         """
+        if isinstance(ch, int):
+            ch = chr(ch)
         if ((ord(ch) < 0x20) and (ord(ch) != 0x09 and
              ord(ch) != 0x0A and ord(ch) != 0x0D)): return ''
         elif ch == '&' :  return '&amp;'
@@ -647,7 +668,10 @@ class XmlExporter(IdaXml):
         # tag_remove seems to be losing last character
         # work around is to add a space
         cmt_text = ida_lines.tag_remove(cmt + ' ')
-        self.write_text(cmt_text.decode('utf-8'))
+        if sys.version_info.major >= 3:
+            self.write_text(cmt_text)
+        else:
+            self.write_text(cmt_text.decode('utf-8'))
         self.end_element(COMMENT, False)
 
 
@@ -714,7 +738,7 @@ class XmlExporter(IdaXml):
                 if msize == 0:
                     msize = 1
             if idc.is_strlit(f) == False and size != msize:
-                dtype = "%s[%d]" % (dtype, size/msize)
+                dtype = "%s[%d]" % (dtype, size//msize)
             self.start_element(DEFINED_DATA)
             self.write_address_attribute(ADDRESS, addr)
             self.write_attribute(DATATYPE, dtype)
@@ -1108,7 +1132,7 @@ class XmlExporter(IdaXml):
                 if size < msize: size = msize
             if (size != msize):
                 arraytype = self.get_member_type(m)
-                dtype = "%s[%d]" % (arraytype, size/msize)
+                dtype = "%s[%d]" % (arraytype, size//msize)
             self.write_attribute(DATATYPE, dtype)
             self.write_numeric_attribute(SIZE, size*self.cbsize)
             regcmt = ida_struct.get_member_cmt(m.id, False)
@@ -1544,7 +1568,7 @@ class XmlExporter(IdaXml):
             if size < msize: size = msize
             if (idc.is_strlit(f) == False and ida_bytes.is_align(f) == False
                 and size != msize):
-                mtype = "%s[%d]" % (mtype, size/msize)
+                mtype = "%s[%d]" % (mtype, size//msize)
             self.write_attribute(DATATYPE, mtype)
             self.write_numeric_attribute(SIZE, size*self.cbsize)
             regcmt = ida_struct.get_member_cmt(member.id, False)
@@ -1781,7 +1805,7 @@ class XmlExporter(IdaXml):
             return idc.get_struc_name(opnd.tid)
         if idc.is_strlit(f) == True:
             str_type = idc.get_str_type(addr)
-            #print ida_bytes.print_strlit_type(str_type)
+            #print(ida_bytes.print_strlit_type(str_type))
             if str_type == ida_nalt.STRTYPE_TERMCHR:   return "string"
             if str_type == ida_nalt.STRTYPE_PASCAL:    return "string1"
             if str_type == ida_nalt.STRTYPE_LEN2:      return "string2"
@@ -2451,7 +2475,7 @@ class XmlImporter(IdaXml):
             Integer representing the number of 8-bit bytes in an
             addressable codebyte.
         """
-        return (ida_idp.ph_get_cnbits()+7)/8
+        return (ida_idp.ph_get_cnbits()+7)//8
     
 
     def get_datatype_flags(self, datatype, size):
@@ -2637,7 +2661,7 @@ class XmlImporter(IdaXml):
             if idc.is_mapped(addr) == False:
                 msg = ("import_bookmark: address %X not enabled in database"
                        % addr)
-                print msg
+                print(msg)
                 return
             self.update_counter(BOOKMARK)
             for slot in range(ida_moves.MAX_MARK_SLOT):
@@ -2647,7 +2671,7 @@ class XmlImporter(IdaXml):
                     break
         except:
             msg = "** Exception occurred in import_bookmark **"
-            print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
     
 
     def import_cmts(self, element, sid, typ):
@@ -2777,7 +2801,7 @@ class XmlImporter(IdaXml):
         """
         self.update_counter(DESCRIPTION)
         # TODO: import_description: decide what to do with DESCRIPTION
-        # print description.text
+        # print(description.text)
 
 
     def import_enum(self, enum):
@@ -2946,7 +2970,7 @@ class XmlImporter(IdaXml):
             if idc.is_mapped(entry_point) == False:
                 msg = ("import_function: address %X not enabled in database"
                        % entry_point)
-                print msg
+                print(msg)
                 return
             idc.add_func(entry_point, BADADDR)
             self.update_counter(FUNCTION)
@@ -2981,7 +3005,7 @@ class XmlImporter(IdaXml):
                 self.import_register_var(register_var, func)
         except:
             msg = "** Exception occurred in import_function **"
-            print "\n" + msg + "\n", sys.exc_type, sys.exc_value
+            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
 
 
     def import_function_def(self, function_def):
@@ -3205,7 +3229,7 @@ class XmlImporter(IdaXml):
         # TODO: import_memory_reference: store refs? maybe only user-defined?
         '''
         if user == 'y':
-            #print "%08X %08X" % (addr, to_addr), op, primary
+            #print("%08X %08X" % (addr, to_addr), op, primary)
             pass
         '''
  
@@ -3232,7 +3256,7 @@ class XmlImporter(IdaXml):
         seg_str = ''
         if '::' in addrstr:
             # overlay - skip for now
-            print '  ** Overlayed memory block %s skipped **  ' % name
+            print('  ** Overlayed memory block %s skipped **  ' % name)
             msg  = 'Overlayed memory block %s skipped!' % name
             msg += "\n\nXML Import does not currently support"
             msg += "\noverlayed memory blocks."

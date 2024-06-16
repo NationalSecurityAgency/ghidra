@@ -22,7 +22,7 @@ import java.io.IOException;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.util.FileOpenDataFlavorHandler;
 import ghidra.framework.client.*;
-import ghidra.framework.main.GetVersionedObjectTask;
+import ghidra.framework.main.GetDomainObjectTask;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.task.TaskLauncher;
@@ -35,20 +35,23 @@ public final class LocalVersionInfoHandler
 		VersionInfo info = (VersionInfo) obj;
 
 		DomainFile file = tool.getProject().getProjectData().getFile(info.getDomainFilePath());
-		GetVersionedObjectTask task =
-			new GetVersionedObjectTask(this, file, info.getVersionNumber());
+		GetDomainObjectTask task =
+			new GetDomainObjectTask(this, file, info.getVersionNumber());
 		tool.execute(task, 250);
-		DomainObject versionedObj = task.getVersionedObject();
-
+		DomainObject versionedObj = task.getDomainObject();
 		if (versionedObj != null) {
-			DomainFile vfile = versionedObj.getDomainFile();
-			tool.acceptDomainFiles(new DomainFile[] { vfile });
-			versionedObj.release(this);
+			try {
+				DomainFile vfile = versionedObj.getDomainFile();
+				tool.acceptDomainFiles(new DomainFile[] { vfile });
+			}
+			finally {
+				versionedObj.release(this);
+			}
 		}
 	}
 
 	@Override
-	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+	public boolean handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 		DomainFolder folder = getDomainFolder(destinationNode);
 
@@ -62,6 +65,7 @@ public final class LocalVersionInfoHandler
 			if (file != null) {
 				new TaskLauncher(new CopyFileVersionTask(file, info.getVersionNumber(), folder),
 					dataTree, 500);
+				return true;
 			}
 		}
 		catch (NotConnectedException exc) {
@@ -70,6 +74,7 @@ public final class LocalVersionInfoHandler
 		catch (IOException exc) {
 			ClientUtil.handleException(rep, exc, "Repository Connection", tool.getToolFrame());
 		}
+		return false;
 	}
 
 	private DomainFolder getDomainFolder(GTreeNode destinationNode) {

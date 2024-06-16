@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -187,6 +186,17 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
+	public void testAssemble_MOV_RDX_0xffffffffffffffff() {
+		assertOneCompatRestExact("MOV RDX,0xffffffffffffffff", "48:ba:ff:ff:ff:ff:ff:ff:ff:ff",
+			"MOV RDX,-0x1");
+	}
+
+	@Test
+	public void testAssemble_MOV_RDX_n1() {
+		assertOneCompatRestExact("MOV RDX,-0x1", "48:ba:ff:ff:ff:ff:ff:ff:ff:ff");
+	}
+
+	@Test
 	public void testAssemble_MOV_mRBXm_R14W() {
 		/*
 		 * Constructor Line #'s: instruction(1825), instruction(1835), MOV(3221), rm16(1128),
@@ -302,6 +312,6 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemblyCompat32_DEC_EAX() {
-		assertOneCompatRestExact("DEC EAX", "48", "09:00:00:00", 0x00400000, "DEC EAX");
+		assertOneCompatRestExact("DEC EAX", "48", "09:00:00:00:00:00:00:00", 0x00400000, "DEC EAX");
 	}
 }

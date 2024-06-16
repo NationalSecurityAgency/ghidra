@@ -19,10 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Collections2;
+import java.util.stream.Stream;
 
 import db.DBRecord;
 import generic.NestedIterator;
@@ -31,6 +28,7 @@ import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.DBTreeNodeRecord.NodeType;
 import ghidra.util.database.spatial.Query.QueryInclusion;
+import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.VersionException;
 
 public abstract class AbstractConstraintsTree< //
@@ -41,21 +39,15 @@ public abstract class AbstractConstraintsTree< //
 		T, //
 		Q extends Query<DS, NS>> {
 
+	static final int MAX_CACHE_ENTRIES = 50;
+
 	protected final DBCachedObjectStore<DR> dataStore;
 	protected final DBCachedObjectStore<NR> nodeStore;
 
-	protected final Map<Long, Collection<DR>> cachedDataChildren = CacheBuilder.newBuilder()
-			.removalListener(this::cachedDataChildrenRemoved)
-			.concurrencyLevel(4)
-			.maximumSize(50)
-			.build()
-			.asMap();
-	protected final Map<Long, Collection<NR>> cachedNodeChildren = CacheBuilder.newBuilder()
-			.removalListener(this::cachedNodeChildrenRemoved)
-			.concurrencyLevel(4)
-			.maximumSize(50)
-			.build()
-			.asMap();
+	protected final Map<Long, Collection<DR>> cachedDataChildren =
+		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES);
+	protected final Map<Long, Collection<NR>> cachedNodeChildren =
+		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES);
 
 	protected NR root;
 	protected int leafLevel;
@@ -69,20 +61,12 @@ public abstract class AbstractConstraintsTree< //
 			this::createNodeEntry, upgradable);
 	}
 
-	private void cachedDataChildrenRemoved(RemovalNotification<Long, Collection<DR>> rn) {
-		// Nothing
-	}
-
-	private void cachedNodeChildrenRemoved(RemovalNotification<Long, Collection<NR>> rn) {
-		// Nothing
-	}
-
 	protected abstract DR createDataEntry(DBCachedObjectStore<DR> store, DBRecord record);
 
 	protected abstract NR createNodeEntry(DBCachedObjectStore<NR> store, DBRecord record);
 
 	protected void init() {
-		assert root == null;
+		// assert root == null;
 		root = getOrCreateRoot();
 		leafLevel = computeLeafLevel();
 	}
@@ -574,16 +558,17 @@ public abstract class AbstractConstraintsTree< //
 		node.setDataCount(node.getDataCount() - 1);
 	}
 
+	protected NS unionStream(Stream<NS> shapes) {
+		return shapes.reduce(BoundingShape::unionBounds).orElse(null);
+	}
+
 	protected void doRecomputeBounds(NR node) {
 		/*
 		 * TODO: There may be optimizations here, esp. if no bound of the removed node is on the
 		 * edge of the parent. Furthermore, since an implementation may index on those bounds, there
 		 * may be a fast way to discover the "next child in".
 		 */
-		Collection<? extends NS> childBounds =
-			Collections2.transform(getChildrenOf(node), DBTreeRecord::getBounds);
-		NS bounds = BoundingShape.boundsUnion(childBounds);
-		node.setShape(bounds);
+		node.setShape(unionStream(getChildrenOf(node).stream().map(DBTreeRecord::getBounds)));
 	}
 
 	protected <R> void doRemoveFromCachedChildren(long parentKey, R child,
@@ -781,9 +766,7 @@ public abstract class AbstractConstraintsTree< //
 	 */
 	protected void checkNodeIntegrity(NR n) {
 		// Check parent has exactly the minimum bounds of its children
-		Collection<? extends NS> childBounds =
-			Collections2.transform(getChildrenOf(n), DBTreeRecord::getBounds);
-		NS expectedBounds = BoundingShape.boundsUnion(childBounds);
+		NS expectedBounds = unionStream(getChildrenOf(n).stream().map(DBTreeRecord::getBounds));
 		if (expectedBounds == null && n != root) {
 			throw new AssertionError("Non-root node cannot be empty");
 		}
@@ -843,6 +826,7 @@ public abstract class AbstractConstraintsTree< //
 					throw new AssertionError(
 						"Leaf node " + n + " cannot contain nodes " + nodeChildren);
 				}
+				break;
 		}
 
 		// Check that child count matches by counting over iterator
@@ -911,9 +895,6 @@ public abstract class AbstractConstraintsTree< //
 					" out of sync: cache=" + cachedChildren + " db=" + databasedChildren);
 			}
 		}
-		if (leafLevel != computeLeafLevel()) {
-			throw new AssertionError("Leaf level is incorrect");
-		}
 		visit(null, new TreeRecordVisitor() {
 			@Override
 			protected VisitResult beginNode(NR parent, NR n, QueryInclusion inclusion) {
@@ -927,6 +908,9 @@ public abstract class AbstractConstraintsTree< //
 				return VisitResult.NEXT;
 			}
 		}, false);
+		if (leafLevel != computeLeafLevel()) {
+			throw new AssertionError("Leaf level is incorrect");
+		}
 	}
 
 	public abstract AbstractConstraintsTreeSpatialMap<DS, DR, NS, T, Q> asSpatialMap();
@@ -945,6 +929,7 @@ public abstract class AbstractConstraintsTree< //
 			cachedNodeChildren.clear();
 			dataStore.invalidateCache();
 			nodeStore.invalidateCache();
+			init();
 		}
 	}
 }

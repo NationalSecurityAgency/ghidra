@@ -1,8 +1,11 @@
+AutoMapSpec
 AutoReadMemorySpec
 DebuggerBot
 DebuggerMappingOpinion
 DebuggerModelFactory
+DebuggerPcodeEmulatorFactory
 DebuggerPlatformOpinion
 DebuggerProgramLaunchOpinion
+DebuggerRegisterColumnFactory
 DisassemblyInject
-LocationTrackingSpec
+LocationTrackingSpecFactory

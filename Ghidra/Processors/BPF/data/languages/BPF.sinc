@@ -1,0 +1,184 @@
+###############################################################################
+# BPF Processor Specification for Ghidra
+###############################################################################
+
+define space ram type=ram_space size=4 default;
+define space packet type=ram_space size=4;
+define space mem type=ram_space size=4;
+define space register type=register_space size=4;
+
+define register offset=0 size=4 [ A  X  RS  R  PC ];
+define register offset=0 size=2 [ AH _ XH _  RSH _ RH _ PCH _ ];
+define register offset=0 size=1 [ AB _ _ _ XB _ _ _  RSB _ _ _ RB _ _ _ PCB _ _ _ ];
+ 
+# Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
+define token instr(64)
+	imm=(32, 63)
+	jf=(24, 31) signed
+	jt=(16, 23) signed
+	op_src_K_X=(3, 3)
+	op_alu_jmp_opcode=(4, 7)
+	op_alu_jmp_source=(3, 3)
+	op_alu_mode=(4, 7)
+	op_ld_st_mode=(5, 7)
+	op_ld_st_size=(3, 4)
+	op_insn_class=(0, 2)
+;
+
+:LD imm  is imm & op_ld_st_mode=0x0 & op_ld_st_size=0x0 & op_insn_class=0x0 { A=imm; }
+:LDH imm  is imm & op_ld_st_mode=0x0 & op_ld_st_size=0x1 & op_insn_class=0x0 { AH=imm:2; A = A & 0xffff; }
+:LDB imm  is imm & op_ld_st_mode=0x0 & op_ld_st_size=0x2 & op_insn_class=0x0 { AB=imm:1; A = A & 0xff;}
+
+:LDX imm  is imm & op_ld_st_mode=0x0 & op_ld_st_size=0x0 & op_insn_class=0x1 { X=imm; }
+:LDXH imm  is imm & op_ld_st_mode=0x0 & op_ld_st_size=0x1 & op_insn_class=0x1 { XH=imm:2; X = X & 0xffff; }
+:LDXB imm  is imm & op_ld_st_mode=0x0 & op_ld_st_size=0x2 & op_insn_class=0x1 { XB=imm:1; X = X & 0xff;}
+
+:LD imm  is imm & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { A=*[packet]:4 imm:4; }
+:LDH imm  is imm & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x0 { A=*[packet]:2 imm:4; A = A & 0xffff; }
+:LDB imm  is imm & op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x0 { A=*[packet]:1 imm:4; A = A & 0xff;}
+
+:LDX imm  is imm & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x1 { X=*[packet]:4 imm:4; }
+:LDXH imm  is imm & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x1 { X=*[packet]:2 imm:4; X = X & 0xffff; }
+:LDXB imm  is imm & op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x1 { X=*[packet]:1 imm:4; X = X & 0xff;}
+
+:ST imm  is imm & op_insn_class=0x2 { *[mem]:4 imm:4=A:4; }
+:STX imm  is imm & op_insn_class=0x3 { *[mem]:4 imm:4=X:4; }
+
+:LDI imm  is imm & op_ld_st_mode=0x2 & op_ld_st_size=0x0 & op_insn_class=0x0 { A=*[packet]:4 (imm:4 + X); }
+:LDIH imm  is imm & op_ld_st_mode=0x2 & op_ld_st_size=0x1 & op_insn_class=0x0 { A=*[packet]:2 (imm:4 + X); A = A & 0xffff; }
+:LDIB imm  is imm & op_ld_st_mode=0x2 & op_ld_st_size=0x2 & op_insn_class=0x0 { A=*[packet]:1 (imm:4 + X); A = A & 0xff; }
+
+:LD imm  is imm & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x0 { A=*[mem]:4 imm:4; }
+:LDH imm  is imm & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x0 { A=*[mem]:2 imm:4; A = A & 0xffff; }
+:LDB imm  is imm & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x0 { A=*[mem]:1 imm:4; A = A & 0xff; }
+
+:LDX imm  is imm & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x1 { X=*[mem]:4 imm:4; }
+:LDXH imm  is imm & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x1 { X=*[mem]:2 imm:4; X = X & 0xffff; }
+:LDXB imm  is imm & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x1 { X=*[mem]:1 imm:4; X = X & 0xff; }
+
+# ALU
+:ADD imm  is imm & op_alu_mode=0x0 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A + imm; }
+:ADD X  is X & op_alu_mode=0x0 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A + X; }
+:SUB imm  is imm & op_alu_mode=0x1 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A - imm; }
+:SUB X  is X & op_alu_mode=0x1 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A - X; }
+:MUL imm  is imm & op_alu_mode=0x2 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A * imm; }
+:MUL X  is X & op_alu_mode=0x2 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A * X; }
+:DIV imm  is imm & op_alu_mode=0x3 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A / imm; }
+:DIV X  is X & op_alu_mode=0x3 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A / X; }
+:OR imm  is imm & op_alu_mode=0x4 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A | imm; }
+:OR X  is X & op_alu_mode=0x4 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A | X; }
+:AND imm  is imm & op_alu_mode=0x5 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A & imm; }
+:AND X  is X & op_alu_mode=0x5 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A & X; }
+:LSH imm  is imm & op_alu_mode=0x6 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A << imm; }
+:LSH X  is X & op_alu_mode=0x6 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A << X; }
+:RSH imm  is imm & op_alu_mode=0x7 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A >> imm; }
+:RSH X  is X & op_alu_mode=0x7 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A >> X; }
+:NEG  is op_alu_mode=0x8 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= -A; }
+:MOD imm  is imm & op_alu_mode=0x9 & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A % imm; }
+:MOD X  is X & op_alu_mode=0x9 & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A % X; }
+:XOR imm  is imm & op_alu_mode=0xa & op_insn_class=0x4 & op_src_K_X = 0x0 { A= A ^ imm; }
+:XOR X  is X & op_alu_mode=0xa & op_insn_class=0x4 & op_src_K_X = 0x1 { A= A ^ X; }
+
+:TAX  is op_insn_class=0x7 & op_src_K_X = 0x0 { A= X; }
+:TXA  is op_insn_class=0x7 & op_src_K_X = 0x1 { X= A; }
+
+
+:LD_MSH imm  is imm & op_ld_st_mode=0x5 & op_ld_st_size=0x0 & op_insn_class=0x0 {
+  local t_val = *[packet]:4 imm:4;
+  t_val = t_val&0xf;
+  t_val = t_val << 2;
+  A = t_val;
+}
+
+:LDH_MSH imm  is imm & op_ld_st_mode=0x5 & op_ld_st_size=0x1 & op_insn_class=0x0 {
+  local t_val = *[packet]:2 imm:4;
+  t_val = t_val&0xf;
+  t_val = t_val << 2;
+  AH = t_val;
+}
+
+:LDB_MSH imm  is imm & op_ld_st_mode=0x5 & op_ld_st_size=0x2 & op_insn_class=0x0 {
+  local t_val = *[packet]:1 imm:4;
+  t_val = t_val&0xf;
+  t_val = t_val << 2;
+  AB = t_val;
+}
+
+:LDX_MSH imm  is imm & op_ld_st_mode=0x5 & op_ld_st_size=0x0 & op_insn_class=0x1 {
+  local t_val = *[packet]:4 imm:4;
+  t_val = t_val&0xf;
+  t_val = t_val << 2;
+  X = t_val;
+}
+
+:LDXH_MSH imm  is imm & op_ld_st_mode=0x5 & op_ld_st_size=0x1 & op_insn_class=0x1 {
+  local t_val = *[packet]:2 imm:4;
+  t_val = t_val&0xf;
+  t_val = t_val << 2;
+  XH = t_val;
+  X = X & 0xffff;
+}
+
+:LDXB_MSH imm  is imm & op_ld_st_mode=0x5 & op_ld_st_size=0x2 & op_insn_class=0x1 {
+  local t_val = *[packet]:1 imm:4;
+  t_val = t_val&0xf;
+  t_val = t_val << 2;
+  XB = t_val;
+  X = X & 0xff;
+}
+
+#Branch instructions
+###############################################################################
+
+joff: reloc  is imm [ reloc = inst_next + imm * 8; ] { export *:8 reloc; }
+jtoff: reloc  is jt [ reloc = inst_next + jt * 8; ] { export *:8 reloc; }
+jfoff: reloc  is jf [ reloc = inst_next + jf * 8; ] { export *:8 reloc; }
+
+:JA joff  is joff & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=0 & op_insn_class=0x5 {
+	goto joff;
+}
+
+:JEQ jtoff, jfoff, imm  is imm & jtoff & jfoff & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
+	if (A==imm) goto jtoff;
+	goto jfoff;
+}
+
+:JEQ jtoff, jfoff, X  is X & jtoff & jfoff & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=1 & op_insn_class=0x5 {	
+	if (A==X) goto jtoff;
+	goto jfoff;
+}
+
+:JGT jtoff, jfoff, imm  is imm & jtoff & jfoff & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
+	if (A > imm) goto jtoff;
+	goto jfoff;
+}
+
+:JGT jtoff, jfoff, X  is X & jtoff & jfoff & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=1 & op_insn_class=0x5 {	
+	if (A > X) goto jtoff;
+	goto jfoff;
+}
+
+:JGE jtoff, jfoff, imm  is imm & jtoff & jfoff & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
+	if (A >= imm) goto jtoff;
+	goto jfoff;
+}
+
+:JGE jtoff, jfoff, X  is X & jtoff & jfoff & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=1 & op_insn_class=0x5 {	
+	if (A >= X) goto jtoff;
+	goto jfoff;
+}
+
+:JSET jtoff, jfoff, imm  is imm & jtoff & jfoff & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
+	if ((A&imm) != 0) goto jtoff;
+	goto jfoff;
+}
+
+:JSET jtoff, jfoff, X  is X & jtoff & jfoff & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=1 & op_insn_class=0x5 {	
+	if ((A&X) != 0) goto jtoff;
+	goto jfoff;
+}
+
+:RETW imm is imm & op_ld_st_size=0 & op_insn_class=0x6 {
+  R = imm;
+  return [*:8 RS];
+}

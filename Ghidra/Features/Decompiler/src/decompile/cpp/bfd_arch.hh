@@ -16,9 +16,13 @@
  */
 /// \file bfd_arch.hh
 /// \brief Specific implementation of Architecture using GNU BFD libraries
+#ifndef __BFD_ARCH_HH__
+#define __BFD_ARCH_HH__
 
 #include "sleigh_arch.hh"
 #include "loadimage_bfd.hh"
+
+namespace ghidra {
 
 extern ElementId ELEM_BFD_SAVEFILE;	///< Marshaling element \<bfd_savefile>
 
@@ -47,3 +51,6 @@ public:
   BfdArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~BfdArchitecture(void) {}
 };
+
+} // End namespace ghidra
+#endif

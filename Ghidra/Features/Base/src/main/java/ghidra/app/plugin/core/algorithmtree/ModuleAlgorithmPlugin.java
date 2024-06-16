@@ -43,7 +43,7 @@ import docking.action.MenuData;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Apply Module Algorithm to a folder or fragment",
 	description = "This plugin applies the \"module\" algorithm "+
 			" to a Folder or Fragment in a program tree. This algorithm "+
@@ -60,7 +60,7 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
 	private BlockModelService blockModelService;
 
 	public ModuleAlgorithmPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override

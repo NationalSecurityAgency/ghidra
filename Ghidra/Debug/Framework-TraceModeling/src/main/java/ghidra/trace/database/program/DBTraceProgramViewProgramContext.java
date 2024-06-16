@@ -20,8 +20,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
-import com.google.common.collect.Range;
-
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -29,6 +27,7 @@ import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.util.AbstractProgramContext;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.LockHold;
 
@@ -95,7 +94,7 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 	@Override
 	public void setRegisterValue(Address start, Address end, RegisterValue value)
 			throws ContextChangeException {
-		registerContextManager.setValue(language, value, Range.atLeast(program.snap),
+		registerContextManager.setValue(language, value, Lifespan.nowOn(program.snap),
 			new AddressRangeImpl(start, end));
 	}
 
@@ -177,7 +176,7 @@ public class DBTraceProgramViewProgramContext extends AbstractProgramContext {
 	public void remove(Address start, Address end, Register register)
 			throws ContextChangeException {
 		try (LockHold hold = program.trace.lockWrite()) {
-			Range<Long> span = Range.closed(program.snap, program.snap);
+			Lifespan span = Lifespan.at(program.snap);
 			for (AddressRange range : language.getAddressFactory().getAddressSet(start, end)) {
 				registerContextManager.removeValue(language, register, span, range);
 			}

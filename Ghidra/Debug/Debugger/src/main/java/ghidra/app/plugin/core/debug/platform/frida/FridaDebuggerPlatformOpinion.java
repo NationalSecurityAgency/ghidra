@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.platform.frida;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
@@ -79,18 +80,23 @@ public class FridaDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinio
 			// TODO: May need these per offer
 			return new FridaDebuggerPlatformMapper(tool, trace, getCompilerSpec());
 		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == FridaDebuggerPlatformMapper.class;
+		}
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
 		if (debugger == null || arch == null ||
 			os == null | !debugger.toLowerCase().contains("frida")) {
 			return Set.of();
 		}
 		String lcOS = os.toLowerCase();
 		boolean isLinux = lcOS.contains("linux");
-		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos");
+		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos") || lcOS.contains("ios");
 		boolean isWindows = lcOS.contains("windows");
 		String lcArch = arch.toLowerCase();
 		// "arm" subsumes "arm64"

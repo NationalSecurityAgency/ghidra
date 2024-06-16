@@ -31,18 +31,19 @@ import docking.DialogComponentProvider;
 import docking.StatusBar;
 import docking.action.DockingActionIf;
 import docking.actions.KeyEntryDialog;
-import docking.actions.ToolActions;
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.LoggingInitialization;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.main.PickToolDialog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.dialog.PluginInstallerDialog;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskDialog;
 import ghidra.util.task.TaskMonitor;
@@ -135,11 +136,12 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		tool.executeBackgroundCommand(new DummyBackgroundCommand(), program);
 
 		Border inner = BorderFactory.createRaisedBevelBorder();
-		Border outer = BorderFactory.createLineBorder(Color.BLACK);
+		Border outer = BorderFactory.createLineBorder(Colors.BORDER);
 		statusBar.setBorder(BorderFactory.createCompoundBorder(outer, inner));
 		captureComponent(statusBar);
 		program.endTransaction(id, false);
-		padImage(Color.WHITE, topBottomMargin, leftRightMargin, leftRightMargin, topBottomMargin);
+		padImage(Colors.FOREGROUND, topBottomMargin, leftRightMargin, leftRightMargin,
+			topBottomMargin);
 
 		JComponent statusLabel = (JComponent) getInstanceField("statusLabel", statusBar);
 		Font font = new Font("Ariel", Font.PLAIN, 12);
@@ -184,8 +186,9 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		int arrowX = bounds.x + bounds.width / 2 + leftMargin;
 		int arrowStartY = textY - metrics.getHeight() - 5;
 		int arrowEndY = height - topMargin;
-		drawText(label, Color.BLACK, new Point(textX, textY), font);
-		drawArrow(Color.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY), 9);
+		drawText(label, Colors.FOREGROUND, new Point(textX, textY), font);
+		drawArrow(Palette.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY),
+			9);
 	}
 
 	private void labelTop(String label, Rectangle bounds, Font font, FontMetrics metrics,
@@ -195,8 +198,9 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		int arrowX = bounds.x + bounds.width / 2 + leftMargin;
 		int arrowStartY = textY + 5;
 		int arrowEndY = topMargin;
-		drawText(label, Color.BLACK, new Point(textX, textY), font);
-		drawArrow(Color.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY), 9);
+		drawText(label, Colors.FOREGROUND, new Point(textX, textY), font);
+		drawArrow(Palette.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY),
+			9);
 	}
 
 	private int getTextStart(Rectangle bounds, FontMetrics metrics, String string) {
@@ -261,7 +265,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		captureDialog();
 
 		JButton button = findButtonByText(window, "Restore Defaults");
-		drawRectangleWithDropShadowAround(button, Color.GREEN, 2);
+		drawRectangleWithDropShadowAround(button, Palette.GREEN, 2);
 
 		crop(new Rectangle(0, 200, 700, 150));
 	}
@@ -283,10 +287,8 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void testSetKeyBindings() {
 
 		tool = env.launchDefaultTool();
-		ToolActions toolActions = (ToolActions) getInstanceField("toolActions", tool);
-
 		DockingActionIf action = getAction(tool, "FunctionPlugin", "Delete Function");
-		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(action, toolActions);
+		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(tool, action);
 
 		runSwing(() -> tool.showDialog(keyEntryDialog), false);
 		captureDialog();
@@ -307,7 +309,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		return helpTopicDirs;
 	}
 
-	private class DummyBackgroundCommand extends BackgroundCommand {
+	private static class DummyBackgroundCommand extends BackgroundCommand<DomainObject> {
 
 		public DummyBackgroundCommand() {
 			super("Dummy", true, true, false);

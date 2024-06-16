@@ -22,7 +22,9 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionMetadata;
@@ -59,7 +61,10 @@ import ghidra.util.task.TaskMonitor;
  * ------------------------------------
  */
 
-public class InstructionSearchDialog extends DialogComponentProvider implements Observer {
+public class InstructionSearchDialog extends ReusableDialogComponentProvider implements Observer {
+
+	private static final Color BG_COLOR_MARKERS =
+		new GColor("color.bg.plugin.instructionsearch.search.markers");
 
 	// Panel containing the {@link InstructionTable} and {@link PreviewTable}.
 	private InstructionSearchMainPanel tablePanel;
@@ -70,7 +75,7 @@ public class InstructionSearchDialog extends DialogComponentProvider implements 
 	// Panel for displaying error messages.
 	private MessagePanel messagePanel;
 
-	// The parent pluain object.
+	// The parent plugin object.
 	private InstructionSearchPlugin plugin;
 
 	private JButton searchAllButton;
@@ -136,7 +141,7 @@ public class InstructionSearchDialog extends DialogComponentProvider implements 
 		if (selection == null && getMessagePanel() != null) {
 			getMessagePanel().setMessageText(
 				"Select instructions from the listing (and hit reload) to populate the table.",
-				Color.BLUE);
+				Messages.NORMAL);
 		}
 
 		if (selection != null && plugin.isSelectionValid(selection, this)) {
@@ -498,7 +503,7 @@ public class InstructionSearchDialog extends DialogComponentProvider implements 
 			model.setSelectionSize(matchSize);
 			TableComponentProvider<Address> tableProvider =
 				table.showTableWithMarkers(title + " " + model.getName(), "InstructionSearch",
-					model, Color.GREEN, null, "Instruction Search Results", null);
+					model, BG_COLOR_MARKERS, null, "Instruction Search Results", null);
 			tableProvider.installRemoveItemsAction();
 		};
 		SystemUtilities.runSwingLater(runnable);

@@ -34,7 +34,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.StringUtilities;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class CommentMarkupType extends VTMarkupType {
 
@@ -206,7 +206,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 		Stringable appliedMarkupOriginalValue = null;
 		try {
 			appliedMarkupOriginalValue = getOriginalDestinationValueForAppliedMarkupOfThisType(
-				association, destinationAddress, TaskMonitorAdapter.DUMMY_MONITOR);
+				association, destinationAddress, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// For now this shouldn't get a cancel.

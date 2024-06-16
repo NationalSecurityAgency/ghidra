@@ -21,24 +21,23 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 
 public class TestTargetBreakpoint
 		extends DefaultTestTargetObject<TestTargetBreakpoint, TestTargetBreakpointContainer>
 		implements TargetBreakpointSpec, TargetBreakpointLocation, TargetDeletable {
 
-	public TestTargetBreakpoint(TestTargetBreakpointContainer parent, int num, Address address,
-			int length, Set<TargetBreakpointKind> kinds) {
+	public TestTargetBreakpoint(TestTargetBreakpointContainer parent, int num, AddressRange range,
+			Set<TargetBreakpointKind> kinds) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(num)), "Breakpoint");
 
 		changeAttributes(List.of(), Map.of(
 			SPEC_ATTRIBUTE_NAME, this,
-			ADDRESS_ATTRIBUTE_NAME, address,
+			RANGE_ATTRIBUTE_NAME, range,
 			ENABLED_ATTRIBUTE_NAME, true,
-			EXPRESSION_ATTRIBUTE_NAME, address.toString(),
-			KINDS_ATTRIBUTE_NAME, TargetBreakpointKindSet.copyOf(kinds),
-			LENGTH_ATTRIBUTE_NAME, length //
-		), "Initialized");
+			EXPRESSION_ATTRIBUTE_NAME, range.getMinAddress().toString(),
+			KINDS_ATTRIBUTE_NAME, TargetBreakpointKindSet.copyOf(kinds)),
+			"Initialized");
 	}
 
 	@Override

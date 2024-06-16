@@ -15,13 +15,12 @@
  */
 package pdbquery;
 
-import java.util.Map;
-
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
+import ghidra.app.util.pdb.pdbapplicator.SymbolGroup;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -41,7 +40,7 @@ public class PdbQuery {
 	 */
 	public static AbstractMsType getDataTypeRecord(GhidraScript script, AbstractPdb pdb,
 			int number) {
-		AbstractTypeProgramInterface tpi = pdb.getTypeProgramInterface();
+		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
 		if (tpi == null) {
 			println(script, "PDB does not contain a TPI... aborting search.");
 			return null;
@@ -75,7 +74,7 @@ public class PdbQuery {
 	 */
 	public static AbstractMsType getItemTypeRecord(GhidraScript script, AbstractPdb pdb,
 			int number) {
-		AbstractTypeProgramInterface ipi = pdb.getItemProgramInterface();
+		TypeProgramInterface ipi = pdb.getItemProgramInterface();
 		if (ipi == null) {
 			println(script, "PDB does not contain an IPI... aborting search.");
 			return null;
@@ -102,7 +101,7 @@ public class PdbQuery {
 
 	/**
 	 * Searches PDB data type records that contain the search string.  Outputs results to the
-	 * console.
+	 * console
 	 * @param script the script for which we are working
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
@@ -110,7 +109,7 @@ public class PdbQuery {
 	 */
 	public static void searchDataTypes(GhidraScript script, AbstractPdb pdb, String searchString)
 			throws CancelledException {
-		AbstractTypeProgramInterface tpi = pdb.getTypeProgramInterface();
+		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
 		if (tpi == null) {
 			println(script, "PDB does not contain a TPI... aborting search.");
 		}
@@ -124,7 +123,7 @@ public class PdbQuery {
 		println(script, "Searching " + num + " PDB data type components...");
 		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
 				.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
 			AbstractMsType typeRecord = pdb.getTypeRecord(recordNumber);
 			String recordString = typeRecord.toString();
@@ -140,7 +139,7 @@ public class PdbQuery {
 
 	/**
 	 * Searches PDB item records that contain the search string.  Outputs results to the
-	 * console.
+	 * console
 	 * @param script the script for which we are working
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
@@ -148,7 +147,7 @@ public class PdbQuery {
 	 */
 	public static void searchItemTypes(GhidraScript script, AbstractPdb pdb, String searchString)
 			throws CancelledException {
-		AbstractTypeProgramInterface ipi = pdb.getItemProgramInterface();
+		TypeProgramInterface ipi = pdb.getItemProgramInterface();
 		if (ipi == null) {
 			println(script, "PDB does not contain an IPI... aborting search.");
 			return;
@@ -163,7 +162,7 @@ public class PdbQuery {
 		println(script, "Searching " + num + " PDB item type components...");
 		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < ipi
 				.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecordNumber recordNumber = RecordNumber.itemRecordNumber(indexNumber);
 			AbstractMsType typeRecord = pdb.getTypeRecord(recordNumber);
 			String recordString = typeRecord.toString();
@@ -179,14 +178,15 @@ public class PdbQuery {
 
 	/**
 	 * Searches PDB symbol records that contain the search string.  Outputs results to the
-	 * console.
+	 * console
 	 * @param script the script for which we are working
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon issue creating an iterator
 	 */
 	public static void searchSymbols(GhidraScript script, AbstractPdb pdb, String searchString)
-			throws CancelledException {
+			throws CancelledException, PdbException {
 
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
@@ -198,47 +198,32 @@ public class PdbQuery {
 
 		int numModules = debugInfo.getNumModules();
 		TaskMonitor monitor = script.getMonitor();
-		int numSymbols = 0;
-		for (int module = 0; module <= numModules; module++) {
-			monitor.checkCanceled();
-			try {
-				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
-				numSymbols += symbols.size();
-			}
-			catch (PdbException e) {
-				// just skip the module... logging this in the next loop.
-			}
-		}
 
-		monitor.initialize(numSymbols);
-		println(script, "Searching " + numSymbols + " PDB symbol components...");
+		monitor.initialize(numModules);
+		println(script, "Searching " + numModules + " PDB modules' symbol components...");
 		for (int module = 0; module <= numModules; module++) {
-			monitor.checkCanceled();
-			try {
-				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
-				numSymbols += symbols.size();
-				for (Map.Entry<Long, AbstractMsSymbol> entry : symbols.entrySet()) {
-					monitor.checkCanceled();
-					AbstractMsSymbol symbol = entry.getValue();
-					String symbolString = symbol.toString();
-					if (symbolString.contains(searchString)) {
-						results.append("Module " + module + ", Offset " + entry.getKey() + ":\n");
-						results.append(symbolString);
-						results.append('\n');
-					}
-					monitor.incrementProgress(1);
+			monitor.checkCancelled();
+			SymbolGroup symbolGroup = new SymbolGroup(pdb, module);
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+			while (iter.hasNext()) {
+				monitor.checkCancelled();
+				AbstractMsSymbol symbol = iter.next();
+				String symbolString = symbol.toString();
+				if (symbolString.contains(searchString)) {
+					results.append(
+						"Module " + module + ", Offset " + iter.getCurrentOffset() + ":\n");
+					results.append(symbolString);
+					results.append('\n');
 				}
 			}
-			catch (PdbException e) {
-				Msg.debug(PdbQuery.class, "Skipping module " + module + " due to exception.");
-			}
+			monitor.incrementProgress(1);
 		}
 		println(script, results.toString());
 	}
 
 	/**
 	 * Method for outputting a message to the console (if script is not null); otherwise outputs
-	 * the message to Msg.info().
+	 * the message to Msg.info()
 	 * @param script the script
 	 * @param message the message to output to the console
 	 */

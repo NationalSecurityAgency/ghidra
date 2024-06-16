@@ -22,33 +22,60 @@ import java.util.concurrent.*;
  * <code>FileSystemListenerList</code> maintains a list of FileSystemListener's.
  * This class, acting as a FileSystemListener, simply relays each callback to
  * all FileSystemListener's within its list.  Employs either a synchronous 
- * and asynchronous notification mechanism.
+ * and asynchronous notification mechanism. Once disposed event dispatching will 
+ * discontinue.
  */
 public class FileSystemEventManager implements FileSystemListener {
+
+	private static enum ThreadState {
+		STOPPED, RUNNING, DISPOSED
+	}
 
 	private List<FileSystemListener> listeners = new CopyOnWriteArrayList<>();
 	private BlockingQueue<FileSystemEvent> eventQueue = new LinkedBlockingQueue<>();
 
-	private volatile boolean disposed = false;
+	private final boolean asyncDispatchEnabled;
+
+	private volatile ThreadState state = ThreadState.STOPPED;
 	private Thread thread;
 
 	/**
 	 * Constructor
 	 * @param enableAsynchronousDispatching if true a separate dispatch thread will be used
-	 * to notify listeners.  If false, blocking notification will be performed.
+	 * to notify listeners.  If false, blocking notification will be performed.  Events are 
+	 * immediately discarded in the absence of any listener(s).
 	 */
 	public FileSystemEventManager(boolean enableAsynchronousDispatching) {
+		asyncDispatchEnabled = enableAsynchronousDispatching;
+	}
 
-		if (enableAsynchronousDispatching) {
-			thread = new FileSystemEventProcessingThread();
-			thread.start();
+	/**
+	 * Return true if asynchornous event processing is enabled.
+	 * @return true if asynchornous event processing is enabled, else false
+	 */
+	public boolean isAsynchronous() {
+		return asyncDispatchEnabled;
+	}
+
+	/**
+	 * Discontinue event dispatching and terminate dispatch thread if it exists.
+	 */
+	public synchronized void dispose() {
+		state = ThreadState.DISPOSED;
+		if (asyncDispatchEnabled) {
+			if (thread != null && thread.isAlive()) {
+				thread.interrupt();
+			}
+			eventQueue.clear();
 		}
 	}
 
-	public void dispose() {
-		disposed = true;
-		if (thread != null) {
-			thread.interrupt();
+	private synchronized void startDispatchThread() {
+		if (asyncDispatchEnabled && state == ThreadState.STOPPED) {
+			// only starts when first listener is added
+			state = ThreadState.RUNNING;
+			thread = new FileSystemEventProcessingThread();
+			thread.start();
 		}
 	}
 
@@ -57,6 +84,7 @@ public class FileSystemEventManager implements FileSystemListener {
 	 * @param listener the listener
 	 */
 	public void add(FileSystemListener listener) {
+		startDispatchThread(); // if asyncDispatchEnabled
 		listeners.add(listener);
 	}
 
@@ -116,30 +144,34 @@ public class FileSystemEventManager implements FileSystemListener {
 	@Override
 	public void syncronize() {
 		// Note: synchronize calls will only work when using a threaded event queue
-		if (isAsynchronous()) {
-			add(new SynchronizeEvent());
+		if (asyncDispatchEnabled) {
+			queueEvent(new SynchronizeEvent());
 		}
 	}
 
-	private boolean isAsynchronous() {
-		return thread != null;
-	}
-
-	private void add(FileSystemEvent ev) {
-		if (!listeners.isEmpty()) {
-			eventQueue.add(ev);
+	/**
+	 * Queue specified event if listener thread is running
+	 * @param ev filesystm event
+	 * @return true if queued, else false if listener thread not running
+	 */
+	private boolean queueEvent(FileSystemEvent ev) {
+		if (state == ThreadState.RUNNING) {
+			return eventQueue.add(ev);
 		}
+		return false;
 	}
 
 	private void handleEvent(FileSystemEvent e) {
-		if (disposed) {
+		if (state == ThreadState.DISPOSED) {
 			return;
 		}
 
-		if (isAsynchronous()) {
-			add(e);
+		if (asyncDispatchEnabled) {
+			// if there are no listeners event will be discarded (i.e., listener thread not running)
+			queueEvent(e);
 		}
 		else {
+			// process in a synchronous fashion in current thread
 			e.process(listeners);
 		}
 	}
@@ -154,17 +186,26 @@ public class FileSystemEventManager implements FileSystemListener {
 	 * 
 	 * @param timeout the maximum time to wait
 	 * @param unit the time unit of the {@code time} argument
-	 * @return true if the events were processed in the given timeout
-	 * @throws InterruptedException if this waiting thread is interrupted
+	 * @return true if the events were processed in the given timeout.  A false value will be
+	 * returned if either a timeout occured
 	 */
-	public boolean flushEvents(long timeout, TimeUnit unit) throws InterruptedException {
-		if (!isAsynchronous()) {
+	public boolean flushEvents(long timeout, TimeUnit unit) {
+		if (!asyncDispatchEnabled) {
 			return true; // each thread processes its own event
 		}
 
 		MarkerEvent event = new MarkerEvent();
-		eventQueue.add(event);
-		return event.waitForEvent(timeout, unit);
+		if (!queueEvent(event)) {
+			// events are not queuing since there are no listeners or dispose has occured
+			return true;
+		}
+		try {
+			return event.waitForEvent(timeout, unit);
+		}
+		catch (InterruptedException e) {
+			// ignore - listener thread stopped or disposed
+			return true;
+		}
 	}
 
 //==================================================================================================
@@ -180,18 +221,14 @@ public class FileSystemEventManager implements FileSystemListener {
 
 		@Override
 		public void run() {
-			while (!disposed) {
-
+			while (state == ThreadState.RUNNING) {
 				FileSystemEvent event;
 				try {
 					event = eventQueue.take();
 					event.process(listeners);
 				}
 				catch (InterruptedException e) {
-					// interrupt has been cleared; if other threads rely on this interrupted state,
-					// then mark the thread as interrupted again by calling: 
-					// Thread.currentThread().interrupt();
-					// For now, this code relies on the 'alive' flag to know when to terminate
+					// ignore - interrupt has been cleared
 				}
 			}
 		}

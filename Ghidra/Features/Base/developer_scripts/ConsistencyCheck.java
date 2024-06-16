@@ -54,7 +54,7 @@ public class ConsistencyCheck extends GhidraScript {
 			return;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		if (!df.canSave() || !currentProgram.hasExclusiveAccess()) {
 			popup("Program database is NOT consistent!\nRebuild requires exclusive checkout.");
@@ -72,7 +72,7 @@ public class ConsistencyCheck extends GhidraScript {
 
 		programMgr.closeProgram(currentProgram, true);
 
-		monitor.clearCanceled(); // compensate for Script Manager cancelling task on program close
+		monitor.clearCancelled(); // compensate for Script Manager cancelling task on program close
 
 		dbh = program.getDBHandle();
 		try {

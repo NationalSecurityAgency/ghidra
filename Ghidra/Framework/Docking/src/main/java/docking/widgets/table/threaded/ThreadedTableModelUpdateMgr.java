@@ -70,7 +70,7 @@ class ThreadedTableModelUpdateMgr<T> {
 		SystemUtilities.assertTrue(this.monitor.isCancelEnabled(),
 			"In order for this update manager to work correctly " +
 				"the given task monitor must be cancel enabled (e.g., you cannot use " +
-				"the TaskMonitorAdapter.DUMMY_MONITOR, as that is not cancelleable)");
+				"the TaskMonitor.DUMMY, as that is not cancelleable)");
 
 		addRemoveUpdater = new SwingUpdateManager(DELAY, MAX_DELAY, () -> processAddRemoveItems());
 
@@ -411,7 +411,7 @@ class ThreadedTableModelUpdateMgr<T> {
 		public void run() {
 			TableUpdateJob<T> job = getNextJob();
 			while (job != null) {
-				monitor.clearCanceled();
+				monitor.clearCancelled();
 				job.run();
 
 				// useful for debug				
@@ -433,7 +433,7 @@ class ThreadedTableModelUpdateMgr<T> {
 		}
 
 		@Override
-		public void clearCanceled() {
+		public void clearCancelled() {
 			// don't allow this
 		}
 	}

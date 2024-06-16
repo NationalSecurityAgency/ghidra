@@ -23,11 +23,8 @@ import java.util.List;
 
 import org.junit.*;
 
-import db.DBConstants;
 import db.DBHandle;
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
-import ghidra.framework.Application;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
@@ -58,11 +55,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		txID = handle.startTransaction();
 
 		addressFactory = language.getAddressFactory();
-		AddressMapDB addrMap = (AddressMapDB) program.getAddressMap();
+		AddressMapDB addrMap = program.getAddressMap();
 		Lock lock = new Lock("Test");
-		int openMode = DBConstants.CREATE;
-		mem = new MemoryMapDB(handle, addrMap, openMode, true, lock);
-
+		mem = new MemoryMapDB(handle, addrMap, true, lock);
 		MemoryMapDBAdapter adapter =
 			new MemoryMapDBAdapterV3(handle, mem, MAX_SUB_BLOCK_SIZE, true);
 		FileBytesAdapter fileBytesAdapter = new FileBytesAdapterV0(handle, true);
@@ -94,7 +89,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(false, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -125,7 +120,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(9), info.getMaxAddress());
 		try {
 			block.getByte(addr(0));
-			fail("expected exception trying to read bytes on unitialized block");
+			fail("expected exception trying to read bytes on uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected
@@ -133,7 +128,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCreateUnitializedOverlayBlock() throws Exception {
+	public void testCreateUninitializedOverlayBlock() throws Exception {
 		MemoryBlock block = mem.createUninitializedBlock("test", addr(0), 10, true);
 
 		assertEquals(10, block.getSize());
@@ -150,7 +145,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(10, info.getLength());
 		try {
 			block.getByte(block.getStart());
-			fail("expected exception trying to read bytes on unitialized block");
+			fail("expected exception trying to read bytes on uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected
@@ -194,7 +189,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(true, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -208,7 +203,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		}
 		try {
 			mem.getByte(block.getStart().add(10));
-			fail("expected exception trying to read bytes on mapped unitialized block");
+			fail("expected exception trying to read bytes on mapped uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected 
@@ -230,7 +225,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(true, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -245,7 +240,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		}
 		try {
 			mem.getByte(block.getStart().add(8));
-			fail("expected exception trying to read bytes on mapped unitialized block");
+			fail("expected exception trying to read bytes on mapped uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected 
@@ -266,7 +261,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(false, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -398,7 +393,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 
 		sourceInfo = sourceInfos.get(1);
 		assertEquals(fileBytes, sourceInfo.getFileBytes().get());
-		assertEquals(70, sourceInfo.getFileBytesOffset());
+		assertEquals(70, sourceInfo.getFileBytesOffset(sourceInfo.getMinAddress()));
 		assertEquals(10, sourceInfo.getLength());
 	}
 
@@ -535,7 +530,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSplitAndJoinUnitializedBlock() throws Exception {
+	public void testSplitAndJoinUninitializedBlock() throws Exception {
 		MemoryBlock block = mem.createUninitializedBlock("test", addr(0), 40, false);
 		mem.split(block, addr(10));
 		MemoryBlock[] blocks = mem.getBlocks();
@@ -979,7 +974,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAddressSourceInfoForUnitialized() throws Exception {
+	public void testAddressSourceInfoForUninitialized() throws Exception {
 		mem.createUninitializedBlock("test", addr(0), 10, false);
 
 		AddressSourceInfo info = mem.getAddressSourceInfo(addr(0));
@@ -1024,14 +1019,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		return addressFactory.getDefaultAddressSpace().getAddress(offset);
 	}
 
-	private Language getLanguage(String languageName) throws Exception {
-
-		ResourceFile ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-		if (ldefFile != null) {
-			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			Language language = languageService.getLanguage(new LanguageID(languageName));
-			return language;
-		}
-		throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return languageService.getLanguage(new LanguageID(languageName));
 	}
+
 }

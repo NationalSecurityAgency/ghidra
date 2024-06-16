@@ -18,6 +18,8 @@
 #include "test.hh"
 #include <iostream>
 
+namespace ghidra {
+
 static Architecture *glb;
 static TypeFactory *types;
 static CastStrategy *strategy;
@@ -31,7 +33,7 @@ public:
   static void build(void);
 };
 
-TypeTestEnvironment theEnviron;
+static TypeTestEnvironment theEnviron;
 
 TypeTestEnvironment::TypeTestEnvironment(void)
 
@@ -209,3 +211,5 @@ TEST(cast_integertoken) {
   ASSERT(longPrinted(CPUI_INT_RIGHT,parse("uint8"),0xffffffff));
   ASSERT(!longPrinted(CPUI_INT_RIGHT,parse("uint8"),0x100000000));
 }
+
+} // End namespace ghidra

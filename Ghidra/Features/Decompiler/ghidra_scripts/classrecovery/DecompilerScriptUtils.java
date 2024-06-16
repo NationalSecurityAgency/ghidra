@@ -15,10 +15,12 @@
  */
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
+
+import docking.options.OptionsService;
 import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.ParameterDefinition;
@@ -31,34 +33,29 @@ import ghidra.util.task.TaskMonitor;
 public class DecompilerScriptUtils {
 
 	private Program program;
-	private PluginTool tool;
+	private ServiceProvider serviceProvider;
 	private TaskMonitor monitor;
 
 	private DecompInterface decompInterface;
 
-	DecompilerScriptUtils(Program program, PluginTool tool, TaskMonitor monitor) {
+	DecompilerScriptUtils(Program program, ServiceProvider serviceProvider, TaskMonitor monitor) {
 		this.program = program;
 		this.monitor = monitor;
-		this.tool = tool;
+		this.serviceProvider = serviceProvider;
 
 		decompInterface = setupDecompilerInterface();
 	}
 
 	/**
 	 * Method to setup the decompiler interface for the given program
-	 * @return the interface to the decompiler
+	 * @return the interface to the decompiler or null if failed to open program
 	 */
 	public DecompInterface setupDecompilerInterface() {
 
 		decompInterface = new DecompInterface();
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		OptionsService service = tool.getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
-		}
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(serviceProvider, program);
+
 		decompInterface.setOptions(options);
 
 		decompInterface.toggleCCode(true);
@@ -66,6 +63,7 @@ public class DecompilerScriptUtils {
 		decompInterface.setSimplificationStyle("decompile");
 
 		if (!decompInterface.openProgram(program)) {
+			decompInterface.dispose();
 			return null;
 		}
 		return decompInterface;
@@ -75,7 +73,6 @@ public class DecompilerScriptUtils {
 	public DecompInterface getDecompilerInterface() {
 		return decompInterface;
 	}
-
 
 	/**
 	 * Method to decompile the given function and return the function's HighFunction
@@ -112,7 +109,6 @@ public class DecompilerScriptUtils {
 		return decompRes.getHighFunction().getFunctionPrototype().getReturnType();
 	}
 
-
 	/**
 	 * Method to retrieve the function signature string from the decompiler function prototype. NOTE:
 	 * if there is a this param, it will not be included.
@@ -139,7 +135,6 @@ public class DecompilerScriptUtils {
 			return null;
 		}
 
-
 		HighFunction highFunction = decompRes.getHighFunction();
 
 		FunctionPrototype functionPrototype = highFunction.getFunctionPrototype();
@@ -157,7 +152,7 @@ public class DecompilerScriptUtils {
 		else {
 			int paramCount = parameterDefinitions.length;
 			for (int i = 0; i < parameterDefinitions.length; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				ParameterDefinition param = parameterDefinitions[i];
 
 				if (param.getName().equals("this")) {

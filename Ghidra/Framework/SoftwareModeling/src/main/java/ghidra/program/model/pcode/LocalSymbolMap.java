@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
@@ -22,10 +26,8 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A container for local symbols within the decompiler's model of a function. It contains HighSymbol
@@ -37,7 +39,7 @@ import ghidra.xml.XmlPullParser;
  */
 public class LocalSymbolMap {
 	private HighFunction func;				// Function to which these variables are local
-	private String spacename;
+	private AddressSpace localSpace;		// The address space (usually stack) associated with map 
 	private HashMap<MappedVarKey, HighSymbol> addrMappedSymbols;	// Hashed by addr and pcaddr
 	private HashMap<Long, HighSymbol> symbolMap;  			// Hashed by unique key
 	private HighSymbol[] paramSymbols;
@@ -45,11 +47,11 @@ public class LocalSymbolMap {
 
 	/**
 	 * @param highFunc HighFunction the local variables are defined within.
-	 * @param spcname space name the local variables are defined within.
+	 * @param spc the address space the local variables are defined within.
 	 */
-	public LocalSymbolMap(HighFunction highFunc, String spcname) {
+	public LocalSymbolMap(HighFunction highFunc, AddressSpace spc) {
 		func = highFunc;
-		spacename = spcname;
+		localSpace = spc;
 		addrMappedSymbols = new HashMap<>();
 		symbolMap = new HashMap<>();
 		paramSymbols = new HighSymbol[0];
@@ -261,40 +263,40 @@ public class LocalSymbolMap {
 	}
 
 	/**
-	 * Parse a &lt;mapsym&gt; tag in XML
-	 * @param parser is the XML parser
+	 * Decode a &lt;mapsym&gt; element from the stream.
+	 * @param decoder is the stream decoder
 	 * @return the reconstructed HighSymbol
-	 * @throws PcodeXMLException for problems sub tags
+	 * @throws DecoderException for problems sub tags
 	 */
-	private HighSymbol parseSymbolXML(XmlPullParser parser) throws PcodeXMLException {
-		HighSymbol res = HighSymbol.restoreMapSymXML(parser, false, func);
+	private HighSymbol decodeSymbol(Decoder decoder) throws DecoderException {
+		HighSymbol res = HighSymbol.decodeMapSym(decoder, false, func);
 		insertSymbol(res);
 		return res;
 	}
 
 	/**
-	 * Parse a local symbol scope in XML from the &lt;localdb&gt; tag.
+	 * Decode a local symbol scope from the stream
 	 * 
-	 * @param parser is the XML parser
-	 * @throws PcodeXMLException for problems parsing individual tags
+	 * @param decoder is the stream decoder
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void parseScopeXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("localdb");
-		spacename = el.getAttribute("main");
-		XmlElement scopeel = parser.start("scope");
+	public void decodeScope(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_LOCALDB);
+		localSpace = decoder.readSpace(ATTRIB_MAIN);
+		int scopeel = decoder.openElement(ELEM_SCOPE);
 
-		parser.discardSubTree();	// This is the parent scope path
-		parser.discardSubTree();	// This is the address range
+		decoder.skipElement();			// This is the parent scope path
+		decoder.skipElement();			// This is the address range
 
-		addrMappedSymbols.clear();			// Clear out any old map
-		symbolMap.clear();			// Clear out any old map
+		addrMappedSymbols.clear();		// Clear out any old map
+		symbolMap.clear();				// Clear out any old map
 
-		XmlElement nextEl = parser.peek();
-		if (nextEl != null && nextEl.isStart() && "symbollist".equals(nextEl.getName())) {
-			parseSymbolList(parser);
+		int nextEl = decoder.peekElement();
+		if (nextEl == ELEM_SYMBOLLIST.id()) {
+			decodeSymbolList(decoder);
 		}
-		parser.end(scopeel);
-		parser.end(el);
+		decoder.closeElement(scopeel);
+		decoder.closeElement(el);
 	}
 
 	private static final Comparator<HighSymbol> PARAM_SYMBOL_SLOT_COMPARATOR = new Comparator<>() {
@@ -305,15 +307,15 @@ public class LocalSymbolMap {
 	};
 
 	/**
-	 * Add mapped symbols to this LocalVariableMap, by parsing the &lt;symbollist&gt; and &lt;mapsym&gt; tags.
-	 * @param parser is the XML parser
-	 * @throws PcodeXMLException for problems parsing a tag
+	 * Add mapped symbols to this LocalVariableMap, by decoding the &lt;symbollist&gt; and &lt;mapsym&gt; elements
+	 * @param decoder is the stream decoder
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void parseSymbolList(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("symbollist");
+	public void decodeSymbolList(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_SYMBOLLIST);
 		ArrayList<HighSymbol> parms = new ArrayList<>();
-		while (parser.peek().isStart()) {
-			HighSymbol sym = parseSymbolXML(parser);
+		while (decoder.peekElement() != 0) {
+			HighSymbol sym = decodeSymbol(decoder);
 			if (sym.isParameter()) {
 				parms.add(sym);
 			}
@@ -321,39 +323,46 @@ public class LocalSymbolMap {
 		paramSymbols = new HighSymbol[parms.size()];
 		parms.toArray(paramSymbols);
 		Arrays.sort(paramSymbols, PARAM_SYMBOL_SLOT_COMPARATOR);
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	/**
-	 * Output an XML document representing this local variable map.
-	 * @param resBuf is the buffer to write to
+	 * Encode all the variables in this local variable map to the stream
+	 * @param encoder is the stream encoder
 	 * @param namespace if the namespace of the function
+	 * @param transformer is used to compute a simplified version of the namespace name
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildLocalDbXML(StringBuilder resBuf, Namespace namespace) {		// Get memory mapped local variables
-		resBuf.append("<localdb");
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "lock", false);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "main", spacename);
-		resBuf.append(">\n");
-		resBuf.append("<scope");
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getFunction().getName());
-		resBuf.append(">\n");
-		resBuf.append("<parent");
+	public void encodeLocalDb(Encoder encoder, Namespace namespace, NameTransformer transformer)
+			throws IOException {
+		encoder.openElement(ELEM_LOCALDB);
+		encoder.writeBool(ATTRIB_LOCK, false);
+		encoder.writeSpace(ATTRIB_MAIN, localSpace);
+		encoder.openElement(ELEM_SCOPE);
+		String nm = func.getFunction().getName();
+		encoder.writeString(ATTRIB_NAME, nm);
+		String altName = transformer.simplify(nm);
+		if (!nm.equals(altName)) {
+			encoder.writeString(ATTRIB_LABEL, altName);
+		}
+		encoder.openElement(ELEM_PARENT);
 		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
 		if (!HighFunction.collapseToGlobal(namespace)) {
 			parentid = namespace.getID();
 		}
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", parentid);
-		resBuf.append("/>\n");
-		resBuf.append("<rangelist/>\n");	// Empty address range
-		resBuf.append("<symbollist>\n");
+		encoder.writeUnsignedInteger(ATTRIB_ID, parentid);
+		encoder.closeElement(ELEM_PARENT);
+		encoder.openElement(ELEM_RANGELIST);	// Empty address range
+		encoder.closeElement(ELEM_RANGELIST);
+		encoder.openElement(ELEM_SYMBOLLIST);
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();
 		while (iter.hasNext()) {
 			HighSymbol sym = iter.next();
-			HighSymbol.buildMapSymXML(resBuf, sym);
+			HighSymbol.encodeMapSym(encoder, sym);
 		}
-		resBuf.append("</symbollist>\n");
-		resBuf.append("</scope>\n");
-		resBuf.append("</localdb>\n");
+		encoder.closeElement(ELEM_SYMBOLLIST);
+		encoder.closeElement(ELEM_SCOPE);
+		encoder.closeElement(ELEM_LOCALDB);
 	}
 
 	/**
@@ -423,16 +432,6 @@ public class LocalSymbolMap {
 		return (HighParam) paramSymbols[i].getHighVariable();
 	}
 
-	public boolean containsVariableWithName(String name) {
-		Collection<HighSymbol> values = symbolMap.values();
-		for (HighSymbol sym : values) {
-			if (sym.getName().equals(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	protected HighSymbol newMappedSymbol(long id, String nm, DataType dt, VariableStorage store,
 			Address pcaddr, int slot) {
 		if (id == 0) {
@@ -454,7 +453,7 @@ public class LocalSymbolMap {
 			id = getNextId();
 		}
 		HighSymbol sym;
-		if (DynamicHash.getMethodFromHash(hash) > 3) {
+		if (DynamicHash.getMethodFromHash(hash) > 3 && UnionFacetSymbol.isUnionType(dt)) {
 			int fieldNum = UnionFacetSymbol.extractFieldNumber(nm);
 			sym = new UnionFacetSymbol(id, nm, dt, fieldNum, func);
 		}
@@ -575,9 +574,20 @@ public class LocalSymbolMap {
 		}
 
 		public MappedVarKey(VariableStorage store, Address pcad) {
-			addr = store.getFirstVarnode().getAddress();
-			if (!addr.isStackAddress()) {
-				// first use not supported for stack
+			Varnode first = store.getFirstVarnode();
+
+			if (first != null) {
+				addr = first.getAddress();
+				if (!addr.isStackAddress()) {
+					// first use not supported for stack
+					pcaddr = pcad;
+				}
+			}
+			else {
+				// Hack: first can come back as null if something has gone wrong, such as a 
+				// spacebase without a range.
+				Msg.warn(this, "First use is null, possible spacebase/global range issue." +
+					"There will be variable rename issues");
 				pcaddr = pcad;
 			}
 		}
@@ -588,12 +598,14 @@ public class LocalSymbolMap {
 			if (!SystemUtilities.isEqual(pcaddr, op.pcaddr)) {
 				return false;
 			}
-			return addr.equals(op.addr);
+			return SystemUtilities.isEqual(addr, op.addr);
 		}
 
 		@Override
 		public int hashCode() {
-			int hash1 = addr.hashCode();
+			// Hack: addr should not be null, but can be if something in decompiler went wrong
+			//       most likely a spacebase without a corresponding global register range entry
+			int hash1 = addr != null ? addr.hashCode() : 0;
 			int hash2 = pcaddr != null ? pcaddr.hashCode() : 0;
 			return (hash1 << 4) ^ hash2;
 		}

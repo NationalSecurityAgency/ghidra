@@ -64,21 +64,21 @@ public class FunctionGraphVertexAttributes {
 	}
 
 	public Map<FGVertex, Point> getVertexLocations(FunctionGraph functionGraph) {
-		ObjectPropertyMap vertexLocationropertyMap =
+		ObjectPropertyMap<SaveablePoint> vertexLocationPropertyMap =
 			programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 				LOCATION_PROPERTY_NAME, SaveablePoint.class, false);
 
-		ObjectPropertyMap groupVertexLocationropertyMap =
+		ObjectPropertyMap<SaveablePoint> groupVertexLocationPropertyMap =
 			programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 				GROUP_LOCATION_PROPERTY_NAME, SaveablePoint.class, false);
 
-		return getVertexLocationsFromPropertyMaps(functionGraph, vertexLocationropertyMap,
-			groupVertexLocationropertyMap);
+		return getVertexLocationsFromPropertyMaps(functionGraph, vertexLocationPropertyMap,
+			groupVertexLocationPropertyMap);
 	}
 
 	private Map<FGVertex, Point> getVertexLocationsFromPropertyMaps(FunctionGraph functionGraph,
-			ObjectPropertyMap vertexLocationPropertyMap,
-			ObjectPropertyMap groupVertexLocationPropertyMap) {
+			ObjectPropertyMap<SaveablePoint> vertexLocationPropertyMap,
+			ObjectPropertyMap<SaveablePoint> groupVertexLocationPropertyMap) {
 
 		Map<FGVertex, Point> map = new HashMap<>();
 		Graph<FGVertex, FGEdge> graph = functionGraph;
@@ -95,8 +95,8 @@ public class FunctionGraphVertexAttributes {
 	}
 
 	private SaveablePoint getPointFromPropertyMap(FGVertex vertex,
-			ObjectPropertyMap vertexLocationPropertyMap,
-			ObjectPropertyMap groupVertexLocationPropertyMap) {
+			ObjectPropertyMap<SaveablePoint> vertexLocationPropertyMap,
+			ObjectPropertyMap<SaveablePoint> groupVertexLocationPropertyMap) {
 
 		Address address = vertex.getVertexAddress();
 		if (vertex instanceof GroupedFunctionGraphVertex) {
@@ -104,17 +104,17 @@ public class FunctionGraphVertexAttributes {
 				return null;
 			}
 
-			return (SaveablePoint) groupVertexLocationPropertyMap.getObject(address);
+			return groupVertexLocationPropertyMap.get(address);
 		}
 
 		if (vertexLocationPropertyMap == null) {
 			return null;
 		}
-		return (SaveablePoint) vertexLocationPropertyMap.getObject(address);
+		return vertexLocationPropertyMap.get(address);
 	}
 
 	public Element getGroupedVertexSettings(FunctionGraph functionGraph) {
-		ObjectPropertyMap propertyMap =
+		ObjectPropertyMap<SaveableXML> propertyMap =
 			programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 				GROUP_SETTINGS_PROPERTY_NAME, SaveableXML.class, false);
 		if (propertyMap == null) {
@@ -123,7 +123,7 @@ public class FunctionGraphVertexAttributes {
 
 		FGVertex rootVertex = functionGraph.getRootVertex();
 		Address entryPoint = rootVertex.getVertexAddress();
-		SaveableXML saveableXML = (SaveableXML) propertyMap.getObject(entryPoint);
+		SaveableXML saveableXML = propertyMap.get(entryPoint);
 		if (saveableXML != null) {
 			return saveableXML.getElement();
 		}
@@ -132,7 +132,7 @@ public class FunctionGraphVertexAttributes {
 	}
 
 	public Element getRegroupVertexSettings(FunctionGraph functionGraph) {
-		ObjectPropertyMap propertyMap =
+		ObjectPropertyMap<SaveableXML> propertyMap =
 			programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 				REGROUP_SETTINGS_PROPERTY_NAME, SaveableXML.class, false);
 		if (propertyMap == null) {
@@ -141,7 +141,7 @@ public class FunctionGraphVertexAttributes {
 
 		FGVertex rootVertex = functionGraph.getRootVertex();
 		Address entryPoint = rootVertex.getVertexAddress();
-		SaveableXML saveableXML = (SaveableXML) propertyMap.getObject(entryPoint);
+		SaveableXML saveableXML = propertyMap.get(entryPoint);
 		if (saveableXML != null) {
 			return saveableXML.getElement();
 		}
@@ -150,7 +150,7 @@ public class FunctionGraphVertexAttributes {
 	}
 
 	public Map<FGVertex, Color> getVertexColors(FunctionGraph functionGraph) {
-		ObjectPropertyMap propertyMap =
+		ObjectPropertyMap<SaveableColor> propertyMap =
 			programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 				COLOR_PROPERTY_NAME, SaveableColor.class, false);
 		if (propertyMap == null) {
@@ -163,7 +163,7 @@ public class FunctionGraphVertexAttributes {
 		for (FGVertex vertex : vertices) {
 			AddressSetView codeBlock = vertex.getAddresses();
 			Address minAddress = codeBlock.getMinAddress();
-			SaveableColor saveableColor = (SaveableColor) propertyMap.getObject(minAddress);
+			SaveableColor saveableColor = propertyMap.get(minAddress);
 			if (saveableColor != null) {
 				Color color = saveableColor.getColor();
 				map.put(vertex, color);
@@ -174,6 +174,7 @@ public class FunctionGraphVertexAttributes {
 
 	/**
 	 * Clears all vertex locations (including group vertex locations).
+	 * @param functionGraph function graph
 	 */
 	public void clearVertexLocations(FunctionGraph functionGraph) {
 		locationUpdateMap.clear(); // clear any unsaved changes
@@ -181,12 +182,12 @@ public class FunctionGraphVertexAttributes {
 
 		int transactionID = programUserData.startTransaction();
 		try {
-			ObjectPropertyMap vertexLocationPropertyMap =
+			ObjectPropertyMap<SaveablePoint> vertexLocationPropertyMap =
 				programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 					LOCATION_PROPERTY_NAME, SaveablePoint.class, false);
 			clearMap(vertexLocationPropertyMap, functionGraph);
 
-			ObjectPropertyMap groupVertexLocationPropertyMap =
+			ObjectPropertyMap<SaveablePoint> groupVertexLocationPropertyMap =
 				programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 					GROUP_LOCATION_PROPERTY_NAME, SaveablePoint.class, false);
 			clearMap(groupVertexLocationPropertyMap, functionGraph);
@@ -196,7 +197,8 @@ public class FunctionGraphVertexAttributes {
 		}
 	}
 
-	private void clearMap(ObjectPropertyMap propertyMap, FunctionGraph functionGraph) {
+	private void clearMap(ObjectPropertyMap<SaveablePoint> propertyMap,
+			FunctionGraph functionGraph) {
 		if (propertyMap == null) {
 			return; // nothing to do
 		}
@@ -212,13 +214,14 @@ public class FunctionGraphVertexAttributes {
 
 	/**
 	 * Note: this method does not clear group vertex locations.
+	 * @param functionGraph function graph
 	 */
 	public void clearGroupSettings(FunctionGraph functionGraph) {
 		groupedSettingsUpdateMap.clear(); // clear any unsaved changes
 
 		int transactionID = programUserData.startTransaction();
 		try {
-			ObjectPropertyMap propertyMap =
+			ObjectPropertyMap<SaveableXML> propertyMap =
 				programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 					GROUP_SETTINGS_PROPERTY_NAME, SaveableXML.class, false);
 
@@ -239,7 +242,7 @@ public class FunctionGraphVertexAttributes {
 
 		int transactionID = programUserData.startTransaction();
 		try {
-			ObjectPropertyMap propertyMap =
+			ObjectPropertyMap<SaveableXML> propertyMap =
 				programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 					REGROUP_SETTINGS_PROPERTY_NAME, SaveableXML.class, false);
 
@@ -258,9 +261,9 @@ public class FunctionGraphVertexAttributes {
 	public void clearAllPropertiesForAddresses(AddressSetView addresses) {
 		int transactionID = programUserData.startTransaction();
 		try {
-			List<PropertyMap> properties =
+			List<PropertyMap<?>> properties =
 				programUserData.getProperties(FunctionGraphPlugin.class.getSimpleName());
-			for (PropertyMap propertyMap : properties) {
+			for (PropertyMap<?> propertyMap : properties) {
 				clearAllPropertiesForAddressRange(propertyMap, addresses);
 			}
 		}
@@ -272,9 +275,9 @@ public class FunctionGraphVertexAttributes {
 	public void clearPropertyForAddresses(String propertyName, AddressSetView addresses) {
 		int transactionID = programUserData.startTransaction();
 		try {
-			List<PropertyMap> properties =
+			List<PropertyMap<?>> properties =
 				programUserData.getProperties(FunctionGraphPlugin.class.getSimpleName());
-			for (PropertyMap propertyMap : properties) {
+			for (PropertyMap<?> propertyMap : properties) {
 				if (propertyMap.getName().equals(propertyName)) {
 					clearAllPropertiesForAddressRange(propertyMap, addresses);
 					return;
@@ -286,7 +289,7 @@ public class FunctionGraphVertexAttributes {
 		}
 	}
 
-	private void clearAllPropertiesForAddressRange(PropertyMap propertyMap,
+	private void clearAllPropertiesForAddressRange(PropertyMap<?> propertyMap,
 			AddressSetView addresses) {
 		AddressIterator iterator = addresses.getAddresses(true);
 		for (; iterator.hasNext();) {
@@ -300,35 +303,35 @@ public class FunctionGraphVertexAttributes {
 		try {
 
 			if (!colorUpdateMap.isEmpty()) {
-				ObjectPropertyMap propertyMap =
+				ObjectPropertyMap<SaveableColor> propertyMap =
 					programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 						COLOR_PROPERTY_NAME, SaveableColor.class, true);
 				saveMap(colorUpdateMap, propertyMap);
 			}
 
 			if (!locationUpdateMap.isEmpty()) {
-				ObjectPropertyMap propertyMap =
+				ObjectPropertyMap<SaveablePoint> propertyMap =
 					programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 						LOCATION_PROPERTY_NAME, SaveablePoint.class, true);
 				saveMap(locationUpdateMap, propertyMap);
 			}
 
 			if (!groupLocationUpdateMap.isEmpty()) {
-				ObjectPropertyMap propertyMap =
+				ObjectPropertyMap<SaveablePoint> propertyMap =
 					programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 						GROUP_LOCATION_PROPERTY_NAME, SaveablePoint.class, true);
 				saveMap(groupLocationUpdateMap, propertyMap);
 			}
 
 			if (!groupedSettingsUpdateMap.isEmpty()) {
-				ObjectPropertyMap propertyMap =
+				ObjectPropertyMap<SaveableXML> propertyMap =
 					programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 						GROUP_SETTINGS_PROPERTY_NAME, SaveableXML.class, true);
 				saveMap(groupedSettingsUpdateMap, propertyMap);
 			}
 
 			if (!regroupSettingsUpdateMap.isEmpty()) {
-				ObjectPropertyMap propertyMap =
+				ObjectPropertyMap<SaveableXML> propertyMap =
 					programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 						REGROUP_SETTINGS_PROPERTY_NAME, SaveableXML.class, true);
 				saveMap(regroupSettingsUpdateMap, propertyMap);
@@ -339,7 +342,8 @@ public class FunctionGraphVertexAttributes {
 		}
 	}
 
-	private void saveMap(Map<Address, Saveable> map, ObjectPropertyMap propertyMap) {
+	private void saveMap(Map<Address, Saveable> map,
+			ObjectPropertyMap<? extends Saveable> propertyMap) {
 		Set<Entry<Address, Saveable>> entrySet = map.entrySet();
 		for (Entry<Address, Saveable> entry : entrySet) {
 			Address key = entry.getKey();
@@ -362,14 +366,14 @@ public class FunctionGraphVertexAttributes {
 	}
 
 	public Color getVertexColor(Address address) {
-		ObjectPropertyMap propertyMap =
+		ObjectPropertyMap<SaveableColor> propertyMap =
 			programUserData.getObjectProperty(FunctionGraphPlugin.class.getSimpleName(),
 				COLOR_PROPERTY_NAME, SaveableColor.class, false);
 		if (propertyMap == null) {
 			return null;
 		}
 
-		SaveableColor saveable = (SaveableColor) propertyMap.getObject(address);
+		SaveableColor saveable = propertyMap.get(address);
 		if (saveable == null) {
 			return null;
 		}

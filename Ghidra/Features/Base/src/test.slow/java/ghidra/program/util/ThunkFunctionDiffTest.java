@@ -27,7 +27,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -72,7 +72,7 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			if (myProgram != null) {
 				myProgram.flushEvents();
 			}
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 		}
 		catch (Exception e) {
@@ -106,8 +106,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -118,20 +116,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -142,13 +134,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -159,11 +147,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		AddressSet expectedDifferences = new AddressSet();
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -175,8 +163,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -187,20 +173,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -211,13 +191,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -229,11 +205,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -245,8 +221,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -257,13 +231,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -280,11 +250,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -301,8 +271,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -313,13 +281,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -331,11 +295,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -347,8 +311,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -359,14 +321,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -375,8 +332,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -387,13 +342,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -408,12 +359,12 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter functionFilter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(functionFilter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(functionFilter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -425,8 +376,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -437,14 +386,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -453,8 +397,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, "0100199b"),
@@ -465,13 +407,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, "0100199b"));
@@ -488,12 +426,12 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			addr(latestProgram, "0100199b"));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter functionFilter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(functionFilter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(functionFilter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -504,8 +442,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -516,21 +452,15 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -540,20 +470,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -563,13 +487,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -581,11 +501,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -596,8 +516,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -608,21 +526,15 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -632,13 +544,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -655,11 +563,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -670,8 +578,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -682,13 +588,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -700,8 +602,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -711,13 +611,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -729,11 +625,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -744,8 +640,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -756,13 +650,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -771,8 +661,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -783,13 +671,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create non-thunk function in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -804,12 +688,12 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter functionFilter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(functionFilter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(functionFilter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -821,8 +705,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -833,21 +715,15 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -869,13 +745,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -906,11 +778,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -921,8 +793,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -944,20 +814,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -979,13 +843,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1022,11 +882,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		AddressSet expectedDifferences = new AddressSet();
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -1037,8 +897,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1060,20 +918,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1095,13 +947,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1140,11 +988,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -1155,8 +1003,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1178,20 +1024,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1213,13 +1053,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1257,11 +1093,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -1272,8 +1108,6 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1295,20 +1129,14 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1330,13 +1158,9 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1374,11 +1198,11 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 

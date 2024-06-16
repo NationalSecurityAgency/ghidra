@@ -15,10 +15,12 @@
  */
 /// \file rangeutil.hh
 /// \brief Documentation for the CircleRange class
-#ifndef __RANGEUTIL__
-#define __RANGEUTIL__
+#ifndef __RANGEUTIL_HH__
+#define __RANGEUTIL_HH__
 
 #include "op.hh"
+
+namespace ghidra {
 
 /// \brief A class for manipulating integer value ranges.
 ///
@@ -404,4 +406,5 @@ inline void ValueSetSolver::partitionPrepend(const Partition &head,Partition &pa
     part.stopNode = head.stopNode;
 }
 
+} // End namespace ghidra
 #endif

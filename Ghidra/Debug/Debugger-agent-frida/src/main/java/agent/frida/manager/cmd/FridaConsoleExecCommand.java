@@ -19,7 +19,8 @@ import com.google.gson.JsonElement;
 
 import agent.frida.manager.FridaEvent;
 import agent.frida.manager.FridaManager;
-import agent.frida.manager.evt.*;
+import agent.frida.manager.evt.AbstractFridaCompletedCommandEvent;
+import agent.frida.manager.evt.FridaConsoleOutputEvent;
 import agent.frida.manager.impl.FridaManagerImpl;
 
 /**
@@ -41,7 +42,8 @@ public class FridaConsoleExecCommand extends AbstractFridaCommand<String> {
 
 	@Override
 	public boolean handle(FridaEvent<?> evt, FridaPendingCommand<?> pending) {
-		if (evt instanceof AbstractFridaCompletedCommandEvent && pending.getCommand().equals(this)) {
+		if (evt instanceof AbstractFridaCompletedCommandEvent &&
+			pending.getCommand().equals(this)) {
 			return true;
 		}
 		else if (evt instanceof FridaConsoleOutputEvent && to == Output.CAPTURE) {
@@ -68,10 +70,10 @@ public class FridaConsoleExecCommand extends AbstractFridaCommand<String> {
 			manager.loadScript(this, "exec", command);
 		}
 	}
-	
+
 	@Override
 	public void parseSpecifics(JsonElement element) {
-		String res = element.isJsonPrimitive() ? element.getAsString() : "";
+		String res = element.isJsonPrimitive() ? element.getAsString() : element.toString() + "\n";
 		manager.getClient().processEvent(new FridaConsoleOutputEvent(0, res));
 		//manager.getEventListeners().fire.consoleOutput(object+"\n", 0);		
 	}

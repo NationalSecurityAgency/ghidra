@@ -19,24 +19,33 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.help.UnsupportedOperationException;
 
 import db.*;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
+import generic.stl.Pair;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.docking.settings.*;
+import ghidra.framework.Application;
+import ghidra.framework.data.OpenMode;
+import ghidra.framework.model.RuntimeIOException;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressMap;
+import ghidra.program.database.symbol.VariableStorageManager;
+import ghidra.program.database.util.DBRecordAdapter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.datastruct.FixedSizeHashMap;
@@ -89,8 +98,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	// Data map keys
 	private static final String DTM_DB_VERSION_KEY = "DB Version";
+	private static final String DTM_GHIDRA_VERSION_KEY = "GHIDRA Version";
 
 	private static final String SETTINGS_TABLE_NAME = "Default Settings";
+
+	public static final byte UNKNOWN_CALLING_CONVENTION_ID =
+		CallingConventionDBAdapter.UNKNOWN_CALLING_CONVENTION_ID;
+	public static final byte DEFAULT_CALLING_CONVENTION_ID =
+		CallingConventionDBAdapter.DEFAULT_CALLING_CONVENTION_ID;
 
 	private BuiltinDBAdapter builtinAdapter;
 	private ComponentDBAdapter componentAdapter;
@@ -107,8 +122,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private ParentChildAdapter parentChildAdapter;
 	protected SourceArchiveAdapter sourceArchiveAdapter;
 
-	protected DBHandle dbHandle;
+	private CallingConventionDBAdapter callingConventionAdapter;
+	private TreeSet<String> knownCallingConventions;
+	private TreeSet<String> definedCallingConventions;
+
+	protected final boolean readOnlyMode;
+	protected final DBHandle dbHandle;
+	protected final String tablePrefix;
 	protected final ErrorHandler errHandler;
+
 	private DataTypeConflictHandler currentHandler;
 
 	private CategoryDB root;
@@ -125,26 +147,34 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private List<InvalidatedListener> invalidatedListeners = new ArrayList<>();
 	protected DataTypeManagerChangeListenerHandler defaultListener =
 		new DataTypeManagerChangeListenerHandler();
-	private NameComparator nameComparator = new NameComparator();
+	private Comparator<DataType> nameComparator = DataTypeComparator.INSTANCE;
 	private int creatingDataType = 0;
 	protected UniversalID universalID;
 
 	private Map<UniversalID, SourceArchive> sourceArchiveMap;
 	private LinkedList<Long> idsToDelete = new LinkedList<>();
+	private LinkedList<Pair<DataType, DataType>> typesToReplace = new LinkedList<>();
 	private List<DataType> favoritesList = new ArrayList<>();
+
+	// TODO: idsToDataTypeMap may have issue since there could be a one to many mapping
+	// (e.g., type with same UniversalID could be in multiple categories unless specifically 
+	// prevented during resolve)
 	private IdsToDataTypeMap idsToDataTypeMap = new IdsToDataTypeMap();
 
 	private ThreadLocal<EquivalenceCache> equivalenceCache = new ThreadLocal<>();
 
 	private IdentityHashMap<DataType, DataType> resolveCache;
-	private TreeSet<ResolvePair> resolveQueue;
+	private TreeSet<ResolvePair> resolveQueue; // TODO: is TreeSet really needed?
+	private LinkedList<DataType> conflictQueue = new LinkedList<>();
 
 	private boolean isBulkRemoving;
 
 	protected AddressMap addrMap;
 
-	protected DataOrganization dataOrganization;
-	
+	private DataOrganization dataOrganization;
+	private ProgramArchitecture programArchitecture;
+	private VariableStorageManager variableStorageMgr;
+
 	protected final Lock lock;
 
 	private static class ResolvePair implements Comparable<ResolvePair> {
@@ -186,20 +216,23 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	/**
 	 * Construct a new temporary data-type manager. Note that this manager does not
-	 * support the save or saveAs operation.
+	 * support the save or saveAs operation.  No Language is associated with instance.
+	 * 
 	 * @param dataOrganization applicable data organization
+	 * @throws RuntimeIOException if database error occurs during creation
 	 */
-	protected DataTypeManagerDB(DataOrganization dataOrganization) {
+	protected DataTypeManagerDB(DataOrganization dataOrganization) throws RuntimeIOException {
 		this.lock = new Lock("DataTypeManagerDB");
 		this.errHandler = new DbErrorHandler();
 		this.dataOrganization = dataOrganization;
+		this.tablePrefix = "";
 
 		try {
 			dbHandle = new DBHandle();
+			readOnlyMode = false;
 			int id = startTransaction("");
-
 			try {
-				init(DBConstants.CREATE, TaskMonitor.DUMMY);
+				init(OpenMode.CREATE, TaskMonitor.DUMMY);
 			}
 			catch (VersionException | CancelledException e) {
 				throw new AssertException(e); // unexpected
@@ -209,28 +242,32 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			throw new RuntimeIOException(e);
 		}
 	}
 
 	/**
 	 * Constructor for a data-type manager backed by a packed database file. When
 	 * opening for UPDATE an automatic upgrade will be performed if required.
-	 * NOTE: default DataOrganization will be used.
+	 * NOTE: Default DataOrganization will be used for new archive.
 	 * 
 	 * @param packedDBfile packed datatype archive file (i.e., *.gdt resource).
-	 * @param openMode     open mode CREATE, READ_ONLY or UPDATE (see
-	 *                     {@link DBConstants}).
+	 * @param openMode     open mode CREATE, READ_ONLY or UPDATE 
+	 * @param monitor task monitor
 	 * @throws IOException a low-level IO error. This exception may also be thrown
 	 *                     when a version error occurs (cause is VersionException).
+	 * @throws CancelledException if task cancelled
 	 */
-	protected DataTypeManagerDB(ResourceFile packedDBfile, int openMode) throws IOException {
+	protected DataTypeManagerDB(ResourceFile packedDBfile, OpenMode openMode, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		this.errHandler = new DbErrorHandler();
-		lock = new Lock("DataTypeManagerDB");
+		this.lock = new Lock("DataTypeManagerDB");
+		this.tablePrefix = "";
+		this.readOnlyMode = (openMode == OpenMode.IMMUTABLE);
 
 		File file = packedDBfile.getFile(false);
-		if (file == null && openMode != DBConstants.READ_ONLY) {
+		if (file == null && openMode != OpenMode.IMMUTABLE) {
 			throw new IOException("Unsupported mode (" + openMode +
 				") for read-only Datatype Archive: " + packedDBfile.getAbsolutePath());
 		}
@@ -239,23 +276,21 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		boolean openSuccess = false;
 		PackedDatabase pdb = null;
 		try {
-			if (openMode == DBConstants.CREATE) {
+			if (openMode == OpenMode.CREATE) {
 				dbHandle = new PackedDBHandle(
 					DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE);
 			}
 			else {
-				pdb = PackedDatabase.getPackedDatabase(packedDBfile, false, TaskMonitor.DUMMY);
-				if (openMode == DBConstants.UPDATE) {
-					dbHandle = pdb.openForUpdate(TaskMonitor.DUMMY);
+				pdb = PackedDatabase.getPackedDatabase(packedDBfile, false, monitor);
+
+				if (openMode == OpenMode.IMMUTABLE) {
+					dbHandle = pdb.open(monitor);
 				}
-				else {
-					dbHandle = pdb.open(TaskMonitor.DUMMY);
+				else { // UPDATE mode (allows upgrade use)
+					dbHandle = pdb.openForUpdate(monitor);
 				}
 			}
 			openSuccess = true;
-		}
-		catch (CancelledException e1) {
-			throw new AssertException(e1); // can't happen--dummy monitor
 		}
 		finally {
 			if (!openSuccess && pdb != null) {
@@ -266,27 +301,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// Initialize datatype manager and save new archive on CREATE
 		boolean initSuccess = false;
 		try {
-
-			// TODO: In the future it may be neccessary to store additional properties
-			// within the archive to failitate use of a language specified data organization.
-			// It will likely be neccessary to have a different CREATE constructor which accepts 
-			// a DataOrganization
-
-			dataOrganization = DataOrganizationImpl.getDefaultOrganization();
-
-			initPackedDatabase(packedDBfile, openMode);
-
-			if (openMode == DBConstants.CREATE) {
+			initPackedDatabase(packedDBfile, openMode, monitor); // performs upgrade if needed
+			if (openMode == OpenMode.CREATE) {
 				// preserve UniversalID if it has been established
 				Long uid = universalID != null ? universalID.getValue() : null;
 				((PackedDBHandle) dbHandle).saveAs("Archive", file.getParentFile(),
-					packedDBfile.getName(), uid, TaskMonitor.DUMMY);
+					packedDBfile.getName(), uid, monitor);
 			}
-
 			initSuccess = true;
-		}
-		catch (CancelledException e) {
-			throw new AssertException(e); // can't happen--dummy monitor
 		}
 		finally {
 			if (!initSuccess) {
@@ -295,42 +317,46 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private void initPackedDatabase(ResourceFile packedDBfile, int openMode)
-			throws CancelledException, IOException {
-		int id = startTransaction("");
-		try {
-			init(openMode, TaskMonitor.DUMMY);
+	private void initPackedDatabase(ResourceFile packedDBfile, OpenMode openMode,
+			TaskMonitor monitor) throws CancelledException, IOException {
+		try (Transaction tx = openTransaction("")) {
+			init(openMode, monitor);
+
+			if (openMode != OpenMode.CREATE && hasDataOrganizationChange(true)) {
+				// check for data organization change with possible upgrade
+				handleDataOrganizationChange(openMode, monitor);
+			}
+
+			if (openMode == OpenMode.UPGRADE) {
+				migrateOldFlexArrayComponentsIfRequired(monitor);
+
+				Msg.showInfo(this, null, "Archive Upgraded",
+					"Data type archive has been upgraded: " + packedDBfile.getName());
+			}
 		}
 		catch (VersionException e) {
-			if (openMode == DBConstants.UPDATE && e.isUpgradable()) {
-				try {
-					init(DBConstants.UPGRADE, TaskMonitor.DUMMY);
-					migrateOldFlexArrayComponentsIfRequired(TaskMonitor.DUMMY);
-
-					Msg.showInfo(this, null, "Archive Upgraded",
-						"Data type archive schema has been upgraded: " + packedDBfile.getName());
-				}
-				catch (VersionException ve) {
-					throw new IOException(e); // unexpected
-				}
+			if (openMode == OpenMode.UPDATE && e.isUpgradable()) {
+				initPackedDatabase(packedDBfile, OpenMode.UPGRADE, monitor);
 			}
 			else {
-				// TODO: Unable to handle required upgrade for read-only without API change
+				// Unable to handle required upgrade
 				throw new IOException(e);
 			}
-		}
-		finally {
-			endTransaction(id, true);
 		}
 	}
 
 	/**
 	 * Constructor for a database-backed <code>DataTypeManagerDB</code> extension.
+	 * NOTE: This does not check for and handle data organization changes which must be
+	 * handled later (use {@link #hasDataOrganizationChange(boolean)} and 
+	 * {@link #compilerSpecChanged(TaskMonitor)} to check for and initiate response to changes).
 	 * 
 	 * @param handle     database handle
 	 * @param addrMap    address map (may be null)
-	 * @param openMode   open mode CREATE, READ_ONLY or UPDATE (see
-	 *                     {@link DBConstants}).
+	 * @param openMode   open mode CREATE, READ_ONLY, UPDATE, UPGRADE.
+	 * @param tablePrefix DB table prefix to be applied to all associated table names.  This 
+	 *                    need only be specified when using multiple instances with the same
+	 *                    DB handle (null or empty string for no-prefix).
 	 * @param errHandler the error handler
 	 * @param lock       database lock
 	 * @param monitor    the current task monitor
@@ -339,23 +365,24 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @throws VersionException if any database handle's version doesn't match the expected version.
 	 *                   This exception will never be thrown in READ_ONLY mode.
 	 */
-	protected DataTypeManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
-			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
+	protected DataTypeManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode,
+			String tablePrefix, ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
-
+		this.tablePrefix = tablePrefix != null ? tablePrefix : "";
 		this.dbHandle = handle;
+		this.readOnlyMode = (openMode == OpenMode.IMMUTABLE);
 		this.addrMap = addrMap;
 		this.errHandler = errHandler;
 		this.lock = lock;
 		init(openMode, monitor);
 	}
 
-	private void init(int openMode, TaskMonitor monitor)
+	private void init(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 		updateID();
 		initializeAdapters(openMode, monitor);
 		if (checkForSourceArchiveUpdatesNeeded(openMode, monitor)) {
-			doSourceArchiveUpdates(null, monitor);
+			doSourceArchiveUpdates(monitor);
 		}
 		dtCache = new DBObjectCache<>(10);
 		sourceArchiveDBCache = new DBObjectCache<>(10);
@@ -367,106 +394,117 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private void initializeAdapters(int openMode, TaskMonitor monitor)
+	private void initializeAdapters(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 
 		//
-		// IMPORTANT! All adapter version must retain read-only capability to permit
+		// IMPORTANT! All adapter versions must retain read-only capability to permit
 		// opening older archives without requiring an upgrade. Failure to do so may
 		// present severe usability issues when the ability to open for update is not 
 		// possible.
 		//
 
-		checkAndUpdateManagerVersion(openMode);
+		checkManagerVersion(openMode);
 
 		VersionException versionExc = null;
 		try {
-			builtinAdapter = BuiltinDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			callingConventionAdapter =
+				CallingConventionDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			categoryAdapter = CategoryDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			builtinAdapter = BuiltinDBAdapter.getAdapter(dbHandle, openMode, tablePrefix);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			arrayAdapter = ArrayDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			categoryAdapter = CategoryDBAdapter.getAdapter(dbHandle, openMode, tablePrefix);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			typedefAdapter = TypedefDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			arrayAdapter = ArrayDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			compositeAdapter = CompositeDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			typedefAdapter = TypedefDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			componentAdapter = ComponentDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			compositeAdapter =
+				CompositeDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			functionDefAdapter =
-				FunctionDefinitionDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			componentAdapter = ComponentDBAdapter.getAdapter(dbHandle, openMode, tablePrefix);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			paramAdapter = FunctionParameterAdapter.getAdapter(dbHandle, openMode, monitor);
+			functionDefAdapter = FunctionDefinitionDBAdapter.getAdapter(dbHandle, openMode,
+				tablePrefix, callingConventionAdapter, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			settingsAdapter = SettingsDBAdapter.getAdapter(SETTINGS_TABLE_NAME, dbHandle, openMode,
-				null, monitor);
+			paramAdapter =
+				FunctionParameterAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			pointerAdapter = PointerDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			settingsAdapter = SettingsDBAdapter.getAdapter(tablePrefix + SETTINGS_TABLE_NAME,
+				dbHandle, openMode, null, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			enumAdapter = EnumDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			pointerAdapter = PointerDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			enumValueAdapter = EnumValueDBAdapter.getAdapter(dbHandle, openMode, monitor);
+			enumAdapter = EnumDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			parentChildAdapter = ParentChildAdapter.getAdapter(dbHandle, openMode, monitor);
+			enumValueAdapter =
+				EnumValueDBAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
 		try {
-			sourceArchiveAdapter = SourceArchiveAdapter.getAdapter(dbHandle, openMode, monitor);
+			parentChildAdapter = ParentChildAdapter.getAdapter(dbHandle, openMode, tablePrefix);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		
+		try {
+			sourceArchiveAdapter =
+				SourceArchiveAdapter.getAdapter(dbHandle, openMode, tablePrefix, monitor);
+		}
+		catch (VersionException e) {
+			versionExc = e.combine(versionExc);
+		}
+
 		try {
 			initializeOtherAdapters(openMode, monitor);
 		}
@@ -477,20 +515,33 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (versionExc != null) {
 			throw versionExc;
 		}
+
+		updateManagerAndAppVersion(openMode);
 	}
-	
+
 	/**
 	 * Initialize other DB adapters after base implementation adapters has been
 	 * initialized.
-	 * @param openMode the DB open mode (see {@link DBConstants})
+	 * @param openMode the DB open mode
 	 * @param monitor the progress monitor
 	 * @throws CancelledException if the user cancels an upgrade
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database IO error occurs.
 	 */
-	protected void initializeOtherAdapters(int openMode, TaskMonitor monitor)
+	protected void initializeOtherAdapters(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 		// do nothing
+	}
+
+	protected void handleDataOrganizationChange(OpenMode openMode, TaskMonitor monitor)
+			throws IOException, LanguageVersionException, CancelledException {
+		if (openMode == OpenMode.UPDATE) {
+			throw new LanguageVersionException("Data organization change detected", true);
+		}
+		if (openMode == OpenMode.UPGRADE) {
+			compilerSpecChanged(monitor);
+		}
+		// NOTE: No change for READ_ONLY mode
 	}
 
 	/**
@@ -502,9 +553,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	private void initializedParentChildTable() {
 		buildSortedDataTypeList();
-		Iterator<DataType> it = sortedDataTypes.iterator();
-		while (it.hasNext()) {
-			DataType dt = it.next();
+		for (DataType dt : sortedDataTypes) {
 			if (dt instanceof Array) {
 				((Array) dt).getDataType().addParent(dt);
 			}
@@ -539,40 +588,39 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	/**
 	 * Check data map for overall manager version for compatibility.
-	 * If not open read-only the map will be immediately updated to latest version.
 	 * @throws VersionException if database is a newer unsupported version
 	 * @throws IOException if an IO error occurs
 	 */
-	private void checkAndUpdateManagerVersion(int openMode) throws IOException, VersionException {
+	private void checkManagerVersion(OpenMode openMode) throws IOException, VersionException {
 
-		if (openMode == DBConstants.CREATE) {
-			DBStringMapAdapter dataMap = getDataMap(true);
-			dataMap.put(DTM_DB_VERSION_KEY, Integer.toString(DB_VERSION));
+		if (openMode == OpenMode.CREATE) {
 			return;
 		}
 
 		// Check data map for overall manager version for compatibility.
-		// If not open read-only the map will be immediately updated to latest version.
-		DBStringMapAdapter dataMap = getDataMap(openMode == DBConstants.UPGRADE);
+		DBStringMapAdapter dataMap = getDataMap(openMode == OpenMode.UPGRADE);
 		if (dataMap != null) {
 			// verify that we are compatible with stored data
 			int dbVersion = dataMap.getInt(DTM_DB_VERSION_KEY, 1);
 			if (dbVersion > DB_VERSION) {
 				throw new VersionException(false);
 			}
-			if (dbVersion < DB_VERSION) {
-				if (openMode == DBConstants.UPGRADE) {
-					// Upgrade mode required to advance overall DB version
-					dataMap.put(DTM_DB_VERSION_KEY, Integer.toString(DB_VERSION));
-				}
-				else if (openMode == DBConstants.UPDATE) {
-					throw new VersionException(true);
-				}
+			if (dbVersion < DB_VERSION && openMode == OpenMode.UPDATE) {
+				// Force upgrade if open for update
+				throw new VersionException(true);
 			}
 		}
-		else if (openMode == DBConstants.UPDATE) {
+		else if (openMode == OpenMode.UPDATE) {
 			// missing data map
 			throw new VersionException(true);
+		}
+	}
+
+	private void updateManagerAndAppVersion(OpenMode openMode) throws IOException {
+		if (openMode == OpenMode.CREATE || openMode == OpenMode.UPGRADE) {
+			DBStringMapAdapter dataMap = getDataMap(true);
+			dataMap.put(DTM_DB_VERSION_KEY, Integer.toString(DB_VERSION));
+			dataMap.put(DTM_GHIDRA_VERSION_KEY, Application.getApplicationVersion());
 		}
 	}
 
@@ -720,9 +768,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		lock.acquire();
 		try {
-			Set<String> previouslyUsedSet = previouslyUsedSettingsValuesMap
-					.computeIfAbsent(settingsDefinition.getStorageKey(),
-						n -> generateSuggestions(settingsDefinition));
+			Set<String> previouslyUsedSet = previouslyUsedSettingsValuesMap.computeIfAbsent(
+				settingsDefinition.getStorageKey(), n -> generateSuggestions(settingsDefinition));
 			// Last-minute additions are not cached since suggested values may change
 			Set<String> set = new TreeSet<>(previouslyUsedSet); // copy before updating
 			settingsDefinition.addPreferredValues(this, set);
@@ -734,6 +781,164 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		finally {
 			lock.release();
 		}
+	}
+
+	/**
+	 * Set the architecture-specific details associated with this datatype manager.
+	 * The data organization will be obtained from the compiler spec specified by
+	 * the program architecture.  Fixup of all composites will be performed, if store is
+	 * true, to reflect any changes in the data organization.
+	 * The caller is resposible for ensuring that this setting is done consistent 
+	 * with the {@link #addrMap} setting used during construction if applicable.
+	 * <br>
+	 * If not storing caller may need to check for data organization change to communicate
+	 * change or to facilitate an upgrade situation.
+	 * 
+	 * @param programArchitecture program architecture details (may be null) in which case
+	 * default data organization will be used.
+	 * @param variableStorageMgr variable storage manager (within same database) or null
+	 * to disable variable storage support.  Ignored if programArchitecture is null;
+	 * @param store if true database update will occur and datatypes will be updated if
+	 * any change to the data organization is detected (a stored copy may be used to
+	 * detect this condition).  This should never be passed as true if opened read-only.
+	 * This should be false during create mode where only the state is affected without 
+	 * changing the Database or existing datatypes.
+	 * @param monitor task monitor
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if processing cancelled - data types may not properly reflect
+	 * updated compiler specification
+	 * @throws UnsupportedOperationException if language was previously set
+	 */
+	protected void setProgramArchitecture(ProgramArchitecture programArchitecture,
+			VariableStorageManager variableStorageMgr, boolean store, TaskMonitor monitor)
+			throws IOException, CancelledException {
+
+		this.programArchitecture = programArchitecture;
+		this.variableStorageMgr = programArchitecture != null ? variableStorageMgr : null;
+
+		dataOrganization = programArchitecture != null
+				? programArchitecture.getCompilerSpec().getDataOrganization()
+				: DataOrganizationImpl.getDefaultOrganization();
+
+		if (store) {
+			try {
+				compilerSpecChanged(monitor);
+				updateLastChangeTime();
+			}
+			finally {
+				invalidateCache();
+			}
+		}
+	}
+
+	/**
+	 * Perform updates related to a compiler spec change, including:
+	 * <ul>
+	 * <li>data organization changes which may impact datatype components and packing</li>
+	 * </ul>
+	 * NOTE: this manager must be open for update.
+	 * @param monitor task monitor
+	 * @throws ReadOnlyException if this manager has not been open for update
+	 * @throws IOException if an IO error occurs while performing updates
+	 * @throws CancelledException if processing cancelled - data types may not properly reflect
+	 * updated compiler specification
+	 */
+	protected void compilerSpecChanged(TaskMonitor monitor) throws IOException, CancelledException {
+
+		if (readOnlyMode) {
+			throw new ReadOnlyException();
+		}
+
+		boolean hasDataOrgChange = hasDataOrganizationChange(false);
+
+		saveDataOrganization();
+
+		if (hasDataOrgChange) {
+			doCompositeFixup(monitor);
+		}
+
+		// FUTURE: may need to handle calling convention and data organization change impact
+		// on function definitions
+	}
+
+	/**
+	 * Check if the active {@link #getDataOrganization()} differs from the stored data organization.
+	 * False will be returned when {@code ifPreviouslyStored} is true and data organization has never 
+	 * beeen saved.
+	 * @param ifPreviouslyStored if true and data organization has never been saved false will be returned
+	 * @return true if a data organization change has occured
+	 * @throws IOException if an IO error occurs
+	 */
+	protected final boolean hasDataOrganizationChange(boolean ifPreviouslyStored)
+			throws IOException {
+		// compare DB-stored data organization with the one in affect
+		DataOrganization storedDataOrg = readDataOrganization();
+		if (ifPreviouslyStored && storedDataOrg == null) {
+			return false;
+		}
+		return !Objects.equals(readDataOrganization(), getDataOrganization());
+	}
+
+	/**
+	 * Save the current data organization to facilitate future change detection and 
+	 * upgrades.
+	 * @throws IOException if failure occured while saving data organization.
+	 */
+	protected void saveDataOrganization() throws IOException {
+		DataOrganizationImpl.save(getDataOrganization(), getDataMap(true), "dataOrg.");
+	}
+
+	/**
+	 * Read the DB-serialized data organization.  If one has not been stored a suitable
+	 * default will be returned.
+	 * @return stored data organization or suitable default.
+	 * @throws IOException if DB error orccurs
+	 */
+	protected DataOrganization readDataOrganization() throws IOException {
+		DBStringMapAdapter dataMap = getDataMap(false);
+		if (dataMap == null) {
+			return null;
+		}
+
+		DataOrganization dataOrg = DataOrganizationImpl.restore(dataMap, "dataOrg.");
+		if (dataOrg == null) {
+			ProgramArchitecture arch = getProgramArchitecture();
+			return DataOrganizationImpl
+					.getDefaultOrganization(arch != null ? arch.getLanguage() : null);
+		}
+		return dataOrg;
+	}
+
+	@Override
+	public ProgramArchitecture getProgramArchitecture() {
+		return programArchitecture;
+	}
+
+	protected static String getProgramArchitectureSummary(LanguageID languageId,
+			int languageVersion, CompilerSpecID compilerSpecId) {
+		StringBuilder buf = new StringBuilder();
+		buf.append(languageId.getIdAsString());
+		buf.append(" / ");
+		buf.append(compilerSpecId.getIdAsString());
+		return buf.toString();
+	}
+
+	@Override
+	public String getProgramArchitectureSummary() {
+		if (programArchitecture != null) {
+			return getProgramArchitectureSummary(programArchitecture.getLanguage().getLanguageID(),
+				programArchitecture.getLanguage().getVersion(),
+				programArchitecture.getCompilerSpec().getCompilerSpecID());
+		}
+		return null;
+	}
+
+	/**
+	 * Get the variable storage manager if it has been established.
+	 * @return variable storage manager or null if no associated architecture.
+	 */
+	protected VariableStorageManager getVariableStorageManager() {
+		return variableStorageMgr;
 	}
 
 	/**
@@ -773,14 +978,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (sortedDataTypes == null) {
 			return;
 		}
+		// find and remove exact match from sortedDataTypes list
 		String name = dataTypePath.getDataTypeName();
-		DataType compareDataType = new TypedefDataType(name, DataType.DEFAULT);
-		try {
-			compareDataType.setCategoryPath(dataTypePath.getCategoryPath());
-		}
-		catch (DuplicateNameException e) {
-			// will not happen - compareDataType not in dataTypeManager
-		}
+		DataType compareDataType =
+			new TypedefDataType(dataTypePath.getCategoryPath(), name, DataType.DEFAULT, this);
 		int index = Collections.binarySearch(sortedDataTypes, compareDataType, nameComparator);
 		if (index >= 0) {
 			sortedDataTypes.remove(index);
@@ -797,6 +998,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			sortedDataTypes.add(index, dataType);
 		}
 		else {
+			// NOTE: ideally, this should never happen and may indicate presence of duplicate
 			sortedDataTypes.set(index, dataType);
 		}
 	}
@@ -889,11 +1091,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	ConflictResult resolveConflict(DataTypeConflictHandler handler, DataType addedDataType,
-			DataType existingDataType) {
-		return handler.resolveConflict(addedDataType, existingDataType);
-	}
-
 	@Override
 	public String getUniqueName(CategoryPath path, String baseName) {
 		int pos = baseName.lastIndexOf('_');
@@ -917,7 +1114,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return name;
 	}
 
-	String getUniqueName(CategoryPath path1, CategoryPath path2, String baseName) {
+	String getTemporaryUniqueName(CategoryPath newCategoryPath, CategoryPath currentCategoryPath,
+			String baseName) {
 		int pos = baseName.lastIndexOf('_');
 		int oneUpNumber = 0;
 		String name = baseName;
@@ -932,7 +1130,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				// the number will get updated below
 			}
 		}
-		while (getDataType(path1, name) != null || getDataType(path2, name) != null) {
+		while (getDataType(newCategoryPath, name) != null ||
+			getDataType(currentCategoryPath, name) != null) {
 			++oneUpNumber;
 			name = baseName + "_" + oneUpNumber;
 		}
@@ -1038,38 +1237,37 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 
 			resolvedDataType = getCachedResolve(dataType);
-			if (resolvedDataType != null) {
-				return resolvedDataType;
+			if (resolvedDataType == null) {
+				SourceArchive sourceArchive = dataType.getSourceArchive();
+				if (sourceArchive != null &&
+					sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
+					resolvedDataType = resolveBuiltIn(dataType);
+				}
+				else if (sourceArchive == null || dataType.getUniversalID() == null) {
+					// if the dataType has no source or it has no ID (datatypes with no ID are
+					// always local i.e. pointers)
+					resolvedDataType = resolveDataTypeNoSource(dataType);
+				}
+				else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
+					sourceArchive.getArchiveType() == ArchiveType.PROGRAM) {
+					// dataTypes from a different program don't carry over their identity.
+					resolvedDataType = resolveDataTypeNoSource(dataType);
+				}
+				else {
+					resolvedDataType = resolveDataTypeWithSource(dataType);
+				}
+				cacheResolvedDataType(dataType, resolvedDataType);
+				if (resolvedDataType instanceof DataTypeDB) {
+					setCachedEquivalence((DataTypeDB) resolvedDataType, dataType);
+				}
 			}
-
-			SourceArchive sourceArchive = dataType.getSourceArchive();
-			if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
-				resolvedDataType = resolveBuiltIn(dataType, currentHandler);
-			}
-			else if (sourceArchive == null || dataType.getUniversalID() == null) {
-				// if the dataType has no source or it has no ID (datatypes with no ID are
-				// always local i.e. pointers)
-				resolvedDataType = resolveNoSourceDataType(dataType, currentHandler);
-			}
-			else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
-				sourceArchive.getArchiveType() == ArchiveType.PROGRAM) {
-				// dataTypes from a different program don't carry over their identity.
-				resolvedDataType = resolveNoSourceDataType(dataType, currentHandler);
-			}
-			else {
-				resolvedDataType =
-					resolveDataTypeWithSource(dataType, sourceArchive, currentHandler);
-			}
-			cacheResolvedDataType(dataType, resolvedDataType);
-			if (resolvedDataType instanceof DataTypeDB) {
-				setCachedEquivalence((DataTypeDB) resolvedDataType, dataType);
-			}
-			return resolvedDataType;
 		}
 		finally {
 			try {
 				if (isResolveCacheOwner) {
-					flushResolveQueue(true); // may throw exception - incomplete resolve
+					// Process resolve queue and allowed resolvedDataType to be replaced
+					// during conflict processing
+					resolvedDataType = processResolveQueue(true, resolvedDataType);
 				}
 			}
 			finally {
@@ -1080,9 +1278,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				lock.release();
 			}
 		}
+		return resolvedDataType;
 	}
 
-	private DataType resolveBuiltIn(DataType dataType, DataTypeConflictHandler handler) {
+	private DataType resolveBuiltIn(DataType dataType) {
+
+		if (dataType instanceof Pointer) {
+			// treat built-in pointers like other datatypes without a source
+			return resolveDataTypeNoSource(dataType);
+		}
+
 		// can't do this check now because Pointers from the BuiltinDataTypeManager are
 		// not instances of BuiltInDataType because the BuiltInDataTypeManger converts
 		// pointers from BuiltIns to PointerDBs (Probably shouldn't, but the 
@@ -1094,7 +1299,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				return existingDataType;
 			}
 			// oops a non-builtin dataType exists with the same name. Only option is to rename existing
-			String dtName = getUnusedConflictName(dataType.getCategoryPath(), dataType.getName());
+			String dtName = getUnusedConflictName(dataType);
 			try {
 				existingDataType.setName(dtName);
 			}
@@ -1103,7 +1308,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					"Failed to rename conflicting datatype: " + existingDataType.getPathName(), e);
 			}
 		}
-		return createDataType(dataType, dataType.getName(), BuiltInSourceArchive.INSTANCE, handler);
+		return createDataType(dataType, dataType.getName(), BuiltInSourceArchive.INSTANCE,
+			currentHandler);
 	}
 
 	private DataType resolveBitFieldDataType(BitFieldDataType bitFieldDataType,
@@ -1122,7 +1328,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		int storageSize = bitFieldDataType.getStorageSize();
 		int storageSizeBits = 8 * storageSize;
 		if ((bitOffset + bitSize) > storageSizeBits) {
-			// should get recomputed during packing when used within aligned structure
+			// should get recomputed during packing when used within structure with packing enabled
 			int effectiveBitSize = Math.min(bitSize, baseLengthBits);
 			bitOffset = getDataOrganization().isBigEndian() ? baseLengthBits - effectiveBitSize : 0;
 			storageSize = baseLength;
@@ -1135,84 +1341,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	/**
-	 * Either finds an equivalent dataType with the same categoryPath and name (or
-	 * conflict name) to the given dataType. Otherwise, it creates a new dataType in
-	 * this archive equivalent to the given dataType. If a dataType exists with same
-	 * path and name but is not equivalent, the handler will resolve the problem in
-	 * one of 3 ways. 1) A new dataType will be created, but with a .conflict name
-	 * 2) The existing dataType will be replaced by a resolved copy of the given
-	 * dataType. 3) The existing dataType will be returned instead of a resolved
-	 * version of the given dataType.
-	 * 
-	 * @param dataType the dataType for which to return an equivalent dataType in
-	 *                 this manager
-	 * @param handler  Used to handle collisions with dataTypes with same path and
-	 *                 name that is
-	 * @return resolved datatype
-	 */
-	private DataType resolveNoSourceDataType(DataType dataType, DataTypeConflictHandler handler) {
-
-		DataType existingDataType = findEquivalentDataTypeSameLocation(dataType, handler);
-		if (existingDataType != null) {
-			return existingDataType;
-		}
-		existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
-		if (existingDataType == null) {
-			return createDataType(dataType, dataType.getName(), null, handler);
-		}
-
-		// So we have a dataType with the same path and name, but not equivalent, so use
-		// the conflictHandler to decide what to do.
-		ConflictResult result = resolveConflict(handler, dataType, existingDataType);
-		switch (result) {
-
-			case REPLACE_EXISTING: // new type replaces old conflicted type
-				try {
-					if (updateExistingDataType(existingDataType, dataType)) {
-						return existingDataType;
-					}
-					renameToUnusedConflictName(existingDataType);
-					DataType newDataType =
-						createDataType(dataType, dataType.getName(), null, handler);
-					try {
-						replace(existingDataType, newDataType);
-					}
-					catch (DataTypeDependencyException e) {
-						throw new IllegalArgumentException(
-							"Invalid datatype replacement: " + newDataType.getName(), e);
-					}
-					return newDataType;
-				}
-				catch (DataTypeDependencyException e) {
-					// new type refers to old type - fallthrough to RENAME_AND_ADD
-					// TODO: alternatively we could throw an exception
-				}
-
-			case RENAME_AND_ADD: // default handler behavior
-				String dtName =
-					getUnusedConflictName(dataType.getCategoryPath(), dataType.getName());
-				DataType newDataType = createDataType(dataType, dtName, null, handler);
-
-				// resolving child data types could result in another copy of dataType in the
-				// manager depending upon the conflict handler - check again
-				existingDataType = findEquivalentDataTypeSameLocation(dataType, handler);
-				// If there is an equivalent datatype, remove the added type and return the existing
-				if (existingDataType != null && existingDataType != newDataType) {
-					removeInternal(newDataType, TaskMonitor.DUMMY);
-					return existingDataType;
-				}
-				return newDataType;
-
-			case USE_EXISTING: // new type is discarded and old conflicted type is returned
-				return existingDataType;
-		}
-		return null;
-	}
-
 	private void renameToUnusedConflictName(DataType dataType) {
-		String dtName = dataType.getName();
-		String name = getUnusedConflictName(dataType.getCategoryPath(), dtName);
+		String name = getUnusedConflictName(dataType);
 		try {
 			dataType.setName(name);
 		}
@@ -1232,33 +1362,60 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @param existingDataType existing datatype
 	 * @param dataType         new datatype
+	 * @param sourceArchive source archive associated with new type (may be null).
+	 * If not null the existingDataType will be updated with source info.
 	 * @return true if replacement approach was successful, else false
 	 * @throws DataTypeDependencyException if datatype contains dependency issues
 	 *                                     during resolve process
 	 */
-	private boolean updateExistingDataType(DataType existingDataType, DataType dataType)
-			throws DataTypeDependencyException {
-
-		// TODO: this approach could be added to other DB datatypes to avoid
-		// unnecessary creation and removal.
+	private boolean updateExistingDataType(DataType existingDataType, DataType dataType,
+			SourceArchive sourceArchive) throws DataTypeDependencyException {
 
 		try {
-			if (existingDataType instanceof StructureDB) {
-				if (!(dataType instanceof StructureInternal)) {
+			if (existingDataType instanceof StructureDB existingStruct) {
+				if (!(dataType instanceof StructureInternal replacementStruct)) {
 					return false;
 				}
-				StructureDB existingStruct = (StructureDB) existingDataType;
-				existingStruct.doReplaceWith((StructureInternal) dataType, true);
-				return true;
+				existingStruct.doReplaceWith(replacementStruct, true);
 			}
-			else if (existingDataType instanceof UnionDB) {
-				if (!(dataType instanceof UnionInternal)) {
+			else if (existingDataType instanceof UnionDB existingUnion) {
+				if (!(dataType instanceof UnionInternal replacementUnion)) {
 					return false;
 				}
-				UnionDB existingUnion = (UnionDB) existingDataType;
-				existingUnion.doReplaceWith((UnionInternal) dataType, true);
-				return true;
+				existingUnion.doReplaceWith(replacementUnion, true);
 			}
+			else if (existingDataType instanceof FunctionDefinitionDB existingFuncDef) {
+				if (!(dataType instanceof FunctionDefinition replacementFuncDef)) {
+					return false;
+				}
+				existingFuncDef.doReplaceWith(replacementFuncDef, true);
+			}
+			else if (existingDataType instanceof EnumDB) {
+				if (!(dataType instanceof Enum)) {
+					return false;
+				}
+				// TODO: implement doReplaceWith
+				existingDataType.replaceWith(dataType);
+			}
+			else if (existingDataType instanceof TypedefDB) {
+				if (!(dataType instanceof TypeDef)) {
+					return false;
+				}
+				// TODO: implement doReplaceWith
+				existingDataType.replaceWith(dataType);
+			}
+			else {
+				return false;
+			}
+
+			if (sourceArchive != null) {
+				existingDataType.setSourceArchive(sourceArchive);
+				((DataTypeDB) existingDataType).setUniversalID(dataType.getUniversalID());
+				long lastChangeTime = dataType.getLastChangeTime();
+				existingDataType.setLastChangeTime(lastChangeTime);
+				existingDataType.setLastChangeTimeInSourceArchive(lastChangeTime);
+			}
+			return true;
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -1268,35 +1425,87 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	/**
 	 * This method gets a ".conflict" name that is not currently used by any data
-	 * types in the indicated category of the data type manager.
+	 * types in the datatype's category within this data type manager.  If the baseName without
+	 * conflict suffix is not used that name will be returned.
+	 * <br>
+	 * NOTE: The original datatype name will be returned unchanged for pointers and arrays since 
+	 * they cannot be renamed.
+	 * 
+	 * @param dt datatype who name is used to establish non-conflict base name
+	 * @return the unused conflict name or original name for datatypes whose name is automatic
+	 */
+	public String getUnusedConflictName(DataType dt) {
+		return getUnusedConflictName(dt.getCategoryPath(), dt);
+	}
+
+	/**
+	 * This method gets a ".conflict" name that is not currently used by any data
+	 * types in the indicated category within this data type manager.  If the baseName without
+	 * conflict suffix is not used that name will be returned.
+	 * <br>
+	 * NOTE: The original datatype name will be returned unchanged for pointers and arrays since 
+	 * they cannot be renamed.
 	 * 
 	 * @param path the category path of the category where the new data type live in
 	 *             the data type manager.
-	 * @param name The name of the data type. This name may or may not contain
-	 *             ".conflict" as part of it. If the name contains ".conflict", only
-	 *             the part of the name that comes prior to the ".conflict" will be
-	 *             used to determine a new unused conflict name.
+	 * @param dt datatype who name is used to establish non-conflict base name
 	 * @return the unused conflict name
 	 */
-	public String getUnusedConflictName(CategoryPath path, String name) {
-		int index = name.indexOf(DataType.CONFLICT_SUFFIX);
-		if (index > 0) {
-			name = name.substring(0, index);
+	public String getUnusedConflictName(CategoryPath path, DataType dt) {
+		String name = dt.getName();
+		if ((dt instanceof Array) || (dt instanceof Pointer) || (dt instanceof BuiltInDataType)) {
+			// name not used - anything will do
+			return name;
 		}
-		String baseName = name + DataType.CONFLICT_SUFFIX;
+
+		String baseName = DataTypeUtilities.getNameWithoutConflict(dt);
 		String testName = baseName;
 		int count = 0;
 		while (getDataType(path, testName) != null) {
-			count++;
-			testName = baseName + count;
+			testName = baseName + DataType.CONFLICT_SUFFIX;
+			if (count > 0) {
+				testName += Integer.toString(count);
+			}
+			++count;
 		}
 		return testName;
 	}
 
-	private boolean isEquivalentDataType(DataType addedDataType, DataType existingDataType,
-			DataTypeConflictHandler handler) {
-		return existingDataType.isEquivalent(addedDataType) ||
-			handler.resolveConflict(addedDataType, existingDataType) == ConflictResult.USE_EXISTING;
+	private List<DataType> findDataTypesSameLocation(DataType dataType) {
+
+		Category category = getCategory(dataType.getCategoryPath());
+		if (category == null) {
+			return List.of();
+		}
+
+		if (!(dataType instanceof Pointer) && !(dataType instanceof Array)) {
+			return category.getDataTypesByBaseName(dataType.getName());
+		}
+
+		DataType existingDataType = category.getDataType(dataType.getName());
+
+		DataType baseDataType = DataTypeUtilities.getBaseDataType(dataType);
+		if (baseDataType == null) {
+			return existingDataType != null ? List.of(existingDataType) : List.of();
+		}
+
+		SourceArchive sourceArchive = baseDataType.getSourceArchive();
+		if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
+			return existingDataType != null ? List.of(existingDataType) : List.of();
+		}
+
+		String baseTypeName = baseDataType.getName();
+		String decorations = dataType.getName().substring(baseTypeName.length());
+
+		List<DataType> list = new ArrayList<>();
+		for (DataType existingBaseDt : category.getDataTypesByBaseName(baseTypeName)) {
+			String name = existingBaseDt.getName() + decorations;
+			DataType dt = category.getDataType(name);
+			if (dt != null) {
+				list.add(dt);
+			}
+		}
+		return list;
 	}
 
 	/**
@@ -1304,75 +1513,195 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * categoryPath and has either the same name or a conflict variation of that
 	 * name.
 	 * 
-	 * @param dataType the dataType for which to find an equivalent existing
-	 *                 dataType
+	 * @param dataType the dataType for which to find an equivalent existing dataType
 	 */
-	private DataType findEquivalentDataTypeSameLocation(DataType dataType,
-			DataTypeConflictHandler handler) {
+	private DataType findEquivalentDataTypeSameLocation(DataType dataType) {
 
-		// first see if an exact match exists
-		String dtName = dataType.getName();
-
-		DataType existingDataType = getDataType(dataType.getCategoryPath(), dtName);
+		// Check exact name match
+		DataType existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
 
 		// If the existing Data type is currently being resolved, its isEquivalent
 		// method is short circuited such that it will return true. So it is important 
 		// to call the isEquivalent on the existing datatype and not the dataType.
-		if (existingDataType != null && isEquivalentDataType(dataType, existingDataType, handler)) {
+		if (existingDataType != null &&
+			DataTypeDB.isEquivalent(existingDataType, dataType, currentHandler)) {
 			return existingDataType;
 		}
 
-		Category category = getCategory(dataType.getCategoryPath());
-		if (category == null) {
-			return null;
-		}
-		List<DataType> relatedByName = category.getDataTypesByBaseName(dtName);
-
+		List<DataType> relatedByName = findDataTypesSameLocation(dataType);
 		for (DataType candidate : relatedByName) {
 			if (candidate != existingDataType &&
-				isEquivalentDataType(dataType, candidate, handler)) {
+				DataTypeDB.isEquivalent(candidate, dataType, currentHandler)) {
 				return candidate;
 			}
 		}
 		return null;
 	}
 
-	private DataType resolveDataTypeWithSource(DataType dataType, SourceArchive sourceArchive,
-			DataTypeConflictHandler handler) {
+	private DataType findDataTypeSameLocation(DataType dataType) {
+
+		// Check exact name match which is similar
+		DataType existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
+		if (existingDataType != null &&
+			DataTypeUtilities.isSameKindDataType(dataType, existingDataType)) {
+			return existingDataType;
+		}
+
+		// check all conflict types
+		List<DataType> relatedByName = findDataTypesSameLocation(dataType);
+		for (DataType candidate : relatedByName) {
+			if (existingDataType == null) {
+				existingDataType = candidate;
+			}
+			if (DataTypeUtilities.isSameKindDataType(dataType, candidate)) {
+				return candidate;
+			}
+		}
+
+		return existingDataType;
+	}
+
+	/**
+	 * Either finds an equivalent dataType with the same categoryPath and name (or
+	 * conflict name) to the given dataType. Otherwise, it creates a new dataType in
+	 * this archive equivalent to the given dataType. If a dataType exists with same
+	 * path and name but is not equivalent, the handler will resolve the problem in
+	 * one of 3 ways. 1) A new dataType will be created, but with a .conflict name
+	 * 2) The existing dataType will be replaced by a resolved copy of the given
+	 * dataType. 3) The existing dataType will be returned instead of a resolved
+	 * version of the given dataType.
+	 * 
+	 * @param dataType the dataType for which to return an equivalent dataType in
+	 *                 this manager
+	 * @return resolved datatype
+	 */
+	private DataType resolveDataTypeNoSource(DataType dataType) {
+
+		DataType existingDataType = findEquivalentDataTypeSameLocation(dataType);
+		if (existingDataType != null) {
+			return existingDataType;
+		}
+
+		return resolveNoEquivalentFound(dataType, null);
+	}
+
+	/**
+	 * Perform datatype resolution for types originating from a source archive (excludes
+	 * programs and built-in datatypes).
+	 * 
+	 * @param dataType the dataType for which to return an equivalent dataType in
+	 *                 this manager
+	 * @return resolved datatype
+	 */
+	private DataType resolveDataTypeWithSource(DataType dataType) {
+
+		SourceArchive sourceArchive = dataType.getSourceArchive();
+
 		// Do we have that dataType already resolved and associated with the source archive?
 		DataType existingDataType = getDataType(sourceArchive, dataType.getUniversalID());
 		if (existingDataType != null) {
-			if (!existingDataType.isEquivalent(dataType)) {
-				if (handler.shouldUpdate(dataType, existingDataType)) {
-					existingDataType.replaceWith(dataType);
-					existingDataType.setLastChangeTime(dataType.getLastChangeTime());
-				}
+			if (!DataTypeDB.isEquivalent(existingDataType, dataType, currentHandler) &&
+				currentHandler.shouldUpdate(dataType, existingDataType)) {
+				existingDataType.replaceWith(dataType);
+				existingDataType.setLastChangeTime(dataType.getLastChangeTime());
 			}
 			return existingDataType;
 		}
 
-		// Do we have the same named data type in the same category already?
-		existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
-		if (existingDataType == null) {
-			// Don't have a data type with this path name, so can create it.
-			return createDataType(dataType, dataType.getName(), sourceArchive, handler);
+		if (sourceArchive.getSourceArchiveID().equals(getUniversalID())) {
+			// Avoid conflict handling for types with a source which matches
+			// this archive, although a conflict name may still be used.  
+			// This can occur when a semi-mirrored archive instance is used
+			// such as the CompositeViewerDataTypeManager or Program Merge 
+			// which uses the same Archive UniversalID.
+			return createConflictDataType(dataType, sourceArchive);
 		}
 
 		// If we have the same path name and the existing data type is a local data type
 		// and is equivalent to this one, then associate it with the source archive
-		if (isLocalSource(existingDataType) &&
-			isEquivalentDataType(dataType, existingDataType, handler)) {
-			return replaceEquivalentLocalWithSourceDataType(dataType, sourceArchive,
-				existingDataType);
+		existingDataType = findEquivalentDataTypeSameLocation(dataType);
+		if (existingDataType != null) {
+			if (isLocalSource(existingDataType)) {
+				// If we have an equivalent local data type associate it with the source archive
+				replaceEquivalentLocalWithSourceDataType(dataType, sourceArchive, existingDataType);
+			}
+			return existingDataType;
 		}
 
-		// Otherwise, we need to create a new Data type associated with the archive
-		// and it will possibly have a conflict name.
-		String dtName = getUnusedConflictName(dataType.getCategoryPath(), dataType.getName());
-		return createDataType(dataType, dtName, sourceArchive, handler);
+		return resolveNoEquivalentFound(dataType, sourceArchive);
 	}
 
-	private DataType replaceEquivalentLocalWithSourceDataType(DataType dataType,
+	/**
+	 * Complete datatype resolution after having attempted to find an existing equivalent type. 
+	 * An attempt is made to identify a conflicting datatype and determine a conflict resolution
+	 * using the specified conflict handler.
+	 * @param dataType datatype being resolved
+	 * @param sourceArchive source archive associated with new type (may be null)
+	 * @return resolved datatype (may be existing or newly added datatype)
+	 */
+	private DataType resolveNoEquivalentFound(DataType dataType, SourceArchive sourceArchive) {
+
+		if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.PROGRAM) {
+			sourceArchive = null; // do not preserve program as a source archive
+		}
+
+		// If not found, do we have the same named data type in the same category already?
+		// (preference is given to similar kind of datatype when checking existing conflict types)
+		DataType existingDataType = findDataTypeSameLocation(dataType);
+		if (existingDataType == null) {
+			return createDataType(dataType, getUnusedConflictName(dataType), sourceArchive,
+				currentHandler);
+		}
+
+		// So we have a dataType with the same path and name, but not equivalent, so use
+		// the conflictHandler to decide what to do.
+		ConflictResult conflictResult = currentHandler.resolveConflict(dataType, existingDataType);
+		switch (conflictResult) {
+
+			case REPLACE_EXISTING: // new type replaces old conflicted type
+				try {
+					if (updateExistingDataType(existingDataType, dataType, sourceArchive)) {
+						return existingDataType;
+					}
+					renameToUnusedConflictName(existingDataType);
+					DataType newDataType =
+						createDataType(dataType, dataType.getName(), sourceArchive, currentHandler);
+					try {
+						replace(existingDataType, newDataType);
+					}
+					catch (DataTypeDependencyException e) {
+						throw new IllegalArgumentException(
+							"Invalid datatype replacement: " + newDataType.getName(), e);
+					}
+					return newDataType;
+				}
+				catch (DataTypeDependencyException e) {
+					// new type refers to old type - fallthrough to RENAME_AND_ADD
+					// TODO: alternatively we could throw an exception
+				}
+
+			case RENAME_AND_ADD: // default handler behavior
+				return createConflictDataType(dataType, sourceArchive);
+
+			default:  // USE_EXISTING - new type is discarded and old conflicted type is returned
+				return existingDataType;
+		}
+	}
+
+	private DataType createConflictDataType(DataType dataType, SourceArchive sourceArchive) {
+		String dtName = getUnusedConflictName(dataType);
+		DataType newDataType = createDataType(dataType, dtName, sourceArchive, currentHandler);
+
+		// NOTE: queue conflict datatype for delayed check for equivalent type.
+		// This is not needed for Pointer or Array which will update if/when
+		// referenced type gets replaced.
+		if (!(newDataType instanceof Pointer) && !(newDataType instanceof Array)) {
+			conflictQueue.add(newDataType);
+		}
+		return newDataType;
+	}
+
+	private void replaceEquivalentLocalWithSourceDataType(DataType dataType,
 			SourceArchive sourceArchive, DataType existingDataType) {
 		// Since it's equivalent, set its source, ID, and replace its components.
 		// TODO: Need a better way to do this.
@@ -1383,7 +1712,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		existingDataType.setLastChangeTime(lastChangeTime);
 		existingDataType.setLastChangeTimeInSourceArchive(lastChangeTime);
 		dataTypeChanged(existingDataType, false);
-		return existingDataType;
 	}
 
 	private boolean isLocalSource(DataType dataType) {
@@ -1411,17 +1739,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			monitor.setProgress(0);
 			int i = 0;
 			for (DataType dt : dataTypes) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				resolve(dt, handler);
 				if (isResolveCacheOwner) {
-					flushResolveQueue(false);
+					processResolveQueue(false);
 				}
 				monitor.setProgress(++i);
 			}
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				flushResolveQueue(true);
+				processResolveQueue(true);
 			}
 			if (isEquivalenceCacheOwner) {
 				clearEquivalenceCache();
@@ -1436,11 +1764,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (sourceArchive == null) {
 			return null;
 		}
-		if (getSourceArchive(sourceArchive.getSourceArchiveID()) != null) {
-			// already have it
-			return getSourceArchive(sourceArchive.getSourceArchiveID());
-		}
+		lock.acquire();
 		try {
+			SourceArchive existingArchive = getSourceArchive(sourceArchive.getSourceArchiveID());
+			if (existingArchive != null) {
+				return existingArchive;  // already have it
+			}
 			DBRecord record = sourceArchiveAdapter.createRecord(sourceArchive);
 			SourceArchive newSourceArchive = getSourceArchiveDB(record);
 			invalidateSourceArchiveCache();
@@ -1449,8 +1778,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		catch (IOException e) {
 			dbError(e);
-			return null;
 		}
+		finally {
+			lock.release();
+		}
+		return null;
 	}
 
 	@Override
@@ -1464,14 +1796,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				throw new IllegalArgumentException("Attempted to delete the local archive!");
 			}
 			disassociateAllDataTypes(sourceArchiveID);
-			try {
-				sourceArchiveAdapter.deleteRecord(sourceArchiveID);
-			}
-			catch (IOException e) {
-				dbError(e);
-			}
-			sourceArchiveChanged(sourceArchiveID);
+			sourceArchiveAdapter.deleteRecord(sourceArchiveID);
+			sourceArchiveChanged(sourceArchiveID); // must occur before invalidateSourceArchiveCache 
 			invalidateSourceArchiveCache();
+		}
+		catch (IOException e) {
+			dbError(e);
 		}
 		finally {
 			lock.release();
@@ -1529,6 +1859,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 
 			replace(existingDt, replacementDt);
+
 			if (fixupName) {
 				try {
 					long lastChangeTime = replacementDt.getLastChangeTime();
@@ -1536,8 +1867,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					replacementDt.setLastChangeTime(lastChangeTime);
 				}
 				catch (Exception e) {
-					Msg.error(this, "Unable to set the name to " + existingDt.getName() +
-						"on " + replacementDt + " while replacing the original datatype", e);
+					Msg.error(this, "Unable to set the name to " + existingDt.getName() + "on " +
+						replacementDt + " while replacing the original datatype", e);
 				}
 			}
 			CategoryPath path = existingDt.getCategoryPath();
@@ -1548,8 +1879,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 				catch (Exception e) {
 					// not sure what to do here
-					Msg.error(this, "Unable to set the CatagoryPath to " + path +
-						"on " + replacementDt + " while replacing the original datatype", e);
+					Msg.error(this, "Unable to set the CatagoryPath to " + path + "on " +
+						replacementDt + " while replacing the original datatype", e);
 				}
 			}
 			return replacementDt;
@@ -1561,25 +1892,73 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void replace(DataType existingDt, DataType replacementDt)
 			throws DataTypeDependencyException {
-		if (existingDt == replacementDt) {
+
+		if (!contains(existingDt)) {
 			return;
 		}
-
-		DataTypePath replacedDtPath = existingDt.getDataTypePath();
-		long replacedId = getID(existingDt);
-
-		UniversalID id = existingDt.getUniversalID();
-		idsToDataTypeMap.removeDataType(existingDt.getSourceArchive(), id);
 
 		if (replacementDt.dependsOn(existingDt)) {
 			throw new DataTypeDependencyException("Replace failed: " +
 				replacementDt.getDisplayName() + " depends on " + existingDt.getDisplayName());
 		}
 
-		replaceUsesInOtherDataTypes(existingDt, replacementDt);
+		addDataTypeToReplace(existingDt, replacementDt);
+		replaceQueuedDataTypes();
+	}
+
+	private void replaceQueuedDataTypes() {
+
+		// Collect all datatypes to be replaced and notify children which may also get queued
+		// for removal.
+		Map<Long, Long> dataTypeReplacementMap = new HashMap<>();
+		List<Pair<DataType, DataType>> dataTypeReplacements = new LinkedList<>();
+		while (!typesToReplace.isEmpty()) {
+			Pair<DataType, DataType> dataTypeReplacement = typesToReplace.removeFirst();
+			DataType replacedDt = dataTypeReplacement.first;
+			DataType replacementDt = dataTypeReplacement.second;
+
+			long replacedId = getID(replacedDt);
+			if (replacedId <= 0) {
+				Msg.error(this, "Unexpected ID for replaced datatype (" + replacedId + "): " +
+					replacedDt.getPathName());
+				continue; // ignore attempt to replace special type
+			}
+			long replacementId = getID(dataTypeReplacement.second);
+			if (replacementId < 0) {
+				Msg.error(this, "Unexpected ID for replacement datatype (" + replacementId + "): " +
+					replacementDt.getPathName());
+			}
+
+			replaceUsesInOtherDataTypes(replacedDt, replacementDt);
+
+			dataTypeReplacements.add(dataTypeReplacement);
+			dataTypeReplacementMap.put(replacedId, replacementId);
+		}
+
+		// perform any neccessary external use replacements
+		replaceDataTypesUsed(dataTypeReplacementMap);
+
+		// perform actual database updates (e.g., record updates, change notifications, etc.)
+		for (Pair<DataType, DataType> dataTypeReplacement : dataTypeReplacements) {
+			replaceDataType(dataTypeReplacement.first, dataTypeReplacement.second);
+		}
+	}
+
+	/**
+	 * Allow extensions to perform any neccessary fixups to address all datatype replacements.
+	 * @param dataTypeReplacementMap map of datatype replacements (oldID maps to replacementID).
+	 */
+	abstract protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap);
+
+	private void replaceDataType(DataType replacedDt, DataType replacementDt) {
+
+		DataTypePath replacedDtPath = replacedDt.getDataTypePath();
+		long replacedId = getID(replacedDt);
+
+		UniversalID id = replacedDt.getUniversalID();
+		idsToDataTypeMap.removeDataType(replacedDt.getSourceArchive(), id);
 
 		try {
-			replaceDataTypeIDs(replacedId, getID(replacementDt));
 			parentChildAdapter.removeAllRecordsForParent(replacedId);
 		}
 		catch (IOException e) {
@@ -1593,23 +1972,24 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void replaceUsesInOtherDataTypes(DataType existingDt, DataType newDt) {
 		if (existingDt instanceof DataTypeDB) {
+			// Notify parents that a dependency has been replaced.  For pointers and arrays
+			// it may require their subsequent category change or removal to avoid duplication.
 			for (DataType dt : existingDt.getParents()) {
 				dt.dataTypeReplaced(existingDt, newDt);
 			}
 		}
 		else {
+			// Since we do not track parents of non-DB types we must assume that all data types
+			// must be modified.  Use of the sortedDataTypes list is the simplest way to do this. 
+			// A copy of the list must be used since it will changed if other types get removed
+			// in the process.
 			buildSortedDataTypeList();
-			// make copy of sortedDataTypes list before iterating as dt.dataTypeReplaced may
-			// call back into this class and cause a modification to the sortedDataTypes list.
-			Iterator<DataType> it = new ArrayList<>(sortedDataTypes).iterator();
-			while (it.hasNext()) {
-				DataType dt = it.next();
+			List<DataType> sortedDataTypesCopy = new ArrayList<>(sortedDataTypes);
+			for (DataType dt : sortedDataTypesCopy) {
 				dt.dataTypeReplaced(existingDt, newDt);
 			}
 		}
 	}
-
-	abstract protected void replaceDataTypeIDs(long oldID, long newID);
 
 	/**
 	 * Replace one source archive (oldDTM) with another (newDTM). Any data types
@@ -1671,17 +2051,23 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			list.add(DataType.DEFAULT);
 			return;
 		}
+		// ignore .conflict in both name and result matches
 		lock.acquire();
 		try {
 			buildSortedDataTypeList();
-			DataType compareDataType = new TypedefDataType(name, DataType.DEFAULT);
+			// Use exemplar datatype in root category without .conflict to position at start
+			// of possible matches
+			name = DataTypeUtilities.getNameWithoutConflict(name);
+			DataType compareDataType =
+				new TypedefDataType(CategoryPath.ROOT, name, DataType.DEFAULT, this);
 			int index = Collections.binarySearch(sortedDataTypes, compareDataType, nameComparator);
 			if (index < 0) {
 				index = -index - 1;
 			}
+			// add all matches to list
 			while (index < sortedDataTypes.size()) {
 				DataType dt = sortedDataTypes.get(index);
-				if (!name.equals(dt.getName())) {
+				if (!name.equals(DataTypeUtilities.getNameWithoutConflict(dt, false))) {
 					break;
 				}
 				list.add(dt);
@@ -1811,11 +2197,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dt == DataType.DEFAULT) {
 			return DEFAULT_DATATYPE_ID;
 		}
-		if (dt instanceof BitFieldDataType) {
-			return createKey(BITFIELD, BitFieldDBDataType.getId((BitFieldDataType) dt));
-		}
 		if (dt instanceof BadDataType) {
 			return BAD_DATATYPE_ID;
+		}
+		if (dt instanceof BitFieldDataType) {
+			return createKey(BITFIELD, BitFieldDBDataType.getId((BitFieldDataType) dt));
 		}
 		if (dt instanceof DataTypeDB) {
 			// NOTE: Implementation DOES NOT check or guarantee that datatype or its returned ID 
@@ -1869,46 +2255,47 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Remove the given datatype from this manager (assumes the lock has already been acquired).
 	 * 
 	 * @param dataType the dataType to be removed
-	 * @param monitor  the task monitor
+	 * @return true if datatype removal was successful, else false
 	 */
-	private boolean removeInternal(DataType dataType, TaskMonitor monitor) {
+	private boolean removeInternal(DataType dataType) {
 		if (!contains(dataType)) {
 			return false;
 		}
 
-		LinkedList<Long> deletedIds = new LinkedList<>();
-
 		long id = getID(dataType);
-
-		if (id < 0) {
+		if (id <= 0) { // removal of certain special types not permitted
 			return false;
 		}
-
 		idsToDelete.add(Long.valueOf(id));
-
-		while (!idsToDelete.isEmpty()) {
-			Long l = idsToDelete.removeFirst();
-			id = l.longValue();
-			removeUseOfDataType(id);
-
-			deletedIds.addFirst(l);
-		}
-
-		Iterator<Long> it = deletedIds.iterator();
-		while (it.hasNext()) {
-			Long l = it.next();
-			deleteDataType(l.longValue());
-		}
-
-		try {
-			deleteDataTypeIDs(deletedIds, monitor);
-		}
-		catch (CancelledException e) {
-			return false;
-		}
-
+		removeQueuedDataTypes();
 		return true;
 	}
+
+	private void removeQueuedDataTypes() {
+
+		// collect all datatype to be removed and notify children which may also get queued
+		// for removal.
+		Set<Long> deletedIds = new HashSet<>();
+		while (!idsToDelete.isEmpty()) {
+			long id = idsToDelete.removeFirst();
+			removeUseOfDataType(id);
+			deletedIds.add(id);
+		}
+
+		// perform any neccessary external use removals
+		deleteDataTypesUsed(deletedIds);
+
+		// perform actual database updates (e.g., record removal, change notifications, etc.)
+		for (long id : deletedIds) {
+			deleteDataType(id);
+		}
+	}
+
+	/**
+	 * Allow extensions to perform any neccessary fixups for all datatype removals listed.
+	 * @param deletedIds list of IDs for all datatypes which are getting removed.
+	 */
+	protected abstract void deleteDataTypesUsed(Set<Long> deletedIds);
 
 	private void removeUseOfDataType(long id) {
 
@@ -1932,11 +2319,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	public boolean remove(DataType dataType, TaskMonitor monitor) {
 		lock.acquire();
 		try {
-			return removeInternal(dataType, monitor);
+			if (contains(dataType)) {
+				return removeInternal(dataType);
+			}
 		}
 		finally {
 			lock.release();
 		}
+		return false;
 	}
 
 	@Override
@@ -1945,10 +2335,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			throw new IllegalArgumentException(
 				"The given datatype must exist in this DataTypeManager");
 		}
-		if (!datatype.getSourceArchive().equals(getLocalSourceArchive())) {
-			return;
-		}
-		if (datatype.getSourceArchive().equals(archive)) {
+		SourceArchive currentSource = datatype.getSourceArchive();
+		if (!currentSource.equals(getLocalSourceArchive()) && !currentSource.equals(archive)) {
 			return;
 		}
 		resolveSourceArchive(archive);
@@ -1986,8 +2374,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			// Set the datatype's universal ID to a newly generated universal ID,
 			// since we no longer want the source archive data type's universal ID.
-			if (dataType instanceof DataTypeDB) {
-				DataTypeDB dt = (DataTypeDB) dataType;
+			if (dataType instanceof DataTypeDB dt) {
 				dt.setUniversalID(UniversalIdGenerator.nextID());
 			}
 
@@ -2026,22 +2413,45 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return (sourceArchive.equals(dtm.getLocalSourceArchive()));
 	}
 
+	/**
+	 * Queue a datatype to deleted in response to another datatype being deleted.
+	 * @param id datatype ID to be removed
+	 */
 	protected void addDataTypeToDelete(long id) {
 		idsToDelete.add(Long.valueOf(id));
 	}
 
-	abstract protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
-			throws CancelledException;
+	/**
+	 * Queue a datatype to be replaced by another datatype in response to its referenced 
+	 * datatype being replaced.
+	 * @param oldDataType datatype to be replaced
+	 * @param replacementDataType datatype which is the replacement
+	 */
+	protected void addDataTypeToReplace(DataType oldDataType, DataType replacementDataType) {
+		Objects.requireNonNull(oldDataType);
+		Objects.requireNonNull(replacementDataType);
+		if (oldDataType == replacementDataType) {
+			throw new AssertionError("Invalid datatype replacement pair");
+		}
+		typesToReplace.add(new Pair<>(oldDataType, replacementDataType));
+	}
 
 	private void notifyDeleted(long dataTypeID) {
 		DataType dataType = getDataType(dataTypeID);
 		if (dataType == null) {
 			return;
 		}
-		if (dataType instanceof DataTypeDB) {
-			((DataTypeDB) dataType).notifyDeleted();
+		if (dataType instanceof DataTypeDB dt) {
+			// Notify datatype that it has been deleted which in-turn will notify all of its
+			// parents.  Parent datatype which are no longer valid (i.e., pointers, arrays)
+			// may invoke addDataTypeToDelete method to schedule their subsequent removal.
+			dt.notifyDeleted();
 		}
 		else {
+			// Since we do not track parents of non-DB types we must assume that all data types
+			// must be modified.  Use of the sortedDataTypes list is the simplest way to do this. 
+			// A copy of the list must be used since it will changed if other types get removed
+			// in the process.
 			buildSortedDataTypeList();
 			List<DataType> sortedDataTypesCopy = new ArrayList<>(sortedDataTypes);
 			for (DataType dt : sortedDataTypesCopy) {
@@ -2159,8 +2569,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		// otherwise, it probably belongs to this dataTypeManager, but it could a
 		// leftover after an undo. So make sure it really is there.
-		if (dataType instanceof DataTypeDB) {
-			DataTypeDB dtDb = (DataTypeDB) dataType;
+		if (dataType instanceof DataTypeDB dtDb) {
 			return dtCache.get(dtDb.getKey()) == dataType && !dtDb.isDeleted();
 		}
 		return builtIn2IdMap.containsKey(dataType);
@@ -2218,8 +2627,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public DataType getDataType(CategoryPath path, String name) {
-		if (CategoryPath.ROOT.equals(path) &&
-			name.equals(DataType.DEFAULT.getName())) {
+		if (CategoryPath.ROOT.equals(path) && name.equals(DataType.DEFAULT.getName())) {
 			return DataType.DEFAULT;
 		}
 		Category category = getCategory(path);
@@ -2306,26 +2714,36 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private DataType getDataType(long dataTypeID, DBRecord record) {
 		int tableId = getTableID(dataTypeID);
+		DataType dt = null;
 		switch (tableId) {
 			case BUILT_IN:
-				return getBuiltInDataType(dataTypeID, record);
+				dt = getBuiltInDataType(dataTypeID, record);
+				break;
 			case COMPOSITE:
-				return getCompositeDataType(dataTypeID, record);
+				dt = getCompositeDataType(dataTypeID, record);
+				break;
 			case ARRAY:
-				return getArrayDataType(dataTypeID, record);
+				dt = getArrayDataType(dataTypeID, record);
+				break;
 			case POINTER:
-				return getPointerDataType(dataTypeID, record);
+				dt = getPointerDataType(dataTypeID, record);
+				break;
 			case TYPEDEF:
-				return getTypedefDataType(dataTypeID, record);
+				dt = getTypedefDataType(dataTypeID, record);
+				break;
 			case FUNCTION_DEF:
-				return getFunctionDefDataType(dataTypeID, record);
+				dt = getFunctionDefDataType(dataTypeID, record);
+				break;
 			case ENUM:
-				return getEnumDataType(dataTypeID, record);
+				dt = getEnumDataType(dataTypeID, record);
+				break;
 			case BITFIELD:
-				return BitFieldDBDataType.getBitFieldDataType(dataTypeID, this);
+				dt = BitFieldDBDataType.getBitFieldDataType(dataTypeID, this);
+				break;
 			default:
 				return null;
 		}
+		return dt;
 	}
 
 	private DataType getBuiltInDataType(long dataTypeID, DBRecord record) {
@@ -2599,46 +3017,36 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 
 			DataType newDataType = null;
-			if (dt instanceof Array) {
-				Array array = (Array) dt;
+			if (dt instanceof Array array) {
 				newDataType = createArray(array.getDataType(), array.getNumElements(),
 					array.getElementLength(), cat, handler);
 			}
-			else if (dt instanceof Pointer) {
-				Pointer ptr = (Pointer) dt;
+			else if (dt instanceof Pointer ptr) {
 				int len = ptr.hasLanguageDependantLength() ? -1 : ptr.getLength();
 				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, handler);
 			}
-			else if (dt instanceof BuiltInDataType) {
-				BuiltInDataType builtInDataType = (BuiltInDataType) dt;
+			else if (dt instanceof BuiltInDataType builtInDataType) {
 				newDataType = createBuiltIn(builtInDataType, cat);
 			}
-			else if (dt instanceof StructureInternal) {
-				StructureInternal structure = (StructureInternal) dt;
-				newDataType = createStructure(structure, name, cat, sourceArchiveIdValue,
-					id.getValue());
+			else if (dt instanceof StructureInternal structure) {
+				newDataType =
+					createStructure(structure, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof TypeDef) {
-				TypeDef typedef = (TypeDef) dt;
+			else if (dt instanceof TypeDef typedef) {
 				newDataType =
 					createTypeDef(typedef, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof UnionInternal) {
-				UnionInternal union = (UnionInternal) dt;
-				newDataType =
-					createUnion(union, name, cat, sourceArchiveIdValue, id.getValue());
+			else if (dt instanceof UnionInternal union) {
+				newDataType = createUnion(union, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof Enum) {
-				Enum enumm = (Enum) dt;
+			else if (dt instanceof Enum enumm) {
 				newDataType = createEnum(enumm, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof FunctionDefinition) {
-				FunctionDefinition funDef = (FunctionDefinition) dt;
+			else if (dt instanceof FunctionDefinition funDef) {
 				newDataType = createFunctionDefinition(funDef, name, cat, sourceArchiveIdValue,
 					id.getValue());
 			}
-			else if (dt instanceof MissingBuiltInDataType) {
-				MissingBuiltInDataType missingBuiltInDataType = (MissingBuiltInDataType) dt;
+			else if (dt instanceof MissingBuiltInDataType missingBuiltInDataType) {
 				newDataType = createMissingBuiltIn(missingBuiltInDataType, cat);
 			}
 			else {
@@ -2655,8 +3063,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private Structure createStructure(StructureInternal struct, String name, CategoryDB category,
-			long sourceArchiveIdValue, long universalIdValue)
-			throws IOException {
+			long sourceArchiveIdValue, long universalIdValue) throws IOException {
 		try {
 			if (name == null || name.length() == 0) {
 				throw new IllegalArgumentException("Data type must have a valid name");
@@ -2667,9 +3074,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				len = 0;
 			}
 			DBRecord record = compositeAdapter.createRecord(name, struct.getDescription(), false,
-				category.getID(), len, -1, sourceArchiveIdValue,
-				universalIdValue, struct.getLastChangeTime(),
-				struct.getStoredPackingValue(), struct.getStoredMinimumAlignment());
+				category.getID(), len, -1, sourceArchiveIdValue, universalIdValue,
+				struct.getLastChangeTime(), struct.getStoredPackingValue(),
+				struct.getStoredMinimumAlignment());
 
 			StructureDB structDB =
 				new StructureDB(this, dtCache, compositeAdapter, componentAdapter, record);
@@ -2678,7 +3085,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			category.dataTypeAdded(structDB);
 
 			structDB.doReplaceWith(struct, false);
-			structDB.setDescription(struct.getDescription());
 
 			// doReplaceWith may have updated the last change time so set it back to what we want.
 			structDB.setLastChangeTime(struct.getLastChangeTime());
@@ -2698,11 +3104,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private TypeDef createTypeDef(TypeDef typedef, String name, Category cat,
-			long sourceArchiveIdValue, long universalIdValue)
-			throws IOException {
+			long sourceArchiveIdValue, long universalIdValue) throws IOException {
 		if (name == null || name.length() == 0) {
 			throw new IllegalArgumentException("Data type must have a valid name");
 		}
+
 		DataType dataType = resolve(typedef.getDataType(), getDependencyConflictHandler());
 		boolean isAutoNamed = typedef.isAutoNamed();
 		short flags = 0;
@@ -2727,16 +3133,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private Union createUnion(UnionInternal union, String name, CategoryDB category,
-			long sourceArchiveIdValue, long universalIdValue)
-			throws IOException {
+			long sourceArchiveIdValue, long universalIdValue) throws IOException {
 		if (name == null || name.length() == 0) {
 			throw new IllegalArgumentException("Data type must have a valid name");
 		}
 		try {
 			creatingDataType++;
 			DBRecord record = compositeAdapter.createRecord(name, null, true, category.getID(), 0,
-				-1, sourceArchiveIdValue, universalIdValue,
-				union.getLastChangeTime(), union.getStoredPackingValue(), union.getStoredMinimumAlignment());
+				-1, sourceArchiveIdValue, universalIdValue, union.getLastChangeTime(),
+				union.getStoredPackingValue(), union.getStoredMinimumAlignment());
 			UnionDB unionDB =
 				new UnionDB(this, dtCache, compositeAdapter, componentAdapter, record);
 
@@ -2744,7 +3149,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			category.dataTypeAdded(unionDB);
 
 			unionDB.doReplaceWith(union, false);
-			unionDB.setDescription(union.getDescription());
 
 			// doReplaceWith updated the last change time so set it back to what we want.
 			unionDB.setLastChangeTime(union.getLastChangeTime());
@@ -2770,7 +3174,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		long enumID = record.getKey();
 		String[] enumNames = enumm.getNames();
 		for (String enumName : enumNames) {
-			enumValueAdapter.createRecord(enumID, enumName, enumm.getValue(enumName), enumm.getComment(enumName));
+			enumValueAdapter.createRecord(enumID, enumName, enumm.getValue(enumName),
+				enumm.getComment(enumName));
 		}
 		EnumDB enumDB = new EnumDB(this, dtCache, enumAdapter, enumValueAdapter, record);
 		return enumDB;
@@ -2811,7 +3216,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return arrayDB;
 	}
 
-	private void updateLastChangeTime() {
+	protected void updateLastChangeTime() {
 		SourceArchive mySourceArchive = getSourceArchive(getUniversalID());
 		if (mySourceArchive == null) {
 			return;
@@ -2978,18 +3383,19 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		try {
 			creatingDataType++;
-			DBRecord record =
-				functionDefAdapter.createRecord(name, funDef.getComment(), cat.getID(),
-					DEFAULT_DATATYPE_ID, funDef.hasVarArgs(), funDef.getGenericCallingConvention(),
-					sourceArchiveIdValue, universalIdValue, funDef.getLastChangeTime());
+			byte callingConventionId = callingConventionAdapter.getCallingConventionId(
+				funDef.getCallingConventionName(), cc -> callingConventionNameAdded(cc));
+			DBRecord record = functionDefAdapter.createRecord(name, funDef.getComment(),
+				cat.getID(), DEFAULT_DATATYPE_ID, funDef.hasNoReturn(), funDef.hasVarArgs(),
+				callingConventionId, sourceArchiveIdValue, universalIdValue,
+				funDef.getLastChangeTime());
 			FunctionDefinitionDB funDefDb =
 				new FunctionDefinitionDB(this, dtCache, functionDefAdapter, paramAdapter, record);
 
 			// Make sure category knows about function definition before args/return resolved
 			cat.dataTypeAdded(funDefDb);
 
-			funDefDb.setArguments(funDef.getArguments());
-			funDefDb.setReturnType(funDef.getReturnType());
+			funDefDb.doReplaceWith(funDef, false);
 
 			// setArguments updated the last change time so set it back to what we want.
 			funDefDb.setLastChangeTime(funDef.getLastChangeTime());
@@ -3001,12 +3407,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	class StructureIterator implements Iterator<Structure> {
+	class DataTypeIterator<T extends DataType> implements Iterator<T> {
 		private RecordIterator it;
-		private StructureDB nextStruct;
+		private T nextDataType;
+		private Predicate<DataType> predicate;
 
-		StructureIterator() throws IOException {
-			it = compositeAdapter.getRecords();
+		DataTypeIterator(DBRecordAdapter adapter, Predicate<DataType> predicate)
+				throws IOException {
+			it = adapter.getRecords();
+			this.predicate = predicate;
 		}
 
 		@Override
@@ -3016,29 +3425,30 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		@Override
 		public boolean hasNext() {
-			if (nextStruct == null) {
-				getNextStruct();
+			if (nextDataType == null) {
+				getNextDataType();
 			}
-			return nextStruct != null;
+			return nextDataType != null;
 		}
 
 		@Override
-		public StructureDB next() {
+		public T next() {
 			if (hasNext()) {
-				StructureDB s = nextStruct;
-				nextStruct = null;
-				return s;
+				T dt = nextDataType;
+				nextDataType = null;
+				return dt;
 			}
 			return null;
 		}
 
-		private void getNextStruct() {
+		@SuppressWarnings("unchecked")
+		private void getNextDataType() {
 			try {
 				while (it.hasNext()) {
 					DBRecord rec = it.next();
 					DataType dt = getDataType(rec.getKey(), rec);
-					if (dt instanceof Structure) {
-						nextStruct = (StructureDB) dt;
+					if (predicate.test(dt)) {
+						nextDataType = (T) dt;
 						return;
 					}
 				}
@@ -3046,74 +3456,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			catch (IOException e) {
 				Msg.error(this, "Unexpected exception iterating structures", e);
 			}
-		}
-	}
-
-	class CompositeIterator implements Iterator<Composite> {
-		private RecordIterator it;
-		private CompositeDB nextComposite;
-
-		CompositeIterator() throws IOException {
-			it = compositeAdapter.getRecords();
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Remove not supported");
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (nextComposite == null) {
-				getNextComposite();
-			}
-			return nextComposite != null;
-		}
-
-		@Override
-		public CompositeDB next() {
-			if (hasNext()) {
-				CompositeDB c = nextComposite;
-				nextComposite = null;
-				return c;
-			}
-			return null;
-		}
-
-		private void getNextComposite() {
-			try {
-				if (it.hasNext()) {
-					DBRecord rec = it.next();
-					nextComposite = (CompositeDB) getDataType(rec.getKey(), rec);
-				}
-			}
-			catch (IOException e) {
-				Msg.error(this, "Unexpected exception iterating composites", e);
-			}
-		}
-	}
-
-	private class NameComparator implements Comparator<DataType> {
-		/**
-		 * Compares its two arguments for order. Returns a negative integer, zero, or a
-		 * positive integer as the first argument is less than, equal to, or greater
-		 * than the second.
-		 * <p>
-		 *
-		 * @param d1 the first datatype to be compared
-		 * @param d2 the second datatype to be compared
-		 * @return a negative integer, zero, or a positive integer as the first argument
-		 *         is less than, equal to, or greater than the second
-		 * @throws ClassCastException if the arguments' types prevent them from being
-		 *                            compared by this Comparator
-		 */
-		@Override
-		public int compare(DataType d1, DataType d2) {
-			int c = d1.getName().compareTo(d2.getName());
-			if (c == 0) {
-				return d1.getCategoryPath().compareTo(d2.getCategoryPath());
-			}
-			return c;
 		}
 	}
 
@@ -3195,9 +3537,22 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	@Override
+	public Iterator<FunctionDefinition> getAllFunctionDefinitions() {
+		try {
+			return new DataTypeIterator<FunctionDefinition>(functionDefAdapter, dt -> true);
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		List<FunctionDefinition> emptyList = List.of();
+		return emptyList.iterator();
+	}
+
+	@Override
 	public Iterator<Structure> getAllStructures() {
 		try {
-			return new StructureIterator();
+			return new DataTypeIterator<Structure>(compositeAdapter,
+				dt -> (dt instanceof Structure));
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -3208,7 +3563,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	@Override
 	public Iterator<Composite> getAllComposites() {
 		try {
-			return new CompositeIterator();
+			return new DataTypeIterator<Composite>(compositeAdapter, dt -> true);
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -3232,6 +3587,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	public void invalidateCache() {
 		lock.acquire();
 		try {
+			callingConventionAdapter.invalidateCache();
+			knownCallingConventions = null;
+			definedCallingConventions = null;
 			dtCache.invalidate();
 			sourceArchiveDBCache.invalidate();
 			invalidateSourceArchiveCache();
@@ -3391,8 +3749,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public Set<DataType> getDataTypesContaining(DataType dataType) {
-		if (dataType instanceof DataTypeDB) {
-			DataTypeDB dataTypeDb = (DataTypeDB) dataType;
+		if (dataType instanceof DataTypeDB dataTypeDb) {
 			if (dataTypeDb.getDataTypeManager() != this) {
 				return Set.of();
 			}
@@ -3414,12 +3771,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	@Override
-	public Pointer getPointer(DataType dt) {
+	public final Pointer getPointer(DataType dt) {
 		return new PointerDataType(dt, this);
 	}
 
 	@Override
-	public Pointer getPointer(DataType dt, int size) {
+	public final Pointer getPointer(DataType dt, int size) {
 		return new PointerDataType(dt, size, this);
 	}
 
@@ -3450,7 +3807,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dt instanceof Enum) {
 			enumValueMap = null;
 		}
-		if (creatingDataType == 0) {
+		if (!isAutoChange && creatingDataType == 0) {
+			// auto-changes should not be synced
 			updateLastChangeTime();
 			setDirtyFlag(dt);
 		}
@@ -3636,21 +3994,212 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	@Override
-	public DataOrganization getDataOrganization() {
+	public AddressMap getAddressMap() {
+		return addrMap;
+	}
+
+	@Override
+	public final DataOrganization getDataOrganization() {
 		if (dataOrganization == null) {
-			dataOrganization = DataOrganizationImpl.getDefaultOrganization();
+			try {
+				// Initialization of dataOrganization may never have been established
+				// if either an architecture has never been specified or a language
+				// error occured during initializtion.  In such cases the stored
+				// data organization should be used if available.
+				dataOrganization = readDataOrganization();
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+			if (dataOrganization == null) {
+				dataOrganization = DataOrganizationImpl.getDefaultOrganization();
+			}
 		}
 		return dataOrganization;
 	}
 
-	private boolean checkForSourceArchiveUpdatesNeeded(int openMode, TaskMonitor monitor)
+	/**
+	 * Get calling convention name corresponding to existing specified id.
+	 * @param id calling convention ID
+	 * @return calling convention name if found else unknown
+	 */
+	public String getCallingConventionName(byte id) {
+		lock.acquire();
+		try {
+			String callingConvention = callingConventionAdapter.getCallingConventionName(id);
+			return callingConvention != null ? callingConvention
+					: CompilerSpec.CALLING_CONVENTION_unknown;
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return null;
+	}
+
+	/**
+	 * Get (and assign if needed thus requiring open transaction) the ID associated with the 
+	 * specified calling convention name.  If name is a new convention and the number of stored
+	 * convention names exceeds 127 the returned ID will correspond to the unknown calling 
+	 * convention.
+	 * @param name calling convention name
+	 * @param restrictive if true an error will be thrown if name is not defined by 
+	 * {@link GenericCallingConvention} or the associated compiler specification if 
+	 * datatype manager has an associated program architecture.
+	 * @return calling convention ID
+	 * @throws IOException if database IO error occurs
+	 * @throws InvalidInputException if restrictive is true and name is not defined by 
+	 * {@link GenericCallingConvention} or the associated compiler specification if 
+	 * datatype manager has an associated program architecture.
+	 */
+	public byte getCallingConventionID(String name, boolean restrictive)
+			throws InvalidInputException, IOException {
+
+		if (CompilerSpec.isUnknownCallingConvention(name)) {
+			return UNKNOWN_CALLING_CONVENTION_ID;
+		}
+		if (CompilerSpec.CALLING_CONVENTION_default.equals(name)) {
+			return DEFAULT_CALLING_CONVENTION_ID;
+		}
+
+		lock.acquire();
+		try {
+			// If restrictive only permit a name which is known
+			if (restrictive &&
+				GenericCallingConvention
+						.getGenericCallingConvention(name) == GenericCallingConvention.unknown &&
+				!getKnownCallingConventionNames().contains(name) &&
+				getCallingConvention(name) == null) {
+
+				throw new InvalidInputException("Invalid calling convention name: " + name);
+			}
+
+			return callingConventionAdapter.getCallingConventionId(name,
+				cc -> callingConventionNameAdded(cc));
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return UNKNOWN_CALLING_CONVENTION_ID;
+	}
+
+	private void callingConventionNameAdded(String name) {
+		getKnownCallingConventionSet().add(name);
+	}
+
+	private Set<String> getDefinedCallingConventionSet() {
+		if (definedCallingConventions == null) {
+			definedCallingConventions = buildDefinedCallingConventionSet();
+		}
+		return definedCallingConventions;
+	}
+
+	private TreeSet<String> buildDefinedCallingConventionSet() {
+
+		// Include all calling conventions defined by associated architecure compiler spec
+		TreeSet<String> nameSet = new TreeSet<>();
+		ProgramArchitecture arch = getProgramArchitecture();
+		if (arch != null) {
+			CompilerSpec compilerSpec = arch.getCompilerSpec();
+			PrototypeModel[] namedCallingConventions = compilerSpec.getCallingConventions();
+			for (PrototypeModel model : namedCallingConventions) {
+				nameSet.add(model.getName());
+			}
+		}
+
+		// Include all generic calling convention names without cspec
+		else {
+			for (GenericCallingConvention conv : GenericCallingConvention.values()) {
+				if (conv == GenericCallingConvention.unknown) {
+					continue; // added below
+				}
+				nameSet.add(conv.getDeclarationName());
+			}
+		}
+
+		return nameSet;
+	}
+
+	@Override
+	public Collection<String> getDefinedCallingConventionNames() {
+		lock.acquire();
+		try {
+			return new ArrayList<>(getDefinedCallingConventionSet());
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private Set<String> getKnownCallingConventionSet() {
+		if (knownCallingConventions == null) {
+			knownCallingConventions = buildKnownCallingConventionSet();
+		}
+		return knownCallingConventions;
+	}
+
+	private TreeSet<String> buildKnownCallingConventionSet() {
+		TreeSet<String> nameSet = new TreeSet<>();
+		try {
+			// Include defined call convention names
+			nameSet.addAll(getDefinedCallingConventionSet());
+
+			// Include all calling convention names previously added to DB
+			for (String name : callingConventionAdapter.getCallingConventionNames()) {
+				nameSet.add(name);
+			}
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+
+		return nameSet;
+	}
+
+	@Override
+	public Collection<String> getKnownCallingConventionNames() {
+		lock.acquire();
+		try {
+			return new ArrayList<>(getKnownCallingConventionSet());
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public PrototypeModel getDefaultCallingConvention() {
+		ProgramArchitecture arch = getProgramArchitecture();
+		if (arch != null) {
+			CompilerSpec compilerSpec = arch.getCompilerSpec();
+			return compilerSpec.getDefaultCallingConvention();
+		}
+		return null;
+	}
+
+	@Override
+	public PrototypeModel getCallingConvention(String name) {
+		ProgramArchitecture arch = getProgramArchitecture();
+		if (arch != null) {
+			CompilerSpec compilerSpec = arch.getCompilerSpec();
+			return compilerSpec.getCallingConvention(name);
+		}
+		return null;
+	}
+
+	private boolean checkForSourceArchiveUpdatesNeeded(OpenMode openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.CREATE || openMode == DBConstants.READ_ONLY) {
+		if (openMode == OpenMode.CREATE || openMode == OpenMode.IMMUTABLE) {
 			return false;
 		}
 		List<DBRecord> records = sourceArchiveAdapter.getRecords();
 		for (DBRecord record : records) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (SourceArchiveUpgradeMap.isReplacedSourceArchive(record.getKey())) {
 				return true;
 			}
@@ -3676,7 +4225,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		RecordIterator records = compositeAdapter.getRecords();
 		while (records.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = records.next();
 			if (!rec.getBooleanValue(CompositeDBAdapter.COMPOSITE_IS_UNION_COL)) {
 				// StructureDB instantiation will perform an automatic flex-array
@@ -3690,23 +4239,20 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	/**
 	 * This method is only invoked during an upgrade.
 	 * 
-	 * @param compilerSpec compiler spec
 	 * @param monitor      task monitor
 	 * @throws CancelledException if task cancelled
 	 */
-	protected void doSourceArchiveUpdates(CompilerSpec compilerSpec, TaskMonitor monitor)
-			throws CancelledException {
+	protected void doSourceArchiveUpdates(TaskMonitor monitor) throws CancelledException {
 		SourceArchiveUpgradeMap upgradeMap = new SourceArchiveUpgradeMap();
 		for (SourceArchive sourceArchive : getSourceArchives()) {
-			SourceArchive mappedSourceArchive =
-				upgradeMap.getMappedSourceArchive(sourceArchive, compilerSpec);
+			SourceArchive mappedSourceArchive = upgradeMap.getMappedSourceArchive(sourceArchive);
 			if (mappedSourceArchive != null) {
 				replaceSourceArchive(sourceArchive, mappedSourceArchive);
 			}
 		}
 		BuiltInDataTypeManager builtInDTM = BuiltInDataTypeManager.getDataTypeManager();
 		for (String name : SourceArchiveUpgradeMap.getTypedefReplacements()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dataType = getDataType(CategoryPath.ROOT, name);
 			if (dataType instanceof TypeDef) {
 				DataType builtIn = builtInDTM.getDataType(CategoryPath.ROOT, name);
@@ -3728,42 +4274,52 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * that this program be open with exclusive access before invoking this method to avoid 
 	 * excessive merge conflicts with other users.
 	 * @param monitor task monitor
-	 * @throws CancelledException if operation is cancelled
+	 * @throws CancelledException if processing cancelled - data types may not properly reflect
+	 * updated compiler specification
 	 */
 	public void fixupComposites(TaskMonitor monitor) throws CancelledException {
 		lock.acquire();
 		try {
-
-			// NOTE: Any composite could be indirectly affected by a component size change
-			// based upon type relationships
-
-			// NOTE: Composites brought in from archive may have incorrect component size
-			// if not aligned and should not be used to guage a primitive size change
-
-			// Unfortunately parent table does not track use of primitives so a brute
-			// force search is required.  Since all composites must be checked, this 
-			// is combined with the composite graph generation to get ordered list
-			// of composites for subsequent size change operation.
-
-			List<CompositeDB> orderedComposites = getAllCompositesInPostDependencyOrder(monitor);
-
-			monitor.setProgress(0);
-			monitor.setMaximum(orderedComposites.size());
-			monitor.setMessage("Updating Datatype Sizes...");
-
-			int count = 0;
-			for (CompositeDB c : orderedComposites) {
-				monitor.checkCanceled();
-				c.fixupComponents();
-				monitor.setProgress(++count);
-			}
-
+			doCompositeFixup(monitor);
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
 		finally {
 			lock.release();
+		}
+	}
+
+	private void doCompositeFixup(TaskMonitor monitor) throws CancelledException, IOException {
+
+		// NOTE: Any composite could be indirectly affected by a component size change
+		// based upon type relationships.  In addition, an architecture change could
+		// alter the size and alignment of any datatype.
+
+		// NOTE: Composites brought in from archive may have incorrect component size
+		// if packing disabled and should not be used to guage a primitive size change
+
+		// Unfortunately parent table does not track use of primitives so a brute
+		// force search is required.  Since all composites must be checked, this 
+		// is combined with the composite graph generation to get ordered list
+		// of composites for subsequent size change operation.
+
+		List<CompositeDB> orderedComposites = getAllCompositesInPostDependencyOrder(monitor);
+
+		monitor.setProgress(0);
+		monitor.setMaximum(orderedComposites.size());
+		monitor.setMessage("Updating Datatype Sizes...");
+
+		int count = 0;
+		for (CompositeDB c : orderedComposites) {
+			monitor.checkCancelled();
+			if (c.isPackingEnabled()) {
+				c.repack(true, false);
+			}
+			else {
+				c.fixupComponents();
+			}
+			monitor.setProgress(++count);
 		}
 	}
 
@@ -3805,7 +4361,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		GDirectedGraph<CompositeDB, GEdge<CompositeDB>> graph = GraphFactory.createDirectedGraph();
 		Iterator<Composite> allComposites = getAllComposites();
 		while (allComposites.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CompositeDB c = (CompositeDB) allComposites.next();
 			graph.addVertex(c);
 			for (DataTypeComponent m : c.getDefinedComponents()) {
@@ -3819,9 +4375,207 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
+	 * De-duplicate equivalent conflict datatypes which share a common base data type name and
+	 * are found to be equivalent.
+	 * 
+	 * @param dataType data type whose related conflict types should be de-duplicated
+	 * @return true if one or more datatypes were de-duplicted or dde-conflicted, else false
+	 */
+	public boolean dedupeConflicts(DataType dataType) {
+		if (!(dataType instanceof DataTypeDB)) {
+			return false;
+		}
+
+		lock.acquire();
+		try {
+			if (dataType instanceof Pointer || dataType instanceof Array) {
+				dataType = DataTypeUtilities.getBaseDataType(dataType);
+			}
+			if (dataType == null || !contains(dataType)) {
+				return false;
+			}
+			List<DataType> relatedByName = findDataTypesSameLocation(dataType);
+			if (relatedByName.size() < 2) {
+				return false;
+			}
+			Collections.sort(relatedByName, DataTypeComparator.INSTANCE);
+
+			boolean success = false;
+			for (int n = relatedByName.size() - 1; n != 0; n--) {
+				DataType targetDt = relatedByName.get(n);
+
+				for (int m = 0; m < n; m++) {
+					DataType candidate = relatedByName.get(m);
+					if (candidate.isEquivalent(targetDt)) {
+						try {
+							replace(targetDt, candidate);
+							success = true;
+							break;
+						}
+						catch (DataTypeDependencyException e) {
+							throw new AssertionError("Unexpected condition", e);
+						}
+					}
+				}
+			}
+			return success;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private record DedupedConflicts(int processCnt, int replaceCnt) {
+	}
+
+	private DedupedConflicts doDedupeConflicts(DataType dataType) {
+
+		List<DataType> relatedByName = findDataTypesSameLocation(dataType);
+		if (relatedByName.size() < 2) {
+			return new DedupedConflicts(1, 0);
+		}
+		Collections.sort(relatedByName, DataTypeComparator.INSTANCE);
+
+		int replaceCnt = 0;
+		for (int n = relatedByName.size() - 1; n != 0; n--) {
+			DataType targetDt = relatedByName.get(n);
+
+			for (int m = 0; m < n; m++) {
+				DataType candidate = relatedByName.get(m);
+				if (candidate.isEquivalent(targetDt)) {
+					try {
+						replace(targetDt, candidate);
+						++replaceCnt;
+						break;
+					}
+					catch (DataTypeDependencyException e) {
+						throw new AssertionError("Unexpected condition", e);
+					}
+				}
+			}
+		}
+		return new DedupedConflicts(relatedByName.size(), replaceCnt);
+
+	}
+
+	/**
+	 * De-duplicate equivalent conflict datatypes which share a common base data type name and
+	 * are found to be equivalent.
+	 * 
+	 * @param monitor task monitor
+	 * @throws CancelledException if task is cancelled
+	 */
+	public void dedupeAllConflicts(TaskMonitor monitor) throws CancelledException {
+		lock.acquire();
+		try {
+			List<DataType> conflictList = new ArrayList<>();
+			int total = popuplateConflictList(conflictList, getRootCategory());
+			monitor.initialize(total);
+			int processed = 0;
+			int replacements = 0;
+			for (DataType conflictDt : conflictList) {
+				monitor.checkCancelled();
+				DedupedConflicts result = doDedupeConflicts(conflictDt);
+				processed += result.processCnt;
+				replacements += result.replaceCnt;
+				monitor.setProgress(processed);
+			}
+			Msg.info(this, "Evaluated " + processed + " conflict types, replaced " + replacements +
+				" base type conflicts");
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private int popuplateConflictList(List<DataType> conflictList, Category category) {
+
+		int count = 0;
+		for (Category childCategory : category.getCategories()) {
+			count += popuplateConflictList(conflictList, childCategory);
+		}
+
+		DataType[] dataTypes = category.getDataTypes();
+		Arrays.sort(dataTypes, DataTypeComparator.INSTANCE);
+
+		String lastBaseName = null;
+		boolean lastHadConflict = false;
+
+		for (DataType dt : dataTypes) {
+			if (dt instanceof Pointer || dt instanceof Array) {
+				continue;
+			}
+			boolean isConflict = DataTypeUtilities.isConflictDataType(dt);
+			String name = DataTypeUtilities.getNameWithoutConflict(dt, false);
+			if (!name.equals(lastBaseName)) {
+				// base name changed
+				lastBaseName = name;
+				lastHadConflict = false;
+				if (isConflict) {
+					// non-conflict type is not present
+					conflictList.add(dt);
+					lastHadConflict = true;
+					++count;
+				}
+			}
+			else if (isConflict) {
+				if (!lastHadConflict) {
+					// account for non-conflict type in count
+					conflictList.add(dt);
+					lastHadConflict = true;
+					++count;
+				}
+				++count;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Process the conflict queue of newly created conflict datatypes.  Processing performs one
+	 * last attempt at locating an equivalent datatype 
+	 * 
+	 * @param dataType final resolved data type.
+	 * If a newly created conflict type and this method and is able to replace with an equivalent 
+	 * data type the replacement datatype will be returned, otherwise the specified {@code dataType}
+	 * instance will be returned.
+	 * @return final resolved data type
+	 */
+	private DataType processConflictQueue(DataType dataType) {
+
+		while (!conflictQueue.isEmpty()) {
+
+			// Process last conflict first (LIFO) to ensure conflicts with larger
+			// numbers are discarded first if applicable - although unlikely to occur
+			// during the same resolve-cycle.
+			DataType dt = conflictQueue.removeLast();
+
+			List<DataType> relatedByName = findDataTypesSameLocation(dt);
+			for (DataType candidate : relatedByName) {
+				if (candidate != dt && DataTypeDB.isEquivalent(candidate, dt,
+					DataTypeConflictHandler.DEFAULT_HANDLER)) {
+					try {
+						replace(dt, candidate);
+						if (dt == dataType) {
+							// switch final type
+							dataType = candidate;
+						}
+						break;
+					}
+					catch (DataTypeDependencyException e) {
+						// ignore - try next if available
+					}
+				}
+			}
+
+		}
+		return dataType;
+	}
+
+	/**
 	 * Activate resolveCache and associated resolveQueue if not already active. If
 	 * this method returns true caller is responsible for flushing resolveQueue and
-	 * invoking {@link #flushResolveQueue(boolean)} when resolve complete. 
+	 * invoking {@link #processResolveQueue(boolean)} when resolve complete. 
 	 * For each completed resolve {@link #cacheResolvedDataType(DataType, DataType)} 
 	 * should be invoked.
 	 * 
@@ -3849,7 +4603,42 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		resolveQueue.add(new ResolvePair(resolvedDt, definitionDt));
 	}
 
-	void flushResolveQueue(boolean deactivateCache) {
+	/**
+	 * Process resolve queue, which  includes:
+	 * <ul>
+	 * <li>Process any deferred pointer resolves in {@code resolveQueue}</li>
+	 * <li>If deactivating cache {@code deactivateCache==true} the conflict queue will be 
+	 * processed</li>
+	 * <li>If deactivating cache {@code deactivateCache==true} the {@code resolveCache} will be
+	 * disposed.</li>
+	 * </ul>
+	 * @param deactivateCache true if caller is {@code resolveCache} owner as determined by call 
+	 * to {@link #activateResolveCache()}) at start of resolve cycle, else false.
+	 */
+	void processResolveQueue(boolean deactivateCache) {
+		processResolveQueue(deactivateCache, null);
+	}
+
+	/**
+	 * Process resolve queue, which  includes:
+	 * <ul>
+	 * <li>Process any deferred pointer resolves in {@code resolveQueue}</li>
+	 * <li>If deactivating cache {@code deactivateCache==true} the conflict queue will be 
+	 * processed</li>
+	 * <li>If deactivating cache {@code deactivateCache==true} the {@code resolveCache} will be
+	 * disposed.</li>
+	 * </ul>
+	 * 
+	 * @param deactivateCache true if caller is {@code resolveCache} owner as determined by call 
+	 * to {@link #activateResolveCache()}) at start of resolve cycle, else false.
+	 * @param dataType final resolved data type.  If {@code deactivateCache==true} and this type
+	 * is a newly created conflict type and this method and is able to replace with an equivalent 
+	 * data type the replacement datatype will be returned, otherwise the specified {@code dataType}
+	 * instance will be returned.
+	 * @return final resolved data type
+	 */
+	private DataType processResolveQueue(boolean deactivateCache, DataType dataType) {
+
 		try {
 			if (resolveQueue != null) {
 				DataTypeConflictHandler handler = getDependencyConflictHandler();
@@ -3857,7 +4646,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					ResolvePair resolvePair = resolveQueue.pollFirst();
 					DataTypeDB resolvedDt = resolvePair.resolvedDt;
 					try {
-						resolvedDt.postPointerResolve(resolvePair.definitionDt, handler);
+						if (!resolvedDt.isDeleted()) {
+							resolvedDt.postPointerResolve(resolvePair.definitionDt, handler);
+						}
 					}
 					// TODO: catch exceptions if needed
 					finally {
@@ -3866,6 +4657,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					}
 				}
 			}
+			if (deactivateCache) {
+				return processConflictQueue(dataType);
+			}
 		}
 		finally {
 			resolveQueue = null;
@@ -3873,6 +4667,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				resolveCache = null;
 			}
 		}
+		return dataType;
 	}
 
 	private DataType getCachedResolve(DataType dt) {
@@ -4120,14 +4915,35 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private class DbErrorHandler implements ErrorHandler {
 
 		@Override
-		public void dbError(IOException e) {
+		public void dbError(IOException e) throws RuntimeIOException {
 
 			String message = e.getMessage();
 			if (e instanceof ClosedException) {
 				message = "Data type archive is closed: " + getName();
+				Msg.showError(this, null, "IO ERROR", message, e);
 			}
 
-			Msg.showError(this, null, "IO ERROR", message, e);
+			throw new RuntimeIOException(e);
+		}
+	}
+
+	/**
+	 * Diagnostic method to determine actual number of datatype records which exist.  This
+	 * may differ from the total number of datatypes reported via {@link DataTypeManager#getAllDataTypes()}
+	 * due to the manner in which datatypes are held in-memory (i.e., name-based indexed) if
+	 * duplicate datatype names exist within a category.
+	 * @return total number of datatype records.
+	 */
+	int getDataTypeRecordCount() {
+		lock.acquire();
+		try {
+			return builtinAdapter.getRecordCount() + compositeAdapter.getRecordCount() +
+				arrayAdapter.getRecordCount() + pointerAdapter.getRecordCount() +
+				typedefAdapter.getRecordCount() + functionDefAdapter.getRecordCount() +
+				enumAdapter.getRecordCount();
+		}
+		finally {
+			lock.release();
 		}
 	}
 

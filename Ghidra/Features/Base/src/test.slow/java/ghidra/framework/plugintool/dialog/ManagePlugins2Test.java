@@ -31,7 +31,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Tests for the configuring a tool.
@@ -54,15 +54,13 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		close(dialog);
 		env.dispose();
-
-		sleep(1000);
 	}
 
 	@Test
 	public void testPluginPackage_ReleasedPackage_ReleasedPlugins() throws Exception {
 
 		PluginPackage testPackage = new PluginPackage("TEST",
-			ResourceManager.loadImage("images/Data_32.png"), "Test plugin pacakge") {
+			Icons.ADD_ICON, "Test plugin pacakge") {
 			//
 		};
 
@@ -99,7 +97,7 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testPluginPackage_ReleasedPackage_ReleasedAndStablePlugins() throws Exception {
 
 		PluginPackage testPackage = new PluginPackage("TEST",
-			ResourceManager.loadImage("images/Data_32.png"), "Test plugin pacakge") {
+			Icons.ADD_ICON, "Test plugin pacakge") {
 			//
 		};
 
@@ -140,7 +138,7 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testPluginPackage_StablePackage_ReleasedAndStablePlugins() throws Exception {
 
 		PluginPackage testPackage = new PluginPackage("TEST",
-			ResourceManager.loadImage("images/Data_32.png"), "Test plugin pacakge") {
+			Icons.ADD_ICON, "Test plugin pacakge") {
 			@Override
 			public PluginStatus getActivationLevel() {
 				return PluginStatus.STABLE;
@@ -185,7 +183,7 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 			throws Exception {
 
 		PluginPackage testPackage = new PluginPackage("TEST",
-			ResourceManager.loadImage("images/Data_32.png"), "Test plugin pacakge") {
+			Icons.ADD_ICON, "Test plugin pacakge") {
 			@Override
 			public PluginStatus getActivationLevel() {
 				return PluginStatus.STABLE;
@@ -235,7 +233,7 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testPluginPackage_ReleasedPackage_StablePlugins() throws Exception {
 
 		PluginPackage testPackage = new PluginPackage("TEST",
-			ResourceManager.loadImage("images/Data_32.png"), "Test plugin pacakge") {
+			Icons.ADD_ICON, "Test plugin pacakge") {
 			//
 		};
 
@@ -274,7 +272,7 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 			throws Exception {
 
 		PluginPackage testPackage = new PluginPackage("TEST",
-			ResourceManager.loadImage("images/Data_32.png"), "Test plugin pacakge") {
+			Icons.ADD_ICON, "Test plugin pacakge") {
 			//
 		};
 
@@ -456,25 +454,25 @@ public class ManagePlugins2Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/*
-
+	
 	 	testPluginPackage_Released() {
-
+	
 	 		Click to add all
-
+	
 	 		Click to remove All
-
+	
 	 	}
-
-
+	
+	
 		testPluginPackage_Stable_ReleasedPlugins()
-
+	
 		testPluginPackage_Stable_ReleasedAndStablePlugins()
 	
 		testPluginPackage_Stable_ReleasedAndStableAndUnstablePlugins()
 			-unstable goes to 'experimental'
-
+	
 		testPluginPackage
-
+	
 	 */
 
 }

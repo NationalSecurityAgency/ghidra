@@ -15,6 +15,7 @@
  */
 package ghidra.framework.plugintool.dialog;
 
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Table model for the {@link PluginInstallerDialog} dialog. This defines the table columns and
@@ -48,7 +48,7 @@ class PluginInstallerTableModel
 	final static int STATUS_COL = 1;
 	final static int NAME_COL = 2;
 
-	public static final Icon EXPERIMENTAL_ICON = ResourceManager.loadImage("images/warning.png");
+	public static final Icon EXPERIMENTAL_ICON = Icons.WARNING_ICON;
 	public static final Icon DEV_ICON = Icons.STRONG_WARNING_ICON;
 
 	private static Map<PluginStatus, Icon> statusIconMap = new HashMap<>();
@@ -94,6 +94,8 @@ class PluginInstallerTableModel
 		descriptor.addVisibleColumn(new PluginNameColumn(), 1, true);
 		descriptor.addVisibleColumn(new PluginDescriptionColumn());
 		descriptor.addVisibleColumn(new PluginCategoryColumn());
+		descriptor.addHiddenColumn(new PluginModuleColumn());
+		descriptor.addHiddenColumn(new PluginLocationColumn());
 
 		return descriptor;
 	}
@@ -136,8 +138,11 @@ class PluginInstallerTableModel
 			List<PluginDescription> pluginsThatUseTarget =
 				model.getDependencies(targetPluginDescription);
 			String dependenciesToUnloadHtmlList =
-				pluginsThatUseTarget.stream().map(PluginDescription::getName).sorted().collect(
-					Collectors.joining("<li>", "<ul><li>", "</ul>"));
+				pluginsThatUseTarget.stream()
+						.map(PluginDescription::getName)
+						.sorted()
+						.collect(
+							Collectors.joining("<li>", "<ul><li>", "</ul>"));
 
 			if (pluginsThatUseTarget.isEmpty() ||
 				OptionDialog.showYesNoDialog(parentComponent, "Confirm plugin removal",
@@ -175,7 +180,7 @@ class PluginInstallerTableModel
 	 * Column for displaying the interactive checkbox, allowing the user to install
 	 * or uninstall the plugin.
 	 */
-	class PluginInstalledColumn extends
+	private class PluginInstalledColumn extends
 			AbstractDynamicTableColumn<PluginDescription, Boolean, List<PluginDescription>> {
 
 		@Override
@@ -198,7 +203,7 @@ class PluginInstallerTableModel
 	/**
 	 * Column for displaying the status of the plugin.
 	 */
-	class PluginStatusColumn
+	private class PluginStatusColumn
 			extends AbstractDynamicTableColumn<PluginDescription, Icon, List<PluginDescription>> {
 
 		@Override
@@ -221,7 +226,7 @@ class PluginInstallerTableModel
 	/**
 	 * Column for displaying the extension name of the plugin.
 	 */
-	class PluginNameColumn
+	private class PluginNameColumn
 			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
 
 		@Override
@@ -244,7 +249,7 @@ class PluginInstallerTableModel
 	/**
 	 * Column for displaying the plugin description.
 	 */
-	class PluginDescriptionColumn
+	private class PluginDescriptionColumn
 			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
 
 		@Override
@@ -264,10 +269,54 @@ class PluginInstallerTableModel
 		}
 	}
 
+	private class PluginModuleColumn
+			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
+
+		@Override
+		public String getColumnName() {
+			return "Module";
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 200;
+		}
+
+		@Override
+		public String getValue(PluginDescription rowObject, Settings settings,
+				List<PluginDescription> data, ServiceProvider sp) throws IllegalArgumentException {
+			return rowObject.getModuleName();
+		}
+	}
+
+	private class PluginLocationColumn
+			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
+
+		@Override
+		public String getColumnName() {
+			return "Location";
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 200;
+		}
+
+		@Override
+		public String getValue(PluginDescription rowObject, Settings settings,
+				List<PluginDescription> data, ServiceProvider sp) throws IllegalArgumentException {
+			Class<? extends Plugin> clazz = rowObject.getPluginClass();
+			String name = clazz.getName();
+			String path = '/' + name.replace('.', '/') + ".class";
+			URL url = clazz.getResource(path);
+			return url.getFile();
+		}
+	}
+
 	/**
 	 * Column for displaying the plugin category.
 	 */
-	class PluginCategoryColumn
+	private class PluginCategoryColumn
 			extends AbstractDynamicTableColumn<PluginDescription, String, List<PluginDescription>> {
 
 		@Override

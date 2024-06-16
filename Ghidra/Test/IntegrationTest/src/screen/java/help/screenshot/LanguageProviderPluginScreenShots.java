@@ -37,7 +37,8 @@ public class LanguageProviderPluginScreenShots extends GhidraScreenShotGenerator
 
 @Test
     public void testLanguages() {
-		final SetLanguageDialog dialog = new SetLanguageDialog(tool, program);
+		final SetLanguageDialog dialog = new SetLanguageDialog(tool, program,
+			"Set Language: " + program.getDomainFile().getName());
 		Object newLanguagePanel = getInstanceField("selectLangPanel", dialog);
 		final GTableFilterPanel<?> filterPanel =
 			(GTableFilterPanel<?>) getInstanceField("tableFilterPanel", newLanguagePanel);

@@ -17,19 +17,25 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
+import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
-import ghidra.trace.model.stack.TraceStackFrame;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 
-public class PCLocationTrackingSpec implements RegisterLocationTrackingSpec {
+public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
+	INSTANCE;
+
 	public static final String CONFIG_NAME = "TRACK_PC";
+
+	private static final PCByRegisterLocationTrackingSpec BY_REG =
+		PCByRegisterLocationTrackingSpec.INSTANCE;
+	private static final PCByStackLocationTrackingSpec BY_STACK =
+		PCByStackLocationTrackingSpec.INSTANCE;
 
 	@Override
 	public String getConfigName() {
@@ -47,63 +53,51 @@ public class PCLocationTrackingSpec implements RegisterLocationTrackingSpec {
 	}
 
 	@Override
-	public Register computeRegister(DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		if (trace == null) {
-			return null;
-		}
-		return trace.getBaseLanguage().getProgramCounter();
+	public String computeTitle(DebuggerCoordinates coordinates) {
+		return "Auto PC";
 	}
 
 	@Override
-	public AddressSpace computeDefaultAddressSpace(DebuggerCoordinates coordinates) {
-		return coordinates.getTrace().getBaseLanguage().getDefaultSpace();
-	}
-
-	public Address computePCViaStack(DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		TraceThread thread = coordinates.getThread();
-		long snap = coordinates.getSnap();
-		TraceStack stack = trace.getStackManager().getLatestStack(thread, snap);
-		if (stack == null) {
-			return null;
-		}
-		int level = coordinates.getFrame();
-		TraceStackFrame frame = stack.getFrame(level, false);
-		if (frame == null) {
-			return null;
-		}
-		return frame.getProgramCounter(snap);
+	public String getLocationLabel() {
+		return "pc";
 	}
 
 	@Override
-	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates,
-			long emuSnap) {
+	public LocationTracker getTracker() {
+		return this;
+	}
+
+	@Override
+	public Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
 		if (coordinates.getTime().isSnapOnly()) {
-			Address pc = computePCViaStack(coordinates);
+			Address pc = BY_STACK.computeTraceAddress(provider, coordinates);
 			if (pc != null) {
 				return pc;
 			}
 		}
-		return RegisterLocationTrackingSpec.super.computeTraceAddress(tool, coordinates, emuSnap);
+		return BY_REG.computeTraceAddress(provider, coordinates);
+	}
+
+	@Override
+	public GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
+			ProgramLocation location) {
+		return BY_REG.getDefaultGoToInput(provider, coordinates, location);
 	}
 
 	// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.
 	@Override
 	public boolean affectedByStackChange(TraceStack stack, DebuggerCoordinates coordinates) {
-		if (stack.getThread() != coordinates.getThread()) {
-			return false;
-		}
-		if (!coordinates.getTime().isSnapOnly()) {
-			return false;
-		}
-		// TODO: Would be nice to have stack lifespan...
-		TraceStack curStack = coordinates.getTrace()
-				.getStackManager()
-				.getLatestStack(stack.getThread(), coordinates.getSnap());
-		if (stack != curStack) {
-			return false;
-		}
+		return BY_STACK.affectedByStackChange(stack, coordinates);
+	}
+
+	@Override
+	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
+			DebuggerCoordinates coordinates) {
+		return BY_REG.affectedByBytesChange(space, range, coordinates);
+	}
+
+	@Override
+	public boolean shouldDisassemble() {
 		return true;
 	}
 }

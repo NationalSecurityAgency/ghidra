@@ -16,7 +16,9 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",103);
+namespace ghidra {
+
+AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",130);
 
 /// \param op2 is the lane description to copy from
 LaneDescription::LaneDescription(const LaneDescription &op2)
@@ -266,6 +268,19 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
   return true;		// Already inserted
 }
 
+/// Prepare to build the transformed INDIRECT PcodeOp based on settings from the given INDIRECT.
+/// \param indOp is the given INDIRECT
+void TransformOp::inheritIndirect(PcodeOp *indOp)
+
+{
+  if (indOp->isIndirectCreation()) {
+    if (indOp->getIn(0)->isIndirectZero())
+      special |= TransformOp::indirect_creation;
+    else
+      special |= TransformOp::indirect_creation_possible_out;
+  }
+}
+
 void LanedRegister::LanedIterator::normalize(void)
 
 {
@@ -281,9 +296,8 @@ void LanedRegister::LanedIterator::normalize(void)
 
 /// Parse any vector lane sizes.
 /// \param decoder is the stream decoder
-/// \param manage is used to map register names to storage info
 /// \return \b true if the XML description provides lane sizes
-bool LanedRegister::decode(Decoder &decoder,const AddrSpaceManager *manage)
+bool LanedRegister::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_REGISTER);
@@ -303,7 +317,7 @@ bool LanedRegister::decode(Decoder &decoder,const AddrSpaceManager *manage)
   decoder.rewindAttributes();
   VarnodeData storage;
   storage.space = (AddrSpace *)0;
-  storage.decodeFromAttributes(decoder, manage);
+  storage.decodeFromAttributes(decoder);
   decoder.closeElement(elemId);
   wholeSize = storage.size;
   sizeBitMask = 0;
@@ -757,3 +771,5 @@ void TransformManager::apply(void)
   transformInputVarnodes(inputList);
   placeInputs();
 }
+
+} // End namespace ghidra

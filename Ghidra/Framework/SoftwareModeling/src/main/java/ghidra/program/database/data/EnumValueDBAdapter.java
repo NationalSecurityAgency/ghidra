@@ -24,6 +24,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -46,32 +48,34 @@ abstract class EnumValueDBAdapter implements RecordTranslator {
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor the monitor to use for displaying status or for canceling.
 	 * @return the adapter for accessing the table of enumeration data type values.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
+	 * @throws CancelledException if task is cancelled
 	 */
-	static EnumValueDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
-		if (openMode == DBConstants.CREATE) {
-			return new EnumValueDBAdapterV1(handle, true);
+	static EnumValueDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+		if (openMode == OpenMode.CREATE) {
+			return new EnumValueDBAdapterV1(handle, tablePrefix, true);
 		}
 		try {
-			return new EnumValueDBAdapterV1(handle, false);
+			return new EnumValueDBAdapterV1(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			EnumValueDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, adapter);
+			if (openMode == OpenMode.UPGRADE) {
+				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
 		}
 	}
 
-	static EnumValueDBAdapter findReadOnlyAdapter(DBHandle handle) {
+	private static EnumValueDBAdapter findReadOnlyAdapter(DBHandle handle) {
 		try {
 			return new EnumValueDBAdapterV0(handle);
 		}
@@ -85,28 +89,34 @@ abstract class EnumValueDBAdapter implements RecordTranslator {
 	 * version.
 	 * @param handle handle to the database whose table is to be upgraded to a newer version.
 	 * @param oldAdapter the adapter for the existing table to be upgraded.
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param monitor task monitor
 	 * @return the adapter for the new upgraded version of the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
+	 * @throws CancelledException if task is cancelled
 	 */
-	static EnumValueDBAdapter upgrade(DBHandle handle, EnumValueDBAdapter oldAdapter)
-			throws VersionException, IOException {
+	private static EnumValueDBAdapter upgrade(DBHandle handle, EnumValueDBAdapter oldAdapter,
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
 		EnumValueDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new EnumValueDBAdapterV1(tmpHandle, true);
+			tmpAdapter = new EnumValueDBAdapterV1(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
-			EnumValueDBAdapter newAdapter = new EnumValueDBAdapterV1(handle, true);
+			EnumValueDBAdapter newAdapter = new EnumValueDBAdapterV1(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
@@ -149,9 +159,7 @@ abstract class EnumValueDBAdapter implements RecordTranslator {
 	 * @param handle the handle used to delete the table
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(ENUM_VALUE_TABLE_NAME);
-	}
+	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	/**
 	 * Remove the record for the given enum Value ID.

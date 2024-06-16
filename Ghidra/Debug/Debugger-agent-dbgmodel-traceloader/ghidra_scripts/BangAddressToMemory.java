@@ -16,25 +16,24 @@
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import com.google.common.collect.Range;
-
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.AbstractDbgModel;
+import db.Transaction;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * This script populates a trace database with memory derived from "!address". This is  particularly
+ * This script populates a trace database with memory derived from "!address". This is particularly
  * useful for dump files and other cases where QueryVirtual fails.
  * 
  * <p>
@@ -63,7 +62,6 @@ public class BangAddressToMemory extends GhidraScript {
 	private TraceMemoryManager memory;
 
 	private AddressSpace defaultSpace;
-
 
 	private DebuggerModelService modelService;
 	private DebuggerTraceManagerService managerService;
@@ -96,7 +94,7 @@ public class BangAddressToMemory extends GhidraScript {
 		if (modelService == null) {
 			throw new RuntimeException("Unable to find DebuggerMemviewPlugin");
 		}
-		
+
 		DebuggerObjectModel model = modelService.getCurrentModel();
 		if (!(model instanceof AbstractDbgModel)) {
 			throw new RuntimeException("Current model must be an AbstractDbgModel");
@@ -111,7 +109,7 @@ public class BangAddressToMemory extends GhidraScript {
 			throw new RuntimeException("Script requires an active trace");
 		}
 		memory = trace.getMemoryManager();
-		
+
 		lang = currentProgram.getLanguage();
 		defaultSpace = lang.getAddressFactory().getDefaultAddressSpace();
 
@@ -121,7 +119,7 @@ public class BangAddressToMemory extends GhidraScript {
 	}
 
 	private void parse(String result) {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate memory", true);
+		try (Transaction tx = trace.openTransaction("Populate memory");
 				LockHold hold = trace.lockWrite();) {
 			//Pattern pattern = Pattern.compile("\\s+(*)\\s+(*)\\s+");
 			//Matcher matcher = pattern.matcher(fullclassname);
@@ -148,8 +146,8 @@ public class BangAddressToMemory extends GhidraScript {
 				AddressRange rng = rng(start, end - 1);
 				try {
 					TraceMemoryRegion region =
-						memory.addRegion(startStr, Range.atLeast(0L), rng, TraceMemoryFlag.READ,
-						TraceMemoryFlag.WRITE, TraceMemoryFlag.EXECUTE);
+						memory.addRegion(startStr, Lifespan.nowOn(0), rng, TraceMemoryFlag.READ,
+							TraceMemoryFlag.WRITE, TraceMemoryFlag.EXECUTE);
 					region.setName(name);
 				}
 				catch (TraceOverlappedRegionException | DuplicateNameException e) {

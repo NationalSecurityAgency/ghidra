@@ -149,8 +149,8 @@ public class GdbBreakpointInfo {
 		else {
 			locs = List.of();
 		}
-		return new GdbBreakpointInfo(number, type, typeName, GdbBreakpointDisp.KEEP, null, null,
-			origLoc, origLoc, null, true, 0, locs);
+		return new GdbBreakpointInfo(number, type, typeName, GdbBreakpointDisp.KEEP, null, origLoc,
+			null, origLoc, null, true, 0, locs);
 	}
 
 	/**

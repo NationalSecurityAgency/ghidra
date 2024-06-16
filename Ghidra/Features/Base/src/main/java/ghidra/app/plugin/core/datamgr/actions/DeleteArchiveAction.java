@@ -24,6 +24,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.archive.FileArchive;
@@ -36,8 +37,7 @@ public class DeleteArchiveAction extends DockingAction {
 	public DeleteArchiveAction(DataTypeManagerPlugin plugin) {
 		super("Delete Archive", plugin.getName());
 
-// ACTIONS - auto generated
-		setPopupMenuData(new MenuData(new String[] { "Delete Archive" }, null, "Edit"));
+		setPopupMenuData(new MenuData(new String[] { "Delete Archive" }, null, "File"));
 
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
@@ -94,8 +94,8 @@ public class DeleteArchiveAction extends DockingAction {
 		if (OptionDialog.showOptionDialogWithCancelAsDefaultButton(gTree,
 			"Confirm Delete Operation",
 			"<html><b>Are you sure you want to delete archive: " +
-				HTMLUtilities.escapeHTML(node.getName()) + "?<br><br>" +
-				"<font color=\"red\">(WARNING: This action will permanently " +
+				HTMLUtilities.escapeHTML(node.getName()) + "?<br><br>" + "<font color=\"" +
+				Messages.ERROR.toHexString() + "\">(WARNING: This action will permanently " +
 				"delete the file from disk.)</font></b>",
 			"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 			return;

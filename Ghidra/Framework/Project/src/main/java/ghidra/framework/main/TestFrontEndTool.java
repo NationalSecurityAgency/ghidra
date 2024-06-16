@@ -28,6 +28,12 @@ public class TestFrontEndTool extends FrontEndTool {
 
 	@Override
 	public void close() {
-		setVisible(false);
+		// overridden to not ask to save
+		dispose();
+	}
+
+	@Override
+	protected void shutdown() {
+		// let test environment bring the system down
 	}
 }

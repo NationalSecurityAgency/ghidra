@@ -6,7 +6,7 @@
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
     <TITLE>Importer Plugin</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -29,37 +29,29 @@
 
     <BLOCKQUOTE>
       <UL>
+        <LI>Android APK</LI>
         <LI>Common Object File Format (COFF)</LI>
-
+        <LI>Dalvik Executable (DEX)</LI>
         <LI>Debug Symbols (DBG)</LI>
-
+        <LI>Dump File Loader</LI>
+        <LI>DYLD Shared Cache</LI>
         <LI>Executable and Linking Format (ELF)</LI>
-
-        <LI>Ghidra Data Type Archive Format</LI>
-
-        <LI>GZF Input Format</LI>
-
+        <LI>Ghidra Data Type Archive File (GDT)</LI>
+        <LI>Ghidra Zip File (GZF)</LI>
         <LI>Intel Hex</LI>
-
+        <LI>Java Class File</LI>
         <LI>Mac OS X Mach-O</LI>
-
         <LI>Module Definition (DEF)</LI>
-
         <LI>Motorola Hex</LI>
-
         <LI>New Executable (NE)</LI>
-
         <LI>Old-style DOS Executable (MZ)</LI>
-
         <LI>Portable Executable (PE)</LI>
-
         <LI>Preferred Executable Format (PEF)</LI>
-
         <LI>Program Mapfile (MAP)</LI>
-
         <LI>Raw Binary</LI>
-
+        <LI>Relocatable Object Module Format (OMF)</LI>
         <LI>XML Input Format</LI>
+        <LI>SARIF Input Format</LI>
       </UL>
     </BLOCKQUOTE>
 
@@ -83,21 +75,47 @@
         <H4>Steps:</H4>
 
         <UL>
-          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Import
+          <LI>Invoke the action from the <B>File<IMG src="help/shared/arrow.gif" alt="">Import
           File...</B> menu item.</LI>
 
           <LI>Select the file to import using the filechooser that appears.</LI>
 
           <LI>Use the <A href="#Importer_Dialog">Importer Dialog</A> (or the <A href=
           "#Batch_Import_Dialog">Batch Importer Dialog</A> if it is an archive) that pops up to
-          configure the import.</LI>
+          perform the import.</LI>
 
-          <LI>Press OK to initiate the import.</LI>
+          <LI>Press OK from the <A href="#Importer_Dialog">Importer Dialog</A> to perform the import.</LI>
 
           <LI>A results summary dialog will appear and, if successful, the new program will appear
           in the project window and if initiated from a CodeBrowser tool, it will be opened in the
           tool.</LI>
         </UL>
+
+	      <H4>Alternative Steps (<I>drag-and-drop</I>):</H4>
+	
+	        <UL>
+	          <LI><B>Project Window</B>:  Drag a file from the system file explorer application and drop 
+	          onto the Ghidra Project Tree destination folder.  Dropping onto the table view is not
+	          supported.  In the case of Ghidra Zip File (GZF) or Ghidra Data Type Archive (GDT) file
+	          imports, an immediate unpack can be performed wthout a popup dialog if the Front End option
+	          <I>Enable simple GZF/GDT unpack</I> is enabled (
+	          <B>Edit<IMG src="help/shared/arrow.gif">Tool Options...<IMG src="help/shared/arrow.gif">File Import<IMG src="help/shared/arrow.gif">Enable simple GZF/GDT unpack</B>).
+	          </LI>  
+              
+              <LI>or <B>Running Tool</B>:  Drag a file from the system file explorer application and drop 
+	          onto a Tool window (e.g., <I>Code Browser Tool</I>).</LI>
+              
+              <LI>The <A href="#Importer_Dialog">Importer Dialog</A> (or the <A href=
+	          "#Batch_Import_Dialog">Batch Importer Dialog</A> if it is an archive) will be
+	          displayed to complete the import.</LI>
+	
+	          <LI>Press OK to initiate the import.</LI>
+	
+	          <LI>A results summary dialog will appear and, if successful, the new program will appear
+	          in the project window and if initiated from a CodeBrowser tool, it will be opened in the
+	          tool.</LI>
+	        </UL>
+	        
       </BLOCKQUOTE>
 
       <H3><A name="Batch_Import"></A>Batch Import</H3>
@@ -109,7 +127,7 @@
         <H4>Steps:</H4>
 
         <UL>
-          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Batch
+          <LI>Invoke the action from the <B>File<IMG src="help/shared/arrow.gif" alt="">Batch
           Import...</B> menu item.</LI>
 
           <LI>Use the filechooser dialog that appears to select a root directory for searching for
@@ -135,7 +153,7 @@
         <H4>Steps:</H4>
 
         <UL>
-          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Open File System...</B> menu item.</LI>
+          <LI>Invoke the action from the <B>File<IMG src="help/shared/arrow.gif" alt="">Open File System...</B> menu item.</LI>
 
           <LI>Use the dialog that appears to browse the contents of the container file and import
           files as desired. 
@@ -152,7 +170,7 @@
         <H4>Steps:</H4>
 
         <UL>
-          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Add to
+          <LI>Invoke the action from the <B>File<IMG src="help/shared/arrow.gif" alt="">Add to
           Program...</B> menu item.</LI>
 
           <LI>Use the filechooser dialog that appears to select a root directory for searching for
@@ -242,7 +260,7 @@
         </UL>
         
         <P>
-        <IMG src="../../shared/note.yellow.png" alt="">If this dialog appears as a result of the
+        <IMG src="help/shared/note.yellow.png" alt="">If this dialog appears as a result of the
         <B>Add To Program</B> action, then the Language, Destination Folder, and Filename fields
         will be disabled since these values are already determined by the existing program.
         </P>
@@ -259,7 +277,7 @@
       <H3>Common Options <A name="Common_Options"></A></H3>
 
       <BLOCKQUOTE>
-        <P>These options appear many of the standard executable program formats such as ELF, PE,
+        <P>These options appear in many of the standard executable program formats such as ELF, PE,
         etc.</P>
 
         <H4>Apply Processor Defined Labels</H4>
@@ -279,39 +297,44 @@
           those symbols will remain at the address they were originally placed. If the option is
           off, the symbols will move with the image base or the memory block.</P>
         </BLOCKQUOTE>
-
-        <H4>Create Export Symbol Files</H4>
+        
+        <H4>Link Existing Project Libraries</H4>
 
         <BLOCKQUOTE>
-          <P>Creates symbol files for each library used by an executable. The symbol file will
-          contain stack purge information for each exported symbol in the library. The symbol files
-          will be stored in <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
-
-          <P><IMG alt="" src="../../shared/note.yellow.png"> When running Ghidra with .symbols files
-          created from an older operating system, you may receive the following warning
-          message:</P>
-
-          <BLOCKQUOTE>
-            <P><I>Unable to locate [<CODE>symbol_name</CODE>] in
-            [<CODE>&lt;filepath&gt;.exports</CODE>].
-            Please verify the version is correct.</I></P>
-          </BLOCKQUOTE>
-
-          <P>This warning message indicates which symbols do not exist in the corresponding
-          <I>.exports</I> file. The only information lost by not including these symbols is
-          function purge and comments. If you require this information, manually delete the
-          <I>.exports</I> file and Ghidra will regenerate it.</P>
+          <P> Searches the project for existing library programs and creates external references to
+          them.</P>
         </BLOCKQUOTE>
-
-        <H4>Load External Libraries</H4>
+        
+        <H4>Project Library Search Folder</H4>
 
         <BLOCKQUOTE>
-          <P>Recursively resolves the external libraries used by the executable. The entire library
-          dependency tree will be traversed in a depth-first manner and a program will be created
-          for each library. The <A href=
-          "help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A> in
-          these program will be resolved.<BR>
-           The "..." button will bring up the <A href="#Library_Paths">Library Paths Dialog</A></P>
+          <P>The project folder that will get searched for existing library programs.  If left
+          empty, the folder that the main program is being imported to will be searched.</P>
+        </BLOCKQUOTE>
+        
+        <H4>Load Libraries From Disk</H4>
+
+        <BLOCKQUOTE>
+          <P>Searches a user-defined path list to recursively resolve the external libraries used 
+          by the executable. The entire library dependency tree will be traversed in a depth-first 
+          manner and a program will be created for each found library (if it doesn't exist already).
+          The <A href="help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A>
+          in these program will be resolved.<BR>
+          The "Edit Paths" button will bring up the <A href="#Library_Paths">Library Paths Dialog</A></P>
+        </BLOCKQUOTE>
+        
+        <H4>Recursive Library Load Depth</H4>
+
+        <BLOCKQUOTE>
+          <P>Specifies how many levels deep the depth-first library dependency tree will be 
+          traversed when loading local or system libraries.</P>
+        </BLOCKQUOTE>
+        
+        <H4>Library Destination Folder</H4>
+
+        <BLOCKQUOTE>
+          <P>The project folder where newly loaded library programs will get created.  If left 
+          empty, they will get created in the same folder as the main program being imported.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -352,12 +375,15 @@
           the program is run. These sections will not be stored in a special address space called
           "other".</P>
         </BLOCKQUOTE>
-
-        <H4>Fixup Unresolved External Symbols</H4>
+        
+        <H4>Max Zero-Segment Discard Size</H4>
 
         <BLOCKQUOTE>
-          <P>If selected, Ghidra will attemp to resolve external references against other programs
-          already imported into Ghidra that are in the destination folder for this import.</P>
+          <P>When both section-headers and program-headers are present, this option controls the 
+          maximum byte-size of a non-section-based memory block which has a zero-fill which will
+          be discarded.  This is intended to allow section-alignment load sequences to be ignored
+          and discarded.  A value of "0" will disable all such discards.  The default value is 
+          255-bytes.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -374,7 +400,7 @@
         <H4>Overlay</H4>
 
         <BLOCKQUOTE>
-          <P>If selected, the bytes will be loaded as an initiailized overlay block. A new overlay space will be
+          <P>If selected, the bytes will be loaded as an initialized overlay block. A new overlay space will be
           created with the same name as the Block Name.</P>
         </BLOCKQUOTE>
 
@@ -422,11 +448,58 @@
       <BLOCKQUOTE>
         <P>The MZ format has only the <A href="#Common_Options">Common Options</A>.</P>
       </BLOCKQUOTE>
+      
+      <H3>NE Options<A name="Options_New_Executable__NE_"/></H3>
+
+      <BLOCKQUOTE>
+        <P>The NE format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+        
+        <H4>Perform Library Ordinal Lookup</H4>
+
+        <BLOCKQUOTE>
+          <P>Looks up and applies pre-generated exported symbol ordinal name mappings and stack 
+          purge information.  This information is stored in symbol files located in 
+          <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
+          
+          <P>If there is no pre-generated information for a given library but the ordinal name 
+          mappings and/or stack purge information is extracted during the library load/analysis 
+          process, the information will be cached locally to the user's <CODE>.ghidra/</CODE>
+          directory to speed up future imports.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
 
       <H3>PE Options<A name="Options_Portable_Executable__PE_"/></H3>
 
       <BLOCKQUOTE>
         <P>The PE format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+        
+        <H4>Perform Library Ordinal Lookup</H4>
+
+        <BLOCKQUOTE>
+          <P>Looks up and applies pre-generated exported symbol ordinal name mappings and stack 
+          purge information.  This information is stored in symbol files located in 
+          <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
+          
+          <P>If there is no pre-generated information for a given library but the ordinal name 
+          mappings and/or stack purge information is extracted during the library load/analysis 
+          process, the information will be cached locally to the user's <CODE>.ghidra/</CODE>
+          directory to speed up future imports.</P>
+
+          <P><IMG alt="" src="help/shared/note.yellow.png"> When running Ghidra with symbol files
+          created from an older operating system, you may receive the following warning
+          message:</P>
+
+          <BLOCKQUOTE>
+            <P><I>Unable to locate [<CODE>symbol_name</CODE>] in
+            [<CODE>&lt;filepath&gt;.exports</CODE>].
+            Please verify the version is correct.</I></P>
+          </BLOCKQUOTE>
+
+          <P>This warning message indicates which symbols do not exist in the corresponding
+          <I>.exports</I> file. The only information lost by not including these symbols is
+          function purge and comments. If you require this information, manually delete the
+          <I>.exports</I> file and Ghidra will regenerate it.</P>
+        </BLOCKQUOTE>
 
         <H4>Parse CLI headers (if present)</H4>
 
@@ -598,13 +671,27 @@
           Names</A>.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
+      
+      <H3>SARIF Options <A name="sarif_options"><A name="Options_SARIF_Input_Format"/></A></H3>
+
+      <BLOCKQUOTE>
+        <P>The SARIF format is used to load from a SARIF formatted file. The options are simply
+        switches for which types of program information to import and are identical to the options
+        specified above for XML.</P>
+      </BLOCKQUOTE>
+
+
       </BLOCKQUOTE>
 
       <H2><A name="Library_Paths"></A>Library Search Path</H2>
 
       <BLOCKQUOTE>
-        <P>The Library Search Path dialog is used to specify the directories that Ghidra should use
-        to resolve external libraries (e.g.; *.dll, *.so) while importing.</P>
+        <P>The Library Search Path dialog is used to specify the directories, container files,
+        and/or FSRLs that Ghidra should use to resolve external libraries (e.g.; *.dll, *.so) while
+        importing. A "." can be added to specify the the program's import location.  FSRLs can be
+        added via the
+        <A href="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html#FSB_Add_Library_Search_Path">File System Browser context menu</A>.
+        </P>
       </BLOCKQUOTE>
 
       <P align="center"><IMG alt="" src="images/SearchPathsDialog.png"></P>
@@ -628,7 +715,7 @@
           </OL>
 
           <BLOCKQUOTE>
-            <P><I><IMG alt="" src="../../shared/note.yellow.png"> The search order is important when you
+            <P><I><IMG alt="" src="help/shared/note.yellow.png"> The search order is important when you
             have different versions of a libraries in different directories. The first directory in
             the search path that contains a required library is the one that Ghidra will
             use.</I></P>
@@ -641,13 +728,14 @@
           <OL>
             <LI>Click the <IMG alt="" src="images/Plus.png"> button</LI>
 
-            <LI>Select a directory from the file chooser</LI>
+            <LI>Select a directory or container file from the file chooser, or the program's
+            import location if "." is not present in the list already</LI>
 
             <LI>Click the "Select Directory" button</LI>
           </OL>
 
           <BLOCKQUOTE>
-            <P><I><IMG alt="" src="../../shared/note.png"> The newly added path will be placed at
+            <P><I><IMG alt="" src="help/shared/note.png"> The newly added path will be placed at
             the top of the list.</I></P>
           </BLOCKQUOTE>
         </BLOCKQUOTE>
@@ -674,7 +762,7 @@
           </OL>
 
           <BLOCKQUOTE>
-           <P><I><IMG alt="" src="../../shared/warning.png"> 
+           <P><I><IMG alt="" src="help/shared/warning.png"> 
            This option will remove any paths added manually.</I></P>
           </BLOCKQUOTE>
         </BLOCKQUOTE>
@@ -709,7 +797,7 @@
 
           <LI><B>Size</B> - the size in bits of the processor address space</LI>
 
-          <LI><B>Endian</B> - the endianess of the processor</LI>
+          <LI><B>Endian</B> - the endianness of the processor</LI>
 
           <LI><B>Compile</B> - the compiler specification used to build the program</LI>
         </UL>

@@ -26,20 +26,19 @@ import ghidra.util.classfinder.ClassTranslator;
  * determined by the data organization of the associated data type manager.
  */
 public class CharDataType extends AbstractIntegerDataType implements DataTypeWithCharset {
-	private final static long serialVersionUID = 1;
 
 	static {
 		ClassTranslator.put("ghidra.program.model.data.AsciiDataType",
 			CharDataType.class.getName());
 	}
 
-	private static SettingsDefinition[] CHAR_SETTINGS_DEFS =
-		{ FormatSettingsDefinition.DEF_CHAR, PADDING, ENDIAN, MNEMONIC,
-			CharsetSettingsDefinition.CHARSET, RenderUnicodeSettingsDefinition.RENDER };
+	private static SettingsDefinition[] CHAR_SETTINGS_DEFS = { FormatSettingsDefinition.DEF_CHAR,
+		PADDING, ENDIAN, MNEMONIC, CharsetSettingsDefinition.CHARSET,
+		RenderUnicodeSettingsDefinition.RENDER, TranslationSettingsDefinition.TRANSLATION };
 
 	private static SettingsDefinition[] WIDE_UTF_CHAR_SETTINGS_DEFS =
 		{ FormatSettingsDefinition.DEF_CHAR, PADDING, ENDIAN, MNEMONIC,
-			RenderUnicodeSettingsDefinition.RENDER };
+			RenderUnicodeSettingsDefinition.RENDER, TranslationSettingsDefinition.TRANSLATION };
 
 	public static final CharDataType dataType = new CharDataType();
 
@@ -54,12 +53,13 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 		this("char", dtm);
 	}
 
-	protected CharDataType(String name, boolean signed, DataTypeManager dtm) {
-		super(name, signed, dtm);
+	protected CharDataType(String name, DataTypeManager dtm) {
+		super(name, dtm);
 	}
 
-	private CharDataType(String name, DataTypeManager dtm) {
-		super(name, isSignedChar(dtm), dtm);
+	@Override
+	public boolean isSigned() {
+		return getDataOrganization().isSignedChar();
 	}
 
 	@Override
@@ -74,12 +74,6 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 
 	private boolean isWideUTFChar() {
 		return getLength() != 1;
-	}
-
-	private static boolean isSignedChar(DataTypeManager dtm) {
-		DataOrganization dataOrganization =
-			dtm != null ? dtm.getDataOrganization() : DataOrganizationImpl.getDefaultOrganization();
-		return dataOrganization.isSignedChar();
 	}
 
 	/**

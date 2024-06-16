@@ -22,10 +22,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramContext;
@@ -37,18 +36,20 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextManager;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceRegisterContextManager extends
-		AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace, DBTraceRegisterContextRegisterSpace>
-		implements TraceRegisterContextManager,
-		DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
+public class DBTraceRegisterContextManager
+		extends AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace> implements
+		TraceRegisterContextManager, DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
 	public static final String NAME = "RegisterContext";
 
 	@DBAnnotatedObjectInfo(version = 0)
@@ -78,7 +79,7 @@ public class DBTraceRegisterContextManager extends
 			return value;
 		}
 
-		void setLifespan(Range<Long> lifespan) {
+		void setLifespan(Lifespan lifespan) {
 			super.doSetLifespan(lifespan);
 		}
 	}
@@ -87,7 +88,7 @@ public class DBTraceRegisterContextManager extends
 
 	protected final Map<Language, ProgramContext> defaultContexts = new HashMap<>();
 
-	public DBTraceRegisterContextManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceRegisterContextManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTracePlatformManager languageManager)
 			throws VersionException, IOException {
@@ -100,14 +101,14 @@ public class DBTraceRegisterContextManager extends
 	@Override
 	protected DBTraceRegisterContextSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceRegisterContextSpace(this, dbh, space, ent);
+		return new DBTraceRegisterContextSpace(this, dbh, space, ent, null);
 	}
 
 	@Override
-	protected DBTraceRegisterContextRegisterSpace createRegisterSpace(AddressSpace space,
+	protected DBTraceRegisterContextSpace createRegisterSpace(AddressSpace space,
 			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		// TODO: Should I just forbid this? It doesn't seem sane. Then again, what do I know?
-		return new DBTraceRegisterContextRegisterSpace(this, dbh, space, ent, thread);
+		return new DBTraceRegisterContextSpace(this, dbh, space, ent, thread);
 	}
 
 	@Override
@@ -132,7 +133,7 @@ public class DBTraceRegisterContextManager extends
 	}
 
 	@Override
-	public DBTraceRegisterContextRegisterSpace getRegisterContextRegisterSpace(TraceThread thread,
+	public DBTraceRegisterContextSpace getRegisterContextRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
@@ -154,13 +155,13 @@ public class DBTraceRegisterContextManager extends
 	}
 
 	@Override
-	public void setValue(Language language, RegisterValue value, Range<Long> lifespan,
+	public void setValue(Language language, RegisterValue value, Lifespan lifespan,
 			AddressRange range) {
 		delegateWriteV(range.getAddressSpace(), m -> m.setValue(language, value, lifespan, range));
 	}
 
 	@Override
-	public void removeValue(Language language, Register register, Range<Long> span,
+	public void removeValue(Language language, Register register, Lifespan span,
 			AddressRange range) {
 		delegateDeleteV(range.getAddressSpace(),
 			m -> m.removeValue(language, register, span, range));
@@ -181,10 +182,15 @@ public class DBTraceRegisterContextManager extends
 	}
 
 	@Override
-	public RegisterValue getValueWithDefault(Language language, Register register, long snap,
+	public RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
 			Address address) {
-		return delegateReadOr(address.getAddressSpace(),
-			m -> m.getValueWithDefault(language, register, snap, address),
+		Address hostAddress = platform.mapGuestToHost(address);
+		Language language = platform.getLanguage();
+		if (hostAddress == null) {
+			return getDefaultValue(language, register, address);
+		}
+		return delegateReadOr(hostAddress.getAddressSpace(),
+			m -> m.getValueWithDefault(language, register, snap, hostAddress, address),
 			() -> getDefaultValue(language, register, address));
 	}
 
@@ -217,7 +223,7 @@ public class DBTraceRegisterContextManager extends
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range) {
+	public void clear(Lifespan span, AddressRange range) {
 		delegateDeleteV(range.getAddressSpace(), m -> m.clear(span, range));
 	}
 }

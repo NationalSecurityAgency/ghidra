@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.console;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,8 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.ActionList;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
 
@@ -36,8 +39,13 @@ public class ConsoleActionsCellEditor extends AbstractCellEditor
 
 	protected ActionList value;
 
+	protected Color bg = new Color(0); // Initial cached value
+
 	public ConsoleActionsCellEditor() {
 		ConsoleActionsCellRenderer.configureBox(box);
+		Border innerBorder = BorderFactory.createEmptyBorder(0, 4, 0, 4);
+		Border outerBorder = BorderFactory.createLineBorder(Palette.YELLOW, 1);
+		box.setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 	}
 
 	@Override
@@ -49,7 +57,11 @@ public class ConsoleActionsCellEditor extends AbstractCellEditor
 	public Component getTableCellEditorComponent(JTable table, Object v, boolean isSelected,
 			int row, int column) {
 		// I can't think of when you'd be "editing" a non-selected cell.
-		box.setBackground(table.getSelectionBackground());
+		if (bg.getRGB() != table.getSelectionBackground().getRGB()) {
+			bg = new Color(table.getSelectionBackground().getRGB());
+		}
+		box.setBackground(bg);
+		box.setOpaque(true);
 
 		value = (ActionList) v;
 		ConsoleActionsCellRenderer.populateBox(box, buttonCache, value,

@@ -18,21 +18,27 @@ package ghidra.app.decompiler.component;
 import java.awt.Color;
 import java.util.*;
 
+import generic.theme.Gui;
+
 /**
  * A class to create and store colors related to token names
  */
 public class TokenHighlightColors {
 
-	private int minColorSaturation = 100;
-	private int defaultColorAlpha = 100;
 	private Map<String, Color> colorsByName = new HashMap<>();
 	private List<Color> recentColors = new ArrayList<>();
 
 	private Color generateColor() {
-		return new Color((int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
-			(int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
-			(int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
-			defaultColorAlpha);
+
+		float h = (float) Math.random(); // 0-360
+		float s = .25f; // saturation; gray to full color; full color is too harsh for highlights
+		float b = 1f; // brightness; black to full color
+		if (Gui.isDarkTheme()) {
+			s = .5f; // a bit more color against a dark background
+			b = .5f; // less brightness, as the background is not as bright
+		}
+
+		return Color.getHSBColor(h, s, b);
 	}
 
 	public Color getColor(String text) {

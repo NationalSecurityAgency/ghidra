@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.equate;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.symbol.EquateManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
@@ -31,7 +30,7 @@ import ghidra.util.exception.*;
  * add the current location to its list of references.  The old equate will have this
  * reference location removed and will be deleted if it was the last reference.
  */
-class RenameEquateCmd implements Command {
+class RenameEquateCmd implements Command<Program> {
 
 	private String oldEquateName;
 	private String newEquateName;
@@ -79,22 +78,15 @@ class RenameEquateCmd implements Command {
 		this.opIndex = opIndex;
 	}
 
-	/**
-	 * The name of the edit action.
-	 */
 	@Override
 	public String getName() {
 		return "Rename Equate";
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = ((Program) obj);
+	public boolean applyTo(Program program) {
 		EquateTable etable = program.getEquateTable();
-		
+
 		// First make sure there's an entry in the equates table for the equate
 		// to be changed (there should always be one).
 		Equate fromEquate = etable.getEquate(oldEquateName);
@@ -102,10 +94,10 @@ class RenameEquateCmd implements Command {
 			msg = "Equate not found: " + oldEquateName;
 			return false;
 		}
-		
+
 		// Get the value behind the equate...for later use.
 		long value = fromEquate.getValue();
-		
+
 		// See if there are 0 references to this equate.  If so, remove
 		// it from the table.
 		if (fromEquate.getReferenceCount() <= 1) {
@@ -142,9 +134,6 @@ class RenameEquateCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;

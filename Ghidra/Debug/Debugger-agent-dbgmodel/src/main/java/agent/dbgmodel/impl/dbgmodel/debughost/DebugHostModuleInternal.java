@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostModule1;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -31,25 +31,19 @@ public interface DebugHostModuleInternal extends DebugHostModule1 {
 	Map<Pointer, DebugHostModuleInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostModuleInternal instanceFor(WrapIDebugHostModule1 data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostModuleImpl1::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostModuleImpl1::new);
 	}
 
 	static DebugHostModuleInternal instanceFor(WrapIDebugHostModule2 data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostModuleImpl2::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostModuleImpl2::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostModule1>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostModule1>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostModule2.IID_IDEBUG_HOST_MODULE2),
-					WrapIDebugHostModule2.class) //
-				.put(new REFIID(IDebugHostModule1.IID_IDEBUG_HOST_MODULE),
-					WrapIDebugHostModule1.class) //
-				.build();
+	List<Preferred<WrapIDebugHostModule1>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostModule2.IID_IDEBUG_HOST_MODULE2, WrapIDebugHostModule2.class),
+		new Preferred<>(IDebugHostModule1.IID_IDEBUG_HOST_MODULE, WrapIDebugHostModule1.class));
 
 	static DebugHostModuleInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostModuleInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostModuleInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

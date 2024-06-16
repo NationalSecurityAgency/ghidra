@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import docking.action.ContextSpecificAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.main.datatree.DomainFileNode;
@@ -29,16 +30,15 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 		extends ContextSpecificAction<T> {
 
-	private static Icon icon = ResourceManager.loadImage("images/folder_add.png");
+	private static final Icon ICON = new GIcon("icon.projectdata.new.folder");
 
 	public ProjectDataNewFolderAction(String owner, String group, Class<T> contextClass) {
 		super("New Folder", owner, contextClass);
-		setPopupMenuData(new MenuData(new String[] { "New Folder" }, icon, group));
+		setPopupMenuData(new MenuData(new String[] { "New Folder" }, ICON, group));
 		markHelpUnnecessary();
 	}
 
@@ -50,6 +50,11 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 	@Override
 	public boolean isAddToPopup(T context) {
 		return (context.getFolderCount() + context.getFileCount()) == 1;
+	}
+
+	@Override
+	protected boolean isEnabledForContext(T context) {
+		return getFolder(context).isInWritableProject();
 	}
 
 	private void createNewFolder(T context) {

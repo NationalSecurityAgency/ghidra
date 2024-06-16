@@ -32,6 +32,7 @@ public enum FlowOverride {
 	 * <pre>{@literal
 	 *   Pcode mapping:
 	 *      CALL -> BRANCH
+	 *      CALLIND -> BRANCHIND
 	 *      RETURN -> BRANCHIND
 	 * }</pre>
 	 */
@@ -54,7 +55,7 @@ public enum FlowOverride {
 	CALL,
 
 	/**
-	 * Override the primary BRANCH or RETURN with a suitable CALL/RETURN operation.
+	 * Override the primary BRANCH, CALL, or RETURN with a suitable CALL/RETURN operation 
 	 * <pre>{@literal
 	 * 	 Pcode mapping:
 	 * 		BRANCH -> CALL/RETURN
@@ -65,6 +66,8 @@ public enum FlowOverride {
 	 *          CALL <addr>
 	 *          RETURN 0
 	 *        <label>
+	 *      CALL -> CALL/RETURN
+	 *      CALLIND -> CALLIND/RETURN
 	 *      RETURN -> CALLIND/RETURN
 	 * }</pre>
 	 */

@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -116,18 +117,16 @@ public class SeparateDebugHeader implements OffsetValidator {
 			ptr += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 		}
 
-		long tmp = ptr;
+		BinaryReader stringReader = reader.clone(ptr);
 		List<String> exportedNameslist = new ArrayList<>();
 		while (true) {
-			String str = reader.readAsciiString(tmp);
-			if (str == null || str.length() == 0) {
+			String str = stringReader.readNextAsciiString();
+			if (str.isEmpty()) {
 				break;
 			}
-			tmp += str.length() + 1;
 			exportedNameslist.add(str);
 		}
-		exportedNames = new String[exportedNameslist.size()];
-		exportedNameslist.toArray(exportedNames);
+		exportedNames = exportedNameslist.toArray(String[]::new);
 
 		ptr += exportedNamesSize;
 

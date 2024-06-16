@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalManager;
 
@@ -25,11 +23,11 @@ import ghidra.program.model.symbol.ExternalManager;
  * Command to remove an external program name from the reference manager.
  * 
  */
-public class RemoveExternalNameCmd implements Command {
+public class RemoveExternalNameCmd implements Command<Program> {
 
 	private String externalName;
 	private String status;
-		
+
 	/**
 	 * Constructs a new command removing an external program name.
 	 * @param externalName the name of the external program name to be removed.
@@ -38,13 +36,9 @@ public class RemoveExternalNameCmd implements Command {
 		this.externalName = externalName;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program p = (Program)obj;
-		ExternalManager extMgr = p.getExternalManager();
+	@Override
+	public boolean applyTo(Program program) {
+		ExternalManager extMgr = program.getExternalManager();
 		if (!extMgr.removeExternalLibrary(externalName)) {
 			status = externalName + " can not be removed";
 			return false;
@@ -52,16 +46,12 @@ public class RemoveExternalNameCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return status;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Remove External Program Name";
 	}

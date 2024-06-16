@@ -93,7 +93,7 @@ public class ConstraintFilterPanel extends JPanel {
 
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		ImageIcon icon = Icons.DELETE_ICON;
+		Icon icon = Icons.DELETE_ICON;
 
 		JButton button = new EmptyBorderButton(icon);
 		button.setToolTipText("Delete entry");

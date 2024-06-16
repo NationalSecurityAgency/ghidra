@@ -18,17 +18,17 @@ package ghidra.app.plugin.core.datamgr.archive;
 import java.awt.Component;
 import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateFileException;
-import resources.ResourceManager;
 
 public class InvalidFileArchive implements Archive {
 
-	private static final ImageIcon INVALID_ARCHIVE_ICON =
-		ResourceManager.loadImage("images/closedFolderInvalid.png");
+	private static final Icon INVALID_ARCHIVE_ICON =
+		new GIcon("icon.plugin.datatypes.archive.invalid");
 	private DataTypeManagerHandler archiveManager;
 	private UniversalID universalID;
 	private ArchiveType archiveType;
@@ -104,7 +104,7 @@ public class InvalidFileArchive implements Archive {
 	}
 
 	@Override
-	public ImageIcon getIcon(boolean expanded) {
+	public Icon getIcon(boolean expanded) {
 		return INVALID_ARCHIVE_ICON;
 	}
 }

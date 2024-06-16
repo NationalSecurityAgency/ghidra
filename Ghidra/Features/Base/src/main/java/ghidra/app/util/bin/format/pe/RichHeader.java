@@ -111,7 +111,7 @@ public class RichHeader implements StructConverter, Writeable {
 	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
 
 		if (table != null) {
-			raf.write(dc.getBytes(IMAGE_DANS_SIGNATURE));
+			raf.write(dc.getBytes(IMAGE_DANS_SIGNATURE ^ table.getMask()));
 
 			raf.write(dc.getBytes(table.getMask())); // 0 ^ mask
 			raf.write(dc.getBytes(table.getMask())); // 0 ^ mask

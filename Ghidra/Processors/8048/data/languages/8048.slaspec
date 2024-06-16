@@ -1,4 +1,20 @@
 # sleigh specification file for Intel 8048
+#
+# The MCS-48 family can only handle a 4kB (12 bits) address space.
+# However, some applications use a custom method to access multiple
+# banks of 4kB, such as an IO pin driving extra address lines on an
+# external ROM IC.
+#
+# To be able to parse those non-standard >4kB ROMs, this implementation
+# keeps track of 16-bit addresses by simply preserving the upper 4 bits
+# (see Addr8 and Addr12 constructors).
+#
+# To redirect the flow to a different 4kB bank, it is necessary to manually
+# set a flow override (with Fallthrough->Set) on the specific instruction.
+#
+# That cannot really be automated at this level because there is no "standard"
+# mechanism for external bank control.
+
 
 
 # Do not take BS into account when decompiling
@@ -28,8 +44,12 @@ define register offset=0x00 size=1 [ A SP ];
 define register offset=0x10 size=1 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
 @endif
 define register offset=0x20 size=2 [ PC ];
-define register offset=0x30 size=1 [ C AC F0 F1 BS DFB ];  # single bit
+define register offset=0x30 size=1 [ C AC F0 F1 BS ];  # single bit
 
+define register offset=0x80 size=4 bankreg;
+define context bankreg
+  DBF=(0,0)
+;
 
 ################################################################
 # Tokens
@@ -50,7 +70,7 @@ define token opbyte (8)
    ppfill   = (2,3)
    abit     = (5,7) dec
    abfill   = (4,4)
-   dfb      = (4,4)
+   dbf      = (4,4)
    bs       = (4,4)
 ;
 
@@ -71,14 +91,16 @@ attach variables ri [ R0 R1 ];
 attach names rn [ R0 R1 R2 R3 R4 R5 R6 R7 ];
 attach names ri [ R0 R1 ];
 @endif
-attach names dfb     [ MB0 MB1 ];
+
+attach names abit ["0" "1" "2" "3" "4" "5" "6" "7"];
+attach names dbf     [ MB0 MB1 ];
 attach names bs      [ RB0 RB1 ];
 attach names pp      [ BUS P1 P2 _ ];
 attach names xpp     [ P4 P5 P6 P7 ];
 
 
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 
 define pcodeop nop;
@@ -247,13 +269,13 @@ RiX: Rind is Rind {
   export *[EXTMEM]:1 Rind;
 }
 PData: @A is A {
-  local addr:2 = inst_next; addr[0,7] = A; export *[CODE]:1 addr;
+  local addr:2 = inst_next; addr[0,8] = A; export *[CODE]:1 addr;
 }
 P3Data: @A is A {
-  local addr:2 = 0x300; addr[0,7] = A; export *[CODE]:1 addr;
+  local addr:2 = 0x300; addr[0,8] = A; export *[CODE]:1 addr;
 }
 AddrInd: PData is PData {
-  local addr:2 = inst_next; addr[0,7] = PData; export *[CODE]:1 addr;
+  local addr:2 = inst_next; addr[0,8] = PData; export addr;
 }
 Ab: abit is abit {
   local bit:1 = (A>>abit)&1; export bit;
@@ -264,10 +286,10 @@ Data: "#"^data is data {
 Imm: Data is oplo=3; Data {
   export Data;
 }
-Addr8: addr is addr8 [ addr = (inst_next $and 0xf00)+addr8; ] {
+Addr8: addr is addr8 [ addr = (inst_next $and 0xff00)+addr8; ] {
   export *[CODE]:1 addr;
 }
-Addr12: addr is aopaddr & adata [ addr = (DFB*2048)+(aopaddr*256)+adata; ] {
+Addr12: addr is aopaddr & adata [ addr = (inst_next & 0xf000) + (DBF*0x800) + (aopaddr*256)+adata; ] {
   export *[CODE]:1 addr;
 }
 Bus: "BUS" is epsilon {
@@ -430,7 +452,7 @@ RniI: Imm is Imm {
   goto Addr12;
 }
 :JMPP AddrInd   is ophi=11 & oplo=3 & AddrInd {
-  goto AddrInd;
+  goto [AddrInd];
 }
 :MOV A,Imm      is (ophi=2 & A)... & Imm {
   A = Imm;
@@ -510,9 +532,9 @@ RniI: Imm is Imm {
 :RRC A          is ophi=6 & oplo=7 & A {
   rotc(A&1, (A>>1)|(C<<7));
 }
-:SEL dfb        is (ophi=14 | ophi=15) & oplo=5 & dfb {
-  DFB = dfb;
-}
+:SEL dbf        is (ophi=14 | ophi=15) & oplo=5 & dbf
+	[ DBF=dbf; globalset(inst_next,DBF); ]
+{}
 :SEL bs         is (ophi=12 | ophi=13) & oplo=5 & bs {
   setbank(bs);
 }

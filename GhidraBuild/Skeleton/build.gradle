@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply plugin: 'eclipse'
-
 
 eclipse.project.name = '_Skeleton'
 
@@ -37,6 +37,7 @@ rootProject.assembleDistribution {
 		exclude '.project'
 		exclude 'build.gradle'
 		rename "buildTemplate.gradle", "build.gradle"
+		rename "gitignore", ".gitignore"
 		into "Extensions/Ghidra/Skeleton"
 	}
 }

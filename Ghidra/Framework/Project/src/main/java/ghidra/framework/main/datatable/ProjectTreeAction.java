@@ -70,7 +70,7 @@ public abstract class ProjectTreeAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		if (!isEnabledForContext(context)) {
+		if (!(context instanceof FrontEndProjectTreeContext)) {
 			return false;
 		}
 		return isAddToPopup((FrontEndProjectTreeContext) context);

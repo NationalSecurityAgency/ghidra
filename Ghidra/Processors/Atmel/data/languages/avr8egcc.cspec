@@ -32,31 +32,25 @@
   <global>
     <range space="code"/>
     <range space="mem"/>
+    <range space="codebyte"/>
   </global>
   
   <stackpointer register="SP" space="mem" growth="negative"/>
   
   <default_proto>
-    <prototype name="__stdcall" extrapop="3" stackshift="3" strategy="register">
+    <prototype name="__stdcall" extrapop="3" stackshift="3">
       <input>
-        <!-- Stack used for vararg parameters only -->
-      <pentry minsize="1" maxsize="2">
-          <register name="W"/>
+        <pentry minsize="1" maxsize="2">
+          <register name="R25R24"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R23R22"/>
-        </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="W" piece2="R23R22"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R21R20"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R19R18"/>
-        </pentry>
-        <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="R21R20" piece2="R19R18"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R17R16"/>
@@ -73,13 +67,21 @@
         <pentry minsize="1" maxsize="2">
           <register name="R9R8"/>
         </pentry>
+        <!-- Currently messes up parameter allocation, for known data types bigger than 2 -->
+        <!-- strategy="packreg" planned to mitigate this problem -->
+        <pentry minsize="1" maxsize="500" align="1">
+          <addr offset="4" space="stack"/>
+        </pentry>          
       </input>
       <output>
         <pentry minsize="1" maxsize="2">
-          <register name="W"/>
+          <register name="R25R24"/>
         </pentry>
         <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="W" piece2="R23R22"/>
+          <addr space="join" piece1="R25R24" piece2="R23R22"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="R25R24" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
         </pentry>
       </output>
       <unaffected>
@@ -101,21 +103,42 @@
         <register name="R15"/>
         <register name="R16"/>
         <register name="R17"/>
-        <register name="Y"/>
+        <register name="Y"/> 
       </unaffected>
+      <killedbycall>
+          <register name="R0"/>
+          <register name="R18"/>
+          <register name="R19"/>
+          <register name="R20"/>
+          <register name="R21"/>
+          <register name="R22"/>
+          <register name="R23"/>
+          <register name="R24"/>
+          <register name="R25"/>
+          <register name="Xlo"/>
+          <register name="Xhi"/>
+          <register name="Zlo"/>
+          <register name="Zhi"/>
+      </killedbycall>
     </prototype>
   </default_proto>
   
-  <prototype name="__stackcall" extrapop="3" stackshift="3" strategy="register">
+  <prototype name="__stackcall" extrapop="3" stackshift="3">
       <input>
       <pentry minsize="1" maxsize="500" align="1">
-        <addr offset="1" space="stack"/>
+        <addr offset="4" space="stack"/>
       </pentry>
     </input>
 	<output>
-	  <pentry minsize="1" maxsize="2">
-	    <register name="W"/>
-	  </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="R25R24"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="R25R24" piece2="R23R22"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="R25R24" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
+        </pentry>
 	</output>
     <unaffected>
       <register name="SP"/>

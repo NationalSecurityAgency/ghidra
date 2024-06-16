@@ -1,0 +1,30 @@
+<decompilertest>
+  <!--
+     Function with floating-point NaN operations, some of which should be removed.
+  -->
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x1011b7" readonly="true">
+              f30f1efa4883ec18f2
+0f114c2408bf01000000660f2ec07a08
+b8000000000f44f8e88cfffffff20f10
+05230e0000660f2f442408400f97c740
+0fb6ffe898ffffff4883c418c3
+</bytechunk>
+<bytechunk space="ram" offset="0x102008" readonly="true">
+                000000000000e83f
+</bytechunk>
+<symbol space="ram" offset="0x1011b7" name="nanops"/>
+<symbol space="ram" offset="0x101169" name="read_nan"/>
+<symbol space="ram" offset="0x101190" name="read_compare"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>lo fu nanops</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="NaN operations #1" min="1" max="1">read_nan\(NAN\(param_1\)\);</stringmatch>
+<stringmatch name="NaN operations #2" min="1" max="1">read_compare\(param_2 &lt; 0\.75\);</stringmatch>
+<stringmatch name="NaN operations #3" min="0" max="0">NAN\(param_2\)</stringmatch>
+</decompilertest>

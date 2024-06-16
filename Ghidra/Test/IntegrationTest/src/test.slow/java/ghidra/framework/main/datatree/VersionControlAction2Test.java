@@ -17,6 +17,8 @@ package ghidra.framework.main.datatree;
 
 import static org.junit.Assert.*;
 
+import java.net.URL;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.*;
@@ -30,9 +32,12 @@ import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.main.projectdata.actions.VersionControlAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.ProgramDB;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
@@ -40,6 +45,7 @@ import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
 import resources.ResourceManager;
+import resources.icons.UrlImageIcon;
 
 /**
  * Tests for version control (not multi user).
@@ -190,9 +196,11 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		assertTrue(icon instanceof MultiIcon);
 		Icon[] icons = ((MultiIcon) icon).getIcons();
 		Icon checkOutIcon = ResourceManager.loadImage("images/checkex.png");
+		URL checkOutIconUrl = getURL(checkOutIcon);
 		boolean found = false;
 		for (Icon element : icons) {
-			if (checkOutIcon.equals(element)) {
+			URL elementUrl = getURL(element);
+			if (Objects.equals(checkOutIconUrl, elementUrl)) {
 				found = true;
 				break;
 			}
@@ -213,7 +221,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForSwing();
 		waitForTasks();
 
-		Program program = (Program) ((DomainFileNode) node).getDomainFile()
+		ProgramDB program = (ProgramDB) ((DomainFileNode) node).getDomainFile()
 				.getDomainObject(this,
 					true, false, TaskMonitor.DUMMY);
 		int transactionID = program.startTransaction("test");
@@ -245,6 +253,58 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
 		assertTrue(!df.isCheckedOut());
+
+	}
+	
+	@Test
+	public void testCheckInWhileOpen() throws Exception {
+		GTreeNode node = getNode(PROGRAM_A);
+		addToVersionControl(node, false);
+
+		selectNode(node);
+		DockingActionIf action = getAction("CheckOut");
+		runSwing(() -> action.actionPerformed(getDomainFileActionContext(node)), false);
+		waitForSwing();
+		waitForTasks();
+
+		ProgramDB program = (ProgramDB) ((DomainFileNode) node).getDomainFile()
+				.getDomainObject(this,
+					true, false, TaskMonitor.DUMMY);
+		int transactionID = program.startTransaction("test");
+		try {
+			// Ensure that buffer memory cache has been completely consumed
+			// Max BufferMgr cache size is 256*16KByte=4MByte
+			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+			program.getMemory().createInitializedBlock("BigBlock", space.getAddress(0x80000000L), 
+				4*1024*1024, (byte)0xff, TaskMonitor.DUMMY, false);
+		}
+		finally {
+			program.endTransaction(transactionID, true);
+			program.save(null, TaskMonitor.DUMMY);
+		}
+
+		try {
+			DockingActionIf checkInAction = getAction("CheckIn");
+			runSwing(() -> checkInAction.actionPerformed(getDomainFileActionContext(node)), false);
+			waitForSwing();
+			VersionControlDialog dialog = waitForDialogComponent(VersionControlDialog.class);
+			assertNotNull(dialog);
+			JTextArea textArea = findComponent(dialog, JTextArea.class);
+			assertNotNull(textArea);
+			JCheckBox cb = findComponent(dialog, JCheckBox.class);
+			assertNotNull(cb);
+			runSwing(() -> {
+				textArea.setText("This is a test");
+				cb.setSelected(false);
+			});
+			pressButtonByText(dialog, "OK");
+			waitForTasks();
+			DomainFile df = ((DomainFileNode) node).getDomainFile();
+			assertTrue(df.isCheckedOut());
+		}
+		finally {
+			program.release(this);
+		}
 
 	}
 
@@ -420,4 +480,20 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		pressButtonByText(dialog, "Dismiss");
 		waitForTasks();
 	}
+
+	/**
+	 * Gets the URL for the given icon
+	 * @param icon the icon to get a URL for
+	 * @return the URL for the given icon
+	 */
+	public URL getURL(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getUrl();
+		}
+		if (icon instanceof GIcon gIcon) {
+			return gIcon.getUrl();
+		}
+		return null;
+	}
+
 }

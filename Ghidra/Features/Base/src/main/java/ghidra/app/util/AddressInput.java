@@ -17,22 +17,24 @@ package ghidra.app.util;
 
 import java.awt.BorderLayout;
 import java.awt.FontMetrics;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.Predicate;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 
 import docking.widgets.combobox.GComboBox;
+import docking.widgets.table.FocusableEditor;
 import ghidra.program.model.address.*;
 
 /**
  * Panel for user input of addresses.  Handles case with multiple address
  * spaces.
  */
-public class AddressInput extends JPanel {
+public class AddressInput extends JPanel implements FocusableEditor {
 	private JTextField textField;
 	private JComboBox<AddressSpace> combo;
 	private boolean comboAdded;
@@ -43,21 +45,27 @@ public class AddressInput extends JPanel {
 	private boolean stateChanging;
 	private JTextField spaceField;
 
-	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR =
-		new Comparator<>() {
-			@Override
-			public int compare(AddressSpace s1, AddressSpace s2) {
-				if (s1.isOverlaySpace()) {
-					if (!s2.isOverlaySpace()) {
-						return 1;
-					}
-				}
-				else if (s2.isOverlaySpace()) {
-					return -1;
-				}
-				return s1.getName().compareTo(s2.getName());
+	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR = (s1, s2) -> {
+		if (s1.isOverlaySpace()) {
+			if (!s2.isOverlaySpace()) {
+				return 1;
 			}
-		};
+		}
+		else if (s2.isOverlaySpace()) {
+			return -1;
+		}
+		return s1.getName().compareTo(s2.getName());
+	};
+
+	/**
+	 * Constructor for AddressInput.
+	 * @param border border around each subcomponent (combo/text fields).
+	 */
+	public AddressInput(Border border) {
+		this();
+		combo.setBorder(border);
+		textField.setBorder(border);
+	}
 
 	/**
 	 * Constructor for AddressInput.
@@ -69,6 +77,7 @@ public class AddressInput extends JPanel {
 		textField.setName("JTextField");//for JUnits...
 		combo = new GComboBox<>();
 		combo.setName("JComboBox");//for JUnits...
+		combo.getAccessibleContext().setAccessibleName("Address Space");
 		add(textField, BorderLayout.CENTER);
 		//add(combo, BorderLayout.WEST);
 		comboAdded = false;
@@ -90,12 +99,7 @@ public class AddressInput extends JPanel {
 			}
 		});
 
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				stateChanged();
-			}
-		});
+		combo.addActionListener(ev -> stateChanged());
 	}
 
 	/**
@@ -119,6 +123,7 @@ public class AddressInput extends JPanel {
 	/**
 	 * Returns the address in the field or null if the address can't
 	 * be parsed.
+	 * @return The address for the current value in the text field
 	 * 
 	 * @throws NullPointerException if AddressFactory has not been set.
 	 */
@@ -158,12 +163,11 @@ public class AddressInput extends JPanel {
 	}
 
 	/**
-	 * Set the address factory to be used to parse addresses.  Also
-	 * used to set the combo box with the list of valid address spaces
-	 * if there is more than one space.
+	 * Returns the text in this field.
+	 * @return the text in this field
 	 */
-	public void setAddressFactory(AddressFactory factory) {
-		setAddressFactory(factory, false, false);
+	public String getText() {
+		return textField.getText();
 	}
 
 	public AddressFactory getAddressFactory() {
@@ -171,16 +175,42 @@ public class AddressInput extends JPanel {
 	}
 
 	/**
-	 * Set the address factory to be used to parse addresses. Also used to set the combo box
-	 * with the list of valid address spaces if there is more than one space.
-	 * @param factory address factory to use
-	 * @param filterOverlaySpaces true if overlay spaces should not appear in the combo box
-	 * for the address spaces.
-	 * @param allowOtherSpace true if the OTHER space should appear in the combo box for 
-	 * the address spaces
+	 * Address Space predicate which includes all loaded memory spaces.
+	 * See {@link AddressSpace#isLoadedMemorySpace()}.
+	 * Intended for use with {@link #setAddressFactory(AddressFactory, Predicate)}.
 	 */
-	public void setAddressFactory(AddressFactory factory, boolean filterOverlaySpaces,
-			boolean allowOtherSpace) {
+	public final static Predicate<AddressSpace> INCLUDE_LOADED_MEMORY_SPACES = (s) -> {
+		return s.isLoadedMemorySpace();
+	};
+
+	/**
+	 * Address Space predicate which includes all memory spaces, including the 
+	 * {@link AddressSpace#OTHER_SPACE} and all overlay spaces. 
+	 * Intended for use with {@link #setAddressFactory(AddressFactory, Predicate)}.
+	 */
+	public final static Predicate<AddressSpace> INCLUDE_ALL_MEMORY_SPACES = (s) -> {
+		return s.isMemorySpace();
+	};
+
+	/**
+	 * Set the address factory to be used to parse addresses.  Also
+	 * used to set the combo box with the list of valid address spaces
+	 * if there is more than one space.  Only loaded memory spaces
+	 * will be allowed (see {@link AddressSpace#isLoadedMemorySpace()}).
+	 * @param factory address factory to use
+	 */
+	public void setAddressFactory(AddressFactory factory) {
+		setAddressFactory(factory, INCLUDE_LOADED_MEMORY_SPACES);
+	}
+
+	/**
+	 * Set the address factory to be used to parse addresses. Also used to set the combo box
+	 * with the list of valid address spaces if there is more than one space.  The specified
+	 * predicate will be used to determine if an address space should be included.
+	 * @param factory address factory to use
+	 * @param predicate callback used to determine if an address space should be included for selection
+	 */
+	public void setAddressFactory(AddressFactory factory, Predicate<AddressSpace> predicate) {
 		this.addrFactory = factory;
 		AddressSpace[] spaces = factory.getAddressSpaces();
 
@@ -191,14 +221,9 @@ public class AddressInput extends JPanel {
 		FontMetrics fm = combo.getFontMetrics(combo.getFont());
 		int width = 0;
 		for (AddressSpace space : spaces) {
-			if (filterOverlaySpaces && space.isOverlaySpace()) {
+			if (!predicate.test(space)) {
 				continue;
 			}
-
-			if (!allowOtherSpace && space.equals(AddressSpace.OTHER_SPACE)) {
-				continue;
-			}
-
 			String s = space.toString();
 			width = Math.max(width, fm.stringWidth(s));
 
@@ -257,11 +282,23 @@ public class AddressInput extends JPanel {
 	}
 
 	/**
-	 * Set the offset part of the address field.
+	 * Set the offset part of the address offset field without changing address space.
+	 * NOTE: This method is intended for test use only and mimicks user input.
 	 * @param value the offset value string
 	 */
 	public void setValue(String value) {
 		textField.setText(value);
+	}
+
+	/**
+	 * Set the address space and offset.
+	 * NOTE: Unlike {@link #setAddress(Address)} this method is intended for test use only 
+	 * and mimicks user input with {@link #stateChanged()} notification.
+	 * @param addr the address value
+	 */
+	public void setValue(Address addr) {
+		setAddress(addr);
+		stateChanged();
 	}
 
 	@Override
@@ -332,6 +369,14 @@ public class AddressInput extends JPanel {
 	}
 
 	/**
+	 * Sets the accessible name for this address input field.
+	 * @param name the accessible name for this address field
+	 */
+	public void setAccessibleName(String name) {
+		textField.getAccessibleContext().setAccessibleName(name);
+	}
+
+	/**
 	 * Set the text field to be editable according to the state param.
 	 */
 	public void setEditable(boolean state) {
@@ -340,6 +385,16 @@ public class AddressInput extends JPanel {
 
 	public boolean isEditable() {
 		return textField.isEditable();
+	}
+
+	@Override
+	public void focusEditor() {
+		if (comboAdded) {
+			combo.requestFocusInWindow();
+		}
+		else {
+			textField.requestFocusInWindow();
+		}
 	}
 
 	private void stateChanged() {

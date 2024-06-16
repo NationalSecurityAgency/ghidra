@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import agent.frida.manager.FridaImport;
 import agent.frida.model.iface2.FridaModelTargetImportContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetElementType;
@@ -47,7 +48,7 @@ public class FridaModelTargetImportContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listModuleImports(module.getModule()).thenAccept(byName -> {
 			List<TargetObject> symbols;
 			synchronized (this) {

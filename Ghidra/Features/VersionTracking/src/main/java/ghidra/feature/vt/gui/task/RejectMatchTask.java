@@ -43,7 +43,7 @@ public class RejectMatchTask extends VtTask {
 		monitor.setMessage("Updating status for matches");
 		monitor.initialize(matches.size());
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTAssociation association = match.getAssociation();
 			VTAssociationStatus status = association.getStatus();
 			if (status == VTAssociationStatus.ACCEPTED || status == VTAssociationStatus.REJECTED) {

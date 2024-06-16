@@ -26,9 +26,9 @@ import ghidra.program.util.ProgramLocation;
 
 /**
  * Plugin for managing function tags. This works with the associated
- * {@link FunctionTagProvider} to allow users to view and 
+ * {@link FunctionTagProvider} to allow users to view and
  * edit function tags both globally and for individual functions.
- * 
+ *
  */
 //@formatter:off
 @PluginInfo(
@@ -50,18 +50,12 @@ public class FunctionTagPlugin extends ProgramPlugin {
 	private FunctionTagProvider provider;
 
 	public FunctionTagPlugin(PluginTool tool) {
-		super(tool, true, false);
-		provider = new FunctionTagProvider(this, getCurrentProgram());
-		createActions();
+		super(tool);
 	}
-
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
 
 	/**
 	 * Returns the component provider for this plugin
-	 * 
+	 *
 	 * @return the component provider
 	 */
 	public FunctionTagProvider getProvider() {
@@ -71,11 +65,10 @@ public class FunctionTagPlugin extends ProgramPlugin {
 	@Override
 	public void init() {
 		super.init();
-	}
 
-	/******************************************************************************
-	 * PROTECTED METHODS
-	 ******************************************************************************/
+		provider = new FunctionTagProvider(this, getCurrentProgram());
+		createActions();
+	}
 
 	@Override
 	protected void programDeactivated(Program program) {
@@ -91,10 +84,6 @@ public class FunctionTagPlugin extends ProgramPlugin {
 	protected void locationChanged(ProgramLocation loc) {
 		provider.locationChanged(loc);
 	}
-
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
 
 	private void createActions() {
 		editFunctionTagsAction = new EditFunctionTagsAction("Edit Function Tags", this);

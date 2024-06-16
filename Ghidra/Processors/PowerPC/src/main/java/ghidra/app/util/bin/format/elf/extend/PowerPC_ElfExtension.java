@@ -46,6 +46,11 @@ public class PowerPC_ElfExtension extends ElfExtension {
 	public static final ElfDynamicType DT_PPC_OPT = new ElfDynamicType(0x70000001, "DT_PPC_OPT",
 		"Specify that tls descriptors should be optimized", ElfDynamicValueType.VALUE);
 
+	// ELF header flags
+	private static final int EF_PPC_EMB = 0x80000000;				// PowerPC embedded flag
+	private static final int EF_PPC_RELOCATABLE = 0x00010000;
+	private static final int EF_PPC_RELOCATABLE_LIB = 0x00008000;
+
 	// Program header (segment) flags
 	private static final int PF_PPC_VLE = 0x10000000;
 
@@ -113,10 +118,10 @@ public class PowerPC_ElfExtension extends ElfExtension {
 				// Update first got entry normally updated by link editor to refer to dynamic table
 				int dynamicOffset =
 					memory.getInt(gotAddr) + (int) elfLoadHelper.getImageBaseWordAdjustmentOffset();
-				elfLoadHelper.addFakeRelocTableEntry(gotAddr, 4);
+				elfLoadHelper.addArtificialRelocTableEntry(gotAddr, 4);
 				memory.setInt(gotAddr, dynamicOffset);
 			}
-			catch (MemoryAccessException | AddressOverflowException e) {
+			catch (MemoryAccessException e) {
 				elfLoadHelper.log(e);
 			}
 		}
@@ -161,7 +166,7 @@ public class PowerPC_ElfExtension extends ElfExtension {
 		MemoryBlock[] blocks = memory.getBlocks();
 
 		for (MemoryBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			MemoryBlock gotBlock = block;
 
@@ -277,7 +282,7 @@ public class PowerPC_ElfExtension extends ElfExtension {
 			// Rely on section headers if present
 			for (ElfSectionHeader section : elf.getSections(
 				ElfSectionHeaderConstants.SHT_PROGBITS)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if ((section.getFlags() & SHF_PPC_VLE) == 0) {
 					continue;
 				}
@@ -287,7 +292,7 @@ public class PowerPC_ElfExtension extends ElfExtension {
 		else {
 			for (ElfProgramHeader segment : elf.getProgramHeaders(
 				ElfProgramHeaderConstants.PT_LOAD)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if ((segment.getFlags() & PF_PPC_VLE) == 0) {
 					continue;
 				}

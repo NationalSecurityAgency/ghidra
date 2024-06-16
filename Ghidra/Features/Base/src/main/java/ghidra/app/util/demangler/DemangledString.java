@@ -84,8 +84,10 @@ public class DemangledString extends DemangledObject {
 
 		Symbol s = program.getSymbolTable().getPrimarySymbol(address);
 		if (s != null && s.getSymbolType() == SymbolType.FUNCTION) {
-			Msg.error(this,
-				"Failed to demangled string at " + address + " due to existing function");
+			String message =
+				"Failed to demangled string at " + address + " due to existing function";
+			setErrorMessage(message);
+			Msg.error(this, message);
 			return false;
 		}
 

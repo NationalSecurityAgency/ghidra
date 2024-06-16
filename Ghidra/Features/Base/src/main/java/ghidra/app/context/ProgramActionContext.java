@@ -18,11 +18,11 @@ package ghidra.app.context;
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 import ghidra.program.model.listing.Program;
 
-public class ProgramActionContext extends ActionContext {
+public class ProgramActionContext extends DefaultActionContext {
 	protected final Program program;
 
 	public ProgramActionContext(ComponentProvider provider, Program program) {

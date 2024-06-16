@@ -15,15 +15,14 @@
  */
 package ghidra.app.plugin.core.bookmark;
 
+import java.util.Collections;
+import java.util.List;
+
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
-
-import java.util.Collections;
-import java.util.List;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Command to delete some number of bookmarks.
@@ -33,7 +32,7 @@ import java.util.List;
  *     by type of bookmark
  *     by category of bookmark
  */
-public class BookmarkDeleteCmd implements Command {
+public class BookmarkDeleteCmd implements Command<Program> {
 
 	private List<Bookmark> bookmarks;
 	private String type;
@@ -162,9 +161,9 @@ public class BookmarkDeleteCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		BookmarkManager mgr = ((Program) obj).getBookmarkManager();
+		BookmarkManager mgr = program.getBookmarkManager();
 
 		if (bookmarks != null) {
 			deleteBookmarks(mgr, bookmarks);
@@ -205,7 +204,7 @@ public class BookmarkDeleteCmd implements Command {
 
 	private void deleteBookmarks(BookmarkManager mgr, String theType, String theCategory) {
 		try {
-			mgr.removeBookmarks(theType, theCategory, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.removeBookmarks(theType, theCategory, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen--dummy monitor
@@ -214,7 +213,7 @@ public class BookmarkDeleteCmd implements Command {
 
 	private void deleteBookmarks(BookmarkManager mgr, AddressSetView set) {
 		try {
-			mgr.removeBookmarks(set, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.removeBookmarks(set, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen--dummy monitor
@@ -223,7 +222,7 @@ public class BookmarkDeleteCmd implements Command {
 
 	private void deleteBookmarks(BookmarkManager mgr, AddressSetView set, String theType) {
 		try {
-			mgr.removeBookmarks(set, theType, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.removeBookmarks(set, theType, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen--dummy monitor
@@ -233,7 +232,7 @@ public class BookmarkDeleteCmd implements Command {
 	private void deleteBookmarks(BookmarkManager mgr, AddressSetView set, String theType,
 			String theCategory) {
 		try {
-			mgr.removeBookmarks(set, theType, theCategory, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.removeBookmarks(set, theType, theCategory, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen--dummy monitor

@@ -33,6 +33,7 @@ public class SchemaBuilder {
 	private ResyncMode elementResync = TargetObjectSchema.DEFAULT_ELEMENT_RESYNC;
 
 	private Map<String, AttributeSchema> attributeSchemas = new LinkedHashMap<>();
+	private Map<String, String> attributeAliases = new LinkedHashMap<>();
 	private AttributeSchema defaultAttributeSchema = AttributeSchema.DEFAULT_ANY;
 	private ResyncMode attributeResync = TargetObjectSchema.DEFAULT_ATTRIBUTE_RESYNC;
 
@@ -42,6 +43,21 @@ public class SchemaBuilder {
 	public SchemaBuilder(DefaultSchemaContext context, SchemaName name) {
 		this.context = context;
 		this.name = name;
+	}
+
+	public SchemaBuilder(DefaultSchemaContext context, TargetObjectSchema schema) {
+		this(context, schema.getName());
+		setType(schema.getType());
+		setInterfaces(schema.getInterfaces());
+		setCanonicalContainer(schema.isCanonicalContainer());
+
+		elementSchemas.putAll(schema.getElementSchemas());
+		setDefaultElementSchema(schema.getDefaultElementSchema());
+		setElementResyncMode(schema.getElementResyncMode());
+
+		attributeSchemas.putAll(schema.getAttributeSchemas());
+		setDefaultAttributeSchema(schema.getDefaultAttributeSchema());
+		setAttributeResyncMode(schema.getAttributeResyncMode());
 	}
 
 	public SchemaBuilder setType(Class<?> type) {
@@ -148,10 +164,10 @@ public class SchemaBuilder {
 		if (schema.getName().equals("")) {
 			return setDefaultAttributeSchema(schema);
 		}
-		if (attributeSchemas.containsKey(schema.getName())) {
-			throw new IllegalArgumentException("Duplicate attribute name '" + schema.getName() +
-				"' origin1=" + attributeOrigins.get(schema.getName()) +
-				" origin2=" + origin);
+		if (attributeOrigins.containsKey(schema.getName())) {
+			throw new IllegalArgumentException(
+				"Duplicate attribute name '%s' adding schema origin1=%s origin2=%s".formatted(
+					schema.getName(), attributeOrigins.get(schema.getName()), origin));
 		}
 		attributeSchemas.put(schema.getName(), schema);
 		attributeOrigins.put(schema.getName(), origin);
@@ -163,6 +179,7 @@ public class SchemaBuilder {
 			return setDefaultAttributeSchema(AttributeSchema.DEFAULT_ANY);
 		}
 		attributeSchemas.remove(name);
+		attributeAliases.remove(name);
 		attributeOrigins.remove(name);
 		return this;
 	}
@@ -179,8 +196,38 @@ public class SchemaBuilder {
 		if (schema.getName().equals("")) {
 			return setDefaultAttributeSchema(schema);
 		}
+		attributeAliases.remove(schema.getName());
 		attributeSchemas.put(schema.getName(), schema);
 		attributeOrigins.put(schema.getName(), origin);
+		return this;
+	}
+
+	protected void validateAlias(String from, String to) {
+		if (from.equals("")) {
+			throw new IllegalArgumentException("Key '' cannot be an alias");
+		}
+		if (to.equals("")) {
+			throw new IllegalArgumentException("Cannot alias to key '' (from %s)".formatted(from));
+		}
+	}
+
+	public SchemaBuilder addAttributeAlias(String from, String to, Object origin) {
+		validateAlias(from, to);
+		if (attributeOrigins.containsKey(from)) {
+			throw new IllegalArgumentException(
+				"Duplicate attribute name '%s' adding alias origin1=%s origin2=%s".formatted(
+					from, attributeOrigins.get(from), origin));
+		}
+		attributeAliases.put(from, to);
+		attributeOrigins.put(from, origin);
+		return this;
+	}
+
+	public SchemaBuilder replaceAttributeAlias(String from, String to, Object origin) {
+		validateAlias(from, to);
+		attributeSchemas.remove(from);
+		attributeAliases.put(from, to);
+		attributeOrigins.put(from, origin);
 		return this;
 	}
 
@@ -212,6 +259,6 @@ public class SchemaBuilder {
 		return new DefaultTargetObjectSchema(
 			context, name, type, interfaces, isCanonicalContainer,
 			elementSchemas, defaultElementSchema, elementResync,
-			attributeSchemas, defaultAttributeSchema, attributeResync);
+			attributeSchemas, attributeAliases, defaultAttributeSchema, attributeResync);
 	}
 }

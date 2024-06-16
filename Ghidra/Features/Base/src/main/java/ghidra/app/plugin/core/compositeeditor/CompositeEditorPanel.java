@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
@@ -34,9 +33,8 @@ import javax.swing.text.JTextComponent;
 
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
-import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
+import docking.dnd.DropTgtAdapter;
+import docking.dnd.Droppable;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
@@ -45,6 +43,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField;
+import generic.theme.GColor;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
@@ -58,6 +57,8 @@ import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.UsrException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 
 /**
  * Panel for editing a composite data type. Specific composite data type editors
@@ -67,12 +68,7 @@ import ghidra.util.layout.VerticalLayout;
  * composite data type. To add your own info panel override the createInfoPanel() method.
  */
 public abstract class CompositeEditorPanel extends JPanel
-		implements CompositeEditorModelListener, ComponentCellEditorListener, Draggable, Droppable {
-
-	// Normal color for selecting components in the table.
-	// TODO: Why do we choose a different selection color?
-	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
-	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
+		implements CompositeEditorModelListener, ComponentCellEditorListener, Droppable {
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
 
@@ -80,7 +76,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
-	protected CompositeTable table;
+	protected GTable table;
 	private JLabel statusLabel;
 
 	private boolean editorAdjusting = false;
@@ -91,10 +87,6 @@ public abstract class CompositeEditorPanel extends JPanel
 	/** The table cell renderer for drag-n-drop. */
 	protected DndTableCellRenderer dndTableCellRenderer;
 	protected DndTableCellRenderer dndDtiCellRenderer;
-	private DragSource dragSource;
-	private DragGestureAdapter dragGestureAdapter;
-	private DragSrcAdapter dragSourceAdapter;
-	private int dragAction = DnDConstants.ACTION_MOVE;
 	private DropTarget dropTarget;
 	private DropTgtAdapter dropTargetAdapter;
 	private DataFlavor[] acceptableFlavors; // data flavors that are valid.
@@ -151,17 +143,16 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
 	}
 
-	private boolean launchBitFieldEditor(int modelColumn, int editingRow) {
-		if (model.viewComposite instanceof Structure &&
-			!model.viewComposite.isPackingEnabled() &&
-			model.getDataTypeColumn() == modelColumn && editingRow < model.getNumComponents()) {
+	private boolean launchBitFieldEditor(int modelRow, int modelColumn) {
+		if (model.viewComposite instanceof Structure && !model.viewComposite.isPackingEnabled() &&
+			model.getDataTypeColumn() == modelColumn && modelRow < model.getNumComponents()) {
 			// check if we are attempting to edit a bitfield
-			DataTypeComponent dtComponent = model.getComponent(editingRow);
+			DataTypeComponent dtComponent = model.getComponent(modelRow);
 			if (dtComponent.isBitFieldComponent()) {
 				table.getCellEditor().cancelCellEditing();
 
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
-					provider.dtmService, editingRow, model.showHexNumbers, ordinal -> {
+					provider.dtmService, modelRow, model.showHexNumbers, ordinal -> {
 						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
@@ -187,9 +178,12 @@ public abstract class CompositeEditorPanel extends JPanel
 					if (editingRow < 0) {
 						return;
 					}
-					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
-					if (!launchBitFieldEditor(modelColumn, editingRow)) {
-						model.beginEditingField(editingRow, modelColumn);
+
+					int modelRow = table.convertRowIndexToModel(editingRow);
+					int editingColumn = table.getEditingColumn();
+					int modelColumn = table.convertColumnIndexToModel(editingColumn);
+					if (!launchBitFieldEditor(modelRow, modelColumn)) {
+						model.beginEditingField(modelRow, modelColumn);
 					}
 				});
 			}
@@ -287,9 +281,6 @@ public abstract class CompositeEditorPanel extends JPanel
 					editBelowField();
 					break;
 			}
-			if (table.isEditing()) {
-				table.getEditorComponent().requestFocus();
-			}
 		}
 		finally {
 			editorAdjusting = false;
@@ -313,6 +304,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		// Handle the editing for this field.
 		int viewColumn = table.convertColumnIndexToView(modelColumn);
 		scrollToCell(row, viewColumn);
+		table.setColumnSelectionInterval(viewColumn, viewColumn);
 		startCellEditing(row, viewColumn);
 		return table.isEditing();
 	}
@@ -331,20 +323,20 @@ public abstract class CompositeEditorPanel extends JPanel
 		int index = row;
 		int fieldNum = table.convertColumnIndexToView(modelColumn);
 
-		int numFields = model.getColumnCount();
+		int numFields = table.getColumnCount();
 		int numComps = model.getRowCount();
 		do {
 			// Determine the new location for the cursor.
 			if (index < numComps) { // on component row
 				if (++fieldNum < (numFields)) { // not on last field
-					if (model.isCellEditable(index, table.convertColumnIndexToModel(fieldNum))) {
+					if (table.isCellEditable(index, fieldNum)) {
 						foundEditable = true;
 					}
 				}
 				else if ((++index < numComps) // on last field for other than last component
 					|| (index == numComps)) { // Last field and row but unlocked
 					fieldNum = 0; // Set it to first field.
-					if (model.isCellEditable(index, table.convertColumnIndexToModel(fieldNum))) {
+					if (table.isCellEditable(index, fieldNum)) {
 						foundEditable = true;
 					}
 				}
@@ -365,6 +357,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			model.setRow(row);
 			model.setColumn(modelColumn);
 		}
+
 		return foundEditable;
 	}
 
@@ -464,6 +457,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (locateNextEditField(currentRow)) {
 			return beginEditField(model.getRow(), model.getColumn());
 		}
+
 		return false;
 	}
 
@@ -494,6 +488,11 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+		DataTypeManager originalDTM = model.getOriginalDataTypeManager();
+		if (originalDTM == null) {
+			// editor unloaded
+			return;
+		}
 		boolean reload = true;
 		String objectType = "domain object";
 		if (domainObject instanceof Program) {
@@ -502,7 +501,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		else if (domainObject instanceof DataTypeArchive) {
 			objectType = "data type archive";
 		}
-		DataType dt = model.getOriginalDataTypeManager().getDataType(model.getCompositeID());
+		DataType dt = originalDTM.getDataType(model.getCompositeID());
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
 			String origDtPath = composite.getPathName();
@@ -554,7 +553,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private void createTable() {
-		table = new CompositeTable(model);
+		table = new CompositeEditorTable(model);
 
 		TableColumnModel columnModel = table.getColumnModel();
 		if (columnModel instanceof GTableColumnModel) {
@@ -565,16 +564,9 @@ public abstract class CompositeEditorPanel extends JPanel
 			}
 		}
 
-		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
-		table.addMouseListener(new CompositeTableMouseListener());
+		table.setAutoEditEnabled(false); // do not edit when typing
 
-		CompositeEditorTableAction action = provider.actionMgr.getNamedAction(
-			CompositeEditorTableAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
-		Action swingAction = KeyBindingUtils.adaptDockingActionToNonContextAction(action);
-		InputMap map = table.getInputMap();
-		map.put(action.getKeyBinding(), "StartEditing");
-		ActionMap amap = table.getActionMap();
-		amap.put("StartEditing", swingAction);
+		table.addMouseListener(new CompositeTableMouseListener());
 
 		table.getSelectionModel().addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
@@ -594,7 +586,9 @@ public abstract class CompositeEditorPanel extends JPanel
 			TableColumnModel cm = table.getColumnModel();
 			int[] selected = cm.getSelectedColumns();
 			if (selected.length == 1) {
-				model.setColumn(selected[0]);
+				int viewIndex = selected[0];
+				int modelIndex = table.convertColumnIndexToModel(viewIndex);
+				model.setColumn(modelIndex);
 			}
 			else {
 				model.setColumn(-1);
@@ -605,8 +599,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		JScrollPane sp = new JScrollPane(table);
 		table.setPreferredScrollableViewportSize(new Dimension(model.getWidth(), 250));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		//table.setSelectionBackground(SELECTION_COLOR);
-		//table.setSelectionForeground(Color.black);
 		tablePanel.add(sp, BorderLayout.CENTER);
 		SearchControlPanel searchPanel = new SearchControlPanel(this);
 
@@ -636,7 +628,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			// This can happen on the Mac and is usually white.  This is a simple solution for
 			// that scenario.  If this fails on other platforms, then do something more advanced
 			// at that point.
-			table.setGridColor(Color.GRAY);
+			table.setGridColor(new GColor("color.bg.table.grid"));
 		}
 	}
 
@@ -668,7 +660,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		JPanel panel = new JPanel(new BorderLayout());
 		statusLabel = new GDLabel(" ");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		statusLabel.setForeground(Color.blue);
+		statusLabel.setForeground(new GColor("color.fg.dialog.status.normal"));
 		statusLabel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
@@ -788,99 +780,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		dropTarget =
 			new DropTarget(table, DnDConstants.ACTION_COPY_OR_MOVE, dropTargetAdapter, true);
 		dropTarget.setActive(true);
-
-		// set up the component area as a drag site that provides Data Types.
-		dragSource = DragSource.getDefaultDragSource();
-		dragGestureAdapter = new DragGestureAdapter(this);
-		dragSourceAdapter = new DragSrcAdapter(this);
-		dragSource.createDefaultDragGestureRecognizer(table, dragAction, dragGestureAdapter);
-	}
-
-	/**
-	 * Return true if the object at the location in the DragGesture
-	 * event is draggable.
-	 *
-	 * @param e event passed to a DragGestureListener via its
-	 * dragGestureRecognized() method when a particular DragGestureRecognizer
-	 * detects a platform dependent Drag and Drop action initiating
-	 * gesture has occurred on the Component it is tracking.
-	 * @see docking.dnd.DragGestureAdapter
-	 */
-	@Override
-	public boolean isStartDragOk(DragGestureEvent e) {
-		return false;
-//            boolean dragOk = false;
-//            // Need to check that the location is on a component.
-//            Point point = e.getDragOrigin();
-//          int index = table.rowAtPoint(point);
-//            // If we are on a component then drag is allowed.
-//            if ((index >= 0) && (index < model.getNumComponents())) {
-//                dragOk = true;
-//            }
-//            return dragOk;
-	}
-
-	/**
-	 * Called by the DragGestureAdapter to start the drag.
-	 */
-	@Override
-	public DragSourceListener getDragSourceListener() {
-		return dragSourceAdapter;
-	}
-
-	/**
-	 * Do the move operation; called when the drag and drop operation
-	 * completes.
-	 * @see docking.dnd.DragSrcAdapter#dragDropEnd
-	 */
-	@Override
-	public void move() {
-		// no-op
-	}
-
-	/**
-	 * Method called when the drag operation exits the drop target
-	 * without dropping.
-	 */
-	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		// no-op
-	}
-
-	/**
-	 * Get the drag actions supported by this drag source:
-	 * <ul>
-	 * <li>DnDConstants.ACTION_MOVE
-	 * <li>DnDConstants.ACTION_COPY
-	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </ul>
-	 *
-	 * @return the drag actions
-	 */
-	@Override
-	public int getDragAction() {
-		return dragAction;
-	}
-
-	/**
-	 * Get the object to transfer.
-	 *
-	 * @param p location of object to transfer
-	 * @return object to transfer
-	 */
-	@Override
-	public Transferable getTransferable(Point p) {
-		int index = table.rowAtPoint(p);
-		int numRows = model.getRowCount();
-		if (index >= numRows) {
-			index = numRows;
-		}
-		DataType dt = DefaultDataType.dataType;
-		// If we are on a component then get the data type.
-		if ((index >= 0)) {
-			dt = model.getComponent(index).getDataType();
-		}
-		return new DataTypeTransferable(dt);
 	}
 
 	@Override
@@ -888,15 +787,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		return true;
 	}
 
-	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
-	 * drop() method.
-	 *
-	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
-	 * @param f represents the opaque concept of a data format as
-	 * would appear on a clipboard, during drag and drop.
-	 */
 	@Override
 	public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
 		if (!(obj instanceof DataType)) {
@@ -917,7 +807,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 *
 	 * @param p the point of insert
@@ -936,7 +826,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 * 
 	 * @param p the point of insert
@@ -1031,9 +921,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorModelListener#endFieldEditing()
-	 */
 	@Override
 	public void endFieldEditing() {
 		stopCellEditing();
@@ -1042,9 +929,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeModelStatusListener#statusChanged(java.lang.String, boolean)
-	 */
 	@Override
 	public void statusChanged(String message, boolean beep) {
 		if ((message == null) || (message.length() == 0)) {
@@ -1068,8 +952,10 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	}
 
-	private Integer findForward(String searchText) {
-		int colCount = model.getColumnCount();
+	private Integer findForward(String text) {
+
+		String searchText = text.toLowerCase();
+		int colCount = table.getColumnCount();
 		int currentRow = Math.max(0, model.getRow());
 
 		// search  remaining lines
@@ -1081,7 +967,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			}
 		}
-		// wrap search search rows from beginning
+		// wrap search - search rows from beginning
 		for (int row = 0; row < currentRow; row++) {
 			for (int col = 0; col < colCount; col++) {
 				if (matchesSearch(searchText, row, col)) {
@@ -1094,8 +980,10 @@ public abstract class CompositeEditorPanel extends JPanel
 		return null;
 	}
 
-	private Integer findBackward(String searchText) {
-		int colCount = model.getColumnCount();
+	private Integer findBackward(String text) {
+
+		String searchText = text.toLowerCase();
+		int colCount = table.getColumnCount();
 		int currentRow = Math.max(0, model.getRow());
 
 		// search previous lines
@@ -1106,7 +994,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			}
 		}
-		//wrap search - search from last row to current row
+		// wrap search - search from last row to current row
 		for (int row = model.getRowCount() - 1; row >= currentRow; row--) {
 			for (int col = colCount - 1; col >= 0; col--) {
 				if (matchesSearch(searchText, row, col)) {
@@ -1119,14 +1007,40 @@ public abstract class CompositeEditorPanel extends JPanel
 		return null;
 	}
 
-	private boolean matchesSearch(String searchText, int row, int col) {
-		Object valueAt = model.getValueAt(row, col);
+	private boolean matchesSearch(String searchText, int viewRow, int viewCol) {
+
+		// Note: row is the same in view and model space; col is in view space and can differ from
+		// the model, since columns can be hidden in the view, but remain in the model.
+		int modelRow = viewRow;
+		int modelCol = table.convertColumnIndexToModel(viewCol);
+		Object valueAt = model.getValueAt(modelRow, modelCol);
 		if (valueAt == null) {
 			return false;
 		}
-		String value = getString(valueAt);
 
-		return value.toLowerCase().contains(searchText);
+		String value = getString(valueAt).toLowerCase();
+		if (viewCol == model.getNameColumn()) {
+			return nameMatchesSearch(searchText, modelRow, value);
+		}
+
+		return value.contains(searchText);
+	}
+
+	private boolean nameMatchesSearch(String searchText, int row, String value) {
+
+		if (value.contains(searchText)) {
+			return true;
+		}
+
+		// see if the default name is a match
+		DataTypeComponent dtc = model.getComponent(row);
+		if (dtc != null) {
+			// this allows this to match a search even though it is not seen in the UI
+			String defaultName = dtc.getDefaultFieldName().toLowerCase();
+			return defaultName.contains(searchText);
+		}
+
+		return false;
 	}
 
 	private String getString(Object object) {
@@ -1155,9 +1069,9 @@ public abstract class CompositeEditorPanel extends JPanel
 			BigInteger endIndex = range.getEnd().getIndex();
 			lsm.addSelectionInterval(startIndex.intValue(), endIndex.intValue() - 1);
 		}
-		int column = model.getColumn();
-		clsm.setAnchorSelectionIndex(column);
-		clsm.setLeadSelectionIndex(column);
+		int modelColumn = model.getColumn();
+		int viewColumn = table.convertColumnIndexToView(modelColumn);
+		clsm.setSelectionInterval(viewColumn, viewColumn);
 	}
 
 	private class ComponentStringCellEditor extends ComponentCellEditor {
@@ -1233,9 +1147,10 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private class ComponentDataTypeCellEditor extends AbstractCellEditor
-			implements TableCellEditor {
+			implements TableCellEditor, FocusableEditor {
 
 		private DataTypeSelectionEditor editor;
+		private DropDownSelectionTextField<DataType> textField;
 		private DataType dt;
 		private int maxLength;
 		private boolean bitfieldAllowed;
@@ -1275,7 +1190,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			editor.setPreferredDataTypeManager(originalDataTypeManager);
 			editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
-			final DropDownSelectionTextField<DataType> textField = editor.getDropDownTextField();
+			textField = editor.getDropDownTextField();
 			textField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 			editor.addCellEditorListener(new CellEditorListener() {
 				@Override
@@ -1309,12 +1224,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			});
 
-			editorPanel = new JPanel() {
-				@Override
-				public void requestFocus() {
-					textField.requestFocus();
-				}
-			};
+			editorPanel = new JPanel();
 			editorPanel.setLayout(new BorderLayout());
 			editorPanel.add(textField, BorderLayout.CENTER);
 			editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
@@ -1333,6 +1243,11 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 
 		@Override
+		public void focusEditor() {
+			textField.requestFocusInWindow();
+		}
+
+		@Override
 		public Object getCellEditorValue() {
 			return dt;
 		}
@@ -1340,18 +1255,15 @@ public abstract class CompositeEditorPanel extends JPanel
 		@Override
 		public boolean stopCellEditing() {
 
-			ListSelectionModel columnSelectionModel = table.getColumnModel().getSelectionModel();
-			columnSelectionModel.setValueIsAdjusting(true);
-
 			int editingColumn = table.getEditingColumn();
 
 			model.setStatus("");
-
 			if (!isEmptyEditorCell() && !validateUserChoice()) {
 				return false;
 			}
 
-			int editingRow = model.getRow();
+			ListSelectionModel columnSelectionModel = table.getColumnModel().getSelectionModel();
+			columnSelectionModel.setValueIsAdjusting(true);
 
 			DataType dataType = (DataType) editor.getCellEditorValue();
 			if (dataType != null) {
@@ -1367,10 +1279,10 @@ public abstract class CompositeEditorPanel extends JPanel
 				fireEditingCanceled();
 			}
 
-			columnSelectionModel.setAnchorSelectionIndex(editingColumn);
-			columnSelectionModel.setLeadSelectionIndex(editingColumn);
+			columnSelectionModel.setSelectionInterval(editingColumn, editingColumn);
 			columnSelectionModel.setValueIsAdjusting(false);
 
+			int editingRow = model.getRow();
 			NavigationDirection navigationDirection = editor.getNavigationDirection();
 			if (navigationDirection == NavigationDirection.BACKWARD) {
 				editPreviousField(editingRow);
@@ -1446,39 +1358,35 @@ public abstract class CompositeEditorPanel extends JPanel
 			int column = table.columnAtPoint(point);
 			int modelColumn = table.convertColumnIndexToModel(column);
 			int clickCount = e.getClickCount();
-			if (!table.isEditing() && (e.getID() == MouseEvent.MOUSE_PRESSED)) {
-				model.clearStatus(); // Only want to clear status when starting new actions (pressed).
+			if (!table.isEditing() && e.getID() == MouseEvent.MOUSE_PRESSED) {
+				model.clearStatus(); // Only clear status when starting new actions (pressed).
 			}
+
 			if (isPopup) {
 				if (!table.isRowSelected(row)) {
 					table.setRowSelectionInterval(row, row);
 				}
 				return;
 			}
-			if ((clickCount < 2) || (e.getButton() != MouseEvent.BUTTON1)) {
+
+			if (clickCount < 2 || e.getButton() != MouseEvent.BUTTON1) {
 				return;
 			}
-			String status = null;
+
 			if (model.isCellEditable(row, modelColumn)) {
 				return;
 			}
 
-			status = model.getColumnName(modelColumn) + " field is not editable";
-			if ((row >= 0) && (row < model.getNumComponents()) &&
-				((modelColumn == model.getNameColumn()) ||
-					(modelColumn == model.getCommentColumn()))) {
-				if (!model.isCellEditable(row, modelColumn)) {
-					DataType dt = model.getComponent(row).getDataType();
-					if (dt == DataType.DEFAULT) {
-						if (modelColumn == model.getNameColumn()) {
-							status = model.getColumnName(modelColumn) +
-								" field is not editable for Undefined byte.";
-						}
-						else if (modelColumn == model.getCommentColumn()) {
-							status = model.getColumnName(modelColumn) +
-								" field is not editable for Undefined byte.";
-						}
-					}
+			String columnName = model.getColumnName(modelColumn);
+			String status = columnName + " field is not editable";
+
+			boolean isValidRow = row >= 0 && row < model.getNumComponents();
+			boolean isStringColumn =
+				modelColumn == model.getNameColumn() || modelColumn == model.getCommentColumn();
+			if (isValidRow && isStringColumn) {
+				DataType dt = model.getComponent(row).getDataType();
+				if (dt == DataType.DEFAULT) {
+					status = columnName + " field is not editable for Undefined byte.";
 				}
 			}
 
@@ -1488,18 +1396,24 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	class CompositeTable extends GTable {
+	private class CompositeEditorTable extends GTable {
 
-		public CompositeTable(TableModel dm) {
-			super(dm);
+		public CompositeEditorTable(TableModel model) {
+			super(model);
 		}
 
 		@Override
-		// overridden because the editor component was not being given focus
-		public Component prepareEditor(TableCellEditor editor, int row, int column) {
-			final Component component = super.prepareEditor(editor, row, column);
-			Swing.runLater(() -> component.requestFocus());
-			return component;
+		protected void installEditKeyBinding() {
+			// We use a tool action instead of the default action.  We must signal to the table to
+			// not use the default action to prevent the table from getting the action.
+
+			// This code will insert a placeholder of 'none' in the table for this keystroke, which
+			// is the default edit keystroke in Swing.  The actual binding for this keystroke is in
+			// a parent input map of the table.  By placing this keystroke in the table's input map,
+			// we prevent the key processing code from traversing into the parent input map's
+			// bindings.
+			KeyStroke keyStroke = KeyStroke.getKeyStroke("pressed F2");
+			KeyBindingUtils.clearKeyBinding(this, keyStroke);
 		}
 	}
 

@@ -53,6 +53,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 	private MultiActionDockingAction nextAction;
 	private DockingAction previousFunctionAction;
 	private DockingAction nextFunctionAction;
+	private DockingAction clearHistoryAction;
 	private CodeBrowserPlugin cbPlugin;
 	private CodeViewerProvider provider;
 
@@ -71,9 +72,12 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		nextAction = plugin.getNextAction();
 		previousFunctionAction = plugin.getPreviousFunctionAction();
 		nextFunctionAction = plugin.getNextFunctionAction();
+		clearHistoryAction = plugin.getClearHistoryAction();
 
 		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
 		provider = cbPlugin.getProvider();
+		goTo(program.getMinAddress());
+		clearHistory();
 	}
 
 	@After
@@ -90,15 +94,13 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		Symbol bulkNavigationSymbol = navigatedSymbols.remove(0);
 
 		// the previous list of actions should be the size of the list - 1
-		List<DockingActionIf> actionList =
-			previousAction.getActionList(getContext());
+		List<DockingActionIf> actionList = previousAction.getActionList(getContext());
 
 		// verify the size...
-		// (the navigated symbols plus the original location before we started)
-		assertEquals(actionList.size(), navigatedSymbols.size() + 1);
+		assertEquals(actionList.size(), navigatedSymbols.size());
 
 		// ...verify the order
-		int n = actionList.size() - 1; // don't compare the first location
+		int n = actionList.size(); // don't compare the first location
 		for (int i = 0; i < n; i++) {
 			DockingActionIf dockableAction = actionList.get(i);
 			LocationMemento location =
@@ -122,7 +124,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// ...make sure the 'previous' list is updated with only actions after the one in our list
 		actionList = previousAction.getActionList(getContext());
-		n = actionList.size() - 1; // don't compare the first location
+		n = actionList.size();
 		int navigatedIndexOffset = (navigatedIndex + 1); // don't count the navigated index
 		int remainingSymbols = navigatedSymbols.size() - navigatedIndexOffset;
 		assertEquals(n, remainingSymbols);
@@ -169,7 +171,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// ...make sure that the 'previous' list is properly updated
 		actionList = previousAction.getActionList(getContext());
-		n = actionList.size() - 1; // don't compare the first location
+		n = actionList.size();
 		navigatedIndexOffset = (navigatedIndex + 1); // don't count the navigated index
 		remainingSymbols = navigatedSymbols.size() - navigatedIndexOffset;
 		assertEquals(n, remainingSymbols);
@@ -358,6 +360,14 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForSwing();
 	}
 
+	private void clearHistory() {
+		assertTrue(clearHistoryAction.isEnabledForContext(getContext()));
+		performAction(clearHistoryAction, true);
+		cbPlugin.updateNow();
+		waitForSwing();
+
+	}
+
 	private void previous() {
 		assertTrue(previousAction.isEnabledForContext(getContext()));
 		performAction(previousAction, true);
@@ -437,9 +447,8 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		Object actionToGuiMapper = TestUtils.getInstanceField("actionToGuiMapper", windowManager);
 		Object menuAndToolBarManager =
 			TestUtils.getInstanceField("menuAndToolBarManager", actionToGuiMapper);
-		Map<WindowNode, WindowActionManager> map =
-			(Map<WindowNode, WindowActionManager>) TestUtils.getInstanceField(
-				"windowToActionManagerMap", menuAndToolBarManager);
+		Map<WindowNode, WindowActionManager> map = (Map<WindowNode, WindowActionManager>) TestUtils
+				.getInstanceField("windowToActionManagerMap", menuAndToolBarManager);
 		Iterator<WindowActionManager> iterator = map.values().iterator();
 
 		while (iterator.hasNext()) {
@@ -448,8 +457,8 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 				(ToolBarManager) TestUtils.getInstanceField("toolBarMgr", wam);
 
 			Map<String, List<ToolBarItemManager>> groupToItemsMap =
-				(Map<String, List<ToolBarItemManager>>) TestUtils.getInstanceField(
-					"groupToItemsMap", toolBarManager);
+				(Map<String, List<ToolBarItemManager>>) TestUtils
+						.getInstanceField("groupToItemsMap", toolBarManager);
 
 			ToolBarData toolBarData = action.getToolBarData();
 			String group = toolBarData.getToolBarGroup();

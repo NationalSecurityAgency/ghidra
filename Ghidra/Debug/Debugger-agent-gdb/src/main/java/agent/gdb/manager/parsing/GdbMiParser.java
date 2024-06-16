@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.MultiMapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 
 import agent.gdb.manager.parsing.GdbParsingUtils.AbstractGdbParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
@@ -30,11 +30,13 @@ import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 /**
  * A parser for GDB/MI records
  * 
+ * <p>
  * While this is a much more machine-friendly format, it has some interesting idiosyncrasies that
  * make it annoying even within a machine. This class attempts to impose a nice abstraction of these
  * records while dealing with nuances particular to certain records, but in general. Examine GDB's
  * documentation for some example records.
  * 
+ * <p>
  * There seem to be one primitive type and two (and a half?) aggregate types in these records. The
  * one primitive type is a string. The aggregates are lists and maps, and maybe "field lists" which
  * behave like multi-valued maps. Maps introduce IDs, which comprise the map keys or field names.
@@ -88,7 +90,7 @@ public class GdbMiParser extends AbstractGdbParser {
 			/**
 			 * Build the field list
 			 * 
-			 * @return
+			 * @return the field list
 			 */
 			public GdbMiFieldList build() {
 				return list;
@@ -97,41 +99,14 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * A key-value entry in the field list
+		 * 
+		 * @param key the key
+		 * @param value the value
 		 */
-		public static class Entry {
-			private final String key;
-			private final Object value;
-
-			private Entry(String key, Object value) {
-				this.key = key;
-				this.value = value;
-			}
-
-			/**
-			 * Get the key
-			 * 
-			 * @return the key
-			 */
-			public String getKey() {
-				return key;
-			}
-
-			/**
-			 * Get the value
-			 * 
-			 * @return the value
-			 */
-			public Object getValue() {
-				return value;
-			}
+		public record Entry(String key, Object value) {
 		}
 
-		private MultiValuedMap<String, Object> map = new HashSetValuedHashMap<String, Object>() {
-			@Override
-			protected HashSet<Object> createCollection() {
-				return new LinkedHashSet<>();
-			}
-		};
+		private MultiValuedMap<String, Object> map = new ArrayListValuedHashMap<String, Object>();
 		private MultiValuedMap<String, Object> unmodifiableMap =
 			MultiMapUtils.unmodifiableMultiValuedMap(map);
 		private final List<Entry> entryList = new ArrayList<>();
@@ -198,6 +173,7 @@ public class GdbMiParser extends AbstractGdbParser {
 		/**
 		 * Assume only a single list is associated with the key, and get that list
 		 * 
+		 * <p>
 		 * For convenience, the list is cast to a list of elements of a given type. This cast is
 		 * unchecked.
 		 * 
@@ -220,10 +196,8 @@ public class GdbMiParser extends AbstractGdbParser {
 		 */
 		public GdbMiFieldList getFieldList(String key) {
 			Object obj = getSingleton(key);
-			if (obj instanceof List) {
-				if (((List<?>) obj).isEmpty()) {
-					return GdbMiFieldList.builder().build();
-				}
+			if (obj instanceof List<?> list && list.isEmpty()) {
+				return GdbMiFieldList.builder().build();
 			}
 			return (GdbMiFieldList) obj;
 		}
@@ -334,7 +308,7 @@ public class GdbMiParser extends AbstractGdbParser {
 	 * 
 	 * @see #parseObject(CharSequence)
 	 * @return the object
-	 * @throws GdbParseError
+	 * @throws GdbParseError if no text matches
 	 */
 	public Object parseObject() throws GdbParseError {
 		switch (peek(true)) {
@@ -369,9 +343,11 @@ public class GdbMiParser extends AbstractGdbParser {
 			char ch = buf.get();
 			if (ch > 0xff) {
 				throw new GdbParseError("byte", "U+" + String.format("%04X", ch));
-			} else if (ch == '"') {
+			}
+			else if (ch == '"') {
 				break;
-			} else if (ch != '\\') {
+			}
+			else if (ch != '\\') {
 				baos.write(ch);
 				continue;
 			}
@@ -493,6 +469,11 @@ public class GdbMiParser extends AbstractGdbParser {
 			if (c == '{') {
 				Object fieldVal = parseObject();
 				result.add(UNNAMED, fieldVal);
+				continue;
+			}
+			if (c == '"') {
+				String bareString = parseString();
+				result.add(null, bareString);
 				continue;
 			}
 			String fieldId = match(FIELD_ID, true);

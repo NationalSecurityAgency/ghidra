@@ -18,6 +18,7 @@ package ghidra.program.model.listing;
 import java.util.List;
 import java.util.Set;
 
+import db.Transaction;
 import ghidra.framework.model.UserData;
 import ghidra.framework.options.Options;
 import ghidra.program.model.util.*;
@@ -25,6 +26,19 @@ import ghidra.util.Saveable;
 import ghidra.util.exception.PropertyTypeMismatchException;
 
 public interface ProgramUserData extends UserData {
+
+	/**
+	 * Open new transaction.  This should generally be done with a try-with-resources block:
+	 * <pre>
+	 * try (Transaction tx = pud.openTransaction(description)) {
+	 * 	// ... Do something
+	 * }
+	 * </pre>
+	 * 
+	 * @return transaction object
+	 * @throws IllegalStateException if this {@link ProgramUserData} has already been closed.
+	 */
+	public Transaction openTransaction();
 
 	/**
 	 * Start a transaction prior to changing any properties
@@ -88,18 +102,19 @@ public interface ProgramUserData extends UserData {
 	 * @param propertyName the name of property map
 	 * @param saveableObjectClass the class type for the object property map
 	 * @param create creates the property map if it does not exist
+	 * @param <T> {@link Saveable} property value type
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
 	 */
-	public ObjectPropertyMap getObjectProperty(String owner, String propertyName,
-			Class<? extends Saveable> saveableObjectClass, boolean create);
+	public <T extends Saveable> ObjectPropertyMap<T> getObjectProperty(String owner,
+			String propertyName, Class<T> saveableObjectClass, boolean create);
 
 	/**
 	 * Get all property maps associated with a specific owner.
 	 * @param owner name of property owner (e.g., plugin name)
 	 * @return list of property maps
 	 */
-	public List<PropertyMap> getProperties(String owner);
+	public List<PropertyMap<?>> getProperties(String owner);
 
 	/**
 	 * Returns list of all property owners for which property maps have been defined.

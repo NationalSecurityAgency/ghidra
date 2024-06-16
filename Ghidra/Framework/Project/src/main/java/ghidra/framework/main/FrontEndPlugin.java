@@ -32,27 +32,30 @@ import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.*;
+import generic.theme.GIcon;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
+import ghidra.framework.data.FolderLinkContentHandler;
+import ghidra.framework.data.LinkedGhidraFolder;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
-import ghidra.framework.main.datatree.ClearCutAction;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.User;
 import ghidra.util.*;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
-import resources.ResourceManager;
 
 /**
  * Main plugin component for the Ghidra Project Window, which is
@@ -70,7 +73,7 @@ import resources.ResourceManager;
 )
 //@formatter:on
 public class FrontEndPlugin extends Plugin
-		implements FrontEndService, RemoteAdapterListener, ProgramaticUseOnly {
+		implements FrontEndService, RemoteAdapterListener, ProjectViewListener, ProgramaticUseOnly {
 
 	private final static String TITLE_PREFIX = "Ghidra: ";
 	private final static String EXPORT_TOOL_ACTION_NAME = "Export Tool";
@@ -82,7 +85,6 @@ public class FrontEndPlugin extends Plugin
 	private ProjectToolBar toolBar;
 	private ProjectDataTreePanel dataTreePanel;
 	private ProjectDataTablePanel dataTablePanel;
-	private ToolButtonTransferable toolButtonTransferable;
 	private WorkspacePanel workspacePanel;
 	private Project activeProject;
 	private ProjectManager projectManager;
@@ -119,9 +121,9 @@ public class FrontEndPlugin extends Plugin
 	private JPanel connectionIconPanel;
 	private JButton connectionButton;
 
-	static final Icon CONNECTED_ICON = ResourceManager.loadImage("images/connected.gif");
-	static final Icon DISCONNECTED_ICON = ResourceManager.loadImage("images/disconnected.gif");
-	private Icon emptyIcon = ResourceManager.loadImage("images/EmptyIcon.gif");
+	static final Icon CONNECTED_ICON = new GIcon("icon.frontend.project.connected");
+	static final Icon DISCONNECTED_ICON = new GIcon("icon.frontend.project.disconnected");
+	private static final Icon EMPTY_ICON = new GIcon("icon.empty.20");
 
 	private FrontEndProvider frontEndProvider;
 
@@ -129,14 +131,15 @@ public class FrontEndPlugin extends Plugin
 	private ClearCutAction clearCutAction;
 	private ProjectDataCopyAction copyAction;
 	private ProjectDataPasteAction pasteAction;
+	private ProjectDataPasteLinkAction pasteLinkAction;
 	private ProjectDataRenameAction renameAction;
 	private ProjectDataOpenDefaultToolAction openAction;
-	private ProjectDataExpandAction expandAction;
-	private ProjectDataCollapseAction collapseAction;
+	private ProjectDataExpandAction<FrontEndProjectTreeContext> expandAction;
+	private ProjectDataCollapseAction<FrontEndProjectTreeContext> collapseAction;
 	private ProjectDataSelectAction selectAction;
 	private ProjectDataReadOnlyAction readOnlyAction;
 	private ProjectDataRefreshAction refreshAction;
-	private ProjectDataNewFolderAction newFolderAction;
+	private ProjectDataNewFolderAction<FrontEndProjectTreeContext> newFolderAction;
 	private ProjectDataDeleteAction deleteAction;
 	protected List<DockingAction> openActions = new ArrayList<>();
 
@@ -218,6 +221,7 @@ public class FrontEndPlugin extends Plugin
 		clearCutAction = new ClearCutAction(owner);
 		copyAction = new ProjectDataCopyAction(owner, groupName);
 		pasteAction = new ProjectDataPasteAction(owner, groupName);
+		pasteLinkAction = new ProjectDataPasteLinkAction(owner, groupName);
 
 		groupName = "Delete/Rename";
 		renameAction = new ProjectDataRenameAction(owner, groupName);
@@ -240,6 +244,7 @@ public class FrontEndPlugin extends Plugin
 		tool.addAction(clearCutAction);
 		tool.addAction(copyAction);
 		tool.addAction(pasteAction);
+		tool.addAction(pasteLinkAction);
 		tool.addAction(deleteAction);
 		tool.addAction(openAction);
 		tool.addAction(renameAction);
@@ -394,6 +399,10 @@ public class FrontEndPlugin extends Plugin
 			toolChest.addToolChestChangeListener(toolBar);
 			toolChest.addToolChestChangeListener(toolChestChangeListener);
 			createToolSpecificOpenActions();
+
+			// Add project view listener
+			activeProject.addProjectViewListener(this);
+
 			// Add the repository listener
 			RepositoryAdapter repository = activeProject.getRepository();
 			if (repository != null) {
@@ -402,6 +411,16 @@ public class FrontEndPlugin extends Plugin
 		}
 
 //        gui.validate();
+	}
+
+	@Override
+	public void viewedProjectAdded(URL projectView) {
+		SwingUtilities.invokeLater(() -> rebuildRecentMenus());
+	}
+
+	@Override
+	public void viewedProjectRemoved(URL projectView) {
+		SwingUtilities.invokeLater(() -> rebuildRecentMenus());
 	}
 
 	/**
@@ -426,23 +445,7 @@ public class FrontEndPlugin extends Plugin
 		projectDataPanel.readDataState(saveState);
 	}
 
-	/**
-	 * Exit the Ghidra application; the parameter indicates whether
-	 * the user should be prompted to save the project that is about
-	 * to be closed
-	 */
-	void exitGhidra() {
-		boolean okToExit = closeActiveProject();
-		if (okToExit) {
-			System.exit(0);
-
-		}
-		else if (!tool.isVisible()) {
-			tool.setVisible(true);
-		}
-	}
-
-	private boolean closeActiveProject() {
+	boolean closeActiveProject() {
 		if (activeProject == null) {
 			return true;
 		}
@@ -451,7 +454,7 @@ public class FrontEndPlugin extends Plugin
 		}
 		catch (Exception e) {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e); // Keep this.
-			int result = OptionDialog.showOptionDialog(tool.getToolFrame(), "Close Project Failed",
+			int result = OptionDialog.showOptionDialog(null, "Close Project Failed",
 				"Error Description: [ " + e + " ]" + "\n" +
 					"=====> Do you wish to exit Ghidra, possibly losing changes? <=====",
 				"Exit Ghidra (Possibly Lose Changes)", OptionDialog.ERROR_MESSAGE);
@@ -466,11 +469,11 @@ public class FrontEndPlugin extends Plugin
 	 * general project utility that brings up a file chooser for
 	 * the user to specify a directory and filename that are used
 	 * for the Project location and name
-	 * 
+	 *
 	 * @param fileChooser the chooser used to pick the project
 	 * @param mode read-only or not
 	 * @param preferenceName the preference property name used to save the last opened project
-	 * @return the project locator for the opened project 
+	 * @return the project locator for the opened project
 	 */
 	ProjectLocator chooseProject(GhidraFileChooser fileChooser, String mode,
 			String preferenceName) {
@@ -536,8 +539,22 @@ public class FrontEndPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> {
 			// there was a delete bug; make the set unmodifiable to catch this earlier
 			Set<DomainFile> unmodifiableFiles = Collections.unmodifiableSet(files);
+			if (dataTablePanel.isCapacityExceeded()) {
+				projectDataPanel.showTree();
+			}
+			else {
+				dataTablePanel.setSelectedDomainFiles(unmodifiableFiles);
+			}
 			dataTreePanel.selectDomainFiles(unmodifiableFiles);
-			dataTablePanel.setSelectedDomainFiles(unmodifiableFiles);
+		});
+	}
+
+	void selectFolder(final DomainFolder folder) {
+		// Do this later in case any of the given files are newly created, which means that the
+		// GUIs may have not yet been notified.
+		SwingUtilities.invokeLater(() -> {
+			projectDataPanel.showTree();
+			dataTreePanel.selectDomainFolder(folder);
 		});
 	}
 
@@ -587,23 +604,12 @@ public class FrontEndPlugin extends Plugin
 			if (e != null) {
 				Component source = (Component) e.getSource();
 				if (source instanceof ToolButton) {
-					return new ActionContext(provider, source);
+					return new DefaultActionContext(provider, source);
 				}
 			}
 		}
 
 		return actionContext;
-	}
-
-	ToolButtonTransferable getToolButtonTransferable() {
-		return toolButtonTransferable;
-	}
-
-	void setToolButtonTransferable(ToolButtonTransferable t) {
-		if (t == null && toolButtonTransferable != null) {
-			toolButtonTransferable.clearTransferData();
-		}
-		toolButtonTransferable = t;
 	}
 
 	void updateToolConnectionDialog() {
@@ -671,7 +677,7 @@ public class FrontEndPlugin extends Plugin
 			connectionIconPanel.remove(connectionButton);
 		}
 		if (project == null || project.getRepository() == null) {
-			connectionLabel = new GIconLabel(emptyIcon);
+			connectionLabel = new GIconLabel(EMPTY_ICON);
 			connectionIconPanel.add(connectionLabel);
 			return;
 		}
@@ -679,14 +685,14 @@ public class FrontEndPlugin extends Plugin
 		RepositoryAdapter repository = project.getRepository();
 		User user = null;
 		boolean isConnected = repository.isConnected();
-		connectionButton = new JButton(isConnected ? CONNECTED_ICON : DISCONNECTED_ICON);
+		connectionButton = new GButton(isConnected ? CONNECTED_ICON : DISCONNECTED_ICON);
 		connectionButton.addActionListener(e -> connect());
 
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
-		connectionButton.setBorder(
-			isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		connectionButton
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		connectionIconPanel.add(connectionButton);
 		if (isConnected) {
 
@@ -697,8 +703,8 @@ public class FrontEndPlugin extends Plugin
 				Msg.debug(this, "Unexpected exception retrieving user from repository", e);
 			}
 		}
-		repositoryLabel.setText(
-			"Project Repository:   " + repository.getName() + getAccessString(user));
+		repositoryLabel
+				.setText("Project Repository:   " + repository.getName() + getAccessString(user));
 
 		String serverName = repository.getServerInfo().getServerName();
 		connectionButton.setToolTipText(
@@ -801,6 +807,7 @@ public class FrontEndPlugin extends Plugin
 	protected void dispose() {
 		dataTablePanel.dispose();
 		dataTreePanel.dispose();
+		projectActionManager.dispose();
 	}
 
 	private void buildPanels() {
@@ -968,8 +975,8 @@ public class FrontEndPlugin extends Plugin
 			}
 		};
 		renameToolAction.setPopupMenuData(new MenuData(new String[] { "Rename..." }, "tool"));
-		renameToolAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
+		renameToolAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
 
 		propertiesAction = new ToolButtonAction(PROPERTIES_ACTION_NAME) {
 			@Override
@@ -992,8 +999,8 @@ public class FrontEndPlugin extends Plugin
 		propertiesAction.setPopupMenuData(
 			new MenuData(new String[] { "Configure Plugins..." }, "zproperties"));
 
-		propertiesAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
+		propertiesAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
 
 		tool.addLocalAction(frontEndProvider, exportToolAction);
 		tool.addLocalAction(frontEndProvider, renameToolAction);
@@ -1075,25 +1082,112 @@ public class FrontEndPlugin extends Plugin
 	}
 
 	public void openDomainFile(DomainFile domainFile) {
-		Project project = tool.getProject();
-		final ToolServices toolServices = project.getToolServices();
-		ToolTemplate defaultToolTemplate = toolServices.getDefaultToolTemplate(domainFile);
 
-		if (defaultToolTemplate == null) {
-			// assume no tools in the tool chest
-			Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
-				"<html>Cannot find tool to open file: <b>" +
-					HTMLUtilities.escapeHTML(domainFile.getName()) +
-					"</b>.<br><br>Make sure you have an appropriate tool installed <br>from the " +
-					"<b>Tools->Import Default Tools...</b> menu.  Alternatively, you can " +
-					"use <b>Tool->Set Tool Associations</b> menu to change how Ghidra " +
-					"opens this type of file");
+		if (FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE.equals(domainFile.getContentType())) {
+			showLinkedFolderInViewedProject(domainFile);
 			return;
 		}
 
-		ToolButton button = toolBar.getToolButtonForToolConfig(defaultToolTemplate);
-		button.launchTool(domainFile);
+		Project project = tool.getProject();
+		ToolServices toolServices = project.getToolServices();
+		ToolTemplate defaultToolTemplate = toolServices.getDefaultToolTemplate(domainFile);
+		if (defaultToolTemplate != null) {
+			ToolButton button = toolBar.getToolButtonForToolConfig(defaultToolTemplate);
+			if (button != null) {
+				button.launchTool(domainFile);
+				return;
+			}
+		}
 
+		if (toolServices.launchDefaultTool(List.of(domainFile)) != null) {
+			return;
+		}
+
+		Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
+			"<html>Cannot find tool to open file: <b>" +
+				HTMLUtilities.escapeHTML(domainFile.getName()) +
+				"</b>.<br><br>Make sure you have an appropriate tool installed <br>from the " +
+				"<b>Tools->Import Default Tools...</b> menu.  Alternatively, you can " +
+				"use <b>Tool->Set Tool Associations</b> menu to change how Ghidra " +
+				"opens this type of file");
+	}
+
+	private void showLinkedFolderInViewedProject(DomainFile domainFile) {
+
+		try {
+			LinkedGhidraFolder linkedFolder =
+				FolderLinkContentHandler.getReadOnlyLinkedFolder(domainFile);
+			if (linkedFolder == null) {
+				return;  // unsupported use
+			}
+
+			ProjectDataTreePanel dtp = projectDataPanel.openView(linkedFolder.getProjectURL());
+			if (dtp == null) {
+				return;
+			}
+
+			// Do not hang onto domainFile, linkedFolder or their underlying project data
+
+			ProjectData viewedProjectData = dtp.getProjectData();
+			DomainFolder domainFolder =
+				viewedProjectData.getFolder(linkedFolder.getLinkedPathname());
+
+			if (domainFolder != null) {
+				// delayed to ensure tree is displayed
+				Swing.runLater(() -> dtp.selectDomainFolder(domainFolder));
+			}
+		}
+		catch (IOException e) {
+			Msg.showError(this, projectDataPanel, "Linked-folder failure: " + domainFile.getName(),
+				e);
+		}
+
+	}
+
+	void showInViewedProject(URL ghidraURL, boolean isFolder) {
+
+		ProjectDataTreePanel dtp = projectDataPanel.openView(GhidraURL.getProjectURL(ghidraURL));
+		if (dtp == null) {
+			return;
+		}
+
+		Swing.runLater(() -> {
+			// delayed to ensure tree is displayed
+
+			ProjectData viewedProjectData = dtp.getProjectData();
+
+			String path = GhidraURL.getProjectPathname(ghidraURL);
+
+			if (isFolder) {
+				DomainFolder viewedProjectFolder = getViewProjectFolder(viewedProjectData, path);
+				if (viewedProjectFolder != null) {
+					dtp.selectDomainFolder(viewedProjectFolder);
+				}
+			}
+			else {
+				DomainFile viewedProjectFile = getViewProjectFile(viewedProjectData, path);
+				if (viewedProjectFile != null) {
+					dtp.selectDomainFile(viewedProjectFile);
+				}
+			}
+		});
+	}
+
+	private DomainFile getViewProjectFile(ProjectData viewedProjectData, String path) {
+		if (path == null || path.endsWith(DomainFolder.SEPARATOR)) {
+			return null;
+		}
+		return viewedProjectData.getFile(path);
+	}
+
+	private DomainFolder getViewProjectFolder(ProjectData viewedProjectData, String path) {
+		if (path == null || path.equals(DomainFolder.SEPARATOR)) {
+			return viewedProjectData.getRootFolder();
+		}
+		if (path.endsWith(DomainFolder.SEPARATOR)) {
+			path = path.substring(0, path.length() - 1); // remove trailing separator
+		}
+		return viewedProjectData.getFolder(path);
 	}
 
 	private class MyToolChestChangeListener implements ToolChestChangeListener {

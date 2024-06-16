@@ -15,6 +15,16 @@
  */
 package ghidra.program.model.data;
 
+/**
+ * {@link DataTypeConflictHandler} provides the {@link DataTypeManager} with a handler that is 
+ * used to provide a disposition when a datatype conflict is detected during 
+ * {@link DataTypeManager#resolve(DataType, DataTypeConflictHandler)} processing.
+ * <br>
+ * Known Issue: resolve processing identifies a conflict on an outer datatype (e.g., Structure)
+ * before a resolve conflict decision has been made on its referenced datatypes.  Depending
+ * upon the conflict handler used, this can result in duplicate conflict types once the full
+ * resolution is completed (see GP-3632).
+ */
 public abstract class DataTypeConflictHandler {
 
 	/**
@@ -46,6 +56,7 @@ public abstract class DataTypeConflictHandler {
 				return REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER;
 			}
 		};
+
 		public abstract DataTypeConflictHandler getHandler();
 	}
 

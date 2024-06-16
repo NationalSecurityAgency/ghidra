@@ -16,31 +16,49 @@
 package ghidra.app.plugin.core.debug.gui.model;
 
 import java.awt.*;
-import java.awt.event.MouseListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.*;
 
 import javax.swing.JPanel;
 import javax.swing.JTree;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.tree.TreePath;
-
-import com.google.common.collect.Range;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
+import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.*;
+import ghidra.util.Swing;
 
 public class ObjectsTreePanel extends JPanel {
 
 	protected class ObjectsTreeRenderer extends GTreeRenderer implements ColorsModified.InTree {
 		{
 			setHTMLRenderingEnabled(true);
+		}
+
+		private boolean isOnCurrentPath(TraceObjectValue value) {
+			if (value == null) {
+				return false;
+			}
+			return (value.getValue() instanceof TraceObject child && isOnCurrentPath(child));
+		}
+
+		private boolean isOnCurrentPath(TraceObject object) {
+			TraceObject cur = current.getObject();
+			if (cur == null) {
+				return false;
+			}
+			return object.getCanonicalPath().isAncestor(cur.getCanonicalPath());
 		}
 
 		@Override
@@ -54,6 +72,7 @@ public class ObjectsTreePanel extends JPanel {
 
 			AbstractNode node = (AbstractNode) value;
 			setForeground(getForegroundFor(tree, node.isModified(), selected));
+			setFont(getFont(isOnCurrentPath(node.getValue())));
 			return this;
 		}
 
@@ -68,22 +87,112 @@ public class ObjectsTreePanel extends JPanel {
 		}
 	}
 
-	protected final ObjectTreeModel treeModel;
-	protected final GTree tree;
+	static class ObjectGTree extends GTree {
+		public ObjectGTree(GTreeNode root) {
+			super(root);
+			getJTree().setToggleClickCount(0);
+		}
 
+		JTree tree() {
+			return getJTree();
+		}
+	}
+
+	protected static class DelayedSwingHack implements Runnable {
+		public static void runWayLater(int delay, Runnable runnable) {
+			Swing.runLater(new DelayedSwingHack(delay, runnable));
+		}
+
+		private int delay;
+		private final Runnable runnable;
+
+		public DelayedSwingHack(int delay, Runnable runnable) {
+			this.delay = delay;
+			this.runnable = runnable;
+		}
+
+		@Override
+		public void run() {
+			if (--delay == 0) {
+				runnable.run();
+			}
+			else {
+				Swing.runLater(this);
+			}
+		}
+	}
+
+	protected class ListenerForShowing implements AncestorListener {
+		boolean showing = false;
+		int version = 0;
+
+		@Override
+		public void ancestorRemoved(AncestorEvent event) {
+			updateShowing();
+		}
+
+		@Override
+		public void ancestorMoved(AncestorEvent event) {
+			updateShowing();
+		}
+
+		@Override
+		public void ancestorAdded(AncestorEvent event) {
+			updateShowing();
+		}
+
+		public void updateShowing() {
+			/**
+			 * There may be several changes to visibility throughout some routines running on the
+			 * Swing thread. To avoid processing such frantic changes, we aim to wait for the last
+			 * change. Thus, we increment a version counter and schedule a delayed lambda on the
+			 * Swing thread. That lambda will only actually do anything if the version number hasn't
+			 * been incremented, i.e., some additional change hasn't occurred. This should prevent
+			 * intermediate changes, e.g., when re-docking the window, from causing needless
+			 * updates.
+			 */
+			final int v = ++version;
+			DelayedSwingHack.runWayLater(2, () -> {
+				if (v == version) {
+					version = 0;
+					setShowing(ObjectsTreePanel.this.isShowing());
+				}
+			});
+		}
+
+		private void setShowing(boolean showing) {
+			if (this.showing == showing) {
+				return;
+			}
+			this.showing = showing;
+			showingChanged(showing);
+		}
+	}
+
+	protected final ObjectTreeModel treeModel;
+	protected final ObjectGTree tree;
+
+	protected boolean showing = false;
+	protected Set<TraceObjectKeyPath> savedSelection = null;
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
+	protected DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	protected boolean limitToSnap = true;
 	protected boolean showHidden = false;
 	protected boolean showPrimitives = false;
 	protected boolean showMethods = false;
 
-	protected Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
-	protected Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
+	protected Color diffColor = DebuggerResources.COLOR_VALUE_CHANGED;
+	protected Color diffColorSel = DebuggerResources.COLOR_VALUE_CHANGED_SEL;
+
+	protected final ListenerForShowing listenerForShowing = new ListenerForShowing();
 
 	public ObjectsTreePanel() {
 		super(new BorderLayout());
+
+		addAncestorListener(listenerForShowing);
+
 		treeModel = createModel();
-		tree = new GTree(treeModel.getRoot());
+		tree = new ObjectGTree(treeModel.getRoot());
 
 		tree.setCellRenderer(new ObjectsTreeRenderer());
 		add(tree, BorderLayout.CENTER);
@@ -97,22 +206,76 @@ public class ObjectsTreePanel extends JPanel {
 		return new KeepTreeState(tree);
 	}
 
+	protected void showingChanged(boolean showing) {
+		if (!showing) {
+			savedSelection = getSelectedKeyPaths();
+		}
+		this.showing = showing;
+		updateTreeModelForCoordinates();
+		updateTreeModelForSpan();
+		updateTreeModelForShowHidden();
+		updateTreeModelForShowPrimitives();
+		updateTreeModelForShowMethods();
+		if (showing && savedSelection != null) {
+			setSelectedKeyPaths(savedSelection, EventOrigin.INTERNAL_GENERATED);
+		}
+		// Restore expansion? Nah.
+	}
+
+	protected Trace computeDiffTrace(Trace current, Trace previous) {
+		if (current == null) {
+			return null;
+		}
+		if (previous == null) {
+			return current;
+		}
+		return previous;
+	}
+
 	public void goToCoordinates(DebuggerCoordinates coords) {
-		// TODO: thread should probably become a TraceObject once we transition
 		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
 			return;
 		}
-		DebuggerCoordinates previous = current;
-		this.current = coords;
+		previous = current;
+		current = coords;
+		if (previous.getSnap() == current.getSnap() &&
+			previous.getTrace() == current.getTrace() &&
+			previous.getObject() == current.getObject()) {
+			return;
+		}
+		updateTreeModelForCoordinates();
+	}
+
+	protected void updateTreeModelForCoordinates() {
+		if (!showing) {
+			// Clear it out and have it remove its listeners
+			treeModel.setTrace(null);
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
-			treeModel.setDiffTrace(previous.getTrace());
+			treeModel.setDiffTrace(computeDiffTrace(current.getTrace(), previous.getTrace()));
 			treeModel.setTrace(current.getTrace());
 			treeModel.setDiffSnap(previous.getSnap());
 			treeModel.setSnap(current.getSnap());
 			if (limitToSnap) {
-				treeModel.setSpan(Range.singleton(current.getSnap()));
+				treeModel.setSpan(Lifespan.at(current.getSnap()));
 			}
-			tree.filterChanged();
+			//tree.filterChanged();
+			// Repaint for bold current path is already going to happen
+
+			// Repaint is not enough, as node sizes may change
+			for (TraceObjectKeyPath path = current.getPath(); path != null; path = path.parent()) {
+				AbstractNode node = treeModel.getNode(path);
+				if (node != null) {
+					node.fireNodeChanged();
+				}
+			}
+			for (TraceObjectKeyPath path = previous.getPath(); path != null; path = path.parent()) {
+				AbstractNode node = treeModel.getNode(path);
+				if (node != null) {
+					node.fireNodeChanged();
+				}
+			}
 		}
 	}
 
@@ -121,8 +284,15 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.limitToSnap = limitToSnap;
+		updateTreeModelForSpan();
+	}
+
+	protected void updateTreeModelForSpan() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
-			treeModel.setSpan(limitToSnap ? Range.singleton(current.getSnap()) : Range.all());
+			treeModel.setSpan(limitToSnap ? Lifespan.at(current.getSnap()) : Lifespan.ALL);
 		}
 	}
 
@@ -135,6 +305,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showHidden = showHidden;
+		updateTreeModelForShowHidden();
+	}
+
+	protected void updateTreeModelForShowHidden() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowHidden(showHidden);
 		}
@@ -149,6 +326,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showPrimitives = showPrimitives;
+		updateTreeModelForShowPrimitives();
+	}
+
+	protected void updateTreeModelForShowPrimitives() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowPrimitives(showPrimitives);
 		}
@@ -163,6 +347,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showMethods = showMethods;
+		updateTreeModelForShowMethods();
+	}
+
+	protected void updateTreeModelForShowMethods() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowMethods(showMethods);
 		}
@@ -196,20 +387,6 @@ public class ObjectsTreePanel extends JPanel {
 		tree.removeGTreeSelectionListener(listener);
 	}
 
-	@Override
-	public synchronized void addMouseListener(MouseListener l) {
-		super.addMouseListener(l);
-		// Is this a HACK?
-		tree.addMouseListener(l);
-	}
-
-	@Override
-	public synchronized void removeMouseListener(MouseListener l) {
-		super.removeMouseListener(l);
-		// HACK?
-		tree.removeMouseListener(l);
-	}
-
 	public void setSelectionMode(int selectionMode) {
 		tree.getSelectionModel().setSelectionMode(selectionMode);
 	}
@@ -221,7 +398,11 @@ public class ObjectsTreePanel extends JPanel {
 	protected <R, A> R getItemsFromPaths(TreePath[] paths,
 			Collector<? super AbstractNode, A, R> collector) {
 		return Stream.of(paths)
-				.map(p -> (AbstractNode) p.getLastPathComponent())
+				.<AbstractNode> mapMulti((path, consumer) -> {
+					if (path.getLastPathComponent() instanceof AbstractNode node) {
+						consumer.accept(node);
+					}
+				})
 				.collect(collector);
 	}
 
@@ -244,14 +425,60 @@ public class ObjectsTreePanel extends JPanel {
 		return treeModel.getNode(path);
 	}
 
-	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
-		List<GTreeNode> nodes = new ArrayList<>();
+	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths, EventOrigin origin) {
+		savedSelection = keyPaths instanceof Set<TraceObjectKeyPath> s ? s : Set.copyOf(keyPaths);
+		List<TreePath> treePaths = new ArrayList<>();
 		for (TraceObjectKeyPath path : keyPaths) {
 			AbstractNode node = getNode(path);
 			if (node != null) {
-				nodes.add(node);
+				treePaths.add(node.getTreePath());
 			}
 		}
-		tree.setSelectedNodes(nodes);
+		tree.setSelectionPaths(treePaths.toArray(TreePath[]::new), origin);
+	}
+
+	public Set<TraceObjectKeyPath> getSelectedKeyPaths() {
+		Set<TraceObjectKeyPath> result = new HashSet<>();
+		for (AbstractNode node : getSelectedItems()) {
+			TraceObjectValue value = node.getValue();
+			if (value == null) {
+				result.add(TraceObjectKeyPath.of());
+			}
+			else {
+				result.add(value.getCanonicalPath());
+			}
+		}
+		return result;
+	}
+
+	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
+		setSelectedKeyPaths(keyPaths, EventOrigin.API_GENERATED);
+	}
+
+	public void expandCurrent() {
+		TraceObject object = current.getObject();
+		if (object == null) {
+			return;
+		}
+		AbstractNode node = getNode(object.getCanonicalPath());
+		TreePath parentPath = node.getTreePath().getParentPath();
+		if (parentPath != null) {
+			tree.expandPath(parentPath);
+		}
+	}
+
+	public void setSelectedObject(TraceObject object) {
+		if (object == null) {
+			tree.clearSelectionPaths();
+			return;
+		}
+		AbstractNode node = getNode(object.getCanonicalPath());
+		if (node != null) {
+			tree.addSelectionPath(node.getTreePath());
+		}
+	}
+
+	public void selectCurrent() {
+		setSelectedObject(current.getObject());
 	}
 }

@@ -18,20 +18,20 @@ package ghidra.trace.model.modules;
 import java.net.URL;
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
+import ghidra.trace.model.Lifespan;
 
 /**
  * Manages mappings from this trace into static images (Ghida {@link Program}s)
  * 
- * Most commonly, this is used to map sections listed by a connected debugger to those same sections
- * of programs already imported into the same Ghidra project. It is vitally important that the image
- * loaded by the target is an exact copy of the image imported by Ghidra, or else things may not be
- * aligned.
+ * <p>
+ * Most commonly, this is used to map modules listed by a connected debugger to programs already
+ * imported into the same Ghidra project. It is vitally important that the image loaded by the
+ * target is an exact copy of the image imported by Ghidra, or else things may not be aligned.
  * 
+ * <p>
  * Note, to best handle mapping ranges to a variety of programs, and to validate the addition of new
  * entries, it is unlikely a client should consume mapping entries directly. Instead, a service
  * should track the mappings among all open traces and programs, permitting clients to mutate and
@@ -43,6 +43,7 @@ public interface TraceStaticMappingManager {
 	/**
 	 * Add a new mapping, if not already covered
 	 * 
+	 * <p>
 	 * A new mapping may overlap an existing mapping, so long as they agree in address shift.
 	 * Furthermore, in such cases, the implementation may coalesce mappings to remove duplication.
 	 * 
@@ -51,10 +52,10 @@ public interface TraceStaticMappingManager {
 	 * @param toProgramURL the (Ghidra) URL of the static image ("to")
 	 * @param toAddress the starting address (in string form) in the static image ("to")
 	 * @throws TraceConflictedMappingException if an existing mapping conflicts. See
-	 *             {@link #isAnyConflicting(AddressRange, Range, URL, String)}
+	 *             {@link #findAnyConflicting(AddressRange, Lifespan, URL, String)}
 	 * @return the new entry, or any entry which subsumes the specified mapping
 	 */
-	TraceStaticMapping add(AddressRange range, Range<Long> lifespan, URL toProgramURL,
+	TraceStaticMapping add(AddressRange range, Lifespan lifespan, URL toProgramURL,
 			String toAddress) throws TraceConflictedMappingException;
 
 	/**
@@ -76,14 +77,16 @@ public interface TraceStaticMappingManager {
 	/**
 	 * Check if another mapping would conflict with the given prospective mapping
 	 * 
+	 * <p>
 	 * Mappings are allowed to overlap, but they must agree on the destination program and address
 	 * throughout all overlapping portions.
 	 * 
-	 * TODO: It'd be nice if the manager automatically merged overlapping mappings in agreement or
-	 * provided a "deduplicate" method which optimized the entries in the database. This gets
-	 * complicated, since we're dealing with overlapping rectangles, not strict one-dimensional
-	 * ranges. Look into existing research for optimizing coverage of shapes by rectangles. The same
-	 * is needed for property maps in 2 dimensions.
+	 * <p>
+	 * <b>TODO</b>: It'd be nice if the manager automatically merged overlapping mappings in
+	 * agreement or provided a "de-duplicate" method which optimized the entries in the database.
+	 * This gets complicated, since we're dealing with overlapping rectangles, not strict
+	 * one-dimensional ranges. Look into existing research for optimizing coverage of shapes by
+	 * rectangles. The same is needed for property maps in 2 dimensions.
 	 * 
 	 * @param range the range in the trace ("from")
 	 * @param lifespan the span of time in the trace
@@ -91,12 +94,13 @@ public interface TraceStaticMappingManager {
 	 * @param toAddress the starting address (in string form) in the static image ("to")
 	 * @return a conflicting mapping, or {@code null} if none exist
 	 */
-	TraceStaticMapping findAnyConflicting(AddressRange range, Range<Long> lifespan,
+	TraceStaticMapping findAnyConflicting(AddressRange range, Lifespan lifespan,
 			URL toProgramURL, String toAddress);
 
 	/**
 	 * Find all mappings which overlap the given adddress range and span of time
 	 * 
+	 * <p>
 	 * Note, this returns overlapping entries whether or not they conflict.
 	 * 
 	 * @param range the range in the trace ("from")
@@ -104,5 +108,5 @@ public interface TraceStaticMappingManager {
 	 * @return an unmodifiable collection of overlapped entries
 	 */
 	Collection<? extends TraceStaticMapping> findAllOverlapping(AddressRange range,
-			Range<Long> lifespan);
+			Lifespan lifespan);
 }

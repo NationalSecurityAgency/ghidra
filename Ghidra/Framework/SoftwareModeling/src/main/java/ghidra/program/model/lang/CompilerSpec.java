@@ -15,14 +15,17 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataOrganization;
-import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.pcode.Encoder;
 
 /**
  * Interface for requesting specific information about the compiler used to
@@ -38,12 +41,16 @@ import ghidra.program.model.listing.Parameter;
  */
 public interface CompilerSpec {
 
+	public static final String CALLING_CONVENTION_unknown = "unknown";
+	public static final String CALLING_CONVENTION_default = "default";
+
 	public final static String CALLING_CONVENTION_cdecl = "__cdecl";
 	public final static String CALLING_CONVENTION_pascal = "__pascal";
 	public final static String CALLING_CONVENTION_thiscall = "__thiscall";
 	public final static String CALLING_CONVENTION_stdcall = "__stdcall";
 	public final static String CALLING_CONVENTION_fastcall = "__fastcall";
 	public final static String CALLING_CONVENTION_vectorcall = "__vectorcall";
+	public final static String CALLING_CONVENTION_rustcall = "__rustcall";
 
 	/**
 	 * Labels for PrototypeModels that are used by default for various analysis/evaluation
@@ -53,6 +60,19 @@ public interface CompilerSpec {
 	public enum EvaluationModelType {
 		EVAL_CURRENT,			// A PrototypeModel used to evaluate the "current" function
 		EVAL_CALLED				// A PrototypeModel used to evaluate a "called" function
+	}
+
+	/**
+	 * Determine if the specified calling convention name is treated as the unknown calling
+	 * convention (blank or {code "unknown"}).  Other unrecognized names will return false.
+	 * This static method does not assume any specific compiler specification.
+	 * 
+	 * @param callingConventionName calling convention name or null
+	 * @return true if specified name is blank or {code "unknown"}
+	 */
+	public static boolean isUnknownCallingConvention(String callingConventionName) {
+		return StringUtils.isBlank(callingConventionName) ||
+			CompilerSpec.CALLING_CONVENTION_unknown.equals(callingConventionName);
 	}
 
 	/**
@@ -172,15 +192,16 @@ public interface CompilerSpec {
 	public PcodeInjectLibrary getPcodeInjectLibrary();
 
 	/**
-	 * Get the PrototypeModel corresponding to the given generic calling convention
-	 * @param genericCallingConvention is the given generic calling convention
+	 * Get the PrototypeModel which corresponds to the given calling convention name.
+	 * If no match is found the default prototype model is returned.
+	 * @param conventionName calling convention name.
 	 * @return the matching model or the defaultModel if nothing matches
 	 */
-	public PrototypeModel matchConvention(GenericCallingConvention genericCallingConvention);
+	public PrototypeModel matchConvention(String conventionName);
 
 	/**
 	 * Find the best guess at a calling convention model from this compiler spec
-	 * given an ordered list of (potential) parameters.
+	 * given an ordered list of (potential) parameters with storage assignments.
 	 * @param params is the ordered list of parameters
 	 * @return prototype model corresponding to the specified function signature
 	 */
@@ -239,11 +260,12 @@ public interface CompilerSpec {
 	public Set<String> getPropertyKeys();
 
 	/**
-	 * Marshal this entire specification to an XML stream.  An XML document is written with
-	 * root tag \<compiler_spec>.
-	 * @param buffer is the XML stream
+	 * Encode this entire specification to a stream.  A document is written with
+	 * root element \<compiler_spec>.
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer);
+	public void encode(Encoder encoder) throws IOException;
 
 	/**
 	 * Determine if this CompilerSpec is equivalent to another specified instance

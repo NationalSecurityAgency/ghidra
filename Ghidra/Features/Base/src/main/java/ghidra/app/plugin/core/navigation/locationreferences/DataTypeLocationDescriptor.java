@@ -139,43 +139,47 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 
 		for (int i = 0; i < changeEvent.numRecords(); i++) {
 			DomainObjectChangeRecord domainObjectRecord = changeEvent.getChangeRecord(i);
-			int eventType = domainObjectRecord.getEventType();
+//			int eventType = domainObjectRecord.getEventType();
+			EventType eventType = domainObjectRecord.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				return checkForAddressChange(domainObjectRecord);
+			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case FUNCTION_CHANGED:
+						ProgramChangeRecord changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						Address functionAddress = changeRecord.getStart();
+						if (referencesContain(functionAddress) &&
+							functionContainsDataType(functionAddress)) {
+							return checkForAddressChange(changeRecord);
+						}
+						break;
 
-			switch (eventType) {
-				case ChangeManager.DOCR_FUNCTION_CHANGED:
-					ProgramChangeRecord changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					Address functionAddress = changeRecord.getStart();
-					if (referencesContain(functionAddress) &&
-						functionContainsDataType(functionAddress)) {
-						return checkForAddressChange(changeRecord);
-					}
-					break;
-
-				case ChangeManager.DOCR_MEMORY_BLOCK_MOVED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_REMOVED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-				case ChangeManager.DOCR_CODE_REMOVED:
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-				case ChangeManager.DOCR_VARIABLE_REFERENCE_REMOVED:
-				case DomainObject.DO_OBJECT_RESTORED:
-					return checkForAddressChange(domainObjectRecord);
-				case ChangeManager.DOCR_CODE_ADDED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_ADDED:
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-				case ChangeManager.DOCR_FUNCTION_ADDED:
-				case ChangeManager.DOCR_VARIABLE_REFERENCE_ADDED:
-				case ChangeManager.DOCR_DATA_TYPE_RENAMED:
-				case ChangeManager.DOCR_DATA_TYPE_REPLACED:
-					// signal that the reference addresses may be out-of-date
-					if (modelFreshnessListener != null) {
-						modelFreshnessListener.stateChanged(new ChangeEvent(this));
-					}
-					return true;
+					case MEMORY_BLOCK_MOVED:
+					case MEMORY_BLOCK_REMOVED:
+					case SYMBOL_REMOVED:
+					case REFERENCE_REMOVED:
+					case CODE_REMOVED:
+					case FUNCTION_REMOVED:
+					case VARIABLE_REFERENCE_REMOVED:
+						return checkForAddressChange(domainObjectRecord);
+					case CODE_ADDED:
+					case MEMORY_BLOCK_ADDED:
+					case SYMBOL_ADDED:
+					case REFERENCE_ADDED:
+					case FUNCTION_ADDED:
+					case VARIABLE_REFERENCE_ADDED:
+					case DATA_TYPE_RENAMED:
+					case DATA_TYPE_REPLACED:
+						// signal that the reference addresses may be out-of-date
+						if (modelFreshnessListener != null) {
+							modelFreshnessListener.stateChanged(new ChangeEvent(this));
+						}
+						return true;
+					default:
+				}
 			}
 		}
-
 		return false;
 	}
 

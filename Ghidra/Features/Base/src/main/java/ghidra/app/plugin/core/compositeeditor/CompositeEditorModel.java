@@ -44,7 +44,7 @@ import ghidra.util.exception.*;
 public abstract class CompositeEditorModel extends CompositeViewerModel implements EditorModel {
 
 	/**
-	 * Whether or not an apply is occurring. Need to ignore changes to the 
+	 * Whether or not an apply is occurring. Need to ignore changes to the
 	 * original structure, if apply is causing them.
 	 */
 	protected boolean applyingFieldEdit = false;
@@ -85,6 +85,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
 		}
 
+		long lastCompositeId = originalCompositeId;
+
 		if (isEditingField()) {
 			endFieldEditing();
 		}
@@ -111,7 +113,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		originalDTM.addDataTypeManagerListener(this);
 
 		hadChanges = false;
-		setSelection(new FieldSelection());
+
+		if (originalCompositeId == -1 || lastCompositeId != originalCompositeId) {
+			// only clear the selection if loading a new type
+			setSelection(new FieldSelection());
+		}
+
 		clearStatus();
 		compositeInfoChanged();
 		fireTableDataChanged();
@@ -121,9 +128,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * Create view composite with the appropriate datatype manager and 
+	 * Create view composite with the appropriate datatype manager and
 	 * changes listener(s) if required.
-	 * 
+	 *
 	 * @param original original composite being loaded
 	 * @return view composite to used by model
 	 */
@@ -136,10 +143,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 		// Clone all settings some of which do not get resolved.
 
-		// NOTE: It is important to note that the editor will allow modification of component 
-		// default settings, however the underlying datatype default settings may not get copied 
+		// NOTE: It is important to note that the editor will allow modification of component
+		// default settings, however the underlying datatype default settings may not get copied
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
-		// underlying datatype default setting value being presented when adjusting component 
+		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
 		cloneAllComponentSettings(original, composite);
 
@@ -180,7 +187,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * @param rowIndex index of the row (component)
 	 * @param dt the data type to be placed at the row index
 	 * @return a new data type instance
-	 * @throws InvalidDataTypeException if the resulting data type is not allowed to be 
+	 * @throws InvalidDataTypeException if the resulting data type is not allowed to be
 	 * added at the indicated index
 	 * @throws CancelledException if cancelled
 	 */
@@ -215,7 +222,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			throw new InvalidDataTypeException("Data types of size 0 are not allowed.");
 		}
 
-		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen);
+		// TODO: Need to handle proper placement for big-endian within a larger component (i.e., right-justified)
+		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen,
+			viewComposite.isPackingEnabled());
 	}
 
 	/**
@@ -253,7 +262,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * Gets called to update/validate the current editable location in the table.
 	 * @param value the new cell value
 	 * @param rowIndex the index of the row in the component table.
-	 * @param columnIndex the column index for the table cell in the 
+	 * @param columnIndex the column index for the table cell in the
 	 * current model.
 	 * @return true if the field was updated or validated successfully.
 	 */
@@ -264,18 +273,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		try {
 			applyingFieldEdit = true;
 			if (columnIndex == getDataTypeColumn()) {
-				setComponentDataType(rowIndex, value);
+				return setComponentDataType(rowIndex, value);
 			}
 			else if (columnIndex == getNameColumn()) {
-				setComponentName(rowIndex, ((String) value).trim());
+				return setComponentName(rowIndex, ((String) value).trim());
 			}
 			else if (columnIndex == getCommentColumn()) {
-				setComponentComment(rowIndex, (String) value);
+				return setComponentComment(rowIndex, (String) value);
 			}
-			else {
-				return false;
-			}
-			return true;
+			return false;
 		}
 		catch (UsrException e) {
 			setStatus(e.getMessage());
@@ -289,7 +295,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 //==================================================================================================
 // METHODS FOR CHANGING THE COMPOSITE
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Called whenever the edit state of the data structure changes.
@@ -308,7 +314,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 *  Sets the name for the structure being edited.
 	 *
 	 * @param name the new name.
-	 * 
+	 *
 	 * @throws DuplicateNameException if the name already exists.
 	 */
 	@Override
@@ -361,7 +367,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	@Override
-	public void setComponentDataType(int rowIndex, Object dataTypeObject) throws UsrException {
+	public boolean setComponentDataType(int rowIndex, Object dataTypeObject) throws UsrException {
 		DataType previousDt = null;
 		int previousLength = 0;
 		String dtName = "";
@@ -385,7 +391,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		else if (dataTypeObject instanceof String) {
 			String dtString = (String) dataTypeObject;
 			if (dtString.equals(dtName)) {
-				return;
+				return false;
 			}
 			DataTypeManager originalDTM = getOriginalDataTypeManager();
 			newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
@@ -393,7 +399,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			newLength = newDt.getLength();
 		}
 		if (newDt == null) {
-			return; // Was nothing and is nothing.
+			return false; // Was nothing and is nothing.
 		}
 
 		if (DataTypeComponent.usesZeroLengthComponent(newDt)) {
@@ -410,7 +416,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			DataTypeInstance sizedDataType = DataTypeHelper.getSizedDataType(provider, newDt,
 				suggestedLength, getMaxReplaceLength(rowIndex));
 			if (sizedDataType == null) {
-				return;
+				return false;
 			}
 			newDt = resolveDataType(sizedDataType.getDataType(), viewDTM,
 				DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -420,7 +426,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			}
 		}
 		if ((previousDt != null) && newDt.isEquivalent(previousDt) && newLength == previousLength) {
-			return;
+			return false;
 		}
 
 		int maxLength = getMaxReplaceLength(rowIndex);
@@ -430,14 +436,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 		setComponentDataTypeInstance(rowIndex, newDt, newLength);
 		notifyCompositeChanged();
+		return true;
 	}
 
 	/**
-	 * Resolves the data type against the indicated data type manager using the specified 
-	 * conflictHandler.  Transactions should have already been initiated prior to calling this 
-	 * method.   If not then override this method to perform the transaction code around the 
+	 * Resolves the data type against the indicated data type manager using the specified
+	 * conflictHandler.  Transactions should have already been initiated prior to calling this
+	 * method.   If not then override this method to perform the transaction code around the
 	 * resolve.
-	 * 
+	 *
 	 * @param dt the data type to be resolved
 	 * @param resolveDtm the data type manager to resolve the data type against
 	 * @param conflictHandler the handler to be used for any conflicts encountered while resolving
@@ -693,18 +700,18 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 //==================================================================================================
 // METHODS FOR THE FIELD EDITING
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
-	public boolean beginEditingField(int rowIndex, int columnIndex) {
+	public boolean beginEditingField(int modelRow, int modelColumn) {
 		if (isEditingField()) {
 			return false;
 		}
 		try {
 			stillBeginningEdit = true; // We want to know we are still beginning an edit when we fix the selection.
 			editingField = true;
-			setLocation(rowIndex, columnIndex);
-			setSelection(new int[] { rowIndex });
+			setLocation(modelRow, modelColumn);
+			setSelection(new int[] { modelRow });
 			notifyEditingChanged();
 		}
 		finally {
@@ -728,17 +735,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		return !settingValueAt && editingField;
 	}
 
-	@Override
-	public int getFirstEditableColumn(int rowIndex) {
-		int numFields = this.getColumnCount();
-		for (int i = 0; i < numFields; i++) {
-			if (this.isCellEditable(rowIndex, i)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
 	private void notifyEditingChanged() {
 		for (CompositeEditorModelListener listener : listeners) {
 			listener.compositeEditStateChanged(
@@ -759,7 +755,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			int currentIndex = getMinIndexSelected();
 			DataType dt = getNextCycleDataType(cycleGroup);
 			if (dt != null) {
-				DataTypeInstance dti = DataTypeHelper.getFixedLength(this, currentIndex, dt);
+				DataTypeInstance dti = DataTypeHelper.getFixedLength(this, currentIndex, dt,
+					usesAlignedLengthComponents());
 				if (dti == null) {
 					return;
 				}
@@ -777,10 +774,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * This gets the next data type in the cycle that fits in place of the 
+	 * This gets the next data type in the cycle that fits in place of the
 	 * currently selected component. If the currently selected component's data
-	 * type is not in the cycle group, then the first data type that fits from 
-	 * the cycle group is returned. If no new data type from the cycle group 
+	 * type is not in the cycle group, then the first data type that fits from
+	 * the cycle group is returned. If no new data type from the cycle group
 	 * fits at the selected component, null is returned.
 	 *
 	 * @param cycleGroup the cycle group of data types to choose from.
@@ -854,13 +851,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	/**
 	 * Determine if the data type is a valid one to place into the current structure being edited.
 	 * If invalid, an exception will be thrown.
-	 * 
+	 *
 	 * @param datatype the data type
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted or doesn't have a valid size.
 	 */
-	protected void checkIsAllowableDataType(DataType datatype)
-			throws InvalidDataTypeException {
+	protected void checkIsAllowableDataType(DataType datatype) throws InvalidDataTypeException {
 		if (!allowsZeroLengthComponents() && DataTypeComponent.usesZeroLengthComponent(datatype)) {
 			throw new InvalidDataTypeException(
 				"Zero-length datatype not permitted: " + datatype.getName());
@@ -935,11 +931,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 		return ((baseDt != null) && !(baseDt instanceof BuiltInDataType) &&
 			!(baseDt instanceof MissingBuiltInDataType) &&
-			((baseDt instanceof Structure) || baseDt instanceof Union || baseDt instanceof Enum));
+			((baseDt instanceof Structure) || (baseDt instanceof Union) ||
+				(baseDt instanceof Enum) || (baseDt instanceof FunctionDefinition)));
 	}
 
 	@Override
-	public boolean isEditFieldAllowed(int rowIndex, int columnIndex) {
+	public boolean isEditFieldAllowed() {
 		return !isEditingField();
 	}
 
@@ -1024,9 +1021,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * If the component at the indicated index is a composite data type, 
+	 * If the component at the indicated index is a composite data type,
 	 * this gets the number of components that it contains.
-	 * 
+	 *
 	 * @param rowIndex the index of the component in the editor.
 	 * @return the number of sub-components or 0.
 	 */
@@ -1080,7 +1077,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 //==================================================================================================
 // End of methods for determining if a type of edit action is allowed
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 *  Saves the current selection in the structure components viewing area.
@@ -1105,7 +1102,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 
 		// Normally if the user makes a new selection, we want to end any field editing
-		// that is in progress, but if we are fixing up the selection during a beginEdit 
+		// that is in progress, but if we are fixing up the selection during a beginEdit
 		// then don't end field editing since we are in a transition state.
 		if (!stillBeginningEdit) {
 			endFieldEditing();
@@ -1166,7 +1163,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			dtName = dt.getDisplayName();
 			if (dtString.equals(dtName)) {
 				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength());
+					element.getLength(), usesAlignedLengthComponents());
 			}
 		}
 
@@ -1198,7 +1195,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
 		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength);
+		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
+			usesAlignedLengthComponents());
 	}
 
 	@SuppressWarnings("unused") // the exception is thrown by subclasses

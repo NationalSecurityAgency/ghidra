@@ -15,13 +15,14 @@
  */
 package ghidra.framework.main;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.util.LinkedList;
 
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
+import generic.theme.*;
+import generic.theme.GThemeDefaults.Ids.Fonts;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
@@ -29,9 +30,9 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
 
-/** 
+/**
  * A generic text pane that is used as a console to which text can be written.
- * 
+ *
  * There is not test for this class, but it is indirectly tested by FrontEndGuiTest.
  */
 public class ConsoleTextPane extends JTextPane implements OptionsChangeListener {
@@ -50,8 +51,8 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	/** % of characters to delete when truncation is necessary */
 	private static double DEFAULT_TRUNCATION_FACTOR = .10;
 
-	private static SimpleAttributeSet outputAttributeSet;
-	private static SimpleAttributeSet errorAttributeSet;
+	private static SimpleAttributeSet outputAttributes;
+	private static SimpleAttributeSet errorAttributes;
 
 	// don't update more than once per second if lots of messages are being written
 	private SwingUpdateManager updateManager = new SwingUpdateManager(100, 1000, () -> doUpdate());
@@ -97,7 +98,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	}
 //==================================================================================================
 // Non-interface Methods
-//==================================================================================================    
+//==================================================================================================
 
 	private void initOptions(Options options) {
 		options.registerOption(MAXIMUM_CHARACTERS_OPTION_NAME, DEFAULT_MAXIMUM_CHARS, null,
@@ -113,7 +114,8 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	private void updateFromOptions(Options options) {
 		int newLimit = options.getInt(MAXIMUM_CHARACTERS_OPTION_NAME, DEFAULT_MAXIMUM_CHARS);
-		truncationFactor = options.getDouble(TRUNCATION_FACTOR_OPTION_NAME, DEFAULT_TRUNCATION_FACTOR);
+		truncationFactor =
+			options.getDouble(TRUNCATION_FACTOR_OPTION_NAME, DEFAULT_TRUNCATION_FACTOR);
 		setMaximumCharacterLimit(newLimit);
 	}
 
@@ -141,7 +143,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	private void doAddMessage(MessageWrapper newMessage) {
 		synchronized (messageList) {
-			if ( !messageList.isEmpty() ) {
+			if (!messageList.isEmpty()) {
 				MessageWrapper lastMessage = messageList.getLast();
 				if (lastMessage.merge(newMessage)) {
 					return;
@@ -189,10 +191,10 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	private AttributeSet getAttributeSetByName(String attributeSetName) {
 		if (OUTPUT_ATTRIBUTE_VALUE.equals(attributeSetName)) {
-			return outputAttributeSet;
+			return outputAttributes;
 		}
 		else if (ERROR_ATTRIBUTE_VALUE.equals(attributeSetName)) {
-			return errorAttributeSet;
+			return errorAttributes;
 		}
 		else {
 			// we found an attribute type that we do not know about
@@ -201,25 +203,16 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	}
 
 	private void createAttribtues() {
-		createAttributes(new Font("monospaced", Font.PLAIN, 12));
+		createAttributes(Gui.getFont(Fonts.MONOSPACED));
 	}
 
 	private void createAttributes(Font font) {
-		outputAttributeSet = new SimpleAttributeSet();
-		outputAttributeSet.addAttribute(CUSTOM_ATTRIBUTE_KEY, OUTPUT_ATTRIBUTE_VALUE);
-		outputAttributeSet.addAttribute(StyleConstants.FontFamily, font.getFamily());
-		outputAttributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
-		outputAttributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
-		outputAttributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		outputAttributeSet.addAttribute(StyleConstants.Foreground, Color.BLACK);
 
-		errorAttributeSet = new SimpleAttributeSet();
-		errorAttributeSet.addAttribute(CUSTOM_ATTRIBUTE_KEY, ERROR_ATTRIBUTE_VALUE);
-		errorAttributeSet.addAttribute(StyleConstants.FontFamily, font.getFamily());
-		errorAttributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
-		errorAttributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
-		errorAttributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		errorAttributeSet.addAttribute(StyleConstants.Foreground, Color.RED);
+		outputAttributes = new GAttributes(font, new GColor("color.fg.consoletextpane"));
+		outputAttributes.addAttribute(CUSTOM_ATTRIBUTE_KEY, OUTPUT_ATTRIBUTE_VALUE);
+
+		errorAttributes = new GAttributes(font, new GColor("color.fg.error.consoletextpane"));
+		errorAttributes.addAttribute(CUSTOM_ATTRIBUTE_KEY, ERROR_ATTRIBUTE_VALUE);
 	}
 
 	private void doUpdate() {
@@ -311,7 +304,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		}
 
 		AttributeSet getAttributes() {
-			return outputAttributeSet;
+			return outputAttributes;
 		}
 	}
 
@@ -322,7 +315,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 		@Override
 		AttributeSet getAttributes() {
-			return errorAttributeSet;
+			return errorAttributes;
 		}
 	}
 

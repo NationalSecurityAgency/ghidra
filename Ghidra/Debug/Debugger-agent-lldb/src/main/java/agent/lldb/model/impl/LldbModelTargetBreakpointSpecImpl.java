@@ -16,10 +16,12 @@
 package agent.lldb.model.impl;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import SWIG.*;
+import SWIG.SBBreakpoint;
+import SWIG.SBStream;
 import agent.lldb.model.iface2.LldbModelTargetBreakpointContainer;
 import agent.lldb.model.iface2.LldbModelTargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointLocation;
@@ -28,34 +30,24 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.datastruct.ListenerSet;
 
-@TargetObjectSchemaInfo(
-	name = "BreakpointSpec",
-	elements = { //
-		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) //
-	},
-	attributes = {
+@TargetObjectSchemaInfo(name = "BreakpointSpec", elements = { //
+	@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) }, attributes = {
 		@TargetAttributeType(name = "Type", type = String.class),
 		@TargetAttributeType(name = "Valid", type = Boolean.class),
 		@TargetAttributeType(name = "Enabled", type = Boolean.class),
 		@TargetAttributeType(name = "Count", type = Long.class),
-		@TargetAttributeType(type = Void.class)
-	},
-	canonicalContainer = true)
+		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class LldbModelTargetBreakpointSpecImpl extends LldbModelTargetAbstractXpointSpec {
 
 	protected final ListenerSet<TargetBreakpointAction> actions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
-			};
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	public LldbModelTargetBreakpointSpecImpl(LldbModelTargetBreakpointContainer breakpoints,
 			Object info) {
 		super(breakpoints, info, "BreakpointSpec");
 	}
 
+	@Override
 	public String getDescription(int level) {
 		SBStream stream = new SBStream();
 		SBBreakpoint bpt = (SBBreakpoint) getModelObject();
@@ -63,16 +55,17 @@ public class LldbModelTargetBreakpointSpecImpl extends LldbModelTargetAbstractXp
 		return stream.GetData();
 	}
 
+	@Override
 	protected TargetBreakpointKindSet computeKinds(Object from) {
 		if (from instanceof SBBreakpoint) {
 			SBBreakpoint bpt = (SBBreakpoint) from;
-			return bpt.IsHardware() ? 
-				TargetBreakpointKindSet.of(TargetBreakpointKind.HW_EXECUTE) : 
-				TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
+			return bpt.IsHardware() ? TargetBreakpointKindSet.of(TargetBreakpointKind.HW_EXECUTE)
+					: TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
 		}
 		return TargetBreakpointKindSet.of();
 	}
 
+	@Override
 	public void updateInfo(Object info, String reason) {
 		setModelObject(info);
 		updateAttributesFromInfo(reason);
@@ -91,13 +84,14 @@ public class LldbModelTargetBreakpointSpecImpl extends LldbModelTargetAbstractXp
 		});
 	}
 
+	@Override
 	public void updateAttributesFromInfo(String reason) {
 		SBBreakpoint bpt = (SBBreakpoint) getModelObject();
 		String description = getDescription(1);
 		String[] split = description.split(",");
 		if (split[1].contains("regex")) {
 			expression = split[1];
-			expression = expression.substring(expression.indexOf("'")+1);
+			expression = expression.substring(expression.indexOf("'") + 1);
 			expression = expression.substring(0, expression.indexOf("'"));
 		}
 		this.changeAttributes(List.of(), List.of(), Map.of( //
@@ -118,15 +112,17 @@ public class LldbModelTargetBreakpointSpecImpl extends LldbModelTargetAbstractXp
 			LldbModelTargetBreakpointLocationImpl loc =
 				(LldbModelTargetBreakpointLocationImpl) elements[0];
 			this.changeAttributes(List.of(), List.of(), Map.of( //
-				TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME, loc.address //
+				TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, loc.range //
 			), reason);
 		}
 	}
 
+	@Override
 	public ListenerSet<TargetBreakpointAction> getActions() {
 		return actions;
 	}
 
+	@Override
 	public LldbModelTargetBreakpointLocation findLocation(Object obj) {
 		if (!(obj instanceof BigInteger)) {
 			return null;

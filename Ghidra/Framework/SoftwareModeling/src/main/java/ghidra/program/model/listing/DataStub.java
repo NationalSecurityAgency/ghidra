@@ -31,7 +31,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
 
 /**
  * DataStub can be extended for use by tests. It throws an UnsupportedOperationException
@@ -101,11 +100,6 @@ public class DataStub implements Data {
 	}
 
 	@Override
-	public void visitProperty(PropertyVisitor visitor, String propertyName) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public String getLabel() {
 		throw new UnsupportedOperationException();
 	}
@@ -152,11 +146,6 @@ public class DataStub implements Data {
 
 	@Override
 	public void setCommentAsArray(int commentType, String[] comment) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -400,6 +389,11 @@ public class DataStub implements Data {
 
 	@Override
 	public boolean isConstant() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isWritable() {
 		throw new UnsupportedOperationException();
 	}
 

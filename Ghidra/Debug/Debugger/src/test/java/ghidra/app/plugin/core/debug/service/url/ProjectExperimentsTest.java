@@ -132,11 +132,6 @@ public class ProjectExperimentsTest extends AbstractGhidraHeadedIntegrationTest 
 		}
 
 		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			log("File object replaced: file=" + file + " oldObject=" + obj(oldObject));
-		}
-
-		@Override
 		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
 			log("File object opened for update: file=" + file + " object=" + obj(object));
 		}
@@ -176,7 +171,7 @@ public class ProjectExperimentsTest extends AbstractGhidraHeadedIntegrationTest 
 
 		assertNotNull(proj2 = pm.openProject(loc2, false, false));
 
-		ProjectData data1 = proj2.addProjectView(loc1.getURL());
+		ProjectData data1 = proj2.addProjectView(loc1.getURL(), true);
 		assertNotNull(data1);
 
 		// It's a cryin' shame. I don't get *any* callbacks. _ANY!_

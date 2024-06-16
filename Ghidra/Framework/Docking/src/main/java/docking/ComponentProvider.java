@@ -15,18 +15,18 @@
  */
 package docking;
 
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
 
 import docking.action.*;
-import docking.help.HelpDescriptor;
-import docking.help.HelpService;
+import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import help.HelpDescriptor;
+import help.HelpService;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
@@ -114,6 +114,11 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private String inceptionInformation;
 
+	private String registeredFontId;
+	private Component defaultFocusComponent;
+
+	private ThemeListener themeListener = this::themeChanged;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -142,6 +147,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		this.contextType = contextType;
 
 		recordInception();
+
+		Gui.addThemeListener(themeListener);
 	}
 
 	/**
@@ -166,6 +173,24 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		boolean supportsKeyBindings = !isTransient;
 		showProviderAction = new ShowProviderAction(supportsKeyBindings);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		if (!e.isLookAndFeelChanged()) {
+			return;  // we only care if the Look and Feel changes
+		}
+
+		if (isVisible()) {
+			// if we are visible, then we don't need to update as the system updates all
+			// visible components
+			return;
+		}
+
+		// update this providers components ui for the new Look and Feel
+		JComponent component = getComponent();
+		if (component != null) {
+			SwingUtilities.updateComponentTreeUI(component);
+		}
 	}
 
 	/**
@@ -201,21 +226,37 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return instanceID;
 	}
 
-	// Default implementation
-	public void requestFocus() {
-
-		JComponent component = getComponent();
-		if (component == null) {
-			return; // this shouldn't happen; this implies we have been disposed
-		}
-
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, component)) {
+	public final void requestFocus() {
+		if (!isVisible()) {
 			return;
 		}
 
-		component.requestFocus();
+		if (defaultFocusComponent != null) {
+			DockingWindowManager.requestFocus(defaultFocusComponent);
+			return;
+		}
+
+		JComponent component = getComponent();
+		Container parent = component == null ? null : component.getParent();
+		if (parent == null) {
+			return;	// we are either disposed or not added to the tool yet
+		}
+
+		Container focusCycleRoot = parent.getFocusCycleRootAncestor();
+		if (focusCycleRoot == null) {
+			return;
+		}
+
+		// Only request focus if next component in focus traversal belongs to this provider
+		FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+		Component firstComponent = policy.getComponentAfter(focusCycleRoot, parent);
+		if (firstComponent != null && SwingUtilities.isDescendingFrom(firstComponent, parent)) {
+			DockingWindowManager.requestFocus(firstComponent);
+		}
+	}
+
+	protected void setDefaultFocusComponent(Component component) {
+		this.defaultFocusComponent = component;
 	}
 
 	/**
@@ -283,6 +324,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Returns all the local actions registered for this component provider.
+	 * @return all the local actions registered for this component provider
+	 */
+	public Set<DockingActionIf> getLocalActions() {
+		return dockingTool.getLocalActions(this);
+	}
+
+	/**
 	 * Removes all local actions from this component provider
 	 */
 	protected void removeAllLocalActions() {
@@ -336,7 +385,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return true if this provider is showing.
 	 */
 	public boolean isVisible() {
-		return dockingTool.isVisible(this);
+		return dockingTool != null && dockingTool.isVisible(this);
 	}
 
 	/**
@@ -359,6 +408,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	public void closeComponent() {
 		if (isTransient) {
 			removeFromTool();
+			Gui.removeThemeListener(themeListener);
 		}
 		else {
 			setVisible(false);
@@ -417,7 +467,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the new context
 	 */
 	protected ActionContext createContext() {
-		return new ActionContext(this);
+		return new DefaultActionContext(this);
 	}
 
 	/**
@@ -428,7 +478,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the new context
 	 */
 	protected ActionContext createContext(Object contextObject) {
-		return new ActionContext(this).setContextObject(contextObject);
+		return new DefaultActionContext(this).setContextObject(contextObject);
 	}
 
 	/**
@@ -440,7 +490,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the new context
 	 */
 	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
-		return new ActionContext(this, sourceComponent).setContextObject(contextObject);
+		return new DefaultActionContext(this, sourceComponent).setContextObject(contextObject);
 	}
 
 	/**
@@ -593,6 +643,22 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		dockingTool.getWindowManager().setIcon(this, icon);
+	}
+
+	/**
+	 * Get the icon provided to {@link #setIcon(Icon)}
+	 * 
+	 * <p>
+	 * This method is final, guaranteeing there is always a means for extensions of this class to
+	 * obtain the original icon. Some classes may override {@link #getIcon()} to apply modifications
+	 * when the icon is displayed in the UI. Further extensions of that class may wish to override
+	 * {@link #getIcon()}, too, and so might want access to the original base icon. This method
+	 * provides that access.
+	 * 
+	 * @return the base icon
+	 */
+	protected final Icon getBaseIcon() {
+		return icon;
 	}
 
 	/**
@@ -776,6 +842,53 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return dockingTool;
 	}
 
+	/**
+	 * Tells the provider to adjust the font size for this provider. By default, this method
+	 * will adjust the font for the registered font id if it has been registered using
+	 * {@link #registeredFontId}. Subclasses can override this method to a more comprehensive
+	 * adjustment to multiple fonts if necessary.
+	 * @param bigger if true, the font should be made bigger, otherwise the font should be made
+	 * smaller
+	 */
+	public void adjustFontSize(boolean bigger) {
+		if (registeredFontId == null) {
+			return;
+		}
+		Font font = Gui.getFont(registeredFontId);
+		if (font == null) {
+			return;
+		}
+		int size = font.getSize();
+		if (bigger) {
+			size += 1;
+		}
+		else {
+			size = Math.max(size - 1, 3);
+		}
+		ThemeManager.getInstance().setFont(registeredFontId, font.deriveFont((float) size));
+	}
+
+	/**
+	 * Tells the provider to reset the font size for this provider.
+	 * <p>
+	 * See {@link #adjustFontSize(boolean)}
+	 */
+	public void resetFontSize() {
+		if (registeredFontId == null) {
+			return;
+		}
+		ThemeManager.getInstance().restoreFont(registeredFontId);
+	}
+
+	/**
+	 * Registers a fontId for the font that will be automatically adjusted when
+	 * {@link #adjustFontSize(boolean)} is called.
+	 * @param fontId the id of the theme font to be adjusted
+	 */
+	protected void registerAdjustableFontId(String fontId) {
+		this.registeredFontId = fontId;
+	}
+
 	@Override
 	public String toString() {
 		return name + " - " + getTitle() + " - " + getSubTitle();
@@ -885,4 +998,5 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return inceptionInformation;
 		}
 	}
+
 }

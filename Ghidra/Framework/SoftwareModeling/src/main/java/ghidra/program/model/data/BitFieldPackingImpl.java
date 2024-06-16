@@ -15,15 +15,27 @@
  */
 package ghidra.program.model.data;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+import java.util.Objects;
+
+import ghidra.program.database.DBStringMapAdapter;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 public class BitFieldPackingImpl implements BitFieldPacking {
 
-	private boolean useMSConvention = false;
-	private boolean typeAlignmentEnabled = true;
-	private int zeroLengthBoundary = 0;
+	public static final boolean DEFAULT_USE_MS_CONVENTION = false;
+	public static final boolean DEFAULT_TYPE_ALIGNMENT_ENABLED = true;
+	public static final int DEFAULT_ZERO_LENGTH_BOUNDARY = 0;
+
+	private boolean useMSConvention = DEFAULT_USE_MS_CONVENTION;
+	private boolean typeAlignmentEnabled = DEFAULT_TYPE_ALIGNMENT_ENABLED;
+	private int zeroLengthBoundary = DEFAULT_ZERO_LENGTH_BOUNDARY;
 
 	@Override
 	public boolean useMSConvention() {
@@ -70,26 +82,86 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 	}
 
 	/**
-	 * Write configuration to a stream as an XML \<bitfield_packing> tag
-	 * @param buffer is the stream to write to
+	 * Save the specified bitfield packing options to the specified DB data map.
+	 * @param bitfieldPacking bitfield packing options
+	 * @param dataMap DB data map
+	 * @param keyPrefix key prefix for all map entries
+	 * @throws IOException if an IO error occurs
 	 */
-	public void saveXml(StringBuilder buffer) {
-		if (!useMSConvention && typeAlignmentEnabled && zeroLengthBoundary == 0) {
+	static void save(BitFieldPacking bitfieldPacking, DBStringMapAdapter dataMap,
+			String keyPrefix) throws IOException {
+
+		boolean useMSConvention = bitfieldPacking.useMSConvention();
+		if (useMSConvention != DEFAULT_USE_MS_CONVENTION) {
+			dataMap.put(keyPrefix + "use_MS_convention", Boolean.toString(useMSConvention));
+		}
+
+		boolean typeAlignmentEnabled = bitfieldPacking.isTypeAlignmentEnabled();
+		if (typeAlignmentEnabled != DEFAULT_TYPE_ALIGNMENT_ENABLED) {
+			dataMap.put(keyPrefix + "type_alignment_enabled",
+				Boolean.toString(typeAlignmentEnabled));
+		}
+
+		int zeroLengthBoundary = bitfieldPacking.getZeroLengthBoundary();
+		if (zeroLengthBoundary != DEFAULT_ZERO_LENGTH_BOUNDARY) {
+			dataMap.put(keyPrefix + "zero_length_boundary", Integer.toString(zeroLengthBoundary));
+		}
+	}
+
+	/**
+	 * Restore a data organization from the specified DB data map.
+	 * @param dataMap DB data map
+	 * @param keyPrefix key prefix for all map entries
+	 * @return data organization
+	 * @throws IOException if an IO error occurs
+	 */
+	static BitFieldPackingImpl restore(DBStringMapAdapter dataMap, String keyPrefix)
+			throws IOException {
+
+		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
+
+		bitFieldPacking.useMSConvention =
+			dataMap.getBoolean(keyPrefix + ELEM_USE_MS_CONVENTION.name(),
+				bitFieldPacking.useMSConvention);
+
+		bitFieldPacking.typeAlignmentEnabled = dataMap.getBoolean(
+			keyPrefix + ELEM_TYPE_ALIGNMENT_ENABLED.name(), bitFieldPacking.typeAlignmentEnabled);
+
+		bitFieldPacking.zeroLengthBoundary =
+			dataMap.getInt(keyPrefix + ELEM_ZERO_LENGTH_BOUNDARY.name(),
+				bitFieldPacking.zeroLengthBoundary);
+
+		return bitFieldPacking;
+	}
+
+	/**
+	 * Output the details of this bitfield packing to a encoded document formatter.
+	 * @param encoder the output document encoder.
+	 * @throws IOException if an IO error occurs while encoding/writing output
+	 */
+	public void encode(Encoder encoder) throws IOException {
+		if (useMSConvention == DEFAULT_USE_MS_CONVENTION &&
+			typeAlignmentEnabled == DEFAULT_TYPE_ALIGNMENT_ENABLED &&
+			zeroLengthBoundary == DEFAULT_ZERO_LENGTH_BOUNDARY) {
 			return;		// All defaults
 		}
-		buffer.append("<bitfield_packing>\n");
-		if (useMSConvention) {
-			buffer.append("<use_MS_convention value=\"yes\"/>\n");
+		encoder.openElement(ELEM_BITFIELD_PACKING);
+		if (useMSConvention != DEFAULT_USE_MS_CONVENTION) {
+			encoder.openElement(ELEM_USE_MS_CONVENTION);
+			encoder.writeBool(ATTRIB_VALUE, true);
+			encoder.closeElement(ELEM_USE_MS_CONVENTION);
 		}
-		if (!typeAlignmentEnabled) {
-			buffer.append("<type_alignment_enabled value=\"no\"/>\n");
+		if (typeAlignmentEnabled != DEFAULT_TYPE_ALIGNMENT_ENABLED) {
+			encoder.openElement(ELEM_TYPE_ALIGNMENT_ENABLED);
+			encoder.writeBool(ATTRIB_VALUE, false);
+			encoder.closeElement(ELEM_TYPE_ALIGNMENT_ENABLED);
 		}
-		if (zeroLengthBoundary != 0) {
-			buffer.append("<zero_length_boundary");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", zeroLengthBoundary);
-			buffer.append("/>\n");
+		if (zeroLengthBoundary != DEFAULT_ZERO_LENGTH_BOUNDARY) {
+			encoder.openElement(ELEM_ZERO_LENGTH_BOUNDARY);
+			encoder.writeSignedInteger(ATTRIB_VALUE, zeroLengthBoundary);
+			encoder.closeElement(ELEM_ZERO_LENGTH_BOUNDARY);
 		}
-		buffer.append("</bitfield_packing>\n");
+		encoder.closeElement(ELEM_BITFIELD_PACKING);
 	}
 
 	/**
@@ -104,18 +176,37 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 			String name = subel.getName();
 			String value = subel.getAttribute("value");
 
-			if (name.equals("use_MS_convention")) {
+			if (name.equals(ELEM_USE_MS_CONVENTION.name())) {
 				useMSConvention = SpecXmlUtils.decodeBoolean(value);
 			}
-			else if (name.equals("type_alignment_enabled")) {
+			else if (name.equals(ELEM_TYPE_ALIGNMENT_ENABLED.name())) {
 				typeAlignmentEnabled = SpecXmlUtils.decodeBoolean(value);
 			}
-			else if (name.equals("zero_length_boundary")) {
+			else if (name.equals(ELEM_ZERO_LENGTH_BOUNDARY.name())) {
 				zeroLengthBoundary = SpecXmlUtils.decodeInt(value);
 			}
 
 			parser.end(subel);
 		}
 		parser.end();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(typeAlignmentEnabled, useMSConvention, zeroLengthBoundary);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BitFieldPackingImpl other = (BitFieldPackingImpl) obj;
+		return typeAlignmentEnabled == other.typeAlignmentEnabled &&
+			useMSConvention == other.useMSConvention &&
+			zeroLengthBoundary == other.zeroLengthBoundary;
 	}
 }

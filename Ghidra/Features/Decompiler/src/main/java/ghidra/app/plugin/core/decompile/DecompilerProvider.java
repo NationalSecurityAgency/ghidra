@@ -21,50 +21,68 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 import docking.*;
 import docking.action.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.margin.DecompilerMarginProvider;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
-import ghidra.app.util.HighlightProvider;
-import ghidra.framework.model.*;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.util.ServiceListener;
-import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
+import resources.MultiIconBuilder;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
-		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler,
-		DecompilerHighlightService {
+		implements OptionsChangeListener, DecompilerCallbackHandler, DecompilerHighlightService,
+		DecompilerMarginService {
 
 	private static final String OPTIONS_TITLE = "Decompiler";
 
 	private static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
-	private static final ImageIcon C_SOURCE_ICON =
-		ResourceManager.loadImage("images/decompileFunction.gif");
+	private static final Icon C_SOURCE_ICON = new GIcon("icon.decompiler.action.provider");
+
+	private static final Icon SLASH_ICON = new GIcon("icon.decompiler.action.slash");
+
+	private static final Icon TOGGLE_UNREACHABLE_CODE_ICON =
+		new GIcon("icon.decompiler.action.provider.unreachable");
+
+	private static final Icon TOGGLE_UNREACHABLE_CODE_DISABLED_ICON =
+		new MultiIconBuilder(TOGGLE_UNREACHABLE_CODE_ICON).addCenteredIcon(SLASH_ICON).build();
+
+	private static final Icon TOGGLE_READ_ONLY_ICON =
+		new GIcon("icon.decompiler.action.provider.readonly");
+
+	private static final Icon TOGGLE_READ_ONLY_DISABLED_ICON =
+		new MultiIconBuilder(TOGGLE_READ_ONLY_ICON).addCenteredIcon(SLASH_ICON).build();
 
 	private DockingAction pcodeGraphAction;
 	private DockingAction astGraphAction;
+
+	private ToggleDockingAction displayUnreachableCodeToggle;
+	private ToggleDockingAction respectReadOnlyFlags;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -82,6 +100,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private ViewerPosition pendingViewerPosition;
 
 	private SwingUpdateManager redecompileUpdater;
+	private DecompilerProgramListener programListener;
 
 	// Follow-up work can be items that need to happen after a pending decompile is finished, such
 	// as updating highlights after a variable rename
@@ -110,7 +129,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		this.plugin = plugin;
 		this.clipboardProvider = new DecompilerClipboardProvider(plugin, this);
-
+		registerAdjustableFontId(DecompileOptions.DEFAULT_FONT_ID);
 		setConnected(isConnected);
 
 		decompilerOptions = new DecompileOptions();
@@ -141,10 +160,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DecompilerIntro"));
 		addToTool();
 
-		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh());
+		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh(false));
 		followUpWorkUpdater = new SwingUpdateManager(() -> doFollowUpWork());
 
 		plugin.getTool().addServiceListener(serviceListener);
+		programListener = new DecompilerProgramListener(controller, redecompileUpdater);
+		setDefaultFocusComponent(controller.getDecompilerPanel());
 	}
 
 //==================================================================================================
@@ -159,6 +180,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		super.closeComponent();
 		controller.clear();
 		plugin.closeProvider(this);
 	}
@@ -174,9 +196,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	@Override
 	public void componentShown() {
 		if (program != null && currentLocation != null) {
+			ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 			ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-			decompilerOptions.grabFromToolAndProgram(plugin, opt, program);
+			decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
 			controller.setOptions(decompilerOptions);
+
+			refreshToggleButtons();
+
 			controller.display(program, currentLocation, null);
 		}
 	}
@@ -196,7 +222,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		Address entryPoint = function.getEntryPoint();
 		boolean isDecompiling = controller.isDecompiling();
-		return new DecompilerActionContext(this, entryPoint, isDecompiling);
+		int lineNumber =
+			event != null & !isDecompiling ? getDecompilerPanel().getLineNumber(event.getY()) : 0;
+		return new DecompilerActionContext(this, entryPoint, isDecompiling, lineNumber);
 	}
 
 	@Override
@@ -260,12 +288,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		pendingViewerPosition = decompMemento.getViewerPosition();
 	}
 
-	@Override
-	public void requestFocus() {
-		controller.getDecompilerPanel().requestFocus();
-		tool.toFront(this);
-	}
-
 //==================================================================================================
 // DecompilerHighlightService interface methods
 //==================================================================================================
@@ -284,44 +306,40 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 // DomainObjectListener methods
 //==================================================================================================
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		// Check for events that signal that a decompiler process' data is stale
-		// and if so force a new process to be spawned
-		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-			controller.resetDecompiler();
+	private void doRefresh(boolean optionsChanged) {
+		if (!isVisible()) {
+			return;
 		}
-		else if (ev.containsEvent(DomainObject.DO_PROPERTY_CHANGED)) {
-			Iterator<DomainObjectChangeRecord> iter = ev.iterator();
-			while (iter.hasNext()) {
-				DomainObjectChangeRecord record = iter.next();
-				if (record.getEventType() == DomainObject.DO_PROPERTY_CHANGED) {
-					if (record.getOldValue() instanceof String) {
-						String value = (String) record.getOldValue();
-						if (value.startsWith(SpecExtension.SPEC_EXTENSION)) {
-							controller.resetDecompiler();
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		// Trigger a redecompile an any program change if the window is active
-		if (isVisible()) {
-			redecompileUpdater.update();
-		}
-	}
-
-	private void doRefresh() {
+		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-		decompilerOptions.grabFromToolAndProgram(plugin, opt, program);
+
+		// Current values of toggle buttons
+		boolean decompilerEliminatesUnreachable = decompilerOptions.isEliminateUnreachable();
+		boolean decompilerRespectsReadOnlyFlags = decompilerOptions.isRespectReadOnly();
+
+		decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
+
+		// If the tool options were not changed
+		if (!optionsChanged) {
+			// Keep these analysis options the same
+			decompilerOptions.setEliminateUnreachable(decompilerEliminatesUnreachable);
+			decompilerOptions.setRespectReadOnly(decompilerRespectsReadOnlyFlags);
+		}
+		else {
+			// Otherwise, keep the new analysis options and update the state of the toggle buttons
+			refreshToggleButtons();
+		}
+
 		controller.setOptions(decompilerOptions);
+
 		if (currentLocation != null) {
 			controller.refreshDisplay(program, currentLocation, null);
 		}
+	}
+
+	private void refreshToggleButtons() {
+		displayUnreachableCodeToggle.setSelected(!decompilerOptions.isEliminateUnreachable());
+		respectReadOnlyFlags.setSelected(!decompilerOptions.isRespectReadOnly());
 	}
 
 	private void doFollowUpWork() {
@@ -351,7 +369,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		if (options.getName().equals(OPTIONS_TITLE) ||
 			options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
-			doRefresh();
+			doRefresh(true);
 		}
 	}
 
@@ -385,21 +403,26 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	/**
 	 * Sets the current program and adds/removes itself as a domainObjectListener
+	 *
 	 * @param newProgram the new program or null to clear out the current program.
 	 */
 	void doSetProgram(Program newProgram) {
 		controller.clear();
 		if (program != null) {
-			program.removeListener(this);
+			program.removeListener(programListener);
 		}
+
 		program = newProgram;
 		currentLocation = null;
 		currentSelection = null;
 		if (program != null) {
-			program.addListener(this);
+			program.addListener(programListener);
+			ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 			ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-			decompilerOptions.grabFromToolAndProgram(plugin, opt, program);
+			decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
 		}
+
+		clipboardProvider.setProgram(program);
 	}
 
 	@Override
@@ -409,6 +432,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			contextChanged();
 			controller.setSelection(selection);
 		}
+
+		clipboardProvider.setSelection(selection);
 	}
 
 	@Override
@@ -422,15 +447,17 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * sets the current location for this provider. If the provider is not visible, it does not
-	 * pass it on to the controller.  When the component is later shown, the current location
-	 * will then be passed to the controller.
+	 * sets the current location for this provider. If the provider is not visible, it does not pass
+	 * it on to the controller. When the component is later shown, the current location will then be
+	 * passed to the controller.
+	 *
 	 * @param loc the location to compile and set the cursor.
 	 * @param viewerPosition if non-null the position at which to scroll the view.
 	 */
 	void setLocation(ProgramLocation loc, ViewerPosition viewerPosition) {
 		Address currentAddress = currentLocation != null ? currentLocation.getAddress() : null;
 		currentLocation = loc;
+		clipboardProvider.setLocation(currentLocation);
 		Address newAddress = currentLocation != null ? currentLocation.getAddress() : null;
 		if (viewerPosition == null) {
 			viewerPosition = pendingViewerPosition;
@@ -448,6 +475,15 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	 */
 	void refresh() {
 		controller.refreshDisplay(program, currentLocation, null);
+	}
+
+	/**
+	 * Update the options from decompilerOptions
+	 */
+	void updateOptionsAndRefresh() {
+		controller.setOptions(decompilerOptions);
+
+		refresh();
 	}
 
 	@Override
@@ -471,8 +507,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * Returns a string that shows the current line with the field under the cursor in between
-	 * '[]' chars.
+	 * Returns a string that shows the current line with the field under the cursor in between '[]'
+	 * chars.
 	 *
 	 * @return the string
 	 */
@@ -648,18 +684,19 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void doWheNotBusy(Callback c) {
+	public void doWhenNotBusy(Callback c) {
 		followUpWork.offer(c);
 		followUpWorkUpdater.update();
+	}
+
+	@Override
+	public DecompilerPanel getDecompilerPanel() {
+		return controller.getDecompilerPanel();
 	}
 
 //==================================================================================================
 // methods called from other members
 //==================================================================================================
-
-	DecompilerPanel getDecompilerPanel() {
-		return controller.getDecompilerPanel();
-	}
 
 	// snapshot callback
 	public void cloneWindow() {
@@ -678,7 +715,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 			// transfer any state after the new decompiler is initialized
 			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
-			newProvider.doWheNotBusy(() -> {
+			newProvider.doWhenNotBusy(() -> {
 				newPanel.setViewerPosition(myViewPosition);
 				newPanel.cloneHighlights(myPanel);
 			});
@@ -713,6 +750,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void initializeDecompilerOptions() {
+		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
 		HelpLocation helpLocation = new HelpLocation(HelpTopics.DECOMPILER, "GeneralOptions");
 		opt.setOptionsHelpLocation(helpLocation);
@@ -720,7 +758,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 				.setOptionsHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "AnalysisOptions"));
 		opt.getOptions("Display")
 				.setOptionsHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DisplayOptions"));
-		decompilerOptions.registerOptions(plugin, opt, program);
+		decompilerOptions.registerOptions(fieldOptions, opt, program);
 
 		opt.addOptionsChangeListener(this);
 
@@ -754,6 +792,87 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		refreshAction
 				.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarRedecompile")); // just use the default
 
+		displayUnreachableCodeToggle = new ToggleDockingAction("Toggle Unreachable Code", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				boolean isSelected = this.isSelected();
+
+				// Set the option based on the button state
+				decompilerOptions.setEliminateUnreachable(!isSelected);
+
+				updateOptionsAndRefresh();
+			}
+
+			@Override
+			public void setSelected(boolean isSelected) {
+				super.setSelected(isSelected);
+
+				// Update the icon to have a slash or not
+				if (!isSelected) {
+					displayUnreachableCodeToggle
+							.setToolBarData(new ToolBarData(TOGGLE_UNREACHABLE_CODE_ICON, "A"));
+				}
+				else {
+					displayUnreachableCodeToggle.setToolBarData(
+						new ToolBarData(TOGGLE_UNREACHABLE_CODE_DISABLED_ICON, "A"));
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				DecompileData decompileData = controller.getDecompileData();
+				if (decompileData == null) {
+					return false;
+				}
+				return decompileData.hasDecompileResults();
+			}
+		};
+		displayUnreachableCodeToggle.setDescription("Toggle off to eliminate unreachable code");
+		displayUnreachableCodeToggle.setHelpLocation(
+			new HelpLocation(HelpTopics.DECOMPILER, "ToolBarEliminateUnreachableCode"));
+
+		respectReadOnlyFlags = new ToggleDockingAction("Toggle Respecting Read-only Flags", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				boolean isSelected = this.isSelected();
+
+				// Set the option based on the button state
+				decompilerOptions.setRespectReadOnly(!isSelected);
+
+				updateOptionsAndRefresh();
+			}
+
+			@Override
+			public void setSelected(boolean isSelected) {
+				super.setSelected(isSelected);
+
+				// Update the icon to have a slash or not
+				if (!isSelected) {
+					respectReadOnlyFlags
+							.setToolBarData(new ToolBarData(TOGGLE_READ_ONLY_ICON, "A"));
+				}
+				else {
+					respectReadOnlyFlags
+							.setToolBarData(new ToolBarData(TOGGLE_READ_ONLY_DISABLED_ICON, "A"));
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				DecompileData decompileData = controller.getDecompileData();
+				if (decompileData == null) {
+					return false;
+				}
+				return decompileData.hasDecompileResults();
+			}
+		};
+		respectReadOnlyFlags.setDescription("Toggle off to respect readonly flags set on memory");
+		respectReadOnlyFlags
+				.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarRespectReadOnly"));
+
+		// Set the selected state and icon for the above two toggle icons
+		refreshToggleButtons();
+
 		//
 		// Below are actions along with their groups and subgroup information.  The comments
 		// for each section indicates the logical group for the actions that follow.
@@ -780,6 +899,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		OverridePrototypeAction overrideSigAction = new OverridePrototypeAction();
 		setGroupInfo(overrideSigAction, functionGroup, subGroupPosition++);
+
+		EditPrototypeOverrideAction editOverrideSigAction = new EditPrototypeOverrideAction();
+		setGroupInfo(editOverrideSigAction, functionGroup, subGroupPosition++);
 
 		DeletePrototypeOverrideAction deleteSigAction = new DeletePrototypeOverrideAction();
 		setGroupInfo(deleteSigAction, functionGroup, subGroupPosition++);
@@ -908,6 +1030,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		ConvertDecAction convertDecAction = new ConvertDecAction(plugin);
 		setGroupInfo(convertDecAction, convertGroup, subGroupPosition++);
 
+		ConvertFloatAction convertFloatAction = new ConvertFloatAction(plugin);
+		setGroupInfo(convertFloatAction, convertGroup, subGroupPosition++);
+
+		ConvertDoubleAction convertDoubleAction = new ConvertDoubleAction(plugin);
+		setGroupInfo(convertDoubleAction, convertGroup, subGroupPosition++);
+
 		ConvertHexAction convertHexAction = new ConvertHexAction(plugin);
 		setGroupInfo(convertHexAction, convertGroup, subGroupPosition++);
 
@@ -976,6 +1104,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		GoToPreviousBraceAction goToPreviousBraceAction = new GoToPreviousBraceAction();
 
 		addLocalAction(refreshAction);
+		addLocalAction(displayUnreachableCodeToggle);
+		addLocalAction(respectReadOnlyFlags);
 		addLocalAction(selectAllAction);
 		addLocalAction(defUseHighlightAction);
 		addLocalAction(forwardSliceAction);
@@ -994,6 +1124,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(removeAllSecondadryHighlightsAction);
 		addLocalAction(convertBinaryAction);
 		addLocalAction(convertDecAction);
+		addLocalAction(convertFloatAction);
+		addLocalAction(convertDoubleAction);
 		addLocalAction(convertHexAction);
 		addLocalAction(convertOctAction);
 		addLocalAction(convertCharAction);
@@ -1010,6 +1142,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(editDataTypeAction);
 		addLocalAction(specifyCProtoAction);
 		addLocalAction(overrideSigAction);
+		addLocalAction(editOverrideSigAction);
 		addLocalAction(deleteSigAction);
 		addLocalAction(renameFunctionAction);
 		addLocalAction(renameLabelAction);
@@ -1093,12 +1226,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program p) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program p) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program p) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program p) {
 		// currently unsupported
 	}
 
@@ -1112,5 +1245,15 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	void handleTokenRenamed(ClangToken tokenAtCursor, String newName) {
 		controller.getDecompilerPanel().tokenRenamed(tokenAtCursor, newName);
+	}
+
+	@Override
+	public void addMarginProvider(DecompilerMarginProvider provider) {
+		getDecompilerPanel().addMarginProvider(provider);
+	}
+
+	@Override
+	public void removeMarginProvider(DecompilerMarginProvider provider) {
+		getDecompilerPanel().removeMarginProvider(provider);
 	}
 }

@@ -25,21 +25,21 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.OptionDialogBuilder;
-import ghidra.framework.main.datatable.ProjectDataContext;
+import generic.theme.GIcon;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
-	private static Icon icon = ResourceManager.loadImage("images/page_delete.png");
+	private static final Icon ICON = new GIcon("icon.projectdata.delete");
 
 	public ProjectDataDeleteAction(String owner, String group) {
 		super("Delete", owner);
-		setPopupMenuData(new MenuData(new String[] { "Delete" }, icon, group));
+		setPopupMenuData(new MenuData(new String[] { "Delete" }, ICON, group));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 		markHelpUnnecessary();
 	}
@@ -89,17 +89,17 @@ public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
 		if (fileCount == 1) {
 			if (!selectedFiles.isEmpty()) {
 				DomainFile file = CollectionUtils.any(selectedFiles);
-				return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete \"" +
+				return "<html>Are you sure you want to <B><U>permanently</U></B> delete \"" +
 					HTMLUtilities.escapeHTML(file.getName()) + "\"?";
 			}
 
 			// only folders are selected, but they contain files
-			return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete the " +
+			return "<html>Are you sure you want to <B><U>permanently</U></B> delete the " +
 				" selected files and folders?";
 		}
 
 		// multiple files selected
-		return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete the " + fileCount +
+		return "<html>Are you sure you want to <B><U>permanently</U></B> delete the " + fileCount +
 			" selected files?";
 	}
 

@@ -50,7 +50,7 @@ public interface FridaModelTargetSession extends //
 					== DebugOutputFlags.DEBUG_OUTPUT_WARNING.getValue())) {
 			chan = TargetConsole.Channel.STDERR;
 		}
-		getListeners().fire.consoleOutput(getProxy(), chan, output);
+		broadcast().consoleOutput(getProxy(), chan, output);
 	}
 
 	@Override

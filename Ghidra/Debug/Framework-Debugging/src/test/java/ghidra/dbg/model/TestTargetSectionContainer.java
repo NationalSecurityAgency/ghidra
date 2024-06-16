@@ -29,7 +29,7 @@ public class TestTargetSectionContainer
 	}
 
 	public TestTargetSection addSection(String name, AddressRange range) {
-		TestTargetSection section = new TestTargetSection(this, name, range);
+		TestTargetSection section = getModel().newTestTargetSection(this, name, range);
 		changeElements(List.of(), List.of(section), "Add test section: " + name);
 		return section;
 	}

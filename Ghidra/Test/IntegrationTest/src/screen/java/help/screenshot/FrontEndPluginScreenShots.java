@@ -33,12 +33,16 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.GTable;
 import docking.wizard.WizardManager;
 import docking.wizard.WizardPanel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
+import ghidra.framework.Application;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.*;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.dialog.*;
 import ghidra.framework.preferences.Preferences;
+import ghidra.framework.project.extensions.ExtensionTablePanel;
+import ghidra.framework.project.extensions.ExtensionTableProvider;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramContentHandler;
@@ -47,12 +51,12 @@ import ghidra.test.ProjectTestUtils;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.ExtensionDetails;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
 
 public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	private static final String OTHER_PROJECT = "Other_Project";
-	private final static String TEMP_DIR = System.getProperty("java.io.tmpdir");
 	Icon icon = (Icon) getInstanceField("CONVERT_ICON", ProjectInfoDialog.class);
 
 	public FrontEndPluginScreenShots() {
@@ -329,7 +333,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 		FrontEndPlugin plugin = getPlugin(tool, FrontEndPlugin.class);
 		JComponent projectDataPanel = (JComponent) getInstanceField("projectDataPanel", plugin);
 		JTabbedPane tabbedPane =
-			(JTabbedPane) getInstanceField("projectTabPanel", projectDataPanel);
+			(JTabbedPane) getInstanceField("projectTab", projectDataPanel);
 		tabbedPane.setSelectedIndex(1);
 		setToolSize(800, 600);
 		captureComponent(projectDataPanel);
@@ -350,8 +354,13 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testProjectExists() {
-		OkDialog.show("Project Exists",
-			"Cannot restore project because project named TestPrj already exists.");
+		runSwing(() -> {
+			OkDialog.show("Project Exists",
+				"Cannot restore project because project named TestPrj already exists.");
+		}, false);
+
+		waitForSwing();
+
 		captureDialog();
 	}
 
@@ -650,25 +659,62 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testViewOtherProjects()
 			throws IOException, LockException, InvalidNameException, CancelledException {
-		ProjectTestUtils.deleteProject(TEMP_DIR, OTHER_PROJECT);
+		String TEMP_DIR = Application.getUserTempDirectory().getAbsolutePath();
+
 		Project project = env.getProject();
 		program = env.getProgram("WinHelloCPP.exe");
 		ProjectData projectData = project.getProjectData();
 		projectData.getRootFolder().createFile("HelloCpp.exe", program, TaskMonitor.DUMMY);
 
-		project.close();
-
+		// Create other project to be viewed
+		ProjectTestUtils.deleteProject(TEMP_DIR, OTHER_PROJECT);
 		Project otherProject = ProjectTestUtils.getProject(TEMP_DIR, OTHER_PROJECT);
-
 		Language language = getZ80_LANGUAGE();
 		ProjectTestUtils.createProgramFile(otherProject, "Program1", language,
 			language.getDefaultCompilerSpec(), null);
 		ProjectTestUtils.createProgramFile(otherProject, "Program2", language,
 			language.getDefaultCompilerSpec(), null);
+		otherProject.close();
+
+		waitForSwing();
+
+		performAction("View Project", "FrontEndPlugin", false);
+		final GhidraFileChooser fileChooser = (GhidraFileChooser) getDialog();
+		runSwing(() -> fileChooser.setSelectedFile(new File(TEMP_DIR, OTHER_PROJECT)));
+		pressButtonOnDialog("Select Project");
+		setToolSize(500, 600);
+		captureToolWindow(700, 600);
+
+		ProjectTestUtils.deleteProject(TEMP_DIR, OTHER_PROJECT);
+		ProjectTestUtils.deleteProject(TEMP_DIR, OTHER_PROJECT);
+
+	}
+
+	@Test
+	public void testLinkOtherProject()
+			throws IOException, LockException, InvalidNameException, CancelledException {
+		String TEMP_DIR = Application.getUserTempDirectory().getAbsolutePath();
+
+		Project project = env.getProject();
+		program = env.getProgram("WinHelloCPP.exe");
+		DefaultProjectData projectData = (DefaultProjectData) project.getProjectData();
+		projectData.getRootFolder().createFile("HelloCpp.exe", program, TaskMonitor.DUMMY);
+
+		// Create other project to be viewed
+		ProjectTestUtils.deleteProject(TEMP_DIR, OTHER_PROJECT);
+		Project otherProject = ProjectTestUtils.getProject(TEMP_DIR, OTHER_PROJECT);
+		Language language = getZ80_LANGUAGE();
+		DomainFile otherFile =
+			ProjectTestUtils.createProgramFile(otherProject, "Program1", language,
+				language.getDefaultCompilerSpec(), null);
+		ProjectTestUtils.createProgramFile(otherProject, "Program2", language,
+			language.getDefaultCompilerSpec(), null);
+
+		otherFile.copyToAsLink(projectData.getRootFolder());
 
 		otherProject.close();
-		waitForSwing();
-		project = ProjectTestUtils.getProject(TEMP_DIR, PROJECT_NAME);
+
+		waitForBusyTool(tool);
 
 		performAction("View Project", "FrontEndPlugin", false);
 		final GhidraFileChooser fileChooser = (GhidraFileChooser) getDialog();
@@ -712,7 +758,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	private void captureIconAndText(Icon labelImage, String text) {
 		final JLabel label = new JLabel(text);
-		label.setBackground(Color.WHITE);
+		label.setBackground(Colors.BACKGROUND);
 		label.setOpaque(true);
 		label.setIcon(labelImage);
 		label.setHorizontalAlignment(SwingConstants.CENTER);

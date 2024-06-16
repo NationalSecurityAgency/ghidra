@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.ui.*;
 import ghidra.app.plugin.core.table.TableComponentProvider;
@@ -58,7 +58,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DialogComponentProvider dialog = getDialog();
 		JButton manualEntryButton =
-			(JButton) AbstractGenericTest.findComponentByName(dialog.getComponent(),
+			(JButton) AbstractGuiTest.findComponentByName(dialog.getComponent(),
 				"manual entry");
 		pressButton(manualEntryButton);
 
@@ -210,7 +210,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DialogComponentProvider dialog = getDialog();
 		JButton searchButton =
-			(JButton) AbstractGenericTest.findAbstractButtonByText(dialog.getComponent(),
+			(JButton) AbstractGuiTest.findAbstractButtonByText(dialog.getComponent(),
 				"Search All");
 		pressButton(searchButton);
 

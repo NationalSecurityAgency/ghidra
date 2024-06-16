@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Provides a basic implementation of a word datatype
  */
-public class WordDataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class WordDataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined WordDataType instance.*/
 	public final static WordDataType dataType = new WordDataType();
@@ -30,7 +28,7 @@ public class WordDataType extends AbstractIntegerDataType {
 	}
 
 	public WordDataType(DataTypeManager dtm) {
-		super("word", false, dtm);
+		super("word", dtm);
 	}
 
 	@Override

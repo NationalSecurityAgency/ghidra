@@ -20,10 +20,20 @@ import java.util.concurrent.locks.*;
 
 import db.DBHandle;
 import ghidra.framework.data.DBDomainObjectSupport;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A domain object that can use {@link DBCachedObjectStoreFactory}.
+ *
+ * <p>
+ * Technically, this only introduces a read-write lock to the domain object. The
+ * {@link DBCachedObjectStoreFactory} and related require this read-write lock. Sadly, this idea
+ * didn't pan out, and that read-write lock is just a degenerate wrapper of the Ghidra
+ * {@link ghidra.util.Lock}, which is not a read-write lock. This class may disappear.
+ */
 public abstract class DBCachedDomainObjectAdapter extends DBDomainObjectSupport {
 
 	static class SwingAwareReadWriteLock extends ReentrantReadWriteLock {
@@ -151,12 +161,20 @@ public abstract class DBCachedDomainObjectAdapter extends DBDomainObjectSupport 
 
 	protected ReadWriteLock rwLock;
 
-	protected DBCachedDomainObjectAdapter(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor,
+	/**
+	 * @see {@link DBDomainObjectSupport}
+	 */
+	protected DBCachedDomainObjectAdapter(DBHandle dbh, OpenMode openMode, TaskMonitor monitor,
 			String name, int timeInterval, int bufSize, Object consumer) {
 		super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
 		this.rwLock = new GhidraLockWrappingRWLock(lock);
 	}
 
+	/**
+	 * Get the "read-write" lock
+	 * 
+	 * @return the lock
+	 */
 	public ReadWriteLock getReadWriteLock() {
 		return rwLock;
 	}

@@ -15,11 +15,6 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-
-import ghidra.pcodeCPort.address.Address;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
@@ -46,16 +41,7 @@ public class FlowDestSymbol extends SpecificSymbol {
 
 	@Override
 	public symbol_type getType() {
-		return symbol_type.start_symbol;
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
-		Address refAddr = walker.getFlowDestAddr();
-		hand.space = const_space;
-		hand.offset_space = null;
-		hand.offset_offset = refAddr.getOffset();
-		hand.size = refAddr.getAddrSize();
+		return symbol_type.flowdest_symbol;
 	}
 
 	@Override
@@ -66,10 +52,4 @@ public class FlowDestSymbol extends SpecificSymbol {
 		return new VarnodeTpl(location, spc, off, sz_zero);
 	}
 
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		long val = pos.getFlowDestAddr().getOffset();
-		s.append("0x");
-		s.print(Long.toHexString(val));
-	}
 }

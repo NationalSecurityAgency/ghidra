@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.io.IOException;
 import java.io.Writer;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents Global Symbol Information component of a PDB file.  This class is only
@@ -35,38 +35,42 @@ public class GlobalSymbolInformation extends AbstractSymbolInformation {
 	/**
 	 * Constructor.
 	 * @param pdbIn {@link AbstractPdb} that owns the Global Symbol Information to process.
+	 * @param streamNumber the stream number containing the symbol information
 	 */
-	public GlobalSymbolInformation(AbstractPdb pdbIn) {
-		super(pdbIn);
+	public GlobalSymbolInformation(AbstractPdb pdbIn, int streamNumber) {
+		super(pdbIn, streamNumber);
 	}
 
 	/**
-	 * Deserialize the {@link GlobalSymbolInformation} from the appropriate stream in the Pdb.
-	 * @param streamNumber the stream number containing the information to deserialize.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes and intializes {@link GlobalSymbolInformation} basic information from the
+	 * appropriate stream in the Pdb so that later queries can be made
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void deserialize(int streamNumber, TaskMonitor monitor)
-			throws IOException, PdbException, CancelledException {
-		super.deserialize(streamNumber, monitor);
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-		deserializeHashTable(reader, monitor);
+	void initialize() throws IOException, PdbException, CancelledException {
+		initializeValues();
+		initializeGlobalOffsetsAndLengths();
+		deserializeHashHeader();
+	}
 
-		// Organize the information
-		generateSymbolsList(monitor);
+	private void initializeGlobalOffsetsAndLengths() {
+		symbolHashOffset = 0;
+		MsfStream stream = pdb.getMsf().getStream(streamNumber);
+		symbolHashLength = (stream == null) ? 0 : stream.getLength();
 	}
 
 	/**
-	 * Debug method for dumping information from this {@link GlobalSymbolInformation}.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * Debug method for dumping information from this {@link GlobalSymbolInformation}
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException issue reading PDBor upon issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("GlobalSymbolInformation-------------------------------------\n");
 		dumpHashHeader(builder);

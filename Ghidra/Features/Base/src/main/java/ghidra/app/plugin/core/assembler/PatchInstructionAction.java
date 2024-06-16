@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.assembler;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
@@ -28,16 +27,18 @@ import javax.swing.KeyStroke;
 import org.apache.commons.collections4.map.DefaultedMap;
 import org.apache.commons.collections4.map.LazyMap;
 
+import db.Transaction;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.autocomplete.*;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.cmd.disassemble.ReDisassembleCommand;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -118,14 +119,14 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	private final Map<Language, CachingSwingWorker<Assembler>> cache =
 		LazyMap.lazyMap(new HashMap<>(), language -> new AssemblerConstructorWorker(language));
 
-	/*test*/ final Map<Language, Boolean> shownWarning =
+	/*test*/ static final Map<Language, Boolean> SHOWN_WARNING =
 		DefaultedMap.defaultedMap(new HashMap<>(), false);
 
-	/*test*/ final AssemblyDualTextField input = new AssemblyDualTextField();
+	/*test*/ final AssemblyDualTextField input = newAssemblyDualTextField();
 	private final ListenerForAccept listenerForAccept = new ListenerForAccept();
 
-	private Language language;
-	private Assembler assembler;
+	protected Language language;
+	protected Assembler assembler;
 
 	// Callback to keep the autocompleter positioned under the fields
 	private FieldPanelOverLayoutListener listenerToMoveAutocompleter = ev -> {
@@ -135,20 +136,28 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		}
 	};
 
+	public PatchInstructionAction(Plugin owner) {
+		this(owner, "Patch Instruction");
+	}
+
 	public PatchInstructionAction(Plugin owner, String name) {
 		super(owner, name);
 
-		setPopupMenuData(new MenuData(new String[] { "Patch Instruction" }, MENU_GROUP));
+		setPopupMenuData(new MenuData(new String[] { name }, MENU_GROUP));
 		setKeyBindingData(new KeyBindingData(KEYBIND_PATCH_INSTRUCTION));
 		setHelpLocation(new HelpLocation(owner.getName(), "patch_instruction"));
 
-		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
+		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
+		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 
 		input.getAutocompleter().addAutocompletionListener(listenerForAccept);
 
 		init();
+	}
+
+	protected AssemblyDualTextField newAssemblyDualTextField() {
+		return new AssemblyDualTextField();
 	}
 
 	@Override
@@ -182,24 +191,36 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		return true;
 	}
 
-	@Override
-	protected void prepare(CodeUnit cu) {
-		language = cu.getProgram().getLanguage();
+	protected void warnLanguage() {
 		AssemblyRating rating = AssemblyRating.valueOf(
 			language.getProperty(ASSEMBLY_RATING + ":" + language.getLanguageID(),
 				AssemblyRating.UNRATED.name()));
 		if (AssemblyRating.PLATINUM != rating) {
 			String message = language.getProperty(ASSEMBLY_MESSAGE + ":" + language.getLanguageID(),
 				rating.message);
-			if (!shownWarning.get(language)) {
+			if (!SHOWN_WARNING.get(language)) {
 				Msg.showWarn(this, null, "Assembler Rating",
 					"<html><body><p style='width: 300px;'>" + message + "</p></body></html>");
-				shownWarning.put(language, true);
+				SHOWN_WARNING.put(language, true);
 			}
 		}
+	}
 
+	protected Language getLanguage(CodeUnit cu) {
+		return cu.getProgram().getLanguage();
+	}
+
+	protected Assembler getAssembler(CodeUnit cu) {
+		return Assemblers.getAssembler(cu.getProgram());
+	}
+
+	@Override
+	protected void prepare() {
+		CodeUnit cu = getCodeUnit();
+		language = getLanguage(cu);
 		cache.get(language).get(null);
-		assembler = Assemblers.getAssembler(cu.getProgram());
+		warnLanguage();
+		assembler = getAssembler(cu);
 	}
 
 	@Override
@@ -207,9 +228,19 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		input.setFont(font);
 	}
 
+	protected Instruction getExistingInstruction() {
+		Program program = getProgram();
+		if (program == null) {
+			return null;
+		}
+		return program.getListing().getInstructionAt(getAddress());
+	}
+
 	@Override
 	protected boolean showInputs(FieldPanel fieldPanel) {
-		input.setProgramLocation(getProgram(), getAddress());
+		input.setAssembler(assembler);
+		input.setAddress(getAddress());
+		input.setExisting(getExistingInstruction());
 		FieldLocation locMnem = findFieldLocation(getAddress(), "Mnemonic");
 		if (locMnem == null) {
 			Msg.showError(this, fieldPanel, getName(),
@@ -232,9 +263,10 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	}
 
 	@Override
-	protected void fillInputs(CodeUnit unit) {
-		if (unit instanceof Instruction) {
-			Instruction ins = (Instruction) unit;
+	protected void fillInputs() {
+		CodeUnit cu = getCodeUnit();
+		if (cu instanceof Instruction) {
+			Instruction ins = (Instruction) cu;
 			String instr = ins.toString();
 			if (ins.isInDelaySlot()) {
 				assert instr.startsWith("_");
@@ -269,6 +301,14 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		// Do nothing. User must select a completion item instead
 	}
 
+	protected void applyPatch(byte[] data) throws MemoryAccessException {
+		// NB. This will immediately re-disassembly the one command.
+		// We'll background the context repair, which may include more disassembly
+		assembler.patchProgram(data, getAddress());
+		ReDisassembleCommand cmd = new ReDisassembleCommand(getAddress());
+		tool.executeBackgroundCommand(cmd, getProgram());
+	}
+
 	/**
 	 * Accept the given instruction selected by the user
 	 * 
@@ -277,10 +317,9 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	public void accept(AssemblyInstruction ins) {
 		Program program = getProgram();
 		Address address = getAddress();
-		try (ProgramTransaction trans =
-			ProgramTransaction.open(program, "Assemble @" + address + ": " + input.getText())) {
-			assembler.patchProgram(ins.getData(), address);
-			trans.commit();
+		try (Transaction tx =
+			program.openTransaction("Assemble @" + address + ": " + input.getText())) {
+			applyPatch(ins.getData());
 			hide();
 		}
 		catch (MemoryAccessException e) {

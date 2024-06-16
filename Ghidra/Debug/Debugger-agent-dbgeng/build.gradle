@@ -18,8 +18,11 @@ apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
-apply plugin: 'eclipse'
 
+apply from: "$rootProject.projectDir/gradle/debugger/hasNodepJar.gradle"
+apply from: "$rootProject.projectDir/gradle/debugger/hasPythonPackage.gradle"
+
+apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgeng'
 
 dependencies {
@@ -33,51 +36,73 @@ dependencies {
 	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
 }
 
-def boolean filterJar(File jarfile) {
-	if (jarfile.name.contains("gradle-api")) {
-		return false
-	} else if (jarfile.name.contains("groovy-all")) {
-		return false
-	} else if (jarfile.name.contains("gradle-installation-beacon")) {
-		return false
-	}
-	return true
-}
+ext.tlb = file("build/os/win_x86_64/dbgmodel.tlb")
 
-jar {
-	manifest {
-		attributes['Main-Class'] = 'agent.dbgeng.gadp.DbgEngGadpServer'
-	}
-}
+if ("win_x86_64".equals(getCurrentPlatformName())) {
 
-task configureNodepJar {
-	dependsOn(configurations.default)
+	String makeName = "win_x86_64DbgmodelTlbMake"
+	task(type: Exec, makeName) {
+		ext.tmpBatch = file("build/buildTlb.bat")
+		ext.idl = file("src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl")
+		inputs.file(idl)
+		outputs.file(tlb)
 
-	doLast {
-		configurations.default.files.forEach {
-			if (filterJar(it)) {
-				nodepJar.from(zipTree(it))
+		doFirst {
+			file(tlb).parentFile.mkdirs()
+			def midlCmd = "midl /tlb ${tlb} ${idl}"
+			println "Executing: " + midlCmd
+
+			tmpBatch.withWriter { out ->
+				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
+				out.println midlCmd
 			}
+		}
+		doLast {
+			assert file(tlb).exists() : "Failed to build dbgmodel.tlb"
+		}
+
+		commandLine "cmd", "/c", tmpBatch
+	}
+
+	tasks.assemblePyPackage {
+		from(tasks."$makeName") {
+			into("src/ghidradbg/dbgmodel/tlb")
+		}
+	}	
+}
+else if (file(tlb).exists()) {
+	// required for multi-platform build
+	tasks.assemblePyPackage {
+		from(tlb) {
+			println "Copying existing tlb build artifact: " + tlb
+			into("src/ghidradbg/dbgmodel/tlb")
 		}
 	}
 }
+else {
+	def prebuiltTlb = new File(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb")
+	if (prebuiltTlb.exists()) {
+		println "Copying prebuilt dbgmodel.tlb"
+		tasks.assemblePyPackage {
+			from(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb") {
+				into("src/ghidradbg/dbgmodel/tlb")
+			}
+		}
+	}
+	else {
+		println "WARNING: dbgmodel.tlb omitted from ghidradbg python package"
+	}
+}
 
-task nodepJar(type: Jar) {
-	inputs.file(file(jar.archivePath))
-	dependsOn(configureNodepJar)
-	dependsOn(jar)
-	
-	archiveAppendix = 'nodep'
+distributePyDep("Pybag-2.2.10-py3-none-any.whl")
+distributePyDep("capstone-5.0.1-py3-none-win_amd64.whl")
+distributePyDep("comtypes-1.4.1-py3-none-any.whl")
+distributePyDep("pywin32-306-cp312-cp312-win_amd64.whl")
+
+tasks.nodepJar {
 	manifest {
 		attributes['Main-Class'] = 'agent.dbgeng.gadp.DbgEngGadpServer'
 	}
-	
-	from(zipTree(jar.archivePath))
-	// TODO: This kind of stinks. I could probably apply some judicious excludes
-	// images I don't care.
-	// I probably must include duplicate LICENSE files, so that all are included
-	// IDK why the duplicate OSGi framework classes, but I probably don't care.
-	duplicatesStrategy = 'include'
 }
 
 test {

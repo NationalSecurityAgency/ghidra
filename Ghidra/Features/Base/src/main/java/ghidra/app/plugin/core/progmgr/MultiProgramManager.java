@@ -15,63 +15,57 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
-import java.net.URL;
+import static ghidra.framework.model.DomainObjectEvent.*;
+
 import java.rmi.NoSuchObjectException;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import org.jdom.Element;
 
 import ghidra.app.events.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
-import ghidra.app.util.task.OpenProgramTask;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.TransientToolState;
-import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.util.*;
-import ghidra.util.task.TaskLauncher;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 
-class MultiProgramManager implements DomainObjectListener, TransactionListener {
-
-	// arbitrary counter for given ProgramInfo objects and ID to use for sorting
-	private static final AtomicInteger nextAvailableId = new AtomicInteger();
+/**
+ * Class for tracking open programs in the tool.
+ */
+class MultiProgramManager implements TransactionListener {
 
 	private ProgramManagerPlugin plugin;
 	private PluginTool tool;
 	private ProgramInfo currentInfo;
 	private TransactionMonitor txMonitor;
-	private MyFolderListener folderListener;
 
 	private Runnable programChangedRunnable;
 	private boolean hasUnsavedPrograms;
+	private String pluginName;
 
-	// These data structures are accessed from multiple threads.  Rather than synchronizing all
+	// This data structure is accessed from multiple threads.  Rather than synchronizing all
 	// accesses, we have chosen to be weakly consistent.   We assume that any out-of-date checks
 	// for open program state will be self-correcting.  For example, if a client checks to see if
 	// a program is open before opening it, then a repeated call to open the program will not
 	// result in a second copy of that program being opened.  This is safe because program opens
 	// and closes are all done from the Swing thread.
-	private List<ProgramInfo> openPrograms = new CopyOnWriteArrayList<>();
-	private ConcurrentHashMap<Program, ProgramInfo> programMap = new ConcurrentHashMap<>();
+	private Map<Program, ProgramInfo> programMap = new ConcurrentHashMap<>();
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	MultiProgramManager(ProgramManagerPlugin programManagerPlugin) {
 		this.plugin = programManagerPlugin;
 		this.tool = programManagerPlugin.getTool();
+		this.pluginName = plugin.getName();
 
 		txMonitor = new TransactionMonitor();
 		txMonitor.setName("Transaction Open (Program being modified)");
 		tool.addStatusComponent(txMonitor, true, true);
-		folderListener = new MyFolderListener();
-		tool.getProject().getProjectData().addDomainFolderChangeListener(folderListener);
 
 		programChangedRunnable = () -> {
 			if (tool == null) {
@@ -82,25 +76,25 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		};
 	}
 
-	void addProgram(Program p, URL ghidraURL, int state) {
+	void addProgram(Program p, ProgramLocator locator, int state) {
+		addProgram(new ProgramInfo(p, locator, state != ProgramManager.OPEN_HIDDEN), state);
+	}
+
+	private void addProgram(ProgramInfo programInfo, int state) {
+		Program p = programInfo.program;
 		ProgramInfo oldInfo = getInfo(p);
 		if (oldInfo == null) {
+			oldInfo = programInfo;
 			p.addConsumer(tool);
-			ProgramInfo info = new ProgramInfo(p, state != ProgramManager.OPEN_HIDDEN);
-			info.ghidraURL = ghidraURL;
-			openPrograms.add(info);
-			openPrograms.sort(Comparator.naturalOrder());
-			programMap.put(p, info);
+			programMap.put(p, oldInfo);
 
 			fireOpenEvents(p);
 
-			p.addListener(this);
+			p.addListener(domainObjectListener);
 			p.addTransactionListener(this);
 		}
-		else {
-			if (!oldInfo.visible && state != ProgramManager.OPEN_HIDDEN) {
-				oldInfo.setVisible(true);
-			}
+		else if (!oldInfo.visible && state != ProgramManager.OPEN_HIDDEN) {
+			oldInfo.setVisible(true);
 		}
 		if (state == ProgramManager.OPEN_CURRENT) {
 			saveLocation();
@@ -109,17 +103,15 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	}
 
 	void dispose() {
-		tool.getProject().getProjectData().removeDomainFolderChangeListener(folderListener);
 		fireActivatedEvent(null);
 
 		for (Program p : programMap.keySet()) {
-			p.removeListener(this);
+			p.removeListener(domainObjectListener);
 			p.removeTransactionListener(this);
 			fireCloseEvents(p);
 			p.release(tool);
 		}
 		programMap.clear();
-		openPrograms.clear();
 		tool.setSubTitle("");
 		tool.removeStatusComponent(txMonitor);
 		tool = null;
@@ -143,22 +135,21 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		else {
 			p.removeTransactionListener(this);
 			programMap.remove(p);
-			p.removeListener(this);
-			openPrograms.remove(info);
+			p.removeListener(domainObjectListener);
 			if (info == currentInfo) {
 				ProgramInfo newCurrent = findNextCurrent();
 				setCurrentProgram(newCurrent);
 			}
 			fireCloseEvents(p);
 			p.release(tool);
-			if (openPrograms.isEmpty()) {
+			if (programMap.isEmpty()) {
 				plugin.getTool().clearLastEvents();
 			}
 		}
 	}
 
 	private ProgramInfo findNextCurrent() {
-		for (ProgramInfo pi : openPrograms) {
+		for (ProgramInfo pi : getSortedProgramInfos()) {
 			if (pi.visible) {
 				return pi;
 			}
@@ -166,19 +157,15 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		return null;
 	}
 
-	Program[] getOtherPrograms() {
-		Program currentProgram = getCurrentProgram();
-		List<Program> list = openPrograms.stream()
-				.map(info -> info.program)
-				.filter(program -> program != currentProgram)
-				.collect(Collectors.toList());
-		return list.toArray(new Program[list.size()]);
+	List<Program> getOtherPrograms() {
+		List<Program> otherPrograms = new ArrayList<>(programMap.keySet());
+		otherPrograms.remove(getCurrentProgram());
+		return otherPrograms;
 	}
 
-	Program[] getAllPrograms() {
-		List<Program> list =
-			openPrograms.stream().map(info -> info.program).collect(Collectors.toList());
-		return list.toArray(Program[]::new);
+	List<Program> getAllPrograms() {
+		List<ProgramInfo> sorted = getSortedProgramInfos();
+		return sorted.stream().map(info -> info.program).collect(Collectors.toList());
 	}
 
 	Program getCurrentProgram() {
@@ -206,7 +193,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	}
 
 	Program getProgram(Address addr) {
-		for (ProgramInfo pi : openPrograms) {
+		for (ProgramInfo pi : getSortedProgramInfos()) {
 			if (pi.program.getMemory().contains(addr)) {
 				return pi.program;
 			}
@@ -230,6 +217,13 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		historyService.addNewLocation(defaultNavigatable);
 	}
 
+	private List<ProgramInfo> getSortedProgramInfos() {
+		List<ProgramInfo> list = new ArrayList<>(programMap.values());
+		Collections.sort(list);
+		return list;
+
+	}
+
 	private void setCurrentProgram(ProgramInfo info) {
 		if (currentInfo == info) {
 			return;
@@ -246,12 +240,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		TransientToolState toolState = null;
 		if (currentInfo != null) {
 			currentInfo.setVisible(true);
-			DomainFile df = currentInfo.program.getDomainFile();
-			String title = df.toString();
-			if (df.isReadOnly()) {
-				title = title + " [Read-Only]";
-			}
-			tool.setSubTitle(title);
+			tool.setSubTitle(currentInfo.toString());
 			txMonitor.setProgram(currentInfo.program);
 			if (currentInfo.lastState != null) {
 				toolState = currentInfo.lastState;
@@ -261,71 +250,82 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		if (toolState != null) {
 			toolState.restoreTool();
 		}
+		// only fire the post activated event when a program is activated (we send activated with
+		// null program to represent a phantom de-activated event)
+		if (newProgram != null) {
+			firePostActivatedEvent(newProgram);
+		}
 	}
 
 	private void fireOpenEvents(Program program) {
-		plugin.firePluginEvent(new ProgramOpenedPluginEvent("", program));
-		plugin.firePluginEvent(new OpenProgramPluginEvent("", program));
+		plugin.firePluginEvent(new ProgramOpenedPluginEvent(pluginName, program));
+		plugin.firePluginEvent(new OpenProgramPluginEvent(pluginName, program));
 	}
 
 	private void fireCloseEvents(Program program) {
-		plugin.firePluginEvent(new ProgramClosedPluginEvent("", program));
-		plugin.firePluginEvent(new CloseProgramPluginEvent("", program, true));
+		plugin.firePluginEvent(new ProgramClosedPluginEvent(pluginName, program));
+		plugin.firePluginEvent(new CloseProgramPluginEvent(pluginName, program, true));
 //		tool.contextChanged();
 	}
 
 	private void fireActivatedEvent(Program newProgram) {
-		plugin.firePluginEvent(new ProgramActivatedPluginEvent("", newProgram));
+		plugin.firePluginEvent(new ProgramActivatedPluginEvent(pluginName, newProgram));
+	}
+
+	private void firePostActivatedEvent(Program newProgram) {
+		plugin.firePluginEvent(new ProgramPostActivatedPluginEvent(pluginName, newProgram));
 	}
 
 	private void fireVisibilityChangeEvent(Program program, boolean isVisible) {
-		plugin.firePluginEvent(new ProgramVisibilityChangePluginEvent("", program, isVisible));
+		plugin.firePluginEvent(
+			new ProgramVisibilityChangePluginEvent(pluginName, program, isVisible));
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!(ev.getSource() instanceof Program)) {
-			return;
+	DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.any(ERROR).terminate(this::handleError)
+			.each(FILE_CHANGED).call(this::handleFileChanged)
+			.build();
+		// @formatter:on
+	}
+
+	private void handleError(DomainObjectChangedEvent event) {
+		DomainObjectChangeRecord rec = event.findFirst(ERROR);
+		if (event.getSource() instanceof Program program) {
+			String msg = getErrorMessage(program, (Throwable) rec.getNewValue());
+			Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
+			removeProgram(program);
 		}
+	}
 
-		Program program = (Program) ev.getSource();
-		if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_ERROR)) {
-			for (int i = 0; i < ev.numRecords(); i++) {
-				DomainObjectChangeRecord docr = ev.getChangeRecord(i);
-				int eventType = docr.getEventType();
-				if (eventType == DomainObject.DO_DOMAIN_FILE_CHANGED) {
-					if (currentInfo != null && currentInfo.program == program) {
-						String name = program.getDomainFile().toString();
-						tool.setSubTitle(name);
-					}
-				}
-				else if (eventType == DomainObject.DO_OBJECT_ERROR) {
-					String msg;
-					Throwable t = (Throwable) docr.getNewValue();
-					if (t instanceof NoSuchObjectException) {
-						msg = program.getName() + " was closed due to an unrecoverable error!" +
-							"\nThis error could be the result of your computer becoming suspended" +
-							"\nor sleeping allowing the network connection with the Ghidra Server" +
-							"\nto fail.";
-					}
-					else {
-						msg = program.getName() + " was closed due to an unrecoverable error!" +
-							"\n \nSuch failures are generally due to an IO Error caused" +
-							"\nby the local filesystem or server.";
-					}
-
-					Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
-					removeProgram(program);
-					return;
-				}
-
+	private void handleFileChanged(DomainObjectChangedEvent event, DomainObjectChangeRecord rec) {
+		if (event.getSource() instanceof Program program) {
+			ProgramInfo info = getInfo(program);
+			if (info != null) {
+				info.programSavedAs(); // updates info to new domain file
+			}
+			if (currentInfo != null && currentInfo.program == program) {
+				String name = program.getDomainFile().toString();
+				tool.setSubTitle(name);
 			}
 		}
 	}
 
+	private String getErrorMessage(Program program, Throwable t) {
+		if (t instanceof NoSuchObjectException) {
+			return program.getName() + " was closed due to an unrecoverable error!" +
+				"\nThis error could be the result of your computer becoming suspended" +
+				"\nor sleeping allowing the network connection with the Ghidra Server" +
+				"\nto fail.";
+		}
+		return program.getName() + " was closed due to an unrecoverable error!" +
+			"\n \nSuch failures are generally due to an IO Error caused" +
+			"\nby the local filesystem or server.";
+	}
+
 	public boolean isEmpty() {
-		return openPrograms.isEmpty();
+		return programMap.isEmpty();
 	}
 
 	public boolean contains(Program p) {
@@ -370,52 +370,20 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		return (info != null && info.owner != null);
 	}
 
-	private ProgramInfo getInfo(Program p) {
+	ProgramInfo getInfo(Program p) {
 		if (p == null) {
 			return null;
 		}
 		return programMap.get(p);
 	}
 
-	Program getOpenProgram(URL ghidraURL) {
-		if (!GhidraURL.isServerRepositoryURL(ghidraURL)) {
-			return null;
-		}
-		URL normalizedURL = GhidraURL.getNormalizedURL(ghidraURL);
+	Program getOpenProgram(ProgramLocator programLocator) {
 		for (ProgramInfo info : programMap.values()) {
-			URL url = info.ghidraURL;
-			if (url != null && url.equals(normalizedURL)) {
+			if (info.getProgramLocator().equals(programLocator)) {
 				return info.program;
 			}
 		}
 		return null;
-	}
-
-	Program getOpenProgram(DomainFile domainFile, int version) {
-		for (Program program : programMap.keySet()) {
-			DomainFile programDomainFile = program.getDomainFile();
-			if (filesMatch(domainFile, version, programDomainFile)) {
-				return program;
-			}
-		}
-		return null;
-	}
-
-	private boolean filesMatch(DomainFile file1, int version, DomainFile file2) {
-		if (!file1.getPathname().equals(file2.getPathname())) {
-			return false;
-		}
-
-		if (file1.isCheckedOut() != file2.isCheckedOut()) {
-			return false;
-		}
-
-		if (!SystemUtilities.isEqual(file1.getProjectLocator(), file2.getProjectLocator())) {
-			return false;
-		}
-
-		int openVersion = file2.isReadOnly() ? file2.getVersion() : -1;
-		return version == openVersion;
 	}
 
 	/**
@@ -433,7 +401,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			return true;
 		}
 		// look at all the open programs to see if any have changes
-		for (ProgramInfo programInfo : openPrograms) {
+		for (ProgramInfo programInfo : programMap.values()) {
 			if (programInfo.program.isChanged()) {
 				return true;
 			}
@@ -448,7 +416,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	}
 
 	@Override
-	public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+	public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
 		// don't care
 	}
 
@@ -465,53 +433,36 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-	private class MyFolderListener extends DomainFolderListenerAdapter {
 
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
+	class ProgramInfo implements Comparable<ProgramInfo> {
 
-			/**
-			 * Special handling for when a file is checked-in.  The existing program has be moved
-			 * to a proxy file (no longer in the project) so that it can be closed and the program
-			 * re-opened with the new version after the check-in merge.
-			 */
+		// arbitrary counter for given ProgramInfo objects and ID to use for sorting
+		private static final AtomicInteger nextAvailableId = new AtomicInteger();
 
-			if (!programMap.containsKey(oldObject)) {
-				return;
-			}
-			Element dataState = null;
-			if (currentInfo != null && currentInfo.program == oldObject) {
-				// save dataState as though the project state was saved and re-opened to simulate
-				// recovering after closing the program during this swap
-				dataState = tool.saveDataStateToXml(true);
-			}
-			OpenProgramTask openTask = new OpenProgramTask(file, -1, this);
-			openTask.setSilent();
-			new TaskLauncher(openTask, tool.getToolFrame());
-			Program openProgram = openTask.getOpenProgram();
-			plugin.openProgram(openProgram,
-				dataState != null ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE);
-			openProgram.release(this);
-			removeProgram((Program) oldObject);
-			if (dataState != null) {
-				tool.restoreDataStateFromXml(dataState);
-			}
-		}
-	}
+		public final Program program;
+		public ProgramLocator programLocator;
 
-	private class ProgramInfo implements Comparable<ProgramInfo> {
-
-		private Program program;
-		private URL ghidraURL;
 		private TransientToolState lastState;
 		private int instance;
-		private boolean visible;
+		private boolean visible = false;
 		private Object owner;
 
-		ProgramInfo(Program p, boolean visible) {
+		private String displayName; // cached displayName
+
+		ProgramInfo(Program p, ProgramLocator programLocator, boolean visible) {
 			this.program = p;
+			this.programLocator = programLocator;
 			this.visible = visible;
 			instance = nextAvailableId.incrementAndGet();
+		}
+
+		ProgramLocator getProgramLocator() {
+			return programLocator;
+		}
+
+		void programSavedAs() {
+			programLocator = new ProgramLocator(program.getDomainFile());
+			displayName = null;
 		}
 
 		public void setVisible(boolean state) {
@@ -522,6 +473,25 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		@Override
 		public int compareTo(ProgramInfo info) {
 			return instance - info.instance;
+		}
+
+		@Override
+		public String toString() {
+			if (displayName != null) {
+				return displayName;
+			}
+			StringBuilder buf = new StringBuilder();
+			DomainFile df = program.getDomainFile();
+			buf.append(program.getDomainFile().toString());
+			if (df.isReadOnly()) {
+				buf.append(" [Read-Only]");
+			}
+			displayName = buf.toString();
+			return displayName;
+		}
+
+		public boolean canReopen() {
+			return programLocator.canReopen();
 		}
 	}
 }

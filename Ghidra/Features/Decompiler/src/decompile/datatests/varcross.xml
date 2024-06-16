@@ -1,0 +1,62 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Examples where the decompiler is tempted to (but shouldn't) merge address tied varnodes
+    with other varnodes that cross a potential access through an alias.
+-->
+<bytechunk space="ram" offset="0x10002b" readonly="true">
+                      4883ec6831
+c083ff07b918000000b8480000000f45
+c84889e0488d542450c7000000000048
+83c0044839d075f1894c24284889e7e8
+9cffffff4883c468c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100a29" readonly="true">
+                  f30f1efa5383ff
+07bb28000000b8580000000f45d8e8bd
+ffffff891db70f00005bc3
+</bytechunk>
+<bytechunk space="ram" offset="0x100000d80" readonly="true">
+4881ec800000004c8d7c244089f383c3
+07498bf766e87800895c244066e8b000
+03442440c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="use_array"/>
+<symbol space="ram" offset="0x10002b" name="store_cross"/>
+<symbol space="ram" offset="0x100a00" name="read_glob"/>
+<symbol space="ram" offset="0x100a29" name="global_cross"/>
+<symbol space="ram" offset="0x100000d80" name="local_cross"/>
+<symbol space="ram" offset="0x100000e10" name="othercall"/>
+<symbol space="ram" offset="0x100000e50" name="retval"/>
+</binaryimage>
+<script>
+  <com>map addr r0x101a00 uint4 glob1</com>
+  <com>lo fu store_cross</com>
+  <com>map addr s0xffffffffffffff98 uint4 local_array[20]</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu global_cross</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern int4 local_cross(uint8 param_1,int4 param_2);</com>
+  <com>lo fu local_cross</com>
+  <com>map addr s0xffffffffffffffc0 int4 local_int[16]</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Store cross #1" min="0" max="0">local_array\[10\] = 0x18;</stringmatch>
+<stringmatch name="Store cross #2" min="0" max="0">local_array\[10\] = 0x48;</stringmatch>
+<stringmatch name="Store cross #3" min="1" max="1">uVar. = 0x18;</stringmatch>
+<stringmatch name="Store cross #4" min="1" max="1">uVar. = 0x48;</stringmatch>
+<stringmatch name="Store cross #5" min="1" max="1">local_array\[10\] = uVar.;
+                                                   use_array\(local_array\);</stringmatch>
+<stringmatch name="Global cross #1" min="1" max="1">uVar. = 0x28;</stringmatch>
+<stringmatch name="Global cross #2" min="1" max="1">uVar. = 0x58;</stringmatch>
+<stringmatch name="Global cross #3" min="1" max="1">read_glob\(\);
+                                                   glob1 = uVar.;</stringmatch>
+<stringmatch name="Local cross #1" min="1" max="1">othercall\(param_1,local_int\);
+                                                   local_int\[0\] = param_2 \+ 7;</stringmatch>
+<stringmatch name="Local cross #2" min="1" max="1">iVar. = retval\(\);
+						   return iVar. \+ local_int\[0\];</stringmatch>
+</decompilertest>

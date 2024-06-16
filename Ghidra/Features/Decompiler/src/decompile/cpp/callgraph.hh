@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_CALLGRAPH__
-#define __CPUI_CALLGRAPH__
+#ifndef __CALLGRAPH_HH__
+#define __CALLGRAPH_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 // Forward declarations
 class Architecture;
@@ -107,7 +109,6 @@ class CallGraph {
   void iterateFunctionsAddrOrder(Scope *scope);
 public:
   CallGraph(Architecture *g) { glb = g; }
-  Architecture *getArch(void) const { return glb; }
   CallGraphNode *addNode(Funcdata *f);
   CallGraphNode *addNode(const Address &addr,const string &nm);
   CallGraphNode *findNode(const Address &addr);
@@ -123,4 +124,5 @@ public:
   void decoder(Decoder &decoder);
 };
 
+} // End namespace ghidra
 #endif

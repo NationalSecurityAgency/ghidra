@@ -19,12 +19,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import generic.NestedIterator;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.trace.database.DBTrace;
@@ -32,13 +31,14 @@ import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.stack.DBTraceStack.ThreadSnap;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.Trace.TraceStackChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -58,10 +58,9 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 	protected final DBCachedObjectStore<DBTraceStackFrame> frameStore;
 	protected final DBCachedObjectIndex<Address, DBTraceStackFrame> framesByPC;
 
-	public DBTraceStackManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceStackManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager,
-			DBTraceOverlaySpaceAdapter overlayAdapter)
-			throws VersionException, IOException {
+			DBTraceOverlaySpaceAdapter overlayAdapter) throws VersionException, IOException {
 		this.dbh = dbh;
 		this.lock = lock;
 		this.trace = trace;
@@ -70,8 +69,8 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
-		stackStore = factory.getOrCreateCachedStore(DBTraceStack.TABLE_NAME,
-			DBTraceStack.class, (s, r) -> new DBTraceStack(this, s, r), true);
+		stackStore = factory.getOrCreateCachedStore(DBTraceStack.TABLE_NAME, DBTraceStack.class,
+			(s, r) -> new DBTraceStack(this, s, r), true);
 		stacksByThreadSnap = stackStore.getIndex(ThreadSnap.class, DBTraceStack.THREAD_SNAP_COLUMN);
 
 		frameStore = factory.getOrCreateCachedStore(DBTraceStackFrame.TABLE_NAME,
@@ -100,12 +99,11 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 
 	public static PathPredicates single(TraceObject seed, Class<? extends TargetObject> targetIf) {
 		PathMatcher stackMatcher = seed.getTargetSchema().searchFor(targetIf, false);
-		PathPattern singleton = stackMatcher.getSingletonPattern();
-		if (singleton.getSingletonPath() == null) {
+		if (stackMatcher.getSingletonPath() == null) {
 			throw new IllegalStateException("Schema doesn't provide a unique " +
 				targetIf.getSimpleName() + " for " + seed.getCanonicalPath());
 		}
-		return singleton;
+		return stackMatcher.getSingletonPattern();
 	}
 
 	protected TraceObjectStack doGetOrAddObjectStack(TraceThread thread, long snap,
@@ -115,9 +113,8 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 		PathPredicates predicates = single(obj, TargetStack.class);
 		if (createIfAbsent) {
 			try (LockHold hold = trace.lockWrite()) {
-				TraceObjectStack stack =
-					trace.getObjectManager()
-							.getSuccessor(obj, predicates, snap, TraceObjectStack.class);
+				TraceObjectStack stack = trace.getObjectManager()
+						.getSuccessor(obj, predicates, snap, TraceObjectStack.class);
 				if (stack != null) {
 					return stack;
 				}
@@ -158,7 +155,7 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 				stack = stackStore.create();
 				stack.set(thread, snap);
 			}
-			trace.setChanged(new TraceChangeRecord<>(TraceStackChangeType.ADDED, null, stack));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.STACK_ADDED, null, stack));
 			return stack;
 		}
 		return stacksByThreadSnap.getOne(key);
@@ -189,15 +186,16 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 	// TODO: Should probably include a lifespan parameter?
 	public Iterable<TraceStackFrame> getFramesIn(AddressSetView set) {
 		if (trace.getObjectManager().hasSchema()) {
-			return () -> NestedIterator.start(set.iterator(), rng -> trace.getObjectManager()
-					.getObjectsIntersecting(Range.all(), rng, TargetStackFrame.PC_ATTRIBUTE_NAME,
-						TraceObjectStackFrame.class)
-					.iterator());
+			return () -> NestedIterator.start(set.iterator(),
+				rng -> trace.getObjectManager()
+						.getObjectsIntersecting(Lifespan.ALL, rng,
+							TargetStackFrame.PC_ATTRIBUTE_NAME, TraceObjectStackFrame.class)
+						.iterator());
 		}
-		return () -> NestedIterator.start(set.iterator(), rng -> framesByPC
-				.sub(rng.getMinAddress(), true, rng.getMaxAddress(), true)
-				.values()
-				.iterator());
+		return () -> NestedIterator.start(set.iterator(),
+			rng -> framesByPC.sub(rng.getMinAddress(), true, rng.getMaxAddress(), true)
+					.values()
+					.iterator());
 	}
 
 	protected void deleteStack(DBTraceStack stack) {

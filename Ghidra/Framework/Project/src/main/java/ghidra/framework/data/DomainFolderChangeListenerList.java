@@ -26,8 +26,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 	private DomainFileIndex fileIndex;
 
 	/** CopyOnWriteArrayList prevents the need for synchronization */
-	private List<DomainFolderChangeListener> list =
-		new CopyOnWriteArrayList<>();
+	private List<DomainFolderChangeListener> list = new CopyOnWriteArrayList<>();
 
 	DomainFolderChangeListenerList(DomainFileIndex fileIndex) {
 		this.fileIndex = fileIndex;
@@ -195,19 +194,6 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileObjectClosed(file, object);
-			}
-		});
-	}
-
-	@Override
-	public void domainFileObjectReplaced(final DomainFile file, final DomainObject oldObject) {
-		fileIndex.domainFileObjectReplaced(file, oldObject);
-		if (list.isEmpty()) {
-			return;
-		}
-		Swing.runNow(() -> {
-			for (DomainFolderChangeListener listener : list) {
-				listener.domainFileObjectReplaced(file, oldObject);
 			}
 		});
 	}

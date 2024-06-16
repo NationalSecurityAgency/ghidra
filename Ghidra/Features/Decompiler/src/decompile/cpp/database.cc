@@ -18,27 +18,29 @@
 #include "crc32.hh"
 #include <ctype.h>
 
-AttributeId ATTRIB_CAT = AttributeId("cat",49);
-AttributeId ATTRIB_FIELD = AttributeId("field",50);
-AttributeId ATTRIB_MERGE = AttributeId("merge",51);
-AttributeId ATTRIB_SCOPEIDBYNAME = AttributeId("scopeidbyname",52);
-AttributeId ATTRIB_VOLATILE = AttributeId("volatile",53);
+namespace ghidra {
 
-ElementId ELEM_COLLISION = ElementId("collision",60);
-ElementId ELEM_DB = ElementId("db",61);
-ElementId ELEM_EQUATESYMBOL = ElementId("equatesymbol",62);
-ElementId ELEM_EXTERNREFSYMBOL = ElementId("externrefsymbol",63);
-ElementId ELEM_FACETSYMBOL = ElementId("facetsymbol",64);
-ElementId ELEM_FUNCTIONSHELL = ElementId("functionshell",65);
-ElementId ELEM_HASH = ElementId("hash",66);
-ElementId ELEM_HOLE = ElementId("hole",67);
-ElementId ELEM_LABELSYM = ElementId("labelsym",68);
-ElementId ELEM_MAPSYM = ElementId("mapsym",69);
-ElementId ELEM_PARENT = ElementId("parent",70);
-ElementId ELEM_PROPERTY_CHANGEPOINT = ElementId("property_changepoint",71);
-ElementId ELEM_RANGEEQUALSSYMBOLS = ElementId("rangeequalssymbols",72);
-ElementId ELEM_SCOPE = ElementId("scope",73);
-ElementId ELEM_SYMBOLLIST = ElementId("symbollist",74);
+AttributeId ATTRIB_CAT = AttributeId("cat",61);
+AttributeId ATTRIB_FIELD = AttributeId("field",62);
+AttributeId ATTRIB_MERGE = AttributeId("merge",63);
+AttributeId ATTRIB_SCOPEIDBYNAME = AttributeId("scopeidbyname",64);
+AttributeId ATTRIB_VOLATILE = AttributeId("volatile",65);
+
+ElementId ELEM_COLLISION = ElementId("collision",67);
+ElementId ELEM_DB = ElementId("db",68);
+ElementId ELEM_EQUATESYMBOL = ElementId("equatesymbol",69);
+ElementId ELEM_EXTERNREFSYMBOL = ElementId("externrefsymbol",70);
+ElementId ELEM_FACETSYMBOL = ElementId("facetsymbol",71);
+ElementId ELEM_FUNCTIONSHELL = ElementId("functionshell",72);
+ElementId ELEM_HASH = ElementId("hash",73);
+ElementId ELEM_HOLE = ElementId("hole",74);
+ElementId ELEM_LABELSYM = ElementId("labelsym",75);
+ElementId ELEM_MAPSYM = ElementId("mapsym",76);
+ElementId ELEM_PARENT = ElementId("parent",77);
+ElementId ELEM_PROPERTY_CHANGEPOINT = ElementId("property_changepoint",78);
+ElementId ELEM_RANGEEQUALSSYMBOLS = ElementId("rangeequalssymbols",79);
+ElementId ELEM_SCOPE = ElementId("scope",80);
+ElementId ELEM_SYMBOLLIST = ElementId("symbollist",81);
 
 uint8 Symbol::ID_BASE = 0x4000000000000000L;
 
@@ -149,25 +151,14 @@ bool SymbolEntry::updateType(Varnode *vn) const
 Datatype *SymbolEntry::getSizedType(const Address &inaddr,int4 sz) const
 
 {
-  uintb off;
+  int4 off;
 
   if (isDynamic())
     off = offset;
   else
-    off = (inaddr.getOffset() - addr.getOffset()) + offset;
+    off = (int4)(inaddr.getOffset() - addr.getOffset()) + offset;
   Datatype *cur = symbol->getType();
-  do {
-    if (offset == 0 && cur->getSize() == sz)
-      return cur;
-    cur = cur->getSubType(off,&off);
-  } while(cur != (Datatype *)0);
-  //    else {
-  // This case occurs if the varnode is a "partial type" of some sort
-  // This PROBABLY means the varnode shouldn't be considered addrtied
-  // I.e. it shouldn't be considered part of the same variable as symbol
-  //    }
-    
-  return (Datatype *)0;
+  return symbol->getScope()->getArch()->types->getExactPiece(cur, off, sz);
 }
 
 /// Give a contained one-line description of \b this storage, suitable for a debug console
@@ -211,9 +202,8 @@ void SymbolEntry::encode(Encoder &encoder) const
 /// if the symbol is dynamic. Then parse the \b uselimit describing the valid
 /// range of code addresses.
 /// \param decoder is the stream decoder
-/// \param manage is an address space manager for constructing Address objects
 /// \return the advanced iterator
-void SymbolEntry::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void SymbolEntry::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.peekElement();
@@ -224,10 +214,10 @@ void SymbolEntry::decode(Decoder &decoder,const AddrSpaceManager *manage)
     decoder.closeElement(elemId);
   }
   else {
-    addr = Address::decode(decoder,manage);
+    addr = Address::decode(decoder);
     hash = 0;
   }
-  uselimit.decode(decoder,manage);
+  uselimit.decode(decoder);
 }
 
 /// Examine the data-type to decide if the Symbol has the special property
@@ -405,6 +395,7 @@ void Symbol::decodeHeader(Decoder &decoder)
 
 {
   name.clear();
+  displayName.clear();
   category = no_category;
   symbolId = 0;
   for(;;) {
@@ -457,12 +448,17 @@ void Symbol::decodeHeader(Decoder &decoder)
       if (decoder.readBool())
 	flags |= Varnode::volatil;
     }
+    else if (attribId == ATTRIB_LABEL) {
+      displayName = decoder.readString();
+    }
   }
   if (category == function_parameter) {
     catindex = decoder.readUnsignedInteger(ATTRIB_INDEX);
   }
   else
     catindex = 0;
+  if (displayName.size() == 0)
+    displayName = name;
 }
 
 /// Encode the data-type for the Symbol
@@ -542,6 +538,7 @@ FunctionSymbol::FunctionSymbol(Scope *sc,const string &nm,int4 size)
   consumeSize = size;
   buildType();
   name = nm;
+  displayName = nm;
 }
 
 FunctionSymbol::FunctionSymbol(Scope *sc,int4 size)
@@ -562,7 +559,7 @@ Funcdata *FunctionSymbol::getFunction(void)
 {
   if (fd != (Funcdata *)0) return fd;
   SymbolEntry *entry = getFirstWholeMap();
-  fd = new Funcdata(name,scope,entry->getAddr(),this);
+  fd = new Funcdata(name,displayName,scope,entry->getAddr(),this);
   return fd;
 }
 
@@ -585,7 +582,7 @@ void FunctionSymbol::decode(Decoder &decoder)
 {
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_FUNCTION) {
-    fd = new Funcdata("",scope,Address(),this);
+    fd = new Funcdata("","",scope,Address(),this);
     try {
       symbolId = fd->decode(decoder);
     } catch(RecovError &err) {
@@ -593,6 +590,7 @@ void FunctionSymbol::decode(Decoder &decoder)
       throw DuplicateFunctionError(fd->getAddress(),fd->getName());
     }
     name = fd->getName();
+    displayName = fd->getDisplayName();
     if (consumeSize < fd->getSize()) {
       if ((fd->getSize()>1)&&(fd->getSize() <= 8))
 	consumeSize = fd->getSize();
@@ -608,6 +606,9 @@ void FunctionSymbol::decode(Decoder &decoder)
 	name = decoder.readString();
       else if (attribId == ATTRIB_ID) {
 	symbolId = decoder.readUnsignedInteger();
+      }
+      else if (attribId == ATTRIB_LABEL) {
+	displayName = decoder.readString();
       }
     }
     decoder.closeElement(elemId);
@@ -737,6 +738,7 @@ LabSymbol::LabSymbol(Scope *sc,const string &nm)
 {
   buildType();
   name = nm;
+  displayName = nm;
 }
 
 /// \param sc is the Scope that will contain the new Symbol
@@ -776,6 +778,8 @@ void ExternRefSymbol::buildNameType(void)
     name = s.str();
     name += "_exref"; // Indicate this is an external reference variable
   }
+  if (displayName.size() == 0)
+    displayName = name;
   flags |= Varnode::externref | Varnode::typelock;
 }
 
@@ -802,14 +806,17 @@ void ExternRefSymbol::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_EXTERNREFSYMBOL);
-  name = "";			// Name is empty
+  name.clear();			// Name is empty
+  displayName.clear();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_NAME) // Unless we see it explicitly
       name = decoder.readString();
+    else if (attribId == ATTRIB_LABEL)
+      displayName = decoder.readString();
   }
-  refaddr = Address::decode(decoder,scope->getArch());
+  refaddr = Address::decode(decoder);
   decoder.closeElement(elemId);
   buildNameType();
 }
@@ -1526,6 +1533,8 @@ SymbolEntry *Scope::addSymbol(const string &nm,Datatype *ct,
 {
   Symbol *sym;
 
+  if (ct->hasStripped())
+    ct = ct->getStripped();
   sym = new Symbol(owner,nm,ct);
   addSymbolInternal(sym);
   return addMapPoint(sym,addr,usepoint);
@@ -1583,7 +1592,7 @@ Symbol *Scope::addMapSym(Decoder &decoder)
   addSymbolInternal(sym);	// This routine may throw, but it will delete sym in this case
   while(decoder.peekElement() != 0) {
     SymbolEntry entry(sym);
-    entry.decode(decoder,glb);
+    entry.decode(decoder);
     if (entry.isInvalid()) {
       glb->printMessage("WARNING: Throwing out symbol with invalid mapping: "+sym->getName());
       removeSymbol(sym);
@@ -1714,6 +1723,29 @@ Symbol *Scope::addEquateSymbol(const string &nm,uint4 format,uintb value,const A
   return sym;
 }
 
+/// \brief Create a symbol forcing a field interpretation for a specific access to a variable with \e union data-type
+///
+/// The symbol is attached to a specific Varnode and a PcodeOp that reads or writes to it.  The Varnode,
+/// in the context of the PcodeOp, is forced to have the data-type of the selected field, and field's name is used
+/// to represent the Varnode in output.
+/// \param nm is the name of the symbol
+/// \param dt is the union data-type containing the field to force
+/// \param fieldNum is the index of the desired field, or -1 if the whole union should be forced
+/// \param addr is the address of the p-code op reading/writing the Varnode
+/// \param hash is the dynamic hash identifying the Varnode
+/// \return the new UnionFacetSymbol
+Symbol *Scope::addUnionFacetSymbol(const string &nm,Datatype *dt,int4 fieldNum,const Address &addr,uint8 hash)
+
+{
+  Symbol *sym = new UnionFacetSymbol(owner,nm,dt,fieldNum);
+  addSymbolInternal(sym);
+  RangeList rnglist;
+  if (!addr.isInvalid())
+    rnglist.insertRange(addr.getSpace(),addr.getOffset(),addr.getOffset());
+  addDynamicMapInternal(sym,Varnode::mapped,hash,0,1,rnglist);
+  return sym;
+}
+
 /// Create default name given information in the Symbol and possibly a representative Varnode.
 /// This method extracts the crucial properties and then uses the buildVariableName method to
 /// construct the actual name.
@@ -1783,8 +1815,10 @@ void ScopeInternal::addSymbolInternal(Symbol *sym)
     nextUniqueId += 1;
   }
   try {
-    if (sym->name.size() == 0)
+    if (sym->name.size() == 0) {
       sym->name = buildUndefinedName();
+      sym->displayName = sym->name;
+    }
     if (sym->getType() == (Datatype *)0)
       throw LowlevelError(sym->getName() + " symbol created with no type");
     if (sym->getType()->getSize() < 1)
@@ -2019,6 +2053,7 @@ void ScopeInternal::clearUnlocked(void)
 	  renameSymbol(sym,buildUndefinedName());
 	}
       }
+      clearAttribute(sym, Varnode::nolocalalias);	// Clear any calculated attributes
       if (sym->isSizeTypeLocked())
 	resetSizeLockType(sym);
     }
@@ -2122,6 +2157,7 @@ void ScopeInternal::renameSymbol(Symbol *sym,const string &newname)
     multiEntrySet.erase(sym);	// The multi-entry set is sorted by name, remove
   string oldname = sym->name;
   sym->name = newname;
+  sym->displayName = newname;
   insertNameTree(sym);
   if (sym->wholeCount > 1)
     multiEntrySet.insert(sym);	// Reenter into the multi-entry set now that name is changed
@@ -2130,6 +2166,8 @@ void ScopeInternal::renameSymbol(Symbol *sym,const string &newname)
 void ScopeInternal::retypeSymbol(Symbol *sym,Datatype *ct)
 
 {
+  if (ct->hasStripped())
+    ct = ct->getStripped();
   if ((sym->type->getSize() == ct->getSize())||(sym->mapentry.empty())) { 
 // If size is the same, or no mappings nothing special to do
     sym->type = ct;
@@ -2632,7 +2670,7 @@ void ScopeInternal::decodeHole(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_HOLE);
   uint4 flags = 0;
   Range range;
-  range.decodeFromAttributes(decoder, glb);
+  range.decodeFromAttributes(decoder);
   decoder.rewindAttributes();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -2717,7 +2755,7 @@ void ScopeInternal::decode(Decoder &decoder)
   }
   if (subId== ELEM_RANGELIST) {
     RangeList newrangetree;
-    newrangetree.decode(decoder,glb);
+    newrangetree.decode(decoder);
     glb->symboltab->setRange(this,newrangetree);
   }
   else if (subId == ELEM_RANGEEQUALSSYMBOLS) {
@@ -3198,6 +3236,32 @@ void Database::setPropertyRange(uint4 flags,const Range &range)
   }
 }
 
+/// The non-zero bits in the \b flags parameter indicate the boolean properties to be cleared.
+/// No other properties are altered.
+/// \param flags is the set of properties to clear
+/// \param range is the memory range to clear
+void Database::clearPropertyRange(uint4 flags,const Range &range)
+
+{
+  Address addr1 = range.getFirstAddr();
+  Address addr2 = range.getLastAddrOpen(glb);
+  flagbase.split(addr1);
+  partmap<Address,uint4>::iterator aiter,biter;
+
+  aiter = flagbase.begin(addr1);
+  if (!addr2.isInvalid()) {
+    flagbase.split(addr2);
+    biter = flagbase.begin(addr2);
+  }
+  else
+    biter = flagbase.end();
+  flags = ~flags;
+  while(aiter != biter) {	// Update bits across whole range
+    (*aiter).second &= flags;
+    ++aiter;
+  }
+}
+
 /// Encode a single \<db> element to the stream, which contains child elements
 /// for each Scope (which contain Symbol children in turn).
 /// \param encoder is the stream encoder
@@ -3262,7 +3326,7 @@ void Database::decode(Decoder &decoder)
     decoder.openElement();
     uint4 val = decoder.readUnsignedInteger(ATTRIB_VAL);
     VarnodeData vData;
-    vData.decodeFromAttributes(decoder, glb);
+    vData.decodeFromAttributes(decoder);
     Address addr = vData.getAddr();
     decoder.closeElement(subId);
     flagbase.split(addr) = val;
@@ -3271,14 +3335,28 @@ void Database::decode(Decoder &decoder)
   for(;;) {
     uint4 subId = decoder.openElement();
     if (subId != ELEM_SCOPE) break;
-    string name = decoder.readString(ATTRIB_NAME);
-    uint8 id = decoder.readUnsignedInteger(ATTRIB_ID);
+    string name;		// Name of global scope by default
+    string displayName;
+    uint8 id = 0;		// Id of global scope by default
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_NAME)
+	name = decoder.readString();
+      else if (attribId == ATTRIB_ID) {
+	id = decoder.readUnsignedInteger();
+      }
+      else if (attribId == ATTRIB_LABEL)
+	displayName = decoder.readString();
+    }
     Scope *parentScope = (Scope *)0;
     uint4 parentId = decoder.peekElement();
     if (parentId == ELEM_PARENT) {
       parentScope = parseParentTag(decoder);
     }
     Scope *newScope = findCreateScope(id, name, parentScope);
+    if (!displayName.empty())
+      newScope->setDisplayName(displayName);
     newScope->decode(decoder);
     decoder.closeElement(subId);
   }
@@ -3311,3 +3389,40 @@ void Database::decodeScope(Decoder &decoder,Scope *newScope)
   }
   decoder.closeElement(elemId);
 }
+
+/// Some namespace objects may already exist.  Create those that don't.
+/// \param decoder is the stream to decode the path from
+/// \return the namespace described by the path
+Scope *Database::decodeScopePath(Decoder &decoder)
+
+{
+  Scope *curscope = getGlobalScope();
+  uint4 elemId = decoder.openElement(ELEM_PARENT);
+  uint4 subId = decoder.openElement();
+  decoder.closeElementSkipping(subId);		// Skip element describing the root scope
+  for(;;) {
+    subId = decoder.openElement();
+    if (subId != ELEM_VAL) break;
+    string displayName;
+    uint8 scopeId = 0;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_ID)
+	scopeId = decoder.readUnsignedInteger();
+      else if (attribId == ATTRIB_LABEL)
+	displayName = decoder.readString();
+    }
+    string name = decoder.readString(ATTRIB_CONTENT);
+    if (scopeId == 0)
+      throw DecoderError("Missing name and id in scope");
+    curscope = findCreateScope(scopeId, name, curscope);
+    if (!displayName.empty())
+      curscope->setDisplayName(displayName);
+    decoder.closeElement(subId);
+  }
+  decoder.closeElement(elemId);
+  return curscope;
+}
+
+} // End namespace ghidra

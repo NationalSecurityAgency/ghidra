@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.ModuleReference;
 
 import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
@@ -101,18 +101,29 @@ public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return doRefresh();
 	}
 
 	protected CompletableFuture<Void> doRefresh() {
-		Map<String, ModuleReference> map = new HashMap<>();
-		List<ModuleReference> allModules = vm.vm.allModules();
-		for (ModuleReference ref : allModules) {
-			map.put(JdiModelTargetModule.getUniqueId(ref), ref);
-		}
-		modulesByName.keySet().retainAll(map.keySet());
-		return updateUsingModules(map);
+		return CompletableFuture.supplyAsync(() -> {
+			Map<String, ModuleReference> map = new HashMap<>();
+			boolean available = vm.vm.canGetModuleInfo();
+			if (!available) {
+				return map;
+			}
+			try {
+				List<ModuleReference> allModules = vm.vm.allModules();
+				for (ModuleReference ref : allModules) {
+					map.put(JdiModelTargetModule.getUniqueId(ref), ref);
+				}
+			}
+			catch (UnsupportedOperationException e) {
+				Msg.error(this, "UnsupportedOperationException: " + e.getMessage());
+			}
+			modulesByName.keySet().retainAll(map.keySet());
+			return map;
+		}).thenCompose(this::updateUsingModules);
 	}
 
 	protected synchronized JdiModelTargetModule getTargetModule(ModuleReference module) {
@@ -125,9 +136,6 @@ public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl
 	}
 
 	public CompletableFuture<?> refreshInternal() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return doRefresh().exceptionally(ex -> {
 			Msg.error(this, "Problem refreshing inferior's modules", ex);
 			return null;

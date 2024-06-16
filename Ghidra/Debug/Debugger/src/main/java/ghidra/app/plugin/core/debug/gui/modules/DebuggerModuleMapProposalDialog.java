@@ -26,9 +26,9 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapModulesAction;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
@@ -42,13 +42,14 @@ public class DebuggerModuleMapProposalDialog
 		implements EnumeratedTableColumn<ModuleMapTableColumns, ModuleMapEntry> {
 		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
 		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getModule().getBase()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getFromRange().getMinAddress()),
 		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> (e.getToProgram().getDomainFile() == null
 				? e.getToProgram().getName()
 				: e.getToProgram().getDomainFile().getName())),
-		STATIC_BASE("Static Base", Address.class, e -> e.getToProgram().getImageBase()),
-		SIZE("Size", Long.class, e -> e.getModuleRange().getLength());
+		STATIC_BASE("Static Base", Address.class, e -> e.getToRange().getMinAddress()),
+		SIZE("Size", Long.class, e -> e.getFromRange().getLength()),
+		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize, ModuleMapEntry::setMemorize);
 
 		private final String header;
 		private final Class<?> cls;
@@ -100,8 +101,8 @@ public class DebuggerModuleMapProposalDialog
 	protected static class ModuleMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<ModuleMapTableColumns, ModuleMapEntry> {
 
-		public ModuleMapPropsalTableModel() {
-			super("Module Map", ModuleMapTableColumns.class);
+		public ModuleMapPropsalTableModel(PluginTool tool) {
+			super(tool, "Module Map", ModuleMapTableColumns.class);
 		}
 
 		@Override
@@ -113,13 +114,13 @@ public class DebuggerModuleMapProposalDialog
 	private final DebuggerModulesProvider provider;
 
 	protected DebuggerModuleMapProposalDialog(DebuggerModulesProvider provider) {
-		super(MapModulesAction.NAME);
+		super(provider.getTool(), DebuggerResources.NAME_MAP_MODULES);
 		this.provider = provider;
 	}
 
 	@Override
-	protected ModuleMapPropsalTableModel createTableModel() {
-		return new ModuleMapPropsalTableModel();
+	protected ModuleMapPropsalTableModel createTableModel(PluginTool tool) {
+		return new ModuleMapPropsalTableModel(tool);
 	}
 
 	@Override

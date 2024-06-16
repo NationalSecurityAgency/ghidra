@@ -69,7 +69,7 @@ public class StringModel {
 		for (int i = 0; i < textReps.length; i++) {
 
 			if ((i >= 33) && (i <= 126)) {
-				textReps[i] = new Character((char) i).toString();
+				textReps[i] = Character.valueOf((char) i).toString();
 			}
 			else {
 				if (asciiNumToDescription.containsKey(i)) {

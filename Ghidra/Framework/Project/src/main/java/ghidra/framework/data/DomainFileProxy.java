@@ -17,13 +17,17 @@ package ghidra.framework.data;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 import javax.swing.Icon;
 
+import ghidra.framework.client.*;
 import ghidra.framework.model.*;
-import ghidra.framework.store.ItemCheckoutStatus;
-import ghidra.framework.store.Version;
+import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.framework.remote.RepositoryItem;
+import ghidra.framework.store.*;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.ReadOnlyException;
@@ -56,7 +60,7 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	DomainFileProxy(String name, String parentPath, DomainObjectAdapter doa, int version,
-			String fileID, ProjectLocator projectLocation) {
+			String fileID, ProjectLocator projectLocation) throws IOException {
 
 		this(name, doa);
 		this.parentPath = parentPath;
@@ -111,6 +115,95 @@ public class DomainFileProxy implements DomainFile {
 		return parentPath + DomainFolder.SEPARATOR + getName();
 	}
 
+	private URL getSharedFileURL(URL sharedProjectURL, String ref) {
+		try {
+			// Direct URL construction done so that ghidra protocol extension may be supported
+			String urlStr = sharedProjectURL.toExternalForm();
+			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
+				urlStr = urlStr.substring(0, urlStr.length() - 1);
+			}
+			urlStr += getPathname();
+			return new URL(urlStr);
+		}
+		catch (MalformedURLException e) {
+			// ignore
+		}
+		return null;
+	}
+
+	private URL getSharedFileURL(Properties properties, String ref) {
+		if (properties == null) {
+			return null;
+		}
+		String serverName = properties.getProperty(DefaultProjectData.SERVER_NAME);
+		String repoName = properties.getProperty(DefaultProjectData.REPOSITORY_NAME);
+		if (serverName == null || repoName == null) {
+			return null;
+		}
+		int port = Integer.parseInt(properties.getProperty(DefaultProjectData.PORT_NUMBER, "0"));
+
+		if (!ClientUtil.isConnected(serverName, port)) {
+			return null; // avoid initiating a server connection. 
+		}
+
+		RepositoryAdapter repository = null;
+		try {
+			RepositoryServerAdapter repositoryServer =
+				ClientUtil.getRepositoryServer(serverName, port);
+			Set<String> repoNames = Set.of(repositoryServer.getRepositoryNames());
+			if (!repoNames.contains(repoName)) {
+				return null; // only consider repos which user has access to
+			}
+			repository = repositoryServer.getRepository(repoName);
+			if (repository == null) {
+				return null;
+			}
+			repository.connect();
+			RepositoryItem item = repository.getItem(parentPath, name);
+			if (item == null || !Objects.equals(item.getFileID(), fileID)) {
+				return null;
+			}
+			ServerInfo serverInfo = repository.getServerInfo();
+			return GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
+				repository.getName(), item.getPathName(), ref);
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		finally {
+			if (repository != null) {
+				repository.disconnect();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public URL getSharedProjectURL(String ref) {
+		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
+			URL projectURL = projectLocation.getURL();
+			if (GhidraURL.isServerRepositoryURL(projectURL)) {
+				return getSharedFileURL(projectURL, ref);
+			}
+			Properties properties =
+				DefaultProjectData.readProjectProperties(projectLocation.getProjectDir());
+			return getSharedFileURL(properties, ref);
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
+		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
+			URL projectURL = projectLocation.getURL();
+			if (GhidraURL.isServerRepositoryURL(projectURL)) {
+				return null;
+			}
+			return GhidraURL.makeURL(projectLocation, getPathname(), ref);
+		}
+		return null;
+	}
+
 	@Override
 	public int compareTo(DomainFile df) {
 		return getName().compareToIgnoreCase(df.getName());
@@ -143,7 +236,7 @@ public class DomainFileProxy implements DomainFile {
 		DomainObjectAdapter dobj = getDomainObject();
 		if (dobj != null) {
 			try {
-				ContentHandler ch = DomainObjectAdapter.getContentHandler(dobj);
+				ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(dobj);
 				return ch.getContentType();
 			}
 			catch (IOException e) {
@@ -151,6 +244,27 @@ public class DomainFileProxy implements DomainFile {
 			}
 		}
 		return "Unknown File";
+	}
+
+	@Override
+	public boolean isLinkFile() {
+		DomainObjectAdapter dobj = getDomainObject();
+		if (dobj != null) {
+			ContentHandler<?> ch;
+			try {
+				ch = DomainObjectAdapter.getContentHandler(dobj);
+				return LinkHandler.class.isAssignableFrom(ch.getClass());
+			}
+			catch (IOException e) {
+				// ignore
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public DomainFolder followLink() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -199,11 +313,6 @@ public class DomainFileProxy implements DomainFile {
 		return true;
 	}
 
-	public boolean isUsedExclusivelyBy(Object consumer) {
-		DomainObjectAdapter dobj = getDomainObject();
-		return dobj != null ? dobj.isUsedExclusivelyBy(consumer) : false;
-	}
-
 	@Override
 	public ArrayList<?> getConsumers() {
 		DomainObjectAdapter dobj = getDomainObject();
@@ -228,6 +337,7 @@ public class DomainFileProxy implements DomainFile {
 				dobj.release(consumer);
 			}
 			catch (IllegalArgumentException e) {
+				// ignore unknown consumer error
 			}
 		}
 	}
@@ -254,11 +364,6 @@ public class DomainFileProxy implements DomainFile {
 	public void addToVersionControl(String comment, boolean keepCheckedOut, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		throw new UnsupportedOperationException("Repository operations not supported");
-	}
-
-	@Override
-	public boolean isVersionControlSupported() {
-		return false;
 	}
 
 	@Override
@@ -293,7 +398,7 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		throw new UnsupportedOperationException("Repository operations not supported");
 	}
@@ -301,6 +406,16 @@ public class DomainFileProxy implements DomainFile {
 	@Override
 	public void merge(boolean okToUpgrade, TaskMonitor monitor) {
 		throw new UnsupportedOperationException("Repository operations not supported");
+	}
+
+	@Override
+	public boolean isLinkingSupported() {
+		return false;
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
+		return null; // not supported by proxy file
 	}
 
 	@Override
@@ -318,11 +433,8 @@ public class DomainFileProxy implements DomainFile {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainFile#copyVersionTo(int, ghidra.framework.model.DomainFolder, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public DomainFile copyVersionTo(int version, DomainFolder destFolder, TaskMonitor monitor)
+	public DomainFile copyVersionTo(int ver, DomainFolder destFolder, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		throw new UnsupportedOperationException("copyVersionTo unsupported for DomainFileProxy");
 	}
@@ -380,6 +492,11 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
+	public void undoCheckout(boolean keep, boolean force) throws IOException {
+		throw new UnsupportedOperationException("undoCheckout() unsupported for DomainFileProxy");
+	}
+
+	@Override
 	public ChangeSet getChangesByOthersSinceCheckout() throws IOException {
 		return null;
 	}
@@ -415,7 +532,7 @@ public class DomainFileProxy implements DomainFile {
 			throw new UnsupportedOperationException("packFile() only valid for Database files");
 		}
 		DomainObjectAdapterDB dbObj = (DomainObjectAdapterDB) domainObj;
-		ContentHandler ch = DomainObjectAdapter.getContentHandler(domainObj);
+		ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(domainObj);
 		PackedDatabase.packDatabase(dbObj.getDBHandle(), dbObj.getName(), ch.getContentType(), file,
 			monitor);
 	}

@@ -19,7 +19,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 import javax.swing.table.TableModel;
 
@@ -29,12 +29,12 @@ import docking.actions.SharedDockingActionPlaceholder;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GIcon;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.timer.GTimer;
-import resources.ResourceManager;
 
 /**
  * An action to delete data from a table.   If your model is a {@link ThreadedTableModel}, then
@@ -54,7 +54,7 @@ public class DeleteTableRowAction extends DockingAction {
 
 	private static final KeyStroke DEFAULT_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
-	private static final ImageIcon ICON = ResourceManager.loadImage("images/table_delete.png");
+	private static final Icon ICON = new GIcon("icon.plugin.table.delete.row");
 	private static final String NAME = "Remove Items";
 
 	private GTable table;

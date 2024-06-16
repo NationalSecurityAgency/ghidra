@@ -18,43 +18,49 @@
 #include "flow.hh"
 #include "printc.hh"
 
-ElementId ELEM_ALIASBLOCK = ElementId("aliasblock",111);
-ElementId ELEM_ALLOWCONTEXTSET = ElementId("allowcontextset",112);
-ElementId ELEM_ANALYZEFORLOOPS = ElementId("analyzeforloops",113);
-ElementId ELEM_COMMENTHEADER = ElementId("commentheader",114);
-ElementId ELEM_COMMENTINDENT = ElementId("commentindent",115);
-ElementId ELEM_COMMENTINSTRUCTION = ElementId("commentinstruction",116);
-ElementId ELEM_COMMENTSTYLE = ElementId("commentstyle",117);
-ElementId ELEM_CONVENTIONPRINTING = ElementId("conventionprinting",118);
-ElementId ELEM_CURRENTACTION = ElementId("currentaction",119);
-ElementId ELEM_DEFAULTPROTOTYPE = ElementId("defaultprototype",120);
-ElementId ELEM_ERRORREINTERPRETED = ElementId("errorreinterpreted",121);
-ElementId ELEM_ERRORTOOMANYINSTRUCTIONS = ElementId("errortoomanyinstructions",122);
-ElementId ELEM_ERRORUNIMPLEMENTED = ElementId("errorunimplemented",123);
-ElementId ELEM_EXTRAPOP = ElementId("extrapop",124);
-ElementId ELEM_IGNOREUNIMPLEMENTED = ElementId("ignoreunimplemented",125);
-ElementId ELEM_INDENTINCREMENT = ElementId("indentincrement",126);
-ElementId ELEM_INFERCONSTPTR = ElementId("inferconstptr",127);
-ElementId ELEM_INLINE = ElementId("inline",128);
-ElementId ELEM_INPLACEOPS = ElementId("inplaceops",129);
-ElementId ELEM_INTEGERFORMAT = ElementId("integerformat",130);
-ElementId ELEM_JUMPLOAD = ElementId("jumpload",131);
-ElementId ELEM_MAXINSTRUCTION = ElementId("maxinstruction",132);
-ElementId ELEM_MAXLINEWIDTH = ElementId("maxlinewidth",133);
-ElementId ELEM_NAMESPACESTRATEGY = ElementId("namespacestrategy",134);
-ElementId ELEM_NOCASTPRINTING = ElementId("nocastprinting",135);
-ElementId ELEM_NORETURN = ElementId("noreturn",136);
-ElementId ELEM_NULLPRINTING = ElementId("nullprinting",137);
-ElementId ELEM_OPTIONSLIST = ElementId("optionslist",138);
-ElementId ELEM_PARAM1 = ElementId("param1",139);
-ElementId ELEM_PARAM2 = ElementId("param2",140);
-ElementId ELEM_PARAM3 = ElementId("param3",141);
-ElementId ELEM_PROTOEVAL = ElementId("protoeval",142);
-ElementId ELEM_SETACTION = ElementId("setaction",143);
-ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",144);
-ElementId ELEM_STRUCTALIGN = ElementId("structalign",145);
-ElementId ELEM_TOGGLERULE = ElementId("togglerule",146);
-ElementId ELEM_WARNING = ElementId("warning",147);
+namespace ghidra {
+
+ElementId ELEM_ALIASBLOCK = ElementId("aliasblock",174);
+ElementId ELEM_ALLOWCONTEXTSET = ElementId("allowcontextset",175);
+ElementId ELEM_ANALYZEFORLOOPS = ElementId("analyzeforloops",176);
+ElementId ELEM_COMMENTHEADER = ElementId("commentheader",177);
+ElementId ELEM_COMMENTINDENT = ElementId("commentindent",178);
+ElementId ELEM_COMMENTINSTRUCTION = ElementId("commentinstruction",179);
+ElementId ELEM_COMMENTSTYLE = ElementId("commentstyle",180);
+ElementId ELEM_CONVENTIONPRINTING = ElementId("conventionprinting",181);
+ElementId ELEM_CURRENTACTION = ElementId("currentaction",182);
+ElementId ELEM_DEFAULTPROTOTYPE = ElementId("defaultprototype",183);
+ElementId ELEM_ERRORREINTERPRETED = ElementId("errorreinterpreted",184);
+ElementId ELEM_ERRORTOOMANYINSTRUCTIONS = ElementId("errortoomanyinstructions",185);
+ElementId ELEM_ERRORUNIMPLEMENTED = ElementId("errorunimplemented",186);
+ElementId ELEM_EXTRAPOP = ElementId("extrapop",187);
+ElementId ELEM_IGNOREUNIMPLEMENTED = ElementId("ignoreunimplemented",188);
+ElementId ELEM_INDENTINCREMENT = ElementId("indentincrement",189);
+ElementId ELEM_INFERCONSTPTR = ElementId("inferconstptr",190);
+ElementId ELEM_INLINE = ElementId("inline",191);
+ElementId ELEM_INPLACEOPS = ElementId("inplaceops",192);
+ElementId ELEM_INTEGERFORMAT = ElementId("integerformat",193);
+ElementId ELEM_JUMPLOAD = ElementId("jumpload",194);
+ElementId ELEM_MAXINSTRUCTION = ElementId("maxinstruction",195);
+ElementId ELEM_MAXLINEWIDTH = ElementId("maxlinewidth",196);
+ElementId ELEM_NAMESPACESTRATEGY = ElementId("namespacestrategy",197);
+ElementId ELEM_NOCASTPRINTING = ElementId("nocastprinting",198);
+ElementId ELEM_NORETURN = ElementId("noreturn",199);
+ElementId ELEM_NULLPRINTING = ElementId("nullprinting",200);
+ElementId ELEM_OPTIONSLIST = ElementId("optionslist",201);
+ElementId ELEM_PARAM1 = ElementId("param1",202);
+ElementId ELEM_PARAM2 = ElementId("param2",203);
+ElementId ELEM_PARAM3 = ElementId("param3",204);
+ElementId ELEM_PROTOEVAL = ElementId("protoeval",205);
+ElementId ELEM_SETACTION = ElementId("setaction",206);
+ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",207);
+ElementId ELEM_SPLITDATATYPE = ElementId("splitdatatype",270);
+ElementId ELEM_STRUCTALIGN = ElementId("structalign",208);
+ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
+ElementId ELEM_WARNING = ElementId("warning",210);
+ElementId ELEM_JUMPTABLEMAX = ElementId("jumptablemax",271);
+ElementId ELEM_NANIGNORE = ElementId("nanignore",272);
+ElementId ELEM_BRACEFORMAT = ElementId("braceformat",284);
 
 /// If the parameter is "on" return \b true, if "off" return \b false.
 /// Any other value causes an exception.
@@ -78,7 +84,7 @@ bool ArchOption::onOrOff(const string &p)
 void OptionDatabase::registerOption(ArchOption *option)
 
 {
-  uint4 id = ElementId::find(option->getName());	// Option name must match a known element name
+  uint4 id = ElementId::find(option->getName(),0);	// Option name must match a known element name
   optionmap[id] = option;
 }
 
@@ -99,7 +105,6 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionForLoops());
   registerOption(new OptionInline());
   registerOption(new OptionNoReturn());
-  registerOption(new OptionStructAlign());
   registerOption(new OptionProtoEval());
   registerOption(new OptionWarning());
   registerOption(new OptionNullPrinting());
@@ -113,15 +118,19 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionCommentHeader());
   registerOption(new OptionCommentInstruction());
   registerOption(new OptionIntegerFormat());
+  registerOption(new OptionBraceFormat());
   registerOption(new OptionCurrentAction());
   registerOption(new OptionAllowContextSet());
   registerOption(new OptionSetAction());
   registerOption(new OptionSetLanguage());
+  registerOption(new OptionJumpTableMax());
   registerOption(new OptionJumpLoad());
   registerOption(new OptionToggleRule());
   registerOption(new OptionAliasBlock());
   registerOption(new OptionMaxInstruction());
   registerOption(new OptionNamespaceStrategy());
+  registerOption(new OptionSplitDatatypes());
+  registerOption(new OptionNanIgnore());
 }
 
 OptionDatabase::~OptionDatabase(void)
@@ -257,7 +266,10 @@ string OptionReadOnly::apply(Architecture *glb,const string &p1,const string &p2
 string OptionDefaultPrototype::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {
-  glb->setDefaultModel(p1);
+  ProtoModel *model = glb->getModel(p1);
+  if (model == (ProtoModel *)0)
+    throw LowlevelError("Unknown prototype model :" + p1);
+  glb->setDefaultModel(model);
   return "Set default prototype to "+p1;
 }
 
@@ -351,23 +363,6 @@ string OptionNoReturn::apply(Architecture *glb,const string &p1,const string &p2
     prop = "false";
   string res = "No return property for function "+p1+" = "+prop;
   return res;
-}
-
-/// \class OptionStructAlign
-/// \brief Alter the "structure alignment" data organization setting
-///
-/// The first parameter must an integer value indicating the desired alignment
-string OptionStructAlign::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
-
-{
-  int4 val  = -1;
-  istringstream s(p1);
-  s >> dec >> val;
-  if (val == -1)
-    throw ParseError("Missing alignment value");
-
-  glb->types->setStructAlign(val);
-  return "Structure alignment set";
 }
 
 /// \class OptionWarning
@@ -585,6 +580,47 @@ string OptionIntegerFormat::apply(Architecture *glb,const string &p1,const strin
   return "Integer format set to "+p1;
 }
 
+/// \class OptionBraceFormat
+/// \brief Set the brace formatting strategy for various types of code block
+///
+/// The first parameter is the strategy name:
+///   - \b same  - For an opening brace on the same line
+///   - \b next  - For an opening brace on the next line
+///   - \b skip  - For an opening brace after a blank line
+///
+/// The second parameter is the type of code block:
+///   - \b function - For the main function body
+///   - \b ifelse   - For if/else blocks
+///   - \b loop     - For do/while/for loop blocks
+///   - \b switch   - For a switch block
+string OptionBraceFormat::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  PrintC *lng = dynamic_cast<PrintC *>(glb->print);
+  if (lng == (PrintC *)0)
+    return "Can only set brace formatting for C language";
+  Emit::brace_style style;
+  if (p2 == "same")
+    style = Emit::same_line;
+  else if (p2 == "next")
+    style = Emit::next_line;
+  else if (p2 == "skip")
+    style = Emit::skip_line;
+  else
+    throw ParseError("Unknown brace style: "+p2);
+  if (p1 == "function")
+    lng->setBraceFormatFunction(style);
+  else if (p1 == "ifelse")
+    lng->setBraceFormatIfElse(style);
+  else if (p1 == "loop")
+    lng->setBraceFormatLoop(style);
+  else if (p1 == "switch")
+    lng->setBraceFormatSwitch(style);
+  else
+    throw ParseError("Unknown brace format category: "+p1);
+  return "Brace formatting for " + p1 + " set to " + p2;
+}
+
 /// \class OptionSetAction
 /// \brief Establish a new root Action for the decompiler
 ///
@@ -764,7 +800,7 @@ string OptionProtoEval::apply(Architecture *glb,const string &p1,const string &p
   if (p1 == "default")
     model = glb->defaultfp;
   else {
-    model = glb->protoModels[p1];
+    model = glb->getModel(p1);
     if (model == (ProtoModel *)0)
       throw ParseError("Unknown prototype model: "+p1);
   }
@@ -785,6 +821,26 @@ string OptionSetLanguage::apply(Architecture *glb,const string &p1,const string 
   glb->setPrintLanguage(p1);
   res = "Decompiler produces "+p1;
   return res;
+}
+
+/// \class OptionJumpTableMax
+/// \brief Set the maximum number of entries that can be recovered for a single jump table
+///
+/// This option is an unsigned integer value used during analysis of jump tables.  It serves as a
+/// sanity check that the recovered number of entries for a jump table is reasonable and
+/// also acts as a resource limit on the number of destination addresses that analysis will attempt
+/// to follow from a single indirect jump.
+string OptionJumpTableMax::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  istringstream s(p1);
+  s.unsetf(ios::dec | ios::hex | ios::oct);
+  uint4 val = 0;
+  s >> val;
+  if (val==0)
+    throw ParseError("Must specify integer maximum");
+  glb->max_jumptable_size = val;
+  return "Maximum jumptable size set to "+p1;
 }
 
 /// \class OptionJumpLoad
@@ -914,3 +970,94 @@ string OptionNamespaceStrategy::apply(Architecture *glb,const string &p1,const s
   glb->print->setNamespaceStrategy(strategy);
   return "Namespace strategy set";
 }
+
+/// Possible value are:
+///   - (empty string) = 0
+///   - "struct"       = 1
+///   - "array"        = 2
+///   - "pointer"     = 4
+///
+/// \param val is the option string
+/// \return the corresponding configuration bit
+uint4 OptionSplitDatatypes::getOptionBit(const string &val)
+
+{
+  if (val.size() == 0) return 0;
+  if (val == "struct") return option_struct;
+  if (val == "array") return option_array;
+  if (val == "pointer") return option_pointer;
+  throw LowlevelError("Unknown data-type split option: "+val);
+}
+
+/// \class OptionSplitDatatypes
+/// \brief Control which data-type assignments are split into multiple COPY/LOAD/STORE operations
+///
+/// Any combination of the three options can be given:
+///   - "struct"  = Divide structure data-types into separate field assignments
+///   - "array"   = Divide array data-types into separate element assignments
+///   - "pointer" = Divide assignments, via LOAD/STORE, through pointers
+string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  uint4 oldConfig = glb->split_datatype_config;
+  glb->split_datatype_config = getOptionBit(p1);
+  glb->split_datatype_config |= getOptionBit(p2);
+  glb->split_datatype_config |= getOptionBit(p3);
+
+  if ((glb->split_datatype_config & (option_struct | option_array)) == 0) {
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitcopy",false);
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitpointer",false);
+  }
+  else {
+    bool pointers = (glb->split_datatype_config & option_pointer) != 0;
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitcopy",true);
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitpointer",pointers);
+  }
+
+  if (oldConfig == glb->split_datatype_config)
+    return "Split data-type configuration unchanged";
+  return "Split data-type configuration set";
+}
+
+/// \class OptionNanIgnore
+/// \brief Which Not a Number (NaN) operations should be ignored
+///
+/// The option controls which p-code NaN operations are replaced with a \b false constant, assuming
+/// the input is a valid floating-point value.
+///   - "none"  = No operations are replaced
+///   - "compare" = Replace NaN operations associated with floating-poing comparisons
+///   - "all" = Replace all NaN operations
+string OptionNanIgnore::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  bool oldIgnoreAll = glb->nan_ignore_all;
+  bool oldIgnoreCompare = glb->nan_ignore_compare;
+
+  if (p1 == "none") {			// Don't ignore any NaN operation
+    glb->nan_ignore_all = false;
+    glb->nan_ignore_compare = false;
+  }
+  else if (p1 == "compare") {		// Ignore only NaN operations protecting floating-point comparisons
+    glb->nan_ignore_all = false;
+    glb->nan_ignore_compare = true;
+  }
+  else if (p1 == "all") {		// Ignore all NaN operations
+    glb->nan_ignore_all = true;
+    glb->nan_ignore_compare = true;
+  }
+  else {
+    throw LowlevelError("Unknown nanignore option: "+p1);
+  }
+  Action *root = glb->allacts.getCurrent();
+  if (!glb->nan_ignore_all && !glb->nan_ignore_compare) {
+    root->disableRule("ignorenan");
+  }
+  else {
+    root->enableRule("ignorenan");
+  }
+  if (oldIgnoreAll == glb->nan_ignore_all && oldIgnoreCompare == glb->nan_ignore_compare)
+    return "NaN ignore configuration unchanged";
+  return "Nan ignore configuration set to: " + p1;
+}
+
+} // End namespace ghidra

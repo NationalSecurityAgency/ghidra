@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 
 /**
@@ -48,6 +50,9 @@ public class DBStringMapAdapter {
 	}
 
 	public void put(String key, String value) throws IOException {
+		if (StringUtils.equals(value, get(key))) {
+			return;
+		}
 		DBRecord record = SCHEMA.createRecord(new StringField(key));
 		record.setString(0, value);
 		table.putRecord(record);

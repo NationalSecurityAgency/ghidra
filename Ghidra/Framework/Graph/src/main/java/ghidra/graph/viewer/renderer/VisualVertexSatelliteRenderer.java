@@ -17,19 +17,27 @@ package ghidra.graph.viewer.renderer;
 
 import java.awt.*;
 
+import com.google.common.base.Function;
+
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.vertex.AbstractVisualVertexRenderer;
 
 /**
- * A renderer for vertices for the satellite view.  This is really just a basic renderer 
+ * A renderer for vertices for the satellite view.  This is really just a basic renderer
  * that adds emphasis capability, as seen in the primary function graph renderer.
+ * @param <V> the vertex type
+ * @param <E> the edge type
  */
 public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends AbstractVisualVertexRenderer<V, E> {
+
+	private Color highlightColor = new GColor("color.bg.highlight.visualgraph");
 
 	/**
 	 * Overridden to handle painting emphasis.
@@ -51,9 +59,9 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 		}
 
 // POSTERITY NOTE: we used to let the satellite paint the emphasis of nodes, as a way to call
-//		           attention to the selected node.  Now that we use caching, this has the odd 
-//		           side-effect of painting a large vertex in the cached image.  Also, we have 
-//		           changed how the satellite paints selected vertices, so the effect being 
+//		           attention to the selected node.  Now that we use caching, this has the odd
+//		           side-effect of painting a large vertex in the cached image.  Also, we have
+//		           changed how the satellite paints selected vertices, so the effect being
 //		           performed below is no longer necessary.
 //		GraphicsDecorator emphasisGraphics = getEmphasisGraphics(defaultGraphics, v, rc, layout);
 //		rc.setGraphicsContext(emphasisGraphics);
@@ -64,13 +72,38 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 	}
 
 	@Override
+	protected void paintShapeForVertex(RenderContext<V, E> rc, V v, Shape shape) {
+		GraphicsDecorator g = rc.getGraphicsContext();
+		Paint oldPaint = g.getPaint();
+
+		Function<? super V, Paint> fillXform = getVertexFillPaintTransformer();
+		if (fillXform == null) {
+			fillXform = rc.getVertexFillPaintTransformer();
+		}
+
+		Paint fillPaint = fillXform.apply(v);
+		if (fillPaint == null) {
+			super.paintShapeForVertex(rc, v, shape);
+			return;
+		}
+
+		// this makes the plain vertices easier to see
+		paintDropShadow(rc, g, shape);
+
+		g.setPaint(fillPaint);
+		g.fill(shape);
+
+		g.setPaint(oldPaint);
+	}
+
+	@Override
 	protected Shape prepareFinalVertexShape(RenderContext<V, E> rc, V v, Layout<V, E> layout,
 			int[] coords) {
 
 		// DEBUG original behavior; this can show the true shape of the vertex
 		// return super.prepareFinalVertexShape(rc, v, layout, coords);
 
-		// use the compact shape in the satellite view		
+		// use the compact shape in the satellite view
 		return getCompactShape(rc, layout, v);
 	}
 
@@ -83,22 +116,19 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 		}
 
 		Paint oldPaint = g.getPaint();
-
-		int halfishTransparency = 150;
-		Color yellowWithTransparency = new Color(255, 255, 0, halfishTransparency);
-		g.setPaint(yellowWithTransparency);
+		g.setPaint(highlightColor);
 
 //		int offset = (int) adjustValueForCurrentScale(rc, 10D, .25);
 		int offset = 10;
 
-		// scale the offset with the scale of the view, but not as fast, so that as we scale down, 
+		// scale the offset with the scale of the view, but not as fast, so that as we scale down,
 		// the size of the paint area starts to get larger than the vertex
 		offset = (int) adjustValueForCurrentScale(rc, offset, .9);
 		g.fillOval(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),
 			bounds.height + (offset * 2));
 
 		if (isGraphScaledEnoughToBeDifficultToSee(rc)) {
-			g.setColor(Color.BLACK);
+			g.setColor(Colors.BORDER);
 			g.drawOval(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),
 				bounds.height + (offset * 2));
 			g.drawOval(bounds.x - offset - 1, bounds.y - offset - 1,

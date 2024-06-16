@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.util.*;
 
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -78,11 +79,13 @@ public class ElfDefaultGotPltMarkup {
 		// look for .got section blocks
 		MemoryBlock[] blocks = memory.getBlocks();
 		for (MemoryBlock gotBlock : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
-			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
+			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got) ||
+				!gotBlock.isInitialized()) {
 				continue;
 			}
+
 			// Assume the .got section is read_only.  This is not true, but it helps with analysis
 			gotBlock.setWrite(false);
 
@@ -142,7 +145,7 @@ public class ElfDefaultGotPltMarkup {
 
 			ElfProgramHeader relocTableLoadHeader =
 				elf.getProgramLoadHeaderContaining(relocTableAddr);
-			if (relocTableLoadHeader == null || relocTableLoadHeader.getOffset() < 0) {
+			if (relocTableLoadHeader == null || relocTableLoadHeader.isInvalidOffset()) {
 				return;
 			}
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
@@ -368,31 +371,40 @@ public class ElfDefaultGotPltMarkup {
 			return; // evidence of prior markup - skip GOT processing
 		}
 
-		try {
-			// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
-			ElfDynamicTable dynamicTable = elf.getDynamicTable();
-			long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
-			if (dynamicTable != null && imageBaseAdj != 0) {
+		// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
+		ElfDynamicTable dynamicTable = elf.getDynamicTable();
+		long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
+		if (dynamicTable != null && imageBaseAdj != 0) {
+			try {
 				long entry1Value = elfLoadHelper.getOriginalValue(gotStart, false);
 				if (entry1Value == dynamicTable.getAddressOffset()) {
 					// TODO: record artificial relative relocation for reversion/export concerns
 					entry1Value += imageBaseAdj; // adjust first entry value
 					if (elf.is64Bit()) {
-						elfLoadHelper.addFakeRelocTableEntry(gotStart, 8);
+						elfLoadHelper.addArtificialRelocTableEntry(gotStart, 8);
 						memory.setLong(gotStart, entry1Value);
 					}
 					else {
-						elfLoadHelper.addFakeRelocTableEntry(gotStart, 4);
+						elfLoadHelper.addArtificialRelocTableEntry(gotStart, 4);
 						memory.setInt(gotStart, (int) entry1Value);
 					}
 				}
 			}
+			catch (Exception e) {
+				String msg =
+					"Failed to process first GOT entry at " + gotStart + ": " + e.getMessage();
+				log(msg);
+				Msg.error(this, msg, e);
+			}
+		}
 
-			boolean imageBaseAlreadySet = elf.isPreLinked();
+		boolean imageBaseAlreadySet = elf.isPreLinked();
 
+		try {
+			int pointerSize = program.getDataTypeManager().getDataOrganization().getPointerSize();
 			Address newImageBase = null;
 			Address nextGotAddr = gotStart;
-			while (nextGotAddr.compareTo(gotEnd) <= 0) {
+			while (gotEnd.subtract(nextGotAddr) >= pointerSize) {
 
 				data = createPointer(nextGotAddr, true);
 				if (data == null) {
@@ -441,7 +453,8 @@ public class ElfDefaultGotPltMarkup {
 
 		MemoryBlock pltBlock = memory.getBlock(ElfSectionHeaderConstants.dot_plt);
 		// TODO: This is a band-aid since there are many PLT implementations and this assumes only one.
-		if (pltBlock == null || !pltBlock.isExecute() || pltBlock.getSize() <= assumedPltHeadSize) {
+		if (pltBlock == null || !pltBlock.isExecute() || !pltBlock.isInitialized() ||
+			pltBlock.getSize() <= assumedPltHeadSize) {
 			return;
 		}
 
@@ -472,10 +485,13 @@ public class ElfDefaultGotPltMarkup {
 			TaskMonitor monitor) throws CancelledException {
 
 		try {
-			// Disassemble section.  
+			// Disassemble PLT section.  
 			// Disassembly is only done so we can see all instructions since many
-			// of them are unreachable after applying relocations
-			disassemble(minAddress, maxAddress, program, monitor);
+			// of them are unreachable after applying relocations.  Avoid disassembly
+			// when alternate instruction sets exist.
+			if (!PseudoDisassembler.hasLowBitCodeModeInAddrValues(program)) {
+				disassemble(minAddress, maxAddress, program, monitor);
+			}
 
 			// Any symbols in the linkage section should be converted to External function thunks 
 			// This can be seen with ARM Android examples.
@@ -494,8 +510,8 @@ public class ElfDefaultGotPltMarkup {
 
 	/**
 	 * Convert all symbols over a specified range to thunks to external functions. 
-	 * @param minAddress
-	 * @param maxAddress
+	 * @param minAddress range minimum address
+	 * @param maxAddress range maximum address (inclusive)
 	 * @return number of symbols converted
 	 */
 	private int convertSymbolsToExternalFunctions(Address minAddress, Address maxAddress) {
@@ -533,7 +549,7 @@ public class ElfDefaultGotPltMarkup {
 		Disassembler disassembler = Disassembler.getDisassembler(prog, monitor, m -> {
 			/* silent */});
 		while (!set.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressSet disset = disassembler.disassemble(set.getMinAddress(), null, true);
 			if (disset.isEmpty()) {
 				// Stop on first error but discard error bookmark since
@@ -585,6 +601,9 @@ public class ElfDefaultGotPltMarkup {
 	 * @param data program data
 	 */
 	public static void setConstant(Data data) {
+		if (data == null) {
+			return;
+		}
 		Memory memory = data.getProgram().getMemory();
 		MemoryBlock block = memory.getBlock(data.getAddress());
 		if (!block.isWrite() || block.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
@@ -656,7 +675,7 @@ public class ElfDefaultGotPltMarkup {
 		if (program.getImageBase().getOffset() != 0) {
 			return null;
 		}
-		if (program.getRelocationTable().getRelocation(data.getAddress()) != null) {
+		if (program.getRelocationTable().hasRelocation(data.getAddress())) {
 			return null;
 		}
 		MemoryBlock tBlock = memory.getBlock(".text");

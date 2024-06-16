@@ -16,10 +16,12 @@
 /// \file stringmanage.hh
 /// \brief Classes for decoding and storing string data
 
-#ifndef __STRING_MANAGE__
-#define __STRING_MANAGE__
+#ifndef __STRINGMANAGE_HH__
+#define __STRINGMANAGE_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 class Architecture;
 
@@ -63,7 +65,7 @@ public:
   virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc)=0;
 
   void encode(Encoder &encoder) const;	///< Encode cached strings to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *m);	///< Restore string cache from a stream
+  void decode(Decoder &decoder);	///< Restore string cache from a stream
 
   static bool hasCharTerminator(const uint1 *buffer,int4 size,int4 charsize);	///< Check for a unicode string terminator
   static int4 readUtf16(const uint1 *buf,bool bigend);	///< Read a UTF16 code point from a byte array
@@ -87,4 +89,5 @@ public:
   bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Translate/copy unicode to UTF8
 };
 
+} // End namespace ghidra
 #endif

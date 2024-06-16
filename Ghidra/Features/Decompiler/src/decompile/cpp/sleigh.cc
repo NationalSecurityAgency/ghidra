@@ -16,6 +16,8 @@
 #include "sleigh.hh"
 #include "loadimage.hh"
 
+namespace ghidra {
+
 PcodeCacher::PcodeCacher(void)
 
 {
@@ -186,6 +188,12 @@ AddrSpace *SleighBuilder::generatePointer(const VarnodeTpl *vntpl,VarnodeData &v
   return hand.space;
 }
 
+/// \brief Add in an additional offset to the address of a dynamic Varnode
+///
+/// The Varnode is ultimately read/written via LOAD/STORE operation AND has undergone a truncation
+/// operation, so an additional offset needs to get added to the pointer referencing the Varnode.
+/// \param op is the LOAD/STORE operation being generated
+/// \param vntpl is the dynamic Varnode
 void SleighBuilder::generatePointerAdd(PcodeData *op,const VarnodeTpl *vntpl)
 
 {
@@ -444,7 +452,7 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   nextfree = 0;
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
-    ParserContext *pos = new ParserContext(contextcache);
+    ParserContext *pos = new ParserContext(contextcache,translate);
     pos->initialize(75,20,constspace);
     list[i] = pos;
   }
@@ -462,13 +470,15 @@ void DisassemblyCache::free(void)
   delete [] hashtable;
 }
 
+/// \param trans is the Translate object instantiating this cache (for inst_next2 callbacks)
 /// \param ccache is the ContextCache front-end shared across all the parser contexts
 /// \param cspace is the constant address space used for minting constant Varnodes
 /// \param cachesize is the number of distinct ParserContext objects in this cache
 /// \param windowsize is the size of the ParserContext hash-table
-DisassemblyCache::DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
+DisassemblyCache::DisassemblyCache(Translate *trans,ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
 
 {
+  translate = trans;
   contextcache = ccache;
   constspace = cspace;
   initialize(cachesize,windowsize);		// Set default settings for the cache
@@ -549,7 +559,13 @@ void Sleigh::initialize(DocumentStorage &store)
     const Element *el = store.getTag("sleigh");
     if (el == (const Element *)0)
       throw LowlevelError("Could not find sleigh tag");
-    restoreXml(el);
+    sla::FormatDecode decoder(this);
+    ifstream s(el->getContent(), std::ios_base::binary);
+    if (!s)
+      throw LowlevelError("Could not open .sla file: " + el->getContent());
+    decoder.ingestStream(s);
+    s.close();
+    decode(decoder);
   }
   else
     reregisterContext();
@@ -559,7 +575,7 @@ void Sleigh::initialize(DocumentStorage &store)
     parser_cachesize = 8;
     parser_windowsize = 256;
   }
-  discache = new DisassemblyCache(cache,getConstantSpace(),parser_cachesize,parser_windowsize);
+  discache = new DisassemblyCache(this,cache,getConstantSpace(),parser_cachesize,parser_windowsize);
 }
 
 /// \brief Obtain a parse tree for the instruction at the given address
@@ -793,3 +809,5 @@ void Sleigh::allowContextSet(bool val) const
 {
   cache->allowSet(val);
 }
+
+} // End namespace ghidra

@@ -15,8 +15,9 @@
  */
 package ghidra.app.cmd.formats;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -32,7 +33,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -48,11 +48,8 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 	@Override
 	public boolean canApply(Program program) {
 		try {
-			Memory memory = program.getMemory();
-
-			ByteProvider provider = new MemoryByteProvider(memory,
-				program.getAddressFactory().getDefaultAddressSpace());
-
+			ByteProvider provider =
+				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
 			DOSHeader dosHeader = new DOSHeader(reader);
@@ -75,8 +72,8 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 	public boolean analysisWorkerCallback(Program program, Object workerContext,
 			TaskMonitor monitor) throws Exception, CancelledException {
 
-		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
-			program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 
 		PortableExecutable pe = new PortableExecutable(provider, SectionLayout.FILE);
 

@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.disassembler.AddressTable;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -88,7 +89,7 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 			// use context to fill out addresses on certain instructions
 			//   Always trust values read from writable memory
 			ConstantPropagationContextEvaluator eval =
-				new ConstantPropagationContextEvaluator(true) {
+				new ConstantPropagationContextEvaluator(monitor, true) {
 					@Override
 					public boolean evaluateDestination(VarnodeContext context,
 							Instruction instruction) {
@@ -131,10 +132,13 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 
 					@Override
 					public boolean evaluateReference(VarnodeContext context, Instruction instr,
-							int pcodeop, Address address, int size, RefType refType) {
+							int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 						return true; // just go ahead and mark up the instruction
 					}
 				};
+				
+			eval.setTrustWritableMemory(true)
+			    .setCreateComplexDataFromPointers(true);
 
 			SymbolicPropogator symEval = new SymbolicPropogator(currentProgram);
 			symEval.setParamRefCheck(true);
@@ -144,7 +148,7 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 			symEval.flowConstants(start, func.getBody(), eval, true, monitor);
 
 			// now handle symbolic execution assuming values!
-			eval = new ConstantPropagationContextEvaluator() {
+			eval = new ConstantPropagationContextEvaluator(monitor) {
 
 				@Override
 				public boolean evaluateContext(VarnodeContext context, Instruction instr) {
@@ -181,14 +185,14 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 
 				@Override
 				public Address evaluateConstant(VarnodeContext context, Instruction instr,
-						int pcodeop, Address constant, int size, RefType refType) {
+						int pcodeop, Address constant, int size, DataType dataType, RefType refType) {
 					// don't create any references from constants, only looking for flow refs
 					return null;
 				}
 
 				@Override
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
-						int pcodeop, Address address, int size, RefType refType) {
+						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 					// TODO: if ever loading from instructions in memory, must
 					// EXIT!
 					if (!(instr.getFlowType().isComputed() &&
@@ -220,6 +224,9 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 					return true;
 				}
 			};
+			
+			eval.setTrustWritableMemory(true)
+		        .setCreateComplexDataFromPointers(true);
 
 			// now flow with the simple block of this branch....
 
@@ -258,7 +265,7 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 				tableSizeMax = 64;
 				tableIndexOffset = 0;
 				for (long assume = 0; assume < tableSizeMax; assume++) {
-					assumeValue = new Long(assume);
+					assumeValue = Long.valueOf(assume);
 					hitTheGuard = false;
 
 					symEval.flowConstants(branchSet.getMinAddress(), branchSet, eval, false,

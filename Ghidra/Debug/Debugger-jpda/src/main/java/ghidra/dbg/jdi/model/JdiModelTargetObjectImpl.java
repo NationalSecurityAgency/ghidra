@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.Mirror;
 import com.sun.jdi.ThreadReference;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiStateListener;
@@ -158,8 +159,8 @@ public class JdiModelTargetObjectImpl extends
 		Map<String, ?> existingAttributes = getCachedAttributes();
 		Boolean autoupdate = (Boolean) existingAttributes.get("autoupdate");
 		if (autoupdate != null && autoupdate) {
-			requestAttributes(true);
-			requestElements(true);
+			requestAttributes(RefreshBehavior.REFRESH_ALWAYS);
+			requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 

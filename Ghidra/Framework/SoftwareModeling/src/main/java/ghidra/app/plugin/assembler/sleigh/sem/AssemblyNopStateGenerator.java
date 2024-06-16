@@ -39,8 +39,8 @@ public class AssemblyNopStateGenerator
 	 * @param opSym the operand symbol
 	 * @param fromLeft the accumulated patterns from the left sibling or parent
 	 */
-	public AssemblyNopStateGenerator(AssemblyTreeResolver resolver, OperandSymbol opSym,
-			AssemblyResolvedPatterns fromLeft) {
+	public AssemblyNopStateGenerator(AbstractAssemblyTreeResolver<?> resolver,
+			OperandSymbol opSym, AssemblyResolvedPatterns fromLeft) {
 		super(resolver, null, fromLeft);
 		this.opSym = opSym;
 	}
@@ -48,8 +48,7 @@ public class AssemblyNopStateGenerator
 	@Override
 	public Stream<AssemblyGeneratedPrototype> generate(GeneratorContext gc) {
 		gc.dbg("Generating NOP for " + opSym);
-		return Stream.of(
-			new AssemblyGeneratedPrototype(new AssemblyNopState(resolver, gc.path, gc.shift, opSym),
-				fromLeft));
+		return Stream.of(new AssemblyGeneratedPrototype(
+			new AssemblyNopState(resolver, gc.path, gc.shift, opSym), fromLeft));
 	}
 }

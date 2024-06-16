@@ -25,6 +25,7 @@ import SWIG.*;
 import agent.lldb.lldb.DebugClient;
 import agent.lldb.manager.LldbCause;
 import agent.lldb.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
@@ -47,8 +48,7 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 			TargetBreakpointKind.SW_EXECUTE,
 			//TargetBreakpointKind.HW_EXECUTE,
 			TargetBreakpointKind.READ,
-			TargetBreakpointKind.WRITE
-		);
+			TargetBreakpointKind.WRITE);
 
 	private final SBTarget session;
 
@@ -82,7 +82,7 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 		LldbModelImpl impl = (LldbModelImpl) model;
 		impl.deleteModelObject(info);
 		changeElements(List.of( //
-			DebugClient.getId(getModelObject()) //
+			DebugClient.getId(info) //
 		), List.of(), Map.of(), "Deleted");
 	}
 
@@ -98,22 +98,25 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 				BigInteger bptId = t.GetStopReasonDataAtIndex(0);
 				BigInteger locId = t.GetStopReasonDataAtIndex(1);
 				if (bpt.GetID() == bptId.intValue()) {
-					LldbModelTargetProcess targetProcess = (LldbModelTargetProcess) getModel().getModelObject(eventProcess);
+					LldbModelTargetProcess targetProcess =
+						(LldbModelTargetProcess) getModel().getModelObject(eventProcess);
 					LldbModelTargetThread targetThread =
-							targetProcess.getThreads().getTargetThread(t);
+						targetProcess.getThreads().getTargetThread(t);
 					LldbModelTargetBreakpointSpec spec = getTargetBreakpointSpec(bpt);
 					if (spec == null) {
-						Msg.error(this, "Stopped for breakpoint unknown to the agent: " + bpt + " (pc=" +
-							targetThread + ")");
+						Msg.error(this,
+							"Stopped for breakpoint unknown to the agent: " + bpt + " (pc=" +
+								targetThread + ")");
 						return;
 					}
 
 					LldbModelTargetBreakpointLocation loc = spec.findLocation(locId);
 					if (loc == null) {
 						Msg.warn(this,
-							"Stopped for a breakpoint whose location is unknown to the agent: " + spec);
+							"Stopped for a breakpoint whose location is unknown to the agent: " +
+								spec);
 					}
-					listeners.fire.breakpointHit(this, targetThread, null, spec, loc);					
+					broadcast().breakpointHit(this, targetThread, null, spec, loc);
 				}
 			}
 		}
@@ -135,7 +138,7 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listBreakpoints(getSession()).thenAccept(byNumber -> {
 			List<TargetObject> specs;
 			synchronized (this) {
@@ -148,6 +151,7 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 		});
 	}
 
+	@Override
 	public SBTarget getSession() {
 		return session;
 	}

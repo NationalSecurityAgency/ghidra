@@ -15,16 +15,18 @@
  */
 package ghidra.trace.util;
 
-import com.google.common.collect.*;
-
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.DefaultLifeSet;
+import ghidra.trace.model.Lifespan.MutableLifeSet;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.AbstractPeekableIterator;
 
-public class TraceViewportSpanIterator extends AbstractPeekableIterator<Range<Long>> {
+public class TraceViewportSpanIterator extends AbstractPeekableIterator<Lifespan> {
 	private final TraceTimeManager timeManager;
-	private final RangeSet<Long> set = TreeRangeSet.create();
+	private final MutableLifeSet set = new DefaultLifeSet();
 	private long snap;
 	private boolean done = false;
 
@@ -59,7 +61,7 @@ public class TraceViewportSpanIterator extends AbstractPeekableIterator<Range<Lo
 	}
 
 	@Override
-	protected Range<Long> seekNext() {
+	protected Lifespan seekNext() {
 		if (done) {
 			return null;
 		}
@@ -76,7 +78,7 @@ public class TraceViewportSpanIterator extends AbstractPeekableIterator<Range<Lo
 		else {
 			snap = fork.getSchedule().getSnap();
 		}
-		Range<Long> range = Range.closed(prevSnap, curSnap);
+		Lifespan range = Lifespan.span(prevSnap, curSnap);
 		set.add(range);
 		return range;
 	}

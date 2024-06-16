@@ -16,20 +16,22 @@
 package ghidra.framework.data;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class GhidraFolder implements DomainFolder {
 
-	private ProjectFileManager fileManager;
+	private DefaultProjectData projectData;
 	private LocalFileSystem fileSystem;
 	private FileSystem versionedFileSystem;
 	private DomainFolderChangeListener listener;
@@ -37,10 +39,10 @@ public class GhidraFolder implements DomainFolder {
 	private GhidraFolder parent;
 	private String name;
 
-	GhidraFolder(ProjectFileManager fileManager, DomainFolderChangeListener listener) {
-		this.fileManager = fileManager;
-		this.fileSystem = fileManager.getLocalFileSystem();
-		this.versionedFileSystem = fileManager.getVersionedFileSystem();
+	GhidraFolder(DefaultProjectData projectData, DomainFolderChangeListener listener) {
+		this.projectData = projectData;
+		this.fileSystem = projectData.getLocalFileSystem();
+		this.versionedFileSystem = projectData.getVersionedFileSystem();
 		this.listener = listener;
 		this.name = FileSystem.SEPARATOR;
 	}
@@ -49,7 +51,7 @@ public class GhidraFolder implements DomainFolder {
 		this.parent = parent;
 		this.name = name;
 
-		this.fileManager = parent.getProjectFileManager();
+		this.projectData = parent.getProjectData();
 		this.fileSystem = parent.getLocalFileSystem();
 		this.versionedFileSystem = parent.getVersionedFileSystem();
 		this.listener = parent.getChangeListener();
@@ -64,15 +66,11 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	LocalFileSystem getUserFileSystem() {
-		return fileManager.getUserFileSystem();
+		return projectData.getUserFileSystem();
 	}
 
 	DomainFolderChangeListener getChangeListener() {
 		return listener;
-	}
-
-	ProjectFileManager getProjectFileManager() {
-		return fileManager;
 	}
 
 	GhidraFileData getFileData(String fileName) throws FileNotFoundException, IOException {
@@ -83,22 +81,9 @@ public class GhidraFolder implements DomainFolder {
 		return fileData;
 	}
 
-	GhidraFolderData getFolderPathData(String folderPath) throws FileNotFoundException {
-		GhidraFolderData parentData = (folderPath.startsWith(FileSystem.SEPARATOR))
-				? fileManager.getRootFolderData()
-				: getFolderData();
-		GhidraFolderData folderData = parentData.getFolderPathData(folderPath, false);
-		if (folderData == null) {
-			String path = (folderPath.startsWith(FileSystem.SEPARATOR)) ? folderPath
-					: getPathname(folderPath);
-			throw new FileNotFoundException("folder " + path + " not found");
-		}
-		return folderData;
-	}
-
 	GhidraFolderData getFolderData() throws FileNotFoundException {
 		if (parent == null) {
-			return fileManager.getRootFolderData();
+			return projectData.getRootFolderData();
 		}
 		GhidraFolderData folderData = parent.getFolderData().getFolderData(name, false);
 		if (folderData == null) {
@@ -116,7 +101,7 @@ public class GhidraFolder implements DomainFolder {
 	private GhidraFolderData createFolderData(String folderName) throws IOException {
 		synchronized (fileSystem) {
 			GhidraFolderData parentData =
-				parent == null ? fileManager.getRootFolderData() : createFolderData();
+				parent == null ? projectData.getRootFolderData() : createFolderData();
 			GhidraFolderData folderData = parentData.getFolderData(folderName, false);
 			if (folderData == null) {
 				try {
@@ -131,7 +116,7 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	private GhidraFolderData createFolderData() throws IOException {
-		GhidraFolderData rootFolderData = fileManager.getRootFolderData();
+		GhidraFolderData rootFolderData = projectData.getRootFolderData();
 		if (parent == null) {
 			return rootFolderData;
 		}
@@ -140,10 +125,10 @@ public class GhidraFolder implements DomainFolder {
 
 	/**
 	 * Refresh folder data - used for testing only
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	void refreshFolderData() throws IOException {
-		getFolderData().refresh(false, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		getFolderData().refresh(false, true, TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -163,12 +148,12 @@ public class GhidraFolder implements DomainFolder {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
-		return fileManager.getProjectLocator();
+		return projectData.getProjectLocator();
 	}
 
 	@Override
-	public ProjectFileManager getProjectData() {
-		return fileManager;
+	public DefaultProjectData getProjectData() {
+		return projectData;
 	}
 
 	String getPathname(String childName) {
@@ -194,8 +179,41 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	@Override
+	public URL getSharedProjectURL() {
+		URL projectURL = projectData.getSharedProjectURL();
+		if (projectURL == null) {
+			return null;
+		}
+		try {
+			// Direct URL construction done so that ghidra protocol extension may be supported
+			String urlStr = projectURL.toExternalForm();
+			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
+				urlStr = urlStr.substring(0, urlStr.length() - 1);
+			}
+			String path = getPathname();
+			if (!path.endsWith(FileSystem.SEPARATOR)) {
+				path += FileSystem.SEPARATOR;
+			}
+			urlStr += path;
+			return new URL(urlStr);
+		}
+		catch (MalformedURLException e) {
+			return null;
+		}
+	}
+
+	@Override
+	public URL getLocalProjectURL() {
+		ProjectLocator projectLocator = projectData.getProjectLocator();
+		if (!projectLocator.isTransient()) {
+			return GhidraURL.makeURL(projectLocator, getPathname(), null);
+		}
+		return null;
+	}
+
+	@Override
 	public boolean isInWritableProject() {
-		return !getProjectData().getLocalFileSystem().isReadOnly();
+		return !fileSystem.isReadOnly();
 	}
 
 	@Override
@@ -244,7 +262,9 @@ public class GhidraFolder implements DomainFolder {
 				return folderData.isEmpty();
 			}
 			catch (FileNotFoundException e) {
-				return false; // TODO: what should we return if folder not found
+				// TODO: what should we return if folder not found or error occurs?
+				// True is returned to allow this method to be used to avoid continued access.
+				return true;
 			}
 		}
 	}
@@ -285,7 +305,7 @@ public class GhidraFolder implements DomainFolder {
 				}
 			}
 			catch (IOException e) {
-				Msg.error(this, "file error for " + parent.getPathname(fileName), e);
+				Msg.error(this, "file error for " + getPathname(fileName), e);
 			}
 			return null;
 		}
@@ -295,14 +315,14 @@ public class GhidraFolder implements DomainFolder {
 	public DomainFile createFile(String fileName, DomainObject obj, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		return createFolderData().createFile(fileName, obj,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainFile createFile(String fileName, File packFile, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		return createFolderData().createFile(fileName, packFile,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -325,8 +345,11 @@ public class GhidraFolder implements DomainFolder {
 		if (parent == null) {
 			throw new UnsupportedOperationException("root folder may not be moved");
 		}
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support moveTo");
+		}
 		GhidraFolderData folderData = getFolderData();
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
 		return folderData.moveTo(newGhidraParent.getFolderData());
 	}
 
@@ -334,9 +357,22 @@ public class GhidraFolder implements DomainFolder {
 	public GhidraFolder copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		GhidraFolderData folderData = getFolderData();
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support copyTo");
+		}
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
 		return folderData.copyTo(newGhidraParent.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
+		GhidraFolderData folderData = getFolderData();
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support copyToAsLink");
+		}
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
+		return folderData.copyToAsLink(newGhidraParent.getFolderData());
 	}
 
 	/**
@@ -374,7 +410,7 @@ public class GhidraFolder implements DomainFolder {
 			return false;
 		}
 		GhidraFolder other = (GhidraFolder) obj;
-		if (fileManager != other.fileManager) {
+		if (projectData != other.projectData) {
 			return false;
 		}
 		return getPathname().equals(other.getPathname());
@@ -387,11 +423,11 @@ public class GhidraFolder implements DomainFolder {
 
 	@Override
 	public String toString() {
-		ProjectLocator projectLocator = fileManager.getProjectLocator();
+		ProjectLocator projectLocator = projectData.getProjectLocator();
 		if (projectLocator.isTransient()) {
-			return fileManager.getProjectLocator().getName() + getPathname();
+			return projectData.getProjectLocator().getName() + getPathname();
 		}
-		return fileManager.getProjectLocator().getName() + ":" + getPathname();
+		return projectData.getProjectLocator().getName() + ":" + getPathname();
 	}
 
 }

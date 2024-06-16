@@ -25,13 +25,13 @@
 
 import java.util.*;
 
+import docking.options.OptionsService;
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.script.*;
 import ghidra.app.tablechooser.*;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
@@ -254,8 +254,7 @@ public class ShowConstantUse extends GhidraScript {
 				ConstUseLocation entry = (ConstUseLocation) rowObject;
 				Function func = entry.getProgram()
 						.getFunctionManager()
-						.getFunctionContaining(
-							entry.getAddress());
+						.getFunctionContaining(entry.getAddress());
 				if (func == null) {
 					return "";
 				}
@@ -639,7 +638,7 @@ public class ShowConstantUse extends GhidraScript {
 			ReferenceIterator referencesTo =
 				currentProgram.getReferenceManager().getReferencesTo(addr);
 			for (Reference reference : referencesTo) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// get function containing.
 				Address refAddr = reference.getFromAddress();
@@ -665,8 +664,7 @@ public class ShowConstantUse extends GhidraScript {
 					// decompile function
 					// look for call to this function
 					// display call
-					@SuppressWarnings("unchecked")
-					ArrayList<PcodeOp> localDefUseList = (ArrayList<PcodeOp>) defUseList.clone();
+					ArrayList<PcodeOp> localDefUseList = new ArrayList<PcodeOp>(defUseList);
 
 					this.monitor.setMessage("Analyzing : " + refFunc.getName() + " for refs to " +
 						addr + ":" + paramIndex);
@@ -763,9 +761,7 @@ public class ShowConstantUse extends GhidraScript {
 		if (defUseList == null || defUseList.size() <= 0) {
 			return value;
 		}
-		Iterator<PcodeOp> iterator = defUseList.iterator();
-		while (iterator.hasNext()) {
-			PcodeOp pcodeOp = iterator.next();
+		for (PcodeOp pcodeOp : defUseList) {
 			int opcode = pcodeOp.getOpcode();
 			switch (opcode) {
 				case PcodeOp.INT_AND:
@@ -867,12 +863,11 @@ public class ShowConstantUse extends GhidraScript {
 					doneSet);
 				return;
 			case PcodeOp.MULTIEQUAL:
-				followToParam(constUse, defUseList, highFunction, def.getInput(0), funcList,
-					doneSet);
-				@SuppressWarnings("unchecked")
-				ArrayList<PcodeOp> splitUseList = (ArrayList<PcodeOp>) defUseList.clone();
-				followToParam(constUse, splitUseList, highFunction, def.getInput(1), funcList,
-					doneSet);
+				for (int i = 0; i < def.getNumInputs(); i++) {
+					ArrayList<PcodeOp> splitUseList = new ArrayList<>(defUseList);
+					followToParam(constUse, splitUseList, highFunction, def.getInput(i), funcList,
+						doneSet);
+				}
 				return;
 			case PcodeOp.CAST:
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), funcList,
@@ -972,8 +967,7 @@ public class ShowConstantUse extends GhidraScript {
 	}
 
 	private void followThroughGlobal(HashMap<Address, Long> constUse, ArrayList<PcodeOp> defUseList,
-			HighVariable hvar,
-			ArrayList<FunctionParamUse> funcList,
+			HighVariable hvar, ArrayList<FunctionParamUse> funcList,
 			HashSet<SequenceNumber> doneSet) {
 		Address loc = hvar.getRepresentative().getAddress();
 		PcodeOp def = hvar.getRepresentative().getDef();
@@ -1015,6 +1009,7 @@ public class ShowConstantUse extends GhidraScript {
 	private Address lastDecompiledFuncAddr = null;
 
 	private DecompInterface setUpDecompiler(Program program) {
+
 		DecompInterface decompInterface = new DecompInterface();
 
 		// call it to get results
@@ -1023,13 +1018,8 @@ public class ShowConstantUse extends GhidraScript {
 			return null;
 		}
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		OptionsService service = state.getTool().getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
-		}
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(state.getTool(), program);
+
 		decompInterface.setOptions(options);
 
 		decompInterface.toggleCCode(true);

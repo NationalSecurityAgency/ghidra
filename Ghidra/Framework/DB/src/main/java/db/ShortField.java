@@ -94,12 +94,12 @@ public final class ShortField extends PrimitiveField {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		return buf.putShort(offset, value);
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		updatingPrimitiveValue();
 		value = buf.getShort(offset);
 		return offset + 2;
@@ -184,6 +184,10 @@ public final class ShortField extends PrimitiveField {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
+		if (bytes == null) {
+			setNull();
+			return;
+		}
 		if (bytes.length != 2) {
 			throw new IllegalFieldAccessException();
 		}

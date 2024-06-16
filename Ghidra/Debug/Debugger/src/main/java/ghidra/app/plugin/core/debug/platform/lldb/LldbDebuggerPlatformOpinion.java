@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.platform.lldb;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
@@ -31,7 +32,7 @@ public class LldbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 	protected static final CompilerSpecID COMP_ID_GCC = new CompilerSpecID("gcc");
 	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("windows");
 
-	protected static class LldbDebuggerPlatformMapper
+	protected static final class LldbDebuggerPlatformMapper
 			extends DefaultDebuggerPlatformMapper {
 		public LldbDebuggerPlatformMapper(PluginTool tool, Trace trace,
 				CompilerSpec cSpec) {
@@ -79,18 +80,50 @@ public class LldbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 			// TODO: May need these per offer
 			return new LldbDebuggerPlatformMapper(tool, trace, getCompilerSpec());
 		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == LldbDebuggerPlatformMapper.class;
+		}
+	}
+
+	protected static class LldbDebuggerPlatformOffer extends AbstractDebuggerPlatformOffer {
+		public static LldbDebuggerPlatformOffer fromArchLCSP(String arch,
+				LanguageCompilerSpecPair lcsp)
+				throws CompilerSpecNotFoundException, LanguageNotFoundException {
+			return new LldbDebuggerPlatformOffer("Default LLDB for " + arch, lcsp.getCompilerSpec());
+		}
+
+		public LldbDebuggerPlatformOffer(String description, CompilerSpec cSpec) {
+			super(description, cSpec);
+		}
+
+		@Override
+		public int getConfidence() {
+			return 10;
+		}
+
+		@Override
+		public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
+			return new LldbDebuggerPlatformMapper(tool, trace, cSpec);
+		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == LldbDebuggerPlatformMapper.class;
+		}
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
 		if (debugger == null || arch == null ||
 			os == null | !debugger.toLowerCase().contains("lldb")) {
 			return Set.of();
 		}
 		String lcOS = os.toLowerCase();
 		boolean isLinux = lcOS.contains("linux");
-		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos");
+		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos") || lcOS.contains("ios");
 		boolean isWindows = lcOS.contains("windows");
 		String lcArch = arch.toLowerCase();
 		// "arm" subsumes "arm64"

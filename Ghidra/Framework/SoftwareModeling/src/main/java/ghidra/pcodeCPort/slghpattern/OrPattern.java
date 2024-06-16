@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,20 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
-
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-
-import org.jdom.Element;
+import ghidra.program.model.pcode.Encoder;
 
 public class OrPattern extends Pattern {
 
 	private VectorSTL<DisjointPattern> orlist = new VectorSTL<DisjointPattern>();
 
 	public OrPattern() {
-	} // For use with restoreXml
+	}
 
 	@Override
 	public int numDisjoint() {
@@ -69,16 +66,6 @@ public class OrPattern extends Pattern {
 		for (iter = orlist.begin(); !iter.isEnd(); iter.increment()) {
 			iter.get().shiftInstruction(sa);
 		}
-	}
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		for (int i = 0; i < orlist.size(); ++i) {
-			if (orlist.get(i).isMatch(pos)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	// This isn't quite right because different branches
@@ -222,23 +209,11 @@ public class OrPattern extends Pattern {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<or_pat>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_OR_PAT);
 		for (int i = 0; i < orlist.size(); ++i) {
-			orlist.get(i).saveXml(s);
+			orlist.get(i).encode(encoder);
 		}
-		s.append("</or_pat>\n");
+		encoder.closeElement(ELEM_OR_PAT);
 	}
-
-	@Override
-	public void restoreXml(Element el) {
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		while (iter.hasNext()) {
-			Element element = (Element) iter.next();
-			DisjointPattern pat = DisjointPattern.restoreDisjoint(element);
-			orlist.push_back(pat);
-		}
-	}
-
 }

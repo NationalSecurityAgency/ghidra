@@ -44,9 +44,7 @@ public class GhidraFileOpenDataFlavorHandlerService {
 		FileOpenDropHandler.addDataFlavorHandler(DataFlavor.javaFileListFlavor,
 			new JavaFileListHandler());
 
-		DataFlavor linuxFileUrlFlavor =
-			new DataFlavor("application/x-java-serialized-object;class=java.lang.String",
-				"String file URL");
-		FileOpenDropHandler.addDataFlavorHandler(linuxFileUrlFlavor, new LinuxFileUrlHandler());
+		FileOpenDropHandler.addDataFlavorHandler(LinuxFileUrlHandler.linuxFileUrlFlavor,
+			new LinuxFileUrlHandler());
 	}
 }

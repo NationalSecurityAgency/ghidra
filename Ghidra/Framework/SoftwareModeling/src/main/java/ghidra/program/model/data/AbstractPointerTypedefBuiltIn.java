@@ -151,6 +151,11 @@ public abstract class AbstractPointerTypedefBuiltIn extends BuiltIn implements T
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return modelTypedef.getAlignedLength();
+	}
+
+	@Override
 	public DataType getDataType() {
 		return modelTypedef.getDataType();
 	}
@@ -179,16 +184,25 @@ public abstract class AbstractPointerTypedefBuiltIn extends BuiltIn implements T
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
+		if (settings == null) {
+			settings = getDefaultSettings();
+		}
 		return modelTypedef.getValueClass(settings);
 	}
 
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
+		if (settings == null) {
+			settings = getDefaultSettings();
+		}
 		return modelTypedef.getValue(buf, settings, length);
 	}
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
+		if (settings == null) {
+			settings = getDefaultSettings();
+		}
 		return modelTypedef.getRepresentation(buf, settings, length);
 	}
 

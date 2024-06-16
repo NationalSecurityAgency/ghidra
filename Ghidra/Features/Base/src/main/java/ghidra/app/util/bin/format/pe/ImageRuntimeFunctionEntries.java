@@ -16,160 +16,27 @@
 package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * typedef struct _IMAGE_RUNTIME_FUNCTION_ENTRY {
- *  DWORD BeginAddress;
- *  DWORD EndAddress;
- *  union {
- *    DWORD UnwindInfoAddress;
- *    DWORD UnwindData;
- *  } DUMMYUNIONNAME;
- * } RUNTIME_FUNCTION, *PRUNTIME_FUNCTION, _IMAGE_RUNTIME_FUNCTION_ENTRY, *_PIMAGE_RUNTIME_FUNCTION_ENTRY;
- *
- * #define UNW_FLAG_NHANDLER 0x0
- * #define UNW_FLAG_EHANDLER 0x1
- * #define UNW_FLAG_UHANDLER 0x2
- * #define UNW_FLAG_CHAININFO 0x4
- *
- * typedef struct _UNWIND_INFO {
- *     UCHAR Version : 3;
- *     UCHAR Flags : 5;
- *     UCHAR SizeOfProlog;
- *     UCHAR CountOfUnwindCodes;
- *     UCHAR FrameRegister : 4;
- *     UCHAR FrameOffset : 4;
- *     UNWIND_CODE UnwindCode[1];
- *
- * //
- * // The unwind codes are followed by an optional DWORD aligned field that
- * // contains the exception handler address or the address of chained unwind
- * // information. If an exception handler address is specified, then it is
- * // followed by the language specified exception handler data.
- * //
- * //  union {
- * //      ULONG ExceptionHandler;
- * //      ULONG FunctionEntry;
- * //  };
- * //
- * //  ULONG ExceptionData[];
- * //
- * } UNWIND_INFO, *PUNWIND_INFO;
+ * An interface for working with function table entries used for exception handling, which are found
+ * in the .pdata section.  The actual implementations are architecture-specific.
  */
-public class ImageRuntimeFunctionEntries {
+public interface ImageRuntimeFunctionEntries {
 
-	private final static int UNWIND_INFO_SIZE = 0x0C;
-
-	List<_IMAGE_RUNTIME_FUNCTION_ENTRY> functionEntries = new ArrayList<>();
-
-	ImageRuntimeFunctionEntries(BinaryReader reader, long index, NTHeader ntHeader)
-			throws IOException {
-		int entryCount = 0;
-
-		// Find the exception handler data section. This is an unbounded array of
-		// RUNTIME_INFO structures one after another and there's no count field
-		// to tell us how many there are, so get the maximum number there could be
-		// based on the size of the section.
-		FileHeader fh = ntHeader.getFileHeader();
-		for (SectionHeader section : fh.getSectionHeaders()) {
-			if (section.getName().contentEquals(".pdata")) {
-				entryCount = section.getSizeOfRawData() / UNWIND_INFO_SIZE;
-				break;
-			}
-		}
-
-		if (entryCount == 0) {
-			return;
-		}
-
-		long origIndex = reader.getPointerIndex();
-
-		reader.setPointerIndex(index);
-
-		for (int i = 0; i < entryCount; i++) {
-			_IMAGE_RUNTIME_FUNCTION_ENTRY entry = new _IMAGE_RUNTIME_FUNCTION_ENTRY();
-			entry.beginAddress = reader.readNextUnsignedInt();
-			entry.endAddress = reader.readNextUnsignedInt();
-			entry.unwindInfoAddressOrData = reader.readNextUnsignedInt();
-
-			// When the size of the section is bigger than the number of structures
-			// the structure data fields will all be null, signaling the end of the
-			// array of structures. Break out here.
-			if (entry.beginAddress == 0 && entry.endAddress == 0 &&
-				entry.unwindInfoAddressOrData == 0) {
-				break;
-			}
-
-			// Read and process the UNWIND_INFO structures the RUNTIME_INFO
-			// structures point to
-			entry.unwindInfo =
-				PEx64UnwindInfo.readUnwindInfo(reader, entry.unwindInfoAddressOrData, ntHeader);
-
-			functionEntries.add(entry);
-		}
-
-		reader.setPointerIndex(origIndex);
-	}
-
-	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getRuntimeFunctionEntries() {
-		return functionEntries;
-	}
-
-	public static void createData(Program program, Address headerStart,
-			List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes) {
-		// TODO: This is x86-64 architecture-specific and needs to be generalized.
-		StructureDataType dt = new StructureDataType(".PDATA", 0);
-		dt.setCategoryPath(new CategoryPath("/PE"));
-
-		// Lay an array of RUNTIME_INFO structure out over the data
-		StructureDataType irfeStruct = new StructureDataType("_IMAGE_RUNTIME_FUNCTION_ENTRY", 0);
-		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "BeginAddress", null);
-		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "EndAddress", null);
-		irfeStruct.add(ghidra.app.util.bin.StructConverter.IBO32, "UnwindInfoAddressOrData", null);
-
-		ArrayDataType irfeArray =
-			new ArrayDataType(irfeStruct, irfes.size(), irfeStruct.getLength());
-
-		try {
-			DataUtilities.createData(program, headerStart, irfeArray, irfeArray.getLength(), true,
-				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-		}
-		catch (CodeUnitInsertionException e) {
-			return;
-		}
-	}
-
-	// FIXME: change name to conform to Java naming standards
-	// FIXME: If public visibility is required improved member protection is needed
-	public static class _IMAGE_RUNTIME_FUNCTION_ENTRY {
-		long beginAddress;
-		long endAddress;
-		long unwindInfoAddressOrData;
-		PEx64UnwindInfo unwindInfo;
-
-		public void createData(Program program) {
-			if (unwindInfoAddressOrData > 0) {
-				try {
-					DataType dt = unwindInfo.toDataType();
-					Address start = program.getImageBase().add(unwindInfoAddressOrData);
-
-					DataUtilities.createData(program, start, dt, dt.getLength(), true,
-						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				}
-				catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
-					// ignore
-				}
-			}
-		}
-	}
-
+	/**
+	 * Marks up an {@link ImageRuntimeFunctionEntries}
+	 * 
+	 * @param program The {@link Program}
+	 * @param start The start {@link Address} 
+	 * @throws IOException If there was an IO-related error creating the data
+	 * @throws DuplicateNameException If a data type of the same name already exists
+	 * @throws CodeUnitInsertionException If data creation failed
+	 */
+	public void markup(Program program, Address start) throws CodeUnitInsertionException,
+			IOException, DuplicateNameException;
 }

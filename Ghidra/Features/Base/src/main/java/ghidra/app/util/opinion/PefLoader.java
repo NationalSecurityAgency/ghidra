@@ -36,7 +36,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class PefLoader extends AbstractLibrarySupportLoader {
+public class PefLoader extends AbstractProgramWrapperLoader {
 
 	public final static String PEF_NAME = "Preferred Executable Format (PEF)";
 	private static final long MIN_BYTE_LENGTH = 40;
@@ -320,7 +320,7 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processRelocations(ContainerHeader header, Program program,
-			ImportStateCache importState, MessageLog log, TaskMonitor monitor) {
+			ImportStateCache importState, MessageLog log, TaskMonitor monitor) throws IOException {
 		List<LoaderRelocationHeader> relocationHeaders = header.getLoader().getRelocations();
 		for (LoaderRelocationHeader relocationHeader : relocationHeaders) {
 			if (monitor.isCancelled()) {
@@ -330,7 +330,9 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 				new RelocationState(header, relocationHeader, program, importState);
 			List<Relocation> relocations = relocationHeader.getRelocations();
 			int relocationIndex = 0;
-			for (Relocation relocation : relocations) {
+			int numRepeats = 0;
+			int jumpToIdx = -1;
+			while (relocationIndex < relocations.size()) {
 				if (monitor.isCancelled()) {
 					return;
 				}
@@ -338,9 +340,40 @@ public class PefLoader extends AbstractLibrarySupportLoader {
 					monitor.setMessage(
 						"Processing relocation " + relocationIndex + " of " + relocations.size());
 				}
-				++relocationIndex;
 
+				Relocation relocation = relocations.get(relocationIndex);
 				relocation.apply(importState, state, header, program, log, monitor);
+
+				if (relocation.getRepeatCount() != 0) {
+					numRepeats++;
+
+					if (numRepeats < relocation.getRepeatCount()) {
+						if (jumpToIdx != -1) {
+							relocationIndex = jumpToIdx;
+							continue;
+						}
+
+						int blocksBack = 0;
+						jumpToIdx = relocationIndex;
+						while (blocksBack < relocation.getRepeatChunks()) {
+							jumpToIdx--;
+							blocksBack += relocations.get(jumpToIdx).getSizeInBytes() / 2;
+						}
+
+						if (blocksBack != relocation.getRepeatChunks()) {
+							throw new IOException("specified number of repeat chunks does not point to the start of a relocation command!");
+						}
+
+						continue;
+
+					} else {
+						/* done looping */
+						numRepeats = 0;
+						jumpToIdx = -1;
+					}
+				}
+
+				++relocationIndex;
 			}
 			state.dispose();
 		}

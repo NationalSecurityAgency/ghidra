@@ -78,9 +78,8 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 		plugin = getPlugin(tool, VTPlugin.class);
 		controller = new VTControllerImpl(plugin);
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
@@ -94,7 +93,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		waitForBusyTool(tool);
 		destinationProgram.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		env.dispose();
 
@@ -152,7 +151,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 
 		task.run(TaskMonitor.DUMMY);
 		destinationProgram.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private Data setData(DataType dataType, int dtLength, Address address, Program program)

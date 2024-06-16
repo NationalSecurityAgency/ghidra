@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.*;
 
 import docking.widgets.table.*;
 import ghidra.util.*;
-import ghidra.util.datastruct.Algorithms;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -59,6 +58,7 @@ public class TableUpdateJob<T> {
 		ADD_REMOVING,
 		SORTING,
 		APPLYING,
+		CANCELLED,
 		DONE
 	}
 	//@formatter:on
@@ -68,8 +68,8 @@ public class TableUpdateJob<T> {
 
 	private TableData<T> sourceData;
 	private TableData<T> updatedData;
-	private boolean disableSubFiltering = SystemUtilities.getBooleanProperty(
-		RowObjectFilterModel.SUB_FILTERING_DISABLED_PROPERTY, false);
+	private boolean disableSubFiltering = SystemUtilities
+			.getBooleanProperty(RowObjectFilterModel.SUB_FILTERING_DISABLED_PROPERTY, false);
 
 	private volatile boolean reloadData;
 	private volatile boolean doForceSort;
@@ -100,7 +100,7 @@ public class TableUpdateJob<T> {
 	/**
 	 * Meant to be called by subclasses, not clients.  This method will trigger this job not to
 	 * load data, but rather to use the given data.
-	 * 
+	 *
 	 * @param data The data to process.
 	 */
 	protected void setData(TableData<T> data) {
@@ -111,7 +111,7 @@ public class TableUpdateJob<T> {
 	 * Allows the precise disabling of the filter operation.  For example, when the user sorts, no
 	 * filtering is needed.  If the filter has changed, then a filter will take place, regardless
 	 * of the state of this variable.
-	 * 
+	 *
 	 * @param force false to reuse the current filter, if possible.
 	 */
 	protected void setForceFilter(boolean force) {
@@ -163,7 +163,7 @@ public class TableUpdateJob<T> {
 	/**
 	 * Adds the Add/Remove item to the list of items to be processed in the add/remove phase. This
 	 * call is not allowed on running jobs, only pending jobs.
-	 * 
+	 *
 	 * @param item the add/remove item to add to the list of items to be processed in the
 	 *        add/remove phase of this job.
 	 * @param maxAddRemoveCount the maximum number of add/remove jobs to queue before performing a
@@ -277,7 +277,10 @@ public class TableUpdateJob<T> {
 			if (pendingRequestedState != null) {
 				setState(pendingRequestedState);
 				pendingRequestedState = null;
-				monitor.clearCanceled();
+				monitor.clearCancelled();
+			}
+			else if (currentState != CANCELLED) {
+				setState(CANCELLED);
 			}
 			else {
 				setState(DONE);
@@ -314,6 +317,7 @@ public class TableUpdateJob<T> {
 			case SORTING:
 				return APPLYING;
 			case APPLYING:
+			case CANCELLED:
 			default:
 				return DONE;
 		}
@@ -340,6 +344,9 @@ public class TableUpdateJob<T> {
 				break;
 			case APPLYING:
 				applyData();
+				break;
+			case CANCELLED:
+				notifyCancelled();
 				break;
 			default:
 		}
@@ -381,7 +388,7 @@ public class TableUpdateJob<T> {
 	 * Since much memory could be consumed, we provide an option in the tool to disable this reuse
 	 * of filtered data.  When not in use, each filter change will perform a full refilter.  This
 	 * is not an issue for tables with moderate to small-sized datasets.
-	 * 
+	 *
 	 * @return the initial data to use for future filter and sort operations.
 	 */
 	private TableData<T> pickExistingTableData() {
@@ -512,10 +519,30 @@ public class TableUpdateJob<T> {
 
 		int size = data.size();
 		monitor.setMessage("Sorting " + model.getName() + " (" + size + " rows)" + "...");
-		monitor.initialize(size);
 
 		Comparator<T> comparator = newSortContext.getComparator();
-		Algorithms.mergeSort(data, comparator, monitor);
+		Comparator<T> monitoredComparator = new MonitoredComparator<>(comparator, monitor, size);
+
+		// copy the data. If the sort is cancelled, the data could be corrupted
+		List<T> copy = new ArrayList<>(data);
+		try {
+			Collections.sort(data, monitoredComparator);
+		}
+		catch (SortCancelledException e) {
+			// restore copy as data could be corrupted
+			data.clear();
+			data.addAll(copy);
+		}
+		catch (Exception e) {
+			// We added this to catch an issue if the sort comparators violate the contract of
+			// Comparator.  TimSort will throw an exception in this case.  We have decided to not
+			// throw the exception.  This will allow the currently loaded data to be used, albeit
+			// unsorted.
+			Msg.error(this, "Unable to finish table sorting", e);
+			// restore copy as data could be corrupted
+			data.clear();
+			data.addAll(copy);
+		}
 
 		monitor.setMessage("Done sorting");
 	}
@@ -664,6 +691,13 @@ public class TableUpdateJob<T> {
 		}
 	}
 
+	private void notifyCancelled() {
+		Swing.runNow(() -> {
+			model.backgroundWorkCancelled();
+		});
+
+	}
+
 	public synchronized void cancel() {
 		isFired = true; // let the job die, ignoring any issues that may arise
 		pendingRequestedState = DONE;
@@ -681,5 +715,47 @@ public class TableUpdateJob<T> {
 			buffy.append('\t').append(state).append('\n');
 		}
 		return buffy.toString();
+	}
+
+	/**
+	 * Wraps a comparator<T> to add progress monitoring and cancel checking
+	 *
+	 * @param <T> The type of data being sorted
+	 */
+	private static class MonitoredComparator<T> implements Comparator<T> {
+		private Comparator<T> delegate;
+		private TaskMonitor monitor;
+		private long comparisonCount;
+		private long expectedComparisons;
+
+		MonitoredComparator(Comparator<T> delegate, TaskMonitor monitor, int size) {
+			this.delegate = delegate;
+			this.monitor = monitor;
+			// After testing the number of comparisons needed to sort random data for the
+			// sort used by Collections, the max seems to be less then  O(N (log(n)-1).
+			// This seems to be a reasonable approximation for random data. For sorted data
+			// the number drops to exactly N-1 comparisons, but that just means the progress
+			// bar only be part way complete when the sort completes.
+
+			// log base 2 of N = natural log N / natural log 2
+			long logN = (long) (Math.log(size) / Math.log(2));
+			expectedComparisons = size * (logN - 1);
+			expectedComparisons = Math.max(1, expectedComparisons); // make sure it is never 0
+			monitor.initialize(100);
+		}
+
+		@Override
+		public int compare(T o1, T o2) {
+			if (monitor.isCancelled()) {
+				throw new SortCancelledException();
+			}
+			long percentCompleted = ++comparisonCount * 100 / expectedComparisons;
+			monitor.setProgress(percentCompleted);
+			return delegate.compare(o1, o2);
+		}
+	}
+
+	private static class SortCancelledException extends RuntimeException {
+		// special version of RuntimeException for MontitoredComparator
 	}
 }

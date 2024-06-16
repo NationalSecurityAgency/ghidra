@@ -27,11 +27,11 @@ import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class DeleteAction extends SymbolTreeContextAction {
 
-	private final static Icon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
+	private final static Icon DELETE_ICON = Icons.DELETE_ICON;
 
 	private final SymbolTreePlugin plugin;
 

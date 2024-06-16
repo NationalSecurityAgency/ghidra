@@ -19,24 +19,31 @@ import java.awt.Color;
 import java.util.*;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.TraceObjectValPath;
+import ghidra.trace.model.target.*;
 
 public class PathTableModel extends AbstractQueryTableModel<PathRow> {
+	record Seen(List<String> path, long minSnap) {
+		static Seen forPath(TraceObjectValPath path) {
+			TraceObjectValue last = path.getLastEntry();
+			return new Seen(path.getKeyList(), last == null ? 0 : last.getMinSnap());
+		}
+	}
+
 	/** Initialized in {@link #createTableColumnDescriptor()}, which precedes this. */
 	private TracePathValueColumn valueColumn;
 	private TracePathLastLifespanPlotColumn lifespanPlotColumn;
 
 	protected static Stream<? extends TraceObjectValPath> distinctKeyPath(
 			Stream<? extends TraceObjectValPath> stream) {
-		Set<List<String>> seen = new HashSet<>();
-		return stream.filter(path -> seen.add(path.getKeyList()));
+		Set<Seen> seen = new HashSet<>();
+		return stream.filter(path -> seen.add(Seen.forPath(path)));
 	}
 
 	public class PathRow {
@@ -89,6 +96,23 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 		public boolean isModified() {
 			return isValueModified(path.getLastEntry());
 		}
+
+		public boolean isLastCanonical() {
+			TraceObjectValue last = path.getLastEntry();
+			// Root is canonical
+			return last == null || last.isCanonical();
+		}
+
+		public boolean isCurrent() {
+			TraceObject current = getCurrentObject();
+			if (current == null) {
+				return false;
+			}
+			if (!(getValue() instanceof TraceObject child)) {
+				return false;
+			}
+			return child.getCanonicalPath().isAncestor(current.getCanonicalPath());
+		}
 	}
 
 	public PathTableModel(Plugin plugin) {
@@ -97,7 +121,7 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 
 	protected void updateTimelineMax() {
 		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
-		Range<Long> fullRange = Range.closed(0L, max == null ? 1 : max + 1);
+		Lifespan fullRange = Lifespan.span(0L, max == null ? 1 : max + 1);
 		lifespanPlotColumn.setFullRange(fullRange);
 	}
 
@@ -124,7 +148,7 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	}
 
 	@Override
-	protected Stream<PathRow> streamRows(Trace trace, ModelQuery query, Range<Long> span) {
+	protected Stream<PathRow> streamRows(Trace trace, ModelQuery query, Lifespan span) {
 		// TODO: For queries with early wildcards, this is not efficient
 		// May need to incorporate filtering hidden into the query execution itself.
 		return distinctKeyPath(query.streamPaths(trace, span)
@@ -136,11 +160,21 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	protected TableColumnDescriptor<PathRow> createTableColumnDescriptor() {
 		TableColumnDescriptor<PathRow> descriptor = new TableColumnDescriptor<>();
 		descriptor.addHiddenColumn(new TracePathStringColumn());
-		descriptor.addVisibleColumn(new TracePathLastKeyColumn());
+		descriptor.addVisibleColumn(new TracePathLastKeyColumn(), 1, true);
 		descriptor.addVisibleColumn(valueColumn = new TracePathValueColumn());
-		descriptor.addVisibleColumn(new TracePathLastLifespanColumn());
+		descriptor.addVisibleColumn(new TracePathLastLifespanColumn(), 2, true);
 		descriptor.addHiddenColumn(lifespanPlotColumn = new TracePathLastLifespanPlotColumn());
 		return descriptor;
+	}
+
+	@Override
+	public PathRow findTraceObject(TraceObject object) {
+		for (PathRow row : getModelData()) {
+			if (row.getValue() == object && row.isLastCanonical()) {
+				return row;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -151,5 +185,16 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	@Override
 	public void setDiffColorSel(Color diffColorSel) {
 		valueColumn.setDiffColorSel(diffColorSel);
+	}
+
+	@Override
+	public void snapChanged() {
+		super.snapChanged();
+		lifespanPlotColumn.setSnap(getSnap());
+	}
+
+	@Override
+	public void addSeekListener(SeekListener listener) {
+		lifespanPlotColumn.addSeekListener(listener);
 	}
 }

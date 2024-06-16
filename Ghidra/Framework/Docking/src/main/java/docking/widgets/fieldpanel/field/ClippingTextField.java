@@ -44,7 +44,7 @@ public class ClippingTextField implements TextField {
 	private String fullText;
 	private boolean isClipped;
 
-	private HighlightFactory hlFactory;
+	private FieldHighlightFactory hlFactory;
 
 	private boolean isPrimary;
 
@@ -58,7 +58,7 @@ public class ClippingTextField implements TextField {
 	 * @param hlFactory The HighlightFactory object used to paint highlights.
 	 */
 	public ClippingTextField(int startX, int width, FieldElement textElement,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 		// default to one row
 		this(startX, width, textElement, 1, hlFactory);
 	}
@@ -77,7 +77,7 @@ public class ClippingTextField implements TextField {
 	 * @param hlFactory The HighlightFactory object used to paint highlights.
 	 */
 	public ClippingTextField(int startX, int width, FieldElement textElement, int numDataRows,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 
 		this.startX = startX;
 		this.width = width;
@@ -282,7 +282,7 @@ public class ClippingTextField implements TextField {
 		if (cursorLoc != null) {
 			cursorTextOffset = screenLocationToTextOffset(cursorLoc.row(), cursorLoc.col());
 		}
-		paintHighlights(g, hlFactory.getHighlights(this, getString(), cursorTextOffset));
+		paintHighlights(g, hlFactory.createHighlights(this, getString(), cursorTextOffset));
 	}
 
 	protected void paintSelection(Graphics g, FieldBackgroundColorManager colorManager, int row,
@@ -353,9 +353,14 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
+
 		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
 		if (column < 0) {
-			return new DefaultRowColLocation(0, textElement.length());
+			column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn - 3);
+			if (column < 0) {
+				return new DefaultRowColLocation(0, textElement.length());
+			}
+			return new RowColLocation(0, textElement.length());
 		}
 		return new RowColLocation(0, column);
 	}

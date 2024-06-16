@@ -88,7 +88,7 @@ public class RemoveUserCheckoutsScript extends GhidraScript {
 	private int removeCheckouts(RepositoryAdapter repository, String folderPath, String uid, TaskMonitor monitor) throws IOException, CancelledException {
 		int count = 0;
 		for (RepositoryItem item : repository.getItemList(folderPath)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += removeCheckouts(repository, item, uid);
 		}
 		for (String subfolder : repository.getSubfolderList(folderPath)) {

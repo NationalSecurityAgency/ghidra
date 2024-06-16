@@ -15,30 +15,24 @@
  */
 package ghidra.dbg.jdi.model;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetDeletable;
-import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.ListenerSet;
 
-@TargetObjectSchemaInfo(
-	name = "BreakpointSpec",
-	attributes = {
-		@TargetAttributeType(
-			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME,
-			type = JdiModelTargetBreakpointContainer.class),
-		@TargetAttributeType(
-			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME,
-			type = JdiModelTargetBreakpointSpec.class),
-		@TargetAttributeType(type = Void.class)
-	},
-	canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = {
+	@TargetAttributeType(name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, type = JdiModelTargetBreakpointContainer.class),
+	@TargetAttributeType(name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, type = JdiModelTargetBreakpointSpec.class),
+	@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 		implements TargetBreakpointSpec, JdiModelTargetDeletable {
 
@@ -46,12 +40,7 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	protected TargetBreakpointKindSet kinds;
 
 	protected final ListenerSet<TargetBreakpointAction> actions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
-			}
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	public JdiModelTargetBreakpointSpec(JdiModelTargetBreakpointContainer breakpoints,
 			JdiBreakpointInfo info, boolean isElement) {
@@ -103,7 +92,7 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 		actions.remove(action);
 	}
 
-	protected CompletableFuture<JdiBreakpointInfo> getInfo(boolean refresh) {
+	protected CompletableFuture<JdiBreakpointInfo> getInfo(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(info);
 	}
 
@@ -125,7 +114,7 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo(refresh).thenCompose(i -> {
 			return updateInfo(info, i, "Refreshed");
 		});

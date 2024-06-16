@@ -21,7 +21,6 @@ import ghidra.app.cmd.disassemble.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -89,6 +88,7 @@ public class DisassemblerPlugin extends Plugin {
 	private DockingAction x86_64DisassembleAction;
 	private DockingAction x86_32DisassembleAction;
 	private DockingAction setFlowOverrideAction;
+	private DockingAction setLengthOverrideAction;
 
 	/** Dialog for obtaining the processor state to be used for disassembling. */
 //	private ProcessorStateDialog processorStateDialog;
@@ -178,6 +178,7 @@ public class DisassemblerPlugin extends Plugin {
 		x86_64DisassembleAction = new X86_64DisassembleAction(this, GROUP_NAME, false);
 		x86_32DisassembleAction = new X86_64DisassembleAction(this, GROUP_NAME, true);
 		setFlowOverrideAction = new SetFlowOverrideAction(this, GROUP_NAME);
+		setLengthOverrideAction = new SetLengthOverrideAction(this, GROUP_NAME);
 
 		tool.addAction(disassembleAction);
 		tool.addAction(disassembleRestrictedAction);
@@ -194,6 +195,7 @@ public class DisassemblerPlugin extends Plugin {
 		tool.addAction(x86_32DisassembleAction);
 		tool.addAction(contextAction);
 		tool.addAction(setFlowOverrideAction);
+		tool.addAction(setLengthOverrideAction);
 	}
 
 	void disassembleRestrictedCallback(ListingActionContext context) {
@@ -235,9 +237,6 @@ public class DisassemblerPlugin extends Plugin {
 		Program currentProgram = context.getProgram();
 		DisassembleCommand cmd = null;
 
-		boolean isDynamicListing = (context instanceof CodeViewerActionContext &&
-			((CodeViewerActionContext) context).isDyanmicListing());
-
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
 			cmd = new DisassembleCommand(currentSelection, null, true);
 		}
@@ -267,17 +266,22 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new DisassembleCommand(addr, restrictedSet, true);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
-			cmd.enableCodeAnalysis(!isDynamicListing); // do not analyze debugger listing
+			// do not analyze debugger listing
+			cmd.enableCodeAnalysis(!context.getNavigatable().isDynamic());
 			tool.executeBackgroundCommand(cmd, currentProgram);
 		}
 	}
 
 	boolean checkDisassemblyEnabled(ListingActionContext context, Address address,
 			boolean followPtr) {
+		// Debugger now has its own Disassemble actions
+		if (context.getNavigatable().isDynamic()) {
+			return false;
+		}
 		ProgramSelection currentSelection = context.getSelection();
 		Program currentProgram = context.getProgram();
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
@@ -332,7 +336,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new ArmDisassembleCommand(addr, null, thumbMode);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -356,7 +360,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new Hcs12DisassembleCommand(addr, null, xgMode);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -380,7 +384,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new MipsDisassembleCommand(addr, null, mips16);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -404,7 +408,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new PowerPCDisassembleCommand(addr, null, vle);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {

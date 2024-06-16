@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader.symbol;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 
@@ -58,6 +59,67 @@ public class SymbolsTest extends AbstractGenericTest {
 		catch (Exception e) {
 			fail("Error in static initialization of test: " + e);
 		}
+	}
+
+	//==============================================================================================
+	//==============================================================================================
+	//==============================================================================================
+	@Test
+	public void testProcedureFlags() throws Exception {
+		// Twiddle the flags, ensuring proper encoding/decoding into/from the integral type that
+		// holds them.
+		testFlagBits(false, false, false, false, false, false, false, false);
+		testFlagBits(true, false, false, false, false, false, false, false);
+		testFlagBits(true, true, false, false, false, false, false, false);
+		testFlagBits(false, true, false, false, false, false, false, false);
+		testFlagBits(false, true, true, false, false, false, false, false);
+		testFlagBits(false, false, true, false, false, false, false, false);
+		testFlagBits(false, false, true, true, false, false, false, false);
+		testFlagBits(false, false, false, true, false, false, false, false);
+		testFlagBits(false, false, false, true, true, false, false, false);
+		testFlagBits(false, false, false, false, true, false, false, false);
+		testFlagBits(false, false, false, false, true, true, false, false);
+		testFlagBits(false, false, false, false, false, true, false, false);
+		testFlagBits(false, false, false, false, false, true, true, false);
+		testFlagBits(false, false, false, false, false, false, true, false);
+		testFlagBits(false, false, false, false, false, false, true, true);
+		testFlagBits(false, false, false, false, false, false, false, true);
+		testFlagBits(true, false, false, false, false, false, false, true);
+		testFlagBits(true, true, true, true, true, true, true, true);
+	}
+
+	private void testFlagBits(boolean framePointerPresent,
+			boolean interruptReturn, boolean farReturn, boolean doesNotReturn,
+			boolean labelNotFallenInto, boolean customCallingConvention, boolean markedNoInline,
+			boolean hasDebugInfo) throws PdbException {
+
+		byte[] bytes = createProcedureMsFlagsBuffer(framePointerPresent, interruptReturn, farReturn,
+			doesNotReturn, labelNotFallenInto, customCallingConvention, markedNoInline,
+			hasDebugInfo);
+		PdbByteReader reader = new PdbByteReader(bytes);
+		ProcedureFlags procedureFlags = new ProcedureFlags(reader);
+
+		assertEquals(framePointerPresent, procedureFlags.hasFramePointerPresent());
+		assertEquals(interruptReturn, procedureFlags.hasInterruptReturn());
+		assertEquals(farReturn, procedureFlags.hasFarReturn());
+		assertEquals(doesNotReturn, procedureFlags.doesNotReturn());
+		assertEquals(labelNotFallenInto, procedureFlags.labelNotReached());
+		assertEquals(customCallingConvention, procedureFlags.hasCustomCallingConvention());
+		assertEquals(markedNoInline, procedureFlags.markedAsNoInline());
+		assertEquals(hasDebugInfo, procedureFlags.hasDebugInformationForOptimizedCode());
+
+		String s = "";
+		s += framePointerPresent ? (s.isEmpty() ? "" : ", ") + "Frame Ptr Present" : "";
+		s += interruptReturn ? (s.isEmpty() ? "" : ", ") + "Interrupt" : "";
+		s += farReturn ? (s.isEmpty() ? "" : ", ") + "FAR" : "";
+		s += doesNotReturn ? (s.isEmpty() ? "" : ", ") + "Never Return" : "";
+		s += labelNotFallenInto ? (s.isEmpty() ? "" : ", ") + "Not Reached" : "";
+		s += customCallingConvention ? (s.isEmpty() ? "" : ", ") + "Custom Calling Convention" : "";
+		s += markedNoInline ? (s.isEmpty() ? "" : ", ") + "Do Not Inline" : "";
+		s += hasDebugInfo ? (s.isEmpty() ? "" : ", ") + "Optimized Debug Info" : "";
+
+		String result = procedureFlags.toString();
+		assertEquals("Flags: " + s, result);
 	}
 
 	//==============================================================================================
@@ -300,7 +362,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals(symbol instanceof Compile2StMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE2_ST:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
-			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
+			"   Compiled for edit and continue: no\n" + "   Compiled without debugging info: no\n" +
 			"   Compiled with LTCG: no\n" + "   Compiled with /bzalign: no\n" +
 			"   Managed code present: no\n" + "   Compiled with /GS: no\n" +
 			"   Compiled with /hotpatch: no\n" + "   Converted by CVTCIL: no\n" +
@@ -332,7 +394,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals(symbol instanceof Compile2MsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE2:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
-			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
+			"   Compiled for edit and continue: no\n" + "   Compiled without debugging info: no\n" +
 			"   Compiled with LTCG: no\n" + "   Compiled with /bzalign: no\n" +
 			"   Managed code present: no\n" + "   Compiled with /GS: no\n" +
 			"   Compiled with /hotpatch: no\n" + "   Converted by CVTCIL: no\n" +
@@ -363,7 +425,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals(symbol instanceof Compile3MsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE3:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
-			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
+			"   Compiled for edit and continue: no\n" + "   Compiled without debugging info: no\n" +
 			"   Compiled with LTCG: no\n" + "   Compiled with /bzalign: no\n" +
 			"   Managed code present: no\n" + "   Compiled with /GS: no\n" +
 			"   Compiled with /hotpatch: no\n" + "   Converted by CVTCIL: no\n" +

@@ -15,8 +15,9 @@
  */
 package ghidra.pcode.floatformat;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.math.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An IEEE 754 floating point class.
@@ -31,8 +32,20 @@ import java.math.BigInteger;
  *      
  * <p>Operations compute exact result then round to nearest even.
  */
-public strictfp class BigFloat implements Comparable<BigFloat> {
-	final int fracbits; // there are fracbits+1 significant bits.
+public class BigFloat implements Comparable<BigFloat> {
+	
+	public static final String INFINITY = "Infinity";
+	public static final String POSITIVE_INFINITY = "+" + INFINITY;
+	public static final String NEGATIVE_INFINITY = "-" + INFINITY;
+	public static final String NAN = "NaN";
+
+	private static final int INFINITE_SCALE = -(64 * 1024);
+	public static final BigDecimal BIG_POSITIVE_INFINITY =
+		new BigDecimal(BigInteger.ONE, INFINITE_SCALE);
+	public static final BigDecimal BIG_NEGATIVE_INFINITY =
+		(new BigDecimal(BigInteger.ONE, INFINITE_SCALE)).negate();
+
+	final int fracbits; // number of significant mantissa bits including implied msb if relavent
 	final int expbits; // # bits used for exponent
 
 	final int maxScale;
@@ -40,19 +53,22 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	FloatKind kind;
 
-	// -1, +1
-	int sign;
-	// normal numbers have unscaled.bitLength() =  fracbits+1
+	int sign; // -1, +1
+
+	// normal numbers have unscaled.bitLength() = fracbits+1
 	// subnormal numbers have scale=0 and unscaled.bitLength() <= fracbits 
 	BigInteger unscaled;
 	int scale;
+
+	private static Map<Integer, MathContext> defaultDisplayContextMap = new HashMap<>();
 
 	/**
 	 * Construct a BigFloat.  If kind is FINITE, the value is <code>sign*unscaled*2^(scale-fracbits)</code>.
 	 * <p>
 	 * NOTE: Requires that normal values are constructed in a normal form as with denormal values.
 	 * 
-	 * @param fracbits number of fractional bits (positive non-zero value)
+	 * @param fracbits number of fractional bits (positive non-zero value; includes additional 
+	 * implied bit if relavent).
 	 * @param expbits maximum number of bits in exponent (positive non-zero value)
 	 * @param kind the Kind, FINITE, INFINITE, ...
 	 * @param sign +1 or -1
@@ -60,8 +76,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 * @param scale value's scale (signed value with the biased range of expbits)
 	 * @throws IllegalArgumentException if invalid unscaled and scale values are specified based upon the fracbits and expbits values.
 	 */
-	BigFloat(int fracbits, int expbits, FloatKind kind, int sign, BigInteger unscaled,
-			int scale) {
+	BigFloat(int fracbits, int expbits, FloatKind kind, int sign, BigInteger unscaled, int scale) {
 		this.fracbits = fracbits;
 		this.expbits = expbits;
 		this.kind = kind;
@@ -72,8 +87,8 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		this.maxScale = (1 << (expbits - 1)) - 1;
 		this.minScale = 1 - this.maxScale;
 
-		if (unscaled.bitLength() > (fracbits + 1)) {
-			throw new IllegalArgumentException("unscaled value exceeds " + (fracbits + 1) +
+		if (unscaled.bitLength() > fracbits) {
+			throw new IllegalArgumentException("unscaled value exceeds " + fracbits +
 				" bits in length (length=" + unscaled.bitLength() + ")");
 		}
 		if (scale < minScale || scale > maxScale) {
@@ -152,21 +167,6 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	}
 
 	/**
-	 * Return the BigFloat with the given number of bits representing the given BigInteger.
-	 * 
-	 * @param fracbits number of fractional bits
-	 * @param expbits number of bits in the exponent
-	 * @param i an integer
-	 * @return a BigFloat representing i
-	 */
-	public static BigFloat valueOf(int fracbits, int expbits, BigInteger i) {
-		BigFloat f = new BigFloat(fracbits, expbits, FloatKind.FINITE, i.signum() >= 0 ? +1 : -1,
-			i.abs(), fracbits);
-		f.scaleUpTo(fracbits + 1);
-		return f;
-	}
-
-	/**
 	 * Return the BigFloat with the given number of bits representing zero.
 	 * 
 	 * @param fracbits number of fractional bits
@@ -198,7 +198,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 */
 	public static BigFloat infinity(int fracbits, int expbits, int sign) {
 		return new BigFloat(fracbits, expbits, FloatKind.INFINITE, sign,
-			BigInteger.ONE.shiftLeft(fracbits), (1 << (expbits - 1)) - 1);
+			BigInteger.ONE.shiftLeft(fracbits - 1), (1 << (expbits - 1)) - 1);
 	}
 
 	/**
@@ -239,7 +239,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 * @return {@code true} if this BigFloat is FINITE and normal.
 	 */
 	public boolean isNormal() {
-		return kind == FloatKind.FINITE && unscaled.bitLength() == (fracbits + 1);
+		return kind == FloatKind.FINITE && unscaled.bitLength() == fracbits;
 	}
 
 	/**
@@ -252,7 +252,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 */
 	public boolean isDenormal() {
 		return kind == FloatKind.FINITE && !unscaled.equals(BigInteger.ZERO) &&
-			unscaled.bitLength() <= fracbits;
+			unscaled.bitLength() < fracbits;
 	}
 
 	/**
@@ -279,7 +279,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 			return;
 		}
 
-		int extrabits = Math.max(unscaled.bitLength() - (fracbits + 1), minScale - scale);
+		int extrabits = Math.max(unscaled.bitLength() - fracbits, minScale - scale);
 
 		if (extrabits <= 0) {
 			throw new AssertionError("Rounding with no extra bits of precision");
@@ -295,7 +295,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		if (midbitset && (eps || odd)) {
 			unscaled = unscaled.add(BigInteger.ONE);
 			// handle overflowing carry
-			if (unscaled.bitLength() > fracbits + 1) {
+			if (unscaled.bitLength() > fracbits) {
 				assert (unscaled.bitLength() == unscaled.getLowestSetBit() + 1);
 				unscaled = unscaled.shiftRight(1);
 				scale += 1;
@@ -311,14 +311,15 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		if (kind != FloatKind.FINITE || unscaled.signum() == 0) {
 			throw new AssertionError("lead bit of non-finite or zero");
 		}
-		return unscaled.bitLength() - fracbits + scale;
+		return unscaled.bitLength() - fracbits + scale + 1;
 	}
 
 	/**
 	 * If finite, the returned BigDecimal is exactly equal to this.  If not finite, one of the
 	 * FloatFormat.BIG_* constants is returned.
 	 * 
-	 * @return a BigDecimal
+	 * @return a BigDecimal or null if value is NaN (i.e., {@link FloatKind#QUIET_NAN} or 
+	 * {@link FloatKind#SIGNALING_NAN}).
 	 */
 	public BigDecimal toBigDecimal() {
 		switch (kind) {
@@ -328,7 +329,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 				}
 				int unusedBits = Math.max(unscaled.getLowestSetBit(), 0);
 				BigInteger val = unscaled;
-				int iscale = scale - fracbits;
+				int iscale = scale - fracbits + 1;
 				BigDecimal x;
 				if (iscale >= -unusedBits) {
 					x = new BigDecimal(val.shiftLeft(iscale));
@@ -346,11 +347,10 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 				}
 				return x;
 			case INFINITE:
-				return sign < 0 ? FloatFormat.BIG_NEGATIVE_INFINITY
-						: FloatFormat.BIG_POSITIVE_INFINITY;
+				return sign < 0 ? BIG_NEGATIVE_INFINITY : BIG_POSITIVE_INFINITY;
 			case QUIET_NAN:
 			case SIGNALING_NAN:
-				return FloatFormat.BIG_NaN;
+				return null;
 			default:
 				throw new AssertionError("unknown BigFloat kind: " + kind);
 		}
@@ -375,15 +375,16 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 				String binary;
 				if (this.isNormal()) {
 					binary = "1." + unscaled.toString(2).substring(1);
-					ascale += (unscaled.bitLength() - (fracbits + 1));
+					ascale += (unscaled.bitLength() - fracbits);
 				}
 				else { // subnormal
-					assert (unscaled.bitLength() <= fracbits);
+					assert (unscaled.bitLength() < fracbits);
 					if (unscaled.equals(BigInteger.ZERO)) {
 						return String.format("%s0b0.0", s);
 					}
 					binary =
-						"0." + "0".repeat(fracbits - unscaled.bitLength()) + unscaled.toString(2);
+						"0." + "0".repeat(fracbits - unscaled.bitLength() - 1) +
+							unscaled.toString(2);
 				}
 				binary = binary.replaceAll("0*$", "");
 				if (binary.endsWith(".")) {
@@ -513,7 +514,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		//    nbits(x) - nbits(y) <= nbits(x/y) <= nbits(x) - nbits(y) + 1
 		// so 
 		//   this + lshift - other = fracbits+2 =>
-		int lshift = fracbits + 2 + other.unscaled.bitLength() - this.unscaled.bitLength();
+		int lshift = fracbits + 1 + other.unscaled.bitLength() - this.unscaled.bitLength();
 		this.upscale(lshift);
 
 		BigInteger qr[] = this.unscaled.divideAndRemainder(other.unscaled);
@@ -521,7 +522,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		BigInteger r = qr[1];
 
 		this.sign *= other.sign;
-		this.scale -= other.scale - fracbits;
+		this.scale -= other.scale - fracbits + 1;
 		this.unscaled = q;
 		this.internalRound(r.signum() != 0);
 	}
@@ -561,9 +562,9 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		// this and other are finite
 		this.sign *= other.sign;
 		this.unscaled = this.unscaled.multiply(other.unscaled);
-		this.scale += other.scale - fracbits;
+		this.scale += other.scale - fracbits + 1;
 
-		this.scaleUpTo(fracbits + 2);
+		this.scaleUpTo(fracbits + 1);
 		this.internalRound(false);
 	}
 
@@ -655,10 +656,10 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	protected void add0(BigFloat other) {
 		int d = this.scale - other.scale;
 
-		if (d > fracbits + 1) {
+		if (d > fracbits) {
 			return;
 		}
-		else if (d < -(fracbits + 1)) {
+		else if (d < -fracbits) {
 			this.copyFrom(other);
 			return;
 		}
@@ -680,7 +681,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		this.scale = a.scale - 1;
 		this.unscaled = a.unscaled.shiftLeft(1).add(b.unscaled.shiftRight(d - 1));
 
-		scaleUpTo(fracbits + 2);
+		scaleUpTo(fracbits + 1);
 		internalRound(residue);
 	}
 
@@ -688,10 +689,10 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	protected void sub0(BigFloat other) {
 		int d = this.scale - other.scale;
 
-		if (d > fracbits + 2) {
+		if (d > fracbits + 1) {
 			return;
 		}
-		else if (d < -(fracbits + 2)) {
+		else if (d < -(fracbits + 1)) {
 			this.copyFrom(other);
 			return;
 		}
@@ -726,7 +727,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 			this.sign *= -1;
 			this.unscaled = this.unscaled.negate();
 		}
-		scaleUpTo(fracbits + 2);
+		scaleUpTo(fracbits + 1);
 		internalRound(residue);
 	}
 
@@ -767,11 +768,11 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		BigInteger bit;
 
 		//// force at least fracbits+2 bits of precision in the result
-		int sigbits = 2 * fracbits + 3;
+		int sigbits = 2 * fracbits + 2;
 		this.scaleUpTo(sigbits);
 
 		// scale+fracbits needs to be even for the sqrt computation
-		if (((scale + fracbits) & 1) != 0) {
+		if (((scale + fracbits - 1) & 1) != 0) {
 			upscale(1);
 		}
 
@@ -794,7 +795,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		}
 
 		unscaled = result;
-		scale = (scale + fracbits) / 2;
+		scale = (scale + fracbits - 1) / 2;
 
 		internalRound(residue.signum() != 0);
 	}
@@ -806,7 +807,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 			makeZero();
 			return;
 		}
-		int nbitsUnderOne = fracbits - scale;
+		int nbitsUnderOne = fracbits - scale - 1;
 		unscaled = unscaled.shiftRight(nbitsUnderOne).shiftLeft(nbitsUnderOne);
 	}
 
@@ -814,7 +815,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	private void makeOne() {
 		kind = FloatKind.FINITE;
 		scale = 0;
-		unscaled = BigInteger.ONE.shiftLeft(fracbits);
+		unscaled = BigInteger.ONE.shiftLeft(fracbits - 1);
 	}
 
 	// ceil, ignoring sign
@@ -827,7 +828,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 			return;
 		}
 
-		int nbitsUnderOne = fracbits - scale;
+		int nbitsUnderOne = fracbits - scale - 1;
 		boolean increment = unscaled.getLowestSetBit() < nbitsUnderOne;
 		unscaled = unscaled.shiftRight(nbitsUnderOne).shiftLeft(nbitsUnderOne);
 		if (increment) {
@@ -835,7 +836,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		}
 
 		// if we carry to a new bit, change the scale
-		if (unscaled.bitLength() > fracbits + 1) {
+		if (unscaled.bitLength() > fracbits) {
 			upscale(-1);
 		}
 	}
@@ -961,7 +962,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 * @return the truncated integer form of this BigFloat
 	 */
 	public BigInteger toBigInteger() {
-		BigInteger res = unscaled.shiftRight(fracbits - scale);
+		BigInteger res = unscaled.shiftRight(fracbits - scale - 1);
 		if (sign < 0) {
 			return res.negate();
 		}
@@ -983,7 +984,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 */
 	public void round() {
 		BigFloat half = new BigFloat(fracbits, expbits, FloatKind.FINITE, +1,
-			BigInteger.ONE.shiftLeft(fracbits), -1);
+			BigInteger.ONE.shiftLeft(fracbits - 1), -1);
 		add(half);
 		floor();
 	}
@@ -1032,6 +1033,140 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		}
 
 		return this.sign * this.unscaled.compareTo(other.unscaled);
+	}
+
+	private String formatSpecialCase() {
+		if (isNaN()) {
+			return NAN;
+		}
+		if (isInfinite()) {
+			return sign < 0 ? NEGATIVE_INFINITY : POSITIVE_INFINITY;
+		}
+		return null;
+	}
+
+	/**
+	 * Perform rounding and conversion to BigDecimal prior to generating
+	 * a formatted decimal string of the specified BigFloat value.
+	 * A default generated {@link MathContext} is used.
+	 * @return decimal string representation
+	 */
+	@Override
+	public String toString() {
+		String special = formatSpecialCase();
+		if (special != null) {
+			return special;
+		}
+		BigDecimal bd = toBigDecimal();
+		bd = bd.round(getDefaultDisplayContext(fracbits));
+		return bd.toString();
+	}
+
+	/**
+	 * Perform rounding and conversion to BigDecimal prior to generating
+	 * a formatted decimal string of the specified BigFloat value.
+	 * @param displayContext display context used for rounding and precision.
+	 * @return decimal string representation
+	 */
+	public String toString(MathContext displayContext) {
+		String special = formatSpecialCase();
+		if (special != null) {
+			return special;
+		}
+		BigDecimal bd = toBigDecimal();
+		bd = bd.round(displayContext);
+		return bd.toString();
+	}
+
+	/**
+	 * Perform appropriate rounding and conversion to BigDecimal prior to generating
+	 * a formatted decimal string of the specified BigFloat value.  
+	 * See {@link #toString(FloatFormat, boolean)},
+	 * {@link FloatFormat#toDecimalString(BigFloat)} and 
+	 * {@link FloatFormat#toDecimalString(BigFloat, boolean)}.
+	 * @param ff float format
+	 * @param compact if true the precision will be reduced to a form which is still equivalent at
+	 * the binary encoding level for the specified FloatFormat.
+	 * @return decimal string representation
+	 */
+	public String toString(FloatFormat ff, boolean compact) {
+		String special = formatSpecialCase();
+		if (special != null) {
+			return special;
+		}
+		BigDecimal bd = toBigDecimal();
+		bd = bd.round(ff.getDisplayContext());
+
+		String str = bd.toString();
+		int precision = bd.precision();
+		int bdScale = bd.scale();
+
+		// Generate compact representation if requested
+		if (compact && precision > 2) {
+			BigInteger encoding = ff.getEncoding(this);
+			for (String newStr = str; newStr != null;) {
+				newStr = removeFractionalDigit(newStr, 1, false);
+				if (newStr != null) {
+					bd = new BigDecimal(newStr);
+					bd = bd.setScale(bdScale); // avoid scale change which may alter encoding
+					BigFloat bf = ff.getBigFloat(bd);
+					if (encoding.equals(ff.getEncoding(bf))) {
+						str = newStr;
+					}
+					else {
+						newStr = null; // stop compaction
+					}
+				}
+			}
+		}
+		// Strip trailing zeros
+		str = stripTrailingZeros(str, 1);
+		// Ensure decimal point is present
+		if (str.indexOf('.') < 0) {
+			str += ".0";
+		}
+		return str;
+	}
+
+	private String stripTrailingZeros(String decStr, int minDigits) {
+		String str = decStr;
+		while (true) {
+			String nextStr = removeFractionalDigit(str, 1, true);
+			if (nextStr == null) {
+				break;
+			}
+			str = nextStr;
+		}
+		return str;
+	}
+
+	private String removeFractionalDigit(String decStr, int minDigits, boolean stripZeroDigitOnly) {
+		int decimalPointIx = decStr.indexOf('.');
+		if (decimalPointIx < 0) {
+			return null;
+		}
+		int expIx = decStr.toUpperCase().indexOf('E');
+		String exp = "";
+		if (expIx > 0) {
+			exp = decStr.substring(expIx);
+			decStr = decStr.substring(0, expIx);
+		}
+		if (decStr.length() - decimalPointIx - 1 <= minDigits) {
+			return null;
+		}
+		int lastDigitIndex = decStr.length() - 1;
+		if (stripZeroDigitOnly && decStr.charAt(lastDigitIndex) != '0') {
+			return null;
+		}
+		// discard last mantissa digit
+		return decStr.substring(0, lastDigitIndex) + exp;
+	}
+
+	private static synchronized MathContext getDefaultDisplayContext(int fracBits) {
+		return defaultDisplayContextMap.computeIfAbsent(fracBits, n -> {
+			int precision = (int) (0.30103 * fracBits); // log10(2) * mantissa bits
+			return new MathContext(precision, RoundingMode.HALF_EVEN);
+		});
 	}
 
 }

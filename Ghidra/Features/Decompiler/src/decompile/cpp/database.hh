@@ -20,12 +20,14 @@
 /// scopes, namespaces etc.  Search can be by name or the address of the Symbol storage
 /// location.
 
-#ifndef __CPUI_DATABASE__
-#define __CPUI_DATABASE__
+#ifndef __DATABASE_HH__
+#define __DATABASE_HH__
 
 #include "variable.hh"
 #include "partmap.hh"
 #include "rangemap.hh"
+
+namespace ghidra {
 
 class Architecture;
 class Funcdata;
@@ -157,7 +159,7 @@ public:
   Datatype *getSizedType(const Address &addr,int4 sz) const;		///< Get the data-type associated with (a piece of) \b this
   void printEntry(ostream &s) const;					///< Dump a description of \b this to a stream
   void encode(Encoder &encoder) const;					///< Encode \b this to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);		///< Decode \b this from a stream
+  void decode(Decoder &decoder);					///< Decode \b this from a stream
 };
 typedef rangemap<SymbolEntry> EntryMap;			///< A rangemap of SymbolEntry
 
@@ -174,6 +176,7 @@ class Symbol {
 protected:
   Scope *scope;			///< The scope that owns this symbol
   string name;			///< The local name of the symbol
+  string displayName;		///< Name to use when displaying symbol in output
   Datatype *type;		///< The symbol's data-type
   uint4 nameDedup;		///< id to distinguish symbols with the same name
   uint4 flags;			///< Varnode-like properties of the symbol
@@ -216,6 +219,7 @@ public:
   Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
   Symbol(Scope *sc);		  			///< Construct for use with decode()
   const string &getName(void) const { return name; }		///< Get the local name of the symbol
+  const string &getDisplayName(void) const { return displayName; }	///< Get the name to display in output
   Datatype *getType(void) const { return type; }		///< Get the data-type
   uint8 getId(void) const { return symbolId; }			///< Get a unique id for the symbol
   uint4 getFlags(void) const { return flags; }			///< Get the boolean properties of the Symbol
@@ -225,6 +229,7 @@ public:
   bool isTypeLocked(void) const { return ((flags&Varnode::typelock)!=0); }	///< Is the Symbol type-locked
   bool isNameLocked(void) const { return ((flags&Varnode::namelock)!=0); }	///< Is the Symbol name-locked
   bool isSizeTypeLocked(void) const { return ((dispflags & size_typelock)!=0); }	///< Is the Symbol size type-locked
+  bool isVolatile(void) const { return ((flags & Varnode::volatil)!=0); }	///< Is the Symbol volatile
   bool isThisPointer(void) const { return ((dispflags & is_this_ptr)!=0); }		///< Is \b this the "this" pointer
   bool isIndirectStorage(void) const { return ((flags&Varnode::indirectstorage)!=0); }	///< Is storage really a pointer to the true Symbol
   bool isHiddenReturn(void) const { return ((flags&Varnode::hiddenretparm)!=0); }	///< Is this a reference to the function return value
@@ -304,6 +309,12 @@ public:
   virtual void decode(Decoder &decoder);
 };
 
+/// \brief A Symbol that forces a particular \e union field at a particular point in the body of a function
+///
+/// This is an internal Symbol that users can create if they want to force a particular interpretation of a
+/// a \e union data-type.  It attaches to data-flow via the DynamicHash mechanism, which also allows it to attach
+/// to a specific read or write of the target Varnode.  Different reads (or write) of the same Varnode can have
+/// different symbols attached.  The Symbol's associated data-type will be the desired \e union to force.
 class UnionFacetSymbol : public Symbol {
   int4 fieldNum;			///< Particular field to associate with Symbol access
 public:
@@ -460,6 +471,7 @@ class Scope {
 protected:
   Architecture *glb;				///< Architecture of \b this scope
   string name;					///< Name of \b this scope
+  string displayName;				///< Name to display in output
   Funcdata *fd;					///< (If non-null) the function which \b this is the local Scope for
   uint8 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
   static const Scope *stackAddr(const Scope *scope1,
@@ -542,6 +554,7 @@ protected:
 					     const RangeList &uselim)=0;
   SymbolEntry *addMap(SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
   void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
+  void setDisplayName(const string &nm) { displayName = nm; }		///< Change name displayed in output
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -550,7 +563,7 @@ public:
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
   Scope(uint8 id,const string &nm,Architecture *g,Scope *own) {
-    uniqueId = id; name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; owner=own;
+    uniqueId = id; name = nm; displayName = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; owner=own;
 #ifdef OPACTION_DEBUG
     debugon = false;
 #endif
@@ -696,7 +709,13 @@ public:
 
   virtual void encode(Encoder &encoder) const=0;	///< Encode \b this as a \<scope> element
   virtual void decode(Decoder &decoder)=0;		///< Decode \b this Scope from a \<scope> element
-  virtual void decodeWrappingAttributes(Decoder &decoder) {}	///< Restore attributes for \b this Scope from wrapping element
+
+  /// \brief Restore attributes for \b this from a parent element that is not a Scope
+  ///
+  /// Attributes are read from the (already opened) element, prior to reading reading the
+  /// \<scope> element specific to \b this Scope
+  /// \param decoder is the stream decoder
+  virtual void decodeWrappingAttributes(Decoder &decoder) {}
   virtual void printEntries(ostream &s) const=0;	///< Dump a description of all SymbolEntry objects to a stream
 
   /// \brief Get the number of Symbols in the given category
@@ -723,6 +742,7 @@ public:
 				 const Address &addr,const Address &usepoint);
 
   const string &getName(void) const { return name; }		///< Get the name of the Scope
+  const string &getDisplayName(void) const { return displayName; }	///< Get name displayed in output
   uint8 getId(void) const { return uniqueId; }			///< Get the globally unique id
   bool isGlobal(void) const { return (fd == (Funcdata *)0); }	///< Return \b true if \b this scope is global
 
@@ -762,6 +782,7 @@ public:
   LabSymbol *addCodeLabel(const Address &addr,const string &nm);
   Symbol *addDynamicSymbol(const string &nm,Datatype *ct,const Address &caddr,uint8 hash);
   Symbol *addEquateSymbol(const string &nm,uint4 format,uintb value,const Address &addr,uint8 hash);
+  Symbol *addUnionFacetSymbol(const string &nm,Datatype *dt,int4 fieldNum,const Address &addr,uint8 hash);
   string buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const;	///< Create a default name for the given Symbol
   bool isReadOnly(const Address &addr,int4 size,const Address &usepoint) const;
   void printBounds(ostream &s) const { rangetree.printBounds(s); }	///< Print a description of \b this Scope's \e owned memory ranges
@@ -923,11 +944,13 @@ public:
   Scope *mapScope(Scope *qpoint,const Address &addr,const Address &usepoint);
   uint4 getProperty(const Address &addr) const { return flagbase.getValue(addr); }	///< Get boolean properties at the given address
   void setPropertyRange(uint4 flags,const Range &range);	///< Set boolean properties over a given memory range
+  void clearPropertyRange(uint4 flags,const Range &range);	///< Clear boolean properties over a given memory range
   void setProperties(const partmap<Address,uint4> &newflags) { flagbase = newflags; }	///< Replace the property map
   const partmap<Address,uint4> &getProperties(void) const { return flagbase; }	///< Get the entire property map
   void encode(Encoder &encoder) const;				///< Encode the whole Database to a stream
   void decode(Decoder &decoder);				///< Decode the whole database from a stream
-  void decodeScope(Decoder &decoder,Scope *newScope);	///< Register and fill out a single Scope from  an XML \<scope> tag
+  void decodeScope(Decoder &decoder,Scope *newScope);	///< Register and fill out a single Scope from an XML \<scope> tag
+  Scope *decodeScopePath(Decoder &decoder);	///< Decode a namespace path and make sure each namespace exists
 };
 
 /// \param sc is the scope containing the new symbol
@@ -938,6 +961,7 @@ inline Symbol::Symbol(Scope *sc,const string &nm,Datatype *ct)
 {
   scope=sc;
   name=nm;
+  displayName = nm;
   nameDedup=0;
   type=ct;
   flags=0;
@@ -967,4 +991,5 @@ inline Symbol::Symbol(Scope *sc)
   depthResolution = 0;
 }
 
+} // End namespace ghidra
 #endif

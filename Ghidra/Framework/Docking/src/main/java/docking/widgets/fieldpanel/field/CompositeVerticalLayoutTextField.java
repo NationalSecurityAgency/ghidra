@@ -52,7 +52,7 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	private int startX;
 	private int width;
 	private int preferredWidth;
-	private HighlightFactory hlFactory;
+	private FieldHighlightFactory hlFactory;
 
 	private int height;
 	private int heightAbove;
@@ -71,12 +71,12 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	private boolean isClipped;
 
 	public CompositeVerticalLayoutTextField(List<TextField> fields, int startX, int width,
-			int maxLines, HighlightFactory hlFactory) {
+			int maxLines, FieldHighlightFactory hlFactory) {
 		this(fields, startX, width, maxLines, hlFactory, " ");
 	}
 
 	protected CompositeVerticalLayoutTextField(List<TextField> fields, int startX, int width,
-			int maxLines, HighlightFactory hlFactory, String rowSeparator) {
+			int maxLines, FieldHighlightFactory hlFactory, String rowSeparator) {
 
 		this.startX = startX;
 		this.width = width;
@@ -146,7 +146,7 @@ public class CompositeVerticalLayoutTextField implements TextField {
 
 		FieldElement[] elements = new FieldElement[] {
 			element,
-			new StrutFieldElement(500)
+			new StrutFieldElement(element, 500)
 		};
 		FieldElement compositeElement = new CompositeFieldElement(elements);
 		return new ClippingTextField(startX, width, compositeElement, hlFactory);
@@ -284,14 +284,13 @@ public class CompositeVerticalLayoutTextField implements TextField {
 		int startY = myStartY;
 		int translatedY = 0;
 
-		for (int i = 0; i < fieldRows.size(); i++) {
+		for (FieldRow fieldRow : fieldRows) {
 
 			// if past clipping region we are done
 			if (startY > clipEndY) {
 				break;
 			}
 
-			FieldRow fieldRow = fieldRows.get(i);
 			TextField field = fieldRow.field;
 			int subFieldHeight = fieldRow.field.getHeight();
 			int endY = startY + subFieldHeight;

@@ -17,7 +17,7 @@ package ghidra.app.plugin.debug;
 
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndService;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
@@ -27,14 +27,14 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Show Domain Folder change notifications",
 	description = "Displays active project domain folder change notifications",
 	servicesRequired = { FrontEndService.class }
 )
 //@formatter:on
 public class DomainFolderChangesDisplayPlugin extends Plugin
-		implements FrontEndOnly, ProjectListener, DomainFolderChangeListener {
+		implements ApplicationLevelOnlyPlugin, ProjectListener, DomainFolderChangeListener {
 
 	private DomainFolderChangesDisplayComponentProvider provider;
 
@@ -130,11 +130,6 @@ public class DomainFolderChangesDisplayPlugin extends Plugin
 	public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 		provider.addText("domainFileStatusChanged: " + file.getPathname() + ", fileIDset=" +
 			Boolean.toString(fileIDset));
-	}
-
-	@Override
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		provider.addText("domainFileObjectReplaced: " + file.getPathname());
 	}
 
 	@Override

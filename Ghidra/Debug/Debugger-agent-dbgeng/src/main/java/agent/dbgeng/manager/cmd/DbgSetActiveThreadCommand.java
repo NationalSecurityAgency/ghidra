@@ -15,14 +15,22 @@
  */
 package agent.dbgeng.manager.cmd;
 
+import java.math.BigInteger;
+
+import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.manager.DbgEvent;
 import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
+import agent.dbgeng.manager.evt.DbgConsoleOutputEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgThreadImpl;
 
 public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 
-	private DbgThread thread;
+	private DbgThreadImpl thread;
 	private Integer frameId;
+	private Long offset;
 
 	/**
 	 * Set the active thread
@@ -33,15 +41,63 @@ public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 	 */
 	public DbgSetActiveThreadCommand(DbgManagerImpl manager, DbgThread thread, Integer frameId) {
 		super(manager);
-		this.thread = thread;
+		this.thread = (DbgThreadImpl) thread;
 		this.frameId = frameId;
+	}
+
+	@Override
+	public boolean handle(DbgEvent<?> evt, DbgPendingCommand<?> pending) {
+		if (evt instanceof AbstractDbgCompletedCommandEvent && pending.getCommand().equals(this)) {
+			return true;
+		}
+		else if (evt instanceof DbgConsoleOutputEvent) {
+			pending.steal(evt);
+		}
+		return false;
+	}
+
+	@Override
+	public Void complete(DbgPendingCommand<?> pending) {
+		StringBuilder builder = new StringBuilder();
+		for (DbgConsoleOutputEvent out : pending.findAllOf(DbgConsoleOutputEvent.class)) {
+			builder.append(out.getOutput());
+		}
+		parse(builder.toString());
+		if (offset != null) {
+			manager.getSystemObjects().setImplicitThreadDataOffset(offset);
+		}
+		return null;
+	}
+
+	private void parse(String result) {
+		String[] lines = result.split("\n");
+		for (int i = 0; i < lines.length; i++) {
+			String line = lines[i];
+			if (line.contains("THREAD")) {
+				String[] fields = line.trim().split("\\s+");
+				if (fields.length > 1 && fields[0].equals("THREAD")) {
+					BigInteger val = new BigInteger(fields[1], 16);
+					offset = val.longValue();
+					thread.setOffset(offset);
+				}
+				break;
+			}
+		}		
 	}
 
 	@Override
 	public void invoke() {
 		DebugThreadId id = thread.getId();
 		if (id != null) {
-			manager.getSystemObjects().setCurrentThreadId(id);
+			if (!manager.isKernelMode()) {
+				manager.getSystemObjects().setCurrentThreadId(id);
+			} else {
+				offset = thread.getOffset();
+				if (offset == null || offset == 0L) {
+					DebugControl control = manager.getControl();
+					control.execute("!thread -t "+Long.toHexString(thread.getTid())+" 0");		
+				}
+			}
 			if (frameId != null) {
 				manager.getSymbols().setCurrentScopeFrameIndex(frameId);
 			}

@@ -15,7 +15,8 @@
  */
 package agent.lldb.model.impl;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import SWIG.SBBreakpointLocation;
@@ -23,25 +24,20 @@ import SWIG.SBTarget;
 import agent.lldb.lldb.DebugClient;
 import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(
-	name = "BreakpointSpec",
-	elements = { //
-		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) //
-	},
-	attributes = {
+@TargetObjectSchemaInfo(name = "BreakpointSpec", elements = { //
+	@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) }, attributes = {
 		@TargetAttributeType(name = "Type", type = String.class),
 		@TargetAttributeType(name = "Valid", type = Boolean.class),
 		@TargetAttributeType(name = "Enabled", type = Boolean.class),
 		@TargetAttributeType(name = "Count", type = Long.class),
-		@TargetAttributeType(type = Void.class)
-	},
-	canonicalContainer = true)
+		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetObjectImpl
 		implements LldbModelTargetBreakpointSpec {
 
@@ -58,12 +54,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	protected final Map<Integer, LldbModelTargetBreakpointLocation> breaksBySub =
 		new WeakValueHashMap<>();
 	protected final ListenerSet<TargetBreakpointAction> actions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
-			};
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	public LldbModelTargetAbstractXpointSpec(LldbModelTargetBreakpointContainer breakpoints,
 			Object info, String title) {
@@ -81,7 +72,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	protected CompletableFuture<Void> init() {
 		Object info = getModelObject();
 		updateInfo(info, "Created");
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -125,10 +116,10 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 		actions.remove(action);
 	}
 
-	protected CompletableFuture<Object> getInfo(boolean refresh) {
+	protected CompletableFuture<Object> getInfo(RefreshBehavior refresh) {
 		SBTarget session = getManager().getCurrentSession();
 		String id = DebugClient.getId(getModelObject());
-		if (!refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			return CompletableFuture
 					.completedFuture(getManager().getKnownBreakpoints(session).get(id));
 		}
@@ -137,7 +128,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo(refresh).thenAccept(i -> {
 			updateInfo(i, "Refreshed");
 		});
@@ -157,7 +148,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 
 	protected void breakpointHit(LldbModelTargetStackFrame frame,
 			LldbModelTargetBreakpointLocation eb) {
-		actions.fire.breakpointHit(this, frame.getParentThread(), frame, eb);
+		actions.invoke().breakpointHit(this, frame.getParentThread(), frame, eb);
 	}
 
 	public synchronized LldbModelTargetBreakpointLocation getTargetBreakpointLocation(
@@ -178,7 +169,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 
 	@Override
 	public ListenerSet<TargetBreakpointAction> getActions() {
-		return new ListenerSet<TargetBreakpointAction>(null);
+		return new ListenerSet<TargetBreakpointAction>(null, true);
 	}
 
 }

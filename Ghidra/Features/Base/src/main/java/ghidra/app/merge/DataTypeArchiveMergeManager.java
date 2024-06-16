@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.app.merge;
 
 import ghidra.app.merge.datatypes.DataTypeMergeManager;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ModalPluginTool;
 import ghidra.program.model.data.DataTypeManagerDomainObject;
 import ghidra.program.model.listing.DataTypeArchive;
@@ -27,15 +26,14 @@ import ghidra.program.model.listing.DataTypeArchiveChangeSet;
  * Top level object that manages each step of the merge/resolve conflicts
  * process.
  */
-public class DataTypeArchiveMergeManager extends MergeManager { 
+public class DataTypeArchiveMergeManager extends MergeManager {
 
-	public DataTypeArchiveMergeManager(	DataTypeManagerDomainObject resultDtArchive, 
-										DataTypeManagerDomainObject myDtArchive, 
-										DataTypeManagerDomainObject originalDtArchive, 
-										DataTypeManagerDomainObject latestDtArchive,
-										DataTypeArchiveChangeSet latestChangeSet, 
-										DataTypeArchiveChangeSet myChangeSet) {
-		super(resultDtArchive, myDtArchive, originalDtArchive, latestDtArchive, latestChangeSet, myChangeSet);
+	public DataTypeArchiveMergeManager(DataTypeManagerDomainObject resultDtArchive,
+			DataTypeManagerDomainObject myDtArchive, DataTypeManagerDomainObject originalDtArchive,
+			DataTypeManagerDomainObject latestDtArchive, DataTypeArchiveChangeSet latestChangeSet,
+			DataTypeArchiveChangeSet myChangeSet) {
+		super(resultDtArchive, myDtArchive, originalDtArchive, latestDtArchive, latestChangeSet,
+			myChangeSet);
 	}
 
 	@Override
@@ -43,14 +41,13 @@ public class DataTypeArchiveMergeManager extends MergeManager {
 		// create the merge resolvers
 		int idx = 0;
 		mergeResolvers = new MergeResolver[1];
-		
-		mergeResolvers[idx++] = new DataTypeMergeManager(	this, 
-															(DataTypeManagerDomainObject)resultDomainObject, 
-															(DataTypeManagerDomainObject)myDomainObject, 
-															(DataTypeManagerDomainObject)originalDomainObject, 
-															(DataTypeManagerDomainObject)latestDomainObject, 
-															(DataTypeArchiveChangeSet)latestChangeSet, 
-															(DataTypeArchiveChangeSet)myChangeSet);
+
+		mergeResolvers[idx++] =
+			new DataTypeMergeManager(this, (DataTypeManagerDomainObject) resultDomainObject,
+				(DataTypeManagerDomainObject) myDomainObject,
+				(DataTypeManagerDomainObject) originalDomainObject,
+				(DataTypeManagerDomainObject) latestDomainObject,
+				(DataTypeArchiveChangeSet) latestChangeSet, (DataTypeArchiveChangeSet) myChangeSet);
 	}
 
 	/**
@@ -64,23 +61,23 @@ public class DataTypeArchiveMergeManager extends MergeManager {
 	public DataTypeArchive getDataTypeArchive(int version) {
 		switch (version) {
 			case MergeConstants.LATEST:
-				return (DataTypeArchive)latestDomainObject;
+				return (DataTypeArchive) latestDomainObject;
 			case MergeConstants.MY:
-				return (DataTypeArchive)myDomainObject;
+				return (DataTypeArchive) myDomainObject;
 			case MergeConstants.ORIGINAL:
-				return (DataTypeArchive)originalDomainObject;
+				return (DataTypeArchive) originalDomainObject;
 			case MergeConstants.RESULT:
-				return (DataTypeArchive)resultDomainObject;
+				return (DataTypeArchive) resultDomainObject;
 			default:
 				return null;
 		}
 	}
-	
+
 	@Override
 	protected MergeManagerPlugin createMergeManagerPlugin(ModalPluginTool mergePluginTool,
-			MergeManager multiUserMergeManager, UndoableDomainObject modifiableDomainObject) {
-		return new DataTypeArchiveMergeManagerPlugin(mergeTool, DataTypeArchiveMergeManager.this, 
-														(DataTypeArchive)resultDomainObject);
+			MergeManager multiUserMergeManager, DomainObject modifiableDomainObject) {
+		return new DataTypeArchiveMergeManagerPlugin(mergeTool, DataTypeArchiveMergeManager.this,
+			(DataTypeArchive) resultDomainObject);
 	}
 
 	@Override

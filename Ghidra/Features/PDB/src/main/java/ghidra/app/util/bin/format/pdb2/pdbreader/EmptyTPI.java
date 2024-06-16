@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.io.IOException;
 import java.io.Writer;
 
-public class EmptyTPI extends AbstractTypeProgramInterface {
+public class EmptyTPI extends TypeProgramInterface {
 
 	EmptyTPI(AbstractPdb pdb) {
 		super(pdb, RecordCategory.TYPE, -1);

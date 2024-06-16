@@ -16,7 +16,6 @@
 package docking.options.editor;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.event.MouseListener;
 import java.beans.PropertyEditorSupport;
 import java.io.File;
@@ -27,7 +26,10 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
+import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
  * Bean editor to show a text field and a browse button to bring
@@ -41,7 +43,16 @@ public class FileChooserEditor extends PropertyEditorSupport {
 	private JTextField textField = new JTextField(NUMBER_OF_COLUMNS);
 	private File currentDir;
 	private GhidraFileChooser fileChooser;
+	private GhidraFileFilter fileFilter;
 	private MouseListener otherMouseListener;
+
+	public FileChooserEditor() {
+		this(null);
+	}
+
+	public FileChooserEditor(GhidraFileFilter fileFilter) {
+		this.fileFilter = fileFilter;
+	}
 
 	@Override
 	public String getAsText() {
@@ -73,14 +84,14 @@ public class FileChooserEditor extends PropertyEditorSupport {
 	public void setValue(Object value) {
 		if (value == null) {
 			currentFileValue = null;
+			textField.setText("");
 		}
-
-		if (value instanceof File) {
+		else if (value instanceof File) {
 			currentFileValue = (File) value;
 			textField.setText(currentFileValue.getAbsolutePath());
 		}
-		else if (value instanceof String) {
-			setAsText((String) value);
+		else if (value instanceof String s) {
+			setAsText(s);
 		}
 	}
 
@@ -106,10 +117,7 @@ public class FileChooserEditor extends PropertyEditorSupport {
 			setLayout(bl);
 
 			textField.setText(currentFileValue != null ? currentFileValue.getAbsolutePath() : "");
-			browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-			Font f = browseButton.getFont();
-			f = new Font(f.getName(), Font.BOLD, f.getSize());
-			browseButton.setFont(f);
+			browseButton = new BrowseButton();
 
 			add(textField);
 			add(Box.createHorizontalStrut(5));
@@ -163,7 +171,10 @@ public class FileChooserEditor extends PropertyEditorSupport {
 
 			fileChooser.setApproveButtonText("Choose Path");
 			fileChooser.setTitle("Choose Path");
-			fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_AND_DIRECTORIES);
+			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
+			if (fileFilter != null) {
+				fileChooser.setFileFilter(fileFilter);
+			}
 			if (currentFileValue != null) {
 				fileChooser.setSelectedFile(currentFileValue);
 			}

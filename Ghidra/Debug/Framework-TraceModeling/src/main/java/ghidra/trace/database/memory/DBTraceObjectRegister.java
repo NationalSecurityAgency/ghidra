@@ -17,13 +17,12 @@ package ghidra.trace.database.memory;
 
 import java.math.BigInteger;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.util.PathUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.target.*;
@@ -60,14 +59,14 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public int getLength() {
+	public int getBitLength() {
 		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TargetRegister.LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+			TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}
 
 	@Override
-	public void setValue(Range<Long> lifespan, byte[] value) {
-		int length = getLength();
+	public void setValue(Lifespan lifespan, byte[] value) {
+		int length = getByteLength();
 		if (length != 0 && value.length != length) {
 			throw new IllegalArgumentException("Length must match the register");
 		}
@@ -88,13 +87,13 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 		if (val instanceof String) {
 			// Always base 16. Model API says byte array for register value is big endian.
 			BigInteger bigVal = new BigInteger((String) val, 16);
-			return Utils.bigIntegerToBytes(bigVal, getLength(), true);
+			return Utils.bigIntegerToBytes(bigVal, getByteLength(), true);
 		}
 		throw new ClassCastException("Cannot convert " + val + " to byte array for register value");
 	}
 
 	@Override
-	public void setState(Range<Long> lifespan, TraceMemoryState state) {
+	public void setState(Lifespan lifespan, TraceMemoryState state) {
 		// NB. There's no model equivalent, so encode using ordinal
 		object.setValue(lifespan, KEY_STATE, state.ordinal());
 	}

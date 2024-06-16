@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,17 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.EndInstructionValue;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class EndSymbol extends SpecificSymbol {
 	private AddrSpace const_space;
@@ -37,7 +34,7 @@ public class EndSymbol extends SpecificSymbol {
 	public EndSymbol(Location location) {
 		super(location);
 		patexp = null;
-	} // For use with restoreXml
+	}
 
 	@Override
 	public PatternExpression getPatternExpression() {
@@ -73,39 +70,17 @@ public class EndSymbol extends SpecificSymbol {
 	}
 
 	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = pos.getCurSpace();
-		hand.offset_space = null;
-		hand.offset_offset = pos.getNaddr().getOffset(); // Get starting address of next instruction
-		hand.size = hand.space.getAddrSize();
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_END_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.closeElement(ELEM_END_SYM);
 	}
 
 	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		long val = pos.getNaddr().getOffset();
-		s.append("0x");
-		s.append(Long.toHexString(val));
-	}
-
-	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<end_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
-	}
-
-	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<end_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		const_space = trans.getConstantSpace();
-		patexp = new EndInstructionValue(null);
-		patexp.layClaim();
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_END_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_END_SYM_HEAD);
 	}
 
 }

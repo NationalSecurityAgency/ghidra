@@ -15,15 +15,17 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.plugin.processors.sleigh.VarnodeData;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -41,14 +43,9 @@ public class ParamEntry {
 	private static final int IS_GROUPED = 512;			// The entry is grouped with other entries
 	private static final int OVERLAPPING = 0x100;		// This overlaps an earlier entry
 
-	public static final int TYPE_UNKNOWN = 8;			// Default type restriction
-	public static final int TYPE_PTR = 2;				// pointer types
-	public static final int TYPE_FLOAT = 3;				// floating point types
-
 	private int flags;
-	private int type;				// Restriction on DataType this entry must match
-	private int group;				// Group of (mutually exclusive) entries that this entry belongs to
-	private int groupsize;			// The number of consecutive groups taken by the entry
+	private StorageClass type;		// Restriction on DataType this entry must match
+	private int[] groupSet;			// Group(s) this entry belongs to
 	private AddressSpace spaceid;	// Space of this range
 	private long addressbase;		// Start of the range
 	private int size;				// size of the range
@@ -58,15 +55,16 @@ public class ParamEntry {
 	private Varnode[] joinrec;
 
 	public ParamEntry(int grp) {	// For use with restoreXml
-		group = grp;
+		groupSet = new int[1];
+		groupSet[0] = grp;
 	}
 
 	public int getGroup() {
-		return group;
+		return groupSet[0];
 	}
 
-	public int getGroupSize() {
-		return groupsize;
+	public int[] getAllGroups() {
+		return groupSet;
 	}
 
 	public int getSize() {
@@ -85,7 +83,7 @@ public class ParamEntry {
 		return addressbase;
 	}
 
-	public int getType() {
+	public StorageClass getType() {
 		return type;
 	}
 
@@ -109,10 +107,6 @@ public class ParamEntry {
 		return ((flags & IS_BIG_ENDIAN) != 0);
 	}
 
-	public boolean isFloatExtended() {
-		return ((flags & SMALLSIZE_FLOAT) != 0);
-	}
-
 	private boolean isLeftJustified() {
 		return (((flags & IS_BIG_ENDIAN) == 0) || ((flags & FORCE_LEFT_JUSTIFY) != 0));
 	}
@@ -121,8 +115,62 @@ public class ParamEntry {
 		return spaceid;
 	}
 
-	public Varnode[] getJoinRecord() {
-		return joinrec;
+	/**
+	 * Collect pieces from the join list, in endian order, until the given size is covered.
+	 * The last piece is trimmed to match the size exactly.  If the size is too big to be
+	 * covered by this ParamEntry, null is returned.
+	 * @param sz is the given size
+	 * @return the collected array of Varnodes or null
+	 */
+	private Varnode[] getJoinPieces(int sz) {
+		int num = 0;
+		int first, replace;
+		Varnode vn = null;
+		Varnode[] res;
+		if (isBigEndian()) {
+			first = 0;
+			while (sz > 0) {
+				if (num >= joinrec.length) {
+					return null;
+				}
+				vn = joinrec[num];
+				if (vn.getSize() > sz) {
+					num += 1;
+					break;
+				}
+				sz -= vn.getSize();
+				num += 1;
+			}
+			replace = num - 1;
+		}
+		else {
+			while (sz > 0) {
+				if (num >= joinrec.length) {
+					return null;
+				}
+				vn = joinrec[joinrec.length - 1 - num];
+				if (vn.getSize() > sz) {
+					num += 1;
+					break;
+				}
+				sz -= vn.getSize();
+				num += 1;
+			}
+			first = joinrec.length - num;
+			replace = first;
+		}
+		if (sz == 0 && num == joinrec.length) {
+			return joinrec;
+		}
+		res = new Varnode[num];
+		for (int i = 0; i < num; ++i) {
+			res[i] = joinrec[first + i];
+		}
+		if (sz > 0) {
+			res[replace] = new Varnode(vn.getAddress(), sz);
+		}
+
+		return res;
 	}
 
 	/**
@@ -262,7 +310,7 @@ public class ParamEntry {
 	 * @return the slot index
 	 */
 	public int getSlot(Address addr, int skip) {
-		int res = group;
+		int res = groupSet[0];
 		if (alignment != 0) {
 			long diff = addr.getOffset() + skip - addressbase;
 			int baseslot = (int) diff / alignment;
@@ -274,23 +322,25 @@ public class ParamEntry {
 			}
 		}
 		else if (skip != 0) {
-			res += (groupsize - 1);
+			res = groupSet[groupSet.length - 1];
 		}
 		return res;
 	}
 
 	/**
-	 * Return the storage address assigned when allocating something of size -sz- assuming -slotnum- slots
-	 * have already been assigned.  Set res.space to null if the -sz- is too small or if
+	 * Assign the storage address when allocating something of size -sz- assuming -slotnum- slots
+	 * have already been assigned.  Set the address to null if the -sz- is too small or if
 	 * there are not enough slots left
 	 * @param slotnum	number of slots already assigned
 	 * @param sz        number of bytes to being assigned
-	 * @param res       the final storage address
+	 * @param typeAlign required byte alignment for the parameter
+	 * @param res       will hold the final storage address
 	 * @return          slotnum plus the number of slots used
 	 */
-	public int getAddrBySlot(int slotnum, int sz, VarnodeData res) {
-		res.space = null;		// Start with an invalid result
+	public int getAddrBySlot(int slotnum, int sz, int typeAlign, ParameterPieces res) {
 		int spaceused;
+		long offset;
+		res.address = null;		// Start with an invalid result
 		if (sz < minsize) {
 			return slotnum;
 		}
@@ -301,14 +351,22 @@ public class ParamEntry {
 			if (sz > size) {
 				return slotnum;		// Check on maximum size
 			}
-			res.space = spaceid;
-			res.offset = addressbase;			// Get base address of the slot
+			offset = addressbase;			// Get base address of the slot
 			spaceused = size;
-			if ((flags & SMALLSIZE_FLOAT) != 0) {
+			if ((flags & SMALLSIZE_FLOAT) != 0 && sz != size) {
+				res.address = spaceid.getAddress(offset);
+				res.joinPieces = new Varnode[1];
+				res.joinPieces[0] = new Varnode(res.address, size);
 				return slotnum;
 			}
 		}
 		else {
+			if (typeAlign > alignment) {
+				int tmp = (slotnum * alignment) % typeAlign;
+				if (tmp != 0) {
+					slotnum += (typeAlign - tmp) / alignment;	// Waste slots to achieve typeAlign
+				}
+			}
 			int slotsused = sz / alignment;	// How many slots does a -sz- byte object need
 			if ((sz % alignment) != 0) {
 				slotsused += 1;
@@ -326,13 +384,17 @@ public class ParamEntry {
 			else {
 				index = slotnum;
 			}
-			res.space = spaceid;
-			res.offset = addressbase + index * alignment;
+			offset = addressbase + index * alignment;
 			slotnum += slotsused;		// Inform caller of number of slots used
 		}
 		if (!isLeftJustified()) {
-			res.offset += (spaceused - sz);
+			offset += (spaceused - sz);
 		}
+		res.address = spaceid.getAddress(offset);
+		if (res.address.getAddressSpace().getType() == AddressSpace.TYPE_JOIN) {
+			res.joinPieces = getJoinPieces(sz);
+		}
+
 		return slotnum;
 	}
 
@@ -363,29 +425,24 @@ public class ParamEntry {
 		if (joinrec == null) {
 			return;
 		}
-		int mingrp = 1000;
-		int maxgrp = -1;
+		ArrayList<Integer> newGroupSet = new ArrayList<>();
 		for (Varnode piece : joinrec) {
 			ParamEntry entry = findEntryByStorage(curList, piece);
 			if (entry != null) {
-				if (entry.group < mingrp) {
-					mingrp = entry.group;
-				}
-				int max = entry.group + entry.groupsize;
-				if (max > maxgrp) {
-					maxgrp = max;
+				for (int group : entry.groupSet) {
+					newGroupSet.add(group);
 				}
 			}
 		}
-		if (maxgrp < 0 || mingrp >= 1000) {
+		if (newGroupSet.isEmpty()) {
 			throw new XmlParseException("<pentry> join must overlap at least one previous entry");
 		}
-		group = mingrp;
-		groupsize = (maxgrp - mingrp);
-		flags |= OVERLAPPING;
-		if (groupsize > joinrec.length) {
-			throw new XmlParseException("<pentry> join must overlap sequential entries");
+		newGroupSet.sort(null);
+		groupSet = new int[newGroupSet.size()];
+		for (int i = 0; i < groupSet.length; ++i) {
+			groupSet[i] = newGroupSet.get(i);
 		}
+		flags |= OVERLAPPING;
 	}
 
 	/**
@@ -398,9 +455,7 @@ public class ParamEntry {
 		if (joinrec != null) {
 			return;
 		}
-		int grpsize = 0;
-		int mingrp = 1000;
-		int maxgrp = -1;
+		ArrayList<Integer> newGroupSet = new ArrayList<>();
 		Address addr = spaceid.getAddress(addressbase);
 		for (ParamEntry entry : curList) {
 			if (entry == this) {
@@ -413,40 +468,34 @@ public class ParamEntry {
 				if (entry.isOverlap()) {
 					continue;		// Don't count resources (already counted overlapped pentry)
 				}
-				if (entry.group < mingrp) {
-					mingrp = entry.group;
+				for (int group : entry.groupSet) {
+					newGroupSet.add(group);
 				}
-				int max = entry.group + entry.groupsize;
-				if (max > maxgrp) {
-					maxgrp = max;
-				}
-				grpsize += entry.groupsize;
 			}
 			else {
 				throw new XmlParseException("Illegal overlap of <pentry> in compiler spec");
 			}
 		}
-		if (grpsize == 0) {
+		if (newGroupSet.isEmpty()) {
 			return;				// No overlaps
 		}
-		if (grpsize != (maxgrp - mingrp)) {
-			throw new XmlParseException("<pentry> must overlap sequential entries");
+		newGroupSet.sort(null);
+		groupSet = new int[newGroupSet.size()];
+		for (int i = 0; i < groupSet.length; ++i) {
+			groupSet[i] = newGroupSet.get(i);
 		}
-		group = mingrp;
-		groupsize = grpsize;
 		flags |= OVERLAPPING;
 	}
 
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<pentry");
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "minsize", minsize);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "maxsize", size);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_PENTRY);
+		encoder.writeSignedInteger(ATTRIB_MINSIZE, minsize);
+		encoder.writeSignedInteger(ATTRIB_MAXSIZE, size);
 		if (alignment != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "align", alignment);
+			encoder.writeSignedInteger(ATTRIB_ALIGN, alignment);
 		}
-		if (type == TYPE_FLOAT || type == TYPE_PTR) {
-			String tok = (type == TYPE_FLOAT) ? "float" : "ptr";
-			SpecXmlUtils.encodeStringAttribute(buffer, "metatype", tok);
+		if (type != StorageClass.GENERAL) {
+			encoder.writeString(ATTRIB_STORAGE, type.toString());
 		}
 		String extString = null;
 		if ((flags & SMALLSIZE_SEXT) != 0) {
@@ -462,9 +511,8 @@ public class ParamEntry {
 			extString = "float";
 		}
 		if (extString != null) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "extension", extString);
+			encoder.writeString(ATTRIB_EXTENSION, extString);
 		}
-		buffer.append(">\n");
 		AddressXML addressSize;
 		if (joinrec == null) {
 			// Treat as unsized address with no size
@@ -473,49 +521,39 @@ public class ParamEntry {
 		else {
 			addressSize = new AddressXML(spaceid, addressbase, size, joinrec);
 		}
-		addressSize.saveXml(buffer);
-		buffer.append("</pentry>");
+		addressSize.encode(encoder);
+		encoder.closeElement(ELEM_PENTRY);
 	}
 
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, List<ParamEntry> curList,
 			boolean grouped) throws XmlParseException {
 		flags = 0;
-		type = TYPE_UNKNOWN;
+		type = StorageClass.GENERAL;
 		size = minsize = -1;		// Must be filled in
 		alignment = 0;				// default
 		numslots = 1;
-		groupsize = 1;				// default
 
-		XmlElement el = parser.start("pentry");
+		XmlElement el = parser.start(ELEM_PENTRY.name());
 		Iterator<Entry<String, String>> iter = el.getAttributes().entrySet().iterator();
 		while (iter.hasNext()) {
 			Entry<String, String> entry = iter.next();
 			String name = entry.getKey();
-			if (name.equals("minsize")) {
+			if (name.equals(ATTRIB_MINSIZE.name())) {
 				minsize = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("size")) {	// old style
+			else if (name.equals(ATTRIB_SIZE.name())) {	// old style
 				alignment = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("align")) {
+			else if (name.equals(ATTRIB_ALIGN.name())) {
 				alignment = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("maxsize")) {
+			else if (name.equals(ATTRIB_MAXSIZE.name())) {
 				size = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("metatype")) {		// Not implemented at the moment
-				String meta = entry.getValue();
-				// TODO:  Currently only supporting "float", "ptr", and "unknown" metatypes
-				if ((meta != null)) {
-					if (meta.equals("float")) {
-						type = TYPE_FLOAT;
-					}
-					else if (meta.equals("ptr")) {
-						type = TYPE_PTR;
-					}
-				}
+			else if (name.equals(ATTRIB_STORAGE.name()) || name.equals(ATTRIB_METATYPE.name())) {
+				type = StorageClass.getClass(entry.getValue());
 			}
-			else if (name.equals("extension")) {
+			else if (name.equals(ATTRIB_EXTENSION.name())) {
 				flags &= ~(SMALLSIZE_ZEXT | SMALLSIZE_SEXT | SMALLSIZE_INTTYPE | SMALLSIZE_FLOAT);
 				String value = entry.getValue();
 				if (value.equals("sign")) {
@@ -604,8 +642,13 @@ public class ParamEntry {
 		if (numslots != obj.numslots) {
 			return false;
 		}
-		if (group != obj.group || groupsize != obj.groupsize) {
+		if (groupSet.length != obj.groupSet.length) {
 			return false;
+		}
+		for (int i = 0; i < groupSet.length; ++i) {
+			if (groupSet[i] != obj.groupSet[i]) {
+				return false;
+			}
 		}
 		if (!SystemUtilities.isArrayEqual(joinrec, obj.joinrec)) {
 			return false;
@@ -647,18 +690,17 @@ public class ParamEntry {
 		return (int) (offset2 - offset1);
 	}
 
-	public static int getMetatype(DataType tp) {
-		// TODO: A complete metatype implementation
+	public static StorageClass getBasicTypeClass(DataType tp) {
 		if (tp instanceof TypeDef) {
 			tp = ((TypeDef) tp).getBaseDataType();
 		}
 		if (tp instanceof AbstractFloatDataType) {
-			return TYPE_FLOAT;
+			return StorageClass.FLOAT;
 		}
 		if (tp instanceof Pointer) {
-			return TYPE_PTR;
+			return StorageClass.PTR;
 		}
-		return TYPE_UNKNOWN;
+		return StorageClass.GENERAL;
 	}
 
 	/**
@@ -673,7 +715,7 @@ public class ParamEntry {
 			return;
 		}
 		if (entry1.type != entry2.type) {
-			if (entry1.type == TYPE_UNKNOWN) {
+			if (entry1.type == StorageClass.GENERAL) {
 				throw new XmlParseException(
 					"<pentry> tags with a specific type must come before the general type");
 			}

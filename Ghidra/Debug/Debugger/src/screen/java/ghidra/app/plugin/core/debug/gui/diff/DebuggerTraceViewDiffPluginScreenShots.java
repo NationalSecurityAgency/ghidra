@@ -22,12 +22,14 @@ import java.nio.ByteOrder;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.async.AsyncTestUtils;
+import ghidra.framework.model.DomainFolder;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
@@ -36,7 +38,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
+import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGenerator
@@ -66,7 +68,7 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 	@Test
 	public void testCaptureDebuggerTraceViewDiffPlugin() throws Throwable {
 		long snap1, snap2;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceTimeManager tm = tb.trace.getTimeManager();
 			snap1 = tm.createSnapshot("Baseline").getKey();
 			snap2 = tm.createSnapshot("X's first move").getKey();
@@ -92,13 +94,16 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 			mm.putBytes(snap2, tb.addr(0x00600000), buf);
 		}
 
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		root.createFile("tictactoe", tb.trace, TaskMonitor.DUMMY);
+
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 		traceManager.activateSnap(snap1);
 		waitForSwing();
 
 		waitOn(diffPlugin.startComparison(TraceSchedule.snap(snap2)));
-		assertTrue(diffPlugin.gotoNextDiff());
+		assertTrue(runSwing(() -> diffPlugin.gotoNextDiff()));
 
 		captureIsolatedProvider(DebuggerListingProvider.class, 900, 600);
 	}
@@ -106,7 +111,7 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 	@Test
 	public void testCaptureDebuggerTimeSelectionDialog() throws Throwable {
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceTimeManager tm = tb.trace.getTimeManager();
 			thread = tb.getOrAddThread("main", 0);
 			tm.createSnapshot("Break on main").setEventThread(thread);

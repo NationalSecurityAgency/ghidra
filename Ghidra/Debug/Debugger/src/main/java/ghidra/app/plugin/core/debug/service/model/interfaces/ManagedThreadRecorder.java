@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.debug.service.model.interfaces;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
 import ghidra.trace.model.thread.TraceThread;
 
 public interface ManagedThreadRecorder extends AbstractTraceRecorder {

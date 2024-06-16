@@ -63,7 +63,7 @@ public class ArchitectureDataDirectory extends DataDirectory {
         	Msg.info(this, "Requesting ASCII string of size "+getSize());
         	return false;
         }
-        copyright = reader.readAsciiString(ptr, getSize());
+		copyright = reader.readAsciiString(ptr, getSize()).trim();
         return true;
     }
 

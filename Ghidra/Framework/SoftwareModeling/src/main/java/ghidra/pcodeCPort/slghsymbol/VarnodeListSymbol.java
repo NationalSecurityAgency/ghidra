@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,15 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.*;
-import ghidra.pcodeCPort.pcoderaw.VarnodeData;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.translate.BadDataError;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-
-import org.jdom.Element;
 
 public class VarnodeListSymbol extends ValueSymbol {
 
@@ -40,7 +32,7 @@ public class VarnodeListSymbol extends ValueSymbol {
 
 	public VarnodeListSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	@Override
 	public symbol_type getType() {
@@ -68,32 +60,6 @@ public class VarnodeListSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public Constructor resolve(ParserWalker walker) {
-		if (!tableisfilled) {
-			int ind = (int) patval.getValue(walker);
-			if ((ind < 0) || (ind >= varnode_table.size()) || (varnode_table.get(ind) == null)) {
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				PrintStream s = new PrintStream(baos);
-				walker.getAddr().printRaw(s);
-				throw new BadDataError(walker.getAddr().getShortcut() + baos.toString() +
-					": No corresponding entry in varnode list");
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		// The resolve routine has checked that -ind- must be a valid index
-		VarnodeData fix = varnode_table.get(ind).getFixedVarnode();
-		hand.space = fix.space;
-		hand.offset_space = null; // Not a dynamic value
-		hand.offset_offset = fix.offset;
-		hand.size = fix.size;
-	}
-
-	@Override
 	public int getSize() {
 		for (int i = 0; i < varnode_table.size(); ++i) {
 			VarnodeSymbol vnsym = varnode_table.get(i); // Assume all are same size
@@ -105,59 +71,29 @@ public class VarnodeListSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		if (ind >= varnode_table.size()) {
-			throw new SleighError("Value out of range for varnode table", getLocation());
-		}
-		s.append(varnode_table.get(ind).getName());
-	}
-
-	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<varlist_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.append(">\n");
-		patval.saveXml(s);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VARLIST_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		patval.encode(encoder);
 		for (int i = 0; i < varnode_table.size(); ++i) {
 			if (varnode_table.get(i) == null) {
-				s.append("<null/>\n");
+				encoder.openElement(ELEM_NULL);
+				encoder.closeElement(ELEM_NULL);
 			}
 			else {
-				s.append("<var id=\"0x");
-				s.append(Long.toHexString(varnode_table.get(i).getId()));
-				s.append("\"/>\n");
+				encoder.openElement(ELEM_VAR);
+				encoder.writeUnsignedInteger(ATTRIB_ID, varnode_table.get(i).getId());
+				encoder.closeElement(ELEM_VAR);
 			}
 		}
-		s.append("</varlist_sym>\n");
+		encoder.closeElement(ELEM_VARLIST_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<varlist_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-
-		List<?> children = el.getChildren();
-		Iterator<?> iter = children.iterator();
-		Element child = (Element) iter.next();
-		patval = (PatternValue) PatternExpression.restoreExpression(child, trans);
-		patval.layClaim();
-		while (iter.hasNext()) {
-			Element subel = (Element) iter.next();
-			if (subel.getName().equals("var")) {
-				int id1 = XmlUtils.decodeUnknownInt(subel.getAttributeValue("id"));
-				varnode_table.push_back((VarnodeSymbol) trans.findSymbol(id1));
-			}
-			else {
-				varnode_table.push_back(null);
-			}
-		}
-		checkTableFill();
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VARLIST_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_VARLIST_SYM_HEAD);
 	}
 
 }

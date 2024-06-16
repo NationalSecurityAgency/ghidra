@@ -16,12 +16,14 @@
 /// \file sleigh_arch.hh
 /// \brief Architecture objects that use a Translate object derived from Sleigh
 
-#ifndef __SLEIGH_ARCH__
-#define __SLEIGH_ARCH__
+#ifndef __SLEIGH_ARCH_HH__
+#define __SLEIGH_ARCH_HH__
 
 #include "filemanage.hh"
 #include "architecture.hh"
 #include "sleigh.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_DEPRECATED;	///< Marshaling attribute "deprecated"
 extern AttributeId ATTRIB_ENDIAN;	///< Marshaling attribute "endian"
@@ -117,6 +119,13 @@ protected:
   static void collectSpecFiles(ostream &errs);		///< Gather specification files in normal locations
   virtual Translate *buildTranslator(DocumentStorage &store);
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void);
+  virtual void buildTypegrp(DocumentStorage &store);
+  virtual void buildCoreTypes(DocumentStorage &store);
+  virtual void buildCommentDB(DocumentStorage &store);
+  virtual void buildStringManager(DocumentStorage &store);
+  virtual void buildConstantPool(DocumentStorage &store);
+  virtual void buildContext(DocumentStorage &store);
+  virtual void buildSymbols(DocumentStorage &store);
   virtual void buildSpecFile(DocumentStorage &store);
   virtual void modifySpaces(Translate *trans);
   virtual void resolveArchitecture(void);
@@ -131,7 +140,7 @@ public:
   virtual string getDescription(void) const;
 
   static string normalizeProcessor(const string &nm);		///< Try to recover a \e language \e id processor field
-  static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianess field
+  static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianness field
   static string normalizeSize(const string &nm);		///< Try to recover a \e language \e id size field
   static string normalizeArchitecture(const string &nm);	///< Try to recover a \e language \e id string
   static void scanForSleighDirectories(const string &rootpath);
@@ -140,4 +149,5 @@ public:
   static FileManage specpaths;					///< Known directories that contain .ldefs files.
 };
 
+} // End namespace ghidra
 #endif

@@ -23,9 +23,8 @@ import SWIG.ByteOrder;
 import SWIG.SBTarget;
 import agent.lldb.model.iface2.LldbModelTargetSession;
 import agent.lldb.model.iface2.LldbModelTargetSessionAttributes;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "SessionAttributes",
@@ -57,6 +56,14 @@ public class LldbModelTargetSessionAttributesImpl extends LldbModelTargetObjectI
 
 		SBTarget target = (SBTarget) session.getModelObject();
 		String[] triple = target.GetTriple().split("-");
+		String arch = "x86_64";
+		String manufacturer = "unknown";
+		String os = System.getProperty("os.name").toLowerCase();
+		if (triple.length == 3) {
+			arch = triple[0];
+			manufacturer = triple[1];
+			os = triple[2];
+		} 
 		ByteOrder order = target.GetByteOrder();
 		String orderStr = "invalid";
 		if (order.equals(ByteOrder.eByteOrderLittle)) {
@@ -73,9 +80,9 @@ public class LldbModelTargetSessionAttributesImpl extends LldbModelTargetObjectI
 			platformAttributes, //
 			environment //
 		), Map.of( //
-			ARCH_ATTRIBUTE_NAME, triple[0], //
+			ARCH_ATTRIBUTE_NAME, arch, //
 			DEBUGGER_ATTRIBUTE_NAME, "lldb", //
-			OS_ATTRIBUTE_NAME, triple[2], //
+			OS_ATTRIBUTE_NAME, os, //
 			ENDIAN_ATTRIBUTE_NAME, orderStr //
 		), "Initialized");
 
@@ -83,7 +90,7 @@ public class LldbModelTargetSessionAttributesImpl extends LldbModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(null);
 	}
 

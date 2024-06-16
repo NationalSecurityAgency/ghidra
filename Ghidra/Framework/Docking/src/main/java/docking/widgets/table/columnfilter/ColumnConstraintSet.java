@@ -22,6 +22,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.constraint.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.SaveState;
 
 /**
@@ -174,29 +176,34 @@ public class ColumnConstraintSet<R, T> {
 		return saveState;
 	}
 
-	/**
+	/*
 	 * Returns an HTML representation of this constraint set in a tabular form. It will be used
 	 * inside the HTML representation of the entire filter. See {@link ColumnBasedTableFilter#getHtmlRepresentation()}
 	 * for a description of the table format.
+	 * @return the html
 	 */
 	String getHtmlRepresentation() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("<table valign=top cellpadding=0 cellspacing=0>");
-		builder.append("<tr><td style=\"color:#990099\">");
-		builder.append(model.getColumnName(columnIndex));
-		builder.append("&nbsp;");
-		builder.append("</td>");
-		builder.append("<td>");
-		builder.append(getHtmlRepresentation(constraints.get(0)));
-		builder.append("<td></tr>");
+		StringBuilder buf = new StringBuilder();
+		buf.append("<table valign=top cellpadding=0 cellspacing=0>");
+		buf.append("<tr><td style=\"font-weight:bold\">");
+		buf.append(model.getColumnName(columnIndex));
+		buf.append("&nbsp;");
+		buf.append("</td>");
+		buf.append("<td>");
+		buf.append(getHtmlRepresentation(constraints.get(0)));
+		buf.append("<td></tr>");
+
+		GColor gray = Palette.GRAY;
+		String grayHex = gray.toHexString();
 		for (int i = 1; i < constraints.size(); i++) {
-			builder.append("<tr><td style=\"color:gray;text-align:center\">or</td>");
-			builder.append("<td >");
-			builder.append(getHtmlRepresentation(constraints.get(i)));
-			builder.append("</td></tr>");
+			buf.append("<tr><td style=\"color:").append(grayHex);
+			buf.append("; text-align:center\">or</td>");
+			buf.append("<td >");
+			buf.append(getHtmlRepresentation(constraints.get(i)));
+			buf.append("</td></tr>");
 		}
-		builder.append("</table>");
-		return builder.toString();
+		buf.append("</table>");
+		return buf.toString();
 	}
 
 	private String getHtmlRepresentation(ColumnConstraint<?> columnConstraint) {
@@ -209,7 +216,7 @@ public class ColumnConstraintSet<R, T> {
 		if (quoteValue) {
 			buf.append("\"");
 		}
-		buf.append("<span style=\"color: blue\">");
+		buf.append("<span style=\"font-weight:bold\">");
 		buf.append(columnConstraint.getConstraintValueString());
 		buf.append("</span>");
 		if (quoteValue) {

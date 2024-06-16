@@ -23,8 +23,6 @@ import java.util.HashMap;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.InputDialog;
 import ghidra.framework.model.*;
@@ -32,6 +30,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
+import help.Help;
+import help.HelpService;
 
 class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 	private final static long serialVersionUID = 1L;

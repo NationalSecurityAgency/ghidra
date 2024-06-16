@@ -20,20 +20,21 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbManager;
 import agent.gdb.model.impl.GdbModelImpl;
-import agent.gdb.pty.PtyFactory;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.dbg.util.ShellUtils;
+import ghidra.program.model.listing.Program;
+import ghidra.pty.PtyFactory;
 
-/**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
- */
-@FactoryDescription( //
-	brief = "IN-VM GNU gdb local debugger", //
-	htmlDetails = "Launch a GDB session in this same JVM" //
-)
+@FactoryDescription(
+	brief = "gdb",
+	htmlDetails = """
+			Connect to gdb.
+			This is best for most Linux and Unix userspace targets, and many embedded targets.
+			It may also be used with gdbserver by connecting to gdb, then using <code>target remote
+			...</code>.
+			This will access the native API, which may put Ghidra's JVM at risk.""")
 public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	private String gdbCmd = GdbManager.DEFAULT_GDB_CMD;
@@ -46,21 +47,47 @@ public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	public final Property<Boolean> useExistingOption =
 		Property.fromAccessors(boolean.class, this::isUseExisting, this::setUseExisting);
 
-	// TODO: newLine option?
+	private boolean useCrlf = System.lineSeparator().equals("\r\n");;
+	@FactoryOption("Use DOS line endings (unchecked for UNIX and Cygwin))")
+	public final Property<Boolean> crlfNewLineOption =
+		Property.fromAccessors(Boolean.class, this::isUseCrlf, this::setUseCrlf);
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		List<String> gdbCmdLine = ShellUtils.parseArgs(gdbCmd);
 		GdbModelImpl model = new GdbModelImpl(PtyFactory.local());
+		if (useCrlf) {
+			model.setDosNewLine();
+		}
+		else {
+			model.setUnixNewLine();
+		}
 		return model
 				.startGDB(existing ? null : gdbCmdLine.get(0),
 					gdbCmdLine.subList(1, gdbCmdLine.size()).toArray(String[]::new))
 				.thenApply(__ -> model);
 	}
 
+	public boolean isUseCrlf() {
+		return useCrlf;
+	}
+
+	public void setUseCrlf(boolean useCrlf) {
+		this.useCrlf = useCrlf;
+	}
+
 	@Override
-	public boolean isCompatible() {
-		return GdbCompatibility.INSTANCE.isCompatible(gdbCmd);
+	public int getPriority(Program program) {
+		if (!GdbCompatibility.INSTANCE.isCompatible(gdbCmd)) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 80;
 	}
 
 	public String getGdbCommand() {

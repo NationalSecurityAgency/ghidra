@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +17,28 @@ package ghidra.program.database.properties;
 
 import java.io.IOException;
 
+import javax.help.UnsupportedOperationException;
+
+import db.DBHandle;
+import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ChangeManager;
-import ghidra.util.exception.*;
-import ghidra.util.prop.PropertyVisitor;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import db.DBHandle;
-import db.util.ErrorHandler;
 
 /**
  * This class provides a dummy map for an unsupported map.
  */
-public class UnsupportedMapDB extends PropertyMapDB {
+public class UnsupportedMapDB extends PropertyMapDB<Object> {
 
 	/**
 	 * Construct a dummy property map.
 	 * @param dbHandle database handle.
-	 * @param openMode the mode that the program was openned in.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
 	 * @param errHandler database error handler.
 	 * @param changeMgr change manager for event notification	 
 	 * @param addrMap address map.
@@ -45,25 +48,31 @@ public class UnsupportedMapDB extends PropertyMapDB {
 	 * @throws CancelledException if the user cancels the upgrade operation.
 	 * @throws IOException if a database io error occurs.
 	 */
-	UnsupportedMapDB(DBHandle dbHandle, int openMode, ErrorHandler errHandler,
+	UnsupportedMapDB(DBHandle dbHandle, OpenMode openMode, ErrorHandler errHandler,
 			ChangeManager changeMgr, AddressMap addrMap, String name, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		super(dbHandle, errHandler, changeMgr, addrMap, name);
 		checkMapVersion(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
-	 */
-	public void applyValue(PropertyVisitor visitor, Address addr) {
-		throw new AssertException();
+	@Override
+	public Class<Object> getValueClass() {
+		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
-	 */
-	public Object getObject(Address addr) {
+	@Override
+	public Object get(Address addr) {
 		return null;
+	}
+
+	@Override
+	public boolean hasProperty(Address addr) {
+		return false;
+	}
+
+	@Override
+	public void add(Address addr, Object value) {
+		throw new UnsupportedOperationException();
 	}
 
 }

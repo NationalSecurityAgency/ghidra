@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * Parser, extending {@link TypeProgramInterfaceParser}, for detecting and returning the
- *  appropriate {@link AbstractTypeProgramInterface} format to be used as the Item Program
+ *  appropriate {@link TypeProgramInterface} format to be used as the Item Program
  *  Interface for the filename given.
  */
 public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
@@ -27,8 +27,8 @@ public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
 	private static final int ITEM_PROGRAM_INTERFACE_STREAM_NUMBER = 4;
 
 	/**
-	 * Returns the standard stream number that contains the serialized Item Program Interface.
-	 * @return The standard stream number that contains the Item Program Interface.
+	 * Returns the standard stream number that contains the serialized Item Program Interface
+	 * @return the standard stream number that contains the Item Program Interface
 	 */
 	@Override
 	protected int getStreamNumber() {
@@ -38,8 +38,8 @@ public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
 
 	/**
 	 * Returns the appropriate {@link RecordCategory} needed while processing
-	 *  the Type Program Interface} (vs. Item Program Interface).
-	 * @return {@link RecordCategory#ITEM}.
+	 *  the Type Program Interface} (vs. Item Program Interface)
+	 * @return {@link RecordCategory#ITEM}
 	 */
 	@Override
 	protected RecordCategory getCategory() {
@@ -48,10 +48,10 @@ public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
 	}
 
 	/**
-	 * Returns true if there is not a name in the name table assigned to the stream number for
-	 * the IPI.
-	 * @param nameTable the nametable that contains the stream/name map
-	 * @return {@code true} if no name associated with the IPI stream number.
+	 * Returns {@code true} if there is not a name in the name table assigned to the stream number
+	 * for the IPI
+	 * @param nameTable the name table that contains the stream/name map
+	 * @return {@code true} if no name associated with the IPI stream number
 	 */
 	public static boolean hackCheckNoNameForStream(NameTable nameTable) {
 		String name = nameTable.getNameFromStreamNumber(ITEM_PROGRAM_INTERFACE_STREAM_NUMBER);

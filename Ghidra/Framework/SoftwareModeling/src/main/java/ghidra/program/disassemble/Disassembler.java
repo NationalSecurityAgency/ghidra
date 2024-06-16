@@ -123,8 +123,12 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Get a suitable disassembler instance. 
-	 * Marking of bad instructions honors "Mark Bad Disassembly" 
-	 * program Disassembler option.
+	 * The following Program options are used during disassbly:
+	 * <ul>
+	 * <li>{@link #MARK_BAD_INSTRUCTION_PROPERTY}</li>
+	 * <li>{@link #MARK_UNIMPL_PCODE_PROPERTY}</li>
+	 * <li>{@link #RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY}</li>
+	 * </ul>
 	 * @param program the program to be disassembled.
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
@@ -155,6 +159,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * Intended for block pseudo-disassembly use only when the method 
 	 * {@link Disassembler#pseudoDisassembleBlock(MemBuffer, RegisterValue, int)}
 	 * is used.
+	 * NOTE: Executable memory restriction is not provided but should possibly be considered
+	 * by any use of the resulting instance.
 	 * @param language processor language
 	 * @param addrFactory address factory 
 	 * @param monitor progress monitor
@@ -218,8 +224,13 @@ public class Disassembler implements DisassemblerConflictHandler {
 	// TODO: Force use of factory methods above by making constructors protected
 
 	/**
-	 * Disassembler constructor.  Marking of bad instructions honors "Mark Bad Disassembly" 
-	 * program Disassembler option.
+	 * Disassembler constructor.
+	 * The following Program options are used during disassbly:
+	 * <ul>
+	 * <li>{@link #MARK_BAD_INSTRUCTION_PROPERTY}</li>
+	 * <li>{@link #MARK_UNIMPL_PCODE_PROPERTY}</li>
+	 * <li>{@link #RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY}</li>
+	 * </ul>
 	 * @param program the program to be disassembled.
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
@@ -233,6 +244,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Disassembler constructor.  Intended for block pseudo-disassembly use only.
+	 * NOTE: Executable memory restriction is not provided but should possibly be considered
+	 * by any use of the resulting instance.
 	 * @param language processor language
 	 * @param addrFactory address factory 
 	 * @param monitor progress monitor
@@ -718,7 +731,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * Perform a psuedo-disassembly of an single instruction block only following fall-throughs.
+	 * Perform a pseudo-disassembly of an single instruction block only following fall-throughs.
 	 * WARNING! This method should not be used in conjunction with other disassembly methods
 	 * on the this Disassembler instance.  Disassembler must be instantiated with a Program object.
 	 * @param addr start of block
@@ -738,7 +751,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * Perform a psuedo-disassembly of an single instruction block only following fall-throughs.
+	 * Perform a pseudo-disassembly of an single instruction block only following fall-throughs.
 	 * WARNING! This method should not be used in conjunction with other disassembly methods
 	 * on the this Disassembler instance.
 	 * @param blockMemBuffer block memory buffer 
@@ -802,8 +815,10 @@ public class Disassembler implements DisassemblerConflictHandler {
 			disassembleInstructionBlock(block, blockMemBuffer, null, limit, null, false);
 		}
 		catch (Exception e) {
-			Msg.error(this, "Pseudo block disassembly failure at " + blockMemBuffer.getAddress() +
-				": " + e.getMessage(), e);
+			String message = "Pseudo block disassembly failure at " + blockMemBuffer.getAddress() +
+				": " + e.getMessage();
+			Msg.error(this, message, e);
+			reportMessage(message);
 		}
 		finally {
 
@@ -1340,7 +1355,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * @return true if the call also falls through to this instruction
 	 */
 	private boolean isNoReturnCall(Instruction instr, Address target) {
-		// if allready overriden, return
+		// if already overridden, return
 		// is this function a call fixup
 		if (program == null) {
 			return false; // can't tell without program
@@ -1374,7 +1389,12 @@ public class Disassembler implements DisassemblerConflictHandler {
 			RegisterValue contextValue = conflict.getParseContextValue();
 			if (contextValue != null) {
 				try {
-					program.getProgramContext().setRegisterValue(address, address, contextValue);
+					RegisterValue curContextValue = program.getProgramContext().getRegisterValue(contextValue.getRegister(), address);
+
+					// only store if different than what is already there, which could be a default value
+					if (!contextValue.equals(curContextValue)) {
+						program.getProgramContext().setRegisterValue(address, address, contextValue);
+					}
 				}
 				catch (ContextChangeException e) {
 					// ignore - existing instruction likely blocked context modification
@@ -1387,21 +1407,26 @@ public class Disassembler implements DisassemblerConflictHandler {
 			return;
 		}
 
+		boolean markAsError = true;
+
 		Address flowFrom = conflict.getFlowFromAddress();
 		String flowMsg = flowFrom != null ? (" (flow from " + flowFrom + ")") : "";
 		Address markAddr = address;
 		if (!isBookmarkAllowed(markAddr)) {
 			if (flowFrom != null) {
 				markAddr = flowFrom;
+				if (conflict.getInstructionErrorType() == InstructionErrorType.MEMORY &&
+					address.getOffset() == 0) {
+					markAsError = false;
+				}
 			}
 			else {
 				return;
 			}
 		}
 
-		bmMgr.setBookmark(markAddr, BookmarkType.ERROR, ERROR_BOOKMARK_CATEGORY,
-			conflict.getConflictMessage() + flowMsg);
-
+		bmMgr.setBookmark(markAddr, markAsError ? BookmarkType.ERROR : BookmarkType.WARNING,
+			ERROR_BOOKMARK_CATEGORY, conflict.getConflictMessage() + flowMsg);
 	}
 
 	private boolean isBookmarkAllowed(Address addr) {

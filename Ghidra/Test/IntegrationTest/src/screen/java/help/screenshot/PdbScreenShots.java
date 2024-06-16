@@ -49,7 +49,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 		temporaryDir = createTempDirectory("example_pdb");
 		tx = program.startTransaction("set analyzed flag");
 		Options proplist = program.getOptions(Program.PROGRAM_INFO);
-		proplist.setBoolean(Program.ANALYZED, false);
+		proplist.setBoolean(Program.ANALYZED_OPTION_NAME, false);
 		PdbInfo pdbInfo = PdbInfoDotNet.fromValues("HelloWorld.pdb", 1, new GUID(GUID1_STR));
 		pdbInfo.serializeToOptions(proplist);
 		proplist.setString("Executable Location",

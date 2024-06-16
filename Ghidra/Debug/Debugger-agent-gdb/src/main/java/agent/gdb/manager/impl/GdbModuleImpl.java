@@ -24,15 +24,29 @@ import agent.gdb.manager.GdbModule;
 import agent.gdb.manager.GdbModuleSection;
 import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import ghidra.async.AsyncLazyValue;
-import ghidra.async.AsyncUtils;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 
 public class GdbModuleImpl implements GdbModule {
-	protected static final Pattern OBJECT_FILE_LINE_PATTERN =
+	protected static final String MAINT_INFO_SECTIONS_CMD_V8 =
+		"maintenance info sections ALLOBJ";
+	protected static final String MAINT_INFO_SECTIONS_CMD_V11 =
+		"maintenance info sections -all-objects";
+	protected static final String[] MAINT_INFO_SECTIONS_CMDS = new String[] {
+		MAINT_INFO_SECTIONS_CMD_V11,
+		MAINT_INFO_SECTIONS_CMD_V8,
+	};
+
+	protected static final Pattern OBJECT_FILE_LINE_PATTERN_V8 =
 		Pattern.compile("\\s*Object file: (?<name>.*)");
-	protected static final Pattern V11_FILE_LINE_PATTERN =
-		Pattern.compile("\\s*(Object)|(Exec) file: `(?<name>.*)', file type (?<type>.*)");
+	protected static final Pattern OBJECT_FILE_LINE_PATTERN_V11 =
+		Pattern.compile("\\s*((Object)|(Exec)) file: `(?<name>.*)', file type (?<type>.*)");
+
+	protected static final Pattern[] OBJECT_FILE_LINE_PATTERNS = new Pattern[] {
+		OBJECT_FILE_LINE_PATTERN_V11,
+		OBJECT_FILE_LINE_PATTERN_V8,
+	};
+
 	protected static final String GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for ";
 
 	// Pattern observed in GDB 8 (probably applies to previous, too)
@@ -54,6 +68,11 @@ public class GdbModuleImpl implements GdbModule {
 			"(?<name>\\S+)\\s+" + //
 			"(?<attrs>.*)");
 
+	protected static final Pattern[] OBJECT_SECTION_LINE_PATTERNS = new Pattern[] {
+		OBJECT_SECTION_LINE_PATTERN_V10,
+		OBJECT_SECTION_LINE_PATTERN_V8,
+	};
+
 	protected static final Pattern MSYMBOL_LINE_PATTERN = Pattern.compile(
 		"\\s*" + //
 			"\\[\\s*(?<idx>\\d+)\\]\\s+" + //
@@ -67,12 +86,9 @@ public class GdbModuleImpl implements GdbModule {
 	protected Long base = null;
 	protected Long max = null;
 
-	protected Pattern sectionLinePattern = OBJECT_SECTION_LINE_PATTERN_V10;
-
 	protected final Map<String, GdbModuleSectionImpl> sections = new LinkedHashMap<>();
 	protected final Map<String, GdbModuleSection> unmodifiableSections =
 		Collections.unmodifiableMap(sections);
-	protected final AsyncLazyValue<Void> loadSections = new AsyncLazyValue<>(this::doLoadSections);
 
 	protected final AsyncLazyValue<Map<String, GdbMinimalSymbol>> minimalSymbols =
 		new AsyncLazyValue<>(this::doGetMinimalSymbols);
@@ -87,50 +103,19 @@ public class GdbModuleImpl implements GdbModule {
 		return name;
 	}
 
-	protected CompletableFuture<Void> doLoadSections() {
-		return inferior.loadSections().thenCompose(__ -> {
-			if (!loadSections.isDone()) {
-				/**
-				 * The inferior's load sections should have provided the value out of band before it
-				 * is completed from the request that got us invoked. If it didn't it's because the
-				 * response to the load in progress did not include this module. We should only have
-				 * to force it at most once more.
-				 */
-				inferior.loadSections.forget();
-				return inferior.loadSections();
-			}
-			return AsyncUtils.NIL;
-		}).thenAccept(__ -> {
-			if (!loadSections.isDone()) {
-				Msg.warn(this,
-					"Module's sections still not known: " + name + ". Probably got unloaded.");
-			}
-		});
-	}
-
 	@Override
-	public CompletableFuture<Long> computeBase() {
-		return loadSections.request().thenApply(__ -> base);
-	}
-
-	@Override
-	public CompletableFuture<Long> computeMax() {
-		return loadSections.request().thenApply(__ -> max);
-	}
-
-	@Override
-	public Long getKnownBase() {
+	public Long getBase() {
 		return base;
 	}
 
 	@Override
-	public Long getKnownMax() {
+	public Long getMax() {
 		return max;
 	}
 
 	@Override
-	public CompletableFuture<Map<String, GdbModuleSection>> listSections() {
-		return loadSections.request().thenApply(__ -> unmodifiableSections);
+	public CompletableFuture<Map<String, GdbModuleSection>> listSections(boolean refresh) {
+		return inferior.listModules(refresh).thenApply(__ -> unmodifiableSections);
 	}
 
 	@Override
@@ -165,39 +150,17 @@ public class GdbModuleImpl implements GdbModule {
 		return minimalSymbols.request();
 	}
 
-	protected Matcher matchSectionLine(Pattern pattern, String line) {
-		Matcher matcher = pattern.matcher(line);
-		if (matcher.matches()) {
-			sectionLinePattern = pattern;
-		}
-		return matcher;
-	}
-
-	protected Matcher matchSectionLine(String line) {
-		Matcher matcher = sectionLinePattern.matcher(line);
-		if (matcher.matches()) {
-			return matcher;
-		}
-		matcher = matchSectionLine(OBJECT_SECTION_LINE_PATTERN_V10, line);
-		if (matcher.matches()) {
-			return matcher;
-		}
-		matcher = matchSectionLine(OBJECT_SECTION_LINE_PATTERN_V8, line);
-		if (matcher.matches()) {
-			return matcher;
-		}
-		return matcher;
-	}
-
-	protected void processSectionLine(String line) {
-		Matcher matcher = matchSectionLine(line);
-		if (matcher.matches()) {
+	protected void processSectionLine(String line, Set<String> namesSeen,
+			GdbMemoryMapping.Index index) {
+		Matcher matcher = inferior.manager.matchSectionLine(line);
+		if (matcher != null) {
 			try {
 				long vmaStart = Long.parseLong(matcher.group("vmaS"), 16);
 				long vmaEnd = Long.parseLong(matcher.group("vmaE"), 16);
 				long offset = Long.parseLong(matcher.group("offset"), 16);
 
 				String sectionName = matcher.group("name");
+				namesSeen.add(sectionName);
 				List<String> attrs = new ArrayList<>();
 				for (String a : matcher.group("attrs").split("\\s+")) {
 					if (a.length() != 0) {
@@ -205,19 +168,30 @@ public class GdbModuleImpl implements GdbModule {
 					}
 				}
 				if (attrs.contains("ALLOC")) {
-					long b = vmaStart - offset;
+					long b = index.computeBase(vmaStart);
 					base = base == null ? b : MathUtilities.unsignedMin(base, b);
 					max = max == null ? b : MathUtilities.unsignedMax(max, vmaEnd);
 				}
 				if (sections.put(sectionName,
 					new GdbModuleSectionImpl(sectionName, vmaStart, vmaEnd, offset,
 						attrs)) != null) {
-					Msg.warn(this, "Duplicate section name: " + line);
 				}
 			}
 			catch (NumberFormatException e) {
 				Msg.error(this, "Invalid number in section entry: " + line);
 			}
 		}
+	}
+
+	protected void resyncRetainSections(Set<String> names) {
+		/**
+		 * The need for this seems dubious. If it's the same module, why would its sections ever
+		 * change? However, in theory, a module could be unloaded, replaced on disk, and reloaded.
+		 * If all those happen between two queries, then yes, it'll seem as though an existing
+		 * module's sections changed.
+		 * 
+		 * If we ever need a callback, we'll have to use an iterator-based implementation.
+		 */
+		sections.keySet().retainAll(names);
 	}
 }

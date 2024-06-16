@@ -25,7 +25,15 @@
 #include <cstring>
 
 #include <limits>
-#include <vector>
+
+namespace ghidra {
+
+using std::isnan;
+using std::sqrt;
+using std::floor;
+using std::ceil;
+using std::round;
+using std::abs;
 
 // utility functions
 float floatFromRawBits(uintb e) {
@@ -75,7 +83,7 @@ uintb doubleToRawBits(double f) {
 
 //// FloatFormat tests
 
-static std::vector<float> float_test_values{
+static vector<float> float_test_values{
     -0.0f,
     +0.0f,
     -1.0f,
@@ -103,7 +111,7 @@ static std::vector<float> float_test_values{
     std::numeric_limits<float>::infinity()
 };
 
-static std::vector<int> int_test_values = {
+static vector<int> int_test_values = {
     0, -1, 1, 1234, -1234, std::numeric_limits<int>::min(), std::numeric_limits<int>::max()
 };
 
@@ -256,7 +264,7 @@ TEST(float_opSqrt) {
     FloatFormat format(4);
 
     for(float f:float_test_values) {
-        uintb true_result = floatToRawBits(sqrtf(f));
+        uintb true_result = floatToRawBits(sqrt(f));
         uintb encoding = format.getEncoding(f);
         uintb result = format.opSqrt(encoding);
 
@@ -269,7 +277,7 @@ TEST(float_opCeil) {
     FloatFormat format(4);
 
     for(float f:float_test_values) {
-        uintb true_result = floatToRawBits(ceilf(f));
+        uintb true_result = floatToRawBits(ceil(f));
         uintb encoding = format.getEncoding(f);
         uintb result = format.opCeil(encoding);
 
@@ -282,7 +290,7 @@ TEST(float_opFloor) {
     FloatFormat format(4);
 
     for(float f:float_test_values) {
-        uintb true_result = floatToRawBits(floorf(f));
+        uintb true_result = floatToRawBits(floor(f));
         uintb encoding = format.getEncoding(f);
         uintb result = format.opFloor(encoding);
 
@@ -295,7 +303,7 @@ TEST(float_opRound) {
     FloatFormat format(4);
 
     for(float f:float_test_values) {
-        uintb true_result = floatToRawBits(roundf(f));
+        uintb true_result = floatToRawBits(round(f));
         uintb encoding = format.getEncoding(f);
         uintb result = format.opRound(encoding);
 
@@ -479,4 +487,5 @@ TEST(float_opSub) {
     }
 }
 
+} // End namespace ghidra
 // end generated 

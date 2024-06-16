@@ -46,7 +46,36 @@ public class Json extends ToStringStyle {
 			this.setArrayEnd("]");
 
 			this.setFieldSeparator(",\n\t");
-			this.setFieldNameValueSeparator(":");
+			this.setFieldNameValueSeparator(": ");
+
+			this.setNullText("null");
+
+			this.setSummaryObjectStartText("\"<");
+			this.setSummaryObjectEndText(">\"");
+
+			this.setSizeStartText("\"<size=");
+			this.setSizeEndText(">\"");
+		}
+	}
+
+	/**
+	 * A {@link ToStringStyle} inspired by {@link ToStringStyle#JSON_STYLE} that places
+	 * object fields all on one line, with Json style formatting.
+	 */
+	public static class JsonWithFlatToStringStyle extends ToStringStyle {
+
+		private JsonWithFlatToStringStyle() {
+			this.setUseClassName(false);
+			this.setUseIdentityHashCode(false);
+
+			this.setContentStart("{ ");
+			this.setContentEnd(" }");
+
+			this.setArrayStart("[");
+			this.setArrayEnd("]");
+
+			this.setFieldSeparator(", ");
+			this.setFieldNameValueSeparator(": ");
 
 			this.setNullText("null");
 
@@ -62,11 +91,27 @@ public class Json extends ToStringStyle {
 	 * Creates a Json string representation of the given object and all of its fields.  To exclude
 	 * some fields, call {@link #toStringExclude(Object, String...)}.  To only include particular
 	 * fields, call {@link #appendToString(StringBuffer, String)}.
+	 * <p>
+	 * The returned string is formatted for pretty printing using whitespace, such as tabs and 
+	 * newlines.
+	 * 
 	 * @param o the object
 	 * @return the string
 	 */
 	public static String toString(Object o) {
 		return ToStringBuilder.reflectionToString(o, Json.WITH_NEWLINES);
+	}
+
+	/**
+	 * Creates a Json string representation of the given object and all of its fields.
+	 * <p>
+	 * The returned string is formatted without newlines for better use in logging.
+	 * 
+	 * @param o the object
+	 * @return the string
+	 */
+	public static String toStringFlat(Object o) {
+		return ToStringBuilder.reflectionToString(o, new JsonWithFlatToStringStyle());
 	}
 
 	/**

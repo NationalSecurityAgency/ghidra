@@ -17,6 +17,8 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.DBRecord;
 import ghidra.docking.settings.*;
 import ghidra.program.model.data.*;
@@ -201,6 +203,9 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setComment(String comment) {
 		if (record != null) {
+			if (StringUtils.isBlank(comment)) {
+				comment = null;
+			}
 			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 			updateRecord(true);
 		}
@@ -208,10 +213,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	@Override
 	public String getFieldName() {
-		if (isZeroBitFieldComponent()) {
-			return "";
-		}
-		if (record != null) {
+		if (record != null && !isZeroBitFieldComponent()) {
 			return record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
 		}
 		return null;
@@ -220,15 +222,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
 		if (record != null) {
-			if (name != null) {
-				name = name.trim();
-				if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-					name = null;
-				}
-				else {
-					checkDuplicateName(name);
-				}
-			}
+			name = checkFieldName(name);
 			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
 			updateRecord(true);
 		}
@@ -244,6 +238,19 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 				throw new DuplicateNameException("Duplicate field name: " + name);
 			}
 		}
+	}
+
+	private String checkFieldName(String name) throws DuplicateNameException {
+		if (name != null) {
+			name = name.trim();
+			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
+				name = null;
+			}
+			else {
+				checkDuplicateName(name);
+			}
+		}
+		return name;
 	}
 
 	@Override
@@ -288,8 +295,15 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		return myDt.getClass() == otherDt.getClass();
 	}
 
-	@Override
-	public boolean isEquivalent(DataTypeComponent dtc) {
+	static boolean isEquivalent(DataTypeComponent existingDtc, DataTypeComponent dtc,
+			DataTypeConflictHandler handler) {
+		if (existingDtc instanceof DataTypeComponentDB existingDtcDB) {
+			return existingDtcDB.isEquivalent(dtc, handler);
+		}
+		return existingDtc.isEquivalent(dtc);
+	}
+
+	boolean isEquivalent(DataTypeComponent dtc, DataTypeConflictHandler handler) {
 		DataType myDt = getDataType();
 		DataType otherDt = dtc.getDataType();
 		// SCR #11220 - this may fix the null pointer exception  - not sure as it is hard
@@ -298,10 +312,10 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			return false;
 		}
 		DataType myParent = getParent();
-		boolean aligned =
+		boolean isPacked =
 			(myParent instanceof Composite) ? ((Composite) myParent).isPackingEnabled() : false;
-		// Components don't need to have matching offset when they are aligned
-		if ((!aligned && (offset != dtc.getOffset())) ||
+		// Components don't need to have matching offset when structure has packing enabled
+		if ((!isPacked && (offset != dtc.getOffset())) ||
 			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
 			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
 			return false;
@@ -312,7 +326,16 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			return false;
 		}
 
-		return DataTypeUtilities.isSameOrEquivalentDataType(myDt, otherDt);
+		if (DataTypeUtilities.isSameDataType(myDt, otherDt)) {
+			return true;
+		}
+
+		return DataTypeDB.isEquivalent(myDt, otherDt, handler);
+	}
+
+	@Override
+	public boolean isEquivalent(DataTypeComponent dtc) {
+		return isEquivalent(dtc, null);
 	}
 
 	@Override
@@ -390,6 +413,26 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	DBRecord getRecord() {
 		return record;
+	}
+
+	/**
+	 * Perform special-case component update that does not result in size or alignment changes. 
+	 * @param name new component name
+	 * @param dt new resolved datatype
+	 * @param comment new comment
+	 */
+	void update(String name, DataType dt, String comment) {
+		if (record != null) {
+			if (StringUtils.isBlank(comment)) {
+				comment = null;
+			}
+			// TODO: Need to check field name and throw DuplicateNameException
+			// name = checkFieldName(name);
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL, dataMgr.getResolvedID(dt));
+			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
+			updateRecord(false);
+		}
 	}
 
 	@Override

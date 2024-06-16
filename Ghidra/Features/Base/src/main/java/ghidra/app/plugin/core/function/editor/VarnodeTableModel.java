@@ -199,13 +199,10 @@ class VarnodeTableModel extends AbstractGTableModel<VarnodeInfo> {
 		}
 	}
 
-	public List<VarnodeInfo> getVarnodes() {
-		return varnodes;
-	}
-
-	public void setVarnodes(List<VarnodeInfo> varnodeList) {
+	void storageModelChanged() {
 		varnodes.clear();
-		varnodes.addAll(varnodeList);
+		varnodes.addAll(storageModel.getVarnodes());
 		fireTableDataChanged();
 	}
+
 }

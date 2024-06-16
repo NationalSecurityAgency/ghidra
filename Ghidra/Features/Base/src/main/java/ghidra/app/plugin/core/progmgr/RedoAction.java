@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.progmgr;
 
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -27,12 +28,14 @@ public class RedoAction extends AbstractUndoRedoAction {
 	public static final String SUBGROUP = "2Redo";
 
 	public RedoAction(ProgramManagerPlugin plugin, PluginTool tool) {
-		super(tool, plugin, "Redo", "images/redo.png", "ctrl shift Z", SUBGROUP);
+		super(tool, plugin, "Redo", "icon.redo", "ctrl shift Z", SUBGROUP);
 	}
 
 	@Override
-	protected void actionPerformed(Program program) throws IOException {
-		program.redo();
+	protected void doAction(Program program, int count) throws IOException {
+		for (int i = 0; i < count; i++) {
+			program.redo();
+		}
 	}
 
 	@Override
@@ -43,5 +46,10 @@ public class RedoAction extends AbstractUndoRedoAction {
 	@Override
 	protected String getUndoRedoDescription(Program program) {
 		return program.getRedoName();
+	}
+
+	@Override
+	protected List<String> getDescriptions(Program program) {
+		return program.getAllRedoNames();
 	}
 }

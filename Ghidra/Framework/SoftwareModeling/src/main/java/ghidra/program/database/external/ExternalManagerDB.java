@@ -18,7 +18,10 @@ package ghidra.program.database.external;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
@@ -64,7 +67,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version does not match the expected version
 	 */
-	public ExternalManagerDB(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public ExternalManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws CancelledException, IOException, VersionException {
 
 		this.addrMap = addrMap;
@@ -72,7 +75,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		initializeOldAdapters(handle, openMode, monitor);
 	}
 
-	private void initializeOldAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeOldAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		try {
 			// Try old adapters needed for upgrade
@@ -82,7 +85,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		catch (VersionException ve) {
 			//ignore
 		}
-		if (oldNameAdapter != null && oldExtRefAdapter != null && openMode != DBConstants.UPGRADE) {
+		if (oldNameAdapter != null && oldExtRefAdapter != null && openMode != OpenMode.UPGRADE) {
 			throw new VersionException(true);
 		}
 	}
@@ -90,15 +93,15 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
-		symbolMgr = (SymbolManager) program.getSymbolTable();
-		functionMgr = (FunctionManagerDB) program.getFunctionManager();
+		symbolMgr = program.getSymbolTable();
+		functionMgr = program.getFunctionManager();
 		scopeMgr = program.getNamespaceManager();
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode != DBConstants.UPGRADE) {
+		if (openMode != OpenMode.UPGRADE) {
 			return;
 		}
 		if (upgradeOldExtRefAdapter(monitor)) {
@@ -119,7 +122,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 		RecordIterator iter = oldNameAdapter.getRecords();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 
 			String name = rec.getString(OldExtNameAdapter.EXT_NAME_COL);
@@ -146,15 +149,15 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 		iter = oldExtRefAdapter.getRecords();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 
 			Address fromAddr =
 				oldAddrMap.decodeAddress(rec.getLongValue(OldExtRefAdapter.FROM_ADDR_COL));
 			int opIndex = rec.getShortValue(OldExtRefAdapter.OP_INDEX_COL);
 			boolean userDefined = rec.getBooleanValue(OldExtRefAdapter.USER_DEFINED_COL);
-			String name = nameMap.get(rec.getLongValue(OldExtRefAdapter.EXT_NAME_ID_COL));
-			if (name == null) {
+			String extLibraryName = nameMap.get(rec.getLongValue(OldExtRefAdapter.EXT_NAME_ID_COL));
+			if (extLibraryName == null) {
 				continue; // should not happen
 			}
 			String label = rec.getString(OldExtRefAdapter.LABEL_COL);
@@ -163,14 +166,11 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 					: null;
 
 			try {
-				refMgr.addExternalReference(fromAddr, name, label, addr,
+				refMgr.addExternalReference(fromAddr, extLibraryName, label, addr,
 					userDefined ? SourceType.USER_DEFINED : SourceType.IMPORTED, opIndex,
 					RefType.DATA);
 			}
-			catch (DuplicateNameException e) {
-				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-			}
-			catch (InvalidInputException e) {
+			catch (InvalidInputException | DuplicateNameException e) {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
 			monitor.setProgress(++cnt);
@@ -227,7 +227,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
-			Address extAddr, SourceType sourceType, boolean reuseExisting) throws InvalidInputException {
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType,
@@ -283,7 +284,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	private SourceType checkExternalLabel(String extLabel, Address extAddr, SourceType source)
 			throws InvalidInputException {
-		if (extLabel == null || extLabel.length() == 0) {
+		if (extLabel != null && (StringUtils.isBlank(extLabel) ||
+			SymbolUtilities.isReservedExternalDefaultName(extLabel, addrMap.getAddressFactory()))) {
 			extLabel = null;
 		}
 		if (extLabel == null && extAddr == null) {
@@ -312,8 +314,15 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			throw new InvalidInputException("The namespace must be an external namespace.");
 		}
 		sourceType = checkExternalLabel(extLabel, extAddr, sourceType);
-		if (extAddr != null && !extAddr.isLoadedMemoryAddress()) {
-			throw new InvalidInputException("Invalid memory address");
+		if (extAddr != null) {
+			if (!extAddr.isLoadedMemoryAddress()) {
+				throw new InvalidInputException("Invalid memory address: " + extAddr);
+			}
+			AddressSpace space = extAddr.getAddressSpace();
+			if (!space.equals(program.getAddressFactory().getAddressSpace(space.getName()))) {
+				throw new InvalidInputException(
+					"Memory address not defined for program: " + extAddr);
+			}
 		}
 		lock.acquire();
 		try {
@@ -359,7 +368,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	/**
 	 * Get the external location which best matches the specified parameters.
 	 * Preference is given to extLabel over extAddr
-	 * @param libScope, the library namespace containing this external location.
+	 * @param library the library namespace containing this external location.
 	 * @param extLabel the name of the external location. Can be null.
 	 * @param extAddr the address of function in the external program.  Can be null
 	 * @return the best matching ExternalLocation or null.
@@ -882,7 +891,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		AddressFactory oldAddrFactory = translator.getOldLanguage().getAddressFactory();
 		SymbolIterator externalSymbols = symbolMgr.getExternalSymbols();
 		while (externalSymbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			SymbolDB s = (SymbolDB) externalSymbols.next();
 			ExternalData externalData = ExternalLocationDB.getExternalData(s);
 			String addrStr = externalData.getAddressString();

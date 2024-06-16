@@ -32,11 +32,11 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import ghidra.app.plugin.core.symboltree.*;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class PasteAction extends SymbolTreeContextAction {
 
-	private final static Icon PASTE_ICON = ResourceManager.loadImage("images/page_paste.png");
+	private final static Icon PASTE_ICON = Icons.PASTE_ICON;
 
 	public PasteAction(SymbolTreePlugin plugin, SymbolTreeProvider provider) {
 		super("Paste Symbols", plugin.getName());

@@ -20,20 +20,17 @@ import javax.swing.Icon;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResolutionPolicy;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
-public class ConflictHandlerModesAction extends
-		MultiStateDockingAction<DataTypeConflictHandler.ConflictResolutionPolicy> {
-
-//	private final DataTypeManagerPlugin plugin;
+public class ConflictHandlerModesAction
+		extends MultiStateDockingAction<DataTypeConflictHandler.ConflictResolutionPolicy> {
 
 	public ConflictHandlerModesAction(DataTypeManagerPlugin plugin) {
 		super("Data Type Conflict Resolution Mode", plugin.getName());
-//		this.plugin = plugin;
 
 		setGroup("conflicts");
 
@@ -41,33 +38,30 @@ public class ConflictHandlerModesAction extends
 			new HelpLocation(plugin.getName(), "conflict_mode");
 		setHelpLocation(conflictModesHelpLocation);
 
-		Icon renameAndAddIcon = ResourceManager.loadImage("images/conflictRename.png");
-		Icon useExistingIcon = ResourceManager.loadImage("images/conflictKeep.png");
-		Icon replaceExistingIcon = ResourceManager.loadImage("images/conflictReplace.png");
-		Icon replaceDefaultIcon = ResourceManager.loadImage("images/conflictReplaceOrRename.png");
+		//@formatter:off
+		Icon renameAndAddIcon = new GIcon("icon.plugin.datatypes.conflict.mode.rename.and.add");
+		Icon useExistingIcon = new GIcon("icon.plugin.datatypes.conflict.mode.use.existing");
+		Icon replaceExistingIcon = new GIcon("icon.plugin.datatypes.conflict.mode.replace.existing");
+		Icon replaceDefaultIcon = new GIcon("icon.plugin.datatypes.conflict.mode.replace.or.rename");
+		//@formatter:on
 
 		ActionState<DataTypeConflictHandler.ConflictResolutionPolicy> renameAndAddState =
-			new ActionState<>(
-				"Rename New or Moved Data Type", renameAndAddIcon,
+			new ActionState<>("Rename New or Moved Data Type", renameAndAddIcon,
 				DataTypeConflictHandler.ConflictResolutionPolicy.RENAME_AND_ADD);
 		renameAndAddState.setHelpLocation(conflictModesHelpLocation);
 
 		ActionState<DataTypeConflictHandler.ConflictResolutionPolicy> useExistingState =
-			new ActionState<>(
-				"Use Existing Data Type", useExistingIcon,
+			new ActionState<>("Use Existing Data Type", useExistingIcon,
 				DataTypeConflictHandler.ConflictResolutionPolicy.USE_EXISTING);
 		useExistingState.setHelpLocation(conflictModesHelpLocation);
 
 		ActionState<DataTypeConflictHandler.ConflictResolutionPolicy> replaceExistingState =
-			new ActionState<>(
-				"Replace Existing Data Type", replaceExistingIcon,
+			new ActionState<>("Replace Existing Data Type", replaceExistingIcon,
 				DataTypeConflictHandler.ConflictResolutionPolicy.REPLACE_EXISTING);
 		replaceExistingState.setHelpLocation(conflictModesHelpLocation);
 
 		ActionState<DataTypeConflictHandler.ConflictResolutionPolicy> replaceDefaultState =
-			new ActionState<>(
-				"Replace Empty Structures else Rename",
-				replaceDefaultIcon,
+			new ActionState<>("Replace Empty Structures else Rename", replaceDefaultIcon,
 				DataTypeConflictHandler.ConflictResolutionPolicy.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD);
 		replaceDefaultState.setHelpLocation(conflictModesHelpLocation);
 
@@ -84,7 +78,7 @@ public class ConflictHandlerModesAction extends
 	@Override
 	public void actionStateChanged(ActionState<ConflictResolutionPolicy> newActionState,
 			EventTrigger trigger) {
-		// action tracks its own state
+		// nothing to do; the action state is queried as needed by the client
 	}
 
 }

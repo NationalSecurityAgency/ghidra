@@ -15,8 +15,6 @@
  */
 package ghidra.trace.model;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -25,7 +23,7 @@ public interface TraceLocation extends Comparable<TraceLocation> {
 
 	TraceThread getThread();
 
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	Address getAddress();
 }

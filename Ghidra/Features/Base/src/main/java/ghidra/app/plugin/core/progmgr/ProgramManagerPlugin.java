@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
-import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.beans.PropertyEditor;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
@@ -32,33 +32,32 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.progmgr.MultiProgramManager.ProgramInfo;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.task.OpenProgramRequest;
 import ghidra.app.util.task.OpenProgramTask;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.protocol.ghidra.*;
-import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.*;
 import ghidra.util.*;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskLauncher;
 
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Manage open programs",
 	description = "This plugin provides actions for opening and closing programs.  It also " +
 			"provides a service to allow plugins to open/close programs.  This plugin is " +
@@ -77,15 +76,19 @@ import ghidra.util.task.TaskLauncher;
 		ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
-public class ProgramManagerPlugin extends Plugin implements ProgramManager {
+public class ProgramManagerPlugin extends Plugin implements ProgramManager, OptionsChangeListener {
+	private final static String CACHE_DURATION_OPTION =
+		"Program Cache.Program Cache Time (minutes)";
+	private final static String CACHE_SIZE_OPTION = "Program Cache.Program Cache Size";
+	private static final int DEFAULT_PROGRAM_CACHE_CAPACITY = 50;
+	private static final int DEFAULT_PROGRAM_CACHE_DURATION = 30; // in minutes
 
 	private static final String SAVE_GROUP = "DomainObjectSave";
 	static final String OPEN_GROUP = "DomainObjectOpen";
 	private MultiProgramManager programMgr;
+	private ProgramCache programCache;
 	private ProgramSaveManager programSaveMgr;
 	private int transactionID = -1;
-	private OpenVersionedFileDialog openDialog;
-	private boolean locked = false;
 	private UndoAction undoAction;
 	private RedoAction redoAction;
 	private ProgramLocation currentLocation;
@@ -95,7 +98,39 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 		createActions();
 		programMgr = new MultiProgramManager(this);
+		programCache = new ProgramCache(Duration.ofMinutes(DEFAULT_PROGRAM_CACHE_DURATION),
+			DEFAULT_PROGRAM_CACHE_CAPACITY);
 		programSaveMgr = new ProgramSaveManager(tool, this);
+		initializeOptions(tool.getOptions("Tool"));
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) {
+		if (optionName.equals(CACHE_DURATION_OPTION)) {
+			Duration duration = Duration.ofMinutes((int) newValue);
+			programCache.setDuration(duration);
+		}
+		if (optionName.equals(CACHE_SIZE_OPTION)) {
+			int capacity = (int) newValue;
+			programCache.setCapacity(capacity);
+		}
+	}
+
+	private void initializeOptions(ToolOptions options) {
+		HelpLocation helpLocation =
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Program_Cache_Duration");
+		options.registerOption(CACHE_DURATION_OPTION, DEFAULT_PROGRAM_CACHE_DURATION, helpLocation,
+			"Sets the time (in minutes) cached programs are kept around before closing");
+		helpLocation = new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Program_Cache_Size");
+		options.registerOption(CACHE_SIZE_OPTION, DEFAULT_PROGRAM_CACHE_CAPACITY, helpLocation,
+			"Sets the maximum number of programs to be cached");
+
+		int duration = options.getInt(CACHE_DURATION_OPTION, DEFAULT_PROGRAM_CACHE_DURATION);
+		int capacity = options.getInt(CACHE_SIZE_OPTION, DEFAULT_PROGRAM_CACHE_CAPACITY);
+		programCache.setCapacity(capacity);
+		programCache.setDuration(Duration.ofMinutes(duration));
+		options.addOptionsChangeListener(this);
 	}
 
 	/**
@@ -110,25 +145,24 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			return false;
 		}
 
-		if (locked) {
-			Msg.showError(this, tool.getToolFrame(), "Open Program Failed",
-				"Program manager is locked and cannot open additional programs");
-			return false;
-		}
-
 		List<DomainFile> filesToOpen = new ArrayList<>();
 		for (DomainFile domainFile : data) {
 			if (domainFile == null) {
 				continue;
 			}
-			if (!(Program.class.isAssignableFrom(domainFile.getDomainObjectClass()))) {
-				continue;
+			Class<? extends DomainObject> domainObjectClass = domainFile.getDomainObjectClass();
+			if (Program.class.isAssignableFrom(domainObjectClass)) {
+				filesToOpen.add(domainFile);
 			}
-			filesToOpen.add(domainFile);
 		}
 		openPrograms(filesToOpen);
 
 		return !filesToOpen.isEmpty();
+	}
+
+	@Override
+	public boolean accept(URL url) {
+		return openProgram(url, OPEN_CURRENT) != null;
 	}
 
 	@Override
@@ -137,145 +171,8 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	}
 
 	@Override
-	public Program openProgram(URL ghidraURL, int state) {
-		if (locked) {
-			Msg.showError(this, tool.getToolFrame(), "Open Program Failed",
-				"Program manager is locked and cannot open additional programs");
-			return null;
-		}
-
-		return Swing.runNow(() -> doOpenProgram(ghidraURL, state));
-	}
-
-	private void messageBadProgramURL(URL ghidraURL) {
-		Msg.showError(this, null, "Invalid Ghidra URL",
-			"Ghidra URL does not reference a Ghidra Program: " + ghidraURL);
-	}
-
-	protected Program doOpenProgram(URL ghidraURL, int openState) {
-		if (!GhidraURL.isServerRepositoryURL(ghidraURL)) {
-			Msg.showError(this, null, "Invalid Ghidra URL",
-				"Ghidra URL does not reference a Ghidra Program: " + ghidraURL);
-			return null;
-		}
-		Program openProgram = programMgr.getOpenProgram(ghidraURL);
-		if (openProgram != null) {
-			programMgr.addProgram(openProgram, GhidraURL.getNormalizedURL(ghidraURL), openState);
-			if (openState == ProgramManager.OPEN_CURRENT) {
-				gotoProgramRef(openProgram, ghidraURL.getRef());
-				programMgr.saveLocation();
-			}
-			contextChanged();
-			return openProgram;
-		}
-
-		GhidraURLWrappedContent wrappedContent = null;
-		Object content = null;
-		try {
-			GhidraURLConnection c = (GhidraURLConnection) ghidraURL.openConnection();
-			Object obj = c.getContent();
-			if (c.getResponseCode() == GhidraURLConnection.GHIDRA_UNAUTHORIZED) {
-				return null; // assume user already notified
-			}
-			if (!(obj instanceof GhidraURLWrappedContent)) {
-				messageBadProgramURL(ghidraURL);
-				return null;
-			}
-			wrappedContent = (GhidraURLWrappedContent) obj;
-			content = wrappedContent.getContent(this);
-			if (!(content instanceof DomainFile)) {
-				messageBadProgramURL(ghidraURL);
-				return null;
-			}
-			DomainFile df = (DomainFile) content;
-			if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(df.getContentType())) {
-				messageBadProgramURL(ghidraURL);
-				return null;
-			}
-
-			OpenProgramTask task = new OpenProgramTask(df, true, this);
-			TaskLauncher.launch(task);
-
-			openProgram = task.getOpenProgram();
-			if (openProgram == null) {
-				return null;
-			}
-
-			programMgr.addProgram(openProgram, GhidraURL.getNormalizedURL(ghidraURL), openState);
-			contextChanged();
-			openProgram.release(this);
-			if (openState == ProgramManager.OPEN_CURRENT) {
-				gotoProgramRef(openProgram, ghidraURL.getRef());
-				programMgr.saveLocation();
-			}
-			return openProgram;
-		}
-		catch (NotFoundException e) {
-			messageBadProgramURL(ghidraURL);
-		}
-		catch (MalformedURLException e) {
-			Msg.showError(this, null, "Invalid Ghidra URL",
-				"Improperly formed Ghidra URL: " + ghidraURL);
-		}
-		catch (IOException e) {
-			Msg.showError(this, null, "Program Open Failed",
-				"Failed to open Ghidra URL: " + e.getMessage());
-		}
-		finally {
-			if (content != null) {
-				wrappedContent.release(content, this);
-			}
-		}
-		return null;
-	}
-
-	private boolean gotoProgramRef(Program program, String ref) {
-		if (ref == null) {
-			return false;
-		}
-
-		String trimmedRef = ref.trim();
-		if (trimmedRef.length() == 0) {
-			return false;
-		}
-		List<Symbol> symbols = NamespaceUtils.getSymbols(trimmedRef, program);
-		Symbol sym = symbols.isEmpty() ? null : symbols.get(0);
-
-		ProgramLocation loc = null;
-		if (sym != null) {
-			SymbolType type = sym.getSymbolType();
-			if (type == SymbolType.FUNCTION) {
-				loc = new FunctionSignatureFieldLocation(sym.getProgram(), sym.getAddress());
-			}
-			else if (type == SymbolType.LABEL) {
-				loc = new LabelFieldLocation(sym);
-			}
-		}
-		else {
-			Address addr = program.getAddressFactory().getAddress(trimmedRef);
-			if (addr != null && addr.isMemoryAddress()) {
-				loc = new CodeUnitLocation(program, addr, 0, 0, 0);
-			}
-		}
-		if (loc == null) {
-			Msg.showError(this, null, "Navigation Failed",
-				"Referenced label/function not found: " + trimmedRef);
-			return false;
-		}
-
-		firePluginEvent(new ProgramLocationPluginEvent(getName(), loc, program));
-
-		return true;
-	}
-
-	@Override
 	public Program openProgram(DomainFile df) {
-		return openProgram(df, -1, OPEN_CURRENT);
-	}
-
-	@Override
-	public Program openProgram(DomainFile df, Component parent) {
-		return openProgram(df, -1, OPEN_CURRENT);
+		return openProgram(df, DomainFile.DEFAULT_VERSION, OPEN_CURRENT);
 	}
 
 	@Override
@@ -285,25 +182,146 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	public Program openProgram(DomainFile domainFile, int version, int state) {
+		return openProgram(new ProgramLocator(domainFile, version), state);
+	}
 
-		if (domainFile == null) {
-			throw new IllegalArgumentException("Domain file cannot be null");
+	@Override
+	public Program openProgram(URL ghidraURL, int state) {
+		String location = ghidraURL.getRef();
+		Program program = openProgram(new ProgramLocator(ghidraURL), state);
+
+		if (program != null && location != null && state == OPEN_CURRENT) {
+			gotoProgramRef(program, ghidraURL.getRef());
+			programMgr.saveLocation();
 		}
-		if (locked) {
-			Msg.showError(this, tool.getToolFrame(), "Open Program Failed",
-				"Program manager is locked and cannot open additional programs");
+		return program;
+	}
+
+	private Program openProgram(ProgramLocator locator, int state) {
+		Program program = Swing.runNow(() -> {
+			return doOpenProgramSwing(locator, state);
+		});
+		if (program != null) {
+			Msg.info(this, "Opened program in " + tool.getName() + " tool: " + locator);
+		}
+		return program;
+	}
+
+	private Program doOpenProgramSwing(ProgramLocator locator, int state) {
+		// see if already open
+		Program program = programMgr.getOpenProgram(locator);
+		if (program != null) {
+			showProgram(program, locator, state);
+			return program;
+		}
+
+		// see if cached
+		program = programCache.get(locator);
+		if (program != null) {
+			programMgr.addProgram(program, locator, state);
+			return program;
+		}
+
+		// ok, then open it
+		OpenProgramTask task = new OpenProgramTask(locator, this);
+		new TaskLauncher(task, tool.getToolFrame());
+		OpenProgramRequest request = task.getOpenProgram();
+		if (request != null) {
+			program = request.getProgram();
+			programMgr.addProgram(program, locator, state);
+			request.release();
+			return program;
+		}
+		return null;
+	}
+
+	private boolean gotoProgramRef(Program program, String ref) {
+		if (StringUtils.isBlank(ref)) {
+			return false;
+		}
+
+		String trimmedRef = ref.trim();
+		ProgramLocation loc = getLocationForSymbolRef(program, trimmedRef);
+		if (loc == null) {
+			loc = getLocationForAddressRef(program, trimmedRef);
+		}
+
+		if (loc == null) {
+			Msg.showError(this, null, "Navigation Failed",
+				"Referenced label/function not found: " + trimmedRef);
+			return false;
+		}
+
+		firePluginEvent(new ProgramLocationPluginEvent(getName(), loc, program));
+		return true;
+	}
+
+	private ProgramLocation getLocationForAddressRef(Program program, String ref) {
+		Address addr = program.getAddressFactory().getAddress(ref);
+		if (addr != null && addr.isMemoryAddress()) {
+			return new CodeUnitLocation(program, addr, 0, 0, 0);
+		}
+		return null;
+	}
+
+	private ProgramLocation getLocationForSymbolRef(Program program, String ref) {
+		List<Symbol> symbols = NamespaceUtils.getSymbols(ref, program);
+		if (symbols.isEmpty()) {
 			return null;
 		}
 
-		Program program = Swing.runNow(() -> {
-			Program p = doOpenProgram(domainFile, version, state);
-			contextChanged();
-			return p;
-		});
-
-		if (program != null) {
-			Msg.info(this, "Opened program in " + tool.getName() + " tool: " + domainFile);
+		Symbol symbol = symbols.get(0);
+		if (symbol == null) {
+			return null;
 		}
+
+		SymbolType type = symbol.getSymbolType();
+		if (type == SymbolType.FUNCTION) {
+			return new FunctionSignatureFieldLocation(program, symbol.getAddress());
+		}
+
+		if (type == SymbolType.LABEL) {
+			return new LabelFieldLocation(symbol);
+		}
+		return null;
+	}
+
+	@Override
+	public Program openCachedProgram(URL ghidraURL, Object consumer) {
+		return openCachedProgram(new ProgramLocator(ghidraURL), consumer);
+	}
+
+	@Override
+	public Program openCachedProgram(DomainFile domainFile, Object consumer) {
+		return openCachedProgram(new ProgramLocator(domainFile), consumer);
+	}
+
+	private Program openCachedProgram(ProgramLocator locator, Object consumer) {
+		Program program = programCache.get(locator);
+		if (program != null) {
+			program.addConsumer(consumer);
+			return program;
+		}
+
+		program = programMgr.getOpenProgram(locator);
+		if (program != null) {
+			program.addConsumer(consumer);
+			if (!program.isChanged() || ProgramUtilities.isChangedWithUpgradeOnly(program)) {
+				// Don't put modified programs into the cache unless the only change
+				// corresponds to an upgrade during its instantiation.
+				programCache.put(locator, program);
+			}
+			return program;
+		}
+
+		OpenProgramTask task = new OpenProgramTask(locator, consumer);
+		new TaskLauncher(task, tool.getToolFrame());
+		OpenProgramRequest result = task.getOpenProgram();
+		if (result == null) {
+			return null;
+		}
+		program = result.getProgram();
+		programCache.put(locator, program);
 		return program;
 	}
 
@@ -324,18 +342,19 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	public Program[] getAllOpenPrograms() {
-		return programMgr.getAllPrograms();
+		return programMgr.getAllPrograms().toArray(Program[]::new);
 	}
 
 	@Override
 	public void dispose() {
+		programCache.clear();
 		programMgr.dispose();
 		tool.clearLastEvents();
 	}
 
 	@Override
 	public boolean closeOtherPrograms(boolean ignoreChanges) {
-		Program[] otherPrograms = programMgr.getOtherPrograms();
+		List<Program> otherPrograms = programMgr.getOtherPrograms();
 		Runnable r = () -> doCloseAllPrograms(otherPrograms, ignoreChanges);
 		Swing.runNow(r);
 		return programMgr.isEmpty();
@@ -343,21 +362,23 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	public boolean closeAllPrograms(boolean ignoreChanges) {
-		Program[] openPrograms = programMgr.getAllPrograms();
+		List<Program> openPrograms = programMgr.getAllPrograms();
 		Runnable r = () -> doCloseAllPrograms(openPrograms, ignoreChanges);
 		Swing.runNow(r);
 		return programMgr.isEmpty();
 	}
 
-	private void doCloseAllPrograms(Program[] openPrograms, boolean ignoreChanges) {
+	private void doCloseAllPrograms(List<Program> openPrograms, boolean ignoreChanges) {
 		List<Program> toRemove = new ArrayList<>();
 		Program currentProgram = programMgr.getCurrentProgram();
 		for (Program p : openPrograms) {
 			if (ignoreChanges) {
 				toRemove.add(p);
+				continue;
 			}
 			else if (p.isClosed()) {
 				toRemove.add(p);
+				continue;
 			}
 
 			if (!tool.canCloseDomainObject(p)) {
@@ -407,8 +428,8 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	protected void close() {
-		Program[] programs = programMgr.getAllPrograms();
-		if (programs.length == 0) {
+		List<Program> programs = programMgr.getAllPrograms();
+		if (programs.isEmpty()) {
 			return;
 		}
 		// Don't remove currentProgram until last to prevent activation of other programs.
@@ -450,23 +471,21 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	 */
 	@Override
 	public void openProgram(Program program) {
-		openProgram(program, true);
-	}
-
-	@Override
-	public void openProgram(Program program, boolean current) {
-		openProgram(program, current ? OPEN_CURRENT : OPEN_VISIBLE);
+		openProgram(program, OPEN_CURRENT);
 	}
 
 	@Override
 	public void openProgram(final Program program, final int state) {
-		if (locked) {
-			throw new IllegalStateException(
-				"Progam manager is locked and cannot accept a new program");
+		showProgram(program, new ProgramLocator(program.getDomainFile()), state);
+	}
+
+	private void showProgram(Program p, ProgramLocator locator, final int state) {
+		if (p == null || p.isClosed()) {
+			throw new AssertException("Opened program required");
 		}
 
 		Runnable r = () -> {
-			programMgr.addProgram(program, null, state);
+			programMgr.addProgram(p, locator, state);
 			if (state == ProgramManager.OPEN_CURRENT) {
 				programMgr.saveLocation();
 			}
@@ -482,7 +501,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	protected boolean saveData() {
-		boolean result = programSaveMgr.canCloseAll();
+		boolean result = programSaveMgr.saveAll();
 		contextChanged();
 		return result;
 	}
@@ -506,7 +525,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			new ActionBuilder("Open File", getName()).menuPath(ToolConstants.MENU_FILE, "&Open...")
 					.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroup++))
 					.keyBinding("ctrl O")
-					.enabledWhen(c -> !locked)
 					.onAction(c -> open())
 					.buildAndInstall(tool);
 		openAction.addToWindowWhen(ProgramActionContext.class);
@@ -575,6 +593,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			});
 		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Program_Options"));
 		tool.showDialog(dialog);
+		dialog.dispose();
 	}
 
 	/**
@@ -587,7 +606,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		PropertyEditor editor = options.getPropertyEditor(filePropertyName);
 		if (editor == null && options.getType(filePropertyName) == OptionType.STRING_TYPE) {
 			options.registerOption(filePropertyName, OptionType.STRING_TYPE, null, null, null,
-				new StringBasedFileEditor());
+				() -> new StringBasedFileEditor());
 		}
 	}
 
@@ -613,71 +632,97 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	}
 
 	private void open() {
-		if (openDialog == null) {
-			ActionListener listener = e -> {
-				DomainFile domainFile = openDialog.getDomainFile();
-				int version = openDialog.getVersion();
-				if (domainFile == null) {
-					openDialog.setStatusText("Please choose a Program");
-				}
-				else {
-					openDialog.close();
-					doOpenProgram(domainFile, version, OPEN_CURRENT);
-				}
-			};
-			DomainFileFilter filter = f -> {
-				Class<?> c = f.getDomainObjectClass();
-				return Program.class.isAssignableFrom(c);
-			};
-			openDialog = new OpenVersionedFileDialog(tool, "Open Program", filter);
-			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
-			openDialog.addOkActionListener(listener);
-		}
+
+		OpenVersionedFileDialog<Program> openDialog =
+			new OpenVersionedFileDialog<>(tool, "Open Program", Program.class);
+		openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
+
+		openDialog.addOkActionListener(e -> {
+			DomainFile domainFile = openDialog.getDomainFile();
+			int version = openDialog.getVersion();
+			if (domainFile == null) {
+				openDialog.setStatusText("Please choose a Program");
+			}
+			else {
+				openDialog.close();
+				doOpenProgramSwing(new ProgramLocator(domainFile, version), OPEN_CURRENT);
+			}
+		});
+
 		tool.showDialog(openDialog);
 		contextChanged();
 	}
 
 	public void openPrograms(List<DomainFile> filesToOpen) {
-		OpenProgramTask openTask = null;
-		for (DomainFile domainFile : filesToOpen) {
-			if (programMgr.getOpenProgram(domainFile, -1) != null) {
-				continue;
-			}
-			if (openTask == null) {
-				openTask = new OpenProgramTask(domainFile, -1, this);
-			}
-			else {
-				openTask.addProgramToOpen(domainFile, -1);
-			}
-		}
-		if (openTask != null) {
-			new TaskLauncher(openTask, tool.getToolFrame());
-			List<Program> openPrograms = openTask.getOpenPrograms();
+		List<ProgramLocator> locators =
+			filesToOpen.stream().map(f -> new ProgramLocator(f)).collect(Collectors.toList());
 
-			for (Program program : openPrograms) {
-				openProgram(program, OPEN_VISIBLE);
-				program.release(this);
-			}
-			if (!openPrograms.isEmpty()) {
-				openProgram(openPrograms.get(0), OPEN_CURRENT);
-			}
+		openProgramLocations(locators);
+	}
+
+	private void openProgramLocations(List<ProgramLocator> locators) {
+		if (locators.isEmpty()) {
+			return;
+		}
+		Set<ProgramLocator> toOpen = new LinkedHashSet<>(locators); 	// preserve order
+
+		// ensure already opened programs are visible in the tool
+		Map<ProgramLocator, Program> alreadyOpen = getOpenPrograms(toOpen);
+		makeVisibleInTool(alreadyOpen.values());
+		toOpen.removeAll(alreadyOpen.keySet());
+
+		// ensure cached programs are in the tool
+		Map<ProgramLocator, Program> openedFromCache = openCachedProgramsInTool(toOpen);
+		toOpen.removeAll(openedFromCache.keySet());
+
+		// if nothing to open, make the first program in the list the current program
+		if (toOpen.isEmpty()) {
+			Program first = programMgr.getOpenProgram(locators.get(0));
+			showProgram(first, locators.get(0), OPEN_CURRENT);
+			return;
+		}
+
+		// Need to open at least one program. Make the first one to open the current program.
+		OpenProgramTask task = new OpenProgramTask(new ArrayList<>(toOpen), this);
+		new TaskLauncher(task, tool.getToolFrame());
+
+		List<OpenProgramRequest> openProgramReqs = task.getOpenPrograms();
+
+		int openState = OPEN_CURRENT;
+		for (OpenProgramRequest programReq : openProgramReqs) {
+			showProgram(programReq.getProgram(), programReq.getLocator(), openState);
+			programReq.release();
+			openState = OPEN_VISIBLE;
 		}
 	}
 
-	protected Program doOpenProgram(DomainFile domainFile, int version, int openState) {
-		Program openProgram = programMgr.getOpenProgram(domainFile, version);
-		if (openProgram != null) {
-			openProgram(openProgram, openState);
-			return openProgram;
+	private void makeVisibleInTool(Collection<Program> programs) {
+		for (Program program : programs) {
+			openProgram(program, OPEN_VISIBLE);
 		}
-		OpenProgramTask task = new OpenProgramTask(domainFile, version, this);
-		new TaskLauncher(task, tool.getToolFrame());
-		openProgram = task.getOpenProgram();
-		if (openProgram != null) {
-			openProgram(openProgram, openState);
-			openProgram.release(this);
+	}
+
+	private Map<ProgramLocator, Program> openCachedProgramsInTool(Set<ProgramLocator> toOpen) {
+		Map<ProgramLocator, Program> map = new HashMap<>();
+		for (ProgramLocator programLocator : toOpen) {
+			Program program = programCache.get(programLocator);
+			if (program != null) {
+				openProgram(program, OPEN_VISIBLE);
+				map.put(programLocator, program);
+			}
 		}
-		return openProgram;
+		return map;
+	}
+
+	private Map<ProgramLocator, Program> getOpenPrograms(Collection<ProgramLocator> locators) {
+		Map<ProgramLocator, Program> map = new HashMap<>();
+		for (ProgramLocator locator : locators) {
+			Program program = programMgr.getOpenProgram(locator);
+			if (program != null) {
+				map.put(locator, program);
+			}
+		}
+		return map;
 	}
 
 	@Override
@@ -705,18 +750,20 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	 */
 	@Override
 	public void writeDataState(SaveState saveState) {
-		// Only remember programs from non-transient projects
-		ArrayList<Program> programs = new ArrayList<>();
+
+		ArrayList<ProgramInfo> programInfos = new ArrayList<>();
 		for (Program p : programMgr.getAllPrograms()) {
-			ProjectLocator projectLocator = p.getDomainFile().getProjectLocator();
-			if (projectLocator != null && !projectLocator.isTransient()) {
-				programs.add(p);
+			ProgramInfo info = programMgr.getInfo(p);
+			if (info != null && info.canReopen()) {
+				programInfos.add(info);
 			}
 		}
-		saveState.putInt("NUM_PROGRAMS", programs.size());
+
+		saveState.putInt("NUM_PROGRAMS", programInfos.size());
+
 		int i = 0;
-		for (Program p : programs) {
-			writeProgramInfo(p, saveState, i++);
+		for (ProgramInfo programInfo : programInfos) {
+			writeProgramInfo(programInfo, saveState, i++);
 		}
 		Program p = programMgr.getCurrentProgram();
 		if (p != null) {
@@ -742,8 +789,8 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		loadPrograms(saveState);
 		String currentFile = saveState.getString("CURRENT_FILE", null);
 
-		Program[] programs = programMgr.getAllPrograms();
-		if (programs.length != 0) {
+		List<Program> programs = programMgr.getAllPrograms();
+		if (!programs.isEmpty()) {
 			if (currentFile != null) {
 				for (Program program : programs) {
 					if (program.getDomainFile().getName().equals(currentFile)) {
@@ -754,7 +801,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				}
 			}
 			if (getCurrentProgram() == null) {
-				programMgr.setCurrentProgram(programs[0]);
+				programMgr.setCurrentProgram(programs.get(0));
 			}
 		}
 		contextChanged();
@@ -768,13 +815,18 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		}
 	}
 
-	private void writeProgramInfo(Program program, SaveState saveState, int index) {
-		if (locked) {
-			return; // do not save state when locked.
+	private void writeProgramInfo(ProgramInfo programInfo, SaveState saveState, int index) {
+		if (programInfo.getProgramLocator().isURL()) {
+			URL url = programInfo.getProgramLocator().getURL();
+			saveState.putString("URL_" + index, url.toString());
+			return;
 		}
+
 		String projectLocation = null;
 		String projectName = null;
 		String path = null;
+
+		Program program = programInfo.program;
 		DomainFile df = program.getDomainFile();
 		ProjectLocator projectLocator = df.getProjectLocator();
 		if (projectLocator != null && !projectLocator.isTransient()) {
@@ -797,48 +849,58 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	 * Read in my data state.
 	 */
 	private void loadPrograms(SaveState saveState) {
-		int n = saveState.getInt("NUM_PROGRAMS", 0);
-		if (n == 0) {
+
+		int programCount = saveState.getInt("NUM_PROGRAMS", 0);
+		if (programCount == 0) {
 			return;
 		}
-		OpenProgramTask openTask = null;
+		List<ProgramLocator> openList = new ArrayList<>();
 
-		for (int index = 0; index < n; index++) {
-			DomainFile domainFile = getDomainFile(saveState, index);
-			if (domainFile == null) {
+		for (int index = 0; index < programCount; index++) {
+
+			URL url = getGhidraURL(saveState, index);
+			if (url != null) {
+				openList.add(new ProgramLocator(url));
 				continue;
 			}
-			int version = getVersion(saveState, index);
 
-			if (openTask == null) {
-				openTask = new OpenProgramTask(domainFile, version, this);
-			}
-			else {
-				openTask.addProgramToOpen(domainFile, version);
+			DomainFile domainFile = getDomainFile(saveState, index);
+			if (domainFile != null) {
+				int version = getVersion(saveState, index);
+				openList.add(new ProgramLocator(domainFile, version));
 			}
 		}
-
-		if (openTask == null) {
+		if (openList.isEmpty()) {
 			return;
 		}
+
+		OpenProgramTask task = new OpenProgramTask(openList, this);
 
 		// Restore state should not ask about checking out since
 		// hopefully it is in the same state it was in when project
 		// was closed and state was saved.
-		openTask.setNoCheckout();
+		task.setNoCheckout();
 
+		new TaskLauncher(task, tool.getToolFrame(), 100);
+
+		List<OpenProgramRequest> openProgramReqs = task.getOpenPrograms();
+		for (OpenProgramRequest programReq : openProgramReqs) {
+			ProgramLocator locator = programReq.getLocator();
+			showProgram(programReq.getProgram(), locator, OPEN_VISIBLE);
+			programReq.release();
+		}
+	}
+
+	private URL getGhidraURL(SaveState saveState, int index) {
+		String url = saveState.getString("URL_" + index, null);
+		if (url == null) {
+			return null;
+		}
 		try {
-			new TaskLauncher(openTask, tool.getToolFrame(), 100);
+			return new URL(url);
 		}
-		catch (RuntimeException e) {
-			Msg.showError(this, tool.getToolFrame(), "Error Getting Domain File",
-				"Can't open program", e);
-		}
-
-		List<Program> openPrograms = openTask.getOpenPrograms();
-		for (Program program : openPrograms) {
-			openProgram(program, OPEN_VISIBLE);
-			program.release(this);
+		catch (MalformedURLException e) {
+			return null;
 		}
 	}
 
@@ -853,20 +915,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 		ProjectData projectData = tool.getProject().getProjectData(projectLocator);
 		if (projectData == null) {
-			// Viewed project not available
-			try {
-				projectData = new ProjectFileManager(projectLocator, false, false);
-			}
-			catch (NotOwnerException e) {
-				Msg.showError(this, tool.getToolFrame(), "Program Open Failed",
-					"Not project owner: " + projectLocator + "(" + pathname + ")");
-				return null;
-			}
-			catch (IOException e) {
-				Msg.showError(this, tool.getToolFrame(), "Program Open Failed",
-					"Project error: " + e.getMessage());
-				return null;
-			}
+			return null;
 		}
 
 		DomainFile df = projectData.getFile(pathname);
@@ -1039,17 +1088,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	@Override
 	public boolean setPersistentOwner(Program program, Object owner) {
 		return programMgr.setPersistentOwner(program, owner);
-	}
-
-	@Override
-	public boolean isLocked() {
-		return locked;
-	}
-
-	@Override
-	public void lockDown(boolean state) {
-		locked = state;
-		contextChanged();
 	}
 
 	public boolean isManaged(Program program) {

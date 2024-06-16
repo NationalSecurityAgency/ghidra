@@ -23,13 +23,12 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.*;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
 import org.junit.*;
 
 import generic.concurrent.GThreadPool;
 import generic.test.AbstractGenericTest;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -46,7 +45,6 @@ public class GTaskTest extends AbstractGenericTest {
 	};
 
 	public GTaskTest() {
-		super();
 	}
 
 	@Before
@@ -420,8 +418,7 @@ public class GTaskTest extends AbstractGenericTest {
 	public void testExceptionInTaskListenerTaskCompleted() {
 
 		// disable printing of exception below
-		Logger logger = LogManager.getLogger(GTaskManager.class);
-		Configurator.setLevel(logger.getName(), Level.OFF);
+		setLogLevel(GTaskManager.class, Level.OFF);
 
 		gTaskManager.addTaskListener(new GTaskListenerAdapter() {
 			@Override
@@ -434,16 +431,13 @@ public class GTaskTest extends AbstractGenericTest {
 
 		// this is testing that the exception does cause the taskManager to timeout still busy
 		waitForTaskManager();
-
-		Configurator.setLevel(logger.getName(), Level.DEBUG);
 	}
 
 	@Test
 	public void testExceptionInTaskListenerTaskStarted() {
 
 		// disable printing of exception below
-		Logger logger = LogManager.getLogger(GTaskManager.class);
-		Configurator.setLevel(logger.getName(), Level.OFF);
+		setLogLevel(GTaskManager.class, Level.OFF);
 
 		gTaskManager.addTaskListener(new GTaskListenerAdapter() {
 			@Override
@@ -456,8 +450,6 @@ public class GTaskTest extends AbstractGenericTest {
 
 		// this is testing that the exception does cause the taskManager to timeout still busy
 		waitForTaskManager();
-
-		Configurator.setLevel(logger.getName(), Level.DEBUG);
 	}
 
 	private void cancelCurrentTask() {
@@ -488,7 +480,7 @@ public class GTaskTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+		public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 			try {
 				if (!latch.await(2, TimeUnit.SECONDS)) {
 					Assert.fail("Latch await expired!");
@@ -497,7 +489,7 @@ public class GTaskTest extends AbstractGenericTest {
 			catch (InterruptedException e) {
 				Assert.fail("Did not expect Interrupted Exception");
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			super.run(obj, monitor);
 		}
 	}
@@ -508,7 +500,7 @@ public class GTaskTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+		public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 			GTaskManager taskManager = GTaskManagerFactory.getTaskManager(obj);
 			taskManager.waitForHigherPriorityTasks();
 			super.run(obj, monitor);

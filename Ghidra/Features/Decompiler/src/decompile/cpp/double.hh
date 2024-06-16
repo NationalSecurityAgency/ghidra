@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_DOUBLE__
-#define __CPUI_DOUBLE__
+#ifndef __DOUBLE_HH__
+#define __DOUBLE_HH__
 
 #include "ruleaction.hh"
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief A logical value whose storage is split between two Varnodes
 ///
@@ -68,6 +70,7 @@ public:
   void buildHiFromWhole(Funcdata &data);	///< Rebuild the most significant piece as a CPUI_SUBPIECE of the \b whole
   PcodeOp *findEarliestSplitPoint(void);	///< Find the earliest definition point of the \b lo and \b hi pieces
   PcodeOp *findOutExist(void);			///< Find the point at which the output \b whole must exist
+  bool exceedsConstPrecision(void) const;	///< Check if \b this is a constant that exceeds precision limits
   static bool adjacentOffsets(Varnode *vn1,Varnode *vn2,uintb size1);
   static bool testContiguousPointers(PcodeOp *most,PcodeOp *least,PcodeOp *&first,PcodeOp *&second,AddrSpace *&spc);
   static bool isAddrTiedContiguous(Varnode *lo,Varnode *hi,Address &res);
@@ -339,4 +342,6 @@ public:
   static bool testIndirectUse(PcodeOp *op1,PcodeOp *op2,const vector<PcodeOp *> &indirects);
   static void reassignIndirects(Funcdata &data,PcodeOp *newStore,const vector<PcodeOp *> &indirects);
 };
+
+} // End namespace ghidra
 #endif

@@ -210,6 +210,12 @@ public class ParserWalker {
 		return context.getNaddr();
 	}
 
+	public Address getN2addr() {
+		if (cross_context != null)
+			return cross_context.getN2addr();
+		return context.getN2addr();
+	}
+
 	public AddressSpace getCurSpace() {
 		return context.getCurSpace();
 	}

@@ -55,7 +55,12 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
-	public void testAssembly_T_add_w_pc_r0_r7_asr_0xf() {
+	public void testAssemble_mov_pc_n0x0() {
+		assertOneCompatRestExact("mov pc,#0x0", "00:f0:a0:e3");
+	}
+
+	@Test
+	public void testAssemble_T_add_w_pc_r0_r7_asr_0xf() {
 		assertOneCompatRestExact("add.w pc,r0,r7, asr #0xf", "00:eb:e7:3f", THUMB, 0x0000c3b8,
 			"add.w pc,r0,r7, asr #0xf");
 	}
@@ -68,6 +73,11 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	@Test
 	public void testAssemble_T_and_r0_r5() {
 		assertOneCompatRestExact("ands r0,r5", "28:40", THUMB, 0x00400000, "ands r0,r5");
+	}
+
+	@Test
+	public void testAssemble_T_movs_r0_r0() {
+		assertOneCompatRestExact("movs r0,r0", "00:00", THUMB, 0x00400000, "movs r0,r0");
 	}
 
 	@Test
@@ -106,8 +116,29 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
-	public void testAssemble_T_vmov_i32_d0_simdExpand_0x1_0x0_0xb1() {
-		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x1,0x0,0xb1)", "83:ff:31:00", THUMB,
-			0x00010100, "vmov.i32 d0,simdExpand(0x1,0x0,0xb1)");
+	public void testAssemble_T_vmov_simd_immed() {
+		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0x0,0xb1)", "83:ff:11:00", THUMB,
+			0x00010100, "vmov.i32 d0,simdExpand(0x0,0x0,0xb1)");
+		assertOneCompatRestExact("vmov.i16 d0,simdExpand(0x0,0xa,0xb1)", "83:ff:11:0a", THUMB,
+			0x00010100, "vmov.i16 d0,simdExpand(0x0,0xa,0xb1)");
+		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0xd,0xb1)", "83:ff:11:0d", THUMB,
+			0x00010100, "vmov.i32 d0,simdExpand(0x0,0xd,0xb1)");
+		assertOneCompatRestExact("vmov.i64 d0,simdExpand(0x1,0xe,0xb1)", "83:ff:31:0e", THUMB,
+			0x00010100, "vmov.i64 d0,simdExpand(0x1,0xe,0xb1)");
+	}
+
+	@Test
+	public void testAssemble_T_tbb_mr0_r1() {
+		assertOneCompatRestExact("tbb [r0, r1]", "d0:e8:01:f0", THUMB, 0x00400000, "tbb [r0,r1]");
+	}
+
+	@Test
+	public void testAssemble_T_tbb_mpc_r0() {
+		assertOneCompatRestExact("tbb [pc, r1]", "df:e8:01:f0", THUMB, 0x00400000, "tbb [pc,r1]");
+	}
+
+	@Test
+	public void testAssemble_T_tbb_m0_r0() {
+		assertAllSyntaxErrors("tbb [0, r0]");
 	}
 }

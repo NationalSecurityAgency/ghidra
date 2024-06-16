@@ -23,8 +23,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Note: actual data structure seen in firmware does not contain the "canonical_dex_file_location_" field.
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat_file.h#405
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat_file.h#405">marshmallow-release/runtime/oat_file.h</a>
  */
 class OatDexFile_Marshmallow extends OatDexFile_Lollipop {
 

@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbModule;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetObject;
@@ -39,7 +40,7 @@ import ghidra.program.model.address.*;
 public class GdbModelTargetModule extends
 		DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer> implements TargetModule {
 
-	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
+	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "Range";
 	public static final String VISIBLE_MODULE_NAME_ATTRIBUTE_NAME = "module name";
 
 	protected static String indexModule(GdbModule module) {
@@ -83,7 +84,7 @@ public class GdbModelTargetModule extends
 	}
 
 	public CompletableFuture<Void> init() {
-		return sections.requestElements(true).exceptionally(ex -> {
+		return sections.requestElements(RefreshBehavior.REFRESH_ALWAYS).exceptionally(ex -> {
 			impl.reportError(this, "Could not initialize module sections and base", ex);
 			return null;
 		});
@@ -110,8 +111,8 @@ public class GdbModelTargetModule extends
 	}
 
 	protected AddressRange doGetRange() {
-		Long base = module.getKnownBase();
-		Long max = module.getKnownMax();
+		Long base = module.getBase();
+		Long max = module.getMax();
 		max = max == null ? base : (Long) (max - 1); // GDB gives end+1
 		if (base == null) {
 			Address addr = impl.space.getMinAddress();

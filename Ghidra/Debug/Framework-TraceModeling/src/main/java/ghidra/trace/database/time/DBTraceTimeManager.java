@@ -22,13 +22,15 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -43,7 +45,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	protected final DBCachedObjectStore<DBTraceSnapshot> snapshotStore;
 	protected final DBCachedObjectIndex<String, DBTraceSnapshot> snapshotsBySchedule;
 
-	public DBTraceTimeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceTimeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
 			throws VersionException, IOException {
 		this.trace = trace;
@@ -67,6 +69,21 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 		snapshotStore.invalidateCache();
 	}
 
+	protected void notifySnapshotAdded(DBTraceSnapshot snapshot) {
+		trace.updateViewportsSnapshotAdded(snapshot);
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_ADDED, null, snapshot));
+	}
+
+	protected void notifySnapshotChanged(DBTraceSnapshot snapshot) {
+		trace.updateViewportsSnapshotChanged(snapshot);
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_CHANGED, null, snapshot));
+	}
+
+	protected void notifySnapshotDeleted(DBTraceSnapshot snapshot) {
+		trace.updateViewportsSnapshotDeleted(snapshot);
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_DELETED, null, snapshot));
+	}
+
 	@Override
 	public DBTraceSnapshot createSnapshot(String description) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
@@ -76,8 +93,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 				// Convention for first snap
 				snapshot.setSchedule(TraceSchedule.snap(0));
 			}
-			trace.setChanged(
-				new TraceChangeRecord<>(TraceSnapshotChangeType.ADDED, null, snapshot));
+			notifySnapshotAdded(snapshot);
 			return snapshot;
 		}
 	}
@@ -98,8 +114,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 					// Convention for first snap
 					snapshot.setSchedule(TraceSchedule.snap(0));
 				}
-				trace.setChanged(
-					new TraceChangeRecord<>(TraceSnapshotChangeType.ADDED, null, snapshot));
+				notifySnapshotAdded(snapshot);
 			}
 			return snapshot;
 		}
@@ -141,7 +156,9 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	}
 
 	public void deleteSnapshot(DBTraceSnapshot snapshot) {
-		snapshotStore.delete(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.DELETED, null, snapshot));
+		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			snapshotStore.delete(snapshot);
+			notifySnapshotDeleted(snapshot);
+		}
 	}
 }

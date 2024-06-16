@@ -26,33 +26,35 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.actions.SharedStubKeyBindingAction;
-import docking.help.*;
+import docking.help.HelpManager;
 import docking.tool.ToolConstants;
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.model.Project;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 
 /**
  * Generate a file of all components and actions in the 
  */
 //@formatter:off
 @PluginInfo(
-	status = PluginStatus.RELEASED,
+	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Write JavaHelp Info",
 	description = "This plugin identifies " +
 			"those plugin actions that do not have help associated with them. The file, " +
 			JavaHelpPlugin.infoName + ", is written to your home directory."
 )
 //@formatter:on
-public class JavaHelpPlugin extends Plugin implements FrontEndable {
+public class JavaHelpPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	static final String infoName = "GhidraHelpInfo.txt";
 
@@ -130,7 +132,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 			monitor.setMessage("Filtering help items...");
 			Iterator<Object> iter = map.keySet().iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Object helpObj = iter.next();
 				if (helpObj instanceof DockingAction) {
 					DockingAction action = (DockingAction) helpObj;
@@ -149,7 +151,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 			iter = map.keySet().iterator();
 			int i = 1;
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Object helpObj = iter.next();
 				HelpLocation helpLoc = map.get(helpObj);
 				HelpInfoObject helpInfoObject = new HelpInfoObject(helpObj, helpLoc);
@@ -169,7 +171,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 
 			monitor.setMessage("Writing items missing help...");
 			for (HelpInfoObject helpInfo : helpInfos) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				writeHelpInfo(out, helpInfo, i++);
 				monitor.initialize(1);
 			}

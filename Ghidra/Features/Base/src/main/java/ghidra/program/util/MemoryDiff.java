@@ -31,14 +31,14 @@ import ghidra.util.task.TaskMonitor;
  * types of differences.
  */
 public class MemoryDiff {
-	
+
 	private Program program1;
 	private Program program2;
 	private Memory memory1;
 	private Memory memory2;
 	private AddressRange[] ranges;
 	private MemoryBlockDiff[] diffs;
-	
+
 	/**
 	 * Constructs an object for determining memory differences between two programs.
 	 * @param p1 the first program
@@ -46,8 +46,7 @@ public class MemoryDiff {
 	 * @throws ProgramConflictException if the program memory can't be compared because the programs
 	 * are based on different languages.
 	 */
-	public MemoryDiff(Program p1, Program p2)
-	throws ProgramConflictException {
+	public MemoryDiff(Program p1, Program p2) throws ProgramConflictException {
 		program1 = p1;
 		program2 = p2;
 		memory1 = program1.getMemory();
@@ -55,7 +54,7 @@ public class MemoryDiff {
 		computeRanges();
 		computeDifferences();
 	}
-	
+
 	/**
 	 * Gets the first program that is part of this MemoryDiff.
 	 * @return the first program
@@ -63,7 +62,7 @@ public class MemoryDiff {
 	public Program getProgram1() {
 		return program1;
 	}
-	
+
 	/**
 	 * Gets the second program that is part of this MemoryDiff.
 	 * @return the second program
@@ -71,7 +70,7 @@ public class MemoryDiff {
 	public Program getProgram2() {
 		return program2;
 	}
-	
+
 	/**
 	 * Determines the address ranges that the two programs memories must be broken into for 
 	 * properly comparing the programs. Each of these address ranges will exist in the first
@@ -82,12 +81,12 @@ public class MemoryDiff {
 		ProgramMemoryComparator memComp = new ProgramMemoryComparator(program1, program2);
 		ArrayList<AddressRange> rangeList = new ArrayList<AddressRange>();
 		AddressRangeIterator rangeIter = memComp.getAddressRanges();
-		while(rangeIter.hasNext()) {
+		while (rangeIter.hasNext()) {
 			rangeList.add(rangeIter.next());
 		}
 		ranges = rangeList.toArray(new AddressRange[rangeList.size()]);
 	}
-	
+
 	/**
 	 * Gets the number of address ranges that the two programs memories are broken into for 
 	 * comparing the programs.
@@ -96,7 +95,7 @@ public class MemoryDiff {
 	public int getNumRanges() {
 		return ranges.length;
 	}
-	
+
 	/**
 	 * Gets the address range as indicated by index. The index is zero based. Address ranges are
 	 * in order from the minimum address to the maximum address range.
@@ -106,7 +105,7 @@ public class MemoryDiff {
 	public AddressRange getRange(int index) {
 		return ranges[index];
 	}
-	
+
 	/**
 	 * Gets the memory difference flags for the address range as indicated by index.
 	 * @param index the index of the address range to get the difference flags for.
@@ -115,7 +114,7 @@ public class MemoryDiff {
 	public MemoryBlockDiff getDifferenceInfo(int index) {
 		return diffs[index];
 	}
-	
+
 	/**
 	 * Determines the memory differences and sets the flags for each associated address range.
 	 */
@@ -128,7 +127,7 @@ public class MemoryDiff {
 			diffs[i] = new MemoryBlockDiff(block1, block2);
 		}
 	}
-	
+
 	/**
 	 * Gets a string representation of the types of memory differences that exist for the memory 
 	 * block that contains the indicated address.
@@ -143,30 +142,30 @@ public class MemoryDiff {
 		MemoryBlockDiff info = getDifferenceInfo(index);
 		return info.getDifferencesAsString();
 	}
-	
+
 	/**
 	 * Gets the index of the address range containing the indicated address, 
 	 * if it is contained in the list;
-     *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.
+	 *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.
 	 * @param address the address whose range we are interested in finding.
 	 * @return the index of the address range.
 	 */
 	private int getAddressRangeIndex(Address address) {
 		int low = 0;
-		int high = diffs.length-1;
-	
+		int high = diffs.length - 1;
+
 		while (low <= high) {
-		    int mid = (low + high) >> 1;
-		    AddressRange range = ranges[mid];
-		    if (range.contains(address)) {
-		    	return mid;
-		    }
-		    else if (address.compareTo(range.getMinAddress()) < 0) {
-		    	high = mid - 1;
-		    }
-		    else {
-		    	low = mid + 1;
-		    }
+			int mid = (low + high) >> 1;
+			AddressRange range = ranges[mid];
+			if (range.contains(address)) {
+				return mid;
+			}
+			else if (address.compareTo(range.getMinAddress()) < 0) {
+				high = mid - 1;
+			}
+			else {
+				low = mid + 1;
+			}
 		}
 		return -(low + 1);  // not found.
 	}
@@ -187,7 +186,7 @@ public class MemoryDiff {
 		}
 		return rangeDiffs.toArray(new AddressRange[rangeDiffs.size()]);
 	}
-	
+
 	/**
 	 * Determines whether the two memory blocks are the same.
 	 * @param block1 the first program's memory block
@@ -201,7 +200,7 @@ public class MemoryDiff {
 		else if (block2 == null) {
 			return false;
 		}
-		if(!block1.getName().equals(block2.getName())) {
+		if (!block1.getName().equals(block2.getName())) {
 			return false;
 		}
 		if (!block1.getStart().equals(block2.getStart())) {
@@ -213,7 +212,7 @@ public class MemoryDiff {
 		if (block1.getSize() != block2.getSize()) {
 			return false;
 		}
-		if (block1.getPermissions() != block2.getPermissions()) {
+		if (block1.getFlags() != block2.getFlags()) {
 			return false;
 		}
 		if (!block1.getType().equals(block2.getType())) {
@@ -233,8 +232,7 @@ public class MemoryDiff {
 		}
 		return true;
 	}
-	
-	
+
 	public boolean merge(int row, int mergeFields, TaskMonitor monitor) {
 		if ((mergeFields & MemoryBlockDiff.ALL) == 0) {
 			return false;
@@ -246,8 +244,8 @@ public class MemoryDiff {
 		MemoryBlock block1 = blockDiff.getBlock1();
 		MemoryBlock block2 = blockDiff.getBlock2();
 		AddressRange range = ranges[row];
-		if (shouldMerge(mergeFields, MemoryBlockDiff.START_ADDRESS)
-		            && blockDiff.isStartAddressDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.START_ADDRESS) &&
+			blockDiff.isStartAddressDifferent()) {
 			if (block1 == null) {
 				// Add all or part of a block.
 				Address start2 = block2.getStart();
@@ -271,7 +269,7 @@ public class MemoryDiff {
 					return true;
 				}
 				catch (Exception e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 				}
 				return false;
 			}
@@ -295,64 +293,63 @@ public class MemoryDiff {
 						memory1.removeBlock(blockToRemove, monitor);
 					}
 					return true;
-				} catch (LockException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (NotFoundException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (AddressOutOfBoundsException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (MemoryBlockException e) {
+				}
+				catch (LockException e) {
+					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+				}
+				catch (NotFoundException e) {
+					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+				}
+				catch (AddressOutOfBoundsException e) {
+					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+				}
+				catch (MemoryBlockException e) {
 					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 				}
 				return false;
 			}
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.END_ADDRESS)
-		    && blockDiff.isEndAddressDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.END_ADDRESS) &&
+			blockDiff.isEndAddressDifferent()) {
 			// TODO
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.SIZE)
-		    && blockDiff.isSizeDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.SIZE) && blockDiff.isSizeDifferent()) {
 			// TODO
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.TYPE)
-		    && blockDiff.isTypeDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.TYPE) && blockDiff.isTypeDifferent()) {
 			// TODO
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.INIT)
-		    && blockDiff.isInitDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.INIT) && blockDiff.isInitDifferent()) {
 			// TODO
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.NAME)
-				    && blockDiff.isNameDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.NAME) && blockDiff.isNameDifferent()) {
 			try {
 				block1.setName(block2.getName());
-			} catch (LockException e) {
-			    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+			}
+			catch (LockException e) {
+				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.READ)
-		    && blockDiff.isReadDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.READ) && blockDiff.isReadDifferent()) {
 			block1.setRead(block2.isRead());
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.WRITE)
-		    && blockDiff.isWriteDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.WRITE) && blockDiff.isWriteDifferent()) {
 			block1.setWrite(block2.isWrite());
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.EXECUTE)
-		    && blockDiff.isExecDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.EXECUTE) && blockDiff.isExecDifferent()) {
 			block1.setExecute(block2.isExecute());
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.VOLATILE)
-		    && blockDiff.isVolatileDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.VOLATILE) && blockDiff.isVolatileDifferent()) {
 			block1.setVolatile(block2.isVolatile());
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.SOURCE)
-		    && blockDiff.isSourceDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.ARTIFICIAL) &&
+			blockDiff.isArtificialDifferent()) {
+			block1.setArtificial(block2.isArtificial());
+		}
+		if (shouldMerge(mergeFields, MemoryBlockDiff.SOURCE) && blockDiff.isSourceDifferent()) {
 			block1.setSourceName(block2.getSourceName());
 		}
-		if (shouldMerge(mergeFields, MemoryBlockDiff.COMMENT)
-		    && blockDiff.isCommentDifferent()) {
+		if (shouldMerge(mergeFields, MemoryBlockDiff.COMMENT) && blockDiff.isCommentDifferent()) {
 			block1.setComment(block2.getComment());
 		}
 		return true;

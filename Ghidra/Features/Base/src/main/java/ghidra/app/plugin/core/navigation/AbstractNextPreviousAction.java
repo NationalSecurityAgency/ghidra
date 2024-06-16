@@ -42,7 +42,7 @@ import resources.*;
 public abstract class AbstractNextPreviousAction extends NavigatableContextAction {
 
 	private static final Icon INVERTED_OVERLAY_ICON =
-		ImageUtils.makeTransparent(ResourceManager.loadImage("images/dialog-cancel.png"), .5f);
+		ImageUtils.makeTransparent(Icons.NOT_ALLOWED_ICON, .5f);
 
 	private boolean isForward = true;
 	private PluginTool tool;
@@ -53,8 +53,6 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 	public AbstractNextPreviousAction(PluginTool tool, String name, String owner, String subGroup) {
 		super(name, owner);
 		this.tool = tool;
-		setSupportsDefaultToolContext(true);
-
 		ToolBarData toolBarData =
 			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);

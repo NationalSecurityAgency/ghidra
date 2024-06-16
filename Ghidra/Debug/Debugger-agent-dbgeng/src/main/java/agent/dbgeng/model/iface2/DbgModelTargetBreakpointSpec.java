@@ -24,6 +24,7 @@ import agent.dbgeng.model.iface1.DbgModelTargetBptHelper;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.program.model.address.*;
+import ghidra.util.Msg;
 
 public interface DbgModelTargetBreakpointSpec extends //
 		DbgModelTargetObject, //
@@ -58,16 +59,22 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	@Override
 	public default String getExpression() {
-		return getBreakpointInfo().getExpression();
+		DbgBreakpointInfo info = getBreakpointInfo();
+		return info == null ? null : info.getExpression();
 	}
 
 	public default long getNumber() {
-		return getBreakpointInfo().getNumber();
+		DbgBreakpointInfo info = getBreakpointInfo();
+		return info == null ? null : info.getNumber();
 	}
 
 	@Override
 	public default TargetBreakpointKindSet getKinds() {
-		switch (getBreakpointInfo().getType()) {
+		DbgBreakpointInfo info = getBreakpointInfo();
+		if (info == null) {
+			return TargetBreakpointKindSet.of();
+		}
+		switch (info.getType()) {
 			case BREAKPOINT:
 				return TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
 			case HW_BREAKPOINT:
@@ -99,12 +106,13 @@ public interface DbgModelTargetBreakpointSpec extends //
 				setBreakpointId(idstr);
 				//String uidstr = unique.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
 				String enstr = enabled.getCachedAttribute(VALUE_ATTRIBUTE_NAME).toString();
+				Address address = null;
 				try {
-					Address address = space.getAddress(addstr);
-					map.put(ADDRESS_ATTRIBUTE_NAME, address);
+					address = space.getAddress(addstr);
+					//map.put(ADDRESS_ATTRIBUTE_NAME, address);
 				}
 				catch (AddressFormatException e) {
-					e.printStackTrace();
+					Msg.error(this, "Could not parse breakpoint address", e);
 				}
 				map.put(SPEC_ATTRIBUTE_NAME, this);
 				map.put(EXPRESSION_ATTRIBUTE_NAME, addstr);
@@ -113,7 +121,15 @@ public interface DbgModelTargetBreakpointSpec extends //
 				map.put(ENABLED_ATTRIBUTE_NAME, enstr.equals("-1"));
 				setEnabled(enstr.equals("-1"), "Refreshed");
 				int size = getBreakpointInfo().getSize();
-				map.put(LENGTH_ATTRIBUTE_NAME, size);
+				//map.put(LENGTH_ATTRIBUTE_NAME, size);
+				if (address != null) {
+					try {
+						map.put(RANGE_ATTRIBUTE_NAME, new AddressRangeImpl(address, size));
+					}
+					catch (AddressOverflowException e) {
+						Msg.error(this, "Address overflow in breakpoint range", e);
+					}
+				}
 
 				String oldval = (String) getCachedAttribute(DISPLAY_ATTRIBUTE_NAME);
 				String display = "[" + idstr + "] " + addstr;
@@ -125,14 +141,26 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	private long orZero(Long l) {
 		if (l == null) {
-			return 0;
+			Msg.warn(this, "Breakpoint had null offset. Defaulting to ram:00000000");
 		}
-		return l;
+		return l == null ? 0 : l;
+	}
+
+	private int orOne(Integer i) {
+		return i == null ? 1 : i;
 	}
 
 	public default Address doGetAddress() {
 		DbgBreakpointInfo info = getBreakpointInfo();
 		return getModel().getAddress("ram", orZero(info.getOffset()));
+	}
+
+	public default AddressRange doGetRange() {
+		DbgBreakpointInfo info = getBreakpointInfo();
+		AddressSpace ram = getModel().getAddressSpace("ram");
+		Address min = ram.getAddress(orZero(info.getOffset()));
+		Address max = min.add(orOne(info.getSize()) - 1);
+		return new AddressRangeImpl(min, max);
 	}
 
 	public default void updateInfo(DbgBreakpointInfo oldInfo, DbgBreakpointInfo newInfo,
@@ -146,11 +174,12 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	/**
 	 * Update the enabled field
-	 * 
+	 *
+	 * <p>
 	 * This does not actually toggle the breakpoint. It just updates the field and calls the proper
 	 * listeners. To actually toggle the breakpoint, use {@link #toggle(boolean)} instead, which if
 	 * effective, should eventually cause this method to be called.
-	 * 
+	 *
 	 * @param enabled true if enabled, false if disabled
 	 * @param reason a description of the cause (not really used, yet)
 	 */
@@ -178,8 +207,8 @@ public interface DbgModelTargetBreakpointSpec extends //
 	public default void breakpointHit() {
 		DbgModelTargetThread targetThread =
 			getParentProcess().getThreads().getTargetThread(getManager().getEventThread());
-		getActions().fire.breakpointHit((DbgModelTargetBreakpointSpec) getProxy(), targetThread,
-			null, this);
+		getActions().invoke()
+				.breakpointHit((DbgModelTargetBreakpointSpec) getProxy(), targetThread, null, this);
 	}
 
 }

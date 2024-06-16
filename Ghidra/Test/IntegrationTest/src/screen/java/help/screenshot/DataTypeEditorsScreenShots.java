@@ -25,8 +25,8 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.tree.GTree;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.plugin.core.compositeeditor.*;
@@ -38,7 +38,6 @@ import ghidra.program.model.data.*;
 public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 
 	public DataTypeEditorsScreenShots() {
-		super();
 	}
 
 	@Test
@@ -120,7 +119,8 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		performAction("Choose Data Type", "DataPlugin", false);
 
 		DialogComponentProvider dialog = getDialog();
-		final JButton browseButton = findButtonByIcon(dialog, ButtonPanelFactory.BROWSE_ICON);
+		AbstractButton browseButton =
+			findAbstractButtonByName(dialog.getComponent(), BrowseButton.NAME);
 		pressButton(browseButton, false);
 		waitForSwing();
 
@@ -184,8 +184,8 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		int numRows = table.getRowCount();
 		selectRow(table, numRows - 2);
 
-		performAction("Editor: Duplicate Multiple of Component", "DataTypeManagerPlugin",
-			structureEditor, false);
+		performAction("Duplicate Multiple of Component", "DataTypeManagerPlugin", structureEditor,
+			false);
 		waitForSwing();
 
 		captureDialog();
@@ -209,7 +209,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		int numRows = table.getRowCount();
 		selectRow(table, numRows - 2);
 
-		performAction("Editor: Create Array", "DataTypeManagerPlugin", structureEditor, false);
+		performAction("Create Array", "DataTypeManagerPlugin", structureEditor, false);
 		waitForSwing();
 
 		captureDialog();
@@ -267,7 +267,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		JTable table = editorPanel.getTable();
 		selectRow(table, 4); // select byte:3 bitfield
 
-		performAction("Editor: Edit Bitfield", "DataTypeManagerPlugin", structureEditor, false);
+		performAction("Edit Bitfield", "DataTypeManagerPlugin", structureEditor, false);
 		waitForSwing();
 
 		captureDialog();

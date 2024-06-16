@@ -17,187 +17,195 @@ package ghidra.app.plugin.core.debug.gui.thread;
 
 import static org.junit.Assert.*;
 
-import java.awt.event.MouseEvent;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.Objects;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
+import docking.widgets.table.*;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.services.TraceRecorder;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
+import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
+import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServiceTestAccess;
+import ghidra.dbg.target.TargetExecutionStateful;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.thread.TraceThreadManager;
-import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.database.UndoableTransaction;
+import ghidra.util.table.GhidraTable;
 
-@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+@Category(NightlyCategory.class)
+public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	// NOTE the use of index='1' allowing object-based managers to ID unique path
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Processes' schema='ProcessContainer' />
+			    </schema>
+			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element index='1' schema='Process' />
+			    </schema>
+			    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Threads' schema='ThreadContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <interface name='Activatable' />
+			    </schema>
+			</context>""";
 
-	protected DebuggerThreadsPlugin threadsPlugin;
-	protected DebuggerThreadsProvider threadsProvider;
+	DebuggerThreadsProvider provider;
 
-	protected TraceThread thread1;
-	protected TraceThread thread2;
+	protected TraceObjectThread thread1;
+	protected TraceObjectThread thread2;
 
-	@Before
-	public void setUpThreadsProviderTest() throws Exception {
-		threadsPlugin = addPlugin(tool, DebuggerThreadsPlugin.class);
-		threadsProvider = waitForComponentProvider(DebuggerThreadsProvider.class);
-	}
+	protected SchemaContext ctx;
 
-	protected void addThreads() throws Exception {
-		TraceThreadManager manager = tb.trace.getThreadManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread1 = manager.addThread("Processes[1].Threads[1]", Range.atLeast(0L));
-			thread1.setComment("A comment");
-			thread2 = manager.addThread("Processes[1].Threads[2]", Range.closed(5L, 10L));
-			thread2.setComment("Another comment");
+	@Override
+	protected void createTrace(String langID) throws IOException {
+		super.createTrace(langID);
+		try {
+			activateObjectsMode();
+		}
+		catch (Exception e) {
+			throw new AssertionError(e);
 		}
 	}
 
-	/**
-	 * Check that there exist no tabs, and that the tab row is invisible
-	 */
-	protected void assertZeroTabs() {
-		assertEquals(0, threadsProvider.traceTabs.getList().getModel().getSize());
-		assertEquals("Tab row should not be visible", 0,
-			threadsProvider.traceTabs.getVisibleRect().height);
+	public void activateObjectsMode() throws Exception {
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
+
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
 	}
 
-	/**
-	 * Check that exactly one tab exists, and that the tab row is visible
-	 */
-	protected void assertOneTabPopulated() {
-		assertEquals(1, threadsProvider.traceTabs.getList().getModel().getSize());
-		assertNotEquals("Tab row should be visible", 0,
-			threadsProvider.traceTabs.getVisibleRect().height);
+	protected TraceObjectThread addThread(int index, Lifespan lifespan, String comment) {
+		TraceObjectManager om = tb.trace.getObjectManager();
+		PathPattern threadPattern = new PathPattern(PathUtils.parse("Processes[1].Threads[]"));
+		TraceObjectThread thread = Objects.requireNonNull(om.createObject(
+			TraceObjectKeyPath.of(threadPattern.applyIntKeys(index).getSingletonPath()))
+				.insert(lifespan, ConflictResolution.TRUNCATE)
+				.getDestination(null)
+				.queryInterface(TraceObjectThread.class));
+		thread.getObject()
+				.setAttribute(lifespan, TargetExecutionStateful.STATE_ATTRIBUTE_NAME,
+					TargetExecutionState.STOPPED.name());
+		thread.getObject().setAttribute(lifespan, TraceObjectThread.KEY_COMMENT, comment);
+		return thread;
 	}
 
-	protected void assertNoTabSelected() {
-		assertTabSelected(null);
+	protected void addThreads() throws Exception {
+		try (Transaction tx = tb.startTransaction()) {
+			thread1 = addThread(1, Lifespan.nowOn(0), "A comment");
+			thread2 = addThread(2, Lifespan.span(0, 10), "Another comment");
+		}
 	}
 
-	protected void assertTabSelected(Trace trace) {
-		assertEquals(trace, threadsProvider.traceTabs.getSelectedItem());
+	protected void assertThreadsTableSize(int size) {
+		assertEquals(size, provider.panel.getAllItems().size());
 	}
 
 	protected void assertThreadsEmpty() {
-		List<ThreadRow> threadsDisplayed = threadsProvider.threadTableModel.getModelData();
-		assertTrue(threadsDisplayed.isEmpty());
+		assertThreadsTableSize(0);
+	}
+
+	protected void assertThreadRow(int position, Object object, String name,
+			TargetExecutionState state, String comment) {
+		// NB. Not testing plot, since that's unmodified from generic ObjectTable
+		ValueRow row = provider.panel.getAllItems().get(position);
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Name", ValueRow.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> stateCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "State", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> commentCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Comment", ValueProperty.class)
+				.column();
+
+		assertSame(object, row.getValue().getValue());
+		assertEquals(name, rowColDisplay(row, nameCol));
+		assertEquals(state.name(), rowColVal(row, stateCol));
+		assertEquals(comment, rowColVal(row, commentCol));
 	}
 
 	protected void assertThreadsPopulated() {
-		List<ThreadRow> threadsDisplayed = threadsProvider.threadTableModel.getModelData();
-		assertEquals(2, threadsDisplayed.size());
+		assertThreadsTableSize(2);
 
-		ThreadRow thread1Record = threadsDisplayed.get(0);
-		assertEquals(thread1, thread1Record.getThread());
-		assertEquals("Processes[1].Threads[1]", thread1Record.getName());
-		assertEquals(Range.atLeast(0L), thread1Record.getLifespan());
-		assertEquals(0, thread1Record.getCreationSnap());
-		assertEquals("", thread1Record.getDestructionSnap());
-		assertEquals(tb.trace, thread1Record.getTrace());
-		assertEquals(ThreadState.ALIVE, thread1Record.getState());
-		assertEquals("A comment", thread1Record.getComment());
-
-		ThreadRow thread2Record = threadsDisplayed.get(1);
-		assertEquals(thread2, thread2Record.getThread());
+		assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]",
+			TargetExecutionState.STOPPED, "A comment");
+		assertThreadRow(1, thread2.getObject(), "Processes[1].Threads[2]",
+			TargetExecutionState.STOPPED, "Another comment");
 	}
 
 	protected void assertNoThreadSelected() {
-		assertNull(threadsProvider.threadFilterPanel.getSelectedItem());
+		assertNull(provider.panel.getSelectedItem());
 	}
 
-	protected void assertThreadSelected(TraceThread thread) {
-		ThreadRow row = threadsProvider.threadFilterPanel.getSelectedItem();
+	protected void assertThreadSelected(TraceObjectThread thread) {
+		ValueRow row = provider.panel.getSelectedItem();
 		assertNotNull(row);
-		assertEquals(thread, row.getThread());
+		assertEquals(thread.getObject(), row.getValue().getChild());
 	}
 
 	protected void assertProviderEmpty() {
-		assertZeroTabs();
 		assertThreadsEmpty();
+	}
+
+	@Before
+	public void setUpThreadsProviderTest() throws Exception {
+		addPlugin(tool, DebuggerThreadsPlugin.class);
+		provider = waitForComponentProvider(DebuggerThreadsProvider.class);
+	}
+
+	@After
+	public void tearDownThreadsProviderTest() throws Exception {
+		traceManager.activate(DebuggerCoordinates.NOWHERE);
+		waitForTasks();
+		runSwing(() -> traceManager.closeAllTraces());
 	}
 
 	@Test
 	public void testEmpty() {
-		waitForSwing();
-		assertProviderEmpty();
-	}
-
-	@Test
-	public void testOpenTracePopupatesTab() throws Exception {
-		createAndOpenTrace();
-		waitForSwing();
-
-		assertOneTabPopulated();
-		assertNoTabSelected();
-		assertThreadsEmpty();
-	}
-
-	@Test
-	public void testActivateTraceSelectsTab() throws Exception {
-		createAndOpenTrace();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		assertOneTabPopulated();
-		assertTabSelected(tb.trace);
-
-		traceManager.activateTrace(null);
-		waitForSwing();
-
-		assertOneTabPopulated();
-		assertNoTabSelected();
-	}
-
-	@Test
-	public void testSelectTabActivatesTrace() throws Exception {
-		createAndOpenTrace();
-		waitForSwing();
-		threadsProvider.traceTabs.setSelectedItem(tb.trace);
-		waitForSwing();
-
-		assertEquals(tb.trace, traceManager.getCurrentTrace());
-		assertEquals(tb.trace, threadsProvider.current.getTrace());
+		waitForTasks();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
 	public void testActivateNoTraceEmptiesProvider() throws Exception {
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsPopulated(); // Sanity
+		waitForPass(() -> assertThreadsPopulated());
 
 		traceManager.activateTrace(null);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsEmpty();
-	}
-
-	@Test
-	public void testCurrentTraceClosedUpdatesTabs() throws Exception {
-		createAndOpenTrace();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		assertOneTabPopulated();
-		assertTabSelected(tb.trace);
-
-		traceManager.closeTrace(tb.trace);
-		waitForSwing();
-
-		assertZeroTabs();
-		assertNoTabSelected();
+		waitForPass(() -> assertThreadsEmpty());
 	}
 
 	@Test
@@ -205,57 +213,38 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsPopulated();
+		waitForPass(() -> assertThreadsPopulated());
 
 		traceManager.closeTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsEmpty();
-	}
-
-	@Test
-	public void testCloseTraceTabPopupMenuItem() throws Exception {
-		createAndOpenTrace();
-		waitForSwing();
-
-		assertOneTabPopulated(); // pre-check
-		clickListItem(threadsProvider.traceTabs.getList(), 0, MouseEvent.BUTTON3);
-		waitForSwing();
-		Set<String> expected = Set.of("Close " + tb.trace.getName());
-		assertMenu(expected, expected);
-
-		clickSubMenuItemByText("Close " + tb.trace.getName());
-		waitForSwing();
-
-		waitForPass(() -> {
-			assertEquals(Set.of(), traceManager.getOpenTraces());
-		});
+		waitForPass(() -> assertThreadsEmpty());
 	}
 
 	@Test
 	public void testActivateThenAddThreadsPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
 		addThreads();
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsPopulated();
+		waitForPass(() -> assertThreadsPopulated());
 	}
 
 	@Test
 	public void testAddThreadsThenActivatePopulatesProvider() throws Exception {
 		createAndOpenTrace();
 		addThreads();
-		waitForSwing();
+		waitForTasks();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsPopulated();
+		waitForPass(() -> assertThreadsPopulated());
 	}
 
 	@Test
@@ -263,16 +252,24 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		TraceTimeManager manager = tb.trace.getTimeManager();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertEquals(1, threadsProvider.rangeRenderer.getFullRange().upperEndpoint().longValue());
+		waitForPass(() -> {
+			SpannedRenderer<Long> renderer =
+				QueryPanelTestHelper.getSpannedCellRenderer(provider.panel);
+			assertEquals(1, renderer.getFullRange().max().longValue());
+		});
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			manager.getSnapshot(10, true);
 		}
 		waitForSwing();
 
-		assertEquals(11, threadsProvider.rangeRenderer.getFullRange().upperEndpoint().longValue());
+		waitForPass(() -> {
+			SpannedRenderer<Long> renderer =
+				QueryPanelTestHelper.getSpannedCellRenderer(provider.panel);
+			assertEquals(11, renderer.getFullRange().max().longValue());
+		});
 	}
 
 	// NOTE: Do not test delete updates timeline max, as maxSnap does not reflect deletion
@@ -282,16 +279,19 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread1.setDestructionSnap(15);
+		try (Transaction tx = tb.startTransaction()) {
+			thread1.getObject().removeTree(Lifespan.nowOn(16));
 		}
-		waitForSwing();
+		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertEquals("15",
-			threadsProvider.threadTableModel.getModelData().get(0).getDestructionSnap());
-		// NOTE: Plot max is based on time table, never thread destruction
+		waitForPass(() -> {
+			assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]",
+				TargetExecutionState.STOPPED, "A comment");
+		});
+		// NOTE: Destruction will not be visible in plot unless snapshot 15 is created
 	}
 
 	@Test
@@ -299,51 +299,58 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertEquals(2, threadsProvider.threadTableModel.getModelData().size());
+		waitForPass(() -> assertThreadsTableSize(2));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread2.delete();
+		try (Transaction tx = tb.startTransaction()) {
+			thread2.getObject().removeTree(Lifespan.ALL);
 		}
-		waitForSwing();
+		waitForTasks();
 
-		assertEquals(1, threadsProvider.threadTableModel.getModelData().size());
-		// NOTE: Plot max is based on time table, never thread destruction
+		waitForPass(() -> assertThreadsTableSize(1));
 	}
 
 	@Test
-	public void testEditThreadFields() throws Exception {
+	public void testEditThreadComment() throws Exception {
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
+
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
+		int commentModelIdx = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Comment", ValueProperty.class)
+				.modelIndex();
+		assertNotEquals(-1, commentModelIdx);
 
 		runSwing(() -> {
-			threadsProvider.threadTableModel.setValueAt("My Thread", 0,
-				ThreadTableColumns.NAME.ordinal());
-			threadsProvider.threadTableModel.setValueAt("A different comment", 0,
-				ThreadTableColumns.COMMENT.ordinal());
+			tableModel.setValueAt(new ValueFixedProperty<>("A different comment"), 0,
+				commentModelIdx);
 		});
+		waitForTasks();
 
-		assertEquals("My Thread", thread1.getName());
-		assertEquals("A different comment", thread1.getComment());
+		waitForPass(() -> assertEquals("A different comment",
+			thread1.getObject().getAttribute(0, TraceObjectThread.KEY_COMMENT).getValue()));
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testUndoRedoCausesUpdateInProvider() throws Exception {
 		createAndOpenTrace();
 		addThreads();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
 
-		assertThreadsPopulated();
+		traceManager.activateTrace(tb.trace);
+		waitForTasks();
+		waitForPass(() -> assertThreadsPopulated());
 
 		undo(tb.trace);
-		assertThreadsEmpty();
+		waitForTasks();
+		waitForPass(() -> assertThreadsEmpty());
 
 		redo(tb.trace);
-		assertThreadsPopulated();
+		waitForTasks();
+		waitForPass(() -> assertThreadsPopulated());
 	}
 
 	@Test
@@ -351,33 +358,32 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsPopulated();
-		assertThreadSelected(thread1);
+		waitForPass(() -> {
+			assertThreadsPopulated();
+			assertThreadSelected(thread1);
+		});
 
 		traceManager.activateThread(thread2);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadSelected(thread2);
+		waitForPass(() -> assertThreadSelected(thread2));
 	}
 
 	@Test
-	public void testSelectThreadInTableActivatesThread() throws Exception {
+	public void testDoubleClickThreadInTableActivatesThread() throws Exception {
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertThreadsPopulated();
-		assertThreadSelected(thread1); // Manager selects default if not live
+		waitForPass(() -> assertThreadsPopulated());
 
-		clickTableCellWithButton(threadsProvider.threadTable, 1, 0, MouseEvent.BUTTON1);
-
-		waitForPass(() -> {
-			assertThreadSelected(thread2);
-			assertEquals(thread2, traceManager.getCurrentThread());
-		});
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
+		clickTableCell(table, 1, 0, 2);
+		assertEquals(thread2, traceManager.getCurrentThread());
 	}
 
 	@Test
@@ -385,124 +391,20 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertThreadsPopulated();
-		assertEquals(0, traceManager.getCurrentSnap());
-		assertEquals(0, threadsProvider.headerRenderer.getCursorPosition().longValue());
+		RangeCursorTableHeaderRenderer<Long> renderer =
+			QueryPanelTestHelper.getCursorHeaderRenderer(provider.panel);
+
+		waitForPass(() -> {
+			assertThreadsPopulated();
+			assertEquals(0, traceManager.getCurrentSnap());
+			assertEquals(Long.valueOf(0), renderer.getCursorPosition());
+		});
 
 		traceManager.activateSnap(6);
-		waitForSwing();
+		waitForTasks();
 
-		assertEquals(6, threadsProvider.headerRenderer.getCursorPosition().longValue());
-	}
-
-	@Test
-	public void testActionStepTraceBackward() throws Exception {
-		assertFalse(threadsProvider.actionStepSnapBackward.isEnabled());
-
-		createAndOpenTrace();
-		addThreads();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		assertFalse(threadsProvider.actionStepSnapBackward.isEnabled());
-
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.trace.getTimeManager().getSnapshot(10, true);
-		}
-		waitForDomainObject(tb.trace);
-
-		assertFalse(threadsProvider.actionStepSnapBackward.isEnabled());
-
-		traceManager.activateSnap(2);
-		waitForSwing();
-
-		assertTrue(threadsProvider.actionStepSnapBackward.isEnabled());
-
-		performAction(threadsProvider.actionStepSnapBackward);
-		waitForSwing();
-
-		assertEquals(1, traceManager.getCurrentSnap());
-	}
-
-	@Test
-	public void testActionStepTraceForward() throws Exception {
-		assertFalse(threadsProvider.actionStepSnapForward.isEnabled());
-
-		createAndOpenTrace();
-		addThreads();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		assertFalse(threadsProvider.actionStepSnapForward.isEnabled());
-
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.trace.getTimeManager().getSnapshot(10, true);
-		}
-		waitForDomainObject(tb.trace);
-
-		assertTrue(threadsProvider.actionStepSnapForward.isEnabled());
-
-		performAction(threadsProvider.actionStepSnapForward);
-		waitForSwing();
-
-		assertEquals(1, traceManager.getCurrentSnap());
-		assertTrue(threadsProvider.actionStepSnapForward.isEnabled());
-
-		traceManager.activateSnap(10);
-		waitForSwing();
-
-		assertFalse(threadsProvider.actionStepSnapForward.isEnabled());
-	}
-
-	@Test
-	public void testActionSeekTracePresent() throws Exception {
-		assertTrue(threadsProvider.actionSeekTracePresent.isSelected());
-
-		createAndOpenTrace();
-		addThreads();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		assertEquals(0, traceManager.getCurrentSnap());
-
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.trace.getTimeManager().createSnapshot("Next snapshot");
-		}
-		waitForDomainObject(tb.trace);
-
-		// Not live, so no seek
-		assertEquals(0, traceManager.getCurrentSnap());
-
-		tb.close();
-
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-		// Threads needs registers to be recognized by the recorder
-		mb.createTestThreadRegisterBanks();
-
-		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
-		Trace trace = recorder.getTrace();
-
-		// Wait till two threads are observed in the database
-		waitForPass(() -> assertEquals(2, trace.getThreadManager().getAllThreads().size()));
-		waitForSwing();
-
-		TraceSnapshot snapshot = recorder.forceSnapshot();
-		waitForDomainObject(trace);
-
-		assertEquals(snapshot.getKey(), traceManager.getCurrentSnap());
-
-		performAction(threadsProvider.actionSeekTracePresent);
-		waitForSwing();
-
-		assertFalse(threadsProvider.actionSeekTracePresent.isSelected());
-
-		recorder.forceSnapshot();
-		waitForSwing();
-
-		assertEquals(snapshot.getKey(), traceManager.getCurrentSnap());
+		waitForPass(() -> assertEquals(Long.valueOf(6), renderer.getCursorPosition()));
 	}
 }

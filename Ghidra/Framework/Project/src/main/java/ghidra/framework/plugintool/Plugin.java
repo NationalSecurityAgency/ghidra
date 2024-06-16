@@ -15,6 +15,7 @@
  */
 package ghidra.framework.plugintool;
 
+import java.net.URL;
 import java.util.*;
 
 import docking.ComponentProvider;
@@ -72,7 +73,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * {@link PluginTool#getOptions(String)}. (optional)<br>
  * 		</OL>
  * 	<LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
- * 	If your dependencies are not available (ie. not installed, threw an exception during their
+ * 	If your dependencies are not available (i.e., not installed, threw an exception during their
  *	initialization, etc), your Plugin's {@link #dispose()} will be called and then your Plugin
  *	instance will be discarded.<br>
  *	<LI>Your Plugin's {@link #init()} method is called (when its dependencies are met).
@@ -87,8 +88,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  * 	<LI>...user uses Ghidra...
  * 		<UL>
  * 			<LI>Your Plugin's {@link #processEvent(PluginEvent)} is called for events.
- * 			<LI>Your Plugin's Action's methods (ie.
- * 			{@link DockingAction#actionPerformed(docking.ActionContext) actionPerformed}) are called.
+ * 			<LI>Your Plugin's Action's methods (i.e.,
+ * 			{@link DockingAction#actionPerformed(docking.ActionContext) actionPerformed}) are
+ * 			called.
  * 			<LI>Your Plugin's published service methods are called by other Plugins.
  * 			<LI>Your Plugin's listener methods are called.
  * 		</UL>
@@ -113,12 +115,12 @@ import ghidra.util.classfinder.ExtensionPoint;
  * calls the {@link PluginTool#getService(Class)} method.
  * <p>
  * Conversely, any services your Plugin advertises in &#64;PluginInfo must be published via calls to
- * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's 
+ * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's
  * constructor.
  * <p>
- * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to 
- * load your Plugin. (ie. PluginA requires a service that PluginB provides, which requires a service
- * that PluginA provides)
+ * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to
+ * load your Plugin. (i.e., PluginA requires a service that PluginB provides, which requires a
+ * service that PluginA provides)
  *
  * <h2>Plugin Service implementation</h2>
  * A Plugin may provide a service to other Plugins by advertising in its {@link PluginInfo}
@@ -161,14 +163,15 @@ import ghidra.util.classfinder.ExtensionPoint;
  *
  * <h2>Plugin Events</h2>
  * <UL>
- * 	<LI>Every type of plugin event should be represented by some class extending {@link PluginEvent}.
- *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some 
+ * 	<LI>Every type of plugin event should be represented by some class extending
+ *  {@link PluginEvent}.
+ *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some
  *  natural grouping.
  * </UL>
  *
  * <h2>Component Providers</h2>
  * <UL>
- *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when 
+ *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when
  *  the plugin is added to the tool.
  * </UL>
  *
@@ -176,10 +179,10 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <UL>
  * 	<LI>{@link OptionsChangeListener} - to receive notification when a configuration option
  * 	is changed by the user.
- * 	<LI>{@link FrontEndable} - marks this Plugin as being suitable for inclusion in the FrontEnd 
- * 		tool.
- * 	<LI>{@link FrontEndOnly} - marks this Plugin as FrontEnd only, not usable in CodeBrowser or 
- * 		other tools.
+ * 	<LI>{@link ApplicationLevelPlugin} - marks this Plugin as being suitable for inclusion in the
+ * 		application-level tool.
+ * 	<LI>{@link ApplicationLevelOnlyPlugin} - marks this Plugin as application-level only, not
+ * 		usable in an application's sub-tools.
  * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.
  * </UL>
  *
@@ -201,15 +204,6 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 */
 	protected final PluginDescription pluginDescription =
 		PluginDescription.getPluginDescription(getClass());
-
-	/**
-	 * Temporary compatibility for Plugins that have not been updated to new PluginInfo API.
-	 * <p>
-	 * Contains the list of service classes that this plugin registered as being required.
-	 * <p>
-	 * Ignored if the PluginDescription has values for requiredServices.
-	 */
-	private List<Class<?>> legacyRequiredServices = new ArrayList<>();
 
 	private List<Class<? extends PluginEvent>> eventsProduced = new ArrayList<>();
 	private List<Class<? extends PluginEvent>> eventsConsumed = new ArrayList<>();
@@ -238,20 +232,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Construct a new Plugin.
-	 * <p>
-	 * Deprecated, use {@link Plugin#Plugin(PluginTool)} instead.
-	 *
-	 * @param pluginName name of plugin - not used.
-	 * @param tool tool that will contain this plugin
-	 */
-	@Deprecated
-	protected Plugin(String pluginName, PluginTool tool) {
-		this(tool);
-	}
-
-	/**
-	 * Auto-registers any services directly implemented by this Plugin instance (ie.
+	 * Auto-registers any services directly implemented by this Plugin instance (i.e.,
 	 * the MyService in "class MyPlugin extends Plugin implements MyService { }" )
 	 */
 	private void registerPluginImplementedServices() {
@@ -276,22 +257,6 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 		}
 	}
 
-	/**
-	 * Returns plugin name or null if given class does not extend {@link Plugin}
-	 * <p>
-	 * Deprecated, use {@link PluginUtils#getPluginNameFromClass(Class)}
-	 * <p>
-	 * @param pluginClass the plugin class
-	 * @return the plugin name
-	 */
-	@Deprecated
-	public static String getPluginName(Class<?> pluginClass) {
-		if (pluginClass != Plugin.class && Plugin.class.isAssignableFrom(pluginClass)) {
-			return pluginClass.getSimpleName();
-		}
-		return null;
-	}
-
 	protected void cleanup() {
 		if (!disposed) {
 			Throwable thr = null;
@@ -303,7 +268,6 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 				thr = t;
 			}
 			tool.removeServiceListener(this);
-			legacyRequiredServices.clear();
 			unregisterServices();
 			unregisterEvents();
 			tool.removeAll(getName());
@@ -368,6 +332,17 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
+	 * Request plugin to process URL if supported.  Actual processing may be delayed and 
+	 * interaction with user may occur (e.g., authentication, approval, etc.).
+	 * <p>
+	 * @param url data URL
+	 * @return boolean true if this plugin can process URL.
+	 */
+	public boolean accept(URL url) {
+		return false;
+	}
+
+	/**
 	 * Get the domain files that this plugin has open.
 	 * <p>
 	 * @return array of {@link DomainFile}s that are open by this Plugin.
@@ -377,7 +352,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Called after the constructor and before {@link #init()} to publish services to 
+	 * Called after the constructor and before {@link #init()} to publish services to
 	 * the Tool's service registry.
 	 * <p>
 	 * Services registered during the constructor call will be queued in the services list.
@@ -520,13 +495,12 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Check if this plugin depends on the given plugin
-	 * 
+	 *
 	 * @param plugin the plugin
 	 * @return true if this plugin depends on the given plugin
 	 */
 	public boolean dependsUpon(Plugin plugin) {
-		for (Class<?> c : getList(pluginDescription.getServicesRequired(),
-			legacyRequiredServices)) {
+		for (Class<?> c : pluginDescription.getServicesRequired()) {
 			// If one of our required services is provided by a single Plugin,
 			// then we depend on that Plugin.  If multiple provide, we are not dependent.
 			if (plugin.isOnlyProviderOfService(c)) {
@@ -538,8 +512,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	public List<Class<?>> getMissingRequiredServices() {
 		List<Class<?>> missingServices = new ArrayList<>();
-		for (Class<?> requiredServiceClass : getList(pluginDescription.getServicesRequired(),
-			legacyRequiredServices)) {
+		for (Class<?> requiredServiceClass : pluginDescription.getServicesRequired()) {
 			if (tool.getService(requiredServiceClass) == null) {
 				missingServices.add(requiredServiceClass);
 			}
@@ -553,38 +526,12 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * @return boolean true if a required service isn't available via the PluginTool.
 	 */
 	public boolean hasMissingRequiredService() {
-		for (Class<?> depClass : getList(pluginDescription.getServicesRequired(),
-			legacyRequiredServices)) {
+		for (Class<?> depClass : pluginDescription.getServicesRequired()) {
 			if (tool.getService(depClass) == null) {
 				return true;
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Used to choose between lists to support the old Plugin ABI backward compatible lists
-	 *
-	 * @param l1 the new list from the static PluginDescription config - preferred if it has any elements
-	 * @param l2 the old list - only returned if l1 is empty
-	 * @return either l1 or l2, depending on which one has elements.
-	 */
-	private static <T> List<T> getList(List<T> l1, List<T> l2) {
-		return !l1.isEmpty() ? l1 : l2;
-	}
-
-	/**
-	 * Register event that this plugin produces.
-	 * <p>
-	 * Deprecated, use {@link PluginInfo @PluginInfo.eventsProduced} instead.
-	 * <p>
-	 * @param eventClass Class of the produced event; class is required to force it
-	 * to be loaded
-	 */
-	@Deprecated
-	protected final void registerEventProduced(Class<? extends PluginEvent> eventClass) {
-		eventsProduced.add(eventClass);
-		tool.registerEventProduced(eventClass);
 	}
 
 	private void unregisterEvents() {
@@ -599,23 +546,11 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	/**
 	 * Register event that this plugin consumes.
 	 * <p>
-	 * Deprecated, use {@link PluginInfo @PluginInfo.eventsConsumed} instead.
-	 * <p>
-	 * @param eventClass Class for the event; class is required to force it
-	 * to be loaded
+	 * This method is for internal use.  If plugins wish to manage events consumed, then they should
+	 * use the {@link PluginInfo} annotation to do so.
+	 * @param eventClass Class for the event; class is required to force it to be loaded
 	 */
-	@Deprecated
-	protected final void registerEventConsumed(Class<? extends PluginEvent> eventClass) {
-		registerDynamicEventConsumed(eventClass);
-	}
-
-	/**
-	 * Register event that this plugin consumes.
-	 * <p>
-	 * @param eventClass Class for the event; class is required to force it
-	 * to be loaded
-	 */
-	protected final void registerDynamicEventConsumed(Class<? extends PluginEvent> eventClass) {
+	protected final void internalRegisterEventConsumed(Class<? extends PluginEvent> eventClass) {
 		eventsConsumed.add(eventClass);
 		tool.addEventListener(eventClass, this);
 	}
@@ -708,33 +643,13 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	protected final List<Class<?>> getServicesRequired() {
 		// return either the new PluginDescription servicesRequired or the old
 		// deprecated legacyRequiredServices.
-		return getList(pluginDescription.getServicesRequired(), legacyRequiredServices);
+		return pluginDescription.getServicesRequired();
 	}
 
 	private void unregisterServices() {
 		for (ServiceInterfaceImplementationPair siip : services) {
 			tool.removeService(siip.interfaceClass, siip.provider);
 		}
-	}
-
-	/**
-	 * Registers a dependency on a service interface Class.
-	 * <p>
-	 * This method is deprecated.  Use {@link PluginInfo#servicesRequired() @PluginInfo.servicesRequired}
-	 * instead.
-	 * <p>
-	 * @param interfaceClass interface class that this plugin depends on
-	 * @param isDependency boolean flag, if true this plugin will not work without the
-	 * specified service, if false this service can work without it.  If false, this
-	 * method is a no-op as non-dependency registration information is now discarded.
-	 */
-	@Deprecated
-	protected final void registerServiceUsed(Class<?> interfaceClass, boolean isDependency) {
-		if (isDependency) {
-			legacyRequiredServices.add(interfaceClass);
-		}
-		// information about non-dependency used-services is discarded.  Only
-		// required services are retained.
 	}
 
 	protected final void deregisterService(Class<?> interfaceClass, Object service) {
@@ -836,7 +751,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Close the plugin.   This is when the plugin should release resources, such as those from
 	 * other services.  This method should not close resources being used by others (that should
 	 * happen in dispose()).
-	 * 
+	 *
 	 * <p>This method will be called before {@link #dispose()}.
 	 */
 	protected void close() {

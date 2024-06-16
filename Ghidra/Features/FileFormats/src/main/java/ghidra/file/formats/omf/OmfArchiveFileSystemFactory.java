@@ -52,7 +52,7 @@ public class OmfArchiveFileSystemFactory implements
 
 		try {
 			BinaryReader reader = OmfFileHeader.createReader(byteProvider);
-			return OmfLibraryRecord.checkMagicNumer(reader);
+			return OmfLibraryRecord.checkMagicNumber(reader);
 		}
 		catch (IOException e) {
 			return false;

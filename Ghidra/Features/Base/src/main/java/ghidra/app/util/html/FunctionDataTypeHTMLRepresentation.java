@@ -21,10 +21,12 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.StringUtilities;
@@ -113,14 +115,26 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 	}
 
 	private TextLine buildReturnType(FunctionDefinition functionDefinition) {
+
 		DataType returnDataType = functionDefinition.getReturnType();
-		GenericCallingConvention genericCallingConvention =
-			functionDefinition.getGenericCallingConvention();
-		String modifier = genericCallingConvention != GenericCallingConvention.unknown
-				? (" " + genericCallingConvention.getDeclarationName())
-				: "";
-		return new TextLine(
-			HTMLUtilities.friendlyEncodeHTML(returnDataType.getDisplayName()) + modifier);
+		String rtHtml = friendlyEncodeHTML(returnDataType.getDisplayName());
+
+		String noReturnHtml = "";
+		if (functionDefinition.hasNoReturn()) {
+			noReturnHtml = FunctionSignature.NORETURN_DISPLAY_STRING + HTML_SPACE;
+		}
+
+		String ccHtml = "";
+		String callingConvention = functionDefinition.getCallingConventionName();
+		if (!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+			ccHtml = friendlyEncodeHTML(callingConvention);
+			if (functionDefinition.hasUnknownCallingConventionName()) {
+				ccHtml = colorString(Messages.ERROR, ccHtml);
+			}
+			ccHtml = HTML_SPACE + ccHtml;
+		}
+
+		return new TextLine(noReturnHtml + rtHtml + ccHtml);
 	}
 
 	// display name to name pairs

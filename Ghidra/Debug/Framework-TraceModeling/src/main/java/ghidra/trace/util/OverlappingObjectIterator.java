@@ -27,7 +27,7 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.AbstractPeekableIterator;
 
 public class OverlappingObjectIterator<L, R> extends AbstractPeekableIterator<Pair<L, R>> {
-	interface Ranger<T> {
+	public interface Ranger<T> {
 		Address getMinAddress(T t);
 
 		Address getMaxAddress(T t);

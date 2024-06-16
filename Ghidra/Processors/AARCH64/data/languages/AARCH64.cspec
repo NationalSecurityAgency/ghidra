@@ -20,12 +20,12 @@
           <entry size="2" alignment="2" />
           <entry size="4" alignment="4" />
           <entry size="8" alignment="8" />
+          <entry size="16" alignment="16"/>
      </size_alignment_map>
   </data_organization>
   
   <global>
     <range space="ram"/>
-    <range space="register"  first="0x3000" last="0x3fff"/>
   </global>
   
   <stackpointer register="sp" space="ram"/>
@@ -68,29 +68,32 @@
   <default_proto>
     <prototype name="__cdecl" extrapop="0" stackshift="0">
       <input>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d0"/>
+        <pentry minsize="8" maxsize="8" storage="hiddenret">
+          <register name="x8"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d1"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q0"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d2"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q1"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d3"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d4"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q3"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d5"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q4"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d6"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q5"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d7"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q7"/>
         </pentry>
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x0"/>
@@ -116,13 +119,33 @@
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x7"/>
         </pentry>
-        <pentry minsize="1" maxsize="500" align="4">
+        <pentry minsize="1" maxsize="500" align="8">
           <addr offset="0" space="stack"/>
         </pentry>
+        <rule>
+          <datatype name="homogeneous-float-aggregate"/>
+          <join_per_primitive storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="struct" minsize="17"/>
+          <convert_to_ptr/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <goto_stack/>					<!-- Don't consume general purpose registers -->
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join align="true"/>          <!-- Chunk from general purpose registers -->
+        </rule>
       </input>
       <output>
-        <pentry minsize="1" maxsize="8" metatype="float">
-          <register name="d0"/>
+        <pentry minsize="1" maxsize="16" storage="float">
+          <register name="q0"/>
         </pentry>
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x0"/>
@@ -130,6 +153,10 @@
         <pentry minsize="9" maxsize="16" extension="zero">
           <addr space="join" piece1="x1" piece2="x0"/>
         </pentry>
+        <rule>
+          <datatype name="any" minsize="17"/>
+          <hidden_return voidlock="true"/>
+        </rule>
       </output>
       <unaffected>
         <register name="x19"/>

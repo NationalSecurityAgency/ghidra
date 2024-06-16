@@ -172,6 +172,11 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDefaultLabelPrefix() {
 		return POINTER_LABEL_PREFIX;
 	}
@@ -440,7 +445,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			if (pointerType == PointerType.IMAGE_BASE_RELATIVE) {
 				if (addrOffset == 0) {
 					// Done for consistency with old ImageBaseOffsetDataType.
-					// A 0 relative offset is considerd invalid (NaP)
+					// A 0 relative offset is considered invalid (NaP)
 					return null; // NaP without error
 				}
 				if (mem == null) {
@@ -452,6 +457,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 				return imageBase.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
 			else if (pointerType == PointerType.RELATIVE) {
+				if (addrOffset == 0) {
+					// A 0 relative offset is considered invalid (NaP)
+					return null; // NaP without error
+				}
 				// must ignore AddressSpaceSettingsDefinition
 				Address base = buf.getAddress();
 				targetSpace = base.getAddressSpace();

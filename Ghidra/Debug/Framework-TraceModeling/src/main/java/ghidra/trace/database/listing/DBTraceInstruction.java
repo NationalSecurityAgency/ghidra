@@ -17,28 +17,29 @@ package ghidra.trace.database.listing;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
+import ghidra.program.database.code.InstructionDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.FlowOverride;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
-import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace;
-import ghidra.trace.model.Trace.TraceInstructionChangeType;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -48,18 +49,25 @@ import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 
+/**
+ * The implementation of {@link TraceInstruction} for {@link DBTrace}
+ */
 @DBAnnotatedObjectInfo(version = 0)
-public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstruction> implements
-		TraceInstruction, InstructionAdapterFromPrototype, InstructionContext {
+public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstruction>
+		implements TraceInstruction, InstructionAdapterFromPrototype, InstructionContext {
 	private static final Address[] EMPTY_ADDRESS_ARRAY = new Address[] {};
 	private static final String TABLE_NAME = "Instructions";
 
 	private static final byte FALLTHROUGH_SET_MASK = 0x01;
 	private static final byte FALLTHROUGH_CLEAR_MASK = ~FALLTHROUGH_SET_MASK;
 
-	private static final byte FLOWOVERRIDE_SET_MASK = 0x0e;
-	private static final byte FLOWOVERRIDE_CLEAR_MASK = ~FLOWOVERRIDE_SET_MASK;
-	private static final int FLOWOVERRIDE_SHIFT = 1;
+	private static final byte FLOW_OVERRIDE_SET_MASK = 0x0e;
+	private static final byte FLOW_OVERRIDE_CLEAR_MASK = ~FLOW_OVERRIDE_SET_MASK;
+	private static final int FLOW_OVERRIDE_SHIFT = 1;
+
+	private static final byte LENGTH_OVERRIDE_SET_MASK = 0x70;
+	private static final byte LENGTH_OVERRIDE_CLEAR_MASK = ~LENGTH_OVERRIDE_SET_MASK;
+	private static final int LENGTH_OVERRIDE_SHIFT = 4;
 
 	static final String PLATFORM_COLUMN_NAME = "Platform";
 	static final String PROTOTYPE_COLUMN_NAME = "Prototype";
@@ -76,10 +84,13 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, 0);
 	}
 
+	/**
+	 * A context for guest instructions that maps addresses appropriately
+	 */
 	protected class GuestInstructionContext implements InstructionContext {
 		@Override
 		public Address getAddress() {
-			return guest.mapHostToGuest(getX1());
+			return platform.mapHostToGuest(getX1());
 		}
 
 		@Override
@@ -100,8 +111,29 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		@Override
 		public ParserContext getParserContext(Address instructionAddress)
 				throws UnknownContextException, MemoryAccessException {
-			// TODO: Does the given address need mapping?
 			return DBTraceInstruction.this.getParserContext(instructionAddress);
+		}
+	}
+
+	protected class GuestMemBuffer implements MemBufferMixin {
+		@Override
+		public Address getAddress() {
+			return platform.mapHostToGuest(getX1());
+		}
+
+		@Override
+		public Memory getMemory() {
+			return null;
+		}
+
+		@Override
+		public boolean isBigEndian() {
+			return platform.getLanguage().isBigEndian();
+		}
+
+		@Override
+		public int getBytes(ByteBuffer buffer, int addressOffset) {
+			return DBTraceInstruction.this.getBytes(buffer, addressOffset);
 		}
 	}
 
@@ -116,40 +148,70 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 	protected InstructionPrototype prototype;
 	protected FlowOverride flowOverride;
+	protected int lengthOverride;
 
 	protected ParserContext parserContext;
-	protected DBTraceGuestPlatform guest;
+	protected InternalTracePlatform platform;
 	protected InstructionContext instructionContext;
+	protected MemBuffer memBuffer;
 
+	/**
+	 * Construct an instruction unit
+	 * 
+	 * @param space the space
+	 * @param tree the storage R*-Tree
+	 * @param store the object store
+	 * @param record the record
+	 */
 	public DBTraceInstruction(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceInstruction, ?> tree,
 			DBCachedObjectStore<?> store, DBRecord record) {
 		super(space, tree, store, record);
 	}
 
-	protected void doSetGuestMapping(final DBTraceGuestPlatform guest) {
-		this.guest = guest;
-		if (guest == null) {
+	/**
+	 * At load/create time: set the platform and context (which may map addresses)
+	 * 
+	 * @param platform the platform
+	 */
+	protected void doSetPlatformMapping(final InternalTracePlatform platform) {
+		this.platform = platform;
+		if (platform.isHost()) {
 			instructionContext = this;
+			memBuffer = this;
 		}
 		else {
 			instructionContext = new GuestInstructionContext();
+			memBuffer = new GuestMemBuffer();
 		}
 	}
 
-	protected void set(DBTraceGuestPlatform guest, InstructionPrototype prototype,
-			ProcessorContextView context) {
-		this.platformKey = (int) (guest == null ? -1 : guest.getKey());
+	/**
+	 * Set the fields of this record
+	 * 
+	 * @param platform the platform
+	 * @param prototype the instruction prototype
+	 * @param context the context for locating or creating the prototype entry
+	 * @param forcedLengthOverride reduced instruction byte-length (1..7) or 0 to use default length
+	 */
+	protected void set(InternalTracePlatform platform, InstructionPrototype prototype,
+			ProcessorContextView context, int forcedLengthOverride) {
+		this.platformKey = platform.getIntKey();
 		// NOTE: Using "this" for the MemBuffer seems a bit precarious.
-		DBTraceGuestLanguage languageEntry = guest == null ? null : guest.getLanguageEntry();
-		this.prototypeKey = (int) space.manager
-				.findOrRecordPrototype(prototype, languageEntry, this, context)
-				.getKey();
+		DBTraceGuestLanguage languageEntry = platform.getLanguageEntry();
+		this.prototypeKey =
+			(int) space.manager.findOrRecordPrototype(prototype, languageEntry, this, context)
+					.getKey();
 		this.flowOverride = FlowOverride.NONE; // flags field is already consistent
+		this.lengthOverride = 0;
 		update(PLATFORM_COLUMN, PROTOTYPE_COLUMN, FLAGS_COLUMN);
 
+		if (forcedLengthOverride != 0) {
+			updateLengthOverride(forcedLengthOverride);
+		}
+
 		// TODO: Can there be more in this context than the context register???
-		doSetGuestMapping(guest);
+		doSetPlatformMapping(platform);
 		this.prototype = prototype;
 	}
 
@@ -160,20 +222,27 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			// Wait for something to set prototype
 			return;
 		}
-		guest = space.manager.platformManager.getPlatformByKey(platformKey);
-		if (guest == null && platformKey != -1) {
+		platform = space.manager.platformManager.getPlatformByKey(platformKey);
+		if (platform == null) {
 			throw new IOException("Instruction table is corrupt. Missing platform: " + platformKey);
 		}
 		prototype = space.manager.getPrototypeByKey(prototypeKey);
 		if (prototype == null) {
-			Msg.error(this,
-				"Instruction table is corrupt for address " + getMinAddress() +
-					". Missing prototype " + prototypeKey);
+			Msg.error(this, "Instruction table is corrupt for address " + getMinAddress() +
+				". Missing prototype " + prototypeKey);
 			prototype = new InvalidPrototype(getTrace().getBaseLanguage());
 		}
-		flowOverride = FlowOverride.values()[(flags & FLOWOVERRIDE_SET_MASK) >> FLOWOVERRIDE_SHIFT];
+		flowOverride =
+			FlowOverride.values()[(flags & FLOW_OVERRIDE_SET_MASK) >> FLOW_OVERRIDE_SHIFT];
 
-		doSetGuestMapping(guest);
+		lengthOverride = (flags & LENGTH_OVERRIDE_SET_MASK) >> LENGTH_OVERRIDE_SHIFT;
+		if (lengthOverride != 0 && lengthOverride < prototype.getLength()) {
+			Address minAddr = getMinAddress();
+			Address newEndAddr = minAddr.add(lengthOverride - 1);
+			doSetRange(new AddressRangeImpl(minAddr, newEndAddr));
+		}
+
+		doSetPlatformMapping(platform);
 	}
 
 	@Override
@@ -197,7 +266,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 	@Override
 	public void setEndSnap(long endSnap) {
-		Range<Long> oldSpan;
+		Lifespan oldSpan;
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			oldSpan = getLifespan();
 			super.setEndSnap(endSnap);
@@ -206,8 +275,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	}
 
 	@Override
-	public TraceGuestPlatform getGuestPlatform() {
-		return guest;
+	public TracePlatform getPlatform() {
+		return platform;
 	}
 
 	@Override
@@ -273,8 +342,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public Address getDefaultFallThrough() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			Address fallThrough = getGuestDefaultFallThrough();
-			return guest == null || fallThrough == null ? fallThrough
-					: guest.mapGuestToHost(fallThrough);
+			return platform.mapGuestToHost(fallThrough);
 		}
 	}
 
@@ -285,8 +353,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			if (flowType.hasFallthrough()) {
 				try {
 					return instructionContext.getAddress()
-							.addNoWrap(
-								prototype.getFallThroughOffset(instructionContext));
+							.addNoWrap(prototype.getFallThroughOffset(instructionContext));
 				}
 				catch (AddressOverflowException e) {
 					return null;
@@ -314,6 +381,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 					return ref.getToAddress();
 				}
 				return null;
+			}
+			if (lengthOverride != 0 && getFlowType().hasFallthrough()) {
+				return getMinAddress().add(lengthOverride);
 			}
 			return getDefaultFallThrough();
 		}
@@ -384,6 +454,10 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 				return EMPTY_ADDRESS_ARRAY;
 			}
 
+			if (lengthOverride != 0 && getFlowType().hasFallthrough()) {
+				list.add(getMinAddress().add(lengthOverride));
+			}
+
 			return list.toArray(new Address[list.size()]);
 		}
 	}
@@ -392,12 +466,12 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public Address[] getDefaultFlows() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			Address[] guestFlows = getGuestDefaultFlows();
-			if (guest == null || guestFlows == null) {
+			if (platform.isHost() || guestFlows == null) {
 				return guestFlows;
 			}
 			List<Address> hostFlows = new ArrayList<>();
 			for (Address g : guestFlows) {
-				Address h = guest.mapGuestToHost(g);
+				Address h = platform.mapGuestToHost(g);
 				if (h != null) {
 					hostFlows.add(h);
 				}
@@ -477,8 +551,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			}
 			FlowType origFlowType = getFlowType();
 
-			flags &= FLOWOVERRIDE_CLEAR_MASK;
-			flags |= (flowOverride.ordinal() << FLOWOVERRIDE_SHIFT) & FLOWOVERRIDE_SET_MASK;
+			flags &= FLOW_OVERRIDE_CLEAR_MASK;
+			flags |= (flowOverride.ordinal() << FLOW_OVERRIDE_SHIFT) & FLOW_OVERRIDE_SET_MASK;
 			this.flowOverride = flowOverride;
 			update(FLAGS_COLUMN);
 
@@ -496,8 +570,91 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			}
 		}
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceInstructionChangeType.FLOW_OVERRIDE_CHANGED,
-				space, this, oldFlowOverride, flowOverride));
+			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_FLOW_OVERRIDE_CHANGED, space, this,
+				oldFlowOverride, flowOverride));
+	}
+
+	@Override
+	public void setLengthOverride(int length) throws CodeUnitInsertionException {
+		int oldLengthOverride = this.lengthOverride;
+		try (LockHold hold = space.trace.lockWrite()) {
+			checkDeleted();
+			InstructionPrototype proto = getPrototype();
+			length = InstructionDB.checkLengthOverride(length, proto);
+			if (length == lengthOverride) {
+				return; // no change
+			}
+
+			int newLength = length != 0 ? length : proto.getLength();
+			if (newLength > getLength()) {
+				Address minAddr = getMinAddress();
+				Address newEndAddr = minAddr.add(newLength - 1);
+				TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(
+					new AddressRangeImpl(minAddr.next(), newEndAddr), getLifespan());
+				for (AbstractDBTraceCodeUnit<?> cu : space.definedUnits.getIntersecting(tasr)) {
+					if (cu != this) {
+						throw new CodeUnitInsertionException(
+							"Length override of " + newLength + " conflicts with code unit at " +
+								cu.getMinAddress() + ", lifespan=" + cu.getLifespan());
+					}
+				}
+			}
+
+			updateLengthOverride(length);
+		}
+		space.trace.setChanged(
+			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_LENGTH_OVERRIDE_CHANGED, space, this,
+				oldLengthOverride, length));
+	}
+
+	private void updateLengthOverride(int length) {
+		flags &= LENGTH_OVERRIDE_CLEAR_MASK;
+		flags |= (length << LENGTH_OVERRIDE_SHIFT);
+		lengthOverride = length;
+		update(FLAGS_COLUMN);
+
+		int newLength = length != 0 ? length : getPrototype().getLength();
+		Address minAddr = getMinAddress();
+		Address newEndAddr = minAddr.add(newLength - 1);
+		doSetRange(new AddressRangeImpl(minAddr, newEndAddr));
+	}
+
+	@Override
+	public boolean isLengthOverridden() {
+		return lengthOverride != 0;
+	}
+
+	@Override
+	public int getLength() {
+		if (lengthOverride != 0) {
+			return lengthOverride;
+		}
+		return super.getLength();
+	}
+
+	@Override
+	public int getParsedLength() {
+		if (lengthOverride == 0) {
+			return super.getLength();
+		}
+		return getPrototype().getLength();
+	}
+
+	@Override
+	public byte[] getParsedBytes() throws MemoryAccessException {
+		if (!isLengthOverridden()) {
+			return getBytes();
+		}
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			checkIsValid();
+			int len = getPrototype().getLength();
+			byte[] b = new byte[len];
+			Address addr = getAddress();
+			if (len != getMemory().getBytes(addr, b)) {
+				throw new MemoryAccessException("Failed to read " + len + " bytes at " + addr);
+			}
+			return b;
+		}
 	}
 
 	@Override
@@ -573,8 +730,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 		update(FLAGS_COLUMN);
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceInstructionChangeType.FALL_THROUGH_OVERRIDE_CHANGED,
-				space, this, !overridden, overridden));
+			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_FALL_THROUGH_OVERRIDE_CHANGED, space,
+				this, !overridden, overridden));
 	}
 
 	@Override
@@ -642,8 +799,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public BigInteger getValue(Register register, boolean signed) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			DBTraceRegisterContextManager manager = space.trace.getRegisterContextManager();
+			Address guestAddress = getPlatform().mapHostToGuest(getMinAddress());
 			RegisterValue rv =
-				manager.getValueWithDefault(getLanguage(), register, getStartSnap(), getAddress());
+				manager.getValueWithDefault(getPlatform(), register, getStartSnap(), guestAddress);
 			if (rv == null) {
 				return null;
 			}
@@ -655,8 +813,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public RegisterValue getRegisterValue(Register register) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			DBTraceRegisterContextManager manager = space.trace.getRegisterContextManager();
-			return manager.getValueWithDefault(getLanguage(), register, getStartSnap(),
-				getAddress());
+			Address guestAddress = getPlatform().mapHostToGuest(getMinAddress());
+			return manager.getValueWithDefault(getPlatform(), register, getStartSnap(),
+				guestAddress);
 		}
 	}
 
@@ -681,12 +840,13 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 	@Override
 	public MemBuffer getMemBuffer() {
-		return this;
+		return memBuffer;
 	}
 
 	@Override
 	public ParserContext getParserContext() throws MemoryAccessException {
-		return parserContext == null ? parserContext = prototype.getParserContext(this, this)
+		return parserContext == null
+				? parserContext = prototype.getParserContext(getMemBuffer(), getProcessorContext())
 				: parserContext;
 	}
 

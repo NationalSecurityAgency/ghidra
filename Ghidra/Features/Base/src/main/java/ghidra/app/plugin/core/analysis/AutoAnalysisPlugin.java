@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.analysis;
 
 import java.util.*;
 
-import javax.swing.SwingUtilities;
-
 import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.DockingAction;
@@ -28,6 +26,7 @@ import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ListingContextAction;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.Analyzer;
@@ -36,8 +35,9 @@ import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
@@ -46,7 +46,7 @@ import ghidra.util.task.TaskLauncher;
 
 /**
  * AutoAnalysisPlugin
- * 
+ *
  * Provides support for auto analysis tasks. Manages a pipeline or priority of
  * tasks to run given some event has occurred.
  */
@@ -57,7 +57,7 @@ import ghidra.util.task.TaskLauncher;
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Manages auto-analysis",
 	description = "Provides coordination and a service for All Auto Analysis tasks.",
-	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class }
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramPostActivatedPluginEvent.class }
 )
 //@formatter:on
 public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerListener {
@@ -101,32 +101,32 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	 */
 	private void createActions() {
 
-		// use this index to make sure that the following actions are ordered in the way that 
+		// use this index to make sure that the following actions are ordered in the way that
 		// they are inserted
 		int subGroupIndex = 0;
 
-		//@formatter:off
 		autoAnalyzeAction =
-			new ActionBuilder("Auto Analyze", getName())
-					.supportsDefaultToolContext(true)
-					.menuPath("&Analysis", "&Auto Analyze...")
+			new ActionBuilder("Auto Analyze", getName()).menuPath("&Analysis", "&Auto Analyze...")
 					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
 					.keyBinding("A")
-					.validContextWhen(ac -> {
-						updateActionName(ac);
-						return ac instanceof ListingActionContext;
-					})
+					.withContext(ListingActionContext.class, true)
 					.onAction(this::analyzeCallback)
 					.buildAndInstall(tool);
 
+		// we need to specially override the validContextWhen so that as a side effect, we
+		// can change the action name to not include a program name when the action is
+		// actually invalid.
+		autoAnalyzeAction.validContextWhen(ac -> {
+			updateActionName(ac);
+			return ac instanceof ListingActionContext;
+		});
+
 		new ActionBuilder("Analyze All Open", getName())
-					.supportsDefaultToolContext(true)
-					.menuPath("&Analysis", "Analyze All &Open...")
-					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
-					.onAction(c -> analyzeAllCallback())
-					.validContextWhen(ac -> ac instanceof ListingActionContext)
-					.buildAndInstall(tool);
-		//@formatter:on
+				.menuPath("&Analysis", "Analyze All &Open...")
+				.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
+				.withContext(ListingActionContext.class, true)
+				.onAction(c -> analyzeAllCallback())
+				.buildAndInstall(tool);
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
@@ -178,16 +178,20 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	private void analyzeCallback(Program program, ProgramSelection selection) {
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 
-		analysisMgr.initializeOptions(); // get initial options
+		analysisMgr.initializeOptions(); // this allows analyzers to register options with defaults
 
 		if (!showOptionsDialog(program)) {
 			return;
 		}
 
-		analysisMgr.initializeOptions(); // options may have changed
+		analysisMgr.initializeOptions(); // reloads the options in case the user changed them
 
-		// At this point, any analysis that is done is consider to be true for analyzed.
-		GhidraProgramUtilities.setAnalyzedFlag(program, true);
+		// check if this is the first time this program is being analyzed. If so,
+		// schedule a callback when it is completed to send a FirstTimeAnalyzedPluginEvent
+		boolean isAnalyzed = GhidraProgramUtilities.isAnalyzed(program);
+		if (!isAnalyzed) {
+			analysisMgr.addListener(new FirstTimeAnalyzedCallback());
+		}
 
 		// start analysis to set the flag, but it probably won't do more.  A bit goofy but better
 		// than the way it was
@@ -222,16 +226,13 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
+		if (event instanceof ProgramClosedPluginEvent ev) {
 			programClosed(ev.getProgram());
 		}
-		else if (event instanceof ProgramOpenedPluginEvent) {
-			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+		else if (event instanceof ProgramOpenedPluginEvent ev) {
 			programOpened(ev.getProgram());
 		}
-		else if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		else if (event instanceof ProgramActivatedPluginEvent ev) {
 			Program program = ev.getActiveProgram();
 			if (program == null) {
 				removeOneShotActions();
@@ -239,6 +240,12 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			else {
 				programActivated(program);
 				addOneShotActions(program);
+			}
+		}
+		else if (event instanceof ProgramPostActivatedPluginEvent ev) {
+			Program program = ev.getActiveProgram();
+			if (program != null) {
+				postProgramActivated(program);
 			}
 		}
 	}
@@ -249,44 +256,34 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		analysisMgr.addListener(this);
 
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		options.registerOptionsEditor(new AnalysisOptionsEditor(program));
+		options.registerOptionsEditor(() -> new AnalysisOptionsEditor(program));
 		options.setOptionsHelpLocation(
 			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option"));
 	}
 
-	private void programActivated(final Program program) {
-
+	private void programActivated(Program program) {
 		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
-				.registerOption(
-					StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+				.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
+					"Cumulative analysis task times",
+					() -> new StoredAnalyzerTimesPropertyEditor());
 
-		// invokeLater() to ensure that all other plugins have been notified of the program
-		// activated.  This makes sure plugins like the Listing have opened and painted the 
-		// program.
-		//
-		// If the user decided to instantly close the code browser before we get to run anything,
-		// an exception could be thrown! Therefore, we must check to see if the program is closed
-		// at this point before we run anything.
-		//
-		SwingUtilities.invokeLater(() -> {
-			if (program.isClosed()) {
-				return;
-			}
-			final AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
-			if (analysisMgr.askToAnalyze(tool)) {
-				analyzeCallback(program, null);
-			}
-		});
+	}
+
+	private void postProgramActivated(Program program) {
+		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
+		if (analysisMgr.askToAnalyze(tool)) {
+			analyzeCallback(program, null);
+		}
 	}
 
 	/**
-	 * Show the options panel for the auto analysis options. 
+	 * Show the options panel for the auto analysis options.
 	 */
 	private boolean showOptionsDialog(Program program) {
 		tool.clearStatusInfo();
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_AUTO_ANALYSIS);
 		boolean showDialog = options.getBoolean(SHOW_ANALYSIS_OPTIONS, true);
+
 		if (!showDialog) {
 			return true;
 		}
@@ -302,7 +299,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	}
 
 	@Override
-	public void analysisEnded(AutoAnalysisManager manager) {
+	public void analysisEnded(AutoAnalysisManager manager, boolean isCancelled) {
 		MessageLog log = manager.getMessageLog();
 		if (log.hasMessages()) {
 
@@ -318,7 +315,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		}
 	}
 
-	class OneShotAnalyzerAction extends DockingAction {
+	class OneShotAnalyzerAction extends ListingContextAction {
 		private Analyzer analyzer;
 		private Program canAnalyzeProgram;
 		private boolean canAnalyze;
@@ -330,28 +327,26 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 				null, ANALYZE_GROUP_NAME));
 			setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "Auto_Analyzers"));
 
-			setEnabled(false);
-			setSupportsDefaultToolContext(true);
+			setContextClass(ListingActionContext.class, true);
 		}
 
 		@Override
-		public void actionPerformed(ActionContext context) {
-			if (!(context instanceof ListingActionContext)) {
-				return;
-			}
-			ListingActionContext programContext = (ListingActionContext) context;
+		public void actionPerformed(ListingActionContext context) {
 			AddressSetView set;
-			if (programContext.hasSelection()) {
-				set = programContext.getSelection();
+			if (context.hasSelection()) {
+				set = context.getSelection();
 			}
 			else {
-				set = programContext.getProgram().getMemory();
+				Memory memory = context.getProgram().getMemory();
+				AddressSet external = new AddressSet(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
+					AddressSpace.EXTERNAL_SPACE.getMaxAddress());
+				set = memory.union(external);
 			}
 
 			AutoAnalysisManager analysisMgr =
-				AutoAnalysisManager.getAnalysisManager(programContext.getProgram());
+				AutoAnalysisManager.getAnalysisManager(context.getProgram());
 
-			Program program = programContext.getProgram();
+			Program program = context.getProgram();
 			Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 			options = options.getOptions(analyzer.getName());
 			analyzer.optionsChanged(options, program);
@@ -364,17 +359,25 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		}
 
 		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			if (!(context instanceof ListingActionContext)) {
-				return false;
-			}
-			ListingActionContext programContext = (ListingActionContext) context;
-			Program p = programContext.getProgram();
+		public boolean isEnabledForContext(ListingActionContext context) {
+			Program p = context.getProgram();
 			if (p != canAnalyzeProgram) {
 				canAnalyzeProgram = p;
 				canAnalyze = analyzer.canAnalyze(p);
 			}
 			return canAnalyze;
+		}
+	}
+
+	private class FirstTimeAnalyzedCallback implements AutoAnalysisManagerListener {
+		@Override
+		public void analysisEnded(AutoAnalysisManager manager, boolean isCancelled) {
+			manager.removeListener(this);
+
+			if (!isCancelled) {
+				tool.firePluginEvent(new FirstTimeAnalyzedPluginEvent(
+					AutoAnalysisPlugin.this.getName(), manager.getProgram()));
+			}
 		}
 	}
 }

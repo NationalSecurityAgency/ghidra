@@ -20,13 +20,14 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressKeyAddressIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.EquateInfo;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
@@ -58,7 +59,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	 * @throws VersionException if the database version doesn't match the current version.
 	 * @throws IOException if a database error occurs.
 	 */
-	public EquateManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public EquateManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
 
 		this.addrMap = addrMap;
@@ -72,7 +73,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return program;
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 		VersionException versionExc = null;
 		try {
@@ -98,7 +99,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
@@ -119,8 +120,8 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			validateName(name);
 			DBRecord record = equateAdapter.createEquate(name, value);
 			EquateDB equate = new EquateDB(this, equateCache, record);
-			program.setChanged(ChangeManager.DOCR_EQUATE_ADDED,
-				new EquateInfo(name, value, null, 0, 0), null);
+			program.setChanged(ProgramEvent.EQUATE_ADDED, new EquateInfo(name, value, null, 0, 0),
+				null);
 			return equate;
 
 		}
@@ -312,6 +313,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			ArrayList<EquateRefDB> list = new ArrayList<>();
@@ -384,7 +386,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			equateAdapter.removeRecord(equateID);
 			equateCache.delete(equateID);
 			// fire event: oldValue = equate name, newValue=null
-			program.setChanged(ChangeManager.DOCR_EQUATE_REMOVED, name, null);
+			program.setChanged(ProgramEvent.EQUATE_REMOVED, name, null);
 		}
 		finally {
 			lock.release();
@@ -431,7 +433,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			new EquateRefDB(this, refCache, record);
 
 			// fire event: oldValue=EquateInfo, newValue = null
-			program.setChanged(ChangeManager.DOCR_EQUATE_REFERENCE_ADDED, address, address,
+			program.setChanged(ProgramEvent.EQUATE_REFERENCE_ADDED, address, address,
 				new EquateInfo(name, value, address, opIndex, dynamicHash), null);
 		}
 		finally {
@@ -508,7 +510,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	 * @param newName new name
 	 */
 	void equateNameChanged(String oldName, String newName) {
-		program.setChanged(ChangeManager.DOCR_EQUATE_RENAMED, oldName, newName);
+		program.setChanged(ProgramEvent.EQUATE_RENAMED, oldName, newName);
 	}
 
 	DBRecord getEquateRecord(long equateID) {
@@ -589,7 +591,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 
 	private void referenceRemoved(EquateDB equateDB, Address refAddr, short opIndex,
 			long dynamichash) {
-		program.setChanged(ChangeManager.DOCR_EQUATE_REFERENCE_REMOVED, refAddr, refAddr,
+		program.setChanged(ProgramEvent.EQUATE_REFERENCE_REMOVED, refAddr, refAddr,
 			new EquateInfo(equateDB.getName(), equateDB.getValue(), refAddr, opIndex, dynamichash),
 			null);
 	}

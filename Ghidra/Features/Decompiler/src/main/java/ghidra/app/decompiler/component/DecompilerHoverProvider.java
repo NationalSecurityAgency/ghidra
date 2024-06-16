@@ -77,6 +77,9 @@ public class DecompilerHoverProvider extends AbstractHoverProvider {
 			if (highVar instanceof HighGlobal) {
 				reference = highVar.getRepresentative().getAddress();
 			}
+			else if (highVar == null && vn.getAddress().isLoadedMemoryAddress()) {
+				reference = vn.getAddress();
+			}
 		}
 
 		return new ProgramLocation(program, token.getMinAddress(), reference);

@@ -32,7 +32,7 @@ public class PdbLog {
 
 	private static Writer nullWriter;
 	private static Writer fileWriter;
-	private static final boolean SYSTEM_LOGGING_ENABLED = Boolean.getBoolean("pdb.logging");
+	private static final boolean SYSTEM_LOGGING_ENABLED = Boolean.getBoolean("ghidra.pdb.logging");
 	private static boolean enabled = SYSTEM_LOGGING_ENABLED;
 
 	/**
@@ -40,8 +40,8 @@ public class PdbLog {
 	 * method gives control to the client to be able to turn on/off the messaging output without
 	 * having to do conditional checks at each point that one of the messaging methods is called.
 	 * @param enable {@code true} to enable logging; {@code false} to disable logging.  Initial
-	 * state is {@code false}.
-	 * @throws IOException upon problem creating a {@link FileWriter}.
+	 * state is {@code false}
+	 * @throws IOException upon problem creating a {@link FileWriter}
 	 * @see #message(String)
 	 * @see #message(String, Supplier...)
 	 */
@@ -53,11 +53,11 @@ public class PdbLog {
 	 * Outputs a message to the PDB log if messaging has been enable, else ignored.  This method
 	 * uses a format string and a variable arguments list of lambdas to allow for deferred
 	 * processing of the message to output.  Thus, when message output is disabled, the client
-	 * does not endure as much cost in supplying a message string that is not used.
+	 * does not endure as much cost in supplying a message string that is not used
 	 * @param format a {@link String} format list as would be used to a printf() function, but
 	 *  which must only specify {@code %s} {@link String} outputs.
 	 * @param suppliers variable number of {@link Supplier}&lt;{@link String}&gt; arguments.  The
-	 *  number must match the number of {@code %s} outputs in the format string.
+	 *  number must match the number of {@code %s} outputs in the format string
 	 * @see #setEnabled(boolean)
 	 */
 	// We know this is @SafeVarags (or SuppressWarnings("unchecked")) on potential
@@ -89,9 +89,9 @@ public class PdbLog {
 	 * Outputs a message to the PDB log if messaging has been enable, else ignored.  This method
 	 * uses a {@link Supplier}&lt;{@link String}&gt; to allow for deferred processing of the message
 	 * to output.  Thus, when message output is disabled, the client does not endure as much cost
-	 * in supplying a message string that is not used.
+	 * in supplying a message string that is not used
 	 * @param supplier a {@link Supplier}&lt;{@link String}&gt; that supplies a {@link String}
-	 * message to be output.
+	 * message to be output
 	 * @see #setEnabled(boolean)
 	 */
 	public static void message(Supplier<String> supplier) {
@@ -111,8 +111,8 @@ public class PdbLog {
 	}
 
 	/**
-	 * Outputs a {@link String} message to the PDB log if messaging has been enable, else ignored.
-	 * @param message a {@link String} message to be output.
+	 * Outputs a {@link String} message to the PDB log if messaging has been enable, else ignored
+	 * @param message a {@link String} message to be output
 	 * @see #setEnabled(boolean)
 	 */
 	public static void message(String message) {
@@ -145,17 +145,17 @@ public class PdbLog {
 	//  might not have been read, depending on the order of how record sets are read.
 	// TODO: is using PdbLog here.  Is that what we intend?
 	/**
-	 * Logs fact of record index out of range (detection is performed by caller).
-	 * @param tpi the TypeProgramInterface involved.
-	 * @param recordNumber the record number to report.
+	 * Logs fact of record index out of range (detection is performed by caller)
+	 * @param tpi the TypeProgramInterface involved
+	 * @param recordNumber the record number to report
 	 */
-	public static void logBadTypeRecordIndex(AbstractTypeProgramInterface tpi, int recordNumber) {
+	public static void logBadTypeRecordIndex(TypeProgramInterface tpi, int recordNumber) {
 		message("Bad requested type record " + recordNumber + ", min: " + tpi.getTypeIndexMin() +
 			", max: " + tpi.getTypeIndexMaxExclusive());
 	}
 
 	/**
-	 * Logs fact of record index out of range (detection is performed by caller).
+	 * Logs fact of record index out of range (detection is performed by caller)
 	 * @param type {@link AbstractMsType} found
 	 * @param itemRequiredClass class expected
 	 */
@@ -165,7 +165,7 @@ public class PdbLog {
 	}
 
 	/**
-	 * Cleans up the class by closing resources.
+	 * Cleans up the class by closing resources
 	 */
 	public static void dispose() {
 		try {
@@ -180,8 +180,8 @@ public class PdbLog {
 	}
 
 	/**
-	 * Returns the {@link Writer} for logging.
-	 * @return a {@link Writer} for for logging.
+	 * Returns the {@link Writer} for logging
+	 * @return a {@link Writer} for for logging
 	 */
 	private static Writer getWriter() throws IOException {
 		return enabled ? getFileWriter() : getNullWriter();
@@ -189,8 +189,8 @@ public class PdbLog {
 
 	/**
 	 * Returns the {@link FileWriter} for the log file.  If the file is already open, it is
-	 * returned.  If not already open, it is opened and previous contents are deleted.
-	 * @return a {@link FileWriter} for the log file.
+	 * returned.  If not already open, it is opened and previous contents are deleted
+	 * @return a {@link FileWriter} for the log file
 	 */
 	private static Writer getFileWriter() throws IOException {
 		if (fileWriter == null) {
@@ -210,8 +210,8 @@ public class PdbLog {
 
 	/**
 	 * Returns a {@link NullWriter} for the log file when chosen instead of a FileWriter.  If
-	 * one already exists, it is returned.  Otherwise a new one is created.
-	 * @return a {@link NullWriter} for the log file.
+	 * one already exists, it is returned.  Otherwise a new one is created
+	 * @return a {@link NullWriter} for the log file
 	 */
 	private static Writer getNullWriter() {
 		if (nullWriter == null) {

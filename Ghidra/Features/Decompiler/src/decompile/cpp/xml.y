@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+%define api.prefix {xml}
 %{
 #include "xml.hh"
 // CharData mode   look for '<' '&' or "]]>"
@@ -24,6 +25,8 @@
 
 #include <iostream>
 #include <string>
+
+namespace ghidra {
 
 string Attributes::bogus_uri("http://unused.uri");
 
@@ -106,14 +109,14 @@ struct NameValue {
   string *value;	///< The value
 };
 
-extern int yylex(void);							///< Interface to the scanner
-extern int yyerror(const char *str);			///< Interface for registering an error in parsing
+extern int xmllex(void);				///< Interface to the scanner
+extern int xmlerror(const char *str);			///< Interface for registering an error in parsing
 extern void print_content(const string &str);	///< Send character data to the ContentHandler
 extern int4 convertEntityRef(const string &ref);	///< Convert an XML entity to its equivalent character
 extern int4 convertCharRef(const string &ref);	///< Convert an XML character reference to its equivalent character
 static XmlScan *global_scan;					///< Global reference to the scanner
 static ContentHandler *handler;					///< Global reference to the content handler
-extern int yydebug;								///< Debug mode
+
 %}
 
 %union {
@@ -130,6 +133,9 @@ extern int yydebug;								///< Debug mode
 %type <i> Reference
 %type <attr> EmptyElemTag STag stagstart
 %type <pair> SAttribute
+
+%destructor { } <i>
+%destructor { delete $$; } <*>
 %%
 
 document:  element Misc;
@@ -495,7 +501,7 @@ int4 convertCharRef(const string &ref)
   return val;
 }
 
-int yylex(void)
+int xmllex(void)
 
 {
   int res = global_scan->nexttoken();
@@ -504,7 +510,7 @@ int yylex(void)
   return res;
 }
 
-int yyerror(const char *str)
+int xmlerror(const char *str)
 
 {
   handler->setError(str);
@@ -565,7 +571,7 @@ const string &Element::getAttributeValue(const string &nm) const
   for(uint4 i=0;i<attr.size();++i)
     if (attr[i] == nm)
       return value[i];
-  throw XmlError("Unknown attribute: "+nm);
+  throw DecoderError("Unknown attribute: "+nm);
 }
 
 DocumentStorage::~DocumentStorage(void)
@@ -590,7 +596,7 @@ Document *DocumentStorage::openDocument(const string &filename)
 {
   ifstream s(filename.c_str());
   if (!s)
-    throw XmlError("Unable to open xml document "+filename);
+    throw DecoderError("Unable to open xml document "+filename);
   Document *res = parseDocument(s);
   s.close();
   return res;
@@ -620,7 +626,7 @@ Document *xml_tree(istream &i)
   TreeHandler handle(doc);
   if (0!=xml_parse(i,&handle)) {
     delete doc;
-    throw XmlError(handle.getError());
+    throw DecoderError(handle.getError());
   }
   return doc;
 }
@@ -642,3 +648,5 @@ void xml_escape(ostream &s,const char *str)
     str++;
   }
 }
+
+} // End namespace ghidra

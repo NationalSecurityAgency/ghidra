@@ -15,6 +15,12 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.MenuData;
+import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -25,19 +31,13 @@ import ghidra.util.HelpLocation;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskListener;
 
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
-
 /**
  * Action that creates a manual match for the currently selected source and destination functions 
  * in the function association tables.
  */
 public class CreateManualMatchAction extends AbstractCreateManualMatchAction {
 
-	public static final Icon ICON = ResourceManager.loadImage("images/Plus.png");
+	public static final Icon ICON = new GIcon("icon.version.tracking.action.create.manual.match");
 
 	/**
 	 * Creates a manual match action.

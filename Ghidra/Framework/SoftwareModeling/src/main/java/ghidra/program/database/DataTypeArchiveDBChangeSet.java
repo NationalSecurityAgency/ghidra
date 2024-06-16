@@ -79,7 +79,7 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedDataTypeIds.contains(lid) && !tmpAddedDataTypeIds.contains(lid)) {
 			tmpChangedDataTypeIds.add(lid);
 		}
@@ -90,7 +90,7 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedDataTypeIds.add(new Long(id));
+		tmpAddedDataTypeIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -108,7 +108,7 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedCategoryIds.contains(lid) && !tmpAddedCategoryIds.contains(lid)) {
 			tmpChangedCategoryIds.add(lid);
 		}
@@ -119,7 +119,7 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedCategoryIds.add(new Long(id));
+		tmpAddedCategoryIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -137,7 +137,7 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedSourceArchiveIds.add(new Long(id));
+		tmpAddedSourceArchiveIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -145,7 +145,7 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedSourceArchiveIds.contains(lid) && !tmpAddedSourceArchiveIds.contains(lid)) {
 			tmpChangedSourceArchiveIds.add(lid);
 		}

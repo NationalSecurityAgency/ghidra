@@ -220,13 +220,10 @@ public class CliBlobMarshalSpec extends CliBlob {
 				break;
 
 			case NATIVE_TYPE_CUSTOMMARSHALER:
-				customMarshallerGuidOrTypeName =
-					reader.readTerminatedString(reader.getPointerIndex(), '\0');
-				customMarshallerTypeName =
-					reader.readTerminatedString(reader.getPointerIndex(), '\0');
-				if (reader.peekNextByte() > 0) {
-					customMarshallerCookie =
-						reader.readTerminatedString(reader.getPointerIndex(), '\0');
+				customMarshallerGuidOrTypeName = reader.readNextUtf8String();
+				customMarshallerTypeName = reader.readNextUtf8String();
+				if (reader.peekNextByte() != 0) {
+					customMarshallerCookie = reader.readNextUtf8String();
 				}
 				break;
 
@@ -267,6 +264,7 @@ public class CliBlobMarshalSpec extends CliBlob {
 				break;
 
 			case NATIVE_TYPE_CUSTOMMARSHALER:
+				// TODO: length of these UTF-8 strings isn't the same as number of characters 
 				struct.add(UTF8, customMarshallerGuidOrTypeName.length(), "", "GUID or Type Name");
 				struct.add(UTF8, customMarshallerGuidOrTypeName.length(), "", "Type Name");
 				if (customMarshallerCookie.compareTo("") != 0) {

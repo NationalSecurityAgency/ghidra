@@ -33,7 +33,7 @@ public class ThreadEx implements StructConverter {
 	private int priority;
 	private long teb;
 	private long stackStartOfMemoryRange;
-	private int stackDataSize;
+	private long stackDataSize;
 	private int stackRVA;
 	private int contextDataSize;
 	private int contextRVA;
@@ -60,7 +60,7 @@ public class ThreadEx implements StructConverter {
 		setPriority(reader.readNextInt());
 		setTeb(reader.readNextLong());
 		setStackStartOfMemoryRange(reader.readNextLong());
-		setStackDataSize(reader.readNextInt());
+		setStackDataSize(reader.readNextUnsignedInt());
 		setStackRVA(reader.readNextInt());
 		setContextDataSize(reader.readNextInt());
 		setContextRVA(reader.readNextInt());
@@ -73,6 +73,7 @@ public class ThreadEx implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 
@@ -161,11 +162,11 @@ public class ThreadEx implements StructConverter {
 		this.stackStartOfMemoryRange = stackStartOfMemoryRange;
 	}
 
-	public int getStackDataSize() {
+	public long getStackDataSize() {
 		return stackDataSize;
 	}
 
-	public void setStackDataSize(int stackDataSize) {
+	public void setStackDataSize(long stackDataSize) {
 		this.stackDataSize = stackDataSize;
 	}
 

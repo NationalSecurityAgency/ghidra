@@ -17,14 +17,12 @@ package ghidra.app.merge;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * The PhaseProgressPanel provides a title, progress bar and message for the current phase that is 
@@ -33,7 +31,7 @@ import resources.ResourceManager;
 public class PhaseProgressPanel extends JPanel {
 
 	private final static String DEFAULT_INFO = "Merge programs in progress...";
-	private ImageIcon INFORM_ICON = ResourceManager.loadImage("images/information.png");
+	private Icon INFORM_ICON = Icons.INFO_ICON;
 
 	private JLabel titleLabel;
 	private JProgressBar progressBar;
@@ -105,12 +103,7 @@ public class PhaseProgressPanel extends JPanel {
 		doSetMessage(DEFAULT_INFO);
 
 		// Sets up the timer for updating the GUI.
-		updateTimer = new Timer(250, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				update();
-			}
-		});
+		updateTimer = new Timer(250, e -> update());
 	}
 
 	// Method for use by the timer to update the progress bar or message.

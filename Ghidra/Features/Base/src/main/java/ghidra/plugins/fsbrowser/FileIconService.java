@@ -15,23 +15,13 @@
  */
 package ghidra.plugins.fsbrowser;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
-
-import generic.jar.ResourceFile;
+import generic.theme.*;
 import ghidra.formats.gfilesystem.FSUtilities;
-import ghidra.framework.Application;
-import ghidra.util.Msg;
-import ghidra.util.xml.XmlUtilities;
-import resources.*;
-import util.CollectionUtils;
+import resources.MultiIcon;
 
 /**
  * Provides {@link Icon}s that represent the type and status of a file, based on
@@ -45,7 +35,7 @@ import util.CollectionUtils;
  * are resized to be 1/2 the width and height of the icon they are being
  * overlaid on.
  * <p>
- * Threadsafe
+ * Thread safe
  * <p>
  */
 public class FileIconService {
@@ -58,76 +48,33 @@ public class FileIconService {
 		return Singleton.INSTANCE;
 	}
 
-	public static final String OVERLAY_IMPORTED = "imported";
-	public static final String OVERLAY_FILESYSTEM = "filesystem";
-	public static final String OVERLAY_MISSING_PASSWORD = "password_missing";
+	public static final Icon IMPORTED_OVERLAY_ICON =
+		new GIcon("icon.fsbrowser.file.overlay.imported");
+	public static final Icon FILESYSTEM_OVERLAY_ICON =
+		new GIcon("icon.fsbrowser.file.overlay.filesystem");
+	public static final Icon MISSING_PASSWORD_OVERLAY_ICON =
+		new GIcon("icon.fsbrowser.file.overlay.missing.password");
+	public static final Icon DEFAULT_ICON = new GIcon("icon.fsbrowser.file.extension.default");
 
-	private static final String FILEEXT_MAPPING_FILE = "file_extension_icons.xml";
+	private static final String EXTENSION_ICON_PREFIX = "icon.fsbrowser.file.extension";
+	private static final String SUBSTRING_ICON_PREFIX = "icon.fsbrowser.file.substring";
 
-	private Map<String, String> fileExtToIconName = new HashMap<>();
-	private Map<String, String> fileSubstrToIconName = new HashMap<>();
-	private Map<String, String> overlayNameToIconName = new HashMap<>();
-	private Map<String, QUADRANT> overlayNameToQuad = new HashMap<>();
-	private String defaultIconPath = "images/famfamfam_silk_icons_v013/page_white.png";
-	private int maxExtLevel = 1;
-
-	private Map<String, Icon> iconKeyToIcon = new HashMap<>();
-
-	private ResourceFile xmlFile;
+	private Map<String, Icon> substringToIconMap = new HashMap<>();
 
 	private FileIconService() {
-		this.xmlFile = Application.findDataFileInAnyModule(FILEEXT_MAPPING_FILE);
-		if (xmlFile == null) {
-			Msg.error(this, "Cannot find " + FILEEXT_MAPPING_FILE +
-				".   File system browser will not have icons.");
-		}
+		createSubstringMap();
 	}
 
-	private String makeKey(String key, String[] overlays) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(key).append("__");
-		for (String o : overlays) {
-			if (o == null || o.isEmpty()) {
-				continue;
+	private void createSubstringMap() {
+		GThemeValueMap values = ThemeManager.getInstance().getCurrentValues();
+		List<IconValue> icons = values.getIcons();
+		for (IconValue iconValue : icons) {
+			String id = iconValue.getId();
+			if (id.startsWith(SUBSTRING_ICON_PREFIX)) {
+				String substring = id.substring(SUBSTRING_ICON_PREFIX.length());
+				substringToIconMap.put(substring, new GIcon(id));
 			}
-			sb.append(o).append("__");
 		}
-		return sb.toString();
-	}
-
-	private Icon getCachedIcon(String key, String path, String... overlays) {
-		key = makeKey(key, overlays);
-		Icon cachedIcon = iconKeyToIcon.get(key);
-		if (cachedIcon == null) {
-			cachedIcon = ResourceManager.loadImage(path);
-			if (overlays.length > 0) {
-				int expectedOW = cachedIcon.getIconWidth() / 2;
-				int expectedOH = cachedIcon.getIconHeight() / 2;
-
-				EnumSet<QUADRANT> usedQuads = EnumSet.noneOf(QUADRANT.class);
-				MultiIconBuilder iconBuilder = new MultiIconBuilder(cachedIcon);
-				for (String overlay : overlays) {
-					if (overlay == null || overlay.isEmpty()) {
-						continue;
-					}
-					String overlayPath = overlayNameToIconName.get(overlay);
-					QUADRANT quad = overlayNameToQuad.get(overlay);
-					if (overlayPath == null || quad == null) {
-						continue;
-					}
-					if (usedQuads.contains(quad)) {
-						Msg.warn(this, "File icon already contains an overlay at " + quad);
-					}
-					usedQuads.add(quad);
-
-					ImageIcon overlayIcon = ResourceManager.loadImage(overlayPath);
-					iconBuilder.addIcon(overlayIcon, expectedOW, expectedOH, quad);
-				}
-				cachedIcon = iconBuilder.build();
-			}
-			iconKeyToIcon.put(key, cachedIcon);
-		}
-		return cachedIcon;
 	}
 
 	/**
@@ -135,106 +82,43 @@ public class FileIconService {
 	 * name.
 	 *
 	 * @param fileName name of file that an icon is being requested for.
-	 * @param overlays optional list of overlay names, names of icons that
-	 *            should be overlaid on top of the base icon, that represent a
+	 * @param overlays optional list of overlay icons that
+	 *            should be overlaid on top of the base icon. These icons represent a
 	 *            status or feature independent of the file's base icon.
 	 * @return {@link Icon} instance that best represents the named file, never
 	 *         null.
 	 */
-	public synchronized Icon getImage(String fileName, String... overlays) {
-		loadIfNeeded();
-
+	public Icon getIcon(String fileName, List<Icon> overlays) {
 		fileName = fileName.toLowerCase();
-		for (int extLevel = 1; extLevel <= maxExtLevel; extLevel++) {
-			String ext = FSUtilities.getExtension(fileName, extLevel);
-			if (ext == null) {
-				break;
-			}
-			String path = fileExtToIconName.get(ext);
-			if (path != null) {
-				return getCachedIcon(ext, path, overlays);
+		String ext = FSUtilities.getExtension(fileName, 1);
+		if (ext != null) {
+			String iconId = EXTENSION_ICON_PREFIX + ext;
+			if (Gui.hasIcon(iconId)) {
+				Icon base = new GIcon(iconId);
+				return buildIcon(base, overlays);
 			}
 		}
 
-		for (String substr : fileSubstrToIconName.keySet()) {
-			if (fileName.indexOf(substr) != -1) {
-				return getCachedIcon("####" + substr, fileSubstrToIconName.get(substr), overlays);
+		for (String substring : substringToIconMap.keySet()) {
+			if (fileName.indexOf(substring) != -1) {
+				return buildIcon(substringToIconMap.get(substring), overlays);
 			}
 		}
 
 		// return default icon for generic file
-		return getCachedIcon("", defaultIconPath, overlays);
+		return buildIcon(DEFAULT_ICON, overlays);
 	}
 
-	/**
-	 * Loads XML file if it has not been loaded yet.
-	 */
-	protected void loadIfNeeded() {
-		if (fileExtToIconName.isEmpty()) {
-			load();
+	private Icon buildIcon(Icon base, List<Icon> overlays) {
+		if (overlays == null || overlays.isEmpty()) {
+			return base;
 		}
-	}
-
-	private void load() {
-		fileExtToIconName.clear();
-		fileSubstrToIconName.clear();
-		overlayNameToIconName.clear();
-		overlayNameToQuad.clear();
-		iconKeyToIcon.clear();
-		defaultIconPath = null;
-		maxExtLevel = 1;
-
-		try (InputStream xmlInputStream = xmlFile.getInputStream()) {
-			SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);
-			Document doc = sax.build(xmlInputStream);
-			Element root = doc.getRootElement();
-			for (Element child : CollectionUtils.asList(root.getChildren("file_extension"),
-				Element.class)) {
-				String extension = child.getAttributeValue("extension");
-				String iconPath = child.getAttributeValue("icon");
-				if (extension.endsWith(".")) {
-					addSubstrMapping(extension, iconPath);
-				}
-				else if (!extension.isEmpty()) {
-					addExtMapping(extension, iconPath);
-				}
-				else {
-					defaultIconPath = iconPath;
-				}
-			}
-			for (Element child : CollectionUtils.asList(root.getChildren("file_overlay"),
-				Element.class)) {
-				String name = child.getAttributeValue("name");
-				String iconPath = child.getAttributeValue("icon");
-				QUADRANT quadrant =
-					QUADRANT.valueOf(child.getAttributeValue("quadrant"), QUADRANT.LR);
-
-				overlayNameToIconName.put(name, iconPath);
-				overlayNameToQuad.put(name, quadrant);
+		MultiIcon multiIcon = new MultiIcon(base);
+		for (Icon overlay : overlays) {
+			if (overlay != null) {
+				multiIcon.addIcon(overlay);
 			}
 		}
-		catch (JDOMException | IOException e) {
-			Msg.error(this, "Error reading file icon data: " + e.getMessage(), e);
-		}
+		return multiIcon;
 	}
-
-	private void addSubstrMapping(String substr, String iconPath) {
-		fileSubstrToIconName.put(substr, iconPath);
-	}
-
-	private void addExtMapping(String ext, String iconPath) {
-		fileExtToIconName.put(ext, iconPath);
-		maxExtLevel = Math.max(maxExtLevel, countExtLevel(ext));
-	}
-
-	private int countExtLevel(String ext) {
-		int count = 0;
-		for (int i = 0; i < ext.length(); i++) {
-			if (ext.charAt(i) == '.') {
-				count++;
-			}
-		}
-		return count;
-	}
-
 }

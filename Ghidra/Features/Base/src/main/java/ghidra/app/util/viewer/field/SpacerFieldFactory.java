@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -30,12 +30,9 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.SpacerFieldLocation;
 import ghidra.util.StringUtilities;
-import ghidra.util.classfinder.ClassSearcher;
 
 /**
   *  Generates Spacer Fields.
-  *  <P> 
-  *  This field is not meant to be loaded by the {@link ClassSearcher}, hence the X in the name.
   */
 public class SpacerFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Spacer";
@@ -55,7 +52,7 @@ public class SpacerFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private SpacerFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private SpacerFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
@@ -68,7 +65,7 @@ public class SpacerFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	  */
-	public SpacerFieldFactory(String text, FieldFormatModel model, HighlightProvider hsProvider,
+	public SpacerFieldFactory(String text, FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
@@ -114,7 +111,7 @@ public class SpacerFieldFactory extends FieldFactory {
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 		if (enabled && (text != null)) {
-			AttributedString as = new AttributedString(text, color, getMetrics());
+			AttributedString as = new AttributedString(text, ListingColors.SEPARATOR, getMetrics());
 			FieldElement field = new TextFieldElement(as, 0, 0);
 			return ListingTextField.createSingleLineTextField(this, proxy, field, startX + varWidth,
 				width, hlProvider);
@@ -182,9 +179,8 @@ public class SpacerFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new SpacerFieldFactory(formatModel, provider, options, fieldOptions);
 	}
-
 }

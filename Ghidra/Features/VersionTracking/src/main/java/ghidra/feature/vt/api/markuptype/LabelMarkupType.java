@@ -35,7 +35,7 @@ import ghidra.program.util.LabelFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class LabelMarkupType extends VTMarkupType {
 
@@ -346,7 +346,7 @@ public class LabelMarkupType extends VTMarkupType {
 		Stringable appliedMarkupOriginalValue = null;
 		try {
 			appliedMarkupOriginalValue = getOriginalDestinationValueForAppliedMarkupOfThisType(
-				association, destinationAddress, TaskMonitorAdapter.DUMMY_MONITOR);
+				association, destinationAddress, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// For now this shouldn't get a cancel.

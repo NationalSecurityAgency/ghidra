@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.ios.img3;
 
+import java.util.List;
+
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.bin.*;
@@ -28,30 +30,34 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.List;
-
 public class Img3Analyzer extends FileFormatAnalyzer implements AnalysisWorker {
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return Img3Util.isIMG3(program);
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		return Img3Util.isIMG3(program);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Annotates an IMG3 file.";
 	}
 
+	@Override
 	public String getName() {
 		return "IMG3 Annotation";
 	}
 
+	@Override
 	public boolean isPrototype() {
 		return true;
 	}
 
+	@Override
 	public boolean analyze(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws Exception {
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
@@ -63,7 +69,7 @@ public class Img3Analyzer extends FileFormatAnalyzer implements AnalysisWorker {
 			throws Exception, CancelledException {
 		Address address = program.getMinAddress();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		Img3 header = new Img3(reader);

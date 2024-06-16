@@ -81,12 +81,13 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 	/**
 	 * Constructor.
-	 * @param rootPath path path for root directory.
+	 * @param rootPath path for root directory.
 	 * @param isVersioned if true item versioning will be enabled.
 	 * @param readOnly if true modifications within this file-system will not be allowed
 	 * and result in an ReadOnlyException
 	 * @param enableAsyncronousDispatching if true a separate dispatch thread will be used
 	 * to notify listeners.  If false, blocking notification will be performed.
+	 * @param create if true a new folder will be created.
 	 * @throws FileNotFoundException if specified rootPath does not exist
 	 * @throws IOException if error occurs while reading/writing index files
 	 */
@@ -588,6 +589,26 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			return false;
 		}
 
+		String conflictedItemStorageName = findItemStorageName(parentPath, name);
+
+		String storageName = pfile.getStorageName();
+
+		if (conflictedItemStorageName != null) {
+			try {
+				if (storageName.compareTo(conflictedItemStorageName) <= 0) {
+					conflictedItemStorageName = storageName;
+					return true; // skip conflict orphan
+				}
+
+				// remove conflict orphan from index and, add newer item below
+				deallocateItemStorage(parentPath, name);
+			}
+			finally {
+				Msg.warn(this, "Detected orphaned project file " + conflictedItemStorageName +
+					": " + getPath(parentPath, name));
+			}
+		}
+
 		indexJournal.open();
 		try {
 			Folder folder = addFolderToIndexIfMissing(parentPath);
@@ -754,6 +775,26 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	/**
+	 * Find an existing storage location name
+	 * @param folderPath
+	 * @param itemName
+	 * @return storage location name or null if one not defined within index
+	 */
+	private String findItemStorageName(String folderPath, String name) {
+		try {
+			Folder folder = getFolder(folderPath, GetFolderOption.READ_ONLY);
+			Item item = folder.items.get(name);
+			if (item != null) {
+				return item.itemStorage.storageName;
+			}
+		}
+		catch (NotFoundException e) {
+			// ignore
+		}
+		return null;
+	}
+
+	/**
 	 * Find an existing storage location
 	 * @param folderPath
 	 * @param itemName
@@ -851,8 +892,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	@Override
-	protected String[] getItemNames(String folderPath, boolean includeHiddenFiles)
-			throws IOException {
+	public String[] getItemNames(String folderPath, boolean includeHiddenFiles) throws IOException {
 		if (readOnly) {
 			refreshReadOnlyIndex();
 		}
@@ -875,6 +915,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 	@Override
 	public int getItemCount() throws IOException {
+		checkDisposed();
 		if (readOnly) {
 			refreshReadOnlyIndex();
 		}
@@ -889,11 +930,9 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		return count;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#getFolders(java.lang.String)
-	 */
 	@Override
 	public synchronized String[] getFolderNames(String folderPath) throws IOException {
+		checkDisposed();
 		if (readOnly) {
 			refreshReadOnlyIndex();
 		}
@@ -907,12 +946,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#createFolder(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void createFolder(String parentPath, String folderName)
 			throws InvalidNameException, IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -946,11 +984,10 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		eventManager.folderCreated(parentPath, getName(path));
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#deleteFolder(java.lang.String)
-	 */
 	@Override
 	public synchronized void deleteFolder(String folderPath) throws IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1018,12 +1055,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		getListener().itemCreated(destFolderPath, itemName);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#moveItem(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void moveItem(String folderPath, String name, String newFolderPath,
 			String newName) throws IOException, InvalidNameException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1060,6 +1096,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 				newFolder = getFolder(newFolderPath, GetFolderOption.CREATE_ALL_NOTIFY);
 			}
 
+			LocalFolderItem conflictFolderItem = getItem(newFolderPath, newName);
+			if (conflictFolderItem != null) {
+				throw new DuplicateFileException("Item already exists: " + newName);
+			}
+
 			folderItem.moveTo(item.itemStorage.dir, item.itemStorage.storageName, newFolderPath,
 				newName);
 
@@ -1094,12 +1135,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		deleteEmptyVersionedFolders(folderPath);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#moveFolder(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void moveFolder(String parentPath, String folderName, String newParentPath)
 			throws InvalidNameException, IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1160,12 +1200,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#renameFolder(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void renameFolder(String parentPath, String folderName,
 			String newFolderName) throws InvalidNameException, IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1201,16 +1240,14 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		eventManager.folderRenamed(parentPath, folderName, newFolderName);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#folderExists(java.lang.String)
-	 */
 	@Override
 	public synchronized boolean folderExists(String folderPath) {
 		try {
+			checkDisposed();
 			getFolder(folderPath, GetFolderOption.READ_ONLY);
 			return true;
 		}
-		catch (NotFoundException e) {
+		catch (IOException | NotFoundException e) {
 			return false;
 		}
 	}

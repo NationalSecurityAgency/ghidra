@@ -15,8 +15,9 @@
  */
 package ghidra.file.formats.android.lz4;
 
-import java.io.*;
 import java.util.*;
+
+import java.io.*;
 
 import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorInputStream;
 
@@ -89,8 +90,8 @@ public class LZ4ArchiveFileSystem extends GFileSystemBase {
 				upwtm.setMessage("Decompressing LZ4 archive...");
 				upwtm.setProgress(0);
 
-				while (reader.getPointerIndex() < reader.length()) {
-					monitor.checkCanceled();
+				while (reader.hasNext()) {
+					monitor.checkCancelled();
 
 					int compressedChunkSize = reader.readNextInt();
 					byte[] compressedChunk = reader.readNextByteArray(compressedChunkSize);

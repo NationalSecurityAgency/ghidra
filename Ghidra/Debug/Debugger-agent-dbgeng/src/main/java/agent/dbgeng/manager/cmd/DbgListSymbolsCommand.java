@@ -48,16 +48,20 @@ public class DbgListSymbolsCommand extends AbstractDbgCommand<Map<String, DbgMin
 
 	@Override
 	public void invoke() {
-		DebugSystemObjects so = manager.getSystemObjects();
-		so.setCurrentProcessId(process.getId());
-		DebugSymbols symbols = manager.getSymbols();
-
-		for (DebugSymbolName symbol : symbols.iterateSymbolMatches(module.getName() + "!*")) {
-			List<DebugSymbolId> symbolIdsByName = symbols.getSymbolIdsByName(symbol.name);
-			for (DebugSymbolId symbolId : symbolIdsByName) {
-				DebugSymbolEntry symbolEntry = symbols.getSymbolEntry(symbolId);
-				symbolEntries.put(symbolId, symbolEntry);
+		try {
+			setProcess(process);
+			DebugSymbols symbols = manager.getSymbols();
+	
+			for (DebugSymbolName symbol : symbols.iterateSymbolMatches(module.getName() + "!*")) {
+				List<DebugSymbolId> symbolIdsByName = symbols.getSymbolIdsByName(symbol.name);
+				for (DebugSymbolId symbolId : symbolIdsByName) {
+					DebugSymbolEntry symbolEntry = symbols.getSymbolEntry(symbolId);
+					symbolEntries.put(symbolId, symbolEntry);
+				}
 			}
+		} 
+		finally {
+			resetProcess();
 		}
 	}
 }

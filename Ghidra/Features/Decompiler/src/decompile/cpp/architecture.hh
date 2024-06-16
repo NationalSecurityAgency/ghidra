@@ -15,8 +15,8 @@
  */
 /// \file architecture.hh
 /// \brief Architecture and associated classes that help manage a single processor architecture and load image
-#ifndef __CPUI_ARCHITECTURE__
-#define __CPUI_ARCHITECTURE__
+#ifndef __ARCHITECTURE_HH__
+#define __ARCHITECTURE_HH__
 
 #include "capability.hh"
 #include "varmap.hh"
@@ -33,6 +33,8 @@
 #include "options.hh"
 #include "transform.hh"
 #include "prefersplit.hh"
+
+namespace ghidra {
 
 #ifdef CPUI_STATISTICS
 /// \brief Class for collecting statistics while processing over multiple functions
@@ -61,10 +63,12 @@ public:
 
 class Architecture;
 
+extern AttributeId ATTRIB_ADDRESS;	///< Marshaling attribute "address"
 extern AttributeId ATTRIB_ADJUSTVMA;	///< Marshaling attribute "adjustvma"
 extern AttributeId ATTRIB_ENABLE;	///< Marshaling attribute "enable"
 extern AttributeId ATTRIB_GROUP;	///< Marshaling attribute "group"
 extern AttributeId ATTRIB_GROWTH;	///< Marshaling attribute "growth"
+extern AttributeId ATTRIB_KEY;		///< Marshaling attribute "key"
 extern AttributeId ATTRIB_LOADERSYMBOLS;	///< Marshaling attribute "loadersymbols"
 extern AttributeId ATTRIB_PARENT;	///< Marshaling attribute "parent"
 extern AttributeId ATTRIB_REGISTER;	///< Marshaling attribute "register"
@@ -92,6 +96,7 @@ extern ElementId ELEM_NOHIGHPTR;		///< Marshaling element \<nohighptr>
 extern ElementId ELEM_PROCESSOR_SPEC;		///< Marshaling element \<processor_spec>
 extern ElementId ELEM_PROGRAMCOUNTER;		///< Marshaling element \<programcounter>
 extern ElementId ELEM_PROPERTIES;		///< Marshaling element \<properties>
+extern ElementId ELEM_PROPERTY;			///< Marshaling element \<property>
 extern ElementId ELEM_READONLY;			///< Marshaling element \<readonly>
 extern ElementId ELEM_REGISTER_DATA;		///< Marshaling element \<register_data>
 extern ElementId ELEM_RULE;			///< Marshaling element \<rule>
@@ -167,15 +172,19 @@ public:
   int4 max_term_duplication;	///< Max terms duplicated without a new variable
   int4 max_basetype_size;	///< Maximum size of an "integer" type before creating an array type
   int4 min_funcsymbol_size;	///< Minimum size of a function symbol
+  uint4 max_jumptable_size;	///< Maximum number of entries in a single JumpTable
   bool aggressive_ext_trim;	///< Aggressively trim inputs that look like they are sign extended
   bool readonlypropagate;	///< true if readonly values should be treated as constants
   bool infer_pointers;		///< True if we should infer pointers from constants that are likely addresses
   bool analyze_for_loops;	///< True if we should attempt conversion of \e whiledo loops to \e for loops
+  bool nan_ignore_all;		///< True if we should ignore NaN operations, i.e. nan() always returns false
+  bool nan_ignore_compare;	///< True if we should ignore NaN operations protecting floating-point comparisons
   vector<AddrSpace *> inferPtrSpaces;	///< Set of address spaces in which a pointer constant is inferable
   int4 funcptr_align;		///< How many bits of alignment a function ptr has
   uint4 flowoptions;            ///< options passed to flow following engine
   uint4 max_instructions;	///< Maximum instructions that can be processed in one function
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
+  uint4 split_datatype_config;	///< Toggle for data-types splitting: Bit 0=structs, 1=arrays, 2=pointers
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
   Database *symboltab;		///< Memory map of global variables and functions
@@ -214,11 +223,12 @@ public:
   void resetDefaults(void);		///< Reset defaults values for options owned by \b this
   ProtoModel *getModel(const string &nm) const;		///< Get a specific PrototypeModel
   bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
+  ProtoModel *createUnknownModel(const string &modelName);	///< Create a model for an unrecognized name
   bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   AddrSpace *getSpaceBySpacebase(const Address &loc,int4 size) const; ///< Get space associated with a \e spacebase register
   const LanedRegister *getLanedRegister(const Address &loc,int4 size) const;	///< Get LanedRegister associated with storage
   int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
-  void setDefaultModel(const string &nm);		///< Set the default PrototypeModel
+  void setDefaultModel(ProtoModel *model);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
   void readLoaderSymbols(const string &delim);		 ///< Read any symbols from loader into database
   void collectBehaviors(vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
@@ -226,10 +236,12 @@ public:
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
   void setPrintLanguage(const string &nm);		///< Establish a particular output language
   void globalify(void);					///< Mark \e all spaces as global
-  void decodeFlowOverride(Decoder &decoder);		///< Set flow overrides from XML
+  void decodeFlowOverride(Decoder &decoder);		///< Decode flow overrides from a stream
   virtual ~Architecture(void);				///< Destructor
 
-  virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
+  /// \brief Get a string describing \b this architecture
+  /// \return the description
+  virtual string getDescription(void) const { return archid; }
 
   /// \brief Print an error message to console
   ///
@@ -245,7 +257,7 @@ public:
 #endif
 protected:
   void addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
-		    int4 truncSize,bool isreversejustified,bool stackGrowth); ///< Create a new space and associated pointer
+		    int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal);
   void addNoHighPtr(const Range &rng); ///< Add a new region where pointers do not exist
 
   // Factory routines for building this architecture
@@ -270,13 +282,53 @@ protected:
   /// \return the PcodeInjectLibrary object
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void)=0;
 
-  virtual void buildTypegrp(DocumentStorage &store);		///< Build the data-type factory/container
-  virtual void buildCommentDB(DocumentStorage &store);		///< Build the comment database
-  virtual void buildStringManager(DocumentStorage &store);	///< Build the string manager
-  virtual void buildConstantPool(DocumentStorage &store);	///< Build the constant pool
+  /// \brief Build the data-type factory/container
+  ///
+  /// Build the TypeFactory object specific to \b this Architecture and
+  /// prepopulate it with the \e core types.
+  /// \param store contains possible configuration information
+  virtual void buildTypegrp(DocumentStorage &store)=0;
+
+  /// \brief Add core primitive data-types
+  ///
+  /// Core types may be pulled from the configuration information, or default core types are used.
+  /// \param store contains possible configuration information
+  virtual void buildCoreTypes(DocumentStorage &store)=0;
+
+  /// \brief Build the comment database
+  ///
+  /// Build the container that holds comments in \b this Architecture.
+  /// \param store may hold configuration information
+  virtual void buildCommentDB(DocumentStorage &store)=0;
+
+  /// \brief Build the string manager
+  ///
+  /// Build container that holds decoded strings for \b this Architecture.
+  /// \param store may hold configuration information
+  virtual void buildStringManager(DocumentStorage &store)=0;
+
+  /// \brief Build the constant pool
+  ///
+  /// Some processor models (Java byte-code) need a database of constants.
+  /// The database is always built, but may remain empty.
+  /// \param store may hold configuration information
+  virtual void buildConstantPool(DocumentStorage &store)=0;
+
   virtual void buildInstructions(DocumentStorage &store);	///< Register the p-code operations
   virtual void buildAction(DocumentStorage &store);		///< Build the Action framework
-  virtual void buildContext(DocumentStorage &store);		///< Build the Context database
+
+  /// \brief Build the Context database
+  ///
+  /// Build the database which holds status register settings and other
+  /// information that can affect disassembly depending on context.
+  /// \param store may hold configuration information
+  virtual void buildContext(DocumentStorage &store)=0;
+
+  /// \brief Build any symbols from spec files
+  ///
+  /// Formal symbols described in a spec file are added to the global scope.
+  /// \param store may hold symbol elements
+  virtual void buildSymbols(DocumentStorage &store)=0;
 
   /// \brief Load any relevant specification files
   ///
@@ -358,4 +410,5 @@ inline bool Architecture::highPtrPossible(const Address &loc,int4 size) const {
   return !nohighptr.inRange(loc,size);
 }
 
+} // End namespace ghidra
 #endif

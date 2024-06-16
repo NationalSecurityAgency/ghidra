@@ -21,6 +21,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.formats.android.oat.bundle.OatBundle;
 import ghidra.file.formats.android.oat.bundle.OatBundleFactory;
+import ghidra.file.formats.android.oat.headers.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,31 +41,42 @@ public final class OatHeaderFactory {
 		if (magic.equals(OatConstants.MAGIC)) {
 			if (OatConstants.isSupportedVersion(version)) {
 				switch (version) {
-					case OatConstants.VERSION_KITKAT_RELEASE:
-						return new OatHeader_KitKat(reader);
-					case OatConstants.VERSION_LOLLIPOP_RELEASE:
-					case OatConstants.VERSION_LOLLIPOP_MR1_FI_RELEASE:
-					case OatConstants.VERSION_LOLLIPOP_WEAR_RELEASE:
-						return new OatHeader_Lollipop(reader);
-					case OatConstants.VERSION_MARSHMALLOW_RELEASE:
-						return new OatHeader_Marshmallow(reader);
-					case OatConstants.VERSION_NOUGAT_RELEASE:
-					case OatConstants.VERSION_NOUGAT_MR1_RELEASE:
-						return new OatHeader_Nougat(reader);
-					case OatConstants.VERSION_OREO_RELEASE:
-					case OatConstants.VERSION_OREO_DR3_RELEASE:
-						return new OatHeader_Oreo(reader);//v124 and v126 are same format
-					case OatConstants.VERSION_OREO_M2_RELEASE:
-						return new OatHeader_Oreo_M2(reader);
-					case OatConstants.VERSION_PIE_RELEASE:
-						return new OatHeader_Pie(reader);
-					case OatConstants.VERSION_10_RELEASE:
-						return new OatHeader_10(reader);
-					case OatConstants.VERSION_11_RELEASE:
-						return new OatHeader_11(reader);
-					case OatConstants.VERSION_12_RELEASE:
-					case OatConstants.VERSION_S_V2_PREVIEW:
-						return new OatHeader_12(reader);
+					case OatConstants.OAT_VERSION_007:
+						return new OatHeader_007(reader);
+					case OatConstants.OAT_VERSION_039:
+						return new OatHeader_039(reader);
+					case OatConstants.OAT_VERSION_045:
+						return new OatHeader_045(reader);
+					case OatConstants.OAT_VERSION_051:
+						return new OatHeader_051(reader);
+					case OatConstants.OAT_VERSION_064:
+						return new OatHeader_064(reader);
+					case OatConstants.OAT_VERSION_079:
+						return new OatHeader_079(reader);
+					case OatConstants.OAT_VERSION_088:
+						return new OatHeader_088(reader);
+					case OatConstants.OAT_VERSION_124:
+						return new OatHeader_124(reader);
+					case OatConstants.OAT_VERSION_126:
+						return new OatHeader_126(reader);
+					case OatConstants.OAT_VERSION_131:
+						return new OatHeader_131(reader);
+					case OatConstants.OAT_VERSION_138:
+						return new OatHeader_138(reader);
+					case OatConstants.OAT_VERSION_170:
+						return new OatHeader_170(reader);
+					case OatConstants.OAT_VERSION_183:
+						return new OatHeader_183(reader);
+					case OatConstants.OAT_VERSION_195:
+						return new OatHeader_195(reader);
+					case OatConstants.OAT_VERSION_199:
+						return new OatHeader_199(reader);
+					case OatConstants.OAT_VERSION_220:
+						return new OatHeader_220(reader);
+					case OatConstants.OAT_VERSION_223:
+						return new OatHeader_223(reader);
+					case OatConstants.OAT_VERSION_225:
+						return new OatHeader_225(reader);
 				}
 			}
 		}

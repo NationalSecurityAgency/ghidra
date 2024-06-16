@@ -58,7 +58,7 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	 * @param tool the tool this plugin is added to
 	 */
 	public GhidraScriptMgrPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 
 		// Each tool starts a new script manager plugin, but we only ever want one bundle host.
 		// GhidraScriptUtil (creates and) manages one instance.
@@ -78,14 +78,12 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	public void readConfigState(SaveState saveState) {
 		super.readConfigState(saveState);
 		provider.readConfigState(saveState);
-		GhidraScriptEditorComponentProvider.restoreState(saveState);
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
 		super.writeConfigState(saveState);
 		provider.writeConfigState(saveState);
-		GhidraScriptEditorComponentProvider.saveState(saveState);
 	}
 
 	GhidraState getCurrentState() {

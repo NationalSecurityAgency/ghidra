@@ -63,7 +63,17 @@ public enum Platform {
 	/**
 	 * Identifies a macOS ARM 64-bit OS.
 	 */
-	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".so", ""),
+	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".dylib", ""),
+
+	/**
+	 * Identifies a FreeBSD x86 64-bit OS.
+	 */
+	FREEBSD_X86_64(OperatingSystem.FREE_BSD, Architecture.X86_64, "freebsd_x86_64", ".so", ""),
+
+	/**
+	 * Identifies a FreeBSD ARM 64-bit OS.
+	 */
+	FREEBSD_ARM_64(OperatingSystem.FREE_BSD, Architecture.ARM_64, "freebsd_arm_64", ".so", ""),
 
 	/**
 	 * Identifies an unsupported OS.
@@ -199,13 +209,25 @@ public enum Platform {
 	 */
 	public List<String> getAdditionalLibraryPaths() {
 		List<String> paths = new ArrayList<String>();
-		if (operatingSystem == OperatingSystem.LINUX) {
+		if (operatingSystem == OperatingSystem.LINUX ||
+			operatingSystem == OperatingSystem.FREE_BSD) {
 			paths.add("/bin");
 			paths.add("/lib");
+			paths.add("/lib64");
+			paths.add("/lib/x86_64-linux-gnu");
+			paths.add("/lib/aarch64-linux-gnu");
 			paths.add("/usr/bin");
 			paths.add("/usr/lib");
 			paths.add("/usr/X11R6/bin");
 			paths.add("/usr/X11R6/lib");
+		}
+		else if (operatingSystem == OperatingSystem.MAC_OS_X) {
+			paths.add("/System/Library/dyld/dyld_shared_cache_arm64e");
+			paths.add("/System/Library/dyld/dyld_shared_cache_x86_64");
+			paths.add("/System/Library/dyld/dyld_shared_cache_x86_64h");
+			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e");
+			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64");
+			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64h");
 		}
 		else if (CURRENT_PLATFORM == WIN_X86_64) {
 			String windir = System.getenv("SystemRoot");

@@ -150,7 +150,11 @@ public final class ReferenceUtils {
 		if (cu instanceof Data) {
 			// Update the code unit for the composite data like structures and arrays, as the
 			// call to getCodeUnitContaining() gets the outermost data, not the inner-most.
-			cu = getDeepestDataContaining(address, program);
+			CodeUnit deepestCu = getDeepestDataContaining(address, program);
+			if (deepestCu != null) {
+				cu = deepestCu;
+			}
+
 		}
 
 		if (cu.getMinAddress().equals(address)) {
@@ -318,7 +322,7 @@ public final class ReferenceUtils {
 			findDataTypeMatchesOutsideOfListing(asSet, program, dataType, fieldMatcher, monitor);
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	private static Accumulator<LocationReference> asSet(
@@ -1037,7 +1041,7 @@ public final class ReferenceUtils {
 		Listing listing = program.getListing();
 		DataIterator dataIter = listing.getDefinedData(true);
 		while (dataIter.hasNext() && !monitor.isCancelled()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data data = dataIter.next();
 			getMatchingDataTypesReferencesFromDataAndSubData(accumulator, data, fieldMatcher,
@@ -1149,7 +1153,7 @@ public final class ReferenceUtils {
 
 		int numComponents = data.getNumComponents();
 		for (int i = 0; i < numComponents; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data subData = data.getComponent(i);
 			getMatchingDataTypesReferencesFromDataAndSubData(accumulator, subData, fieldMatcher,
@@ -1206,7 +1210,7 @@ public final class ReferenceUtils {
 		//
 
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function function = iterator.next();
 			Address entryPoint = function.getEntryPoint();
@@ -1329,11 +1333,18 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		AddressSet offcut = new AddressSet(cu.getMinAddress().add(1), cu.getMaxAddress());
+		Address minAddress = cu.getMinAddress();
+		Address maxAddress = cu.getMaxAddress();
+		if (minAddress.equals(maxAddress)) {
+			// not sure when this can happen; have seen in the wild
+			return;
+		}
+
+		AddressSet offcut = new AddressSet(minAddress.add(1), maxAddress);
 		AddressIterator addresses = referenceManager.getReferenceDestinationIterator(offcut, true);
 		Address codeUnitAddress = cu.getAddress();
 		while (addresses.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = addresses.next();
 			if (addr.equals(codeUnitAddress)) {
@@ -1388,7 +1399,7 @@ public final class ReferenceUtils {
 		}
 
 		for (Address thunkAddr : thunkAddrs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Reference ref = new ThunkReference(thunkAddr, func.getEntryPoint());
 			consumer.accept(new LocationReference(ref, false));

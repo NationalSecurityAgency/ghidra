@@ -20,8 +20,9 @@ import ghidra.app.util.bin.format.coff.CoffFileHeader;
 import ghidra.app.util.bin.format.coff.CoffRelocation;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.classfinder.ExtensionPoint;
-import ghidra.util.exception.NotFoundException;
 
 /**
  * An abstract class used to perform COFF relocations.  Classes should extend this class to
@@ -44,12 +45,15 @@ public interface CoffRelocationHandler extends ExtensionPoint {
 	 * @param address The address at which to perform the relocation.
 	 * @param relocation The relocation information to use to perform the relocation.
 	 * @param relocationContext relocation context data
+	 * @return applied relocation result (conveys status and applied byte-length)
 	 * @throws MemoryAccessException If there is a problem accessing memory during the relocation.
-	 * @throws NotFoundException If this handler didn't find a way to perform the relocation.
 	 * @throws RelocationException if supported relocation encountered an error during processing.
+	 * This exception should be thrown in place of returning {@link RelocationResult#FAILURE} or
+	 * a status of {@link Status#FAILURE} which will facilitate a failure reason via 
+	 * {@link RelocationException#getMessage()}.
 	 */
-	public void relocate(Address address, CoffRelocation relocation,
+	public RelocationResult relocate(Address address, CoffRelocation relocation,
 			CoffRelocationContext relocationContext)
-			throws MemoryAccessException, NotFoundException, RelocationException;
+			throws MemoryAccessException, RelocationException;
 
 }

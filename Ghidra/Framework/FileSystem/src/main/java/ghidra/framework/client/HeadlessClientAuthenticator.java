@@ -17,11 +17,12 @@ package ghidra.framework.client;
 
 import java.awt.Component;
 import java.io.*;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
+import java.net.*;
 import java.security.InvalidKeyException;
 
 import javax.security.auth.callback.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.remote.AnonymousCallback;
 import ghidra.framework.remote.SSHSignatureCallback;
@@ -39,18 +40,37 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 
 	private static Object sshPrivateKey;
 	private static String userID = ClientUtil.getUserName(); // default username
-	private static boolean passwordPromptAlowed;
+	private static boolean passwordPromptAllowed;
 
 	private Authenticator authenticator = new Authenticator() {
 		@Override
 		protected PasswordAuthentication getPasswordAuthentication() {
 			Msg.debug(this, "PasswordAuthentication requested for " + getRequestingURL());
+			String usage = null;
 			String prompt = getRequestingPrompt();
+			if ("security".equals(prompt)) {
+				prompt = null; // squash generic "security" prompt
+			}
+			URL requestingURL = getRequestingURL();
+			if (requestingURL != null) {
+				URL minimalURL = null;
+				try {
+					minimalURL = new URL(requestingURL, "/");
+				}
+				catch (MalformedURLException e) {
+					// ignore
+				}
+				usage = "Access password requested for " +
+					(minimalURL != null ? minimalURL.toExternalForm()
+							: requestingURL.getAuthority());
+				prompt = "Password:";
+			}
 			if (prompt == null) {
+				// Assume Ghidra Server access
 				String host = getRequestingHost();
 				prompt = (host != null ? (host + " ") : "") + "(" + userID + ") Password:";
 			}
-			return new PasswordAuthentication(userID, getPassword(null, prompt));
+			return new PasswordAuthentication(userID, getPassword(usage, prompt));
 		}
 	};
 
@@ -75,7 +95,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	 */
 	public static void installHeadlessClientAuthenticator(String username, String keystorePath,
 			boolean allowPasswordPrompt) throws IOException {
-		passwordPromptAlowed = allowPasswordPrompt;
+		passwordPromptAllowed = allowPasswordPrompt;
 		if (username != null) {
 			userID = username;
 		}
@@ -117,7 +137,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 				success = true;
 				Msg.info(HeadlessClientAuthenticator.class, "Loaded SSH key: " + keystorePath);
 			}
-			catch (InvalidKeyException e) { // keyfile is not a valid SSH provate key format
+			catch (InvalidKeyException e) { // keyfile is not a valid SSH private key format
 				// does not appear to be an SSH private key - try PKI keystore parse
 				if (ApplicationKeyManagerFactory.setKeyStore(keystorePath, false)) {
 					success = true;
@@ -140,7 +160,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 
 	private char[] getPassword(String usage, String prompt) {
 
-		if (!passwordPromptAlowed) {
+		if (!passwordPromptAllowed) {
 			Msg.warn(this, "Headless client not configured to supply required password");
 			return BADPASSWORD;
 		}
@@ -208,7 +228,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
 			NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,
 			AnonymousCallback anonymousCb, String loginError) {
-		if (anonymousCb != null && !passwordPromptAlowed) {
+		if (anonymousCb != null && !passwordPromptAllowed) {
 			// Assume that login error will not occur with anonymous login
 			anonymousCb.setAnonymousAccessRequested(true);
 			return true;
@@ -238,7 +258,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	@Override
 	public char[] getKeyStorePassword(String keystorePath, boolean passwordError) {
 		if (passwordError) {
-			if (passwordPromptAlowed) {
+			if (passwordPromptAllowed) {
 				Msg.error(this, "Incorrect keystore password specified: " + keystorePath);
 			}
 			else {

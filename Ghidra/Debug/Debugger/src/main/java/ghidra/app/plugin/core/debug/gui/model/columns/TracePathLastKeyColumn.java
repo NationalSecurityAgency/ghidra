@@ -22,11 +22,19 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectValPath;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class TracePathLastKeyColumn extends AbstractDynamicTableColumn<PathRow, String, Trace> {
+	private final TracePathColumnRenderer<String> renderer = new TracePathColumnRenderer<>();
+
 	@Override
 	public String getColumnName() {
 		return "Key";
+	}
+
+	@Override
+	public GColumnRenderer<String> getColumnRenderer() {
+		return renderer;
 	}
 
 	@Override

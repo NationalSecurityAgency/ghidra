@@ -24,8 +24,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.Field;
@@ -53,7 +52,7 @@ import ghidra.test.TestEnv;
 public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private static final String COMMENTS_CHECK_BOX_TEXT =
-		"<HTML>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>";
+		"<html>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>";
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -179,7 +178,7 @@ public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 		closeProgram();
 
 		assertFalse(isEnabled(clearAction, cb.getProvider()));
-		assertFalse(clearAction.isEnabledForContext(new ActionContext()));
+		assertFalse(clearAction.isEnabledForContext(new DefaultActionContext()));
 
 		showTool(tool);
 		loadProgram("notepad");

@@ -23,10 +23,12 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -37,7 +39,6 @@ import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Assuming a function <b>foo</b>, this plugin will show all callers of <b>foo</b> and all 
@@ -58,16 +59,15 @@ import resources.ResourceManager;
 public class CallTreePlugin extends ProgramPlugin {
 
 	static final Icon PROVIDER_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
-	static final Icon FUNCTION_ICON = ResourceManager.loadImage("images/FunctionScope.gif");
-	static final Icon RECURSIVE_ICON =
-		ResourceManager.loadImage("images/arrow_rotate_clockwise.png");
+	static final Icon FUNCTION_ICON = new GIcon("icon.plugin.calltree.function");
+	static final Icon RECURSIVE_ICON = new GIcon("icon.plugin.calltree.recursive");
 
 	private List<CallTreeProvider> providers = new ArrayList<>();
 	private DockingAction showCallTreeFromMenuAction;
 	private CallTreeProvider primaryProvider;
 
 	public CallTreePlugin(PluginTool tool) {
-		super(tool, true, false, false);
+		super(tool);
 
 		createActions();
 		primaryProvider = new CallTreeProvider(this, true);
@@ -103,6 +103,16 @@ public class CallTreePlugin extends ProgramPlugin {
 	}
 
 	@Override
+	public void readConfigState(SaveState saveState) {
+		primaryProvider.readConfigState(saveState);
+	}
+
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		primaryProvider.writeConfigState(saveState);
+	}
+
+	@Override
 	protected void dispose() {
 		List<CallTreeProvider> copy = new ArrayList<>(providers);
 		for (CallTreeProvider provider : copy) {
@@ -127,23 +137,22 @@ public class CallTreePlugin extends ProgramPlugin {
 
 		// use the name of the provider so that the shared key binding data will get used
 		String actionName = "Static Function Call Trees";
-		showCallTreeFromMenuAction =
-			new DockingAction(actionName, getName()) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					showOrCreateNewCallTree(currentLocation);
-				}
+		showCallTreeFromMenuAction = new DockingAction(actionName, getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				showOrCreateNewCallTree(currentLocation);
+			}
 
-				@Override
-				public boolean isAddToPopup(ActionContext context) {
-					return (context instanceof ListingActionContext);
-				}
-			};
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				return (context instanceof ListingActionContext);
+			}
+		};
 
 		showCallTreeFromMenuAction.setPopupMenuData(new MenuData(
 			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, "ShowReferencesTo"));
-		showCallTreeFromMenuAction.setHelpLocation(
-			new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
+		showCallTreeFromMenuAction
+				.setHelpLocation(new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
 		showCallTreeFromMenuAction.setDescription("Shows the Function Call Trees window for the " +
 			"item under the cursor.  The new window will not change along with the Listing cursor.");
 		tool.addAction(showCallTreeFromMenuAction);
@@ -151,6 +160,10 @@ public class CallTreePlugin extends ProgramPlugin {
 
 	private void creatAndShowProvider() {
 		CallTreeProvider provider = new CallTreeProvider(this, false);
+
+		CallTreeOptions callTreeOptions = primaryProvider.getCallTreeOptions();
+		provider.setCallTreeOptions(callTreeOptions);
+
 		providers.add(provider);
 		provider.initialize(currentProgram, currentLocation);
 		tool.showComponentProvider(provider, true);

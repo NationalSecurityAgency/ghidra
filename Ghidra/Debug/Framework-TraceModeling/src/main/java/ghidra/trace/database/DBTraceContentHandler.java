@@ -29,13 +29,19 @@ import ghidra.framework.store.*;
 import ghidra.trace.model.Trace;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceContentHandler extends DBContentHandler {
+public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace> {
 	public static final String TRACE_CONTENT_TYPE = "Trace";
+
+	public static final Icon TRACE_ICON = Trace.TRACE_ICON;
+
+	static final Class<DBTrace> TRACE_DOMAIN_OBJECT_CLASS = DBTrace.class;
+	static final String TRACE_CONTENT_DEFAULT_TOOL = "Debugger";
+
+	private static final DBTraceLinkContentHandler linkHandler = new DBTraceLinkContentHandler();
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
@@ -48,7 +54,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
+	public DBTrace getImmutableObject(FolderItem item, Object consumer, int version,
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 		String contentType = item.getContentType();
@@ -63,7 +69,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
-			DBOpenMode openMode = DBOpenMode.READ_ONLY;
+			OpenMode openMode = OpenMode.IMMUTABLE;
 			trace = new DBTrace(dbh, openMode, monitor, consumer);
 			getTraceChangeSet(trace, bf);
 			success = true;
@@ -78,7 +84,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -96,7 +102,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
+	public DBTrace getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		String contentType = item.getContentType();
@@ -111,7 +117,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.open(version);
 			dbh = new DBHandle(bf);
-			DBOpenMode openMode = okToUpgrade ? DBOpenMode.UPGRADE : DBOpenMode.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			trace = new DBTrace(dbh, openMode, monitor, consumer);
 			getTraceChangeSet(trace, bf);
 			trace.setTraceUserData(new DBTraceUserData(trace));
@@ -128,7 +134,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -146,7 +152,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
+	public DBTrace getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean recover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 		String contentType = item.getContentType();
@@ -161,7 +167,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.openForUpdate(checkoutId);
 			dbh = new DBHandle(bf, recover, monitor);
-			DBOpenMode openMode = okToUpgrade ? DBOpenMode.UPGRADE : DBOpenMode.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			trace = new DBTrace(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
 				getTraceChangeSet(trace, bf);
@@ -183,7 +189,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -267,7 +273,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
-			DBOpenMode openMode = DBOpenMode.READ_ONLY;
+			OpenMode openMode = OpenMode.IMMUTABLE;
 			trace = new DBTrace(dbh, openMode, null, this);
 			return getTraceChangeSet(trace, bf);
 		}
@@ -280,7 +286,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (trace != null) {
@@ -296,8 +302,8 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public Class<? extends DomainObject> getDomainObjectClass() {
-		return DBTrace.class;
+	public Class<DBTrace> getDomainObjectClass() {
+		return TRACE_DOMAIN_OBJECT_CLASS;
 	}
 
 	@Override
@@ -312,12 +318,12 @@ public class DBTraceContentHandler extends DBContentHandler {
 
 	@Override
 	public String getDefaultToolName() {
-		return "Debugger"; // TODO: Actually make this tool
+		return TRACE_CONTENT_DEFAULT_TOOL;
 	}
 
 	@Override
 	public Icon getIcon() {
-		return Trace.TRACE_ICON;
+		return TRACE_ICON;
 	}
 
 	@Override
@@ -330,5 +336,10 @@ public class DBTraceContentHandler extends DBContentHandler {
 			DomainObject originalObj, DomainObject latestObj) {
 		// TODO:
 		return null;
+	}
+
+	@Override
+	public DBTraceLinkContentHandler getLinkHandler() {
+		return linkHandler;
 	}
 }

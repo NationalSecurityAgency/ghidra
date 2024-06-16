@@ -1,17 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language_definitions>
-  <language processor="HCS12"
+  <language processor="HC-12"
+            endian="big"
+            size="16"
+            variant="default"
+            version="2.0"
+            slafile="HC12.sla"
+            processorspec="HC12.pspec"
+            manualindexfile="../manuals/HCS12.idx"
+            id="HC-12:BE:16:default">
+    <description>HC12 Microcontroller Family</description>
+    <compiler name="default" spec="HC12.cspec" id="default"/>
+    <external_name tool="gnu" name="m68hc12"/>
+  </language>
+  <language processor="HCS-12"
             endian="big"
             size="24"
             variant="default"
-            version="1.0"
+            version="2.0"
             slafile="HCS12.sla"
             processorspec="HCS12.pspec"
             manualindexfile="../manuals/HCS12.idx"
+            id="HCS-12:BE:24:default">
+    <description>HCS12 Microcontroller Family</description>
+    <compiler name="default" spec="HCS12.cspec" id="default"/>
+    <external_name tool="gnu" name="m9s12x"/>
+  </language>
+  <language processor="HCS-12X"
+            endian="big"
+            size="24"
+            variant="default"
+            version="2.0"
+            slafile="HCS12X.sla"
+            processorspec="HCS12X.pspec"
+            manualindexfile="../manuals/HCS12.idx"
+            id="HCS-12X:BE:24:default">
+    <description>HCS12X Microcontroller Family</description>
+    <compiler name="default" spec="HCS12X.cspec" id="default"/>
+    <external_name tool="gnu" name="m9s12x"/>
+  </language>
+  
+  <!-- deprecated HCS12, which was equivalent to HCS12X, allows opening of existing Programs which use the old ID -->
+  <language processor="HCS-12X"
+            deprecated="true"
+            endian="big"
+            size="24"
+            variant="default"
+            version="2.0"
+            slafile="HCS12X.sla"
+            processorspec="HCS12X.pspec"
+            manualindexfile="../manuals/HCS12.idx"
             id="HCS12:BE:24:default">
     <description>HCS12X Microcontroller Family</description>
-    <compiler name="default" spec="HCS12.cspec" id="default"/>
+    <compiler name="default" spec="HCS12X.cspec" id="default"/>
     <external_name tool="gnu" name="m9s12x"/>
   </language>
 </language_definitions>

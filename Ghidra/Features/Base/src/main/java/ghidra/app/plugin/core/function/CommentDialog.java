@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,119 +15,116 @@
  */
 package ghidra.app.plugin.core.function;
 
-import ghidra.app.util.PluginConstants;
-import ghidra.framework.plugintool.PluginTool;
-
 import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
+import ghidra.framework.plugintool.PluginTool;
 
-abstract class CommentDialog extends DialogComponentProvider {
-    private JTextArea commentsField;
+abstract class CommentDialog extends ReusableDialogComponentProvider {
+	private JTextArea commentsField;
 
-    private boolean applyWasDone;
-    private String origComments;
+	private boolean applyWasDone;
+	private String origComments;
 
-    protected FunctionPlugin plugin;
+	protected FunctionPlugin plugin;
 
-    CommentDialog(FunctionPlugin plugin) {
-        // changed name
-        super("Set Comment");
-        addWorkPanel(createPanel());
-        addListeners();
+	CommentDialog(FunctionPlugin plugin) {
+		// changed name
+		super("Set Comment");
+		addWorkPanel(createPanel());
+		addListeners();
 
-        addOKButton();
-        addApplyButton();
-        addCancelButton();
-        this.plugin = plugin;
-    }
+		addOKButton();
+		addApplyButton();
+		addCancelButton();
+		this.plugin = plugin;
+	}
 
-    void showDialog(String comment) {
-        applyWasDone = true;
-        origComments = comment;
+	void showDialog(String comment) {
+		applyWasDone = true;
+		origComments = comment;
 
-        commentsField.setText(origComments);
-        if (origComments != null && origComments.length() > 0) {
-            commentsField.selectAll();
-        }
-        PluginTool tool = plugin.getTool();
-        tool.showDialog( this, tool.getComponentProvider( 
-            PluginConstants.CODE_BROWSER ));
-    }
-    
-    /////////////////////////////////////////////
-    // *** GhidraDialog "callback" methods ***
-    /////////////////////////////////////////////
+		commentsField.setText(origComments);
+		if (origComments != null && origComments.length() > 0) {
+			commentsField.selectAll();
+		}
+		PluginTool tool = plugin.getTool();
+		tool.showDialog(this);
+	}
 
-    /**
-     * Callback for the cancel button.
-     */
-    @Override
-    protected void cancelCallback() {
-        close();
-    }
+	/////////////////////////////////////////////
+	// *** GhidraDialog "callback" methods ***
+	/////////////////////////////////////////////
 
-    /**
-     * Callback for the OK button.
-     */
-    @Override
-    protected void okCallback() {
-        applyCallback();
-        close();
-    }
+	/**
+	 * Callback for the cancel button.
+	 */
+	@Override
+	protected void cancelCallback() {
+		close();
+	}
 
-    /**
-     * Callback for the Apply button.
-     */
-    @Override
-    protected void applyCallback() {
-        if (!applyWasDone) {
-            // Apply was hit
-            origComments = commentsField.getText();
-            doApply(origComments);
-            applyWasDone = true;
-        }
-    }
-    
-    abstract protected void doApply(String comment);
+	/**
+	 * Callback for the OK button.
+	 */
+	@Override
+	protected void okCallback() {
+		applyCallback();
+		close();
+	}
 
-    ////////////////////////////////////////////////////////////////////
-    // ** private methods **
-    ////////////////////////////////////////////////////////////////////
+	/**
+	 * Callback for the Apply button.
+	 */
+	@Override
+	protected void applyCallback() {
+		if (!applyWasDone) {
+			// Apply was hit
+			origComments = commentsField.getText();
+			doApply(origComments);
+			applyWasDone = true;
+		}
+	}
 
-    /**
-     * Create the panel for the dialog.
-     */
-    private JPanel createPanel() {
+	abstract protected void doApply(String comment);
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
+	////////////////////////////////////////////////////////////////////
+	// ** private methods **
+	////////////////////////////////////////////////////////////////////
 
-        JPanel p = new JPanel();
-        commentsField = new JTextArea(10, 50);
-        commentsField.setLineWrap(true);
-        commentsField.setWrapStyleWord(true);
-        JScrollPane scrollP = new JScrollPane(commentsField);
+	/**
+	 * Create the panel for the dialog.
+	 */
+	private JPanel createPanel() {
 
-        p.add(scrollP);
-        panel.add(scrollP, BorderLayout.CENTER);
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
 
-        return panel;
-    }
+		JPanel p = new JPanel();
+		commentsField = new JTextArea(10, 50);
+		commentsField.setLineWrap(true);
+		commentsField.setWrapStyleWord(true);
+		JScrollPane scrollP = new JScrollPane(commentsField);
 
-    /**
-     * Add listeners to the radio buttons.
-     */
-    private void addListeners() {
-        commentsField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                applyWasDone = false;
-            }
-        });
-    }
+		p.add(scrollP);
+		panel.add(scrollP, BorderLayout.CENTER);
+
+		return panel;
+	}
+
+	/**
+	 * Add listeners to the radio buttons.
+	 */
+	private void addListeners() {
+		commentsField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				applyWasDone = false;
+			}
+		});
+	}
 }

@@ -18,15 +18,26 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 
 import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.PcodeMachine.SwiMode;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A sequence of emulator stepping commands, essentially comprising a "point in time."
+ */
 public class TraceSchedule implements Comparable<TraceSchedule> {
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
 
+	/**
+	 * Create a schedule that consists solely of a snapshot
+	 * 
+	 * @param snap the snapshot key
+	 * @return the schedule
+	 */
 	public static final TraceSchedule snap(long snap) {
 		return new TraceSchedule(snap, new Sequence(), new Sequence());
 	}
@@ -336,11 +347,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public void execute(Trace trace, PcodeMachine<?> machine, TaskMonitor monitor)
 			throws CancelledException {
+		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		TraceThread lastThread = getEventThread(trace);
-		lastThread =
-			steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
-		lastThread =
-			pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
+		lastThread = steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
+		lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 	}
 
 	/**
@@ -379,6 +389,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			TaskMonitor monitor) throws CancelledException {
 		TraceThread lastThread = position.getLastThread(trace);
 		Sequence remains = steps.relativize(position.steps);
+		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		if (remains.isNop()) {
 			Sequence pRemains = this.pSteps.relativize(position.pSteps);
 			lastThread =
@@ -387,8 +398,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		else {
 			lastThread =
 				remains.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
-			lastThread =
-				pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
+			lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 		}
 	}
 
@@ -480,6 +490,19 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
+	 * Behaves as in {@link #steppedPcodeForward(TraceThread, int)}, but by appending skips
+	 * 
+	 * @param thread the thread to step, or null for the "last thread"
+	 * @param pTickCount the number of p-code skips to take the thread forward
+	 * @return the resulting schedule
+	 */
+	public TraceSchedule skippedPcodeForward(TraceThread thread, int pTickCount) {
+		Sequence pTicks = this.pSteps.clone();
+		pTicks.advance(new SkipStep(thread == null ? -1 : thread.getKey(), pTickCount));
+		return new TraceSchedule(snap, steps.clone(), pTicks);
+	}
+
+	/**
 	 * Returns the equivalent of executing count p-code operations less than this schedule
 	 * 
 	 * <p>
@@ -510,16 +533,16 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @param sleigh a single line of sleigh, excluding the terminating semicolon.
 	 * @return the resulting schedule
 	 */
-	public TraceSchedule patched(TraceThread thread, String sleigh) {
+	public TraceSchedule patched(TraceThread thread, Language language, String sleigh) {
 		if (!this.pSteps.isNop()) {
 			Sequence pTicks = this.pSteps.clone();
 			pTicks.advance(new PatchStep(thread.getKey(), sleigh));
-			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
+			pTicks.coalescePatches(language);
 			return new TraceSchedule(snap, steps.clone(), pTicks);
 		}
 		Sequence ticks = this.steps.clone();
 		ticks.advance(new PatchStep(keyOf(thread), sleigh));
-		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
+		ticks.coalescePatches(language);
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
 
@@ -530,20 +553,62 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @param sleigh the lines of sleigh, excluding the terminating semicolons.
 	 * @return the resulting schedule
 	 */
-	public TraceSchedule patched(TraceThread thread, List<String> sleigh) {
+	public TraceSchedule patched(TraceThread thread, Language language, List<String> sleigh) {
 		if (!this.pSteps.isNop()) {
 			Sequence pTicks = this.pSteps.clone();
 			for (String line : sleigh) {
 				pTicks.advance(new PatchStep(thread.getKey(), line));
 			}
-			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
+			pTicks.coalescePatches(language);
 			return new TraceSchedule(snap, steps.clone(), pTicks);
 		}
 		Sequence ticks = this.steps.clone();
 		for (String line : sleigh) {
 			ticks.advance(new PatchStep(thread.getKey(), line));
 		}
-		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
+		ticks.coalescePatches(language);
 		return new TraceSchedule(snap, ticks, new Sequence());
+	}
+
+	/**
+	 * Compute the schedule resulting from this schedule advanced by the given schedule
+	 * 
+	 * <p>
+	 * This operation cannot be used to append instruction steps after p-code steps. Thus, if this
+	 * schedule contains any p-code steps and {@code} next has instruction steps, an error will be
+	 * 
+	 * @param next the schedule to append. Its snap is ignored.
+	 * @return the complete schedule
+	 * @throws IllegalArgumentException if the result would have instruction steps following p-code
+	 *             steps
+	 */
+	public TraceSchedule advanced(TraceSchedule next) {
+		if (this.pSteps.isNop()) {
+			Sequence ticks = this.steps.clone();
+			ticks.advance(next.steps);
+			return new TraceSchedule(this.snap, ticks, next.pSteps.clone());
+		}
+		else if (next.steps.isNop()) {
+			Sequence pTicks = this.steps.clone();
+			pTicks.advance(next.pSteps);
+			return new TraceSchedule(this.snap, this.steps.clone(), pTicks);
+		}
+		throw new IllegalArgumentException("Cannot have instructions steps following p-code steps");
+	}
+
+	/**
+	 * Get the threads involved in the schedule
+	 * 
+	 * @param trace the trace whose threads to get
+	 * @return the set of threads
+	 */
+	public Set<TraceThread> getThreads(Trace trace) {
+		Set<TraceThread> result = new HashSet<>();
+		TraceThread lastThread = getEventThread(trace);
+		lastThread = steps.collectThreads(result, trace, lastThread);
+		lastThread = pSteps.collectThreads(result, trace, lastThread);
+		result.add(lastThread);
+		result.remove(null);
+		return result;
 	}
 }

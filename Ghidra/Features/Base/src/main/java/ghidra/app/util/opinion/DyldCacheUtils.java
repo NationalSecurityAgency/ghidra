@@ -21,8 +21,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
+import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
 import ghidra.program.model.address.Address;
@@ -98,42 +97,45 @@ public class DyldCacheUtils {
 	}
 
 	/**
-	 * Class to store a "split" DYLD Cache, which is split across several files (base file, .1, .2,
-	 * .symbols, etc).
+	 * Class to store a "split" DYLD Cache, which is split across several subcache files (base file,
+	 * .1, .2, .symbols, etc).
 	 */
 	public static class SplitDyldCache implements Closeable {
 
 		private List<ByteProvider> providers = new ArrayList<>();
 		private List<DyldCacheHeader> headers = new ArrayList<>();
+		private List<String> names = new ArrayList<>();
 		private FileSystemService fsService;
 
 		/**
 		 * Creates a new {@link SplitDyldCache}
 		 * 
 		 * @param baseProvider The {@link ByteProvider} of the "base" DYLD Cache file
-		 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
-		 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
+		 * @param shouldProcessLocalSymbols True if local symbols should be processed; otherwise, 
+		 *   false
 		 * @param log The log
 		 * @param monitor A cancelable task monitor
 		 * @throws IOException If there was an IO-related issue with processing the split DYLD Cache
 		 * @throws CancelledException If the user canceled the operation
 		 */
-		public SplitDyldCache(ByteProvider baseProvider, boolean shouldProcessSymbols,
-				boolean shouldCombineSplitFiles, MessageLog log, TaskMonitor monitor)
-				throws IOException, CancelledException {
+		public SplitDyldCache(ByteProvider baseProvider, boolean shouldProcessLocalSymbols,
+				MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
 
 			// Setup "base" DYLD Cache
 			monitor.setMessage("Parsing " + baseProvider.getName() + " headers...");
 			providers.add(baseProvider);
 			DyldCacheHeader baseHeader = new DyldCacheHeader(new BinaryReader(baseProvider, true));
-			baseHeader.parseFromFile(shouldProcessSymbols, log, monitor);
+			baseHeader.parseFromFile(shouldProcessLocalSymbols, log, monitor);
 			headers.add(baseHeader);
+			names.add(baseProvider.getName());
 
-			// Setup additional "split" DYLD Caches (if applicable)
-			if (!shouldCombineSplitFiles) {
+			// Setup additional "split" DYLD subcaches (if applicable)
+			if (baseHeader.getSubcacheEntries().size() == 0 &&
+				baseHeader.getSymbolFileUUID() == null) {
 				return;
 			}
 			fsService = FileSystemService.getInstance();
+			Map<String, FSRL> uuidToFileMap = new HashMap<>();
 			for (FSRL splitFSRL : findSplitDyldCacheFiles(baseProvider.getFSRL(), monitor)) {
 				monitor.setMessage("Parsing " + splitFSRL.getName() + " headers...");
 				ByteProvider splitProvider = fsService.getByteProvider(splitFSRL, false, monitor);
@@ -144,9 +146,37 @@ public class DyldCacheUtils {
 				providers.add(splitProvider);
 				DyldCacheHeader splitHeader =
 					new DyldCacheHeader(new BinaryReader(splitProvider, true));
-				splitHeader.parseFromFile(shouldProcessSymbols, log, monitor);
+				splitHeader.parseFromFile(shouldProcessLocalSymbols, log, monitor);
 				headers.add(splitHeader);
-				log.appendMsg("Including split DYLD: " + splitProvider.getName());
+				names.add(splitFSRL.getName());
+				uuidToFileMap.put(splitHeader.getUUID(), splitFSRL);
+			}
+
+			// Validate the subcaches
+			for (DyldSubcacheEntry subcacheEntry : baseHeader.getSubcacheEntries()) {
+				String uuid = subcacheEntry.getUuid();
+				String extension = subcacheEntry.getCacheExtension();
+				FSRL fsrl = uuidToFileMap.get(uuid);
+				if (fsrl != null) {
+					log.appendMsg("Including subcache: " + fsrl.getName() + " - " + uuid);
+				}
+				else {
+					log.appendMsg(String.format("Missing subcache: %s%s",
+						extension != null ? (baseProvider.getName() + extension + " - ") : "",
+						uuid));
+				}
+			}
+			String symbolUUID = baseHeader.getSymbolFileUUID();
+			if (symbolUUID != null) {
+				FSRL symbolFSRL = uuidToFileMap.get(symbolUUID);
+				if (symbolFSRL != null) {
+					log.appendMsg(
+						"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
+				}
+				else {
+					log.appendMsg(String.format("Missing symbols subcache: %s.symbols - %s",
+						baseProvider.getName(), symbolUUID));
+				}
 			}
 		}
 
@@ -171,12 +201,46 @@ public class DyldCacheUtils {
 		}
 
 		/**
+		 * Gets the i'th {@link String name} in the split DYLD Cache
+		 * 
+		 * @param i The index of the {@link String name} to get
+		 * @return The i'th {@link String name} in the split DYLD Cache
+		 */
+		public String getName(int i) {
+			return names.get(i);
+		}
+
+		/**
 		 * Gets the number of split DYLD Cache files
 		 * 
 		 * @return The number of split DYLD Cache files
 		 */
 		public int size() {
 			return providers.size();
+		}
+		
+		/**
+		 * Gets the base address of the split DYLD cache.  This is where the cache should be loaded 
+		 * in memory.
+		 * 
+		 * @return The base address of the split DYLD cache
+		 */
+		public long getBaseAddress() {
+			return headers.get(0).getBaseAddress();
+		}
+
+		/**
+		 * Gets the {@link DyldCacheLocalSymbolsInfo} from the split DYLD Cache files
+		 * 
+		 * @return The {@link DyldCacheLocalSymbolsInfo} from the split DYLD Cache files, or null 
+		 *   if no local symbols are defined
+		 */
+		public DyldCacheLocalSymbolsInfo getLocalSymbolInfo() {
+			return headers.stream()
+					.map(h -> h.getLocalSymbolsInfo())
+					.filter(info -> info != null)
+					.findAny()
+					.orElse(null);
 		}
 
 		@Override

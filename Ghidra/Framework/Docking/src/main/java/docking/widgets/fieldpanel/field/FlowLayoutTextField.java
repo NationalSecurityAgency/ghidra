@@ -17,7 +17,7 @@ package docking.widgets.fieldpanel.field;
 
 import java.util.*;
 
-import docking.widgets.fieldpanel.support.HighlightFactory;
+import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 
 /**
  * This class provides a TextField implementation that takes multiple AttributedString field
@@ -41,7 +41,7 @@ public class FlowLayoutTextField extends VerticalLayoutTextField {
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
 	public FlowLayoutTextField(FieldElement[] textElements, int startX,
-			int width, int maxLines, HighlightFactory hlFactory) {
+			int width, int maxLines, FieldHighlightFactory hlFactory) {
 		this(Arrays.asList(textElements), startX, width, maxLines, hlFactory);
 	}
 
@@ -58,7 +58,7 @@ public class FlowLayoutTextField extends VerticalLayoutTextField {
 	 * @param hlFactory the highlight factory
 	 */
 	public FlowLayoutTextField(List<FieldElement> elements, int startX,
-			int width, int maxLines, HighlightFactory hlFactory) {
+			int width, int maxLines, FieldHighlightFactory hlFactory) {
 		super(createLineElements(elements, width), startX, width, maxLines, hlFactory, "");
 	}
 

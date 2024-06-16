@@ -18,8 +18,6 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
 
 /**
@@ -52,97 +50,87 @@ import ghidra.util.StringUtilities;
  * 
  * </code></pre>
  */
-public class ElfDynamic implements ByteArrayConverter {
+public class ElfDynamic {
 
-	private ElfHeader elf;
+	private final ElfHeader elf;
 
-	private int d_tag;
-    private long d_val;
+	private final int d_tag;
+	private final long d_val;
 
-	public ElfDynamic(BinaryReader reader, ElfHeader elf)
-			throws IOException {
+	/**
+	 * Construct an ELF dynamic table entry
+	 * @param reader to read dynamic entry at current position 
+	 * 				(reader is not retained, position moves to next entry)
+	 * @param elf ELF header
+	 * @throws IOException if an IO error occurs during parse
+	 */
+	public ElfDynamic(BinaryReader reader, ElfHeader elf) throws IOException {
 		this.elf = elf;
 		if (elf.is32Bit()) {
 			d_tag = reader.readNextInt();
-			d_val = Integer.toUnsignedLong(reader.readNextInt());
-        }
-        else {
+			d_val = reader.readNextUnsignedInt();
+		}
+		else {
 			d_tag = (int) reader.readNextLong();
-            d_val = reader.readNextLong();
-        }
-    }
+			d_val = reader.readNextLong();
+		}
+	}
 
-    /**
-     * Constructs a new ELF dynamic with the specified tag and value.
-     * @param tag     the tag (or type) of this dynamic
-     * @param value   the value (or pointer) of this dynamic
-     * @param elf     the elf header
-     */
+	/**
+	 * Constructs a new ELF dynamic with the specified tag and value.
+	 * @param tag     the tag (or type) of this dynamic
+	 * @param value   the value (or pointer) of this dynamic
+	 * @param elf     the elf header
+	 */
 	public ElfDynamic(int tag, long value, ElfHeader elf) {
-        this.d_tag = tag;
-        this.d_val = value;
+		this.d_tag = tag;
+		this.d_val = value;
 		this.elf = elf;
-    }
+	}
 
-    /**
-     * Constructs a new ELF dynamic with the specified (enum) tag and value.
-     * @param tag     the (enum) tag (or type) of this dynamic
-     * @param value   the value (or pointer) of this dynamic
-     * @param elf     the elf header
-     */
+	/**
+	 * Constructs a new ELF dynamic with the specified (enum) tag and value.
+	 * @param tag     the (enum) tag (or type) of this dynamic
+	 * @param value   the value (or pointer) of this dynamic
+	 * @param elf     the elf header
+	 */
 	public ElfDynamic(ElfDynamicType tag, long value, ElfHeader elf) {
 		this(tag.value, value, elf);
-    }
+	}
 
-    /**
-     * Returns the value that controls the interpretation of the 
-     * the d_val and/or d_ptr.
-     * @return the tag (or type) of this dynamic
-     */
+	/**
+	 * Returns the value that controls the interpretation of the 
+	 * the d_val and/or d_ptr.
+	 * @return the tag (or type) of this dynamic
+	 */
 	public int getTag() {
-        return d_tag;
-    }
+		return d_tag;
+	}
 
-    /**
-     * Returns the enum value that controls the interpretation of the 
-     * the d_val and/or d_ptr (or null if unknown).
-     * @return the enum tag (or type) of this dynamic or null if unknown
-     */
+	/**
+	 * Returns the enum value that controls the interpretation of the 
+	 * the d_val and/or d_ptr (or null if unknown).
+	 * @return the enum tag (or type) of this dynamic or null if unknown
+	 */
 	public ElfDynamicType getTagType() {
 		return elf.getDynamicType(d_tag);
 	}
 
-    /**
-     * Returns the object whose integer values represent various interpretations.
-     * For example, if d_tag == DT_SYMTAB, then d_val holds the address of the symbol table.
-     * But, if d_tag == DT_SYMENT, then d_val holds the size of each symbol entry.
-     * @return the Elf32_Word object represent integer values with various interpretations
-     */
-    public long getValue() {
-        return d_val;
-    }
+	/**
+	 * Returns the object whose integer values represent various interpretations.
+	 * For example, if d_tag == DT_SYMTAB, then d_val holds the address of the symbol table.
+	 * But, if d_tag == DT_SYMENT, then d_val holds the size of each symbol entry.
+	 * @return the Elf32_Word object represent integer values with various interpretations
+	 */
+	public long getValue() {
+		return d_val;
+	}
 
-    /**
-     * Sets the value of this dynamic. The value could be an address or a number.
-     * @param value the new value dynamic
-     */
-    public void setValue(long value) {
-        this.d_val = value;
-    }
-
-    /**
-     * Sets the value of this dynamic. The value could be an address or a number.
-     * @param value the new value dynamic
-     */
-    public void setValue(int value) {
-		this.d_val = Integer.toUnsignedLong(value);
-    }
-
-    /**
-     * A convenience method for getting a string representing the d_tag value.
-     * For example, if d_tag == DT_SYMTAB, then this method returns "DT_SYMTAB".
-     * @return a string representing the d_tag value
-     */
+	/**
+	 * A convenience method for getting a string representing the d_tag value.
+	 * For example, if d_tag == DT_SYMTAB, then this method returns "DT_SYMTAB".
+	 * @return a string representing the d_tag value
+	 */
 	public String getTagAsString() {
 		ElfDynamicType tagType = getTagType();
 		if (tagType != null) {
@@ -156,33 +144,11 @@ public class ElfDynamic implements ByteArrayConverter {
 		return getTagAsString();
 	}
 
-    /**
-     * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
-     */
-    public byte [] toBytes(DataConverter dc) {
-        byte [] bytes = new byte[sizeof()];
-		write(bytes, 0, dc);
-        return bytes;
-    }
-
-	public void write(byte[] data, int offset, DataConverter dc)
-			throws ArrayIndexOutOfBoundsException {
-		if (elf.is32Bit()) {
-			dc.putInt(data, offset, d_tag);
-			dc.putInt(data, offset + 4, (int) d_val);
-		}
-		else {
-			dc.putLong(data, offset, d_tag);
-			dc.putLong(data, offset + 8, d_val);
-		}
-	}
-
-    /**
+	/**
 	 * @return the size in bytes of this object.
 	 */
 	public int sizeof() {
 		return elf.is32Bit() ? 8 : 16;
-    }
+	}
 
 }
-

@@ -39,7 +39,7 @@ import org.xml.sax.*;
  */
 public class SpecXmlUtils {
 
-	static public boolean decodeBoolean(String val) {
+	static public Boolean decodeNullableBoolean(String val) {
 		if (val!=null && val.length()!=0) {
 			switch(val.charAt(0)) {
 			case 'y':
@@ -53,9 +53,25 @@ public class SpecXmlUtils {
 			default:
 			}
 		}
-		return false;		// Should we throw an exception for bad encodings?
+		return null;		// Should we throw an exception for bad encodings?
 	}
 	
+	static public boolean decodeBoolean(String val) {
+		Boolean returnValue = decodeNullableBoolean(val);
+		if (returnValue != null) {
+			return returnValue;
+		}
+		return false;
+	}
+	
+	static public boolean decodeBoolean(String val, boolean defaultValue) {
+		Boolean returnValue = decodeNullableBoolean(val);
+		if (returnValue != null) {
+			return returnValue;
+		}
+		return defaultValue;
+	}
+
 	static public String encodeBoolean(boolean val) {
 		return val ? "true" : "false";
 	}

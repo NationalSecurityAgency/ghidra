@@ -18,16 +18,16 @@ package docking;
 import javax.swing.Icon;
 
 import docking.widgets.label.GIconLabel;
+import generic.theme.GIcon;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
-import resources.ResourceManager;
 
 /**
  * A class to handle the space requirements on the status bar that vary for different OSes.  For 
  * example, the Mac requires extra space on the status bar, due to the drag icon the Mac uses.
  */
 public class StatusBarSpacer extends GIconLabel {
-	private static Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon.gif");
+	private static Icon EMPTY_ICON = new GIcon("icon.empty.20");
 
 	public StatusBarSpacer() {
 		super(

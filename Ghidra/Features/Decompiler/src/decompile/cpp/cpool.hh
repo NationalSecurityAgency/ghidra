@@ -16,10 +16,12 @@
 /// \file cpool.hh
 /// \brief Definitions to support a constant pool for \e deferred compilation languages (i.e. java byte-code)
 
-#ifndef __CPOOL__
-#define __CPOOL__
+#ifndef __CPOOL_HH__
+#define __CPOOL_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_A;		///< Marshaling attribute "a"
 extern AttributeId ATTRIB_B;		///< Marshaling attribute "b"
@@ -205,4 +207,5 @@ public:
   virtual void decode(Decoder &decoder,TypeFactory &typegrp);
 };
 
+} // End namespace ghidra
 #endif

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,13 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class ConstantValue extends PatternValue {
 
@@ -32,16 +29,11 @@ public class ConstantValue extends PatternValue {
 
 	public ConstantValue(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public ConstantValue(Location location, long v) {
 		super(location);
 		val = v;
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) {
-		return val;
 	}
 
 	@Override
@@ -65,15 +57,10 @@ public class ConstantValue extends PatternValue {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<intb val=\"");
-		s.print(val);
-		s.append("\"/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, Translate trans) {
-		val = XmlUtils.decodeUnknownLong(el.getAttributeValue("val"));
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_INTB);
+		encoder.writeSignedInteger(ATTRIB_VAL, val);
+		encoder.closeElement(ELEM_INTB);
 	}
 
 }

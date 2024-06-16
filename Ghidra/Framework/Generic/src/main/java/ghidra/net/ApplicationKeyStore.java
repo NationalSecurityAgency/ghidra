@@ -23,7 +23,6 @@ import java.util.Date;
 import java.util.Enumeration;
 
 import javax.security.auth.x500.X500Principal;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import ghidra.util.Msg;
 
@@ -34,11 +33,6 @@ import ghidra.util.Msg;
  * for client/server may be in a PKCS12 form (*.p12, *.pks, *.pfx) or Java JKS (*.jks) form.
  */
 class ApplicationKeyStore {
-
-	static final String[] PKCS_FILE_EXTENSIONS = new String[] { "p12", "pks", "pfx" };
-
-	private static final FileNameExtensionFilter PKCS_FILENAME_FILTER =
-		new FileNameExtensionFilter("PKCS Key File", PKCS_FILE_EXTENSIONS);
 
 	private ApplicationKeyStore() {
 		// no instantiation - static methods only
@@ -113,7 +107,7 @@ class ApplicationKeyStore {
 			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
 
 		File keystoreFile = new File(keystorePath);
-		boolean isPKCS12 = PKCS_FILENAME_FILTER.accept(keystoreFile);
+		boolean isPKCS12 = ApplicationKeyManagerUtils.PKCS_FILENAME_FILTER.accept(keystoreFile);
 		String type = isPKCS12 ? "PKCS12" : "JKS"; // JKS assumed if not PKCS
 		KeyStore ks = KeyStore.getInstance(type);
 

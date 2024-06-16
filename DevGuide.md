@@ -1,371 +1,355 @@
 # Developer's Guide
 
-## References
+## Environment
+* Primary Language: [Java][java]
+* Secondary Languages: [C++][cpp], [Sleigh][sleigh], [Jython][jython]
+* Integrated Development Environment: [Eclipse][eclipse]
+* Build System: [Gradle][gradle]
+* Source Control: [Git][git]
 
-- [Catalog of Dependencies](#catalog-of-dependencies)
-- [Install Development and Build Tools](#install-development-and-build-tools)
-- [Setup Source Repository](#setup-source-repository)
-- [Setup Build Dependency Repository](#setup-build-dependency-repository)
-  * [Automatic script instructions](#automatic-script-instructions)
-  * [Manual download instructions](#manual-download-instructions)
-- [Building Ghidra](#building-ghidra)
-- [Developing Ghidra](#developing-ghidra)
-  * [Prepare the Environment](#prepare-the-environment)
-  * [Import Eclipse Projects](#import-eclipse-projects)
-  * [Building the natives](#building-the-natives)
-  * [Pre-compile Language Modules](#pre-compile-language-modules-optional)
-  * [Import and Build GhidraDev project](#import-and-build-ghidradev-project-optional)
-  * [Run and Debug Ghidra from Eclipse](#run-and-debug-ghidra-from-eclipse)
-  * [Running tests](#running-tests)
-- [Setup build in CI](#setup-build-in-ci)
-- [Building Supporting Data](#building-supporting-data)
-  * [Building Data Type Archives](#building-data-type-archives)
-  * [Building FID Databases](#building-fid-databases)
-- [Hacking on the Debugger](#hacking-on-the-debugger)
+For specific information on required versions and download links please see the 
+[README.md](README.md) file.
 
-## Catalog of Dependencies
+## Quickstart
+Follow the [Advanced Development](README.md#advanced-development) instructions in the [
+README.md](README.md) file to get your development environment setup quickly. 
 
-The following is a list of dependencies, in no particular order.
-This guide includes instructions for obtaining many of these at the relevant step(s).
-You may not need all of these, depending on which portions you are building or developing.
-#### At minimum you will need all of the following
-* Java JDK 11 (64-bit) - Free long term support (LTS) versions of JDK 11 are provided by:
-    - Adoptium Temurin
-      - https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
-    - Amazon Corretto
-      - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 6.8+ or 7.x
-    - https://gradle.org/releases/
-* A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
-    - https://gcc.gnu.org/
-    - https://developer.apple.com/xcode/
-    - https://visualstudio.microsoft.com/downloads/
-#### Optional for Development
-* Eclipse - It must support JDK 11. Eclipse 2018-12 or later should work. Other IDEs may work, but we have not tested them.
-    - https://www.eclipse.org/downloads/
-#### Necessary unless a download zip snapshot of the ghidra repository is used
-* Git - We use the official installer on Windows. For windows you can also use the github CLI or git from with (Windows Subsystem for Linux - WSL). Most Linux distros have git in their repos. Xcode provides git on macOS.   You can skip Git if you download a .zip file of the ghidra repository.
-    - https://git-scm.com/downloads
-    - https://cli.github.com/
-#### Optional unless following [Manual download instructions](#manual-download-instructions)
-* Bash - This is moot on Linux and macOS. On Windows, we use MinGW. This may be distributed with Git for Windows.  This can be skipped if using the automatic build.
-    - https://osdn.net/projects/mingw/releases/
-#### Necessary for the development and building of Ghidra, these and more will be downloaded during the [Automatic](#automatic-script-instructions) or the [Manual](#manual-download-instructions) instructions
-* dex2jar. We use version 2.0.
-    - https://github.com/pxb1988/dex2jar/releases
-* AXMLPrinter2
-    - https://code.google.com/archive/p/android4me/downloads
-* Yet Another Java Service Wrapper. We use version 13.01 - Only to build Ghidra package.
-    - https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-beta-13.01/
-* Eclipse PDE - Environment for developing the GhidraDev plugin.
-    - https://www.eclipse.org/pde/
-* Eclipse CDT. We build against version 8.6.0 - Build dependency for the GhidraDev plugin.
-    - https://www.eclipse.org/cdt/
-* PyDev. We build against version 6.3.1 - Build dependency for the GhidraDev plugin.
-    - https://sourceforge.net/projects/pydev/files/pydev/
+## Licensing and Copyright
+* Primary License: [Apache License 2.0][apache]
+* Secondary Licenses: [See licenses directory](licenses)
 
-There are many, many others automatically downloaded by Gradle from Maven Central and Bintray JCenter when building and/or setting up the development environment.
-If you need these offline, a reasonable course of action is to set up a development environment online, perhaps perform a build, and then scrape Gradle's cache.
+If possible please try to stick to the [Apache License 2.0][apache]
+license when developing for Ghidra.  At times it may be necessary to incorporate other compatible 
+licenses into Ghidra.  Any GPL code must live in the top-level `GPL/` directory as a totally 
+standalone, independently buildable Ghidra module.
 
-## Install Development and Build Tools
+If you are contributing code to the Ghidra project, the preferred way to receive credit/recognition 
+is Git commit authorship.  Please ensure your Git credentials are properly linked to your GitHub 
+account so you appear as a Ghidra contributor on GitHub.  We do not have a standard for putting 
+authors' names directly in the source code, so it is discouraged.
 
-If you're on Windows, install Git unless you will download a .zip clone of the ghidra repository. If you go the manual route
-many of the commands given below must be executed in Bash (Windows Subsystem for Linux (WSL), or Use git-bash or MSYS from MinGW).
-
-Install OpenJDK 11 and make sure it's the default java.
-
-Install Eclipse.
-You can launch Eclipse with any JRE/JDK, but you'll need to ensure Eclipse knows about your JDK 11 installation.
-In Eclipse, select Window -> Preferences (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
-
-Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 11.
-
-## Setup Source Repository
-
-You may choose any directory for your working copy, however these instructions will assume you have cloned the source to `~/git/ghidra`.
-Be sure to adjust the commands to match your chosen working directory if different than suggested:
-
-```bash
-mkdir ~/git
-cd ~/git
-git clone git@github.com:NationalSecurityAgency/ghidra.git
-```
-or unzip a snapshot .zip of the ghidra repository
-
-## Setup Build Dependency Repository
-
-Ghidra's build uses artifacts named as available in Maven Central and Bintray JCenter, when possible.
-Unfortunately, in some cases, the artifact or the particular version we desire is not available.
-So, in addition to mavenCentral and jcenter, you must configure a flat directory-style repository for
-manually-downloaded dependencies.
-
-The flat directory-style repository can be created and populated automatically by a provided script, 
-or manually by downloading the required dependencies.  Choose one of the two following methods:
-  * [Automatic script instructions](#automatic-script-instructions)
-  * [Manual download instructions](#manual-download-instructions)
-
-### Automatic Script Instructions
-The flat directory-style repository can be setup automatically by running a simple Gradle script. 
-Navigate to `~/git/ghidra` and run the following:
+## Common Gradle Tasks
+Download non-Maven Central dependencies.  This creates a `dependencies` directory in the repository
+root.
 ```
 gradle -I gradle/support/fetchDependencies.gradle init
 ```
-The Gradle task to be executed, in this case _init_, is unimportant. The point is to have Gradle execute
-the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/dependencies/` 
-directory populated with the following files:
- * flatRepo/AXMLPrinter2.jar
- * flatRepo/dex-ir-2.0.jar
- * flatRepo/dex-reader-2.0.jar
- * flatRepo/dex-reader-api-2.0.jar
- * flatRepo/dex-tools-2.0.jar
- * flatRepo/dex-translator-2.0.jar
- * flatRepo/dex-writer-2.0.jar
- * GhidraDev/cdt-8.6.0.zip
- * GhidraDev/PyDev 6.3.1.zip
- * GhidraServer/yajsw-beta-13.01.zip
- * fidb/*.fidb
 
-If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
-instructions below...
-
-### Manual Download Instructions
-
-Create the `~/git/ghidra/dependencies/` directory and required subdirectories to hold the manually-downloaded dependencies:
-
-```bash
-mkdir ~/git/ghidra/dependencies
-mkdir ~/git/ghidra/dependencies/flatRepo
-mkdir ~/git/ghidra/dependencies/fidb
-mkdir ~/git/ghidra/dependencies/GhidraServer
-mkdir ~/git/ghidra/dependencies/GhidraDev
+Download Maven Central dependencies and setup the repository for development.  By default, these 
+will be stored at `$HOME/.gradle/`.
+```
+gradle prepdev
 ```
 
-#### Get Dependencies for FileFormats:
-
-Download `dex-tools-2.0.zip` from the dex2jar project's releases page on GitHub.
-Unpack the `dex-*.jar` files from the `lib` directory to `~/git/ghidra/dependencies/flatRepo`:
-
-```bash
-cd ~/Downloads   # Or wherever
-curl -OL https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip
-unzip dex-tools-2.0.zip
-cp dex2jar-2.0/lib/dex-*.jar ~/git/ghidra/dependencies/flatRepo/
-
+Generate nested Eclipse project files which can then be imported into Eclipse as "existing 
+projects".
+```
+gradle cleanEclipse eclipse
 ```
 
-Download `AXMLPrinter2.jar` from the "android4me" archive on code.google.com.
-Place it in `~/git/ghidra/dependencies/flatRepo`:
-
-```bash
-cd ~/git/ghidra/dependencies/flatRepo
-curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar
+Build native components for your current platform.  Requires native tool chains to be present.
 ```
-
-#### Get Dependencies for GhidraServer
-
-Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 13.01.
-Download `yajsw-beta-13.01.zip` from their project on www.sourceforge.net, and place it in:
-`~/git/ghidra/dependencies/GhidraServer/`:
-
-```bash
-cd ~/Downloads   # Or wherever
-curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-beta-13.01/yajsw-beta-13.01.zip
-cp ~/Downloads/yajsw-beta-13.01.zip ~/git/ghidra/dependencies/GhidraServer/
-```
-
-#### Get Dependencies for GhidraDev
-
-Building the GhidraDev plugin for Eclipse requires the CDT and PyDev plugins for Eclipse.
-Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
-`~/git/ghidra/dependencies/GhidraDev/`:
-
-```bash
-cd ~/Downloads   # Or wherever
-curl -OL 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
-curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'https://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
-shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
-cp ~/Downloads/cdt-8.6.0.zip ~/git/ghidra/dependencies/GhidraDev/
-```
-
-Download `PyDev 6.3.1.zip` from www.pydev.org, and place it in the same directory:
-
-```bash
-cd ~/Downloads   # Or wherever
-curl -L -o 'PyDev 6.3.1.zip' https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip
-cp ~/Downloads/'PyDev 6.3.1.zip' ~/git/ghidra/dependencies/GhidraDev/
-```
-
-#### Get Ghidra Function ID datasets
-
-Download the Ghidra Function ID dataset files from the `ghidra-data` GitHub repository and place them
-in `~/git/ghidra/dependencies/fidb`:
-
-```bash
-cd ~/Downloads   # Or wherever
-curl -L -o 'vs2012_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x64.fidb
-curl -L -o 'vs2012_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x86.fidb
-curl -L -o 'vs2015_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x64.fidb
-curl -L -o 'vs2015_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x86.fidb
-curl -L -o 'vs2017_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x64.fidb
-curl -L -o 'vs2017_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x86.fidb
-curl -L -o 'vs2019_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x64.fidb
-curl -L -o 'vs2019_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x86.fidb
-curl -L -o 'vsOlder_x64.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x64.fidb
-curl -L -o 'vsOlder_x86.fidb' https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x86.fidb
-cp ~/Downloads/*.fidb ~/git/ghidra/dependencies/fidb/
-```
-
-## Building Ghidra
-
-Before building, you may want to update the version and release name.
-These properties are kept in `~/git/ghidra/Ghidra/application.properties`.
-
-To build the full package, use Gradle:
-
-```bash
-gradle buildGhidra
-```
-
-The output will be placed in `~/git/ghidra/build/dist/`.
-It will be named according to the version, release name, build date, and platform.
-To test it, unzip it where you like, and execute `./ghidraRun`.
-
-__NOTE:__ Unless pre-built manually, the Eclipse GhidraDev plugin will not be included 
-in the build. In addition, some other supporting data will also be missing.
-See the sections below for instructions on how to produce these components.
-You may also be able to copy some of these already-built components from a previous official distribution.
-
-## Developing Ghidra
-
-### Prepare the Environment
-
-From the project root, execute:
-
-```bash
-gradle prepDev
-```
-The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
-
-### Import Eclipse Projects
-To develop/modify Ghidra, you must first use Gradle to generate Eclipse projects.  From the project 
-root:
-
-```bash
-gradle eclipse
-```
-
-Select __File -> Import__, expand General, and select "Existing Projects into Workspace."
-Select the root of the source repo, and select "Search for nested projects."
-Select all, and Finish.
-You may see build path errors until the environment is properly prepared, as described below.
-
-### Building the natives
-
-Some of Ghidra's components are built for the native platform.
-We currently support 64-bit Linux x86/ARM, macOS x86/ARM, and Windows x86.
-
-Build the natives for your current platform using Gradle:
-
-```bash
 gradle buildNatives
 ```
 
-This will build the decompiler, the demangler for GNU toolchains, the sleigh compiler, and (on Windows only) the PDB parser.
-
-### Pre-compile Language Modules (optional)
-
-Optionally, to pre-compile all the language modules, you may also execute:
-
-```bash
+Manually compile sleigh files. Ghidra will also do this at runtime when necessary.
+```
 gradle sleighCompile
 ```
 
-If the language modules are not pre-compiled, Ghidra will compile them at run time on an as-needed basis.
+Build Javadoc:
+```
+gradle createJavadocs
+```
 
-### Import and Build GhidraDev project (optional)
+Build Python3 packages for the Debugger:
+```
+gradle buildPyPackage
+```
 
-Developing the GhidraDev Eclipse plugin requires the _Eclipse PDE (Plug-in Development Environment)_, which 
-can be installed via the Eclipse marketplace.  It is also included in the _Eclipse IDE for RCP and RAP Developers_.
-To generate the GhidraDev Eclipse projects, execute:
+Build Ghidra to `build/dist` in an uncompressed form.  This will be a distribution intended only to 
+run on the platform on which it was built.
+```
+gradle assembleAll
+```
+
+Build Ghidra to `build/dist` in a compressed form.  This will be a distribution intended only to run
+on the platform on which it was built.
+```
+gradle buildGhidra
+```
+
+**Tip:**  You may want to skip certain Gradle tasks to speed up your build, or to deal with
+a problem later.  For example, perhaps you added some new source files and the build is failing 
+because of unresolved IP header issues.  You can use the Gradle `-x <task>` command line argument to
+prevent specific tasks from running:
+```
+gradle buildGhidra -x ip
+```
+
+## Known Issues
+* There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
+  if a non-English system locale is being used. As a workaround, set the following environment 
+  variable prior to running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
+
+## Offline Development Environment
+Sometimes you may want to move the Ghidra repository to an offline network and do development there.
+These are the recommended steps to ensure that you not only move the source repository, but all 
+downloaded dependencies as well:
+
+1. `gradle -I gradle/support/fetchDependencies.gradle init`
+2. `gradle -g dependencies/gradle prepdev`
+3. Move ghidra directory to different system
+4. `gradle -g dependencies/gradle buildGhidra` (on offline system)
+
+**NOTE**: The `-g` flag specifies the Gradle user home directory. The default is the `.gradle`
+directory in the user’s home directory.  Overriding it to be inside the Ghidra repository will
+ensure that all maven central dependencies that were fetched during the `prepdev` task will be moved
+along with the rest of the repo.
+
+## Developing GhidraDev Eclipse Plugin
+Developing the GhidraDev Eclipse plugin requires the 
+_Eclipse PDE (Plug-in Development Environment)_, which can be installed via the Eclipse marketplace.
+It is also included in the _Eclipse IDE for RCP and RAP Developers_. To generate the GhidraDev 
+Eclipse projects, execute:
 
 ```
 gradle eclipse -PeclipsePDE
 ```
 
-Import the newly generated GhidraDev projects into Eclipse. 
+Import the newly generated GhidraDev projects into an Eclipse that supports this type of project. 
 
-__Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's preferences,
-and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
+__Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's 
+preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
 
-See `~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt`
+See [GhidraDevPlugin/build_README.txt](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt)
 for instructions on how to build the GhidraDev plugin.
 
-### Run and Debug Ghidra from Eclipse
+## Running tests
+To run unit tests, do:
+```
+gradle unitTestReport
+```
 
-To run or debug Ghidra from Eclipse, use the provided launch configuration (usually under the "Run" or "Debug" buttons).
-If the launcher does not appear, it probably has not been marked as a favorite.
-Click the dropdown next to the "Run" button and select "Run Configurations."
-Then expand "Java Application" on the left to find the "Ghidra" launcher.
+For more complex integration tests, do:
+```
+gradle integrationTest
+```
 
-### Running tests
-
-For running unit tests, run
-
-    gradle unitTestReport
-
-for more complex integration tests run
-
-    gradle integrationTest
-
-For running both unit test and integration test and generate report use
-
-    gradle combinedTestReport
+For running both unit and integration tests and to generate a report do:
+```
+gradle combinedTestReport
+```
 
 ## Setup build in CI
 
-For running build in headless mode on Linux, in CI environment, or in Docker, before running tests, run
-
-    Xvfb :99 -nolisten tcp &
-    export DISPLAY=:99
-
-this is required to make AWT happy.
+For running tests in headless mode on Linux, in a CI environment, or in Docker, first do:
+```
+Xvfb :99 -nolisten tcp &
+export DISPLAY=:99
+```
+This is required to make AWT happy.
 
 ## Building Supporting Data
 
-Some features of Ghidra require the curation of rather extensive databases.
-These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
-Much of this work is done by hand.
-The archives included in our official builds can be found in the [ghidra-data] repository.
+Some features of Ghidra require the curation of rather extensive databases. These include the Data 
+Type Archives and Function ID Databases, both of which require collecting header files and libraries
+for the relevant SDKs and platforms. Much of this work is done by hand. The archives included in our
+official builds can be found in the [ghidra-data] repository.
 
 ### Building Data Type Archives
 
-This task is often done manually from the Ghidra GUI, and the archives included in our official build require a fair bit of fine tuning.
-From a CodeBrowser window, select __File -> Parse C Source__.
-From here you can create and configure parsing profiles, which lists headers and pre-processor options.
-Then, click _Parse to File_ to create the Data Type Archive.
-The result can be added to an installation or source tree by copying it to `~/git/ghidra/Ghidra/Features/Base/data/typeinfo`.
+This task is often done manually from the Ghidra GUI, and the archives included in our official 
+build require a fair bit of fine tuning.
+1. From the CodeBrowser, select __File -> Parse C Source__
+2. From here you can create and configure
+parsing profiles, which lists headers and pre-processor options.
+3. Click _Parse to File_ to create the Data Type Archive.
+4. The result can be added to an installation or source tree by copying it to 
+`Ghidra/Features/Base/data/typeinfo`.
 
 ### Building FID Databases
 
-This task is often done manually from the Ghidra GUI, and the archives included in our official build require a fair bit of fine tuning.
-You will first need to import the relevant libraries from which you'd like to produce a FID database.
-This is often a set of libraries from an SDK.
-We include a variety of Visual Studio platforms in the official build. The official .fidb files can be found in the ghidra-data repository here https://github.com/NationalSecurityAgency/ghidra-data/tree/master/FunctionID
+This task is often done manually from the Ghidra GUI, and the archives included in our official 
+build require a fair bit of fine tuning. You will first need to import the relevant libraries from 
+which you'd like to produce a FID database. This is often a set of libraries from an SDK. We include
+a variety of Visual Studio platforms in the official build. The official .fidb files can be found in
+the [ghidra-data][ghidra-data] repository.
 
-From a CodeBrowser window, select __File -> Configure__.
-Enable the "Function ID" plugins, and close the dialog.
-Now, from the CodeBrowser window, select __Tools -> Function ID -> Create new empty FidDb__.
-Choose a destination file.
-Now, select __Tools -> Function ID -> Populate FidDb__ from programs.
-Fill out the options appropriately and click OK.
+1. From the CodeBrowser, select __File -> Configure__
+2. Enable the "Function ID" plugins, and close the dialog.
+3. From the CodeBrowser, select __Tools -> Function ID -> Create new empty FidDb__.
+4. Choose a destination file.
+5. Select __Tools -> Function ID -> Populate FidDb__ from programs.
+6. Fill out the options appropriately and click OK.
 
-If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.
+If you'd like some details of our fine tuning, take a look at [building_fid.txt](Ghidra/Features/FunctionID/data/building_fid.txt).
 
-### Hacking on the Debugger
+## Debugger Development
 
-The Debugger consists of multiple modules comprising its own collection of utilities, frameworks, and features.
-There is plenty of new ground to be broken.
-Before getting too deep into it, please see our dedicated [Debugger Developer's Guide][DbgGuide].
+We have recently changed the Debugger's back-end architecture.
+We no longer user JNA to access native Debugger APIs.
+We only use it for pseudo-terminal access.
+Instead, we use Python3 and a protobuf-based TCP connection for back-end integration.
 
+### Additional Dependencies
+
+In addition to Ghidra's normal dependencies, you may want the following:
+
+ * WinDbg for Windows x64
+ * GDB 13 or later for Linux
+ * LLDB 10 or later for macOS
+
+The others (e.g., JNA) are handled by Gradle via Maven Central.
+
+### Architecture Overview
+
+There are several Eclipse projects each fitting into a larger architectural picture.
+These all currently reside in the `Ghidra/Debug` directory, but will likely be re-factored into the
+`Framework` and `Feature` directories later. Each project is listed "bottom up" with a brief 
+description and status.
+
+ * ProposedUtils - a collection of utilities proposed to be moved to other respective projects.
+ * AnnotationValidator - an experimental annotation processor for database access objects.
+ * Framework-TraceModeling - a database schema and set of interfaces for storing machine state over
+ time.
+ * Framework-AsyncComm - a collection of utilities for asynchronous communication (packet formats
+ and completable-future conveniences).
+ * Framework-Debugging - specifies interfaces for debugger models and provides implementation
+ conveniences. This is mostly deprecated.
+ * Debugger - the collection of Ghidra plugins and services comprising the Debugger UI.
+ * Debugger-rmi-trace - the wire protocol, client, services, and UI components for Trace RMI, the new back-end architecture.
+ * Debugger-agent-dbgeng - the connector for WinDbg (via dbgeng.dll) on Windows x64.
+ * Debugger-agent-dbgmodel - an experimental connector for WinDbg Preview (with TTD, via 
+ dbgmodel.dll) on Windows x64. This is deprecated, as most of these features are implemented in Debugger-agent-dbgeng for the new architecture.
+ * Debugger-agent-dbgmodel-traceloader - an experimental "importer" for WinDbg trace files. This is deprecated.
+ * Debugger-agent-gdb - the connector for GDB (13 or later recommended) on UNIX.
+ * Debugger-swig-lldb - the Java language bindings for LLDB's SBDebugger, also proposed upstream. This is deprecated. We now use the Python3 language bindings for LLDB.
+ * Debugger-agent-lldb - the connector for LLDB (10 or later recommended) on macOS, UNIX, and Windows.
+ * Debugger-gadp - the connector for our custom wire protocol the Ghidra Asynchronous Debugging 
+ Protocol. This is deprecated. It's replaced by Debugger-rmi-trace.
+ * Debugger-jpda - an in-development connector for Java and Dalvik debugging via JDI (i.e., JDWP). This is deprecated and not yet replaced.
+
+The Trace Modeling schema records machine state and markup over time.
+It rests on the same database framework as Programs, allowing trace recordings to be stored in a Ghidra project and shared via a server, if desired.
+Trace "recording" is a de facto requirement for displaying information in Ghidra's UI.
+The back-end connector has full discretion over what is recorded by using Trace RMI.
+Typically, only the machine state actually observed by the user (or perhaps a script) is recorded.
+For most use cases, the Trace is small and ephemeral, serving only to mediate between the UI components and the target's model.
+It supports many of the same markup (e.g., disassembly, data types) as Programs, in addition to tracking active threads, loaded modues, breakpoints, etc.
+
+Every back end (or "adapter" or "connector" or "agent") employs the Trace RMI client to populate a trace database.
+As a general rule in Ghidra, no component is allowed to access a native API and reside in the same JVM as the Ghidra UI.
+This allows us to contain crashes, preventing data loss.
+To accommodate this requirement &mdash; given that debugging native applications is almost certainly going to require access to native APIs &mdash; we've developed the Trace RMI protocol.
+This also allows us to better bridge the language gap between Java and Python, which is supported by most native debuggers.
+This protocol is loosely coupled to Framework-TraceModeling, essentially exposing its methods via RMI, as well as some methods for controlling the UI.
+The protocol is built using Google's Protobuf library, providing a potential path for back-end implementations in alternative languages.
+We provide the Trace RMI server as a Ghidra component implemented in Java and the Trace RMI client as a Python3 package.
+A back-end implementation may be a stand-alone executable or script that accesses the native debugger's API, or a script or plugin for the native debugger.
+It then connects to Ghidra via Trace RMI to populate the trace database with information gleaned from that API.
+It should provide a set of diagnostic commands to control and monitor that connection.
+It should also use the native API to detect session and target changes so that Ghidra's UI consistently reflects the debugging session.
+
+The old system relied on a "recorder" to discover targets and map them to traces in the proper Ghidra language.
+That responsibility is now delegated to the back end.
+Typically, it examines the target's architecture and immediately creates a trace upon connection.
+
+### Developing a new connector
+
+So Ghidra does not yet support your favorite debugger?
+We believe the new system is much less daunting than the previous.
+Still, please finish reading this guide, and look carefully at the ones we have so far, and perhaps ask to see if we are already developing one.
+Of course, in time you might also search the internet to see if others are developing one.
+There are quite a few caveats and gotchas, the most notable being that this interface is still in some flux.
+When things go wrong, it could be because of, without limitation:
+
+1. A bug on your part
+2. A bug on our part
+3. A design flaw in the interfaces
+4. A bug in the debugger/API you're adapting
+
+We are still (yes, still) in the process of writing up this documentation.
+In the meantime, we recommend using the GDB and dbgeng agents as examples.
+Be sure to look at the Python code `src/main/py`!
+The deprecated Java code `src/main/java` is still included as we transition.
+
+You'll also need to provide launcher(s) so that Ghidra knows how to configure and start your connector.
+These are just shell scripts.
+We use bash scripts on Linux and macOS, and we use batch files on Windows.
+Try to include as many common use cases as makes sense for the debugger.
+This provides the most flexibility to users and examples to power users who might create derivative launchers.
+Look at the existing launchers for examples.
+
+For testing, please follow the examples for GDB.
+We no longer provide abstract classes that prescribe requirements.
+Instead, we just provide GDB as an example.
+Usually, we split our tests into three categories:
+
+ * Commands
+ * Methods
+ * Hooks
+
+The Commands tests check that the user CLI commands, conventionally implemented in `commands.py`, work correctly.
+In general, do the minimum connection setup, execute the command, and check that it produces the expected output and causes the expected effects.
+
+The Methods tests check that the remote methods, conventionally implemented in `methods.py`, work correctly.
+Many methods are just wrappers around CLI commands, some provided by the native debugger and some provided by `commands.py`.
+These work similarly to the commands test, except that they invoke methods instead of executing commands.
+Again, check the return value (rarely applicable) and that it causes the expected effects.
+
+The Hooks tests check that the back end is able to listen for session and target changes, e.g., knowing when the target stops.
+*The test should not "cheat" by executing commands or invoking methods that should instead be triggered by the listener.*
+It should execute the minimal commands to setup the test, then trigger an event.
+It should then check that the event in turn triggered the expected effects, e.g., updating PC upon the target stopping.
+
+Whenever you make a change to the Python code, you'll need to re-assemble the package's source.
+
+```
+gradle assemblePyPackage
+```
+
+This is required in case your package includes generated source, as is the case for Debugger-rmi-trace.
+If you want to create a new Ghidra module for your connector (recommended) use an existing one's `build.gradle` as a template.
+A key part is applying the `hasPythonPackage.gradle` script.
+
+### Adding a new platform
+
+If a connector already exists for a suitable debugger on the desired platform, then adding it may be very simple.
+For example, many platforms are supported by GDB, so even though we're currently focused on x86-64 (and to some extent arm64) support, we've provided the mappings for many.
+These mappings are conventionally kept in each connector's `arch.py` file.
+
+In general, to update `arch.py`, you need to know:
+
+1. What the platform is called (including variant names) by the debugger
+2. What the processor language is called by Ghidra
+3. If applicable, the mapping of target address spaces into Ghidra's address spaces
+4. If applicable, the mapping of target register names to those in Ghidra's processor language
+
+In most cases (3) and (4) are already implemented by the included mappers.
+Naturally, you'll want to test the special cases, preferably in automated tests.
+
+### Emulation
+
+The most obvious integration path for 3rd-party emulators is to write a "connector."
+However, p-code emulation is an integral feature of the Ghidra UI, and it has a fairly accessible API.
+Namely, for interpolation between machines states recorded in a trace, and extrapolation into future machine states.
+Integration of such emulators may still be useful to you, but we recommend trying the p-code emulator to see if it suits your needs for emulation in Ghidra before pursuing integration of another emulator.
+We also provide out-of-the-box QEMU integration via GDB.
+
+### Contributing
+
+When submitting help tickets and pull requests, please tag those related to the debugger with "Debugger" so that we can triage them more quickly.
+
+
+[java]: https://dev.java
+[cpp]: https://isocpp.org
+[sleigh]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/languages/index.html
+[jython]: https://www.jython.org
+[eclipse]: https://www.eclipse.org/downloads/
+[gradle]: https://gradle.org
+[git]: https://git-scm.com
+[apache]: https://www.apache.org/licenses/LICENSE-2.0
+[fork]: https://docs.github.com/en/get-started/quickstart/fork-a-repo
 [ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data
 [DbgGuide]: DebuggerDevGuide.md

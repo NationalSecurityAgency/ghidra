@@ -60,7 +60,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 				// with Tool-based service.
 				dtList = new ArrayList<>(super.getSortedDataTypeList());
 				program.getDataTypeManager().getAllDataTypes(dtList);
-				Collections.sort(dtList, new NameComparator());
+				Collections.sort(dtList, DataTypeComparator.INSTANCE);
 				return dtList;
 			}
 
@@ -81,17 +81,6 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		};
 
 		parser = new FunctionSignatureParser(program.getDataTypeManager(), service);
-	}
-
-	private class NameComparator implements Comparator<DataType> {
-		@Override
-		public int compare(DataType d1, DataType d2) {
-			int c = d1.getName().compareTo(d2.getName());
-			if (c == 0) {
-				return d1.getCategoryPath().compareTo(d2.getCategoryPath());
-			}
-			return c;
-		}
 	}
 
 	@Test
@@ -192,6 +181,75 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		FunctionDefinitionDataType dt =
 			parser.parse(f, "signed char Bob(long long a, unsigned int b)");
 		assertEquals("char Bob(longlong a, uint b)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testReturnPointerToNoPointer() throws Exception {
+		FunctionSignature f = fun("char *", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char Bob()");
+		assertEquals("char Bob(void)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testReturnPointerToSizedPointer() throws Exception {
+		FunctionSignature f = fun("char *", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char *32 Bob()");
+		assertEquals("char * Bob(void)", dt.getRepresentation(null, null, 0));
+		assertEquals("char *", dt.getReturnType().getDisplayName());
+	}
+
+	@Test
+	public void testReturnPointerToPointerPointer() throws Exception {
+		FunctionSignature f = fun("char *", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char * * Bob()");
+		assertEquals("char * * Bob(void)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testChangeReturnTypeToIncludeSizedPointer() throws Exception {
+		FunctionSignature f = fun("char", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char *32 Bob(void)");
+		assertEquals("char * Bob(void)", dt.getRepresentation(null, null, 0));
+		assertEquals("char *32", dt.getReturnType().getName());
+	}
+
+	@Test
+	public void testParseFunctionNameWithSizedPointerReturnType() throws Exception {
+		FunctionSignature f = fun("char *32", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char *32 Joe()");
+		assertEquals("char * Joe(void)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testParamPointerToSizedPointer() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char *", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *32 p1)");
+		assertEquals("int Bob(char * p1)", dt.getRepresentation(null, null, 0));
+		ParameterDefinition[] arguments = dt.getArguments();
+		assertEquals("char *32", arguments[0].getDataType().getName());
+	}
+
+	@Test
+	public void testParamPointerToPointerPointer() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char *", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char * * p1)");
+		assertEquals("int Bob(char * * p1)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testChangeParamTypeToIncludeSizedPointer() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *32 p1)");
+		assertEquals("int Bob(char * p1)", dt.getRepresentation(null, null, 0));
+		ParameterDefinition[] arguments = dt.getArguments();
+		assertEquals("char *32", arguments[0].getDataType().getName());
+	}
+
+	@Test
+	public void testParseParamNameWithSizedPointerDataType() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char *32", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *32 p2)");
+		assertEquals("int Bob(char * p2)", dt.getRepresentation(null, null, 0));
 	}
 
 	@Test
@@ -322,16 +380,16 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		FunctionSignature f = fun("int", "Bob");
 		FunctionDefinitionDataType dt =
 			parser.parse(f, "unsigned long[3] Foo(unsigned long long *, signed int[3], StructA*)");
-		assertTrue((new ArrayDataType(UnsignedLongDataType.dataType, 3, -1)).isEquivalent(
-			dt.getReturnType()));
+		assertTrue((new ArrayDataType(UnsignedLongDataType.dataType, 3, -1))
+				.isEquivalent(dt.getReturnType()));
 		assertEquals("Foo", dt.getName());
 		ParameterDefinition[] args = dt.getArguments();
 		assertEquals(3, args.length);
-		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType)).isEquivalent(
-			args[0].getDataType()));
+		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType))
+				.isEquivalent(args[0].getDataType()));
 		assertEquals("", args[0].getName());
-		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1)).isEquivalent(
-			args[1].getDataType()));
+		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1))
+				.isEquivalent(args[1].getDataType()));
 		assertEquals("", args[1].getName());
 		assertTrue(args[2].getDataType() instanceof Pointer);
 		assertEquals("", args[2].getName());
@@ -361,11 +419,11 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 			"unsigned long[3] Bob(unsigned long long *foo, signed int[3] bar, StructA *s)");
 		ParameterDefinition[] args = dt.getArguments();
 		assertEquals(3, args.length);
-		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType)).isEquivalent(
-			args[0].getDataType()));
+		assertTrue((new PointerDataType(UnsignedLongLongDataType.dataType))
+				.isEquivalent(args[0].getDataType()));
 		assertEquals("foo", args[0].getName());
-		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1)).isEquivalent(
-			args[1].getDataType()));
+		assertTrue((new ArrayDataType(IntegerDataType.dataType, 3, -1))
+				.isEquivalent(args[1].getDataType()));
 		assertEquals("bar", args[1].getName());
 		assertTrue(args[2].getDataType() instanceof Pointer);
 		assertEquals("s", args[2].getName());
@@ -418,6 +476,15 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	private DataType createDataType(String name) {
 		if (name.equals("int")) {
 			return new IntegerDataType();
+		}
+		if (name.equals("char *")) {
+			return new PointerDataType(new CharDataType());
+		}
+		if (name.equals("char *32")) {
+			return new Pointer32DataType(new CharDataType());
+		}
+		if (name.equals("char * *32")) {
+			return new Pointer32DataType(new PointerDataType(new CharDataType()));
 		}
 		return new StructureDataType(name, 2);
 	}

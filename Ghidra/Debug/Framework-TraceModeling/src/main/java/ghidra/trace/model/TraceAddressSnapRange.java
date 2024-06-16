@@ -15,15 +15,12 @@
  */
 package ghidra.trace.model;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.util.database.spatial.rect.Rectangle2D;
 
 public interface TraceAddressSnapRange extends Rectangle2D<Address, Long, TraceAddressSnapRange> {
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	AddressRange getRange();
 
@@ -44,12 +41,12 @@ public interface TraceAddressSnapRange extends Rectangle2D<Address, Long, TraceA
 
 	@Override
 	default Long getY1() {
-		return DBTraceUtils.lowerEndpoint(getLifespan());
+		return getLifespan().min();
 	}
 
 	@Override
 	default Long getY2() {
-		return DBTraceUtils.upperEndpoint(getLifespan());
+		return getLifespan().max();
 	}
 
 	@Override

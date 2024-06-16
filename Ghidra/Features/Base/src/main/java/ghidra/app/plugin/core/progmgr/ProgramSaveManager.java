@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.rmi.ConnectException;
@@ -38,16 +40,23 @@ import ghidra.util.task.*;
 class ProgramSaveManager {
 	private ProgramManager programMgr;
 	private PluginTool tool;
-	private DataTreeDialog dataTreeSaveDialog;
 	private boolean treeDialogCancelled;
 	private DomainFileFilter domainFileFilter;
 
 	ProgramSaveManager(PluginTool tool, ProgramManager programMgr) {
 		this.tool = tool;
 		this.programMgr = programMgr;
-		domainFileFilter = f -> {
-			Class<?> c = f.getDomainObjectClass();
-			return Program.class.isAssignableFrom(c);
+		domainFileFilter = new DomainFileFilter() {
+
+			@Override
+			public boolean accept(DomainFile df) {
+				return Program.class.isAssignableFrom(df.getDomainObjectClass());
+			}
+
+			@Override
+			public boolean followLinkedFolders() {
+				return false; // can't save to linked-folder (read-only)
+			}
 		};
 	}
 
@@ -59,8 +68,7 @@ class ProgramSaveManager {
 	 * the user
 	 */
 	boolean canClose(Program program) {
-		if (program == null ||
-			(program.getDomainFile().getConsumers().size() > 1 && !tool.hasToolListeners())) {
+		if (!isOnlyToolConsumer(program)) {
 			return true;
 		}
 		if (acquireSaveLock(program, "Close")) {
@@ -74,15 +82,12 @@ class ProgramSaveManager {
 		return false;
 	}
 
-	boolean canCloseAll() {
+	boolean saveAll() {
 		Program[] programs = programMgr.getAllOpenPrograms();
 		List<Program> saveList = new ArrayList<>();
 		List<Program> lockList = new ArrayList<>();
 		try {
 			for (Program program : programs) {
-//				if (programs[i].isTemporary()) {
-//					continue;
-//				}
 				if (isOnlyToolConsumer(program)) {
 					if (!acquireSaveLock(program, "Close")) {
 						return false;
@@ -101,9 +106,7 @@ class ProgramSaveManager {
 			return saveChangedPrograms(saveList);
 		}
 		finally {
-			Iterator<Program> it = lockList.iterator();
-			while (it.hasNext()) {
-				Program p = it.next();
+			for (Program p : lockList) {
 				p.unlock();
 			}
 		}
@@ -244,7 +247,8 @@ class ProgramSaveManager {
 			return;
 		}
 		if (existingFile != null) {
-			String msg = "Program " + name + " already exists.\n" + "Do you want to overwrite it?";
+			String msg = existingFile.getContentType() + " file " + name + " already exists.\n" +
+				"Do you want to overwrite it?";
 			if (OptionDialog.showOptionDialog(tool.getToolFrame(), "Duplicate Name", msg,
 				"Overwrite", OptionDialog.QUESTION_MESSAGE) == OptionDialog.CANCEL_OPTION) {
 				return;
@@ -299,7 +303,7 @@ class ProgramSaveManager {
 //		String title = "Save "+currentProgram.getName();
 //		String closeItem = closingProgram ? "program" : "tool";
 //		String filename = currentProgram.getDomainFile().getPathname();
-//		StringBuffer buf = new StringBuffer(); 
+//		StringBuffer buf = new StringBuffer();
 //		buf.append("The program ("+filename+") is currently being modified by the\n");
 //		buf.append("the following actions:\n \n");
 //		ProgramDB program = (ProgramDB)currentProgram;
@@ -319,16 +323,16 @@ class ProgramSaveManager {
 //		buf.append("Do you want to abort the actions and continue to close the ");
 //		buf.append(closeItem);
 //		buf.append("?");
-//			
+//
 //		int result = OptionDialog.showOptionDialog(tool.getToolFrame(),title , buf.toString(),
 //				"Abort Actions", OptionDialog.WARNING_MESSAGE);
-//			
+//
 //		return result == OptionDialog.OPTION_ONE;
 //	}
 //	private boolean checkForSave(Program currentProgram) {
 //		DomainFile df = currentProgram.getDomainFile();
-//		
-//		String filename = df.getName();            
+//
+//		String filename = df.getName();
 //
 //		if (!df.isInProject()) {
 //			return  OptionDialog.showOptionDialog(tool.getToolFrame(),
@@ -338,7 +342,7 @@ class ProgramSaveManager {
 //					   "If you continue, your changes will be lost!",
 //					   "Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
 //		}
-//		
+//
 //		if (df.isReadOnly()) {
 //			return OptionDialog.showOptionDialog(tool.getToolFrame(),
 //					   "Program Changed",
@@ -346,9 +350,9 @@ class ProgramSaveManager {
 //					   " has been changed.  \n"+
 //					   "If you continue, your changes will be lost!",
 //					   "Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
-//		
+//
 //		}
-//		
+//
 //
 //		int result = OptionDialog.showOptionDialog(tool.getToolFrame(),
 //				   "Save Program?",
@@ -356,7 +360,7 @@ class ProgramSaveManager {
 //				   " has changed. Do you want to save it?",
 //				   "&Save", "Do&n't Save",
 //				   OptionDialog.QUESTION_MESSAGE);
-//				 
+//
 //		if (result == OptionDialog.CANCEL_OPTION) {
 //			return false;
 //		}
@@ -371,12 +375,11 @@ class ProgramSaveManager {
 			StringBuilder buf = new StringBuilder();
 			buf.append(
 				"The Program is currently being modified by the following actions/tasks:\n ");
-			Transaction t = program.getCurrentTransaction();
+			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append("WARNING! The above task(s) should be cancelled before attempting a " +
@@ -405,12 +408,11 @@ class ProgramSaveManager {
 			StringBuffer buf = new StringBuffer();
 			buf.append(
 				"The Program is currently being modified by the following actions/tasks:\n ");
-			Transaction t = program.getCurrentTransaction();
+			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append(
@@ -441,37 +443,35 @@ class ProgramSaveManager {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		if (dataTreeSaveDialog == null) {
+		DataTreeDialog dialog =
+			new DataTreeDialog(null, "Save As", SAVE, domainFileFilter);
 
-			ActionListener listener = event -> {
-				DomainFolder folder = dataTreeSaveDialog.getDomainFolder();
-				String newName = dataTreeSaveDialog.getNameText();
-				if (newName.length() == 0) {
-					dataTreeSaveDialog.setStatusText("Please enter a name");
-					return;
-				}
-				else if (folder == null) {
-					dataTreeSaveDialog.setStatusText("Please select a folder");
-					return;
-				}
+		ActionListener listener = event -> {
+			DomainFolder folder = dialog.getDomainFolder();
+			String newName = dialog.getNameText();
+			if (newName.length() == 0) {
+				dialog.setStatusText("Please enter a name");
+				return;
+			}
+			else if (folder == null) {
+				dialog.setStatusText("Please select a folder");
+				return;
+			}
 
-				DomainFile file = folder.getFile(newName);
-				if (file != null && file.isReadOnly()) {
-					dataTreeSaveDialog.setStatusText("Read Only.  Choose new name/folder");
-				}
-				else {
-					dataTreeSaveDialog.close();
-					treeDialogCancelled = false;
-				}
-			};
-			dataTreeSaveDialog =
-				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
+			DomainFile file = folder.getFile(newName);
+			if (file != null && file.isReadOnly()) {
+				dialog.setStatusText("Read Only.  Choose new name/folder");
+			}
+			else {
+				dialog.close();
+				treeDialogCancelled = false;
+			}
+		};
 
-			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog.setHelpLocation(
-				new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
-		}
-		return dataTreeSaveDialog;
+		dialog.addOkActionListener(listener);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+
+		return dialog;
 	}
 
 	class SaveFileTask extends Task {
@@ -520,7 +520,7 @@ class ProgramSaveManager {
 		 * @param folder new parent folder
 		 * @param newName name for domain object
 		 * @param doOverwrite true means the given name already exists and the user
-		 * wants to overwrite that existing file; false means a new file will 
+		 * wants to overwrite that existing file; false means a new file will
 		 * get created
 		 */
 		SaveAsTask(DomainObject obj, DomainFolder folder, String newName, boolean doOverwrite) {

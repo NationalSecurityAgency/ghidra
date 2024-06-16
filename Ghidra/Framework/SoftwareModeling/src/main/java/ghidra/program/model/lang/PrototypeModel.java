@@ -15,16 +15,18 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -48,11 +50,11 @@ public class PrototypeModel {
 	private Varnode[] killedbycall;	// Memory ranges definitely affected by calls
 	private Varnode[] returnaddress;	// Memory used to store the return address
 	private Varnode[] likelytrash;	// Memory likely to be meaningless on input
+	private Varnode[] internalstorage;	// Registers holding internal compiler constants
 	private PrototypeModel compatModel;	// The model this is an alias of
 	private AddressSet localRange;	// Range on the stack considered for local storage
 	private AddressSet paramRange;	// Range on the stack considered for parameter storage
 	private InputListType inputListType = InputListType.STANDARD;
-	private GenericCallingConvention genericCallingConvention;
 	private boolean hasThis;		// Convention has a this (auto-parameter)
 	private boolean isConstruct;		// Convention is used for object construction
 	private boolean hasUponEntry;	// Does this have an uponentry injection
@@ -80,12 +82,12 @@ public class PrototypeModel {
 		killedbycall = model.killedbycall;
 		returnaddress = model.returnaddress;
 		likelytrash = model.likelytrash;
+		internalstorage = model.internalstorage;
 		compatModel = model;
 		localRange = new AddressSet(model.localRange);
 		paramRange = new AddressSet(model.paramRange);
 		hasThis = model.hasThis || name.equals(CompilerSpec.CALLING_CONVENTION_thiscall);
 		isConstruct = model.isConstruct;
-		genericCallingConvention = GenericCallingConvention.getGenericCallingConvention(name);
 		hasUponEntry = model.hasUponEntry;
 		hasUponReturn = model.hasUponReturn;
 	}
@@ -101,22 +103,14 @@ public class PrototypeModel {
 		killedbycall = null;
 		returnaddress = null;
 		likelytrash = null;
+		internalstorage = null;
 		compatModel = null;
 		localRange = null;
 		paramRange = null;
-		genericCallingConvention = GenericCallingConvention.unknown;
 		hasThis = false;
 		isConstruct = false;
 		hasUponEntry = false;
 		hasUponReturn = false;
-	}
-
-	/**
-	 * Get the generic calling convention enum associated with this
-	 * @return the enum
-	 */
-	public GenericCallingConvention getGenericCallingConvention() {
-		return genericCallingConvention;
 	}
 
 	/**
@@ -150,12 +144,19 @@ public class PrototypeModel {
 	}
 
 	/**
+	 * @return list of registers used to store internal compiler constants
+	 */
+	public Varnode[] getInternalStorage() {
+		if (internalstorage == null) {
+			internalstorage = new Varnode[0];
+		}
+		return internalstorage;
+	}
+
+	/**
 	 * @return list of registers/memory used to store the return address
 	 */
 	public Varnode[] getReturnAddress() {
-		if (returnaddress == null) {
-			returnaddress = new Varnode[0];
-		}
 		return returnaddress;
 	}
 
@@ -233,24 +234,23 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * @deprecated
 	 * Get the preferred return location given the specified dataType.
-	 * In truth, there is no one location.  The routines that use this method tend
-	 * to want the default storage location for integer or pointer return values.
+	 * If the return value is passed back through a hidden input pointer,
+	 * i.e. {@link AutoParameterType#RETURN_STORAGE_PTR}, this routine will not pass back
+	 * the storage location of the pointer, but will typically pass
+	 * back the location of the normal return register which holds a copy of the pointer.
 	 * @param dataType first parameter dataType or null for an undefined type.
 	 * @param program is the Program
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
-	@Deprecated
 	public VariableStorage getReturnLocation(DataType dataType, Program program) {
 		DataType clone = dataType.clone(program.getDataTypeManager());
-		DataType[] arr = new DataType[1];
-		arr[0] = clone;
-		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, arr, res, false);
+		PrototypePieces proto = new PrototypePieces(this, clone);
+		ArrayList<ParameterPieces> res = new ArrayList<>();
+		outputParams.assignMap(proto, program.getDataTypeManager(), res, false);
 		if (res.size() > 0) {
-			return res.get(0);
+			return res.get(0).getVariableStorage(program);
 		}
 		return null;
 	}
@@ -312,12 +312,51 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given function and set of return/parameter datatypes 
-	 * defined by an array of data types.
+	 * Calculate input and output storage locations given a function prototype
+	 * 
+	 * The data-types of the function prototype are passed in. Based on this model, a
+	 * location is selected for each (input and output) parameter and passed back to the
+	 * caller.  The passed back storage locations are ordered with the output storage
+	 * as the first entry, followed by the input storage locations.  The model has the option
+	 * of inserting a hidden return value pointer in the input storage locations.
+	 * 
+	 * If the model cannot assign storage, the ParameterPieces will have a null Address.
+	 * @param proto is the function prototype parameter data-types
+	 * @param dtManager is the manager used to create indirect data-types
+	 * @param res will hold the storage addresses for each parameter
+	 * @param addAutoParams is true if auto parameters (like the this pointer) should be processed
+	 */
+	public void assignParameterStorage(PrototypePieces proto, DataTypeManager dtManager,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
+		outputParams.assignMap(proto, dtManager, res, addAutoParams);
+		inputParams.assignMap(proto, dtManager, res, addAutoParams);
+
+		if (hasThis && addAutoParams && res.size() > 1) {
+			int thisIndex = 1;
+			if (res.get(1).hiddenReturnPtr && res.size() > 2) {
+				if (inputParams.isThisBeforeRetPointer()) {
+					// pointer has been bumped by auto-return-storage
+					res.get(1).swapMarkup(res.get(2));	// must swap storage and position for slots 1 and 2
+				}
+				else {
+					thisIndex = 2;
+				}
+			}
+			res.get(thisIndex).isThisPointer = true;
+		}
+	}
+
+	/**
+	 * Compute the variable storage for a given array of return/parameter datatypes.  The first array element
+	 * is the return datatype, which is followed by any input parameter datatypes in order.
+	 * If addAutoParams is true, pointer datatypes will automatically be inserted for "this" or "hidden return"
+	 * input parameters, if needed.  In this case, the dataTypes array should not include explicit entries for
+	 * these parameters.  If addAutoParams is false, the dataTypes array is assumed to already contain explicit
+	 * entries for any of these parameters.
 	 * @param program is the Program
 	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
 	 * i.e., minimum array length is 1)
-	 * @param addAutoParams TODO
+	 * @param addAutoParams true if auto-parameter storage locations can be generated
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
 	 * return storage. The returned array may also include additional auto-parameter storage 
 	 * locations. 
@@ -325,61 +364,21 @@ public class PrototypeModel {
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
 
-		boolean injectAutoThisParam = false;
+		DataType injectedThis = null;
 		if (addAutoParams && hasThis) {
 			// explicit support for auto 'this' parameter
 			// must inject pointer arg to obtain storage assignment
-			injectAutoThisParam = true;
-			DataType[] ammendedTypes = new DataType[dataTypes.length + 1];
-			ammendedTypes[0] = dataTypes[0];
-			ammendedTypes[1] = new PointerDataType(program.getDataTypeManager());
-			if (dataTypes.length > 1) {
-				System.arraycopy(dataTypes, 1, ammendedTypes, 2, dataTypes.length - 1);
-			}
-			dataTypes = ammendedTypes;
+			injectedThis = new PointerDataType(program.getDataTypeManager());
 		}
+		PrototypePieces proto = new PrototypePieces(this, dataTypes, injectedThis);
 
-		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, dataTypes, res, addAutoParams);
-		inputParams.assignMap(program, dataTypes, res, addAutoParams);
+		ArrayList<ParameterPieces> res = new ArrayList<>();
+		assignParameterStorage(proto, program.getDataTypeManager(), res, addAutoParams);
 		VariableStorage[] finalres = new VariableStorage[res.size()];
-		res.toArray(finalres);
 
-		if (injectAutoThisParam) {
-
-			Varnode[] thisVarnodes = finalres[1].getVarnodes();
-
-			int thisIndex = 1;
-			try {
-				if (finalres[1].isAutoStorage()) {
-					if (inputParams.isThisBeforeRetPointer()) {
-						// pointer has been bumped by auto-return-storage
-						// must swap storage and position for slots 1 and 2 
-						finalres[2] = new DynamicVariableStorage(program,
-							finalres[1].getAutoParameterType(), finalres[2].getVarnodes());
-					}
-					else {
-						thisIndex = 2;
-						thisVarnodes = finalres[2].getVarnodes();
-					}
-				}
-
-				if (thisVarnodes.length != 0) {
-					finalres[thisIndex] =
-						new DynamicVariableStorage(program, AutoParameterType.THIS, thisVarnodes);
-				}
-				else {
-					finalres[thisIndex] =
-						DynamicVariableStorage.getUnassignedDynamicStorage(AutoParameterType.THIS);
-				}
-			}
-			catch (InvalidInputException e) {
-				finalres[thisIndex] =
-					DynamicVariableStorage.getUnassignedDynamicStorage(AutoParameterType.THIS);
-			}
-
+		for (int i = 0; i < finalres.length; ++i) {
+			finalres[i] = res.get(i).getVariableStorage(program);
 		}
-
 		return finalres;
 	}
 
@@ -417,89 +416,87 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Marshal this object as XML to an output buffer
-	 * @param buffer is the output buffer
+	 * Encode this object to an output stream
+	 * @param encoder is the stream encoder
 	 * @param injectLibrary is a library containing any inject payloads associated with the model
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer, PcodeInjectLibrary injectLibrary) {
+	public void encode(Encoder encoder, PcodeInjectLibrary injectLibrary) throws IOException {
 		if (compatModel != null) {
-			buffer.append("<modelalias");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
-			SpecXmlUtils.encodeStringAttribute(buffer, "parent", compatModel.name);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_MODELALIAS);
+			encoder.writeString(ATTRIB_NAME, name);
+			encoder.writeString(ATTRIB_PARENT, compatModel.name);
+			encoder.closeElement(ELEM_MODELALIAS);
 			return;
 		}
-		buffer.append("<prototype");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
+		encoder.openElement(ELEM_PROTOTYPE);
+		encoder.writeString(ATTRIB_NAME, name);
 		if (extrapop != PrototypeModel.UNKNOWN_EXTRAPOP) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "extrapop", extrapop);
+			encoder.writeSignedInteger(ATTRIB_EXTRAPOP, extrapop);
 		}
 		else {
-			SpecXmlUtils.encodeStringAttribute(buffer, "extrapop", "unknown");
+			encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
 		}
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "stackshift", stackshift);
-		GenericCallingConvention nameType = GenericCallingConvention.guessFromName(name);
-		if (nameType != genericCallingConvention) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "type",
-				genericCallingConvention.getDeclarationName());
-		}
+		encoder.writeSignedInteger(ATTRIB_STACKSHIFT, stackshift);
 		if (hasThis) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "hasthis", "yes");
+			encoder.writeBool(ATTRIB_HASTHIS, true);
 		}
 		if (isConstruct) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "constructor", "yes");
+			encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
 		}
 		if (inputListType != InputListType.STANDARD) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "strategy", "register");
+			encoder.writeString(ATTRIB_STRATEGY, "register");
 		}
-		buffer.append(">\n");
-		inputParams.saveXml(buffer, true);
-		buffer.append('\n');
-		outputParams.saveXml(buffer, false);
-		buffer.append('\n');
+		inputParams.encode(encoder, true);
+		outputParams.encode(encoder, false);
 		if (hasUponEntry || hasUponReturn) {
 			InjectPayload payload =
 				injectLibrary.getPayload(InjectPayload.CALLMECHANISM_TYPE, getInjectName());
-			payload.saveXml(buffer);
+			payload.encode(encoder);
 		}
 		if (unaffected != null) {
-			buffer.append("<unaffected>\n");
-			writeVarnodes(buffer, unaffected);
-			buffer.append("</unaffected>\n");
+			encoder.openElement(ELEM_UNAFFECTED);
+			encodeVarnodes(encoder, unaffected);
+			encoder.closeElement(ELEM_UNAFFECTED);
 		}
 		if (killedbycall != null) {
-			buffer.append("<killedbycall>\n");
-			writeVarnodes(buffer, killedbycall);
-			buffer.append("</killedbycall>\n");
+			encoder.openElement(ELEM_KILLEDBYCALL);
+			encodeVarnodes(encoder, killedbycall);
+			encoder.closeElement(ELEM_KILLEDBYCALL);
 		}
 		if (likelytrash != null) {
-			buffer.append("<likelytrash>\n");
-			writeVarnodes(buffer, likelytrash);
-			buffer.append("</likelytrash>\n");
+			encoder.openElement(ELEM_LIKELYTRASH);
+			encodeVarnodes(encoder, likelytrash);
+			encoder.closeElement(ELEM_LIKELYTRASH);
+		}
+		if (internalstorage != null) {
+			encoder.openElement(ELEM_INTERNAL_STORAGE);
+			encodeVarnodes(encoder, internalstorage);
+			encoder.closeElement(ELEM_INTERNAL_STORAGE);
 		}
 		if (returnaddress != null) {
-			buffer.append("<returnaddress>\n");
-			writeVarnodes(buffer, returnaddress);
-			buffer.append("</returnaddress>\n");
+			encoder.openElement(ELEM_RETURNADDRESS);
+			encodeVarnodes(encoder, returnaddress);
+			encoder.closeElement(ELEM_RETURNADDRESS);
 		}
 		if (localRange != null && !localRange.isEmpty()) {
-			buffer.append("<localrange>\n");
-			writeAddressSet(buffer, localRange);
-			buffer.append("</localrange>\n");
+			encoder.openElement(ELEM_LOCALRANGE);
+			encodeAddressSet(encoder, localRange);
+			encoder.closeElement(ELEM_LOCALRANGE);
 		}
 		if (paramRange != null && !paramRange.isEmpty()) {
-			buffer.append("<paramrange>\n");
-			writeAddressSet(buffer, paramRange);
-			buffer.append("</paramrange>\n");
+			encoder.openElement(ELEM_PARAMRANGE);
+			encodeAddressSet(encoder, paramRange);
+			encoder.closeElement(ELEM_PARAMRANGE);
 		}
-		buffer.append("</prototype>\n");
+		encoder.closeElement(ELEM_PROTOTYPE);
 	}
 
-	private void writeVarnodes(StringBuilder buffer, Varnode[] varnodes) {
+	private void encodeVarnodes(Encoder encoder, Varnode[] varnodes) throws IOException {
 		for (Varnode vn : varnodes) {
-			buffer.append("<varnode");
-			AddressXML.appendAttributes(buffer, vn.getAddress(), vn.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_VARNODE);
+			AddressXML.encodeAttributes(encoder, vn.getAddress(), vn.getSize());
+			encoder.closeElement(ELEM_VARNODE);
 		}
 	}
 
@@ -523,7 +520,7 @@ public class PrototypeModel {
 		return res;
 	}
 
-	private void writeAddressSet(StringBuilder buffer, AddressSet addressSet) {
+	private void encodeAddressSet(Encoder encoder, AddressSet addressSet) throws IOException {
 		AddressRangeIterator iter = addressSet.getAddressRanges();
 		while (iter.hasNext()) {
 			AddressRange addrRange = iter.next();
@@ -543,22 +540,22 @@ public class PrototypeModel {
 				if (first < 0 && last >= 0) {	// Range crosses 0
 					first &= mask;
 					// Split out the piece coming before 0
-					buffer.append("<range");
-					SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
-					SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first", first);
-					SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last", mask);
-					buffer.append("/>\n");
+					encoder.openElement(ELEM_RANGE);
+					encoder.writeSpace(ATTRIB_SPACE, space);
+					encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
+					encoder.writeUnsignedInteger(ATTRIB_LAST, mask);
+					encoder.closeElement(ELEM_RANGE);
 					// Reset first,last to be the piece coming after 0
 					first = 0;
 				}
 				first &= mask;
 				last &= mask;
 			}
-			buffer.append("<range");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first", first);
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last", last);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_RANGE);
+			encoder.writeSpace(ATTRIB_SPACE, space);
+			encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
+			encoder.writeUnsignedInteger(ATTRIB_LAST, last);
+			encoder.closeElement(ELEM_RANGE);
 		}
 	}
 
@@ -605,13 +602,6 @@ public class PrototypeModel {
 			extrapop = SpecXmlUtils.decodeInt(extpopStr);
 		}
 		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute("stackshift"));
-		String type = protoElement.getAttribute("type");
-		if (type != null) {
-			genericCallingConvention = GenericCallingConvention.getGenericCallingConvention(type);
-		}
-		else {
-			genericCallingConvention = GenericCallingConvention.guessFromName(name);
-		}
 		hasThis = false;
 		isConstruct = false;
 		String thisString = protoElement.getAttribute("hasthis");
@@ -660,6 +650,9 @@ public class PrototypeModel {
 			}
 			else if (elName.equals("likelytrash")) {
 				likelytrash = readVarnodes(parser, cspec);
+			}
+			else if (elName.equals("internal_storage")) {
+				internalstorage = readVarnodes(parser, cspec);
 			}
 			else if (elName.equals("localrange")) {
 				localRange = readAddressSet(parser, cspec);
@@ -745,9 +738,6 @@ public class PrototypeModel {
 		if (extrapop != obj.extrapop || stackshift != obj.stackshift) {
 			return false;
 		}
-		if (genericCallingConvention != obj.genericCallingConvention) {
-			return false;
-		}
 		if (hasThis != obj.hasThis || isConstruct != obj.isConstruct) {
 			return false;
 		}
@@ -772,6 +762,9 @@ public class PrototypeModel {
 		if (!SystemUtilities.isArrayEqual(likelytrash, obj.likelytrash)) {
 			return false;
 		}
+		if (!SystemUtilities.isArrayEqual(internalstorage, obj.internalstorage)) {
+			return false;
+		}
 		String compatName = (compatModel != null) ? compatModel.getName() : "";
 		String compatNameOp2 = (obj.compatModel != null) ? obj.compatModel.getName() : "";
 		if (!compatName.equals(compatNameOp2)) {
@@ -792,5 +785,13 @@ public class PrototypeModel {
 	@Override
 	public String toString() {
 		return getName();
+	}
+
+	/**
+	 * Set the return address
+	 * @param returnaddress return address
+	 */
+	protected void setReturnAddress(Varnode[] returnaddress) {
+		this.returnaddress = returnaddress;
 	}
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<processor_spec>
+	 <programcounter register="PC"/>
+    <default_memory_blocks>
+        <memory_block name="BPF_packet" start_address="packet:800000" length="0x1000" initialized="true"/>    
+        <memory_block name="BPF_packet" start_address="mem:900000" length="0x1000" initialized="true"/>    
+    </default_memory_blocks>
+</processor_spec>

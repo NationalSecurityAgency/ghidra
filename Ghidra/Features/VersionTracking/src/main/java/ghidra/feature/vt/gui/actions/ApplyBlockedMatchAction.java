@@ -17,10 +17,13 @@ package ghidra.feature.vt.gui.actions;
 
 import java.util.*;
 
+import javax.swing.Icon;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -28,7 +31,6 @@ import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.feature.vt.gui.task.ApplyBlockedMatchTask;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
-import resources.Icons;
 
 /**
  * The ApplyBlockedMatchAction allows the user to apply a match that is currently blocked.
@@ -36,6 +38,9 @@ import resources.Icons;
  * The user is prompted to verify the conflicting matches should be cleared before proceeding.
  */
 public class ApplyBlockedMatchAction extends DockingAction {
+
+	public static final Icon APPLY_BLOCKED_MATCH_ICON =
+		new GIcon("icon.version.tracking.action.match.apply.blocked");
 
 	public static String NAME = "Apply Blocked Match";
 	private static final String MENU_GROUP = VTPlugin.EDIT_MENU_GROUP;
@@ -47,7 +52,7 @@ public class ApplyBlockedMatchAction extends DockingAction {
 		this.controller = controller;
 
 		setPopupMenuData(new MenuData(new String[] { "Apply Blocked Match" },
-			Icons.APPLY_BLOCKED_MATCH_ICON, MENU_GROUP));
+			APPLY_BLOCKED_MATCH_ICON, MENU_GROUP));
 		setEnabled(false);
 		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Apply_Blocked_Match"));
 

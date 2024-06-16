@@ -1,9 +1,9 @@
 # sleigh specification file for Freescale HCS12 (68HCS12)
 
 @define HCS12 "1"
-@define HCS12X "1"
+
+@define SIZE "3"
 
 @define MAXFLASHPage "0xFF"
 
 @include "HCS_HC12.sinc"
-@include "XGATE.sinc"

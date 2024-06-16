@@ -503,4 +503,22 @@ public interface DbgEngNative extends StdCallLibrary {
 		}
 	}
 
+	public static class DEBUG_CREATE_PROCESS_OPTIONS extends Structure {
+		public static class ByReference extends DEBUG_CREATE_PROCESS_OPTIONS
+				implements Structure.ByReference {
+		}
+
+		public static final List<String> FIELDS = createFieldsOrder(
+			"CreateFlags", "EngCreateFlags", "VerifierFlags", "Reserved");
+
+		public ULONG CreateFlags;
+		public ULONG EngCreateFlags;
+		public ULONG VerifierFlags;
+		public ULONG Reserved;
+
+		@Override
+		protected List<String> getFieldOrder() {
+			return FIELDS;
+		}
+	}
 }

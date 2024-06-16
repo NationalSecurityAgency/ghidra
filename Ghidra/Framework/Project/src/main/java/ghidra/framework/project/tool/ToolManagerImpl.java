@@ -86,8 +86,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	}
 
-	/** 
-	 * Registers the new instance of the tool in the namesMap and returns the total number of 
+	/**
+	 * Registers the new instance of the tool in the namesMap and returns the total number of
 	 * running instances of that tool
 	 * @param toolName the name of the tool being registers
 	 * @param tool the tool being registered
@@ -208,8 +208,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		wsMap.put(name, ws);
 
 		// notify listeners of added workspace
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener listener = changeListeners.get(i);
+		for (WorkspaceChangeListener listener : changeListeners) {
 			listener.workspaceAdded(ws);
 		}
 
@@ -250,8 +249,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		wsMap.remove(wsName);
 
 		// notify listeners of removed workspace
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener listener = changeListeners.get(i);
+		for (WorkspaceChangeListener listener : changeListeners) {
 			listener.workspaceRemoved(ws);
 		}
 
@@ -288,8 +286,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 		Element root = new Element("TOOL_MANAGER");
 		root.setAttribute("ACTIVE_WORKSPACE", activeWorkspace.getName());
-		for (int i = 0; i < workspaces.size(); i++) {
-			WorkspaceImpl ws = (WorkspaceImpl) workspaces.get(i);
+		for (Workspace element : workspaces) {
+			WorkspaceImpl ws = (WorkspaceImpl) element;
 			root.addContent(ws.saveToXml());
 		}
 		Iterator<String> keys = connectMap.keySet().iterator();
@@ -306,7 +304,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * restores the object from an XML element
-	 * 
+	 *
 	 * @param root root element of saved XML state
 	 */
 	public void restoreFromXml(Element root) {
@@ -378,16 +376,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	/**
-	 * Close all running tools in the project.
-	 */
-	public void close() {
-		for (int i = 0; i < workspaces.size(); i++) {
-			WorkspaceImpl w = (WorkspaceImpl) workspaces.get(i);
-			w.close();
-		}
-	}
-
-	/** 
 	 * Save the tools that are opened and changed, that will be brought back up when the project
 	 * is reopened
 	 * @return true if the session was saved
@@ -447,6 +435,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	public void dispose() {
+		for (Workspace element : workspaces) {
+			WorkspaceImpl w = (WorkspaceImpl) element;
+			w.dispose();
+		}
 		toolServices.dispose();
 	}
 
@@ -518,7 +510,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Get any tool services available from this tool
-	 * 
+	 *
 	 * @return ToolServices list of tool services this tool can provide.
 	 */
 	public ToolServices getToolServices() {
@@ -557,14 +549,14 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 *  Close a tool.
-	 * 
+	 *
 	 * @param tool tool to be closed.
 	 */
 	void closeTool(PluginTool tool) {
 
 		// find the workspace running the tool
-		for (int i = 0; i < workspaces.size(); i++) {
-			WorkspaceImpl ws = (WorkspaceImpl) workspaces.get(i);
+		for (Workspace element : workspaces) {
+			WorkspaceImpl ws = (WorkspaceImpl) element;
 			PluginTool[] tools = ws.getTools();
 			for (PluginTool tool2 : tools) {
 				if (tool == tool2) {
@@ -577,7 +569,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Set the active workspace.
-	 * 
+	 *
 	 * @param workspace workspace to set active
 	 */
 	void setActiveWorkspace(WorkspaceImpl workspace) {
@@ -600,17 +592,16 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		activeWorkspace = workspace;
 
 		// notify listeners of new active workspace
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener listener = changeListeners.get(i);
+		for (WorkspaceChangeListener listener : changeListeners) {
 			listener.workspaceSetActive(activeWorkspace);
 		}
 	}
 
 	/**
 	 * Get a handle to the workspace with the given name.
-	 * 
+	 *
 	 * @param name name of the workspace.
-	 * 
+	 *
 	 * @return workspace handle if one exists.
 	 */
 	Workspace getWorkspace(String name) {
@@ -619,7 +610,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Mark workspace as changed.
-	 * 
+	 *
 	 * @param ws workspace to tag
 	 */
 	void setWorkspaceChanged(WorkspaceImpl ws) {
@@ -631,10 +622,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	/**
 	 * Called by the workspace when it is updating its name;
 	 * causes a property change event to be fired.
-	 * 
+	 *
 	 * @param ws workspace to rename
 	 * @param name new name of workspace
-	 * 
+	 *
 	 * @throws DuplicateNameException if there already exists a workspace by the given name
 	 */
 	void setWorkspaceName(Workspace ws, String name) throws DuplicateNameException {
@@ -648,8 +639,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		// fire property change event
 		PropertyChangeEvent event =
 			new PropertyChangeEvent(this, WORKSPACE_NAME_PROPERTY, ws.getName(), name);
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener l = changeListeners.get(i);
+		for (WorkspaceChangeListener l : changeListeners) {
 			l.propertyChange(event);
 		}
 	}
@@ -672,8 +662,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		deregisterTool(tool.getToolName(), tool);
 		disconnectTool(tool);
 
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener l = changeListeners.get(i);
+		for (WorkspaceChangeListener l : changeListeners) {
 			l.toolRemoved(ws, tool);
 		}
 	}
@@ -714,8 +703,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	void fireToolAddedEvent(Workspace ws, PluginTool tool) {
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener l = changeListeners.get(i);
+		for (WorkspaceChangeListener l : changeListeners) {
 			l.toolAdded(ws, tool);
 		}
 	}
@@ -758,10 +746,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Get the key for the connection map.
-	 * 
+	 *
 	 * @param producer tool producing an event
 	 * @param consumer tool consuming an event
-	 * 
+	 *
 	 */
 	private String getKey(PluginTool producer, PluginTool consumer) {
 		return producer.getName() + "+" + consumer.getName();
@@ -778,8 +766,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	private void firePropertyChangeEvent(PropertyChangeEvent ev) {
 		// notify listeners of tool change
-		for (int i = 0; i < changeListeners.size(); i++) {
-			WorkspaceChangeListener l = changeListeners.get(i);
+		for (WorkspaceChangeListener l : changeListeners) {
 			l.propertyChange(ev);
 		}
 	}
@@ -812,7 +799,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 
 		// we are in auto mode...if there is only one tool, then we can auto save
-		if (getToolInstanceCount(tool) == 1) {
+		if (getToolInstanceCount(tool) <= 1) {
 			return true;
 		}
 

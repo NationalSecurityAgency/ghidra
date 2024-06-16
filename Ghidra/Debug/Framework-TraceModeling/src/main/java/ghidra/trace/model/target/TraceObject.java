@@ -16,17 +16,16 @@
 package ghidra.trace.model.target;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
+import ghidra.trace.model.Lifespan.LifeSet;
 
 /**
  * The trace record of an observed {@link TargetObject}
@@ -47,6 +46,13 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return the trace
 	 */
 	Trace getTrace();
+
+	/**
+	 * Get the database key for this object
+	 * 
+	 * @return the key
+	 */
+	long getKey();
 
 	/**
 	 * Get the root of the tree containing this object
@@ -70,7 +76,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @return the range set for snaps at which this object is considered "inserted."
 	 */
-	RangeSet<Long> getLife();
+	LifeSet getLife();
 
 	/**
 	 * Inserts this object at its canonical path for the given lifespan
@@ -80,11 +86,11 @@ public interface TraceObject extends TraceUniqueObject {
 	 * contain the given lifespan. Only the canonical path is considered when looking for existing
 	 * ancestry.
 	 * 
-	 * @param the minimum lifespan of edges from the root to this object
+	 * @param lifespan the minimum lifespan of edges from the root to this object
 	 * @param resolution the rule for handling duplicate keys when setting values.
 	 * @return the value path from root to the newly inserted object
 	 */
-	TraceObjectValPath insert(Range<Long> lifespan, ConflictResolution resolution);
+	TraceObjectValPath insert(Lifespan lifespan, ConflictResolution resolution);
 
 	/**
 	 * Remove this object from its canonical path for the given lifespan
@@ -95,7 +101,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @param span the span during which this object should be removed
 	 */
-	void remove(Range<Long> span);
+	void remove(Lifespan span);
 
 	/**
 	 * Remove this object and its successors from their canonical paths for the given span
@@ -107,7 +113,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @param span the span during which this object and its canonical successors should be removed
 	 */
-	void removeTree(Range<Long> span);
+	void removeTree(Lifespan span);
 
 	/**
 	 * Get the parent value along this object's canonical path for a given snapshot
@@ -137,7 +143,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param lifespan the lifespan to consider
 	 * @return the stream of canonical parents
 	 */
-	Stream<? extends TraceObjectValue> getCanonicalParents(Range<Long> lifespan);
+	Stream<? extends TraceObjectValue> getCanonicalParents(Lifespan lifespan);
 
 	/**
 	 * Check if this object is the root
@@ -149,10 +155,13 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Get all paths actually leading to this object, from the root, within the given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
 	 * @param span the span which every value entry on each path must intersect
 	 * @return the paths
 	 */
-	Stream<? extends TraceObjectValPath> getAllPaths(Range<Long> span);
+	Stream<? extends TraceObjectValPath> getAllPaths(Lifespan span);
 
 	/**
 	 * Specifies a strategy for resolving duplicate keys
@@ -172,7 +181,11 @@ public interface TraceObject extends TraceUniqueObject {
 		 * Throw {@link DuplicateKeyException} if the specified lifespan would result in conflicting
 		 * entries
 		 */
-		DENY;
+		DENY,
+		/**
+		 * Adjust the new entry to fit into the span available, possibly ignoring it altogether
+		 */
+		ADJUST;
 	}
 
 	/**
@@ -192,46 +205,77 @@ public interface TraceObject extends TraceUniqueObject {
 	<I extends TraceObjectInterface> I queryInterface(Class<I> ifClass);
 
 	/**
-	 * Get all values whose child is this object
+	 * Get all values intersecting the given span and whose child is this object
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
+	 * @param span the span
 	 * @return the parent values
 	 */
-	Collection<? extends TraceObjectValue> getParents();
+	Collection<? extends TraceObjectValue> getParents(Lifespan span);
 
 	/**
-	 * Get all values (elements and attributes) of this object
+	 * Get all values (elements and attributes) of this object intersecting the given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
+	 * @param span the span
 	 * @return the values
 	 */
-	Collection<? extends TraceObjectValue> getValues();
+	Collection<? extends TraceObjectValue> getValues(Lifespan span);
+
+	/**
+	 * Get values with the given key intersecting the given span
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's values are retrieved instead.
+	 * 
+	 * @param span the span
+	 * @param key the key
+	 * @return the collection of values
+	 */
+	Collection<? extends TraceObjectValue> getValues(Lifespan span, String key);
 
 	/**
 	 * Get values with the given key intersecting the given span ordered by time
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's values are retrieved instead.
 	 * 
 	 * @param span the span
 	 * @param key the key
 	 * @param forward true to order from least- to most-recent, false for most- to least-recent
 	 * @return the stream of values
 	 */
-	Stream<? extends TraceObjectValue> getOrderedValues(Range<Long> span, String key,
+	Stream<? extends TraceObjectValue> getOrderedValues(Lifespan span, String key,
 			boolean forward);
 
 	/**
-	 * Get all elements of this object
+	 * Get all elements of this object intersecting the given span
 	 * 
+	 * @param span the span
 	 * @return the element values
 	 */
-	Collection<? extends TraceObjectValue> getElements();
+	Collection<? extends TraceObjectValue> getElements(Lifespan span);
 
 	/**
-	 * Get all attributes of this object
+	 * Get all attributes of this object intersecting the given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded.
+	 * 
+	 * @param span the span
 	 * @return the attribute values
 	 */
-	Collection<? extends TraceObjectValue> getAttributes();
+	Collection<? extends TraceObjectValue> getAttributes(Lifespan span);
 
 	/**
 	 * Get the value for the given snap and key
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's value is retrieved instead.
 	 * 
 	 * @param snap the snap
 	 * @param key the key
@@ -282,49 +326,82 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Stream all ancestor values of this object matching the given predicates, intersecting the
 	 * given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
+	 * 
 	 * @param span a span which values along the path must intersect
 	 * @param rootPredicates the predicates for matching path keys, relative to the root
 	 * @return the stream of matching paths to values
 	 */
-	Stream<? extends TraceObjectValPath> getAncestorsRoot(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getAncestorsRoot(Lifespan span,
 			PathPredicates rootPredicates);
 
 	/**
 	 * Stream all ancestor values of this object matching the given predicates, intersecting the
 	 * given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
+	 * 
 	 * @param span a span which values along the path must intersect
 	 * @param relativePredicates the predicates for matching path keys, relative to this object
 	 * @return the stream of matching paths to values
 	 */
-	Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getAncestors(Lifespan span,
 			PathPredicates relativePredicates);
 
 	/**
 	 * Stream all successor values of this object matching the given predicates, intersecting the
 	 * given span
 	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
+	 * 
 	 * @param span a span which values along the path must intersect
 	 * @param relativePredicates the predicates for matching path keys, relative to this object
 	 * @return the stream of matching paths to values
 	 */
-	Stream<? extends TraceObjectValPath> getSuccessors(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getSuccessors(Lifespan span,
 			PathPredicates relativePredicates);
 
 	/**
 	 * Stream all successor values of this object at the given relative path, intersecting the given
 	 * span, ordered by time.
 	 * 
+	 * <p>
+	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * attributes.
+	 * 
 	 * @param span the span which values along the path must intersect
 	 * @param relativePath the path relative to this object
 	 * @param forward true to order from least- to most-recent, false for most- to least-recent
 	 * @return the stream of value paths
 	 */
-	Stream<? extends TraceObjectValPath> getOrderedSuccessors(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getOrderedSuccessors(Lifespan span,
 			TraceObjectKeyPath relativePath, boolean forward);
 
 	/**
+	 * Stream all canonical successor values of this object matching the given predicates
+	 * 
+	 * <p>
+	 * If an object has a disjoint life, i.e., multiple canonical parents, then only the
+	 * least-recent of those is traversed. Aliased keys are excluded; those can't be canonical
+	 * anyway.
+	 * 
+	 * @param relativePredicates predicates on the relative path from this object to desired
+	 *            successors
+	 * @return the stream of value paths
+	 */
+	Stream<? extends TraceObjectValPath> getCanonicalSuccessors(PathPredicates relativePredicates);
+
+	/**
 	 * Set a value for the given lifespan
+	 * 
+	 * <p>
+	 * If the key is an alias, the target key's value is set instead.
 	 * 
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
@@ -333,7 +410,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return the created value entry
 	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */
-	TraceObjectValue setValue(Range<Long> lifespan, String key, Object value,
+	TraceObjectValue setValue(Lifespan lifespan, String key, Object value,
 			ConflictResolution resolution);
 
 	/**
@@ -342,42 +419,43 @@ public interface TraceObject extends TraceUniqueObject {
 	 * <p>
 	 * Setting a value of {@code null} effectively deletes the value for the given lifespan and
 	 * returns {@code null}. Values of the same key intersecting the given lifespan or either
-	 * truncated or deleted.
+	 * truncated or deleted. If the key is an alias, the target key's value is set instead.
+	 * 
 	 * 
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
 	 * @param value the new value
 	 * @return the created value entry, or null
 	 */
-	TraceObjectValue setValue(Range<Long> lifespan, String key, Object value);
+	TraceObjectValue setValue(Lifespan lifespan, String key, Object value);
 
 	/**
 	 * Set an attribute for the given lifespan
 	 * 
 	 * <p>
-	 * This is equivalent to {@link #setValue(Range, String, Object)}, except it verifies the key is
-	 * an attribute name.
+	 * This is equivalent to {@link #setValue(Lifespan, String, Object)}, except it verifies the key
+	 * is an attribute name.
 	 * 
 	 * @param lifespan the lifespan of the attribute
 	 * @param name the name to set
 	 * @param value the new value
 	 * @return the created value entry
 	 */
-	TraceObjectValue setAttribute(Range<Long> lifespan, String name, Object value);
+	TraceObjectValue setAttribute(Lifespan lifespan, String name, Object value);
 
 	/**
 	 * Set an element for the given lifespan
 	 * 
 	 * <p>
-	 * This is equivalent to {@link #setValue(Range, String, Object)}, except it converts the index
-	 * to a key, i.e., add brackets.
+	 * This is equivalent to {@link #setValue(Lifespan, String, Object)}, except it converts the
+	 * index to a key, i.e., add brackets.
 	 * 
 	 * @param lifespan the lifespan of the element
 	 * @param index the index to set
 	 * @param value the new value
 	 * @return the created value entry
 	 */
-	TraceObjectValue setElement(Range<Long> lifespan, String index, Object value);
+	TraceObjectValue setElement(Lifespan lifespan, String index, Object value);
 
 	/**
 	 * Set an element for the given lifespan
@@ -387,7 +465,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param value the new value
 	 * @return the created value entry
 	 */
-	TraceObjectValue setElement(Range<Long> lifespan, long index, Object value);
+	TraceObjectValue setElement(Lifespan lifespan, long index, Object value);
 
 	/**
 	 * Get the (target) schema for this object
@@ -403,7 +481,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param targetIf the interface class
 	 * @return the stream of found paths to values
 	 */
-	Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Range<Long> span,
+	Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Lifespan span,
 			Class<? extends TargetObject> targetIf);
 
 	/**
@@ -414,14 +492,14 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param ifClass the interface class
 	 * @return the stream of interfaces
 	 */
-	<I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Range<Long> span,
+	<I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Lifespan span,
 			Class<I> ifClass);
 
 	/**
 	 * Search for ancestors on the canonical path having the given target interface
 	 * 
 	 * <p>
-	 * The object may not yet be inserted at its canonical path
+	 * The object may not yet be inserted at its canonical path.
 	 * 
 	 * @param targetIf the interface class
 	 * @return the stream of objects
@@ -433,7 +511,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Search for ancestors on the canonical path providing the given interface
 	 * 
 	 * <p>
-	 * The object may not yet be inserted at its canonical path
+	 * The object may not yet be inserted at its canonical path.
 	 * 
 	 * @param <I> the interface type
 	 * @param ifClass the interface class
@@ -446,10 +524,11 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @param span the span which the found paths must intersect
 	 * @param targetIf the target interface class
+	 * @param requireCanonical if the objects must be found within their canonical container
 	 * @return the stream of found paths to values
 	 */
-	Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Range<Long> span,
-			Class<? extends TargetObject> targetIf);
+	Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Lifespan span,
+			Class<? extends TargetObject> targetIf, boolean requireCanonical);
 
 	/**
 	 * Search for successors providing the given interface and retrieve those interfaces
@@ -457,10 +536,11 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param <I> the interface type
 	 * @param span the span which the found objects must intersect
 	 * @param ifClass the interface class
+	 * @param requireCanonical if the objects must be found within their canonical container
 	 * @return the stream of interfaces
 	 */
-	<I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Range<Long> span,
-			Class<I> ifClass);
+	<I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Lifespan span,
+			Class<I> ifClass, boolean requireCanonical);
 
 	/**
 	 * Delete this object along with parent and child value entries referring to it
@@ -468,7 +548,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * <p>
 	 * <b>Warning:</b> This will remove the object from the manager <em>entirely</em>, not just over
 	 * a given span. In general, this is used for cleaning and maintenance. Consider
-	 * {@link #remove(Range)} or {@link TraceObjectValue#delete()} instead. Note, this does not
+	 * {@link #remove(Lifespan)} or {@link TraceObjectValue#delete()} instead. Note, this does not
 	 * delete the child objects or any successors. It is not recommended to invoke this on the root
 	 * object, since it cannot be replaced without first clearing the manager.
 	 */
@@ -506,5 +586,92 @@ public interface TraceObject extends TraceUniqueObject {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Search for a suitable object having the given target interface
+	 * 
+	 * <p>
+	 * This operates by examining the schema for a unique suitable path, without regard to
+	 * lifespans. If needed, the caller should inspect the object's life.
+	 * 
+	 * @param targetIf the target interface
+	 * @return the suitable object, or null if not found
+	 */
+	default TraceObject querySuitableTargetInterface(Class<? extends TargetObject> targetIf) {
+		if (targetIf == TargetObject.class) {
+			return this;
+		}
+		List<String> path = getRoot().getTargetSchema()
+				.searchForSuitable(targetIf, getCanonicalPath().getKeyList());
+		if (path == null) {
+			return null;
+		}
+		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
+	}
+
+	/**
+	 * Search for a suitable object having the given schema
+	 * 
+	 * <p>
+	 * This operates by examining the schema for a unique suitable path, without regard to
+	 * lifespans. If needed, the caller should inspect the object's life.
+	 * 
+	 * @param schema the schema
+	 * @return the suitable object, or null if not found
+	 */
+	default TraceObject querySuitableSchema(TargetObjectSchema schema) {
+		List<String> path = getRoot().getTargetSchema()
+				.searchForSuitable(schema, getCanonicalPath().getKeyList());
+		if (path == null) {
+			return null;
+		}
+		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
+	}
+
+	/**
+	 * Search for a suitable register container
+	 * 
+	 * @see TargetObjectSchema#searchForRegisterContainer(int, List)
+	 * @param frameLevel the frame level. Must be 0 if not applicable
+	 * @return the register container, or null
+	 */
+	default TraceObject queryRegisterContainer(int frameLevel) {
+		PathPredicates regsMatcher = getRoot().getTargetSchema()
+				.searchForRegisterContainer(frameLevel, getCanonicalPath().getKeyList());
+		for (PathPattern regsPattern : regsMatcher.getPatterns()) {
+			TraceObject regsObj = getTrace().getObjectManager()
+					.getObjectByCanonicalPath(
+						TraceObjectKeyPath.of(regsPattern.getSingletonPath()));
+			if (regsObj != null) {
+				return regsObj;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Get the execution state, if applicable, of this object
+	 * 
+	 * <p>
+	 * This searches for the conventional stateful object defining this object's execution state. If
+	 * such an object does not exist, null is returned. If one does exist, then its execution state
+	 * at the given snap is returned. If that state is null, it is assumed
+	 * {@link TargetExecutionState#INACTIVE}.
+	 * 
+	 * @param snap the snap
+	 * @return the state or null
+	 */
+	default TargetExecutionState getExecutionState(long snap) {
+		TraceObject stateful = querySuitableTargetInterface(TargetExecutionStateful.class);
+		if (stateful == null) {
+			return null;
+		}
+		TraceObjectValue stateVal =
+			stateful.getAttribute(snap, TargetExecutionStateful.STATE_ATTRIBUTE_NAME);
+		if (stateVal == null) {
+			return TargetExecutionState.INACTIVE;
+		}
+		return TargetExecutionState.valueOf((String) stateVal.getValue());
 	}
 }

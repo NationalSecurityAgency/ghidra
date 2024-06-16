@@ -127,7 +127,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 			symbolTable.getSymbols(getInitializedMemory(), SymbolType.LABEL, true);
 
 		while (dataSymbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = dataSymbols.next();
 			if (!symbol.getName().contains(RTTI_BASE_COMPLETE_OBJECT_LOADER_LABEL)) {
 				continue;
@@ -193,7 +193,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 			symbolTable.getSymbols(getInitializedMemory(), SymbolType.LABEL, true);
 
 		while (dataSymbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = dataSymbols.next();
 			if (!symbol.getName().contains(RTTI_BASE_CLASS_DESCRIPTOR_LABEL)) {
 				continue;
@@ -259,7 +259,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 		for (int i = 0; i < numBaseClasses; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address baseClassDescriptorAddress = getReferencedAddress(address.add(i * 4));
 
@@ -308,7 +308,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 		Iterator<Symbol> baseClassDescriptorIterator = baseClassDescriptors.iterator();
 		while (baseClassDescriptorIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = baseClassDescriptorIterator.next();
 			Address classHierarchyDescriptorAddress = createClassHierarchyDescriptor(
 				symbol.getAddress().add(24), symbol.getParentNamespace());
@@ -322,7 +322,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 		Iterator<Symbol> completeObjectLocatorIterator = completeObjectLocators.iterator();
 		while (completeObjectLocatorIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = completeObjectLocatorIterator.next();
 			Address classHierarchyDescriptorAddress = createClassHierarchyDescriptor(
 				symbol.getAddress().add(16), symbol.getParentNamespace());
@@ -421,7 +421,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 		while (classHierarchyDescriptorIterator.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address classHierarchyDescriptorAddress = classHierarchyDescriptorIterator.next();
 			Symbol classHierarchyDescriptorSymbol =
@@ -520,7 +520,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 		Iterator<Symbol> iterator = completeObjectLocatorSymbols.iterator();
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol completeObjectLocatorSymbol = iterator.next();
 
 			Address completeObjectLocatorAddress = completeObjectLocatorSymbol.getAddress();
@@ -594,7 +594,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol sym : symbols) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (sym.getName().contains(name) && sym.getParentNamespace().equals(namespace)) {
 				return sym;
 			}
@@ -643,7 +643,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 		MemoryBlock[] blocks = currentProgram.getMemory().getBlocks();
 
 		for (MemoryBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (block.isInitialized()) {
 				dataAddresses.add(block.getStart(), block.getEnd());

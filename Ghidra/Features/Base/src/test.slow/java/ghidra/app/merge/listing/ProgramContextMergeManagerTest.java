@@ -53,14 +53,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					setRegValue(pc, addr("1002085"), addr("1002100"), regDR0, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				setRegValue(pc, addr("1002085"), addr("1002100"), regDR0, 0x5L);
 			}
 
 			@Override
@@ -68,13 +62,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), regDR0, 0x22L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), regDR0, 0x22L);
 			}
 		});
 
@@ -112,14 +100,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					setRegValue(pc, addr("10022d4"), addr("10022d9"), regDR0, 0x66L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				setRegValue(pc, addr("10022d4"), addr("10022d9"), regDR0, 0x66L);
 			}
 
 			@Override
@@ -127,13 +109,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("10022e0"), addr("10022e5"), regDR0, 0x44L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022e0"), addr("10022e5"), regDR0, 0x44L);
 			}
 		});
 
@@ -175,13 +151,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					pc.remove(addr("1002312"), addr("1002317"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				pc.remove(addr("1002312"), addr("1002317"), regDR0);
 			}
 
 			@Override
@@ -189,13 +159,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					pc.remove(addr("100230c"), addr("1002311"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				pc.remove(addr("100230c"), addr("1002311"), regDR0);
 			}
 		});
 
@@ -237,14 +201,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
 			}
 
 			@Override
@@ -252,18 +210,12 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					pc.remove(addr("1002329"), addr("100233b"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				pc.remove(addr("1002329"), addr("100233b"), regDR0);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 
 		chooseCancel(); // 1002085 - 1002100
 		Thread.sleep(250);
@@ -294,14 +246,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
 			}
 
 			@Override
@@ -309,18 +255,12 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					pc.remove(addr("1002329"), addr("100233b"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				pc.remove(addr("1002329"), addr("100233b"), regDR0);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 		chooseRadioButton(LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -338,14 +278,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
 			}
 
 			@Override
@@ -353,18 +287,12 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					pc.remove(addr("1002329"), addr("100233b"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				pc.remove(addr("1002329"), addr("100233b"), regDR0);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002050 - 1002074
 		waitForMergeCompletion();
 
@@ -382,14 +310,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
 			}
 
 			@Override
@@ -397,18 +319,12 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					pc.remove(addr("1002329"), addr("100233b"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				pc.remove(addr("1002329"), addr("100233b"), regDR0);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 		chooseRadioButton(ORIGINAL_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -426,14 +342,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					// Initially Direction was 0x1e240
-					pc.remove(addr("1002329"), addr("100233b"), regDR0);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Initially Direction was 0x1e240
+				pc.remove(addr("1002329"), addr("100233b"), regDR0);
 			}
 
 			@Override
@@ -441,18 +351,12 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002329"), addr("100233b"), regDR0, 0x5L);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues((Long) null, new Long(0x5L), new Long(0x40e20100L));
+		checkDisplayValues((Long) null, Long.valueOf(0x5L), Long.valueOf(0x40e20100L));
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -470,14 +374,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDir = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), regDir, 0x5L);
-					setRegValue(pc, addr("1002075"), addr("1002100"), regDir, 0x7L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), regDir, 0x5L);
+				setRegValue(pc, addr("1002075"), addr("1002100"), regDir, 0x7L);
 			}
 
 			@Override
@@ -485,14 +383,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regDR0 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002050"), addr("1002084"), regDR0, 0x1L);
-					setRegValue(pc, addr("1002085"), addr("1002150"), regDR0, 0x3L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002050"), addr("1002084"), regDR0, 0x1L);
+				setRegValue(pc, addr("1002085"), addr("1002150"), regDR0, 0x3L);
 			}
 		});
 
@@ -539,14 +431,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), reg1, 0x5L);
-					setRegValue(pc, addr("1002075"), addr("1002100"), reg1, 0x7L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), reg1, 0x5L);
+				setRegValue(pc, addr("1002075"), addr("1002100"), reg1, 0x7L);
 			}
 
 			@Override
@@ -554,14 +440,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002050"), addr("1002084"), reg1, 0x1L);
-					setRegValue(pc, addr("1002085"), addr("1002150"), reg1, 0x3L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002050"), addr("1002084"), reg1, 0x1L);
+				setRegValue(pc, addr("1002085"), addr("1002150"), reg1, 0x3L);
 			}
 		});
 
@@ -597,14 +477,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), reg1, 0x5L);
-					setRegValue(pc, addr("1002075"), addr("1002100"), reg1, 0x7L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), reg1, 0x5L);
+				setRegValue(pc, addr("1002075"), addr("1002100"), reg1, 0x7L);
 			}
 
 			@Override
@@ -612,14 +486,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002050"), addr("1002084"), reg1, 0x1L);
-					setRegValue(pc, addr("1002085"), addr("1002150"), reg1, 0x3L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002050"), addr("1002084"), reg1, 0x1L);
+				setRegValue(pc, addr("1002085"), addr("1002150"), reg1, 0x3L);
 			}
 		});
 
@@ -655,14 +523,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), reg1, 0x5L);
-					setRegValue(pc, addr("1002075"), addr("1002100"), reg1, 0x7L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), reg1, 0x5L);
+				setRegValue(pc, addr("1002075"), addr("1002100"), reg1, 0x7L);
 			}
 
 			@Override
@@ -670,14 +532,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameTR2);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002050"), addr("1002084"), reg1, 0x1L);
-					setRegValue(pc, addr("1002085"), addr("1002150"), reg1, 0x3L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002050"), addr("1002084"), reg1, 0x1L);
+				setRegValue(pc, addr("1002085"), addr("1002150"), reg1, 0x3L);
 			}
 		});
 
@@ -715,17 +571,11 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				Register regAx = pc.getRegister(regNameAx);
 				Register regEbp = pc.getRegister(regNameEbp);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), regTR2, 0x5L);
-					setRegValue(pc, addr("1002075"), addr("1002100"), regTR2, 0x7L);
-					setRegValue(pc, addr("1006420"), addr("1006440"), regAx, 0x123bL);
-					setRegValue(pc, addr("1001007"), addr("1001010"), regEbp, 0x22334455L);
-					setRegValue(pc, addr("1002050"), addr("1002060"), regEbp, 0x22334455L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), regTR2, 0x5L);
+				setRegValue(pc, addr("1002075"), addr("1002100"), regTR2, 0x7L);
+				setRegValue(pc, addr("1006420"), addr("1006440"), regAx, 0x123bL);
+				setRegValue(pc, addr("1001007"), addr("1001010"), regEbp, 0x22334455L);
+				setRegValue(pc, addr("1002050"), addr("1002060"), regEbp, 0x22334455L);
 			}
 
 			@Override
@@ -735,61 +585,55 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				Register regAx = pc.getRegister(regNameAx);
 				Register regEbp = pc.getRegister(regNameEbp);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1001300"), addr("1001320"), regAx, 0x7788L);
-					setRegValue(pc, addr("1002050"), addr("1002084"), regTR2, 0x1L);
-					setRegValue(pc, addr("1002085"), addr("1002150"), regTR2, 0x3L);
-					setRegValue(pc, addr("1006422"), addr("1006424"), regAx, 0x123bL);
-					setRegValue(pc, addr("1006428"), addr("1006430"), regAx, 0xabcdL);
-					setRegValue(pc, addr("1006432"), addr("1006434"), regAx, 0x1255L);
-					setRegValue(pc, addr("1001007"), addr("1001008"), regEbp, 0xaa33cc55L);
-					setRegValue(pc, addr("1002054"), addr("1002054"), regEbp, 0x22334455L);
-					setRegValue(pc, addr("1002055"), addr("1002060"), regEbp, 0x99887766L);
-					setRegValue(pc, addr("1002080"), addr("1002090"), regEbp, 0x12345678L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1001300"), addr("1001320"), regAx, 0x7788L);
+				setRegValue(pc, addr("1002050"), addr("1002084"), regTR2, 0x1L);
+				setRegValue(pc, addr("1002085"), addr("1002150"), regTR2, 0x3L);
+				setRegValue(pc, addr("1006422"), addr("1006424"), regAx, 0x123bL);
+				setRegValue(pc, addr("1006428"), addr("1006430"), regAx, 0xabcdL);
+				setRegValue(pc, addr("1006432"), addr("1006434"), regAx, 0x1255L);
+				setRegValue(pc, addr("1001007"), addr("1001008"), regEbp, 0xaa33cc55L);
+				setRegValue(pc, addr("1002054"), addr("1002054"), regEbp, 0x22334455L);
+				setRegValue(pc, addr("1002055"), addr("1002060"), regEbp, 0x99887766L);
+				setRegValue(pc, addr("1002080"), addr("1002090"), regEbp, 0x12345678L);
 			}
 		});
 
 		executeMerge(ASK_USER);
 
 		// EBP register conflicts
-		checkDisplayValues(new Long(0x22334455L), new Long(0xaa33cc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0xaa33cc55L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x22334455L), new Long(0x99887766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0x99887766L), (Long) null);
 		chooseRadioButton(ORIGINAL_BUTTON_NAME); // 1002055 - 1002060
 
 		// TR2 register conflicts
-		checkDisplayValues(new Long(0x5L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x5L), Long.valueOf(0x1L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002050 - 1002074
-		checkDisplayValues(new Long(0x7L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x1L), (Long) null);
 		chooseRadioButton(LATEST_BUTTON_NAME); // 1002075 - 1002084
-		checkDisplayValues(new Long(0x7L), new Long(0x3L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x3L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002085 - 1002100
 
 		// AX register conflicts
-		checkDisplayValues(new Long(0x123bL), new Long(0xabcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0xabcdL), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x123bL), new Long(0x1255L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0x1255L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006432 - 1006434
 
 		// BP register conflicts
-		checkDisplayValues(new Long(0x4455L), new Long(0xcc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0xcc55L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x4455L), new Long(0x7766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0x7766L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002055 - 1002060
 
 		// AL register conflicts
-		checkDisplayValues(new Long(0x3bL), new Long(0xcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0xcdL), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x3bL), new Long(0x55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0x55L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006432 - 1006434
 
 		// AH register conflicts
-		checkDisplayValues(new Long(0x12L), new Long(0xabL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x12L), Long.valueOf(0xabL), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006428 - 100106430
 
 		waitForMergeCompletion();
@@ -869,18 +713,12 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regSsType = pc.getRegister(regNameContextBit);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					clear(program, "0x1006436", "0x1006436");
+				clear(program, "0x1006436", "0x1006436");
 
-					setRegValue(pc, addr("1006436"), addr("1006436"), regSsType, 0x1L);
-					setRegValue(pc, addr("1001000"), addr("1001010"), regSsType, 0x1L);
+				setRegValue(pc, addr("1006436"), addr("1006436"), regSsType, 0x1L);
+				setRegValue(pc, addr("1001000"), addr("1001010"), regSsType, 0x1L);
 
-					disassemble(program, "0x1006436", "0x1006436");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				disassemble(program, "0x1006436", "0x1006436");
 			}
 
 			@Override
@@ -889,19 +727,13 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regSsType = pc.getRegister(regNameContextBit);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					clear(program, "0x1006432", "0x1006434");
+				clear(program, "0x1006432", "0x1006434");
 
-					setRegValue(pc, addr("1006432"), addr("1006434"), regSsType, 0x1L);
-					setRegValue(pc, addr("1001000"), addr("1001004"), regSsType, 0x1L);
-					setRegValue(pc, addr("1001005"), addr("1001010"), regSsType, 0x0L);
+				setRegValue(pc, addr("1006432"), addr("1006434"), regSsType, 0x1L);
+				setRegValue(pc, addr("1001000"), addr("1001004"), regSsType, 0x1L);
+				setRegValue(pc, addr("1001005"), addr("1001010"), regSsType, 0x0L);
 
-					disassemble(program, "0x1006432", "0x1006434");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				disassemble(program, "0x1006432", "0x1006434");
 			}
 		});
 
@@ -944,12 +776,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				// Empty
 			}
 
 			@Override
@@ -957,13 +784,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register regEbp = pc.getRegister(regNameEbp);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1002080"), addr("1002090"), regEbp, 0x12345678L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002080"), addr("1002090"), regEbp, 0x12345678L);
 			}
 		});
 
@@ -984,14 +805,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
-					setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
+				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
 			}
 
 			@Override
@@ -999,21 +814,15 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
-					setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
+				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x66L), new Long(0x7L), new Long(0x1010101L));
+		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
-		checkDisplayValues(new Long(0x44L), new Long(0x5L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -1034,14 +843,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
-					setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
+				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
 			}
 
 			@Override
@@ -1049,21 +852,15 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
-					setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
+				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x66L), new Long(0x7L), new Long(0x1010101L));
+		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
 		chooseRadioButton(LATEST_BUTTON_NAME);
-		checkDisplayValues(new Long(0x44L), new Long(0x5L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -1084,14 +881,8 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
-					setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x66L);
+				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x44L);
 			}
 
 			@Override
@@ -1099,21 +890,15 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				ProgramContext pc = program.getProgramContext();
 				Register reg1 = pc.getRegister(regNameDR0);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
-					setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("10022d4"), addr("10022e5"), reg1, 0x7L);
+				setRegValue(pc, addr("10022ee"), addr("10022fc"), reg1, 0x5L);
 			}
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x66L), new Long(0x7L), new Long(0x1010101L));
+		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
 		chooseRadioButton(ORIGINAL_BUTTON_NAME);
-		checkDisplayValues(new Long(0x44L), new Long(0x5L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(ORIGINAL_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -1136,7 +921,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		String latestExpected = getValueString(latest);
 		String myExpected = getValueString(my);
 		String originalExpected = getValueString(original);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Window window = windowForComponent(getMergePanel());
 		final VerticalChoicesPanel comp = findComponent(window, VerticalChoicesPanel.class);
 		JLabel latestLabel = (JLabel) findComponentByName(comp, comp.getComponentName(1, 1));
@@ -1219,17 +1004,11 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				Register regAx = pc.getRegister(regNameAx);
 				Register regEbp = pc.getRegister(regNameEbp);
 
-				int transactionID = program.startTransaction("Setup latest version");
-				try {
-					setRegValue(pc, addr("1002000"), addr("1002074"), regTR2, 0x5L);
-					setRegValue(pc, addr("1002075"), addr("1002100"), regTR2, 0x7L);
-					setRegValue(pc, addr("1006420"), addr("1006440"), regAx, 0x123bL);
-					setRegValue(pc, addr("1001007"), addr("1001010"), regEbp, 0x22334455L);
-					setRegValue(pc, addr("1002050"), addr("1002060"), regEbp, 0x22334455L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1002000"), addr("1002074"), regTR2, 0x5L);
+				setRegValue(pc, addr("1002075"), addr("1002100"), regTR2, 0x7L);
+				setRegValue(pc, addr("1006420"), addr("1006440"), regAx, 0x123bL);
+				setRegValue(pc, addr("1001007"), addr("1001010"), regEbp, 0x22334455L);
+				setRegValue(pc, addr("1002050"), addr("1002060"), regEbp, 0x22334455L);
 			}
 
 			@Override
@@ -1239,22 +1018,16 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 				Register regAx = pc.getRegister(regNameAx);
 				Register regEbp = pc.getRegister(regNameEbp);
 
-				int transactionID = program.startTransaction("Setup my version");
-				try {
-					setRegValue(pc, addr("1001300"), addr("1001320"), regAx, 0x7788L);
-					setRegValue(pc, addr("1002050"), addr("1002084"), regTR2, 0x1L);
-					setRegValue(pc, addr("1002085"), addr("1002150"), regTR2, 0x3L);
-					setRegValue(pc, addr("1006422"), addr("1006424"), regAx, 0x123bL);
-					setRegValue(pc, addr("1006428"), addr("1006430"), regAx, 0xabcdL);
-					setRegValue(pc, addr("1006432"), addr("1006434"), regAx, 0x1255L);
-					setRegValue(pc, addr("1001007"), addr("1001008"), regEbp, 0xaa33cc55L);
-					setRegValue(pc, addr("1002054"), addr("1002054"), regEbp, 0x22334455L);
-					setRegValue(pc, addr("1002055"), addr("1002060"), regEbp, 0x99887766L);
-					setRegValue(pc, addr("1002080"), addr("1002090"), regEbp, 0x12345678L);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				setRegValue(pc, addr("1001300"), addr("1001320"), regAx, 0x7788L);
+				setRegValue(pc, addr("1002050"), addr("1002084"), regTR2, 0x1L);
+				setRegValue(pc, addr("1002085"), addr("1002150"), regTR2, 0x3L);
+				setRegValue(pc, addr("1006422"), addr("1006424"), regAx, 0x123bL);
+				setRegValue(pc, addr("1006428"), addr("1006430"), regAx, 0xabcdL);
+				setRegValue(pc, addr("1006432"), addr("1006434"), regAx, 0x1255L);
+				setRegValue(pc, addr("1001007"), addr("1001008"), regEbp, 0xaa33cc55L);
+				setRegValue(pc, addr("1002054"), addr("1002054"), regEbp, 0x22334455L);
+				setRegValue(pc, addr("1002055"), addr("1002060"), regEbp, 0x99887766L);
+				setRegValue(pc, addr("1002080"), addr("1002090"), regEbp, 0x12345678L);
 			}
 		});
 	}
@@ -1267,39 +1040,39 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		executeMerge(ASK_USER);
 
 		// EBP register conflicts
-		checkDisplayValues(new Long(0x22334455L), new Long(0xaa33cc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0xaa33cc55L), (Long) null);
 		chooseProgramContext("EBP", KEEP_MY, false); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x22334455L), new Long(0x99887766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0x99887766L), (Long) null);
 		chooseProgramContext("EBP", KEEP_ORIGINAL, false); // 1002055 - 1002060
 
 		// TR2 register conflicts
-		checkDisplayValues(new Long(0x5L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x5L), Long.valueOf(0x1L), (Long) null);
 		chooseProgramContext("TR2", KEEP_MY, false); // 1002050 - 1002074
-		checkDisplayValues(new Long(0x7L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x1L), (Long) null);
 		chooseProgramContext("TR2", KEEP_LATEST, false); // 1002075 - 1002084
-		checkDisplayValues(new Long(0x7L), new Long(0x3L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x3L), (Long) null);
 		chooseProgramContext("TR2", KEEP_MY, false); // 1002085 - 1002100
 
 		// AX register conflicts
-		checkDisplayValues(new Long(0x123bL), new Long(0xabcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0xabcdL), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x123bL), new Long(0x1255L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0x1255L), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006432 - 1006434
 
 		// BP register conflicts
-		checkDisplayValues(new Long(0x4455L), new Long(0xcc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0xcc55L), (Long) null);
 		chooseProgramContext("BP", KEEP_MY, false); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x4455L), new Long(0x7766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0x7766L), (Long) null);
 		chooseProgramContext("BP", KEEP_MY, false); // 1002055 - 1002060
 
 		// AL register conflicts
-		checkDisplayValues(new Long(0x3bL), new Long(0xcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0xcdL), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x3bL), new Long(0x55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0x55L), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006432 - 1006434
 
 		// AH register conflicts
-		checkDisplayValues(new Long(0x12L), new Long(0xabL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x12L), Long.valueOf(0xabL), (Long) null);
 		chooseProgramContext("AH", KEEP_MY, false); // 1006428 - 100106430
 
 		waitForMergeCompletion();
@@ -1377,39 +1150,39 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		executeMerge(ASK_USER);
 
 		// EBP register conflicts
-		checkDisplayValues(new Long(0x22334455L), new Long(0xaa33cc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0xaa33cc55L), (Long) null);
 		chooseProgramContext("EBP", KEEP_MY, true); // 1001007 - 1001008
-//		checkDisplayValues(new Long(0x22334455L), new Long(0x99887766L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0x99887766L), (Long) null);
 //		chooseProgramContext("EBP", KEEP_ORIGINAL, false); // 1002055 - 1002060
 
 		// TR2 register conflicts
-		checkDisplayValues(new Long(0x5L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x5L), Long.valueOf(0x1L), (Long) null);
 		chooseProgramContext("TR2", KEEP_MY, true); // 1002050 - 1002074
-//		checkDisplayValues(new Long(0x7L), new Long(0x1L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x1L), (Long) null);
 //		chooseProgramContext("TR2", KEEP_LATEST, false); // 1002075 - 1002084
-//		checkDisplayValues(new Long(0x7L), new Long(0x3L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x3L), (Long) null);
 //		chooseProgramContext("TR2", KEEP_MY, false); // 1002085 - 1002100
 
 		// AX register conflicts
-		checkDisplayValues(new Long(0x123bL), new Long(0xabcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0xabcdL), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x123bL), new Long(0x1255L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0x1255L), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006432 - 1006434
 
 		// BP register conflicts
-		checkDisplayValues(new Long(0x4455L), new Long(0xcc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0xcc55L), (Long) null);
 		chooseProgramContext("BP", KEEP_MY, true); // 1001007 - 1001008
-//		checkDisplayValues(new Long(0x4455L), new Long(0x7766L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0x7766L), (Long) null);
 //		chooseProgramContext("BP", KEEP_MY, false); // 1002055 - 1002060
 
 		// AL register conflicts
-		checkDisplayValues(new Long(0x3bL), new Long(0xcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0xcdL), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x3bL), new Long(0x55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0x55L), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006432 - 1006434
 
 		// AH register conflicts
-		checkDisplayValues(new Long(0x12L), new Long(0xabL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x12L), Long.valueOf(0xabL), (Long) null);
 		chooseProgramContext("AH", KEEP_MY, true); // 1006428 - 100106430
 
 		waitForMergeCompletion();

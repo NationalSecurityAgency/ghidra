@@ -15,16 +15,24 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.model.listing.TraceDefinedUnitsView;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.listing.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeManager#definedUnits()}
+ */
 public class DBTraceDefinedUnitsMemoryView extends
 		AbstractBaseDBTraceCodeUnitsMemoryView<AbstractDBTraceCodeUnit<?>, DBTraceDefinedUnitsView>
-		implements TraceDefinedUnitsView {
+		implements TraceDefinedUnitsView, InternalTraceBaseDefinedUnitsView<TraceCodeUnit> {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceDefinedUnitsMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}
@@ -35,7 +43,7 @@ public class DBTraceDefinedUnitsMemoryView extends
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range, boolean clearContext,
+	public void clear(Lifespan span, AddressRange range, boolean clearContext,
 			TaskMonitor monitor) throws CancelledException {
 		delegateDeleteV(range.getAddressSpace(), m -> m.clear(span, range, clearContext, monitor));
 	}

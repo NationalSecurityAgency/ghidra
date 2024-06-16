@@ -22,9 +22,7 @@ import ghidra.trace.model.thread.TraceThread;
 public interface TraceReferenceManager extends TraceReferenceOperations {
 	TraceReferenceSpace getReferenceSpace(AddressSpace space, boolean createIfAbsent);
 
-	TraceReferenceRegisterSpace getReferenceRegisterSpace(TraceThread thread,
-			boolean createIfAbsent);
+	TraceReferenceSpace getReferenceRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
-	TraceReferenceRegisterSpace getReferenceRegisterSpace(TraceStackFrame frame,
-			boolean createIfAbsent);
+	TraceReferenceSpace getReferenceRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
 }

@@ -22,7 +22,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.ProgramDropProvider;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
@@ -42,7 +42,6 @@ import ghidra.program.util.ProgramSelection;
  */
 @ServiceInfo(defaultProvider = CodeBrowserPlugin.class)
 public interface CodeViewerService {
-
 	/**
 	 * Add a provider that shows an overview of the program.
 	 * @param overviewProvider provider to add
@@ -105,14 +104,14 @@ public interface CodeViewerService {
 	 * @param provider The provider to set.
 	 * @param program The program with which to associate the given provider.
 	 */
-	public void setHighlightProvider(HighlightProvider provider, Program program);
+	public void setHighlightProvider(ListingHighlightProvider provider, Program program);
 
 	/**
 	 * Remove the highlight provider.
 	 * @param provider the provider to remove.
 	 * @param program the program associated with the given provider.
 	 */
-	public void removeHighlightProvider(HighlightProvider provider, Program program);
+	public void removeHighlightProvider(ListingHighlightProvider provider, Program program);
 
 	/**
 	 * Set a listing panel on the code viewer.
@@ -226,4 +225,9 @@ public interface CodeViewerService {
 	 * @param listener the listener to be notified;
 	 */
 	public void removeListingDisplayListener(AddressSetDisplayListener listener);
+
+	/**
+	 * Request that the main connected Listing view gets focus
+	 */
+	public void requestFocus();
 }

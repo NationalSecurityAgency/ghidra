@@ -21,13 +21,17 @@ import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.layout.PairLayout;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Panel to show whether tree name and tree structure changed.
- * 
- * 
+ *
+ *
  */
 class TreeChangePanel extends JPanel {
 
@@ -39,11 +43,10 @@ class TreeChangePanel extends JPanel {
 	private JLabel nameIconLabel;
 	private JLabel structureIconLabel;
 
-	private final static ImageIcon CHANGED_ICON = ResourceManager.loadImage("images/changed16.gif");
-	private final static ImageIcon NO_CHANGE_ICON =
-		ResourceManager.loadImage("images/EmptyIcon16.gif");
-	private final static Color CHANGED_COLOR = Color.BLACK;
-	private final static Color NO_CHANGE_COLOR = Color.GRAY;
+	private final static Icon CHANGED_ICON = new GIcon("icon.plugin.merge.changed");
+	private final static Icon NO_CHANGE_ICON = Icons.EMPTY_ICON;
+	private final static Color CHANGED_COLOR = Colors.FOREGROUND;
+	private final static Color NO_CHANGE_COLOR = Messages.HINT;
 
 	TreeChangePanel(String title) {
 		super(new BorderLayout());
@@ -72,9 +75,7 @@ class TreeChangePanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		treeNameLabel = new GDLabel("Tree Name");
-		Font font = treeNameLabel.getFont();
-		font = new Font(font.getName(), Font.BOLD, font.getSize());
-		treeNameLabel.setFont(font);
+		Gui.registerFont(treeNameLabel, Font.BOLD);
 
 		nameLabel = new GDLabel("Name Changed");
 		nameIconLabel = new GIconLabel(CHANGED_ICON);

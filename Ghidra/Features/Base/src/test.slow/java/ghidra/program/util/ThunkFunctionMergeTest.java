@@ -25,7 +25,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -69,7 +69,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			if (myProgram != null) {
 				myProgram.flushEvents();
 			}
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 		}
 		catch (Exception e) {
@@ -103,8 +103,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -115,20 +113,14 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -139,13 +131,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -155,7 +143,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs = new AddressSet();
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -182,8 +170,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -194,20 +180,14 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -218,13 +198,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -234,7 +210,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs =
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
@@ -262,8 +238,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with two params.
 					AddressSet body =
@@ -274,13 +248,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -295,7 +265,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
@@ -326,8 +296,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -338,13 +306,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -354,7 +318,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
@@ -384,8 +348,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -396,14 +358,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function latestFunction =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -412,8 +369,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -424,13 +379,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function myFunction =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -443,7 +394,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
@@ -475,8 +426,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -487,14 +436,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function latestFunction =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -504,8 +448,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, "01001984"),
@@ -516,13 +458,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function myFunction =
 					program.getFunctionManager().getFunctionAt(addr(program, "01001984"));
@@ -536,7 +474,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(latestProgram, "01001984"), addr(latestProgram, "01001984"));
@@ -570,8 +508,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -582,14 +518,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function latestFunction =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -599,8 +530,6 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -611,13 +540,9 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function myFunction =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -631,7 +556,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressSetView as = latestProgram.getMemory();
 		ProgramMergeManager programMerge =
-			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitorAdapter.DUMMY_MONITOR);
+			new ProgramMergeManager(latestProgram, myProgram, as, TaskMonitor.DUMMY);
 
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
@@ -667,7 +592,7 @@ public class ThunkFunctionMergeTest extends AbstractGhidraHeadedIntegrationTest 
 		boolean success = false;
 		int latestId = latestProgram.startTransaction("Merge To Latest");
 		try {
-			programMerge.merge(as, TaskMonitorAdapter.DUMMY_MONITOR);
+			programMerge.merge(as, TaskMonitor.DUMMY);
 			success = true;
 		}
 		catch (Exception e) {

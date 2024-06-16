@@ -15,6 +15,14 @@
  */
 package ghidra.examples;
 
+import java.awt.event.KeyEvent;
+
+import javax.swing.*;
+
+import docking.ActionContext;
+import docking.DockingUtils;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.app.ExamplesPluginPackage;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -27,15 +35,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-
-import java.awt.Event;
-import java.awt.event.KeyEvent;
-
-import javax.swing.*;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
 
 /**
   * Class description goes here
@@ -54,120 +53,118 @@ import docking.action.*;
 )
 //@formatter:on
 public class KitchenSinkPlugin extends ProgramPlugin {
-	private final static String NEXT_IMAGE = "images/right.png";
-	private final static String PREV_IMAGE = "images/left.png";
 
-    private DockingAction helloProgramAction;
-    private Program program;
+	private DockingAction helloProgramAction;
+	private Program program;
 
-    /**
-      * Constructor
-      */ 
-    public KitchenSinkPlugin(PluginTool tool) {
+	/**
+	  * Constructor
+	  */
+	public KitchenSinkPlugin(PluginTool tool) {
 
-        super(tool, false, false);
+		super(tool);
 
-        // set up list of services.
-        setupServices();
+		// set up list of services.
+		setupServices();
 
-        // set up list of actions.
-        setupActions(); 
-    }
-
-    private void setupServices() {
-    	registerServiceProvided(HelloWorldService.class,
-        	new HelloWorldService() {
-	            public void sayHello() {
-    	            announce("Hello");
-        	    }
-        	});
-    }
-
-    private void setupActions() {
-        DockingAction action = new DockingAction("Hello World", getName() ) {
-            @Override
-            public void actionPerformed( ActionContext context ) {
-                Msg.info(this, "Hello World:: action");
-                announce("Hello World");
-            }
-        };
-        action.setEnabled( true );
-        String helloGroup = "Hello";
-        ImageIcon prevImage = ResourceManager.loadImage(PREV_IMAGE);
-        action.setMenuBarData( new MenuData( new String[] {"Misc", "Hello World"}, prevImage, helloGroup ) );
-        action.setPopupMenuData( new MenuData( new String[] {"Hello World"}, prevImage, helloGroup ) );
-        action.setKeyBindingData( new KeyBindingData( KeyStroke.getKeyStroke('H', Event.CTRL_MASK ) ) );
-        action.setToolBarData( new ToolBarData( prevImage, helloGroup ) );
-        action.setDescription("Hello World");
-        action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_World"));
-
-        tool.addAction(action);
-
-        action = new DockingAction("Hello Program", getName() ) {
-            @Override
-            public void actionPerformed( ActionContext context ) {
-                Msg.info(this, "Hello Program:: action");
-                sayHelloProgram();        
-            }
-        };
-        action.setEnabled(false);
-        ImageIcon nextImage = ResourceManager.loadImage(NEXT_IMAGE);
-        action.setMenuBarData( new MenuData( new String[]{"Misc", "Hello Program"}, nextImage, helloGroup ) );
-        action.setKeyBindingData( new KeyBindingData( KeyStroke.getKeyStroke(KeyEvent.VK_P, Event.CTRL_MASK ) ) );
-        action.setToolBarData( new ToolBarData( nextImage, helloGroup ) );
-        action.setDescription("Hello Program");
-        action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_Program"));
-        tool.addAction(action);
-
-        // remember this action so I can enable/disable it later
-        helloProgramAction = action;
-    }
-
-	@Override
-    protected void programActivated(Program activatedProgram) {
-		helloProgramAction.setEnabled(true);
-        this.program = activatedProgram; 
+		// set up list of actions.
+		setupActions();
 	}
+
+	private void setupServices() {
+		registerServiceProvided(HelloWorldService.class,
+			(HelloWorldService) () -> announce("Hello"));
+	}
+
+	private void setupActions() {
+		DockingAction action = new DockingAction("Hello World", getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				Msg.info(this, "Hello World:: action");
+				announce("Hello World");
+			}
+		};
+		action.setEnabled(true);
+		String helloGroup = "Hello";
+		Icon prevImage = new GIcon("icon.sample.kitchen.sink.action.hello.world");
+		action.setMenuBarData(
+			new MenuData(new String[] { "Misc", "Hello World" }, prevImage, helloGroup));
+		action.setPopupMenuData(
+			new MenuData(new String[] { "Hello World" }, prevImage, helloGroup));
+		action.setKeyBindingData(new KeyBindingData(
+			KeyStroke.getKeyStroke('H', DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
+		action.setToolBarData(new ToolBarData(prevImage, helloGroup));
+		action.setDescription("Hello World");
+		action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_World"));
+
+		tool.addAction(action);
+
+		action = new DockingAction("Hello Program", getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				Msg.info(this, "Hello Program:: action");
+				sayHelloProgram();
+			}
+		};
+		action.setEnabled(false);
+		Icon nextImage = new GIcon("icon.sample.kitchen.sink.action.hello.program");
+		action.setMenuBarData(
+			new MenuData(new String[] { "Misc", "Hello Program" }, nextImage, helloGroup));
+		action.setKeyBindingData(
+			new KeyBindingData(
+				KeyStroke.getKeyStroke(KeyEvent.VK_P, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
+		action.setToolBarData(new ToolBarData(nextImage, helloGroup));
+		action.setDescription("Hello Program");
+		action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_Program"));
+		tool.addAction(action);
+
+		// remember this action so I can enable/disable it later
+		helloProgramAction = action;
+	}
+
 	@Override
-    protected void programDeactivated(Program deactivatedProgram) {
+	protected void programActivated(Program activatedProgram) {
+		helloProgramAction.setEnabled(true);
+		this.program = activatedProgram;
+	}
+
+	@Override
+	protected void programDeactivated(Program deactivatedProgram) {
 		if (this.program == deactivatedProgram) {
 			helloProgramAction.setEnabled(false);
 			this.program = null;
 		}
 	}
-    protected void sayHelloProgram() {
 
-        if (program == null) {
-            return;
-        }
+	protected void sayHelloProgram() {
 
-        announce("Hello " + program.getName());
-    }
+		if (program == null) {
+			return;
+		}
 
-    protected void announce(String message) {
-        JOptionPane.showMessageDialog(null,message,"Hello World",
-                                      JOptionPane.INFORMATION_MESSAGE);
-    }
-    
-  	/**
+		announce("Hello " + program.getName());
+	}
+
+	protected void announce(String message) {
+		JOptionPane.showMessageDialog(null, message, "Hello World",
+			JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	/**
 	 * If your plugin maintains configuration state, you must save that state information
-     * to the SaveState object in this method.  For example, the Code Browser can be configured
-     * to show fields in different colors.  This is the method where that type
-     * information is saved.
+	 * to the SaveState object in this method.  For example, the Code Browser can be configured
+	 * to show fields in different colors.  This is the method where that type
+	 * information is saved.
 	 */
-    @Override
-    public void writeConfigState(SaveState saveState) {
-    }
+	@Override
+	public void writeConfigState(SaveState saveState) {
+	}
+
 	/**
 	 * If your plugin maintains configuration state, this is where you read it
-     * back in.
+	 * back in.
 	 */
-    @Override
-    public void readConfigState(SaveState saveState) {
-    }
+	@Override
+	public void readConfigState(SaveState saveState) {
+	}
 }
-
-
-
-
-

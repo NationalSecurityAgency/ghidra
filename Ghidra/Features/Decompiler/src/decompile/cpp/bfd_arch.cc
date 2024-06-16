@@ -16,10 +16,12 @@
  */
 #include "bfd_arch.hh"
 
+namespace ghidra {
+
 // Constructing this object registers capability
 BfdArchitectureCapability BfdArchitectureCapability::bfdArchitectureCapability;
 
-ElementId ELEM_BFD_SAVEFILE = ElementId("bfd_savefile",46);
+ElementId ELEM_BFD_SAVEFILE = ElementId("bfd_savefile",238);
 
 BfdArchitectureCapability::BfdArchitectureCapability(void)
 
@@ -169,3 +171,5 @@ void BfdArchitecture::restoreXml(DocumentStorage &store)
     SleighArchitecture::restoreXml(store);
   }
 }
+
+} // End namespace ghidra

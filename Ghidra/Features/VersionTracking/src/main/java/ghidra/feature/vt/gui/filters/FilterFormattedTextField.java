@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +15,33 @@
  */
 package ghidra.feature.vt.gui.filters;
 
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.APPLIED;
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.NONE;
-import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
-import ghidra.util.SystemUtilities;
+import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.*;
 
 import java.awt.Color;
 import java.awt.event.FocusEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.InputVerifier;
+import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class FilterFormattedTextField extends JFormattedTextField {
-	private static final Color ERROR_BACKGROUND_COLOR = new Color(218, 217, 206);
-	private static final String TEXT_FIELD_BACKGROUND_COLOR_KEY = "TextField.background";
-	protected static final Color EDITING_BACKGROUND_COLOR = new Color(243, 242, 131);
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
+import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
+import ghidra.util.SystemUtilities;
 
-	private Set<FilterStatusListener> listeners = new HashSet<FilterStatusListener>();
+public class FilterFormattedTextField extends JFormattedTextField {
+	private static final Color ERROR_BACKGROUND_COLOR =
+		new GColor("color.bg.version.tracking.filter.formatted.field.error");
+	private static final Color EDITING_BACKGROUND_COLOR =
+		new GColor("color.bg.version.tracking.filter.formatted.field.editing");
+	private static final Color EDITING_FOREGROUND_COLOR =
+		new GColor("color.fg.version.tracking.filter.formatted.field.editing");
+
+	private Set<FilterStatusListener> listeners = new HashSet<>();
 
 	private FilterEditingStatus currentStatus = NONE;
 	private final Object defaultValue;
@@ -57,24 +60,25 @@ public class FilterFormattedTextField extends JFormattedTextField {
 		this.currentStatus = NONE;
 
 		getDocument().addDocumentListener(new DocumentListener() {
+			@Override
 			public void removeUpdate(DocumentEvent e) {
 				updateText();
 			}
 
+			@Override
 			public void insertUpdate(DocumentEvent e) {
 				updateText();
 			}
 
+			@Override
 			public void changedUpdate(DocumentEvent e) {
 				updateText();
 			}
 		});
 
-		addPropertyChangeListener("value", new PropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent evt) {
-				editingFinished();
-			}
-		});
+		addPropertyChangeListener("value", evt -> editingFinished());
+
+		update();
 	}
 
 	public void disableFocusEventProcessing() {
@@ -176,27 +180,22 @@ public class FilterFormattedTextField extends JFormattedTextField {
 	}
 
 	private void update() {
-		setBackground(getCurrentColor());
-		filterStatusChanged(currentStatus);
-	}
 
-	private Color getCurrentColor() {
 		updateStatus();
-		//            if ( isError ) {
-		//                return ERROR_BACKGROUND_COLOR;
-		//            }
-		//            if ( isEdited() ) {
-		//                return EDITING_BACKGROUND_COLOR;
-		//            }
-
-		Color defaultColor = UIManager.getColor(TEXT_FIELD_BACKGROUND_COLOR_KEY);
 		if (isError) {
-			return ERROR_BACKGROUND_COLOR;
+			setForeground(Colors.FOREGROUND);
+			setBackground(ERROR_BACKGROUND_COLOR);
 		}
-		if (hasNonDefaultValue()) {
-			return EDITING_BACKGROUND_COLOR;
+		else if (hasNonDefaultValue()) {
+			setForeground(EDITING_FOREGROUND_COLOR);
+			setBackground(EDITING_BACKGROUND_COLOR);
 		}
-		return defaultColor;
+		else { // default
+			setForeground(Colors.FOREGROUND);
+			setBackground(Colors.BACKGROUND);
+		}
+
+		filterStatusChanged(currentStatus);
 	}
 
 	private void updateStatus() {

@@ -18,11 +18,13 @@ package ghidra.app.util.bin;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.EOFException;
 import java.io.IOException;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.util.NumberUtil;
+import ghidra.util.NumericUtilities;
 
 public class BinaryReaderTest {
 
@@ -147,8 +149,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readUnsignedShort(0));
 		assertEquals(Short.MAX_VALUE /* 0x7fff */, br.readUnsignedShort(2));
-		assertEquals(NumberUtil.UNSIGNED_SHORT_MASK /* ie. UNSIGNED_SHORT_MAX, 0xffff*/,
-			br.readUnsignedShort(4));
+		assertEquals(0xffff, br.readUnsignedShort(4));
 		assertEquals(Short.MAX_VALUE + 1 /* 0x8000 */, br.readUnsignedShort(6));
 		try {
 			br.readUnsignedShort(8);
@@ -182,8 +183,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readNextUnsignedShort());
 		assertEquals(Short.MAX_VALUE /* 0x7fff */, br.readNextUnsignedShort());
-		assertEquals(NumberUtil.UNSIGNED_SHORT_MASK /* ie. UNSIGNED_SHORT_MAX, 0xffff*/,
-			br.readNextUnsignedShort());
+		assertEquals(0xffff, br.readNextUnsignedShort());
 		assertEquals(Short.MAX_VALUE + 1 /* 0x8000 */, br.readNextUnsignedShort());
 		try {
 			br.readNextUnsignedShort();
@@ -223,8 +223,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readUnsignedInt(0));
 		assertEquals(Integer.MAX_VALUE, br.readUnsignedInt(4));
-		assertEquals(NumberUtil.UNSIGNED_INT_MASK /*ie. UNSIGNED_INT_MAX, 0xff_ff_ff_ff*/,
-			br.readUnsignedInt(8));
+		assertEquals(NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG, br.readUnsignedInt(8));
 		assertEquals((long) Integer.MAX_VALUE + 1 /* 0x80_00_00_00 */, br.readUnsignedInt(12));
 		try {
 			br.readUnsignedInt(16);
@@ -260,8 +259,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readNextUnsignedInt());
 		assertEquals(Integer.MAX_VALUE, br.readNextUnsignedInt());
-		assertEquals(NumberUtil.UNSIGNED_INT_MASK /*ie. UNSIGNED_INT_MAX, 0xff_ff_ff_ff*/,
-			br.readNextUnsignedInt());
+		assertEquals(NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG, br.readNextUnsignedInt());
 		assertEquals((long) Integer.MAX_VALUE + 1 /* 0x80_00_00_00 */, br.readNextUnsignedInt());
 		try {
 			br.readNextUnsignedInt();
@@ -272,37 +270,89 @@ public class BinaryReaderTest {
 		}
 	}
 
+	@Test
+	public void testUint32Max() throws IOException {
+		BinaryReader br = br(true, 0xff, 0xff, 0xff, 0x7f, 0xff);
+		int value = br.readNextUnsignedIntExact();
+		Assert.assertEquals(Integer.MAX_VALUE, value);
+	}
+
+	@Test(expected = IOException.class)
+	public void testUint32Overflow() throws IOException {
+		// Test uint32 max overflow with 0xff_ff_ff_ff
+		BinaryReader br = br(true, 0xff, 0xff, 0xff, 0xff, 0xff);
+		int value = br.readNextUnsignedIntExact();
+		Assert.fail(
+			"Should not be able to read a value that is larger than what can fit in java 32 bit int: " +
+				Integer.toUnsignedString(value));
+	}
+
 	// ------------------------------------------------------------------------------------
 	// UTF-16 Unicode String
 	// ------------------------------------------------------------------------------------
 	@Test
-	public void testReadUnicodeString_LE() throws IOException {
+	public void test_ReadUnicodeString_fixedlen_LE() throws IOException {
 		BinaryReader br = br(true, 1, 1, 1, 'A', 0, 'B', 0, 'C', 0, 0, 0x80, 0);
 		assertEquals("ABC\u8000", br.readUnicodeString(3, 4));
 	}
 
 	@Test
-	public void testReadUnicodeString_BE() throws IOException {
+	public void test_ReadUnicodeString__fixedlen_BE() throws IOException {
 		BinaryReader br = br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C', 0x80, 0, 0);
 		assertEquals("ABC\u8000", br.readUnicodeString(3, 4));
 	}
 
 	@Test
-	public void testReadTerminatedUnicodeString_LE() throws IOException {
+	public void test_ReadUnicodeString_LE() throws IOException {
 		BinaryReader br = br(true, 1, 1, 1, 'A', 0, 'B', 0, 'C', 0, 0, 0x80, 0, 0);
 
 		assertEquals("ABC\u8000", br.readUnicodeString(3));
 	}
 
 	@Test
-	public void testReadTerminatedUnicodeString_BE() throws IOException {
+	public void test_ReadUnicodeString_BE() throws IOException {
 		BinaryReader br = br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C', 0x80, 0, 0, 0);
 
 		assertEquals("ABC\u8000", br.readUnicodeString(3));
 	}
 
 	@Test
-	public void testReadNextUnicodeString_LE() throws IOException {
+	public void test_ReadUnicodeString_EmptyStr() throws IOException {
+		BinaryReader br = br(false, 1, 1, 1, 0, 0, 0, 'B', 0, 'C', 0x80, 0, 0, 0);
+
+		assertEquals("", br.readUnicodeString(3));
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadUnicodeString_EofTerminated() throws IOException {
+		BinaryReader br = br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C');
+
+		br.readUnicodeString(3);
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadUnicodeString_Missing_Full_Terminator() throws IOException {
+		BinaryReader br = br(false, 0, 'A', 0, 'B', 0, 'C', 0);
+
+		br.readUnicodeString(0);
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadUnicodeString_AtEof() throws IOException {
+		BinaryReader br = br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C');
+
+		br.readUnicodeString(9);
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadUnicodeString_PastEof() throws IOException {
+		BinaryReader br = br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C');
+
+		br.readUnicodeString(10);
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_LE() throws IOException {
 		BinaryReader br =
 			br(true, 1, 1, 1, 'A', 0, 'B', 0, 'C', 0, 0, 0x80, 0, 0, /* magic flag value */ 42);
 		br.setPointerIndex(3);
@@ -311,12 +361,203 @@ public class BinaryReaderTest {
 	}
 
 	@Test
-	public void testReadNextUnicodeString_BE() throws IOException {
+	public void test_ReadNextUnicodeString_BE() throws IOException {
 		BinaryReader br =
 			br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C', 0x80, 0, 0, 0, /* magic flag value */ 42);
 		br.setPointerIndex(3);
 		assertEquals("ABC\u8000", br.readNextUnicodeString());
 		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_WithTrailingWhitespace() throws IOException {
+		BinaryReader br =
+			br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C', 0, ' ', 0, 0, /* magic flag value */ 42);
+		br.setPointerIndex(3);
+		assertEquals("ABC ", br.readNextUnicodeString());
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_Empty() throws IOException {
+		BinaryReader br =
+			br(false, 1, 1, 1, 0, 0, 0, 'B', 0, 'C', 0, 0, /* magic flag value */ 42);
+		br.setPointerIndex(3);
+		assertEquals("", br.readNextUnicodeString());
+		assertEquals("BC", br.readNextUnicodeString());
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_Fixedlen() throws IOException {
+		BinaryReader br =
+			br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C', 0, ' ', /* magic flag value */ 42);
+		br.setPointerIndex(3);
+		assertEquals("ABC ", br.readNextUnicodeString(4));
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_Fixedlen_Nullterms() throws IOException {
+		BinaryReader br =
+			br(false, 1, 1, 1, 0, 'A', 0, 'B', 0, 'C', 0, 0, 0, 0, /* magic flag value */ 42);
+		br.setPointerIndex(3);
+		assertEquals("ABC", br.readNextUnicodeString(5));
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_Fixedlen_Emptystr() throws IOException {
+		BinaryReader br =
+			br(false, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* magic flag value */ 42);
+		br.setPointerIndex(3);
+		assertEquals("", br.readNextUnicodeString(5));
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_NullTerm_AtEof() throws IOException {
+		BinaryReader br = br(false, 0, 'A', 0, 'B', 0, 'C', 0, 0);
+		assertEquals("ABC", br.readNextUnicodeString());
+		try {
+			br.readNextUnicodeString();
+			Assert.fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void test_ReadNextUnicodeString_NullTerm_ToEof() throws IOException {
+		BinaryReader br = br(false, 0, 'A', 0, 'B', 0, 'C');
+		try {
+			br.readNextUnicodeString();
+			Assert.fail();
+		}
+		catch (EOFException e) {
+			// good
+		}
+	}
+
+	// ------------------------------------------------------------------------------------
+	// 'Ascii' Strings
+	// ------------------------------------------------------------------------------------
+	@Test
+	public void test_ReadAsciiString_NullTerm() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C', 0, /* magic flag */ 42);
+		assertEquals("ABC", br.readAsciiString(0));
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadAsciiString_Not_Terminated() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C');
+		assertEquals("", br.readAsciiString(0));
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadAsciiString_AtEof() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C');
+		assertEquals("", br.readAsciiString(3));
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadAsciiString_PastEof() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C');
+		br.readAsciiString(4);
+	}
+
+	@Test
+	public void test_ReadAsciiString_NotTrimed() throws IOException {
+		BinaryReader br = br(true, ' ', 'A', 'B', 'C', ' ', 0, /* magic flag */ 42);
+		assertEquals(" ABC ", br.readAsciiString(0));
+	}
+
+	@Test
+	public void test_ReadAsciiString_tab_terminates() throws IOException {
+		// tests the readAsciiString() doesn't terminate on a '\t' tab char
+		BinaryReader br = br(true, 'A', 'B', 'C', '\t', 'D', 'E', 'F', 0, /* magic flag */ 42);
+		assertEquals("ABC\tDEF", br.readAsciiString(0));
+	}
+
+	@Test
+	public void test_ReadNextAsciiString() throws IOException {
+		BinaryReader br = br(true, ' ', 'A', 'B', 'C', ' ', 0, /* magic flag */ 42);
+		assertEquals(" ABC ", br.readNextAsciiString());
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextAsciiString_EmtpyStr() throws IOException {
+		BinaryReader br = br(true, ' ', 'A', 'B', 'C', ' ', 0, /* magic flag */ 42);
+		br.setPointerIndex(5);
+		assertEquals("", br.readNextAsciiString());
+		assertEquals(42, br.readNextUnsignedByte());
+	}
+
+	@Test
+	public void test_ReadNextAsciiString_AtEof() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C', 0);
+		assertEquals("ABC", br.readNextAsciiString());
+		try {
+			br.readNextAsciiString();
+			Assert.fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void test_ReadNextAsciiString_FixedLength() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C', 'D', 'E', 'F', 0, /* magic flag */ 42);
+		assertEquals("ABC", br.readNextAsciiString(3));
+		assertEquals("DEF", br.readNextAsciiString(4));
+		assertEquals(42, br.readNextByte());
+	}
+
+	@Test
+	public void test_ReadNextAsciiString_FixedLength_With_whitespace() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', ' ', '\0', 'D', 'E', 'F', 0, /* magic flag */ 42);
+		assertEquals("AB ", br.readNextAsciiString(4));
+		assertEquals("DEF", br.readNextAsciiString());
+		assertEquals(42, br.readNextByte());
+	}
+
+	@Test
+	public void test_ReadNextAsciiString_FixedLength_EmptyStr() throws IOException {
+		BinaryReader br = br(true, 0, 0, 0, 'D', 'E', 'F', 0, /* magic flag */ 42);
+		assertEquals("", br.readNextAsciiString(3));
+		assertEquals("DEF", br.readNextAsciiString());
+		assertEquals(42, br.readNextByte());
+	}
+
+	@Test(expected = EOFException.class)
+	public void test_ReadAsciiString_ToEof() throws IOException {
+		BinaryReader br = br(true, 'A', 'B', 'C');
+		br.readAsciiString(0);
+	}
+
+	@Test
+	public void test_ReadUtf8String() throws IOException {
+		// tests variable length decoding
+		BinaryReader br = br(true, -22, -87, -107, -61, -65, 0);
+		assertEquals("\uaa55\u00ff", br.readUtf8String(0));
+	}
+
+	@Test
+	public void test_ReadNextUtf8String() throws IOException {
+		// tests variable length decoding
+		BinaryReader br = br(true, -22, -87, -107, -61, -65, 0, -22, -87, -107, 0);
+		assertEquals("\uaa55\u00ff", br.readNextUtf8String());
+		assertEquals("\uaa55", br.readNextUtf8String());
+	}
+
+	@Test
+	public void test_ReadUtf8String_bad_data() throws IOException {
+		// tests variable length decoding
+		BinaryReader br = br(true, -22, -87, 'A', 0);
+		assertEquals("\ufffdA" /* unicode replacement char, 'A'*/, br.readUtf8String(0));
 	}
 
 }

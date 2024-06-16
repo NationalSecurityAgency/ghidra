@@ -19,20 +19,17 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.google.common.collect.RangeSet;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbCause.Causes;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncLazyValue;
-import ghidra.async.AsyncUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
@@ -46,7 +43,7 @@ public class GdbInferiorImpl implements GdbInferior {
 			"0x(?<end>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
-			"(?<file>\\S*)\\s*");
+			"(?<file>.*)");
 
 	protected static final Pattern MEMORY_MAPPING_LINE_PATTERN =
 		Pattern.compile("\\s*" + //
@@ -55,9 +52,9 @@ public class GdbInferiorImpl implements GdbInferior {
 			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
 			"(?<flags>[rwsxp\\-]+)\\s+" +
-			"(?<file>\\S*)\\s*");
+			"(?<file>.*)");
 
-	private final GdbManagerImpl manager;
+	protected final GdbManagerImpl manager;
 	private final int id;
 
 	private Long pid; // Not always present
@@ -72,9 +69,8 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	private final Map<String, GdbModuleImpl> modules = new LinkedHashMap<>();
 	private final Map<String, GdbModule> unmodifiableModules = Collections.unmodifiableMap(modules);
-
-	// Because asking GDB to list sections lists those of all modules
-	protected final AsyncLazyValue<Void> loadSections = new AsyncLazyValue<>(this::doLoadSections);
+	protected final AsyncLazyValue<Map<String, GdbModule>> listModules =
+		new AsyncLazyValue<>(this::doListModules);
 
 	private final NavigableMap<BigInteger, GdbMemoryMapping> mappings = new TreeMap<>();
 	private final NavigableMap<BigInteger, GdbMemoryMapping> unmodifiableMappings =
@@ -241,40 +237,32 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public CompletableFuture<Map<String, GdbModule>> listModules() {
-		// "nosections" is an unlikely section name. Goal is to exclude section lines.
-		// TODO: Would be nice to save this switch, or better, choose at start based on version
-		CompletableFuture<String> future =
-			consoleCapture("maintenance info sections ALLOBJ nosections",
-				CompletesWithRunning.CANNOT);
-		return future.thenCompose(output -> {
-			if (output.split("\n").length <= 1) {
-				return consoleCapture("maintenance info sections -all-objects nosections")
-						.thenApply(out2 -> parseModuleNames(out2, true));
+	public CompletableFuture<Map<String, GdbModule>> listModules(boolean refresh) {
+		if (refresh) {
+			if (listModules.isBusy()) {
+				manager.logInfo("Refresh requested while busy. Keeping cache.");
 			}
-			return CompletableFuture.completedFuture(parseModuleNames(output, false));
-		});
+			else {
+				manager.logInfo("Refresh requested. Forgetting module cache.");
+				listModules.forget();
+			}
+		}
+		manager.logInfo("Modules requested");
+		return listModules.request();
 	}
 
-	protected CompletableFuture<Void> loadSections() {
-		return loadSections.request();
-	}
-
-	protected CompletableFuture<Void> doLoadSections() {
-		CompletableFuture<String> future =
-			consoleCapture("maintenance info sections ALLOBJ", CompletesWithRunning.CANNOT);
-		return future.thenCompose(output -> {
-			if (output.split("\n").length <= 1) {
-				return consoleCapture("maintenance info sections -all-objects")
-						.thenAccept(out2 -> parseAndUpdateAllModuleSections(out2, true));
-			}
-			parseAndUpdateAllModuleSections(output, false);
-			return AsyncUtils.NIL;
+	protected CompletableFuture<Map<String, GdbModule>> doListModules() {
+		return manager.execMaintInfoSectionsAllObjects(this).thenCompose(lines -> {
+			return listMappings().thenApply(mappings -> {
+				GdbMemoryMapping.Index index = new GdbMemoryMapping.Index(mappings);
+				parseAndUpdateAllModuleSections(lines, index);
+				return unmodifiableModules;
+			});
 		});
 	}
 
 	protected GdbModuleImpl resyncCreateModule(String name) {
-		Msg.warn(this, "Resync: Missed loaded module/library: " + name);
+		//Msg.warn(this, "Resync: Missed loaded module/library: " + name);
 		//manager.listenersInferior.fire.libraryLoaded(this, name, Causes.UNCLAIMED);
 		return createModule(name);
 	}
@@ -284,7 +272,8 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	protected void libraryLoaded(String name) {
-		modules.computeIfAbsent(name, this::createModule);
+		manager.logInfo("Module loaded: " + name + ". Forgeting module cache.");
+		listModules.forget();
 	}
 
 	protected void libraryUnloaded(String name) {
@@ -292,87 +281,57 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	protected void resyncRetainModules(Set<String> names) {
-		for (Iterator<Entry<String, GdbModuleImpl>> mit = modules.entrySet().iterator(); mit
-				.hasNext();) {
-			Entry<String, GdbModuleImpl> ent = mit.next();
-			if (!names.contains(ent.getKey())) {
-				Msg.warn(this, "Resync: Missed unloaded module/library: " + ent);
-				/*manager.listenersInferior.fire.libraryUnloaded(this, ent.getKey(),
-					Causes.UNCLAIMED);*/
-			}
-		}
+		/**
+		 * NOTE: We used to fire libraryUnloaded on removes detected during resync. For that, we
+		 * used an iterator. Without a listener callback, we have simplified.
+		 */
+		modules.keySet().retainAll(names);
 	}
 
-	protected String nameFromLine(String line, boolean v11) {
-		if (v11) {
-			Matcher nameMatcher = GdbModuleImpl.V11_FILE_LINE_PATTERN.matcher(line);
-			if (!nameMatcher.matches()) {
-				return null;
-			}
-			String name = nameMatcher.group("name");
-			if (name.startsWith(GdbModuleImpl.GNU_DEBUGDATA_PREFIX)) {
-				return null;
-			}
-			return name;
+	protected String nameFromLine(String line) {
+		Matcher nameMatcher = manager.matchFileLine(line);
+		if (nameMatcher == null) {
+			return null;
 		}
-		else {
-			Matcher nameMatcher = GdbModuleImpl.OBJECT_FILE_LINE_PATTERN.matcher(line);
-			if (!nameMatcher.matches()) {
-				return null;
-			}
-			return nameMatcher.group("name");
+		String name = nameMatcher.group("name");
+		if (name.startsWith(GdbModuleImpl.GNU_DEBUGDATA_PREFIX)) {
+			return null;
 		}
+		return name;
 	}
 
-	protected void parseAndUpdateAllModuleSections(String out, boolean v11) {
-		Set<String> namesSeen = new HashSet<>();
+	protected void parseAndUpdateAllModuleSections(String[] lines, GdbMemoryMapping.Index index) {
+		Set<String> modNamesSeen = new HashSet<>();
+		Set<String> secNamesSeen = new HashSet<>();
 		GdbModuleImpl curModule = null;
-		for (String line : out.split("\n")) {
-			String name = nameFromLine(line, v11);
+		for (String line : lines) {
+			String name = nameFromLine(line);
 			if (name != null) {
 				if (curModule != null) {
-					curModule.loadSections.provide().complete(null);
+					curModule.resyncRetainSections(secNamesSeen);
+					secNamesSeen.clear();
 				}
-				namesSeen.add(name);
+				modNamesSeen.add(name);
 				curModule = modules.computeIfAbsent(name, this::resyncCreateModule);
-				// NOTE: This will usurp the module's lazy loader, but we're about to
-				// provide it anyway
-				if (curModule.loadSections.isDone()) {
-					curModule = null;
-				}
-				continue;
 			}
-			if (curModule == null) {
-				continue;
+			else if (curModule != null) {
+				curModule.processSectionLine(line, secNamesSeen, index);
 			}
-			curModule.processSectionLine(line);
 		}
 		if (curModule != null) {
-			curModule.loadSections.provide().complete(null);
+			curModule.resyncRetainSections(secNamesSeen);
+			// No need to clear secNamesSeen
 		}
-		resyncRetainModules(namesSeen);
-	}
-
-	protected Map<String, GdbModule> parseModuleNames(String out, boolean v11) {
-		Set<String> namesSeen = new HashSet<>();
-		for (String line : out.split("\n")) {
-			String name = nameFromLine(line, v11);
-			if (name != null) {
-				namesSeen.add(name);
-				modules.computeIfAbsent(name, this::resyncCreateModule);
-			}
-		}
-		resyncRetainModules(namesSeen);
-		return unmodifiableModules;
+		resyncRetainModules(modNamesSeen);
 	}
 
 	@Override
-	public Map<BigInteger, GdbMemoryMapping> getKnownMappings() {
+	public NavigableMap<BigInteger, GdbMemoryMapping> getKnownMappings() {
 		return unmodifiableMappings;
 	}
 
 	@Override
-	public CompletableFuture<Map<BigInteger, GdbMemoryMapping>> listMappings() {
+	public CompletableFuture<NavigableMap<BigInteger, GdbMemoryMapping>> listMappings() {
 		return consoleCapture("info proc mappings", CompletesWithRunning.CANNOT)
 				.thenApply(this::parseMappings);
 	}
@@ -405,7 +364,7 @@ public class GdbInferiorImpl implements GdbInferior {
 		return new GdbMemoryMapping(start, end, size, offset, "rwx", objfile);
 	}
 
-	protected Map<BigInteger, GdbMemoryMapping> parseMappings(String out) {
+	protected NavigableMap<BigInteger, GdbMemoryMapping> parseMappings(String out) {
 		Set<BigInteger> startsSeen = new TreeSet<>();
 		for (String line : out.split("\n")) {
 			try {
@@ -514,7 +473,7 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		return execute(new GdbReadMemoryCommand(manager, null, addr, buf, len));
 	}
 

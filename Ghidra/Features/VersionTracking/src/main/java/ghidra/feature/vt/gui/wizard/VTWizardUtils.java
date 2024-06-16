@@ -15,17 +15,19 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import docking.widgets.OptionDialog;
-import ghidra.feature.vt.api.impl.VTSessionContentHandler;
+import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.task.SaveTask;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFileFilter;
-import ghidra.program.database.ProgramDB;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.task.TaskLauncher;
 
@@ -36,30 +38,27 @@ public class VTWizardUtils {
 	}
 
 	public static final DomainFileFilter VT_SESSION_FILTER = new DomainFileFilter() {
+
 		@Override
 		public boolean accept(DomainFile df) {
-			if (VTSessionContentHandler.CONTENT_TYPE.equals(df.getContentType())) {
-				return true;
-			}
+			return VTSession.class.isAssignableFrom(df.getDomainObjectClass());
+		}
+
+		@Override
+		public boolean followLinkedFolders() {
 			return false;
 		}
 	};
 
-	public static final DomainFileFilter PROGRAM_FILTER = new DomainFileFilter() {
-		@Override
-		public boolean accept(DomainFile df) {
-			if (ProgramDB.CONTENT_TYPE.equals(df.getContentType())) {
-				return true;
-			}
-			return false;
-		}
+	public static final DomainFileFilter PROGRAM_FILTER = f -> {
+		return Program.class.isAssignableFrom(f.getDomainObjectClass());
 	};
 
 	static DomainFile chooseDomainFile(Component parent, String domainIdentifier,
 			DomainFileFilter filter, DomainFile fileToSelect) {
 		final DataTreeDialog dataTreeDialog = filter == null
-				? new DataTreeDialog(parent, "Choose " + domainIdentifier, DataTreeDialog.OPEN)
-				: new DataTreeDialog(parent, "Choose " + domainIdentifier, DataTreeDialog.OPEN,
+				? new DataTreeDialog(parent, "Choose " + domainIdentifier, OPEN)
+				: new DataTreeDialog(parent, "Choose " + domainIdentifier, OPEN,
 					filter);
 		final DomainFileBox box = new DomainFileBox();
 		dataTreeDialog.addOkActionListener(new ActionListener() {

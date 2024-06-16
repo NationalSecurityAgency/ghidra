@@ -15,7 +15,13 @@
  */
 package docking;
 
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import docking.action.DockingActionIf;
 
@@ -43,17 +49,22 @@ class PlaceholderManager {
 	}
 
 	ComponentPlaceholder replacePlaceholder(ComponentProvider provider,
-			ComponentPlaceholder oldPlaceholder) {
+			ComponentPlaceholder defaultPlaceholder) {
 
-		ComponentPlaceholder newPlaceholder = createOrRecyclePlaceholder(provider, oldPlaceholder);
+		// Note: the 'restoredPlaceholder' is from xml; the 'defaultPlaceholder' is that which was
+		// created by a plugin as it was constructed.  If there is no placeholder in the xml,
+		// then the original 'defaultPlaceholder' will be returned from
+		// createOrRecyclePlaceholder().
+		ComponentPlaceholder restoredPlaceholder =
+			createOrRecyclePlaceholder(provider, defaultPlaceholder);
 
-		moveActions(oldPlaceholder, newPlaceholder);
-		if (!oldPlaceholder.isHeaderShowing()) {
-			newPlaceholder.showHeader(false);
+		moveActions(defaultPlaceholder, restoredPlaceholder);
+		if (!defaultPlaceholder.isHeaderShowing()) {
+			restoredPlaceholder.showHeader(false);
 		}
 
-		if (oldPlaceholder.isShowing() != newPlaceholder.isShowing()) {
-			if (newPlaceholder.isShowing()) {
+		if (defaultPlaceholder.isShowing() != restoredPlaceholder.isShowing()) {
+			if (restoredPlaceholder.isShowing()) {
 				provider.componentShown();
 			}
 			else {
@@ -61,11 +72,13 @@ class PlaceholderManager {
 			}
 		}
 
-		if (newPlaceholder != oldPlaceholder) {
-			oldPlaceholder.dispose();
-			removePlaceholder(oldPlaceholder);
+		// if we have found a replacement placeholder, then remove the default placeholder
+		if (restoredPlaceholder != defaultPlaceholder) {
+			defaultPlaceholder.dispose();
+			removePlaceholder(defaultPlaceholder);
 		}
-		return newPlaceholder;
+
+		return restoredPlaceholder;
 	}
 
 	/**
@@ -240,8 +253,8 @@ class PlaceholderManager {
 		// 1) share the same owner (plugin), and
 		// 2) are in the same group, or related groups
 		//
-		// If there are not other providers that share the same owner as the one we are given, 
-		// then we will search all providers.  This allows different plugins to share 
+		// If there are not other providers that share the same owner as the one we are given,
+		// then we will search all providers.  This allows different plugins to share
 		// window arrangement.
 		//
 		Set<ComponentPlaceholder> buddies = activePlaceholders;
@@ -275,7 +288,7 @@ class PlaceholderManager {
 	 * provider.
 	 * @param activePlaceholders the set of currently showing placeholders.
 	 * @param newInfo the placeholder for the new provider to be shown.
-	 * @return an existing matching placeholder or null. 
+	 * @return an existing matching placeholder or null.
 	 */
 	private ComponentPlaceholder findBestPlaceholderToStackUpon(
 			Set<ComponentPlaceholder> activePlaceholders, ComponentPlaceholder newInfo) {
@@ -283,13 +296,23 @@ class PlaceholderManager {
 		String name = newInfo.getName();
 		String group = newInfo.getGroup();
 
-		for (ComponentPlaceholder placeholder : activePlaceholders) {
-			if (name.equals(placeholder.getName()) && group.equals(placeholder.getGroup())) {
-				return placeholder;
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+		List<ComponentPlaceholder> matching = activePlaceholders.stream()
+				.filter(p -> name.equals(p.getName()) && group.equals(p.getGroup()))
+				.collect(Collectors.toList());
+
+		// prefer using the focused window
+		for (ComponentPlaceholder placeholder : matching) {
+			JComponent component = placeholder.getProviderComponent();
+			if (focusOwner != null && component != null) {
+				if (SwingUtilities.isDescendingFrom(focusOwner, component)) {
+					return placeholder;
+				}
 			}
 		}
 
-		return null;
+		return matching.stream().findAny().orElse(null);
 	}
 
 	private ComponentPlaceholder findBestUnusedPlaceholder(

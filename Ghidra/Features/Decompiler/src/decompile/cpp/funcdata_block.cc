@@ -16,6 +16,8 @@
 #include "funcdata.hh"
 #include "flow.hh"
 
+namespace ghidra {
+
 // Funcdata members pertaining directly to blocks
 
 /// A description of each block in the current structure hierarchy is
@@ -475,53 +477,55 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
 /// A partial function (copy) is built using the flow info. Simplification is performed on the
 /// partial function (using the "jumptable" strategy), then destination addresses of the
 /// branch are recovered by examining the simplified data-flow. The jump-table object
-/// is populated with the recovered addresses.  An integer value is returned:
-///   - 0 = success
-///   - 1 = normal could-not-recover failure
-///   - 2 = \b likely \b thunk failure
-///   - 3 = no legal flows to the BRANCHIND failure
+/// is populated with the recovered addresses.  A code indicating success or the type of
+/// failure is returned.
 ///
+/// \param partial is a function object for caching analysis
 /// \param jt is the jump-table object to populate
 /// \param op is the BRANCHIND p-code op to analyze
 /// \param flow is the existing flow information
 /// \return the success/failure code
-int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
+JumpTable::RecoveryMode Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 
 {
-  PcodeOp *partop = (PcodeOp *)0;
-  string oldactname;
+  if (!partial.isJumptableRecoveryOn()) {
+    // Do full analysis on the table if we haven't before
+    partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
+    partial.truncatedFlow(this,flow);
 
-  ostringstream s1;
-  s1 << name << "@@jump@";
-  op->getAddr().printRaw(s1);
-
-  Funcdata partial(s1.str(),localmap->getParent(),baseaddr,(FunctionSymbol *)0);
-  partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
-  partial.truncatedFlow(this,flow);
-
-  partop = partial.findOp(op->getSeqNum());
-
-  if ((partop==(PcodeOp *)0) ||
-      (partop->code() != CPUI_BRANCHIND)||
-      (partop->getAddr() != op->getAddr()))
-    throw LowlevelError("Error recovering jumptable: Bad partial clone");
-
-  oldactname = glb->allacts.getCurrentName(); // Save off old action
-  glb->allacts.setCurrent("jumptable");
-  try {
+    string oldactname = glb->allacts.getCurrentName(); // Save off old action
+    try {
+      glb->allacts.setCurrent("jumptable");
 #ifdef OPACTION_DEBUG
-    if (jtcallback != (void (*)(Funcdata &orig,Funcdata &fd))0)
-      (*jtcallback)(*this,partial);  // Alternative reset/perform
-    else {
+      if (jtcallback != (void (*)(Funcdata &orig,Funcdata &fd))0)
+	(*jtcallback)(*this,partial);  // Alternative reset/perform
+      else {
 #endif
-    glb->allacts.getCurrent()->reset( partial );
-    glb->allacts.getCurrent()->perform( partial ); // Simplify the partial function
+      glb->allacts.getCurrent()->reset( partial );
+      glb->allacts.getCurrent()->perform( partial ); // Simplify the partial function
 #ifdef OPACTION_DEBUG
+      }
+#endif
+      glb->allacts.setCurrent(oldactname); // Restore old action
     }
-#endif
-    glb->allacts.setCurrent(oldactname); // Restore old action
-    if (partop->isDead())	// Indirectop we were trying to recover was eliminated as dead code (unreachable)
-      return 0;			// Return jumptable as 
+    catch(LowlevelError &err) {
+      glb->allacts.setCurrent(oldactname);
+      warning(err.explain,op->getAddr());
+      return JumpTable::fail_normal;
+    }
+  }
+  PcodeOp *partop = partial.findOp(op->getSeqNum());
+
+  if (partop==(PcodeOp *)0 || partop->code() != CPUI_BRANCHIND || partop->getAddr() != op->getAddr())
+    throw LowlevelError("Error recovering jumptable: Bad partial clone");
+  if (partop->isDead())	// Indirectop we were trying to recover was eliminated as dead code (unreachable)
+    return JumpTable::success;			// Return jumptable as
+
+  // Test if the branch target is copied from the return address.
+  if (testForReturnAddress(partop->getIn(0)))
+    return JumpTable::fail_return;		// Return special failure code.  Switch would not recover anyway.
+
+  try {
     jt->setLoadCollect(flow->doesJumpRecord());
     jt->setIndirectOp(partop);
     if (jt->getStage()>0)
@@ -529,47 +533,123 @@ int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
     else
       jt->recoverAddresses(&partial); // Analyze partial to recover jumptable addresses
   }
-  catch(JumptableNotReachableError &err) {
-    glb->allacts.setCurrent(oldactname);
-    return 3;
+  catch(JumptableNotReachableError &err) {	// Thrown by recoverAddresses
+    return JumpTable::fail_noflow;
   }
-  catch(JumptableThunkError &err) {
-    glb->allacts.setCurrent(oldactname);
-    return 2;
+  catch(JumptableThunkError &err) {		// Thrown by recoverAddresses
+    return JumpTable::fail_thunk;
   }
   catch(LowlevelError &err) {
-    glb->allacts.setCurrent(oldactname);
     warning(err.explain,op->getAddr());
-    return 1;
+    return JumpTable::fail_normal;
   }
-  return 0;
+  return JumpTable::success;
 }
 
-/// \brief Recover destinations for a BRANCHIND by analyzing nearby data and control-flow
+/// Backtrack from the BRANCHIND, looking for ops that might affect the destination.
+/// If a CALLOTHER, which is not injected/inlined in some way, is in the flow path of
+/// the destination calculation, we know the jump-table analysis will fail and the failure mode is returned.
+/// \param op is the BRANCHIND op
+/// \return \b success if there is no early failure, or the failure mode otherwise
+JumpTable::RecoveryMode Funcdata::earlyJumpTableFail(PcodeOp *op)
+
+{
+  Varnode *vn = op->getIn(0);
+  list<PcodeOp *>::const_iterator iter = op->insertiter;
+  list<PcodeOp *>::const_iterator startiter = beginOpDead();
+  int4 countMax = 8;
+  while(iter != startiter) {
+    if (vn->getSize() == 1) return JumpTable::success;
+    countMax -= 1;
+    if (countMax < 0) return JumpTable::success;	// Don't iterate too many times
+    --iter;
+    op = *iter;
+    Varnode *outvn = op->getOut();
+    bool outhit = false;
+    if (outvn != (Varnode *)0)
+      outhit = vn->intersects(*outvn);
+    if (op->getEvalType() == PcodeOp::special) {
+      if (op->isCall()) {
+	OpCode opc = op->code();
+	if (opc == CPUI_CALLOTHER) {
+	  int4 id = (int4)op->getIn(0)->getOffset();
+	  UserPcodeOp *userOp = glb->userops.getOp(id);
+	  if (dynamic_cast<InjectedUserOp *>(userOp) != (InjectedUserOp *)0)
+	    return JumpTable::success;	// Don't try to back track through injection
+	  if (dynamic_cast<JumpAssistOp *>(userOp) != (JumpAssistOp *)0)
+	    return JumpTable::success;
+	  if (dynamic_cast<SegmentOp *>(userOp) != (SegmentOp *)0)
+	    return JumpTable::success;
+	  if (outhit)
+	    return JumpTable::fail_callother;	// Address formed via uninjected CALLOTHER, analysis will fail
+	  // Assume CALLOTHER will not interfere with address and continue backtracking
+	}
+	else {
+	  // CALL or CALLIND - Output has not been established yet
+	  return JumpTable::success;	// Don't try to back track through CALL
+	}
+      }
+      else if (op->isBranch())
+	return JumpTable::success;	// Don't try to back track further
+      else {
+	if (op->code() == CPUI_STORE) return JumpTable::success;	// Don't try to back track through STORE
+	if (outhit)
+	  return JumpTable::success;	// Some special op (CPOOLREF, NEW, etc) generates address, don't assume failure
+	// Assume special will not interfere with address and continue backtracking
+      }
+    }
+    else if (op->getEvalType() == PcodeOp::unary) {
+      if (outhit) {
+	Varnode *invn = op->getIn(0);
+	if (invn->getSize() != vn->getSize()) return JumpTable::success;
+	vn = invn;		// Treat input as address
+      }
+      // Continue backtracking
+    }
+    else if (op->getEvalType() == PcodeOp::binary) {
+      if (outhit) {
+	OpCode opc = op->code();
+	if (opc != CPUI_INT_ADD && opc != CPUI_INT_SUB && opc != CPUI_INT_XOR)
+	  return JumpTable::success;
+	if (!op->getIn(1)->isConstant()) return JumpTable::success;	// Don't back-track thru binary op, don't assume failure
+	Varnode *invn = op->getIn(0);
+	if (invn->getSize() != vn->getSize()) return JumpTable::success;
+	vn = invn;		// Treat input as address
+      }
+      // Continue backtracking
+    }
+    else {
+      if (outhit)
+	return JumpTable::success;
+    }
+  }
+  return JumpTable::success;
+}
+
+/// \brief Recover control-flow destinations for a BRANCHIND
 ///
-/// This is the high-level entry point for jump-table/switch recovery. In short, a
-/// copy of the current state of data-flow is made, simplification transformations are applied
-/// to the copy, and the resulting data-flow tree is examined to enumerate possible values
-/// of the input Varnode to the given BRANCHIND PcodeOp.  This information is stored in a
-/// JumpTable object.
+/// If an existing and complete JumpTable exists for the BRANCHIND, it is returned immediately.
+/// Otherwise an attempt is made to analyze the current partial function and recover the set of destination
+/// addresses, which if successful will be returned as a new JumpTable object.
+/// \param partial is the Funcdata copy to perform analysis on if necessary
 /// \param op is the given BRANCHIND PcodeOp
 /// \param flow is current flow information for \b this function
-/// \param failuremode will hold the final success/failure code (0=success)
+/// \param mode will hold the final success/failure code
 /// \return the recovered JumpTable or NULL if there was no success
-JumpTable *Funcdata::recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremode)
+JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,JumpTable::RecoveryMode &mode)
 
 {
   JumpTable *jt;
 
-  failuremode = 0;
+  mode = JumpTable::success;
   jt = linkJumpTable(op);		// Search for pre-existing jumptable
   if (jt != (JumpTable *)0) {
     if (!jt->isOverride()) {
       if (jt->getStage() != 1)
 	return jt;		// Previously calculated jumptable (NOT an override and NOT incomplete)
     }
-    failuremode = stageJumpTable(jt,op,flow); // Recover based on override information
-    if (failuremode != 0)
+    mode = stageJumpTable(partial,jt,op,flow); // Recover based on override information
+    if (mode != JumpTable::success)
       return (JumpTable *)0;
     jt->setIndirectOp(op);	// Relink table back to original op
     return jt;
@@ -577,9 +657,12 @@ JumpTable *Funcdata::recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremo
 
   if ((flags & jumptablerecovery_dont)!=0)
     return (JumpTable *)0;	// Explicitly told not to recover jumptables
+  mode = earlyJumpTableFail(op);
+  if (mode != JumpTable::success)
+    return (JumpTable *)0;
   JumpTable trialjt(glb);
-  failuremode = stageJumpTable(&trialjt,op,flow);
-  if (failuremode != 0)
+  mode = stageJumpTable(partial,&trialjt,op,flow);
+  if (mode != JumpTable::success)
     return (JumpTable *)0;
   //  if (trialjt.is_twostage())
   //    warning("Jumptable maybe incomplete. Second-stage recovery not implemented",trialjt.Opaddress());
@@ -1006,3 +1089,5 @@ void Funcdata::spliceBlockBasic(BlockBasic *bl)
   bblocks.spliceBlock(bl);
   structureReset();
 }
+
+} // End namespace ghidra

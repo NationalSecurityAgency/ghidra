@@ -39,13 +39,21 @@ public class HCS12X_ElfExtension extends ElfExtension {
 	@Override
 	public boolean canHandle(ElfLoadHelper elfLoadHelper) {
 		Language language = elfLoadHelper.getProgram().getLanguage();
-		return canHandle(elfLoadHelper.getElfHeader()) &&
-			"HCS12".equals(language.getProcessor().toString());
+		boolean isSpecialHCSMemory = isHCS12(language) || isHCS12X(language);
+		return canHandle(elfLoadHelper.getElfHeader()) && isSpecialHCSMemory;
 	}
 
 	@Override
 	public String getDataTypeSuffix() {
 		return "_HCS12";
+	}
+	
+	private boolean isHCS12(Language language) {
+		return "HCS-12".equals(language.getProcessor().toString());
+	}
+	
+	private boolean isHCS12X(Language language) {
+		return "HCS-12X".equals(language.getProcessor().toString());
 	}
 
 	@Override
@@ -62,7 +70,7 @@ public class HCS12X_ElfExtension extends ElfExtension {
 			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
 		}
 
-		addrWordOffset = hcs12TranslatePagedAddress(addrWordOffset);
+		addrWordOffset = hcs12TranslatePagedAddress(elfLoadHelper, addrWordOffset);
 
 		return space.getTruncatedAddress(addrWordOffset, true);
 	}
@@ -81,12 +89,46 @@ public class HCS12X_ElfExtension extends ElfExtension {
 			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();
 		}
 
-		addrWordOffset = hcs12TranslatePagedAddress(addrWordOffset);
+		addrWordOffset = hcs12TranslatePagedAddress(elfLoadHelper, addrWordOffset);
 
 		return space.getTruncatedAddress(addrWordOffset, true);
 	}
 
-	private long hcs12TranslatePagedAddress(long addrWordOffset) {
+	private long hcs12TranslatePagedAddress(ElfLoadHelper elfLoaderHelper, long addrWordOffset) {
+		
+		Language lang = elfLoaderHelper.getProgram().getLanguage();
+		if (isHCS12X(lang)) {
+			return hcs12xTranslatePagedAddress(addrWordOffset);
+		}
+
+		long page = (addrWordOffset >> 16) & 0xff;
+
+		long addr = addrWordOffset & 0xffff;
+
+		// PPage 3D address
+		if ((addr & 0xc000) == 0x0000) {
+			return ((0x3d << 14) | (addr & 0x3fff));
+		}
+
+		// PPage 3E address
+		if ((addr & 0xc000) == 0x4000) {
+			return (0x3e << 14) | (addr & 0x3fff);
+		}
+
+		// PPAGE 
+		if ((addr & 0xc000) == 0x8000) {
+			return (page << 14) | (addr & 0x3fff);
+		}
+
+		// PPAGE 3F address
+		if ((addr & 0xc000) == 0xc000) {
+			return (0x3f << 14) | (addr & 0x3fff);
+		}
+
+		return addr;
+	}
+
+	private long hcs12xTranslatePagedAddress(long addrWordOffset) {
 
 		long page = (addrWordOffset >> 16) & 0xff;
 
@@ -148,11 +190,9 @@ public class HCS12X_ElfExtension extends ElfExtension {
 			return address;
 		}
 
-		String symName = elfSymbol.getNameAsString();
-
 		long laddr = address.getOffset();
 
-		laddr = hcs12TranslatePagedAddress(laddr);
+		laddr = hcs12TranslatePagedAddress(elfLoadHelper, laddr);
 
 		Address mappedAddr = address.getNewAddress(laddr);
 

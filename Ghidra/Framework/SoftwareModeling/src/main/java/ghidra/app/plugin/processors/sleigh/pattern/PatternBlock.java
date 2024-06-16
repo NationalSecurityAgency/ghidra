@@ -19,18 +19,17 @@
  */
 package ghidra.app.plugin.processors.sleigh.pattern;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.NumericUtilities;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
- * 
- *
  * A mask/value pair viewed as two bitstreams
  */
 public class PatternBlock {
@@ -43,10 +42,12 @@ public class PatternBlock {
 		int delsize = end - start;
 		int newsize = array.length - delsize;
 		int[] res = new int[newsize];
-		for (int i = 0; i < start; ++i)
+		for (int i = 0; i < start; ++i) {
 			res[i] = array[i];
-		for (int i = end; i < array.length; ++i)
+		}
+		for (int i = end; i < array.length; ++i) {
 			res[i - delsize] = array[i];
+		}
 		return res;
 	}
 
@@ -104,8 +105,9 @@ public class PatternBlock {
 			while (iter1 != 0) {
 				--iter1;
 				--iter2;
-				if (maskvec[iter1] != 0)
+				if (maskvec[iter1] != 0) {
 					break;	// Find last non-zero
+				}
 			}
 			if (iter1 != maskvec.length) {
 				iter1++;			// Find first zero,in last zero chain
@@ -142,10 +144,12 @@ public class PatternBlock {
 
 	public PatternBlock(boolean tf) {
 		offset = 0;
-		if (tf)
+		if (tf) {
 			nonzerosize = 0;
-		else
+		}
+		else {
 			nonzerosize = -1;
+		}
 		maskvec = null;
 		valvec = null;
 	}
@@ -193,8 +197,9 @@ public class PatternBlock {
 		int maxlength = (getLength() > b.getLength()) ? getLength() : b.getLength();
 
 		int asize = maxlength / 4;
-		if (maxlength % 4 != 0)
+		if (maxlength % 4 != 0) {
 			asize += 1;
+		}
 		res.maskvec = new int[asize];
 		res.valvec = new int[asize];
 		res.offset = 0;
@@ -206,17 +211,20 @@ public class PatternBlock {
 			val1 = getValue(offset1 * 8, 32);
 			mask2 = b.getMask(offset1 * 8, 32);
 			val2 = b.getValue(offset1 * 8, 32);
-			if (((mask2 & mask1) & val2) != ((mask2 & mask1) & val1))
+			if (((mask2 & mask1) & val2) != ((mask2 & mask1) & val1)) {
 				break;	// Impossible pattern
+			}
 			res.maskvec[i] = mask1 | mask2;
 			res.valvec[i] = val1 | val2;
 			offset1 += 4;
 			i += 1;
 		}
-		if (offset1 < maxlength)		// If pattern is impossible
+		if (offset1 < maxlength) { // If pattern is impossible
 			res.nonzerosize = -1;
-		else
+		}
+		else { // If pattern is impossible
 			res.nonzerosize = maxlength;
+		}
 		res.normalize();
 		return res;
 	}
@@ -228,16 +236,19 @@ public class PatternBlock {
 		int sbit = 0;
 		while (sbit < length) {
 			tmplength = length - sbit;
-			if (tmplength > 32)
+			if (tmplength > 32) {
 				tmplength = 32;
+			}
 			mask1 = getMask(sbit, tmplength);
 			value1 = getValue(sbit, tmplength);
 			mask2 = op2.getMask(sbit, tmplength);
 			value2 = op2.getValue(sbit, tmplength);
-			if ((mask1 & mask2) != mask2)
+			if ((mask1 & mask2) != mask2) {
 				return false;
-			if ((value1 & mask2) != (value2 & mask2))
+			}
+			if ((value1 & mask2) != (value2 & mask2)) {
 				return false;
+			}
 			sbit += tmplength;
 		}
 		return true;
@@ -250,16 +261,19 @@ public class PatternBlock {
 		int sbit = 0;
 		while (sbit < length) {
 			tmplength = length - sbit;
-			if (tmplength > 32)
+			if (tmplength > 32) {
 				tmplength = 32;
+			}
 			mask1 = getMask(sbit, tmplength);
 			value1 = getValue(sbit, tmplength);
 			mask2 = op2.getMask(sbit, tmplength);
 			value2 = op2.getValue(sbit, tmplength);
-			if (mask1 != mask2)
+			if (mask1 != mask2) {
 				return false;
-			if ((mask1 & value1) != (mask2 & value2))
+			}
+			if ((mask1 & value1) != (mask2 & value2)) {
 				return false;
+			}
 			sbit += tmplength;
 		}
 		return true;
@@ -281,17 +295,21 @@ public class PatternBlock {
 		int wordnum2 = (startbit + size - 1) / 32;
 		int res;
 
-		if ((wordnum1 < 0) || (wordnum1 >= maskvec.length))
+		if ((wordnum1 < 0) || (wordnum1 >= maskvec.length)) {
 			res = 0;
-		else
+		}
+		else {
 			res = maskvec[wordnum1];
+		}
 		res <<= shift;
 		if (wordnum1 != wordnum2) {
 			int tmp;
-			if ((wordnum2 < 0) || (wordnum2 >= maskvec.length))
+			if ((wordnum2 < 0) || (wordnum2 >= maskvec.length)) {
 				tmp = 0;
-			else
+			}
+			else {
 				tmp = maskvec[wordnum2];
+			}
 			res |= (tmp >>> (32 - shift));
 		}
 		res >>>= 32 - size;
@@ -305,17 +323,21 @@ public class PatternBlock {
 		int wordnum2 = (startbit + size - 1) / 32;
 		int res;
 
-		if ((wordnum1 < 0) || (wordnum1 >= valvec.length))
+		if ((wordnum1 < 0) || (wordnum1 >= valvec.length)) {
 			res = 0;
-		else
+		}
+		else {
 			res = valvec[wordnum1];
+		}
 		res <<= shift;
 		if (wordnum1 != wordnum2) {
 			int tmp;
-			if ((wordnum2 < 0) || (wordnum2 >= valvec.length))
+			if ((wordnum2 < 0) || (wordnum2 >= valvec.length)) {
 				tmp = 0;
-			else
+			}
+			else {
 				tmp = valvec[wordnum2];
+			}
 			res |= (tmp >>> (32 - shift));
 		}
 		res >>>= 32 - size;
@@ -331,14 +353,16 @@ public class PatternBlock {
 	}
 
 	public boolean isInstructionMatch(ParserWalker walker) {
-		if (nonzerosize <= 0)
+		if (nonzerosize <= 0) {
 			return (nonzerosize == 0);
+		}
 		int off = offset;
 		try {
 			for (int i = 0; i < maskvec.length; ++i) {
 				int data = walker.getInstructionBytes(off, 4);
-				if ((maskvec[i] & data) != valvec[i])
+				if ((maskvec[i] & data) != valvec[i]) {
 					return false;
+				}
 				off += 4;
 			}
 			return true;
@@ -349,37 +373,39 @@ public class PatternBlock {
 	}
 
 	public boolean isContextMatch(ParserWalker walker) {
-		if (nonzerosize <= 0)
+		if (nonzerosize <= 0) {
 			return (nonzerosize == 0);
+		}
 		int off = offset;
 		for (int i = 0; i < maskvec.length; ++i) {
 			int data = walker.getContextBytes(off, 4);
-			if ((maskvec[i] & data) != valvec[i])
+			if ((maskvec[i] & data) != valvec[i]) {
 				return false;
+			}
 			off += 4;
 		}
 		return true;
 	}
 
-	public void restoreXml(XmlPullParser parser) {
-		XmlElement el = parser.start("pat_block");
-		offset = SpecXmlUtils.decodeInt(el.getAttribute("offset"));
-		nonzerosize = SpecXmlUtils.decodeInt(el.getAttribute("nonzero"));
-		ArrayList<String> masks = new ArrayList<>();
-		ArrayList<String> vals = new ArrayList<>();
-		XmlElement subel;
-		while ((subel = parser.softStart("mask_word")) != null) {
-			masks.add(subel.getAttribute("mask"));
-			vals.add(subel.getAttribute("val"));
-			parser.end(subel);
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_PAT_BLOCK);
+		offset = (int) decoder.readSignedInteger(ATTRIB_OFF);
+		nonzerosize = (int) decoder.readSignedInteger(ATTRIB_NONZERO);
+		ArrayList<Integer> masks = new ArrayList<>();
+		ArrayList<Integer> vals = new ArrayList<>();
+		while (decoder.peekElement() == ELEM_MASK_WORD.id()) {
+			decoder.openElement();
+			masks.add((int) decoder.readUnsignedInteger(ATTRIB_MASK));
+			vals.add((int) decoder.readUnsignedInteger(ATTRIB_VAL));
+			decoder.closeElement(ELEM_MASK_WORD.id());
 		}
 		maskvec = new int[masks.size()];
 		valvec = new int[vals.size()];
 		for (int i = 0; i < maskvec.length; ++i) {
-			maskvec[i] = SpecXmlUtils.decodeInt(masks.get(i));
-			valvec[i] = SpecXmlUtils.decodeInt(vals.get(i));
+			maskvec[i] = masks.get(i);
+			valvec[i] = vals.get(i);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	@Override

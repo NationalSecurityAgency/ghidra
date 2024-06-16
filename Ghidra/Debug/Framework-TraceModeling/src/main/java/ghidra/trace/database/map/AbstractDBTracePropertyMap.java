@@ -18,33 +18,36 @@ package ghidra.trace.database.map;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.framework.data.OpenMode;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.map.AbstractDBTracePropertyMap.DBTraceSaveablePropertyMapEntry;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.property.TracePropertyMap;
+import ghidra.trace.model.property.TracePropertyMapSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.annot.*;
+import ghidra.util.exception.NotYetImplementedException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
 		extends DBTraceAddressSnapRangePropertyMap<T, DR> implements TracePropertyMap<T> {
 
-	public AbstractDBTracePropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+	public AbstractDBTracePropertyMap(String name, DBHandle dbh, OpenMode openMode,
 			ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, Class<DR> dataType,
 			DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
@@ -53,26 +56,28 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			dataFactory);
 	}
 
+	// TODO: These next several methods are repeated thrice in this file....
+
 	@SuppressWarnings("unchecked")
-	protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Range<Long> span) {
+	protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Lifespan span) {
 		// TODO: Would rather not rely on implementation knowledge here
-		// The shape is the database record in AbstracctDBTraceAddressSnapRangePropertyMapData
+		// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
 		makeWay((DR) entry.getKey(), span);
 	}
 
-	protected void makeWay(DR data, Range<Long> span) {
+	protected void makeWay(DR data, Lifespan span) {
 		DBTraceUtils.makeWay(data, span, (d, s) -> d.doSetLifespan(s), d -> deleteData(d));
 		// TODO: Any events?
 	}
 
 	@Override
-	public void set(Range<Long> lifespan, Address address, T value) {
+	public void set(Lifespan lifespan, Address address, T value) {
 		// NOTE: No null -> clear, so that Void properties make sense
 		put(address, lifespan, value);
 	}
 
 	@Override
-	public void set(Range<Long> lifespan, AddressRange range, T value) {
+	public void set(Lifespan lifespan, AddressRange range, T value) {
 		put(range, lifespan, value);
 	}
 
@@ -87,12 +92,21 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range) {
+	public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
+			AddressRange range) {
+		return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
+	}
+
+	@Override
+	public boolean clear(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			boolean result = false;
 			for (Entry<TraceAddressSnapRange, T> entry : reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
 				makeWay(entry, span);
+				result = true;
 			}
+			return result;
 		}
 	}
 
@@ -107,10 +121,127 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		}
 	}
 
+	@Override
+	protected DBTracePropertyMapSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
+			throws VersionException, IOException {
+		return new DBTracePropertyMapSpace(
+			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
+			lock, space, null, 0, dataType, dataFactory);
+	}
+
+	@Override
+	protected DBTracePropertyMapSpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
+		return new DBTracePropertyMapSpace(
+			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
+			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
+	}
+
+	@Override
+	public TracePropertyMapSpace<T> getPropertyMapSpace(AddressSpace space,
+			boolean createIfAbsent) {
+		return (DBTracePropertyMapSpace) getForSpace(space, createIfAbsent);
+	}
+
+	@Override
+	public TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceThread thread, int frameLevel,
+			boolean createIfAbsent) {
+		return (DBTracePropertyMapSpace) getForRegisterSpace(thread, frameLevel, createIfAbsent);
+	}
+
+	@Override
+	public void delete() {
+		throw new NotYetImplementedException();
+	}
+
+	public class DBTracePropertyMapSpace extends DBTraceAddressSnapRangePropertyMapSpace<T, DR>
+			implements TracePropertyMapSpace<T> {
+
+		public DBTracePropertyMapSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
+				ReadWriteLock lock, AddressSpace space, TraceThread thread, int frameLevel,
+				Class<DR> dataType,
+				DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
+				throws VersionException, IOException {
+			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
+		}
+
+		@Override
+		public Trace getTrace() {
+			return trace;
+		}
+
+		@Override
+		public Class<T> getValueClass() {
+			return AbstractDBTracePropertyMap.this.getValueClass();
+		}
+
+		@SuppressWarnings("unchecked")
+		protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Lifespan span) {
+			// TODO: Would rather not rely on implementation knowledge here
+			// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
+			makeWay((DR) entry.getKey(), span);
+		}
+
+		protected void makeWay(DR data, Lifespan span) {
+			DBTraceUtils.makeWay(data, span, (d, s) -> d.doSetLifespan(s), d -> deleteData(d));
+			// TODO: Any events?
+		}
+
+		@Override
+		public void set(Lifespan lifespan, Address address, T value) {
+			put(address, lifespan, value);
+		}
+
+		@Override
+		public void set(Lifespan lifespan, AddressRange range, T value) {
+			put(range, lifespan, value);
+		}
+
+		@Override
+		public T get(long snap, Address address) {
+			return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstValue();
+		}
+
+		@Override
+		public Entry<TraceAddressSnapRange, T> getEntry(long snap, Address address) {
+			return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstEntry();
+		}
+
+		@Override
+		public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
+				AddressRange range) {
+			return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
+		}
+
+		@Override
+		public boolean clear(Lifespan span, AddressRange range) {
+			try (LockHold hold = LockHold.lock(lock.writeLock())) {
+				boolean result = false;
+				for (Entry<TraceAddressSnapRange, T> entry : reduce(
+					TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
+					makeWay(entry, span);
+					result = true;
+				}
+				return result;
+			}
+		}
+
+		@Override
+		public T put(TraceAddressSnapRange shape, T value) {
+			try (LockHold hold = LockHold.lock(lock.writeLock())) {
+				for (Entry<TraceAddressSnapRange, T> entry : reduce(
+					TraceAddressSnapRangeQuery.intersecting(shape)).entries()) {
+					makeWay(entry, shape.getLifespan());
+				}
+				return super.put(shape, value);
+			}
+		}
+	}
+
 	public static class DBTraceIntPropertyMap
 			extends AbstractDBTracePropertyMap<Integer, DBTraceIntPropertyMapEntry> {
 
-		public DBTraceIntPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceIntPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -155,7 +286,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceLongPropertyMap
 			extends AbstractDBTracePropertyMap<Long, DBTraceLongPropertyMapEntry> {
 
-		public DBTraceLongPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceLongPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -208,7 +339,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			return (Class) DBTraceSaveablePropertyMapEntry.class;
 		}
 
-		public DBTraceSaveablePropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceSaveablePropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager, Class<T> valueClass)
 				throws IOException, VersionException {
@@ -324,7 +455,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceStringPropertyMap
 			extends AbstractDBTracePropertyMap<String, DBTraceStringPropertyMapEntry> {
 
-		public DBTraceStringPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceStringPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -369,7 +500,7 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	public static class DBTraceVoidPropertyMap
 			extends AbstractDBTracePropertyMap<Void, DBTraceVoidPropertyMapEntry> {
 
-		public DBTraceVoidPropertyMap(String name, DBHandle dbh, DBOpenMode openMode,
+		public DBTraceVoidPropertyMap(String name, DBHandle dbh, OpenMode openMode,
 				ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 				DBTraceThreadManager threadManager) throws IOException, VersionException {
 			super(name, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,

@@ -15,9 +15,8 @@
  */
 package ghidra.trace.model.bookmark;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.listing.Bookmark;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -31,9 +30,9 @@ public interface TraceBookmark extends Bookmark {
 	 */
 	TraceThread getThread();
 
-	void setLifespan(Range<Long> lifespan);
+	void setLifespan(Lifespan lifespan);
 
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	@Override
 	TraceBookmarkType getType();

@@ -103,6 +103,7 @@ define register offset=0x1000 size=8
 	uao
 	pan
 	tco
+	accdata
 ];
 
 # System Registers
@@ -313,6 +314,9 @@ define register offset=0x1100 size=8
 	gmid_el1
 	gcr_el1
 	ssbs
+	allint
+	dit
+	svcr
 ];
 
 # bitrange definitions are [<least significant bit>,<size>]
@@ -1201,6 +1205,8 @@ define token instrAARCH64 (32) endian = little
 	b_0509 = (5,9)
 	b_0510 = (5,10)
 	b_0515 = (5,15)
+	b_0519 = (5,19)
+	b_0531 = (5,31)
 	b_0607 = (6,7)
 	b_0609 = (6,9)
 	b_0610 = (6,10)
@@ -2720,13 +2726,13 @@ Rn_VPR128.D.imm_neon_uimm1: Rn_VPR128.D^"["^imm_neon_uimm1^"]" is Rn_VPR128.D & 
 Re_VPR128.H.vIndexHL: Re_VPR128.H^"["^vIndexHL^"]" is Re_VPR128.H & vIndexHL { }
 
 @if DATA_ENDIAN == "little"
-Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=2 & b_2121 & b_1111 [ val = 0x5000 + 32*Re_VPR128 + (b_1111 * 2 + b_2121)*2; ] { export *[register]:2 val; }
-Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=1 & b_2121 & b_1111 & b_2020 [ val = 0x5000 + 32*Re_VPR128 + (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
-Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x5000 + 32*Re_VPR128 + (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=2 & b_2121 & b_1111 [ val = 0x5000 + 32*Re_VPR128Lo + (b_1111 * 2 + b_2121)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=1 & b_2121 & b_1111 & b_2020 [ val = 0x5000 + 32*Re_VPR128Lo + (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x5000 + 32*Re_VPR128Lo + (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
 @else
-Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=2 & b_2121 & b_1111 [ val = 0x501e + 32*Re_VPR128 - (b_1111 * 2 + b_2121)*2; ] { export *[register]:2 val; }
-Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=1 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128 - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
-Re_VPR128Lo.H.sel: Re_VPR128, val is Re_VPR128 & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128 - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=2 & b_2121 & b_1111 [ val = 0x501e + 32*Re_VPR128Lo - (b_1111 * 2 + b_2121)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=1 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128Lo - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
+Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128Lo - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
 @endif
 Re_VPR128Lo.H.vIndexHLM: Re_VPR128Lo.H^"["^vIndexHLM^"]" is Re_VPR128Lo.H & vIndexHLM & Re_VPR128Lo.H.sel { export Re_VPR128Lo.H.sel; }
 

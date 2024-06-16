@@ -18,6 +18,8 @@ apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+apply from: "buildNatives.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features FileFormats'
@@ -28,26 +30,35 @@ dependencies {
 	api project(':Recognizers')
 	api project(':PDB')
 	
-	api ':dex-ir:2.0'
-	api ':dex-reader:2.0'
-	api ':dex-reader-api:2.0'
-	api ':dex-translator:2.0'
+	// Used by "Android DEX to JAR" file system
+	api ':dex-ir:2.1'
+	api ':dex-reader:2.1'
+	api ':dex-reader-api:2.1'
+	api ':dex-translator:2.1'
+	api 'org.ow2.asm:asm-debug-all:5.0.3'
 
-	api 'org.ow2.asm:asm-debug-all:4.1'
+	// Used by "Android DEX to SMALI" file system
+	api 'org.smali:baksmali:2.5.2' // requires guava-27.1-android or later
+	api 'org.smali:dexlib2:2.5.2'  // requires guava-27.1-android or later
+	api 'org.smali:util:2.5.2'     // requires guava-27.1-android or later
 
-	api 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
-	api 'org.smali:dexlib:1.4.0'
-	api 'org.smali:util:1.4.0'
-
-	api 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'
+	// Used by "Android XML" file system
 	api ':AXMLPrinter2'
-	
+
+	// Used by "ZIP" and "7zip" file systems
+	api 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'	
 	runtimeOnly 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:16.02-2.01'
 	
-	helpPath project(path: ":Base", configuration: 'helpPath')
-
 	// include code from src/test/slow in Base
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
+}
+
+// Include buildable native source in distribution
+rootProject.assembleDistribution {
+	from (this.project.projectDir.toString()) {
+		include "src/lzfse/**"
+		into  { getZipPath(this.project) }
+	}
 }
 
 // ***********************************************************************************************

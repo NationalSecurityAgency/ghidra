@@ -376,7 +376,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		final GoToService goToService = tool.getService(GoToService.class);
 		runSwing(() -> goToService.goTo(new AddressFieldLocation(program, address)));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cbp.updateNow();
 
 		ListingActionContext context =

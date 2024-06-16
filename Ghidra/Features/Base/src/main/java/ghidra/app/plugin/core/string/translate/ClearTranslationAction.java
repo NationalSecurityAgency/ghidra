@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string.translate;
 
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.util.List;
 
@@ -64,6 +64,7 @@ public class ClearTranslationAction extends AbstractTranslateAction {
 			monitor.initialize(dataLocations.size());
 			for (ProgramLocation progLoc : dataLocations) {
 				Data data = DataUtilities.getDataAtLocation(progLoc);
+				TRANSLATION.setTranslatedValue(data, null);
 				TRANSLATION.clear(data);
 			}
 		}

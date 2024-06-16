@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
@@ -32,11 +30,12 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectIndex;
 import ghidra.util.database.DBCachedObjectStoreFactory;
@@ -67,7 +66,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 		assert threadKey == -1; // No breakpoints on registers
 		breakpointMapSpace =
 			new DBTraceAddressSnapRangePropertyMapSpace<DBTraceBreakpoint, DBTraceBreakpoint>(
-				DBTraceBreakpoint.tableName(space, threadKey), factory, lock, space,
+				DBTraceBreakpoint.tableName(space, threadKey), factory, lock, space, null, 0,
 				DBTraceBreakpoint.class, (t, s, r) -> new DBTraceBreakpoint(this, t, s, r));
 		breakpointsByPath =
 			breakpointMapSpace.getUserIndex(String.class, DBTraceBreakpoint.PATH_COLUMN);
@@ -89,7 +88,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 		return 0;
 	}
 
-	protected DBTraceBreakpoint addBreakpoint(String path, Range<Long> lifespan, AddressRange range,
+	protected DBTraceBreakpoint addBreakpoint(String path, Lifespan lifespan, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) {
 		// NOTE: thread here is not about address/register spaces.
@@ -101,9 +100,9 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 			}
 			DBTraceBreakpoint breakpoint =
 				breakpointMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
-			breakpoint.set(path, path, threads, kinds, enabled, comment);
+			breakpoint.set(path, path, threads, kinds, enabled, true, comment);
 			trace.setChanged(
-				new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, this, breakpoint));
+				new TraceChangeRecord<>(TraceEvents.BREAKPOINT_ADDED, this, breakpoint));
 			return breakpoint;
 		}
 	}
@@ -121,7 +120,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 			breakpointMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values());
 	}
 
-	public Collection<? extends DBTraceBreakpoint> getBreakpointsIntersecting(Range<Long> span,
+	public Collection<? extends DBTraceBreakpoint> getBreakpointsIntersecting(Lifespan span,
 			AddressRange range) {
 		return Collections.unmodifiableCollection(breakpointMapSpace.reduce(
 			TraceAddressSnapRangeQuery.intersecting(range, span)).orderedValues());
@@ -129,8 +128,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 
 	public void deleteBreakpoint(DBTraceBreakpoint breakpoint) {
 		breakpointMapSpace.deleteData(breakpoint);
-		trace.setChanged(
-			new TraceChangeRecord<>(TraceBreakpointChangeType.DELETED, this, breakpoint));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_DELETED, this, breakpoint));
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +36,7 @@ public class AoutHeaderMIPS extends AoutHeader {
 		gp_value    = reader.readNextInt();
 	}
 
-	public int getUnitializedDataStart() {
+	public int getUninitializedDataStart() {
 		return bss_start;
 	}
 

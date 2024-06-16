@@ -17,16 +17,18 @@
 #include "block.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",40);
-AttributeId ATTRIB_DEPTH = AttributeId("depth",41);
-AttributeId ATTRIB_END = AttributeId("end",42);
-AttributeId ATTRIB_OPCODE = AttributeId("opcode",43);
-AttributeId ATTRIB_REV = AttributeId("rev",44);
+namespace ghidra {
 
-ElementId ELEM_BHEAD = ElementId("bhead",47);
-ElementId ELEM_BLOCK = ElementId("block",48);
-ElementId ELEM_BLOCKEDGE = ElementId("blockedge",49);
-ElementId ELEM_EDGE = ElementId("edge",50);
+AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",75);
+AttributeId ATTRIB_DEPTH = AttributeId("depth",76);
+AttributeId ATTRIB_END = AttributeId("end",77);
+AttributeId ATTRIB_OPCODE = AttributeId("opcode",78);
+AttributeId ATTRIB_REV = AttributeId("rev",79);
+
+ElementId ELEM_BHEAD = ElementId("bhead",102);
+ElementId ELEM_BLOCK = ElementId("block",103);
+ElementId ELEM_BLOCKEDGE = ElementId("blockedge",104);
+ElementId ELEM_EDGE = ElementId("edge",105);
 
 /// The edge is saved assuming we already know what block we are in.
 /// \param encoder is the stream encoder
@@ -405,9 +407,15 @@ bool FlowBlock::restrictedByConditional(const FlowBlock *cond) const
 {
   if (sizeIn() == 1) return true;	// Its impossible for any path to come through sibling to this
   if (getImmedDom() != cond) return false;	// This is not dominated by conditional block at all
+  bool seenCond = false;
   for(int4 i=0;i<sizeIn();++i) {
     const FlowBlock *inBlock = getIn(i);
-    if (inBlock == cond) continue;	// The unique edge from cond to this
+    if (inBlock == cond) {
+      if (seenCond)
+	return false;			// Coming in from cond block on multiple direct edges
+      seenCond = true;
+      continue;
+    }
     while(inBlock != this) {
       if (inBlock == cond) return false;	// Must have come through sibling
       inBlock = inBlock->getImmedDom();
@@ -1258,6 +1266,14 @@ void BlockGraph::printRaw(ostream &s) const
     (*iter)->printRaw(s);
 }
 
+PcodeOp *BlockGraph::firstOp(void) const
+
+{
+  if (getSize() == 0)
+    return (PcodeOp *)0;
+  return getBlock(0)->firstOp();
+}
+
 FlowBlock *BlockGraph::nextFlowAfter(const FlowBlock *bl) const
 
 {
@@ -1324,10 +1340,10 @@ void BlockGraph::encodeBody(Encoder &encoder) const
     list[i]->encode(encoder);
 }
 
-void BlockGraph::decodeBody(Decoder &decoder,BlockMap &resolver)
+void BlockGraph::decodeBody(Decoder &decoder)
 
 {
-  BlockMap newresolver(resolver);
+  BlockMap newresolver;
   vector<FlowBlock *> tmplist;
 
   for(;;) {
@@ -1352,11 +1368,10 @@ void BlockGraph::decodeBody(Decoder &decoder,BlockMap &resolver)
 /// Parse a \<block> element.  This is currently just a wrapper around the
 /// FlowBlock::decode() that sets of the BlockMap resolver
 /// \param decoder is the stream decoder
-/// \param m is the address space manager
-void BlockGraph::decode(Decoder &decoder,const AddrSpaceManager *m)
+void BlockGraph::decode(Decoder &decoder)
 
 {
-  BlockMap resolver(m);
+  BlockMap resolver;
   FlowBlock::decode(decoder,resolver);
   // Restore goto references here
 }
@@ -1659,13 +1674,20 @@ BlockMultiGoto *BlockGraph::newBlockMultiGoto(FlowBlock *bl,int4 outedge)
   }
   else {
     ret = new BlockMultiGoto(bl);
+    int4 origSizeOut = bl->sizeOut();
     vector<FlowBlock *> nodes;
     nodes.push_back(bl);
     identifyInternal(ret,nodes);
     addBlock(ret);
     ret->addEdge(targetbl);
-    if (targetbl != bl)		// If the target is itself, edge is already removed by identifyInternal
-      removeEdge(ret,targetbl);
+    if (targetbl != bl)	{
+      if (ret->sizeOut() != origSizeOut) {	// If there are less out edges after identifyInternal
+	// it must have collapsed a self edge (switch out edges are already deduped)
+	ret->forceOutputNum(ret->sizeOut()+1);	// preserve the self edge (it is not the goto edge)
+      }
+      removeEdge(ret,targetbl);	// Remove the edge to the goto target
+    }
+    // else -- the goto edge is a self edge and will get removed by identifyInternal
     if (isdefaultedge)
       ret->setDefaultGoto();
   }
@@ -2254,6 +2276,13 @@ Address BlockBasic::getStop(void) const
   return range->getLastAddr();
 }
 
+PcodeOp *BlockBasic::firstOp(void) const
+
+{
+  if (op.empty()) return (PcodeOp *)0;
+  return (PcodeOp *)op.front();
+}
+
 PcodeOp *BlockBasic::lastOp(void) const
 
 {
@@ -2417,7 +2446,7 @@ void FlowBlock::decode(Decoder &decoder,BlockMap &resolver)
 {
   uint4 elemId = decoder.openElement(ELEM_BLOCK);
   decodeHeader(decoder);
-  decodeBody(decoder,resolver);
+  decodeBody(decoder);
   decodeEdges(decoder,resolver);
   decoder.closeElement(elemId);
 }
@@ -2562,10 +2591,10 @@ void BlockBasic::encodeBody(Encoder &encoder) const
   cover.encode(encoder);
 }
 
-void BlockBasic::decodeBody(Decoder &decoder,BlockMap &resolver)
+void BlockBasic::decodeBody(Decoder &decoder)
 
 {
-  cover.decode(decoder, resolver.getAddressManager());
+  cover.decode(decoder);
 }
 
 void BlockBasic::printHeader(ostream &s) const
@@ -2591,30 +2620,110 @@ void BlockBasic::printRaw(ostream &s) const
   }
 }
 
-/// \brief Check if there is meaningful activity between two branch instructions
+/// \brief Check for values created in \b this block that flow outside the block.
 ///
-/// The first branch is assumed to be a CBRANCH one edge of which flows into
-/// the other branch. The flow can be through 1 or 2 blocks.  If either block
-/// performs an operation other than MULTIEQUAL, INDIRECT (or the branch), then
-/// return \b false.
-/// \param first is the CBRANCH operation
-/// \param path is the index of the edge to follow to the other branch
-/// \param last is the other branch operation
-/// \return \b true if there is no meaningful activity
-bool BlockBasic::noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last)
+/// The block can calculate a value for a BRANCHIND or CBRANCH and can copy values and this method will still
+/// return \b true.  But calculating any value used outside the block, writing to an addressable location,
+/// or performing a CALL or STORE causes the method to return \b false.
+/// \return \b true if no value is created that can be used outside of the block
+bool BlockBasic::noInterveningStatement(void) const
 
 {
-  BlockBasic *curbl = (BlockBasic *)first->getParent()->getOut(path);
-  for(int4 i=0;i<2;++i) {
-    if (!curbl->hasOnlyMarkers()) return false;
-    if (curbl != last->getParent()) {
-      if (curbl->sizeOut() != 1) return false; // Intervening conditional branch
+  list<PcodeOp *>::const_iterator iter;
+  const PcodeOp *bop;
+  OpCode opc;
+
+  for(iter=op.begin();iter!=op.end();++iter) {
+    bop = *iter;
+    if (bop->isMarker()) continue;
+    if (bop->isBranch()) continue;
+    if (bop->getEvalType() == PcodeOp::special) {
+      if (bop->isCall())
+	return false;
+      opc = bop->code();
+      if (opc == CPUI_STORE || opc == CPUI_NEW)
+	return false;
     }
-    else
-      return true;
-    curbl = (BlockBasic *)curbl->getOut(0);
+    else {
+      opc = bop->code();
+      if (opc == CPUI_COPY || opc == CPUI_SUBPIECE)
+	continue;
+    }
+    const Varnode *outvn = bop->getOut();
+    if (outvn->isAddrTied())
+      return false;
+    list<PcodeOp *>::const_iterator iter = outvn->beginDescend();
+    while(iter!=outvn->endDescend()) {
+      PcodeOp *op = *iter;
+      if (op->getParent() != this)
+	return false;
+      ++iter;
+    }
   }
-  return false;
+  return true;
+}
+
+/// If there exists a CPUI_MULTIEQUAL PcodeOp in \b this basic block that takes the given exact list of Varnodes
+/// as its inputs, return that PcodeOp. Otherwise return null.
+/// \param varArray is the exact list of Varnodes
+/// \return the MULTIEQUAL or null
+PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
+
+{
+  Varnode *vn = varArray[0];
+  PcodeOp *op;
+  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+  for(;;) {
+    op = *iter;
+    if (op->code() == CPUI_MULTIEQUAL && op->getParent() == this)
+      break;
+    ++iter;
+    if (iter == vn->endDescend())
+      return (PcodeOp *)0;
+  }
+  for(int4 i=0;i<op->numInput();++i) {
+    if (op->getIn(i) != varArray[i])
+      return (PcodeOp *)0;
+  }
+  return op;
+}
+
+/// Each Varnode must be defined by a PcodeOp with the same OpCode.  The Varnode, within the array, is replaced
+/// with the input Varnode in the indicated slot.
+/// \param varArray is the given array of Varnodes
+/// \param slot is the indicated slot
+/// \return \b true if all the Varnodes are defined in the same way
+bool BlockBasic::liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot)
+
+{
+  OpCode opc;
+  Varnode *cvn;
+  Varnode *vn = varArray[0];
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  opc = op->code();
+  if (op->numInput() == 2) {
+    cvn = op->getIn(1-slot);
+    if (!cvn->isConstant()) return false;
+  }
+  else
+    cvn = (Varnode *)0;
+  varArray[0] = op->getIn(slot);
+  for(int4 i=1;i<varArray.size();++i) {
+    vn = varArray[i];
+    if (!vn->isWritten()) return false;
+    op = vn->getDef();
+    if (op->code() != opc) return false;
+
+    if (cvn != (Varnode *)0) {
+      Varnode *cvn2 = op->getIn(1-slot);
+      if (!cvn2->isConstant()) return false;
+      if (cvn->getSize() != cvn2->getSize()) return false;
+      if (cvn->getOffset() != cvn2->getOffset()) return false;
+    }
+    varArray[i] = op->getIn(slot);
+  }
+  return true;
 }
 
 void BlockCopy::printHeader(ostream &s) const
@@ -3426,6 +3535,11 @@ FlowBlock *BlockSwitch::nextFlowAfter(const FlowBlock *bl) const
 {
   if (getBlock(0) == bl)
     return (FlowBlock *)0;	// Don't know what will execute
+
+  // Can only evaluate this if bl is a case block that falls through to another case block.
+  // Otherwise there is a break statement in the flow
+  if (bl->getType() != t_goto)	// Fallthru must be a goto block
+    return (FlowBlock *)0;
   int4 i;
   // Look for block to find flow after
   for(i=0;i<caseblocks.size();++i)
@@ -3438,12 +3552,6 @@ FlowBlock *BlockSwitch::nextFlowAfter(const FlowBlock *bl) const
   // Otherwise we are at last block of switch, flow is to exit of switch
   if (getParent() == (const FlowBlock *)0) return (FlowBlock *)0;
   return getParent()->nextFlowAfter(this);
-}
-
-BlockMap::BlockMap(const BlockMap &op2)
-
-{
-  manage = op2.manage;
 }
 
 /// \param bt is the block_type
@@ -3505,3 +3613,5 @@ FlowBlock *BlockMap::createBlock(const string &name)
   sortlist.push_back(bl);
   return bl;
 }
+
+} // End namespace ghidra

@@ -42,7 +42,7 @@ public class DbgDetachCommand extends AbstractDbgCommand<Void> {
 			manager.fireThreadExited(t.getId(), process, pending);
 			t.remove();
 		}
-		manager.getEventListeners().fire.processRemoved(process.getId(), DbgCause.Causes.UNCLAIMED);
+		manager.getEventListeners().invoke().processRemoved(process.getId(), DbgCause.Causes.UNCLAIMED);
 		return null;
 	}
 

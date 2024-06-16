@@ -16,14 +16,21 @@
 package ghidra.trace.model.listing;
 
 import ghidra.program.model.listing.Data;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.symbol.TraceReference;
 
+/**
+ * A data unit in a {@link Trace}
+ */
 public interface TraceData extends TraceCodeUnit, Data {
 	@Override
 	TraceData getComponent(int index);
 
 	@Override
 	TraceData getComponentAt(int offset);
+
+	@Override
+	TraceData getComponentContaining(int offset);
 
 	@Override
 	TraceData getComponent(int[] componentPath);

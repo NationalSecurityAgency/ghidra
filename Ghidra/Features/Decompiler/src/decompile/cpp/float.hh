@@ -16,10 +16,12 @@
 /// \file float.hh
 /// \brief Support for decoding different floating-point formats
 
-#ifndef __CPUI_FLOATFORMAT__
-#define __CPUI_FLOATFORMAT__
+#ifndef __FLOAT_HH__
+#define __FLOAT_HH__
 
-#include "xml.hh"
+#include "error.hh"
+
+namespace ghidra {
 
 /// \brief Encoding information for a single floating-point format
 ///
@@ -59,7 +61,6 @@ private:
   uintb getNaNEncoding(bool sgn) const;				///< Get an encoded NaN value
   void calcPrecision(void);					///< Calculate the decimal precision of this format
 public:
-  FloatFormat(void) {}	///< Construct for use with restoreXml()
   FloatFormat(int4 sz);	///< Construct default IEEE 754 standard settings
   int4 getSize(void) const { return size; }			///< Get the size of the encoding in bytes
   double getHostFloat(uintb encoding,floatclass *type) const;	///< Convert an encoding into host's double
@@ -91,9 +92,7 @@ public:
   uintb opRound(uintb a) const;				///< Round
   uintb opInt2Float(uintb a,int4 sizein) const;		///< Convert integer to floating-point
   uintb opFloat2Float(uintb a,const FloatFormat &outformat) const;	///< Convert between floating-point precisions
-
-  void saveXml(ostream &s) const;			///< Save the format to an XML stream
-  void restoreXml(const Element *el);			///< Restore the format from XML
 };
 
+} // End namespace ghidra
 #endif

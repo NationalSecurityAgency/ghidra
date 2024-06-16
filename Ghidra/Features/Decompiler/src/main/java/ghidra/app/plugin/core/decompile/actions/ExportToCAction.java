@@ -17,23 +17,24 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.io.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.theme.GIcon;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.preferences.Preferences;
+import ghidra.program.model.symbol.IllegalCharCppTransformer;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
-import resources.ResourceManager;
 
 public class ExportToCAction extends AbstractDecompilerAction {
-	private static final ImageIcon EXPORT_ICON = ResourceManager.loadImage("images/page_edit.png");
+	private static final Icon EXPORT_ICON = new GIcon("icon.decompiler.action.export");
 	private static final String LAST_USED_C_FILE = "last.used.decompiler.c.export.file";
 
 	public ExportToCAction() {
@@ -66,6 +67,7 @@ public class ExportToCAction extends AbstractDecompilerAction {
 			fileChooser.setSelectedFile(lastUsedFile);
 		}
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file == null) {
 			return null;
 		}
@@ -110,8 +112,9 @@ public class ExportToCAction extends AbstractDecompilerAction {
 		try {
 			PrintWriter writer = new PrintWriter(new FileOutputStream(file));
 			ClangTokenGroup grp = context.getCCodeModel();
-			PrettyPrinter printer = new PrettyPrinter(context.getFunction(), grp);
-			DecompiledFunction decompFunc = printer.print(true);
+			PrettyPrinter printer =
+				new PrettyPrinter(context.getFunction(), grp, new IllegalCharCppTransformer());
+			DecompiledFunction decompFunc = printer.print();
 			writer.write(decompFunc.getC());
 			writer.close();
 			context.setStatusMessage(

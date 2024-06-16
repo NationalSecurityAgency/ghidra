@@ -21,6 +21,8 @@
 #include "ext/stdio_filebuf.h"
 #endif
 
+namespace ghidra {
+
 vector<IfaceCapability *> IfaceCapability::thelist;
 
 void IfaceCapability::initialize(void)
@@ -162,6 +164,7 @@ void IfaceStatus::pushScript(istream *iptr,const string &newprompt)
   if (errorisdone)
     flags |= 1;
   flagstack.push_back(flags);
+  errorisdone = true;		// Abort on first exception in a script
   prompt = newprompt;
 }
 
@@ -611,3 +614,5 @@ void IfcEcho::execute(istream &s)
     status->fileoptr->put(c);
   *status->fileoptr << endl;
 }
+
+} // End namespace ghidra

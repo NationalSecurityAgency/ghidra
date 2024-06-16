@@ -29,18 +29,19 @@ import docking.action.*;
 import docking.actions.KeyEntryDialog;
 import docking.actions.ToolActions;
 import docking.tool.util.DockingToolConstants;
+import generic.theme.GIcon;
+import ghidra.framework.options.ActionTrigger;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.*;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	// note: this has to happen after the test framework is initialized, so it cannot be static
-	private final Icon ICON = ResourceManager.loadImage("images/refresh.png");
+	private final Icon ICON = Icons.REFRESH_ICON;
 	private static final String PROVIDER_NAME = "Test Action Provider";
 	private static final KeyStroke CONTROL_T =
 		KeyStroke.getKeyStroke(KeyEvent.VK_T, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
@@ -443,7 +444,8 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		ToolOptions keyOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		// shared option name/format: "Provider Name (Shared)" - the shared action's owner is the Tool
-		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Shared)", newKs));
+		runSwing(() -> keyOptions.setActionTrigger(provider.getName() + " (Shared)",
+			new ActionTrigger(newKs)));
 		waitForSwing();
 	}
 
@@ -491,15 +493,30 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		// Option name: the action name with the 'Shared' owner
 		String fullName = provider.getName() + " (Shared)";
-		KeyStroke optionsKs = runSwing(() -> options.getKeyStroke(fullName, null));
+		ActionTrigger actionTrigger = runSwing(() -> options.getActionTrigger(fullName, null));
+		KeyStroke optionsKs = null;
+		if (actionTrigger != null) {
+			optionsKs = actionTrigger.getKeyStroke();
+		}
 		assertEquals("Key stroke in options does not match expected key stroke", expectedKs,
 			optionsKs);
 	}
 
 	private void assertWindowMenuActionHasIcon(Icon expected) {
 		DockingActionIf action = getWindowMenuShowProviderAction();
+		Icon menuIcon = action.getMenuBarData().getMenuIcon();
 		assertEquals("Windows menu icons for provider does not match the value set on the provider",
-			expected, action.getMenuBarData().getMenuIcon());
+			getDescription(expected), getDescription(menuIcon));
+	}
+
+	private String getDescription(Icon icon) {
+		if (icon instanceof GIcon) {
+			return ((GIcon) icon).getUrl().toString();
+		}
+		if (icon instanceof ImageIcon) {
+			return ((ImageIcon) icon).getDescription();
+		}
+		return icon.toString();
 	}
 
 	private void assertToolbarActionHasIcon(Icon expected) {

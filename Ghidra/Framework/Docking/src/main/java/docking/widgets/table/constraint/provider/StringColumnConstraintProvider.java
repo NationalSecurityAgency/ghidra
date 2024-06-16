@@ -31,7 +31,8 @@ public class StringColumnConstraintProvider implements ColumnConstraintProvider 
 		list.add(new StringContainsColumnConstraint(""));
 		list.add(new StringStartsWithColumnConstraint(""));
 
-		list.add(new StringMatcherColumnConstraint(""));
+		list.add(new StringMatchesColumnConstraint(""));
+		list.add(new StringNotMatchesColumnConstraint(""));
 		list.add(new StringNotContainsColumnConstraint(""));
 		list.add(new StringNotStartsWithColumnConstraint(""));
 

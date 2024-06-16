@@ -20,10 +20,10 @@ import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.ConsoleService;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 
 //@formatter:off
 @PluginInfo(
@@ -41,7 +41,7 @@ public class ConsolePlugin extends ProgramPlugin {
 	private ConsoleComponentProvider provider;
 
 	public ConsolePlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 		provider = new ConsoleComponentProvider(tool, getName());
 		registerServiceProvided(ConsoleService.class, provider);
 	}
@@ -67,15 +67,4 @@ public class ConsolePlugin extends ProgramPlugin {
 	protected void programDeactivated(Program program) {
 		provider.setCurrentProgram(null);
 	}
-
-	@Override
-	public void processEvent(PluginEvent event) {
-		super.processEvent(event);
-		if (event instanceof ProgramLocationPluginEvent) {
-			ProgramLocationPluginEvent plpe = (ProgramLocationPluginEvent) event;
-			ProgramLocation pl = plpe.getLocation();
-			provider.setCurrentAddress(pl.getAddress());
-		}
-	}
-
 }

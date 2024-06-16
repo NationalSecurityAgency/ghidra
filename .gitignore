@@ -68,6 +68,7 @@ Release
 .classpath
 .settings/
 .prefs
+.pydevproject
 
 # Ignore XTEXT generated dirs/files
 */*/*/*/xtend-gen
@@ -89,3 +90,4 @@ gradlew.*
 # Ignore logs and core dumps
 *.log
 core.*
+!core.png

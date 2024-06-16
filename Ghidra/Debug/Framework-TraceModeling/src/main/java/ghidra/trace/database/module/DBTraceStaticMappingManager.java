@@ -20,18 +20,18 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
-
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.*;
+import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
-import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -50,7 +50,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	protected final DBCachedObjectIndex<Address, DBTraceStaticMapping> mappingsByAddress;
 	protected final Collection<DBTraceStaticMapping> view;
 
-	public DBTraceStaticMappingManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceStaticMappingManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws VersionException, IOException {
 		this.dbh = dbh;
@@ -78,18 +78,17 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	}
 
 	@Override
-	public DBTraceStaticMapping add(AddressRange range, Range<Long> lifespan, URL toProgramURL,
-			String toAddress)
-			throws TraceConflictedMappingException {
-		if (lifespan.hasLowerBound() && lifespan.lowerBoundType() != BoundType.CLOSED) {
-			throw new IllegalArgumentException("Lower bound must be closed");
-		}
+	public DBTraceStaticMapping add(AddressRange range, Lifespan lifespan, URL toProgramURL,
+			String toAddress) throws TraceConflictedMappingException {
+		Objects.requireNonNull(toProgramURL,
+			"Program URL cannot be null. Program must be in a project to have a URL.");
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			DBTraceStaticMapping conflict =
 				findAnyConflicting(range, lifespan, toProgramURL, toAddress);
 			if (conflict != null) {
+				// TODO: Find all conflicts?
 				throw new TraceConflictedMappingException("Another mapping would conflict",
-					conflict);
+					Set.of(conflict));
 			}
 			// TODO: A more sophisticated coverage check?
 			// TODO: Better coalescing
@@ -108,8 +107,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 			}
 			DBTraceStaticMapping mapping = mappingStore.create();
 			mapping.set(range, lifespan, toProgramURL, toAddress);
-			trace.setChanged(
-				new TraceChangeRecord<>(TraceStaticMappingChangeType.ADDED, null, mapping));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.MAPPING_ADDED, null, mapping));
 			return mapping;
 		}
 	}
@@ -121,8 +119,9 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	@Override
 	public DBTraceStaticMapping findContaining(Address address, long snap) {
-		for (DBTraceStaticMapping mapping : mappingsByAddress.head(address,
-			true).descending().values()) {
+		for (DBTraceStaticMapping mapping : mappingsByAddress.head(address, true)
+				.descending()
+				.values()) {
 			if (!mapping.getLifespan().contains(snap)) {
 				continue;
 			}
@@ -135,11 +134,11 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	}
 
 	@Override
-	public DBTraceStaticMapping findAnyConflicting(AddressRange range, Range<Long> lifespan,
-			URL toProgramURL,
-			String toAddress) {
-		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(),
-			true).descending().values()) {
+	public DBTraceStaticMapping findAnyConflicting(AddressRange range, Lifespan lifespan,
+			URL toProgramURL, String toAddress) {
+		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(), true)
+				.descending()
+				.values()) {
 			if (!mapping.conflictsWith(range, lifespan, toProgramURL, toAddress)) {
 				continue;
 			}
@@ -156,11 +155,12 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	@Override
 	public Collection<? extends DBTraceStaticMapping> findAllOverlapping(AddressRange range,
-			Range<Long> lifespan) {
+			Lifespan lifespan) {
 		Set<DBTraceStaticMapping> result = new HashSet<>();
-		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(),
-			true).descending().values()) {
-			if (!DBTraceUtils.intersect(mapping.getLifespan(), lifespan)) {
+		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(), true)
+				.descending()
+				.values()) {
+			if (!mapping.getLifespan().intersects(lifespan)) {
 				continue;
 			}
 			if (!mapping.getTraceAddressRange().intersects(range)) {
@@ -176,7 +176,6 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	public void delete(DBTraceStaticMapping mapping) {
 		mappingStore.delete(mapping);
-		trace.setChanged(
-			new TraceChangeRecord<>(TraceStaticMappingChangeType.DELETED, null, mapping));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.MAPPING_DELETED, null, mapping));
 	}
 }

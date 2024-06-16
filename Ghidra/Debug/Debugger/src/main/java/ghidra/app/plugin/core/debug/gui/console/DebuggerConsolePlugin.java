@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.console;
 
+import java.util.List;
+
 import javax.swing.Icon;
 
 import org.apache.logging.log4j.Level;
@@ -84,15 +86,15 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 		provider = new DebuggerConsoleProvider(this);
 
 		rootLogger = (Logger) LogManager.getRootLogger();
-		appender.start();
-		rootLogger.addAppender(appender);
+		//appender.start();
+		//rootLogger.addAppender(appender);
 	}
 
 	@Override
 	protected void dispose() {
 		if (rootLogger != null) {
-			rootLogger.removeAppender(appender);
-			appender.stop();
+			//rootLogger.removeAppender(appender);
+			//appender.stop();
 
 			provider.dispose();
 			tool.removeComponentProvider(provider);
@@ -106,8 +108,18 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	}
 
 	@Override
+	public void log(Icon icon, String message, Throwable error) {
+		provider.log(icon, message, error);
+	}
+
+	@Override
 	public void log(Icon icon, String message, ActionContext context) {
 		provider.log(icon, message, context);
+	}
+
+	@Override
+	public void log(Icon icon, String message, Throwable error, ActionContext context) {
+		provider.log(icon, message, error, context);
 	}
 
 	@Override
@@ -118,6 +130,11 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	@Override
 	public boolean logContains(ActionContext context) {
 		return provider.logContains(context);
+	}
+
+	@Override
+	public List<ActionContext> getActionContexts() {
+		return provider.getActionContexts();
 	}
 
 	@Override
@@ -134,6 +151,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * For testing: get the number of rows having a given class of action context
 	 * 
 	 * @param ctxCls the context class
+	 * @return the number of rows
 	 */
 	public long getRowCount(Class<? extends ActionContext> ctxCls) {
 		return provider.getRowCount(ctxCls);
@@ -145,7 +163,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * @param ctx the context
 	 * @return the the log entry
 	 */
-	public LogRow getLogRow(ActionContext ctx) {
+	public LogRow<?> getLogRow(ActionContext ctx) {
 		return provider.getLogRow(ctx);
 	}
 }

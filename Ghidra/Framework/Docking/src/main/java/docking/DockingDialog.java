@@ -25,10 +25,10 @@ import javax.swing.*;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.framework.ApplicationInformationDisplayFactory;
-import docking.help.HelpDescriptor;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.util.bean.GGlassPane;
+import help.HelpDescriptor;
 
 // NOTE: this class has a static focus component variable that is set whenever the dialog gets
 // activated and is scheduled to get focus at a later time.  This variable is static so that only
@@ -320,10 +320,8 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 			return;
 		}
 
-		Rectangle r = getBounds();
 		Point p = WindowUtilities.centerOnComponent(c, this);
-		r.setLocation(p);
-		setBounds(r);
+		setLocation(p);
 	}
 
 	@Override

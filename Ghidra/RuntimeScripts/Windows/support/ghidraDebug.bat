@@ -15,4 +15,4 @@ set LAUNCH_MODE=debug
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:18001
 
-call "%~dp0launch.bat" %LAUNCH_MODE% Ghidra "%MAXMEM%" "" ghidra.GhidraRun %*
+call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra "%MAXMEM%" "" ghidra.GhidraRun %*

@@ -487,11 +487,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		Runnable r = () -> dlg1.setInput(0x20);
 		runSwing(r);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dlg1, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, null, 0x20);
@@ -516,11 +516,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		r = () -> dlg2.setInput(0x10);
 		runSwing(r);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dlg2, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		actions = getDataPluginActions();
 		checkOnArray(actions, new ByteDataType(), 0x10);
@@ -746,11 +746,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		Runnable r = () -> dlg1.setInput(5);
 		runSwing(r);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dlg1, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, structDt, 5);
@@ -816,7 +816,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		d = getContextData();
 		assertEquals("ChooseFontW\0\u0015\0ReplaceTextW\0\0\u0004", d.getValue());
-		assertEquals("\"ChooseFontW\\0\",15h,\"\\0ReplaceTextW\\0\\0\",04h",
+		assertEquals("\"ChooseFontW\\0\",15h,00h,\"ReplaceTextW\\0\\0\",04h",
 			d.getDefaultValueRepresentation());
 
 	}
@@ -888,7 +888,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		checkOnDefined(null, UnicodeDataType.class);
 
 		d = getContextData();
-		assertEquals("01h,00h,\"\\0Sample\"", d.getDefaultValueRepresentation());
+		assertEquals("01h,00h,00h,00h,\"Sample\"", d.getDefaultValueRepresentation());
 		assertEquals("\1\0Sample", d.getValue());
 
 	}

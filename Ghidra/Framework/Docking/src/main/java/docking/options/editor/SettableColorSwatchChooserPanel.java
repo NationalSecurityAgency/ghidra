@@ -16,38 +16,69 @@
 package docking.options.editor;
 
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.event.*;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.LineBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
+import javax.swing.colorchooser.ColorSelectionModel;
+import javax.swing.event.*;
+import javax.swing.text.Document;
 
-import docking.widgets.label.GHtmlLabel;
+import docking.dnd.GClipboard;
+import docking.dnd.StringTransferable;
+import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import ghidra.util.layout.VerticalLayout;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import ghidra.util.ColorUtils;
+import ghidra.util.WebColors;
+import ghidra.util.layout.HorizontalLayout;
 
 public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
-	SwatchPanel swatchPanel;
-	RecentSwatchPanel recentSwatchPanel;
-	HistorySwatchPanel historySwatchPanel;
-	MainSwatchListener mainSwatchListener;
-	MouseListener recentSwatchListener;
-	MouseListener historySwatchListener;
 
-	private String recentStr = UIManager.getString("ColorChooser.swatchesRecentText");
-	private List<Color> recentColors;
+	private SwatchPanel swatchPanel;
+	private RecentSwatchPanel recentSwatchPanel;
+	private HistorySwatchPanel historySwatchPanel;
+	private JTextField colorNameField;
+	private GDLabel colorValueLabel;
 
-	public SettableColorSwatchChooserPanel(List<Color> recentColors) {
-		setRecentColors(recentColors);
+	private MainSwatchListener mainSwatchListener;
+	private MouseListener recentSwatchListener;
+	private MouseListener historySwatchListener;
+	private DocumentListener colorNameListener;
+	private ChangeListener colorValueUpdateListener;
+
+	private String recentText = UIManager.getString("ColorChooser.swatchesRecentText");
+	private List<Color> historyColors;
+
+	public void setHistoryColors(List<Color> historyColors) {
+		this.historyColors = historyColors;
+		if (historySwatchPanel != null) {
+			historySwatchPanel.setHistoryColors(historyColors);
+		}
+	}
+
+	public List<Color> getHistoryColors() {
+		return historyColors;
 	}
 
 	public void setRecentColors(List<Color> recentColors) {
-		this.recentColors = recentColors;
-		if (historySwatchPanel != null) {
-			historySwatchPanel.setRecentColors(recentColors);
+		if (recentSwatchPanel != null) {
+			recentSwatchPanel.setRecentColors(recentColors);
 		}
+	}
+
+	public List<Color> getRecentColors() {
+		if (recentSwatchPanel != null) {
+			return recentSwatchPanel.getRecentColors();
+		}
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -66,6 +97,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 				return Integer.parseInt((String) value);
 			}
 			catch (NumberFormatException nfe) {
+				// return default value
 			}
 		}
 		return defaultValue;
@@ -111,80 +143,187 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		swatchPanel.getAccessibleContext().setAccessibleName(getDisplayName());
 
 		recentSwatchPanel = new RecentSwatchPanel();
-		recentSwatchPanel.getAccessibleContext().setAccessibleName(recentStr);
+		recentSwatchPanel.getAccessibleContext().setAccessibleName(recentText);
 
 		mainSwatchListener = new MainSwatchListener();
 		swatchPanel.addMouseListener(mainSwatchListener);
 		recentSwatchListener = new RecentSwatchListener();
 		recentSwatchPanel.addMouseListener(recentSwatchListener);
 
-		Border border =
-			new CompoundBorder(new LineBorder(Color.black), new LineBorder(Color.white));
+		LineBorder border = new LineBorder(Colors.BORDER);
 		swatchPanel.setBorder(border);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
 		gbc.weightx = 1.0;
 		gbc.gridwidth = 2;
 		gbc.gridheight = 2;
 		gbc.weighty = 1.0;
+		gbc.anchor = GridBagConstraints.PAGE_START;
 		superHolder.add(swatchPanel, gbc);
 
-		recentSwatchPanel.addMouseListener(recentSwatchListener);
 		recentSwatchPanel.setBorder(border);
-		JPanel recentLabelHolder = new JPanel(new BorderLayout());
-		JLabel l = new GHtmlLabel(recentStr);
-		l.setLabelFor(recentSwatchPanel);
-		recentLabelHolder.add(l, BorderLayout.NORTH);
-		gbc.weighty = 0.0;
-		gbc.gridwidth = GridBagConstraints.REMAINDER;
-		gbc.gridheight = 1;
-//superHolder.add( recentLabelHolder, gbc );
-//superHolder.add( recentSwatchPanel, gbc );  
 
-		// GHIDRA
-		historySwatchPanel = new HistorySwatchPanel(recentColors);
-		historySwatchListener = new HistorySwatchListener();
+		JLabel recentLabel = new GLabel(recentText);
+		recentLabel.setLabelFor(recentSwatchPanel);
+
+		JPanel recentPanel = new JPanel(new BorderLayout());
+		recentPanel.add(recentLabel, BorderLayout.NORTH);
+		recentPanel.add(recentSwatchPanel, BorderLayout.CENTER);
+
+		historySwatchPanel = new HistorySwatchPanel(historyColors);
 		historySwatchPanel.addMouseListener(historySwatchListener);
+		historySwatchListener = new HistorySwatchListener();
 		historySwatchPanel.setBorder(border);
-		JPanel historyLabelHolder = new JPanel(new BorderLayout());
+
+		JPanel historyPanel = new JPanel(new BorderLayout());
 		JLabel historyLabel = new GLabel("History:");
 		historyLabel.setLabelFor(historySwatchPanel);
-		historyLabelHolder.add(historyLabel, BorderLayout.NORTH);
-		gbc.weighty = 0.0;
-		gbc.gridwidth = GridBagConstraints.REMAINDER;
-		gbc.gridheight = 1;
-//superHolder.add( historyLabelHolder, gbc );
-//superHolder.add( historySwatchPanel, gbc );          
+		historyPanel.add(historyLabel, BorderLayout.NORTH);
+		historyPanel.add(historySwatchPanel, BorderLayout.CENTER);
 
-		JPanel recentAndHistoryPanel = new JPanel(new VerticalLayout(1));
-		recentAndHistoryPanel.add(recentLabelHolder);
-		recentAndHistoryPanel.add(recentSwatchPanel);
-		recentAndHistoryPanel.add(Box.createVerticalStrut(2));
-		recentAndHistoryPanel.add(historyLabelHolder);
-		recentAndHistoryPanel.add(historySwatchPanel);
-		superHolder.add(Box.createHorizontalStrut(5));
-		superHolder.add(recentAndHistoryPanel);
+		JPanel recentAndHistoryPanel = new JPanel(new HorizontalLayout(10));
+		recentAndHistoryPanel.add(recentPanel);
+		recentAndHistoryPanel.add(historyPanel);
+
+		gbc.gridx = 2;
+		gbc.gridy = 0;
+		gbc.weighty = 0.0;
+		superHolder.add(Box.createHorizontalStrut(10));
+
+		gbc.gridx = 3;
+		gbc.gridy = 0;
+		superHolder.add(recentAndHistoryPanel, gbc);
+
+		JPanel colorValuePanel = createColorValuePanel();
+
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.gridwidth = 4; // take all space on the bottom, below the swatch
+		superHolder.add(colorValuePanel, gbc);
 
 		add(superHolder);
+	}
 
+	private JPanel createColorValuePanel() {
+
+		//
+		// The Color Value Panel shows allows the user to enter colors by name, hex or rgb.   It
+		// also displays the current chooser color value in a label that can be double-clicked to
+		// copy the color info.
+		//
+		// The layout:
+		// - Box of 2 items from left to right
+		//  	Label
+		// 		Text Field + Description
+		//
+		// - The second box is laid out from top to bottom
+		// 		Text Field on top
+		// 		Description label on bottom
+		//
+		JPanel colorValuePanel = new JPanel();
+		colorValuePanel.setLayout(new BoxLayout(colorValuePanel, BoxLayout.LINE_AXIS));
+		JPanel colorTextPanel = new JPanel();
+		colorTextPanel.setLayout(new BoxLayout(colorTextPanel, BoxLayout.PAGE_AXIS));
+
+		colorNameField = new JTextField(20);
+		colorNameField.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					updateColorFromColorNameField();
+					e.consume();
+				}
+			}
+		});
+		Document document = colorNameField.getDocument();
+		colorNameListener = new ColorNameListener();
+		document.addDocumentListener(colorNameListener);
+
+		GLabel colorNameLabel = new GLabel("Color Name: ");
+		String colorNameTip = "Enter a Web Color name or a color value";
+
+		colorValueLabel = new GDLabel();
+		colorValueLabel.setForeground(Messages.HINT);
+		colorValueLabel.setToolTipText("Double-click to copy color info");
+		colorValueLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					Color color = getColorFromModel();
+					String text =
+						WebColors.toHexString(color).toUpperCase() + "  " +
+							WebColors.toRgbString(color);
+					String colorName = WebColors.toColorName(color);
+					if (colorName != null) {
+						text += "  " + colorName;
+					}
+					Clipboard systemClipboard = GClipboard.getSystemClipboard();
+					StringTransferable transferable = new StringTransferable(text);
+					systemClipboard.setContents(transferable, null);
+				}
+			}
+		});
+
+		colorValueLabel.setText("    "); // this creates the correct vertical spacing when empty
+
+		ColorSelectionModel model = getColorSelectionModel();
+		colorValueUpdateListener = e -> {
+
+			Color color = getColorFromModel();
+			recentSwatchPanel.setMostRecentColor(color);
+
+			String text = WebColors.toHexString(color) + "  " + WebColors.toRgbString(color);
+			String colorName = WebColors.toColorName(color);
+			colorValueLabel.setToolTipText(colorName);
+			colorValueLabel.setText(text);
+		};
+		model.addChangeListener(colorValueUpdateListener);
+
+		colorNameLabel.setToolTipText(colorNameTip);
+		colorNameField.setToolTipText(colorNameTip);
+
+		JPanel colorTextParentPanel = new JPanel(); // flow layout to center on x-axis
+		colorTextParentPanel.add(colorValueLabel);
+
+		colorTextPanel.add(colorNameField);
+		colorTextPanel.add(colorTextParentPanel);
+
+		// add space between the text field and this label
+		colorNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 5));
+
+		// align both left-to-right items at the top of the container
+		colorNameLabel.setAlignmentY(0);
+		colorTextPanel.setAlignmentY(0);
+
+		colorValuePanel.add(colorNameLabel);
+		colorValuePanel.add(colorTextPanel);
+
+		// add space between swatch and this panel
+		colorValuePanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+		return colorValuePanel;
 	}
 
 	@Override
 	public void uninstallChooserPanel(JColorChooser enclosingChooser) {
+		ColorSelectionModel model = getColorSelectionModel();
+		model.removeChangeListener(colorValueUpdateListener);
+
 		super.uninstallChooserPanel(enclosingChooser);
 		swatchPanel.removeMouseListener(mainSwatchListener);
 		recentSwatchPanel.removeMouseListener(recentSwatchListener);
 		historySwatchPanel.removeMouseListener(historySwatchListener);
-		swatchPanel = null;
-		recentSwatchPanel = null;
-		recentSwatchListener = null;
-		mainSwatchListener = null;
+		colorNameField.getDocument().removeDocumentListener(colorNameListener);
+
 		removeAll();  // strip out all the sub-components
 	}
 
 	@Override
 	public void updateChooser() {
+		// stub
 	}
 
-	class HistorySwatchListener extends MouseAdapter {
+	private class HistorySwatchListener extends MouseAdapter {
 		@Override
 		public void mousePressed(MouseEvent e) {
 			Color color = historySwatchPanel.getColorForLocation(e.getX(), e.getY());
@@ -192,7 +331,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		}
 	}
 
-	class RecentSwatchListener extends MouseAdapter {
+	private class RecentSwatchListener extends MouseAdapter {
 		@Override
 		public void mousePressed(MouseEvent e) {
 			Color color = recentSwatchPanel.getColorForLocation(e.getX(), e.getY());
@@ -200,12 +339,44 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		}
 	}
 
-	class MainSwatchListener extends MouseAdapter implements Serializable {
+	private class MainSwatchListener extends MouseAdapter implements Serializable {
 		@Override
 		public void mousePressed(MouseEvent e) {
 			Color color = swatchPanel.getColorForLocation(e.getX(), e.getY());
 			getColorSelectionModel().setSelectedColor(color);
-			recentSwatchPanel.setMostRecentColor(color);
+		}
+	}
+
+	private void updateColorFromColorNameField() {
+
+		String text = colorNameField.getText();
+		String colorText = text.replaceAll("\s", "");
+		Color color = WebColors.getColor(colorText);
+
+		if (color == null) {
+			color = WebColors.getColor('#' + colorText);
+		}
+
+		if (color != null) {
+			getColorSelectionModel().setSelectedColor(color);
+		}
+	}
+
+	private class ColorNameListener implements DocumentListener {
+
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			updateColorFromColorNameField();
+		}
+
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			updateColorFromColorNameField();
+		}
+
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			updateColorFromColorNameField();
 		}
 	}
 }
@@ -222,7 +393,7 @@ class SwatchPanel extends JPanel {
 		initColors();
 		setToolTipText(""); // register for events
 		setOpaque(true);
-		setBackground(Color.white);
+		setBackground(Colors.BACKGROUND);
 		setRequestFocusEnabled(false);
 	}
 
@@ -232,6 +403,7 @@ class SwatchPanel extends JPanel {
 	}
 
 	protected void initValues() {
+		// stub
 	}
 
 	@Override
@@ -251,7 +423,7 @@ class SwatchPanel extends JPanel {
 				}
 				int y = row * (swatchSize.height + gap.height);
 				g.fillRect(x, y, swatchSize.width, swatchSize.height);
-				g.setColor(Color.black);
+				g.setColor(Colors.BORDER);
 				g.drawLine(x + swatchSize.width - 1, y, x + swatchSize.width - 1,
 					y + swatchSize.height - 1);
 				g.drawLine(x, y + swatchSize.height - 1, x + swatchSize.width - 1,
@@ -268,7 +440,7 @@ class SwatchPanel extends JPanel {
 	}
 
 	protected void initColors() {
-
+		// stub
 	}
 
 	@Override
@@ -297,47 +469,14 @@ class SwatchPanel extends JPanel {
 
 class RecentSwatchPanel extends SwatchPanel {
 
+	private List<Color> recentColors;
+
 	RecentSwatchPanel() {
 		initColors();
 	}
 
-	@Override
-	protected void initValues() {
-		swatchSize = UIManager.getDimension("ColorChooser.swatchesRecentSwatchSize");
-		numSwatches = new Dimension(5, 7);
-		gap = new Dimension(1, 1);
-	}
-
-	@Override
-	protected void initColors() {
-		Color defaultRecentColor = UIManager.getColor("ColorChooser.swatchesDefaultRecentColor");
-		int numColors = numSwatches.width * numSwatches.height;
-
-		colors = new Color[numColors];
-		for (int i = 0; i < numColors; i++) {
-			colors[i] = defaultRecentColor;
-		}
-	}
-
-	public void setMostRecentColor(Color c) {
-
-		System.arraycopy(colors, 0, colors, 1, colors.length - 1);
-		colors[0] = c;
-		repaint();
-	}
-
-}
-
-class HistorySwatchPanel extends SwatchPanel {
-	private List<Color> recentColors;
-
-	HistorySwatchPanel(List<Color> recentColors) {
-		setRecentColors(recentColors);
-	}
-
-	void setRecentColors(List<Color> recentColors) {
-		this.recentColors = recentColors;
-		initColors();
+	List<Color> getRecentColors() {
+		return List.of(colors);
 	}
 
 	@Override
@@ -362,7 +501,63 @@ class HistorySwatchPanel extends SwatchPanel {
 			for (int i = 0; i < recentColorCount; i++) {
 				colors[i] = recentColors.get(i);
 			}
+		}
+	}
+
+	void setMostRecentColor(Color c) {
+
+		// Do not add duplicates next to each other; duplicates are ok if separated by other colors,
+		// as this shows color choices over time and provides the user some context.
+		Color lastColor = colors[0];
+		if (Objects.equals(lastColor, c)) {
 			return;
+		}
+
+		System.arraycopy(colors, 0, colors, 1, colors.length - 1);
+		colors[0] = c;
+		repaint();
+	}
+
+	void setRecentColors(List<Color> recentColors) {
+		this.recentColors = recentColors;
+		initColors();
+	}
+}
+
+class HistorySwatchPanel extends SwatchPanel {
+	private List<Color> historyColors;
+
+	HistorySwatchPanel(List<Color> recentColors) {
+		setHistoryColors(recentColors);
+	}
+
+	void setHistoryColors(List<Color> recentColors) {
+		this.historyColors = recentColors;
+		initColors();
+	}
+
+	@Override
+	protected void initValues() {
+		swatchSize = UIManager.getDimension("ColorChooser.swatchesRecentSwatchSize");
+		numSwatches = new Dimension(5, 7);
+		gap = new Dimension(1, 1);
+	}
+
+	@Override
+	protected void initColors() {
+		Color defaultRecentColor = UIManager.getColor("ColorChooser.swatchesDefaultRecentColor");
+		int numColors = numSwatches.width * numSwatches.height;
+
+		colors = new Color[numColors];
+		for (int i = 0; i < numColors; i++) {
+			colors[i] = defaultRecentColor;
+		}
+
+		if (historyColors != null && historyColors.size() > 0) {
+			int recentColorCount = historyColors.size();
+			for (int i = 0; i < recentColorCount; i++) {
+				colors[i] = historyColors.get(i);
+			}
 		}
 	}
 }
@@ -383,8 +578,8 @@ class MainSwatchPanel extends SwatchPanel {
 
 		colors = new Color[numColors];
 		for (int i = 0; i < numColors; i++) {
-			colors[i] =
-				new Color(rawValues[(i * 3)], rawValues[(i * 3) + 1], rawValues[(i * 3) + 2]);
+			colors[i] = ColorUtils.getColor(rawValues[(i * 3)], rawValues[(i * 3) + 1],
+				rawValues[(i * 3) + 2]);
 		}
 	}
 

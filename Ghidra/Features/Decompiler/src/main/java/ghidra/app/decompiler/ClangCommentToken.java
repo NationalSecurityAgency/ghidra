@@ -17,10 +17,11 @@ package ghidra.app.decompiler;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.pcode.PcodeFactory;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
+import ghidra.program.model.pcode.*;
 
+/**
+ * A token in source code representing (part of) a comment.
+ */
 public class ClangCommentToken extends ClangToken {
 
 	private Address srcaddr;	// source address of the comment
@@ -58,12 +59,11 @@ public class ClangCommentToken extends ClangToken {
 	}
 
 	@Override
-	public void restoreFromXML(XmlElement el, XmlElement end, PcodeFactory pfactory) {
-		super.restoreFromXML(el, end, pfactory);
-		String name = el.getAttribute(ClangXML.SPACE);
-		AddressSpace spc = pfactory.getAddressFactory().getAddressSpace(name);
-		long offset = SpecXmlUtils.decodeLong(el.getAttribute(ClangXML.OFFSET));
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_SPACE);
+		long offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_OFF);
 		srcaddr = spc.getAddress(offset);
+		super.decode(decoder, pfactory);
 	}
 
 }

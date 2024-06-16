@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.iface1.DbgModelTargetInterruptible;
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 
 public class DbgModel2TargetSystemMarkerImpl extends DbgModel2TargetObjectImpl
 		implements DbgModelTargetInterruptible {
@@ -32,7 +33,7 @@ public class DbgModel2TargetSystemMarkerImpl extends DbgModel2TargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 		Map<String, Object> nmap = new HashMap<>();
 		return addModelObjectAttributes(nmap);
 	}

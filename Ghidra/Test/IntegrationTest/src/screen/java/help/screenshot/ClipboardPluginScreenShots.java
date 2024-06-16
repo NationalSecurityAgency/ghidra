@@ -28,6 +28,7 @@ import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.clipboard.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -74,7 +75,7 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 		captureListingCallMnemonic(start, end);
 
 		placeImagesSideBySide(image, menuImage);
-		drawBorder(Color.BLACK);
+		drawBorder(Colors.BORDER);
 	}
 
 	private void cropCopyMenu() {
@@ -109,10 +110,11 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 		JMenuItem item = (JMenuItem) elements[index];
 		Rectangle itemBounds = item.getBounds();
 
-		copySectionBounds.x = itemBounds.x;
-		copySectionBounds.y = itemBounds.y;
-		copySectionBounds.width = itemBounds.width;
-		height += itemBounds.height;
+		int padding = 5; // add some padding to get the menu item borders in the cropped image
+		copySectionBounds.x = itemBounds.x - padding;
+		copySectionBounds.y = itemBounds.y - padding;
+		copySectionBounds.width = itemBounds.width + (padding * 2);
+		height += itemBounds.height + (padding * 2);
 
 		item = (JMenuItem) elements[index + 1];
 		itemBounds = item.getBounds();
@@ -149,21 +151,18 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 
 		Object listPanel = getInstanceField("listPanel", copySpecialDialog);
 		final JList<?> list = (JList<?>) getInstanceField("list", listPanel);
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				ListModel<?> model = list.getModel();
-				int size = model.getSize();
-				for (int i = 0; i < size; i++) {
-					Object value = model.getElementAt(i);
-					if ("Labels and Comments".equals(value.toString())) {
-						list.setSelectedIndex(i);
-						return;
-					}
+		runSwing(() -> {
+			ListModel<?> model = list.getModel();
+			int size = model.getSize();
+			for (int i = 0; i < size; i++) {
+				Object value = model.getElementAt(i);
+				if ("Labels and Comments".equals(value.toString())) {
+					list.setSelectedIndex(i);
+					return;
 				}
-
-				throw new RuntimeException("Could not find 'Labels and Comments' copy action");
 			}
+
+			throw new RuntimeException("Could not find 'Labels and Comments' copy action");
 		});
 		waitForSwing();
 	}
@@ -197,8 +196,7 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 		return waitForDialogComponent(CopyPasteSpecialDialog.class);
 	}
 
-	private ClipboardContentProviderService getClipboardService(
-			ClipboardPlugin clipboardPlugin) {
+	private ClipboardContentProviderService getClipboardService(ClipboardPlugin clipboardPlugin) {
 		Map<?, ?> serviceMap = (Map<?, ?>) getInstanceField("serviceActionMap", clipboardPlugin);
 		Set<?> keySet = serviceMap.keySet();
 		for (Object name : keySet) {

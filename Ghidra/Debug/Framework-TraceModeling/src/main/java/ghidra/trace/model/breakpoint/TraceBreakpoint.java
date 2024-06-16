@@ -18,12 +18,11 @@ package ghidra.trace.model.breakpoint;
 import java.util.Collection;
 import java.util.Set;
 
-import com.google.common.collect.Range;
-
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -31,7 +30,6 @@ import ghidra.util.exception.DuplicateNameException;
  * A breakpoint in a trace
  */
 public interface TraceBreakpoint extends TraceUniqueObject {
-
 	/**
 	 * Get the trace containing this breakpoint
 	 * 
@@ -55,6 +53,8 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * 
 	 * <p>
 	 * This should be a name suitable for display on the screen
+	 * 
+	 * @param name the new name
 	 */
 	void setName(String name);
 
@@ -79,12 +79,18 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	AddressRange getRange();
 
 	/**
+	 * Get the minimum address in this breakpoint's range
+	 * 
 	 * @see #getRange()
+	 * @return the minimum address
 	 */
 	Address getMinAddress();
 
 	/**
+	 * Get the maximum address in this breakpoint's range
+	 * 
 	 * @see #getRange()
+	 * @return the maximum address
 	 */
 	Address getMaxAddress();
 
@@ -100,7 +106,7 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * 
 	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Get the placed snap of this breakpoint
@@ -113,6 +119,7 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * Set the cleared snap of this breakpoint
 	 * 
 	 * @param clearedSnap the cleared snap, or {@link Long#MAX_VALUE} for "to the end of time"
+	 * @throws DuplicateNameException if extending the lifespan would cause a naming collision
 	 */
 	void setClearedSnap(long clearedSnap) throws DuplicateNameException;
 
@@ -164,9 +171,29 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	/**
 	 * Check whether this breakpoint is enabled or disabled at the given snap
 	 * 
+	 * @param snap the snap
 	 * @return true if enabled, false if disabled
 	 */
 	boolean isEnabled(long snap);
+
+	/**
+	 * Set whether this breakpoint is enabled or disabled for emulation
+	 * 
+	 * <p>
+	 * This change applies to the entire lifespan of the record. It's not intended to record a
+	 * history, but to toggle the breakpoint in the integrated emulator.
+	 * 
+	 * @param enabled true if enabled, false if disabled
+	 */
+	void setEmuEnabled(boolean enabled);
+
+	/**
+	 * Check whether this breakpoint is enabled or disabled for emulation at the given snap
+	 * 
+	 * @param snap the snap
+	 * @return true if enabled, false if disabled
+	 */
+	boolean isEmuEnabled(long snap);
 
 	/**
 	 * Set the kinds included in this breakpoint
@@ -217,7 +244,57 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	String getComment();
 
 	/**
+	 * Set Sleigh source to replace the breakpointed instruction in emulation
+	 * 
+	 * <p>
+	 * The default is simply:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@link PcodeEmulationLibrary#emu_swi() emu_swi()};
+	 * {@link PcodeEmulationLibrary#emu_exec_decoded() emu_exec_decoded()};
+	 * </pre>
+	 * <p>
+	 * That is effectively a non-conditional breakpoint followed by execution of the actual
+	 * instruction. Modifying this allows clients to create conditional breakpoints or simply
+	 * override or inject additional logic into an emulated target.
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This currently has no effect on access breakpoints, but only execution
+	 * breakpoints.
+	 * 
+	 * <p>
+	 * If the specified source fails to compile during emulator set-up, this will fall back to
+	 * {@link PcodeEmulationLibrary#emu_swi()}
+	 * 
+	 * @see SleighUtils#UNCONDITIONAL_BREAK
+	 * @param sleigh the Sleigh source
+	 */
+	void setEmuSleigh(String sleigh);
+
+	/**
+	 * Get the Sleigh source that replaces the breakpointed instruction in emulation
+	 * 
+	 * @return the Sleigh source
+	 */
+	String getEmuSleigh();
+
+	/**
 	 * Delete this breakpoint from the trace
 	 */
 	void delete();
+
+	/**
+	 * Check if the breakpoint is valid at the given snapshot
+	 * 
+	 * <p>
+	 * In object mode, a breakpoint's life may be disjoint, so checking if the snap occurs between
+	 * creation and destruction is not quite sufficient. This method encapsulates validity. In
+	 * object mode, it checks that the breakpoint object has a canonical parent at the given
+	 * snapshot. In table mode, it checks that the lifespan contains the snap.
+	 * 
+	 * @param snap the snapshot key
+	 * @return true if valid, false if not
+	 */
+	boolean isValid(long snap);
 }

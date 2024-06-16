@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +74,7 @@ public class SetMarkupItemConsideredTask extends Task {
 	protected void doWork(TaskMonitor monitor) throws Exception, CancelledException {
 		monitor.initialize(markupItems.size());
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			markupItem.setConsidered(status);
 			monitor.incrementProgress(1);
 		}

@@ -27,8 +27,6 @@ import javax.swing.tree.TreeSelectionModel;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.framework.main.FrontEndPlugin;
@@ -36,6 +34,8 @@ import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Panel that contains a DataTree for showing project data.
@@ -423,6 +423,9 @@ public class ProjectDataTreePanel extends JPanel {
 		root = createRootNode(projectName);
 
 		tree = new DataTree(tool, root);
+		if (!isActiveProject) {
+			tree.setName(tree.getName() + ": " + projectName);
+		}
 
 		if (plugin != null) {
 			tree.addGTreeSelectionListener(e -> {

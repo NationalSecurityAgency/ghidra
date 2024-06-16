@@ -25,6 +25,7 @@ import javax.swing.JCheckBox;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
@@ -45,7 +46,7 @@ import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.QueryData;
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
@@ -250,31 +251,37 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		});
 
 		// Test decimal
-		setText("file:0");
+		setText("file(0)");
 		showDialog();
 		performOkCallback();
 		assertEquals(addr1, cbPlugin.getCurrentAddress());
 
 		// Test hex
-		setText("file:0x1");
+		setText("file(0x1)");
 		showDialog();
 		performOkCallback();
 		assertEquals(addr1.add(1), cbPlugin.getCurrentAddress());
 
 		// Test "case"
-		setText("FILE:2");
+		setText("FILe(0X2)");
 		showDialog();
 		performOkCallback();
 		assertEquals(addr1.add(2), cbPlugin.getCurrentAddress());
 
+		// Test spaces
+		setText("file   (   0   )");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1, cbPlugin.getCurrentAddress());
+
 		// Test not found
-		setText("file:0x100");
+		setText("file(0x100)");
 		showDialog();
 		performOkCallback();
 		assertNotEquals(addr1.add(0x100), cbPlugin.getCurrentAddress());
 
 		// Test multiple results
-		setText("file:3");
+		setText("file(3)");
 		showDialog();
 		performOkCallback();
 		GhidraProgramTableModel<?> model = waitForModel();
@@ -569,7 +576,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDynamicFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
 
 		setText("L*");
@@ -581,7 +588,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDefinedFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
 
 		createLabel("1006960", "abc1");
@@ -683,7 +690,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
-		clear.actionPerformed(new ActionContext());
+		clear.actionPerformed(new DefaultActionContext());
 		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
@@ -691,29 +698,29 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001000");
 		performOkCallback();
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		next.actionPerformed(new ActionContext());
+		next.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
 
 		setText("1001010");
 		performOkCallback();
 		assertEquals(addr("1001010"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
@@ -722,7 +729,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001020");
 		performOkCallback();
 		assertEquals(addr("1001020"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
@@ -815,7 +822,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	@Test
-	public void testNavigateToOtherProgramOption() throws Exception {
+	public void testNavigateToOtherProgramOption_FunctionName() throws Exception {
 		loadProgram("x86");
 		loadProgram("8051");
 		showDialog();
@@ -827,8 +834,26 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 
 		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
-
 	}
+
+	@Test
+	public void testNavigateToOtherProgramOption_AddressString() throws Exception {
+		loadProgram("x86");
+		loadProgram("8051");
+		showDialog();
+		setText("01002c93");
+		performOkCallback();
+		assertTrue("Expected goto to fail and dialog to still be showing", dialog.isShowing());
+
+		setOptionToAllowNavigationToOtherOpenPrograms();
+		performOkCallback();
+
+		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
 	private void setOptionToAllowNavigationToOtherOpenPrograms() throws Exception {
 		runSwing(() -> {
@@ -836,10 +861,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			options.setBoolean("'Go To' in Current Program Only", false);
 		});
 	}
-
-//==================================================================================================
-// Private Methods
-//==================================================================================================
 
 	private void assertItemsStartWtih(List<String> list, String prefix) {
 		for (String s : list) {
@@ -1009,7 +1030,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	private ActionContext getActionContext() {
 		ActionContext context = runSwing(() -> cbPlugin.getProvider().getActionContext(null));
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}
@@ -1031,9 +1052,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		while (i++ < 50) {
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel =
-					(GThreadedTablePanel<?>) TestUtils.getInstanceField("threadedPanel",
-						providers[0]);
+				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
+					.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);
@@ -1073,7 +1093,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	private void showDialog() {
 		Swing.runLater(() -> dialog.show(provider, cbPlugin.getCurrentAddress(), tool));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void setText(final String text) throws Exception {

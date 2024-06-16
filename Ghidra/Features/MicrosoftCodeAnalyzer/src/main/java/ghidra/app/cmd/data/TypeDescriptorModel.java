@@ -255,7 +255,8 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 
 		Address typeInfoVftableAddress = null;
 		try {
-			typeInfoVftableAddress = RttiUtil.findTypeInfoVftableAddress(program, TaskMonitor.DUMMY);
+			typeInfoVftableAddress =
+				RttiUtil.findTypeInfoVftableAddress(program, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e);
@@ -356,10 +357,11 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 			throw new UndefinedValueException(
 				"No vf table pointer is defined for this TypeDescriptor model.");
 		}
-		
+
 		Address vfTableAddress;
 		// component 0 is either vf table pointer or hash value.
-		vfTableAddress = EHDataTypeUtilities.getAddress(getDataType(), VF_TABLE_OR_HASH_ORDINAL, getMemBuffer());
+		vfTableAddress =
+			EHDataTypeUtilities.getAddress(getDataType(), VF_TABLE_OR_HASH_ORDINAL, getMemBuffer());
 		return (vfTableAddress != null && vfTableAddress.getOffset() != 0) ? vfTableAddress : null;
 	}
 
@@ -624,17 +626,11 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	private static MDComplexType getMDComplexType(Program program, String mangledString) {
 		MDMangGhidra demangler = new MDMangGhidra();
 		try {
-			MDParsableItem parsableItem = demangler.demangle(mangledString, true);
-			if (!(parsableItem instanceof MDDataType)) {
-				// Not an MDDataType as expected.
-				return null;
-			}
-			MDDataType mangledDt = (MDDataType) parsableItem;
-			if (mangledDt instanceof MDModifierType) {
-				MDModifierType modifierType = (MDModifierType) mangledDt;
+			MDDataType mangledDt = demangler.demangleType(mangledString, true);
+			if (mangledDt instanceof MDModifierType modifierType) {
 				MDType refType = modifierType.getReferencedType();
-				if (refType instanceof MDComplexType) {
-					return (MDComplexType) refType;
+				if (refType instanceof MDComplexType complexType) {
+					return complexType;
 				}
 			}
 			return null; // Not an MDComplexType

@@ -304,7 +304,7 @@ public abstract class PCodeTestAbstractControlBlock {
 			throws InvalidControlBlockException, CodeUnitInsertionException {
 
 		if (applyStruct) {
-			DataUtilities.createData(program, infoStructAddr, infoProgramStruct, -1, false,
+			DataUtilities.createData(program, infoStructAddr, infoProgramStruct, -1,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 
@@ -339,7 +339,7 @@ public abstract class PCodeTestAbstractControlBlock {
 
 				if (applyStruct) {
 					DataUtilities.createData(program, functionInfoAddress, functionInfoStruct, -1,
-						false, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+						ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 					forceCodePointer(functionInfoAddress.add(funcOffset));
 				}
 

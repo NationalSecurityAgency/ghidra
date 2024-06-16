@@ -209,7 +209,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	 * Returns the number of bytes spanned by this Register.
 	 * 
 	 * <p>
-	 * Compare to {{@link #getMinimumByteSize()}: Suppose a 5-bit register spans 2 bytes: 1 bit in
+	 * Compare to {@link #getMinimumByteSize()}: Suppose a 5-bit register spans 2 bytes: 1 bit in
 	 * the first byte, and the remaining 4 in the following byte. Its value can still be stored in 1
 	 * byte, which is what {@link #getMinimumByteSize()} returns; however, its storage still spans 2
 	 * bytes of the base register, which is what this method returns.

@@ -21,8 +21,7 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.dialogs.NumberRangeInputDialog;
-import docking.widgets.tree.*;
-import docking.widgets.tree.support.CombinedGTreeFilter;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeFilter;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
@@ -56,8 +55,7 @@ public class FindStructuresByOffsetAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		NumberRangeInputDialog inputDialog =
-			new NumberRangeInputDialog(NAME, "Offset(s)");
+		NumberRangeInputDialog inputDialog = new NumberRangeInputDialog(NAME, "Offset(s)");
 		if (!inputDialog.show()) {
 			return;
 		}
@@ -66,26 +64,9 @@ public class FindStructuresByOffsetAction extends DockingAction {
 		DataTypesProvider newProvider = plugin.createProvider();
 		newProvider.setTitle(NAME);
 		DataTypeArchiveGTree tree = newProvider.getGTree();
-		tree.setFilterProvider(new MyTreeFilterProvider(tree, new OffsetGTreeFilter(values)));
+		tree.setFilterProvider(
+			new SecondaryTreeFilterProvider(tree, new OffsetGTreeFilter(values)));
 		newProvider.setVisible(true);
-	}
-
-	private class MyTreeFilterProvider extends DefaultGTreeFilterProvider {
-		private GTreeFilter secondaryFilter;
-
-		MyTreeFilterProvider(GTree tree, GTreeFilter secondaryFilter) {
-			super(tree);
-			this.secondaryFilter = secondaryFilter;
-		}
-
-		@Override
-		public GTreeFilter getFilter() {
-			GTreeFilter filter = super.getFilter();
-			if (filter == null) {
-				return secondaryFilter;
-			}
-			return new CombinedGTreeFilter(filter, secondaryFilter);
-		}
 	}
 
 	private class OffsetGTreeFilter implements GTreeFilter {

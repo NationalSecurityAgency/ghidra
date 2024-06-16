@@ -99,7 +99,7 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 		monitor.initialize(getIteratorKeyCount());
 		int i = 0;
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(i++);
 			long key = it.next();
 			accumulator.add(new BookmarkRowObject(key));
@@ -112,8 +112,8 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 		}
 
 		BookmarkType[] programTypes = bookmarkMgr.getBookmarkTypes();
-		int allKnowTypesSize = programTypes.length;
-		return !types.isEmpty() && types.size() != allKnowTypesSize;
+		int allKnownTypesSize = programTypes.length;
+		return !types.isEmpty() && types.size() != allKnownTypesSize;
 	}
 
 	FilterState getFilterState() {

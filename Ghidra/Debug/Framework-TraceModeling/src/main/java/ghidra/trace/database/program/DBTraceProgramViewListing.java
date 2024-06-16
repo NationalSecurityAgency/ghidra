@@ -15,9 +15,8 @@
  */
 package ghidra.trace.database.program;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -51,10 +50,9 @@ public class DBTraceProgramViewListing extends AbstractDBTraceProgramViewListing
 			for (AddressRange range : program.getAddressFactory()
 					.getAddressSet(startAddr,
 						endAddr)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				codeOperations.definedUnits()
-						.clear(Range.closed(program.snap, program.snap), range,
-							clearContext, monitor);
+						.clear(Lifespan.at(program.snap), range, clearContext, monitor);
 			}
 		}
 	}
@@ -65,8 +63,7 @@ public class DBTraceProgramViewListing extends AbstractDBTraceProgramViewListing
 		try (LockHold hold = program.trace.lockRead()) {
 			for (AddressRange range : allMemory) {
 				codeOperations.definedUnits()
-						.clear(Range.closed(program.snap, program.snap), range,
-							clearContext, monitor);
+						.clear(Lifespan.at(program.snap), range, clearContext, monitor);
 			}
 		}
 		catch (CancelledException e) {

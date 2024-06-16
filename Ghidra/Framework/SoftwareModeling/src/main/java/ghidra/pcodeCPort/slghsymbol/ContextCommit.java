@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.ParserWalkerChange;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.utils.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.io.PrintStream;
+import java.io.IOException;
 
-import org.jdom.Element;
+import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.pcodeCPort.utils.Utils;
+import ghidra.program.model.pcode.Encoder;
 
 public class ContextCommit extends ContextChange {
 
@@ -32,7 +31,7 @@ public class ContextCommit extends ContextChange {
 	private boolean flow; // Whether the context "flows" from the point of change
 
 	public ContextCommit() {
-	} // For use with restoreXml
+	}
 
 	@Override
 	public void validate() {
@@ -50,35 +49,13 @@ public class ContextCommit extends ContextChange {
 	}
 
 	@Override
-	public void apply(ParserWalkerChange pos) {
-		pos.getParserContext().addCommit(sym, num, mask, flow, pos.getPoint());
-
-	}
-
-	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<commit");
-		XmlUtils.a_v_u(s, "id", sym.getId());
-		XmlUtils.a_v_i(s, "num", num);
-		XmlUtils.a_v_u(s, "mask", Utils.unsignedInt(mask));
-		XmlUtils.a_v_b(s, "flow", flow);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		int id = XmlUtils.decodeUnknownInt(el.getAttributeValue("id"));
-		sym = (TripleSymbol) trans.findSymbol(id);
-
-		num = XmlUtils.decodeUnknownInt(el.getAttributeValue("num"));
-		mask = XmlUtils.decodeUnknownInt(el.getAttributeValue("mask"));
-		String value = el.getAttributeValue("flow");
-		if (value != null) {
-			flow = XmlUtils.decodeBoolean(value);
-		}
-		else {
-			flow = true;
-		}
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_COMMIT);
+		encoder.writeUnsignedInteger(ATTRIB_ID, sym.getId());
+		encoder.writeSignedInteger(ATTRIB_NUMBER, num);
+		encoder.writeUnsignedInteger(ATTRIB_MASK, Utils.unsignedInt(mask));
+		encoder.writeBool(ATTRIB_FLOW, flow);
+		encoder.closeElement(ELEM_COMMIT);
 	}
 
 }

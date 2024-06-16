@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,21 @@
  */
 package ghidra.framework.cmd;
 
-public abstract class MergeableBackgroundCommand extends BackgroundCommand {
+import ghidra.framework.model.DomainObject;
+
+public abstract class MergeableBackgroundCommand<T extends DomainObject>
+		extends BackgroundCommand<T> {
+
 	public MergeableBackgroundCommand(String name, boolean hasProgress, boolean canCancel,
 			boolean isModal) {
 		super(name, hasProgress, canCancel, isModal);
 	}
 
-	/** Merges the properties of the two commands */
-	public abstract MergeableBackgroundCommand mergeCommands(MergeableBackgroundCommand command);
+	/**
+	 * Merges the properties of the two commands
+	 * @param command command to be merged with this one
+	 * @return resulting merged command
+	 */
+	public abstract MergeableBackgroundCommand<T> mergeCommands(
+			MergeableBackgroundCommand<T> command);
 }

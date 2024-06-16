@@ -28,4 +28,4 @@ fi
 APP_VMARGS="-DGhidraJarBuilder.Name=$(basename "${SCRIPT_FILE}")"
 
 # Launch jar builder
-"${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" Ghidra "${MAXMEM}" "${APP_VMARGS}" ghidra.util.GhidraJarBuilder -main ghidra.JarRun "$@"
+"${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk Ghidra "${MAXMEM}" "${APP_VMARGS}" ghidra.util.GhidraJarBuilder -main ghidra.JarRun "$@"

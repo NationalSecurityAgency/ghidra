@@ -19,6 +19,8 @@ import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.DebuggerMappingOffer;
+import ghidra.debug.api.model.DebuggerMappingOpinion;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 
@@ -67,7 +69,7 @@ public class FridaArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		boolean is64Bit =
 			arch.contains("AARCH64") || arch.contains("arm64") || arch.contains("arm");
 		String os = env.getOperatingSystem();
-		if (os.contains("macos")) {
+		if (os.contains("macos") || os.contains("ios")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new FridaAarch64MacosOffer((TargetProcess) target));

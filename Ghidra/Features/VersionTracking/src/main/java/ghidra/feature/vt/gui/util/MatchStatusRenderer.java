@@ -21,32 +21,23 @@ import javax.swing.Icon;
 import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GIcon;
 import ghidra.util.table.GhidraTableCellRenderer;
-import resources.MultiIcon;
-import resources.ResourceManager;
-import resources.icons.TranslateIcon;
 
 public class MatchStatusRenderer extends GhidraTableCellRenderer {
 
-//	private static final Icon DISABLED_APPLIED_ICON =
-//		ResourceManager.getDisabledIcon(ResourceManager.loadImage("images/flag.png"));
-	private static final Icon ACCEPTED_ICON = ResourceManager.loadImage("images/flag.png");
-	private static final Icon REJECTED_ICON = ResourceManager.loadImage("images/dialog-cancel.png");
-//	private static final Icon REJECTED_ICON = ResourceManager.loadImage("images/delete.png");
-	private static final Icon BLOCKED_ICON = ResourceManager.loadImage("images/kgpg.png");
-
-//	private static final ImageIcon LOCK_ICON =
-//		ResourceManager.loadImage("images/lock.png");
-
-	private static final Icon WARN_ICON = new TranslateIcon(
-		ResourceManager.loadImage("images/bullet_error.png"), 10, 8);
-	private static final Icon FAILURE_ICON = new TranslateIcon(ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/edit-delete.png"), 8, 8), 10, 8);
-	private static final Icon FULLY_APPLIED_ICON = new TranslateIcon(ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/checkmark_green.gif"), 8, 8), 10, 8);
-	private static final Icon FULLY_CONSIDERED_ICON = new TranslateIcon(
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/checkmark_yellow.gif"), 8,
-			8), 10, 8);
+	private static final Icon ACCEPTED_SOME_UNEXAMINED_ICON =
+		new GIcon("icon.version.tracking.match.table.status.accepted.some.unexamined");
+	private static final Icon ACCEPTED_ERROR_ICON =
+		new GIcon("icon.version.tracking.match.table.status.accepted.error");
+	private static final Icon ACCEPTED_FULLY_APPLIED_ICON =
+		new GIcon("icon.version.tracking.match.table.status.accepted.fully.applied");
+	private static final Icon ACCEPTED_FULLY_CONSIDERED_ICON =
+		new GIcon("icon.version.tracking.match.table.status.accepted.fully.considered");
+	private static final Icon REJECTED_ICON =
+		new GIcon("icon.version.tracking.match.table.status.rejected");
+	private static final Icon BLOCKED_ICON =
+		new GIcon("icon.version.tracking.match.table.status.blocked");
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -74,16 +65,16 @@ public class MatchStatusRenderer extends GhidraTableCellRenderer {
 		Icon icon = null;
 		switch (status) {
 			case ACCEPTED_FULLY_APPLIED:
-				icon = new MultiIcon(ACCEPTED_ICON, FULLY_APPLIED_ICON);
+				icon = ACCEPTED_FULLY_APPLIED_ICON;
 				break;
 			case ACCEPTED_HAS_ERRORS:
-				icon = new MultiIcon(ACCEPTED_ICON, FAILURE_ICON);
+				icon = ACCEPTED_ERROR_ICON;
 				break;
 			case ACCEPTED_NO_UNEXAMINED:
-				icon = new MultiIcon(ACCEPTED_ICON, FULLY_CONSIDERED_ICON);
+				icon = ACCEPTED_FULLY_CONSIDERED_ICON;
 				break;
 			case ACCEPTED_SOME_UNEXAMINED:
-				icon = new MultiIcon(ACCEPTED_ICON, WARN_ICON);
+				icon = ACCEPTED_SOME_UNEXAMINED_ICON;
 				break;
 			case AVAILABLE:
 				// no icon				

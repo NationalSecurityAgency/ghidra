@@ -35,25 +35,24 @@ ifeq ($(OS),Darwin)
   OSDIR=mac_x86_64
 endif
 
-CC=gcc
-CXX=g++
+CXX=g++ -std=c++11
 
 # Debug flags
-DBG_CXXFLAGS=-g -std=c++11 -Wall -Wno-sign-compare
+DBG_CXXFLAGS=-g -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -pg -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -fprofile-arcs -ftest-coverage -Wall -Wno-sign-compare
 
 # Optimization flags
-OPT_CXXFLAGS=-O2 -std=c++11 -Wall -Wno-sign-compare
+OPT_CXXFLAGS=-O2 -Wall -Wno-sign-compare
 
 YACC=bison
 
 # libraries
 #INCLUDES=-I$(BFDHOME)/include
 INCLUDES=
-BFDLIB=-lbfd -lz
+BFDLIB=-lbfd
 
-LNK=
+LNK=-lz
 
 # Source files
 ALL_SOURCE= $(wildcard *.cc)
@@ -80,19 +79,19 @@ EXTERNAL_CONSOLEEXT_NAMES=$(subst .cc,,$(notdir $(EXTERNAL_CONSOLEEXT_SOURCE)))
 CORE=	xml marshal space float address pcoderaw translate opcodes globalcontext
 # Additional core files for any projects that decompile
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
-	comment stringmanage fspec action loadimage grammar varnode op \
-	type variable varmap jumptable emulate emulateutil flow userop \
+	comment stringmanage modelrules fspec action loadimage grammar varnode op \
+	type variable varmap jumptable emulate emulateutil flow userop multiprecision \
 	funcdata funcdata_block funcdata_op funcdata_varnode unionresolve pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \
 	transform coreaction condexe override dynamic crc32 prettyprint \
-	printlanguage printc printjava memstate opbehavior paramid $(COREEXT_NAMES)
+	printlanguage printc printjava memstate opbehavior paramid signature $(COREEXT_NAMES)
 # Files used for any project that use the sleigh decoder
 SLEIGH=	sleigh pcodeparse pcodecompile sleighbase slghsymbol \
-	slghpatexpress slghpattern semantics context filemanage
+	slghpatexpress slghpattern semantics context slaformat compression filemanage
 # Additional files for the GHIDRA specific build
 GHIDRA=	ghidra_arch inject_ghidra ghidra_translate loadimage_ghidra \
 	typegrp_ghidra database_ghidra ghidra_context cpool_ghidra \
-	ghidra_process comment_ghidra string_ghidra $(GHIDRAEXT_NAMES)
+	ghidra_process comment_ghidra string_ghidra signature_ghidra $(GHIDRAEXT_NAMES)
 # Additional files specific to the sleigh compiler
 SLACOMP=slgh_compile slghparse slghscan
 # Additional special files that should not be considered part of the library
@@ -232,15 +231,15 @@ sla_opt/%.o:	%.cc
 	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_OPT)        $< -o $@
 
 grammar.cc:	grammar.y
-	$(YACC) -p cparse -o $@ $<
+	$(YACC) -l -o $@ $<
 xml.cc:	xml.y
-	$(YACC) -p xml -o $@ $<
+	$(YACC) -l -o $@ $<
 pcodeparse.cc:	pcodeparse.y
-	$(YACC) -p pcode -o $@ $<
+	$(YACC) -l -o $@ $<
 slghparse.cc:	slghparse.y
-	$(YACC) -d -o $@ $<
+	$(YACC) -l -d -o $@ $<
 slghscan.cc:	slghscan.l
-	$(LEX) -o$@ $<
+	$(LEX) -L -o$@ $<
 ruleparse.cc:	ruleparse.y
 	$(YACC) -p ruleparse -d -o $@ $<
 
@@ -261,10 +260,10 @@ test: ghidra_test_dbg
 	./ghidra_test_dbg
 
 ghidra_dbg:	$(GHIDRA_DBG_OBJS)
-	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o ghidra_dbg $(GHIDRA_DBG_OBJS) $(LNK)
+	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o ghidra_dbg $(GHIDRA_DBG_OBJS)
 
 ghidra_opt:	$(GHIDRA_OPT_OBJS)
-	$(CXX) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE)  -o ghidra_opt $(GHIDRA_OPT_OBJS) $(LNK)
+	$(CXX) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE)  -o ghidra_opt $(GHIDRA_OPT_OBJS)
 
 sleigh_dbg:	$(SLEIGH_DBG_OBJS)
 	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o sleigh_dbg $(SLEIGH_DBG_OBJS) $(LNK)

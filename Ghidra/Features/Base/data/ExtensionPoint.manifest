@@ -1,5 +1,4 @@
 Analyzer
-DataType
 Demangler
 Exporter
 FieldFactory
@@ -20,4 +19,5 @@ InstructionSkipper
 DataTypeReferenceFinder
 ChecksumAlgorithm
 OverviewColorService
-
+DWARFFunctionFixup
+ElfInfoProducer

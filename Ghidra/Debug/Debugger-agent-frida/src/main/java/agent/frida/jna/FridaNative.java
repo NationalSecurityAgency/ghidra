@@ -19,7 +19,6 @@ import java.util.List;
 
 import com.sun.jna.*;
 import com.sun.jna.platform.linux.LibC;
-import com.sun.jna.ptr.PointerByReference;
 
 public interface FridaNative extends LibC {
 
@@ -49,7 +48,7 @@ public interface FridaNative extends LibC {
 			return str;
 		}
 	}
-	
+
 	public enum GumThreadState {
 		GUM_THREAD_RUNNING("running"),
 		GUM_THREAD_STOPPED("stopped"),
@@ -76,7 +75,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("domain", "code", "message");
-		
+
 		public volatile int domain;
 		public volatile int code;
 		public volatile String message;
@@ -86,7 +85,7 @@ public interface FridaNative extends LibC {
 			return FIELDS;
 		}
 	}
-	
+
 	public static class GumMemoryRange extends Structure {
 		public static class ByReference extends GumMemoryRange
 				implements Structure.ByReference {
@@ -94,7 +93,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("address", "size");
-		
+
 		public NativeLong address;
 		public NativeLong size;
 
@@ -111,7 +110,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("path", "offset", "size");
-		
+
 		public Pointer path;
 		public NativeLong offset;
 		public NativeLong size;
@@ -129,7 +128,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("name", "range", "path");
-		
+
 		public Pointer name;
 		public GumMemoryRange.ByReference range;
 		public Pointer path;
@@ -139,7 +138,7 @@ public interface FridaNative extends LibC {
 			return FIELDS;
 		}
 	}
-	
+
 	public static class GumRangeDetails extends Structure {
 		public static class ByReference extends GumRangeDetails
 				implements Structure.ByReference {
@@ -147,7 +146,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("range", "protection", "file");
-		
+
 		public GumMemoryRange.ByReference range;
 		public NativeLong protection;
 		public GumFileMapping.ByReference file;
@@ -165,9 +164,9 @@ public interface FridaNative extends LibC {
 			// NO CODE
 		}
 
-		public static final List<String> FIELDS = createFieldsOrder("address", 
-				"moduleName", "functionName", "fileName", "lineNumber");
-	
+		public static final List<String> FIELDS = createFieldsOrder("address",
+			"moduleName", "functionName", "fileName", "lineNumber");
+
 		public NativeLong address;
 		public byte[] moduleName = new byte[GUM_MAX_PATH];
 		public byte[] functionName = new byte[GUM_MAX_SYMBOL_NAME];
@@ -187,7 +186,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("len", "items");
-	
+
 		public NativeLong len;
 		public NativeLong[] items = new NativeLong[GUM_MAX_BACKTRACE_DEPTH];
 
@@ -204,7 +203,7 @@ public interface FridaNative extends LibC {
 		}
 
 		public static final List<String> FIELDS = createFieldsOrder("range");
-		
+
 		public GumMemoryRange.ByReference range;
 
 		@Override
@@ -224,62 +223,116 @@ public interface FridaNative extends LibC {
 	void GH_frida_init();
 
 	Pointer GH_frida_device_manager_new();
-	void GH_frida_device_manager_close_sync(Pointer manager, Pointer cancellable, GError.ByReference error);
 
-	Pointer GH_frida_device_manager_find_device_by_type_sync(Pointer manager, NativeLong type, NativeLong timeout, Pointer cancellable, GError.ByReference error);
-	Pointer GH_frida_device_manager_enumerate_devices_sync(Pointer manager, Pointer cancellable, GError.ByReference error);
+	void GH_frida_device_manager_close_sync(Pointer manager, Pointer cancellable,
+			GError.ByReference error);
+
+	Pointer GH_frida_device_manager_find_device_by_id_sync(Pointer manager, String id,
+			NativeLong timeout, Pointer cancellable, GError.ByReference error);
+
+	Pointer GH_frida_device_manager_find_device_by_type_sync(Pointer manager, NativeLong type,
+			NativeLong timeout, Pointer cancellable, GError.ByReference error);
+
+	Pointer GH_frida_device_manager_enumerate_devices_sync(Pointer manager, Pointer cancellable,
+			GError.ByReference error);
+
 	Integer GH_frida_device_list_size(Pointer deviceList);
+
 	Pointer GH_frida_device_list_get(Pointer deviceList, int i);
+
+	String GH_frida_device_get_id(Pointer device);
+
 	String GH_frida_device_get_name(Pointer device);
 
-	Pointer GH_frida_device_enumerate_processes_sync(Pointer device, NativeLong options, Pointer cancellable, GError.ByReference error);
+	Pointer GH_frida_device_enumerate_processes_sync(Pointer device, NativeLong options,
+			Pointer cancellable, GError.ByReference error);
+
 	Integer GH_frida_process_list_size(Pointer processList);
+
 	Pointer GH_frida_process_list_get(Pointer processList, int i);
+
 	NativeLong GH_frida_process_get_pid(Pointer process);
+
 	String GH_frida_process_get_name(Pointer process);
+
 	Pointer GH_frida_process_get_parameters(Pointer process);
 
-	Pointer GH_frida_device_enumerate_applications_sync(Pointer device, NativeLong options, Pointer cancellable, GError.ByReference error);
+	Pointer GH_frida_device_enumerate_applications_sync(Pointer device, NativeLong options,
+			Pointer cancellable, GError.ByReference error);
+
 	Integer GH_frida_application_list_size(Pointer processList);
+
 	Pointer GH_frida_application_list_get(Pointer processList, int i);
+
 	NativeLong GH_frida_application_get_pid(Pointer process);
+
 	String GH_frida_application_get_name(Pointer process);
+
 	String GH_frida_application_get_identifier(Pointer process);
+
 	Pointer GH_frida_application_get_parameters(Pointer process);
-	
-	Pointer GH_frida_device_attach_sync(Pointer localDevice, NativeLong pid, NativeLong options, Pointer cancellable, GError.ByReference error);
-	NativeLong GH_frida_device_spawn_sync(Pointer localDevice, String fileName, NativeLong options, Pointer cancellable, GError.ByReference error);
+
+	Pointer GH_frida_device_attach_sync(Pointer localDevice, NativeLong pid, NativeLong options,
+			Pointer cancellable, GError.ByReference error);
+
+	NativeLong GH_frida_device_spawn_sync(Pointer localDevice, String fileName, NativeLong options,
+			Pointer cancellable, GError.ByReference error);
+
 	NativeLong GH_frida_session_get_pid(Pointer session);
-	Pointer GH_frida_device_get_process_by_pid_sync(Pointer localDevice, NativeLong pid, Pointer options, Pointer cancellable, GError.ByReference error);
-	Pointer GH_frida_device_resume_sync(Pointer localDevice, NativeLong pid, Pointer cancellable, GError.ByReference error);
-	Pointer GH_frida_device_kill_sync(Pointer localDevice, NativeLong pid, Pointer cancellable, GError.ByReference error);
+
+	Pointer GH_frida_device_get_process_by_pid_sync(Pointer localDevice, NativeLong pid,
+			Pointer options, Pointer cancellable, GError.ByReference error);
+
+	Pointer GH_frida_device_resume_sync(Pointer localDevice, NativeLong pid, Pointer cancellable,
+			GError.ByReference error);
+
+	Pointer GH_frida_device_kill_sync(Pointer localDevice, NativeLong pid, Pointer cancellable,
+			GError.ByReference error);
 
 	boolean GH_frida_session_is_detached(Pointer session);
-	void GH_frida_session_detach_sync(Pointer session, Pointer cancellable, GError.ByReference error);
-	void GH_frida_session_resume_sync(Pointer session, Pointer cancellable, GError.ByReference error);
-	
+
+	void GH_frida_session_detach_sync(Pointer session, Pointer cancellable,
+			GError.ByReference error);
+
+	void GH_frida_session_resume_sync(Pointer session, Pointer cancellable,
+			GError.ByReference error);
+
 	Pointer GH_frida_script_options_new();
+
 	void GH_frida_script_options_set_name(Pointer options, String name);
-	void GH_frida_script_options_set_runtime (Pointer options, NativeLong runtime);
-	Pointer GH_frida_session_create_script_sync(Pointer session, String commands, Pointer options, Pointer cancellable, GError.ByReference error);
+
+	void GH_frida_script_options_set_runtime(Pointer options, NativeLong runtime);
+
+	Pointer GH_frida_session_create_script_sync(Pointer session, String commands, Pointer options,
+			Pointer cancellable, GError.ByReference error);
+
 	void GH_frida_unref(Pointer script);
+
 	void GH_frida_script_load_sync(Pointer script, Pointer cancellable, GError.ByReference error);
+
 	void GH_frida_script_unload_sync(Pointer script, Pointer cancellable, GError.ByReference error);
-	
-	void GH_frida_session_enable_debugger_sync(Pointer session, NativeLong port, Pointer cancellable, GError.ByReference error);
+
+	void GH_frida_session_enable_debugger_sync(Pointer session, NativeLong port,
+			Pointer cancellable, GError.ByReference error);
+
 	NativeLong GH_frida_bus_session_get_type();
 
 	// These are equivalent but version-dependent
-	NativeLong GH__frida_g_signal_connect_data(Pointer script, String signal, MessageCallback closure, Pointer data, Pointer notify, NativeLong after);
-	NativeLong GH_g_signal_connect_data(Pointer script, String signal, MessageCallback closure, Pointer data, Pointer notify, NativeLong after);
+	NativeLong GH__frida_g_signal_connect_data(Pointer script, String signal,
+			MessageCallback closure, Pointer data, Pointer notify, NativeLong after);
+
+	NativeLong GH_g_signal_connect_data(Pointer script, String signal, MessageCallback closure,
+			Pointer data, Pointer notify, NativeLong after);
 
 	// These are equivalent but version-dependent
 	void GH__frida_g_signal_handler_disconnect(Pointer script, NativeLong signalHandle);
+
 	void GH_g_signal_handler_disconnect(Pointer script, NativeLong signalHandle);
-	
+
 	void GH_g_signal_emit_by_name(Pointer instance, String detailed_signal);
+
 	NativeLong GH_g_signal_new(String signal_name, NativeLong itype, NativeLong signal_flags,
-			NativeLong class_offset, Pointer accumulator, Pointer accu_data, 
+			NativeLong class_offset, Pointer accumulator, Pointer accu_data,
 			Pointer c_marshaller, NativeLong return_type, NativeLong n_params, NativeLong ptype);
-	
+
 }

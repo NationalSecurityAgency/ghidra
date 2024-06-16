@@ -15,49 +15,51 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.net.URL;
 
 import javax.swing.*;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.docking.settings.Settings;
 import ghidra.feature.vt.api.main.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.WebColors;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import resources.MultiIcon;
-import resources.ResourceManager;
-import resources.icons.EmptyIcon;
-import resources.icons.TranslateIcon;
+import resources.icons.*;
 
 /**
  * A renderer for the {@link VTMatch} to show an icon for its applied status
  */
 public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMatch> {
 
-	private static ImageIcon DISABLED_ICON =
-		ResourceManager.getDisabledIcon(ResourceManager.loadImage("images/ledgreen.png"), 50);
-	private static final ImageIcon APPLIED_BASE_ICON =
-		ResourceManager.loadImage("images/ledgreen.png", 8, 8);
-	private static final ImageIcon REJECTED_BASE_ICON =
-		ResourceManager.loadImage("images/ledpurple.png", 8, 8);
-	private static final ImageIcon NOT_APPLIED_BASE_ICON =
-		ResourceManager.loadImage("images/ledorange.png", 8, 8);
-	private static final ImageIcon IGNORED_BASE_ICON =
-		ResourceManager.loadImage("images/ledblue.png", 8, 8);
-	private static final ImageIcon ERROR_BASE_ICON =
-		ResourceManager.loadImage("images/ledred.png", 8, 8);
+	private static final Color FG_TOOLTIP_DEFAULT = new GColor("color.fg.version.tracking.tooltip");
+	private static final Color FG_TOOLTIP_UNEXAMINED =
+		new GColor("color.bg.version.tracking.match.table.markup.status.tooltip.unexamined");
 
-	private static Icon NOT_APPLIED_ICON = new TranslateIcon(NOT_APPLIED_BASE_ICON, 0, 4);
-	private static Icon APPLIED_ICON = new TranslateIcon(APPLIED_BASE_ICON, 9, 4);
-	private static Icon REJECTED_ICON = new TranslateIcon(REJECTED_BASE_ICON, 18, 4);
-	private static Icon IGNORED_ICON = new TranslateIcon(IGNORED_BASE_ICON, 27, 4);
-	private static Icon ERROR_ICON = new TranslateIcon(ERROR_BASE_ICON, 36, 4);
+	private static Icon EMPTY_ICON = new GIcon("icon.empty");
+	private static Icon DISABLED_ICOL =
+		new GIcon("icon.version.tracking.match.table.markup.status.disabled");
+	private static final Icon NOT_APPLIED_ICON =
+		new GIcon("icon.version.tracking.match.table.markup.status.not.applied");
+	private static final Icon APPLIED_ICON =
+		new GIcon("icon.version.tracking.match.table.markup.status.applied");
+	private static final Icon REJECTED_ICON =
+		new GIcon("icon.version.tracking.match.table.markup.status.rejected");
+	private static final Icon IGNORED_ICON =
+		new GIcon("icon.version.tracking.match.table.markup.status.ignored");
+	private static final Icon ERROR_ICON =
+		new GIcon("icon.version.tracking.match.table.markup.status.error");
 
-	private static Icon DISABLED_NOT_APPLIED_ICON = new TranslateIcon(DISABLED_ICON, 0, 4);
-	private static Icon DISABLED_APPLIED_ICON = new TranslateIcon(DISABLED_ICON, 9, 4);
-	private static Icon DISABLED_REJECTED_ICON = new TranslateIcon(DISABLED_ICON, 18, 4);
-	private static Icon DISABLED_IGNORED_ICON = new TranslateIcon(DISABLED_ICON, 27, 4);
-	private static Icon DISABLED_ERROR_ICON = new TranslateIcon(DISABLED_ICON, 36, 4);
+	private static Icon DISABLED_NOT_APPLIED_ICON = new TranslateIcon(DISABLED_ICOL, 0, 4);
+	private static Icon DISABLED_APPLIED_ICON = new TranslateIcon(DISABLED_ICOL, 9, 4);
+	private static Icon DISABLED_REJECTED_ICON = new TranslateIcon(DISABLED_ICOL, 18, 4);
+	private static Icon DISABLED_IGNORED_ICON = new TranslateIcon(DISABLED_ICOL, 27, 4);
+	private static Icon DISABLED_ERROR_ICON = new TranslateIcon(DISABLED_ICOL, 36, 4);
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -81,7 +83,7 @@ public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMa
 		}
 
 		VTAssociationMarkupStatus markupStatus = association.getMarkupStatus();
-		MultiIcon icon = new MultiIcon(new EmptyIcon(36, 16));
+		MultiIcon icon = new MultiIcon(new EmptyIcon(45, 16));
 		icon.addIcon(
 			markupStatus.hasUnexaminedMarkup() ? NOT_APPLIED_ICON : DISABLED_NOT_APPLIED_ICON);
 		icon.addIcon(markupStatus.hasAppliedMarkup() ? APPLIED_ICON : DISABLED_APPLIED_ICON);
@@ -97,68 +99,84 @@ public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMa
 
 	private String getDescription(VTAssociationMarkupStatus status) {
 		StringBuffer buf = new StringBuffer("<html>");
-
 		if (!status.isInitialized()) {
 			buf.append("Match has not been accepted; unknown markup status");
 			return buf.toString();
 		}
 
-		ImageIcon icon = DISABLED_ICON;
+		Icon icon = EMPTY_ICON;
 		String message = "Has one or more \"Unexamined\" markup items";
-		String fontColor = "gray";
+		Color color = FG_TOOLTIP_DEFAULT;
 		if (status.hasUnexaminedMarkup()) {
-			icon = NOT_APPLIED_BASE_ICON;
-			fontColor = "black";
+			icon = NOT_APPLIED_ICON;
+			color = FG_TOOLTIP_UNEXAMINED;
 		}
-		buf.append("<img src=\"").append(icon.getDescription()).append("\" />");
+
+		String fontColor = WebColors.toString(color, false);
+		buf.append("<img src=\"").append(getIconSource(icon)).append("\" />");
 		buf.append("<font color=\"").append(fontColor).append("\">");
 		buf.append(message).append("</font><br>");
 
-		icon = DISABLED_ICON;
+		icon = EMPTY_ICON;
+
 		message = "Has one or more \"Applied\" markup items";
 		fontColor = "gray";
 		if (status.hasAppliedMarkup()) {
-			icon = APPLIED_BASE_ICON;
+			icon = APPLIED_ICON;
 			fontColor = "black";
 		}
-		buf.append("<img src=\"").append(icon.getDescription()).append("\" />");
+		buf.append("<img src=\"").append(getIconSource(icon)).append("\" />");
 		buf.append("<font color=\"").append(fontColor).append("\">");
 		buf.append(message).append("</font><br>");
 
-		icon = DISABLED_ICON;
+		icon = EMPTY_ICON;
+
 		message = "Has one or more \"Rejected\" markup items to apply";
 		fontColor = "gray";
 		if (status.hasRejectedMarkup()) {
-			icon = REJECTED_BASE_ICON;
+			icon = REJECTED_ICON;
 			fontColor = "black";
 		}
-		buf.append("<img src=\"").append(icon.getDescription()).append("\" />");
+		buf.append("<img src=\"").append(getIconSource(icon)).append("\" />");
 		buf.append("<font color=\"").append(fontColor).append("\">");
 		buf.append(message).append("</font><br>");
 
-		icon = DISABLED_ICON;
+		icon = EMPTY_ICON;
 		message = "Has one or more \"Ignored (Don't Know or Don't Care)\" markup items";
 		fontColor = "gray";
 		if (status.hasDontCareMarkup() || status.hasDontKnowMarkup()) {
-			icon = IGNORED_BASE_ICON;
+			icon = IGNORED_ICON;
 			fontColor = "black";
 		}
-		buf.append("<img src=\"").append(icon.getDescription()).append("\" />");
+		buf.append("<img src=\"").append(getIconSource(icon)).append("\" />");
 		buf.append("<font color=\"").append(fontColor).append("\">");
 		buf.append(message).append("</font><br>");
 
-		icon = DISABLED_ICON;
+		icon = EMPTY_ICON;
 		message = "Has one or more \"Error\" markup items";
 		fontColor = "gray";
 		if (status.hasErrors()) {
-			icon = ERROR_BASE_ICON;
+			icon = ERROR_ICON;
 			fontColor = "black";
 		}
-		buf.append("<img src=\"").append(icon.getDescription()).append("\" />");
+		buf.append("<img src=\"").append(getIconSource(icon)).append("\" />");
 		buf.append("<font color=\"").append(fontColor).append("\">");
 		buf.append(message).append("</font><br>");
 
 		return buf.toString();
+	}
+
+	private String getIconSource(Icon icon) {
+		if (icon instanceof GIcon gIcon) {
+			URL url = gIcon.getUrl();
+			if (url != null) {
+				return url.toString();
+			}
+		}
+		else if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getUrl().toString();
+		}
+		return "";
 	}
 
 	@Override

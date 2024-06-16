@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.calltree;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.FunctionSignatureFieldLocation;
@@ -29,12 +29,11 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.TranslateIcon;
 
 public class ExternalCallNode extends CallNode {
 
-	private static final Icon EXTERNAL_ICON = ResourceManager.loadImage("images/package.png");
+	private static final Icon EXTERNAL_ICON = new GIcon("icon.plugin.calltree.node.external");
 	private final Icon EXTERNAL_FUNCTION_ICON;
 	private final Icon baseIcon;
 
@@ -42,8 +41,9 @@ public class ExternalCallNode extends CallNode {
 	private final Address sourceAddress;
 	private final String name;
 
-	ExternalCallNode(Function function, Address sourceAddress, Icon baseIcon) {
-		super(new AtomicInteger(0));  // can't recurse
+	ExternalCallNode(Function function, Address sourceAddress, Icon baseIcon,
+			CallTreeOptions callTreeOptions) {
+		super(callTreeOptions);
 		this.function = function;
 		this.sourceAddress = sourceAddress;
 		this.name = function.getName();
@@ -56,8 +56,13 @@ public class ExternalCallNode extends CallNode {
 	}
 
 	@Override
+	public int loadAll(TaskMonitor monitor) throws CancelledException {
+		return 1; // this node cannot be opened
+	}
+
+	@Override
 	CallNode recreate() {
-		return new ExternalCallNode(function, sourceAddress, baseIcon);
+		return new ExternalCallNode(function, sourceAddress, baseIcon, callTreeOptions);
 	}
 
 	@Override
@@ -77,7 +82,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		return new ArrayList<GTreeNode>();
+		return new ArrayList<>();
 	}
 
 	@Override

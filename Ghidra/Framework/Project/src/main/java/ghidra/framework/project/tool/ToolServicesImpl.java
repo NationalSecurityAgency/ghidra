@@ -16,7 +16,9 @@
 package ghidra.framework.project.tool;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 
 import org.jdom.Document;
 import org.jdom.output.XMLOutputter;
@@ -24,17 +26,20 @@ import org.jdom.output.XMLOutputter;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.ToolUtils;
-import ghidra.framework.data.ContentHandler;
-import ghidra.framework.data.DomainObjectAdapter;
+import ghidra.framework.data.*;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
+import ghidra.framework.protocol.ghidra.ContentTypeQueryTask;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.Msg;
-import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
+import ghidra.util.task.TaskLauncher;
 import ghidra.util.xml.GenericXMLOutputter;
+import util.CollectionUtils;
 
 /**
  * Implementation of service used to manipulate tools.
@@ -46,9 +51,7 @@ class ToolServicesImpl implements ToolServices {
 
 	private ToolChest toolChest;
 	private ToolManagerImpl toolManager;
-	private List<DefaultToolChangeListener> listeners = new ArrayList<>();
 	private ToolChestChangeListener toolChestChangeListener;
-	private Set<ContentHandler> contentHandlers;
 
 	ToolServicesImpl(ToolChest toolChest, ToolManagerImpl toolManager) {
 		this.toolChest = toolChest;
@@ -112,7 +115,7 @@ class ToolServicesImpl implements ToolServices {
 				}
 			}
 		}
-
+		fileChooser.dispose();
 		return exportFile;
 	}
 
@@ -140,7 +143,10 @@ class ToolServicesImpl implements ToolServices {
 
 		String exportDir = Preferences.getProperty(Preferences.LAST_TOOL_EXPORT_DIRECTORY);
 		if (exportDir != null) {
-			newFileChooser.setCurrentDirectory(new File(exportDir));
+			File dir = new File(exportDir);
+			if (dir.isDirectory()) {
+				newFileChooser.setCurrentDirectory(dir);
+			}
 		}
 
 		newFileChooser.setTitle("Export Tool");
@@ -163,62 +169,119 @@ class ToolServicesImpl implements ToolServices {
 		return toolChest;
 	}
 
-	@Override
-	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event) {
-
-		PluginTool[] similarTools = getSameNamedRunningTools(tool);
-		PluginTool matchingTool = findToolUsingFile(similarTools, domainFile);
-		if (matchingTool != null) {
-			// Bring the matching tool forward.
-			matchingTool.toFront();
+	private static DefaultLaunchMode getDefaultLaunchMode() {
+		DefaultLaunchMode defaultLaunchMode = DefaultLaunchMode.DEFAULT;
+		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
+		if (frontEndTool != null) {
+			defaultLaunchMode = frontEndTool.getDefaultLaunchMode();
 		}
-		else {
-			// Create a new tool and pop it up.
-			Workspace workspace = toolManager.getActiveWorkspace();
-			matchingTool = workspace.runTool(tool.getToolTemplate(true));
-			matchingTool.setVisible(true);
-			matchingTool.acceptDomainFiles(new DomainFile[] { domainFile });
-		}
-
-		// Fire the indicated event in the tool.
-		matchingTool.firePluginEvent(event);
+		return defaultLaunchMode;
 	}
 
-	@Override
-	public PluginTool launchDefaultTool(DomainFile domainFile) {
-		ToolTemplate template = getDefaultToolTemplate(domainFile);
-		if (template != null) {
-			Workspace workspace = toolManager.getActiveWorkspace();
-			PluginTool tool = workspace.runTool(template);
-			tool.setVisible(true);
-			if (domainFile != null) {
-				tool.acceptDomainFiles(new DomainFile[] { domainFile });
+	private PluginTool defaultLaunch(ToolTemplate template,
+			Function<PluginTool, Boolean> openFunction) {
+
+		DefaultLaunchMode defaultLaunchMode = getDefaultLaunchMode();
+		if (defaultLaunchMode == DefaultLaunchMode.REUSE_TOOL) {
+			if (template != null) {
+				// attempt to reuse running tool with default name
+				String defaultToolName = template.getName();
+				for (PluginTool tool : getRunningTools()) {
+					if (tool.getName().equals(defaultToolName) && openFunction.apply(tool)) {
+						return tool;
+					}
+				}
 			}
-			return tool;
+
+			// attempt to reuse any running tool
+			for (PluginTool tool : getRunningTools()) {
+				if (openFunction.apply(tool)) {
+					return tool;
+				}
+			}
 		}
-		return null;
+
+		if (template == null) {
+			return null; // unable to launch new tool
+		}
+
+		Workspace workspace = toolManager.getActiveWorkspace();
+		PluginTool tool = workspace.runTool(template);
+		if (tool == null) {
+			return null; // tool launch failed
+		}
+		tool.setVisible(true);
+		openFunction.apply(tool);
+		return tool;
 	}
 
 	@Override
-	public PluginTool launchTool(String toolName, DomainFile domainFile) {
+	public PluginTool launchDefaultTool(Collection<DomainFile> domainFiles) {
+		if (CollectionUtils.isBlank(domainFiles)) {
+			throw new IllegalArgumentException("Domain files cannot be empty");
+		}
+		ToolTemplate template = getDefaultToolTemplate(CollectionUtils.any(domainFiles));
+		return defaultLaunch(template, t -> {
+			return t.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
+		});
+	}
+
+	@Override
+	public PluginTool launchTool(String toolName, Collection<DomainFile> domainFiles) {
 		ToolTemplate template = findToolChestToolTemplate(toolName);
-		if (template != null) {
-			Workspace workspace = toolManager.getActiveWorkspace();
-			PluginTool tool = workspace.runTool(template);
-			tool.setVisible(true);
-			if (domainFile != null) {
-				tool.acceptDomainFiles(new DomainFile[] { domainFile });
-			}
-			return tool;
+		if (template == null) {
+			return null;
 		}
-		return null;
+		return defaultLaunch(template, t -> {
+			if (CollectionUtils.isBlank(domainFiles)) {
+				return true;
+			}
+			return t.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
+		});
+	}
+
+	@Override
+	public PluginTool launchDefaultToolWithURL(URL ghidraUrl) throws IllegalArgumentException {
+		String contentType = getContentType(ghidraUrl);
+		if (contentType == null) {
+			return null;
+		}
+		ToolTemplate template = getDefaultToolTemplate(contentType);
+		return defaultLaunch(template, t -> {
+			return t.accept(ghidraUrl);
+		});
+	}
+
+	@Override
+	public PluginTool launchToolWithURL(String toolName, URL ghidraUrl)
+			throws IllegalArgumentException {
+		if (!GhidraURL.isLocalProjectURL(ghidraUrl) &&
+			!GhidraURL.isServerRepositoryURL(ghidraUrl)) {
+			throw new IllegalArgumentException("unsupported URL");
+		}
+		ToolTemplate template = findToolChestToolTemplate(toolName);
+		if (template == null) {
+			return null;
+		}
+		Workspace workspace = toolManager.getActiveWorkspace();
+		PluginTool tool = workspace.runTool(template);
+		if (tool != null) {
+			tool.accept(ghidraUrl);
+		}
+		return tool;
+	}
+
+	private String getContentType(URL url) throws IllegalArgumentException {
+		ContentTypeQueryTask task = new ContentTypeQueryTask(url);
+		TaskLauncher.launch(task); // blocking task
+		return task.getContentType();
 	}
 
 	@Override
 	public void setContentTypeToolAssociations(Set<ToolAssociationInfo> infos) {
 		for (ToolAssociationInfo info : infos) {
 
-			ContentHandler handler = info.getContentHandler();
+			ContentHandler<?> handler = info.getContentHandler();
 			String contentType = handler.getContentType();
 			String preferenceKey = getToolAssociationPreferenceKey(contentType);
 			if (!info.isDefault()) {
@@ -254,15 +317,18 @@ class ToolServicesImpl implements ToolServices {
 		Set<ToolAssociationInfo> set = new HashSet<>();
 
 		// get all known content types
-		Set<ContentHandler> handlers = getContentHandlers();
-		for (ContentHandler contentHandler : handlers) {
+		Set<? extends ContentHandler<?>> handlers = DomainObjectAdapter.getContentHandlers();
+		for (ContentHandler<?> contentHandler : handlers) {
+			if (contentHandler instanceof LinkHandler) {
+				continue;
+			}
 			set.add(createToolAssociationInfo(contentHandler));
 		}
 
 		return set;
 	}
 
-	private ToolAssociationInfo createToolAssociationInfo(ContentHandler contentHandler) {
+	private ToolAssociationInfo createToolAssociationInfo(ContentHandler<?> contentHandler) {
 		String contentType = contentHandler.getContentType();
 		String defaultToolName = contentHandler.getDefaultToolName();
 		String userPreferredToolName =
@@ -280,7 +346,26 @@ class ToolServicesImpl implements ToolServices {
 
 	@Override
 	public ToolTemplate getDefaultToolTemplate(DomainFile domainFile) {
-		String contentType = domainFile.getContentType();
+		return getDefaultToolTemplate(domainFile.getContentType());
+	}
+
+	@Override
+	public ToolTemplate getDefaultToolTemplate(String contentType) {
+
+		try {
+			ContentHandler<?> contentHandler = DomainObjectAdapter.getContentHandler(contentType);
+			if (contentHandler instanceof LinkHandler) {
+				Class<? extends DomainObjectAdapter> domainObjectClass =
+					contentHandler.getDomainObjectClass();
+				contentHandler = DomainObjectAdapter.getContentHandler(domainObjectClass);
+				contentType = contentHandler.getContentType();
+			}
+		}
+		catch (IOException e) {
+			// Failed to identify content handler
+			Msg.error(this, e.getMessage());
+			return null;
+		}
 
 		String toolName =
 			Preferences.getProperty(getToolAssociationPreferenceKey(contentType), null, true);
@@ -310,27 +395,30 @@ class ToolServicesImpl implements ToolServices {
 		}
 
 		//
-		// Next, look through for all compatible content handlers find tools for them
+		// Next, check content handler for its default tool name
 		//
-		Set<ContentHandler> compatibleHandlers = getCompatibleContentHandlers(domainClass);
-		for (ContentHandler handler : compatibleHandlers) {
+		try {
+			ContentHandler<?> handler = DomainObjectAdapter.getContentHandler(domainClass);
 			String defaultToolName = handler.getDefaultToolName();
-			if (nameToTemplateMap.get(defaultToolName) != null) {
-				continue; // already have tool in the map by this name; prefer that tool
+			if (nameToTemplateMap.get(defaultToolName) == null) {
+				ToolTemplate toolChestTemplate = findToolChestToolTemplate(defaultToolName);
+				if (toolChestTemplate != null) {
+					// found the tool in the tool chest--use that one
+					nameToTemplateMap.put(toolChestTemplate.getName(), toolChestTemplate);
+				}
+				else {
+					// see if there is a default tool
+					GhidraToolTemplate defaultToolTemplate =
+						findDefaultToolTemplate(defaultToolName);
+					if (defaultToolTemplate != null) {
+						nameToTemplateMap.put(defaultToolTemplate.getName(), defaultToolTemplate);
+					}
+				}
 			}
-
-			ToolTemplate toolChestTemplate = findToolChestToolTemplate(defaultToolName);
-			if (toolChestTemplate != null) {
-				// found the tool in the tool chest--use that one
-				nameToTemplateMap.put(toolChestTemplate.getName(), toolChestTemplate);
-				continue;
-			}
-
-			// see if there is a default tool
-			GhidraToolTemplate defaultToolTemplate = findDefaultToolTemplate(defaultToolName);
-			if (defaultToolTemplate != null) {
-				nameToTemplateMap.put(defaultToolTemplate.getName(), defaultToolTemplate);
-			}
+		}
+		catch (IOException e) {
+			// Failed to identify content handler
+			Msg.error(this, e.getMessage());
 		}
 
 		//
@@ -355,72 +443,21 @@ class ToolServicesImpl implements ToolServices {
 		return new HashSet<>(nameToTemplateMap.values());
 	}
 
-	private Set<ContentHandler> getCompatibleContentHandlers(
-			Class<? extends DomainObject> domainClass) {
-		Set<ContentHandler> set = new HashSet<>();
-		Set<ContentHandler> handlers = getContentHandlers();
-		for (ContentHandler contentHandler : handlers) {
-			Class<? extends DomainObject> handlerDomainClass =
-				contentHandler.getDomainObjectClass();
-			if (handlerDomainClass == domainClass) {
-				set.add(contentHandler);
-			}
-		}
-		return set;
-	}
-
 	private String getToolAssociationPreferenceKey(String contentType) {
 		return TOOL_ASSOCIATION_PREFERENCE + SEPARATOR + contentType;
 	}
 
 	private String getDefaultToolAssociation(String contentType) {
-		Set<ContentHandler> handlers = getContentHandlers();
-		for (ContentHandler contentHandler : handlers) {
-			String type = contentHandler.getContentType();
-			if (type.equals(contentType)) {
-				return contentHandler.getDefaultToolName();
-			}
+
+		try {
+			ContentHandler<?> contentHandler = DomainObjectAdapter.getContentHandler(contentType);
+			return contentHandler.getDefaultToolName();
+		}
+		catch (IOException e) {
+			// Failed to identify content handler
+			Msg.error(this, e.getMessage());
 		}
 		return null;
-	}
-
-	private Set<ContentHandler> getContentHandlers() {
-		if (contentHandlers != null) {
-			return contentHandlers;
-		}
-
-		contentHandlers = new HashSet<>();
-		List<ContentHandler> instances = ClassSearcher.getInstances(ContentHandler.class);
-		for (ContentHandler contentHandler : instances) {
-			// a bit of validation
-			String contentType = contentHandler.getContentType();
-			if (contentType == null) {
-				Msg.error(DomainObjectAdapter.class, "ContentHandler " +
-					contentHandler.getClass().getName() + " does not specify a content type");
-				continue;
-			}
-
-			String toolName = contentHandler.getDefaultToolName();
-			if (toolName == null) {
-				Msg.error(DomainObjectAdapter.class, "ContentHandler " +
-					contentHandler.getClass().getName() + " does not specify a default tool");
-				continue;
-			}
-
-			contentHandlers.add(contentHandler);
-		}
-
-		return contentHandlers;
-	}
-
-	@Override
-	public void addDefaultToolChangeListener(DefaultToolChangeListener listener) {
-		listeners.add(listener);
-	}
-
-	@Override
-	public void removeDefaultToolChangeListener(DefaultToolChangeListener listener) {
-		listeners.remove(listener);
 	}
 
 	private GhidraToolTemplate findToolChestToolTemplate(String toolName) {
@@ -444,52 +481,9 @@ class ToolServicesImpl implements ToolServices {
 		return null;
 	}
 
-	/**
-	 * Get all running tools that have the same tool chest tool name as this one.
-	 * 
-	 * @param tool the tool for comparison.
-	 * 
-	 * @return array of tools that are running and named the same as this one.
-	 */
-	private PluginTool[] getSameNamedRunningTools(PluginTool tool) {
-		String toolName = tool.getToolName();
-		PluginTool[] tools = toolManager.getRunningTools();
-		List<PluginTool> toolList = new ArrayList<>(tools.length);
-		for (PluginTool element : tools) {
-			if (toolName.equals(element.getToolName())) {
-				toolList.add(element);
-			}
-		}
-		return toolList.toArray(new PluginTool[toolList.size()]);
-	}
-
 	@Override
 	public PluginTool[] getRunningTools() {
 		return toolManager.getRunningTools();
-	}
-
-	/**
-	 * Search the array of tools for one using the given domainFile.
-	 * 
-	 * @param tools array of tools to search
-	 * @param domainFile domain file to find user of
-	 * 
-	 * @return first tool found to be using the domainFile
-	 */
-	private PluginTool findToolUsingFile(PluginTool[] tools, DomainFile domainFile) {
-		PluginTool matchingTool = null;
-		for (int toolNum = 0; (toolNum < tools.length) && (matchingTool == null); toolNum++) {
-			PluginTool pTool = (PluginTool) tools[toolNum];
-			// Is this tool the same as the type we are in.
-			DomainFile[] df = pTool.getDomainFiles();
-			for (DomainFile element : df) {
-				if (domainFile.equals(element)) {
-					matchingTool = tools[toolNum];
-					break;
-				}
-			}
-		}
-		return matchingTool;
 	}
 
 	@Override

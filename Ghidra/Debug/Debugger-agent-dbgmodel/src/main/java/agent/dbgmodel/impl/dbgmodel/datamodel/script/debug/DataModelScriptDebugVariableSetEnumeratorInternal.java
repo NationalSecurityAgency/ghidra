@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script.debug;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.debug.DataModelScriptDebugVariableSetEnumerator;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.debug.IDataModelScriptDebugVariableSetEnumerator;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.debug.WrapIDataModelScriptDebugVariableSetEnumerator;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -35,23 +35,19 @@ public interface DataModelScriptDebugVariableSetEnumeratorInternal
 
 	static DataModelScriptDebugVariableSetEnumeratorInternal instanceFor(
 			WrapIDataModelScriptDebugVariableSetEnumerator data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data,
+		return DbgEngUtil.lazyWeakCache(CACHE, data,
 			DataModelScriptDebugVariableSetEnumeratorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelScriptDebugVariableSetEnumerator>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDataModelScriptDebugVariableSetEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(
-						IDataModelScriptDebugVariableSetEnumerator.IID_IDATA_MODEL_SCRIPT_DEBUG_VARIABLE_SET_ENUMERATOR),
-					WrapIDataModelScriptDebugVariableSetEnumerator.class) //
-				.build();
+	List<Preferred<WrapIDataModelScriptDebugVariableSetEnumerator>> PREFERRED_DATA_SPACES_IIDS =
+		List.of(
+			new Preferred<>(
+				IDataModelScriptDebugVariableSetEnumerator.IID_IDATA_MODEL_SCRIPT_DEBUG_VARIABLE_SET_ENUMERATOR,
+				WrapIDataModelScriptDebugVariableSetEnumerator.class));
 
 	static DataModelScriptDebugVariableSetEnumeratorInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(
+		return DbgEngUtil.tryPreferredInterfaces(
 			DataModelScriptDebugVariableSetEnumeratorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}

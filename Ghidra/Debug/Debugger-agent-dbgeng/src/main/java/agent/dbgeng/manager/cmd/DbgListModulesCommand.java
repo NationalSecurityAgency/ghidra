@@ -58,17 +58,27 @@ public class DbgListModulesCommand extends AbstractDbgCommand<Map<String, DbgMod
 
 	@Override
 	public void invoke() {
-		DebugSystemObjects so = manager.getSystemObjects();
-		so.setCurrentProcessId(process.getId());
-		DebugSymbols symbols = manager.getSymbols();
-		for (DebugModule module : symbols.iterateModules(0)) {
-			DebugModuleInfo info = symbols.getModuleParameters(1, module.getIndex());
-			String imageName = module.getName(DebugModuleName.IMAGE);
-			String moduleName = module.getName(DebugModuleName.MODULE);
-			info.setImageName(imageName);
-			info.setModuleName(moduleName);
-			updatedModules.put(info.toString(), module);
-			moduleInfo.put(module, info);
+		try {
+			setProcess(process);
+			DebugSymbols symbols = manager.getSymbols();
+			for (DebugModule module : symbols.iterateModules(0)) {
+				DebugModuleInfo info = symbols.getModuleParameters(1, module.getIndex());
+				String imageName = "UNKNOWN";
+				String moduleName = "UNKNOWN";
+				try {
+					imageName = module.getName(DebugModuleName.IMAGE);
+					moduleName = module.getName(DebugModuleName.MODULE);
+				} catch (UnsupportedOperationException uoe) {
+					//Skip
+				}
+				info.setImageName(imageName);
+				info.setModuleName(moduleName);
+				updatedModules.put(info.toString(), module);
+				moduleInfo.put(module, info);
+			}
+		} 
+		finally {
+			resetProcess();
 		}
 	}
 

@@ -26,14 +26,7 @@ eclipse.project.name = 'Features Graph FunctionCalls'
 // Note: this module's name is 'GraphFunctionCalls'
 dependencies {
 	api project(":Base")
-	
-	helpPath project(path: ":Base", configuration: 'helpPath')
-	
-	// This is needed now because we like to the help of the FunctionGraph.  If and when that
-	// help is extracted to a higher-level help page, like 'Graphing', then this link should be
-	// removed  
-	helpPath project(path: ":FunctionGraph", configuration: 'helpPath')
-	
+
 	// These have abstract test classes and stubs needed by this module	
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')

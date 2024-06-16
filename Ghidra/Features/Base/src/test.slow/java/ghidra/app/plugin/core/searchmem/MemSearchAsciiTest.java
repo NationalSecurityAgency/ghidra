@@ -191,7 +191,7 @@ public class MemSearchAsciiTest extends AbstractMemSearchTest {
 	public void testUnicodeBigEndian() throws Exception {
 
 		// with Big Endian selected, unicode bytes should be reversed
-		setEndianess("Big Endian");
+		setEndianness("Big Endian");
 
 		setEncoding(StandardCharsets.UTF_16);
 		setValueText("start");

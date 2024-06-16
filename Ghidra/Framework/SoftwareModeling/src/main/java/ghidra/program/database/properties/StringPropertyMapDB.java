@@ -19,25 +19,26 @@ import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.prop.PropertyVisitor;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Property manager that deals with properties that are of
  * String type and stored with a database table.
  */
-public class StringPropertyMapDB extends PropertyMapDB implements StringPropertyMap {
+public class StringPropertyMapDB extends PropertyMapDB<String> implements StringPropertyMap {
 
 	/**
 	 * Construct an String property map.
 	 * @param dbHandle database handle.
-	 * @param openMode the mode that the program was openned in.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
 	 * @param errHandler database error handler.
 	 * @param changeMgr change manager for event notification	 
 	 * @param addrMap address map.
@@ -47,16 +48,13 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 	 * @throws CancelledException if the user cancels the upgrade operation.
 	 * @throws IOException if a database io error occurs.
 	 */
-	public StringPropertyMapDB(DBHandle dbHandle, int openMode, ErrorHandler errHandler,
+	public StringPropertyMapDB(DBHandle dbHandle, OpenMode openMode, ErrorHandler errHandler,
 			ChangeManager changeMgr, AddressMap addrMap, String name, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		super(dbHandle, errHandler, changeMgr, addrMap, name);
 		checkMapVersion(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.StringPropertyMap#add(ghidra.program.model.address.Address, java.lang.String)
-	 */
 	@Override
 	public void add(Address addr, String value) {
 		lock.acquire();
@@ -91,9 +89,6 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.util.StringPropertyMap#getString(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public String getString(Address addr) {
 		if (propertyTable == null) {
@@ -130,23 +125,9 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 		return str;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
-	 */
 	@Override
-	public Object getObject(Address addr) {
+	public String get(Address addr) {
 		return getString(addr);
-	}
-
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
-	 */
-	@Override
-	public void applyValue(PropertyVisitor visitor, Address addr) {
-		String str = getString(addr);
-		if (str != null) {
-			visitor.visit(str);
-		}
 	}
 
 }

@@ -15,14 +15,15 @@
  */
 package ghidra.app.util.disassemble;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -34,6 +35,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.classfinder.ClassSearcher;
 
 public class ExternalDisassemblyFieldFactory extends FieldFactory {
+	public static final GColor COLOR = new GColor("color.fg.listing.disassembly.external");
 
 	private static List<ExternalDisassembler> availableDisassemblers;
 
@@ -59,15 +61,9 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	private ExternalDisassemblyFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private ExternalDisassemblyFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// have no options
 	}
 
 	@Override
@@ -100,7 +96,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions) {
+			ListingHighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions) {
 		return new ExternalDisassemblyFieldFactory(formatModel, highlightProvider, options,
 			fieldOptions);
 	}
@@ -130,7 +126,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 			if (disassembly == null) {
 				return null;
 			}
-			AttributedString text = new AttributedString(disassembly, Color.black, getMetrics());
+			AttributedString text = new AttributedString(disassembly, COLOR, getMetrics());
 			FieldElement fieldElement = new TextFieldElement(text, 0, 0);
 			return ListingTextField.createSingleLineTextField(this, proxy, fieldElement,
 				startX + varWidth, width, hlProvider);
@@ -162,7 +158,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 		if (message == null) {
 			message = e.toString();
 		}
-		AttributedString errorText = new AttributedString(message, Color.red, getMetrics());
+		AttributedString errorText = new AttributedString(message, Messages.ERROR, getMetrics());
 		FieldElement fieldElement = new TextFieldElement(errorText, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, fieldElement,
 			startX + varWidth, width, hlProvider);

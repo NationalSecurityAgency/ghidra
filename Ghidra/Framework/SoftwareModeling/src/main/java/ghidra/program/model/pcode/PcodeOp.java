@@ -15,13 +15,14 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -119,7 +120,7 @@ public class PcodeOp {
 	// translation.
 	public static final int MULTIEQUAL = 60;  // Output equal to one of inputs, depending on execution
 	public static final int INDIRECT = 61;    // Output probably equals input, but may be indirectly affected
-	public static final int PIECE = 62;       // Output is constructed from multiple peices
+	public static final int PIECE = 62;       // Output is constructed from multiple pieces
 	public static final int SUBPIECE = 63;    // Output is a subpiece of input0, input1=offset into input0
 
 	public static final int CAST = 64;        // Cast from one type to another
@@ -131,8 +132,9 @@ public class PcodeOp {
 	public static final int INSERT = 70;
 	public static final int EXTRACT = 71;
 	public static final int POPCOUNT = 72;
+	public static final int LZCOUNT = 73;
 
-	public static final int PCODE_MAX = 73;
+	public static final int PCODE_MAX = 74;
 
 	private static Hashtable<String, Integer> opcodeTable;
 
@@ -292,6 +294,15 @@ public class PcodeOp {
 	}
 
 	/**
+	 * Return true if the PcodeOp is commutative.
+	 * If true, the operation has exactly two inputs that can be switched without affecting the output.
+	 * @return true if the operation is commutative
+	 */
+	public final boolean isCommutative() {
+		return isCommutative(opcode);
+	}
+
+	/**
 	 * @return the sequence number this pcode is within some number of pcode
 	 */
 	public final SequenceNumber getSeqnum() {
@@ -418,67 +429,65 @@ public class PcodeOp {
 		output = vn;
 	}
 
-	public void buildXML(StringBuilder resBuf,AddressFactory addrFactory) {
-		resBuf.append("<op");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "code", opcode);
-		resBuf.append('>');
-		resBuf.append(seqnum.buildXML());
+	/**
+	 * Encode just the opcode and input/output Varnode data for this PcodeOp to a stream
+	 * as an \<op> element
+	 * @param encoder is the stream encoder
+	 * @param addrFactory is a factory for looking up encoded address spaces
+	 * @throws IOException for errors in the underlying stream
+	 */
+	public void encodeRaw(Encoder encoder, AddressFactory addrFactory) throws IOException {
+		encoder.openElement(ELEM_OP);
+		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
+		encoder.writeSignedInteger(ATTRIB_SIZE, input.length);
 		if (output == null) {
-			resBuf.append("<void/>");
+			encoder.openElement(ELEM_VOID);
+			encoder.closeElement(ELEM_VOID);
 		}
 		else {
-			output.buildXML(resBuf);
+			output.encodeRaw(encoder);
 		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) input[0].getOffset();
-			resBuf.append("<spaceid");
+			encoder.openElement(ELEM_SPACEID);
 			AddressSpace space = addrFactory.getAddressSpace(spaceId);
-			SpecXmlUtils.encodeStringAttribute(resBuf, "name", space.getName());
-			resBuf.append("/>");
+			encoder.writeSpace(ATTRIB_NAME, space);
+			encoder.closeElement(ELEM_SPACEID);
 		}
 		else if (input.length > 0) {
-			input[0].buildXML(resBuf);
+			input[0].encodeRaw(encoder);
 		}
 		for (int i = 1; i < input.length; ++i) {
-			input[i].buildXML(resBuf);
+			input[i].encodeRaw(encoder);
 		}
-		resBuf.append("</op>");
+		encoder.closeElement(ELEM_OP);
 	}
 
 	/**
-	 * Read p-code from XML stream
+	 * Decode p-code from a stream
 	 * 
-	 * @param parser is the XML stream
+	 * @param decoder is the stream decoder
 	 * @param pfact factory used to create p-code correctly
 	 * 
 	 * @return new PcodeOp
-	 * @throws PcodeXMLException if XML layout is incorrect
+	 * @throws DecoderException if encodings are invalid
 	 */
-	public static PcodeOp readXML(XmlPullParser parser, PcodeFactory pfact)
-			throws PcodeXMLException {
-		XmlElement el = parser.start("op");
-		int opc = SpecXmlUtils.decodeInt(el.getAttribute("code"));
-		if (!parser.peek().isStart()) {
-			throw new PcodeXMLException("Missing <seqnum> in PcodeOp");
-		}
-		SequenceNumber seqnum = SequenceNumber.readXML(parser, pfact.getAddressFactory());
-		if (!parser.peek().isStart()) {
-			throw new PcodeXMLException("Missing output in PcodeOp");
-		}
-		Varnode output = Varnode.readXML(parser, pfact);
-		ArrayList<Varnode> inputlist = new ArrayList<Varnode>();
-		while (parser.peek().isStart()) {
-			Varnode vn = Varnode.readXML(parser, pfact);
+	public static PcodeOp decode(Decoder decoder, PcodeFactory pfact) throws DecoderException {
+		int el = decoder.openElement(ELEM_OP);
+		int opc = (int) decoder.readSignedInteger(ATTRIB_CODE);
+		SequenceNumber seqnum = SequenceNumber.decode(decoder);
+		Varnode output = Varnode.decode(decoder, pfact);
+		ArrayList<Varnode> inputlist = new ArrayList<>();
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			Varnode vn = Varnode.decode(decoder, pfact);
 			inputlist.add(vn);
 		}
-		PcodeOp res;
-		try {
-			res = pfact.newOp(seqnum, opc, inputlist, output);
-		}
-		catch (UnknownInstructionException e) {
-			throw new PcodeXMLException("Bad opcode: " + e.getMessage(), e);
-		}
-		parser.end(el);
+		PcodeOp res = pfact.newOp(seqnum, opc, inputlist, output);
+		decoder.closeElement(el);
 		return res;
 	}
 
@@ -522,7 +531,7 @@ public class PcodeOp {
 	 * Generate a lookup table that maps pcode mnemonic strings to pcode operation codes.
 	 */
 	private static void generateOpcodeTable() {
-		opcodeTable = new Hashtable<String, Integer>();
+		opcodeTable = new Hashtable<>();
 		for (int i = 0; i < PCODE_MAX; i++) {
 			opcodeTable.put(getMnemonic(i), i);
 		}
@@ -690,6 +699,8 @@ public class PcodeOp {
 				return "EXTRACT";
 			case POPCOUNT:
 				return "POPCOUNT";
+			case LZCOUNT:
+				return "LZCOUNT";
 
 			default:
 				return "INVALID_OP";
@@ -712,5 +723,34 @@ public class PcodeOp {
 			throw new UnknownInstructionException();
 		}
 		return i.intValue();
+	}
+
+	/**
+	 * Return true if the given opcode represents a commutative operation.
+	 * If true, the operation has exactly two inputs that can be switched without affecting the output.
+	 * @param opcode is the opcode
+	 * @return true if the operation is commutative
+	 */
+	public static boolean isCommutative(int opcode) {
+		switch (opcode) {
+			case PcodeOp.INT_EQUAL:
+			case PcodeOp.INT_NOTEQUAL:
+			case PcodeOp.INT_ADD:
+			case PcodeOp.INT_XOR:
+			case PcodeOp.INT_AND:
+			case PcodeOp.INT_OR:
+			case PcodeOp.INT_MULT:
+			case PcodeOp.BOOL_XOR:
+			case PcodeOp.BOOL_AND:
+			case PcodeOp.BOOL_OR:
+			case PcodeOp.FLOAT_EQUAL:
+			case PcodeOp.FLOAT_NOTEQUAL:
+			case PcodeOp.FLOAT_ADD:
+			case PcodeOp.FLOAT_MULT:
+			case PcodeOp.INT_CARRY:
+			case PcodeOp.INT_SCARRY:
+				return true;
+		}
+		return false;
 	}
 }

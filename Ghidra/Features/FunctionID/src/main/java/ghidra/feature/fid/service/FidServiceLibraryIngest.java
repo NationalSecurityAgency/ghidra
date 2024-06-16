@@ -30,8 +30,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -220,7 +219,7 @@ class FidServiceLibraryIngest {
 		monitor.initialize(programFiles.size());
 		Object consumer = new Object();
 		for (DomainFile programFile : programFiles) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Program program = null;
 			try {
 				program = (Program) programFile.getDomainObject(consumer, false, false,
@@ -275,7 +274,7 @@ class FidServiceLibraryIngest {
 
 		// 3) add all the forward (child) call relatives
 		for (Entry<Function, FunctionRow> entry : recordMap.entrySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function function = entry.getKey();
 			FunctionRow functionRow = entry.getValue();
 			if (functionRow != null) {
@@ -294,7 +293,7 @@ class FidServiceLibraryIngest {
 		}
 
 		for (Entry<Function, FunctionRow> entry : recordMap.entrySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FunctionRow functionRow = entry.getValue();
 			FunctionRecord functionRecord = functionRow.functionRecord;
 			if (functionRecord == null) {
@@ -339,7 +338,7 @@ class FidServiceLibraryIngest {
 		FunctionIterator functions = functionManager.getFunctions(true);
 
 		for (Function function : functions) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (functionIsExternal(function)) {
 				continue;
 			}
@@ -416,12 +415,12 @@ class FidServiceLibraryIngest {
 		AddressIterator referenceIterator =
 			referenceManager.getReferenceSourceIterator(function.getBody(), true);
 		for (Address address : referenceIterator) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instruction = program.getListing().getInstructionAt(address);
 			if (instruction != null && instruction.getFlowType().isCall()) {
 				Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
 				for (Reference reference : referencesFrom) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Address toAddress = reference.getToAddress();
 					if (!alreadyDone.contains(toAddress)) {
 						Function relation = functionManager.getFunctionContaining(toAddress);
@@ -489,16 +488,16 @@ class FidServiceLibraryIngest {
 	 */
 	private void resolveNamedRelations() throws CancelledException {
 		for (Entry<FunctionRecord, Set<ChildSymbol>> entry : unresolvedSymbols.entrySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FunctionRecord functionRecord = entry.getKey();
 			Set<ChildSymbol> unresolvedForFunction = entry.getValue();
 			for (ChildSymbol unresolvedSym : unresolvedForFunction) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				boolean handled = handleNamedRelationSearch(library, functionRecord, unresolvedSym,
 					RelationType.INTRA_LIBRARY_CALL);
 				if (!handled && linkLibraries != null) {
 					for (LibraryRecord linkLibrary : linkLibraries) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						handled = handleNamedRelationSearch(linkLibrary, functionRecord,
 							unresolvedSym, RelationType.INTER_LIBRARY_CALL);
 						if (handled) {
@@ -531,7 +530,7 @@ class FidServiceLibraryIngest {
 		CodeUnitIterator codeUnitIterator =
 			function.getProgram().getListing().getCodeUnits(body, true);
 		while (codeUnitIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit codeUnit = codeUnitIterator.next();
 			if (codeUnit instanceof Instruction) {
 				Instruction instruction = (Instruction) codeUnit;
@@ -561,7 +560,7 @@ class FidServiceLibraryIngest {
 		List<FunctionRecord> list = fidDb.findFunctionsByLibraryAndName(libraryRecord, symbol.name);
 		HashSet<Long> hashes = new HashSet<>();
 		for (FunctionRecord relation : list) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			// If we have hash information about the symbol, use it as additional filter
 			if (symbol.hashQuad != null &&
 				symbol.hashQuad.getFullHash() != relation.getFullHash()) {
@@ -575,7 +574,7 @@ class FidServiceLibraryIngest {
 		}
 		else if (hashes.size() <= MAXIMUM_NUMBER_OF_NAME_RESOLUTION_RELATIONS) {
 			for (FunctionRecord relative : list) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				// Continue to use any hash information as filter
 				if (symbol.hashQuad != null &&
 					symbol.hashQuad.getFullHash() != relative.getFullHash()) {
@@ -619,15 +618,13 @@ class FidServiceLibraryIngest {
 	 * @return whether the function is external
 	 */
 	private static boolean functionIsExternal(Function function) {
-		if (function.isExternal()) {
-			return true;
-		}
+		Memory mem = function.getProgram().getMemory();
 		Address entryPoint = function.getEntryPoint();
-		MemoryBlock block = function.getProgram().getMemory().getBlock(entryPoint);
-		if (!block.isInitialized()) {
+		if (function.isExternal() || !mem.contains(entryPoint)) {
 			return true;
 		}
-		return false;
+		MemoryBlock block = function.getProgram().getMemory().getBlock(entryPoint);
+		return block == null || !block.isInitialized() || block.isExternalBlock();
 	}
 
 	private void exclude(DomainFile domainFile, Function function,

@@ -24,15 +24,10 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import ghidra.app.services.GoToService;
 import ghidra.program.model.symbol.Reference;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
 
-/**
- * 
- * 
- */
 class ReferencePanel extends JPanel {
 
 	private ReferenceProvider referenceProvider;
@@ -40,8 +35,8 @@ class ReferencePanel extends JPanel {
 	private TableModelListener listener;
 	private GhidraThreadedTablePanel<Reference> threadedTablePanel;
 
-	ReferencePanel(ReferenceProvider provider, SymbolReferenceModel model, SymbolRenderer renderer,
-			GoToService gotoService) {
+	ReferencePanel(ReferenceProvider provider, SymbolReferenceModel model,
+			SymbolRenderer renderer) {
 
 		super(new BorderLayout());
 
@@ -51,10 +46,9 @@ class ReferencePanel extends JPanel {
 
 		refTable = threadedTablePanel.getTable();
 		refTable.setAutoLookupColumn(SymbolReferenceModel.LABEL_COL);
-		refTable.setName("ReferenceTable");//used by JUnit...
 		refTable.setPreferredScrollableViewportSize(new Dimension(250, 200));
 		refTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		refTable.installNavigation(gotoService, gotoService.getDefaultNavigatable());
+		refTable.installNavigation(provider.getTool());
 
 		this.listener = e -> referenceProvider.updateTitle();
 		refTable.getModel().addTableModelListener(listener);
@@ -67,6 +61,9 @@ class ReferencePanel extends JPanel {
 		}
 
 		add(threadedTablePanel, BorderLayout.CENTER);
+
+		String namePrefix = "Reference";
+		refTable.setAccessibleNamePrefix(namePrefix);
 	}
 
 	GhidraTable getTable() {

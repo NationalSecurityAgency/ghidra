@@ -21,7 +21,7 @@ import org.jdom.Element;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.RowLayout;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -151,7 +151,7 @@ public class FieldFormatModel {
 	 * @param colIndex the position in the row for the new field.
 	 */
 	public void addFactory(FieldFactory factory, int rowIndex, int colIndex) {
-		HighlightProvider hsProvider = formatMgr.getFormatHighlightProvider();
+		ListingHighlightProvider hsProvider = formatMgr.getFormatHighlightProvider();
 		ToolOptions displayOptions = formatMgr.getDisplayOptions();
 		ToolOptions fieldOptions = formatMgr.getFieldOptions();
 		FieldFactory ff = factory.newInstance(this, hsProvider, displayOptions, fieldOptions);
@@ -430,19 +430,32 @@ public class FieldFormatModel {
 	}
 
 	/**
-	 * Notifies that the options have changed.
+	 * Notifies that the field display options have changed.
 	 * @param options the Options object that changed.
 	 * @param optionName the name of the property that changed.
 	 * @param oldValue the old value of the property.
 	 * @param newValue the new value of the property.
 	 */
-	public void optionsChanged(Options options, String optionName, Object oldValue,
+	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		for (Row row : rows) {
-			row.optionsChanged(options, optionName, oldValue, newValue);
+			row.displayOptionsChanged(options, optionName, oldValue, newValue);
 		}
 	}
 
+	/**
+	 * Notifies that the field options have changed.
+	 * @param options the Options object that changed.
+	 * @param optionName the name of the property that changed.
+	 * @param oldValue the old value of the property.
+	 * @param newValue the new value of the property.
+	 */
+	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
+			Object newValue) {
+		for (Row row : rows) {
+			row.fieldOptionsChanged(options, optionName, oldValue, newValue);
+		}
+	}
 //==================================================================================================
 //Inner Classes 
 //==================================================================================================
@@ -465,9 +478,17 @@ class Row {
 		layoutFields();
 	}
 
-	public void optionsChanged(Options options, String name, Object oldValue, Object newValue) {
+	public void displayOptionsChanged(Options options, String name, Object oldValue,
+			Object newValue) {
 		for (FieldFactory factory : fields) {
-			factory.optionsChanged(options, name, oldValue, newValue);
+			factory.displayOptionsChanged(options, name, oldValue, newValue);
+		}
+	}
+
+	public void fieldOptionsChanged(Options options, String name, Object oldValue,
+			Object newValue) {
+		for (FieldFactory factory : fields) {
+			factory.fieldOptionsChanged(options, name, oldValue, newValue);
 		}
 	}
 

@@ -17,11 +17,13 @@ package ghidra.app.plugin.core.functiongraph;
 
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.jdom.Element;
 
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -31,20 +33,19 @@ import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -53,22 +54,18 @@ import resources.ResourceManager;
 	category = PluginCategoryNames.GRAPH,
 	shortDescription = FunctionGraphPlugin.FUNCTION_GRAPH_NAME,
 	description = "Plugin for show a graphical representation of the code blocks of a function",
-	servicesRequired = { GoToService.class, BlockModelService.class, CodeViewerService.class, ProgramManager.class }
+	servicesRequired = { GoToService.class, BlockModelService.class, CodeViewerService.class, ProgramManager.class },
+	servicesProvided = { FunctionGraphMarginService.class }
 )
 //@formatter:on
-public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeListener {
+public class FunctionGraphPlugin extends ProgramPlugin
+		implements OptionsChangeListener, FunctionGraphMarginService {
+
 	static final String FUNCTION_GRAPH_NAME = "Function Graph";
 	static final String OPTIONS_NAME_PATH =
 		ToolConstants.GRAPH_OPTIONS + Options.DELIMITER + FUNCTION_GRAPH_NAME;
 
-	static final ImageIcon ICON = ResourceManager.loadImage("images/function_graph.png");
-
-	public static final ImageIcon GROUP_ICON =
-		ResourceManager.loadImage("images/shape_handles.png");
-	public static final ImageIcon GROUP_ADD_ICON =
-		ResourceManager.loadImage("images/shape_square_add.png");
-	public static final ImageIcon UNGROUP_ICON =
-		ResourceManager.loadImage("images/shape_ungroup.png");
+	static final Icon ICON = new GIcon("icon.plugin.functiongraph.action.provider");
 
 	private static final String USER_DEFINED_FORMAT_CONFIG_NAME = "USER_DEFINED_FORMAT_MANAGER";
 
@@ -86,7 +83,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	private List<FGLayoutProvider> layoutProviders;
 
 	public FunctionGraphPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 
 		colorProvider = new IndependentColorProvider(tool);
 	}
@@ -118,18 +115,30 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 			colorProvider = new ToolBasedColorProvider(this, (ColorizingService) service);
 			connectedProvider.refreshAndKeepPerspective();
 		}
+		else if (interfaceClass == MarkerService.class) {
+			for (FGProvider disconnectedProvider : disconnectedProviders) {
+				disconnectedProvider.refreshAndKeepPerspective();
+			}
+			connectedProvider.refreshAndKeepPerspective();
+		}
 	}
 
 	@Override
 	public void serviceRemoved(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == ClipboardService.class) {
-			connectedProvider.setClipboardService((ClipboardService) service);
+			connectedProvider.setClipboardService(null);
 			for (FGProvider disconnectedProvider : disconnectedProviders) {
-				disconnectedProvider.setClipboardService((ClipboardService) service);
+				disconnectedProvider.setClipboardService(null);
 			}
 		}
 		else if (interfaceClass == ColorizingService.class) {
 			colorProvider = new IndependentColorProvider(tool);
+			connectedProvider.refreshAndKeepPerspective();
+		}
+		else if (interfaceClass == MarkerService.class) {
+			for (FGProvider disconnectedProvider : disconnectedProviders) {
+				disconnectedProvider.refreshAndKeepPerspective();
+			}
 			connectedProvider.refreshAndKeepPerspective();
 		}
 	}
@@ -199,6 +208,22 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 			provider.optionsChanged();
 			provider.getComponent().repaint();
 		}
+	}
+
+	@Override
+	public void addMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		for (FGProvider disconnectedProvider : disconnectedProviders) {
+			disconnectedProvider.addMarkerProviderSupplier(supplier);
+		}
+		connectedProvider.addMarkerProviderSupplier(supplier);
+	}
+
+	@Override
+	public void removeMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		for (FGProvider disconnectedProvider : disconnectedProviders) {
+			disconnectedProvider.removeMarkerProviderSupplier(supplier);
+		}
+		connectedProvider.removeMarkerProviderSupplier(supplier);
 	}
 
 	@Override
@@ -436,6 +461,10 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 
 	public FGColorProvider getColorProvider() {
 		return colorProvider;
+	}
+
+	public <T> T getService(Class<T> serviceClass) {
+		return tool.getService(serviceClass);
 	}
 
 	public FunctionGraphOptions getFunctionGraphOptions() {

@@ -16,9 +16,7 @@
 package ghidra.trace.database.program;
 
 import java.util.*;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
+import java.util.stream.StreamSupport;
 
 import generic.NestedIterator;
 import generic.util.PeekableIterator;
@@ -27,6 +25,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -75,6 +74,9 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	protected TraceNamespaceSymbol assertTraceNamespace(Namespace ns) {
+		if (ns == null) {
+			return symbolManager.getGlobalNamespace();
+		}
 		if (!(ns instanceof TraceNamespaceSymbol)) {
 			throw new IllegalArgumentException("Given namespace is not part of this trace");
 		}
@@ -142,14 +144,9 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	protected <T extends TraceSymbol> T requireVisible(T sym) {
-		if (!(sym instanceof TraceSymbolWithLifespan)) {
+		if (!(sym instanceof TraceSymbolWithLifespan wl)) {
 			return sym;
 		}
-		if (sym instanceof TraceFunctionSymbol) {
-			TraceFunctionSymbol function = (TraceFunctionSymbol) sym;
-			return program.isFunctionVisible(function, function.getLifespan()) ? sym : null;
-		}
-		TraceSymbolWithLifespan wl = (TraceSymbolWithLifespan) sym;
 		if (program.viewport.containsAnyUpper(wl.getLifespan())) {
 			return sym;
 		}
@@ -208,9 +205,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 		TraceNamespaceSymbol parent = assertTraceNamespace(namespace);
 		try (LockHold hold = program.trace.lockRead()) {
 			List<Symbol> result = new ArrayList<>();
-			for (TraceSymbol sym : symbolManager.labelsAndFunctions()
-					.getChildrenNamed(name,
-						parent)) {
+			for (TraceSymbol sym : symbolManager.labels().getChildrenNamed(name, parent)) {
 				if (requireVisible(sym) != null) {
 					result.add(sym);
 				}
@@ -237,17 +232,17 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 
 	@Override
 	public Symbol getParameterSymbol(String name, Namespace namespace) {
-		return symbolManager.parameters().getChildNamed(name, assertTraceNamespace(namespace));
+		return null;
 	}
 
 	@Override
 	public Symbol getLocalVariableSymbol(String name, Namespace namespace) {
-		return symbolManager.localVariables().getChildNamed(name, assertTraceNamespace(namespace));
+		return null;
 	}
 
 	@Override
 	public Symbol getVariableSymbol(String name, Function function) {
-		return symbolManager.allVariables().getChildNamed(name, assertTraceNamespace(function));
+		return null;
 	}
 
 	@Override
@@ -277,7 +272,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	public Symbol getPrimarySymbol(Address addr) {
 		try (LockHold hold = program.trace.lockRead()) {
 			Collection<? extends TraceSymbol> at =
-				symbolManager.labelsAndFunctions().getAt(program.snap, null, addr, true);
+				symbolManager.labels().getAt(program.snap, null, addr, true);
 			if (at.isEmpty()) {
 				return null;
 			}
@@ -289,7 +284,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	public Symbol[] getSymbols(Address addr) {
 		try (LockHold hold = program.trace.lockRead()) {
 			Collection<? extends TraceSymbol> at =
-				symbolManager.labelsAndFunctions().getAt(program.snap, null, addr, true);
+				symbolManager.labels().getAt(program.snap, null, addr, true);
 			return at.toArray(new Symbol[at.size()]);
 		}
 	}
@@ -305,7 +300,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	public Symbol[] getUserSymbols(Address addr) {
 		try (LockHold hold = program.trace.lockRead()) {
 			Collection<? extends TraceSymbol> at =
-				symbolManager.labelsAndFunctions().getAt(program.snap, null, addr, false);
+				symbolManager.labels().getAt(program.snap, null, addr, false);
 			return at.toArray(new Symbol[at.size()]);
 		}
 	}
@@ -329,10 +324,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	@Override
 	public boolean hasSymbol(Address addr) {
 		if (addr.isMemoryAddress()) {
-			return symbolManager.labelsAndFunctions().hasAt(program.snap, null, addr, true);
-		}
-		if (addr.getAddressSpace().isRegisterSpace() || addr.isStackAddress()) {
-			return symbolManager.allVariables().hasAt(addr, true);
+			return symbolManager.labels().hasAt(program.snap, null, addr, true);
 		}
 		return false;
 	}
@@ -355,31 +347,17 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 			if (range.getAddressSpace().isMemorySpace()) {
 				if (type == SymbolType.LABEL) {
 					return symbolManager.labels()
-							.getIntersecting(Range.singleton(program.snap),
-								null, range, true, forward)
+							.getIntersecting(Lifespan.at(program.snap), null, range, true, forward)
 							.iterator();
-				}
-				if (type == SymbolType.FUNCTION) {
-					return symbolManager.functions()
-							.getIntersecting(Range.singleton(program.snap),
-								null, range, true, forward)
-							.iterator();
-				}
-			}
-			if (range.getAddressSpace().isRegisterSpace() ||
-				range.getAddressSpace().isStackSpace()) {
-				if (type == SymbolType.PARAMETER) {
-					return symbolManager.parameters().getIntersecting(range, true).iterator();
-				}
-				if (type == SymbolType.LOCAL_VAR) {
-					return symbolManager.localVariables().getIntersecting(range, true).iterator();
-				}
-				if (type == SymbolType.GLOBAL_VAR) {
-					return symbolManager.globalVariables().getIntersecting(range, true).iterator();
 				}
 			}
 			return Collections.emptyIterator();
 		}));
+	}
+
+	@Override
+	public SymbolIterator scanSymbolsByName(String startName) {
+		return new SymbolIteratorAdapter(symbolManager.allSymbols().scanByName(startName));
 	}
 
 	@Override
@@ -390,12 +368,12 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	protected Iterator<? extends Symbol> getSymbolIteratorAtMySnap(
 			TraceSymbolWithLocationView<? extends TraceSymbol> view, AddressSetView asv,
 			boolean includeDynamicSymbols, boolean forward) {
-		Iterator<AddressRange> rit = asv.iterator(forward);
-		Iterator<Iterator<? extends Symbol>> iit = Iterators.transform(rit, range -> {
-			return view.getIntersecting(Range.singleton(program.snap), null, range,
-				includeDynamicSymbols, forward).iterator();
-		});
-		return Iterators.concat(iit);
+		Spliterator<AddressRange> spliterator =
+			Spliterators.spliteratorUnknownSize(asv.iterator(forward), 0);
+		return StreamSupport.stream(spliterator, false).flatMap(range -> {
+			return view.getIntersecting(Lifespan.at(program.snap), null, range,
+				includeDynamicSymbols, forward).stream();
+		}).iterator();
 	}
 
 	@Override
@@ -432,8 +410,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 
 	@Override
 	public SymbolIterator getSymbolIterator(Address startAddr, boolean forward) {
-		return new SymbolIteratorAdapter(getSymbolIteratorAtMySnap(
-			symbolManager.labelsAndFunctions(),
+		return new SymbolIteratorAdapter(getSymbolIteratorAtMySnap(symbolManager.labels(),
 			DBTraceUtils.getAddressSet(program.language.getAddressFactory(), startAddr, forward),
 			true, forward));
 	}
@@ -451,9 +428,8 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	@Override
 	public SymbolIterator getPrimarySymbolIterator(AddressSetView asv, boolean forward) {
 		return new PrimarySymbolIterator(NestedIterator.start(asv.iterator(forward),
-			range -> symbolManager.labelsAndFunctions()
-					.getIntersecting(
-						Range.singleton(program.snap), null, range, true, forward)
+			range -> symbolManager.labels()
+					.getIntersecting(Lifespan.at(program.snap), null, range, true, forward)
 					.iterator()));
 	}
 
@@ -497,17 +473,10 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 		// NOTE: Currently, traces do not allow namespaces to have arbitrary bodies.
 		// Instead, their bodies are the union of addresses of their descendants.
 		if (addr.isMemoryAddress()) {
-			for (TraceSymbol sym : symbolManager.labelsAndFunctions()
-					.getAt(program.snap, null,
-						addr, true)) {
+			for (TraceSymbol sym : symbolManager.labels().getAt(program.snap, null, addr, true)) {
 				if (sym instanceof TraceNamespaceSymbol /* Function */) {
 					return (TraceNamespaceSymbol) sym;
 				}
-				return sym.getParentNamespace();
-			}
-		}
-		if (addr.getAddressSpace().isRegisterSpace() || addr.isStackAddress()) {
-			for (TraceSymbol sym : symbolManager.allVariables().getAt(addr, true)) {
 				return sym.getParentNamespace();
 			}
 		}

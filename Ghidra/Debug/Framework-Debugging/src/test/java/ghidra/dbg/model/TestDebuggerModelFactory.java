@@ -27,7 +27,7 @@ import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 public class TestDebuggerModelFactory implements DebuggerModelFactory {
 	public static final String FAKE_DETAILS = "A 'connection' to a fake debugger";
 	public static final String FAKE_DETAILS_HTML =
-		"<html><b>Description:</b> A&nbsp;'connection'&nbsp;to&nbsp;a&nbsp;fake&nbsp;debugger";
+		"<html><b>Description:</b> A 'connection' to a fake debugger";
 	public static final String FAKE_OPTION_NAME = "Test String";
 	public static final String FAKE_DEFAULT = "Default test string";
 

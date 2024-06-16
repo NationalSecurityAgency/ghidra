@@ -22,6 +22,11 @@
 #include "emulate.hh"
 #include <iostream>
 
+using std::cerr;
+using std::cout;
+
+namespace ghidra {
+
 // These are the bytes for an example x86 binary
 // These bytes are loaded at address 0x80483b4
 static uint1 myprog[] = {
@@ -283,9 +288,13 @@ static void doEmulation(Translate &trans,LoadImage &loader)
   } while(!emulater.getHalt());
 }
 
+} // End namespace ghidra
+
 int main(int argc,char **argv)
 
 {
+  using namespace ghidra;
+
   if (argc != 2) {
     cerr << "USAGE:  " << argv[0] << " disassemble" << endl;
     cerr << "        " << argv[0] << " pcode" << endl;
@@ -293,6 +302,9 @@ int main(int argc,char **argv)
     return 2;
   }
   string action(argv[1]);
+
+  AttributeId::initialize();
+  ElementId::initialize();
 
   // Set up the loadimage
   MyLoadImage loader(0x80483b4,myprog,408);
@@ -303,12 +315,12 @@ int main(int argc,char **argv)
   ContextInternal context;
 
   // Set up the assembler/pcode-translator
-  string sleighfilename = "specfiles/x86.sla";
+  istringstream sleighfilename("<sleigh>specfiles/x86.sla</sleigh>");
   Sleigh trans(&loader,&context);
 
   // Read sleigh file into DOM
   DocumentStorage docstorage;
-  Element *sleighroot = docstorage.openDocument(sleighfilename)->getRoot();
+  Element *sleighroot = docstorage.parseDocument(sleighfilename)->getRoot();
   docstorage.registerTag(sleighroot);
   trans.initialize(docstorage); // Initialize the translator
 
@@ -344,7 +356,7 @@ int main(int argc,char **argv)
 --# libraries
 --INCLUDES=-I./src
 --
---LNK=src/libsla.a
+--LNK=src/libsla.a -lz
 --
 --libsla.a:
 --	$(MAKE) -C src/ $@

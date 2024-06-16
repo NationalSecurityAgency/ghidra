@@ -49,7 +49,8 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory(), program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 		int start = getSuperBlockStart(reader);
 		if( start == -1 ) {
@@ -77,7 +78,8 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 	@Override
 	public boolean analyze(Program program, AddressSetView set,
 			TaskMonitor monitor, MessageLog log) throws Exception {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory(), program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 		int start = getSuperBlockStart(reader);
 		int groupStart = 0;
@@ -101,7 +103,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		monitor.setMessage("Creating group descriptors...");
 		monitor.setMaximum(numGroups);
 		for( int i = 0; i < numGroups; i++ ) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, is64Bit);
 			DataType groupDescDataType = groupDescriptors[i].toDataType();
 			createData(program, groupDescAddress, groupDescDataType);
@@ -125,10 +127,10 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		Ext4Inode inodes[] = new Ext4Inode[inodeCount];
 
 		for( int i = 0; i < groupDescriptors.length; i++ ) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table_lo() & 0xffffffffL;
 			if( is64Bit ) {
-				inodeTableBlockOffset = (groupDescriptors[i].getBg_inode_table_hi() << 32) | inodeTableBlockOffset;
+				inodeTableBlockOffset = (((long) groupDescriptors[i].getBg_inode_table_hi()) << 32) | inodeTableBlockOffset;
 			}
 			long offset = inodeTableBlockOffset * blockSize;
 			reader.setPointerIndex(offset);
@@ -148,7 +150,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 					//inode 0 does not exist
 					continue;
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Ext4Inode inode = new Ext4Inode(reader);
 				DataType dataType = inode.toDataType();
 				createData(program, address, dataType);
@@ -166,7 +168,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			Ext4SuperBlock superBlock, Ext4Inode[] inodes, TaskMonitor monitor) throws Exception {
 		//first 0xa inodes are reserved (0 doesn't exist)
 		for( int i = 0x1; i < inodes.length; i++ ) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Ext4Inode inode = inodes[i];
 			short mode = inode.getI_mode();
 			if( (mode & Ext4Constants.S_IFDIR) != 0 ) {
@@ -225,7 +227,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		monitor.setMessage("Creating super block and group descriptor copies...");
 		monitor.setMaximum(numGroups);
 		for( int i = 1; i < numGroups; i++ ) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if( isSparseSuper && (!isXpowerOfY(i, 3) && !isXpowerOfY(i, 5) && !isXpowerOfY(i, 7)) ) {
 				continue;
 			}

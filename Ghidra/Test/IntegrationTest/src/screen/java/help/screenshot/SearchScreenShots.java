@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.searchtext.SearchTextPlugin;
@@ -105,8 +106,10 @@ public class SearchScreenShots extends AbstractSearchScreenShots {
 		JRadioButton rbAll = (JRadioButton) getInstanceField("searchAllRB", dialog);
 		rbAll.setSelected(true);
 
-		JTextField textField = (JTextField) getInstanceField("valueField", dialog);
-		setText(textField, "LAB");
+		@SuppressWarnings("unchecked")
+		GhidraComboBox<String> comboBox =
+			(GhidraComboBox<String>) getInstanceField("valueComboBox", dialog);
+		setComboBoxSelection(comboBox, "LAB");
 
 		final JButton allButton = (JButton) getInstanceField("allButton", dialog);
 		pressButton(allButton);
@@ -167,8 +170,10 @@ public class SearchScreenShots extends AbstractSearchScreenShots {
 		JRadioButton rbAll = (JRadioButton) getInstanceField("searchAllRB", dialog);
 		rbAll.setSelected(true);
 
-		JTextField textField = (JTextField) getInstanceField("valueField", dialog);
-		setText(textField, "0");
+		@SuppressWarnings("unchecked")
+		GhidraComboBox<String> comboBox =
+			(GhidraComboBox<String>) getInstanceField("valueComboBox", dialog);
+		setComboBoxSelection(comboBox, "0");
 
 		final JButton allButton = (JButton) getInstanceField("allButton", dialog);
 		pressButton(allButton);

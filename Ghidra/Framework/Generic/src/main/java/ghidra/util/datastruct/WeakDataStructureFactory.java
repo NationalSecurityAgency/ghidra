@@ -19,8 +19,8 @@ import generic.concurrent.ConcurrentListenerSet;
 
 /**
  * Factory for creating containers to use in various threading environments
- * 
- * Other non-weak listeners: 
+ *
+ * Other non-weak listeners:
  * <ul>
  * 	<li>{@link ConcurrentListenerSet}</li>
  * </ul>
@@ -29,7 +29,7 @@ public class WeakDataStructureFactory {
 
 	/**
 	 * Use when all access are on a single thread, such as the Swing thread.
-	 * 
+	 *
 	 * @return a new WeakSet
 	 */
 	public static <T> WeakSet<T> createSingleThreadAccessWeakSet() {
@@ -38,7 +38,7 @@ public class WeakDataStructureFactory {
 
 	/**
 	 * Use when mutations outweigh iterations.
-	 * 
+	 *
 	 * @return a new WeakSet
 	 * @see CopyOnReadWeakSet
 	 */
@@ -48,7 +48,7 @@ public class WeakDataStructureFactory {
 
 	/**
 	 * Use when iterations outweigh mutations.
-	 * 
+	 *
 	 * @return a new WeakSet
 	 * @see CopyOnWriteWeakSet
 	 */

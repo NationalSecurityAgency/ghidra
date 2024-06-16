@@ -15,9 +15,11 @@
  */
 #include "paramid.hh"
 
-ElementId ELEM_PARAMMEASURES = ElementId("parammeasures",155);
-ElementId ELEM_PROTO = ElementId("proto",156);
-ElementId ELEM_RANK = ElementId("rank",157);
+namespace ghidra {
+
+ElementId ELEM_PARAMMEASURES = ElementId("parammeasures",106);
+ElementId ELEM_PROTO = ElementId("proto",107);
+ElementId ELEM_RANK = ElementId("rank",108);
 
 // NOTES FROM 20121206 W/Decompiler-Man
 // direct reads is for all opcodes, with special for these:
@@ -278,3 +280,5 @@ void ParamIDAnalysis::savePretty( ostream &s,bool moredetail ) const
   }
   s << "\n";
 }
+
+} // End namespace ghidra

@@ -16,10 +16,12 @@
 /// \file comment.hh
 /// \brief A database interface for high-level language comments
 
-#ifndef __CPUI_COMMENT__
-#define __CPUI_COMMENT__
+#ifndef __COMMENT_HH__
+#define __COMMENT_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 class FlowBlock;
 class PcodeOp;
@@ -66,7 +68,7 @@ public:
   int4 getUniq(void) const { return uniq; }			///< Get the sub-sorting index
   const string &getText(void) const { return text; }		///< Get the body of the comment
   void encode(Encoder &encoder) const;				///< Encode the comment to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);	///< Restore the comment from XML
+  void decode(Decoder &decoder);				///< Decode the comment from a stream
   static uint4 encodeCommentType(const string &name);		///< Convert name string to comment property
   static string decodeCommentType(uint4 val);			///< Convert comment property to string
 };
@@ -144,11 +146,10 @@ public:
   /// \param encoder is the stream encoder
   virtual void encode(Encoder &encoder) const=0;
 
-  /// \brief Restore all comments from a \<commentdb> element
+  /// \brief Decode all comments from a \<commentdb> element
   ///
   /// \param decoder is the stream decoder
-  /// \param manage is a manager for resolving address space references
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage)=0;
+  virtual void decode(Decoder &decoder)=0;
 };
 
 
@@ -171,7 +172,7 @@ public:
   virtual CommentSet::const_iterator beginComment(const Address &fad) const;
   virtual CommentSet::const_iterator endComment(const Address &fad) const;
   virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A class for sorting comments into and within basic blocks
@@ -250,4 +251,5 @@ public:
   Comment *getNext(void) const { Comment *res=(*start).second; ++start; return res; }	///< Advance to the next comment
 };
 
+} // End namespace ghidra
 #endif

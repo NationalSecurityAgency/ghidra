@@ -15,12 +15,11 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -33,11 +32,11 @@ public class EncodedAnnotation implements StructConverter {
 	private List<AnnotationElement> elements = new ArrayList<>();
 
 	public EncodedAnnotation(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		typeIndex = leb128.asUInt32();
 		typeIndexLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		size = leb128.asUInt32();
 		sizeLength = leb128.getLength();
 
@@ -68,9 +67,8 @@ public class EncodedAnnotation implements StructConverter {
 
 		Structure structure = new StructureDataType(builder.toString(), 0);
 
-		structure.add(new ArrayDataType(BYTE, typeIndexLength, BYTE.getLength()), "typeIndex",
-			null);
-		structure.add(new ArrayDataType(BYTE, sizeLength, BYTE.getLength()), "size", null);
+		structure.add(ULEB128, typeIndexLength, "typeIndex", null);
+		structure.add(ULEB128, sizeLength, "size", null);
 
 		int index = 0;
 		for (AnnotationElement element : elements) {

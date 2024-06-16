@@ -33,11 +33,13 @@ import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.table.columnfilter.*;
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.util.WindowUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 import utility.function.Callback;
 
 /**
@@ -45,7 +47,7 @@ import utility.function.Callback;
  *
  * @param <R> the row type of the table being filtered.
  */
-public class ColumnFilterDialog<R> extends DialogComponentProvider
+public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 		implements TableFilterDialogModelListener {
 
 	private final ColumnFilterDialogModel<R> filterModel;
@@ -70,7 +72,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 	 */
 	public ColumnFilterDialog(GTableFilterPanel<R> gTableFilterPanel, JTable table,
 			RowObjectFilterModel<R> tableModel) {
-		super("Table Column Filters", WindowUtilities.areModalDialogsVisible());
+		super("Table Column Filters", WindowUtilities.areModalDialogsVisible(), true, true, false);
 		this.gTableFilterPanel = gTableFilterPanel;
 		this.table = table;
 		this.tableModel = tableModel;
@@ -98,7 +100,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 	public static <R> boolean hasFilterableColumns(JTable table,
 			RowObjectFilterModel<R> model) {
 		return !ColumnFilterDialogModel.getAllColumnFilterData(model, table.getColumnModel())
-				.isEmpty();
+			.isEmpty();
 	}
 
 	private void addClearFilterButton() {
@@ -127,7 +129,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		};
 		saveAction.setHelpLocation(new HelpLocation("Trees", "Save_Filter"));
 		saveAction.setDescription("Save Filter");
-		saveAction.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/disk.png")));
+		saveAction.setToolBarData(new ToolBarData(Icons.SAVE_ICON));
 		addAction(saveAction);
 
 		DockingAction loadAction = new DockingAction("Load", "Filter") {
@@ -139,7 +141,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		loadAction.setDescription("Load Filter");
 		loadAction.setHelpLocation(new HelpLocation("Trees", "Load_Filter"));
 		loadAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/openSmallFolder.png")));
+			new ToolBarData(Icons.OPEN_FOLDER_ICON));
 		addAction(loadAction);
 	}
 
@@ -222,13 +224,13 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 			JPanel innerPanel = new JPanel(new VerticalLayout(3));
 
 			JButton addAndConditionButton =
-				new JButton("Add AND condition", ResourceManager.loadImage("images/Plus.png"));
+				new JButton("Add AND condition", Icons.ADD_ICON);
 
 			addAndConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.AND));
 			addAndConditionButton.setEnabled(true);
 
 			JButton addOrConditionButton =
-				new JButton("Add  OR   condition", ResourceManager.loadImage("images/Plus.png"));
+				new JButton("Add  OR   condition", Icons.ADD_ICON);
 
 			addOrConditionButton.setHorizontalAlignment(SwingConstants.LEFT);
 			addOrConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.OR));
@@ -369,7 +371,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 
 	private GLabel createLogicalOperationLabel(LogicOperation op) {
 		GLabel label = new GLabel("<" + op + ">", SwingConstants.CENTER);
-		label.setForeground(Color.GRAY);
+		label.setForeground(Messages.HINT);
 		return label;
 	}
 
@@ -381,7 +383,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		headerPanel.add(new GLabel("Filter Value", SwingConstants.CENTER));
 
 		headerPanel.setBorder(new CompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY.brighter().brighter()),
+			BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.BORDER),
 			BorderFactory.createEmptyBorder(4, 0, 4, 0)));
 		return headerPanel;
 	}
@@ -412,7 +414,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		setOkEnabled(isValid);
 		setApplyEnabled(isValid);
 
-		ActionContext context = new ActionContext();
+		ActionContext context = new DefaultActionContext();
 
 		for (DockingActionIf action : getActions()) {
 			action.setEnabled(action.isEnabledForContext(context));
@@ -474,6 +476,5 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		gTableFilterPanel.updateSavedFilters(filter, false);
 
 	}
-
 
 }

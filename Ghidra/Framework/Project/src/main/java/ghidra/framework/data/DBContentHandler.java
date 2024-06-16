@@ -17,14 +17,13 @@ package ghidra.framework.data;
 
 import java.io.IOException;
 
+import javax.help.UnsupportedOperationException;
+
 import db.DBHandle;
-import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
-import ghidra.util.*;
-import ghidra.util.exception.AssertException;
+import ghidra.util.InvalidNameException;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -32,8 +31,11 @@ import ghidra.util.task.TaskMonitor;
  * <code>DBContentHandler</code> provides an abstract ContentHandler for 
  * domain object content which is stored within a database file.
  * This class provides helper methods for working with database files.
+ * 
+ * @param <T> {@link DomainObjectAdapterDB} implementation class
  */
-public abstract class DBContentHandler implements ContentHandler {
+public abstract class DBContentHandler<T extends DomainObjectAdapterDB>
+		implements ContentHandler<T> {
 
 	/**
 	 * Create a new database file from an open database handle.
@@ -55,9 +57,8 @@ public abstract class DBContentHandler implements ContentHandler {
 			FileSystem fs, String path, String name, TaskMonitor monitor)
 			throws InvalidNameException, CancelledException, IOException {
 		DBHandle dbh = domainObj.getDBHandle();
-		ManagedBufferFile bf =
-			fs.createDatabase(path, name, FileIDFactory.createFileID(), contentType,
-				dbh.getBufferSize(), SystemUtilities.getUserName(), null);
+		ManagedBufferFile bf = fs.createDatabase(path, name, FileIDFactory.createFileID(),
+			contentType, dbh.getBufferSize(), SystemUtilities.getUserName(), null);
 		long checkoutId = bf.getCheckinID();  // item remains checked-out after saveAs
 		boolean success = false;
 		try {
@@ -70,6 +71,7 @@ public abstract class DBContentHandler implements ContentHandler {
 					bf.delete();
 				}
 				catch (IOException e) {
+					// ignore
 				}
 				abortCreate(fs, path, name, checkoutId);
 			}
@@ -77,7 +79,7 @@ public abstract class DBContentHandler implements ContentHandler {
 		return checkoutId;
 	}
 
-	private void abortCreate(FileSystem fs, String path, String name, long checkoutId) {
+	protected void abortCreate(FileSystem fs, String path, String name, long checkoutId) {
 		try {
 			FolderItem item = fs.getItem(path, name);
 			if (item != null) {
@@ -90,100 +92,6 @@ public abstract class DBContentHandler implements ContentHandler {
 		catch (IOException e) {
 			// Cleanup failed
 		}
-	}
-
-	/**
-	 * Return user data content type corresponding to associatedContentType.
-	 */
-	private static String getUserDataContentType(String associatedContentType) {
-		return associatedContentType + "UserData";
-	}
-
-	/**
-	 * @see ghidra.framework.data.ContentHandler#saveUserDataFile(ghidra.framework.model.DomainObject, db.DBHandle, ghidra.framework.store.FileSystem, ghidra.util.task.TaskMonitor)
-	 */
-	@Override
-	public final void saveUserDataFile(DomainObject domainObj, DBHandle userDbh, FileSystem userfs,
-			TaskMonitor monitor) throws CancelledException, IOException {
-		if (userfs.isVersioned()) {
-			throw new IllegalArgumentException("User data file-system may not be versioned");
-		}
-		String associatedContentType = getContentType();
-		DomainFile associatedDf = domainObj.getDomainFile();
-		if (associatedDf == null) {
-			throw new IllegalStateException("associated " + associatedContentType +
-				" file must be saved before user data can be saved");
-		}
-		String associatedFileID = associatedDf.getFileID();
-		if (associatedFileID == null) {
-			Msg.error(this, associatedContentType + " '" + associatedDf.getName() +
-				"' has not been assigned a file ID, user settings can not be saved!");
-			return;
-		}
-		String path = "/";
-		String name = ProjectFileManager.getUserDataFilename(associatedFileID);
-		BufferFile bf = null;
-		boolean success = false;
-		try {
-			bf =
-				userfs.createDatabase(path, name, FileIDFactory.createFileID(),
-					getUserDataContentType(associatedContentType), userDbh.getBufferSize(),
-					SystemUtilities.getUserName(), null);
-			userDbh.saveAs(bf, true, monitor);
-			success = true;
-		}
-		catch (InvalidNameException e) {
-			throw new AssertException("Unexpected Error", e);
-		}
-		finally {
-			if (bf != null && !success) {
-				try {
-					bf.delete();
-				}
-				catch (IOException e) {
-				}
-				abortCreate(userfs, path, name, FolderItem.DEFAULT_CHECKOUT_ID);
-			}
-		}
-	}
-
-	/**
-	 * @see ghidra.framework.data.ContentHandler#removeUserDataFile(ghidra.framework.store.FolderItem, ghidra.framework.store.FileSystem)
-	 */
-	@Override
-	public final void removeUserDataFile(FolderItem associatedItem, FileSystem userfs)
-			throws IOException {
-		String path = "/";
-		String name = ProjectFileManager.getUserDataFilename(associatedItem.getFileID());
-		FolderItem item = userfs.getItem(path, name);
-		if (item != null) {
-			item.delete(-1, null);
-		}
-	}
-
-	/**
-	 * Open user data file associatedDbh
-	 * @param associatedFileID
-	 * @param associatedContentType
-	 * @param userfs
-	 * @param monitor
-	 * @return user data file database handle
-	 * @throws IOException
-	 * @throws CancelledException
-	 */
-	protected final DBHandle openAssociatedUserFile(String associatedFileID,
-			String associatedContentType, FileSystem userfs, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		String path = "/";
-		String name = ProjectFileManager.getUserDataFilename(associatedFileID);
-		FolderItem item = userfs.getItem(path, name);
-		if (item == null || !(item instanceof DatabaseItem) ||
-			!getUserDataContentType(associatedContentType).equals(item.getContentType())) {
-			return null;
-		}
-		DatabaseItem dbItem = (DatabaseItem) item;
-		BufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
-		return new DBHandle(bf, false, monitor);
 	}
 
 }

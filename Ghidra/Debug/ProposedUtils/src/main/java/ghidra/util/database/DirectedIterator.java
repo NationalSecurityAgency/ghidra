@@ -17,62 +17,71 @@ package ghidra.util.database;
 
 import java.io.IOException;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
+import db.Table;
+import generic.End.Point;
 
+/**
+ * An iterator over some component of a {@link Table}
+ * 
+ * @param <T> the type of the component, i.e., a key or record
+ */
 public interface DirectedIterator<T> {
+	/**
+	 * The direction of iteration
+	 */
 	public enum Direction {
-		FORWARD, BACKWARD;
-
-		static Direction reverse(Direction direction) {
-			if (direction == FORWARD) {
+		FORWARD {
+			@Override
+			Direction reverse() {
 				return BACKWARD;
 			}
-			return FORWARD;
+		},
+		BACKWARD {
+			@Override
+			Direction reverse() {
+				return FORWARD;
+			}
+		};
+
+		/**
+		 * Get the reverse of this direction
+		 * 
+		 * @return the reverse
+		 */
+		abstract Direction reverse();
+
+		/**
+		 * Get the reverse of the given direction
+		 * 
+		 * @param direction the direction
+		 * @return the reverse
+		 */
+		static Direction reverse(Direction direction) {
+			return direction.reverse();
 		}
 	}
 
-	static long toIteratorMin(Range<Long> range) {
-		if (range == null) {
-			return Long.MIN_VALUE;
-		}
-		else if (!range.hasLowerBound()) {
-			return Long.MIN_VALUE;
-		}
-		else if (range.lowerBoundType() == BoundType.CLOSED) {
-			return range.lowerEndpoint();
-		}
-		else {
-			return range.lowerEndpoint() + 1;
-		}
-	}
-
-	static long toIteratorMax(Range<Long> range) {
-		if (range == null) {
-			return Long.MAX_VALUE;
-		}
-		else if (!range.hasUpperBound()) {
-			return Long.MAX_VALUE;
-		}
-		else if (range.upperBoundType() == BoundType.CLOSED) {
-			return range.upperEndpoint();
-		}
-		else {
-			return range.upperEndpoint() - 1;
-		}
-	}
-
-	static long clampLowerBound(Range<Long> range, long bound, boolean inclusive) {
-		return Math.max(toIteratorMin(range), inclusive ? bound : bound + 1);
-	}
-
-	static long clampUpperBound(Range<Long> range, long bound, boolean inclusive) {
-		return Math.min(toIteratorMax(range), inclusive ? bound : bound - 1);
-	}
-
+	/**
+	 * Check if the table has another record
+	 * 
+	 * @return true if so
+	 * @throws IOException if the table cannot be read
+	 */
 	boolean hasNext() throws IOException;
 
+	/**
+	 * Get the component of the next record
+	 * 
+	 * @return the component
+	 * @throws IOException if the table cannot be read
+	 */
 	T next() throws IOException;
 
+	/**
+	 * Delete the current record
+	 * 
+	 * @return true if successful
+	 * @throws IOException if the table cannot be accessed
+	 */
 	boolean delete() throws IOException;
 }

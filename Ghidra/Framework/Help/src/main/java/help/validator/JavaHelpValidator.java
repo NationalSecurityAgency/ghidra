@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.util.HelpLocation;
 import help.HelpBuildUtils;
 import help.validator.links.*;
 import help.validator.location.HelpModuleCollection;
@@ -95,7 +96,8 @@ public class JavaHelpValidator {
 		Map<HelpFile, Map<String, List<AnchorDefinition>>> duplicateAnchors =
 			helpCollection.getDuplicateAnchorsByFile();
 		debug("\tHelp files with duplicate anchors: " + duplicateAnchors.size());
-		for (Entry<HelpFile, Map<String, List<AnchorDefinition>>> entry : duplicateAnchors.entrySet()) {
+		for (Entry<HelpFile, Map<String, List<AnchorDefinition>>> entry : duplicateAnchors
+				.entrySet()) {
 			HelpFile helpFile = entry.getKey();
 			Map<String, List<AnchorDefinition>> list = entry.getValue();
 			linkDatabase.addDuplicateAnchors(
@@ -174,16 +176,32 @@ public class JavaHelpValidator {
 
 	private Path findPathInModules(IMG img) {
 
-		String rawSrc = img.getSrcAttribute();
-		Collection<ResourceFile> moduleRoots = Application.getModuleRootDirectories();
-		for (ResourceFile root : moduleRoots) {
-			ResourceFile resourceDir = new ResourceFile(root, "src/main/resources");
-			Path toCheck = makePath(resourceDir, rawSrc);
+		String src = img.getSrcAttribute();
+		if (src.startsWith(HelpLocation.HELP_SHARED)) {
+
+			// this prefix is a signal to look for images in a special directory inside of the 
+			// modules instead of help
+			ResourceFile myModule = Application.getMyModuleRootDirectory();
+			ResourceFile resourceDir = new ResourceFile(myModule, "src/main/resources");
+			Path toCheck = makePath(resourceDir, src);
 			if (toCheck != null) {
 				return toCheck;
 			}
 		}
 
+		return doFindPathInModules(src);
+	}
+
+	private Path doFindPathInModules(String path) {
+
+		Collection<ResourceFile> moduleRoots = Application.getModuleRootDirectories();
+		for (ResourceFile root : moduleRoots) {
+			ResourceFile resourceDir = new ResourceFile(root, "src/main/resources");
+			Path toCheck = makePath(resourceDir, path);
+			if (toCheck != null) {
+				return toCheck;
+			}
+		}
 		return null;
 	}
 

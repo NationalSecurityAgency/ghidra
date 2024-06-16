@@ -18,7 +18,8 @@ package ghidra.async;
 import java.lang.ref.Cleaner.Cleanable;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -325,7 +326,7 @@ public class AsyncReference<T, C> {
 			return CompletableFuture.failedFuture(disposalReason);
 		}
 		if (Objects.equals(this.val, t)) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		CompletableFuture<Void> waiter = waitsFor.get(t);
 		if (waiter == null) {
@@ -375,7 +376,7 @@ public class AsyncReference<T, C> {
 			}
 		}
 
-		ExecutionException ex = new ExecutionException("Disposed", reason);
+		DisposedException ex = new DisposedException(reason);
 		for (CompletableFuture<?> future : toExcept) {
 			future.completeExceptionally(ex);
 		}

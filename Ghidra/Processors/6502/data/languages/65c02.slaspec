@@ -208,7 +208,8 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 :TRB OPTB                      is (tcc=0 & taaa=0 & td=1) ... & OPTB
 {
     local op1 = OPTB;
-    local result = A & ~op1;
+    local result = (~A) & op1;
+    OPTB = result;
     Z = result == 0;
 }
 
@@ -216,5 +217,6 @@ ADDRIX: (imm16,X) is X; imm16     { addr:2 = imm16 + zext(X); tmp:2 = *:2 addr; 
 {
     local op1 = OPTB;
     local result = A | op1;
+    OPTB = result;
     Z = result == 0;
 }

@@ -62,9 +62,7 @@ class SelectByFlowAction extends ListingContextAction {
 		super(name, plugin.getName());
 		this.selectByFlowPlugin = plugin;
 		this.selectionType = selectionType;
-
-		// this is in the main tool menu, so make it a tool action
-		setSupportsDefaultToolContext(true);
+		setContextClass(ListingActionContext.class, true);
 
 		String[] menuPath = null;
 		if (selectionType == SelectByFlowPlugin.SELECT_FUNCTIONS) {

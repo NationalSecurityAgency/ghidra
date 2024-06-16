@@ -22,9 +22,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import ghidra.framework.Application;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.ProjectLocator;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
+import ghidra.framework.store.LockException;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -69,8 +72,9 @@ public class TransientProjectManager {
 	}
 
 	private TransientProjectManager() {
-		Runtime.getRuntime().addShutdownHook(
-			new Thread((Runnable) () -> dispose(), "TransientProjectManager Shutdown Hook"));
+		Runtime.getRuntime()
+				.addShutdownHook(new Thread((Runnable) () -> dispose(),
+					"TransientProjectManager Shutdown Hook"));
 	}
 
 	/**
@@ -78,8 +82,6 @@ public class TransientProjectManager {
 	 * connections. WARNING: This method intended for testing only.
 	 */
 	public synchronized void dispose() {
-		// TODO: server handles may be shared with non-transient projects
-
 		TransientProjectData[] projectDataArray =
 			repositoryMap.values().toArray(new TransientProjectData[repositoryMap.size()]);
 		for (TransientProjectData projectData : projectDataArray) {
@@ -94,16 +96,10 @@ public class TransientProjectManager {
 	 * @param protocolConnector Ghidra protocol connector
 	 * @param readOnly true if project data should be treated as read-only
 	 * @return transient project data
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	synchronized TransientProjectData getTransientProject(GhidraProtocolConnector protocolConnector,
 			boolean readOnly) throws IOException {
-
-		TransientProjectData projectData;
-
-		// try to avoid excessive accumulation of unreferenced transient project data.
-		// It is assumed that calls to this method are generally infrequent and may be slow
-		System.gc();
 
 		String repoName = protocolConnector.getRepositoryName();
 		if (repoName == null) {
@@ -114,17 +110,18 @@ public class TransientProjectManager {
 		RepositoryInfo repositoryInfo =
 			new RepositoryInfo(protocolConnector.getRepositoryRootGhidraURL(), repoName, readOnly);
 
-		projectData = repositoryMap.get(repositoryInfo);
+		TransientProjectData projectData = repositoryMap.get(repositoryInfo);
 
 		if (projectData == null || !projectData.stopCleanupTimer()) { // cleanup suspended
 
-			if (protocolConnector.connect(readOnly) != GhidraURLConnection.GHIDRA_OK) {
-				return null;
+			StatusCode statusCode = protocolConnector.connect(readOnly);
+			if (statusCode != StatusCode.OK) {
+				throw new NotConnectedException(statusCode.getDescription());
 			}
 
 			RepositoryAdapter repositoryAdapter = protocolConnector.getRepositoryAdapter();
 			if (repositoryAdapter == null || !repositoryAdapter.isConnected()) {
-				throw new NotConnectedException("protocol connector not connected to repository");
+				throw new NotConnectedException("Not connected to repository");
 			}
 
 			projectData = createTransientProject(repositoryAdapter, repositoryInfo);
@@ -176,13 +173,18 @@ public class TransientProjectManager {
 	private TransientProjectData createTransientProject(RepositoryAdapter repository,
 			RepositoryInfo repositoryInfo) throws IOException {
 
-		File tmp = File.createTempFile("ghidraPrj", "");
+		File tmp = Application.createTempFile("ghidraPrj", "");
 		tmp.delete();
 
 		ProjectLocator tmpProjectLocation = new TransientProjectStorageLocator(
 			tmp.getParentFile().getAbsolutePath(), tmp.getName(), repositoryInfo);
 
-		return new TransientProjectData(this, tmpProjectLocation, repositoryInfo, repository);
+		try {
+			return new TransientProjectData(this, tmpProjectLocation, repositoryInfo, repository);
+		}
+		catch (LockException e) {
+			throw new IOException(e); // unexpected for transient project storage
+		}
 	}
 
 	private static class TransientProjectStorageLocator extends ProjectLocator {

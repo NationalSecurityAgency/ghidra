@@ -17,100 +17,62 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.SymbolPathParser;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
-import ghidra.program.model.data.DataType;
 
 /**
  * Applier for {@link AbstractComplexMsType} types.
  */
-public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
+public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 
-	protected SymbolPath symbolPath;
-	protected SymbolPath fixedSymbolPath;
-
-	protected AbstractComplexTypeApplier definitionApplier = null;
-	protected AbstractComplexTypeApplier forwardReferenceApplier = null;
-
-	public static AbstractComplexTypeApplier getComplexApplier(PdbApplicator applicator,
-			RecordNumber recordNumber) throws PdbException {
-		return (AbstractComplexTypeApplier) applicator.getApplierSpec(recordNumber,
-			AbstractComplexTypeApplier.class);
+	// Intended for: AbstractComplexMsType
+	/**
+	 * Constructor for complex type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 */
+	public AbstractComplexTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	/**
-	 * Constructor for complex type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractComplexMsType} to process.
+	 * Returns the SymbolPath for the complex type parameter without using the record number
+	 * @param type the MS complex PDB type
+	 * @return the path
+	 * @see #getFixedSymbolPath(AbstractComplexMsType type)
 	 */
-	public AbstractComplexTypeApplier(PdbApplicator applicator, AbstractComplexMsType msType) {
-		super(applicator, msType);
-		String fullPathName = msType.getName();
-		symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));
+	SymbolPath getSymbolPath(AbstractComplexMsType type) {
+		String fullPathName = type.getName();
+		return new SymbolPath(SymbolPathParser.parse(fullPathName));
 	}
 
-	SymbolPath getSymbolPath() {
-		return symbolPath;
+	/**
+	 * Returns the definition record for the specified complex type in case the record passed
+	 *  in is only its forward reference
+	 * @param mType the MS complex PDB type
+	 * @param type the derivative complex type class
+	 * @param <T> the derivative class template argument
+	 * @return the path
+	 */
+	public <T extends AbstractComplexMsType> T getDefinitionType(AbstractComplexMsType mType,
+			Class<T> type) {
+		mType = applicator.getMappedTypeRecord(mType.getRecordNumber(), type);
+		return type.cast(mType);
 	}
 
-	boolean isForwardReference() {
-		return ((AbstractComplexMsType) msType).getMsProperty().isForwardReference();
-	}
-
-	boolean isNested() {
-		return ((AbstractComplexMsType) msType).getMsProperty().isNestedClass();
-	}
-
-	boolean isFinal() {
-		return ((AbstractComplexMsType) msType).getMsProperty().isSealed();
-	}
-
-	void setForwardReferenceApplier(AbstractComplexTypeApplier forwardReferenceApplier) {
-		this.forwardReferenceApplier = forwardReferenceApplier;
-	}
-
-	void setDefinitionApplier(AbstractComplexTypeApplier definitionApplier) {
-		this.definitionApplier = definitionApplier;
-	}
-
-	<T extends AbstractComplexTypeApplier> T getDefinitionApplier(Class<T> typeClass) {
-		if (!typeClass.isInstance(definitionApplier)) {
-			return null;
-		}
-		return typeClass.cast(definitionApplier);
-	}
-
-	protected AbstractComplexTypeApplier getAlternativeTypeApplier() {
-		if (isForwardReference()) {
-			return definitionApplier;
-		}
-		return forwardReferenceApplier;
-	}
-
-	protected SymbolPath getFixedSymbolPath() { //return mine or my def's (and set mine)
-		if (fixedSymbolPath != null) {
-			return fixedSymbolPath;
-		}
-
-		if (definitionApplier != null && definitionApplier.getFixedSymbolPath() != null) {
-			fixedSymbolPath = definitionApplier.getFixedSymbolPath();
-			return fixedSymbolPath;
-		}
-
-		SymbolPath fixed = PdbNamespaceUtils.convertToGhidraPathName(symbolPath, index);
-		if (symbolPath.equals(fixed)) {
-			fixedSymbolPath = symbolPath;
-		}
-		else {
-			fixedSymbolPath = fixed;
-		}
-		return fixedSymbolPath;
-	}
-
-	DataType getDataTypeInternal() {
-		return dataType;
+	/**
+	 * Returns the SymbolPath for the complex type.  This ensures that the SymbolPath pertains
+	 *  to the definition type in situations where the record number of the definition (vs. that
+	 *  of the forward reference) is needed for creation of the path
+	 * @param type the MS complex PDB type
+	 * @return the path
+	 */
+	//return mine or my def's (and set mine)
+	SymbolPath getFixedSymbolPath(AbstractComplexMsType type) {
+		SymbolPath path = getSymbolPath(type);
+		RecordNumber mappedNumber = applicator.getMappedRecordNumber(type.getRecordNumber());
+		Integer num = mappedNumber.getNumber();
+		return PdbNamespaceUtils.convertToGhidraPathName(path, num);
 	}
 
 }

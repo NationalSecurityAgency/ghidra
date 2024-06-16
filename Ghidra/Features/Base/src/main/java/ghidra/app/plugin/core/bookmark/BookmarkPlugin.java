@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.bookmark;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.event.KeyEvent;
 import java.util.*;
 
@@ -26,13 +29,15 @@ import docking.Tool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.table.GTable;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.*;
 import ghidra.framework.cmd.CompoundCmd;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
@@ -43,7 +48,8 @@ import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.task.SwingUpdateManager;
-import resources.*;
+import resources.Icons;
+import resources.MultiIconBuilder;
 
 /**
  * Plugin to for adding/deleting/editing bookmarks.
@@ -62,8 +68,7 @@ import resources.*;
 	eventsProduced = { ProgramSelectionPluginEvent.class }
 )
 //@formatter:on
-public class BookmarkPlugin extends ProgramPlugin
-		implements DomainObjectListener, PopupActionProvider, BookmarkService {
+public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider, BookmarkService {
 
 	private final static int MAX_DELETE_ACTIONS = 10;
 
@@ -75,7 +80,6 @@ public class BookmarkPlugin extends ProgramPlugin
 	private BookmarkProvider provider;
 	private DockingAction addAction;
 	private DockingAction deleteAction;
-	private CreateBookmarkDialog createDialog;
 	private GoToService goToService;
 	private MarkerService markerService;
 	private BookmarkManager bookmarkMgr;
@@ -84,13 +88,30 @@ public class BookmarkPlugin extends ProgramPlugin
 	private Map<String, BookmarkNavigator> bookmarkNavigators = new HashMap<>(); // maps type names to BookmarkNavigators
 	private NavUpdater navUpdater;
 
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
+
 	public BookmarkPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		provider = new BookmarkProvider(tool, this);
 		provider.addToTool();
 
 		createActions();
+	}
+
+	private DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		DomainObjectListenerBuilder builder = new DomainObjectListenerBuilder(this);
+		return builder
+			.any(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED).terminate(this::reload)
+			.any(BOOKMARK_TYPE_REMOVED).call(() ->repaintMgr.update())
+			.with(ProgramChangeRecord.class)
+				.each(BOOKMARK_REMOVED).call(this::bookmarkRemoved)
+				.each(BOOKMARK_ADDED).call(this::bookmarkAdded)
+				.each(BOOKMARK_CHANGED).call(this::bookmarkChanged)
+				.each(BOOKMARK_TYPE_ADDED).call(this::typeAdded)
+			.build();
+		// @formatter:on
 	}
 
 	@Override
@@ -115,7 +136,7 @@ public class BookmarkPlugin extends ProgramPlugin
 		tool.addAction(addAction);
 
 		MultiIconBuilder builder = new MultiIconBuilder(Icons.CONFIGURE_FILTER_ICON);
-		builder.addLowerRightIcon(ResourceManager.loadImage("images/check.png"));
+		builder.addLowerRightIcon(new GIcon("icon.plugin.bookmark.add"));
 		Icon filterTypesChanged = builder.build();
 		Icon filterTypesUnchanged = Icons.CONFIGURE_FILTER_ICON;
 		DockingAction filterAction = new DockingAction("Filter Bookmarks", getName()) {
@@ -150,7 +171,7 @@ public class BookmarkPlugin extends ProgramPlugin
 				provider.delete();
 			}
 		};
-		Icon icon = ResourceManager.loadImage("images/edit-delete.png");
+		Icon icon = new GIcon("icon.plugin.bookmark.delete");
 		deleteAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }, icon));
 		deleteAction.setDescription("Delete Selected Bookmarks");
@@ -164,9 +185,9 @@ public class BookmarkPlugin extends ProgramPlugin
 				select(provider.getBookmarkLocations());
 			}
 		};
-		icon = ResourceManager.loadImage("images/text_align_justify.png");
-		selectionAction.setPopupMenuData(
-			new MenuData(new String[] { "Select Bookmark Locations" }, icon));
+		icon = new GIcon("icon.plugin.bookmark.select");
+		selectionAction
+				.setPopupMenuData(new MenuData(new String[] { "Select Bookmark Locations" }, icon));
 		selectionAction.setToolBarData(new ToolBarData(icon));
 		selectionAction.setEnabled(true);
 		tool.addLocalAction(provider, selectionAction);
@@ -204,17 +225,13 @@ public class BookmarkPlugin extends ProgramPlugin
 			provider.dispose();
 			provider = null;
 		}
-		if (createDialog != null) {
-			createDialog.dispose();
-			createDialog = null;
-		}
 		goToService = null;
 
 		disposeAllBookmarkers();
 		markerService = null;
 
 		if (currentProgram != null) {
-			currentProgram.removeListener(this);
+			currentProgram.removeListener(domainObjectListener);
 		}
 		currentProgram = null;
 		super.dispose();
@@ -296,60 +313,9 @@ public class BookmarkPlugin extends ProgramPlugin
 		navUpdater.addType(type);
 	}
 
-	@Override
-	public synchronized void domainObjectChanged(DomainObjectChangedEvent ev) {
-
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
-			scheduleUpdate(null);
-			provider.reload();
-			return;
-		}
-
-		for (int i = 0; i < ev.numRecords(); i++) {
-			DomainObjectChangeRecord record = ev.getChangeRecord(i);
-
-			int eventType = record.getEventType();
-			if (!(record instanceof ProgramChangeRecord)) {
-				continue;
-			}
-			switch (eventType) {
-
-				case ChangeManager.DOCR_BOOKMARK_REMOVED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Bookmark bookmark = (Bookmark) rec.getObject();
-					bookmarkRemoved(bookmark);
-					break;
-				}
-
-				case ChangeManager.DOCR_BOOKMARK_ADDED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Bookmark bookmark = (Bookmark) rec.getObject();
-					bookmarkAdded(bookmark);
-					break;
-				}
-
-				case ChangeManager.DOCR_BOOKMARK_CHANGED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Bookmark bookmark = (Bookmark) rec.getObject();
-					bookmarkChanged(bookmark);
-					break;
-				}
-
-				case ChangeManager.DOCR_BOOKMARK_TYPE_ADDED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					BookmarkType bookmarkType = (BookmarkType) rec.getObject();
-					if (bookmarkType != null) {
-						typeAdded(bookmarkType.getTypeString());
-					}
-					break;
-				}
-				default:
-					repaintMgr.update();
-
-			}
-		}
+	public void reload() {
+		scheduleUpdate(null);
+		provider.reload();
 	}
 
 	@Override
@@ -357,12 +323,18 @@ public class BookmarkPlugin extends ProgramPlugin
 		tool.showComponentProvider(provider, visible);
 	}
 
-	private void typeAdded(String type) {
-		provider.typeAdded(type);
-		getBookmarkNavigator(bookmarkMgr.getBookmarkType(type));
+	private void typeAdded(ProgramChangeRecord rec) {
+		BookmarkType type = (BookmarkType) rec.getObject();
+		if (type == null) {
+			return;
+		}
+		provider.typeAdded(type.getTypeString());
+		getBookmarkNavigator(bookmarkMgr.getBookmarkType(type.getTypeString()));
+		repaintMgr.update();
 	}
 
-	private void bookmarkChanged(Bookmark bookmark) {
+	private void bookmarkChanged(ProgramChangeRecord rec) {
+		Bookmark bookmark = (Bookmark) rec.getObject();
 		if (bookmark == null) {
 			scheduleUpdate(null);
 			provider.reload();
@@ -372,9 +344,11 @@ public class BookmarkPlugin extends ProgramPlugin
 		nav.add(bookmark.getAddress());
 		scheduleUpdate(bookmark.getType().getTypeString());
 		provider.bookmarkChanged(bookmark);
+		repaintMgr.update();
 	}
 
-	private void bookmarkAdded(Bookmark bookmark) {
+	private void bookmarkAdded(ProgramChangeRecord rec) {
+		Bookmark bookmark = (Bookmark) rec.getObject();
 		if (bookmark == null) {
 			scheduleUpdate(null);
 			provider.reload();
@@ -384,9 +358,11 @@ public class BookmarkPlugin extends ProgramPlugin
 		nav.add(bookmark.getAddress());
 //		scheduleUpdate(bookmark.getType().getTypeString());
 		provider.bookmarkAdded(bookmark);
+		repaintMgr.update();
 	}
 
-	private void bookmarkRemoved(Bookmark bookmark) {
+	private void bookmarkRemoved(ProgramChangeRecord rec) {
+		Bookmark bookmark = (Bookmark) rec.getObject();
 		if (bookmark == null) {
 			scheduleUpdate(null);
 			provider.reload();
@@ -402,13 +378,14 @@ public class BookmarkPlugin extends ProgramPlugin
 			}
 		}
 		provider.bookmarkRemoved(bookmark);
+		repaintMgr.update();
 	}
 
 	@Override
 	protected synchronized void programDeactivated(Program program) {
 		provider.setProgram(null);
 		navUpdater.setProgram(null);
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 		disposeAllBookmarkers();
 		bookmarkMgr = null;
 	}
@@ -425,7 +402,7 @@ public class BookmarkPlugin extends ProgramPlugin
 
 	@Override
 	protected synchronized void programActivated(Program program) {
-		program.addListener(this);
+		program.addListener(domainObjectListener);
 		navUpdater.setProgram(program);
 		initializeBookmarkers();
 		provider.setProgram(program);
@@ -442,7 +419,7 @@ public class BookmarkPlugin extends ProgramPlugin
 			return;
 		}
 		boolean hasSelection = currentSelection != null && !currentSelection.isEmpty();
-		createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
+		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
 		tool.showDialog(createDialog);
 	}
 

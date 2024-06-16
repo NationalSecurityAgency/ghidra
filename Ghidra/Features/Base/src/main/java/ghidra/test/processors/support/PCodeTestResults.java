@@ -18,13 +18,15 @@ package ghidra.test.processors.support;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Predicate;
 
 import org.jdom.Attribute;
 import org.jdom.Element;
 
 public class PCodeTestResults {
 
-	private String jUnitName;
+	private final String jUnitName;
+	private final Predicate<String> ignoreTestPredicate;
 
 	boolean summaryHasIngestErrors;
 	boolean summaryHasRelocationErrors;
@@ -32,6 +34,7 @@ public class PCodeTestResults {
 
 	int summaryTotalAsserts;
 	int summaryPassCount;
+	int summaryIgnoreCount;
 	int summaryFailCount;
 	int summaryCallOtherCount;
 	int summarySevereFailures;
@@ -41,9 +44,76 @@ public class PCodeTestResults {
 	// map keys formed with "<groupName>.<testName>" string
 	private Map<String, TestResults> results = new HashMap<>();
 
-	PCodeTestResults(String jUnitName) {
+	private static String XML_VERSION = "1";
+
+	public static String TAG_NAME = "PCodeTestResults";
+
+	PCodeTestResults(String jUnitName, Predicate<String> ignoreTestPredicate) {
 		this.jUnitName = jUnitName;
+		this.ignoreTestPredicate = ignoreTestPredicate;
 		time = System.currentTimeMillis();
+	}
+
+	public PCodeTestResults(Element root, Predicate<String> ignoreTestPredicate) {
+
+		if (!TAG_NAME.equals(root.getName())) {
+			throw new IllegalArgumentException("Unsupported root element: " + root.getName());
+		}
+		String ver = root.getAttributeValue("VERSION");
+		if (!XML_VERSION.equals(ver)) {
+			throw new IllegalArgumentException(
+				"Unsupported XML format version " + ver + ", required format is " + XML_VERSION);
+		}
+
+		jUnitName = getJunitName(root);
+		this.ignoreTestPredicate = ignoreTestPredicate;
+
+		time = 0;
+		String timeStr = root.getAttributeValue("TIME");
+		if (timeStr != null) {
+			try {
+				time = Long.parseLong(timeStr);
+			}
+			catch (NumberFormatException e) {
+				// ignore
+			}
+		}
+
+		summaryHasIngestErrors = getAttributeValue(root, "INGEST_ERR", false);
+		summaryHasRelocationErrors = getAttributeValue(root, "RELOC_ERR", false);
+		summaryHasDisassemblyErrors = getAttributeValue(root, "DIS_ERR", false);
+
+		@SuppressWarnings("unchecked")
+		List<Element> elementList = root.getChildren("TestResults");
+		for (Element element : elementList) {
+
+			String testName = element.getAttributeValue("NAME");
+			if (testName == null) {
+				throw new IllegalArgumentException("Invalid TestResults element in XML");
+			}
+			TestResults testResults = new TestResults();
+			testResults.totalAsserts = getAttributeValue(element, "TOTAL_ASSERTS", 0);
+			testResults.passCount = getAttributeValue(element, "PASS", 0);
+			testResults.ignoredCount = getAttributeValue(element, "IGNORE", 0);
+			testResults.failCount = getAttributeValue(element, "FAIL", 0);
+			testResults.callOtherCount = getAttributeValue(element, "CALLOTHER", 0);
+			testResults.severeFailure = getAttributeValue(element, "SEVERE_FAILURE", false);
+
+			summaryTotalAsserts += testResults.totalAsserts;
+			summaryPassCount += testResults.passCount;
+			summaryIgnoreCount += testResults.ignoredCount;
+			summaryFailCount += testResults.failCount;
+			summaryCallOtherCount += testResults.callOtherCount;
+			if (testResults.severeFailure) {
+				++summarySevereFailures;
+			}
+
+			results.put(testName, testResults);
+		}
+	}
+
+	static String getJunitName(Element root) {
+		return root.getAttributeValue("JUNIT");
 	}
 
 	public String getJUnitName() {
@@ -51,6 +121,13 @@ public class PCodeTestResults {
 	}
 
 	private static DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+
+	public boolean isIgnoredTest(String testName) {
+		if (ignoreTestPredicate != null) {
+			return ignoreTestPredicate.test(testName);
+		}
+		return false;
+	}
 
 	public String getTime() {
 		if (time == 0) {
@@ -131,6 +208,21 @@ public class PCodeTestResults {
 		return 0;
 	}
 
+	void addIgnoredResult(String groupName, String testName) {
+		String groupTestName = getGroupTestName(groupName, testName);
+		getTestResults(groupTestName, true).ignoredCount++;
+		summaryIgnoreCount++;
+	}
+
+	public int getIgnoredResult(String groupName, String testName) {
+		String groupTestName = getGroupTestName(groupName, testName);
+		TestResults testResults = getTestResults(groupTestName, false);
+		if (testResults != null) {
+			return testResults.ignoredCount;
+		}
+		return 0;
+	}
+
 	void addFailResult(String groupName, String testName) {
 		String groupTestName = getGroupTestName(groupName, testName);
 		getTestResults(groupTestName, true).failCount++;
@@ -183,69 +275,11 @@ public class PCodeTestResults {
 		summaryHasDisassemblyErrors = false;
 		summaryTotalAsserts = 0;
 		summaryPassCount = 0;
+		summaryIgnoreCount = 0;
 		summaryFailCount = 0;
 		summaryCallOtherCount = 0;
 		summarySevereFailures = 0;
 		time = System.currentTimeMillis();
-	}
-
-	private static String XML_VERSION = "1";
-
-	public static String TAG_NAME = "PCodeTestResults";
-
-	public PCodeTestResults(Element root) {
-
-		if (!TAG_NAME.equals(root.getName())) {
-			throw new IllegalArgumentException("Unsupported root element: " + root.getName());
-		}
-		String ver = root.getAttributeValue("VERSION");
-		if (!XML_VERSION.equals(ver)) {
-			throw new IllegalArgumentException(
-				"Unsupported XML format version " + ver + ", required format is " + XML_VERSION);
-		}
-
-		jUnitName = root.getAttributeValue("JUNIT");
-
-		time = 0;
-		String timeStr = root.getAttributeValue("TIME");
-		if (timeStr != null) {
-			try {
-				time = Long.parseLong(timeStr);
-			}
-			catch (NumberFormatException e) {
-				// ignore
-			}
-		}
-
-		summaryHasIngestErrors = getAttributeValue(root, "INGEST_ERR", false);
-		summaryHasRelocationErrors = getAttributeValue(root, "RELOC_ERR", false);
-		summaryHasDisassemblyErrors = getAttributeValue(root, "DIS_ERR", false);
-
-		@SuppressWarnings("unchecked")
-		List<Element> elementList = root.getChildren("TestResults");
-		for (Element element : elementList) {
-
-			String testName = element.getAttributeValue("NAME");
-			if (testName == null) {
-				throw new IllegalArgumentException("Invalid TestResults element in XML");
-			}
-			TestResults testResults = new TestResults();
-			testResults.totalAsserts = getAttributeValue(element, "TOTAL_ASSERTS", 0);
-			testResults.passCount = getAttributeValue(element, "PASS", 0);
-			testResults.failCount = getAttributeValue(element, "FAIL", 0);
-			testResults.callOtherCount = getAttributeValue(element, "CALLOTHER", 0);
-			testResults.severeFailure = getAttributeValue(element, "SEVERE_FAILURE", false);
-
-			summaryTotalAsserts += testResults.totalAsserts;
-			summaryPassCount += testResults.passCount;
-			summaryFailCount += testResults.failCount;
-			summaryCallOtherCount += testResults.callOtherCount;
-			if (testResults.severeFailure) {
-				++summarySevereFailures;
-			}
-
-			results.put(testName, testResults);
-		}
 	}
 
 	int getAttributeValue(Element element, String attrName, int defaultValue) {
@@ -305,6 +339,8 @@ public class PCodeTestResults {
 			element.setAttribute(
 				new Attribute("TOTAL_ASSERTS", Integer.toString(testResults.totalAsserts)));
 			element.setAttribute(new Attribute("PASS", Integer.toString(testResults.passCount)));
+			element.setAttribute(
+				new Attribute("IGNORE", Integer.toString(testResults.ignoredCount)));
 			element.setAttribute(new Attribute("FAIL", Integer.toString(testResults.failCount)));
 			element.setAttribute(
 				new Attribute("CALLOTHER", Integer.toString(testResults.callOtherCount)));
@@ -319,6 +355,7 @@ public class PCodeTestResults {
 	static class TestResults {
 		int totalAsserts;
 		int passCount;
+		int ignoredCount;
 		int failCount;
 		int callOtherCount;
 
@@ -326,9 +363,10 @@ public class PCodeTestResults {
 
 		@Override
 		public String toString() {
-			// TODO Auto-generated method stub
-			return "{" + passCount + "/" + failCount + "/" + callOtherCount + "(" + totalAsserts +
+			return "{" + passCount + "/" + ignoredCount + "/" + failCount + "/" + callOtherCount +
+				"(" + totalAsserts +
 				")}";
 		}
 	}
+
 }

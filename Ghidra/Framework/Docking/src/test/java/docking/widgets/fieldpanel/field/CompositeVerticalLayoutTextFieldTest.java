@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import docking.widgets.fieldpanel.support.*;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 
@@ -41,7 +42,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 	int width = 100; // used to trigger horizontal clipping
 	int maxLines = 5; // used to trigger vertical clipping
 
-	private HighlightFactory hlFactory = (hlField, text, cursorTextOffset) -> {
+	private FieldHighlightFactory hlFactory = (hlField, text, cursorTextOffset) -> {
 		return new Highlight[] {};
 	};
 
@@ -65,7 +66,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 		List<FieldElement> elements = new ArrayList<>();
 		int row = 0;
 		for (String line : lines) {
-			elements.add(createRow(row++, line, Color.BLUE));
+			elements.add(createRow(row++, line, Palette.BLUE));
 		}
 
 		List<TextField> fields = new ArrayList<>();
@@ -83,7 +84,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 		List<FieldElement> elements = new ArrayList<>();
 		int row = 0;
 		for (String line : lines) {
-			elements.add(createRow(row++, line, Color.BLUE));
+			elements.add(createRow(row++, line, Palette.BLUE));
 		}
 
 		List<TextField> fields = new ArrayList<>();
@@ -114,12 +115,12 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 	}
 
 	private TextField wrappedField(int row, String text) {
-		FieldElement element = createRow(row, text, Color.BLUE);
+		FieldElement element = createRow(row, text, Palette.BLUE);
 		return new WrappingVerticalLayoutTextField(element, startX, width, maxLines, hlFactory);
 	}
 
 	private TextField clippedField(int row, String text) {
-		FieldElement element = createRow(row, text, Color.BLUE);
+		FieldElement element = createRow(row, text, Palette.BLUE);
 		return new ClippingTextField(startX, width, element, hlFactory);
 	}
 
@@ -491,15 +492,15 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 
 		assertEquals(4, field.getNumRows());
 
-		assertEquals("This is a line", field.getFieldElement(0, 0).getText());
-		assertEquals("with multiple", field.getFieldElement(1, 0).getText());
-		assertEquals("words for", field.getFieldElement(2, 0).getText());
+		assertEquals("This is a line ", field.getFieldElement(0, 0).getText());
+		assertEquals("with multiple ", field.getFieldElement(1, 0).getText());
+		assertEquals("words for ", field.getFieldElement(2, 0).getText());
 		assertEquals("wrapping", field.getFieldElement(3, 0).getText());
 
 		// note: the final 'data' row becomes 4 'screen' rows
-		assertEquals(15, field.getNumCols(0));
-		assertEquals(14, field.getNumCols(1));
-		assertEquals(10, field.getNumCols(2));
+		assertEquals(16, field.getNumCols(0));
+		assertEquals(15, field.getNumCols(1));
+		assertEquals(11, field.getNumCols(2));
 		assertEquals(9, field.getNumCols(3));
 	}
 
@@ -510,15 +511,15 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 
 		assertEquals(4, field.getNumRows());
 
-		assertEquals("This is line", field.getFieldElement(0, 0).getText());
+		assertEquals("This is line ", field.getFieldElement(0, 0).getText());
 		assertEquals("one", field.getFieldElement(1, 0).getText());
-		assertEquals("This is line", field.getFieldElement(2, 0).getText());
+		assertEquals("This is line ", field.getFieldElement(2, 0).getText());
 		assertEquals("two", field.getFieldElement(3, 0).getText());
 
 		// note: the final 'data' row becomes 4 'screen' rows
-		assertEquals(13, field.getNumCols(0));
+		assertEquals(14, field.getNumCols(0));
 		assertEquals(4, field.getNumCols(1));
-		assertEquals(13, field.getNumCols(2));
+		assertEquals(14, field.getNumCols(2));
 		assertEquals(4, field.getNumCols(3));
 	}
 
@@ -534,17 +535,17 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 
 		assertEquals(5, field.getNumRows());
 
-		assertEquals("This is line", field.getFieldElement(0, 0).getText());
+		assertEquals("This is line ", field.getFieldElement(0, 0).getText());
 		assertEquals("one", field.getFieldElement(1, 0).getText());
 		assertEquals("This line does not wrap", field.getFieldElement(2, 0).getText());
-		assertEquals("This is line", field.getFieldElement(3, 0).getText());
+		assertEquals("This is line ", field.getFieldElement(3, 0).getText());
 		assertEquals("two", field.getFieldElement(4, 0).getText());
 
 		// note: the final 'data' row becomes 5 'screen' rows
-		assertEquals(13, field.getNumCols(0));
+		assertEquals(14, field.getNumCols(0));
 		assertEquals(4, field.getNumCols(1));
 		assertEquals(14, field.getNumCols(2));
-		assertEquals(13, field.getNumCols(3));
+		assertEquals(14, field.getNumCols(3));
 		assertEquals(4, field.getNumCols(4));
 	}
 
@@ -564,8 +565,8 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 
 		assertEquals(row1, field.getFieldElement(0, 0).getText());
 		assertEquals(row2, field.getFieldElement(1, 0).getText());
-		assertEquals("3: wrapped", field.getFieldElement(2, 0).getText());
-		assertEquals("row: This field", field.getFieldElement(3, 0).getText());
+		assertEquals("3: wrapped ", field.getFieldElement(2, 0).getText());
+		assertEquals("row: This field ", field.getFieldElement(3, 0).getText());
 		assertEquals("will wrap", field.getFieldElement(4, 0).getText());
 
 		// not sure how to get this from the field
@@ -574,8 +575,8 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 		assertEquals(clippedLength, field.getNumCols(1));
 
 		// note: the final 'data' row becomes 3 'screen' rows
-		assertEquals(11, field.getNumCols(2));
-		assertEquals(16, field.getNumCols(3));
+		assertEquals(12, field.getNumCols(2));
+		assertEquals(17, field.getNumCols(3));
 		assertEquals(10, field.getNumCols(4));
 	}
 

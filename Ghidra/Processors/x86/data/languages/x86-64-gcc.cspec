@@ -2,7 +2,6 @@
 
 <compiler_spec>
   <data_organization>
-     <absolute_max_alignment value="0" />
      <machine_alignment value="2" />
      <default_alignment value="1" />
      <default_pointer_alignment value="8" />
@@ -14,17 +13,19 @@
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />
-     <long_double_size value="16" />
+     <long_double_size value="10" /> <!-- aligned-length=16 -->
      <size_alignment_map>
           <entry size="1" alignment="1" />
           <entry size="2" alignment="2" />
           <entry size="4" alignment="4" />
           <entry size="8" alignment="8" />
+          <entry size="16" alignment="16" />
      </size_alignment_map>
   </data_organization>
 
   <global>
     <range space="ram"/>
+    <register name="MXCSR"/>
   </global>
   <stackpointer register="RSP" space="ram"/>
   <returnaddress>
@@ -79,17 +80,36 @@
         <pentry minsize="1" maxsize="500" align="8">
           <addr offset="8" space="stack"/>
         </pentry>
+        <rule>
+          <datatype name="any" maxsize="16"/>
+          <join_dual_class/>		<!-- Bind from registers if possible-->
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <goto_stack/>
+        </rule>
       </input>
       <output>
-        <pentry minsize="4" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="8" metatype="float">
           <register name="XMM0_Qa"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="XMM1_Qa"/>
         </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="RAX"/>
         </pentry>
-        <pentry minsize="9" maxsize="16">
-          <addr space="join" piece1="RDX" piece2="RAX"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="RDX"/>
         </pentry>
+        <rule>
+          <datatype name="any" maxsize="16"/>
+          <join_dual_class/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <hidden_return/>
+        </rule>
       </output>
       <killedbycall>
         <register name="RAX"/>
@@ -215,4 +235,159 @@
         <register name="R11"/>
       </killedbycall>
     </prototype>
+	<prototype name="processEntry" extrapop="0" stackshift="0">
+      <input pointermax="8">
+        <pentry minsize="1" maxsize="8">
+          <register name="RDX"/>
+        </pentry>
+	    <pentry minsize="1" maxsize="500" align="8">
+	      <addr offset="0" space="stack"/>
+	    </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="8">
+          <register name="RAX"/>
+        </pentry>
+      </output>
+      <unaffected>
+          <register name="RSP"/>
+      </unaffected>
+      <!-- Functions with this prototype don't have a return address. But, if we don't specify one, this prototype will
+           use the default, which is to have the return address on the stack. That conflicts with how this prototype actually
+           uses the stack, so we set a fake return address at a RBP, which is unspecified at process entry --> 
+      <returnaddress>
+         <register name="RBP"/>
+      </returnaddress>
+    </prototype>
+    
+    <callfixup name="x86_return_thunk">
+      <target name="__x86_return_thunk"/>
+      <pcode>
+        <body><![CDATA[
+	  RIP = *:8 RSP;
+	  RSP = RSP + 8;
+	  return [RIP];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="fentry">
+      <target name="__fentry__"/>
+      <pcode>
+        <body><![CDATA[
+	  temp:1 = 0;
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="mcount">
+      <target name="mcount"/>
+      <pcode>
+        <body><![CDATA[
+	  temp:1 = 0;
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rbp">
+      <target name="__x86_indirect_thunk_rbp"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RBP];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rax">
+      <target name="__x86_indirect_thunk_rax"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RAX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rbx">
+      <target name="__x86_indirect_thunk_rbx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RBX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rcx">
+      <target name="__x86_indirect_thunk_rcx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RCX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rdx">
+      <target name="__x86_indirect_thunk_rdx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RDX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r8">
+      <target name="__x86_indirect_thunk_r8"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R8];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r9">
+      <target name="__x86_indirect_thunk_r9"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R9];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r10">
+      <target name="__x86_indirect_thunk_r10"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R10];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r11">
+      <target name="__x86_indirect_thunk_r11"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R11];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r12">
+      <target name="__x86_indirect_thunk_r12"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R12];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r13">
+      <target name="__x86_indirect_thunk_r13"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R13];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r14">
+      <target name="__x86_indirect_thunk_r14"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R14];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r15">
+      <target name="__x86_indirect_thunk_r15"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R15];
+        ]]></body>
+      </pcode>
+    </callfixup>
 </compiler_spec>

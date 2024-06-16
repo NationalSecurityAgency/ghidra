@@ -41,9 +41,4 @@ public class SpawnedMi2GdbHomeLocalManagerTest extends AbstractGdbManagerTest {
 			throw new AssertionError(e);
 		}
 	}
-
-	@Override
-	protected String getExpectedDefaultArgsVar() {
-		return "";
-	}
 }

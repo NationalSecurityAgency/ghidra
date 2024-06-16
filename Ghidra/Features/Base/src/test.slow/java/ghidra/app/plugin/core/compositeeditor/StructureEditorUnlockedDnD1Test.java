@@ -21,7 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.dialogs.NumberInputDialog;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
 
 public class StructureEditorUnlockedDnD1Test extends AbstractStructureEditorTest {
 
@@ -30,10 +30,6 @@ public class StructureEditorUnlockedDnD1Test extends AbstractStructureEditorTest
 	public void setUp() throws Exception {
 		super.setUp();
 		env.showTool();
-	}
-
-	protected void init(Structure dt, Category cat) {
-		super.init(dt, cat, false);
 	}
 
 	@Test

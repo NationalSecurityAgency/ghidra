@@ -32,7 +32,7 @@ public interface RepositoryHandle {
 
 	// TODO: NOTE! Debugging client or sever garbage collection delays could
 	// cause handle to be disposed prematurely.
-	public final static int CLIENT_CHECK_PERIOD = SystemUtilities.isInTestingMode() ? 1000 : 30000;
+	public final static int CLIENT_CHECK_PERIOD = SystemUtilities.isInTestingMode() ? 2000 : 30000;
 
 	/**
 	 * Returns the name of this repository.
@@ -256,6 +256,7 @@ public interface RepositoryHandle {
 	 * @param parentPath parent folder path
 	 * @param itemName name of item
 	 * @return checkout data list
+	 * @throws FileNotFoundException if folder item not found
 	 * @throws IOException if an IO error occurs
 	 */
 	ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName) throws IOException;

@@ -55,11 +55,11 @@ public class VdexFileSystem extends GFileSystemBase {
 		monitor.setMessage("Parsing VDEX header...");
 		BinaryReader reader = new BinaryReader(provider, true /* TODO always LE??? */ );
 		try {
-			header = VdexFactory.getVdexHeader(reader);
+			header = VdexHeaderFactory.getVdexHeader(reader);
 			header.parse(reader, monitor);
 
 			for (int i = 0; i < header.getDexHeaderList().size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DexHeader dexHeader = header.getDexHeaderList().get(i);
 				String name =
 					((dexHeader instanceof CDexHeader) ? "cdex" + "_" + i : "classes" + i + ".dex");

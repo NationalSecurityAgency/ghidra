@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +17,56 @@ package docking.widgets.tree.support;
 
 import java.awt.Component;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellEditor;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import docking.DockingUtils;
+import docking.UndoRedoKeeper;
 import docking.widgets.tree.GTreeNode;
 
 public class GTreeCellEditor extends DefaultTreeCellEditor {
+
+	private UndoRedoKeeper undoRedoKeeper;
+
 	public GTreeCellEditor(JTree tree, DefaultTreeCellRenderer renderer) {
 		super(tree, renderer);
-	}
-	
-	@Override
-	public Component getTreeCellEditorComponent(JTree jTree, Object value,
-			boolean isSelected, boolean expanded, boolean leaf, int row) {
 
-		GTreeNode node = (GTreeNode)value;
+		if (realEditor instanceof DefaultCellEditor) {
+			Component c = ((DefaultCellEditor) realEditor).getComponent();
+			if (c instanceof JTextField) {
+				JTextField tf = (JTextField) c;
+				undoRedoKeeper = DockingUtils.installUndoRedo(tf);
+			}
+		}
+	}
+
+	@Override
+	public boolean stopCellEditing() {
+		if (super.stopCellEditing()) {
+			clearUndoRedo();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void cancelCellEditing() {
+		super.cancelCellEditing();
+		clearUndoRedo();
+	}
+
+	private void clearUndoRedo() {
+		if (undoRedoKeeper != null) {
+			undoRedoKeeper.clear();
+		}
+	}
+
+	@Override
+	public Component getTreeCellEditorComponent(JTree jTree, Object value, boolean isSelected,
+			boolean expanded, boolean leaf, int row) {
+
+		GTreeNode node = (GTreeNode) value;
 		if (node.isLeaf()) {
 			renderer.setLeafIcon(node.getIcon(expanded));
 		}
@@ -41,8 +74,8 @@ public class GTreeCellEditor extends DefaultTreeCellEditor {
 			renderer.setOpenIcon(node.getIcon(true));
 			renderer.setClosedIcon(node.getIcon(false));
 		}
-		return super.getTreeCellEditorComponent(jTree, value, isSelected, expanded,
-				leaf, row);
+
+		return super.getTreeCellEditorComponent(jTree, value, isSelected, expanded, leaf, row);
 	}
 
 }

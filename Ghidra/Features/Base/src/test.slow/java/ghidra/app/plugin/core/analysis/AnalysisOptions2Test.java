@@ -19,8 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.JPanel;
 import javax.swing.table.TableModel;
@@ -31,6 +30,7 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.options.editor.DefaultOptionComponent;
 import docking.widgets.table.GTable;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.services.*;
@@ -42,6 +42,8 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -59,7 +61,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 	private static final String OLD_OPTION_DEFAULT_VALUE = "Old Default Value";
 	private static final String UNCHANGING_OPTION_DEFAULT_VALUE = "Unchanging Default Value";
 
-	private static final Color NEW_OPTION_DEFAULT_VALUE_AS_COLOR = Color.GREEN;
+	private static final Color NEW_OPTION_DEFAULT_VALUE_AS_COLOR = Palette.GREEN;
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -97,7 +99,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		// The old option's default value should not be applied to the new option
 		//
 
-		installAnalyzer(NotReplacingTestAnalyzerStub.class);
+		installAnalyzer(NotReplacingTestStubAnalyzer.class);
 
 		// install old options; the default value will not be used in the new option
 		installOldOptions(OLD_OPTION_DEFAULT_VALUE);
@@ -120,7 +122,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		// The old option's default value should not be applied to the new option
 		//
 
-		installAnalyzer(NotReplacingTestAnalyzerStub.class);
+		installAnalyzer(NotReplacingTestStubAnalyzer.class);
 
 		// install old options; the default value will not be used in the new option
 		installOldOptions(OLD_OPTION_DEFAULT_VALUE);
@@ -147,7 +149,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		// The old option's non-default value should be applied to the new option
 		//
 
-		installAnalyzer(UseOldValueTestAnalyzerStub.class);
+		installAnalyzer(UseOldValueTestStubAnalyzer.class);
 
 		// install old options; the default value will not be used in the new option
 		installOldOptions(OLD_OPTION_DEFAULT_VALUE);
@@ -173,7 +175,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		// new option has a non-default
 		//
 
-		installAnalyzer(UseOldValueTestAnalyzerStub.class);
+		installAnalyzer(UseOldValueTestStubAnalyzer.class);
 
 		// install old options; the default value will not be used in the new option
 		installOldOptions(OLD_OPTION_DEFAULT_VALUE);
@@ -203,7 +205,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		// has a different object type than the old option.
 		//
 
-		installAnalyzer(ConvertValueTypeTestAnalyzerStub.class);
+		installAnalyzer(ConvertValueTypeTestStubAnalyzer.class);
 
 		// install old options; the default value will not be used in the new option
 		installOldOptions(OLD_OPTION_DEFAULT_VALUE);
@@ -231,12 +233,12 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void installOldOptions(Object value) {
 		Options programAnalysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		Options options = programAnalysisOptions.getOptions(AbstractTestAnalyzerStub.NAME);
+		Options options = programAnalysisOptions.getOptions(AbstractTestStubAnalyzer.NAME);
 		AbstractOptions abstractOptions = (AbstractOptions) getInstanceField("options", options);
 
 		// this call creates an 'unregistered option'
 		String fullOptionName =
-			"Analyzers." + AbstractTestAnalyzerStub.NAME + '.' + OLD_OPTION_NAME;
+			"Analyzers." + AbstractTestStubAnalyzer.NAME + '.' + OLD_OPTION_NAME;
 		Option option = abstractOptions.getOption(fullOptionName, OptionType.getOptionType(value),
 			OLD_OPTION_DEFAULT_VALUE);
 
@@ -247,16 +249,23 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	private void installAnalyzer(Class<? extends Analyzer> analyzer) {
 
-		@SuppressWarnings("unchecked")
-		List<Class<?>> extensions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
+		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
+			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
+				ClassSearcher.class);
+		HashMap<ClassFileInfo, Class<?>> loadedCache =
+			(HashMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
 
 		// remove any traces of previous test runs
-		extensions.removeIf(c -> c.getSimpleName().contains("TestAnalyzerStub"));
+		Set<ClassFileInfo> analyzerSet = extensionPointSuffixToInfoMap.get("Analyzer");
+		assertNotNull(analyzerSet);
 
-		extensions.add(analyzer);
+		analyzerSet.removeIf(c -> c.name().contains("TestStubAnalyzer"));
+		ClassFileInfo info = new ClassFileInfo("", analyzer.getName(), "Analyzer");
+		analyzerSet.add(info);
+		loadedCache.put(info, analyzer);
 	}
 
 	private AnalysisOptionsDialog invokeAnalysisDialog() {
@@ -282,19 +291,19 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void changeNewOption(String newValue) {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		Options analyzerOptions = options.getOptions(AbstractTestAnalyzerStub.NAME);
+		Options analyzerOptions = options.getOptions(AbstractTestStubAnalyzer.NAME);
 
 		tx(program, () -> analyzerOptions.putObject(NEW_OPTION_NAME, newValue));
 	}
 
 	private void changeOldOption(String newValue) {
 		Options programAnalysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		Options options = programAnalysisOptions.getOptions(AbstractTestAnalyzerStub.NAME);
+		Options options = programAnalysisOptions.getOptions(AbstractTestStubAnalyzer.NAME);
 		AbstractOptions abstractOptions = (AbstractOptions) getInstanceField("options", options);
 
 		// this call creates an 'unregistered option'
 		String fullOptionName =
-			"Analyzers." + AbstractTestAnalyzerStub.NAME + '.' + OLD_OPTION_NAME;
+			"Analyzers." + AbstractTestStubAnalyzer.NAME + '.' + OLD_OPTION_NAME;
 		Option option = abstractOptions.getOption(fullOptionName,
 			OptionType.getOptionType(OLD_OPTION_DEFAULT_VALUE), OLD_OPTION_DEFAULT_VALUE);
 
@@ -307,14 +316,14 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertOldValueRemoved() {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		Options analyzerOptions = options.getOptions(AbstractTestAnalyzerStub.NAME);
+		Options analyzerOptions = options.getOptions(AbstractTestStubAnalyzer.NAME);
 		assertFalse("Old option not removed", analyzerOptions.contains(OLD_OPTION_NAME));
 	}
 
 	private void assertOnlyNewOptionsInUi() {
 
 		// click our analyzer in the list of options
-		selectAnalyzer(AbstractTestAnalyzerStub.NAME);
+		selectAnalyzer(AbstractTestStubAnalyzer.NAME);
 
 		// get the panel of options
 		JPanel panel =
@@ -338,7 +347,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertOptionValue(String optionName, Object defaultValue) {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		Options analyzerOptions = options.getOptions(AbstractTestAnalyzerStub.NAME);
+		Options analyzerOptions = options.getOptions(AbstractTestStubAnalyzer.NAME);
 		Object value = analyzerOptions.getObject(optionName, null);
 		assertEquals("Option value is not as expected for '" + optionName + "'", defaultValue,
 			value);
@@ -349,7 +358,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		int r = Integer.parseInt(parts[0]);
 		int g = Integer.parseInt(parts[1]);
 		int b = Integer.parseInt(parts[2]);
-		return new Color(r, g, b);
+		return ColorUtils.getColor(r, g, b);
 	}
 
 	private void selectAnalyzer(String name) {
@@ -385,7 +394,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 // Inner Classes
 //==================================================================================================
 
-	public static abstract class AbstractTestAnalyzerStub implements Analyzer {
+	public static abstract class AbstractTestStubAnalyzer implements Analyzer {
 
 		protected AnalysisOptionsUpdater updater = new AnalysisOptionsUpdater();
 
@@ -470,9 +479,9 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	public static class NotReplacingTestAnalyzerStub extends AbstractTestAnalyzerStub {
+	public static class NotReplacingTestStubAnalyzer extends AbstractTestStubAnalyzer {
 
-		public NotReplacingTestAnalyzerStub() {
+		public NotReplacingTestStubAnalyzer() {
 			super();
 
 			updater.registerReplacement(NEW_OPTION_NAME, OLD_OPTION_NAME, oldValue -> {
@@ -483,9 +492,9 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	public static class UseOldValueTestAnalyzerStub extends AbstractTestAnalyzerStub {
+	public static class UseOldValueTestStubAnalyzer extends AbstractTestStubAnalyzer {
 
-		public UseOldValueTestAnalyzerStub() {
+		public UseOldValueTestStubAnalyzer() {
 			super();
 
 			updater.registerReplacement(NEW_OPTION_NAME, OLD_OPTION_NAME, oldValue -> {
@@ -494,9 +503,9 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	public static class ConvertValueTypeTestAnalyzerStub extends AbstractTestAnalyzerStub {
+	public static class ConvertValueTypeTestStubAnalyzer extends AbstractTestStubAnalyzer {
 
-		public ConvertValueTypeTestAnalyzerStub() {
+		public ConvertValueTypeTestStubAnalyzer() {
 			super();
 
 			updater.registerReplacement(NEW_OPTION_NAME, OLD_OPTION_NAME, oldValue -> {

@@ -15,9 +15,10 @@
  */
 package ghidra.javaclass.analyzers;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -97,8 +98,7 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 		monitor.setMaximum(set.getNumAddresses());
 		monitor.setProgress(0);
 
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, false);
 
 		Listing listing = program.getListing();
@@ -107,7 +107,7 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 		//find the switch instructions and process them
 		while (instructionIterator.hasNext()) {
 			Instruction instruction = instructionIterator.next();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(instruction.getLength());
 			String mnenomic = instruction.getMnemonicString();
 			if (!mnenomic.equals(TABLESWITCH_MNEMONIC) && !mnenomic.equals(LOOKUPSWITCH_MNEMONIC)) {

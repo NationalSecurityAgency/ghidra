@@ -40,12 +40,16 @@ public class TestDebuggerModelBuilder {
 	public TestTargetRegister testRegisterPC;
 	public TestTargetRegister testRegisterSP;
 
+	protected TestDebuggerObjectModel newModel(String typeHint) {
+		return new TestDebuggerObjectModel(typeHint);
+	}
+
 	public void createTestModel() {
 		createTestModel("Session");
 	}
 
 	public void createTestModel(String typeHint) {
-		testModel = new TestDebuggerObjectModel(typeHint);
+		testModel = newModel(typeHint);
 	}
 
 	public Address addr(long offset) {

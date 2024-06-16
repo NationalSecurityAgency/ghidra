@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+    <TITLE>Features and Weights</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/languages.css">
+    <META name="generator" content="DocBook XSL Stylesheets V1.79.1">
+    <LINK rel="home" href="index.html" title="BSim Database">
+    <LINK rel="up" href="index.html" title="BSim Database">
+    <LINK rel="prev" href="DatabaseQuery.html" title="Querying a BSim Database">
+    <LINK rel="next" href="CommandLineReference.html" title="Command-Line Utility Reference">
+  </HEAD>
+
+  <BODY>
+    <DIV class="chapter">
+      <DIV class="titlepage">
+        <DIV>
+          <DIV>
+            <H1 class="title"><A name="FeatureWeight"></A>Features and Weights</H1>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="FunctionFeatures"></A>Features of
+              Software Functions</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>The BSim Database uses a <SPAN class="bold"><STRONG>feature vector</STRONG></SPAN>
+        approach to compare and index software functions. A <SPAN class=
+        "bold"><STRONG>feature</STRONG></SPAN> is an abstraction that simply means a single element
+        or attribute that can be compared quantitatively between two objects. The set of possible
+        features used by a particular approach is fixed, and any object being examined is viewed as
+        some unordered subset of all the possible features. So features are the smallest (atomic)
+        aspect of an object that can be measured, either two objects share a feature in common or
+        they do not. But within this scheme, because objects generally consist of many individual
+        features, quantitative fine-grained comparisons can be automatically calculated.</P>
+
+        <P>The BSim Database extracts its features from the data-flow representation of a function,
+        after it has been normalized by the Ghidra decompiler. This is the SSA graph representation
+        of the function, with nodes representing the variables and operators of the function, and
+        the edges representing the read/write relationships between them. An individual feature is
+        just a portion of this graph, encompassing some subset of variables and operators and the
+        specific flow between them. Because of the decompilation, a feature can be viewed naturally
+        as a uniform snippet of C source code, a partial extraction of some expression in the
+        source code representation of the function. The full set of features provides uniform (and
+        overlapping) coverage of the graph representation of the entire function.</P>
+
+        <P>Features encode specific aspects of the variables they cover but not others. The size of
+        a variable, the operator that produced it, and the set of operators it is fed into are
+        encoded in the features. But, any name assigned to the variable, its data-type, or even its
+        storage location are <SPAN class="emphasis"><EM>not</EM></SPAN> encoded in the
+        features.</P>
+
+        <P>Within a function, details about the specific subfunctions that it calls are not encoded
+        in any of the features for that function, but information describing where the call is made
+        and the set of parameters it takes is encoded.</P>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="WeightingSoftware"></A>Weighting
+              Software Features</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>Some features are more useful for identifying a specific function out of a large corpus
+        than others. With the view that features are just portions of recovered C expressions, some
+        C expressions are simply more common than others. The BSim Database compensates for these
+        differences by assigning a weight to each feature that factors in to the similarity and
+        confidence scores produced when comparing functions. Weighting schemes are considered a
+        configuration parameter of the database and are established for a particular database when
+        it is created. The scheme cannot be changed without creating an entirely new database and
+        reingesting the functions.</P>
+
+        <P>Ghidra comes with precomputed weighting schemes that are calculated using statistics
+        drawn from homogeneous collections of systems and application software. A feature's weight
+        is computed by counting the number of times it occurs across the entire corpus and
+        comparing this with the counts from other features. This allows a direct computation of the
+        information content of the feature; quantitatively, how much have we narrowed down a
+        particular function from the corpus when we know it contains a particular feature.</P>
+
+        <P>The two primary weighting schemes are called <SPAN class=
+        "bold"><STRONG>32</STRONG></SPAN> and <SPAN class="bold"><STRONG>64</STRONG></SPAN>, based
+        on 32-bit code and one on 64-bit code respectively. This means that a particular database
+        instance has better sensitivity for either 32-bit or 64-bit functions. The quantitative
+        scores, similarity and confidence, will be more accurate at distinguishing pairs of
+        functions from one corpus. This does not mean that functions from the <SPAN class=
+        "emphasis"><EM>wrong</EM></SPAN> group cannot be ingested or queried, but the scores may
+        not be as accurate. There is also a <SPAN class="bold"><STRONG>64_32</STRONG></SPAN>
+        weighting scheme for architectures where code is compiled to use 64-bit registers but
+        addresses are still 32-bit.</P>
+
+        <P>The specialized weighting scheme <SPAN class="bold"><STRONG>nosize</STRONG></SPAN>
+        allows BSim to match between 32-bit and 64-bit implementations of a function. It works by
+        making feature hashes blind to the size difference between a 32-bit variable versus a
+        64-bit variable. This compensates for a compiler's tendency to assign a full 64-bit
+        register to a 32-bit variable, which is frequently difficult for the decompiler to
+        automatically resolve in the context of a single function. Because of this blindness, there
+        is a slight loss of sensitivity, when matching 32-bit to 32-bit functions, or when matching
+        64-bit to 64-bit, over the <SPAN class="bold"><STRONG>32</STRONG></SPAN> or <SPAN class=
+        "bold"><STRONG>64</STRONG></SPAN> schemes respectively.</P>
+
+        <P>The weighting scheme <SPAN class="bold"><STRONG>cpool</STRONG></SPAN> should be used for
+        run-time compilation (JIT) architectures, like Java Dalvik or <SPAN class=
+        "emphasis"><EM>.class</EM></SPAN> byte-code executables. These architectures use
+        characteristic <SPAN class="emphasis"><EM>constant pool</EM></SPAN> instructions that delay
+        exact decisions about code and data layout until runtime. The decompiler can still recover
+        data-flow effectively by treating these instructions as black-box operations, so BSim works
+        in the same way as with native code. But a specialized weighting scheme is needed to
+        balance BSim's sensitivity to these operations.</P>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="CompareVectors"></A>Comparing Feature
+              Vectors</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>For a particular function, the set of extracted features and their assigned weights make
+        up the formal <SPAN class="bold"><STRONG>feature vector</STRONG></SPAN> associated with the
+        function. When querying a BSim Database, the primary function search is performed by
+        comparing feature vectors. There are two formal scores that are computed on a pair of
+        feature vectors, <SPAN class="emphasis"><EM>similarity</EM></SPAN> and <SPAN class=
+        "emphasis"><EM>confidence</EM></SPAN>.</P>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="Similarity"></A>Similarity</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>Similarity is a direct calculation of the percentage of features in common between two
+          functions. It varies continuously from 0.0, meaning the functions share no features at
+          all, to 1.0, meaning that the functions have the same feature set. Formally, similarity
+          is defined as the <SPAN class="emphasis"><EM>cosine similarity</EM></SPAN> of the two
+          feature vectors. Weights determine how important individual features are in the score
+          relative to other features, providing a practical and realistic meaning to the score. Two
+          functions can exhibit a few unimportant changes, but the similarity can still be very
+          high because the differences are likely not weighted heavily. Along the same lines, two
+          functions can share most of their features but have a low similarity because they differ
+          in more important features.</P>
+
+          <P>When searching for a function, the database sets a particular threshold on similarity,
+          0.7 by default, and returns functions whose similarity with the queried function exceeds
+          that threshold. This can produce <SPAN class="emphasis"><EM>false positive</EM></SPAN>
+          matches for small functions because a small function is described by just a few features
+          and it is then comparatively easy to randomly match a high percentage of these features.
+          Deciding if a false positive is likely can be decided quantitatively by examining the
+          <SPAN class="emphasis"><EM>confidence</EM></SPAN> score below.</P>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="Confidence"></A>Confidence</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>Confidence is a log likelihood ratio, a weighted count of the set of features that
+          match between two functions minus the set of features that are different. It is an
+          open-ended score, and the higher it gets, the more likely it is that the two functions
+          are a true match. Fixing a threshold for the confidence score provides a more consistent
+          <SPAN class="emphasis"><EM>false positive</EM></SPAN> rate, as opposed to thresholding on
+          similarity. A higher score means the two functions have more features in common as an
+          absolute count, not just a higher percentage. So the chance of randomly matching most of
+          the features continues to go down as confidence goes up.</P>
+
+          <P>A general correspondence between low confidence scores and false positive rates can be
+          somewhat skewed by <SPAN class="emphasis"><EM>wrappers</EM></SPAN> and other small
+          functions, which are always common but whose specific frequency can vary depending on the
+          type of software. BSim fixes the score 10.0 for a particular wrapper form, providing a
+          convenient boundary between wrappers and more substantial functions where frequencies are
+          more consistent. For scores of 10.0 and greater, we get the following rough
+          correspondence with false positive rate. The rate drops by a factor of 2 for an increase
+          in confidence of between 4 and 5 points.</P>
+
+          <DIV class="informalexample">
+            <DIV class="table">
+              <A name="falsepositive.htmltable"></A> 
+
+              <TABLE width="70%" frame="none">
+                <COL width="30%">
+                <COL width="70%">
+
+                <THEAD>
+                  <TR>
+                    <TD><SPAN class="bold"><STRONG>Confidence</STRONG></SPAN></TD>
+
+                    <TD><SPAN class="bold"><STRONG>False Positive Rate
+                    (Approximate)</STRONG></SPAN></TD>
+                  </TR>
+                </THEAD>
+
+                <TBODY>
+                  <TR>
+                    <TD>10</TD>
+
+                    <TD>1 in 4,000</TD>
+                  </TR>
+
+                  <TR>
+                    <TD>26</TD>
+
+                    <TD>1 in 100,000</TD>
+                  </TR>
+
+                  <TR>
+                    <TD>43</TD>
+
+                    <TD>1 in 1,000,000</TD>
+                  </TR>
+
+                  <TR>
+                    <TD>93</TD>
+
+                    <TD>1 in 1,000,000,000</TD>
+                  </TR>
+                </TBODY>
+              </TABLE>
+            </DIV>
+          </DIV>
+
+          <P>For a single function, there is an upper-bound to the confidence that can be achieved
+          by a possible match, its <SPAN class="emphasis"><EM>self significance</EM></SPAN>. This
+          upper-bound is of course reached by comparison with a function having 1.0 similarity.
+          Self significance is roughly proportional to the size of the function. So its impossible
+          to achieve a high confidence for a small function, for single matches viewed in
+          isolation. Of course a medium to low confidence threshold may be enough to produce a
+          unique match if the database is small, and a medium to high confidence threshold may
+          still produce occasional false positives even if the database is very large.</P>
+        </DIV>
+      </DIV>
+    </DIV>
+  </BODY>
+</HTML>

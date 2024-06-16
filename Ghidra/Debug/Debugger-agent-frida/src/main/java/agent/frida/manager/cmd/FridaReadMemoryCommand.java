@@ -17,57 +17,20 @@ package agent.frida.manager.cmd;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-import com.google.common.collect.TreeRangeSet;
-//import com.sun.jna.Pointer;
-//import com.sun.jna.ptr.PointerByReference;
-import com.google.gson.JsonElement;
-
 import agent.frida.manager.impl.FridaManagerImpl;
 import ghidra.program.model.address.Address;
-import ghidra.util.NumericUtilities;
 
-public class FridaReadMemoryCommand extends AbstractFridaCommand<RangeSet<Long>> {
-
-	private final Address addr;
-	private final ByteBuffer buf;
-	private final int len;
+public class FridaReadMemoryCommand extends AbstractFridaReadCommand {
 
 	public FridaReadMemoryCommand(FridaManagerImpl manager, Address addr, ByteBuffer buf, int len) {
-		super(manager);
-		this.addr = addr;
-		this.buf = buf;
-		this.len = len;
+		super(manager, addr, buf, len);
 	}
 
-	@Override
-	public RangeSet<Long> complete(FridaPendingCommand<?> pending) {
-		RangeSet<Long> rangeSet = TreeRangeSet.create();
-		rangeSet.add(Range.closedOpen(addr.getOffset(), addr.getOffset() + len));
-		return rangeSet;
-	}
-
-	
 	@Override
 	public void invoke() {
-		manager.loadScript(this, "read_memory",      
-			"var buf = ptr(0x"+addr+").readByteArray("+len+"); result = hexdump(buf, {header:false});");
-	}
-	
-	@Override
-	public void parseSpecifics(JsonElement element) {
-		String payload = element.getAsString();
-		String[] lines = payload.split("\n");
-		int n = 0;
-		for (String l : lines) {
-			String[] split = l.split("  ");
-			byte[] bytes = NumericUtilities.convertStringToBytes(split[1]);
-			for (int i = 0; i < 16; i++) {
-				buf.put(n+i, bytes[i]);
-			}
-			n += 16;
-		}
+		manager.loadScript(this, "read_memory",
+			"var buf = ptr(0x" + addr + ").readByteArray(" + len +
+				"); result = hexdump(buf, {header:false});");
 	}
 
 }

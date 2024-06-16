@@ -116,6 +116,22 @@ public interface TraceSnapshot {
 	void setSchedule(TraceSchedule schedule);
 
 	/**
+	 * Get the snapshot's version, esp., when it represents a cache entry
+	 * 
+	 * @see Trace#getEmulatorCacheVersion()
+	 * @return the version
+	 */
+	long getVersion();
+
+	/**
+	 * Set the snapshot's version, esp., when it represents a cache entry
+	 * 
+	 * @see Trace#getEmulatorCacheVersion()
+	 * @param version the version
+	 */
+	void setVersion(long version);
+
+	/**
 	 * Delete this snapshot
 	 * 
 	 * This does not delete any entries in other managers associated with this snapshot. This simply

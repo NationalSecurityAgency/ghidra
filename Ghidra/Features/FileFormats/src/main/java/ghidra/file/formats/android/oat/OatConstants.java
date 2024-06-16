@@ -18,7 +18,7 @@ package ghidra.file.formats.android.oat;
 import ghidra.app.util.bin.format.elf.ElfSectionHeaderConstants;
 
 /**
- * https://android.googlesource.com/platform/art/+/marshmallow-mr3-release/runtime/oat.h
+ * https://android.googlesource.com/platform/art/+/master/runtime/oat.h
  */
 public final class OatConstants {
 	//@formatter:off
@@ -67,55 +67,94 @@ public final class OatConstants {
 	// NOTE: we plan to only support RELEASE versions...
 	// Upper case indicates supported version.
 
-	public final static String VERSION_KITKAT_RELEASE             = "007"; 
-	public final static String version_kitkat_dev                 = "008"; 
-	public final static String VERSION_LOLLIPOP_RELEASE           = "039";
-	public final static String VERSION_LOLLIPOP_MR1_FI_RELEASE    = "045";
-	public final static String VERSION_LOLLIPOP_WEAR_RELEASE      = "051";
-	public final static String VERSION_MARSHMALLOW_RELEASE        = "064";
-	public final static String VERSION_NOUGAT_RELEASE             = "079";
-	public final static String version_n_iot_preview_2            = "083";
-	public final static String VERSION_NOUGAT_MR1_RELEASE         = "088";
-	public final static String version_o_preview                  = "114";
-	public final static String VERSION_OREO_RELEASE               = "124";
-	public final static String version_n_iot_preview_4            = "125";
-	public final static String VERSION_OREO_DR3_RELEASE           = "126";
-	public final static String VERSION_OREO_M2_RELEASE            = "131";
-	public final static String version_o_iot_preview_5            = "132";
-	public final static String version_134                        = "134";
-	public final static String version_o_mr1_iot_preview_6        = "135";
-	public final static String VERSION_PIE_RELEASE                = "138";
-	public final static String version_o_mr1_iot_preview_7        = "139";
-	public final static String version_o_mr1_iot_preview_8        = "140";
-	public final static String version_o_mr1_iot_release_1_0_0    = "141";
-	public final static String version_o_mr1_iot_release_1_0_1    = "146";
-	public final static String version_n_iot_release_polk_at1     = "147";
-	public final static String version_q_preview_1                = "166";
-	public final static String VERSION_10_RELEASE                 = "170";
-	public final static String VERSION_11_RELEASE                 = "183";
-	public final static String VERSION_12_RELEASE                 = "195";
-	public final static String VERSION_S_V2_PREVIEW               = "199";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat.cc#24">kitkat-release/runtime/oat.cc</a> */
+	public final static String OAT_VERSION_007 = "007";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-dev/runtime/oat.cc#24">kitkat-dev/runtime/oat.cc</a> */
+	public final static String oat_version_008 = "008"; 
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-release/runtime/oat.cc#25">lollipop-release/runtime/oat.cc</a> */
+	public final static String OAT_VERSION_039 = "039";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-release/runtime/oat.cc#25">lollipop-mr1-release/runtime/oat.cc</a> */
+	public final static String OAT_VERSION_045 = "045";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/oat.cc#27">lollipop-wear-release/runtime/oat.cc</a> */
+	public final static String OAT_VERSION_051 = "051";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat.h#34">marshmallow-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_064 = "064";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat.h#34">nougat-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_079 = "079";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/n-iot-preview-2/runtime/oat.h#34">n-iot-preview-2/runtime/oat.h</a> */
+	public final static String oat_version_083 = "083";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-mr1-release/runtime/oat.h#34">nougat-mr1-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_088 = "088";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-preview/runtime/oat.h#34">o-preview/runtime/oat.h</a> */
+	public final static String oat_version_114 = "114";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat.h#34">oreo-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_124 = "124";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/n-iot-preview-4/runtime/oat.h#34">n-iot-preview-4/runtime/oat.h</a> */
+	public final static String oat_version_125 = "125";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/oat.h#34">oreo-dr3-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_126 = "126";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/oat.h#34">oreo-m2-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_131 = "131";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-iot-preview-5/runtime/oat.h#34">o-iot-preview-5/runtime/oat.h</a> */
+	public final static String oat_version_132 = "132";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-mr1-iot-preview-6/runtime/oat.h#34">o-mr1-iot-preview-6/runtime/oat.h</a> */
+	public final static String oat_version_135 = "135";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat.h#34">pie-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_138 = "138";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-mr1-iot-preview-7/runtime/oat.h#34">o-mr1-iot-preview-7/runtime/oat.h</a> */
+	public final static String oat_version_139 = "139";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-mr1-iot-preview-8/runtime/oat.h#34">o-mr1-iot-preview-8/runtime/oat.h</a> */
+	public final static String oat_version_140 = "140";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/tags/android-o-mr1-iot-release-1.0.0/runtime/oat.h#34">android-o-mr1-iot-release-1.0.0/runtime/oat.h</a> */
+	public final static String oat_version_141 = "141";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/tags/android-o-mr1-iot-release-1.0.1/runtime/oat.h#34">android-o-mr1-iot-release-1.0.1/runtime/oat.h</a> */
+	public final static String oat_version_146 = "146";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/tags/android-n-iot-release-polk-at1/runtime/oat.h#34">android-n-iot-release-polk-at1/runtime/oat.h</a> */
+	public final static String oat_version_147 = "147";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/tags/android-q-preview-1/runtime/oat.h#33">android-q-preview-1/runtime/oat.h</a> */
+	public final static String oat_version_166 = "166";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/oat.h#3"4>android10-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_170 = "170";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/oat.h#34">android11-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_183 = "183";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat.h#3"6>android12-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_195 = "195";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-4/runtime/oat.h#36">android-s-beta-4/runtime/oat.h</a> */
+	public final static String oat_version_197 = "197";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-s-v2-preview-1/runtime/oat.h#36">android-s-v2-preview-1/runtime/oat.h</a> */
+	public final static String OAT_VERSION_199 = "199";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-t-preview-1/runtime/oat.h#36">android-t-preview-1/runtime/oat.h</a> */
+	public final static String OAT_VERSION_220 = "220";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-s-v2-beta-3/runtime/oat.h#36">android-s-v2-beta-3/runtime/oat.h</a> */
+	public final static String OAT_VERSION_223 = "223";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/oat.h#36">android13-release/runtime/oat.h</a> */
+	public final static String OAT_VERSION_225 = "225";
+	/** <a href="https://android.googlesource.com/platform/art/+/master/runtime/oat.h#36">master/runtime/oat.h</a> */
+	public final static String OAT_VERSION_227 = "227";
 
 	/**
 	 * This array contains versions that have been actively tested and verified.
 	 * All other versions will be considered unsupported until tested on exemplar firmware.
 	 */
 	public final static String [] SUPPORTED_VERSIONS = new String [] {
-		VERSION_KITKAT_RELEASE,
-		VERSION_LOLLIPOP_RELEASE,
-		VERSION_LOLLIPOP_MR1_FI_RELEASE,
-		VERSION_LOLLIPOP_WEAR_RELEASE,
-		VERSION_MARSHMALLOW_RELEASE,
-		VERSION_NOUGAT_RELEASE,
-		VERSION_NOUGAT_MR1_RELEASE,
-		VERSION_OREO_RELEASE,
-		VERSION_OREO_DR3_RELEASE,
-		VERSION_OREO_M2_RELEASE,
-		VERSION_PIE_RELEASE,
-		VERSION_10_RELEASE,
-		VERSION_11_RELEASE,
-		VERSION_12_RELEASE,
-		VERSION_S_V2_PREVIEW,
+		OAT_VERSION_007,
+		OAT_VERSION_039,
+		OAT_VERSION_045,
+		OAT_VERSION_051,
+		OAT_VERSION_064,
+		OAT_VERSION_079,
+		OAT_VERSION_088,
+		OAT_VERSION_124,
+		OAT_VERSION_126,
+		OAT_VERSION_131,
+		OAT_VERSION_138,
+		OAT_VERSION_170,
+		OAT_VERSION_183,
+		OAT_VERSION_195,
+		OAT_VERSION_199,
+		OAT_VERSION_220,
+		OAT_VERSION_223,
+		OAT_VERSION_225,
 	};
 
 	//@formatter:on

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import ghidra.pcodeCPort.context.ParserWalker;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.io.PrintStream;
-import java.util.List;
+import java.io.IOException;
 
-import org.jdom.Element;
+import ghidra.program.model.pcode.Encoder;
 
 public class CombinePattern extends DisjointPattern {
 
@@ -61,17 +59,6 @@ public class CombinePattern extends DisjointPattern {
 		if (instr != null) {
 			instr.dispose();
 		}
-	}
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		if (!instr.isMatch(pos)) {
-			return false;
-		}
-		if (!context.isMatch(pos)) {
-			return false;
-		}
-		return true;
 	}
 
 	@Override
@@ -176,22 +163,11 @@ public class CombinePattern extends DisjointPattern {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<combine_pat>\n");
-		context.saveXml(s);
-		instr.saveXml(s);
-		s.append("</combine_pat>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el) {
-		List<?> list = el.getChildren();
-		Element child = (Element) list.get(0);
-		context = new ContextPattern();
-		context.restoreXml(child);
-		child = (Element) list.get(1);
-		instr = new InstructionPattern();
-		instr.restoreXml(child);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_COMBINE_PAT);
+		context.encode(encoder);
+		instr.encode(encoder);
+		encoder.closeElement(ELEM_COMBINE_PAT);
 	}
 
 }

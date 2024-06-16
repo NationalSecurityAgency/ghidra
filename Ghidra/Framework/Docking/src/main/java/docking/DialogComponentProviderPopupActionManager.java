@@ -55,7 +55,7 @@ public class DialogComponentProviderPopupActionManager {
 		}
 
 		if (actionContext == null) {
-			actionContext = new ActionContext();
+			actionContext = new DefaultActionContext();
 		}
 
 		// If the source is null, must set it or we won't have 

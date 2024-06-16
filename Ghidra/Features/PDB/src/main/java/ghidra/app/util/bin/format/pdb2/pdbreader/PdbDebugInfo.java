@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents DebugInfo (DBI) component of a PDB file.
@@ -65,69 +65,73 @@ public abstract class PdbDebugInfo {
 	protected int lengthSectionMap = 0; // signed 32-bit
 	protected int lengthFileInformation = 0; // signed 32-bit
 
-	protected List<AbstractModuleInformation> moduleInformationList = new ArrayList<>();
-	protected List<AbstractSectionContribution> sectionContributionList = new ArrayList<>();
+	protected List<ModuleInformation> moduleInformationList = new ArrayList<>();
+	protected List<SectionContribution> sectionContributionList = new ArrayList<>();
 	protected List<SegmentMapDescription> segmentMapList = new ArrayList<>();
 
-	protected SymbolRecords symbolRecords;
-	protected GlobalSymbolInformation globalSymbolInformation;
-	protected PublicSymbolInformation publicSymbolInformation;
+	protected SymbolRecords symbolRecords = null;
+	protected GlobalSymbolInformation globalSymbolInformation = null;
+	protected PublicSymbolInformation publicSymbolInformation = null;
+
+	private List<Module> modules = new ArrayList<>();
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this Database Interface.
-	 * @param streamNumber The stream number of the stream containing the Database Interface.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} that owns this debug info
+	 * @param streamNumber the stream number of the stream containing the debug info
 	 */
 	public PdbDebugInfo(AbstractPdb pdb, int streamNumber) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
-		globalSymbolInformation = new GlobalSymbolInformation(pdb);
-		publicSymbolInformation = new PublicSymbolInformation(pdb);
-		symbolRecords = new SymbolRecords(pdb);
 	}
 
 	/**
-	 * Returns the number of bytes needed to store the version number.
-	 * @return The number of bytes needed to store the version number.
+	 * Returns the number of bytes needed to store the version number
+	 * @return the number of bytes needed to store the version number
 	 */
 	public static int getVersionNumberSize() {
 		return VERSION_NUMBER_SIZE;
 	}
 
 	/**
-	 * Deserializes the {@link PdbDebugInfo}-based instance.
-	 * The pdb is updated with dbiAge and targetProcessor during deserialization
+	 * Deserializes and initializes some basic {@link PdbDebugInfo}-based information
+	 * The PDB is updated with dbiAge and targetProcessor during deserialization
 	 * of new DBI header.
 	 * @param headerOnly if true only the DBI header fields will be parsed
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return The version number of the Database Interface.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException upon error parsing a field.
-	 * @throws CancelledException Upon user cancellation.
+	 * @return the version number of the debug info
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error parsing a field
+	 * @throws CancelledException upon user cancellation
 	 */
-	public long deserialize(boolean headerOnly, TaskMonitor monitor)
+	public long initialize(boolean headerOnly)
 			throws IOException, PdbException, CancelledException {
 		if (headerOnly) {
-			PdbByteReader reader =
-				pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength(), monitor);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength());
 			deserializeHeader(reader);
 		}
 		else {
-			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 			deserializeHeader(reader);
-			deserializeInternalSubstreams(reader, monitor);
-			deserializeAdditionalSubstreams(monitor);
+			deserializeInternalSubstreams(reader);
+			globalSymbolInformation =
+				new GlobalSymbolInformation(pdb, getGlobalSymbolsHashMaybeStreamNumber());
+			publicSymbolInformation =
+				new PublicSymbolInformation(pdb, getPublicStaticSymbolsHashMaybeStreamNumber());
+			symbolRecords = new SymbolRecords(pdb);
+			initializeAdditionalComponentsForSubstreams();
+			initializeModules();
+			//compareSymbols(); //temporary to ensure same results with previous work.
 		}
 		return versionNumber;
 	}
 
 	/**
-	 * Returns the number of modules.
+	 * Returns the number of modules
 	 * @return the number of modules
 	 */
 	public int getNumModules() {
@@ -135,24 +139,24 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Returns the list of {@link AbstractModuleInformation}, indexed by the module number.
-	 * @return List of {@link AbstractModuleInformation}.
+	 * Returns the list of {@link ModuleInformation}, indexed by the module number
+	 * @return list of {@link ModuleInformation}
 	 */
-	public List<AbstractModuleInformation> getModuleInformationList() {
+	public List<ModuleInformation> getModuleInformationList() {
 		return moduleInformationList;
 	}
 
 	/**
-	 * Returns the {@link AbstractModuleInformation}, based on the moduleNumber.
-	 * @param moduleNumber The module number being requested (1 to {@link #getNumModules()}).
-	 * @return {@link AbstractModuleInformation} for the moduleNumber provided.
-	 * @throws PdbException Upon moduleNumber out of range or no module information.
+	 * Returns the {@link ModuleInformation}, based on the moduleNumber
+	 * @param moduleNumber the module number being requested (1 to {@link #getNumModules()})
+	 * @return {@link ModuleInformation} for the moduleNumber provided
+	 * @throws PdbException upon moduleNumber out of range or no module information
 	 */
-	public AbstractModuleInformation getModuleInformation(int moduleNumber) throws PdbException {
+	public ModuleInformation getModuleInformation(int moduleNumber) throws PdbException {
 		if (moduleNumber < 1 || moduleNumber > moduleInformationList.size()) {
 			throw new PdbException("ModuleNumber out of range: " + moduleNumber);
 		}
-		AbstractModuleInformation moduleInfo = moduleInformationList.get(moduleNumber - 1);
+		ModuleInformation moduleInfo = moduleInformationList.get(moduleNumber - 1);
 		if (moduleInfo == null) {
 			throw new PdbException("Null AbstractModuleInformation");
 		}
@@ -160,137 +164,85 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Returns the list of combined global/public symbols.
-	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols.
+	 * Returns list of {@link SectionContribution} for this debug info
+	 * @return list of {@link SectionContribution}
 	 */
-	public Map<Long, AbstractMsSymbol> getSymbolsByOffset() {
-		return symbolRecords.getSymbolsByOffset();
-	}
-
-	/**
-	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber.
-	 * @param moduleNumber The number ID of the module for which to return the list.
-	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols for the specified module.
-	 * @throws PdbException Upon moduleNumber out of range or no module information.
-	 */
-	public Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber)
-			throws PdbException {
-		if (moduleNumber < 0 || moduleNumber > moduleInformationList.size()) {
-			throw new PdbException("ModuleNumber out of range: " + moduleNumber);
-		}
-		if (moduleNumber == 0) {
-			return getSymbolsByOffset();
-		}
-		return symbolRecords.getModuleSymbolsByOffset(moduleNumber - 1);
-	}
-
-	/**
-	 * Returns the {@link AbstractMsSymbol} from the main symbols for the
-	 *  actual symbol record offset (which is past the length and symbol type fields).
-	 * @param offset the offset of the symbol (beyond length and symbol type fields); this is the
-	 *  offset value specified by many symbol type records.
-	 * @return the symbol group for the module or null if not found.
-	 */
-	public AbstractMsSymbol getSymbolForOffsetOfRecord(long offset) {
-		return getSymbolsByOffset().get(offset - 4);
-	}
-
-	/**
-	 * Returns the {@link AbstractMsSymbol} for the module as specified by moduleNumber and
-	 *  actual symbol record offset (which is past the length and symbol type fields).
-	 * @param moduleNumber The number ID of the module (1 to {@link #getNumModules()}) for
-	 *  which to return the list.
-	 * @param offset the offset of the symbol (beyond length and symbol type fields); this is the
-	 *  offset value specified by many symbol type records.
-	 * @return the symbol group for the module or null if not found.
-	 * @throws PdbException Upon moduleNumber out of range or no module information.
-	 */
-	public AbstractMsSymbol getSymbolForModuleAndOffsetOfRecord(int moduleNumber, long offset)
-			throws PdbException {
-		Map<Long, AbstractMsSymbol> symbols = getModuleSymbolsByOffset(moduleNumber);
-		if (symbols == null) {
-			return null;
-		}
-		return symbols.get(offset - 4);
-	}
-
-	/**
-	 * Returns list of {@link AbstractSectionContribution} for this Database Interface.
-	 * @return List of {@link AbstractSectionContribution}.
-	 */
-	public List<AbstractSectionContribution> getSectionContributionList() {
+	public List<SectionContribution> getSectionContributionList() {
 		return sectionContributionList;
 	}
 
 	/**
-	 * Returns list of {@link SegmentMapDescription} for this Database Interface.
-	 * @return List of {@link SegmentMapDescription}.
+	 * Returns list of {@link SegmentMapDescription} for this debug info
+	 * @return list of {@link SegmentMapDescription}
 	 */
 	public List<SegmentMapDescription> getSegmentMapList() {
 		return segmentMapList;
 	}
 
 	/**
-	 * Returns {@link SymbolRecords} component for this Database Interface.
-	 * @return {@link SymbolRecords} component.
+	 * Returns {@link SymbolRecords} component for this debug info
+	 * @return {@link SymbolRecords} component
 	 */
 	public SymbolRecords getSymbolRecords() {
 		return symbolRecords;
 	}
 
 	/**
-	 * Returns {@link GlobalSymbolInformation} component for this Database Interface.
-	 * @return {@link GlobalSymbolInformation} component.
+	 * Returns {@link GlobalSymbolInformation} component for this debug info
+	 * @return {@link GlobalSymbolInformation} component
 	 */
 	public GlobalSymbolInformation getGlobalSymbolInformation() {
 		return globalSymbolInformation;
 	}
 
 	/**
-	 * Returns Public Symbol Information component for
-	 * this Database Interface.
-	 * @return Public Symbol Information component.
+	 * Returns Public Symbol Information component for this debug info
+	 * @return Public Symbol Information component
 	 */
 	public PublicSymbolInformation getPublicSymbolInformation() {
 		return publicSymbolInformation;
 	}
 
+	/**
+	 * Returns the stream number for {@link SymbolRecords} component
+	 * @return stream number
+	 */
+	public int getSymbolRecordsStreamNumber() {
+		return streamNumberSymbolRecords;
+	}
+
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
+
+	void deserializeHeaderOnly() throws CancelledException, IOException, PdbException {
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength());
+		deserializeHeader(reader);
+	}
+
 	/**
-	 * Returns the stream number for the GlobalSymbols component.
-	 * @return Stream number.
+	 * Returns the stream number for the GlobalSymbols component
+	 * @return stream number
 	 */
 	int getGlobalSymbolsHashMaybeStreamNumber() {
 		return streamNumberGlobalStaticSymbolsHashMaybe;
 	}
 
 	/**
-	 * Returns the stream number for the PublicStaticSymbols component.
-	 * @return Stream number.
+	 * Returns the stream number for the PublicStaticSymbols component
+	 * @return stream number
 	 */
 	int getPublicStaticSymbolsHashMaybeStreamNumber() {
 		return streamNumberPublicStaticSymbolsHashMaybe;
-	}
-
-	/**
-	 * Returns the stream number for {@link SymbolRecords} component.
-	 * @return Stream number.
-	 */
-	int getSymbolRecordsStreamNumber() {
-		return streamNumberSymbolRecords;
 	}
 
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================
 	/**
-	 * Deserializes the Header.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes the Header
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	protected abstract void deserializeHeader(PdbByteReader reader) throws PdbException;
 
@@ -301,64 +253,63 @@ public abstract class PdbDebugInfo {
 	protected abstract int getHeaderLength();
 
 	/**
-	 * Deserializes the SubStreams internal to the Database Interface stream.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException upon error parsing a field.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the SubStreams internal to the debug info stream
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon error parsing a field
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected abstract void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
+	protected abstract void deserializeInternalSubstreams(PdbByteReader reader)
 			throws PdbException, CancelledException;
 
 	/**
-	 * Deserializes the AdditionalSubstreams components.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException upon error parsing a field.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the AdditionalSubstreams components
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error parsing a field
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected abstract void deserializeAdditionalSubstreams(TaskMonitor monitor)
+	protected abstract void initializeAdditionalComponentsForSubstreams()
 			throws IOException, PdbException, CancelledException;
 
 	/**
-	 * Deserializes/Processes the appropriate {@link AbstractModuleInformation} flavor.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException upon error parsing a field.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes/processes the appropriate {@link ModuleInformation} flavor
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @param skip skip over the data in the {@link PdbByteReader}
+	 * @throws PdbException upon error parsing a field
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected abstract void processModuleInformation(PdbByteReader reader, TaskMonitor monitor,
-			boolean skip) throws PdbException, CancelledException;
+	protected abstract void processModuleInformation(PdbByteReader reader, boolean skip)
+			throws PdbException, CancelledException;
 
 	/**
-	 * Dumps the Header.  This method is for debugging only.
-	 * @param writer {@link Writer} to which to write the debug dump.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * Dumps the Header.  This method is for debugging only
+	 * @param writer {@link Writer} to which to write the debug dump
+	 * @throws IOException on issue writing to the {@link Writer}
 	 */
 	protected abstract void dumpHeader(Writer writer) throws IOException;
 
 	/**
-	 * Dumps the Internal Substreams.  This method is for debugging only.
-	 * @param writer {@link Writer} to which to write the debug dump.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * Dumps the Internal Substreams.  This method is for debugging only
+	 * @param writer {@link Writer} to which to write the debug dump
+	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
-	protected abstract void dumpInternalSubstreams(Writer writer) throws IOException;
+	protected abstract void dumpInternalSubstreams(Writer writer)
+			throws IOException, CancelledException, PdbException;
 
 	//==============================================================================================
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Deserializes/Processes the SectionContributions component.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes/processes the SectionContributions component
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @param skip skip over the data in the {@link PdbByteReader}
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void processSectionContributions(PdbByteReader reader, TaskMonitor monitor,
-			boolean skip) throws PdbException, CancelledException {
+	protected void processSectionContributions(PdbByteReader reader, boolean skip)
+			throws PdbException, CancelledException {
 		if (lengthSectionContributionSubstream == 0) {
 			return;
 		}
@@ -373,8 +324,8 @@ public abstract class PdbDebugInfo {
 		if (version == SCV1400) {
 			//long version2 = substreamReader.parseUnsignedIntVal();
 			while (substreamReader.hasMore()) {
-				monitor.checkCanceled();
-				AbstractSectionContribution sectionContribution = new SectionContribution1400();
+				pdb.checkCancelled();
+				SectionContribution sectionContribution = new SectionContribution1400();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
 			}
@@ -382,8 +333,8 @@ public abstract class PdbDebugInfo {
 		else if (version == SCV600) {
 			//long version2 = substreamReader.parseUnsignedIntVal();
 			while (substreamReader.hasMore()) {
-				monitor.checkCanceled();
-				AbstractSectionContribution sectionContribution = new SectionContribution600();
+				pdb.checkCancelled();
+				SectionContribution sectionContribution = new SectionContribution600();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
 			}
@@ -391,11 +342,11 @@ public abstract class PdbDebugInfo {
 		//TODO: Don't know when SectionContribution200 is the type to use.  Don't know if
 		// this part could be the default of processSectionContribs within
 		// DebugInfo and if the above part (test for SVC600 and SVC1400 would
-		// be the override method for DatabaseInformationNew.
+		// be the override method for PdbNewDebugInfo.
 		else {
 			while (substreamReader.hasMore()) {
-				monitor.checkCanceled();
-				AbstractSectionContribution sectionContribution = new SectionContribution400();
+				pdb.checkCancelled();
+				SectionContribution sectionContribution = new SectionContribution400();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
 			}
@@ -403,18 +354,17 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Deserializes/Processes the {@link SegmentMapDescription}.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes/processes the {@link SegmentMapDescription}
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @param skip skip over the data in the {@link PdbByteReader}
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	// TODO: unused value numSegLog?
 	// Note: this is SegmentMap or SectionMap (API structs are segment; API code is Section)
 	// Suppress "unused" for numSegLog
 	@SuppressWarnings("unused")
-	protected void processSegmentMap(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+	protected void processSegmentMap(PdbByteReader reader, boolean skip)
 			throws PdbException, CancelledException {
 		if (lengthSectionMap == 0) {
 			return;
@@ -430,7 +380,7 @@ public abstract class PdbDebugInfo {
 		int numSegLog = substreamReader.parseUnsignedShortVal();
 		// Process records
 		while (substreamReader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCancelled();
 			SegmentMapDescription segment = new SegmentMapDescription();
 			segment.deserialize(substreamReader);
 			segmentMapList.add(segment);
@@ -441,14 +391,13 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Deserializes/Processes the FileInformation.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException upon error parsing filename.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes/processes the FileInformation
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @param skip skip over the data in the {@link PdbByteReader}
+	 * @throws PdbException upon error parsing filename
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void processFileInformation(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+	protected void processFileInformation(PdbByteReader reader, boolean skip)
 			throws PdbException, CancelledException {
 		if (lengthFileInformation == 0) {
 			return;
@@ -472,7 +421,7 @@ public abstract class PdbDebugInfo {
 		int[] count = new int[numInformationModules];
 		int totalCount = 0;
 		for (int moduleIndex = 0; moduleIndex < numInformationModules; moduleIndex++) {
-			monitor.checkCanceled();
+			pdb.checkCancelled();
 			index[moduleIndex] = indicesReader.parseUnsignedShortVal();
 			count[moduleIndex] = countsReader.parseUnsignedShortVal();
 			totalCount += count[moduleIndex];
@@ -485,6 +434,7 @@ public abstract class PdbDebugInfo {
 		PdbByteReader offsetReader = fileInfoReader.getSubPdbByteReader(totalCount * 4);
 		int[] offset = new int[totalCount];
 		for (int moduleIndex = 0; moduleIndex < totalCount; moduleIndex++) {
+			pdb.checkCancelled();
 			offset[moduleIndex] = offsetReader.parseInt();
 		}
 		PdbByteReader namesReader =
@@ -492,8 +442,10 @@ public abstract class PdbDebugInfo {
 
 		int totalRefs = 0;
 		for (int moduleIndex = 0; moduleIndex < numInformationModules; moduleIndex++) {
-			AbstractModuleInformation module = moduleInformationList.get(moduleIndex);
+			pdb.checkCancelled();
+			ModuleInformation module = moduleInformationList.get(moduleIndex);
 			for (int fileIndex = 0; fileIndex < count[moduleIndex]; fileIndex++) {
+				pdb.checkCancelled();
 				int ref = totalRefs + fileIndex;
 				int nameOffset = offset[ref];
 				namesReader.setIndex(nameOffset);
@@ -506,7 +458,7 @@ public abstract class PdbDebugInfo {
 
 	/**
 	 * Method to parse the filename for the "File Information" section from the
-	 * {@link PdbByteReader}.
+	 * {@link PdbByteReader}
 	 * @param reader the {@link PdbByteReader} from which to parse the data
 	 * @return the filename
 	 * @throws PdbException upon error parsing the filename
@@ -515,11 +467,13 @@ public abstract class PdbDebugInfo {
 
 	/**
 	 * Debug method for dumping information from this {@link PdbDebugInfo}-based
-	 *  instance.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 *  instance
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
-	protected void dump(Writer writer) throws IOException {
+	protected void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		writer.write("DebugInfoHeader---------------------------------------------\n");
 		dumpHeader(writer);
 		writer.write("\nEnd DebugInfoHeader-----------------------------------------\n");
@@ -532,27 +486,36 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Debug method for dumping additional substreams from this
-	 *  {@link PdbDebugInfo}-based instance.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * Debug method for dumping additional substreams from this {@link PdbDebugInfo}-based instance
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
-	protected void dumpAdditionalSubstreams(Writer writer) throws IOException {
+	protected void dumpAdditionalSubstreams(Writer writer)
+			throws IOException, CancelledException, PdbException {
 		symbolRecords.dump(writer);
 		writer.write("\n");
 		globalSymbolInformation.dump(writer);
 		writer.write("\n");
 		publicSymbolInformation.dump(writer);
+		dumpSymbols(writer);
+		for (Module module : modules) {
+			pdb.checkCancelled();
+			module.dump(writer);
+		}
 	}
 
 	/**
-	 * Debug method for dumping module information for all of the {@link AbstractModuleInformation}
-	 *  modules from this {@link PdbDebugInfo}-based instance.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * Debug method for dumping module information for all of the {@link ModuleInformation}
+	 *  modules from this {@link PdbDebugInfo}-based instance
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpModuleInformation(Writer writer) throws IOException {
-		for (AbstractModuleInformation information : moduleInformationList) {
+	protected void dumpModuleInformation(Writer writer) throws IOException, CancelledException {
+		for (ModuleInformation information : moduleInformationList) {
+			pdb.checkCancelled();
 			writer.write(information.dump());
 			writer.write("\n");
 		}
@@ -560,13 +523,14 @@ public abstract class PdbDebugInfo {
 
 	/**
 	 * Debug method for dumping section contribution for all of the
-	 *  {@link AbstractSectionContribution} components from this
-	 * {@link PdbDebugInfo}-based instance.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * {@link SectionContribution} components from this {@link PdbDebugInfo}-based instance
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpSectionContributions(Writer writer) throws IOException {
-		for (AbstractSectionContribution contribution : sectionContributionList) {
+	protected void dumpSectionContributions(Writer writer) throws IOException, CancelledException {
+		for (SectionContribution contribution : sectionContributionList) {
+			pdb.checkCancelled();
 			writer.write(contribution.dump());
 			writer.write("\n");
 		}
@@ -574,16 +538,153 @@ public abstract class PdbDebugInfo {
 
 	/**
 	 * Debug method for dumping segment map information for all of the
-	 *  {@link SegmentMapDescription} components from this {@link PdbDebugInfo}-based
-	 *  instance.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 *  {@link SegmentMapDescription} components from this {@link PdbDebugInfo}-based instance
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpSegmentMap(Writer writer) throws IOException {
+	protected void dumpSegmentMap(Writer writer) throws IOException, CancelledException {
 		for (SegmentMapDescription description : segmentMapList) {
+			pdb.checkCancelled();
 			writer.write(description.dump());
 			writer.write("\n");
 		}
 	}
 
+	//==============================================================================================
+	/**
+	 * Initializes modules with some basic information, enabling later queries of the modules
+	 * @throws CancelledException upon user cancellation
+	 */
+	private void initializeModules() throws CancelledException {
+		for (ModuleInformation moduleInformation : moduleInformationList) {
+			pdb.checkCancelled();
+			Module module = new Module(pdb, moduleInformation);
+			// Indices: module #1 goes into index 0 and so on.
+			modules.add(module);
+		}
+	}
+
+	private int numModules() {
+		return modules.size();
+	}
+
+	/**
+	 * Return the Module based upon the module number
+	 * @param moduleNum the module number
+	 * @return the module
+	 */
+	public Module getModule(int moduleNum) {
+		// Indices: module #1 goes into index 0 and so on.
+		return modules.get(moduleNum - 1);
+	}
+
+	/**
+	 * Returns the symbol iterator for main symbols
+	 * @return an iterator over all symbols of the module
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
+	 */
+	public MsSymbolIterator getSymbolIterator() throws CancelledException, PdbException {
+		return new MsSymbolIterator(pdb, streamNumberSymbolRecords, 0, MsfStream.MAX_STREAM_LENGTH);
+	}
+
+	/**
+	 * Returns the symbol iterator symbols of the specified module
+	 * @param moduleNum the module number
+	 * @return an iterator over all symbols of the module
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
+	 */
+	public MsSymbolIterator getSymbolIterator(int moduleNum)
+			throws CancelledException, PdbException {
+		Module module = getModule(moduleNum);
+		return module.getSymbolIterator();
+	}
+
+	private void dumpSymbols(Writer writer) throws CancelledException, IOException, PdbException {
+		MsSymbolIterator iterator = getSymbolIterator();
+		List<AbstractMsSymbol> symbols = new ArrayList<>();
+		while (iterator.hasNext()) {
+			pdb.checkCancelled();
+			symbols.add(iterator.next());
+		}
+	}
+
+	// This method is temporary.  It only exists for ensuring results as we transition processing
+	// mechanisms.
+	private void compareSymbols() throws CancelledException, PdbException, IOException {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
+		// Compare general symbols
+		MsSymbolIterator iterator = getSymbolIterator();
+		List<AbstractMsSymbol> symbols = new ArrayList<>();
+		while (iterator.hasNext()) {
+			pdb.checkCancelled();
+			symbols.add(iterator.next());
+		}
+		if (symbols.size() != symbolRecords.getSymbolsByOffset().size()) {
+			// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+			int a = 1;
+			a = a + 1;
+		}
+		int cnt = 0;
+		for (Map.Entry<Long, AbstractMsSymbol> entry : symbolRecords.getSymbolsByOffset()
+				.entrySet()) {
+			pdb.checkCancelled();
+			AbstractMsSymbol msym = entry.getValue();
+			AbstractMsSymbol lsym = symbols.get(cnt);
+			String mstr = msym.toString();
+			String lstr = lsym.toString();
+			if (!mstr.equals(lstr)) {
+				// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+				int b = 1;
+				b = b + 1;
+			}
+			cnt++;
+		}
+
+		// Compare module symbols
+		for (int modnum = 0; modnum < numModules(); modnum++) {
+			pdb.checkCancelled();
+			Module module = modules.get(modnum);
+			MsSymbolIterator moduleSymbolsIterator = getSymbolIterator(modnum);
+			cnt = 0;
+			Map<Long, AbstractMsSymbol> map = symbolRecords.getModuleSymbolsByOffset(modnum);
+			List<Long> keys = new ArrayList<>();
+			for (Map.Entry<Long, AbstractMsSymbol> entry : map.entrySet()) {
+				pdb.checkCancelled();
+				Long key = entry.getKey();
+				keys.add(key);
+			}
+			Collections.sort(keys);
+			for (Long key : keys) {
+				pdb.checkCancelled();
+				AbstractMsSymbol msym = map.get(key);
+				if (!moduleSymbolsIterator.hasNext()) {
+					// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+					int c = 1;
+					c = c + 1;
+					break;
+				}
+				AbstractMsSymbol lsym = moduleSymbolsIterator.next();
+				String mstr = msym.toString();
+				String lstr = lsym.toString();
+				if (!mstr.equals(lstr)) {
+					// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+					int b = 1;
+					b = b + 1;
+				}
+				cnt++;
+			}
+			if (moduleSymbolsIterator.hasNext()) {
+				// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+				int d = 1;
+				d = d + 1;
+			}
+		}
+	}
 }

@@ -16,8 +16,7 @@
 package ghidra.dbg;
 
 import java.lang.invoke.MethodHandles;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -45,8 +44,17 @@ public class AnnotatedDebuggerAttributeListenerTest implements DebuggerModelTest
 			private void testChanged(TargetObject object, String disp) {
 				display.set(disp, null);
 			}
+
+			@Override
+			public void attributesChanged(TargetObject object, Collection<String> removed,
+					Map<String, ?> added) {
+				if (object != obj) {
+					return;
+				}
+				super.attributesChanged(object, removed, added);
+			}
 		};
-		obj.addListener(l);
+		obj.getModel().addModelListener(l);
 		obj.changeAttributes(List.of(), Map.ofEntries(Map.entry("_test", "Testing")), "Because");
 		waitOn(display.waitValue("Testing"));
 

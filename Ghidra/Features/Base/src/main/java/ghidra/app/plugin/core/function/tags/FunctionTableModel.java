@@ -90,7 +90,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 		int realFunctionCount = program.getFunctionManager().getFunctionCount();
 		monitor.initialize(realFunctionCount);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Function f = iter.next();
 			boolean hasTag = f.getTags().stream().anyMatch(t -> tags.contains(t));
@@ -101,7 +101,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 
 		FunctionIterator externals = program.getFunctionManager().getExternalFunctions();
 		for (Function f : externals) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			boolean hasTag = f.getTags().stream().anyMatch(t -> tags.contains(t));
 			if (hasTag) {

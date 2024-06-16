@@ -1,0 +1,8 @@
+<callfixup name="__rust_probestack">
+    <target name="__rust_probestack"/>
+    <pcode>
+	<body><![CDATA[
+	    temp:1 = 0;
+	    ]]></body>
+    </pcode>
+</callfixup>

@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.script.AskDialog;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginTool;
 
@@ -77,7 +78,7 @@ public abstract class DisplayFilteredAction extends DockingAction {
 			final List<String> path) {
 		TargetObject to = container.getTargetObject();
 		DebuggerObjectModel model = to.getModel();
-		model.fetchModelObject(path, true).thenAccept(obj -> {
+		model.fetchModelObject(path, RefreshBehavior.REFRESH_ALWAYS).thenAccept(obj -> {
 			container.setTargetObject(obj);
 			finishGetOffspring(container, path);
 		});

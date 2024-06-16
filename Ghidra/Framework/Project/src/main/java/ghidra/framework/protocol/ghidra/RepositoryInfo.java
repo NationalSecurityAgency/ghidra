@@ -29,6 +29,14 @@ public class RepositoryInfo {
 		this.readOnly = readOnly;
 	}
 
+	/**
+	 * Get the Ghidra URL which corresponds to the repository
+	 * @return repository URL
+	 */
+	public URL getURL() {
+		return repositoryURL;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof RepositoryInfo)) {

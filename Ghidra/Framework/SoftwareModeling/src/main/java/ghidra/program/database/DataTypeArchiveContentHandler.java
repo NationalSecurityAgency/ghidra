@@ -18,34 +18,38 @@ package ghidra.program.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
-import db.DBConstants;
 import db.DBHandle;
-import db.buffers.BufferFile;
-import db.buffers.ManagedBufferFile;
+import db.buffers.*;
+import generic.theme.GIcon;
 import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
+import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * <code>DataTypeArchiveContentHandler</code> converts between DataTypeArchive instantiations
  * and FolderItem storage.  This class also produces the appropriate Icon for 
  * DataTypeArchive files.
  */
-public class DataTypeArchiveContentHandler extends DBContentHandler {
+public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArchiveDB> {
 
-	private static ImageIcon DATA_TYPE_ARCHIVE_ICON;
+	static Icon DATA_TYPE_ARCHIVE_ICON = new GIcon("icon.content.handler.archive.dt");
 
-	private final static String PROGRAM_ICON_PATH = "images/closedBookBlue.png";
 	public final static String DATA_TYPE_ARCHIVE_CONTENT_TYPE = "Archive";
+
+	final static Class<DataTypeArchiveDB> DATA_TYPE_ARCHIVE_DOMAIN_OBJECT_CLASS =
+		DataTypeArchiveDB.class;
+	final static String DATA_TYPE_ARCHIVE_CONTENT_DEFAULT_TOOL = "CodeBrowser";
+
+	private static final DataTypeArchiveLinkContentHandler linkHandler =
+		new DataTypeArchiveLinkContentHandler();
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
@@ -60,7 +64,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
+	public DataTypeArchiveDB getImmutableObject(FolderItem item, Object consumer, int version,
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		String contentType = item.getContentType();
@@ -75,8 +79,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, monitor, consumer);
+			dataTypeArchive = new DataTypeArchiveDB(dbh, OpenMode.IMMUTABLE, monitor, consumer);
 			getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 			success = true;
 			return dataTypeArchive;
@@ -96,7 +99,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -114,7 +117,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
+	public DataTypeArchiveDB getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
@@ -130,7 +133,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.open(version);
 			dbh = new DBHandle(bf);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, monitor, consumer);
 			getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 			success = true;
@@ -151,7 +154,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -169,7 +172,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
+	public DataTypeArchiveDB getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean recover, Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
@@ -185,7 +188,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.openForUpdate(checkoutId);
 			dbh = new DBHandle(bf, recover, monitor);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
 				getDataTypeArchiveChangeSet(dataTypeArchive, bf);
@@ -215,7 +218,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -292,8 +295,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 		try {
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			dataTypeArchive = new DataTypeArchiveDB(dbh, openMode, null, this);
+			dataTypeArchive = new DataTypeArchiveDB(dbh, OpenMode.IMMUTABLE, null, this);
 			return getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 		}
 		catch (VersionException e) {
@@ -308,7 +310,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (dataTypeArchive != null) {
@@ -324,8 +326,8 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public Class<? extends DomainObject> getDomainObjectClass() {
-		return DataTypeArchiveDB.class;
+	public Class<DataTypeArchiveDB> getDomainObjectClass() {
+		return DATA_TYPE_ARCHIVE_DOMAIN_OBJECT_CLASS;
 	}
 
 	@Override
@@ -340,16 +342,11 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 
 	@Override
 	public String getDefaultToolName() {
-		return "CodeBrowser";
+		return DATA_TYPE_ARCHIVE_CONTENT_DEFAULT_TOOL;
 	}
 
 	@Override
 	public Icon getIcon() {
-		synchronized (DataTypeArchiveContentHandler.class) {
-			if (DATA_TYPE_ARCHIVE_ICON == null) {
-				DATA_TYPE_ARCHIVE_ICON = ResourceManager.loadImage(PROGRAM_ICON_PATH);
-			}
-		}
 		return DATA_TYPE_ARCHIVE_ICON;
 	}
 
@@ -363,6 +360,28 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 			DomainObject originalObj, DomainObject latestObj) {
 		return DataTypeArchiveMergeManagerFactory.getMergeManager(resultsObj, sourceObj,
 			originalObj, latestObj);
+	}
+
+	@Override
+	public DataTypeArchiveLinkContentHandler getLinkHandler() {
+		return linkHandler;
+	}
+
+	@Override
+	public boolean canResetDBSourceFile() {
+		return true;
+	}
+
+	@Override
+	public void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		if (!(item instanceof LocalDatabaseItem dbItem) ||
+			!(domainObj instanceof DataTypeArchiveDB dataTypeArchive)) {
+			throw new IllegalArgumentException("LocalDatabaseItem and DataTypeArchiveDB required");
+		}
+		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
+		dataTypeArchive.getDBHandle().setDBVersionedSourceFile(bf);
+		getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 	}
 
 }

@@ -15,8 +15,8 @@
  */
 /// \file xml.hh
 /// \brief Lightweight (and incomplete) XML parser for marshaling data to and from the decompiler
-#ifndef __CPUI_XML__
-#define __CPUI_XML__
+#ifndef __XML_HH__
+#define __XML_HH__
 
 #include "types.h"
 #include <fstream>
@@ -25,7 +25,16 @@
 #include <vector>
 #include <map>
 
-using namespace std;
+namespace ghidra {
+
+using std::string;
+using std::vector;
+using std::map;
+using std::istream;
+using std::ostream;
+using std::ifstream;
+using std::dec;
+using std::hex;
 
 /// \brief The \e attributes for a single XML element
 ///
@@ -285,9 +294,9 @@ public:
 ///
 /// This object holds the error message as passed to the SAX interface callback
 /// and is thrown as a formal exception.
-struct XmlError {
+struct DecoderError {
   string explain;		///< Explanatory string
-  XmlError(const string &s) { explain = s; }	///< Constructor
+  DecoderError(const string &s) { explain = s; }	///< Constructor
 };
 
 /// \brief Start-up the XML parser given a stream and a handler
@@ -389,4 +398,6 @@ inline bool xml_readbool(const string &attr)
   if (firstc=='y') return true;         // For backward compatibility
   return false;
 }
+
+} // End namespace ghidra
 #endif

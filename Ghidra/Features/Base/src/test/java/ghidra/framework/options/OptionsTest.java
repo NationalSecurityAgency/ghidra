@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
 import java.io.File;
@@ -30,12 +32,14 @@ import javax.swing.KeyStroke;
 import org.jdom.Element;
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.exception.InvalidInputException;
+import gui.event.MouseBinding;
 
-public class OptionsTest extends AbstractGenericTest {
+public class OptionsTest extends AbstractGuiTest {
 
 	public enum FRUIT {
 		Apple, Orange, Pear
@@ -66,7 +70,7 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testDefaultsNotSaved() {
-		options.registerOption("Foo", 5, null, null);
+		options.registerOption("Foo", 5, null, "foo");
 		assertTrue(options.contains("Foo"));
 		assertEquals(5, options.getInt("Foo", 0));
 		saveAndRestoreOptions();
@@ -137,9 +141,9 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testSaveColorOption() {
-		options.setColor("Foo", Color.RED);
+		options.setColor("Foo", Palette.RED);
 		saveAndRestoreOptions();
-		assertEquals(Color.RED, options.getColor("Foo", Color.BLUE));
+		assertColorsEqual(Palette.RED, options.getColor("Foo", Palette.BLUE));
 	}
 
 	@Test
@@ -160,10 +164,37 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testSaveKeyStrokeOption() {
-		options.setKeyStroke("Foo", KeyStroke.getKeyStroke('a', 0));
+		options.setKeyStroke("Foo", KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
 		saveAndRestoreOptions();
-		assertEquals(KeyStroke.getKeyStroke('a', 0),
-			options.getKeyStroke("Foo", KeyStroke.getKeyStroke('b', 0)));
+		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0), options.getKeyStroke("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_KeyStroke() {
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
+		ActionTrigger trigger = new ActionTrigger(ks);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_MouseBinding() {
+		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		ActionTrigger trigger = new ActionTrigger(mb);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_KeyStrokeAndMouseBinding() {
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
+		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		ActionTrigger trigger = new ActionTrigger(ks, mb);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
 	}
 
 	@Test
@@ -195,9 +226,9 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testCopy() {
 		options.setInt("Foo", 3);
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		options.getLong("LONG", 10);
-		options.registerOption("Bar", true, null, null);
+		options.registerOption("Bar", true, null, "foo");
 		Options optionsCopy = options.copy();
 		assertTrue(optionsCopy.contains("Foo"));
 		assertTrue(optionsCopy.contains("COLOR"));
@@ -238,39 +269,45 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testVeto() {
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 
 		OptionsChangeListenerForTestVeto listener1 = new OptionsChangeListenerForTestVeto();
 		OptionsChangeListenerForTestVeto listener2 = new OptionsChangeListenerForTestVeto();
 		options.addOptionsChangeListener(listener1);
 		options.addOptionsChangeListener(listener2);
 
-		options.setColor("COLOR", Color.BLUE);
+		try {
+			options.setColor("COLOR", Palette.BLUE);
+			fail("Expected an OptionsVetoExcepton");
+		}
+		catch (OptionsVetoException e) {
+			// expected
+		}
 
-		assertEquals(Color.RED, options.getColor("COLOR", Color.RED));
+		assertEquals(Palette.RED, options.getColor("COLOR", Palette.RED));
 
-		if (listener1.callOrder == 1) {
-			assertEquals(Color.RED, listener1.value);
+		if (listener1.callCount == 1) {
+			assertEquals(Palette.RED, listener1.value);
 			assertEquals(null, listener2.value);
 		}
-		if (listener2.callOrder == 1) {
-			assertEquals(Color.RED, listener2.value);
+		if (listener2.callCount == 1) {
+			assertEquals(Palette.RED, listener2.value);
 			assertEquals(null, listener1.value);
 		}
 	}
 
 	@Test
 	public void testRemove() {
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		assertTrue(options.contains("COLOR"));
 		options.removeOption("COLOR");
-		assertTrue(!options.contains("COLOR"));
+		assertFalse(options.contains("COLOR"));
 
 	}
 
 	@Test
 	public void testGetOptionNames() {
-		options.setColor("COLOR", Color.red);
+		options.setColor("COLOR", Palette.RED);
 		options.setInt("INT", 3);
 		List<String> optionNames = options.getOptionNames();
 		assertEquals(2, optionNames.size());
@@ -280,35 +317,36 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValue() {
-		options.registerOption("Foo", Color.RED, null, null);
+		options.registerOption("Foo", Color.RED, null, "foo");
 		options.setColor("Foo", Color.BLUE);
-		assertEquals(Color.BLUE, options.getColor("Foo", null));
-		assertEquals(Color.RED, options.getDefaultValue("Foo"));
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, (Color) options.getDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, null, editor);
+		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, "foo",
+			() -> editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
 	}
 
 	@Test
 	public void testGetHelpLocation() {
 		HelpLocation helpLocation = new HelpLocation("topic", "anchor");
-		options.registerOption("Foo", 3, helpLocation, null);
+		options.registerOption("Foo", 3, helpLocation, "foo");
 		assertEquals(helpLocation, options.getHelpLocation("Foo"));
 	}
 
 	@Test
 	public void testRestoreOptionValue() {
 
-		options.registerOption("Foo", Color.RED, null, null);
+		options.registerOption("Foo", Color.RED, null, "foo");
 		options.setColor("Foo", Color.BLUE);
-		assertEquals(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
 
 		options.restoreDefaultValue("Foo");
-		assertEquals(Color.RED, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, options.getColor("Foo", null));
 	}
 
 	@Test
@@ -371,16 +409,16 @@ public class OptionsTest extends AbstractGenericTest {
 		assertTrue(!options.isRegistered("Bar"));
 
 		assertTrue(!options.isRegistered("aaa"));
-		options.registerOption("aaa", 3, null, null);
+		options.registerOption("aaa", 3, null, "foo");
 		assertTrue(options.isRegistered("aaa"));
 
 	}
 
 	@Test
 	public void testRestoreDefaults() {
-		options.registerOption("Foo", 10, null, null);
+		options.registerOption("Foo", 10, null, "foo");
 		options.setInt("Foo", 2);
-		options.registerOption("Bar", 100, null, null);
+		options.registerOption("Bar", 100, null, "foo");
 		options.setInt("Bar", 1);
 		options.restoreDefaultValues();
 		assertEquals(10, options.getInt("Foo", 0));
@@ -416,7 +454,7 @@ public class OptionsTest extends AbstractGenericTest {
 		assertTrue(options.contains("Foo"));
 		assertTrue(options.contains("Bar"));
 
-		options.registerOption("Bar", 0, null, null);
+		options.registerOption("Bar", 0, null, "foo");
 
 		options.removeUnusedOptions();
 
@@ -427,11 +465,11 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testCopyOptions() {
 		options.setInt("INT", 3);
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		ToolOptions options2 = new ToolOptions("aaa");
 		options2.copyOptions(options);
 		assertEquals(3, options.getInt("INT", 3));
-		assertEquals(Color.RED, options.getColor("COLOR", null));
+		assertColorsEqual(Palette.RED, options.getColor("COLOR", null));
 	}
 
 	@Test
@@ -520,7 +558,7 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValueAsString() {
-		options.registerOption("foo", 7, null, null);
+		options.registerOption("foo", 7, null, "foo");
 		options.setInt("foo", 5);
 		assertEquals("7", options.getDefaultValueAsString("foo"));
 		assertNull(options.getDefaultValueAsString("bar"));
@@ -529,7 +567,7 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testResgisteringOptionWithNullValue() {
 		try {
-			options.registerOption("Foo", null, null, null);
+			options.registerOption("Foo", null, null, "foo");
 			Assert.fail("Should not be able to register an options with a default value");
 		}
 		catch (IllegalArgumentException e) {
@@ -540,7 +578,7 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testRegisteringOptionWithUnsupportedType() {
 		try {
-			options.registerOption("Foo", new ArrayList<String>(), null, null);
+			options.registerOption("Foo", new ArrayList<String>(), null, "foo");
 			Assert.fail(
 				"Should not be able to register an options with an ArrayList as a default value");
 		}
@@ -552,7 +590,7 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testRegisteringOptionWithTypeNone() {
 		try {
-			options.registerOption("Foo", OptionType.NO_TYPE, null, null, null);
+			options.registerOption("Foo", OptionType.NO_TYPE, null, null, "foo");
 			Assert.fail("Should not be able to register an options of type NONE");
 		}
 		catch (IllegalArgumentException e) {
@@ -563,26 +601,26 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testRegisteringOptionsEditor() {
 		MyOptionsEditor myOptionsEditor = new MyOptionsEditor();
-		options.registerOptionsEditor(myOptionsEditor);
+		options.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, options.getOptionsEditor());
 		Options subOptions = options.getOptions("SUB");
-		subOptions.registerOptionsEditor(myOptionsEditor);
+		subOptions.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, subOptions.getOptionsEditor());
 
 	}
 
 	@Test
 	public void testSettingValueToNull() {
-		options.setColor("Bar", Color.red);
+		options.setColor("Bar", Palette.RED);
 		options.setColor("Bar", null);
 		assertEquals(null, options.getColor("Bar", null));
 	}
 
 	@Test
-	public void testNullValueWillUsedPassedInDefault() {
-		options.setColor("Bar", Color.red);
+	public void testNullValueWillUsePassedInDefault() {
+		options.setColor("Bar", Palette.RED);
 		options.setColor("Bar", null);
-		assertEquals(Color.BLUE, options.getColor("Bar", Color.BLUE));
+		assertColorsEqual(Palette.BLUE, options.getColor("Bar", Palette.BLUE));
 	}
 
 	@Test
@@ -600,17 +638,17 @@ public class OptionsTest extends AbstractGenericTest {
 	private static class OptionsChangeListenerForTestVeto implements OptionsChangeListener {
 		static int count = 0;
 		private Object value;
-		private int callOrder = -1;
+		private int callCount = -1;
 
 		@Override
 		public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 				Object newValue) {
 
-			if (callOrder < 0) {
-				callOrder = ++count;
+			if (callCount < 0) {
+				callCount = ++count;
 			}
 
-			if (callOrder > 1) {
+			if (callCount > 1) {
 				throw new OptionsVetoException("Test");
 			}
 
@@ -636,13 +674,13 @@ public class OptionsTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void readState(SaveState saveState) {
-			value = saveState.getInt("VALUE", 0);
+		public void readState(GProperties properties) {
+			value = properties.getInt("VALUE", 0);
 		}
 
 		@Override
-		public void writeState(SaveState saveState) {
-			saveState.putInt("VALUE", value);
+		public void writeState(GProperties properties) {
+			properties.putInt("VALUE", value);
 		}
 
 		@Override

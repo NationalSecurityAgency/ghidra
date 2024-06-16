@@ -17,6 +17,8 @@
 #include "pcodeparse.hh"
 #include "architecture.hh"
 
+namespace ghidra {
+
 InjectContextSleigh::~InjectContextSleigh(void)
 
 {
@@ -89,7 +91,8 @@ void InjectPayloadSleigh::decode(Decoder &decoder)
 void InjectPayloadSleigh::printTemplate(ostream &s) const
 
 {
-  tpl->saveXml(s,-1);
+  XmlEncode encoder(s);
+  tpl->encode(encoder,-1);
 }
 
 void InjectPayloadSleigh::checkParameterRestrictions(InjectContextSleigh &con,
@@ -231,8 +234,9 @@ void ExecutablePcodeSleigh::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement();
-  if (elemId != ELEM_CASE_PCODE && elemId != ELEM_ADDR_PCODE && elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
-    throw XmlError("Expecting <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
+  if (elemId != ELEM_PCODE && elemId != ELEM_CASE_PCODE &&
+      elemId != ELEM_ADDR_PCODE && elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
+    throw DecoderError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
   decodePayloadAttributes(decoder);
   decodePayloadParams(decoder);
   uint4 subId = decoder.openElement(ELEM_BODY);
@@ -244,7 +248,8 @@ void ExecutablePcodeSleigh::decode(Decoder &decoder)
 void ExecutablePcodeSleigh::printTemplate(ostream &s) const
 
 {
-  tpl->saveXml(s,-1);
+  XmlEncode encoder(s);
+  tpl->encode(encoder,-1);
 }
 
 InjectPayloadDynamic::~InjectPayloadDynamic(void)
@@ -258,7 +263,7 @@ InjectPayloadDynamic::~InjectPayloadDynamic(void)
 void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
 
 {
-  Address addr = Address::decode(decoder,glb);
+  Address addr = Address::decode(decoder);
   uint4 subId = decoder.openElement(ELEM_PAYLOAD);
   istringstream s(decoder.readString(ATTRIB_CONTENT));
   try {
@@ -268,8 +273,8 @@ void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
       delete (*iter).second;		// Delete any preexisting document
     addrMap[addr] = doc;
   }
-  catch(XmlError &err) {
-    throw LowlevelError("Error in dynamic payload XML");
+  catch(DecoderError &err) {
+    throw LowlevelError("Error decoding dynamic payload");
   }
   decoder.closeElement(subId);
 }
@@ -281,10 +286,11 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
   if (eiter == addrMap.end())
     throw LowlevelError("Missing dynamic inject");
   const Element *el = (*eiter).second->getRoot();
-  XmlDecode decoder(el);
+  XmlDecode decoder(glb->translate,el);
   uint4 rootId = decoder.openElement(ELEM_INST);
+  Address addr = Address::decode(decoder);
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder,glb->translate);
+    emit.decodeOp(addr,decoder);
   decoder.closeElement(rootId);
 }
 
@@ -331,7 +337,7 @@ void PcodeInjectLibrarySleigh::parseInject(InjectPayload *payload)
       throw LowlevelError("Registering pcode snippet before language is instantiated");
   }
   if (contextCache.pos == (ParserContext *)0) {	// Make sure we have a context
-    contextCache.pos = new ParserContext((ContextCache *)0);
+    contextCache.pos = new ParserContext((ContextCache *)0,(Translate *)0);
     contextCache.pos->initialize(8,8,slgh->getConstantSpace());
   }
   PcodeSnippet compiler(slgh);
@@ -466,3 +472,5 @@ int4 PcodeInjectLibrarySleigh::manualCallOtherFixup(const string &name,const str
   registerInject(injectid);
   return injectid;
 }
+
+} // End namespace ghidra

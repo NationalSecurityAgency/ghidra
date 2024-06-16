@@ -35,6 +35,7 @@ import docking.widgets.filter.FilterListener;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 import ghidra.app.context.ListingActionContext;
 /**
  * Dialog for Equate Plugin.
@@ -65,6 +66,13 @@ import ghidra.util.table.*;
 import utility.function.Callback;
 
 public class SetEquateDialog extends DialogComponentProvider {
+
+	private Color FG_EQUATE_SELECED_COLOR =
+		new GColor("color.fg.dialog.equates.equate.selected");
+	private Color FG_BAD_EQUATE_COLOR = new GColor("color.fg.dialog.equates.equate.bad");
+	private Color FG_EQUATE_COLOR = new GColor("color.fg.dialog.equates.equate");
+	private Color FG_SUGGESTION_COLOR = new GColor("color.fg.dialog.equates.suggestion");
+
 	public static final int CANCELED = 0;
 	public static final int OK = 1;
 
@@ -89,6 +97,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	private Scalar scalar;
 	private EquateFilterListener filterListener = new EquateFilterListener();
 	private EquateEnterListener enterListener = new EquateEnterListener();
+
+	// these will be set in the okCallback()
+	private String equateName;
+	private Enum enumDt;
 
 	/**
 	 * Constructor
@@ -148,17 +160,19 @@ public class SetEquateDialog extends DialogComponentProvider {
 				int refCount = eqRowObject.getRefCount();
 				if (refCount > 0) {
 					if (eqRowObject.getEntryName().contains(EquateManager.ERROR_TAG)) {
-						c.setForeground(isSelected ? Color.WHITE : Color.RED);
+						c.setForeground(
+							isSelected ? FG_EQUATE_SELECED_COLOR : FG_BAD_EQUATE_COLOR);
 					}
 					else {
 						Equate e = eqRowObject.getEquate();
 						if (e != null && !e.isEnumBased()) {
-							c.setForeground(isSelected ? Color.WHITE : Color.BLUE.brighter());
+							c.setForeground(
+								isSelected ? FG_EQUATE_SELECED_COLOR : FG_EQUATE_COLOR);
 						}
 					}
 				}
 				else {
-					c.setForeground(isSelected ? Color.WHITE : Color.GRAY.darker());
+					c.setForeground(isSelected ? FG_EQUATE_SELECED_COLOR : FG_SUGGESTION_COLOR);
 				}
 				return c;
 			}
@@ -397,6 +411,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	 * Get the Equate Name entered or chosen by the user.
 	 */
 	public String getEquateName() {
+		return equateName;
+	}
+
+	private String doGetEquateName() {
 		EquateRowObject equateEntry = getRowObject();
 		if (equateEntry != null) {
 			return equateEntry.getEntryName();
@@ -413,6 +431,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	 * @return the enum data type for the selected entry, or null if there is no enum.
 	 */
 	public Enum getEnumDataType() {
+		return enumDt;
+	}
+
+	private Enum doGetEnumDataType() {
 		EquateRowObject equateEntry = getRowObject();
 		return (equateEntry != null) ? equateEntry.getEnumDataType() : null;
 	}
@@ -515,8 +537,11 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		if (isValid(this.getEquateName(), scalar)) {
+		String name = doGetEquateName();
+		if (isValid(name, scalar)) {
 			result = OK;
+			equateName = name;
+			enumDt = doGetEnumDataType();
 			close();
 		}
 		else {
@@ -532,7 +557,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 		// look up the new equate string
 		Equate newEquate = equateTable.getEquate(equateStr);
-		if (newEquate != null && getEnumDataType() == null) {
+		if (newEquate != null && doGetEnumDataType() == null) {
 			// make sure any existing equate with that name has the same value.
 			if (newEquate.getValue() != testScalar.getValue()) {
 				setStatus("Equate " + equateStr + " exists with value 0x" +
@@ -554,6 +579,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 	@Override
 	public void dispose() {
+		super.dispose();
 		suggestedEquatesTable.dispose();
 		filterPanel.dispose();
 	}

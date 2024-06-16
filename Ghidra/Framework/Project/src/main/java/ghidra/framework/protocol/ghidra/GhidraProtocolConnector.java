@@ -22,6 +22,7 @@ import java.net.URL;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.client.*;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.store.FileSystem;
 
 /**
@@ -34,13 +35,13 @@ public abstract class GhidraProtocolConnector {
 
 	protected final URL url;
 
-	protected final String repositoryName;
+	protected String repositoryName; // only valid for server repository
 	protected final String itemPath; // trailing "/" signifies explicit folder path 
 
 	protected String folderPath;
 	protected String folderItemName = null;
 
-	protected int responseCode = -1;
+	protected StatusCode statusCode = null;
 
 	protected RepositoryAdapter repositoryAdapter;
 	protected RepositoryServerAdapter repositoryServerAdapter;
@@ -104,12 +105,12 @@ public abstract class GhidraProtocolConnector {
 	 * @return repository name or null if not specified
 	 * @throws MalformedURLException if URL is invalid
 	 */
-	protected String parseRepositoryName() throws MalformedURLException {
+	private String parseRepositoryName() throws MalformedURLException {
 
 		String path = url.getPath();
 
 		// Divide path into pieces
-		if (path == null || path.length() < 2 || path.charAt(0) != '/') {
+		if (StringUtils.isBlank(path) || path.length() < 2 || path.charAt(0) != '/') {
 			return null; // content corresponds to RepositoryServerAdapter
 		}
 
@@ -129,41 +130,36 @@ public abstract class GhidraProtocolConnector {
 	}
 
 	/**
-	 * Parse item path name from URL and establish initial values for folderPath and
-	 * folderItemName.
-	 * @return original item path from URL or null if not specified
-	 * @throws MalformedURLException if URL is invalid
+	 * Initialize {@code folderPath} and {@code folderItemName} from specified {@code contentPath}. 
+	 * @param contentPath absolute content path (null not permitted)
+	 * @throws MalformedURLException if non-null invalid {@code contentPath} specified
+	 * @return full content path
 	 */
-	protected String parseItemPath() throws MalformedURLException {
+	protected final String initFolderItemPath(String contentPath) throws MalformedURLException {
 
-		String path = url.getPath();
-
-		if (repositoryName == null) {
-			return null; // presumed server-only URL
-		}
-
-		// strip off repository name from path
-		path = path.substring(repositoryName.length() + 1);
-		if (path.length() <= 1) {
-			// root path specified
+		if (StringUtils.isBlank(contentPath)) {
 			folderPath = FileSystem.SEPARATOR;
-			return folderPath; // repository URL, root folder
+			return folderPath;
 		}
 
-		// Handles server repository URL case  ghidra://<host>:<port>/<repository-name>[/<folder-path>]/[<folderItemName>]
+		if (!contentPath.startsWith(FileSystem.SEPARATOR)) {
+			throw new MalformedURLException("invalid content path specification");
+		}
 
-		boolean isFolder = path.endsWith(FileSystem.SEPARATOR);
+		boolean isFolder = contentPath.endsWith(FileSystem.SEPARATOR);
 		folderPath = "";
-		String pathToSplit = isFolder ? path.substring(0, path.length() - 1) : path;
+		String pathToSplit =
+			isFolder ? contentPath.substring(0, contentPath.length() - 1) : contentPath;
 		String[] pieces =
 			StringUtils.splitByWholeSeparatorPreserveAllTokens(pathToSplit, FileSystem.SEPARATOR);
 		if (pieces.length == 0) {
-			throw new MalformedURLException("invalid repository path specification");
+			folderPath = FileSystem.SEPARATOR;
+			return folderPath;
 		}
 		for (int i = 1; i < pieces.length; i++) {
 			String p = pieces[i];
 			if (p.length() == 0) {
-				throw new MalformedURLException("invalid repository path specification");
+				throw new MalformedURLException("invalid content path specification");
 			}
 			if (!isFolder && i == (pieces.length - 1)) {
 				folderItemName = p;
@@ -175,21 +171,46 @@ public abstract class GhidraProtocolConnector {
 		if (folderPath.length() == 0) {
 			folderPath = FileSystem.SEPARATOR;
 		}
+		return contentPath;
+	}
+
+	/**
+	 * Parse item path name from URL and establish initial values for folderPath and
+	 * folderItemName.
+	 * @return original item path from URL or null if not specified
+	 * @throws MalformedURLException if URL is invalid
+	 */
+	protected String parseItemPath() throws MalformedURLException {
+
+		String path = url.getPath();
+
+		if (repositoryName == null) {
+			if (!StringUtils.isEmpty(path) && !"/".equals(path)) {
+				throw new MalformedURLException();
+			}
+			return null; // presumed server-only URL
+		}
+
+		// strip off repository name from path
+		path = path.substring(repositoryName.length() + 1);
+
+		path = initFolderItemPath(path);
 
 		return path;
 	}
 
 	/**
-	 * Gets the status code from a Ghidra URL connect response.
-	 * @return the Ghidra Status-Code, or -1 if not yet connected
+	 * Gets the status code from a Ghidra URL connect attempt.
+	 * @return the Ghidra status code or null if not yet connected
 	 * @see #connect(boolean)
 	 */
-	public int getResponseCode() {
-		return responseCode;
+	public StatusCode getStatusCode() {
+		return statusCode;
 	}
 
 	/**
-	 * Gets the repository name associated with the URL.
+	 * Gets the repository name associated with the URL.  If a local URL is used this will
+	 * correspond to the project name.
 	 * @return the repository name or null if URL does not identify a specific repository
 	 */
 	public String getRepositoryName() {
@@ -247,12 +268,12 @@ public abstract class GhidraProtocolConnector {
 	/**
 	 * Fully resolve folder/item reference once connected to the associated
 	 * repository due to possible ambiguity  
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	protected void resolveItemPath() throws IOException {
 
 		// NOTE: Assume path may correspond to non-existent folder if not found
-		// - this is why GHIDRA_NOT_FOUND response code setting has been disabled
+		// - this is why NOT_FOUND status code setting has been disabled
 
 		if (folderItemName != null) {
 			if (itemPath.endsWith("/")) {
@@ -262,7 +283,7 @@ public abstract class GhidraProtocolConnector {
 
 //				if (readOnly && !repository.folderExists(itemPath)) {
 //					// TODO: URL location not found
-//					responseCode = GHIDRA_NOT_FOUND;
+//					statusCode = NOT_FOUND;
 //					return;
 //				}
 			}
@@ -278,7 +299,7 @@ public abstract class GhidraProtocolConnector {
 
 //				if (folderItemName != null) {
 //					// TODO: URL location not found
-//					responseCode = GHIDRA_NOT_FOUND;
+//					statusCode = NOT_FOUND;
 //					return;
 //				}
 			}
@@ -289,13 +310,13 @@ public abstract class GhidraProtocolConnector {
 	 * Utilized a cached connection via the specified repository adapter.
 	 * This method may only be invoked if not yet connected and the associated
 	 * URL corresponds to a repository (getRepositoryName() != null).  The connection 
-	 * response code should be established based upon the availability of the 
+	 * status code should be established based upon the availability of the 
 	 * URL referenced repository resource (i.e., folder or file).
 	 * @param repository existing connected repository adapter
-	 * @throws IOException 
+	 * @throws IOException if an IO error occurs
 	 */
 	protected void connect(RepositoryAdapter repository) throws IOException {
-		if (responseCode != -1) {
+		if (statusCode != null) {
 			throw new IllegalStateException("already connected");
 		}
 		if (repositoryName == null || !repositoryName.equals(repository.getName())) {
@@ -304,7 +325,7 @@ public abstract class GhidraProtocolConnector {
 		if (!repository.isConnected()) {
 			throw new IllegalStateException("expected connected repository");
 		}
-		responseCode = GhidraURLConnection.GHIDRA_OK;
+		statusCode = StatusCode.OK;
 		this.repositoryAdapter = repository;
 		this.repositoryServerAdapter = repository.getServer();
 		resolveItemPath();
@@ -314,10 +335,10 @@ public abstract class GhidraProtocolConnector {
 	 * Connect to the resource specified by the associated URL.  This method should only be invoked
 	 * once, a second attempt may result in an IOException.
 	 * @param readOnly if resource should be requested for write access.
-	 * @return connection response code @see {@link GhidraURLConnection}
+	 * @return connection status code
 	 * @throws IOException if a connection error occurs
 	 */
-	public abstract int connect(boolean readOnly) throws IOException;
+	public abstract StatusCode connect(boolean readOnly) throws IOException;
 
 	/**
 	 * Determines the read-only nature of a connected resource

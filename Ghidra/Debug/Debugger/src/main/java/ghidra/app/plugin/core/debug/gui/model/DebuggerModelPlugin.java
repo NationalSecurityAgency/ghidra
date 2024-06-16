@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.MultiProviderSaveBehavior;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -33,7 +34,7 @@ import ghidra.trace.model.Trace;
 	description = "GUI to browse objects recorded to the trace",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.STABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
@@ -84,6 +85,11 @@ public class DebuggerModelPlugin extends Plugin {
 	@Override
 	protected void dispose() {
 		tool.removeComponentProvider(connectedProvider);
+		synchronized (disconnectedProviders) {
+			for (DebuggerModelProvider p : disconnectedProviders) {
+				tool.removeComponentProvider(p);
+			}
+		}
 		super.dispose();
 	}
 
@@ -107,12 +113,20 @@ public class DebuggerModelPlugin extends Plugin {
 		return Collections.unmodifiableList(disconnectedProviders);
 	}
 
+	private void coordinatesActivated(DebuggerCoordinates current) {
+		connectedProvider.coordinatesActivated(current);
+		synchronized (disconnectedProviders) {
+			for (DebuggerModelProvider p : disconnectedProviders) {
+				p.coordinatesActivated(current);
+			}
+		}
+	}
+
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
-			connectedProvider.coordinatesActivated(ev.getActiveCoordinates());
+		if (event instanceof TraceActivatedPluginEvent ev) {
+			coordinatesActivated(ev.getActiveCoordinates());
 		}
 		if (event instanceof TraceClosedPluginEvent) {
 			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;

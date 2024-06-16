@@ -44,9 +44,9 @@ public interface TraceEquateManager extends TraceEquateOperations {
 
 	TraceEquateSpace getEquateSpace(AddressSpace space, boolean createIfAbsent);
 
-	TraceEquateRegisterSpace getEquateRegisterSpace(TraceThread thread, boolean createIfAbsent);
+	TraceEquateSpace getEquateRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
-	TraceEquateRegisterSpace getEquateRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
+	TraceEquateSpace getEquateRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
 
 	TraceEquate create(String name, long value)
 			throws DuplicateNameException, IllegalArgumentException;

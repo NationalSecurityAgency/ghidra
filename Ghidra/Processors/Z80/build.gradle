@@ -18,4 +18,6 @@ apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Processors Z80'
 
-
+sleighCompileOptions = [
+	'-l'
+]

@@ -15,13 +15,17 @@
  */
 package ghidra.util.database;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
+/**
+ * This provides the implementation of {@link Map#values()} for {@link DBCachedObjectStore#asMap()}
+ *
+ * @param <T> the type of objects in the store
+ */
 public class DBCachedObjectStoreValueCollection<T extends DBAnnotatedObject>
 		implements Collection<T> {
 	protected final DBCachedObjectStore<T> store;
@@ -54,17 +58,17 @@ public class DBCachedObjectStoreValueCollection<T extends DBAnnotatedObject>
 
 	@Override
 	public Iterator<T> iterator() {
-		return store.objects.iterator(direction, null);
+		return store.objects.iterator(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return store.objects.toArray(direction, null);
+		return store.objects.toArray(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public <U> U[] toArray(U[] a) {
-		return store.objects.toArray(direction, null, a, store.getRecordCount());
+		return store.objects.toArray(direction, KeySpan.ALL, a, store.getRecordCount());
 	}
 
 	@Override
@@ -94,7 +98,7 @@ public class DBCachedObjectStoreValueCollection<T extends DBAnnotatedObject>
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return store.objects.retain(c, null);
+		return store.objects.retain(c, KeySpan.ALL);
 	}
 
 	@Override

@@ -46,7 +46,6 @@ import ghidra.util.Msg;
 		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class,
 		DebuggerTraceManagerService.class,
 		MarkerService.class, // TODO
 		DataTypeManagerService.class, // For DataType selection field
@@ -102,12 +101,10 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			connectedProvider.coordinatesActivated(ev.getActiveCoordinates());
 		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		if (event instanceof TraceClosedPluginEvent ev) {
 			traceClosed(ev.getTrace());
 		}
 	}
@@ -123,12 +120,17 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 
 	public static String encodeSetsByCSpec(
 			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> setsByCSpec) {
-		return StringUtils.join(setsByCSpec.entrySet().stream().map(ent -> {
-			LanguageCompilerSpecPair lcsp = ent.getKey();
-			String regs = StringUtils.join(
-				ent.getValue().stream().map(Register::getName).collect(Collectors.toList()), ',');
-			return lcsp.languageID + "/" + lcsp.compilerSpecID + ":" + regs;
-		}).collect(Collectors.toList()), ';');
+		return setsByCSpec.entrySet()
+				.stream()
+				.map(ent -> {
+					LanguageCompilerSpecPair lcsp = ent.getKey();
+					return lcsp.languageID + "/" + lcsp.compilerSpecID + ":" + ent.getValue()
+							.stream()
+							.filter(r -> r != null)
+							.map(Register::getName)
+							.collect(Collectors.joining(","));
+				})
+				.collect(Collectors.joining(";"));
 	}
 
 	@Override

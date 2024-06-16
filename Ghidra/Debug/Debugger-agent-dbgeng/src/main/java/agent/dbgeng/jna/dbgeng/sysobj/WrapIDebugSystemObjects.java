@@ -17,7 +17,10 @@ package agent.dbgeng.jna.dbgeng.sysobj;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
-import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinDef.ULONG;
+import com.sun.jna.platform.win32.WinDef.ULONGByReference;
+import com.sun.jna.platform.win32.WinDef.ULONGLONG;
+import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils;
@@ -120,4 +123,20 @@ public class WrapIDebugSystemObjects extends UnknownWithUtils implements IDebugS
 	public HRESULT GetCurrentProcessSystemId(ULONGByReference SysId) {
 		return _invokeHR(VTIndices.GET_CURRENT_PROCESS_SYSTEM_ID, getPointer(), SysId);
 	}
+	
+	@Override
+	public HRESULT GetCurrentThreadDataOffset(ULONGLONGByReference SysOffset) {
+		return _invokeHR(VTIndices.GET_CURRENT_THREAD_DATA_OFFSET, getPointer(), SysOffset);
+	}
+
+	@Override
+	public HRESULT GetCurrentProcessDataOffset(ULONGLONGByReference SysOffset) {
+		return _invokeHR(VTIndices.GET_CURRENT_PROCESS_DATA_OFFSET, getPointer(), SysOffset);
+	}
+	
+	@Override
+	public HRESULT GetCurrentProcessExecutableName(byte[] Buffer, ULONG BufferSize, ULONGByReference ExeSize) {
+		return _invokeHR(VTIndices.GET_CURRENT_PROCESS_EXECUTABLE_NAME, getPointer(), Buffer, BufferSize, ExeSize);
+	}
+	
 }

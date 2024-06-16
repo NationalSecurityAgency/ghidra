@@ -15,6 +15,8 @@
  */
 #include "emulate.hh"
 
+namespace ghidra {
+
 /// Any time the emulator is about to execute a user-defined pcode op with the given name,
 /// the indicated breakpoint is invoked first. The break table does \e not assume responsibility
 /// for freeing the breakpoint object.
@@ -411,6 +413,8 @@ void EmulatePcodeCache::executeBranch(void)
       fallthruOp();
     else if ((current_op < 0)||(current_op >= opcache.size()))
       throw LowlevelError("Bad intra-instruction branch");
+    else
+      establishOp();
   }
   else
     setExecuteAddress(destaddr);
@@ -454,3 +458,5 @@ void EmulatePcodeCache::executeInstruction(void)
     executeCurrentOp();
   } while(!instruction_start);
 }
+
+} // End namespace ghidra

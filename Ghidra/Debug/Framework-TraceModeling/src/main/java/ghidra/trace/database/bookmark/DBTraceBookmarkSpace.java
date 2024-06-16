@@ -19,18 +19,17 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.bookmark.TraceBookmarkSpace;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectIndex;
 import ghidra.util.exception.VersionException;
@@ -39,20 +38,27 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 	protected final DBTraceBookmarkManager manager;
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
+	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 
 	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceBookmark, DBTraceBookmark> bookmarkMapSpace;
 	protected final DBCachedObjectIndex<String, DBTraceBookmark> bookmarksByTypeName;
 	protected final Collection<DBTraceBookmark> bookmarkView;
 
-	public DBTraceBookmarkSpace(DBTraceBookmarkManager manager, AddressSpace space)
+	public DBTraceBookmarkSpace(DBTraceBookmarkManager manager, AddressSpace space,
+			TraceThread thread, int frameLevel)
 			throws VersionException, IOException {
 		this.manager = manager;
 		this.lock = manager.getLock();
 		this.trace = manager.getTrace();
+		this.space = space;
+		this.thread = thread;
+		this.frameLevel = frameLevel;
 
 		this.bookmarkMapSpace =
 			new DBTraceAddressSnapRangePropertyMapSpace<>(DBTraceBookmark.tableName(space, -1, 0),
-				trace.getStoreFactory(), lock, space, DBTraceBookmark.class,
+				trace.getStoreFactory(), lock, space, null, 0, DBTraceBookmark.class,
 				(t, s, r) -> new DBTraceBookmark(this, t, s, r));
 		this.bookmarksByTypeName =
 			bookmarkMapSpace.getUserIndex(String.class, DBTraceBookmark.TYPE_COLUMN);
@@ -61,17 +67,17 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 
 	@Override
 	public AddressSpace getAddressSpace() {
-		return bookmarkMapSpace.getAddressSpace();
+		return space;
 	}
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	protected DBTraceBookmarkType assertInTrace(TraceBookmarkType type) {
@@ -98,14 +104,13 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 	}
 
 	@Override
-	public DBTraceBookmark addBookmark(Range<Long> lifespan, Address address,
+	public DBTraceBookmark addBookmark(Lifespan lifespan, Address address,
 			TraceBookmarkType type, String category, String comment) {
 		assertInTrace(type);
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			DBTraceBookmark bookmark = bookmarkMapSpace.put(address, lifespan, null);
 			bookmark.set(type.getTypeString(), category, comment);
-			trace.setChanged(
-				new TraceChangeRecord<>(TraceBookmarkChangeType.ADDED, this, bookmark));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_ADDED, this, bookmark));
 			return bookmark;
 		}
 	}
@@ -121,14 +126,14 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 	}
 
 	@Override
-	public Iterable<DBTraceBookmark> getBookmarksEnclosed(Range<Long> lifespan,
+	public Iterable<DBTraceBookmark> getBookmarksEnclosed(Lifespan lifespan,
 			AddressRange range) {
 		return bookmarkMapSpace.reduce(
 			TraceAddressSnapRangeQuery.enclosed(range, lifespan)).values();
 	}
 
 	@Override
-	public Iterable<DBTraceBookmark> getBookmarksIntersecting(Range<Long> lifespan,
+	public Iterable<DBTraceBookmark> getBookmarksIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return bookmarkMapSpace.reduce(
 			TraceAddressSnapRangeQuery.intersecting(range, lifespan)).values();

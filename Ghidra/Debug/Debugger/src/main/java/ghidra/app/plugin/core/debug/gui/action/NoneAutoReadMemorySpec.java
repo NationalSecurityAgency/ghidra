@@ -19,14 +19,18 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
-import ghidra.async.AsyncUtils;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 
 public class NoneAutoReadMemorySpec implements AutoReadMemorySpec {
-	public static final String CONFIG_NAME = "READ_NONE";
+	public static final String CONFIG_NAME = "0_READ_NONE";
+
+	@Override
+	public boolean equals(Object obj) {
+		return this.getClass() == obj.getClass();
+	}
 
 	@Override
 	public String getConfigName() {
@@ -44,8 +48,8 @@ public class NoneAutoReadMemorySpec implements AutoReadMemorySpec {
 	}
 
 	@Override
-	public CompletableFuture<Void> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
+	public CompletableFuture<Boolean> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible) {
-		return AsyncUtils.NIL;
+		return CompletableFuture.completedFuture(false);
 	}
 }

@@ -19,8 +19,21 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
+/**
+ * The class symbol view.
+ */
 public interface TraceClassSymbolView extends TraceSymbolNoDuplicatesView<TraceClassSymbol> {
-
+	/**
+	 * Add a new class symbol.
+	 * 
+	 * @param name the name of the class
+	 * @param parent the parent namespace
+	 * @param source the source
+	 * @return the new class symbol
+	 * @throws DuplicateNameException if the name is duplicated in the parent namespace
+	 * @throws InvalidInputException if the name is not valid
+	 * @throws IllegalArgumentException if some other argument is not valid
+	 */
 	TraceClassSymbol add(String name, TraceNamespaceSymbol parent, SourceType source)
 			throws DuplicateNameException, InvalidInputException, IllegalArgumentException;
 }

@@ -23,17 +23,18 @@ import java.math.BigInteger;
 import javax.swing.SwingUtilities;
 
 import docking.DockingUtils;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.format.*;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
+import help.Help;
+import help.HelpService;
 
 /**
  * FieldViewer to show data formatted according to the DataFormatModel that is passed in to the
@@ -64,12 +65,12 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	private boolean indexUpdate = true;
 	private FieldLocation lastFieldLoc;
 
-	private ByteViewerHighlightProvider highlightProvider;
+	private ByteViewerHighlighter highlightProvider = new ByteViewerHighlighter();
 	private int highlightButton = MouseEvent.BUTTON2;
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param vpanel the byte viewer panel that this component lives in
 	 * @param layoutModel the layout model for this component
 	 * @param model data format model that knows how the data should be displayed
@@ -78,20 +79,44 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 */
 	protected ByteViewerComponent(ByteViewerPanel vpanel, ByteViewerLayoutModel layoutModel,
 			DataFormatModel model, int bytesPerLine, FontMetrics fm) {
-		super(layoutModel);
+		super(layoutModel, "Byte Viewer");
+		setFieldDescriptionProvider((l, f) -> getFieldDescription(l, f));
 
 		this.panel = vpanel;
 		this.model = model;
 		this.bytesPerLine = bytesPerLine;
 		this.fm = fm;
 		this.layoutModel = layoutModel;
-		highlightProvider = new ByteViewerHighlightProvider();
 
 		setName(model.getName());
+		getAccessibleContext().setAccessibleName("Byte Viewer " + model.getName());
 		initialize();
 
 		// specialized line coloring
 		setBackgroundColorModel(new ByteViewerBackgroundColorModel());
+	}
+
+	private String getFieldDescription(FieldLocation fieldLoc, Field field) {
+		if (field == null) {
+			return null;
+		}
+		ByteBlockInfo info = indexMap.getBlockInfo(fieldLoc.getIndex(), fieldLoc.getFieldNum());
+		if (info != null) {
+			String modelName = model.getName();
+			String location = getAccessibleLocationInfo(info.getBlock(), info.getOffset());
+			return modelName + " format at " + location;
+		}
+		return null;
+	}
+
+	private String getAccessibleLocationInfo(ByteBlock block, BigInteger offset) {
+		if (block instanceof MemoryByteBlock memBlock) {
+			// location represents an address, remove leading zeros to make screen reading concise
+			Address address = memBlock.getAddress(offset);
+			return address.toString(address.getAddressSpace().showSpaceName(), 1);
+		}
+		// otherwise use generic location representation
+		return block.getLocationRepresentation(offset);
 	}
 
 	@Override
@@ -324,9 +349,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		addFieldMouseListener(this);
 	}
 
-	/**
-	 * Set the FontMetrics; recreate the fields.
-	 */
 	void setFontMetrics(FontMetrics fm) {
 		this.fm = fm;
 		createFields();
@@ -335,6 +357,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color used to denote changes in the byte block.
+	 * @param c the color for unsaved changed byte values
 	 */
 	void setEditColor(Color c) {
 		editColor = c;
@@ -355,7 +378,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for the component that has focus.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setCurrentCursorColor(Color c) {
@@ -365,7 +388,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the background color for the line containing the cursor.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setCurrentCursorLineColor(Color c) {
@@ -374,7 +397,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for showing gaps in indexes.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setSeparatorColor(Color c) {
@@ -385,15 +408,13 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Get the color used to denote changes in the byte block.
+	 * Get the the color of unsaved byte changes
+	 * @return the the color of unsaved byte changes
 	 */
 	Color getEditColor() {
 		return editColor;
 	}
 
-	/**
-	 * Set the byte blocks for displaying data.
-	 */
 	void setIndexMap(IndexMap map) {
 		updatingIndexMap = true;
 		indexMap = map;
@@ -426,7 +447,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the new group size
-	 * 
+	 *
 	 * @param groupSize the group size
 	 * @throws UnsupportedOperationException if model for this view does not support groups
 	 */
@@ -436,9 +457,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		layoutModel.setIndexMap(indexMap);
 	}
 
-	/**
-	 * Set the selection.
-	 */
 	void setViewerSelection(ByteBlockSelection selection) {
 		removeFieldSelectionListener(this);
 		try {
@@ -475,8 +493,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			else {
 				++endFieldOffset;
 			}
-			fsel.addRange(
-				new FieldLocation(startLoc.getIndex(), startLoc.getFieldNum(), 0, 0),
+			fsel.addRange(new FieldLocation(startLoc.getIndex(), startLoc.getFieldNum(), 0, 0),
 				new FieldLocation(endIndex, endFieldOffset, 0, 0));
 		}
 		return fsel;
@@ -493,7 +510,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the cursor location; called in response to a location change event
-	 * 
+	 *
 	 * @param block the block
 	 * @param index the index
 	 * @param characterOffset the offset into the UI field
@@ -546,7 +563,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			return characterOffset;
 		}
 
-		int column = characterOffset;
+		int column = fieldLoc.getCol() + characterOffset;
 		int fieldNum = fieldLoc.getFieldNum();
 		int fieldRow = fieldLoc.getRow();
 		ByteField field = (ByteField) layout.getField(fieldNum);
@@ -603,9 +620,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return processFieldSelection(hl);
 	}
 
-	/**
-	 * Restore the view.
-	 */
 	void returnToView(ByteBlock block, BigInteger index, ViewerPosition vpos) {
 		FieldLocation fieldLoc = indexMap.getFieldLocation(block, index, fieldFactories);
 		setViewerPosition(vpos.getIndex(), vpos.getXOffset(), vpos.getYOffset());
@@ -615,6 +629,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Convert the cursor location to a byte block and an offset.
+	 * @return the cursor location to a byte block and an offset.
 	 */
 	ByteBlockInfo getViewerCursorLocation() {
 		FieldLocation loc = getCursorLocation();
@@ -643,23 +658,19 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		if (info == null) {
 			return null;
 		}
-		ByteBlock block = info.getBlock();
 		BigInteger offset = info.getOffset();
 		int byteOffset = model.getByteOffset(info.getBlock(), pos);
 		offset = offset.add(BigInteger.valueOf(byteOffset));
-		return new ByteBlockInfo(block, offset, loc.getCol());
+		return new ByteBlockInfo(info.getBlock(), offset, loc.getCol());
 	}
 
-	/**
-	 * Get the data format model.
-	 */
 	DataFormatModel getDataModel() {
 		return model;
 	}
 
 	/**
 	 * Set the edit mode according to the given param if the model for this view supports editing.
-	 * 
+	 *
 	 * @param editMode true means to enable editing, and change the cursor color.
 	 */
 	void setEditMode(boolean editMode) {
@@ -682,9 +693,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		}
 	}
 
-	/**
-	 * Return true if this view is in edit mode.
-	 */
 	boolean getEditMode() {
 		return editMode;
 	}
@@ -729,9 +737,9 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		createFields();
 
 		setCursorOn(true);
-		editColor = ByteViewerComponentProvider.DEFAULT_EDIT_COLOR;
-		currentCursorColor = ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR;
-		setNonFocusCursorColor(ByteViewerComponentProvider.DEFAULT_NONFOCUS_CURSOR_COLOR);
+		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
+		currentCursorColor = ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR;
+		setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
 		setFocusedCursorColor(currentCursorColor);
 
 		updateColorRunner = () -> updateColor();
@@ -740,7 +748,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.getButton() == MouseEvent.BUTTON3) {
-					// hack to make sure that a right-clicked component becomes the active 
+					// hack to make sure that a right-clicked component becomes the active
 					// component
 					panel.setCurrentView(ByteViewerComponent.this);
 				}
@@ -779,24 +787,65 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		layoutModel.setFactorys(fieldFactories, model, charWidth);
 	}
 
-	private ByteBlockInfo getBlockInfo(FieldLocation loc, boolean isStart) {
+	private IndexedByteBlockInfo getBlockInfoForSelectionStart(FieldLocation loc) {
 		BigInteger index = loc.getIndex();
-		int offset = indexMap.getFieldOffset(index, loc.getFieldNum(), fieldFactories);
-		if (!isStart && loc.getCol() == 0) {
-			offset--;
-			if (offset < 0) {
-				index = index.subtract(BigInteger.ONE);
-				offset = indexMap.getFieldOffset(index, fieldFactories.length, fieldFactories);
-				offset += model.getUnitByteSize() - 1;
-			}
+		int fieldNum = loc.getFieldNum();
+
+		// if the selection starts on a separator line, skip to the next beginning of the next line
+		if (indexMap.isBlockSeparatorIndex(index)) {
+			index = index.add(BigInteger.ONE);
+			fieldNum = 0;
 		}
+
+		int offset = indexMap.getFieldOffset(index, fieldNum, fieldFactories);
 		return indexMap.getBlockInfo(index, offset);
 	}
 
-	private void addByteBlockRange(ByteBlockSelection sel, ByteBlockInfo start, ByteBlockInfo end) {
+	private IndexedByteBlockInfo getBlockInfoForSelectionEnd(FieldLocation loc) {
+		BigInteger lineIndex = loc.getIndex();
+		int fieldNum = loc.getFieldNum();
+
+		// if the selection ends on a separator line, go back to the end of the previous line
+		if (indexMap.isBlockSeparatorIndex(lineIndex)) {
+			lineIndex = lineIndex.subtract(BigInteger.ONE);
+			fieldNum = fieldFactories.length - 1; // set to end of line factory
+		}
+
+		// if the selection is before the characters in this field, the selection doesn't include
+		// this field, so move back a field. (Which may require moving back to the end of the
+		// previous line)
+		if (loc.getCol() == 0) {
+			if (--fieldNum < 0) {
+				lineIndex = lineIndex.subtract(BigInteger.ONE);
+				if (indexMap.isBlockSeparatorIndex(lineIndex)) {
+					lineIndex = lineIndex.subtract(BigInteger.ONE);
+				}
+				fieldNum = fieldFactories.length - 1; // set to end of line factory
+			}
+		}
+
+		// get the byte offset for the first byte in the field
+		int bytesFromLineStart = indexMap.getFieldOffset(lineIndex, fieldNum, fieldFactories);
+
+		// extend the selection to include all bytes in the selected end field since we don't
+		// currently support partial field selections
+		int bytesInField = model.getUnitByteSize();
+		int lastByteInSelectionOnLine = bytesFromLineStart + bytesInField - 1;
+
+		return indexMap.getBlockInfo(lineIndex, lastByteInSelectionOnLine);
+	}
+
+	private void addByteBlockRange(ByteBlockSelection sel, IndexedByteBlockInfo start,
+			IndexedByteBlockInfo end) {
 		if (start == null || end == null) {
 			return;
 		}
+
+		// this should only happen when both the start and end are on the same separator line
+		if (start.compareTo(end) > 0) {
+			return;
+		}
+
 		ByteBlock startBlock = start.getBlock();
 		ByteBlock endBlock = end.getBlock();
 
@@ -819,21 +868,23 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Create a byte block selection from the field selection.
+	 * Translates a screen/view selection into a byte block model selection
+	 * @param fieldSelection a {@link FieldPanel} selection
+	 * @return a {@link ByteBlockSelection}
 	 */
-	protected ByteBlockSelection processFieldSelection(FieldSelection selection) {
+	protected ByteBlockSelection processFieldSelection(FieldSelection fieldSelection) {
 
-		ByteBlockSelection sel = new ByteBlockSelection();
-		int count = selection.getNumRanges();
+		ByteBlockSelection blockSelection = new ByteBlockSelection();
+		int count = fieldSelection.getNumRanges();
 
 		for (int i = 0; i < count; i++) {
-			FieldRange fr = selection.getFieldRange(i);
-			ByteBlockInfo startInfo = getBlockInfo(fr.getStart(), true);
-			ByteBlockInfo endInfo = getBlockInfo(fr.getEnd(), false);
-			addByteBlockRange(sel, startInfo, endInfo);
+			FieldRange range = fieldSelection.getFieldRange(i);
+			IndexedByteBlockInfo start = getBlockInfoForSelectionStart(range.getStart());
+			IndexedByteBlockInfo end = getBlockInfoForSelectionEnd(range.getEnd());
+			addByteBlockRange(blockSelection, start, end);
 		}
 
-		return sel;
+		return blockSelection;
 	}
 
 	String getTextForSelection() {
@@ -845,9 +896,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return FieldSelectionHelper.getAllSelectedText(selection, this);
 	}
 
-	/**
-	 * Returns a field location for the given block, offset.
-	 */
 	FieldLocation getFieldLocation(ByteBlock block, BigInteger offset) {
 		return indexMap.getFieldLocation(block, offset, fieldFactories);
 	}
@@ -885,7 +933,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	private class ByteViewerBackgroundColorModel implements BackgroundColorModel {
 
-		private Color defaultBackgroundColor = Color.WHITE;
+		private Color defaultBackgroundColor = new GColor("color.bg.byteviewer");
 
 		@Override
 		public Color getBackgroundColor(BigInteger index) {

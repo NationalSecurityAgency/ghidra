@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,10 @@
  */
 package ghidra.app.cmd.function;
 
+import java.util.ArrayList;
+import java.util.Stack;
+
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -29,14 +30,11 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.ArrayList;
-import java.util.Stack;
-
 /**
  * Command for analyzing the Stack; the command is run in the background.
  * NOTE: referenced thunk-functions should be created prior to this command
  */
-public class FunctionStackAnalysisCmd extends BackgroundCommand {
+public class FunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
 	private boolean forceProcessing = false;
@@ -77,13 +75,9 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 		doLocals = doLocalAnalysis;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		int count = 0;
 		monitor.initialize(entryPoints.getNumAddresses());
@@ -140,7 +134,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 		ArrayList<Function> funcList = new ArrayList<Function>(); // list of functions needing stack frames created
 		stack.push(f);
 		while (!stack.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = stack.pop();
 			if (func.isThunk()) {
 				continue;
@@ -163,7 +157,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 //		int default_purge = program.getCompilerSpec().getCallStackMod();
 //		int default_stackshift = program.getCompilerSpec().getCallStackShift();
 		while (!funcList.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = funcList.remove(0);
 			SourceType oldSignatureSource = func.getSignatureSource();
 
@@ -218,7 +212,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 
 		InstructionIterator iter = program.getListing().getInstructions(func.getBody(), true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instr = iter.next();
 
 			// process any stack pointer references
@@ -286,7 +280,8 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 //		return true;
 //	}
 
-	private void defineFuncVariable(Function func, Instruction instr, int opIndex, int stackOffset) {
+	private void defineFuncVariable(Function func, Instruction instr, int opIndex,
+			int stackOffset) {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 
@@ -366,9 +361,8 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 					return null;
 				}
 				// only create variables at locations where a variable doesn't exist
-				var =
-					frame.createVariable(null, frameLoc, Undefined.getUndefinedDataType(refSize),
-						SourceType.ANALYSIS);
+				var = frame.createVariable(null, frameLoc, Undefined.getUndefinedDataType(refSize),
+					SourceType.ANALYSIS);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException(e);

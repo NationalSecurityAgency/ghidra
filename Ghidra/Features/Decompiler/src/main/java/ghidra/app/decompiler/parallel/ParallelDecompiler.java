@@ -18,8 +18,7 @@ package ghidra.app.decompiler.parallel;
 import java.util.*;
 import java.util.function.Consumer;
 
-import generic.concurrent.QCallback;
-import generic.concurrent.QResult;
+import generic.concurrent.*;
 import ghidra.app.util.DecompilerConcurrentQ;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -31,8 +30,8 @@ public class ParallelDecompiler {
 
 	/**
 	 * Decompile the given functions using multiple decompilers
-	 * 
-	 * @param callback the callback to be called for each that is processed
+	 *
+	 * @param callback the callback to be called for each item that is processed
 	 * @param program the program
 	 * @param addresses the addresses restricting which functions to decompile
 	 * @param monitor the task monitor
@@ -53,8 +52,8 @@ public class ParallelDecompiler {
 
 	/**
 	 * Decompile the given functions using multiple decompilers
-	 * 
-	 * @param callback the callback to be called for each that is processed
+	 *
+	 * @param callback the callback to be called for each item that is processed
 	 * @param functions the functions to decompile
 	 * @param monitor the task monitor
 	 * @return the list of client results
@@ -62,41 +61,40 @@ public class ParallelDecompiler {
 	 * @throws Exception if any other exception occurs
 	 */
 	public static <R> List<R> decompileFunctions(QCallback<Function, R> callback,
-			Collection<Function> functions,
-			TaskMonitor monitor)
+			Collection<Function> functions, TaskMonitor monitor)
 			throws InterruptedException, Exception {
 
 		List<R> results =
-			doDecompileFunctions(callback, functions.iterator(), functions.size(),
-				monitor);
+			doDecompileFunctions(callback, functions.iterator(), functions.size(), monitor);
 		return results;
 	}
 
 	/**
 	 * Decompile the given functions using multiple decompilers.
-	 * 
+	 *
 	 * <p>Results will be passed to the given consumer as they are produced.  Calling this
-	 * method allows you to handle results as they are discovered.  
-	 * 
+	 * method allows you to handle results as they are discovered.
+	 *
 	 * <p><strong>This method will wait for all processing before returning.</strong>
-	 * 
+	 *
 	 * @param callback the callback to be called for each that is processed
-	 * @param program the program 
+	 * @param program the program
 	 * @param functions the functions to decompile
 	 * @param resultsConsumer the consumer to which results will be passed
 	 * @param monitor the task monitor
 	 * @throws InterruptedException if interrupted
 	 * @throws Exception if any other exception occurs
 	 */
-	public static <R> void decompileFunctions(QCallback<Function, R> callback,
-			Program program,
-			Iterator<Function> functions, Consumer<R> resultsConsumer,
-			TaskMonitor monitor)
+	public static <R> void decompileFunctions(QCallback<Function, R> callback, Program program,
+			Iterator<Function> functions, Consumer<R> resultsConsumer, TaskMonitor monitor)
 			throws InterruptedException, Exception {
 
 		int max = program.getFunctionManager().getFunctionCount();
+		boolean collectResults = false; // the client will process results as they arrive
+		GThreadPool threadPool = GThreadPool.getSharedThreadPool(THREAD_POOL_NAME);
 		DecompilerConcurrentQ<Function, R> queue =
-			new DecompilerConcurrentQ<>(callback, THREAD_POOL_NAME, monitor);
+			new DecompilerConcurrentQ<>(callback, threadPool, collectResults, monitor);
+
 		monitor.initialize(max);
 		queue.process(functions, resultsConsumer);
 		queue.waitUntilDone();
@@ -130,14 +128,14 @@ public class ParallelDecompiler {
 	}
 
 	/**
-	 * Creates an object that can be used to perform decompilation of a limited number of 
+	 * Creates an object that can be used to perform decompilation of a limited number of
 	 * functions at a time, as opposed to working over an entire range of functions at once.
 	 * {@link #decompileFunctions(QCallback, Program, AddressSetView, TaskMonitor)} will create
 	 * and tear down concurrent data structures on each use, making repeated calls less efficient.
-	 * You would use this method when you wish to perform periodic work as results are returned 
+	 * You would use this method when you wish to perform periodic work as results are returned
 	 * <b>and when using the callback mechanism is not sufficient</b> such as when ordering of
-	 * results is required. 
-	 * 
+	 * results is required.
+	 *
 	 * @param callback the callback required to perform work.
 	 * @param monitor the monitor used to report progress and to cancel
 	 * @return the parallel decompiler used for decompiling.

@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Provides a basic implementation of a signed word datatype
  */
-public class SignedWordDataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class SignedWordDataType extends AbstractSignedIntegerDataType {
 
 	/** A statically defined SignedWordDataType instance.*/
 	public final static SignedWordDataType dataType = new SignedWordDataType();
@@ -30,7 +28,7 @@ public class SignedWordDataType extends AbstractIntegerDataType {
 	}
 
 	public SignedWordDataType(DataTypeManager dtm) {
-		super("sword", true, dtm);
+		super("sword", dtm);
 	}
 
 	@Override

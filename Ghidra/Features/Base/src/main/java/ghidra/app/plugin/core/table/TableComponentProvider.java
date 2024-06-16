@@ -20,18 +20,18 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import docking.ActionContext;
-import docking.ComponentProviderActivationListener;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
-import docking.widgets.table.threaded.GThreadedTablePanel;
+import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.*;
@@ -45,7 +45,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
-import resources.ResourceManager;
 
 public class TableComponentProvider<T> extends ComponentProviderAdapter
 		implements TableModelListener, NavigatableRemovalListener {
@@ -67,29 +66,31 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private DockingAction selectAction;
 	private DockingAction removeItemsAction;
 
+	private Function<MouseEvent, ActionContext> contextProvider = null;
+
 	private HelpLocation helpLoc = new HelpLocation(HelpTopics.SEARCH, "Query_Results");
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
-			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
+			GhidraProgramTableModel<T> model, Program program, GoToService gotoService,
 			String windowSubMenu, Navigatable navigatable) {
-		this(plugin, title, name, model, programName, gotoService, null, null, null, windowSubMenu,
+		this(plugin, title, name, model, program, gotoService, null, null, null, windowSubMenu,
 			navigatable);
 	}
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
-			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
-			MarkerService markerService, Color markerColor, ImageIcon markerIcon,
-			String windowSubMenu, Navigatable navigatable) {
+			GhidraProgramTableModel<T> model, Program program, GoToService gotoService,
+			MarkerService markerService, Color markerColor, Icon markerIcon, String windowSubMenu,
+			Navigatable navigatable) {
 		super(plugin.getTool(), name, plugin.getName());
 
 		this.tableServicePlugin = plugin;
 		this.navigatable = navigatable;
-		this.program = navigatable.getProgram();
+		this.program = program;
 		this.model = model;
-		this.programName = programName;
+		this.programName = program.getDomainFile().getName();
 		this.markerService = markerService;
 		this.windowSubMenu = windowSubMenu;
-		setIcon(ResourceManager.loadImage("images/magnifier.png"));
+		setIcon(new GIcon("icon.plugin.table.service"));
 		setTransient();
 		setTitle(title);
 		setHelpLocation(helpLoc);
@@ -114,8 +115,9 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			// remove it; we will add it later to a group
 			markerService.removeMarker(markerSet, program);
 			loadMarkers();
-			model.addTableModelListener(this);
 		}
+
+		model.addTableModelListener(this);
 	}
 
 	private JPanel buildMainPanel(GhidraProgramTableModel<T> tableModel, GoToService gotoService) {
@@ -130,14 +132,19 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			tool.contextChanged(TableComponentProvider.this);
 		});
 
-		// only allow global actions through if we are derived from the connect/primary navigatable
-		table.setActionsEnabled(navigatable.isConnected());
-
-		if (gotoService != null) {
-			if (navigatable != null) {
-				navigatable.addNavigatableListener(this);
-			}
-			table.installNavigation(gotoService, navigatable);
+		if (navigatable != null) {
+			// Only allow global actions if we are derived from the connect/primary navigatable.  
+			// This allows the the primary navigatable to process key events without the user having
+			// to focus first focus the primary navigatable.
+			table.setActionsEnabled(navigatable.isConnected());
+			navigatable.addNavigatableListener(this);
+			table.installNavigation(tool, navigatable);
+		}
+		else {
+			// allow the table to use the default navigation behavior.  If the GoToService later 
+			// becomes available, then navigation will work.
+			table.setActionsEnabled(true); // default navigatable will be used
+			table.installNavigation(tool);
 		}
 
 		panel.add(threadedPanel, BorderLayout.CENTER);
@@ -146,16 +153,22 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		return panel;
 	}
 
-	private void createActions(final Plugin plugin) {
+	private void createActions(Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
-		selectAction =
-			new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
+		if (navigatable != null) {
+			selectAction =
+				new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
+		}
+		else {
+			selectAction = new MakeProgramSelectionAction(tableServicePlugin, table);
+		}
+
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+		selectionNavigationAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override
@@ -185,7 +198,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		externalGotoAction.setDescription("Go to an external location");
 		externalGotoAction.setEnabled(false);
 
-		Icon icon = ResourceManager.loadImage("images/searchm_obj.gif");
+		Icon icon = new GIcon("icon.plugin.table.service.marker");
 		externalGotoAction.setPopupMenuData(
 			new MenuData(new String[] { "GoTo External Location" }, icon, null));
 		externalGotoAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Navigation"));
@@ -206,6 +219,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		tool.addLocalAction(this, removeItemsAction);
 	}
 
+	public String getActionOwner() {
+		return tableServicePlugin.getName();
+	}
+
 	private JPanel createFilterFieldPanel(JTable table, AbstractSortedTableModel<T> sortedModel) {
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, sortedModel);
 		tableFilterPanel.setToolTipText("Filter search results");
@@ -217,14 +234,34 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		buffer.append("(");
 		buffer.append(programName);
 		buffer.append(") ");
+
+		String filteredText = "";
+		if (tableFilterPanel.isFiltered()) {
+			filteredText = " of " + tableFilterPanel.getUnfilteredRowCount();
+		}
+
 		int n = model.getRowCount();
 		if (n == 1) {
-			buffer.append("    (1 entry)");
+			buffer.append("    (1 entry").append(filteredText).append(")");
 		}
 		else if (n > 1) {
-			buffer.append("    (" + n + " entries)");
+			buffer.append("    (").append(n).append(" entries").append(filteredText).append(")");
 		}
 		return buffer.toString();
+	}
+
+	private void reloadMarkers() {
+		if (markerSet == null) {
+			return;
+		}
+
+		if (!markerService.isActiveMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet,
+			program)) {
+			return; // we are not the active marker service; do not replace the active group
+		}
+
+		markerService.removeMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet, program);
+		loadMarkers();
 	}
 
 	private void loadMarkers() {
@@ -232,12 +269,17 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			return;
 		}
 
+		if (markerService.isActiveMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet,
+			program)) {
+			return; // already active; no need to load
+		}
+
 		markerSet.clearAll();
 		int n = model.getRowCount();
 		for (int i = 0; i < n; i++) {
-			ProgramLocation loc = model.getProgramLocation(i, 0);
-			if (loc != null) {
-				markerSet.add(loc.getByteAddress());
+			Address a = model.getAddress(i);
+			if (a != null) {
+				markerSet.add(a);
 			}
 		}
 
@@ -257,7 +299,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			navigatable.removeNavigatableListener(this);
 		}
 
-		tool.removeComponentProvider(this);
+		super.closeComponent();
 		tableServicePlugin.remove(this);
 
 		if (markerSet != null) {
@@ -268,7 +310,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		tableFilterPanel.dispose();
 	}
 
-	public GThreadedTablePanel<T> getThreadedTablePanel() {
+	public GhidraThreadedTablePanel<T> getThreadedTablePanel() {
 		return threadedPanel;
 	}
 
@@ -317,7 +359,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	@Override
 	public void tableChanged(TableModelEvent ev) {
 		updateTitle();
-		loadMarkers();
+		reloadMarkers();
 	}
 
 	public GhidraProgramTableModel<T> getModel() {
@@ -336,9 +378,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		activationListenerList.remove(listener);
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentActivated()
-	 */
 	@Override
 	public void componentActivated() {
 		loadMarkers();
@@ -347,9 +386,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentDeactived()
-	 */
 	@Override
 	public void componentDeactived() {
 		for (ComponentProviderActivationListener listener : activationListenerList) {
@@ -357,9 +393,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#getWindowSubMenuName()
-	 */
 	@Override
 	public String getWindowSubMenuName() {
 		return windowSubMenu;
@@ -373,7 +406,17 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, threadedPanel.getTable());
+		if (contextProvider != null) {
+			return contextProvider.apply(event);
+		}
+		return new DefaultActionContext(this, threadedPanel.getTable());
 	}
 
+	/**
+	 * Sets a function that provides context for this component provider.
+	 * @param contextProvider a function that provides context for this component provider.
+	 */
+	public void setActionContextProvider(Function<MouseEvent, ActionContext> contextProvider) {
+		this.contextProvider = contextProvider;
+	}
 }

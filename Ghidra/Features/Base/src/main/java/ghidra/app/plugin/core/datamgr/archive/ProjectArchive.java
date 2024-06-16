@@ -15,33 +15,33 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
+import java.awt.Component;
+import java.io.IOException;
+
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 
-import java.awt.Component;
-import java.io.IOException;
-
-import javax.swing.ImageIcon;
-
-import resources.ResourceManager;
-
 public class ProjectArchive implements DomainFileArchive {
 
-	private static ImageIcon CLOSED_ICON = ResourceManager.loadImage("images/closedBookBlue.png");
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openBookBlue.png");
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.project.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.project.open");
+	
 	private DataTypeArchive dataTypeArchive;
-	private DomainFile originalDomainFile;
-	DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
+	private DomainFile sourceDomainFile;
+	private DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
 	private DataTypeManagerHandler archiveManager;
 	private DataTypeManager dataTypeManager;
 
 	ProjectArchive(DataTypeManagerHandler archiveManager, DataTypeArchive dataTypeArchive,
-			DomainFile originalDomainFile) {
+			DomainFile sourceDomainFile) {
 		this.archiveManager = archiveManager;
 		this.dataTypeArchive = dataTypeArchive;
 		this.dataTypeManager = dataTypeArchive.getDataTypeManager();
-		this.originalDomainFile = originalDomainFile;
+		this.sourceDomainFile = sourceDomainFile;
 		categoryListener = new ArchiveCategoryChangeListener();
 		dataTypeManager.addDataTypeManagerListener(categoryListener);
 	}
@@ -67,15 +67,19 @@ public class ProjectArchive implements DomainFileArchive {
 		return -1; // Project Archives appear between the ProgramArchive and FileArchives.
 	}
 
+	public boolean hasExclusiveAccess() {
+		return dataTypeArchive.hasExclusiveAccess();
+	}
+
 	@Override
 	public boolean isModifiable() {
-		DomainFile domainFile = getDomainObject().getDomainFile();
-		return domainFile.canSave();
+		DomainFile df = getDomainObject().getDomainFile();
+		return df.canSave();
 	}
 
 	@Override
 	public DomainFile getDomainFile() {
-		return originalDomainFile;
+		return sourceDomainFile;
 	}
 
 	@Override
@@ -85,8 +89,8 @@ public class ProjectArchive implements DomainFileArchive {
 
 	@Override
 	public boolean isChanged() {
-		DomainFile domainFile = dataTypeArchive.getDomainFile();
-		long lastModifiedTime = domainFile.getLastModifiedTime();
+		DomainFile df = dataTypeArchive.getDomainFile();
+		long lastModifiedTime = df.getLastModifiedTime();
 		return (lastModifiedTime == 0) || dataTypeArchive.isChanged();
 	}
 
@@ -110,12 +114,12 @@ public class ProjectArchive implements DomainFileArchive {
 	@Override
 	public void saveAs(Component component) throws IOException {
 		archiveManager.saveAs(dataTypeArchive);
-		originalDomainFile = dataTypeArchive.getDomainFile();
+		sourceDomainFile = dataTypeArchive.getDomainFile(); // update with new domain file
 		dataTypeArchive.updateID();
 	}
 
 	@Override
-	public ImageIcon getIcon(boolean expanded) {
+	public Icon getIcon(boolean expanded) {
 		return expanded ? OPEN_ICON : CLOSED_ICON;
 	}
 
@@ -140,7 +144,8 @@ public class ProjectArchive implements DomainFileArchive {
 		}
 
 		@Override
-		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
+				CategoryPath newPath) {
 			if (!oldPath.equals(newPath)) {
 				fireStateChanged();
 			}
@@ -167,7 +172,8 @@ public class ProjectArchive implements DomainFileArchive {
 		}
 
 		@Override
-		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
+				DataTypePath newPath) {
 			fireStateChanged();
 		}
 
@@ -189,6 +195,11 @@ public class ProjectArchive implements DomainFileArchive {
 
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dtm, SourceArchive dataTypeSource) {
+			fireStateChanged();
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dtm) {
 			fireStateChanged();
 		}
 	}

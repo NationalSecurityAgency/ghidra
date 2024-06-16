@@ -36,7 +36,6 @@ public abstract class AbstractDataType implements DataType {
 	protected String name;
 	protected CategoryPath categoryPath;
 	protected final DataTypeManager dataMgr;
-	private DataOrganization dataOrganization;
 
 	protected AbstractDataType(CategoryPath path, String name, DataTypeManager dataTypeManager) {
 		if (path == null) {
@@ -75,9 +74,20 @@ public abstract class AbstractDataType implements DataType {
 
 	@Override
 	public final DataOrganization getDataOrganization() {
-		if (dataOrganization != null) {
-			return dataOrganization;
-		}
+		return dataMgr != null ? dataMgr.getDataOrganization()
+				: DataOrganizationImpl.getDefaultOrganization();
+	}
+
+	/**
+	 * Get the {@link DataOrganization} which should be used by a {@link AbstractDataType} when 
+	 * associated with a specified {@link DataTypeManager dataMgr}.  If a null 
+	 * {@code dataMgr} is specified the default {@link DataOrganization} will be returned.
+	 * @param dataMgr datatype manager
+	 * @return the {@link DataOrganization} which should be used by a {@link AbstractDataType}
+	 * instance.
+	 */
+	protected static DataOrganization getDataOrganization(DataTypeManager dataMgr) {
+		DataOrganization dataOrganization = null;
 		if (dataMgr != null) {
 			dataOrganization = dataMgr.getDataOrganization();
 		}

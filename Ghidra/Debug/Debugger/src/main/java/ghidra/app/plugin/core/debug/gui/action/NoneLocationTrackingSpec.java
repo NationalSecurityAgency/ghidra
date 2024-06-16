@@ -17,15 +17,19 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.util.TraceAddressSpace;
 
-public class NoneLocationTrackingSpec implements LocationTrackingSpec {
+public enum NoneLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
+	INSTANCE;
+
 	public static final String CONFIG_NAME = "TRACK_NONE";
 
 	@Override
@@ -49,19 +53,42 @@ public class NoneLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates,
-			long emuSnap) {
+	public String getLocationLabel() {
 		return null;
 	}
 
 	@Override
-	public boolean affectedByRegisterChange(TraceAddressSpace space,
+	public LocationTracker getTracker() {
+		return this;
+	}
+
+	@Override
+	public Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
+		return null;
+	}
+
+	@Override
+	public GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
+			ProgramLocation location) {
+		if (location == null) {
+			return GoToInput.fromString("00000000");
+		}
+		return GoToInput.fromAddress(location.getAddress());
+	}
+
+	@Override
+	public boolean affectedByBytesChange(TraceAddressSpace space,
 			TraceAddressSnapRange range, DebuggerCoordinates coordinates) {
 		return false;
 	}
 
 	@Override
 	public boolean affectedByStackChange(TraceStack stack, DebuggerCoordinates coordinates) {
+		return false;
+	}
+
+	@Override
+	public boolean shouldDisassemble() {
 		return false;
 	}
 }

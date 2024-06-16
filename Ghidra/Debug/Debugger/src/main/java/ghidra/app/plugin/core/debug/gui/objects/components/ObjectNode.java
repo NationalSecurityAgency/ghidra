@@ -19,27 +19,25 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.widgets.tree.*;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 
-	static final ImageIcon ICON_POPULATED =
-		ResourceManager.loadImage("images/object-populated.png");
-	static final ImageIcon ICON_EMPTY = ResourceManager.loadImage("images/object-unpopulated.png");
-	static final ImageIcon ICON_RUNNING = ResourceManager.loadImage("images/object-running.png");
-	static final ImageIcon ICON_TERMINATED =
-		ResourceManager.loadImage("images/object-terminated.png");
-	static final ImageIcon ICON_EVENT = ResourceManager.loadImage("images/register-marker.png");
+	static final Icon ICON_POPULATED = new GIcon("icon.debugger.node.object.populated");
+	static final Icon ICON_EMPTY = new GIcon("icon.debugger.node.object.empty");
+	static final Icon ICON_RUNNING = new GIcon("icon.debugger.node.object.running");
+	static final Icon ICON_TERMINATED = new GIcon("icon.debugger.node.object.terminated");
+	static final Icon ICON_EVENT = new GIcon("icon.debugger.node.object.event");
 
 	private ObjectContainer container;
 	private String name;
@@ -80,15 +78,18 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	}
 
 	@Override
-	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+	public List<GTreeNode> generateChildren(TaskMonitor monitor)
+			throws CancelledException {
 
 		if (!container.isImmutable() || isInProgress()) {
 			try {
-				CompletableFuture<ObjectContainer> cf = container.getOffspring();
+				CompletableFuture<ObjectContainer> cf =
+					container.getOffspring(RefreshBehavior.REFRESH_WHEN_ABSENT);
 				if (cf != null) {
 					// NB: We're allowed to do this because we're guaranteed to be 
 					//   in our own thread by the GTreeSlowLoadingNode
-					ObjectContainer oc = cf.get(60, TimeUnit.SECONDS);
+					ObjectContainer oc =
+						cf.get(tree.getProvider().getNodeTimeout(), TimeUnit.SECONDS);
 					return tree.update(oc);
 				}
 			}
@@ -131,7 +132,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 		List<GTreeNode> children = children();
 		monitor = new TreeTaskMonitor(monitor, children.size());
 		for (GTreeNode child : children) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += child.loadAll(monitor);
 			monitor.incrementProgress(1);
 		}
@@ -164,8 +165,8 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 			ObjectContainer rootContainer = provider.getRoot();
 			Map<String, Object> rootMap = rootContainer.getAttributeMap();
 			if (rootMap.containsKey(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME)) {
-				TargetThread targetProcess =
-					(TargetThread) rootMap.get(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME);
+				TargetObject targetProcess =
+					(TargetObject) rootMap.get(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME);
 				if (container.getTargetObject().equals(targetProcess)) {
 					return ICON_EVENT;
 				}
@@ -212,26 +213,20 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 
 	public void callUpdate() {
 		// NB: this has to be in its own thread
-		CompletableFuture.runAsync(new Runnable() {
-			@Override
-			public void run() {
-				List<GTreeNode> updateNodes = tree.update(container);
-				if (isRestructured()) {
-					setChildren(updateNodes);
-				}
+		CompletableFuture.runAsync(() -> {
+			List<GTreeNode> updateNodes = tree.update(container);
+			if (isRestructured()) {
+				setChildren(updateNodes);
 			}
 		});
 	}
 
 	public void callModified() {
 		// NB: this has to be in its own thread
-		CompletableFuture.runAsync(new Runnable() {
-			@Override
-			public void run() {
-				List<GTreeNode> updateNodes = tree.update(container);
-				for (GTreeNode n : updateNodes) {
-					n.fireNodeChanged();
-				}
+		CompletableFuture.runAsync(() -> {
+			List<GTreeNode> updateNodes = tree.update(container);
+			for (GTreeNode n : updateNodes) {
+				n.fireNodeChanged();
 			}
 		});
 	}

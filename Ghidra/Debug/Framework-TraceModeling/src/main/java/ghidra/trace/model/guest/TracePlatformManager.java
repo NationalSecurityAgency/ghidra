@@ -18,7 +18,6 @@ package ghidra.trace.model.guest;
 import java.util.Collection;
 
 import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.Language;
 
 /**
  * Allows the addition of "guest platforms" for disassembling in multiple languages.
@@ -28,18 +27,18 @@ import ghidra.program.model.lang.Language;
  */
 public interface TracePlatformManager {
 	/**
-	 * Get the base language of the trace
+	 * Get a platform representing the trace's base language and compiler spec
 	 * 
-	 * @return the language
+	 * @return the host platform
 	 */
-	Language getBaseLanguage();
+	TracePlatform getHostPlatform();
 
 	/**
-	 * Get the base compiler spec of the trace
+	 * Get all guest platforms
 	 * 
-	 * @return the compiler spec
+	 * @return the collection of platforms
 	 */
-	CompilerSpec getBaseCompilerSpec();
+	Collection<TraceGuestPlatform> getGuestPlatforms();
 
 	/**
 	 * Add a guest platform
@@ -50,25 +49,18 @@ public interface TracePlatformManager {
 	TraceGuestPlatform addGuestPlatform(CompilerSpec compilerSpec);
 
 	/**
-	 * Get the guest platform for the given compiler spec
+	 * Get the platform for the given compiler spec
 	 * 
-	 * @param compilerSpec the compiler spec. For the base compiler spec, this will return null.
+	 * @param compilerSpec the compiler spec
 	 * @return the platform, if found, or null
 	 */
-	TraceGuestPlatform getGuestPlatform(CompilerSpec compilerSpec);
+	TracePlatform getPlatform(CompilerSpec compilerSpec);
 
 	/**
 	 * Get or add a platform for the given compiler spec
 	 * 
 	 * @param compilerSpec the compiler spec
-	 * @return the new or existing platform, or null if compiler spec is the base compiler spec
+	 * @return the new or existing platform
 	 */
-	TraceGuestPlatform getOrAddGuestPlatform(CompilerSpec compilerSpec);
-
-	/**
-	 * Get all guest platforms
-	 * 
-	 * @return the collection of platforms
-	 */
-	Collection<TraceGuestPlatform> getGuestPlatforms();
+	TracePlatform getOrAddPlatform(CompilerSpec compilerSpec);
 }

@@ -51,7 +51,7 @@ public class ComputeChecksumsPlugin extends ProgramPlugin {
 	 * @param tool
 	 */
 	public ComputeChecksumsPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		createActions();
 
 		provider = new ComputeChecksumsProvider(this);

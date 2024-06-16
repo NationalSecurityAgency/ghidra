@@ -24,7 +24,7 @@ import org.junit.Test;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
-public class StructureEditorLockedActions2Test extends AbstractStructureEditorLockedActionsTest {
+public class StructureEditorLockedActions2Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testCycleGroupByteSomeRoom() throws Exception {

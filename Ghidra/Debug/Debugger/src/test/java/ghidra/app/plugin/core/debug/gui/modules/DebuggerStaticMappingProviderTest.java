@@ -25,26 +25,25 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class)
-public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerStaticMappingPlugin mappingsPlugin;
 	protected DebuggerStaticMappingProvider mappingsProvider;
 
@@ -65,8 +64,8 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 		waitForDomainObject(tb.trace);
@@ -85,8 +84,8 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.openTrace(tb.trace);
 		// Note: don't activate yet
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 		waitForDomainObject(tb.trace);
@@ -115,15 +114,15 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		intoProject(tb.trace);
 		intoProject(program);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion(".text", Range.atLeast(0L),
+					.addRegion(".text", Lifespan.nowOn(0),
 						tb.range(0xdeadbeefL, 0xdeadbeefL + 0xff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
 		waitForDomainObject(tb.trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0xc0de1234L), 0x100, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -140,7 +139,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 
 		ProgramSelection traceSel =
 			new ProgramSelection(tb.addr(0xdeadbeefL), tb.addr(0xdeadbeefL + 0x0f));
-		listingPlugin.getProvider().setSelection(traceSel);
+		runSwing(() -> listingPlugin.getProvider().setSelection(traceSel));
 		codeViewerPlugin.goTo(new ProgramLocation(program, addr(program, 0xc0de1234L)), true);
 		waitForSwing();
 
@@ -152,7 +151,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		waitForDomainObject(tb.trace);
 
 		TraceStaticMapping entry = Unique.assertOne(manager.getAllEntries());
-		assertEquals(Range.atLeast(0L), entry.getLifespan());
+		assertEquals(Lifespan.nowOn(0), entry.getLifespan());
 		assertEquals(tb.range(0xdeadbeefL, 0xdeadbeefL + 0x0f), entry.getTraceAddressRange());
 		assertEquals(ProgramURLUtils.getUrlFromProgram(program), entry.getStaticProgramURL());
 		assertEquals("ram:c0de1234", entry.getStaticAddress());
@@ -163,12 +162,12 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 		}
 		waitForDomainObject(tb.trace);
@@ -182,7 +181,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		// Select and remove the first 2 via the action
 		// NOTE: I'm not responsible for making the transaction here. The UI should do it.
 		mappingsProvider.mappingTable.getSelectionModel().setSelectionInterval(0, 1);
-		performAction(mappingsProvider.actionRemove);
+		performEnabledAction(mappingsProvider, mappingsProvider.actionRemove, true);
 		waitForDomainObject(tb.trace);
 
 		// Now, check that only the final one remains
@@ -204,12 +203,12 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 		}
 		waitForDomainObject(tb.trace);
@@ -219,7 +218,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		assertEquals(3, displayed.size());
 
 		// Remove the first two in another transaction
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			manager.findContaining(tb.addr(0xdeadbeef), 0).delete();
 			manager.findContaining(tb.addr(0xdeadbeef + 0x100), 0).delete();
 		}
@@ -237,15 +236,15 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 		}
 		waitForDomainObject(tb.trace);
@@ -264,22 +263,22 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+		try (Transaction tx = tb.startTransaction()) {
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 			waitForDomainObject(tb.trace);
 
 			// Check that all records are displayed in the interim
 			assertEquals(3, mappingsProvider.mappingTableModel.getModelData().size());
 
-			tid.abort();
+			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
 

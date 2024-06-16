@@ -15,11 +15,13 @@
  */
 /// \file pcoderaw.hh
 /// \brief Raw descriptions of varnodes and p-code ops
-#ifndef __CPUI_PCODERAW__
-#define __CPUI_PCODERAW__
+#ifndef __PCODERAW_HH__
+#define __PCODERAW_HH__
 
 #include "address.hh"
 #include "opbehavior.hh"
+
+namespace ghidra {
 
 /// \brief Data defining a specific memory location
 ///
@@ -45,10 +47,10 @@ struct VarnodeData {
   AddrSpace *getSpaceFromConst(void) const;
 
   /// Recover this object from a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);
+  void decode(Decoder &decoder);
 
   /// Recover \b this object from attributes of the current open element
-  void decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage);
+  void decodeFromAttributes(Decoder &decoder);
 
   /// Does \b this container another given VarnodeData
   bool contains(const VarnodeData &op2) const;
@@ -120,6 +122,9 @@ public:
   void clearInputs(void);	///< Remove all input varnodes to this op
   int4 numInput(void) const;	///< Get the number of input varnodes to this op
   VarnodeData *getInput(int4 i) const; ///< Get the i-th input varnode for this op
+
+  /// \brief Decode the raw OpCode and input/output Varnode data for a PcodeOp
+  static OpCode decode(Decoder &decoder,int4 isize,VarnodeData *invar,VarnodeData **outvar);
 };
 
 /// The core behavior for this operation is controlled by an OpBehavior object
@@ -231,4 +236,5 @@ inline VarnodeData *PcodeOpRaw::getInput(int4 i) const
   return in[i];
 }
 
+} // End namespace ghidra
 #endif

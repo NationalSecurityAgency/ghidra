@@ -17,40 +17,47 @@ package ghidra.trace.database.listing;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.listing.TraceUndefinedDataView;
+import ghidra.trace.model.listing.*;
 import ghidra.util.*;
+import ghidra.util.datastruct.FixedSizeHashMap;
 
+/**
+ * The implementation of {@link TraceCodeSpace#undefinedData()}
+ */
 public class DBTraceUndefinedDataView extends
-		AbstractSingleDBTraceCodeUnitsView<UndefinedDBTraceData> implements TraceUndefinedDataView {
+		AbstractSingleDBTraceCodeUnitsView<UndefinedDBTraceData>
+		implements TraceUndefinedDataView, InternalBaseCodeUnitsView<TraceData> {
 
 	protected final static int CACHE_MAX_SNAPS = 5;
 
 	protected final DBTraceCodeManager manager;
 
-	protected final Map<Long, CachedAddressSetView> cache = CacheBuilder.newBuilder()
-			.removalListener(this::cacheEntryRemoved)
-			.maximumSize(CACHE_MAX_SNAPS)
-			.build()
-			.asMap();
+	protected final Map<Long, CachedAddressSetView> cache = new FixedSizeHashMap<>(CACHE_MAX_SNAPS);
 
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceUndefinedDataView(DBTraceCodeSpace space) {
 		super(space);
 		this.manager = space.manager;
 	}
 
-	private void cacheEntryRemoved(RemovalNotification<Long, CachedAddressSetView> rn) {
-		// Nothing
-	}
-
+	/**
+	 * Generate an undefined data unit at the given point
+	 * 
+	 * @param snap the snap of the unit
+	 * @param address the address of the unit
+	 * @return the unit
+	 */
 	protected UndefinedDBTraceData doCreateUnit(long snap, Address address) {
 		space.assertInSpace(address);
 		return manager.doCreateUndefinedUnit(snap, address, space.getThread(),
@@ -62,6 +69,16 @@ public class DBTraceUndefinedDataView extends
 		return 0;
 	}
 
+	/**
+	 * Get an address set view for optimizing various queries
+	 * 
+	 * <p>
+	 * As its code may suggest, this creates the lazy address set view {@code all - definedUnits},
+	 * and wraps it in a cached address set view.
+	 * 
+	 * @param snap the snapshot key for the address set
+	 * @return the address set
+	 */
 	protected AddressSetView doGetAddressSetView(long snap) {
 		return cache.computeIfAbsent(snap,
 			t -> new CachedAddressSetView(new DifferenceAddressSetView(new AddressSet(space.all),
@@ -74,12 +91,12 @@ public class DBTraceUndefinedDataView extends
 	}
 
 	@Override
-	public boolean coversRange(Range<Long> lifespan, AddressRange range) {
+	public boolean coversRange(Lifespan lifespan, AddressRange range) {
 		return !space.definedUnits.intersectsRange(lifespan, range);
 	}
 
 	@Override
-	public boolean intersectsRange(Range<Long> lifespan, AddressRange range) {
+	public boolean intersectsRange(Lifespan lifespan, AddressRange range) {
 		return !space.definedUnits.coversRange(lifespan, range);
 	}
 
@@ -125,15 +142,16 @@ public class DBTraceUndefinedDataView extends
 			boolean forward) {
 		Iterator<Address> ait =
 			getAddressSetView(snap, new AddressRangeImpl(min, max)).getAddresses(forward);
-		return () -> Iterators.transform(ait, a -> doCreateUnit(snap, a));
+		return () -> IteratorUtils.transformedIterator(ait, a -> doCreateUnit(snap, a));
 	}
 
 	@Override
 	public Iterable<? extends UndefinedDBTraceData> getIntersecting(TraceAddressSnapRange tasr) {
-		Iterator<Iterator<? extends UndefinedDBTraceData>> itIt =
-			Iterators.transform(DBTraceUtils.iterateSpan(tasr.getLifespan()),
-				snap -> get(snap, tasr.getX1(), tasr.getX2(), true).iterator());
-		return () -> Iterators.concat(itIt);
+		return () -> StreamSupport.stream(tasr.getLifespan().spliterator(), false)
+				.flatMap(snap -> StreamSupport
+						.stream(get(snap, tasr.getX1(), tasr.getX2(), true).spliterator(), false)
+						.map(u -> (UndefinedDBTraceData) u))
+				.iterator();
 	}
 
 	@Override
@@ -142,6 +160,9 @@ public class DBTraceUndefinedDataView extends
 			doGetAddressSetView(snap));
 	}
 
+	/**
+	 * Invalidate the cache of generated undefined units
+	 */
 	public void invalidateCache() {
 		cache.clear();
 	}

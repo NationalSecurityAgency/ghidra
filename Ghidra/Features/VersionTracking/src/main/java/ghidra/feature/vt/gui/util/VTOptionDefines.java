@@ -15,7 +15,16 @@
  */
 package ghidra.feature.vt.gui.util;
 
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CallingConventionChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionNameChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.HighestSourcePriorityChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.LabelChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceDataChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.SourcePriorityChoices;
 import ghidra.framework.options.Options;
 
 public class VTOptionDefines {
@@ -30,7 +39,6 @@ public class VTOptionDefines {
 		".Automatically Apply Data Label on Accept";
 
 	// Apply Options
-
 	public static final String APPLY_MARKUP_OPTIONS_NAME = "Apply Markup Options";
 	public static boolean DEFAULT_OPTION_FOR_IGNORE_INCOMPLETE_MARKUP_ITEMS = false;
 	public static boolean DEFAULT_OPTION_FOR_IGNORE_EXCLUDED_MARKUP_ITEMS = false;
@@ -108,4 +116,101 @@ public class VTOptionDefines {
 
 	public final static String DISPLAY_APPLY_MARKUP_OPTIONS = APPLY_MARKUP_OPTIONS_NAME +
 		Options.DELIMITER + "Display Apply Markup Options";
+
+	// Auto VT Options
+	public static final String AUTO_VT_OPTIONS_NAME = "Auto Version Tracking Options";
+
+	public static final String AUTO_VT_SYMBOL_CORRELATOR = "Symbol Correlator Options";
+	public static final String AUTO_VT_DATA_CORRELATOR = "Data Correlator Options";
+	public static final String AUTO_VT_EXACT_FUNCTION_CORRELATORS =
+		"Exact Function Correlators Options";
+	public static final String AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR =
+		"Duplicate Function Correlator Options";
+	public static final String AUTO_VT_REFERENCE_CORRELATORS =
+		"Reference Correlators Options";
+	public static final String AUTO_VT_IMPLIED_MATCH_CORRELATOR =
+		"Implied Match Correlator Options";
+
+	public static final String CREATE_IMPLIED_MATCHES_OPTION_TEXT = "Create Implied Matches";
+
+	public static final String CREATE_IMPLIED_MATCHES_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + CREATE_IMPLIED_MATCHES_OPTION_TEXT;
+
+	public static final String RUN_EXACT_DATA_OPTION_TEXT = "Run Exact Data Correlator";
+	public static final String RUN_EXACT_DATA_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + RUN_EXACT_DATA_OPTION_TEXT;
+
+	public static final String RUN_EXACT_SYMBOL_OPTION_TEXT = "Run Exact Symbol Correlator";
+	public static final String RUN_EXACT_SYMBOL_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + RUN_EXACT_SYMBOL_OPTION_TEXT;
+
+	public static final String RUN_EXACT_FUNCTION_BYTES_OPTION_TEXT =
+		"Run Exact Function Bytes Correlator";
+	public static final String RUN_EXACT_FUNCTION_BYTES_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + "Run Exact Function Bytes Correlator";
+
+	public static final String RUN_EXACT_FUNCTION_INST_OPTION_TEXT =
+		"Run Exact Function Instructions Correlators";
+	public static final String RUN_EXACT_FUNCTION_INST_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + RUN_EXACT_FUNCTION_INST_OPTION_TEXT;
+
+	public static final String RUN_DUPE_FUNCTION_OPTION_TEXT = "Run Duplicate Function Correlator";
+	public static final String RUN_DUPE_FUNCTION_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + RUN_DUPE_FUNCTION_OPTION_TEXT;
+
+	public static final String RUN_REF_CORRELATORS_OPTION_TEXT = "Run the Reference Correlators";
+	public static final String RUN_REF_CORRELATORS_OPTION = AUTO_VT_OPTIONS_NAME +
+		"." + RUN_REF_CORRELATORS_OPTION_TEXT;
+
+	public static final String APPLY_IMPLIED_MATCHES_OPTION_TEXT = "Apply Implied Matches";
+
+	public static final String APPLY_IMPLIED_MATCHES_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_IMPLIED_MATCH_CORRELATOR +
+			"." + APPLY_IMPLIED_MATCHES_OPTION_TEXT;
+
+	public static final String MIN_VOTES_OPTION_TEXT = "Minimum Votes Needed";
+	public static final String MIN_VOTES_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_IMPLIED_MATCH_CORRELATOR +
+			"." + MIN_VOTES_OPTION_TEXT;
+
+	public static final String MAX_CONFLICTS_OPTION_TEXT = "Maximum Conflicts Allowed";
+	public static final String MAX_CONFLICTS_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_IMPLIED_MATCH_CORRELATOR +
+			"." + MAX_CONFLICTS_OPTION_TEXT;
+
+	public static final String SYMBOL_CORRELATOR_MIN_LEN_OPTION_TEXT =
+		"Symbol Correlator Minimum Symbol Length";
+	public static final String SYMBOL_CORRELATOR_MIN_LEN_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_SYMBOL_CORRELATOR +
+			"." + SYMBOL_CORRELATOR_MIN_LEN_OPTION_TEXT;
+
+	public static final String DATA_CORRELATOR_MIN_LEN_OPTION_TEXT =
+		"Data Correlator Minimum Data Length";
+	public static final String DATA_CORRELATOR_MIN_LEN_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DATA_CORRELATOR +
+			"." + "Data Correlator Minimum Data Length";
+
+	public static final String FUNCTION_CORRELATOR_MIN_LEN_OPTION_TEXT =
+		"Exact Function Correlators Minimum Function Length";
+	public static final String FUNCTION_CORRELATOR_MIN_LEN_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_EXACT_FUNCTION_CORRELATORS +
+			"." + FUNCTION_CORRELATOR_MIN_LEN_OPTION_TEXT;
+
+	public static final String DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION_TEXT =
+		"Duplicate Function Correlator Minimum Function Length";
+	public static final String DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR +
+			"." + DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION_TEXT;;
+
+	public static final String REF_CORRELATOR_MIN_SCORE_OPTION_TEXT =
+		"Reference Correlators Minimum Score";
+	public static final String REF_CORRELATOR_MIN_SCORE_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_REFERENCE_CORRELATORS +
+			"." + REF_CORRELATOR_MIN_SCORE_OPTION_TEXT;
+
+	public static final String REF_CORRELATOR_MIN_CONF_OPTION_TEXT =
+		"Reference Correlators Minimum Confidence";
+	public static final String REF_CORRELATOR_MIN_CONF_OPTION =
+		AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_REFERENCE_CORRELATORS +
+			"." + REF_CORRELATOR_MIN_CONF_OPTION_TEXT;
 }

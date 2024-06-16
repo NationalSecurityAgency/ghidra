@@ -26,14 +26,6 @@ import ghidra.program.model.data.*;
 
 public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 
-	protected void init(Structure dt, Category cat) {
-		super.init(dt, cat, false);
-		runSwing(() -> {
-//				model.setLocked(true);
-		});
-//		assertTrue(model.isLocked());
-	}
-
 	@Test
 	public void testDragNDropAddSameSize() throws Exception {
 		init(complexStructure, pgmTestCat);
@@ -174,7 +166,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		triggerText(textField, "3");
 		pressButtonByText(dialog, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(27, model.getNumComponents());
 		assertTrue(getDataType(0).isEquivalent(dt4));
 		assertEquals(341, model.getLength());

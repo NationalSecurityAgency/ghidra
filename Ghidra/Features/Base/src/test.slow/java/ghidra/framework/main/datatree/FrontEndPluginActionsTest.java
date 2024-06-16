@@ -52,7 +52,6 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
-import resources.ResourceManager;
 
 /**
  * Tests for actions in the front end (Ghidra project window)
@@ -749,9 +748,6 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		performAction(readOnlyAction, getTreeActionContext(), true);
 
 		assertTrue(((DomainFileNode) npNode).getDomainFile().isReadOnly());
-		ImageIcon icon = ResourceManager.loadImage("fileIcons/ProgramReadOnly.gif");
-		icon = ResourceManager.getScaledIcon(icon, 16, 16);
-
 		assertTrue(npNode.getIcon(false) instanceof MultiIcon);
 	}
 
@@ -907,8 +903,8 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		//
 
 		//@formatter:off
-		Object projectFileManager = getInstanceField("fileManager", df);
-		invokeInstanceMethod("setDomainObject", projectFileManager,
+		Object projectData = getInstanceField("projectData", df);
+		invokeInstanceMethod("setDomainObject", projectData,
 			new Class[] { String.class, 	DomainObjectAdapter.class },
 			new Object[] { path, program }
 				);
@@ -966,8 +962,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 
-		return new FrontEndProjectTreeContext(null, null, paths, folderList, fileList, tree,
-			true);
+		return new FrontEndProjectTreeContext(null, null, paths, folderList, fileList, tree, true);
 	}
 
 }

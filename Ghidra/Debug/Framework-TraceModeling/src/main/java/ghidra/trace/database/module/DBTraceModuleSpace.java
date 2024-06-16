@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
@@ -28,10 +26,10 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModuleSpace;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.DBCachedObjectIndex;
 import ghidra.util.exception.VersionException;
 
@@ -58,13 +56,13 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 		this.trace = manager.getTrace();
 
 		this.moduleMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceModule.tableName(space), trace.getStoreFactory(), lock, space,
+			DBTraceModule.tableName(space), trace.getStoreFactory(), lock, space, null, 0,
 			DBTraceModule.class, (t, s, r) -> new DBTraceModule(this, t, s, r));
 		this.modulesByPath = moduleMapSpace.getUserIndex(String.class, DBTraceModule.PATH_COLUMN);
 		this.moduleView = Collections.unmodifiableCollection(moduleMapSpace.values());
 
 		this.sectionMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceSection.tableName(space), trace.getStoreFactory(), lock, space,
+			DBTraceSection.tableName(space), trace.getStoreFactory(), lock, space, null, 0,
 			DBTraceSection.class, (t, s, r) -> new DBTraceSection(this, t, s, r));
 		this.sectionsByModuleKey =
 			sectionMapSpace.getUserIndex(long.class, DBTraceSection.MODULE_COLUMN);
@@ -95,11 +93,11 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 	}
 
 	protected DBTraceModule doAddModule(String modulePath, String moduleName, AddressRange range,
-			Range<Long> lifespan) {
+			Lifespan lifespan) {
 		DBTraceModule module = moduleMapSpace
 				.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 		module.set(modulePath, moduleName);
-		trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.ADDED, null, module));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_ADDED, null, module));
 		return module;
 	}
 
@@ -125,7 +123,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getModulesIntersecting(Range<Long> lifespan,
+	public Collection<? extends DBTraceModule> getModulesIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return Collections.unmodifiableCollection(
 			moduleMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan))
@@ -137,7 +135,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 		DBTraceSection section = sectionMapSpace
 				.put(new ImmutableTraceAddressSnapRange(range, module.getLifespan()), null);
 		section.set(module, sectionPath, sectionName);
-		trace.setChanged(new TraceChangeRecord<>(TraceSectionChangeType.ADDED, null, section));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_ADDED, null, section));
 		return section;
 	}
 
@@ -153,7 +151,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 	}
 
 	@Override
-	public Collection<? extends DBTraceSection> getSectionsIntersecting(Range<Long> lifespan,
+	public Collection<? extends DBTraceSection> getSectionsIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return Collections.unmodifiableCollection(
 			sectionMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan))

@@ -27,8 +27,8 @@ import ghidra.app.context.ProgramContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndTool;
-import ghidra.framework.main.FrontEndable;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
@@ -50,7 +50,7 @@ import ghidra.util.HelpLocation;
 	description = "This plugin provides an action that displays information about the currently loaded program"
 )
 //@formatter:on
-public class AboutProgramPlugin extends Plugin implements FrontEndable {
+public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin {
 	public final static String PLUGIN_NAME = "AboutProgramPlugin";
 	public final static String ACTION_NAME = "About Program";
 
@@ -106,8 +106,8 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 						ProgramActionContext pac = (ProgramActionContext) context;
 						Program program = pac.getProgram();
 						if (program != null) {
-							String menuName = "About " + program.getDomainFile().getName();
-							getMenuBarData().setMenuItemName(menuName);
+							getMenuBarData().setMenuItemNamePlain(
+								"About " + program.getDomainFile().getName());
 							return true;
 						}
 					}
@@ -116,7 +116,8 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 				}
 			};
 			aboutAction.addToWindowWhen(ProgramActionContext.class);
-			aboutAction.setSupportsDefaultToolContext(true);
+			// use the CodeBrowser as a backup context provider
+			aboutAction.setContextClass(ProgramActionContext.class, true);
 
 			aboutAction.setMenuBarData(
 				new MenuData(new String[] { ToolConstants.MENU_HELP, ACTION_NAME }, null, "ZZZ"));

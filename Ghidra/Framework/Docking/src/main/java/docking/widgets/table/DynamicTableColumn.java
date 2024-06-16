@@ -98,6 +98,16 @@ public interface DynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> {
 	public GColumnRenderer<COLUMN_TYPE> getColumnRenderer();
 
 	/**
+	 * Returns the optional header renderer for this column; null if no renderer is used.
+	 * 
+	 * <P>
+	 * This method allows columns to define custom header rendering.
+	 * 
+	 * @return the renderer
+	 */
+	public GTableHeaderRenderer getHeaderRenderer();
+
+	/**
 	 * Returns a list of settings definitions for this field.
 	 * 
 	 * @return list of settings definitions for this field.

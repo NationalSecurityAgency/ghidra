@@ -20,6 +20,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.task.gui.GProgressBar;
 
 public class ScheduledTaskPanel extends JPanel {
@@ -30,7 +31,6 @@ public class ScheduledTaskPanel extends JPanel {
 	private ScheduledElementLayout layout;
 
 	public ScheduledTaskPanel(String labelText, int indention) {
-		super();
 		this.indention = indention;
 
 		setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
@@ -38,13 +38,13 @@ public class ScheduledTaskPanel extends JPanel {
 		layout = new ScheduledElementLayout();
 		setLayout(layout);
 		label = new GDLabel(labelText);
-		setBackground(Color.WHITE);
+		setBackground(Colors.BACKGROUND);
 		add(label);
 	}
 
 	void addProgressBar() {
-		progressBar = new GProgressBar(null, true, true, false, 12);
-		progressBar.setBackgroundColor(Color.WHITE);
+		progressBar = new GProgressBar(null, true, true, false);
+		progressBar.setBackgroundColor(Colors.BACKGROUND);
 		add(progressBar);
 		layout.clearPreferredSize();
 		invalidate();
@@ -70,7 +70,7 @@ public class ScheduledTaskPanel extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	// This layout handles the scrolling based on the scrollOffset as set by the setHiddenViewAmount()
 	// It also optionally shows the scrollbar for the task or group.

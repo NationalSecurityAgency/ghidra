@@ -22,10 +22,13 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat_quick_method_header.h#190
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/oat_quick_method_header.h#191
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/oat_quick_method_header.h#191
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat_quick_method_header.h#191
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat_quick_method_header.h#190">oreo-release/runtime/oat_quick_method_header.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/oat_quick_method_header.h#191">oreo-dr3-release/runtime/oat_quick_method_header.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/oat_quick_method_header.h#191">oreo-m2-release/runtime/oat_quick_method_header.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat_quick_method_header.h#191">pie-release/runtime/oat_quick_method_header.h</a>
  */
 public class OatQuickMethodHeader_Oreo extends OatQuickMethodHeader {
 

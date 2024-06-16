@@ -271,7 +271,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void processSourceArchiveChanges() throws CancelledException {
 		conflictOption = OPTION_MY;
 		for (Long element : myArchiveChangeList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = element.longValue();
@@ -321,7 +321,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processSourceArchiveAdditions() throws CancelledException {
 		for (Long element : myArchiveAddedList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = element.longValue();
@@ -384,7 +384,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void processSourceArchiveConflicts() throws CancelledException {
 
 		for (Long element : archiveConflictList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long sourceArchiveID = element.longValue();
@@ -415,7 +415,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private void processCategoriesAdded() throws CancelledException {
 		for (Long element : myCatAddedList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = element.longValue();
@@ -435,7 +435,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void processCategoryConflicts() throws CancelledException {
 
 		for (Long element : catConflictList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = element.longValue();
@@ -463,7 +463,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processCategoryChanges() throws CancelledException {
 		for (Long element : myCatChangeList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = element.longValue();
@@ -476,7 +476,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processCategoriesDeleted() throws CancelledException {
 		for (Long element : myCatChangeList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 
 			long id = element.longValue();
 			processCategoryDeleted(id);
@@ -485,7 +485,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processDataTypeConflicts() throws CancelledException {
 		while (dtConflictList.size() > 0) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = dtConflictList.get(0).longValue();
@@ -1473,6 +1473,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		ParameterDefinition[] sourceVars = sourceFunctionDefDt.getArguments();
 		ParameterDefinition[] destVars = new ParameterDefinition[sourceVars.length];
 		boolean sourceHasVarArgs = sourceFunctionDefDt.hasVarArgs();
+		boolean sourceHasNoReturn = sourceFunctionDefDt.hasNoReturn();
 
 		DataType resolvedRDT = DataType.DEFAULT;
 		if (sourceReturnType != null) {
@@ -1492,6 +1493,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 		destDt.setArguments(destVars);
 		destDt.setVarArgs(sourceHasVarArgs);
+		destDt.setNoReturn(sourceHasNoReturn);
 
 		destDt.setLastChangeTime(oldLastChangeTime);
 		destDt.setLastChangeTimeInSourceArchive(oldLastChangeTimeInSourceArchive);
@@ -1548,7 +1550,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void processDataTypeChanges() throws CancelledException {
 
 		for (Long element : myDtChangeList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long id = element.longValue();
@@ -2199,7 +2201,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void processDataTypesDeleted() throws CancelledException {
 		for (Long element : myDtChangeList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 
 			long id = element.longValue();
 			processDataTypeDeleted(id);
@@ -2211,7 +2213,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 */
 	private void processDataTypesAdded() throws CancelledException {
 		for (Long element : myDtAddedList) {
-			currentMonitor.checkCanceled();
+			currentMonitor.checkCancelled();
 			currentMonitor.setProgress(++progressIndex);
 
 			long myDtKey = element.longValue();

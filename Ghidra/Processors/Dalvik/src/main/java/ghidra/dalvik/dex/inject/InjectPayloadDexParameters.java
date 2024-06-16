@@ -15,6 +15,9 @@
  */
 package ghidra.dalvik.dex.inject;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
@@ -28,8 +31,7 @@ import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -178,12 +180,12 @@ public class InjectPayloadDexParameters implements InjectPayload {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
+	public void encode(Encoder encoder) throws IOException {
 		// Provide a minimal tag so decompiler can call-back
-		buffer.append("<pcode");
-		SpecXmlUtils.encodeStringAttribute(buffer, "inject", "uponentry");
-		SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
-		buffer.append("/>\n");
+		encoder.openElement(ELEM_PCODE);
+		encoder.writeString(ATTRIB_INJECT, "uponentry");
+		encoder.writeBool(ATTRIB_DYNAMIC, true);
+		encoder.closeElement(ELEM_PCODE);
 	}
 
 	@Override

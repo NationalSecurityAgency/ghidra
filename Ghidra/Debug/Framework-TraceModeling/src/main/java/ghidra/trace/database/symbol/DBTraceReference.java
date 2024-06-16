@@ -18,18 +18,15 @@ package ghidra.trace.database.symbol;
 import java.util.Collection;
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
-import ghidra.trace.model.Trace.TraceReferenceChangeType;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 
 public class DBTraceReference implements TraceReference {
@@ -53,7 +50,7 @@ public class DBTraceReference implements TraceReference {
 		try (LockHold hold = LockHold.lock(ent.space.lock.writeLock())) {
 			ent.doDelete();
 			ent.space.trace.setChanged(
-				new TraceChangeRecord<>(TraceReferenceChangeType.DELETED, ent.space, ent, this));
+				new TraceChangeRecord<>(TraceEvents.REFERENCE_DELETED, ent.space, ent, this));
 			if (isPrimary()) {
 				Collection<? extends DBTraceReference> remaining = ent.space.getReferencesFrom(
 					getStartSnap(), getFromAddress(), getOperandIndex());
@@ -63,19 +60,19 @@ public class DBTraceReference implements TraceReference {
 				DBTraceReference newPrimary = remaining.iterator().next();
 				newPrimary.ent.setPrimary(true);
 				ent.space.trace.setChanged(new TraceChangeRecord<>(
-					TraceReferenceChangeType.PRIMARY_CHANGED, ent.space, this, false, true));
+					TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space, this, false, true));
 			}
 		}
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return ent.getLifespan();
 	}
 
 	@Override
 	public long getStartSnap() {
-		return DBTraceUtils.lowerEndpoint(getLifespan());
+		return getLifespan().lmin();
 	}
 
 	@Override
@@ -100,13 +97,12 @@ public class DBTraceReference implements TraceReference {
 				getFromAddress(), getOperandIndex());
 			if (oldPrimary != null) {
 				oldPrimary.ent.setPrimary(false);
-				ent.space.trace.setChanged(
-					new TraceChangeRecord<>(TraceReferenceChangeType.PRIMARY_CHANGED, ent.space,
-						oldPrimary, true, false));
+				ent.space.trace.setChanged(new TraceChangeRecord<>(
+					TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space, oldPrimary, true, false));
 			}
 			ent.setPrimary(true);
 			ent.space.trace.setChanged(new TraceChangeRecord<>(
-				TraceReferenceChangeType.PRIMARY_CHANGED, ent.space, this, false, true));
+				TraceEvents.REFERENCE_PRIMARY_CHANGED, ent.space, this, false, true));
 		}
 	}
 
@@ -153,38 +149,20 @@ public class DBTraceReference implements TraceReference {
 				return;
 			}
 			Address toAddress = getToAddress();
-			if (dbSym instanceof AbstractDBTraceVariableSymbol) {
-				AbstractDBTraceVariableSymbol varSym = (AbstractDBTraceVariableSymbol) dbSym;
-				// Variables' lifespans are governed by the parent function.
-				// Globals span all time.
-				DBTraceNamespaceSymbol parent = varSym.getParentNamespace();
-				if (parent instanceof TraceSymbolWithLifespan) {
-					TraceSymbolWithLifespan symWl = (TraceSymbolWithLifespan) parent;
-					if (!symWl.getLifespan().isConnected(getLifespan())) {
-						throw new IllegalArgumentException(
-							"Associated symbol and reference must have connected lifespans");
-					}
-				}
-				if (!varSym.getVariableStorage().contains(toAddress)) {
-					throw new IllegalArgumentException(String.format(
-						"Variable symbol storage of '%s' must contain Reference's to address (%s)",
-						varSym.getName(), toAddress));
-				}
-			}
-			else if (!Objects.equals(symbol.getAddress(), toAddress)) {
+			if (!Objects.equals(symbol.getAddress(), toAddress)) {
 				throw new IllegalArgumentException(String.format(
 					"Symbol address (%s) of '%s' must match Reference's to address (%s)",
 					symbol.getAddress(), symbol.getName(), toAddress));
 			}
 			if (symbol instanceof TraceSymbolWithLifespan) {
 				TraceSymbolWithLifespan symWl = (TraceSymbolWithLifespan) symbol;
-				if (!symWl.getLifespan().isConnected(getLifespan())) {
+				if (!symWl.getLifespan().intersects(getLifespan())) {
 					throw new IllegalArgumentException(
 						"Associated symbol and reference must have connected lifespans");
 				}
 			}
 			ent.setSymbolId(symbol.getID());
-			getTrace().setChanged(new TraceChangeRecord<>(TraceSymbolChangeType.ASSOCIATION_ADDED,
+			getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_ASSOCIATION_ADDED,
 				ent.space, dbSym, null, this));
 		}
 	}
@@ -197,7 +175,7 @@ public class DBTraceReference implements TraceReference {
 			}
 			TraceSymbol oldSymbol = getTrace().getSymbolManager().getSymbolByID(ent.symbolId);
 			ent.setSymbolId(-1);
-			getTrace().setChanged(new TraceChangeRecord<>(TraceSymbolChangeType.ASSOCIATION_REMOVED,
+			getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_ASSOCIATION_REMOVED,
 				ent.space, oldSymbol, this, null));
 		}
 	}

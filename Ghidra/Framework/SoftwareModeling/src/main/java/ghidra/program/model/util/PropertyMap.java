@@ -16,17 +16,24 @@
 package ghidra.program.model.util;
 
 import ghidra.program.model.address.*;
-import ghidra.util.datastruct.NoSuchIndexException;
-import ghidra.util.prop.PropertyVisitor;
 
 /**
  * Interface to define a map containing properties over a set of addresses.
+ * @param <T> property value type
  */
-public interface PropertyMap {
+public interface PropertyMap<T> {
 	/**
 	 * Get the name for this property map.
+	 * @return map name
 	 */
 	public String getName();
+
+	/**
+	 * Returns property value class.
+	 * @return property value class or null for an unsupported map type
+	 */
+	public Class<T> getValueClass();
+
 	/**
 	 * Given two addresses, indicate whether there is an address in
 	 * that range (inclusive) having the property.<p>
@@ -63,11 +70,21 @@ public interface PropertyMap {
 	 * @param addr the address where the property should be removed
 	 */
 	public boolean remove(Address addr);
+	
 	/**
 	 * returns whether there is a property value at addr.
 	 * @param addr the address in question
+	 * @return true if map has value at specified address
 	 */
 	public boolean hasProperty(Address addr);
+
+	/**
+	 * Add a map-specific value type to the specified address
+	 * @param addr property address
+	 * @param value property value or null (null remove value at address)
+	 * @throws IllegalArgumentException if property value type is inappropriate for this map
+	 */
+	public void add(Address addr, Object value);
 	
 	/**
 	 * Returns the property value stored at the specified 
@@ -75,57 +92,61 @@ public interface PropertyMap {
 	 * @param addr property address
 	 * @return property value
 	 */
-	public Object getObject(Address addr);
+	public T get(Address addr);
 	
 	/**
 	 * Get the next address where the property value exists.
 	 * @param addr the address from which to begin the search (exclusive).
+	 * @return property value location after specified {@code addr} or null if none found
 	 */
 	public Address getNextPropertyAddress(Address addr);
+	
 	/**
 	 * Get the previous Address where a property value exists.
-	 * @param addr the address from which
-	 * 		to begin the search (exclusive).
+	 * @param addr the address from which to begin the search (exclusive).
+	 * @return property value location after specified {@code addr} or null if none found
 	 */
 	public Address getPreviousPropertyAddress(Address addr);
+	
 	/**
 	 * Get the first Address where a property value exists.
+	 * @return first property value location or null if none found
 	 */
 	public Address getFirstPropertyAddress();
+	
 	/**
 	 * Get the last Address where a property value exists.
+	 * @return last property value location or null if none found
 	 */
 	public Address getLastPropertyAddress();
+	
 	/**
 	 * Get the number of properties in the map.
+	 * @return number of stored property values
 	 */
 	public int getSize();
+	
 	/**
-	 * Returns an iterator over the indices having a property
-	 * value.
-	 * @exception TypeMismatchException thrown if the property does not
-	 * have values of type <CODE>Object</CODE>.
+	 * Returns an iterator over the indices having a property value.
+	 * @param start minimum address
+	 * @param end maximum address
+	 * @return forward property address iterator
 	 */
-	public AddressIterator getPropertyIterator(
-		Address start,
-		Address end);
+	public AddressIterator getPropertyIterator(Address start, Address end);
+	
 	/**
-	 * Returns an iterator over addresses that have a property
-	 * value.
+	 * Returns an iterator over addresses that have a property value.
+	 * @param start minimum address
+	 * @param end maximum address
 	 * @param forward if true will iterate in increasing address order, otherwise it will start at
 	 * the end and iterate in decreasing address order
-	 * @exception TypeMismatchException thrown if the property does not
-	 * have values of type <CODE>Object</CODE>.
+	 * @return property address iterator
 	 */
-	public AddressIterator getPropertyIterator(
-		Address start,
-		Address end,
-		boolean forward);
+	public AddressIterator getPropertyIterator(Address start, Address end, boolean forward);
+	
 	/**
-	 * Returns an iterator over the addresses that a property
-	 * value.
-	 * @exception TypeMismatchException thrown if the property does not
-	 * have values of type <CODE>Object</CODE>.
+	 * Returns an iterator over the addresses that a property value.
+	 * @return forward property address iterator
 	 */
 	public AddressIterator getPropertyIterator();
 
@@ -133,36 +154,28 @@ public interface PropertyMap {
 	 * Returns an iterator over the addresses that have a property value and
 	 * are in the given address set.
 	 * @param asv the set of addresses to iterate over.
+	 * @return forward property address iterator
 	 */
 	public AddressIterator getPropertyIterator(AddressSetView asv); 
 
 	/**
 	 * Returns an iterator over the addresses that have a property value and
 	 * are in the given address set.
+	 * @param asv the set of addresses to iterate over.
 	 * @param forward if true will iterate in increasing address order, otherwise it will start at
 	 * the end and iterate in decreasing address order
+	 * @return property address iterator
 	 */
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward);
 	
 	/**
-	 * Returns an iterator over the address having a property
-	 * value.
+	 * Returns an iterator over the address having a property value.
 	 * @param start the starting address
 	 * @param forward if true will iterate in increasing address order, otherwise it will start at
 	 * the end and iterate in decreasing address order
-	 * @exception TypeMismatchException thrown if the property does not
-	 * have values of type <CODE>Object</CODE>.
+	 * @return property address iterator
 	 */
 	public AddressIterator getPropertyIterator(Address start, boolean forward);
-	
-	/**
-	 * Applies a property value at the indicated address without knowing its 
-	 * type (String, int, long, etc.) by using the property visitor.
-	 * @param visitor the property visitor that lets you apply the property
-	 * without knowing its specific type ahead of time.
-	 * @param addr the address where the property is to be applied.
-	 */
-	public void applyValue(PropertyVisitor visitor, Address addr);
 	
 	/**
 	 * Moves the properties defined in the range from the start address thru the 

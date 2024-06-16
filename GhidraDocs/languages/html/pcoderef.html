@@ -1,10 +1,10 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>P-Code Reference Manual</title>
-<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="next" href="pcodedescription.html" title="P-Code Operation Reference">
 </head>
@@ -13,9 +13,9 @@
 <table width="100%" summary="Navigation header">
 <tr><th colspan="3" align="center">P-Code Reference Manual</th></tr>
 <tr>
-<td width="20%" align="left">�</td>
-<th width="60%" align="center">�</th>
-<td width="20%" align="right">�<a accesskey="n" href="pcodedescription.html">Next</a>
+<td width="20%" align="left"> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="pcodedescription.html">Next</a>
 </td>
 </tr>
 </table>
@@ -25,13 +25,13 @@
 <div class="titlepage">
 <div>
 <div><h1 class="title">
-<a name="idm140035470386944"></a>P-Code Reference Manual</h1></div>
-<div><p class="releaseinfo">Last updated September 5, 2019</p></div>
+<a name="pcoderef_title"></a>P-Code Reference Manual</h1></div>
+<div><p class="releaseinfo">Last updated March 2, 2023</p></div>
 </div>
 <hr>
 </div>
 <div class="table">
-<a name="mytoc.htmltable"></a><table width="90%" frame="none">
+<a name="mytoc.htmltable"></a><table xml:id="mytoc.htmltable" width="90%" frame="none">
 <col width="25%">
 <col width="25%">
 <col width="25%">
@@ -117,51 +117,57 @@
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_equal" title="INT_EQUAL">INT_EQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_lzcount" title="LZCOUNT">LZCOUNT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_mult" title="INT_MULT">INT_MULT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_floor" title="FLOAT_FLOOR">FLOAT_FLOOR</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_notequal" title="INT_NOTEQUAL">INT_NOTEQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_equal" title="INT_EQUAL">INT_EQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_div" title="INT_DIV">INT_DIV</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_round" title="FLOAT_ROUND">FLOAT_ROUND</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_less" title="INT_LESS">INT_LESS</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_notequal" title="INT_NOTEQUAL">INT_NOTEQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_rem" title="INT_REM">INT_REM</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float_nan" title="FLOAT_NAN">FLOAT_NAN</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_sless" title="INT_SLESS">INT_SLESS</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_less" title="INT_LESS">INT_LESS</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_sdiv" title="INT_SDIV">INT_SDIV</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int2float" title="INT2FLOAT">INT2FLOAT</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_lessequal" title="INT_LESSEQUAL">INT_LESSEQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_sless" title="INT_SLESS">INT_SLESS</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_int_srem" title="INT_SREM">INT_SREM</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_float2float" title="FLOAT2FLOAT">FLOAT2FLOAT</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_slessequal" title="INT_SLESSEQUAL">INT_SLESSEQUAL</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_lessequal" title="INT_LESSEQUAL">INT_LESSEQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_bool_negate" title="BOOL_NEGATE">BOOL_NEGATE</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_trunc" title="TRUNC">TRUNC</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_zext" title="INT_ZEXT">INT_ZEXT</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_slessequal" title="INT_SLESSEQUAL">INT_SLESSEQUAL</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_bool_xor" title="BOOL_XOR">BOOL_XOR</a></td>
  <td><a class="link" href="pseudo-ops.html#cpui_cpoolref" title="CPOOLREF">CPOOLREF</a></td>
 </tr>
 <tr>
  <td></td>
- <td><a class="link" href="pcodedescription.html#cpui_int_sext" title="INT_SEXT">INT_SEXT</a></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_zext" title="INT_ZEXT">INT_ZEXT</a></td>
  <td><a class="link" href="pcodedescription.html#cpui_bool_and" title="BOOL_AND">BOOL_AND</a></td>
  <td><a class="link" href="pseudo-ops.html#cpui_new" title="NEW">NEW</a></td>
+</tr>
+<tr>
+ <td></td>
+ <td><a class="link" href="pcodedescription.html#cpui_int_sext" title="INT_SEXT">INT_SEXT</a></td>
+ <td></td>
+ <td></td>
 </tr>
 </tbody>
 </table>
@@ -189,7 +195,7 @@ to as <span class="bold"><strong>raw p-code</strong></span>. Raw p-code can be u
 instruction execution and generally follows the same control-flow,
 although it may add some of its own internal control-flow. The subset of
 opcodes that can occur in raw p-code is described in
-<a class="xref" href="pcodedescription.html" title="P-Code Operation Reference">the section called &#8220;P-Code Operation Reference&#8221;</a> and in <a class="xref" href="pseudo-ops.html" title="Pseudo P-CODE Operations">the section called &#8220;Pseudo P-CODE Operations&#8221;</a>, making up
+<a class="xref" href="pcodedescription.html" title="P-Code Operation Reference">the section called “P-Code Operation Reference”</a> and in <a class="xref" href="pseudo-ops.html" title="Pseudo P-CODE Operations">the section called “Pseudo P-CODE Operations”</a>, making up
 the bulk of this document. 
 </p>
 <p>
@@ -203,7 +209,7 @@ opcodes. Two of these,
 <span class="bold"><strong>MULTIEQUAL</strong></span> and <span class="bold"><strong>INDIRECT</strong></span>,
 are specific to the graph construction process, but other opcodes can be introduced during
 subsequent analysis and transformation of a graph and help hold recovered data-type relationships.
-All of the new opcodes are described in <a class="xref" href="additionalpcode.html" title="Additional P-CODE Operations">the section called &#8220;Additional P-CODE Operations&#8221;</a>, none of which can occur
+All of the new opcodes are described in <a class="xref" href="additionalpcode.html" title="Additional P-CODE Operations">the section called “Additional P-CODE Operations”</a>, none of which can occur
 in the original raw p-code translation. Finally, a few of the p-code operators,
 <span class="bold"><strong>CALL</strong></span>,
 <span class="bold"><strong>CALLIND</strong></span>, and <span class="bold"><strong>RETURN</strong></span>,
@@ -215,14 +221,14 @@ The core concepts of p-code are:
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140035470234080"></a>Address Space</h3></div></div></div>
+<a name="pcoderef_address_space"></a>Address Space</h3></div></div></div>
 <p>
 The <span class="bold"><strong>address space</strong></span> for p-code is a generalization
 of RAM. It is defined simply as an indexed sequence of bytes that can
 be read and written by the p-code operations. For a specific byte, the unique index
 that labels it is the byte's <span class="bold"><strong>address</strong></span>. An address space has a
 name to identify it, a size that indicates the number of distinct
-indices into the space, and an <span class="bold"><strong>endianess</strong></span>
+indices into the space, and an <span class="bold"><strong>endianness</strong></span>
 associated with it that indicates how integers and other multi-byte
 values are encoded into the space. A typical processor
 will have a <span class="bold"><strong>ram</strong></span> space, to model
@@ -256,7 +262,7 @@ any of the other p-code operations.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140035470224608"></a>Varnode</h3></div></div></div>
+<a name="pcoderef_varnode"></a>Varnode</h3></div></div></div>
 <p>
 A <span class="bold"><strong>varnode</strong></span> is a generalization of
 either a register or a memory location. It is represented by the formal triple:
@@ -274,7 +280,7 @@ on the varnodes: integer, boolean, and floating-point.
 <div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
     Operations that manipulate integers always interpret a varnode as a
-    twos-complement encoding using the endianess associated with the
+    twos-complement encoding using the endianness associated with the
     address space containing the varnode.
   </li>
 <li class="listitem" style="list-style-type: disc">
@@ -303,7 +309,7 @@ on them by the p-code operations that use them.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140035470216864"></a>P-code Operation</h3></div></div></div>
+<a name="pcoderef_pcode_operation"></a>P-code Operation</h3></div></div></div>
 <p>
 A <span class="bold"><strong>p-code operation</strong></span> is the analog of a
 machine instruction. All p-code operations have the same basic format
@@ -313,7 +319,7 @@ its <span class="bold"><strong>opcode</strong></span>.
 For almost all p-code operations, only the output varnode can have its
 value modified; there are no indirect effects of the operation.
 The only possible exceptions are <span class="emphasis"><em>pseudo</em></span> operations,
-see <a class="xref" href="pseudo-ops.html" title="Pseudo P-CODE Operations">the section called &#8220;Pseudo P-CODE Operations&#8221;</a>, which are sometimes necessary when there
+see <a class="xref" href="pseudo-ops.html" title="Pseudo P-CODE Operations">the section called “Pseudo P-CODE Operations”</a>, which are sometimes necessary when there
 is incomplete knowledge of an instruction's behavior.
 </p>
 <p>
@@ -336,7 +342,7 @@ The list of possible
 opcodes are similar to many RISC based instruction sets. The effect of
 each opcode is described in detail in the following sections,
 and a reference table is given
-in <a class="xref" href="reference.html" title="Syntax Reference">the section called &#8220;Syntax Reference&#8221;</a>. In general, the size or
+in <a class="xref" href="reference.html" title="Syntax Reference">the section called “Syntax Reference”</a>. In general, the size or
 precision of a particular p-code operation is determined by the size
 of the varnode inputs or output, not by the opcode.
 </p>
@@ -347,15 +353,15 @@ of the varnode inputs or output, not by the opcode.
 <hr>
 <table width="100%" summary="Navigation footer">
 <tr>
-<td width="40%" align="left">�</td>
-<td width="20%" align="center">�</td>
-<td width="40%" align="right">�<a accesskey="n" href="pcodedescription.html">Next</a>
+<td width="40%" align="left"> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="pcodedescription.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top">�</td>
-<td width="20%" align="center">�</td>
-<td width="40%" align="right" valign="top">�P-Code Operation Reference</td>
+<td width="40%" align="left" valign="top"> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right" valign="top"> P-Code Operation Reference</td>
 </tr>
 </table>
 </div>

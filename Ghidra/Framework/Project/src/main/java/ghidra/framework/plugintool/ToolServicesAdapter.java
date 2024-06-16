@@ -16,15 +16,13 @@
 package ghidra.framework.plugintool;
 
 import java.io.*;
+import java.net.URL;
+import java.util.Collection;
 import java.util.Set;
 
 import ghidra.framework.model.*;
 
 public class ToolServicesAdapter implements ToolServices {
-
-	@Override
-	public void addDefaultToolChangeListener(DefaultToolChangeListener listener) {
-	}
 
 	@Override
 	public boolean canAutoSave(PluginTool tool) {
@@ -33,11 +31,6 @@ public class ToolServicesAdapter implements ToolServices {
 
 	@Override
 	public void closeTool(PluginTool tool) {
-		// override
-	}
-
-	@Override
-	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event) {
 		// override
 	}
 
@@ -62,6 +55,11 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
+	public ToolTemplate getDefaultToolTemplate(String contentType) {
+		return null;
+	}
+
+	@Override
 	public PluginTool[] getRunningTools() {
 		return null;
 	}
@@ -72,18 +70,23 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public PluginTool launchDefaultTool(DomainFile domainFile) {
+	public PluginTool launchDefaultTool(Collection<DomainFile> domainFile) {
 		return null;
 	}
 
 	@Override
-	public PluginTool launchTool(String toolName, DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, Collection<DomainFile> domainFile) {
 		return null;
 	}
 
 	@Override
-	public void removeDefaultToolChangeListener(DefaultToolChangeListener listener) {
-		// override
+	public PluginTool launchDefaultToolWithURL(URL url) {
+		return null;
+	}
+
+	@Override
+	public PluginTool launchToolWithURL(String toolName, URL url) {
+		return null;
 	}
 
 	@Override

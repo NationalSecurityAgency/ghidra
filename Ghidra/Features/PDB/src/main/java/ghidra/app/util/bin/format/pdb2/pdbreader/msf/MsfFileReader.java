@@ -18,29 +18,31 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import ghidra.app.util.bin.ByteProvider;
+
 /**
  * This class is responsible for reading pages from a {@link RandomAccessFile} for the
- *  {@link AbstractMsf} class and its underlying classes.
+ *  {@link Msf} class and its underlying classes.
  */
 class MsfFileReader implements AutoCloseable {
 
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
-	private RandomAccessFile file;
-	private AbstractMsf msf;
+	private ByteProvider byteProvider;
+	private Msf msf;
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
-	 * Closes this class, including its underlying file resources.
-	 * @throws IOException Under circumstances found when closing a {@link RandomAccessFile}.
+	 * Closes this class, including its underlying file resources
+	 * @throws IOException under circumstances found when closing a {@link RandomAccessFile}
 	 */
 	@Override
 	public void close() throws IOException {
-		if (file != null) {
-			file.close();
+		if (byteProvider != null) {
+			byteProvider.close();
 		}
 	}
 
@@ -48,35 +50,35 @@ class MsfFileReader implements AutoCloseable {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param msf The {@link AbstractMsf} for which this class is to be associated.
-	 * @param file {@link RandomAccessFile} underlying this class.
+	 * Constructor
+	 * @param msf the {@link Msf} for which this class is to be associated
+	 * @param byteProvider the ByteProvider providing bytes for the MSF
 	 */
-	MsfFileReader(AbstractMsf msf, RandomAccessFile file) {
+	MsfFileReader(Msf msf, ByteProvider byteProvider) {
 		this.msf = msf;
-		this.file = file;
+		this.byteProvider = byteProvider;
 	}
 
 	/**
-	 * Reads a single page of bytes from the {@link AbstractMsf} and writes it into the bytes array.
-	 * @param page The page number to read from the file.
-	 * @param bytes The byte[] into which the data is to be written.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
+	 * Reads a single page of bytes from the {@link Msf} and writes it into the bytes array
+	 * @param page the page number to read from the file
+	 * @param bytes the byte[] into which the data is to be written
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
 	 */
 	void readPage(int page, byte[] bytes) throws IOException {
 		read(page, 0, msf.getPageSize(), bytes, 0);
 	}
 
 	/**
-	 * Reads bytes from the {@link AbstractMsf} into a byte[].
-	 * @param page The page number within which to start the read.
-	 * @param offset The byte offset within the page to start the read.
-	 * @param numToRead The total number of bytes to read.
-	 * @param bytes The byte[] into which the data is to be written.
-	 * @param bytesOffset The starting offset within the bytes array in which to start writing.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
+	 * Reads bytes from the {@link Msf} into a byte[]
+	 * @param page the page number within which to start the read
+	 * @param offset the byte offset within the page to start the read
+	 * @param numToRead the total number of bytes to read
+	 * @param bytes the byte[] into which the data is to be written
+	 * @param bytesOffset the starting offset within the bytes array in which to start writing
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
 	 */
 	void read(int page, int offset, int numToRead, byte[] bytes, int bytesOffset)
 			throws IOException {
@@ -95,18 +97,13 @@ class MsfFileReader implements AutoCloseable {
 
 		// Fail if file does not contain enough pages for the read--boundary case that assumes
 		//  everything beyond the offset in the file belongs to this read.
-		if (AbstractMsf.floorDivisionWithLog2Divisor(offset + numToRead,
-			msf.getLog2PageSize()) > msf.getNumPages()) {
+		if (Msf.floorDivisionWithLog2Divisor(offset + numToRead, msf.getLog2PageSize()) > msf
+				.getNumPages()) {
 			throw new IOException("Invalid MSF configuration");
 		}
 
-		int numBytesRead = 0;
-		file.seek(fileOffset);
-		numBytesRead = file.read(bytes, bytesOffset, numToRead);
-
-		if (numBytesRead != numToRead) {
-			throw new IOException("Could not read required bytes from MSF");
-		}
+		System.arraycopy(byteProvider.readBytes(fileOffset, numToRead), 0, bytes, bytesOffset,
+			numToRead);
 	}
 
 }

@@ -18,11 +18,13 @@ package classrecovery;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd;
-import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd.OffsetPcodeOpPair;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.app.decompiler.util.FillOutStructureHelper;
+import ghidra.app.decompiler.util.FillOutStructureHelper.OffsetPcodeOpPair;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -32,7 +34,6 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -54,7 +55,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private static final String RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME =
 		"RTTIClassHierarchyDescriptor";
 	private static final String VFTABLE_META_PTR_LABEL = "vftable_meta_ptr";
-	private static final String VFTABLE_LABEL = "vftable";
+//	private static final String VFTABLE_LABEL = "vftable";
 
 	private static final String CLASS_VTABLE_STRUCT_NAME = "_vbtable";
 	private static final String CLASS_VTABLE_PTR_FIELD_EXT = "vftablePtr";
@@ -71,15 +72,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	boolean isPDBLoaded;
 
-	public RTTIWindowsClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
+	public RTTIWindowsClassRecoverer(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
 			boolean nameVFunctions, boolean isPDBLoaded, TaskMonitor monitor) throws Exception {
 
-		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVFunctions,
+		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVFunctions,
 			isPDBLoaded, monitor);
 
 		this.isPDBLoaded = isPDBLoaded;
-
 	}
 
 	@Override
@@ -202,7 +202,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		List<Symbol> vftableSymbols = getListOfVftableSymbols();
 
 		for (Symbol symbol : vftableSymbols) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (symbol.getParentNamespace().getName().equals("type_info")) {
 				return true;
 			}
@@ -210,60 +210,60 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		return false;
 	}
 
-	/**
-	 * Method to determine if the current program has RTTI data applied to it
-	 * @return true if the current program has RTTI data applied to it
-	 * @throws CancelledException if cancelled
-	 */
-	private boolean programHasRTTIApplied() throws CancelledException {
-
-		// First check to see if the RTTICompleteObjectLocator data type exists. If not there has
-		// been no RTTI applied
-		DataType completeObjLocatorDataType = dataTypeManager.getDataType(CategoryPath.ROOT,
-			RTTI_BASE_COMPLETE_OBJECT_LOADER_DATA_NAME);
-		if (completeObjLocatorDataType == null) {
-			return false;
-		}
-
-		// Next check that a RTTICompleteObjectLocator has been applied somewhere to make sure that
-		// we don't have the case where pdb ran and created the data type but rtti didn't run so didn't
-		// apply any of the data types
-		return hasSymbolAndDataType(RTTI_BASE_COMPLETE_OBJECT_LOADER_LABEL,
-			completeObjLocatorDataType);
-	}
-
-	private void runRTTIAnalyzer() throws Exception {
-//		Analyzer analyzer = new RttiAnalyzer();
-//		analyzer.added(program, program.getAddressFactory().getAddressSet(), monitor,
-//			new MessageLog());
-	}
-
-	/**
-	 * Method to find all the vftables in the program 
-	 * @return list of all vftable symbols
-	 * @throws CancelledException when cancelled
-	 */
-	//TODO: pull into separate methods and check separately above
-	private boolean hasSymbolAndDataType(String symbolName, DataType datatype)
-			throws CancelledException {
-
-		String pdbName = "`" + symbolName + "'";
-		SymbolIterator symbols =
-			program.getSymbolTable().getSymbolIterator("*" + symbolName + "*", true);
-
-		while (symbols.hasNext()) {
-			monitor.checkCanceled();
-			Symbol symbol = symbols.next();
-			if (symbol.getName().equals(symbolName) || symbol.getName().equals(pdbName)) {
-				Data dataAt = program.getListing().getDefinedDataAt(symbol.getAddress());
-				if (dataAt.getDataType().equals(datatype)) {
-					return true;
-				}
-			}
-
-		}
-		return false;
-	}
+//	/**
+//	 * Method to determine if the current program has RTTI data applied to it
+//	 * @return true if the current program has RTTI data applied to it
+//	 * @throws CancelledException if cancelled
+//	 */
+//	private boolean programHasRTTIApplied() throws CancelledException {
+//
+//		// First check to see if the RTTICompleteObjectLocator data type exists. If not there has
+//		// been no RTTI applied
+//		DataType completeObjLocatorDataType = dataTypeManager.getDataType(CategoryPath.ROOT,
+//			RTTI_BASE_COMPLETE_OBJECT_LOADER_DATA_NAME);
+//		if (completeObjLocatorDataType == null) {
+//			return false;
+//		}
+//
+//		// Next check that a RTTICompleteObjectLocator has been applied somewhere to make sure that
+//		// we don't have the case where pdb ran and created the data type but rtti didn't run so didn't
+//		// apply any of the data types
+//		return hasSymbolAndDataType(RTTI_BASE_COMPLETE_OBJECT_LOADER_LABEL,
+//			completeObjLocatorDataType);
+//	}
+//
+//	private void runRTTIAnalyzer() throws Exception {
+////		Analyzer analyzer = new RttiAnalyzer();
+////		analyzer.added(program, program.getAddressFactory().getAddressSet(), monitor,
+////			new MessageLog());
+//	}
+//
+//	/**
+//	 * Method to find all the vftables in the program 
+//	 * @return list of all vftable symbols
+//	 * @throws CancelledException when cancelled
+//	 */
+//	//TODO: pull into separate methods and check separately above
+//	private boolean hasSymbolAndDataType(String symbolName, DataType datatype)
+//			throws CancelledException {
+//
+//		String pdbName = "`" + symbolName + "'";
+//		SymbolIterator symbols =
+//			program.getSymbolTable().getSymbolIterator("*" + symbolName + "*", true);
+//
+//		while (symbols.hasNext()) {
+//			monitor.checkCancelled();
+//			Symbol symbol = symbols.next();
+//			if (symbol.getName().equals(symbolName) || symbol.getName().equals(pdbName)) {
+//				Data dataAt = program.getListing().getDefinedDataAt(symbol.getAddress());
+//				if (dataAt.getDataType().equals(datatype)) {
+//					return true;
+//				}
+//			}
+//
+//		}
+//		return false;
+//	}
 
 	public void fixUpRttiAnalysis() throws CancelledException, Exception {
 		applyMissingRTTIStructures();
@@ -287,7 +287,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Symbol> vftableSymbols = createMissingVftableSymbols(completeObjectLocatorSymbols);
 		return vftableSymbols;
-
 	}
 
 	/**
@@ -306,7 +305,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			symbolTable.getSymbols(getInitializedMemory(), SymbolType.LABEL, true);
 
 		while (dataSymbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = dataSymbols.next();
 			if (!symbol.getName().contains(RTTI_BASE_COMPLETE_OBJECT_LOADER_LABEL)) {
 				continue;
@@ -373,7 +372,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			symbolTable.getSymbols(getInitializedMemory(), SymbolType.LABEL, true);
 
 		while (dataSymbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = dataSymbols.next();
 			if (!symbol.getName().contains(RTTI_BASE_CLASS_DESCRIPTOR_LABEL)) {
 				continue;
@@ -440,15 +439,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		for (int i = 0; i < numBaseClasses; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			//TODO: extendedFlatAPI.getReferencedAddress(address, getIboIf64bit);
 			Address baseClassDescriptorAddress = getReferencedAddress(address.add(i * 4));
 
 			Data baseClassDescriptor = extendedFlatAPI.getDataAt(baseClassDescriptorAddress);
 			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType()
 					.getName()
-					.equals(
-						RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
+					.equals(RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
 
 				int num1 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(8));
 				int num2 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(12));
@@ -483,10 +481,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Address> classHierarchyDescriptorAddresses = new ArrayList<Address>();
 
-		Iterator<Symbol> baseClassDescriptorIterator = baseClassDescriptors.iterator();
-		while (baseClassDescriptorIterator.hasNext()) {
-			monitor.checkCanceled();
-			Symbol symbol = baseClassDescriptorIterator.next();
+		for (Symbol symbol : baseClassDescriptors) {
+			monitor.checkCancelled();
 			Address classHierarchyDescriptorAddress = createClassHierarchyDescriptor(
 				symbol.getAddress().add(24), symbol.getParentNamespace());
 
@@ -497,10 +493,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		}
 
-		Iterator<Symbol> completeObjectLocatorIterator = completeObjectLocators.iterator();
-		while (completeObjectLocatorIterator.hasNext()) {
-			monitor.checkCanceled();
-			Symbol symbol = completeObjectLocatorIterator.next();
+		for (Symbol symbol : completeObjectLocators) {
+			monitor.checkCancelled();
 			Address classHierarchyDescriptorAddress = createClassHierarchyDescriptor(
 				symbol.getAddress().add(16), symbol.getParentNamespace());
 			if (classHierarchyDescriptorAddress != null &&
@@ -531,11 +525,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		Data classHierarchyStructure = extendedFlatAPI.getDataAt(classHierarchyDescriptorAddress);
 
-		if (classHierarchyStructure != null &&
-			classHierarchyStructure.getDataType()
-					.getName()
-					.equals(
-						RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
+		if (classHierarchyStructure != null && classHierarchyStructure.getDataType()
+				.getName()
+				.equals(RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
 			return classHierarchyDescriptorAddress;
 
 		}
@@ -594,13 +586,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Address> baseClassArrayAddresses = new ArrayList<Address>();
 
-		Iterator<Address> classHierarchyDescriptorIterator = classHierarchyDescriptors.iterator();
+		for (Address classHierarchyDescriptorAddress : classHierarchyDescriptors) {
 
-		while (classHierarchyDescriptorIterator.hasNext()) {
+			monitor.checkCancelled();
 
-			monitor.checkCanceled();
-
-			Address classHierarchyDescriptorAddress = classHierarchyDescriptorIterator.next();
 			Symbol classHierarchyDescriptorSymbol =
 				symbolTable.getPrimarySymbol(classHierarchyDescriptorAddress);
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
@@ -698,11 +687,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Symbol> vftables = new ArrayList<Symbol>();
 
-		Iterator<Symbol> iterator = completeObjectLocatorSymbols.iterator();
-		while (iterator.hasNext()) {
-			monitor.checkCanceled();
-			Symbol completeObjectLocatorSymbol = iterator.next();
-
+		for (Symbol completeObjectLocatorSymbol : completeObjectLocatorSymbols) {
+			monitor.checkCancelled();
 			Address completeObjectLocatorAddress = completeObjectLocatorSymbol.getAddress();
 
 			Namespace classNamespace = completeObjectLocatorSymbol.getParentNamespace();
@@ -774,7 +760,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol sym : symbols) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (sym.getName().contains(name) && sym.getParentNamespace().equals(namespace)) {
 				return sym;
 			}
@@ -823,7 +809,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
 
 		for (MemoryBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (block.isInitialized()) {
 				dataAddresses.add(block.getStart(), block.getEnd());
@@ -842,8 +828,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void createMissingFunctions(List<Symbol> vftableSymbols)
 			throws CancelledException, Exception {
 
-		List<Address> unusedVftableReferences =
-			findVftableReferencesNotInFunction(vftableSymbols);
+		List<Address> unusedVftableReferences = findVftableReferencesNotInFunction(vftableSymbols);
 
 		if (unusedVftableReferences.size() > 0) {
 			extendedFlatAPI.createUndefinedFunctions(unusedVftableReferences);
@@ -877,10 +862,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Symbol> classHierarchyDescriptorList = getListOfClassHierarchyDescriptors();
 
-		Iterator<Symbol> classHierarchyDescriptorIterator = classHierarchyDescriptorList.iterator();
-		while (classHierarchyDescriptorIterator.hasNext()) {
-			monitor.checkCanceled();
-			Symbol classHierarchyDescriptorSymbol = classHierarchyDescriptorIterator.next();
+		for (Symbol classHierarchyDescriptorSymbol : classHierarchyDescriptorList) {
+			monitor.checkCancelled();
 			Address classHierarchyDescriptorAddress = classHierarchyDescriptorSymbol.getAddress();
 
 			// Get class name from class vftable is in
@@ -974,16 +957,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		PointerDataType pointerDataType = new PointerDataType();
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCancelled();
 			List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
-			Iterator<Address> vftableIterator = vftableAddresses.iterator();
-			while (vftableIterator.hasNext()) {
-				monitor.checkCanceled();
-				Address vftableAddress = vftableIterator.next();
+			for (Address vftableAddress : vftableAddresses) {
+				monitor.checkCancelled();
 				Address ptrToColAddress = vftableAddress.subtract(defaultPointerSize);
 
 				Data pointerToCompleteObjLocator = extendedFlatAPI.getDataAt(vftableAddress);
@@ -1024,7 +1002,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// class hierarchy
 		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
 		while (recoveredClassesIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			RecoveredClass recoveredClass = recoveredClassesIterator.next();
 
@@ -1056,10 +1034,15 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// add parents if single inheritance
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
 			List<RecoveredClass> classHierarchyFromRTTI = getClassHierarchyFromRTTI(recoveredClass);
+
+			if (classHierarchyFromRTTI.size() == 0) {
+				throw new IllegalArgumentException("Unexpected empty class hierarchy for " +
+					recoveredClass.getClassNamespace().getName(true));
+			}
 
 			if (classHierarchyFromRTTI.size() > 0) {
 				recoveredClass.setClassHierarchy(classHierarchyFromRTTI);
@@ -1088,17 +1071,30 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// ones using the single hierarchy lists to help determine direct parents
 		recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
 			if (recoveredClass.hasMultipleInheritance()) {
 
 				List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
+
+				if (classHierarchy.size() <= 1) {
+					throw new IllegalArgumentException(
+						"Class hierarchy for class should be more than 1 since it has multiple inheritance" +
+							recoveredClass.getClassNamespace().getName(true));
+				}
 				int index = 1;
 				while (index < classHierarchy.size()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					RecoveredClass parentClass = classHierarchy.get(index);
 					List<RecoveredClass> parentClassHierarchy = parentClass.getClassHierarchy();
+					if (parentClassHierarchy.size() < 1) {
+						// shouldn't get here since the first loop should have removed all classes
+						// with incorrect class hierarchy
+						throw new IllegalArgumentException(
+							"Parent class has empty class hierarchy " +
+								parentClass.getClassNamespace().getName(true));
+					}
 					recoveredClass.addClassHierarchyMapping(parentClass, parentClassHierarchy);
 					updateClassWithParent(parentClass, recoveredClass);
 					index += parentClassHierarchy.size();
@@ -1122,7 +1118,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		ListIterator<RecoveredClass> listIterator = hierarchyList.listIterator(1);
 		while (listIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass parentClass = listIterator.next();
 
 			if (!currentClass.hasParentClass()) {
@@ -1146,8 +1142,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		List<RecoveredClass> classHierarchy = new ArrayList<RecoveredClass>();
 
 		List<Symbol> symbols = extendedFlatAPI.getListOfSymbolsByNameInNamespace(
-			RTTI_BASE_CLASS_ARRAY_LABEL,
-			recoveredClass.getClassNamespace(), false);
+			RTTI_BASE_CLASS_ARRAY_LABEL, recoveredClass.getClassNamespace(), false);
 
 		if (symbols.size() == 1) {
 			Symbol rttiBaseClassSymbol = symbols.get(0);
@@ -1156,7 +1151,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			int numPointers = rttiBaseClassDescriptorArray.getNumComponents();
 
 			for (int i = 0; i < numPointers; ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// Get the  it is pointing to
 				Address pointerAddress = rttiBaseClassDescriptorArray.getComponent(i).getAddress();
@@ -1165,17 +1160,24 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					extendedFlatAPI.getSingleReferencedAddress(pointerAddress);
 
 				if (baseClassDescriptorAddress == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException(
+						"Missing expected pointer at " + pointerAddress.toString());
+					//return classHierarchy;
 				}
 
 				Symbol primarySymbol = symbolTable.getPrimarySymbol(baseClassDescriptorAddress);
 				if (primarySymbol == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException(
+						"Missing expected BaseClassDescriptor symbol at " +
+							baseClassDescriptorAddress.toString());
+					//return classHierarchy;
 				}
 
 				Namespace pointedToNamespace = primarySymbol.getParentNamespace();
 				if (pointedToNamespace == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException("Missing expected class namesapce at " +
+						baseClassDescriptorAddress.toString());
+					//return classHierarchy;
 				}
 
 				// if the namespace isn't in the map then it is a class 
@@ -1196,7 +1198,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 		else if (symbols.size() > 1) {
-			//TODO: throw exception?
+			throw new IllegalArgumentException("More than one Base Class Array for " +
+				recoveredClass.getClassNamespace().getName(true));
 		}
 		return classHierarchy;
 	}
@@ -1269,7 +1272,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Msg.debug(this, recoveredClass.getName() + " has ambiguous inh type");
 		}
 
-
 	}
 
 	/**
@@ -1337,8 +1339,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-
-
 	/**
 	 * Method to recover parent information, including class offsets, vbase structure and its offset and address if applicable, and whether
 	 * the parent is regularly or virtually inherited
@@ -1348,11 +1348,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void determineParentClassInfoFromBaseClassArray(List<RecoveredClass> recoveredClasses)
 			throws Exception {
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
-
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCancelled();
 
 			boolean hasVirtualAncestor = false;
 			int vbaseOffset = NONE;
@@ -1386,7 +1383,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			int numPointers = baseClassArrayData.getNumComponents();
 
 			for (int i = 0; i < numPointers; ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// Get the address it is pointing to
 				Address pointerAddress = baseClassArrayData.getComponent(i).getAddress();
@@ -1483,23 +1480,22 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 
-		Iterator<Function> constructorIterator = constructorList.iterator();
-		while (constructorIterator.hasNext()) {
+		DecompileOptions decompileOptions =
+			DecompilerUtils.getDecompileOptions(serviceProvider, program);
+		FillOutStructureHelper fillStructHelper =
+			new FillOutStructureHelper(program, decompileOptions, monitor);
 
-			monitor.checkCanceled();
-			Function constructor = constructorIterator.next();
+		for (Function constructor : constructorList) {
 
+			monitor.checkCancelled();
 			HighFunction highFunction = decompilerUtils.getHighFunction(constructor);
 
 			if (highFunction == null) {
 				continue;
 			}
 
-			FillOutStructureCmd fillCmd =
-				new FillOutStructureCmd(program, location, tool);
-
-			Address vbtableAddress = getVbtableAddressFromDecompiledFunction(fillCmd, highFunction,
-				recoveredClass, constructor, vbtableOffset);
+			Address vbtableAddress = getVbtableAddressFromDecompiledFunction(fillStructHelper,
+				highFunction, recoveredClass, constructor, vbtableOffset);
 
 			if (vbtableAddress != null) {
 				return vbtableAddress;
@@ -1514,23 +1510,17 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 
-		Iterator<Function> indeterminateIterator = indeterminateList.iterator();
-		while (indeterminateIterator.hasNext()) {
+		for (Function constructor : indeterminateList) {
 
-			monitor.checkCanceled();
-			Function constructor = indeterminateIterator.next();
-
+			monitor.checkCancelled();
 			HighFunction highFunction = decompilerUtils.getHighFunction(constructor);
 
 			if (highFunction == null) {
 				continue;
 			}
 
-			FillOutStructureCmd fillCmd =
-				new FillOutStructureCmd(program, location, tool);
-
-			Address vbtableAddress = getVbtableAddressFromDecompiledFunction(fillCmd, highFunction,
-				recoveredClass, constructor, vbtableOffset);
+			Address vbtableAddress = getVbtableAddressFromDecompiledFunction(fillStructHelper,
+				highFunction, recoveredClass, constructor, vbtableOffset);
 
 			if (vbtableAddress != null) {
 				return vbtableAddress;
@@ -1543,7 +1533,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to find the address of the vbtable referenced at the given offset in the given function
-	 * @param fillCmd the decompiler's filled out structure for a particular variable
+	 * @param fillStructHelper a reusable {@link FillOutStructureHelper} instance to be used
+	 * with decompiler for a particular variable
 	 * @param highFunction the high function for the given function
 	 * @param recoveredClass the given class
 	 * @param function the given function
@@ -1551,7 +1542,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * @return the address of the found vbtable or null if none is found
 	 * @throws CancelledException if cancelled
 	 */
-	private Address getVbtableAddressFromDecompiledFunction(FillOutStructureCmd fillCmd,
+	private Address getVbtableAddressFromDecompiledFunction(FillOutStructureHelper fillStructHelper,
 			HighFunction highFunction, RecoveredClass recoveredClass, Function function, int offset)
 			throws CancelledException {
 
@@ -1564,7 +1555,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		if (numParams > 0) {
 
 			for (int i = 0; i < numParams; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				HighVariable param =
 					highFunction.getFunctionPrototype().getParam(i).getHighVariable();
 				if (param != null) {
@@ -1573,22 +1564,16 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 
-		Iterator<HighVariable> highVariableIterator = highVariables.iterator();
+		for (HighVariable highVariable : highVariables) {
 
-		while (highVariableIterator.hasNext()) {
+			monitor.checkCancelled();
 
-			HighVariable highVariable = highVariableIterator.next();
-			monitor.checkCanceled();
-
-			fillCmd.processStructure(highVariable, function);
-			List<OffsetPcodeOpPair> stores = fillCmd.getStorePcodeOps();
+			fillStructHelper.processStructure(highVariable, function, true, false);
+			List<OffsetPcodeOpPair> stores = fillStructHelper.getStorePcodeOps();
 			stores = removePcodeOpsNotInFunction(function, stores);
 
-			// this method checks the storedPcodeOps to see if one is a vftable address
-			Iterator<OffsetPcodeOpPair> iterator = stores.iterator();
-			while (iterator.hasNext()) {
-				monitor.checkCanceled();
-				OffsetPcodeOpPair offsetPcodeOpPair = iterator.next();
+			for (OffsetPcodeOpPair offsetPcodeOpPair : stores) {
+				monitor.checkCancelled();
 				int pcodeOffset = offsetPcodeOpPair.getOffset().intValue();
 				if (pcodeOffset == offset) {
 
@@ -1618,11 +1603,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void assignParentClassToVftables(List<RecoveredClass> recoveredClasses)
 			throws Exception {
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCancelled();
 			if (!recoveredClass.hasVftable()) {
 				continue;
 			}
@@ -1665,8 +1647,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> parents =
 					new ArrayList<RecoveredClass>(recoveredClass.getClassHierarchyMap().keySet());
 				RecoveredClass singleParent = parents.get(0);
-				List<RecoveredClass> grandParents =
-					getParentsWithVirtualFunctions(singleParent);
+				List<RecoveredClass> grandParents = getParentsWithVirtualFunctions(singleParent);
 				// check that they both have vftables 
 				// get their order from the class hierarchy list
 				// first see if it has a parent order map and just make it the same one 
@@ -1681,10 +1662,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					// iterate over the hierarchy list and use it to get the order of the parentsParents and assign
 					// to correct vftable
 					List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
-					Iterator<RecoveredClass> classHierarchyIterator = classHierarchy.iterator();
-					while (classHierarchyIterator.hasNext()) {
-						monitor.checkCanceled();
-						RecoveredClass ancestor = classHierarchyIterator.next();
+					for (RecoveredClass ancestor : classHierarchy) {
+						monitor.checkCancelled();
 						if (grandParents.contains(ancestor)) {
 							Integer index = sortedOrder.get(order);
 							Address vftableAddress = orderToVftableMap.get(index);
@@ -1772,12 +1751,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
 
-		Iterator<RecoveredClass> hierarchyIterator = classHierarchy.iterator();
-
-		while (hierarchyIterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass ancestorClass = hierarchyIterator.next();
-
+		for (RecoveredClass ancestorClass : classHierarchy) {
+			monitor.checkCancelled();
 			RecoveredClass firstVirtuallyInheritedAncestorWithVfunctions =
 				getVirtuallyInheritedParentWithVfunctions(ancestorClass);
 			if (firstVirtuallyInheritedAncestorWithVfunctions != null) {
@@ -1812,11 +1787,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		Map<RecoveredClass, Boolean> parentToBaseTypeMap = recoveredClass.getParentToBaseTypeMap();
 
 		List<RecoveredClass> parents = new ArrayList<RecoveredClass>(classHierarchyMap.keySet());
-		Iterator<RecoveredClass> parentIterator = parents.iterator();
-
-		while (parentIterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass parent = parentIterator.next();
+		for (RecoveredClass parent : parents) {
+			monitor.checkCancelled();
 			Boolean isVirtuallyInherited = parentToBaseTypeMap.get(parent);
 
 			if (isVirtuallyInherited != null && isVirtuallyInherited && parent.hasVftable()) {
@@ -1853,10 +1825,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			return;
 		}
 
-		Iterator<Integer> orderIterator = sortedOrder.iterator();
-		while (orderIterator.hasNext()) {
-			monitor.checkCanceled();
-			Integer order = orderIterator.next();
+		for (Integer order : sortedOrder) {
+			monitor.checkCancelled();
 			Address vftableAddress = orderToVftableMap.get(order);
 			RecoveredClass parentClass = parentOrderMap.get(order);
 			recoveredClass.addVftableToBaseClassMapping(vftableAddress, parentClass);
@@ -1925,12 +1895,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			return parentOrderMap;
 		}
 
-		Iterator<Function> functionIterator = functionList.iterator();
-		while (functionIterator.hasNext()) {
+		for (Function function : functionList) {
 
-			monitor.checkCanceled();
-
-			Function function = functionIterator.next();
+			monitor.checkCancelled();
 
 			parentOrderMap = new HashMap<Integer, RecoveredClass>();
 
@@ -1941,12 +1908,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				new HashMap<Address, RecoveredClass>();
 
 			List<Address> classReferences = new ArrayList<Address>(referenceToParentMap.keySet());
-			Iterator<Address> classReferenceIterator = classReferences.iterator();
-			while (classReferenceIterator.hasNext()) {
+			for (Address classReferenceAddress : classReferences) {
 
-				monitor.checkCanceled();
-				Address classReferenceAddress = classReferenceIterator.next();
-
+				monitor.checkCancelled();
 				// if the address refers to a vftable and that vftable is in the current class then it is not a parent class so do not add to map
 				Address possibleVftable = getVftableAddress(classReferenceAddress);
 
@@ -1984,11 +1948,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				Collections.sort(parentReferences, Collections.reverseOrder());
 			}
 
-			// iterate over the ordered parents and add to the order to parent map
-			Iterator<Address> parentRefIterator = parentReferences.iterator();
-			while (parentRefIterator.hasNext()) {
-				monitor.checkCanceled();
-				Address refAddress = parentRefIterator.next();
+			// iterate over the ordered parents and add the order to the parent map
+			for (Address refAddress : parentReferences) {
+				monitor.checkCancelled();
 				RecoveredClass parentClass = referenceToParentMap.get(refAddress);
 				parentOrderMap.put(order, parentClass);
 				order++;
@@ -2029,11 +1991,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		List<RecoveredClass> updatedParentClasses = new ArrayList<RecoveredClass>(parentClasses);
 
 		// now iterate over the direct parents and map that parent to each ancestor on the ancestor with vfunction list 
-		Iterator<RecoveredClass> parentIterator = parentClasses.iterator();
-		while (parentIterator.hasNext()) {
-			monitor.checkCanceled();
+		for (RecoveredClass parentClass : parentClasses) {
+			monitor.checkCancelled();
 
-			RecoveredClass parentClass = parentIterator.next();
 			List<RecoveredClass> ancestors =
 				new ArrayList<RecoveredClass>(parentClass.getClassHierarchy());
 			ancestors.remove(parentClass);
@@ -2043,11 +2003,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			Iterator<RecoveredClass> ancestorIterator = ancestors.iterator();
-			while (ancestorIterator.hasNext()) {
-				monitor.checkCanceled();
-
-				RecoveredClass ancestor = ancestorIterator.next();
+			for (RecoveredClass ancestor : ancestors) {
+				monitor.checkCancelled();
 
 				List<RecoveredClass> decendentList = ancestorToCommonChild.get(ancestor);
 				if (decendentList == null) {
@@ -2074,10 +2031,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		// now iterate over the ancestor map and update the parent list by adding any ancestor
 		// that has common parents and removing those parents from the list
-		Iterator<RecoveredClass> ancestorsIterator = keySet.iterator();
-		while (ancestorsIterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass ancestor = ancestorsIterator.next();
+		for (RecoveredClass ancestor : keySet) {
+			monitor.checkCancelled();
 			List<RecoveredClass> commonChildList = ancestorToCommonChild.get(ancestor);
 			if (commonChildList != null && commonChildList.size() >= 2) {
 				if (!updatedParentClasses.contains(ancestor)) {
@@ -2095,7 +2050,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		Iterator<RecoveredClass> updatedParentsIterator = updatedParentClasses.iterator();
 		while (updatedParentsIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass ancestor = updatedParentsIterator.next();
 
 			// remove if ancestor is an ancestor of any of the others
@@ -2124,7 +2079,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		// first process all the classes with no parents
 		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
@@ -2152,7 +2107,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		int numLoops = 0;
 
 		while (!listOfClasses.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// put in stop gap measure in case some classes never get all
 			// parents processed for some reason
@@ -2166,7 +2121,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 				RecoveredClass recoveredClass = recoveredClassIterator.next();
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (!listOfClasses.contains(recoveredClass)) {
 					continue;
 				}
@@ -2192,7 +2147,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			throws CancelledException, Exception {
 
 		if (!recoveredClass.hasVftable()) {
-			createClassStructureUsingRTTI(recoveredClass, null);
+			Structure classStruct = createClassStructureUsingRTTI(recoveredClass, null);
+
+			if (classStruct != null) {
+				updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
+			}
 			// return in this case because if there is no vftable for a class the script cannot
 			// identify any member functions so there is no need to process the rest of this method
 			return;
@@ -2200,17 +2159,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		// create pointers to empty vftable structs so they can be added to the class data type
 		// then filled in later
-		Map<Address, DataType> vfPointerDataTypes =
-			createEmptyVfTableStructs(recoveredClass);
+		Map<Address, DataType> vfPointerDataTypes = createEmptyVfTableStructs(recoveredClass);
 
 		// create current class structure and add pointer to vftable, all parent member data strutures, and class member data structure
 		Structure classStruct = null;
 
-		classStruct = createClassStructureUsingRTTI(recoveredClass,
-			vfPointerDataTypes);
+		classStruct = createClassStructureUsingRTTI(recoveredClass, vfPointerDataTypes);
 
 		applyVbtableStructure(recoveredClass);
-
 
 		// Now that we have a class data type
 		// name constructor and destructor functions and put into the class namespace
@@ -2240,6 +2196,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// when the vfunctions are put in the class
 		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
 			classStruct);
+
+		if (classStruct != null) {
+			updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
+		}
 
 	}
 
@@ -2299,7 +2259,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		int numPointers = baseClassArrayData.getNumComponents();
 
 		for (int i = 0; i < numPointers; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// Get the base class it is pointing to
 			Address pointerAddress = baseClassArrayData.getComponent(i).getAddress();
@@ -2355,10 +2315,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					recoveredClass.getVftableAddresses().size() > 1 &&
 					recoveredClass.inheritsVirtualAncestor()) {
 
-					int virtParentOffset = getSingleVirtualParentOffset(baseClass);
+					Integer virtParentOffset = getSingleVirtualParentOffset(baseClass);
 
 					int dataLength;
-					if (virtParentOffset == NONE) {
+					if (virtParentOffset == null || virtParentOffset == NONE) {
 						dataLength = baseClassStructure.getLength();
 					}
 					else {
@@ -2392,8 +2352,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 				// if it fits at offset or is at the end and class structure can be grown, 
 				// copy the whole baseClass structure to the class Structure at the given offset
-				EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-						baseClassOffset, baseClassStructure, baseClassStructure.getName(), monitor);
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, baseClassOffset,
+					baseClassStructure, baseClassStructure.getName(), monitor);
 
 			}
 
@@ -2421,8 +2381,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			// if it fits at offset or is at the end and class structure can be grown, 
 			// copy the whole baseClass structure to the class Structure at the given offset
-			EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-				offset.intValue(), classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+			EditStructureUtils.addDataTypeToStructure(classStructureDataType, offset.intValue(),
+				classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 		}
 
 		// add the vbtable structure for single inheritance/virt parent case
@@ -2476,7 +2436,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * @param recoveredClass the given class
 	 * @return the offset in the given class structure of the classes single virtual parent or NONE 
 	 * if cannot retrieve an offset value or if there is not a single virtual parent for the given
-	 * class.
+	 * class. Return null if cannot retrieve the offset for the single virtual parent. 
 	 * @throws CancelledException if cancelled
 	 * @throws AddressOutOfBoundsException if trying to access an address that does not exist in program
 	 * @throws MemoryAccessException  if trying to access memory that can't be accessed
@@ -2498,7 +2458,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private Map<RecoveredClass, Integer> getBaseClassOffsetMap(RecoveredClass recoveredClass)
 			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
 
-		Map<RecoveredClass, Integer> parentOffsetMap = new HashMap<RecoveredClass, Integer>();
+		Map<RecoveredClass, Integer> baseClassOffsetMap = new HashMap<>();
 
 		Data baseClassArrayData = getBaseClassArray(recoveredClass);
 
@@ -2506,7 +2466,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		int numPointers = baseClassArrayData.getNumComponents();
 
 		for (int i = 0; i < numPointers; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// Get the base class it is pointing to
 			Address pointerAddress = baseClassArrayData.getComponent(i).getAddress();
@@ -2524,9 +2484,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					baseClassDescriptorAddress.toString());
 				continue;
 			}
-
+			
 			// Continue if the class has mult inh but base class is not on the parent list
-			//TODO: possibly update to include all base classes
 			if (!recoveredClass.getParentList().contains(baseClass)) {
 				continue;
 			}
@@ -2549,9 +2508,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 				baseClassOffset = api.getInt(recoveredClass.getVbtableAddress().add(vdisp)) + pdisp;
 			}
-			parentOffsetMap.put(baseClass, baseClassOffset);
+			baseClassOffsetMap.put(baseClass, baseClassOffset);
 		}
-		return parentOffsetMap;
+		return baseClassOffsetMap;
 	}
 
 	/**
@@ -2639,7 +2598,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			return;
 		}
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// if there are no vftables or only one vftable in this class then there is no need to 
 			// distinguish with a new label and can keep the generic one 
@@ -2681,7 +2640,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		List<Function> processedFunctions = new ArrayList<>();
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<Function> deletingDestructors = recoveredClass.getDeletingDestructors();
 
@@ -2690,7 +2649,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 
 			for (Function function : deletingDestructors) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (processedFunctions.contains(function)) {
 					continue;
@@ -2739,7 +2698,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		try {
 			for (Symbol functionSymbol : functionSymbols) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// skip any symbols at function that are not dds ie fid mangled names
 				if (!functionSymbol.getName().contains(DELETING_DESTRUCTOR)) {
@@ -2769,25 +2728,23 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * @return the newly created jumped to function or null if it cannot be created
 	 */
 	private Function createSplitDeletingDestructorFunction(AddressSetView body) {
-		
+
 		if (body.getNumAddressRanges() != 2) {
 			return null;
 		}
 		AddressRange firstRange = body.getFirstRange();
 		Address maxAddressofFirstRange = firstRange.getMaxAddress();
-		Instruction instructionContaining =
-			api.getInstructionContaining(maxAddressofFirstRange);
+		Instruction instructionContaining = api.getInstructionContaining(maxAddressofFirstRange);
 		if (!instructionContaining.getFlowType().isJump()) {
 			return null;
 		}
 		AddressRange lastRange = body.getLastRange();
 		Address minAddressOfLastRange = lastRange.getMinAddress();
-		Reference reference =
-			api.getReference(instructionContaining, minAddressOfLastRange);
+		Reference reference = api.getReference(instructionContaining, minAddressOfLastRange);
 		if (reference == null) {
 			return null;
 		}
-		instructionContaining.setFlowOverride(FlowOverride.CALL_RETURN);	
+		instructionContaining.setFlowOverride(FlowOverride.CALL_RETURN);
 		Function newFunction = api.createFunction(minAddressOfLastRange, null);
 		return newFunction;
 	}
@@ -2807,7 +2764,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		try {
 			for (Symbol functionSymbol : functionSymbols) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// skip any symbols at function that are not dds ie fid mangled names
 				if (!functionSymbol.getName().contains(DELETING_DESTRUCTOR)) {
@@ -2836,4 +2793,3 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 }
-

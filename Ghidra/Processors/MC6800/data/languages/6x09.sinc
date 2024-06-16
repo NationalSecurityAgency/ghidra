@@ -197,11 +197,11 @@ EA: ",--"^W    is idxReg=0b11 & noOffset5=1 & idxMode=0b01111 & W # ,--W
 
 EA: addr,"PCR" is noOffset5=1 & idxMode=0b01100; simm8 [ addr = inst_next + simm8; ] 
 {
-     export addr; 
+     export *[const]:2 addr; 
 }
 EA: addr,"PCR" is noOffset5=1 & idxMode=0b01101; simm16 [ addr = inst_next + simm16; ] 
 {
-     export addr; 
+     export *[const]:2 addr; 
 }
 EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b10100
 {
@@ -322,9 +322,9 @@ EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11101; simm16 [ addr = inst_next +
      export eaddr; 
 }
 
-EA: "["addr"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11101; simm16 [ addr = inst_next; ] 
+EA: "["imm16"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11111; imm16
 {
-     local eaddr:2 = inst_next;
+     local eaddr:2 = imm16;
      eaddr = *:2 eaddr;
      export eaddr; 
 }
@@ -366,6 +366,7 @@ OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
 {
     export *[const]:2 imm16;
 }
+
 OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
     local tmp:2 = (zext(DP) << 8) + imm8;
@@ -379,6 +380,21 @@ OP2: EA       is (op47=3 | op47=6 | op47=0xA | op47=0xE); EA
 OP2: imm16      is (op47=7 | op47=0xB | op47=0xF); imm16
 {
     export *:2 imm16;
+}
+
+#JMP and JSR treat the direct/indexed/extended address modes differently
+OP2J: "<"imm8    is (op47=0 | op47=9); imm8
+{
+    local tmp:2 = (zext(DP) << 8) + imm8;
+    export tmp;
+}
+OP2J: EA       is (op47=6 | op47=0xA); EA
+{
+    export EA;
+}
+OP2J: imm16      is (op47=7 | op47=0xB ); imm16
+{
+    export *[const]:2 imm16;
 }
 
 ################################################################
@@ -418,6 +434,15 @@ macro complement(op)
         setNZFlags(op);
 }
 
+# Signed shift right.
+# P-code INT_SRIGHT.
+macro arithmeticShiftRight(op)
+{
+        $(C) = op & 1;
+        op = (op s>> 1);
+        setNZFlags(op);
+}
+
 macro logicalShiftRight(op)
 {
         $(C) = op & 1;
@@ -434,29 +459,23 @@ macro rotateRightWithCarry(op)
         setNZFlags(op);
 }
 
+macro logicalShiftLeft(op)
+{
+        local tmp = (op >> 7);
+        $(C) = tmp;
+        op = op << 1;
+        $(V) = tmp ^ (op >> 7);
+        setNZFlags(op);
+}
+
 macro rotateLeftWithCarry(op)
 {
         local carryIn = $(C);
-        $(C) = op >> 7;
+        local tmp = (op >> 7);
+        $(C) = tmp;
         op = (op << 1) | carryIn;
+        $(V) = tmp ^ (op >> 7);
         setNZFlags(op);
-}
-
-# Signed shift right.
-# P-code INT_SRIGHT.
-macro arithmeticShiftRight(op)
-{
-        $(C) = op & 1;
-        op = (op s>> 1);
-        setNZFlags(op);
-}
-
-macro logicalShiftLeft(op)
-{
-        $(C) = (op >> 7);
-        op = op << 1;
-        $(Z) = (op == 0);
-        $(N) = (op >> 7);
 }
 
 macro increment(op)
@@ -485,60 +504,73 @@ macro clear(op)
         op = 0;
         $(Z) = 1;
         $(N) = 0;	
+        $(C) = 0;
 }
 
 macro addition(reg, op)
 {
-        $(C) = carry(reg, op);
-        $(V) = scarry(reg, op);
+        local tmp = reg;
+        local val = op;
+        $(C) = carry(tmp, val);
+        $(V) = scarry(tmp, val);
 
-        reg = reg + op;
+        tmp = tmp + val;
 
-        setNZFlags(reg);
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro additionWithCarry(reg, op)
 {
         local carryIn = zext($(C));
+        local tmp = reg;
+        local val = op;
         local mask = 0x0F; # Low nibble mask
-        local tmpResult = reg + op;
+        local result = tmp + val;
 
-        $(H) = (((reg & mask) + (op & mask) + carryIn) >> 4) & 1;
-        $(C) = carry(reg, op) || carry(tmpResult, carryIn);
-        $(V) = scarry(reg, op) ^^ scarry(tmpResult, carryIn);
+        $(H) = (((tmp & mask) + (val & mask) + carryIn) >> 4) & 1;
+        $(C) = carry(tmp, val) || carry(result, carryIn);
+        $(V) = scarry(tmp, val) ^^ scarry(result, carryIn);
 
-        reg = tmpResult + carryIn;
+        tmp = result + carryIn;
 
-        setNZFlags(reg);
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro subtraction(reg, op)
 {
-        $(V) = sborrow(reg, op);
-        reg = reg - op;
-        setNZFlags(reg);
-        $(C) = (reg < op);
+        local tmp = reg;
+        local val = op;
+        $(V) = sborrow(tmp, val);
+        $(C) = (tmp < val);
+        tmp = tmp - val;
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro subtractionWithCarry(reg, op)
 {
         local carryIn = zext($(C));
-        local tmpResult = reg - op;
+        local tmp = reg;
+        local val = op;
+        local tmpResult = tmp - val;
 
-        $(C) = (reg < op) || (tmpResult < carryIn);
-        $(V) = sborrow(reg, op) ^^ sborrow(tmpResult, carryIn);
-
-        reg = tmpResult - carryIn;
-
-        setNZFlags(reg);
+        $(C) = (tmp < val) || (tmpResult < carryIn);
+        $(V) = sborrow(tmp, val) ^^ sborrow(tmpResult, carryIn);
+        tmp = tmpResult - carryIn;
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro compare(reg, op)
 {
-        $(V) = sborrow(reg, op);
-        local tmp = reg - op;
+        local tmp = reg;
+        local val = op;
+        $(V) = sborrow(tmp, val);
+        $(C) = (tmp < val);
+        tmp = tmp - val;
         setNZFlags(tmp);
-        $(C) = (tmp < op);
 }
 
 macro logicalAnd(reg, op)
@@ -586,16 +618,15 @@ macro storeRegister(reg, op)
 # Push 1 byte operand op1
 macro Push1(reg, op)
 {
-        *:1 reg = op;
         reg = reg - 1;
+        *:1 reg = op;
 }
 
 # Push 2 byte operand op2
 macro Push2(reg, op)
 {
-        reg = reg - 1;
+        reg = reg - 2;
         *:2 reg = op;
-        reg = reg - 1;
 }
 
 # Pull 1 byte operand op1
@@ -608,9 +639,8 @@ macro Pull1(reg, op)
 # Pull 2 byte operand op2
 macro Pull2(reg, op)
 {
-        reg = reg + 1;
         op = *:2 reg;
-        reg = reg + 1;
+        reg = reg + 2;
 }
 
 macro PushUYXDpD()
@@ -803,9 +833,9 @@ macro PushEntireState()
         test(OP1);
 }
  
-:JMP OP2    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2
+:JMP OP2J    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2J
 {
-        local target = OP2;
+        local target = OP2J;
         goto [target];
 }
 
@@ -992,12 +1022,16 @@ macro PushEntireState()
 
 :LEAX EA    is op=0x30; EA
 {
-        X = EA;
+        local tmp = EA;
+        X = tmp;
+        $(Z) = (tmp == 0);
 }
 
 :LEAY EA    is op=0x31; EA
 {
-        Y = EA;
+        local tmp = EA;
+        Y = tmp;
+        $(Z) = (tmp == 0);
 }
 
 :LEAS EA    is op=0x32; EA
@@ -1184,7 +1218,7 @@ macro PushEntireState()
 
 :ADDB OP1    is (op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
 {
-        setHFlag(A, OP1);
+        setHFlag(B, OP1);
         addition(B, OP1);
 }
 
@@ -1205,11 +1239,11 @@ macro PushEntireState()
         call REL;
 }
 
-:JSR OP2    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2 
+:JSR OP2J    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2J 
 {
         local addr:2 = inst_next;
         Push2(S, addr);
-        local target = OP2;
+        local target = OP2J;
         call [target];
 }
 
@@ -1235,7 +1269,7 @@ macro PushEntireState()
 
 :STU OP2    is (op=0xDF | op=0xEF | op=0xFF) ... & OP2
 {
-        storeRegister(X, OP2);
+        storeRegister(U, OP2);
 }
 
 ################################################################

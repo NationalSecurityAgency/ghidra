@@ -420,7 +420,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void createOffcutFunctionReference(Function function, Address fromAddress) {
@@ -443,7 +443,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void createDataReference(String from, String to) {
@@ -454,7 +454,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 				new AddMemRefCmd(addr(from), addr(to), RefType.DATA, SourceType.USER_DEFINED, 0);
 			cmd.applyTo(program);
 			program.flushEvents();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 		finally {
 			program.endTransaction(transaction, true);
@@ -469,7 +469,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 				new AddMemRefCmd(addr(from), addr(to), RefType.READ, SourceType.USER_DEFINED, 0);
 			cmd.applyTo(program);
 			program.flushEvents();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 		finally {
 			program.endTransaction(transaction, true);
@@ -483,7 +483,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 			AddLabelCmd cmd = new AddLabelCmd(addr(addr), name, SourceType.USER_DEFINED);
 			cmd.applyTo(program);
 			program.flushEvents();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 		finally {
 			program.endTransaction(transaction, true);

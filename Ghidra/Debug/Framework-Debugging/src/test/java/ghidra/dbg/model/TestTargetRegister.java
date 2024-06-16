@@ -27,10 +27,15 @@ public class TestTargetRegister
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetRegisterContainer>
 		implements TargetRegister {
 
+	public static TestTargetRegister fromLanguageRegister(TestTargetRegisterContainer parent,
+			String index, Register register) {
+		return new TestTargetRegister(parent, PathUtils.makeKey(index),
+			(register.getBitLength() + 7) / 8, register.isProgramCounter());
+	}
+
 	public static TestTargetRegister fromLanguageRegister(
 			TestTargetRegisterContainer parent, Register register) {
-		return new TestTargetRegister(parent, PathUtils.makeKey(register.getName()),
-			(register.getBitLength() + 7) / 8, register.isProgramCounter());
+		return fromLanguageRegister(parent, register.getName(), register);
 	}
 
 	protected final int byteLength;
@@ -44,8 +49,8 @@ public class TestTargetRegister
 
 		changeAttributes(List.of(), Map.of(
 			CONTAINER_ATTRIBUTE_NAME, parent,
-			LENGTH_ATTRIBUTE_NAME, byteLength //
-		), "Initialized");
+			BIT_LENGTH_ATTRIBUTE_NAME, byteLength * 8),
+			"Initialized");
 	}
 
 	public byte[] normalizeValue(byte[] value) {

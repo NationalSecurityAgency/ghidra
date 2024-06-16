@@ -26,7 +26,7 @@ public interface TransactionListener {
 	 * @param domainObj the domain object where the transaction was started
 	 * @param tx the transaction that was started
 	 */
-	void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx);
+	void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx);
 
 	/**
 	 * Invoked when a transaction is ended.

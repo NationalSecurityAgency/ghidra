@@ -24,18 +24,17 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 
 public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationTest
@@ -109,7 +108,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Test
 	public void testAddLabels() throws Exception {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceThread thread = b.getOrAddThread("Thread1", 0);
 
 			manager.labels()
@@ -141,7 +140,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testAddNamespaces() throws Exception {
 		DBTraceNamespaceSymbol top;
 		DBTraceNamespaceSymbol a;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			top = manager.namespaces()
 					.add("top", manager.getGlobalNamespace(),
 						SourceType.USER_DEFINED);
@@ -170,7 +169,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testAddClasses() throws Exception {
 		DBTraceClassSymbol classA;
 		DBTraceClassSymbol nested;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			classA =
 				manager.classes().add("A", manager.getGlobalNamespace(), SourceType.USER_DEFINED);
 			assertEquals(1, manager.classStore.getRecordCount());
@@ -210,7 +209,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -241,7 +240,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -263,11 +262,10 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 		assertEquals(Set.of(nsA, clsA), new HashSet<>(manager.allNamespaces().getAll(false)));
 		assertEquals(2, manager.allNamespaces().size(false));
-		assertEquals(Set.of(lab1, lab2), new HashSet<>(manager.labelsAndFunctions().getAll(false)));
-		assertEquals(2, manager.labelsAndFunctions().size(false));
-		assertEquals(Set.of(nsA, clsA),
-			new HashSet<>(manager.notLabelsNorFunctions().getAll(false)));
-		assertEquals(2, manager.notLabelsNorFunctions().size(false));
+		assertEquals(Set.of(lab1, lab2), new HashSet<>(manager.labels().getAll(false)));
+		assertEquals(2, manager.labels().size(false));
+		assertEquals(Set.of(nsA, clsA), new HashSet<>(manager.notLabels().getAll(false)));
+		assertEquals(2, manager.notLabels().size(false));
 		// TODO: Remaining composites
 		assertEquals(Set.of(nsA, clsA, lab1, lab2),
 			new HashSet<>(manager.allSymbols().getAll(false)));
@@ -282,7 +280,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -298,8 +296,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(clsA), new HashSet<>(manager.classes().getChildrenNamed("A", nsA)));
 		assertEquals(clsA, manager.classes().getChildNamed("A", nsA));
 		assertEquals(Set.of(lab1), new HashSet<>(manager.labels().getChildrenNamed("LAB1", nsA)));
-		assertEquals(Set.of(lab2),
-			new HashSet<>(manager.labelsAndFunctions().getChildrenNamed("LAB2", clsA)));
+		assertEquals(Set.of(lab2), new HashSet<>(manager.labels().getChildrenNamed("LAB2", clsA)));
 		assertEquals(Set.of(), new HashSet<>(manager.labels().getChildrenNamed("LAB2", nsA)));
 	}
 
@@ -311,7 +308,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -333,7 +330,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			manager.labels().create(0, null, b.addr(0x4000), "LAB1", nsA, SourceType.USER_DEFINED);
@@ -353,7 +350,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			manager.labels().create(0, null, b.addr(0x4000), "LAB1", nsA, SourceType.USER_DEFINED);
@@ -373,7 +370,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -395,7 +392,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -406,9 +403,9 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 						SourceType.USER_DEFINED);
 		}
 		assertEquals(Set.of(lab1),
-			new HashSet<>(manager.labelsAndFunctions().getWithMatchingName("LAB?", true)));
+			new HashSet<>(manager.labels().getWithMatchingName("LAB?", true)));
 		assertEquals(Set.of(lab1, lab2),
-			new HashSet<>(manager.labelsAndFunctions().getWithMatchingName("LAB?", false)));
+			new HashSet<>(manager.labels().getWithMatchingName("LAB?", false)));
 	}
 
 	@Test
@@ -422,7 +419,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceLabelSymbol lab2;
 		TraceLabelSymbol lab3;
 		TraceLabelSymbol lab4;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
@@ -441,21 +438,19 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 		assertEquals(lab1,
 			manager.labels().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), nsA));
-		assertNull(manager.functions().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), nsA));
 		assertNull(manager.labels().getChildWithNameAt("LAB2", 4, null, b.addr(0x4000), nsA));
 		assertNull(manager.labels().getChildWithNameAt("LAB1", 0, null, b.addr(0x4000), nsA));
 		assertNull(manager.labels()
 				.getChildWithNameAt("LAB1", 4, thread,
 					b.language.getRegister("r4").getAddress(), nsA));
 		assertNull(manager.labels().getChildWithNameAt("LAB1", 4, null, b.addr(0x4001), nsA));
-		assertNull(
-			manager.labelsAndFunctions().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), clsA));
+		assertNull(manager.labels().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), clsA));
 
 		assertEquals(lab2,
-			manager.labelsAndFunctions().getChildWithNameAt("lab2", 4, null, b.addr(0x4001), clsA));
+			manager.labels().getChildWithNameAt("lab2", 4, null, b.addr(0x4001), clsA));
 		assertEquals(lab3,
-			manager.labelsAndFunctions().getChildWithNameAt("lab3", 4, null, b.addr(0x4001), clsA));
-		assertEquals(lab4, manager.labelsAndFunctions()
+			manager.labels().getChildWithNameAt("lab3", 4, null, b.addr(0x4001), clsA));
+		assertEquals(lab4, manager.labels()
 				.getChildWithNameAt("lab4", 0, thread,
 					b.language.getRegister("r4").getAddress(), nsA));
 	}
@@ -464,13 +459,11 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetGlobalWithNameAt() throws InvalidInputException {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
 		TraceLabelSymbol lab1;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			lab1 = manager.labels()
 					.create(4, null, b.addr(0x4000), "LAB1", global,
 						SourceType.USER_DEFINED);
 		}
-		assertEquals(lab1,
-			manager.labelsAndFunctions().getGlobalWithNameAt("LAB1", 4, null, b.addr(0x4000)));
 		assertEquals(lab1, manager.labels().getGlobalWithNameAt("LAB1", 4, null, b.addr(0x4000)));
 	}
 
@@ -485,7 +478,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceLabelSymbol lab2;
 		TraceLabelSymbol lab3;
 		TraceLabelSymbol lab4;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
@@ -505,20 +498,20 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		// TODO: Test that functions are properly excluded from labels()
 		// once I have a means of adding them.
 		assertEquals(Set.of(),
-			new HashSet<>(manager.labelsAndFunctions()
-					.getIntersecting(Range.closed(0L, 0L), null,
-						b.range(0x0000, 0x4000), false, true)));
+			new HashSet<>(manager.labels()
+					.getIntersecting(Lifespan.span(0, 0), null, b.range(0x0000, 0x4000), false,
+						true)));
 		assertEquals(Set.of(lab1, lab2, lab3),
 			new HashSet<>(manager.labels()
-					.getIntersecting(Range.atLeast(0L), null,
+					.getIntersecting(Lifespan.nowOn(0), null,
 						b.range(0x4000, 0x4001), false, true)));
 		assertEquals(Set.of(lab4),
 			new HashSet<>(manager.labels()
-					.getIntersecting(Range.atLeast(0L), thread,
+					.getIntersecting(Lifespan.nowOn(0), thread,
 						TraceRegisterUtils.rangeForRegister(b.language.getRegister("r4")), false,
 						true)));
 		assertEquals(Set.of(), new HashSet<>(manager.labels()
-				.getIntersecting(Range.atLeast(0L),
+				.getIntersecting(Lifespan.nowOn(0),
 					null, b.drng(0x4000, 0x4001), false, true)));
 
 		// TODO: Test ordering is by address
@@ -533,7 +526,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceLabelSymbol lab1;
 		TraceLabelSymbol lab2;
 		TraceLabelSymbol lab3;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
 			lab1 = manager.labels()
@@ -550,7 +543,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(lab1),
 			new HashSet<>(manager.labels().getAt(4, null, b.addr(0x4000), false)));
 		assertEquals(Set.of(lab2, lab3),
-			new HashSet<>(manager.labelsAndFunctions().getAt(4, null, b.addr(0x4001), false)));
+			new HashSet<>(manager.labels().getAt(4, null, b.addr(0x4001), false)));
 		// TODO: Test ordering by setPrimary
 
 		assertFalse(manager.labels().hasAt(0, null, b.addr(0x4000), false));
@@ -566,7 +559,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab2;
 		TraceLabelSymbol lab3;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
@@ -582,7 +575,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 						nsA, SourceType.USER_DEFINED);
 		}
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			lab3.delete();
 			assertEquals(Set.of(lab2), new HashSet<>(manager.allSymbols().getChildren(clsA)));
 
@@ -602,7 +595,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceLabelSymbol lab2;
 		TraceLabelSymbol lab3;
 		TraceLabelSymbol lab4;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);
@@ -647,7 +640,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceLabelSymbol lab2;
 		TraceLabelSymbol lab3;
 		TraceLabelSymbol lab4;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			nsA = manager.namespaces().add("a", global, SourceType.USER_DEFINED);
 			clsA = manager.classes().add("A", nsA, SourceType.USER_DEFINED);

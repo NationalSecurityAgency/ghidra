@@ -27,82 +27,112 @@ import mdemangler.template.MDTemplateNameAndArguments;
 public class MDMangObjectParser {
 
 	public static MDParsableItem determineItemAndParse(MDMang dmang) throws MDException {
-		boolean retry = false;
-		MDException firstException = null;
 		MDParsableItem myItem = null;
-		int index = dmang.getIndex();
+
+		dmang.setProcessingMode(ProcessingMode.DEFAULT_STANDARD);
 		try {
-			myItem = parseDefaultStandard(dmang);
-			if (myItem != null) {
-				myItem.parse();
+			myItem = parse(dmang);
+		}
+		catch (MDException e1) {
+			dmang.resetState();
+			dmang.setProcessingMode(ProcessingMode.LLVM);
+			try {
+				myItem = parse(dmang);
 			}
-			else {
-				retry = true;
+			catch (MDException e2) {
+				throw new MDException(
+					"Reason1: " + e1.getMessage().trim() + "; Reason2: " + e2.getMessage().trim());
 			}
-		}
-		catch (MDException e) {
-			retry = true;
-			myItem = null;
-			firstException = e;
-		}
-		if (!retry) {
-			return myItem;
-		}
-		try {
-			dmang.setIndex(index);
-			myItem = parseLlvm(dmang);
-			if (myItem != null) {
-				myItem.parse();
-			}
-		}
-		catch (MDException e) {
-			if (firstException != null) {
-				throw firstException;
-			}
-			throw e;
-		}
-		if (myItem == null && firstException != null) {
-			throw firstException;
 		}
 		return myItem;
 	}
 
-	public static MDParsableItem parseDefaultStandard(MDMang dmang) throws MDException {
+	/**
+	 * This method is only intended to be called with dmang at a fresh state (including index = 0)
+	 */
+	private static MDParsableItem parse(MDMang dmang) throws MDException {
 		MDParsableItem item;
-		dmang.setProcessingMode(ProcessingMode.DEFAULT_STANDARD);
+
+		// We believe this should adequately distinguish between a mangled "type" name vs. a
+		//  dot-separated mangled "symbol" name.
+		// => This does not work on three of the tests that begin with "?.cctor"
+//		if (dmang.getMangledSymbol().substring(1).contains(".")) {
+//			// Dot-separated name
+//			// TODO: we need to deal with these
+//			// item = new MDDotSeparatedItem(dmang); // for research purposes; might not keep
+//			item = null;
+//		}
+		// Moved the check for data type processing up in the set of checks because we failed
+		//  (above) to properly distinguish dot-separated names for three tests.  Ultimately,
+		//  it might be better to not have a separate MDDotSeparatedItem, but to be able to set
+		//  some attributes on a main item.
+		if (dmang.peek() == '.' && !dmang.getMangledSymbol().substring(1).contains(".")) {
+			dmang.increment();
+			item = MDDataTypeParser.parseDataType(dmang, false);
+			dmang.pushContext();
+			item.parse();
+			dmang.popContext();
+			return item;
+		}
+
 		if (dmang.peek() == '?') {
 			if (dmang.peek(1) == '@') {
 				item = new MDObjectCodeView(dmang);
+				dmang.pushContext();
+				item.parse();
+				dmang.popContext();
+				return item;
 			}
-			else if (dmang.peek(1) == '$') {
+			if (dmang.peek(1) == '$') {
 				item = new MDTemplateNameAndArguments(dmang);
+				//  If we had no exception and there were zero characters remaining, then we
+				//  assume that the item is a template.  Otherwise, we fall through and attempt
+				//  to process as a CPP object.
+				try {
+					dmang.pushContext();
+					item.parse();
+					dmang.popContext();
+					if (dmang.getNumCharsRemaining() == 0) {
+						return item;
+					}
+				}
+				catch (MDException e) {
+					// trying again...
+				}
+				// Must reset the demangler state in order to attempt to process as a CPP item
+				dmang.resetState();
 			}
-			else {
-				item = new MDObjectCPP(dmang);
-			}
+			item = new MDObjectCPP(dmang);
+			dmang.pushContext();
+			item.parse();
+			dmang.popContext();
+			return item;
 		}
-		else if ((dmang.peek() == '_') &&
+
+		if ((dmang.peek() == '_') &&
 			((dmang.peek(1) == '_') || ((dmang.peek(1) >= 'A') && (dmang.peek(1) <= 'Z')))) {
 			item = parseObjectReserved(dmang);
+			dmang.pushContext();
+			item.parse();
+			dmang.popContext();
+			return item;
 		}
-		else if (dmang.peek() == '.') {
-			dmang.increment();
-			item = MDDataTypeParser.parseDataType(dmang, false);
-		}
-		else {
-			item = new MDObjectC(dmang);
-		}
-		return item;
-	}
+		// Might move the test of types back here once we get the dot-separted symbol processing
+		// logic figured out... for now, it was moved up closer to the start of this function
+//		if (dmang.peek() == '.' ) {
+//			// Dot-separated will not enter here, as they are distinguished earlier.
+//			dmang.increment();
+//			item = MDDataTypeParser.parseDataType(dmang, false);
+//			dmang.pushContext();
+//			item.parse();
+//			dmang.popContext();
+//			return item;
+//		}
 
-	public static MDParsableItem parseLlvm(MDMang dmang) {
-		// Might eliminate next test if we create other "non-standard" processing
-		//  that does not begin with "?$".
-		if (dmang.peek() != '?' && dmang.peek(1) != '$') {
-			return null;
-		}
-		dmang.setProcessingMode(ProcessingMode.LLVM);
-		MDObjectCPP item = new MDObjectCPP(dmang);
+		item = new MDObjectC(dmang);
+		dmang.pushContext();
+		item.parse();
+		dmang.popContext();
 		return item;
 	}
 
@@ -150,7 +180,7 @@ public class MDMangObjectParser {
 	 * @throws MDException Upon <b><code>MDMang</code></b> parsing issues that cause us to fail
 	 *  processing.
 	 */
-	public static MDParsableItem parseObjectReserved(MDMang dmang) {
+	private static MDParsableItem parseObjectReserved(MDMang dmang) {
 		MDParsableItem item;
 		if (dmang.positionStartsWith("__TI")) {
 			dmang.increment("__TI".length());

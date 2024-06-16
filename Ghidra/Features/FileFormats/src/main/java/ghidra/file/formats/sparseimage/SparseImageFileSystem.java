@@ -92,7 +92,7 @@ public class SparseImageFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public GFile lookup(String path) throws IOException {
+	public GFile lookup(String path) {
 		return fsIndexHelper.lookup(path);
 	}
 

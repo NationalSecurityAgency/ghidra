@@ -16,19 +16,14 @@
 package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.function.Consumer;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
 import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.data.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NotFoundException;
@@ -37,7 +32,7 @@ import ghidra.util.exception.NotFoundException;
  * A class to represent the Executable and Linking Format (ELF)
  * header and specification.
  */
-public class ElfHeader implements StructConverter, Writeable {
+public class ElfHeader implements StructConverter {
 
 	private static final int MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE = 20;
 
@@ -47,36 +42,40 @@ public class ElfHeader implements StructConverter, Writeable {
 	private HashMap<Integer, ElfSectionHeaderType> sectionHeaderTypeMap;
 	private HashMap<Integer, ElfDynamicType> dynamicTypeMap;
 
-	private ByteProvider provider; // original byte provider
-	private BinaryReader reader; // unlimited reader
-	private ElfLoadAdapter elfLoadAdapter = new ElfLoadAdapter();
+	private final ByteProvider provider; // original byte provider
+	private final BinaryReader reader; // unlimited reader
 
-	private byte e_ident_magic_num; //magic number
-	private String e_ident_magic_str; //magic string
-	private byte e_ident_class; //file class
-	private byte e_ident_data; //data encoding
-	private byte e_ident_version; //file version
-	private byte e_ident_osabi; //operating system and abi
-	private byte e_ident_abiversion; //abi version
-	private byte[] e_ident_pad; //padding
-	private short e_type; //object file type
-	private short e_machine; //target architecture
-	private int e_version; //object file version
-	private long e_entry; //executable entry point
-	private long e_phoff; //program header table offset
-	private long e_shoff; //section header table offset
-	private int e_flags; //processor-specific flags
-	private short e_ehsize; //elf header size
-	private short e_phentsize; //size of entries in the program header table
-	private int e_phnum; //number of enties in the program header table (may not be preserved)
-	private short e_shentsize; //size of entries in the section header table
-	private int e_shnum; //number of enties in the section header table (may not be preserved)
-	private short e_shstrndx; //section index of the section name string table
+	@SuppressWarnings("unused")
+	private final byte e_ident_magic_num; //magic number
+	private final String e_ident_magic_str; //magic string
+	private final byte e_ident_class; //file class
+	private final byte e_ident_data; //data encoding
+	@SuppressWarnings("unused")
+	private final byte e_ident_version; //file version
+	private final byte e_ident_osabi; //operating system and abi
+	private final byte e_ident_abiversion; //abi version
+	@SuppressWarnings("unused")
+	private final byte[] e_ident_pad; //padding
+	private final short e_type; //object file type
+	private final short e_machine; //target architecture
+	private final int e_version; //object file version
+	private final long e_entry; //executable entry point
+	private final long e_phoff; //program header table offset
+	private final long e_shoff; //section header table offset
+	private final int e_flags; //processor-specific flags
+	private final short e_ehsize; //elf header size
+	private final short e_phentsize; //size of entries in the program header table
+	private final int e_phnum; //number of enties in the program header table (may be extended and may not be preserved)
+	private final short e_shentsize; //size of entries in the section header table
+	private final int e_shnum; //number of enties in the section header table (may be extended and may not be preserved)
+	private final int e_shstrndx; //section index of the section name string table (may be extended and may not be preserved)
 
 	private Structure headerStructure;
 
 	private boolean parsed = false;
 	private boolean parsedSectionHeaders = false;
+
+	private ElfLoadAdapter elfLoadAdapter = new ElfLoadAdapter();
 
 	private ElfSectionHeader section0 = null;
 	private ElfSectionHeader[] sectionHeaders = new ElfSectionHeader[0];
@@ -88,6 +87,7 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	private ElfStringTable dynamicStringTable;
 	private ElfSymbolTable dynamicSymbolTable;
+	private boolean hasExtendedSymbolSectionIndexTable; // if SHT_SYMTAB_SHNDX sections exist
 
 	private String[] dynamicLibraryNames;
 
@@ -108,48 +108,21 @@ public class ElfHeader implements StructConverter, Writeable {
 		this.errorConsumer = errorConsumer != null ? errorConsumer : msg -> {
 			/* no logging if errorConsumer was null */
 		};
-		initElfHeader();
-	}
-
-	/**
-	 * Returns the unconstrained binary reader (i.e., reads beyond EOF
-	 * will return 0-bytes).
-	 * @return the binary reader
-	 */
-	public BinaryReader getReader() {
-		return reader;
-	}
-
-	/**
-	 * Returns the byte provider
-	 * @return the byte provider
-	 */
-	public ByteProvider getByteProvider() {
-		return provider;
-	}
-
-	void logError(String msg) {
-		errorConsumer.accept(msg);
-	}
-
-	protected void initElfHeader() throws ElfException {
 		try {
 
-			determineHeaderEndianess();
+			if (!Arrays.equals(ElfConstants.MAGIC_BYTES,
+				provider.readBytes(0, ElfConstants.MAGIC_BYTES.length))) {
+				throw new ElfException("Not a valid ELF executable.");
+			}
+			e_ident_magic_num = ElfConstants.MAGIC_NUM;
+			e_ident_magic_str = ElfConstants.MAGIC_STR;
+
+			determineHeaderEndianness();
 
 			// reader uses unbounded provider wrapper to allow handling of missing/truncated headers
 			reader = new BinaryReader(new UnlimitedByteProviderWrapper(provider),
 				hasLittleEndianHeaders);
-
-			e_ident_magic_num = reader.readNextByte();
-			e_ident_magic_str = reader.readNextAsciiString(ElfConstants.MAGIC_STR_LEN);
-
-			boolean magicMatch = ElfConstants.MAGIC_NUM == e_ident_magic_num &&
-				ElfConstants.MAGIC_STR.equalsIgnoreCase(e_ident_magic_str);
-
-			if (!magicMatch) {
-				throw new ElfException("Not a valid ELF executable.");
-			}
+			reader.setPointerIndex(ElfConstants.MAGIC_BYTES.length);
 
 			e_ident_class = reader.readNextByte();
 			e_ident_data = reader.readNextByte();
@@ -181,56 +154,87 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_ehsize = reader.readNextShort();
 
 			e_phentsize = reader.readNextShort();
-			e_phnum = reader.readNextUnsignedShort();
+
+			int phnum = reader.readNextUnsignedShort();
+			if (phnum == Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
+				phnum = readExtendedProgramHeaderCount(); // use extended stored program header count
+			}
+			e_phnum = phnum;
 
 			e_shentsize = reader.readNextShort();
-			e_shnum = reader.readNextUnsignedShort();
 
-			e_shstrndx = reader.readNextShort();
-
-			if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
-				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
+			int shnum = reader.readNextUnsignedShort();
+			if (shnum == 0 ||
+				shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
+				shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
 			}
+			e_shnum = shnum;
 
-			if (e_phnum == Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
-				e_phnum = readExtendedProgramHeaderCount(); // use extended stored program header count
+			int shstrndx = reader.readNextUnsignedShort();
+			if (e_shnum == 0) {
+				shstrndx = 0;
 			}
+			else if (shstrndx == Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_XINDEX)) {
+				shstrndx = readExtendedSectionHeaderStringTableIndex();
+			}
+			e_shstrndx = shstrndx;
 		}
 		catch (IOException e) {
 			throw new ElfException(e);
 		}
 	}
 
+	/**
+	 * Returns the unconstrained binary reader (i.e., reads beyond EOF
+	 * will return 0-bytes).
+	 * @return the binary reader
+	 */
+	public BinaryReader getReader() {
+		return reader;
+	}
+
+	/**
+	 * Returns the byte provider
+	 * @return the byte provider
+	 */
+	public ByteProvider getByteProvider() {
+		return provider;
+	}
+
+	void logError(String msg) {
+		errorConsumer.accept(msg);
+	}
+
 	private ElfSectionHeader getSection0() throws IOException {
-		if (section0 == null && e_shnum != 0) {
-			long index = e_shoff;
-			if (!providerContainsRegion(index, e_shentsize)) {
+		if (section0 == null && e_shoff != 0) {
+			if (!providerContainsRegion(e_shoff, e_shentsize)) {
 				return null;
 			}
-			reader.setPointerIndex(index);
-			section0 = new ElfSectionHeader(reader, this);
+			section0 = new ElfSectionHeader(reader.clone(e_shoff), this);
 		}
 		return section0;
 	}
 
 	/**
-	 * Read extended program header count stored in first section header (ST_NULL) sh_info field value. 
-	 * Returned value is restricted to the range 0..0x7fffffff.
+	 * Read extended program header count (e_phnum) stored in first section header (ST_NULL) 
+	 * sh_info field value. This is done to overcome the short value limitation of the
+	 * e_phnum header field.  Returned value is restricted to the range 0..0x7fffffff.
 	 * @return extended program header count or 0 if not found or out of range
 	 * @throws IOException if file IO error occurs
 	 */
 	private int readExtendedProgramHeaderCount() throws IOException {
 		ElfSectionHeader s = getSection0();
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
-			long val = s.getInfo();
-			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
+			int val = s.getInfo();
+			return val < 0 ? 0 : val;
 		}
 		return 0;
 	}
 
 	/**
-	 * Read extended section header count stored in first section header (ST_NULL) sh_size field value. 
-	 * Returned value is restricted to the range 0..0x7fffffff.
+	 * Read extended section header count (e_shnum) stored in first section header (ST_NULL) 
+	 * sh_size field value.  This is done to overcome the short value limitation of the
+	 * e_shnum header field.  Returned value is restricted to the range 0..0x7fffffff.
 	 * @return extended section header count or 0 if not found or out of range
 	 * @throws IOException if file IO error occurs
 	 */
@@ -239,6 +243,22 @@ public class ElfHeader implements StructConverter, Writeable {
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
 			long val = s.getSize();
 			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
+		}
+		return 0;
+	}
+
+	/**
+	 * Read extended section header string table index (e_shstrndx) stored in first section header 
+	 * (ST_NULL) sh_size field value.  This is done to overcome the short value limitation of the
+	 * e_shstrndx header field.  Returned value is restricted to the range 0..0x7fffffff.
+	 * @return extended section header count or 0 if not found or out of range
+	 * @throws IOException if file IO error occurs
+	 */
+	private int readExtendedSectionHeaderStringTableIndex() throws IOException {
+		ElfSectionHeader s = getSection0();
+		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
+			int val = s.getLink();
+			return val < 0 ? 0 : val;
 		}
 		return 0;
 	}
@@ -473,6 +493,12 @@ public class ElfHeader implements StructConverter, Writeable {
 					}
 				}
 
+				if (section.isInvalidOffset()) {
+					Msg.debug(this, "Skipping Elf relocation table section with invalid offset " +
+						section.getNameAsString());
+					return;
+				}
+
 				int link = section.getLink(); // section index of associated symbol table
 				int info = section.getInfo(); // section index of section to which relocations apply (relocation offset base)
 
@@ -492,22 +518,18 @@ public class ElfHeader implements StructConverter, Writeable {
 				}
 
 				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
-				if (symbolTable == null) {
-					throw new NotFoundException("Referenced relocation symbol section not found.");
-				}
 
 				boolean addendTypeReloc =
 					(sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
 						sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
 
-				Msg.debug(this,
-					"Elf relocation table section " + section.getNameAsString() +
-						" linked to symbol table section " + symbolTableSection.getNameAsString() +
-						" affecting " + relocaBaseName);
-
-				if (section.getOffset() < 0) {
-					return;
+				String details = "Elf relocation table section " + section.getNameAsString();
+				if (symbolTableSection != null) {
+					details +=
+						" linked to symbol table section " + symbolTableSection.getNameAsString();
 				}
+				details += " affecting " + relocaBaseName;
+				Msg.debug(this, details);
 
 				ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
 				if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
@@ -519,18 +541,17 @@ public class ElfHeader implements StructConverter, Writeable {
 					format = TableFormat.RELR;
 				}
 
-				ElfRelocationTable relocTable = new ElfRelocationTable(reader,
-					this, section, section.getOffset(), section.getAddress(), section.getSize(),
-					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated,
-					format);
+				ElfRelocationTable relocTable =
+					new ElfRelocationTable(reader, this, section, section.getOffset(),
+						section.getAddress(), section.getSize(), section.getEntrySize(),
+						addendTypeReloc, symbolTable, sectionToBeRelocated, format);
 
 				relocationTableList.add(relocTable);
 			}
 		}
 		catch (NotFoundException e) {
-			errorConsumer
-					.accept("Failed to process relocation section " + section.getNameAsString() +
-				": " + e.getMessage());
+			errorConsumer.accept("Failed to process relocation section " +
+				section.getNameAsString() + ": " + e.getMessage());
 		}
 	}
 
@@ -582,18 +603,11 @@ public class ElfHeader implements StructConverter, Writeable {
 
 			ElfProgramHeader relocTableLoadHeader = getProgramLoadHeaderContaining(relocTableAddr);
 			if (relocTableLoadHeader == null) {
-				errorConsumer
-						.accept("Failed to locate " + relocTableAddrType.name + " in memory at 0x" +
-					Long.toHexString(relocTableAddr));
+				errorConsumer.accept("Failed to locate " + relocTableAddrType.name +
+					" in memory at 0x" + Long.toHexString(relocTableAddr));
 				return;
 			}
-			if (relocTableLoadHeader.getOffset() < 0) {
-				return;
-			}
-
-			if (dynamicSymbolTable == null) {
-				errorConsumer.accept("Failed to process " + relocTableAddrType.name +
-					", missing dynamic symbol table");
+			if (relocTableLoadHeader.isInvalidOffset()) {
 				return;
 			}
 
@@ -617,9 +631,9 @@ public class ElfHeader implements StructConverter, Writeable {
 				format = TableFormat.RELR;
 			}
 
-			ElfRelocationTable relocTable = new ElfRelocationTable(reader,
-				this, null, relocTableOffset, relocTableAddr, tableSize, tableEntrySize,
-				addendTypeReloc, dynamicSymbolTable, null, format);
+			ElfRelocationTable relocTable =
+				new ElfRelocationTable(reader, this, null, relocTableOffset, relocTableAddr,
+					tableSize, tableEntrySize, addendTypeReloc, dynamicSymbolTable, null, format);
 			relocationTableList.add(relocTable);
 		}
 		catch (NotFoundException e) {
@@ -688,15 +702,17 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 
 			ElfProgramHeader loadHeader = getProgramLoadHeaderContaining(vaddr);
-			if (loadHeader != null) {
-				long dynamicTableOffset = loadHeader.getOffset() +
-					(dynamicHeaders[0].getVirtualAddress() - loadHeader.getVirtualAddress());
-				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
-					dynamicHeaders[0].getVirtualAddress());
-				return;
+			if (loadHeader == null) {
+				// Assume p_offset can be used reliably if no corresponding PT_LOAD
+				loadHeader = dynamicHeaders[0];
 			}
+			long dynamicTableOffset = loadHeader.getOffset() +
+				(dynamicHeaders[0].getVirtualAddress() - loadHeader.getVirtualAddress());
+			dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
+				dynamicHeaders[0].getVirtualAddress());
+			return;
 		}
-		else if (dynamicHeaders.length > 1) {
+		if (dynamicHeaders.length > 1) {
 			errorConsumer.accept("Multiple ELF Dynamic table program headers found");
 		}
 
@@ -733,9 +749,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		ArrayList<ElfStringTable> stringTableList = new ArrayList<>();
 		for (ElfSectionHeader stringTableSectionHeader : sectionHeaders) {
 			if (stringTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_STRTAB) {
-				ElfStringTable stringTable = new ElfStringTable(reader, this,
-					stringTableSectionHeader, stringTableSectionHeader.getOffset(),
-					stringTableSectionHeader.getAddress(), stringTableSectionHeader.getSize());
+				ElfStringTable stringTable = new ElfStringTable(this, stringTableSectionHeader,
+					stringTableSectionHeader.getOffset(), stringTableSectionHeader.getAddress(),
+					stringTableSectionHeader.getSize());
 				stringTableList.add(stringTable);
 				if (stringTable.getAddressOffset() == dynamicStringTableAddr) {
 					dynamicStringTable = stringTable;
@@ -778,13 +794,57 @@ public class ElfHeader implements StructConverter, Writeable {
 				return null;
 			}
 
-			return new ElfStringTable(reader, this, null,
+			return new ElfStringTable(this, null,
 				stringTableLoadHeader.getOffset(dynamicStringTableAddr), dynamicStringTableAddr,
 				stringTableSize);
 		}
 		catch (NotFoundException e) {
 			throw new AssertException(e);
 		}
+	}
+
+	private int[] getExtendedSymbolSectionIndexTable(ElfSectionHeader symbolTableSectionHeader) {
+
+		if (!hasExtendedSymbolSectionIndexTable) {
+			return null;
+		}
+
+		// Find SHT_SYMTAB_SHNDX section linked to specified symbol table section
+		ElfSectionHeader symbolSectionIndexHeader = null;
+		for (ElfSectionHeader section : sectionHeaders) {
+			if (section.getType() != ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX) {
+				continue;
+			}
+			int linkIndex = section.getLink();
+			if (linkIndex <= 0 || linkIndex >= sectionHeaders.length) {
+				continue;
+			}
+			if (sectionHeaders[linkIndex] == symbolTableSectionHeader) {
+				symbolSectionIndexHeader = section;
+				break;
+			}
+		}
+		if (symbolSectionIndexHeader == null) {
+			return null;
+		}
+
+		// determine number of 32-bit index elements for int[]
+		int count = (int) (symbolSectionIndexHeader.getSize() / 4);
+		int[] indexTable = new int[count];
+
+		try {
+			BinaryReader r = reader.clone(symbolSectionIndexHeader.getOffset());
+			for (int i = 0; i < count; i++) {
+				indexTable[i] = r.readNextInt();
+			}
+		}
+		catch (IOException e) {
+			errorConsumer.accept("Failed to read symbol section index table at 0x" +
+				Long.toHexString(symbolSectionIndexHeader.getOffset()) + ": " +
+				symbolSectionIndexHeader.getNameAsString());
+		}
+
+		return indexTable;
 	}
 
 	private void parseSymbolTables() throws IOException {
@@ -806,7 +866,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		for (ElfSectionHeader symbolTableSectionHeader : sectionHeaders) {
 			if (symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_SYMTAB ||
 				symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_DYNSYM) {
-				if (symbolTableSectionHeader.getOffset() < 0) {
+				// || symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_SUNW_LDYNSYM) {
+				if (symbolTableSectionHeader.isInvalidOffset()) {
 					continue;
 				}
 
@@ -822,10 +883,15 @@ public class ElfHeader implements StructConverter, Writeable {
 				boolean isDyanmic = ElfSectionHeaderConstants.dot_dynsym
 						.equals(symbolTableSectionHeader.getNameAsString());
 
-				ElfSymbolTable symbolTable = new ElfSymbolTable(reader, this,
-					symbolTableSectionHeader, symbolTableSectionHeader.getOffset(),
-					symbolTableSectionHeader.getAddress(), symbolTableSectionHeader.getSize(),
-					symbolTableSectionHeader.getEntrySize(), stringTable, isDyanmic);
+				// get extended symbol section index table if present
+				int[] symbolSectionIndexTable =
+					getExtendedSymbolSectionIndexTable(symbolTableSectionHeader);
+
+				ElfSymbolTable symbolTable =
+					new ElfSymbolTable(reader, this, symbolTableSectionHeader,
+						symbolTableSectionHeader.getOffset(), symbolTableSectionHeader.getAddress(),
+						symbolTableSectionHeader.getSize(), symbolTableSectionHeader.getEntrySize(),
+						stringTable, symbolSectionIndexTable, isDyanmic);
 				symbolTableList.add(symbolTable);
 				if (symbolTable.getAddressOffset() == dynamicSymbolTableAddr) {
 					dynamicSymbolTable = symbolTable; // remember dynamic symbol table
@@ -844,12 +910,26 @@ public class ElfHeader implements StructConverter, Writeable {
 		symbolTableList.toArray(symbolTables);
 	}
 
+	private ElfDynamicType getDynamicHashTableType() {
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_HASH)) {
+			return ElfDynamicType.DT_HASH;
+		}
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH)) {
+			return ElfDynamicType.DT_GNU_HASH;
+		}
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_XHASH)) {
+			return ElfDynamicType.DT_GNU_XHASH;
+		}
+		return null;
+	}
+
 	private ElfSymbolTable parseDynamicSymbolTable() throws IOException {
+
+		ElfDynamicType dynamicHashType = getDynamicHashTableType();
 
 		if (!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMTAB) ||
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMENT) ||
-			!(dynamicTable.containsDynamicValue(ElfDynamicType.DT_HASH) ||
-				dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH))) {
+			dynamicHashType == null) {
 			if (dynamicStringTable != null) {
 				Msg.warn(this, "Failed to parse DT_SYMTAB, missing dynamic dependency");
 			}
@@ -876,11 +956,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			tableAddr = adjustAddressForPrelink(tableAddr);
 			long tableEntrySize = dynamicTable.getDynamicValue(ElfDynamicType.DT_SYMENT);
 
-			// Use dynamic symbol hash table DT_HASH or DT_GNU_HASH to determine symbol table count/length
-			boolean useGnuHash = dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH);
-			long hashTableAddr =
-				useGnuHash ? dynamicTable.getDynamicValue(ElfDynamicType.DT_GNU_HASH)
-						: dynamicTable.getDynamicValue(ElfDynamicType.DT_HASH);
+			// Use dynamic symbol hash table DT_HASH, DT_GNU_HASH, or DT_GNU_XHASH to 
+			// determine symbol table count/length
+			long hashTableAddr = dynamicTable.getDynamicValue(dynamicHashType);
 			hashTableAddr = adjustAddressForPrelink(hashTableAddr);
 
 			ElfProgramHeader symbolTableLoadHeader = getProgramLoadHeaderContaining(tableAddr);
@@ -891,8 +969,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 			ElfProgramHeader hashTableLoadHeader = getProgramLoadHeaderContaining(hashTableAddr);
 			if (hashTableLoadHeader == null) {
-				errorConsumer.accept("Failed to locate DT_HASH or DT_GNU_HASH in memory at 0x" +
-					Long.toHexString(hashTableAddr));
+				errorConsumer.accept(
+					"Failed to locate DT_HASH, DT_GNU_HASH, or DT_GNU_XHASH in memory at 0x" +
+						Long.toHexString(hashTableAddr));
 				return null;
 			}
 
@@ -902,16 +981,22 @@ public class ElfHeader implements StructConverter, Writeable {
 			// determine symbol count from dynamic symbol hash table
 			int symCount;
 			long symbolHashTableOffset = hashTableLoadHeader.getOffset(hashTableAddr);
-			if (useGnuHash) {
+			if (dynamicHashType == ElfDynamicType.DT_GNU_HASH) {
 				symCount = deriveGnuHashDynamicSymbolCount(symbolHashTableOffset);
+			}
+			else if (dynamicHashType == ElfDynamicType.DT_GNU_XHASH) {
+				symCount = deriveGnuXHashDynamicSymbolCount(symbolHashTableOffset);
 			}
 			else {
 				// DT_HASH table, nchain corresponds is same as symbol count
 				symCount = reader.readInt(symbolHashTableOffset + 4); // nchain from DT_HASH
 			}
 
-			return new ElfSymbolTable(reader, this, null, symbolTableOffset,
-				tableAddr, tableEntrySize * symCount, tableEntrySize, dynamicStringTable, true);
+			// NOTE: When parsed from dynamic table and not found via section header parse
+			// it is assumed that the extended symbol section table is not used.
+
+			return new ElfSymbolTable(reader, this, null, symbolTableOffset, tableAddr,
+				tableEntrySize * symCount, tableEntrySize, dynamicStringTable, null, true);
 		}
 		catch (NotFoundException e) {
 			throw new AssertException(e);
@@ -958,6 +1043,22 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
+	 * Walk DT_GNU_XHASH table to determine dynamic symbol count
+	 * @param gnuHashTableOffset DT_GNU_XHASH table file offset
+	 * @return dynamic symbol count
+	 * @throws IOException file read error
+	 */
+	private int deriveGnuXHashDynamicSymbolCount(long gnuHashTableOffset) throws IOException {
+		// Elf32_Word  ngnusyms;  // number of entries in chains (and xlat); dynsymcount=symndx+ngnusyms
+		// Elf32_Word  nbuckets;  // number of hash table buckets
+		// Elf32_Word  symndx;  // number of initial .dynsym entires skipped in chains[] (and xlat[])
+		int ngnusyms = reader.readInt(gnuHashTableOffset);
+		int symndx = reader.readInt(gnuHashTableOffset + 8);
+
+		return symndx + ngnusyms;
+	}
+
+	/**
 	 * Perform offset region check against byte provider.
 	 * This is done against the byte provider since the
 	 * reader is unbounded.
@@ -974,8 +1075,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 	}
 
-	protected void parseSectionHeaders()
-			throws IOException {
+	protected void parseSectionHeaders() throws IOException {
 		if (reader == null) {
 			throw new IOException("ELF binary reader is null!");
 		}
@@ -990,13 +1090,14 @@ public class ElfHeader implements StructConverter, Writeable {
 			long index = e_shoff + (i * e_shentsize);
 			if (!missing && !providerContainsRegion(index, e_shentsize)) {
 				int unreadCnt = e_shnum - i;
-				errorConsumer.accept(
-					unreadCnt + " of " + e_shnum +
-						" section headers are truncated/missing from file");
+				errorConsumer.accept(unreadCnt + " of " + e_shnum +
+					" section headers are truncated/missing from file");
 				missing = true;
 			}
-			reader.setPointerIndex(index);
-			sectionHeaders[i] = new ElfSectionHeader(reader, this);
+			sectionHeaders[i] = new ElfSectionHeader(reader.clone(index), this);
+			if (sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX) {
+				hasExtendedSymbolSectionIndexTable = true;
+			}
 		}
 
 		if (sectionHeaders.length != 0) {
@@ -1012,21 +1113,18 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 	}
 
-	private void parseProgramHeaders()
-			throws IOException {
+	private void parseProgramHeaders() throws IOException {
 		boolean missing = false;
 		programHeaders = new ElfProgramHeader[e_phnum];
 		for (int i = 0; i < e_phnum; ++i) {
 			long index = e_phoff + (i * e_phentsize);
 			if (!missing && !providerContainsRegion(index, e_phentsize)) {
 				int unreadCnt = e_phnum - i;
-				errorConsumer.accept(
-					unreadCnt + " of " + e_phnum +
-						" program headers are truncated/missing from file");
+				errorConsumer.accept(unreadCnt + " of " + e_phnum +
+					" program headers are truncated/missing from file");
 				missing = true;
 			}
-			reader.setPointerIndex(index);
-			programHeaders[i] = new ElfProgramHeader(reader, this);
+			programHeaders[i] = new ElfProgramHeader(reader.clone(index), this);
 		}
 
 		// TODO: Find sample file which requires this hack to verify its necessity
@@ -1102,18 +1200,16 @@ public class ElfHeader implements StructConverter, Writeable {
 		// which currently considers prelink. 
 
 		long minBase = -1;
-
 		int n = Math.min(e_phnum, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
 		for (int i = 0; i < n; ++i) {
 			long index = e_phoff + (i * e_phentsize);
 			if (!providerContainsRegion(index, e_phentsize)) {
 				break;
 			}
-			reader.setPointerIndex(index);
 			try {
-				int headerType = reader.peekNextInt();
+				int headerType = reader.readInt(index);
 				if (headerType == ElfProgramHeaderConstants.PT_LOAD) {
-					ElfProgramHeader header = new ElfProgramHeader(reader, this);
+					ElfProgramHeader header = new ElfProgramHeader(reader.clone(index), this);
 					minBase = getMinBase(header.getVirtualAddress(), minBase);
 				}
 			}
@@ -1191,24 +1287,17 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 		preLinkImageBase = -1L;
 		try {
-			long ptr = reader.getPointerIndex();
-
 			long fileLength = reader.getByteProvider().length();
 
 			// not enough bytes
 			if (fileLength < 8) {
 				return -1;
 			}
-			//reader.setPointerIndex(fileLength - 8);
-			int readInt = reader.readInt(fileLength - 8);
-			String readAsciiString = reader.readAsciiString(fileLength - 4, 4);
+			int preLinkImageBaseInt = reader.readInt(fileLength - 8);
+			String preLinkMagicString = reader.readAsciiString(fileLength - 4, 4).trim();
 
-			if (reader.getPointerIndex() != ptr) {
-				reader.setPointerIndex(ptr);
-			}
-
-			if (readAsciiString.equals("PRE")) {
-				preLinkImageBase = (readInt) & 0xffffffffL;
+			if (preLinkMagicString.equals("PRE")) {
+				preLinkImageBase = Integer.toUnsignedLong(preLinkImageBaseInt);
 			}
 		}
 		catch (IOException e) {
@@ -1239,7 +1328,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		return false;
 	}
 
-	private void determineHeaderEndianess() throws ElfException, IOException {
+	private void determineHeaderEndianness() throws ElfException, IOException {
 
 		if (provider.length() < INITIAL_READ_LEN) {
 			throw new ElfException("Not enough bytes to be a valid ELF executable.");
@@ -1255,10 +1344,10 @@ public class ElfHeader implements StructConverter, Writeable {
 				Integer.toHexString(bytes[ElfConstants.EI_DATA]) + ")");
 		}
 		if (!hasLittleEndianHeaders && bytes[ElfConstants.EI_NIDENT] != 0) {
-			// Header endianess sanity check
+			// Header endianness sanity check
 			// Some toolchains always use little endian Elf Headers
 
-			// TODO: unsure if forced endianess applies to relocation data
+			// TODO: unsure if forced endianness applies to relocation data
 
 			// Check first byte of version (allow switch if equal 1)
 			if (bytes[ElfConstants.EI_NIDENT + 4] == 1) {
@@ -1388,7 +1477,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * the value SHN_UNDEF.
 	 * @return the section header table index of the entry associated with the section name string table
 	 */
-	public short e_shstrndx() {
+	public int e_shstrndx() {
 		return e_shstrndx;
 	}
 
@@ -1541,7 +1630,8 @@ public class ElfHeader implements StructConverter, Writeable {
 			long fileRangeLength) {
 		long maxOffset = fileOffset + fileRangeLength - 1;
 		for (ElfSectionHeader section : sectionHeaders) {
-			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL) {
+			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL ||
+				section.isInvalidOffset()) {
 				continue;
 			}
 			long size = section.getSize();
@@ -1668,7 +1758,8 @@ public class ElfHeader implements StructConverter, Writeable {
 	public ElfProgramHeader getProgramLoadHeaderContainingFileOffset(long offset) {
 		for (ElfProgramHeader programHeader : programHeaders) {
 			if (programHeader == null ||
-				programHeader.getType() != ElfProgramHeaderConstants.PT_LOAD) {
+				programHeader.getType() != ElfProgramHeaderConstants.PT_LOAD ||
+				programHeader.isInvalidOffset()) {
 				continue;
 			}
 			long start = programHeader.getOffset();
@@ -1871,164 +1962,6 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public int getShoffComponentOrdinal() {
 		return 13;
-	}
-
-	private void addSection(ElfSectionHeader newSection) {
-		++e_shnum;
-
-		ElfSectionHeader[] tmp = new ElfSectionHeader[e_shnum];
-		System.arraycopy(sectionHeaders, 0, tmp, 0, sectionHeaders.length);
-		sectionHeaders = tmp;
-
-		sectionHeaders[e_shnum - 1] = newSection;
-
-		if (e_shnum != sectionHeaders.length) {
-			throw new IllegalStateException();
-		}
-	}
-
-	/**
-	 * Adds a new section using the specified memory block.
-	 * The memory block is used to setting the address and size.
-	 * As well as, setting the data.
-	 * @param block the memory block
-	 * @param sh_name the byte index into the string table where the name begins
-	 * @return the newly created section
-	 * @throws MemoryAccessException if any of the requested memory block bytes are uninitialized.
-	 */
-	public ElfSectionHeader addSection(MemoryBlock block, int sh_name)
-			throws MemoryAccessException {
-		ElfSectionHeader newSection = new ElfSectionHeader(this, block, sh_name, getImageBase());
-		addSection(newSection);
-		return newSection;
-	}
-
-	/**
-	 * Adds a new section the specifed name and name index.
-	 * The type of the section will be SHT_PROGBITS.
-	 * @param name the actual name of the new section
-	 * @param sh_name the byte index into the string table where the name begins
-	 * @return the newly created section
-	 */
-	public ElfSectionHeader addSection(String name, int sh_name) {
-		return addSection(name, sh_name, ElfSectionHeaderConstants.SHT_PROGBITS);
-	}
-
-	/**
-	 * Adds a new section the specifed name and name index.
-	 * The type of the section will be SHT_PROGBITS.
-	 * @param name the actual name of the new section
-	 * @param sh_name the byte index into the string table where the name begins
-	 * @param type the type of the new section
-	 * @return the newly created section
-	 */
-	public ElfSectionHeader addSection(String name, int sh_name, int type) {
-		ElfSectionHeader newSection = new ElfSectionHeader(this, name, sh_name, type);
-		addSection(newSection);
-		return newSection;
-	}
-
-	/**
-	 * Appends the new program header to the end of the existing
-	 * program header table.
-	 * @param ph the new program header
-	 */
-	public void addProgramHeader(ElfProgramHeader ph) {
-		ElfProgramHeader[] tmp = new ElfProgramHeader[programHeaders.length + 1];
-
-		int pos = tmp.length - 1;
-
-		boolean firstLoad = true;
-		int firstLoadPos = -1;
-
-		/*PT_LOAD segments must be inserted in sorted order*/
-		if (ph.getType() == ElfProgramHeaderConstants.PT_LOAD) {
-			for (int i = 0; i < programHeaders.length - 1; ++i) {
-				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_LOAD) {
-					if (firstLoad) {
-						firstLoad = false;
-						firstLoadPos = i;
-					}
-					pos = i;
-				}
-			}
-			++pos;
-		}
-
-		System.arraycopy(programHeaders, 0, tmp, 0, pos);
-		tmp[pos] = ph;
-		System.arraycopy(programHeaders, pos, tmp, pos + 1, programHeaders.length - pos);
-
-		if (ph.getType() == ElfProgramHeaderConstants.PT_LOAD) {
-			Arrays.sort(tmp, firstLoadPos, pos + 1);
-		}
-
-		programHeaders = tmp;
-
-		e_phnum = programHeaders.length;
-
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.seek(0);
-		raf.writeByte(e_ident_magic_num);
-		raf.write(e_ident_magic_str.getBytes());
-		raf.writeByte(e_ident_class);
-		raf.writeByte(e_ident_data);
-		raf.writeByte(e_ident_version);
-		raf.writeByte(e_ident_osabi);
-		raf.writeByte(e_ident_abiversion);
-		raf.write(e_ident_pad);
-		raf.write(dc.getBytes(e_type));
-		raf.write(dc.getBytes(e_machine));
-		raf.write(dc.getBytes(e_version));
-
-		if (is32Bit()) {
-			raf.write(dc.getBytes((int) e_entry));
-			raf.write(dc.getBytes((int) e_phoff));
-			raf.write(dc.getBytes((int) e_shoff));
-		}
-		else if (is64Bit()) {
-			raf.write(dc.getBytes(e_entry));
-			raf.write(dc.getBytes(e_phoff));
-			raf.write(dc.getBytes(e_shoff));
-		}
-
-		raf.write(dc.getBytes(e_flags));
-		raf.write(dc.getBytes(e_ehsize));
-		raf.write(dc.getBytes(e_phentsize));
-		if (e_phnum >= Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
-			throw new IOException(
-				"Unsupported program header count serialization: " + e_phnum);
-		}
-		raf.write(dc.getBytes(e_phnum));
-		raf.write(dc.getBytes(e_shentsize));
-		if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
-			throw new IOException(
-				"Unsupported section header count serialization: " + e_shnum);
-		}
-		raf.write(dc.getBytes(e_shnum));
-		raf.write(dc.getBytes(e_shstrndx));
-	}
-
-	/**
-	 * Sets the section header offset.
-	 * @param offset the new section header offset
-	 */
-	public void setSectionHeaderOffset(long offset) {
-		this.e_shoff = offset;
-	}
-
-	/**
-	 * Sets the program header offset.
-	 * @param offset the new program header offset
-	 */
-	public void setProgramHeaderOffset(long offset) {
-		this.e_phoff = offset;
 	}
 
 }

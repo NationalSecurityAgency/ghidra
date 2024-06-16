@@ -15,6 +15,8 @@
  */
 #include "comment_ghidra.hh"
 
+namespace ghidra {
+
 CommentDatabaseGhidra::CommentDatabaseGhidra(ArchitectureGhidra *g)
   : CommentDatabase()
 {
@@ -40,9 +42,9 @@ void CommentDatabaseGhidra::fillCache(const Address &fad) const
   iter = cache.beginComment(fad);
   iterend = cache.endComment(fad);
 
-  XmlDecode decoder;
+  PackedDecode decoder(ghidra);
   if (ghidra->getComments(fad,commentfilter,decoder)) {
-    cache.decode(decoder,ghidra);
+    cache.decode(decoder);
   }
 }
 
@@ -78,3 +80,4 @@ CommentSet::const_iterator CommentDatabaseGhidra::endComment(const Address &fad)
   return cache.endComment(fad);
 }
 
+} // End namespace ghidra

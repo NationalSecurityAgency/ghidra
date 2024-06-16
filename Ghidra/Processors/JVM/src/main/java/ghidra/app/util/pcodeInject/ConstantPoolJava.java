@@ -21,8 +21,11 @@ import java.util.List;
 import ghidra.javaclass.format.*;
 import ghidra.javaclass.format.constantpool.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.ConstantPool;
 import ghidra.program.model.listing.Program;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.InvalidInputException;
 
 public class ConstantPoolJava extends ConstantPool {
 
@@ -103,20 +106,30 @@ public class ConstantPoolJava extends ConstantPool {
 					new ParameterDefinitionImpl("", params.get(i), null);
 				paramDefs[i] = currentParam;
 			}
-			funcDef.setGenericCallingConvention(GenericCallingConvention.stdcall);
+			try {
+				funcDef.setCallingConvention(CompilerSpec.CALLING_CONVENTION_stdcall);
+			}
+			catch (InvalidInputException e) {
+				throw new AssertException(e); // unexpected 
+			}
 		}
 		//invokeinterface, invokespecial, and invokevirtual do have a this pointer
 		else {
 			paramDefs = new ParameterDefinitionImpl[params.size() + 1];
 			ParameterDefinitionImpl thisParam = new ParameterDefinitionImpl("objectRef",
-				new Pointer32DataType(DataType.VOID), null);
+				new Pointer32DataType(VoidDataType.dataType), null);
 			paramDefs[0] = thisParam;
 			for (int i = 1, max = params.size(); i <= max; ++i) {
 				ParameterDefinitionImpl currentParam =
 					new ParameterDefinitionImpl("", params.get(i - 1), null);
 				paramDefs[i] = currentParam;
 			}
-			funcDef.setGenericCallingConvention(GenericCallingConvention.thiscall);
+			try {
+				funcDef.setCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
+			}
+			catch (InvalidInputException e) {
+				throw new AssertException(e); // unexpected 
+			}
 		}
 		funcDef.setArguments(paramDefs);
 		res.type = new PointerDataType(funcDef);
@@ -282,7 +295,7 @@ public class ConstantPoolJava extends ConstantPool {
 				break;
 			case CPOOL_MULTIANEWARRAY:
 				res.tag = ConstantPool.CLASS_REFERENCE;
-				res.type = new PointerDataType(DataType.VOID);
+				res.type = new PointerDataType(VoidDataType.dataType);
 				int nameIndex = ((ConstantPoolClassInfo) poolRef).getNameIndex();
 				ConstantPoolUtf8Info utf8Info = (ConstantPoolUtf8Info) constantPool[nameIndex];
 				String classNameWithSemicolon = utf8Info.getString();

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_FUNCDATA__
-#define __CPUI_FUNCDATA__
+#ifndef __FUNCDATA_HH__
+#define __FUNCDATA_HH__
 
 /// \file funcdata.hh
 /// \brief Utilities for processing data structures associated with a single function
@@ -25,6 +25,8 @@
 #include "merge.hh"
 #include "dynamic.hh"
 #include "unionresolve.hh"
+
+namespace ghidra {
 
 class FlowInfo;
 
@@ -58,14 +60,15 @@ class Funcdata {
     blocks_unreachable = 4,	///< Set if at least one basic block is currently unreachable
     processing_started = 8,	///< Set if processing has started
     processing_complete = 0x10,	///< Set if processing completed
-    typerecovery_on = 0x20,	///< Set if data-type recovery is started
-    no_code = 0x40,		///< Set if there is no code available for this function
-    jumptablerecovery_on = 0x80,	///< Set if \b this Funcdata object is dedicated to jump-table recovery
-    jumptablerecovery_dont = 0x100, 	///< Don't try to recover jump-tables, always truncate
-    restart_pending = 0x200,	///< Analysis must be restarted (because of new override info)
-    unimplemented_present = 0x400,	///< Set if function contains unimplemented instructions
-    baddata_present = 0x800,	///< Set if function flowed into bad data
-    double_precis_on = 0x1000	///< Set if we are performing double precision recovery
+    typerecovery_on = 0x20,	///< Set if data-type analysis will be performed
+    typerecovery_start = 0x40,	///< Set if data-type recovery is started
+    no_code = 0x80,		///< Set if there is no code available for this function
+    jumptablerecovery_on = 0x100,	///< Set if \b this Funcdata object is dedicated to jump-table recovery
+    jumptablerecovery_dont = 0x200, 	///< Don't try to recover jump-tables, always truncate
+    restart_pending = 0x400,	///< Analysis must be restarted (because of new override info)
+    unimplemented_present = 0x800,	///< Set if function contains unimplemented instructions
+    baddata_present = 0x1000,	///< Set if function flowed into bad data
+    double_precis_on = 0x2000	///< Set if we are performing double precision recovery
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
@@ -76,6 +79,7 @@ class Funcdata {
   Architecture *glb;		///< Global configuration data
   FunctionSymbol *functionSymbol;	///< The symbol representing \b this function
   string name;			///< Name of function
+  string displayName;		///< Name to display in output
   Address baseaddr;		///< Starting code address of binary data
   FuncProto funcp;		///< Prototype of this function
   ScopeLocal *localmap;		///< Local variables (symbols in the function scope)
@@ -114,7 +118,7 @@ class Funcdata {
   void pushMultiequals(BlockBasic *bb);		///< Push MULTIEQUAL Varnodes of the given block into the output block
   void clearBlocks(void);			///< Clear all basic blocks
   void structureReset(void);			///< Calculate initial basic block structures (after a control-flow change)
-  int4 stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow);
+  JumpTable::RecoveryMode stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
 
@@ -133,9 +137,10 @@ class Funcdata {
   static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
 				    bool findbranch,bool findcall,bool findreturn);
 public:
-  Funcdata(const string &nm,Scope *conf,const Address &addr,FunctionSymbol *sym,int4 sz=0);	///< Constructor
+  Funcdata(const string &nm,const string &disp,Scope *conf,const Address &addr,FunctionSymbol *sym,int4 sz=0);	///< Constructor
   ~Funcdata(void);							///< Destructor
   const string &getName(void) const { return name; }			///< Get the function's local symbol name
+  const string &getDisplayName(void) const { return displayName; }	///< Get the name to display in output
   const Address &getAddress(void) const { return baseaddr; }		///< Get the entry point address
   int4 getSize(void) const { return size; }				///< Get the function body size in bytes
   Architecture *getArch(void) const { return glb; }			///< Get the program/architecture owning \b this function
@@ -144,7 +149,8 @@ public:
   bool isProcStarted(void) const { return ((flags&processing_started)!=0); }	///< Has processing of the function started
   bool isProcComplete(void) const { return ((flags&processing_complete)!=0); }	///< Is processing of the function complete
   bool hasUnreachableBlocks(void) const { return ((flags&blocks_unreachable)!=0); }	///< Did this function exhibit unreachable code
-  bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Has data-type recovery processes started
+  bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Will data-type analysis be performed
+  bool hasTypeRecoveryStarted(void) const { return ((flags&typerecovery_start)!=0); }	///< Has data-type recovery processes started
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
   void setLanedRegGenerated(void) { minLanedSize = 1000000; }	///< Mark that laned registers have been collected
@@ -169,6 +175,11 @@ public:
   void startProcessing(void);					///< Start processing for this function
   void stopProcessing(void);					///< Mark that processing has completed for this function
   bool startTypeRecovery(void);					///< Mark that data-type analysis has started
+
+  /// \brief Toggle whether data-type recovery will be performed on \b this function
+  ///
+  /// \param val is \b true if data-type analysis is enabled
+  void setTypeRecovery(bool val) { flags = val ? (flags | typerecovery_on) : (flags & ~typerecovery_on); }
   void startCastPhase(void) { cast_phase_index = vbank.getCreateIndex(); }	///< Start the \b cast insertion phase
   uint4 getCastPhaseIndex(void) const { return cast_phase_index; }	///< Get creation index at the start of \b cast insertion
   uint4 getHighLevelIndex(void) const { return high_level_index; }	///< Get creation index at the start of HighVariable creation
@@ -186,7 +197,7 @@ public:
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
   void encode(Encoder &encoder,uint8 id,bool savetree) const;	///< Encode a description of \b this function to stream
-  uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from an XML description
+  uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from a stream
   void encodeJumpTable(Encoder &encoder) const;		///< Encode a description of jump-tables to stream
   void decodeJumpTable(Decoder &decoder);		///< Decode jump-tables from a stream
   void encodeTree(Encoder &encoder) const;		///< Encode a description of the p-code tree to stream
@@ -275,6 +286,7 @@ public:
   Varnode *newUnique(int4 s,Datatype *ct=(Datatype *)0);	///< Create a new \e temporary Varnode
   Varnode *newCodeRef(const Address &m);			///< Create a code address \e annotation Varnode
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
+  Varnode *newExtendedConstant(int4 s,uint8 *val,PcodeOp *op);	///< Create extended precision constant
   void adjustInputVarnodes(const Address &addr,int4 sz);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
 
@@ -349,6 +361,10 @@ public:
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,const Address &pc,uintm uniq=~((uintm)0)) const {
     return vbank.endLoc(s,addr,pc,uniq); }
 
+  /// \brief Given start, return maximal range of overlapping Varnodes
+  uint4 overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const {
+    return vbank.overlapLoc(iter,bounds); }
+
   /// \brief Start of all Varnodes sorted by definition address
   VarnodeDefSet::const_iterator beginDef(void) const { return vbank.beginDef(); }
 
@@ -374,11 +390,11 @@ public:
 
   HighVariable *findHigh(const string &nm) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
+  void prepareThisPointer(void);		///< Prepare for recovery of the "this" pointer
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,uint4 fl,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,int4 offset,uint4 mainFlags) const;
-  bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
-  Datatype *checkSymbolType(Varnode *vn);	///< Check for any delayed symbol data-type information on the given Varnode
+  bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes,bool unmappedAliasCheck);
   void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
@@ -400,14 +416,15 @@ public:
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
   void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
-  void clearSymbolLinks(HighVariable *high);			///< Clear Symbols attached to Varnodes in the given HighVariable
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
+  void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
   Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
   Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
   void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
+  bool testForReturnAddress(Varnode *vn);	///< Test if the given Varnode is (derived from) the return address
   bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
   bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
@@ -498,14 +515,14 @@ public:
   const ResolvedUnion *getUnionField(const Datatype *parent,const PcodeOp *op,int4 slot) const;
   bool setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve);
   void forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 slot);
-  void inheritReadResolution(const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot);
-  int4 inheritWriteResolution(Datatype *parent,const PcodeOp *op,PcodeOp *oldOp);
+  int4 inheritResolution(Datatype *parent,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot);
 
   // Jumptable routines
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND
   JumpTable *installJumpTable(const Address &addr);	///< Install a new jump-table for the given Address
-  JumpTable *recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremode);
+  JumpTable *recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,JumpTable::RecoveryMode &mode);
+  JumpTable::RecoveryMode earlyJumpTableFail(PcodeOp *op);	///< Try to determine, early, if jump-table analysis will fail
   int4 numJumpTables(void) const { return jumpvec.size(); }	///< Get the number of jump-tables for \b this function
   JumpTable *getJumpTable(int4 i) { return jumpvec[i]; }	///< Get the i-th jump-table
   void removeJumpTable(JumpTable *jt);			///< Remove/delete the given jump-table
@@ -671,4 +688,5 @@ extern PcodeOp *cseElimination(Funcdata &data,PcodeOp *op1,PcodeOp *op2);
 extern void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,
 			     vector<Varnode *> &outlist);
 
+} // End namespace ghidra
 #endif

@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.debug.gui.action;
 import java.awt.Color;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -28,27 +27,26 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.colors.*;
 import ghidra.app.plugin.core.debug.gui.colors.MultiSelectionBlendedLayoutBackgroundColorManager.ColoredFieldSelection;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerTrackedRegisterListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.framework.options.AutoOptions;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
+import ghidra.util.Msg;
 
 public class DebuggerTrackLocationTrait {
 	protected static final AutoConfigState.ClassHandler<DebuggerTrackLocationTrait> CONFIG_STATE_HANDLER =
@@ -57,8 +55,8 @@ public class DebuggerTrackLocationTrait {
 	protected class ForTrackingListener extends TraceDomainObjectListener {
 
 		public ForTrackingListener() {
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registersChanged);
-			listenFor(TraceStackChangeType.CHANGED, this::stackChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::registersChanged);
+			listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
 		}
 
 		private void registersChanged(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -67,7 +65,7 @@ public class DebuggerTrackLocationTrait {
 				// Should only happen during transitional times, if at all.
 				return;
 			}
-			if (!spec.affectedByRegisterChange(space, range, current)) {
+			if (!tracker.affectedByBytesChange(space, range, current)) {
 				return;
 			}
 			doTrack();
@@ -78,7 +76,7 @@ public class DebuggerTrackLocationTrait {
 				// Should only happen during transitional times, if at all.
 				return;
 			}
-			if (!spec.affectedByStackChange(stack, current)) {
+			if (!tracker.affectedByStackChange(stack, current)) {
 				return;
 			}
 			doTrack();
@@ -87,10 +85,6 @@ public class DebuggerTrackLocationTrait {
 
 	// TODO: This may already be deprecated....
 	protected class ColorModel extends DebuggerTrackedRegisterBackgroundColorModel {
-		public ColorModel() {
-			super(plugin);
-		}
-
 		@Override
 		protected ProgramLocation getTrackedLocation() {
 			return trackedLocation;
@@ -99,9 +93,8 @@ public class DebuggerTrackLocationTrait {
 
 	protected class ListingColorModel
 			extends DebuggerTrackedRegisterListingBackgroundColorModel {
-
 		public ListingColorModel(ListingPanel listingPanel) {
-			super(plugin, listingPanel);
+			super(listingPanel);
 		}
 
 		@Override
@@ -111,14 +104,7 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	protected class TrackSelectionGenerator implements SelectionGenerator {
-		@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS)
-		private Color trackingColor;
-		@SuppressWarnings("unused")
-		private final AutoOptions.Wiring autoOptionsWiring;
-
-		public TrackSelectionGenerator() {
-			autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
-		}
+		private final Color trackingColor = DebuggerResources.COLOR_REGISTER_MARKERS;
 
 		@Override
 		public void addSelections(BigInteger layoutIndex, SelectionTranslator translator,
@@ -134,11 +120,11 @@ public class DebuggerTrackLocationTrait {
 
 	protected MultiStateDockingAction<LocationTrackingSpec> action;
 
-	private final LocationTrackingSpec defaultSpec =
-		LocationTrackingSpec.fromConfigName(PCLocationTrackingSpec.CONFIG_NAME);
+	private final LocationTrackingSpec defaultSpec = PCLocationTrackingSpec.INSTANCE;
 
 	@AutoConfigStateField(codec = TrackingSpecConfigFieldCodec.class)
 	protected LocationTrackingSpec spec = defaultSpec;
+	protected LocationTracker tracker = spec.getTracker();
 
 	protected final PluginTool tool;
 	protected final Plugin plugin;
@@ -190,9 +176,22 @@ public class DebuggerTrackLocationTrait {
 		return true;
 	}
 
+	protected boolean hasSpec(LocationTrackingSpec spec) {
+		for (ActionState<LocationTrackingSpec> state : action.getAllActionStates()) {
+			if (spec.equals(state.getUserData())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public void setSpec(LocationTrackingSpec spec) {
 		if (action == null) {
 			// It might if the client doesn't need a new button, e.g., TraceDiff
+			doSetSpec(spec);
+		}
+		else if (!hasSpec(spec)) {
+			Msg.warn(this, "No action state for given tracking spec: " + spec);
 			doSetSpec(spec);
 		}
 		else {
@@ -209,15 +208,29 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	public MultiStateDockingAction<LocationTrackingSpec> installAction() {
-		// TODO: Add "other" option, and present most-recent in menu, too
-		// TODO: "other" as in arbitrary expression?
-		// Only those applicable to the current thread's registers, though.
+		// TODO: Only those Sleigh expressions applicable to the current thread's registers?
 		action = DebuggerTrackLocationAction.builder(plugin)
+				.stateGenerator(this::getStates)
 				.onAction(this::clickedSpecButton)
 				.onActionStateChanged(this::clickedSpecMenu)
 				.buildAndInstallLocal(provider);
 		action.setCurrentActionStateByUserData(defaultSpec);
 		return action;
+	}
+
+	public List<ActionState<LocationTrackingSpec>> getStates() {
+		Map<String, ActionState<LocationTrackingSpec>> states = new TreeMap<>();
+		for (LocationTrackingSpec spec : LocationTrackingSpecFactory
+				.allSuggested(tool)
+				.values()) {
+			states.put(spec.getConfigName(),
+				new ActionState<>(spec.getMenuName(), spec.getMenuIcon(), spec));
+		}
+		ActionState<LocationTrackingSpec> current = action.getCurrentState();
+		if (current != null) {
+			states.put(current.getUserData().getConfigName(), current);
+		}
+		return List.copyOf(states.values());
 	}
 
 	protected void clickedSpecButton(ActionContext ctx) {
@@ -232,6 +245,7 @@ public class DebuggerTrackLocationTrait {
 	protected void doSetSpec(LocationTrackingSpec spec) {
 		if (this.spec != spec) {
 			this.spec = spec;
+			this.tracker = spec.getTracker();
 			specChanged(spec);
 		}
 		doTrack();
@@ -246,18 +260,36 @@ public class DebuggerTrackLocationTrait {
 		// Change of current frame
 		// Change of tracking settings
 		DebuggerCoordinates cur = current;
+		if (cur.getView() == null) {
+			return null;
+		}
 		TraceThread thread = cur.getThread();
 		if (thread == null || spec == null) {
 			return null;
 		}
 		// NB: view's snap may be forked for emulation
-		Address address = spec.computeTraceAddress(tool, cur, current.getView().getSnap());
-		return address == null ? null : new ProgramLocation(current.getView(), address);
+		Address address = tracker.computeTraceAddress(tool, cur);
+		if (address == null) {
+			return null;
+		}
+		return new ProgramLocation(cur.getView(), address);
+	}
+
+	public String computeLabelText() {
+		if (spec == null || trackedLocation == null) {
+			return "";
+		}
+		return spec.getLocationLabel() + " = " + trackedLocation.getByteAddress();
 	}
 
 	protected void doTrack() {
-		trackedLocation = computeTrackedLocation();
-		locationTracked();
+		try {
+			trackedLocation = computeTrackedLocation();
+			locationTracked();
+		}
+		catch (Throwable ex) {
+			Msg.error(this, "Error while computing location: " + ex);
+		}
 	}
 
 	protected void addNewListeners() {
@@ -296,8 +328,15 @@ public class DebuggerTrackLocationTrait {
 
 	public void readConfigState(SaveState saveState) {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
-
+		tracker = spec.getTracker();
 		action.setCurrentActionStateByUserData(spec);
+	}
+
+	public GoToInput getDefaultGoToInput(ProgramLocation loc) {
+		if (tracker == null) {
+			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, current, loc);
+		}
+		return tracker.getDefaultGoToInput(tool, current, loc);
 	}
 
 	protected void locationTracked() {

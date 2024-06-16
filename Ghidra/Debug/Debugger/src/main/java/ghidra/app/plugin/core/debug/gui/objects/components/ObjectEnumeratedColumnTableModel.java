@@ -52,67 +52,6 @@ public class ObjectEnumeratedColumnTableModel<C extends ObjectsEnumeratedTableCo
 		}
 	}
 
-	public class TableRowIterator implements RowIterator<R> {
-		protected final ListIterator<R> it = modelData.listIterator();
-		protected int index;
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public R next() {
-			index = it.nextIndex();
-			return it.next();
-		}
-
-		@Override
-		public boolean hasPrevious() {
-			return it.hasPrevious();
-		}
-
-		@Override
-		public R previous() {
-			index = it.previousIndex();
-			return it.previous();
-		}
-
-		@Override
-		public int nextIndex() {
-			return it.nextIndex();
-		}
-
-		@Override
-		public int previousIndex() {
-			return it.previousIndex();
-		}
-
-		@Override
-		public void remove() {
-			it.remove();
-			fireTableRowsDeleted(index, index);
-		}
-
-		@Override
-		public void set(R e) {
-			it.set(e);
-			fireTableRowsUpdated(index, index);
-		}
-
-		@Override
-		public void notifyUpdated() {
-			fireTableRowsUpdated(index, index);
-		}
-
-		@Override
-		public void add(R e) {
-			it.add(e);
-			int nextIndex = it.nextIndex();
-			fireTableRowsInserted(nextIndex, nextIndex);
-		}
-	}
-
 	private final List<R> modelData = new ArrayList<>();
 	private final String name;
 	private C[] cols;

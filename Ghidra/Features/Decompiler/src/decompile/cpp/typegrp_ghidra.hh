@@ -16,11 +16,13 @@
 /// \file typegrp_ghidra.hh
 /// \brief Interface for requesting data-type information from a Ghidra client
 
-#ifndef __TYPEGRP_GHIDRA__
-#define __TYPEGRP_GHIDRA__
+#ifndef __TYPEGRP_GHIDRA_HH__
+#define __TYPEGRP_GHIDRA_HH__
 
 #include "type.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An implementation of the TypeFactory interface, query a Ghidra client for data-type information
 ///
@@ -35,4 +37,5 @@ public:
   virtual ~TypeFactoryGhidra(void) {}
 };
 
+} // End namespace ghidra
 #endif

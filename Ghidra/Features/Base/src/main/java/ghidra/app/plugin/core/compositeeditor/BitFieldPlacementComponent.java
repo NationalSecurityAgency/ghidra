@@ -22,6 +22,7 @@ import java.util.*;
 import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 
+import generic.theme.GColor;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.util.HTMLUtilities;
@@ -42,15 +43,25 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	private static final int LENEND_BOX_SIZE = 16;
 
-	private static final Color TEXT_COLOR = Color.black;
-	private static final Color LINE_COLOR = Color.black;
-	private static final Color BYTE_HEADER_COLOR = new Color(0xdfdfdf);
-	private static final Color UNDEFINED_BIT_COLOR = new Color(0xf8f8f8);
-	private static final Color ACTIVE_BITFIELD_BITS_COLOR = Color.green;
-	private static final Color CONFLICT_BITS_COLOR = Color.yellow;
-	private static final Color BITFIELD_COMPONENT_COLOR = new Color(0xbfbfff);
-	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xa0a0ff);
-	private static final Color INTERIOR_LINE_COLOR = new Color(0xd4d4d4);
+	private static final Color TEXT_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.text");
+	private static final Color LINE_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.line");
+	private static final Color BYTE_HEADER_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.byte.header");
+
+	private static final Color UNDEFINED_BIT_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.bit.undefined");
+	private static final Color BITFIELD_COMPONENT_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.bit.component");
+	private static final Color ACTIVE_BITFIELD_BITS_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.bit.active");
+	private static final Color CONFLICT_BITS_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.bit.conflict");
+	private static final Color NON_BITFIELD_COMPONENT_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.non.bit");
+	private static final Color INTERIOR_LINE_COLOR =
+		new GColor("color.bg.plugin.editors.compositeeditor.line.interior");
 
 	private int bitWidth = 10;
 	private int byteWidth = getByteWidth(bitWidth);
@@ -119,7 +130,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	 * Construct a bit field viewer/editor component.  Non-edit use limits bit
 	 * attribute computation to visible range only which facilitate use within
 	 * scroll pane for very large structures.  Edit use will determine bit attributes
-	 * for full allocation size. 
+	 * for full allocation size.
 	 * @param composite composite data type to be viewed/modified.
 	 * @param editUseEnabled if true use of editing bitfield editing/placement is
 	 * supported, else viewing only.
@@ -211,7 +222,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				return;
 			}
 			if (e.getScrollType() != MouseWheelEvent.WHEEL_UNIT_SCROLL) {
-				// TODO: should we handle other modes?
+				// should we handle other modes?
 				return;
 			}
 			e.consume();
@@ -300,7 +311,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	 * When {@link #editMode} is not {@link EditMode#NONE} the specified
 	 * bitSize and bitOffset specify the active edit bitfield.
 	 * @param bitSize component bitsize
-	 * @param bitOffset component lsb bit offset from lsb of allocation unit 
+	 * @param bitOffset component lsb bit offset from lsb of allocation unit
 	 * (allocation unit size is determine by current {@link #allocationByteSize}).
 	 */
 	void refresh(int bitSize, int bitOffset) {
@@ -328,7 +339,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Update the size and offset of the allocation unit.  Since this can 
+	 * Update the size and offset of the allocation unit.  Since this can
 	 * affect the size of this component, its bounds will be updated the component
 	 * repainted.
 	 * @param byteSize allocation byte size
@@ -402,9 +413,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 		return bitFieldAllocation.hasConflict;
 
-		// TODO: Improve conflict detection with zero-length components.  
-		// Zero-length components can share common offset, although 
-		// zero-length components should have a lower ordinal than a 
+		// TODO: Improve conflict detection with zero-length components.
+		// Zero-length components can share common offset, although
+		// zero-length components should have a lower ordinal than a
 		// sized component at the same offset.
 
 	}
@@ -533,7 +544,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	/**
 	 * Get the bit attributes object which corresponds to the specified point p within the
-	 * bounds of this component. NOTE: use of non-visible bitAttributes within the 
+	 * bounds of this component. NOTE: use of non-visible bitAttributes within the
 	 * allocation range requires edit use enablement (see {@link #editUseEnabled}).
 	 * @param p point within the bounds of this component
 	 * @return bit attributes object or null
@@ -551,7 +562,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Get the bit attributes index which corresponds to the specified horizontal x position 
+	 * Get the bit attributes index which corresponds to the specified horizontal x position
 	 * within the bounds of this component.
 	 * @param x horizontal x position within the bounds of this component
 	 * @return bit attributes index or -1 if not found
@@ -612,9 +623,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			conflictMsg += "<div style=\"color: red;font-style: italic\">overlaps " +
 				HTMLUtilities.escapeHTML(conflictTip) + "</div>";
 		}
-		return "<HTML><div style=\"text-align:center\">" + HTMLUtilities.escapeHTML(tip) +
+		return "<html><div style=\"text-align:center\">" + HTMLUtilities.escapeHTML(tip) +
 			conflictMsg +
-			"<div style=\"color: gray;font-style: italic\">(Shift-wheel to zoom)</div></div></HTML>";
+			"<div style=\"color: gray;font-style: italic\">(Shift-wheel to zoom)</div></div>";
 	}
 
 	@Override
@@ -641,6 +652,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		g.fillRect(0, y, width, BYTE_SEPARATOR_THICKNESS); // next horizontal line
 		y += CELL_HEIGHT + BYTE_SEPARATOR_THICKNESS;
 		g.fillRect(0, y, width, BYTE_SEPARATOR_THICKNESS); // bottom line
+
+		if (g instanceof Graphics2D g2d) {
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+		}
 
 		paintByteHeader(g, BYTE_SEPARATOR_THICKNESS, allocationByteOffset);
 		paintBits((Graphics2D) g, (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT);
@@ -713,7 +729,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		int x = BYTE_SEPARATOR_THICKNESS;
 
 		if (bitAttributes[0] != null && bitAttributes[0].leftEndType == EndBitType.TRUNCATED_END) {
-			// adjust left-most line to reflect truncated component 
+			// adjust left-most line to reflect truncated component
 			x -= BIT_SEPARATOR_THICKNESS; // backup to left line location
 			drawTruncationLine(g, x, y, CELL_HEIGHT);
 			x += BIT_SEPARATOR_THICKNESS;
@@ -724,7 +740,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		BitAttributes prevAttrs = null;
 
 		// Limit rendered bits to those contained within the visible view port
-		// of this scrolled component.  
+		// of this scrolled component.
 
 		JViewport viewPort = (JViewport) getParent();
 		Rectangle bounds = viewPort.getViewRect();
@@ -834,9 +850,9 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * <code>BitFieldPlacement</code> provides the ability to translate a 
+	 * <code>BitFieldPlacement</code> provides the ability to translate a
 	 * composite component to a bit-level placement within the allocation
-	 * range including the notion of clipped edges when one or both sides 
+	 * range including the notion of clipped edges when one or both sides
 	 * extend beyond the allocation range.
 	 */
 	private class BitFieldPlacement {
@@ -867,7 +883,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				BitFieldDataType bitfield = (BitFieldDataType) component.getDataType();
 				int storageSize = 8 * bitfield.getStorageSize();
 				rightBit = leftAdj + storageSize - bitfield.getBitOffset() - 1;
-				// Use effective bit-size since non-packed uses are only concerned with actual 
+				// Use effective bit-size since non-packed uses are only concerned with actual
 				// bits stored (NOTE: this may cause a transition from declared to effective
 				// bit-size when editing a bitfield where the these bit-sizes differ).
 				int bitSize = bitfield.getBitSize();
@@ -897,7 +913,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	/**
 	 * <code>BitFieldAllocation</code> provides the bit-level details within the
 	 * allocation range including the optional overlay of an edit component
-	 * with confict detection.  The bit-level details are defined via 
+	 * with confict detection.  The bit-level details are defined via
 	 * {@link BitAttributes}.
 	 */
 	class BitFieldAllocation {
@@ -921,10 +937,10 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		private int leftChopBytes;
 
 		/**
-		 * Bit attributes array reflects bit layout normalized to big-endian 
-		 * layout where left-most allocation bit has array index of 0.  In edit 
-		 * mode this array covers the full span of {@link #allocationByteSize}, while in 
-		 * non-edit mode the array size is reduced based upon visibility as 
+		 * Bit attributes array reflects bit layout normalized to big-endian
+		 * layout where left-most allocation bit has array index of 0.  In edit
+		 * mode this array covers the full span of {@link #allocationByteSize}, while in
+		 * non-edit mode the array size is reduced based upon visibility as
 		 * indicated by {@link #leftChopBytes} and {@link #rightChopBytes}.
 		 */
 		private BitAttributes[] bitAttributes;
@@ -987,7 +1003,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		}
 
 		/**
-		 * Refresh the computed bitAttributes.  When editUseEnabled is false 
+		 * Refresh the computed bitAttributes.  When editUseEnabled is false
 		 * the computed bitAttributes will correspond to the visible portion
 		 * of the component.  This method does not handle changes to
 		 * {@link #allocationByteSize} which require a new {@link BitFieldAllocation}
@@ -1074,7 +1090,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		/**
 		 * Allocate {@link #bitAttributes} for all structure members which reside
 		 * within the byte range covered by {@link #allocationBytes}.
-		 * @param struct structure whose component bit attributes should be 
+		 * @param struct structure whose component bit attributes should be
 		 *               computed.
 		 */
 		private void allocateStructureMembers(Structure struct) {
@@ -1110,7 +1126,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		/**
 		 * Allocate {@link #bitAttributes} for the specified component within
-		 * the byte range covered by {@link #allocationBytes}. 
+		 * the byte range covered by {@link #allocationBytes}.
 		 * @param dtc composite component
 		 * @param leftBit left bit index within the full {@link #allocationByteSize}
 		 *                where 0 is the left-most bit index.
@@ -1184,7 +1200,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * <code>BitAttributes</code> provide bit attributes which identify the 
+	 * <code>BitAttributes</code> provide bit attributes which identify the
 	 * associated component, a conflict component and left/right line
 	 * types to be displayed.
 	 */

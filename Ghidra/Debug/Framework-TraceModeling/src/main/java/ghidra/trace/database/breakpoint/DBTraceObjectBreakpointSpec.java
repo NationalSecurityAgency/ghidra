@@ -15,22 +15,17 @@
  */
 package ghidra.trace.database.breakpoint;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-
-import ghidra.dbg.target.TargetBreakpointSpec;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
@@ -38,20 +33,28 @@ import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectBreakpointSpec
 		implements TraceObjectBreakpointSpec, DBTraceObjectInterface {
-	private final DBTraceObject object;
+	private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
 
-	private TraceBreakpointKindSet kinds;
+	private final DBTraceObject object;
+	private final Set<String> keys;
+
+	private TraceBreakpointKindSet kinds = TraceBreakpointKindSet.of();
 
 	public DBTraceObjectBreakpointSpec(DBTraceObject object) {
 		this.object = object;
+		TargetObjectSchema schema = object.getTargetSchema();
+		synchronized (KEYS_BY_SCHEMA) {
+			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
+				s -> Set.of(schema.checkAliasedAttribute(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME)));
+		}
 	}
 
 	@Override
@@ -98,7 +101,7 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return computeSpan();
 	}
 
@@ -110,7 +113,7 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public void setClearedSnap(long clearedSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getPlacedSnap(), clearedSnap));
+			setLifespan(Lifespan.span(getPlacedSnap(), clearedSnap));
 		}
 	}
 
@@ -120,7 +123,7 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setLifespan(Range<Long> lifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
 		TraceObjectInterfaceUtils.setLifespan(TraceObjectThread.class, object, lifespan);
 	}
 
@@ -133,7 +136,8 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public void setEnabled(boolean enabled) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, enabled);
+			object.setValue(getLifespan(), TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME,
+				enabled ? true : null);
 		}
 	}
 
@@ -144,7 +148,7 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds) {
 		// TODO: More efficient encoding
 		// TODO: Target-Trace mapping is implied by encoded name. Seems bad.
 		try (LockHold hold = object.getTrace().lockWrite()) {
@@ -178,6 +182,12 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
+	public String getExpression() {
+		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+			TargetBreakpointSpec.EXPRESSION_ATTRIBUTE_NAME, String.class, null);
+	}
+
+	@Override
 	public Set<TraceThread> getThreads() {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
@@ -193,10 +203,35 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
+	public void setEmuEnabled(boolean enabled) {
+		throw new UnsupportedOperationException("Set on a location instead");
+	}
+
+	@Override
+	public boolean isEmuEnabled(long snap) {
+		throw new UnsupportedOperationException("Ask a location instead");
+	}
+
+	@Override
+	public void setEmuSleigh(String sleigh) {
+		throw new UnsupportedOperationException("Set on a location instead");
+	}
+
+	@Override
+	public String getEmuSleigh() {
+		throw new UnsupportedOperationException("Ask a location instead");
+	}
+
+	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.removeTree(computeSpan());
 		}
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		return object.getCanonicalParent(snap) != null;
 	}
 
 	@Override
@@ -208,20 +243,19 @@ public class DBTraceObjectBreakpointSpec
 	public Collection<? extends TraceObjectBreakpointLocation> getLocations() {
 		try (LockHold hold = object.getTrace().lockRead()) {
 			return object
-					.querySuccessorsInterface(getLifespan(), TraceObjectBreakpointLocation.class)
+					.querySuccessorsInterface(getLifespan(), TraceObjectBreakpointLocation.class,
+						true)
 					.collect(Collectors.toSet());
 		}
 	}
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
-			TraceChangeRecord<TraceObjectValue, Void> cast =
-				TraceObjectChangeType.VALUE_CREATED.cast(rec);
+		if (rec.getEventType() == TraceEvents.VALUE_CREATED) {
+			TraceChangeRecord<TraceObjectValue, Void> cast = TraceEvents.VALUE_CREATED.cast(rec);
 			TraceObjectValue affected = cast.getAffectedObject();
 			String key = affected.getEntryKey();
-			boolean applies = TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME.equals(key) ||
-				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(key);
+			boolean applies = keys.contains(key);
 			if (!applies) {
 				return null;
 			}
@@ -232,8 +266,8 @@ public class DBTraceObjectBreakpointSpec
 			for (TraceObjectBreakpointLocation loc : getLocations()) {
 				DBTraceObjectBreakpointLocation dbLoc = (DBTraceObjectBreakpointLocation) loc;
 				TraceAddressSpace space = dbLoc.getTraceAddressSpace();
-				TraceChangeRecord<?, ?> evt = new TraceChangeRecord<>(
-					TraceBreakpointChangeType.CHANGED, space, loc, null, null);
+				TraceChangeRecord<?, ?> evt =
+					new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, loc, null, null);
 				object.getTrace().setChanged(evt);
 			}
 			return null;

@@ -106,7 +106,7 @@ public class JdiModelTargetProcess extends JdiModelTargetObjectImpl
 			default:
 				throw new AssertionError();
 		}
-		listeners.fire.consoleOutput(this, channel, out);
+		broadcast().consoleOutput(this, channel, out);
 	}
 
 	private void readStream(InputStream in, TargetConsole.Channel channel) {

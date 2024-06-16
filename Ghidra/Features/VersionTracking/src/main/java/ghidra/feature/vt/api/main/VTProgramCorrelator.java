@@ -26,11 +26,11 @@ public interface VTProgramCorrelator {
 	/**
 	 * Performs the correlation between two programs looking for how well functions in one program
 	 * correlate to functions in another program.
-	 * @param session An existing manager that may contain previous results that may 
+	 * @param session An existing manager that may contain previous results that may
 	 *        influence this correlation.
 	 * @param monitor a task monitor for reporting progress during the correlation.
 	 * @return the match set created by this correlator used to store results.
-	 * 
+	 *
 	 * @throws CancelledException if the user cancels the correlation via the task monitor.
 	 */
 	public VTMatchSet correlate(VTSession session, TaskMonitor monitor) throws CancelledException;
@@ -43,6 +43,7 @@ public interface VTProgramCorrelator {
 
 	/**
 	 * Returns a options object populated with the options for this correlator instance.
+	 * @return the options
 	 */
 	public ToolOptions getOptions();
 

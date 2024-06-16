@@ -27,6 +27,7 @@ import docking.widgets.PopupWindow;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.HoverProvider;
+import docking.widgets.shapes.PopupWindowPlacer;
 import ghidra.app.services.HoverService;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -42,7 +43,9 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 	private static final Comparator<HoverService> HOVER_PRIORITY_COMPARATOR =
 		(service1, service2) -> service2.getPriority() - service1.getPriority();
 	protected HoverService activeHoverService;
+
 	protected PopupWindow popupWindow;
+	protected PopupWindowPlacer popupWindowPlacer;
 
 	protected final String windowName;
 
@@ -78,6 +81,18 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 				"enable tooltip style popups, but none are currently enabled.\nTo enable these " +
 				"popups you must use the options menu: \"Options->Listing Popups\"");
 		}
+	}
+
+	/**
+	 * Sets the object that decides where to place the popup window. 
+	 * @param popupWindowPlacer the placer
+	 */
+	public void setPopupPlacer(PopupWindowPlacer popupWindowPlacer) {
+		this.popupWindowPlacer = popupWindowPlacer;
+	}
+
+	public boolean isForcePopups() {
+		return false; // the default implementation is to be disabled if tip windows are disabled
 	}
 
 	private boolean hasEnabledHoverServices() {
@@ -162,14 +177,23 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			Rectangle fieldBounds) {
 		lastField = field;
 
+		if (!enabled) {
+			return;
+		}
+
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Window activeWindow = kfm.getActiveWindow();
 		if (activeWindow == null) {
 			activeWindow = JOptionPane.getRootFrame();
 		}
 
+		if (popupWindow != null) {
+			popupWindow.dispose();
+		}
+
 		popupWindow = new PopupWindow(activeWindow, comp);
 		popupWindow.setWindowName(windowName);
+		popupWindow.setPopupPlacer(popupWindowPlacer);
 
 		popupWindow.addComponentListener(new ComponentAdapter() {
 			@Override
@@ -187,9 +211,10 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			}
 		});
 
+		boolean force = isForcePopups();
 		boolean isToolTip = comp instanceof JToolTip;
 		if (isToolTip) {
-			popupWindow.showPopup(event);
+			popupWindow.showPopup(event, force);
 		}
 		else {
 
@@ -206,7 +231,7 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			Rectangle keepVisibleArea = new Rectangle(event.getPoint());
 			keepVisibleArea.grow(horizontalPad, verticalPad);
 
-			popupWindow.showOffsetPopup(event, keepVisibleArea);
+			popupWindow.showOffsetPopup(event, keepVisibleArea, force);
 		}
 	}
 

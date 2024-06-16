@@ -25,9 +25,9 @@ import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import ghidra.framework.remote.InetNameLookup;
 import ghidra.framework.store.local.IndexedLocalFileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.server.remote.InetNameLookup;
 import ghidra.server.remote.RepositoryServerHandleImpl;
 import ghidra.util.NamingUtilities;
 import ghidra.util.StringUtilities;

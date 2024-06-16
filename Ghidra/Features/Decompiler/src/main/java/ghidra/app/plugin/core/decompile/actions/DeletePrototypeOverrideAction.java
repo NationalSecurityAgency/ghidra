@@ -16,16 +16,15 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
-import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
-import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.HighFunction;
-import ghidra.program.model.symbol.*;
-import ghidra.util.*;
+import ghidra.program.model.pcode.DataTypeSymbol;
+import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.util.HelpLocation;
+import ghidra.util.UndefinedFunction;
 
 public class DeletePrototypeOverrideAction extends AbstractDecompilerAction {
 
@@ -33,37 +32,6 @@ public class DeletePrototypeOverrideAction extends AbstractDecompilerAction {
 		super("Remove Signature Override");
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRemoveOverride"));
 		setPopupMenuData(new MenuData(new String[] { "Remove Signature Override" }, "Decompile"));
-	}
-
-	public static CodeSymbol getSymbol(Function func, ClangToken tokenAtCursor) {
-		if (tokenAtCursor == null) {
-			return null;
-		}
-		Address addr = tokenAtCursor.getMinAddress();
-		if (addr == null) {
-			return null;
-		}
-		Namespace overspace = HighFunction.findOverrideSpace(func);
-		if (overspace == null) {
-			return null;
-		}
-		SymbolTable symtab = func.getProgram().getSymbolTable();
-		SymbolIterator iter = symtab.getSymbols(overspace);
-		while (iter.hasNext()) {
-			Symbol sym = iter.next();
-			if (!sym.getName().startsWith("prt")) {
-				continue;
-			}
-			if (!(sym instanceof CodeSymbol)) {
-				continue;
-			}
-			if (!sym.getAddress().equals(addr)) {
-				continue;
-			}
-			return (CodeSymbol) sym;
-		}
-		return null;
-
 	}
 
 	@Override
@@ -74,23 +42,26 @@ public class DeletePrototypeOverrideAction extends AbstractDecompilerAction {
 			return false;
 		}
 
-		return getSymbol(function, context.getTokenAtCursor()) != null;
+		return OverridePrototypeAction.getSymbol(function, context.getTokenAtCursor()) != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Function func = context.getFunction();
-		CodeSymbol sym = getSymbol(func, context.getTokenAtCursor());
-		Program program = func.getProgram();
-		SymbolTable symtab = program.getSymbolTable();
-		int transaction = program.startTransaction("Remove Override Signature");
-		boolean commit = true;
-		if (!symtab.removeSymbolSpecial(sym)) {
-			commit = false;
-			Msg.showError(getClass(), context.getDecompilerPanel(),
-				"Removing Override Signature Failed", "Error removing override signature");
+		Symbol sym = OverridePrototypeAction.getSymbol(func, context.getTokenAtCursor());
+		if (sym == null) {
+			return;
 		}
-		program.endTransaction(transaction, commit);
-
+		Program program = func.getProgram();
+		int txId = program.startTransaction("Remove Override Signature");
+		try {
+			DataTypeSymbol dts = HighFunctionDBUtil.readOverride(sym);
+			sym.delete();
+			dts.cleanupUnusedOverride();
+		}
+		finally {
+			program.endTransaction(txId, true);
+		}
 	}
+
 }

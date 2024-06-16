@@ -65,7 +65,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		ListingTextField tf = getFieldText(function);
 		assertEquals(2, tf.getNumRows());
 
-		setBooleanOption(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, true);
+		setBooleanOption(EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY, true);
 
 		tf = getFieldText(function);
 		assertEquals(4, tf.getNumRows());
@@ -96,7 +96,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		// check existing auto comment
 		ListingTextField tf = getFieldText(addr("0x01002265"));
 		assertEquals(1, tf.getNumRows());
-		assertThat(tf.getText(), startsWith("= 01h"));
+		assertThat(tf.getText(), startsWith("= 00000001h"));
 
 		// set repeatable comment at destination
 		Address destination = addr("0x01002265");

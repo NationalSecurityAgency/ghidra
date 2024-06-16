@@ -22,7 +22,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -32,7 +32,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
 
-public class StorageEditorModelTest extends AbstractGenericTest {
+public class StorageEditorModelTest extends AbstractGuiTest {
 
 	protected static final int REQUIRE_SIZE = 8;
 	protected StorageAddressModel model;
@@ -146,7 +146,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		assertEquals(1, model.getVarnodes().size());
 		dataChangeCalled = false;
 		model.addVarnode();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(dataChangeCalled);
 
 		assertEquals(2, model.getVarnodes().size());
@@ -171,7 +171,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		model.setSelectedVarnodeRows(new int[] { 0 });
 		dataChangeCalled = false;
 		model.removeVarnodes();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(dataChangeCalled);
 
 		List<VarnodeInfo> varnodes = model.getVarnodes();
@@ -189,7 +189,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		assertTrue(model.canRemoveVarnodes());
 		model.removeVarnodes();
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(dataChangeCalled);
 
 		List<VarnodeInfo> varnodes = model.getVarnodes();
@@ -282,7 +282,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		assertNotNull(varnode.getAddress());
 		assertEquals(8, varnode.getSize().intValue());
 
-		model.setVarnodeType(varnode, VarnodeType.Register);
+		model.setVarnodeType(varnode, VarnodeType.Memory);
 		assertNull(varnode.getAddress());
 		assertEquals(8, varnode.getSize().intValue());
 	}

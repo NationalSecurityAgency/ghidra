@@ -85,9 +85,7 @@ public class FunctionSignatureStringable extends Stringable {
 		this.signatureSource = function.getSignatureSource();
 		this.hasCustomStorage = function.hasCustomVariableStorage();
 
-		GenericCallingConvention guessedCallingConvention =
-			GenericCallingConvention.guessFromName(function.getCallingConventionName());
-		isThisCall = (guessedCallingConvention == GenericCallingConvention.thiscall);
+		isThisCall = CompilerSpec.CALLING_CONVENTION_thiscall.equals(callingConventionName);
 
 		// ignore source from function return which is same as signature source
 		returnInfo = getParameterInfo(function.getReturn(), SourceType.DEFAULT);
@@ -469,6 +467,11 @@ public class FunctionSignatureStringable extends Stringable {
 		if (!returnInfo.isEquivalent(other.returnInfo)) { // storage not checked
 			return false;
 		}
+
+		if (!callingConventionName.equals(other.callingConventionName)) {
+			return false;
+		}
+
 		int paramCnt = parameterInfos.size();
 		if (paramCnt != other.parameterInfos.size()) {
 			return false;
@@ -497,9 +500,8 @@ public class FunctionSignatureStringable extends Stringable {
 	public boolean applyFunctionSignature(Function toFunction, ToolOptions markupOptions,
 			boolean forceApply) throws VersionTrackingApplyException {
 
-		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice =
-			markupOptions.getEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-				DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
+		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice = markupOptions
+				.getEnum(VTOptionDefines.FUNCTION_SIGNATURE, DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 
 		int toParamCount = toFunction.getParameterCount();
 
@@ -523,13 +525,14 @@ public class FunctionSignatureStringable extends Stringable {
 
 			// Adjust whether or not the resulting function will use custom storage.
 			boolean useCustomStorage = false;
-			if (hasCustomStorage != toFunction.hasCustomVariableStorage()) {
-				// This should only change to use custom storage if same language.
-				boolean sameLanguage =
-					FunctionUtility.isSameLanguage(toFunction.getProgram(), program);
-				if (!hasCustomStorage || (hasCustomStorage && sameLanguage)) {
-					useCustomStorage = hasCustomStorage;
-				}
+
+			boolean sameLanguage =
+				FunctionUtility.isSameLanguageAndCompilerSpec(toFunction.getProgram(), program);
+
+			// if source program has custom storage and both programs have same language then
+			// set the useCustomStorage flag to enable using custom storage in destination program
+			if (sameLanguage && hasCustomStorage) {
+				useCustomStorage = true;
 			}
 
 			Parameter returnParam =
@@ -538,10 +541,11 @@ public class FunctionSignatureStringable extends Stringable {
 			List<Parameter> newParams =
 				getParameters(toFunction, markupOptions, forceApply, useCustomStorage);
 
-			toFunction.updateFunction(conventionName, returnParam, newParams,
-				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-				true, signatureSource);
+			toFunction
+					.updateFunction(conventionName, returnParam, newParams,
+						useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
+								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
+						true, signatureSource);
 			if (forceApply) {
 				// must force signatureSource if precedence has been lowered
 				// TODO: Should any manual change in function signature force source to be USER_DEFINED instead ??
@@ -668,15 +672,15 @@ public class FunctionSignatureStringable extends Stringable {
 		}
 		if (callFixupChoice == ReplaceChoices.REPLACE) {
 			// Check that you have the same cspec before trying to apply call fixup.
-			if (FunctionUtility.isSameLanguage(toFunction.getProgram(), program)) {
+			if (FunctionUtility.isSameLanguageAndCompilerSpec(toFunction.getProgram(), program)) {
 				toFunction.setCallFixup(fromFunctionCallFixup);
 			}
 		}
 	}
 
 	private String getCallingConvention(Function toFunction, ToolOptions markupOptions) {
-		boolean isFromUnknownCallingConvention = ((callingConventionName == null) ||
-			callingConventionName.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING));
+		boolean isFromUnknownCallingConvention =
+			CompilerSpec.isUnknownCallingConvention(callingConventionName);
 		CallingConventionChoices callingConventionChoice =
 			markupOptions.getEnum(CALLING_CONVENTION, DEFAULT_OPTION_FOR_CALLING_CONVENTION);
 		String toCallingConventionName = toFunction.getCallingConventionName();
@@ -687,7 +691,7 @@ public class FunctionSignatureStringable extends Stringable {
 
 		switch (callingConventionChoice) {
 			case SAME_LANGUAGE:
-				if (FunctionUtility.isSameLanguage(program, toProgram)) {
+				if (FunctionUtility.isSameLanguageAndCompilerSpec(program, toProgram)) {
 					return callingConventionName;
 				}
 				break;
@@ -806,8 +810,8 @@ public class FunctionSignatureStringable extends Stringable {
 			throws VersionTrackingApplyException {
 
 		// See what options the user has specified when applying parameter names.
-		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions.getEnum(
-			VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
+		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions
+				.getEnum(VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
 		VTMatchApplyChoices.HighestSourcePriorityChoices highestPriorityChoice =
 			markupOptions.getEnum(VTOptionDefines.HIGHEST_NAME_PRIORITY,
 				DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY);

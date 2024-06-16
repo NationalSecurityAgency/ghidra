@@ -17,11 +17,11 @@ package ghidra.trace.model.context;
 
 import java.util.Map.Entry;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 
 public interface TraceRegisterContextOperations {
 	/**
@@ -34,16 +34,16 @@ public interface TraceRegisterContextOperations {
 	 */
 	RegisterValue getDefaultValue(Language language, Register register, Address address);
 
-	void setValue(Language language, RegisterValue value, Range<Long> lifespan, AddressRange range);
+	void setValue(Language language, RegisterValue value, Lifespan lifespan, AddressRange range);
 
-	void removeValue(Language language, Register register, Range<Long> span, AddressRange range);
+	void removeValue(Language language, Register register, Lifespan span, AddressRange range);
 
 	RegisterValue getValue(Language language, Register register, long snap, Address address);
 
 	Entry<TraceAddressSnapRange, RegisterValue> getEntry(Language language, Register register,
 			long snap, Address address);
 
-	RegisterValue getValueWithDefault(Language language, Register register, long snap,
+	RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
 			Address address);
 
 	AddressSetView getRegisterValueAddressRanges(Language language, Register register, long snap,
@@ -56,5 +56,5 @@ public interface TraceRegisterContextOperations {
 
 	boolean hasRegisterValue(Language language, Register register, long snap);
 
-	void clear(Range<Long> span, AddressRange range);
+	void clear(Lifespan span, AddressRange range);
 }

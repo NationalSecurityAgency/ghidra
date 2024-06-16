@@ -15,15 +15,21 @@
  */
 package ghidra.app.plugin.core.debug.mapping;
 
+import java.util.Objects;
+
 import ghidra.program.model.lang.CompilerSpec;
 
 public abstract class AbstractDebuggerPlatformOffer implements DebuggerPlatformOffer {
 	private final String description;
 	protected final CompilerSpec cSpec;
 
+	private final int hash;
+
 	public AbstractDebuggerPlatformOffer(String description, CompilerSpec cSpec) {
 		this.description = description;
 		this.cSpec = cSpec;
+
+		this.hash = Objects.hash(description, cSpec);
 	}
 
 	@Override
@@ -34,5 +40,28 @@ public abstract class AbstractDebuggerPlatformOffer implements DebuggerPlatformO
 	@Override
 	public CompilerSpec getCompilerSpec() {
 		return cSpec;
+	}
+
+	@Override
+	public int hashCode() {
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		AbstractDebuggerPlatformOffer that = (AbstractDebuggerPlatformOffer) obj;
+		if (!Objects.equals(this.description, that.description)) {
+			return false;
+		}
+		if (!Objects.equals(this.cSpec, that.cSpec)) {
+			return false;
+		}
+		return true;
 	}
 }

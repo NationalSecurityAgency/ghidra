@@ -12,4 +12,12 @@
      	0x20 0x02 0x1f 0xd6         # br x17
      </data>
   </pattern>
+  <pattern>
+     <data> <!--  AARCH64 ELF32 PLT -->
+     	...10000 0x.. 0x.. 1..10000 # adrp x16, PLTGOT + n * 4
+     	0x11 ......10 01...... 0xb9 # ldr x17, [x16, PLTGOT + n * 4]
+     	0x10 ......10 00...... 0x11 # add x16, x16, :lo12:PLTGOT + n * 4
+     	0x20 0x02 0x1f 0xd6         # br x17
+     </data>
+  </pattern>
 </patternlist>

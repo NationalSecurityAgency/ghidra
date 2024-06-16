@@ -20,6 +20,7 @@ import java.util.Comparator;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
+import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 
 public class ColumnDisplayDynamicTableColumnAdapter<COLUMN_TYPE>
@@ -27,10 +28,12 @@ public class ColumnDisplayDynamicTableColumnAdapter<COLUMN_TYPE>
 		implements Comparator<AddressableRowObject> {
 
 	private final ColumnDisplay<COLUMN_TYPE> display;
+	private final GColumnRenderer<COLUMN_TYPE> renderer;
 
 	public ColumnDisplayDynamicTableColumnAdapter(ColumnDisplay<COLUMN_TYPE> display) {
 		super(display.getColumnName());
 		this.display = display;
+		this.renderer = display.getRenderer();
 	}
 
 	@Override
@@ -52,5 +55,10 @@ public class ColumnDisplayDynamicTableColumnAdapter<COLUMN_TYPE>
 	@Override
 	public int compare(AddressableRowObject o1, AddressableRowObject o2) {
 		return display.compare(o1, o2);
+	}
+
+	@Override
+	public GColumnRenderer<COLUMN_TYPE> getColumnRenderer() {
+		return renderer;
 	}
 }

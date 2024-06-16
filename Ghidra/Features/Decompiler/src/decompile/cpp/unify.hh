@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_UNIFY__
-#define __CPUI_UNIFY__
+#ifndef __UNIFY_HH__
+#define __UNIFY_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 class UnifyCPrinter;
 
@@ -706,4 +707,5 @@ public:
 // vlo1 -> oloadd(+) <- vtmp( != vlo1)( == vlo2);
 // oloadd -> vreslo;
 
+} // End namespace ghidra
 #endif

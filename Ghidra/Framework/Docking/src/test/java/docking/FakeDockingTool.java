@@ -78,9 +78,4 @@ public class FakeDockingTool extends AbstractDockingTool {
 	public void removeServiceListener(ServiceListener listener) {
 		// stub
 	}
-
-	@Override
-	public ActionContext getDefaultToolContext() {
-		return null;
-	}
 }

@@ -21,12 +21,10 @@ import java.util.ArrayList;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
-import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Library;
@@ -41,9 +39,6 @@ import ghidra.program.util.ThunkedFunctionFieldLocation;
 public class ThunkedFunctionFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Thunked-Function";
-	private Color literalColor;
-	private Color unresolvedThunkRefColor;
-	private Color resolvedThunkRefColor;
 
 	/**
 	 * Default Constructor
@@ -59,49 +54,26 @@ public class ThunkedFunctionFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	public ThunkedFunctionFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
-			ToolOptions displayOptions, Options fieldOptions) {
+	public ThunkedFunctionFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
+			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-
-		literalColor = displayOptions.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-			OptionsGui.SEPARATOR.getDefaultColor());
-		unresolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.BAD_REF_ADDR.getColorOptionName(),
-				OptionsGui.BAD_REF_ADDR.getDefaultColor());
-		resolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.EXT_REF_RESOLVED.getColorOptionName(),
-				OptionsGui.EXT_REF_RESOLVED.getDefaultColor());
-	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		literalColor = options.getColor(OptionsGui.FUN_CALL_FIXUP.getColorOptionName(),
-			OptionsGui.FUN_CALL_FIXUP.getDefaultColor());
-		unresolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.BAD_REF_ADDR.getColorOptionName(),
-				OptionsGui.BAD_REF_ADDR.getDefaultColor());
-		resolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.EXT_REF_RESOLVED.getColorOptionName(),
-				OptionsGui.EXT_REF_RESOLVED.getDefaultColor());
 	}
 
 	private Color getThunkedFunctionNameColor(Function thunkedFunction) {
 		if (!thunkedFunction.isExternal()) {
-			return literalColor;
+			return ListingColors.SEPARATOR;
 		}
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		String libName = externalLocation.getLibraryName();
 		if (Library.UNKNOWN.equals(libName)) {
-			return unresolvedThunkRefColor;
+			return ListingColors.EXT_REF_UNRESOLVED;
 		}
 		ExternalManager externalManager = thunkedFunction.getProgram().getExternalManager();
 		String path = externalManager.getExternalLibraryPath(libName);
 		if (path == null || path.length() == 0) {
-			return unresolvedThunkRefColor;
+			return ListingColors.EXT_REF_UNRESOLVED;
 		}
-		return resolvedThunkRefColor;
+		return ListingColors.EXT_REF_RESOLVED;
 	}
 
 	@Override
@@ -120,11 +92,12 @@ public class ThunkedFunctionFieldFactory extends FieldFactory {
 		AttributedString as;
 		int elementIndex = 0;
 
-		as = new AttributedString("Thunked-Function: ", literalColor, getMetrics());
+		as = new AttributedString("Thunked-Function: ", ListingColors.SEPARATOR, getMetrics());
 		textElements.add(new TextFieldElement(as, elementIndex++, 0));
 
-		as = new AttributedString(thunkedFunction.getName(true),
-			getThunkedFunctionNameColor(thunkedFunction), getMetrics());
+		String functionName = simplifyTemplates(thunkedFunction.getName(true));
+		as = new AttributedString(functionName, getThunkedFunctionNameColor(thunkedFunction),
+			getMetrics());
 		textElements.add(new TextFieldElement(as, elementIndex++, 0));
 
 		return ListingTextField.createSingleLineTextField(this, proxy,
@@ -166,15 +139,9 @@ public class ThunkedFunctionFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions pDisplayOptions, ToolOptions fieldOptions) {
 		return new ThunkedFunctionFieldFactory(formatModel, provider, pDisplayOptions,
 			fieldOptions);
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// don't care
 	}
 }

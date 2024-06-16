@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.io.File;
+import java.io.IOException;
+
+import db.DBHandle;
 import ghidra.app.script.GhidraScript;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitorAdapter;
-
-import java.io.File;
-import java.io.IOException;
-
-import db.DBConstants;
-import db.DBHandle;
+import ghidra.util.task.TaskMonitor;
 
 public class UpgradeTestProgramScript extends GhidraScript {
 
@@ -77,10 +75,10 @@ public class UpgradeTestProgramScript extends GhidraScript {
 		}
 	}
 
-	private boolean upgradeProgramArchive(File gzf) throws IOException, CancelledException,
-			VersionException {
+	private boolean upgradeProgramArchive(File gzf)
+			throws IOException, CancelledException, VersionException {
 
-		PackedDatabase db = PackedDatabase.getPackedDatabase(gzf, TaskMonitorAdapter.DUMMY_MONITOR);
+		PackedDatabase db = PackedDatabase.getPackedDatabase(gzf, TaskMonitor.DUMMY);
 		DBHandle dbh = null;
 		ProgramDB p = null;
 		try {
@@ -91,7 +89,7 @@ public class UpgradeTestProgramScript extends GhidraScript {
 			}
 
 			try {
-				p = new ProgramDB(dbh, DBConstants.UPDATE, monitor, this);
+				p = new ProgramDB(dbh, OpenMode.UPDATE, monitor, this);
 				return false;
 			}
 			catch (LanguageNotFoundException e) {
@@ -109,7 +107,7 @@ public class UpgradeTestProgramScript extends GhidraScript {
 			}
 
 			dbh = db.openForUpdate(monitor);
-			p = new ProgramDB(dbh, DBConstants.UPGRADE, monitor, this);
+			p = new ProgramDB(dbh, OpenMode.UPGRADE, monitor, this);
 
 			if (!p.isChanged()) {
 				return false;

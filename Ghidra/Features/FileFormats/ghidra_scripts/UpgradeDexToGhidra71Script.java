@@ -24,9 +24,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SourceType;
@@ -60,7 +58,7 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
     private void recurseProjectFolder( DomainFolder domainFolder ) throws Exception {
         DomainFile[] files = domainFolder.getFiles();
         for ( DomainFile domainFile : files ) {
-        	monitor.checkCanceled();
+        	monitor.checkCancelled();
         	try {
         		processDomainFile( domainFile );
         	} catch(Exception ex) {
@@ -69,7 +67,7 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
         }
         DomainFolder[] folders = domainFolder.getFolders();
         for ( DomainFolder folder : folders ) {
-        	monitor.checkCanceled();
+        	monitor.checkCancelled();
             recurseProjectFolder( folder );
         }
     }
@@ -102,7 +100,7 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
 		boolean success = false;
 		try {
 			for (Function func : program.getFunctionManager().getFunctions(true)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				processFunction(func);
 			}
 			success = true;
@@ -114,7 +112,12 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
 	private void processFunction(Function func) {
 		monitor.setMessage("Updating: "+func.getName());
 		FunctionDefinitionDataType sig = new FunctionDefinitionDataType(func,false);
-		sig.setGenericCallingConvention(GenericCallingConvention.stdcall);
+		try {
+			sig.setCallingConvention(CompilerSpec.CALLING_CONVENTION_stdcall);
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException(e);
+		}
 		func.setCustomVariableStorage(false);
 		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(func.getEntryPoint(),sig,SourceType.ANALYSIS);
 		cmd.applyTo(func.getProgram());

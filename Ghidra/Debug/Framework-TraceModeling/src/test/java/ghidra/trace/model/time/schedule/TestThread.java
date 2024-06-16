@@ -15,15 +15,21 @@
  */
 package ghidra.trace.model.time.schedule;
 
-import java.util.List;
-
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
 
+/**
+ * A mocked out p-code thread
+ *
+ * <p>
+ * This records the sequence of steps and Sleigh executions when testing {@link TraceSchedule}.
+ */
 class TestThread implements PcodeThread<Void> {
 	protected final String name;
 	protected final TestMachine machine;
@@ -44,14 +50,18 @@ class TestThread implements PcodeThread<Void> {
 	}
 
 	@Override
+	public SleighLanguage getLanguage() {
+		return TraceScheduleTest.TOY_BE_64_LANG;
+	}
+
+	@Override
+	public PcodeArithmetic<Void> getArithmetic() {
+		return machine.getArithmetic();
+	}
+
+	@Override
 	public PcodeExecutor<Void> getExecutor() {
-		return new PcodeExecutor<>(TraceScheduleTest.TOY_BE_64_LANG, machine.getArithmetic(), getState()) {
-			public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<Void> library) {
-				machine.record.add("x:" + name);
-				// TODO: Verify the actual effect
-				return null; //super.execute(program, library);
-			}
-		};
+		return new PcodeExecutor<>(getLanguage(), getArithmetic(), getState(), Reason.EXECUTE_READ);
 	}
 
 	@Override
@@ -72,6 +82,11 @@ class TestThread implements PcodeThread<Void> {
 	@Override
 	public void skipPcodeOp() {
 		machine.record.add("sp:" + name);
+	}
+
+	@Override
+	public void stepPatch(String sleigh) {
+		machine.record.add("x:" + name);
 	}
 
 	@Override
@@ -139,6 +154,11 @@ class TestThread implements PcodeThread<Void> {
 	}
 
 	@Override
+	public boolean isSuspended() {
+		return false;
+	}
+
+	@Override
 	public PcodeUseropLibrary<Void> getUseropLibrary() {
 		return null;
 	}
@@ -149,7 +169,7 @@ class TestThread implements PcodeThread<Void> {
 	}
 
 	@Override
-	public void inject(Address address, List<String> sleigh) {
+	public void inject(Address address, String source) {
 	}
 
 	@Override

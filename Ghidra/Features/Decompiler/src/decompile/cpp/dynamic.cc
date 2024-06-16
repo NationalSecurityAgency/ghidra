@@ -17,6 +17,8 @@
 #include "funcdata.hh"
 #include "crc32.hh"
 
+namespace ghidra {
+
 // Table for how to hash opcodes, lumps certain operators (i.e. ADD SUB PTRADD PTRSUB) into one hash
 // zero indicates the operator should be skipped
 const uint4 DynamicHash::transtable[] = {
@@ -55,7 +57,8 @@ const uint4 DynamicHash::transtable[] = {
 
   0,				// CAST is skipped
   CPUI_INT_ADD,  CPUI_INT_ADD, 	// PTRADD and PTRSUB hash same as INT_ADD
-  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT, CPUI_POPCOUNT
+  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT,
+  CPUI_POPCOUNT, CPUI_LZCOUNT
   
 };
 
@@ -233,6 +236,8 @@ void DynamicHash::calcHash(const PcodeOp *op,int4 slot,uint4 method)
 	buildOpUp(markop[opproc]);
       }
       gatherUnmarkedVn();
+      for(;vnproc<markvn.size();++vnproc)
+        buildVnUp(markvn[vnproc]);
       break;
     case 6:
       gatherUnmarkedOp();
@@ -240,6 +245,8 @@ void DynamicHash::calcHash(const PcodeOp *op,int4 slot,uint4 method)
 	buildOpDown(markop[opproc]);
       }
       gatherUnmarkedVn();
+      for(;vnproc<markvn.size();++vnproc)
+        buildVnDown(markvn[vnproc]);
       break;
     default:
       break;
@@ -364,7 +371,7 @@ void DynamicHash::pieceTogetherHash(const Varnode *root,uint4 method)
   hash <<= 4;
   hash |= method;		// 4-bits
   hash <<= 7;
-  hash |= (uint8)op->code();	// 7-bits
+  hash |= (uint8)transtable[op->code()];	// 7-bits
   hash <<= 5;
   hash |= (uint8)(slot & 0x1f);	// 5-bits
   
@@ -607,6 +614,25 @@ PcodeOp *DynamicHash::findOp(const Funcdata *fd,const Address &addr,uint8 h)
   return oplist2[pos];
 }
 
+/// Otherwise preserve the order of the list.
+/// \param varlist is the given list of Varnodes to check
+void DynamicHash::dedupVarnodes(vector<Varnode *> &varlist)
+
+{
+  if (varlist.size() < 2) return;
+  vector<Varnode *> resList;
+  for(int4 i=0;i<varlist.size();++i) {
+    Varnode *vn = varlist[i];
+    if (!vn->isMark()) {
+      vn->setMark();
+      resList.push_back(vn);
+    }
+  }
+  for(int4 i=0;i<resList.size();++i)
+    resList[i]->clearMark();
+  varlist.swap(resList);
+}
+
 /// \brief Get the Varnodes immediately attached to PcodeOps at the given address
 ///
 /// Varnodes can be either inputs or outputs to the PcodeOps. The op-code, slot, and
@@ -619,7 +645,7 @@ PcodeOp *DynamicHash::findOp(const Funcdata *fd,const Address &addr,uint8 h)
 void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h)
 
 {
-  OpCode opc = getOpCodeFromHash(h);
+  uint4 opcVal = getOpCodeFromHash(h);
   int4 slot = getSlotFromHash(h);
   bool isnotattached = getIsNotAttached(h);
   PcodeOpTree::const_iterator iter = fd->beginOp(addr);
@@ -628,7 +654,8 @@ void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata
   while(iter!=enditer) {
     PcodeOp *op = (*iter).second;
     ++iter;
-    if (op->code() != opc) continue;
+    if (op->isDead()) continue;
+    if (transtable[op->code()] != opcVal) continue;
     if (slot <0) {
       Varnode *vn = op->getOut();
       if (vn != (Varnode *)0) {
@@ -654,6 +681,7 @@ void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata
       varlist.push_back(vn);
     }
   }
+  dedupVarnodes(varlist);
 }
 
 /// \brief Place all PcodeOps at the given address in the provided container
@@ -668,6 +696,7 @@ void DynamicHash::gatherOpsAtAddress(vector<PcodeOp *> &opList,const Funcdata *f
   enditer = fd->endOp(addr);
   for(iter = fd->beginOp(addr); iter != enditer; ++iter) {
     PcodeOp *op = (*iter).second;
+    if (op->isDead()) continue;
     opList.push_back(op);
   }
 }
@@ -695,11 +724,11 @@ uint4 DynamicHash::getMethodFromHash(uint8 h)
 
 /// The hash encodes the op-code of the p-code op attached to the root Varnode
 /// \param h is the hash value
-/// \return the op-code
-OpCode DynamicHash::getOpCodeFromHash(uint8 h)
+/// \return the op-code as an integer
+uint4 DynamicHash::getOpCodeFromHash(uint8 h)
 
 {
-  return (OpCode)((h>>37)&0x7f);
+  return (h>>37)&0x7f;
 }
 
 /// The hash encodes the position of the root Varnode within the list of hash collisions
@@ -740,3 +769,5 @@ void DynamicHash::clearTotalPosition(uint8 &h)
   val = ~val;
   h &= val;
 }
+
+} // End namespace ghidra

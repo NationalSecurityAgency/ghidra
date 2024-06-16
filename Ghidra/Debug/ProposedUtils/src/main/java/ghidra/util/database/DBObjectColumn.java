@@ -18,6 +18,18 @@ package ghidra.util.database;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.util.database.annot.DBAnnotatedColumn;
+
+/**
+ * An opaque handle to the column backing an object field
+ * 
+ * <p>
+ * Each should be declared as a static field of the same class whose field it describes, probably
+ * with package-only access. Each must also be annotated with {@link DBAnnotatedColumn}. For an
+ * example, see the documentation of {@link DBAnnotatedObject}. The annotated field receives its
+ * value the first time a store is created for the containing class. Until then, it is
+ * uninitialized.
+ */
 public class DBObjectColumn {
 	static List<DBObjectColumn> instances = new ArrayList<>(20);
 

@@ -27,11 +27,13 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
-import docking.framework.*;
+import docking.framework.ApplicationInformationDisplayFactory;
+import docking.framework.DockingApplicationConfiguration;
+import generic.application.GenericApplicationLayout;
 import ghidra.framework.*;
 import ghidra.framework.model.ToolServices;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.xml.GenericXMLOutputter;
@@ -56,12 +58,12 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	 * {@link ApplicationProperties#APPLICATION_NAME_PROPERTY} and
 	 * {@link ApplicationProperties#APPLICATION_VERSION_PROPERTY} properties
 	 * set.</b>
-	 * 
+	 *
 	 * @param propertiesFilename the name of the properties file.
 	 * @throws IOException error causing application initialization failure
 	 */
 	public StandAloneApplication(String propertiesFilename) throws IOException {
-		this(new DockingApplicationLayout(readApplicationProperties(propertiesFilename)));
+		this(new GenericApplicationLayout(readApplicationProperties(propertiesFilename)));
 	}
 
 	/**
@@ -72,11 +74,11 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	 * @throws IOException error causing application initialization failure
 	 */
 	public StandAloneApplication(String name, String version) throws IOException {
-		this(new DockingApplicationLayout(name, version));
+		this(new GenericApplicationLayout(name, version));
 	}
 
 	/**
-	 * reates a new application using the given application layout
+	 * Creates a new application using the given application layout
 	 * and associated application properties.
 	 * @param applicationLayout application layout
 	 */
@@ -155,7 +157,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 		setDockIcon();
 
 		try {
-			SystemUtilities.runSwingNow(() -> tool = createTool());
+			Swing.runNow(() -> tool = createTool());
 		}
 		catch (Exception e) {
 			Msg.error(this, "Error creating tool, exiting...", e);
@@ -201,6 +203,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 
 	protected void initializeTool(StandAlonePluginTool newTool) {
 		newTool.addExitAction();
+		newTool.installUtilityPlugins();
 	}
 
 	private Element getDefaultToolElement() {
@@ -222,21 +225,37 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	}
 
 	private Element getSavedToolElement() {
-		File savedToolFile = new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
-		if (!savedToolFile.exists()) {
-			return null;
+		File userSettingsDir = Application.getUserSettingsDirectory();
+		File savedToolFile = new File(userSettingsDir, SAVED_TOOL_FILE);
+		if (savedToolFile.exists()) {
+			return loadToolXml(savedToolFile);
 		}
 
+		Msg.debug(this, "No saved tool found in " + userSettingsDir);
+		List<File> dirs = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
+		for (File dir : dirs) {
+			savedToolFile = new File(dir, SAVED_TOOL_FILE);
+			Msg.debug(this, "Checking for previous tool in " + dir);
+			if (savedToolFile.exists()) {
+				Msg.debug(this, "Using previous tool " + savedToolFile);
+				return loadToolXml(savedToolFile);
+			}
+		}
+
+		return null;
+	}
+
+	private Element loadToolXml(File file) {
 		FileInputStream fileInputStream = null;
 		try {
-			fileInputStream = new FileInputStream(savedToolFile.getAbsolutePath());
+			fileInputStream = new FileInputStream(file.getAbsolutePath());
 			SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);
 			Element root = sax.build(fileInputStream).getRootElement();
 			return root;
 		}
 		catch (Exception e) {
-			Msg.showError(getClass(), null, "Error Reading Tool",
-				"Could not read tool: " + savedToolFile, e);
+			Msg.showError(getClass(), null, "Error Reading Tool", "Could not read tool: " + file,
+				e);
 		}
 		finally {
 			if (fileInputStream != null) {
@@ -248,7 +267,6 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 				}
 			}
 		}
-
 		return null;
 	}
 

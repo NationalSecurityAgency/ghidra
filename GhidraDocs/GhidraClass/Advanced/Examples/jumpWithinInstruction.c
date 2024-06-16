@@ -20,7 +20,7 @@ void printMessage(void);
 
 int main(int argc, char **argv){
     asm(".intel_syntax noprefix");
-    asm(".byte 0xeb, 0xff, 0xc0, 0x67, 0x48");
+    asm(".byte 0xeb, 0xff, 0xc0");
     asm(".att_syntax prefix");
     printMessage();
     return EXIT_SUCCESS;

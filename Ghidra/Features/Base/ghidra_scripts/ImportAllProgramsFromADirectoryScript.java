@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +16,16 @@
 //Imports all programs from a selected directory.
 //@category Import
 
+import java.io.File;
+import java.io.IOException;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.LoadResults;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
-
-import java.io.File;
 
 public class ImportAllProgramsFromADirectoryScript extends GhidraScript {
 
@@ -52,36 +53,23 @@ public class ImportAllProgramsFromADirectoryScript extends GhidraScript {
 				continue;
 			}
 
-			Program program = null;
-
+			LoadResults<Program> loadResults = null;
 			try {
-				program = importFile(file);
+				loadResults = AutoImporter.importByLookingForLcs(file, state.getProject(),
+					folder.getPathname(), language.getLanguage(), language.getCompilerSpec(), this,
+					log, monitor);
+				loadResults.getPrimary().save(state.getProject(), log, monitor);
 			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			if (program == null) {
-				try {
-					program =
-						AutoImporter.importByLookingForLcs(file, folder, language.getLanguage(),
-							language.getCompilerSpec(), this, log, monitor);
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-			if (program == null) {
+			catch (IOException e) {
 				println("Unable to import program from file " + file.getName());
 			}
-			else {
-				//openProgram( program );
-				program.release(this);
+			finally {
+				if (loadResults != null) {
+					loadResults.release(this);
+				}
 			}
 
 			println(log.toString());
-
 			log.clear();
 		}
 	}

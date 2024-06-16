@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.concept;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.concept.EquatableConcept;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.concept.IEquatableConcept;
 import agent.dbgmodel.jna.dbgmodel.concept.WrapIEquatableConcept;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,14 @@ public interface EquatableConceptInternal extends EquatableConcept {
 	Map<Pointer, EquatableConceptInternal> CACHE = new WeakValueHashMap<>();
 
 	static EquatableConceptInternal instanceFor(WrapIEquatableConcept data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, EquatableConceptImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, EquatableConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIEquatableConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIEquatableConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IEquatableConcept.IID_IEQUATABLE_CONCEPT),
-					WrapIEquatableConcept.class) //
-				.build();
+	List<Preferred<WrapIEquatableConcept>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IEquatableConcept.IID_IEQUATABLE_CONCEPT, WrapIEquatableConcept.class));
 
 	static EquatableConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(EquatableConceptInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(EquatableConceptInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -16,8 +16,7 @@
 package agent.gdb.manager;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbManager.StepCmd;
@@ -117,28 +116,30 @@ public interface GdbInferior extends GdbConsoleOperations, GdbMemoryOperations {
 	 * List GDB's modules in this inferior (process, thread group)
 	 * 
 	 * <p>
-	 * This is equivalent to the CLI command: {@code maintenance info sections ALLOBJ}. This command
-	 * is more thorough than {@code info shared} as it contains the executable module, shared
-	 * libraries, system-supplied objects, and enumerates all sections thereof, not just
-	 * {@code .text}.
+	 * This is equivalent to the CLI command: {@code maintenance info sections -all-objects}. This
+	 * command is more thorough than {@code info shared} as it contains the executable module,
+	 * shared libraries, system-supplied objects, and enumerates all sections thereof, not just
+	 * {@code .text}. By default, the manager will only refresh this list on the first call or the
+	 * next call since a module-loaded event. Otherwise, it will just return its cached list.
 	 * 
+	 * @param refresh force the manager to refresh its modules and sections lists
 	 * @return a future that completes with a map of module names to module handles
 	 */
-	CompletableFuture<Map<String, GdbModule>> listModules();
+	CompletableFuture<Map<String, GdbModule>> listModules(boolean refresh);
 
 	/**
 	 * Enumerate the memory mappings known to the manager to belong to this inferior's process
 	 * 
 	 * @return a map of start addresses to mapped memory regions
 	 */
-	Map<BigInteger, GdbMemoryMapping> getKnownMappings();
+	NavigableMap<BigInteger, GdbMemoryMapping> getKnownMappings();
 
 	/**
 	 * List the memory mappings of this inferior's process
 	 * 
 	 * @return a future that completes with a map of start addresses to mapped memory regions
 	 */
-	CompletableFuture<Map<BigInteger, GdbMemoryMapping>> listMappings();
+	CompletableFuture<NavigableMap<BigInteger, GdbMemoryMapping>> listMappings();
 
 	/**
 	 * Change CLI focus to this inferior

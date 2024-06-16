@@ -15,30 +15,28 @@
  */
 package ghidra.plugins.fsbrowser;
 
-import java.util.*;
-
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 import javax.swing.KeyStroke;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
-import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.services.*;
-import ghidra.app.util.opinion.LoaderService;
+import ghidra.app.services.FileSystemBrowserService;
+import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndService;
-import ghidra.framework.main.FrontEndable;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ProjectListener;
 import ghidra.framework.plugintool.*;
@@ -66,12 +64,11 @@ import utilities.util.FileUtilities;
 	shortDescription = "Browse Filesystems in containers",
 	description = "This plugin allows users to browse and use the contents of containers (zips, tars, filesystems, etc)",
 	servicesProvided = { FileSystemBrowserService.class },
-	servicesRequired = { TextEditorService.class },
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
-public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, ProjectListener,
-		FileSystemBrowserService {
+public class FileSystemBrowserPlugin extends Plugin
+		implements ApplicationLevelPlugin, ProjectListener, FileSystemBrowserService {
 
 	/* package */ DockingAction openFilesystemAction;
 	/* package */ DockingAction showFileSystemImplsAction;
@@ -108,14 +105,6 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK))
 				.onAction(ac -> doOpenFileSystem())
 				.buildAndInstall(tool);
-		showFileSystemImplsAction =
-			new ActionBuilder("Display Supported File Systems and Loaders", this.getName())
-					.description("Display Supported File Systems and Loaders")
-					.enabledWhen(ac -> true)
-					.menuPath(ToolConstants.MENU_HELP, "List File Systems")
-					.menuGroup("AAAZ")	// this "AAAZ" is from ProcessorListPlugin
-					.onAction(ac -> showSupportedFileSystems())
-					.buildAndInstall(tool);
 	}
 
 	@Override
@@ -128,7 +117,10 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 			frontEndService.removeProjectListener(this);
 			frontEndService = null;
 		}
-		chooserOpen = null;
+
+		if (chooserOpen != null) {
+			chooserOpen.dispose();
+		}
 
 		for (FileSystemBrowserComponentProvider provider : currentBrowsers.values()) {
 			provider.dispose();
@@ -323,29 +315,4 @@ public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, Pro
 		}
 		return provider;
 	}
-
-	/**
-	 * Shows a list of supported file system types and loaders.
-	 */
-	private void showSupportedFileSystems() {
-		StringBuilder sb = new StringBuilder();
-
-		sb.append(
-			"<html><table><tr><td>Supported File Systems</td><td>Supported Loaders</td></tr>\n");
-		sb.append("<tr valign='top'><td><ul>");
-		for (String fileSystemName : fsService().getAllFilesystemNames()) {
-			sb.append("<li>" + fileSystemName + "\n");
-		}
-
-		sb.append("</ul></td><td><ul>");
-		for (String loaderName : LoaderService.getAllLoaderNames()) {
-			sb.append("<li>" + loaderName + "\n");
-		}
-		sb.append("</ul></td></tr></table>");
-
-		MultiLineMessageDialog.showModalMessageDialog(getTool().getActiveWindow(),
-			"Supported File Systems and Loaders", "", sb.toString(),
-			MultiLineMessageDialog.INFORMATION_MESSAGE);
-	}
-
 }

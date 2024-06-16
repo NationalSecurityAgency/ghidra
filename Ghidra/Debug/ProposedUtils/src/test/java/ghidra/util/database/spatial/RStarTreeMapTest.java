@@ -17,7 +17,6 @@ package ghidra.util.database.spatial;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -33,14 +32,15 @@ import java.util.function.Consumer;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.*;
 
-import com.google.common.collect.Iterators;
-
-import db.DBHandle;
-import db.DBRecord;
+import db.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.framework.data.OpenMode;
+import ghidra.util.ColorUtils;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -541,8 +541,9 @@ public class RStarTreeMapTest {
 							int x = e.getX() * rootWidth / getWidth();
 							int y = e.getY() * rootHeight / getHeight();
 							selected.clear();
-							selected.addAll(asSpatialMap().reduce(
-								IntRectQuery.intersecting(rect(x, x, y, y))).keys());
+							selected.addAll(
+								asSpatialMap().reduce(IntRectQuery.intersecting(rect(x, x, y, y)))
+										.keys());
 							repaint();
 						}
 					});
@@ -565,13 +566,13 @@ public class RStarTreeMapTest {
 
 				public void selectColor(Graphics g, NodeType type) {
 					if (type.isLeaf()) {
-						g.setColor(new Color(1, 0, 0, 0.5f).darker());
+						g.setColor(ColorUtils.getColor(179, 0, 0, 128));
 					}
 					else if (type.isLeafParent()) {
-						g.setColor(new Color(0, 1, 0, 0.5f).darker());
+						g.setColor(ColorUtils.getColor(0, 179, 0, 128));
 					}
 					else {
-						g.setColor(new Color(0, 0, 1, 0.5f).darker());
+						g.setColor(ColorUtils.getColor(0, 0, 179, 128));
 					}
 				}
 
@@ -581,14 +582,14 @@ public class RStarTreeMapTest {
 						return;
 					}
 					drawPath(g, getParentOf(nr));
-					g.setColor(Color.BLACK);
+					g.setColor(Palette.BLACK);
 					drawRect(g, nr.getShape(), false);
 				}
 
 				public void drawPath(Graphics g, DBIntRectStringDataRecord dr) {
 					System.out.println("Selected: " + dr);
 					drawPath(g, getParentOf(dr));
-					g.setColor(Color.BLACK);
+					g.setColor(Palette.BLACK);
 					drawRect(g, dr.getBounds(), false);
 				}
 
@@ -609,7 +610,7 @@ public class RStarTreeMapTest {
 						@Override
 						protected VisitResult visitData(DBIntRectNodeRecord parent,
 								DBIntRectStringDataRecord d, boolean included) {
-							g.setColor(new Color(0, 0, 0, 0.5f));
+							g.setColor(ColorUtils.getColor(0, 0, 0, 128));
 							drawRect(g, d.getShape(), true);
 							return VisitResult.NEXT;
 						}
@@ -630,26 +631,26 @@ public class RStarTreeMapTest {
 		private static final int MAX_CHILDREN = 5;
 		private final DBCachedObjectStoreFactory storeFactory;
 		private final IntRStarTree tree;
-		private final SpatialMap<IntRect, String, IntRectQuery> map;
+		public final SpatialMap<IntRect, String, IntRectQuery> map;
 
-		protected MyDomainObject(Object consumer) throws IOException, VersionException {
-			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
+		public MyDomainObject(Object consumer) throws IOException, VersionException {
+			super(new DBHandle(), OpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
 				consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
-			try (UndoableTransaction tid = UndoableTransaction.start(this, "CreateMaps", true)) {
-				tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
-					true, MAX_CHILDREN);
+			try (Transaction tx = openTransaction("CreateMaps")) {
+				tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME, true,
+					MAX_CHILDREN);
 				map = tree.asSpatialMap();
 			}
 		}
 
 		protected MyDomainObject(File file, Object consumer) throws IOException, VersionException {
-			super(new DBHandle(file), DBOpenMode.UPDATE, new ConsoleTaskMonitor(), "Testing", 500,
+			super(new DBHandle(file), OpenMode.UPDATE, new ConsoleTaskMonitor(), "Testing", 500,
 				1000, consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
 			// No transaction, as tree should already exist
-			tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
-				true, MAX_CHILDREN);
+			tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME, true,
+				MAX_CHILDREN);
 			map = tree.asSpatialMap();
 		}
 
@@ -724,11 +725,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testQueryIntersecting() {
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::intersects).forEachRemaining(expected::add);
+		IteratorUtils.filteredIterator(allRects(range), queryRect::intersects)
+				.forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.intersecting(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -736,11 +739,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testQueryEnclosing() {
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::enclosedBy).forEachRemaining(expected::add);
+		IteratorUtils.filteredIterator(allRects(range), queryRect::enclosedBy)
+				.forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.enclosing(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -748,11 +753,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testQueryEnclosed() {
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::encloses).forEachRemaining(expected::add);
+		IteratorUtils.filteredIterator(allRects(range), queryRect::encloses)
+				.forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.enclosed(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -762,17 +769,18 @@ public class RStarTreeMapTest {
 		IntRect queryRect1 = rect(1, 1, 12, 13);
 		IntRect queryRect2 = rect(4, 4, 12, 13);
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range),
-			r -> queryRect1.intersects(r) && queryRect2.intersects(r))
-				.forEachRemaining(
-					expected::add);
+		IteratorUtils
+				.filteredIterator(allRects(range),
+					r -> queryRect1.intersects(r) && queryRect2.intersects(r))
+				.forEachRemaining(expected::add);
 
 		System.out.println(expected);
 
 		IntRectQuery query =
 			IntRectQuery.intersecting(queryRect1).and(IntRectQuery.intersecting(queryRect2));
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -858,7 +866,7 @@ public class RStarTreeMapTest {
 		List<Pair<IntRect, String>> entries = generateRandom(rect(0, 100, 0, 100), 10, 10, 125);
 		obj.tree.checkIntegrity();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom", true)) {
+		try (Transaction tx = obj.openTransaction("AddRandom")) {
 			for (Entry<IntRect, String> ent : entries) {
 				obj.map.put(ent.getKey(), ent.getValue());
 				obj.tree.checkIntegrity();
@@ -874,8 +882,7 @@ public class RStarTreeMapTest {
 		// NOTE: This "thrashing" test covers nearly all the R*-Tree insertion logic.
 		List<Pair<IntRect, String>> entries = generateRandom(rect(0, 100, 0, 100), 10, 10, 1000);
 		Consumer<List<Pair<IntRect, String>>> inserter = list -> {
-			try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom", true)) {
-				int i = 0;
+			try (Transaction tx = obj.openTransaction("AddRandom")) {
 				for (Entry<IntRect, String> ent : list) {
 					obj.map.put(ent.getKey(), ent.getValue());
 					// Note, underlying tree is not synchronized, but map is
@@ -903,7 +910,7 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testIntegrityWith2000VerticallyStackedRects() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddVertical", true)) {
+		try (Transaction tx = obj.openTransaction("AddVertical")) {
 			for (int i = 0; i < 2000; i++) {
 				obj.map.put(rect(0, 10, i, i + 1), "Ent" + i);
 				// Note, underlying tree is not synchronized, but map is
@@ -916,7 +923,7 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testSaveAndLoad() throws IOException, CancelledException, VersionException {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRecord", true)) {
+		try (Transaction tx = obj.openTransaction("AddRecord")) {
 			obj.map.put(rect(1, 5, 6, 10), "Some value");
 		}
 
@@ -929,8 +936,7 @@ public class RStarTreeMapTest {
 			loaded = new MyDomainObject(tmp.toFile(), this);
 
 			assert loaded.map.entries()
-					.contains(
-						new ImmutablePair<>(rect(1, 5, 6, 10), "Some value"));
+					.contains(new ImmutablePair<>(rect(1, 5, 6, 10), "Some value"));
 		}
 		finally {
 			if (loaded != null) {
@@ -958,7 +964,7 @@ public class RStarTreeMapTest {
 		// NOTE: This test is made also to cover the visitation logic.
 		assertTrue(obj.map.isEmpty());
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : generatePoints(rect(1, 12, 1, 12))) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -977,7 +983,7 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testFirst() {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : generatePoints(rect(1, 12, 1, 12))) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -997,25 +1003,23 @@ public class RStarTreeMapTest {
 			obj.map.reduce(IntRectQuery.enclosed(rect(12, 12, 6, 6))).firstValue());
 
 		assertEquals("Point(12,6)",
-			obj.map.reduce(IntRectQuery.enclosed(rect(1, 12, 6, 6))
-					.starting(
-						Rectangle2DDirection.RIGHTMOST))
+			obj.map.reduce(
+				IntRectQuery.enclosed(rect(1, 12, 6, 6)).starting(Rectangle2DDirection.RIGHTMOST))
 					.firstValue());
-		assertEquals("Point(6,1)", obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 1, 12))
-				.starting(
-					Rectangle2DDirection.BOTTOMMOST))
-				.firstValue());
+		assertEquals("Point(6,1)",
+			obj.map.reduce(
+				IntRectQuery.enclosed(rect(6, 6, 1, 12)).starting(Rectangle2DDirection.BOTTOMMOST))
+					.firstValue());
 		assertEquals("Point(6,12)",
-			obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 1, 12))
-					.starting(
-						Rectangle2DDirection.TOPMOST))
+			obj.map.reduce(
+				IntRectQuery.enclosed(rect(6, 6, 1, 12)).starting(Rectangle2DDirection.TOPMOST))
 					.firstValue());
 	}
 
 	@Test
 	public void testIterator() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -1031,21 +1035,19 @@ public class RStarTreeMapTest {
 		actual.clear();
 		points.stream()
 				.filter(e -> e.getKey().enclosedBy(rect(1, 6, 1, 12)))
-				.forEach(
-					e -> expected.put(e.getKey(), e.getValue()));
+				.forEach(e -> expected.put(e.getKey(), e.getValue()));
 		assertEquals(72, expected.size()); // Sanity check on expected
 		obj.map.reduce(IntRectQuery.enclosed(rect(1, 6, 1, 12)))
 				.entries()
 				.stream()
-				.forEach(
-					e -> actual.put(e.getKey(), e.getValue()));
+				.forEach(e -> actual.put(e.getKey(), e.getValue()));
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testOrderedIterator() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -1063,9 +1065,8 @@ public class RStarTreeMapTest {
 
 		expected = List.of("Point(6,6)", "Point(5,6)", "Point(4,6)", "Point(3,6)", "Point(2,6)",
 			"Point(1,6)");
-		actual = new ArrayList<>(obj.map.reduce(IntRectQuery.enclosed(rect(1, 6, 6, 6))
-				.starting(
-					Rectangle2DDirection.RIGHTMOST))
+		actual = new ArrayList<>(obj.map.reduce(
+			IntRectQuery.enclosed(rect(1, 6, 6, 6)).starting(Rectangle2DDirection.RIGHTMOST))
 				.orderedValues());
 	}
 
@@ -1073,13 +1074,13 @@ public class RStarTreeMapTest {
 	public void testRemove() {
 		// TODO: Add a "minimal query including" abstract method to reduce search for removed item
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "RemovePoints", true)) {
+		try (Transaction tx = obj.openTransaction("RemovePoints")) {
 			assertFalse(obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 6, 6))).isEmpty());
 			obj.map.remove(rect(6, 6, 6, 6), "NotHere");
 			assertFalse(obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 6, 6))).isEmpty());
@@ -1099,13 +1100,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testClear() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "RemovePoints", true)) {
+		try (Transaction tx = obj.openTransaction("RemovePoints")) {
 			obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 6, 6))).clear();
 			obj.tree.checkIntegrity();
 			assertEquals(143, obj.map.size());
@@ -1118,8 +1119,7 @@ public class RStarTreeMapTest {
 			Map<IntRect, String> actual = new HashMap<>();
 			points.stream()
 					.filter(e -> e.getKey().enclosedBy(rect(7, 12, 1, 12)))
-					.forEach(
-						e -> expected.put(e.getKey(), e.getValue()));
+					.forEach(e -> expected.put(e.getKey(), e.getValue()));
 			obj.map.entries().stream().forEach(e -> actual.put(e.getKey(), e.getValue()));
 			assertEquals(expected, actual);
 
@@ -1135,7 +1135,7 @@ public class RStarTreeMapTest {
 	@Test
 	public void testValuesToArray() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (Transaction tx = obj.openTransaction("AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}

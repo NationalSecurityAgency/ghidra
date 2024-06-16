@@ -32,9 +32,8 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.database.DirectedIterator.Direction;
 import ghidra.util.database.annot.*;
@@ -69,21 +68,21 @@ public class DBCachedObjectStoreTest {
 
 		protected MyDomainObject(String name, int timeInterval, int bufSize, Object consumer)
 				throws VersionException, IOException {
-			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), name, timeInterval,
+			super(new DBHandle(), OpenMode.CREATE, new ConsoleTaskMonitor(), name, timeInterval,
 				bufSize, consumer);
 			this.storeFactory = new DBCachedObjectStoreFactory(this);
-			try (DBTransaction tid = DBTransaction.start(dbh, true)) {
+			try (Transaction tx = dbh.openTransaction(this)) {
 				this.store = storeFactory.getOrCreateCachedStore(OBJECTS_TABLE_NAME, MyObject.class,
 					MyObject::new, false);
 			}
 		}
 
-		protected MyDomainObject(DBHandle handle, DBOpenMode openMode, TaskMonitor monitor,
+		protected MyDomainObject(DBHandle handle, OpenMode openMode, TaskMonitor monitor,
 				int timeInterval, int bufSize, Object consumer)
 				throws VersionException, IOException {
 			super(handle, openMode, monitor, null, timeInterval, bufSize, consumer);
 			this.storeFactory = new DBCachedObjectStoreFactory(this);
-			try (DBTransaction tid = DBTransaction.start(handle, true)) {
+			try (Transaction tx = dbh.openTransaction(this)) {
 				this.store = storeFactory.getOrCreateCachedStore(OBJECTS_TABLE_NAME, MyObject.class,
 					MyObject::new, false);
 			}
@@ -119,14 +118,14 @@ public class DBCachedObjectStoreTest {
 		public void setF1(long f1) {
 			if (this.f1 != f1) {
 				this.f1 = f1;
-				write(COL1);
+				doWrite(COL1);
 			}
 		}
 
 		public void setF2(int f2) {
 			if (this.f2 != f2) {
 				this.f2 = f2;
-				write(COL2);
+				doWrite(COL2);
 			}
 		}
 	}
@@ -144,12 +143,12 @@ public class DBCachedObjectStoreTest {
 	DBCachedObjectStoreEntrySet<MyObject> entrySet;
 	DBCachedObjectStoreEntrySet<MyObject> rEntrySet;
 
-	protected UndoableTransaction trans() {
-		return UndoableTransaction.start(myDomainObject, "Test", true);
+	protected Transaction trans() {
+		return myDomainObject.openTransaction("Test");
 	}
 
 	protected void populateStore(long... keys) {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			for (long k : keys) {
 				store.create(k);
 			}
@@ -202,7 +201,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testCreate() throws IOException {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(store.isCached(0));
 			MyObject obj = store.create();
 			assertEquals(0, obj.getKey());
@@ -215,7 +214,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testCreateWithKey() throws IOException {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(store.isCached(0));
 			MyObject obj = store.create(0x80);
 			assertEquals(0x80, obj.getKey());
@@ -228,7 +227,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testContains() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create();
 			assertTrue(store.contains(obj));
 		}
@@ -237,7 +236,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testGetRecordCount() {
 		assertEquals(0, store.getRecordCount());
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create();
 			assertTrue(store.contains(obj));
 		}
@@ -247,7 +246,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testGetMaxKey() {
 		assertNull(store.getMaxKey());
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create();
 			assertTrue(store.contains(obj));
 		}
@@ -256,7 +255,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testContainsKey() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(store.containsKey(0));
 			@SuppressWarnings("unused")
 			MyObject obj = store.create();
@@ -266,11 +265,11 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testSave() throws IOException {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create();
 			obj.setF1(0x801);
 			obj.setF2(0x802);
-			obj.updated();
+			obj.doUpdated();
 			Table table = handle.getTable(OBJECTS_TABLE_NAME);
 			DBRecord record = table.getRecord(obj.getKey());
 			assertEquals(0x801, record.getLongValue(0));
@@ -280,7 +279,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testGetObjectAt() throws IOException, VersionException {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			Table table = myDomainObject.storeFactory.getOrCreateTable(OBJECTS_TABLE_NAME,
 				MyObject.class, false);
 			assertEquals(0, table.getRecordCount());
@@ -297,7 +296,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testSaveAndLoad() throws IOException, VersionException, CancelledException {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			Table table = myDomainObject.storeFactory.getOrCreateTable(OBJECTS_TABLE_NAME,
 				MyObject.class, false);
 			assertEquals(0, table.getRecordCount());
@@ -313,8 +312,8 @@ public class DBCachedObjectStoreTest {
 		DBHandle opened = new DBHandle(tmp.toFile());
 		MyDomainObject restored = null;
 		try {
-			restored = new MyDomainObject(opened, DBOpenMode.READ_ONLY, new ConsoleTaskMonitor(),
-				500, 1000, this);
+			restored = new MyDomainObject(opened, OpenMode.IMMUTABLE, new ConsoleTaskMonitor(), 500,
+				1000, this);
 			MyObject rObj = restored.store.getObjectAt(0x1234);
 			assertEquals(0x811, rObj.f1);
 			assertEquals(0x812, rObj.f2);
@@ -328,7 +327,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testDelete() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertNull(store.deleteKey(0));
 			MyObject obj = store.create();
 			assertTrue(store.isCached(0));
@@ -341,7 +340,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testDeleteKey() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertNull(store.deleteKey(0));
 			MyObject obj = store.create();
 			assertTrue(store.isCached(0));
@@ -354,7 +353,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testDeleteAll() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertEquals(0, store.getRecordCount());
 			MyObject obj = store.create();
 			assertEquals(1, store.getRecordCount());
@@ -370,7 +369,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsMapSize() {
 		assertTrue(map.isEmpty());
 		assertEquals(0, map.size());
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 		}
 		assertFalse(map.isEmpty());
@@ -383,7 +382,7 @@ public class DBCachedObjectStoreTest {
 		assertFalse(map.containsKey(null));
 		assertFalse(map.containsKey("Wrong type"));
 		assertFalse(map.containsKey(0L));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 		}
 		assertTrue(map.containsKey(0L));
@@ -392,7 +391,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsMapContainsValue() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(map.containsValue(null));
 			assertFalse(map.containsValue("Wrong type"));
 			MyObject obj1 = store.create(0);
@@ -407,7 +406,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsMapGet() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertNull(map.get(0L));
 			assertNull(map.get("Wrong type"));
 			MyObject obj = store.create(0);
@@ -418,7 +417,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsMapRemove() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertNull(map.remove(null));
 			assertNull(map.remove(0L));
 			assertNull(map.remove("Wrong type"));
@@ -431,7 +430,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsMapClear() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 			assertEquals(1, map.size());
 			map.clear();
@@ -577,7 +576,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsMapSubRemove() {
 		DBCachedObjectStoreSubMap<MyObject> tailMap = map.tailMap(0L);
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject objN3 = store.create(-3);
 			MyObject objP3 = store.create(3);
 
@@ -597,7 +596,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsMapSubClear() {
 		populateStore(-3, -1, 1, 3);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			map.subMap(0L, 0L).clear(); // NOP
 			assertEquals(4, store.getRecordCount());
 			map.tailMap(0L, true).clear();
@@ -960,26 +959,26 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsMapSubSubMap() {
-		assertEquals(Range.closed(-2L, 2L),
-			map.subMap(-2L, true, 4L, false).subMap(-4L, true, 2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rMap.subMap(4L, true, -2L, false).subMap(2L, true, -4L, true).keyRange);
+		assertEquals(KeySpan.closed(-2, 2),
+			map.subMap(-2L, true, 4L, false).subMap(-4L, true, 2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1, 2),
+			rMap.subMap(4L, true, -2L, false).subMap(2L, true, -4L, true).keySpan);
 	}
 
 	@Test
 	public void testAsMapSubHeadMap() {
-		assertEquals(Range.closed(-2L, 2L),
-			map.subMap(-2L, true, 4L, false).headMap(2L, true).keyRange);
-		assertEquals(Range.closed(-2L, 2L),
-			rMap.subMap(2L, true, -4L, false).headMap(-2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2, 2),
+			map.subMap(-2L, true, 4L, false).headMap(2L, true).keySpan);
+		assertEquals(KeySpan.closed(-2, 2),
+			rMap.subMap(2L, true, -4L, false).headMap(-2L, true).keySpan);
 	}
 
 	@Test
 	public void testAsMapSubTailMap() {
-		assertEquals(Range.closedOpen(-2L, 2L),
-			map.subMap(-4L, true, 2L, false).tailMap(-2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rMap.subMap(4L, true, -2L, false).tailMap(2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2, 1),
+			map.subMap(-4L, true, 2L, false).tailMap(-2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1, 2),
+			rMap.subMap(4L, true, -2L, false).tailMap(2L, true).keySpan);
 	}
 
 	@Test
@@ -1003,7 +1002,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsKeySetSize() {
 		assertTrue(keySet.isEmpty());
 		assertEquals(0, keySet.size());
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 		}
 		assertFalse(keySet.isEmpty());
@@ -1013,7 +1012,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsKeySetContains() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create(0);
 			assertFalse(keySet.contains(null));
 			assertFalse(keySet.contains("Wrong type"));
@@ -1067,7 +1066,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsKeySetRemove() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create(0);
 			assertEquals(1, store.getRecordCount());
 
@@ -1083,7 +1082,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsKeySetContainsAll() {
 		assertTrue(keySet.containsAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create(0);
 			store.create(1);
 			assertFalse(keySet.containsAll(List.of(0L, 1L, "Wrong type")));
@@ -1097,7 +1096,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsKeySetRemoveAll() {
 		assertFalse(keySet.removeAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj0 = store.create(0);
 			MyObject obj1 = store.create(1);
 			assertFalse(keySet.removeAll(List.of()));
@@ -1111,7 +1110,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsKeySetRetainAll() {
 		assertFalse(keySet.retainAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj0 = store.create(0);
 			MyObject obj1 = store.create(1);
 			assertFalse(keySet.retainAll(List.of(0L, 1L)));
@@ -1124,7 +1123,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetClear() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 			store.create();
 			assertEquals(2, store.getRecordCount());
@@ -1185,8 +1184,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetSubSet() {
-		assertEquals(map.subMap(1L, 2L).keySet().keyRange, keySet.subSet(1L, 2L).keyRange);
-		assertEquals(rMap.subMap(2L, 1L).keySet().keyRange, rKeySet.subSet(2L, 1L).keyRange);
+		assertEquals(map.subMap(1L, 2L).keySet().keySpan, keySet.subSet(1L, 2L).keySpan);
+		assertEquals(rMap.subMap(2L, 1L).keySet().keySpan, rKeySet.subSet(2L, 1L).keySpan);
 		assertEquals(map.subMap(1L, 2L).keySet().direction, keySet.subSet(1L, 2L).direction);
 		assertEquals(rMap.subMap(2L, 1L).keySet().direction, rKeySet.subSet(2L, 1L).direction);
 
@@ -1211,8 +1210,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetHeadSet() {
-		assertEquals(map.headMap(1L).keySet().keyRange, keySet.headSet(1L).keyRange);
-		assertEquals(rMap.headMap(1L).keySet().keyRange, rKeySet.headSet(1L).keyRange);
+		assertEquals(map.headMap(1L).keySet().keySpan, keySet.headSet(1L).keySpan);
+		assertEquals(rMap.headMap(1L).keySet().keySpan, rKeySet.headSet(1L).keySpan);
 		assertEquals(map.headMap(1L).keySet().direction, keySet.headSet(1L).direction);
 		assertEquals(rMap.headMap(1L).keySet().direction, rKeySet.headSet(1L).direction);
 
@@ -1230,8 +1229,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetTailSet() {
-		assertEquals(map.tailMap(1L).keySet().keyRange, keySet.tailSet(1L).keyRange);
-		assertEquals(rMap.tailMap(1L).keySet().keyRange, rKeySet.tailSet(1L).keyRange);
+		assertEquals(map.tailMap(1L).keySet().keySpan, keySet.tailSet(1L).keySpan);
+		assertEquals(rMap.tailMap(1L).keySet().keySpan, rKeySet.tailSet(1L).keySpan);
 		assertEquals(map.tailMap(1L).keySet().direction, keySet.tailSet(1L).direction);
 		assertEquals(rMap.tailMap(1L).keySet().direction, rKeySet.tailSet(1L).direction);
 
@@ -1319,7 +1318,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsKeySetSubRemove() {
 		DBCachedObjectStoreKeySubSet tailSet = keySet.tailSet(0L);
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject objN3 = store.create(-3);
 			MyObject objP3 = store.create(3);
 
@@ -1351,7 +1350,7 @@ public class DBCachedObjectStoreTest {
 
 		DBCachedObjectStoreKeySubSet tailSet = keySet.tailSet(0L, true);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(keySet.subSet(0L, 0L).retainAll(List.of()));
 			assertFalse(tailSet.retainAll(List.of("Wrong type", 3L, 1L)));
 			assertTrue(tailSet.retainAll(List.of("Wrong type", 1L)));
@@ -1371,7 +1370,7 @@ public class DBCachedObjectStoreTest {
 
 		DBCachedObjectStoreKeySubSet tailSet = keySet.tailSet(0L, true);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(tailSet.removeAll(List.of("Wrong type", -3L, -1L)));
 			assertTrue(tailSet.removeAll(List.of("Wrong type", 3L)));
 			assertFalse(tailSet.removeAll(List.of("Wrong type", 3L)));
@@ -1388,7 +1387,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsKeySetSubClear() {
 		populateStore(-3, -1, 1, 3);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			keySet.subSet(0L, 0L).clear(); // NOP
 			assertEquals(4, store.getRecordCount());
 			keySet.tailSet(0L, true).clear();
@@ -1495,33 +1494,33 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetSubSubSet() {
-		assertEquals(Range.closed(-2L, 2L),
-			keySet.subSet(-2L, true, 4L, false).subSet(-4L, true, 2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rKeySet.subSet(4L, true, -2L, false).subSet(2L, true, -4L, true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			keySet.subSet(-2L, true, 4L, false).subSet(-4L, true, 2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L),
+			rKeySet.subSet(4L, true, -2L, false).subSet(2L, true, -4L, true).keySpan);
 	}
 
 	@Test
 	public void testAsKeySetSubHeadSet() {
-		assertEquals(Range.closed(-2L, 2L),
-			keySet.subSet(-2L, true, 4L, false).headSet(2L, true).keyRange);
-		assertEquals(Range.closed(-2L, 2L),
-			rKeySet.subSet(2L, true, -4L, false).headSet(-2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			keySet.subSet(-2L, true, 4L, false).headSet(2L, true).keySpan);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			rKeySet.subSet(2L, true, -4L, false).headSet(-2L, true).keySpan);
 	}
 
 	@Test
 	public void testAsKeySetSubTailSet() {
-		assertEquals(Range.closedOpen(-2L, 2L),
-			keySet.subSet(-4L, true, 2L, false).tailSet(-2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rKeySet.subSet(4L, true, -2L, false).tailSet(2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 1L),
+			keySet.subSet(-4L, true, 2L, false).tailSet(-2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L),
+			rKeySet.subSet(4L, true, -2L, false).tailSet(2L, true).keySpan);
 	}
 
 	@Test
 	public void testAsValuesSize() {
 		assertTrue(values.isEmpty());
 		assertEquals(0, values.size());
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 		}
 		assertFalse(values.isEmpty());
@@ -1531,7 +1530,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsValuesContains() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create();
 			assertFalse(values.contains(null));
 			assertFalse(values.contains("Wrong type"));
@@ -1611,7 +1610,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsValuesRemove() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj = store.create();
 			assertEquals(1, store.getRecordCount());
 
@@ -1627,7 +1626,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsValuesContainsAll() {
 		assertTrue(values.containsAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj1 = store.create();
 			MyObject obj2 = store.create();
 			assertFalse(values.containsAll(List.of(obj1, obj2, "Wrong type")));
@@ -1641,7 +1640,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsValuesRemoveAll() {
 		assertFalse(values.removeAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj1 = store.create();
 			MyObject obj2 = store.create();
 			assertFalse(values.removeAll(List.of()));
@@ -1655,7 +1654,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsValuesRetainAll() {
 		assertFalse(values.retainAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj1 = store.create();
 			MyObject obj2 = store.create();
 			assertFalse(values.retainAll(List.of(obj1, obj2)));
@@ -1668,7 +1667,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsValuesClear() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 			store.create();
 			assertEquals(2, store.getRecordCount());
@@ -1779,7 +1778,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsValuesSubRemove() {
 		DBCachedObjectStoreValueSubCollection<MyObject> tailValues = map.tailMap(0L).values();
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject objN3 = store.create(-3);
 			MyObject objP3 = store.create(3);
 
@@ -1817,7 +1816,7 @@ public class DBCachedObjectStoreTest {
 		MyObject objN1 = store.getObjectAt(-1);
 		MyObject objP3 = store.getObjectAt(3);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(tailValues.removeAll(List.of("Wrong type", objN3, objN1)));
 			assertTrue(tailValues.removeAll(List.of("Wrong type", objP3)));
 			assertFalse(tailValues.removeAll(List.of("Wrong type", objP3)));
@@ -1839,7 +1838,7 @@ public class DBCachedObjectStoreTest {
 		MyObject objP1 = store.getObjectAt(1);
 		MyObject objP3 = store.getObjectAt(3);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(map.subMap(0L, 0L).values().retainAll(List.of()));
 			assertFalse(tailValues.retainAll(List.of("Wrong type", objP3, objP1)));
 			assertTrue(tailValues.retainAll(List.of("Wrong type", objP1)));
@@ -1857,7 +1856,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsValuesSubClear() {
 		populateStore(-3, -1, 1, 3);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			map.subMap(0L, 0L).values().clear(); // NOP
 			assertEquals(4, store.getRecordCount());
 			map.tailMap(0L, true).values().clear();
@@ -1880,7 +1879,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsEntrySetSize() {
 		assertTrue(entrySet.isEmpty());
 		assertEquals(0, entrySet.size());
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 		}
 		assertFalse(entrySet.isEmpty());
@@ -1890,7 +1889,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsEntrySetContains() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj0 = store.create(0);
 			MyObject obj1 = store.create(1);
 			assertFalse(entrySet.contains(null));
@@ -1943,15 +1942,15 @@ public class DBCachedObjectStoreTest {
 					.map(Entry::getKey)
 					.collect(Collectors.toList());
 		assertEquals(List.of(-3L, -1L, 1L, 3L), list);
-		list = ((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[4])))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList());
+		list =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[4]))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList());
 		assertEquals(List.of(-3L, -1L, 1L, 3L), list);
-		list = ((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[5])))
-				.stream()
-				.map(nullable(Entry::getKey))
-				.collect(Collectors.toList());
+		list =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[5]))).stream()
+					.map(nullable(Entry::getKey))
+					.collect(Collectors.toList());
 		assertEquals(Arrays.asList(new Long[] { -3L, -1L, 1L, 3L, null }), list);
 
 		List<Long> rList =
@@ -1959,22 +1958,22 @@ public class DBCachedObjectStoreTest {
 					.map(Entry::getKey)
 					.collect(Collectors.toList());
 		assertEquals(List.of(3L, 1L, -1L, -3L), rList);
-		rList = ((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[4])))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList());
+		rList =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[4]))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList());
 		assertEquals(List.of(3L, 1L, -1L, -3L), rList);
-		rList = ((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[5])))
-				.stream()
-				.map(nullable(Entry::getKey))
-				.collect(Collectors.toList());
+		rList =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[5]))).stream()
+					.map(nullable(Entry::getKey))
+					.collect(Collectors.toList());
 		assertEquals(Arrays.asList(new Long[] { 3L, 1L, -1L, -3L, null }), rList);
 	}
 
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testAsEntrySetRemove() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj0 = store.create(0);
 			MyObject obj1 = store.create(1);
 			assertEquals(2, store.getRecordCount());
@@ -1995,7 +1994,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsEntrySetContainsAll() {
 		assertTrue(values.containsAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			Entry<Long, MyObject> ent0 = ent(store.create(0));
 			Entry<Long, MyObject> ent1 = ent(store.create(1));
 			assertFalse(entrySet.containsAll(List.of(ent0, ent1, "Wrong type")));
@@ -2009,7 +2008,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsEntrySetRemoveAll() {
 		assertFalse(entrySet.removeAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create(0);
 			Entry<Long, MyObject> ent1 = ent(store.create(1));
 			assertFalse(entrySet.removeAll(List.of()));
@@ -2023,7 +2022,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsEntrySetRetainAll() {
 		assertFalse(entrySet.retainAll(List.of()));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			Entry<Long, MyObject> ent0 = ent(store.create(0));
 			Entry<Long, MyObject> ent1 = ent(store.create(1));
 			assertFalse(entrySet.retainAll(List.of(ent0, ent1)));
@@ -2036,7 +2035,7 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetClear() {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			store.create();
 			store.create();
 			assertEquals(2, store.getRecordCount());
@@ -2085,22 +2084,23 @@ public class DBCachedObjectStoreTest {
 	public void testAsEntrySetDescendingIterator() {
 		populateStore(-3, -1, 1, 3);
 
-		assertEquals(List.of(3L, 1L, -1L, -3L), IteratorUtils.toList(entrySet.descendingIterator())
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-3L, -1L, 1L, 3L), IteratorUtils.toList(rEntrySet.descendingIterator())
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(3L, 1L, -1L, -3L),
+			IteratorUtils.toList(entrySet.descendingIterator())
+					.stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-3L, -1L, 1L, 3L),
+			IteratorUtils.toList(rEntrySet.descendingIterator())
+					.stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 	}
 
 	@Test
 	public void testAsEntrySetSubSet() {
-		assertEquals(map.subMap(1L, 2L).keySet().keyRange,
-			entrySet.subSet(ent(1), ent(2)).keyRange);
-		assertEquals(rMap.subMap(2L, 1L).keySet().keyRange,
-			rEntrySet.subSet(ent(2), ent(1)).keyRange);
+		assertEquals(map.subMap(1L, 2L).keySet().keySpan, entrySet.subSet(ent(1), ent(2)).keySpan);
+		assertEquals(rMap.subMap(2L, 1L).keySet().keySpan,
+			rEntrySet.subSet(ent(2), ent(1)).keySpan);
 		assertEquals(map.subMap(1L, 2L).keySet().direction,
 			entrySet.subSet(ent(1), ent(2)).direction);
 		assertEquals(rMap.subMap(2L, 1L).keySet().direction,
@@ -2125,10 +2125,10 @@ public class DBCachedObjectStoreTest {
 			new ArrayList<>(rEntrySet.subSet(ent(3), false, ent(-3), true)).stream()
 					.map(Entry::getKey)
 					.collect(Collectors.toList()));
-		assertEquals(List.of(-3L, -1L, 1L), new ArrayList<>(entrySet.subSet(ent(-3), ent(3)))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-3L, -1L, 1L),
+			new ArrayList<>(entrySet.subSet(ent(-3), ent(3))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
 		assertEquals(List.of(-1L, 1L, 3L),
 			new ArrayList<>(entrySet.subSet(ent(-3), false, ent(3), true)).stream()
@@ -2138,10 +2138,10 @@ public class DBCachedObjectStoreTest {
 			new ArrayList<>(rEntrySet.subSet(ent(3), true, ent(-3), false)).stream()
 					.map(Entry::getKey)
 					.collect(Collectors.toList()));
-		assertEquals(List.of(3L, 1L, -1L), new ArrayList<>(rEntrySet.subSet(ent(3), ent(-3)))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(3L, 1L, -1L),
+			new ArrayList<>(rEntrySet.subSet(ent(3), ent(-3))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
 		assertEquals(List.of(-3L, -1L, 1L, 3L),
 			new ArrayList<>(entrySet.subSet(ent(-3), true, ent(3), true)).stream()
@@ -2155,66 +2155,76 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetHeadSet() {
-		assertEquals(map.headMap(1L).keySet().keyRange, entrySet.headSet(ent(1)).keyRange);
-		assertEquals(rMap.headMap(1L).keySet().keyRange, rEntrySet.headSet(ent(1)).keyRange);
+		assertEquals(map.headMap(1L).keySet().keySpan, entrySet.headSet(ent(1)).keySpan);
+		assertEquals(rMap.headMap(1L).keySet().keySpan, rEntrySet.headSet(ent(1)).keySpan);
 		assertEquals(map.headMap(1L).keySet().direction, entrySet.headSet(ent(1)).direction);
 		assertEquals(rMap.headMap(1L).keySet().direction, rEntrySet.headSet(ent(1)).direction);
 
 		populateStore(-5, -3, -1, 1, 3, 5);
 
-		assertEquals(List.of(-5L, -3L), new ArrayList<>(entrySet.headSet(ent(-1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(5L, 3L), new ArrayList<>(rEntrySet.headSet(ent(1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-5L, -3L),
+			new ArrayList<>(entrySet.headSet(ent(-1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(5L, 3L),
+			new ArrayList<>(rEntrySet.headSet(ent(1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(-5L, -3L, -1L), new ArrayList<>(entrySet.headSet(ent(-1), true))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(5L, 3L, 1L), new ArrayList<>(rEntrySet.headSet(ent(1), true)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-5L, -3L, -1L),
+			new ArrayList<>(entrySet.headSet(ent(-1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(5L, 3L, 1L),
+			new ArrayList<>(rEntrySet.headSet(ent(1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(-5L, -3L), new ArrayList<>(entrySet.headSet(ent(-1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(5L, 3L), new ArrayList<>(rEntrySet.headSet(ent(1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-5L, -3L),
+			new ArrayList<>(entrySet.headSet(ent(-1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(5L, 3L),
+			new ArrayList<>(rEntrySet.headSet(ent(1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 	}
 
 	@Test
 	public void testAsEntrySetTailSet() {
-		assertEquals(map.tailMap(1L).keySet().keyRange, entrySet.tailSet(ent(1)).keyRange);
-		assertEquals(rMap.tailMap(1L).keySet().keyRange, rEntrySet.tailSet(ent(1)).keyRange);
+		assertEquals(map.tailMap(1L).keySet().keySpan, entrySet.tailSet(ent(1)).keySpan);
+		assertEquals(rMap.tailMap(1L).keySet().keySpan, rEntrySet.tailSet(ent(1)).keySpan);
 		assertEquals(map.tailMap(1L).keySet().direction, entrySet.tailSet(ent(1)).direction);
 		assertEquals(rMap.tailMap(1L).keySet().direction, rEntrySet.tailSet(ent(1)).direction);
 
 		populateStore(-5, -3, -1, 1, 3, 5);
 
-		assertEquals(List.of(3L, 5L), new ArrayList<>(entrySet.tailSet(ent(1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-3L, -5L), new ArrayList<>(rEntrySet.tailSet(ent(-1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(3L, 5L),
+			new ArrayList<>(entrySet.tailSet(ent(1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-3L, -5L),
+			new ArrayList<>(rEntrySet.tailSet(ent(-1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(1L, 3L, 5L), new ArrayList<>(entrySet.tailSet(ent(1), true)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-1L, -3L, -5L), new ArrayList<>(rEntrySet.tailSet(ent(-1), true))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(1L, 3L, 5L),
+			new ArrayList<>(entrySet.tailSet(ent(1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-1L, -3L, -5L),
+			new ArrayList<>(rEntrySet.tailSet(ent(-1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(1L, 3L, 5L), new ArrayList<>(entrySet.tailSet(ent(1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-1L, -3L, -5L), new ArrayList<>(rEntrySet.tailSet(ent(-1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(1L, 3L, 5L),
+			new ArrayList<>(entrySet.tailSet(ent(1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-1L, -3L, -5L),
+			new ArrayList<>(rEntrySet.tailSet(ent(-1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 	}
 
 	@Test
@@ -2329,7 +2339,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testAsEntrySetSubRemove() {
 		Set<Entry<Long, MyObject>> tailSet = entrySet.tailSet(ent(0));
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject objN3 = store.create(-3);
 			MyObject objP3 = store.create(3);
 
@@ -2372,7 +2382,7 @@ public class DBCachedObjectStoreTest {
 		Entry<Long, MyObject> entP1 = ent(store.getObjectAt(1));
 		Entry<Long, MyObject> entP3 = ent(store.getObjectAt(3));
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(entrySet.subSet(ent(0), ent(0)).retainAll(List.of()));
 			assertFalse(tailSet.retainAll(List.of("Wrong type", entP3, entP1)));
 			assertTrue(tailSet.retainAll(List.of("Wrong type", entP1)));
@@ -2396,7 +2406,7 @@ public class DBCachedObjectStoreTest {
 		Entry<Long, MyObject> entN1 = ent(store.getObjectAt(-1));
 		Entry<Long, MyObject> entP3 = ent(store.getObjectAt(3));
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			assertFalse(tailSet.removeAll(List.of("Wrong type", entN3, entN1)));
 			assertTrue(tailSet.removeAll(List.of("Wrong type", entP3)));
 			assertFalse(tailSet.removeAll(List.of("Wrong type", entP3)));
@@ -2413,7 +2423,7 @@ public class DBCachedObjectStoreTest {
 	public void testAsEntrySetSubClear() {
 		populateStore(-3, -1, 1, 3);
 
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			entrySet.subSet(ent(0), ent(0)).clear(); // NOP
 			assertEquals(4, store.getRecordCount());
 			entrySet.tailSet(ent(0), true).clear();
@@ -2563,26 +2573,26 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetSubSubSet() {
-		assertEquals(Range.closed(-2L, 2L), entrySet.subSet(ent(-2), true, ent(4), false)
-				.subSet(ent(-4), true, ent(2), true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L), rEntrySet.subSet(ent(4), true, ent(-2), false)
-				.subSet(ent(2), true, ent(-4), true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L), entrySet.subSet(ent(-2), true, ent(4), false)
+				.subSet(ent(-4), true, ent(2), true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L), rEntrySet.subSet(ent(4), true, ent(-2), false)
+				.subSet(ent(2), true, ent(-4), true).keySpan);
 	}
 
 	@Test
 	public void testAsEntrySetSubHeadSet() {
-		assertEquals(Range.closed(-2L, 2L),
-			entrySet.subSet(ent(-2), true, ent(4), false).headSet(ent(2), true).keyRange);
-		assertEquals(Range.closed(-2L, 2L),
-			rEntrySet.subSet(ent(2), true, ent(-4), false).headSet(ent(-2), true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			entrySet.subSet(ent(-2), true, ent(4), false).headSet(ent(2), true).keySpan);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			rEntrySet.subSet(ent(2), true, ent(-4), false).headSet(ent(-2), true).keySpan);
 	}
 
 	@Test
 	public void testAsEntrySetSubTailSet() {
-		assertEquals(Range.closedOpen(-2L, 2L),
-			entrySet.subSet(ent(-4), true, ent(2), false).tailSet(ent(-2), true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rEntrySet.subSet(ent(4), true, ent(-2), false).tailSet(ent(2), true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 1L),
+			entrySet.subSet(ent(-4), true, ent(2), false).tailSet(ent(-2), true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L),
+			rEntrySet.subSet(ent(4), true, ent(-2), false).tailSet(ent(2), true).keySpan);
 	}
 
 	@Test
@@ -2619,18 +2629,18 @@ public class DBCachedObjectStoreTest {
 	}
 
 	protected DBCachedObjectIndex<Integer, MyObject> populateAndGetIndex() throws IOException {
-		try (UndoableTransaction tid = trans()) {
+		try (Transaction tid = trans()) {
 			MyObject obj0 = store.create(0);
 			obj0.setF2(10);
-			obj0.updated();
+			obj0.doUpdated();
 
 			MyObject obj1 = store.create(1);
 			obj1.setF2(5);
-			obj1.updated();
+			obj1.doUpdated();
 
 			MyObject obj2 = store.create(2);
 			obj2.setF2(5);
-			obj2.updated();
+			obj2.doUpdated();
 		}
 		DBCachedObjectIndex<Integer, MyObject> index = store.getIndex(int.class, COL2_NAME);
 		return index;
@@ -2668,9 +2678,8 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	public void testFoundContains() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
-		assertFalse(found5.contains(null));
 		assertFalse(found5.contains("Wrong type"));
 		assertTrue(found5.contains(store.getObjectAt(1)));
 		assertFalse(found5.contains(store.getObjectAt(0)));
@@ -2679,7 +2688,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundIterator() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertEquals(Set.of(store.getObjectAt(1), store.getObjectAt(2)),
 			new HashSet<>(IteratorUtils.toList(found5.iterator())));
@@ -2688,7 +2697,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundToArray() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertEquals(Set.of(store.getObjectAt(1), store.getObjectAt(2)),
 			new HashSet<>(Arrays.asList(found5.toArray())));
@@ -2697,7 +2706,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundToTypedArray() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertEquals(Set.of(store.getObjectAt(1), store.getObjectAt(2)),
 			new HashSet<>(Arrays.asList(found5.toArray(new MyObject[0]))));
@@ -2712,7 +2721,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundContainsAll() throws VersionException, IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertTrue(found5.containsAll(List.of()));
 		assertFalse(found5.containsAll(List.of(store.getObjectAt(1), "Wrong Type")));
@@ -2721,8 +2730,7 @@ public class DBCachedObjectStoreTest {
 
 		final MyObject altObj1;
 		MyDomainObject altDomainObject = new MyDomainObject("Alternative Dummy", 500, 1000, this);
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(altDomainObject, "Create Obj2", true)) {
+		try (Transaction tid = altDomainObject.openTransaction("Create Obj2")) {
 			altObj1 = altDomainObject.store.create(1);
 		}
 

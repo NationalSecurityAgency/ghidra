@@ -20,17 +20,21 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
-import ghidra.trace.model.guest.TraceGuestPlatform;
-import ghidra.trace.model.guest.TracePlatformManager;
-import ghidra.trace.model.listing.TraceInstruction;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.*;
+import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -57,7 +61,89 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 
 	protected final DBCachedObjectStore<DBTraceGuestPlatformMappedRange> rangeMappingStore;
 
-	public DBTracePlatformManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	protected final InternalTracePlatform hostPlatform = new InternalTracePlatform() {
+		@Override
+		public Trace getTrace() {
+			return trace;
+		}
+
+		@Override
+		public DBTraceGuestLanguage getLanguageEntry() {
+			return null;
+		}
+
+		@Override
+		public int getIntKey() {
+			return -1;
+		}
+
+		@Override
+		public boolean isGuest() {
+			return false;
+		}
+
+		@Override
+		public Language getLanguage() {
+			return trace.getBaseLanguage();
+		}
+
+		@Override
+		public CompilerSpec getCompilerSpec() {
+			return trace.getBaseCompilerSpec();
+		}
+
+		@Override
+		public AddressSetView getHostAddressSet() {
+			return trace.getBaseAddressFactory().getAddressSet();
+		}
+
+		@Override
+		public AddressSetView getGuestAddressSet() {
+			return trace.getBaseAddressFactory().getAddressSet();
+		}
+
+		@Override
+		public Address mapHostToGuest(Address hostAddress) {
+			return hostAddress;
+		}
+
+		@Override
+		public AddressRange mapHostToGuest(AddressRange hostRange) {
+			return hostRange;
+		}
+
+		@Override
+		public AddressSetView mapHostToGuest(AddressSetView hostSet) {
+			return hostSet;
+		}
+
+		@Override
+		public Address mapGuestToHost(Address guestAddress) {
+			return guestAddress;
+		}
+
+		@Override
+		public AddressRange mapGuestToHost(AddressRange guestRange) {
+			return guestRange;
+		}
+
+		@Override
+		public AddressSetView mapGuestToHost(AddressSetView guestSet) {
+			return guestSet;
+		}
+
+		@Override
+		public MemBuffer getMappedMemBuffer(long snap, Address guestAddress) {
+			return trace.getMemoryManager().getBufferAt(snap, guestAddress);
+		}
+
+		@Override
+		public InstructionSet mapGuestInstructionAddressesToHost(InstructionSet set) {
+			return set;
+		}
+	};
+
+	public DBTracePlatformManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, CompilerSpec baseCompilerSpec, DBTrace trace)
 			throws VersionException, IOException {
 		this.dbh = dbh;
@@ -129,9 +215,9 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 	}
 
 	@Internal
-	public DBTraceGuestPlatform getPlatformByKey(int key) {
+	public InternalTracePlatform getPlatformByKey(int key) {
 		if (key == -1) {
-			return null;
+			return hostPlatform;
 		}
 		return platformStore.getObjectAt(key);
 	}
@@ -198,16 +284,12 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			platformsByCompiler.remove(platform.getCompilerSpec());
 			platformStore.delete(platform);
 		}
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_DELETED, null, platform));
 	}
 
 	@Override
-	public Language getBaseLanguage() {
-		return trace.getBaseLanguage();
-	}
-
-	@Override
-	public CompilerSpec getBaseCompilerSpec() {
-		return trace.getBaseCompilerSpec();
+	public InternalTracePlatform getHostPlatform() {
+		return hostPlatform;
 	}
 
 	protected DBTraceGuestPlatform doAddGuestPlatform(CompilerSpec compilerSpec) {
@@ -219,35 +301,44 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 
 	@Override
 	public DBTraceGuestPlatform addGuestPlatform(CompilerSpec compilerSpec) {
-		if (compilerSpec.getCompilerSpecID()
-				.equals(trace.getBaseCompilerSpec().getCompilerSpecID())) {
-			throw new IllegalArgumentException("Base language cannot be a guest language");
+		if (trace.getBaseCompilerSpec() == compilerSpec) {
+			throw new IllegalArgumentException(
+				"Base compiler spec cannot be a guest compiler spec");
 		}
+		DBTraceGuestPlatform platform;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			return doAddGuestPlatform(compilerSpec);
+			platform = doAddGuestPlatform(compilerSpec);
 		}
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
+		return platform;
 	}
 
 	@Override
-	public DBTraceGuestPlatform getGuestPlatform(CompilerSpec compilerSpec) {
+	public InternalTracePlatform getPlatform(CompilerSpec compilerSpec) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			if (trace.getBaseCompilerSpec() == compilerSpec) {
+				return hostPlatform;
+			}
 			return platformsByCompiler.get(compilerSpec);
 		}
 	}
 
 	@Override
-	public DBTraceGuestPlatform getOrAddGuestPlatform(CompilerSpec compilerSpec) {
+	public InternalTracePlatform getOrAddPlatform(CompilerSpec compilerSpec) {
 		if (compilerSpec.getCompilerSpecID()
 				.equals(trace.getBaseCompilerSpec().getCompilerSpecID())) {
-			throw new IllegalArgumentException("Base language cannot be a guest language");
+			return hostPlatform;
 		}
+		DBTraceGuestPlatform platform;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			DBTraceGuestPlatform exists = platformsByCompiler.get(compilerSpec);
 			if (exists != null) {
 				return exists;
 			}
-			return doAddGuestPlatform(compilerSpec);
+			platform = doAddGuestPlatform(compilerSpec);
 		}
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
+		return platform;
 	}
 
 	@Override
@@ -255,33 +346,10 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		return platformView;
 	}
 
-	protected TraceGuestPlatform getPlatformOf(InstructionSet instructionSet) {
-		for (InstructionBlock block : instructionSet) {
-			for (Instruction instruction : block) {
-				if (!(instruction instanceof TraceInstruction)) {
-					continue;
-				}
-				TraceInstruction traceInstruction = (TraceInstruction) instruction;
-				return traceInstruction.getGuestPlatform();
-			}
-		}
-		return null;
-	}
-
-	public InstructionSet mapGuestInstructionAddressesToHost(TraceGuestPlatform platform,
-			InstructionSet instructionSet) {
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			if (platform == null) { // Instructions belong to the host platform
-				return instructionSet;
-			}
-			return platform.mapGuestInstructionAddressesToHost(instructionSet);
-		}
-	}
-
 	@Internal
-	public DBTraceGuestPlatform assertMine(TraceGuestPlatform platform) {
-		if (platform == null) {
-			return null;
+	public InternalTracePlatform assertMine(TracePlatform platform) {
+		if (platform == hostPlatform) {
+			return hostPlatform;
 		}
 		if (!(platform instanceof DBTraceGuestPlatform)) {
 			throw new IllegalArgumentException("Given platform does not belong to this trace");
@@ -294,5 +362,19 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			throw new IllegalArgumentException("Given platform has been deleted");
 		}
 		return dbPlatform;
+	}
+
+	protected Address computeNextRegisterMin() {
+		AddressRange hostRegsRange = hostPlatform.getRegistersRange();
+		Address next = hostRegsRange == null
+				? hostPlatform.getAddressFactory().getRegisterSpace().getAddress(0)
+				: hostRegsRange.getMaxAddress().add(1);
+		for (DBTraceGuestPlatform guest : platformStore.asMap().values()) {
+			Address candidateNext = guest.computeNextRegisterMin();
+			if (candidateNext != null && next.compareTo(candidateNext) < 0) {
+				next = candidateNext;
+			}
+		}
+		return next;
 	}
 }

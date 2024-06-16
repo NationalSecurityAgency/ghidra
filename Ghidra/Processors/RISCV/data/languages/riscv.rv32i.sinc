@@ -123,11 +123,18 @@
 }
 
 # jal d,a 0000006f 0000007f JSR (0, 0) 
-:jal rd,immUJ is immUJ & rd & op0001=0x3 & op0204=0x3 & op0506=0x3
+# call for rd = RA|T0 set to inst_next
+:jal rd,immUJ is immUJ & rd & (r0711=1 | r0711=5) & op0001=0x3 & op0204=0x3 & op0506=0x3
 {
-	#TODO  RAS: push inst_next if rd=x1/x5
 	rd = inst_next;
 	call immUJ;
+}
+
+# goto for all other rd set to inst_next
+:jal rd,immUJ is immUJ & rd & r0711 & op0001=0x3 & op0204=0x3 & op0506=0x3
+{
+	rd = inst_next;
+	goto immUJ;
 }
 
 # j a 0000006f 00000fff BRANCH|ALIAS (0, 0)
@@ -136,14 +143,21 @@
 	goto immUJ;
 }
 
-
 # jalr d,s,j 00000067 0000707f JSR (0, 0)
-:jalr rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
+# call for rd = RA|T0 set to inst_next
+:jalr rd,rs1,immI is rs1 & immI & rd & (r0711=1 | r0711=5) & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
 {
-	#TODO  RAS: push inst_next/pop based on rd=x1/x5 or rs1=x1/x5
 	local ea:$(XLEN) = (rs1 + immI) & ~1;
 	rd = inst_next;
 	call [ea];
+}
+
+# goto for all other rd set to inst_next
+:jalr rd,rs1,immI is rs1 & immI & rd & r0711 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
+{
+	local ea:$(XLEN) = (rs1 + immI) & ~1;
+	rd = inst_next;
+	goto [ea];
 }
 
 # jr o(s) 00000067 00007fff BRANCH|ALIAS (0, 0)

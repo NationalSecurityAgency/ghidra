@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.*;
 
-import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
@@ -50,7 +50,7 @@ public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		List<JdiModelTargetStackFrame> targetFrames = new ArrayList<>();
 		List<StackFrame> frames;
 		try {
@@ -104,16 +104,13 @@ public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 	 * @return null
 	 */
 	protected CompletableFuture<?> update() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
-		return fetchElements(true).exceptionally(e -> {
+		return fetchElements(RefreshBehavior.REFRESH_ALWAYS).exceptionally(e -> {
 			Msg.error(this, "Could not update stack " + this + " on STOPPED");
 			return null;
 		});
 	}
 
 	public void invalidateRegisterCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 }

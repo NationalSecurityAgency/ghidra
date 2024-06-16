@@ -71,13 +71,13 @@ public interface GadpClientTargetBreakpointSpecContainer
 		Path bptPath = evt.getEffective();
 		TargetBreakpointLocation breakpoint = bptPath == null ? null
 				: getModel().getProxy(bptPath.getEList(), true).as(TargetBreakpointLocation.class);
-		getDelegate().getListeners().fire.breakpointHit(this, trapped, frame, spec, breakpoint);
+		broadcast().breakpointHit(this, trapped, frame, spec, breakpoint);
 		if (spec instanceof GadpClientTargetBreakpointSpec) {
 			// If I don't have a cached proxy, then I don't have any listeners
 			GadpClientTargetBreakpointSpec specObj = (GadpClientTargetBreakpointSpec) spec;
 			ListenerSet<TargetBreakpointAction> actions = specObj.getDelegate().getActions(false);
 			if (actions != null) {
-				actions.fire.breakpointHit(specObj, trapped, frame, breakpoint);
+				actions.invoke().breakpointHit(specObj, trapped, frame, breakpoint);
 			}
 		}
 	}

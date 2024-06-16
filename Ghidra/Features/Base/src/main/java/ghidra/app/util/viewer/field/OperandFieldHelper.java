@@ -23,10 +23,10 @@ import java.util.List;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.RowColLocation;
+import docking.widgets.fieldpanel.support.*;
 import ghidra.GhidraOptions;
 import ghidra.app.util.*;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -48,14 +48,17 @@ import ghidra.util.HelpLocation;
  */
 abstract class OperandFieldHelper extends FieldFactory {
 
-	private final static String ENABLE_WORD_WRAP_MSG =
-		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
-	private final static String MAX_DISPLAY_LINES_MSG =
+	private final static String ENABLE_WORD_WRAP_OPTION =
+		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + FieldUtils.WORD_WRAP_OPTION_NAME;
+	private final static String MAX_DISPLAY_LINES_OPTION =
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
 	private final static String UNDERLINE_OPTION =
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Underline References";
 	private final static String SPACE_AFTER_SEPARATOR_OPTION =
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Add Space After Separator";
+	private final static String WRAP_ON_SEMICOLON_OPTION =
+		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Wrap on Semicolons";
+	private final static OperandFieldElement LINE_BREAK = new OperandFieldElement(null, 0, 0, 0);
 
 	public enum UNDERLINE_CHOICE {
 		Hidden, All, None
@@ -75,6 +78,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 	private boolean isWordWrap = false;
 	private int maxDisplayLines = 2;
 	private boolean spaceAfterSeparator = false;
+	private boolean wrapOnSemicolon = false;
 
 	protected BrowserCodeUnitFormat codeUnitFormat;
 	private ChangeListener codeUnitFormatListener = e -> OperandFieldHelper.this.model.update();
@@ -95,16 +99,16 @@ abstract class OperandFieldHelper extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	OperandFieldHelper(String name, FieldFormatModel model, HighlightProvider hlProvider,
+	OperandFieldHelper(String name, FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(name, model, hlProvider, displayOptions, fieldOptions);
 
 		setOptions(displayOptions);
 
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Operands_Field");
-		fieldOptions.registerOption(ENABLE_WORD_WRAP_MSG, false, hl,
+		fieldOptions.registerOption(ENABLE_WORD_WRAP_OPTION, false, hl,
 			"Enables word wrapping of strings in the operands field.");
-		fieldOptions.registerOption(MAX_DISPLAY_LINES_MSG, 2, hl,
+		fieldOptions.registerOption(MAX_DISPLAY_LINES_OPTION, 2, hl,
 			"The maximum number of lines used to display the strings in the operands field.");
 		fieldOptions.registerOption(UNDERLINE_OPTION, UNDERLINE_CHOICE.Hidden, hl,
 			"Select 'All' to underline any operand field that has a reference; " +
@@ -112,16 +116,16 @@ abstract class OperandFieldHelper extends FieldFactory {
 				"select 'None' for no underlines.");
 		fieldOptions.registerOption(SPACE_AFTER_SEPARATOR_OPTION, false, hl,
 			"Add space between separator and next operand");
+		fieldOptions.registerOption(WRAP_ON_SEMICOLON_OPTION, false, hl,
+			"Wrap operand field on semicolons");
 
-		setMaximumLinesToDisplay(fieldOptions.getInt(MAX_DISPLAY_LINES_MSG, 2), fieldOptions);
-		isWordWrap = fieldOptions.getBoolean(ENABLE_WORD_WRAP_MSG, false);
-
+		setMaximumLinesToDisplay(fieldOptions.getInt(MAX_DISPLAY_LINES_OPTION, 2), fieldOptions);
+		isWordWrap = fieldOptions.getBoolean(ENABLE_WORD_WRAP_OPTION, false);
 		underlineChoice = fieldOptions.getEnum(UNDERLINE_OPTION, UNDERLINE_CHOICE.Hidden);
-
 		spaceAfterSeparator = fieldOptions.getBoolean(SPACE_AFTER_SEPARATOR_OPTION, false);
+		wrapOnSemicolon = fieldOptions.getBoolean(WRAP_ON_SEMICOLON_OPTION, false);
 
 		inspector = new SymbolInspector(displayOptions, null);
-		fieldOptions.getOptions(GhidraOptions.OPERAND_GROUP_TITLE).setOptionsHelpLocation(hl);
 
 		// Create code unit format and associated options - listen for changes
 		codeUnitFormat = new BrowserCodeUnitFormat(fieldOptions, true);
@@ -141,22 +145,29 @@ abstract class OperandFieldHelper extends FieldFactory {
 			Object newValue) {
 
 		boolean updateModel = false;
-		if (optionName.equals(MAX_DISPLAY_LINES_MSG)) {
-			setMaximumLinesToDisplay(((Integer) newValue).intValue(), options);
-			updateModel = true;
+		switch (optionName) {
+			case MAX_DISPLAY_LINES_OPTION:
+				setMaximumLinesToDisplay(((Integer) newValue).intValue(), options);
+				updateModel = true;
+				break;
+			case ENABLE_WORD_WRAP_OPTION:
+				isWordWrap = ((Boolean) newValue).booleanValue();
+				updateModel = true;
+				break;
+			case UNDERLINE_OPTION:
+				underlineChoice = (UNDERLINE_CHOICE) newValue;
+				updateModel = true;
+				break;
+			case SPACE_AFTER_SEPARATOR_OPTION:
+				spaceAfterSeparator = ((Boolean) newValue).booleanValue();
+				updateModel = true;
+				break;
+			case WRAP_ON_SEMICOLON_OPTION:
+				wrapOnSemicolon = ((Boolean) newValue).booleanValue();
+				updateModel = true;
+				break;
 		}
-		else if (optionName.equals(ENABLE_WORD_WRAP_MSG)) {
-			isWordWrap = ((Boolean) newValue).booleanValue();
-			updateModel = true;
-		}
-		else if (optionName.equals(UNDERLINE_OPTION)) {
-			underlineChoice = (UNDERLINE_CHOICE) newValue;
-			updateModel = true;
-		}
-		else if (optionName.equals(SPACE_AFTER_SEPARATOR_OPTION)) {
-			spaceAfterSeparator = ((Boolean) newValue).booleanValue();
-			updateModel = true;
-		}
+
 		if (updateModel) {
 			model.update();
 		}
@@ -165,19 +176,18 @@ abstract class OperandFieldHelper extends FieldFactory {
 	private void setMaximumLinesToDisplay(int maxLines, Options options) {
 		if (maxLines < 1) {
 			maxLines = 1;
-			options.setInt(MAX_DISPLAY_LINES_MSG, maxLines);
+			options.setInt(MAX_DISPLAY_LINES_OPTION, maxLines);
 		}
 		this.maxDisplayLines = maxLines;
 	}
 
-	FieldLocation getFieldLocation(BigInteger index, int fieldNum, ListingField bf, int opIndex,
-			int column) {
-		if (bf instanceof ListingTextField) {
-			ListingTextField btf = (ListingTextField) bf;
-			RowColLocation rcl = btf.dataToScreenLocation(opIndex, column);
+	FieldLocation getFieldLocation(BigInteger index, int fieldNum, ListingField field,
+			int opIndex, int column) {
+		if (field instanceof ListingTextField listingField) {
+			RowColLocation rcl = listingField.dataToScreenLocation(opIndex, column);
 			return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
 		}
-		else if (bf instanceof ImageFactoryField) {
+		else if (field instanceof ImageFactoryField) {
 			return new FieldLocation(index, fieldNum, 0, 0);
 		}
 		return null;
@@ -366,7 +376,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 				: getAttributesForData(data, value);
 		AttributedString as =
 			new AttributedString(dataValueRepresentation.toString(), attributes.colorAttribute,
-				getMetrics(attributes.styleAttribute), underline, underlineColor);
+				getMetrics(attributes.styleAttribute), underline, ListingColors.UNDERLINE);
 		FieldElement field = new OperandFieldElement(as, 0, 0, 0);
 
 		if (shouldWordWrap(data, dataValueRepresentation)) {
@@ -435,12 +445,48 @@ abstract class OperandFieldHelper extends FieldFactory {
 			characterOffset = 0;
 		}
 
-		// There may be operands with no representation objects, so we don't want to create a composite field element.
+		// There may be operands with no representation objects, so we don't want to create a 
+		// composite field element.
 		if (elements.isEmpty()) {
 			return null;
 		}
+		if (wrapOnSemicolon) {
+			List<FieldElement> lines = breakIntoLines(elements);
+			if (lines.size() == 1) {
+				return ListingTextField.createSingleLineTextField(this, proxy,
+					lines.get(0), startX + varWidth, width, hlProvider);
+			}
+			return ListingTextField.createMultilineTextField(this, proxy, lines, startX, width,
+				hlProvider);
+		}
 		return ListingTextField.createSingleLineTextField(this, proxy,
 			new CompositeFieldElement(elements), startX + varWidth, width, hlProvider);
+	}
+
+	private List<FieldElement> breakIntoLines(List<OperandFieldElement> elements) {
+		// This method groups all elements between LINE_BREAK elements into composite elements
+		// where each composite element will be display on its own line.
+		//
+		// It does this by collecting elements in the lineElements list until it find a LINE_BREAK
+		List<FieldElement> fieldElements = new ArrayList<>();
+		List<OperandFieldElement> lineElements = new ArrayList<>();
+
+		for (OperandFieldElement operandFieldElement : elements) {
+			if (operandFieldElement == LINE_BREAK) {
+				if (!lineElements.isEmpty()) {
+					fieldElements.add(new CompositeFieldElement(lineElements));
+					lineElements.clear();
+				}
+			}
+			else {
+				lineElements.add(operandFieldElement);
+			}
+		}
+		if (!lineElements.isEmpty()) {
+			fieldElements.add(new CompositeFieldElement(lineElements));
+			lineElements.clear();
+		}
+		return fieldElements;
 	}
 
 	private int addElementsForOperand(Instruction inst, List<OperandFieldElement> elements,
@@ -450,7 +496,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 			AttributedString as =
 				new AttributedString(opRepList != null ? opRepList.toString() : "<UNSUPPORTED>",
 					badRefAttributes.colorAttribute, getMetrics(badRefAttributes.styleAttribute),
-					false, underlineColor);
+					false, ListingColors.UNDERLINE);
 			elements.add(new OperandFieldElement(as, opIndex, subOpIndex, characterOffset));
 			characterOffset += as.length();
 		}
@@ -490,9 +536,14 @@ abstract class OperandFieldHelper extends FieldFactory {
 		}
 
 		ColorStyleAttributes attributes = getOpAttributes(opElem, inst, opIndex);
+
 		AttributedString as = new AttributedString(opElem.toString(), attributes.colorAttribute,
-			getMetrics(attributes.styleAttribute), underline, underlineColor);
+			getMetrics(attributes.styleAttribute), underline, ListingColors.UNDERLINE);
+
 		elements.add(new OperandFieldElement(as, opIndex, subOpIndex, characterOffset));
+		if (wrapOnSemicolon && opElem instanceof Character c && c == ';') {
+			elements.add(LINE_BREAK);
+		}
 		return characterOffset + as.length();
 	}
 
@@ -670,34 +721,27 @@ abstract class OperandFieldHelper extends FieldFactory {
 	 * changes.  It looks up all the color settings and resets the its values.
 	 */
 	private void setOptions(Options options) {
-		separatorAttributes.colorAttribute = options.getColor(
-			OptionsGui.SEPARATOR.getColorOptionName(), OptionsGui.SEPARATOR.getDefaultColor());
+
+		separatorAttributes.colorAttribute = ListingColors.SEPARATOR;
+		scalarAttributes.colorAttribute = ListingColors.CONSTANT;
+		variableRefAttributes.colorAttribute = FunctionColors.VARIABLE;
+		addressAttributes.colorAttribute = ListingColors.ADDRESS;
+		externalRefAttributes.colorAttribute = ListingColors.EXT_REF_RESOLVED;
+		badRefAttributes.colorAttribute = ListingColors.REF_BAD;
+		registerAttributes.colorAttribute = ListingColors.REGISTER;
+
 		separatorAttributes.styleAttribute =
 			options.getInt(OptionsGui.SEPARATOR.getStyleOptionName(), -1);
-		scalarAttributes.colorAttribute = options.getColor(OptionsGui.CONSTANT.getColorOptionName(),
-			OptionsGui.CONSTANT.getDefaultColor());
 		scalarAttributes.styleAttribute =
 			options.getInt(OptionsGui.CONSTANT.getStyleOptionName(), -1);
-		variableRefAttributes.colorAttribute = options.getColor(
-			OptionsGui.VARIABLE.getColorOptionName(), OptionsGui.VARIABLE.getDefaultColor());
 		variableRefAttributes.styleAttribute =
 			options.getInt(OptionsGui.VARIABLE.getStyleOptionName(), -1);
-		addressAttributes.colorAttribute = options.getColor(OptionsGui.ADDRESS.getColorOptionName(),
-			OptionsGui.ADDRESS.getDefaultColor());
 		addressAttributes.styleAttribute =
 			options.getInt(OptionsGui.ADDRESS.getStyleOptionName(), -1);
-		externalRefAttributes.colorAttribute =
-			options.getColor(OptionsGui.EXT_REF_RESOLVED.getColorOptionName(),
-				OptionsGui.EXT_REF_RESOLVED.getDefaultColor());
 		externalRefAttributes.styleAttribute =
 			options.getInt(OptionsGui.EXT_REF_RESOLVED.getStyleOptionName(), -1);
-		badRefAttributes.colorAttribute =
-			options.getColor(OptionsGui.BAD_REF_ADDR.getColorOptionName(),
-				OptionsGui.BAD_REF_ADDR.getDefaultColor());
 		badRefAttributes.styleAttribute =
 			options.getInt(OptionsGui.BAD_REF_ADDR.getStyleOptionName(), -1);
-		registerAttributes.colorAttribute = options.getColor(
-			OptionsGui.REGISTERS.getColorOptionName(), OptionsGui.REGISTERS.getDefaultColor());
 		registerAttributes.styleAttribute =
 			options.getInt(OptionsGui.REGISTERS.getStyleOptionName(), -1);
 
@@ -748,5 +792,4 @@ abstract class OperandFieldHelper extends FieldFactory {
 				operandSubIndex, column);
 		}
 	}
-
 }

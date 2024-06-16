@@ -116,4 +116,9 @@ class LibraryDB implements Library {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return getName();
+	}
+
 }

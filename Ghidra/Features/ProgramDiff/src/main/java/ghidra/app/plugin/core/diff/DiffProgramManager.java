@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.diff;
 
-import java.awt.Component;
 import java.net.URL;
 
 import ghidra.app.services.ProgramManager;
@@ -80,17 +79,22 @@ public class DiffProgramManager implements ProgramManager {
 	}
 
 	@Override
+	public Program openCachedProgram(URL ghidraURL, Object consumer) {
+		return null;
+	}
+
+	@Override
 	public Program openProgram(DomainFile domainFile) {
 		return null;
 	}
 
 	@Override
-	public Program openProgram(DomainFile df, int version) {
+	public Program openCachedProgram(DomainFile domainFile, Object consumer) {
 		return null;
 	}
 
 	@Override
-	public Program openProgram(DomainFile domainFile, Component dialogParent) {
+	public Program openProgram(DomainFile df, int version) {
 		return null;
 	}
 
@@ -101,11 +105,6 @@ public class DiffProgramManager implements ProgramManager {
 
 	@Override
 	public void openProgram(Program program) {
-		// stub
-	}
-
-	@Override
-	public void openProgram(Program program, boolean current) {
 		// stub
 	}
 
@@ -147,15 +146,5 @@ public class DiffProgramManager implements ProgramManager {
 	@Override
 	public boolean setPersistentOwner(Program program, Object owner) {
 		return false;
-	}
-
-	@Override
-	public boolean isLocked() {
-		return false;
-	}
-
-	@Override
-	public void lockDown(boolean state) {
-		// Not doing anything
 	}
 }

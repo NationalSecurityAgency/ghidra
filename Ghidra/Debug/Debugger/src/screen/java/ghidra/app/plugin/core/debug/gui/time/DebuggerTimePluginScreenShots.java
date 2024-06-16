@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.time;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.test.ToyProgramBuilder;
@@ -24,7 +25,6 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerTimePluginScreenShots extends GhidraScreenShotGenerator {
@@ -52,7 +52,7 @@ public class DebuggerTimePluginScreenShots extends GhidraScreenShotGenerator {
 	public void testCaptureDebuggerTimePlugin() throws Throwable {
 		long fakeClock = (long) Integer.MAX_VALUE * 1000;
 		TraceSnapshot snap;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			snap = tb.trace.getTimeManager().createSnapshot("Trace started");
 			snap.setRealTime(fakeClock);
 

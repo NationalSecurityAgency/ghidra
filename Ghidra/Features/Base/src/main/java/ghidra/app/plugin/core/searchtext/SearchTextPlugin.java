@@ -21,13 +21,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
@@ -35,13 +38,16 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.app.plugin.core.searchtext.databasesearcher.ProgramDatabaseSearchTableModel;
 import ghidra.app.plugin.core.searchtext.databasesearcher.ProgramDatabaseSearcher;
 import ghidra.app.plugin.core.table.TableComponentProvider;
-import ghidra.app.services.*;
+import ghidra.app.services.GoToService;
+import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.query.TableService;
 import ghidra.app.util.viewer.field.*;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
@@ -58,7 +64,6 @@ import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 /**
  * Plugin to search text as it is displayed in the fields of the Code Browser.
@@ -82,16 +87,15 @@ import resources.ResourceManager;
 			"on the entire program. Multiple matches are displayed " +
 			"in a query results table. An option allows the search results " +
 			"to be highlighted in the Code Browser.",
-	servicesRequired = { ProgramManager.class, GoToService.class, CodeViewerService.class /*, TableService.class */ }
+	servicesRequired = { ProgramManager.class, GoToService.class }
 )
 //@formatter:on
 public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeListener, TaskListener,
 		NavigatableRemovalListener, DockingContextListener {
 
-	private static final ImageIcon searchIcon = ResourceManager.loadImage("images/searchm_obj.gif");
+	private static final Icon SEARCH_MARKER_ICON = new GIcon("icon.base.search.marker");
 
 	private static final String DESCRIPTION = "Search program text for string";
-	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 
 	private boolean waitingForSearchAll;
 	private SearchTextDialog searchDialog;
@@ -99,8 +103,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private int searchLimit;
 	private SearchTask currentTask;
 	private String lastSearchedText;
-	private Color highlightColor;
-	private Color currentAddrHighlightColor;
 	private boolean doHighlight;
 	private Navigatable navigatable;
 
@@ -115,7 +117,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	 * @param plugintool The tool required by this plugin.
 	 */
 	public SearchTextPlugin(PluginTool plugintool) {
-		super(plugintool, true, false);
+		super(plugintool);
 		createActions();
 		initializeOptions();
 		tool.addContextListener(this);
@@ -143,20 +145,23 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			return;
 		}
 
-		ProgramLocation loc = searchTask.getSearchLocation();
+		TextSearchResult result = searchTask.getSearchLocation();
 		Searcher textSearcher = searchTask.getTextSearcher();
 		SearchOptions searchOptions = textSearcher.getSearchOptions();
-		if (loc != null && loc.equals(currentLocation)) {
+		if (result == null) {
+			searchDialog.setStatusText("Not found");
+		}
+		else if (result.programLocation()
+				.equals(currentLocation)) {
 			searchNext(searchTask.getProgram(), searchNavigatable, textSearcher);
 		}
-		else if (loc != null) {
-			searchDialog.setStatusText("");
-			if (goToService.goTo(searchNavigatable, loc, program)) {
-				new HighlightHandler(searchNavigatable, searchOptions, null, program, loc);
-			}
-		}
 		else {
-			searchDialog.setStatusText("Not found");
+			searchDialog.setStatusText("");
+			ProgramLocation loc = result.programLocation();
+			if (goToService.goTo(searchNavigatable, loc, program)) {
+				new SearchTextHighlightProvider(searchNavigatable, searchOptions, null, program,
+					result);
+			}
 		}
 
 		lastSearchedText = searchOptions.getText();
@@ -175,20 +180,22 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		ToolOptions opt = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		opt.removeOptionsChangeListener(this);
 
-		opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.removeOptionsChangeListener(this);
 
 		navigatable = null;
 
-		if (searchDialog != null && searchDialog.isVisible()) {
-			TaskMonitor taskMonitor = searchDialog.getTaskMonitorComponent();
-			// TODO this can probably be handled by canceling the task below (or vice versa)
-			taskMonitor.cancel();
-			searchDialog.dispose();
+		if (searchDialog != null) {
 
-			if (searchAllTaskMonitor != null) {
-				searchAllTaskMonitor.cancel();
+			if (searchDialog.isVisible()) {
+				TaskMonitor taskMonitor = searchDialog.getTaskMonitorComponent();
+				taskMonitor.cancel();
+				if (searchAllTaskMonitor != null) {
+					searchAllTaskMonitor.cancel();
+				}
 			}
+
+			searchDialog.dispose();
 		}
 
 		if (currentTask != null) {
@@ -323,7 +330,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		searchAllTaskMonitor = tablePanel.getTaskMonitor();
 
 		tableProvider.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "SearchAllResults"));
-		new HighlightHandler(searchNavigatable, searchOptions, tableProvider, searchProgram, null);
+		new SearchTextHighlightProvider(searchNavigatable, searchOptions, tableProvider,
+			searchProgram, null);
 	}
 
 	private TableComponentProvider<ProgramLocation> getTableResultsProvider(
@@ -332,7 +340,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (navigatable.supportsMarkers()) {
 			return query.showTableWithMarkers(
 				"Search Text - \"" + searchString + "\"  [" + matchType + "]", "Search", model,
-				PluginConstants.SEARCH_HIGHLIGHT_COLOR, searchIcon, "Search", navigatable);
+				SearchConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
 		}
 		return query.showTable("Search Text - \"" + searchString + "\"  [" + matchType + "]",
 			"Search", model, "Search", navigatable);
@@ -377,10 +385,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.keyBinding("ctrl shift E")
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
-				.withContext(NavigatableActionContext.class)
+				.withContext(NavigatableActionContext.class, true)
 				.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.supportsDefaultToolContext(true)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
 					displayDialog(c);
@@ -390,11 +397,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		new ActionBuilder("Repeat Text Search", getName())
 				.menuPath("&Search", "Repeat Text Search")
 				.menuGroup("search", subGroup)
-				.keyBinding("ctrl shift F3")
 				.description(DESCRIPTION)
-				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
-				.withContext(NavigatableActionContext.class)
+				.withContext(NavigatableActionContext.class, true)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.enabledWhen(c -> searchedOnce)
 				.onAction(c -> {
@@ -425,40 +430,29 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			}
 			searchLimit = newSearchLimit;
 		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME)) {
-			currentAddrHighlightColor = (Color) newValue;
-		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME)) {
-			highlightColor = (Color) newValue;
-		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_NAME)) {
+		else if (optionName.equals(SearchConstants.SEARCH_HIGHLIGHT_NAME)) {
 			doHighlight = ((Boolean) newValue).booleanValue();
 		}
 	}
 
 	private void initializeOptions() {
 
-		ToolOptions opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		ToolOptions opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		HelpLocation loc = new HelpLocation(HelpTopics.SEARCH, "HighlightText");
 
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
+		opt.registerOption(SearchConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
 			"Determines whether to highlight the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
-			"Color to use when highlighting the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
-			"Color to use for highlighting when the match string occurs at the current address.");
+		opt.registerThemeColorBinding(SearchConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			SearchConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
+			"The search result highlight color");
+		opt.registerThemeColorBinding(SearchConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
+			"The search result highlight color for the currently selected match");
 
 		searchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 
-		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
-		highlightColor = opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR);
-		currentAddrHighlightColor =
-			opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-				PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR);
+		doHighlight = opt.getBoolean(SearchConstants.SEARCH_HIGHLIGHT_NAME, true);
 
 		opt.setOptionsHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Search_Text"));
 
@@ -474,7 +468,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		String textSelection = navigatable.getTextSelection();
 		ProgramLocation location = navigatable.getLocation();
 		Address address = location.getAddress();
-		Listing listing = context.getProgram().getListing();
+		Listing listing = context.getProgram()
+				.getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(address);
 		boolean isInstruction = false;
 		if (textSelection != null) {
@@ -575,7 +570,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 				Msg.showWarn(getClass(), getParentComponent(), "Search Limit Exceeded!",
 					"Stopped search after finding " + matchCount + " matches.\n" +
-						"The Search limit can be changed in the Edit->Options, under Tool Options");
+						"The search limit can be changed at Edit->Tool Options, under Search.");
 			}
 			// there was a suggestion that the dialog should not go way after a search all
 //			searchDialog.close();
@@ -588,7 +583,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 			// must have completed too fast for the provider to be set; try something cute
 			Component focusOwner =
-				KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+				KeyboardFocusManager.getCurrentKeyboardFocusManager()
+						.getFocusOwner();
 			return focusOwner; // assume this IS the provider
 		}
 
@@ -603,20 +599,26 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		}
 	}
 
-	class HighlightHandler implements HighlightProvider, ComponentProviderActivationListener {
+	private class SearchTextHighlightProvider
+			implements ListingHighlightProvider, ComponentProviderActivationListener {
 		private SearchOptions searchOptions;
 		private TableComponentProvider<?> provider;
 		private Program highlightProgram;
 		private final Navigatable highlightNavigatable;
-		private ProgramLocation loc;
+		private boolean showAllResults;
 
-		HighlightHandler(Navigatable navigatable, SearchOptions searchOptions,
-				TableComponentProvider<?> provider, Program program, ProgramLocation loc) {
+		// this is non-null for a single search
+		private TextSearchResult searchResult;
+
+		SearchTextHighlightProvider(Navigatable navigatable, SearchOptions searchOptions,
+				TableComponentProvider<?> provider, Program program,
+				TextSearchResult searchResult) {
 			highlightNavigatable = navigatable;
 			this.searchOptions = searchOptions;
 			this.provider = provider;
 			this.highlightProgram = program;
-			this.loc = loc;
+			this.searchResult = searchResult;
+			this.showAllResults = searchResult == null;
 
 			if (provider != null) {
 				provider.addActivationListener(this);
@@ -625,8 +627,11 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		}
 
 		@Override
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
+
+			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory()
+					.getClass();
+
 			if (!doHighlight) {
 				return NO_HIGHLIGHTS;
 			}
@@ -635,7 +640,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return NO_HIGHLIGHTS;
 			}
 
-			if (!shouldHighlight(fieldFactoryClass, obj)) {
+			if (!shouldHighlight(field)) {
 				return NO_HIGHLIGHTS;
 			}
 
@@ -644,48 +649,94 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return NO_HIGHLIGHTS;
 			}
 
-			return getHighlights(text, cursorTextOffset);
+			if (showAllResults) {
+				return getAllHighlights(text, cursorTextOffset);
+			}
+
+			Address address = searchResult.programLocation()
+					.getAddress();
+			ProxyObj<?> proxy = field.getProxy();
+			if (proxy.contains(address)) {
+				return getSingleSearchHighlight(text, field, cursorTextOffset);
+			}
+
+			return NO_HIGHLIGHTS;
 		}
 
-		private Highlight[] getHighlights(String text, int cursorTextOffset) {
+		private Highlight[] getAllHighlights(String text, int cursorTextOffset) {
 
-			String matchStr = searchOptions.getText().trim();
-			if (matchStr == null || text == null) {
+			String searchText = searchOptions.getText();
+			if (StringUtils.isBlank(searchText) || StringUtils.isBlank(text)) {
 				return NO_HIGHLIGHTS;
 			}
 
 			List<Highlight> list = new ArrayList<>();
 			Pattern regexp =
-				UserSearchUtils.createSearchPattern(matchStr, searchOptions.isCaseSensitive());
+				UserSearchUtils.createSearchPattern(searchText, searchOptions.isCaseSensitive());
 			Matcher matcher = regexp.matcher(text);
 			while (matcher.find()) {
 				int start = matcher.start();
 				int end = matcher.end() - 1;
+				Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 				if (start <= cursorTextOffset && end >= cursorTextOffset) {
-					list.add(new Highlight(start, end, currentAddrHighlightColor));
+					// change the highlight color when in the field so it stands out
+					hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 				}
-				else if (loc == null) { // only add in matches around current match if loc is null
-					// meaning that this is a one at a time search and not a table
-					// of results.
-					list.add(new Highlight(start, end, highlightColor));
-				}
+				list.add(new Highlight(start, end, hlColor));
 			}
 
-			if (list.size() == 0) {
+			if (list.isEmpty()) {
 				return NO_HIGHLIGHTS;
 			}
-			Highlight[] h = new Highlight[list.size()];
-			return list.toArray(h);
+			return list.toArray(Highlight[]::new);
 		}
 
-		/**
-		 * Return whether the field for the given factory class should be highlighted; compare
-		 * against the search options
-		 *
-		 * @param factoryClass field factory class
-		 * @param obj object associated with the field, e.g. CodeUnit
-		 */
-		private boolean shouldHighlight(Class<?> factoryClass, Object obj) {
+		private Highlight[] getSingleSearchHighlight(String text, ListingField field,
+				int cursorTextOffset) {
+
+			String searchText = searchOptions.getText();
+			if (StringUtils.isBlank(searchText) || StringUtils.isBlank(text)) {
+				return NO_HIGHLIGHTS;
+			}
+
+			FieldFactory fieldFactory = field.getFieldFactory();
+			ProgramLocation loc = searchResult.programLocation();
+			if (!fieldFactory.supportsLocation(field, loc)) {
+				return NO_HIGHLIGHTS;
+			}
+
+			int charOffset = searchResult.offset();
+			int searchStart = charOffset;
+			int searchEnd = searchStart + searchText.length();
+
+			Pattern regexp =
+				UserSearchUtils.createSearchPattern(searchText, searchOptions.isCaseSensitive());
+			Matcher matcher = regexp.matcher(text);
+			while (matcher.find()) {
+				int start = matcher.start();
+				int end = matcher.end();
+
+				// ensure the particular regex match is the actual search result
+				if (start == searchStart && end == searchEnd) {
+
+					Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
+					if (start <= cursorTextOffset && end >= cursorTextOffset) {
+						// change the highlight color when in the field so it stands out
+						hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
+					}
+
+					// this is the matching search hit for a single search
+					int endEx = end - 1;
+					return new Highlight[] { new Highlight(start, endEx, hlColor) };
+				}
+			}
+			return NO_HIGHLIGHTS;
+		}
+
+		private boolean shouldHighlight(ListingField field) {
+
+			ProxyObj<?> proxy = field.getProxy();
+			Object obj = proxy.getObject();
 			Program navigatableProgram = navigatable == null ? null : navigatable.getProgram();
 			if (navigatableProgram != highlightProgram) {
 				return false;
@@ -694,6 +745,9 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			if (searchOptions.searchAllFields()) {
 				return true;
 			}
+
+			Class<? extends FieldFactory> factoryClass = field.getFieldFactory()
+					.getClass();
 			if (searchOptions.searchComments()) {
 				if (factoryClass == PreCommentFieldFactory.class ||
 					factoryClass == PlateFieldFactory.class ||

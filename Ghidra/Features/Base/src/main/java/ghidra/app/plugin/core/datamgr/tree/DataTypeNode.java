@@ -50,8 +50,9 @@ public class DataTypeNode extends DataTypeTreeNode {
 
 	@Override
 	public int compareTo(GTreeNode node) {
-		if (node instanceof DataTypeNode) {
-			return super.compareTo(node);
+		if (node instanceof DataTypeNode other) {
+			return DataTypeNameComparator.INSTANCE.compare(dataType.getName(),
+				other.dataType.getName());
 		}
 
 		return 1; // DataTypeNodes always come after ****everything else****
@@ -69,8 +70,14 @@ public class DataTypeNode extends DataTypeTreeNode {
 		if (getClass() != o.getClass()) {
 			return false;
 		}
+
 		DataTypeNode otherNode = (DataTypeNode) o;
-		return dataType.equals(otherNode.dataType) && name.equals(otherNode.name);
+		CategoryPath otherPath = otherNode.getDataType().getCategoryPath();
+		CategoryPath path = dataType.getCategoryPath();
+		if (!path.equals(otherPath)) {
+			return false;
+		}
+		return name.equals(otherNode.name);
 	}
 
 	@Override

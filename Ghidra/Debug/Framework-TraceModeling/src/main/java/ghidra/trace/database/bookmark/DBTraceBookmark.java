@@ -15,8 +15,6 @@
  */
 package ghidra.trace.database.bookmark;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -25,11 +23,12 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -89,7 +88,7 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 	}
 
 	@Override
-	public void setLifespan(Range<Long> lifespan) {
+	public void setLifespan(Lifespan lifespan) {
 		doSetLifespan(lifespan);
 	}
 
@@ -141,14 +140,14 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 			update(CATEGORY_COLUMN, COMMENT_COLUMN);
 		}
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBookmarkChangeType.CHANGED, space, this));
+			new TraceChangeRecord<>(TraceEvents.BOOKMARK_CHANGED, space, this));
 	}
 
 	@Override
 	public void delete() {
 		space.bookmarkMapSpace.deleteData(this);
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBookmarkChangeType.DELETED, space, this));
+			new TraceChangeRecord<>(TraceEvents.BOOKMARK_DELETED, space, this));
 	}
 
 	@Override
@@ -159,7 +158,7 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 		}
 		TraceBookmark that = (TraceBookmark) o;
 		int result;
-		result = DBTraceUtils.compareRanges(this.getLifespan(), that.getLifespan());
+		result = this.getLifespan().compareTo(that.getLifespan());
 		if (result != 0) {
 			return result;
 		}

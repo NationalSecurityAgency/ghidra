@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -31,18 +31,27 @@ import org.junit.Assert;
 import docking.*;
 import docking.action.DockingActionIf;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
+/**
+ * Extend this class to create screen shot images for help. The name of the class determines the
+ * topic directory where the captured image will be stored. So if the class name is
+ * XyzShreenShots, the resulting captured image will appear in help topic directly "Xyz", regardless
+ * of which module has that topic.  The test name will determine the name of the image file
+ * that is generated. So if the test name is testHappyBirthday, the filename will be
+ * HappyBirthday.png.
+ */
 public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenerator {
 
+	private static final Color FG_COLOR_TEXT = Palette.getColor("cornflowerblue");
 	private static final String CAPTURE = "Capture";
 
 	protected GhidraScreenShotGenerator() {
-		super();
 	}
 
 	@Override
@@ -63,7 +72,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		}
 	}
 
-	/** 
+	/**
 	 * Generally, you shouldn't use this.  This is only visible for those who do not directly
 	 * extend this class.
 	 */
@@ -95,34 +104,33 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		}
 
 		// next, try the .gif extension
-		potentialFile = new File(helpTopic, "images/" + name + ".gif");
+		File imageDir = new File(helpTopic, "images");
+		imageDir.mkdirs();
+		potentialFile = new File(imageDir, name + ".gif");
 		if (potentialFile.exists()) {
 			handleGIFImage(potentialFile);
 		}
 
 		// next, how about jpg?
-		potentialFile = new File(helpTopic, "images/" + name + ".jpg");
+		potentialFile = new File(imageDir, name + ".jpg");
 		if (potentialFile.exists()) {
 			handleJPGImage(potentialFile);
 		}
 
 		// next, look for any matching image, ignoring case
 		final String nameLowerCase = name.toLowerCase();
-		File imagesDir = new File(helpTopic, "images");
-		File[] matchingFiles = imagesDir.listFiles((FileFilter) f -> {
+		File[] matchingFiles = imageDir.listFiles((FileFilter) f -> {
 			String filename = f.getName();
 			String filenameLowerCase = filename.toLowerCase();
 			return nameLowerCase.equals(filenameLowerCase);
 		});
 
-		if (matchingFiles.length == 1) {
-			return matchingFiles[0];
+		if (matchingFiles == null || matchingFiles.length == 0) {
+			return new File("ImageNotFound/" + name + ".png");
 		}
 
-		if (matchingFiles.length == 0) {
-//			fail("Unable to find image by name (case-insensitive): " + name + " for test case: " +
-//				getName());
-			return new File("ImageNotFound/" + name + ".png");
+		if (matchingFiles.length == 1) {
+			return matchingFiles[0];
 		}
 
 		Assert.fail("Found multiple files, ignoring case, that match name: " + name +
@@ -179,10 +187,10 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * Call when you are finished generating a new image.  This method will either show the 
-	 * newly created image or write it to disk, depending upon the value of 
+	 * Call when you are finished generating a new image.  This method will either show the
+	 * newly created image or write it to disk, depending upon the value of
 	 * {@link #SAVE_CREATED_IMAGE_FILE}, which is a system property.
-	 * 
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param oldImageName  The name of the image
 	 */
@@ -204,7 +212,9 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		assertNotNull("No new image found", image);
 
 		Image oldImage = getOldImage(helpTopic, oldImageName);
-		File imageFile = new File(helpTopic, "/images/" + oldImageName + DEFAULT_FILENAME_SUFFIX);
+		File imageDir = new File(helpTopic, "images");
+		imageDir.mkdirs();
+		File imageFile = new File(imageDir, oldImageName + DEFAULT_FILENAME_SUFFIX);
 		ImageDialogProvider dialog = new ImageDialogProvider(imageFile, oldImage, image);
 		dialog.setTitle("help/topics/" + helpTopic.getName() + "/images/" + oldImageName);
 		showDialog(dialog);
@@ -256,7 +266,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 
 		int x = (width / 2) - (stringWidth / 2);
 		int y = (height / 2) + (stringHeight / 2);
-		g.setColor(new Color(0, 0, 200, 100));
+		g.setColor(FG_COLOR_TEXT);
 		g.drawString(text, x, y);
 
 		return gifImage;
@@ -280,15 +290,15 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 
 		int x = (width / 2) - (stringWidth / 2);
 		int y = (height / 2) + (stringHeight / 2);
-		g.setColor(new Color(0, 0, 200, 100));
+		g.setColor(FG_COLOR_TEXT);
 		g.drawString(text, x, y);
 
 		return gifImage;
 	}
 
 	/**
-	 * @deprecated use instead {@link #finished(File, String)}.  
-	 * 
+	 * @deprecated use instead {@link #finished(File, String)}.
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param oldImageName  The name of the image
 	 */
@@ -298,8 +308,8 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * @deprecated use instead {@link #finished(File, String)}.  
-	 * 
+	 * @deprecated use instead {@link #finished(File, String)}.
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param imageName  The name of the image
 	 */

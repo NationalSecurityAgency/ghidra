@@ -16,6 +16,8 @@
 #include "ghidra_translate.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// \brief Associate a Varnode with a register name
 ///
 /// \param nm is the register name
@@ -36,7 +38,7 @@ void GhidraTranslate::initialize(DocumentStorage &store)
   const Element *el = store.getTag("sleigh");
   if (el == (const Element *)0)
     throw LowlevelError("Could not find ghidra sleigh tag");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
   decode(decoder);
 }
 
@@ -46,20 +48,20 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   map<string,VarnodeData>::const_iterator iter = nm2addr.find(nm);
   if (iter != nm2addr.end())
     return (*iter).second;
-  XmlDecode decoder;
+  PackedDecode decoder(glb);
   try {
     if (!glb->getRegister(nm,decoder))		// Ask Ghidra client about the register
       throw LowlevelError("No register named "+nm);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     ostringstream errmsg;
-    errmsg << "Error parsing XML response for query of register: " << nm;
+    errmsg << "Error decoding response for query of register: " << nm;
     errmsg << " -- " << err.explain;
     throw LowlevelError(errmsg.str());
   }
   Address regaddr;
   int4 regsize;
-  regaddr = Address::decode( decoder, this, regsize);
+  regaddr = Address::decode( decoder, regsize);
   VarnodeData vndata;
   vndata.space = regaddr.getSpace();
   vndata.offset = regaddr.getOffset();
@@ -100,9 +102,10 @@ int4 GhidraTranslate::oneInstruction(PcodeEmit &emit,const Address &baseaddr) co
 
 {
   int4 offset;
-  uint1 *doc;
+  PackedDecode decoder(glb);
+  bool success;
   try {
-    doc = glb->getPcodePacked(baseaddr);	// Request p-code for one instruction
+    success = glb->getPcode(baseaddr,decoder);	// Request p-code for one instruction
   }
   catch(JavaError &err) {
     ostringstream s;
@@ -110,34 +113,26 @@ int4 GhidraTranslate::oneInstruction(PcodeEmit &emit,const Address &baseaddr) co
     baseaddr.printRaw(s);
     throw LowlevelError(s.str());
   }
-  if (doc == (uint1 *)0) {
+  if (!success) {
     ostringstream s;
     s << "No pcode could be generated at address: " << baseaddr.getShortcut();
     baseaddr.printRaw(s);
     throw BadDataError(s.str());
   }
 
-  uintb val;
-  const uint1 *ptr = PcodeEmit::unpackOffset(doc+1,val);
-  offset = (int4)val;
-
-  if (*doc == PcodeEmit::unimpl_tag) {
+  int4 el = decoder.openElement();
+  offset = decoder.readSignedInteger(ATTRIB_OFFSET);
+  if (el == ELEM_UNIMPL) {
     ostringstream s;
     s << "Instruction not implemented in pcode:\n ";
     baseaddr.printRaw(s);
-    delete [] doc;
     throw UnimplError(s.str(),offset);
   }
 
-  int4 spcindex = (int4)(*ptr++ - 0x20);
-  AddrSpace *spc = getSpace(spcindex);
-  uintb instoffset;
-  ptr = PcodeEmit::unpackOffset(ptr,instoffset);
-  Address pc(spc,instoffset);
+  Address pc = Address::decode(decoder);
   
-  while(*ptr == PcodeEmit::op_tag)
-    ptr = emit.restorePackedOp(pc,ptr,this);
-  delete [] doc;
+  while(decoder.peekElement() != 0)
+    emit.decodeOp(pc,decoder);
   return offset;
 }
 
@@ -161,3 +156,4 @@ void GhidraTranslate::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+} // End namespace ghidra

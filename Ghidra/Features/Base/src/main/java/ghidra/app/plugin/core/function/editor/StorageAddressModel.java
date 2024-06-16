@@ -53,8 +53,8 @@ class StorageAddressModel {
 	}
 
 	void addVarnode() {
-		listener.tableRowsChanged();
 		varnodes.add(new VarnodeInfo(program, VarnodeType.Register));
+		listener.tableRowsChanged();
 		setSelectedRow(varnodes.size() - 1);
 		notifyDataChanged();
 	}
@@ -142,7 +142,7 @@ class StorageAddressModel {
 
 	void setSelectedVarnodeRows(int[] selectedRows) {
 		selectedVarnodeRows = selectedRows;
-		notifyDataChanged();
+//		notifyDataChanged();
 	}
 
 	private void setSelectedRow(int row) {
@@ -201,18 +201,15 @@ class StorageAddressModel {
 		int currentSize = getCurrentSize();
 		if (currentSize == 0) {
 			statusText = "No storage has been allocated";
-//			return false;
 		}
 		else if (currentSize > 0 && unconstrained) {
 			return true;
 		}
 		else if (currentSize < requiredSize) {
 			statusText = "Warning: Not enough storage space allocated";
-//			return false;
 		}
 		else if (currentSize > requiredSize) {
 			statusText = "Warning: Too much storage space allocated";
-//			return false;
 		}
 		return true;
 	}

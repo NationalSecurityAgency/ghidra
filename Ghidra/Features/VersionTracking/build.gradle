@@ -27,8 +27,6 @@ project.ext.excludeFromParallelIntegrationTests = true
 dependencies {
 	api project(":Base")
 	
-	helpPath project(path: ":Base", configuration: "helpPath")
-	
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }

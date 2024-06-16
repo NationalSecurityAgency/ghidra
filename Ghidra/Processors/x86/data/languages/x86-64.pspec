@@ -9,7 +9,6 @@
   <context_data>
     <context_set space="ram">
       <set name="addrsize" val="2"/>
-      <set name="bit64" val="1"/>
       <set name="opsize" val="1"/>
       <set name="rexprefix" val="0"/>
       <set name="longMode" val="1"/>

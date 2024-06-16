@@ -20,11 +20,13 @@ import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Create a "do nothing" task monitor that we can pass along to methods that
- * need a task monitor. This can be used when methods provide detailed
- * task progress information that we don't want to show the user.
- * <P>This  monitor can be configured to allow cancelling via {@link #setCancelEnabled(boolean)}.
- * If this cancelling is enabled, the the monitor may be cancelled programmatically.
+ * Implementation of {@link TaskMonitor} with most features stubbed out.
+ * <p>
+ * This class supports cancelling and cancel listener notification.  Cancelling must be enabled
+ * via {@link #setCancelEnabled(boolean)}.
+ * <p>
+ * Use {@link WrappingTaskMonitor} if you need to override an existing TaskMonitor 
+ * instance's behavior.
  */
 public class TaskMonitorAdapter implements TaskMonitor {
 
@@ -55,8 +57,16 @@ public class TaskMonitorAdapter implements TaskMonitor {
 		return cancelled;
 	}
 
+	@Deprecated(since = "10.3")
 	@Override
 	public void checkCanceled() throws CancelledException {
+		if (cancelled) {
+			throw new CancelledException();
+		}
+	}
+
+	@Override
+	public void checkCancelled() throws CancelledException {
 		if (cancelled) {
 			throw new CancelledException();
 		}
@@ -145,7 +155,7 @@ public class TaskMonitorAdapter implements TaskMonitor {
 			cancelled = false;
 		}
 
-		// TODO this seems like a mistake, to notify of 'cancelled' when clearning 
+		// TODO this seems like a mistake, to notify of 'cancelled' when clearing
 		notifyChangeListeners();
 	}
 

@@ -133,6 +133,9 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 
 	@Override
 	public void output(GdbManager.Channel gdbChannel, String out) {
+		if (!valid) {
+			return;
+		}
 		TargetConsole.Channel dbgChannel;
 		switch (gdbChannel) {
 			case STDOUT:
@@ -144,7 +147,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			default:
 				throw new AssertionError();
 		}
-		listeners.fire.consoleOutput(this, dbgChannel, out);
+		broadcast().consoleOutput(this, dbgChannel, out);
 	}
 
 	@Override
@@ -186,7 +189,10 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		GdbModelTargetInferior inf = inferiors.getTargetInferior(thread.getInferior());
 		GdbModelTargetThread t = inf.threads.getTargetThread(thread);
 		if (frame == null) {
-			setFocus(t);
+			GdbModelSelectableObject curFocus = getFocus();
+			if (curFocus != null && !PathUtils.isAncestor(t.getPath(), curFocus.getPath())) {
+				setFocus(t);
+			}
 			return;
 		}
 		GdbModelTargetStackFrame f = t.stack.getTargetFrame(frame);
@@ -239,7 +245,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		catch (IOException e) {
 			Msg.error(this, "Could not interrupt", e);
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -261,7 +267,8 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		 * or be used as an example for other implementations.
 		 */
 		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
-			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
+			throw new DebuggerIllegalArgumentException(
+				"Can only activate a successor of the scope");
 		}
 		TargetObject cur = obj;
 		while (cur != null) {
@@ -271,7 +278,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			}
 			cur = cur.getParent();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 
 	}
 
@@ -290,11 +297,11 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			if (cur instanceof GdbModelSelectableObject) {
 				GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
 				setFocus(sel);
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			cur = cur.getParent();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {

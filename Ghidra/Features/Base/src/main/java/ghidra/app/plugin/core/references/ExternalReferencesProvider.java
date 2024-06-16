@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.references;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -24,9 +26,11 @@ import javax.swing.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.table.AbstractSortedTableModel;
+import generic.theme.GIcon;
 import ghidra.app.cmd.refs.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
@@ -41,17 +45,17 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * ComponentProvider that displays a table of External Programs.
  * <p>
  */
 public class ExternalReferencesProvider extends ComponentProviderAdapter {
-	private static ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static ImageIcon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static ImageIcon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
-	private static ImageIcon CLEAR_ICON = ResourceManager.loadImage("images/erase16.png");
+	private static Icon ADD_ICON = Icons.ADD_ICON;
+	private static Icon DELETE_ICON = Icons.DELETE_ICON;
+	private static Icon EDIT_ICON = new GIcon("icon.base.edit.bytes");
+	private static Icon CLEAR_ICON = Icons.CLEAR_ICON;
 
 	private JPanel mainPanel;
 	private ExternalNamesTableModel tableModel;
@@ -147,7 +151,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, table);
+		return new DefaultActionContext(this, table);
 	}
 
 	private JPanel buildMainPanel() {
@@ -159,8 +163,11 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		ToolTipManager.sharedInstance().registerComponent(table);
-
 		panel.add(sp, BorderLayout.CENTER);
+
+		String namePrefix = "External Programs";
+		table.setName(namePrefix);
+		table.getAccessibleContext().setAccessibleName(namePrefix);
 
 		return panel;
 	}
@@ -188,8 +195,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 	private void addExternalProgram() {
 		InputDialog dialog = new InputDialog("New External Program", "Enter Name");
-		dialog.setHelpLocation(
-			new HelpLocation("ReferencesPlugin", "Add_External_Program_Name"));
+		dialog.setHelpLocation(new HelpLocation("ReferencesPlugin", "Add_External_Program_Name"));
 		getTool().showDialog(dialog, ExternalReferencesProvider.this);
 		if (dialog.isCanceled()) {
 			return;
@@ -200,8 +206,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 				"External program name cannot be empty");
 			return;
 		}
-		AddExternalNameCmd cmd =
-			new AddExternalNameCmd(newExternalName, SourceType.USER_DEFINED);
+		AddExternalNameCmd cmd = new AddExternalNameCmd(newExternalName, SourceType.USER_DEFINED);
 		getTool().execute(cmd, program);
 	}
 
@@ -210,8 +215,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		StringBuilder buf = new StringBuilder();
 		CompoundCmd cmd = new CompoundCmd("Delete External Program Name");
 		for (String externalName : getSelectedExternalNames()) {
-			boolean hasLocations =
-				externalManager.getExternalLocations(externalName).hasNext();
+			boolean hasLocations = externalManager.getExternalLocations(externalName).hasNext();
 			if (hasLocations) {
 				buf.append("\n     ");
 				buf.append(externalName);
@@ -234,7 +238,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 		List<String> selectedExternalNames = getSelectedExternalNames();
 		String externalName = selectedExternalNames.get(0);	// must be exactly one for us to be enabled.
 		DataTreeDialog dialog = new DataTreeDialog(mainPanel,
-			"Choose External Program (" + externalName + ")", DataTreeDialog.OPEN);
+			"Choose External Program (" + externalName + ")", OPEN);
 
 		dialog.setSearchText(externalName);
 
@@ -246,16 +250,13 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 			String pathName = domainFile.toString();
 			dialog.close();
 			ExternalManager externalManager = program.getExternalManager();
-			String externalLibraryPath =
-				externalManager.getExternalLibraryPath(externalName);
+			String externalLibraryPath = externalManager.getExternalLibraryPath(externalName);
 			if (!pathName.equals(externalLibraryPath)) {
-				Command cmd =
-					new SetExternalNameCmd(externalName, domainFile.getPathname());
+				Command cmd = new SetExternalNameCmd(externalName, domainFile.getPathname());
 				getTool().execute(cmd, program);
 			}
 		});
-		dialog.setHelpLocation(
-			new HelpLocation("ReferencesPlugin", "ChooseExternalProgram"));
+		dialog.setHelpLocation(new HelpLocation("ReferencesPlugin", "ChooseExternalProgram"));
 		getTool().showDialog(dialog);
 	}
 
@@ -342,8 +343,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 						continue;
 					}
 
-					ExternalNamesRow path =
-						new ExternalNamesRow(programName, extMgr.getExternalLibraryPath(programName));
+					ExternalNamesRow path = new ExternalNamesRow(programName,
+						extMgr.getExternalLibraryPath(programName));
 					paths.add(path);
 				}
 			}
@@ -363,7 +364,6 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 			}
 			return -1;
 		}
-
 
 		@Override
 		public void dispose() {

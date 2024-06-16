@@ -18,6 +18,24 @@ define space register type=register_space size=4;
 define register offset=0 size=$(REGISTER_SIZE) [ 
 	r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
 	r16 r17 r18 r19 r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31 ];
+	
+@ifdef E500
+# Define 4-byte general purpose sub-registers (LSB) to be used by E500 compiler specification
+# which must restrict parameter/return passing to low 4-bytes of the 8-byte general purpose registers.
+@if ENDIAN == "big"
+define register offset=0 size=4 [ 
+	_	_r0		_	_r1		_	_r2		_	_r3		_	_r4		_	_r5		_	_r6		_	_r7		
+	_	_r8		_	_r9		_	_r10	_	_r11	_	_r12	_	_r13	_	_r14	_	_r15
+	_ 	_r16 	_ 	_r17 	_ 	_r18 	_ 	_r19 	_ 	_r20 	_ 	_r21 	_ 	_r22 	_ 	_r23 
+	_ 	_r24 	_ 	_r25 	_ 	_r26 	_ 	_r27 	_ 	_r28 	_ 	_r29 	_ 	_r30 	_ 	_r31 ];
+@else
+define register offset=0 size=4 [ 
+	_r0		_	_r1		_	_r2		_	_r3		_	_r4		_	_r5		_	_r6		_	_r7		_
+	_r8		_	_r9		_	_r10	_	_r11	_	_r12	_	_r13	_	_r14	_	_r15	_
+	_r16 	_ 	_r17 	_ 	_r18 	_ 	_r19 	_ 	_r20 	_ 	_r21 	_ 	_r22 	_ 	_r23 	_
+	_r24 	_ 	_r25 	_ 	_r26 	_ 	_r27 	_ 	_r28 	_ 	_r29 	_ 	_r30 	_ 	_r31 	_ ];
+@endif
+@endif
 
 # XER flags
 define register offset=0x400 size=1 [ xer_so xer_ov xer_ov32 xer_ca xer_ca32 xer_count ];
@@ -1397,7 +1415,6 @@ attach variables vrC_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15
 ################################################################
 
 define pcodeop clearHistory;
-define pcodeop countLeadingZeros;
 define pcodeop countTrailingZeros;
 define pcodeop dataCacheBlockAllocate;
 define pcodeop dataCacheBlockFlush;
@@ -1730,7 +1747,8 @@ macro loadRegisterPartial(reg, ea, sa) {
 
 macro storeRegister(reg, ea) {
 @ifdef BIT_64
-	*:4(ea) = reg:4;
+    tmp:8 = reg; # workaround
+	*:4(ea) = tmp:4;
 @else
 	*:4(ea) = reg;
 @endif
@@ -1739,7 +1757,8 @@ macro storeRegister(reg, ea) {
 
 macro storeReg(reg) {
 @ifdef BIT_64
-	*:4(tea) = reg:4;
+	tmp:8 = reg; # workaround
+	*:4(tea) = tmp:4;
 @else
 	*:4(tea) = reg;
 @endif
@@ -1748,7 +1767,8 @@ macro storeReg(reg) {
 
 macro storeRegisterPartial(reg, ea, sa) {
 @ifdef BIT_64
-  *:4(ea) = reg:4;
+  tmp:8 = reg; # workaround
+  *:4(ea) = tmp:4;
 @else
   *:4(ea) = reg;
 @endif

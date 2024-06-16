@@ -25,11 +25,11 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.app.context.ProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.services.DebuggerStaticMappingChangeListener;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -196,7 +196,7 @@ public class DebuggerStaticSyncTrait {
 	}
 
 	protected void doSyncCursorIntoStatic(ProgramLocation location) {
-		if (location == null) {
+		if (location == null || mappingService == null) {
 			return;
 		}
 		ProgramLocation staticLoc = mappingService.getStaticLocationFromDynamic(location);
@@ -208,7 +208,7 @@ public class DebuggerStaticSyncTrait {
 
 	protected void doSyncCursorFromStatic() {
 		TraceProgramView view = current.getView(); // NB. Used for snap (don't want emuSnap)
-		if (view == null || currentStaticLocation == null) {
+		if (currentStaticLocation == null || view == null || mappingService == null) {
 			return;
 		}
 		ProgramLocation dynamicLoc =
@@ -246,7 +246,8 @@ public class DebuggerStaticSyncTrait {
 	}
 
 	protected ProgramSelection doSyncSelectionIntoStatic(Program program, ProgramSelection sel) {
-		if (program == null || sel == null || currentStaticProgram == null) {
+		if (program == null || sel == null || currentStaticProgram == null ||
+			mappingService == null) {
 			return null;
 		}
 		TraceProgramView view = (TraceProgramView) program;
@@ -269,7 +270,8 @@ public class DebuggerStaticSyncTrait {
 
 	protected ProgramSelection doSyncSelectionFromStatic() {
 		TraceProgramView view = current.getView();
-		if (view == null || currentStaticProgram == null || currentStaticSelection == null) {
+		if (view == null || currentStaticProgram == null || currentStaticSelection == null ||
+			mappingService == null) {
 			return null;
 		}
 		AddressSet mapped =

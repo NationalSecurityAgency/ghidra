@@ -29,7 +29,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.DockingDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.dialogs.NumberInputDialog;
@@ -41,6 +41,7 @@ import ghidra.app.plugin.core.stackeditor.StackEditorModel;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.model.*;
+import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.ProgramBuilder;
@@ -246,6 +247,10 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		});
 	}
 
+	protected int[] getSelection() {
+		return runSwing(() -> getTable().getSelectedRows());
+	}
+
 	private String arrayToString(int[] values) {
 		StringBuilder buf = new StringBuilder();
 		for (int value : values) {
@@ -315,7 +320,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName(),
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
-		runSwing(() -> action.actionPerformed(new ActionContext()), wait);
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()), wait);
 		waitForSwing();
 	}
 
@@ -471,31 +476,17 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void startTransaction(final String txDescription) {
-		runSwing(() -> {
-			try {
-				txId = program.startTransaction(txDescription);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
+		txId = program.startTransaction(txDescription);
 	}
 
 	protected void endTransaction(final boolean saveChanges) {
-		runSwing(() -> {
-			try {
-				program.endTransaction(txId, saveChanges);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
+		program.endTransaction(txId, saveChanges);
 	}
 
 	protected class RestoreListener implements DomainObjectListener {
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent event) {
-			if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (event.contains(DomainObjectEvent.RESTORED)) {
 				Object source = event.getSource();
 				if (source instanceof DataTypeManagerDomainObject) {
 					DataTypeManagerDomainObject restoredDomainObject =
@@ -829,4 +820,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertEquals(value, ((CompEditorModel) model).getLength());
 	}
 
+	protected void setOptions(String optionName, boolean b) {
+		runSwing(() -> {
+			Options options = tool.getOptions("Editors");
+			assertTrue(options.isRegistered(optionName));
+			options.setBoolean(optionName, b);
+		});
+	}
 }

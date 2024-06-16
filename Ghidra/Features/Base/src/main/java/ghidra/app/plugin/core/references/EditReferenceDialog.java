@@ -19,12 +19,11 @@ import java.awt.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.jdom.Element;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
@@ -35,7 +34,7 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 
-public class EditReferenceDialog extends DialogComponentProvider {
+public class EditReferenceDialog extends ReusableDialogComponentProvider {
 
 	static final int PREFERRED_PANEL_HEIGHT = 190;
 	static final int PREFERRED_PANEL_WIDTH = 450;
@@ -63,26 +62,22 @@ public class EditReferenceDialog extends DialogComponentProvider {
 	private boolean initializing;
 
 	public EditReferenceDialog(ReferencesPlugin plugin) {
-		super("Edit Reference", true);
+		super("Edit Reference");
 		this.plugin = plugin;
 		addWorkPanel(buildMainPanel());
 		addApplyButton();
 		addCancelButton();
 
 		setDefaultButton(applyButton);
+		setUseSharedLocation(true);
 	}
 
-	/**
-	 * Dispose of this dialog.
-	 */
+	@Override
 	public void dispose() {
-		close();
+		super.dispose();
 		cleanup();
 	}
 
-	/**
-	 * Returns the current code unit displayed.
-	 */
 	CodeUnit getCurrentCodeUnit() {
 		return instrPanel.getCurrentCodeUnit();
 	}
@@ -120,15 +115,12 @@ public class EditReferenceDialog extends DialogComponentProvider {
 
 		JPanel refTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 		refTypePanel.setBorder(new TitledBorder(new EtchedBorder(), "Type of Reference"));
-		ChangeListener refChoiceListener = new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Object src = e.getSource();
-				if (src instanceof JRadioButton) {
-					JRadioButton refChoiceButton = (JRadioButton) src;
-					if (refChoiceButton.isSelected()) {
-						refChoiceActivated(refChoiceButton);
-					}
+		ChangeListener refChoiceListener = e -> {
+			Object src = e.getSource();
+			if (src instanceof JRadioButton) {
+				JRadioButton refChoiceButton = (JRadioButton) src;
+				if (refChoiceButton.isSelected()) {
+					refChoiceActivated(refChoiceButton);
 				}
 			}
 		};
@@ -167,7 +159,6 @@ public class EditReferenceDialog extends DialogComponentProvider {
 
 		bottomPanelLayout = new CardLayout();
 		bottomPanel = new JPanel(bottomPanelLayout);
-		bottomPanel.setFocusCycleRoot(true);
 		bottomPanel.setPreferredSize(new Dimension(PREFERRED_PANEL_WIDTH, PREFERRED_PANEL_HEIGHT));
 		bottomPanel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
@@ -243,7 +234,6 @@ public class EditReferenceDialog extends DialogComponentProvider {
 			activeRefPanel = extRefPanel;
 		}
 		bottomPanelLayout.show(bottomPanel, activeRefPanel.getName());
-		activeRefPanel.requestFocus();
 	}
 
 	public void initDialog(CodeUnit cu, int opIndex, int subIndex, Reference ref) {
@@ -260,7 +250,6 @@ public class EditReferenceDialog extends DialogComponentProvider {
 		}
 
 		initializing = false;
-		activeRefPanel.requestFocus();
 	}
 
 	private void configureAddReference(int opIndex, int subIndex) {

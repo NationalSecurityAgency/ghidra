@@ -21,13 +21,12 @@ apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
 /***************************************************************************************
- * Make sure the correct version of gradle is being used
- ***************************************************************************************/
+* Print current Java and Gradle version and make sure the correct version of gradle is being used
+***************************************************************************************/
 import org.gradle.util.GradleVersion;
-final GradleVersion minimum_version = GradleVersion.version("${rootProject.GRADLE_MINIMUM_VERSION}")
-if (GradleVersion.current() < minimum_version) {
-	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")
-}
+println "Java: " + JavaVersion.current()
+println "Gradle: " + GradleVersion.current().version
+checkGradleVersion()
 
 /***************************************************************************************
  * Define the location of JAVA_HOME
@@ -46,6 +45,12 @@ else {
 if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 	throw new GradleException("\n\n\t32-bit Java detected!  Please use 64-bit Java.\n\n");
 }
+
+/***************************************************************************************
+ * Identify supported Python command
+ ***************************************************************************************/
+project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
+project.ext.PYTHON3 = findPython3()
 
 /*********************************************************************************
  *  Define the location of bin repo
@@ -110,6 +115,109 @@ apply from: "gradle/root/jacoco.gradle"       // adds tasks for java code covera
 apply plugin: 'base'
 clean {
 	delete "$buildDir"
+}
+
+/*********************************************************************************
+ * Throws a GradleException if the current Gradle version is outside of the supported
+ * Gradle version range defined in application.properties.
+ *
+ * NOTE: This function is duplicated in buildExtension.gradle
+ *********************************************************************************/
+import org.gradle.util.GradleVersion;
+def checkGradleVersion() {
+	GradleVersion min = null;
+	GradleVersion max = null;
+	try {
+		min = GradleVersion.version("${rootProject.GRADLE_MIN}")
+	}
+	catch (IllegalArgumentException e) {
+		String defaultMin = "1.0"
+		println "Invalid minimum Gradle version specified in application.properties...using ${defaultMin}"
+		min = GradleVersion.version(defaultMin)
+	}
+	try {
+		if (rootProject.GRADLE_MAX) {
+			max = GradleVersion.version("${rootProject.GRADLE_MAX}")
+		}
+	}
+	catch (IllegalArgumentException e) {
+		println "Invalid maximum Gradle version specified in application.properties...ignoring"
+	}
+	String gradleRange = "at least ${min}"
+	if (max) {
+		gradleRange += " and less than ${max}"		
+	}
+	if (GradleVersion.current() < min || (max && GradleVersion.current() >= max)) {
+		throw new GradleException("Requires ${gradleRange}, but was run with $gradle.gradleVersion")
+	}
+}
+
+
+/*********************************************************************************
+ * Identifies supported python3 command to be used when building and checks for pip install.
+ * Although warnings may be produced no exception is thrown since python only required
+ * for specific build tasks and is not required for prepdev
+ *********************************************************************************/
+def checkPythonVersion(String pyCmd) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
+			standardOutput = stdout
+			errorOutput = OutputStream.nullOutputStream()
+		}
+		def version = "$stdout".strip()
+		return version
+	}
+	catch (Exception e) {
+		return "ABSENT"
+	}
+}
+
+def checkPip(String pyCmd) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd, "-c", "import pip; print(pip.__version__)"
+			standardOutput = stdout
+			errorOutput = OutputStream.nullOutputStream()
+		}
+		def version = "$stdout".strip();
+		if (version.length() == 0) {
+			println("Warning: Python3 pip not installed (required for build)")
+		}
+		else {
+			println("Python3 pip version: ${version}")
+		}
+		return version
+	}
+	catch (Exception e) {
+		println("Warning: Python3 pip not installed (required for build)")
+	}
+}
+
+def findPython3() {
+	for (pyCmd in ['py', 'python3', 'python']) {
+		def pyVer = checkPythonVersion(pyCmd)
+		if (pyVer in SUPPORTED_PY_VERSIONS) {
+			println("Python3 command:  ${pyCmd} (version ${pyVer})")
+			checkPip(pyCmd)
+			return pyCmd
+		}
+	}
+	for (pyVer in SUPPORTED_PY_VERSIONS) {
+		def pyCmd = "python${pyVer}"
+		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
+			println("Python3 command:  ${pyCmd}")
+			checkPip(pyCmd)
+			return pyCmd
+		}
+	}
+	// Don't fail until task execution. Just let "python3" fail.
+	// Force use of non-existent python3.7 instead of unsupported python version
+	// which should fail if a python build is performed.
+	println("Warning: Python3 command not found (required for build)")
+	return 'python3.7'
 }
 
 /******************************************************************************************

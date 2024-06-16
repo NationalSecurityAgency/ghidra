@@ -15,23 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.stack.TraceStackFrame;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public class StackFrameRow {
 	public static class Synthetic extends StackFrameRow {
 		private Address pc;
 
-		public Synthetic(DebuggerStackProvider provider, Address pc) {
-			super(provider);
+		public Synthetic(DebuggerLegacyStackPanel panel, Address pc) {
+			super(panel);
 			this.pc = pc;
 		}
 
@@ -45,19 +40,19 @@ public class StackFrameRow {
 		}
 	}
 
-	private final DebuggerStackProvider provider;
+	private final DebuggerLegacyStackPanel panel;
 
 	final TraceStackFrame frame;
 	private int level;
 
-	public StackFrameRow(DebuggerStackProvider provider, TraceStackFrame frame) {
-		this.provider = provider;
+	public StackFrameRow(DebuggerLegacyStackPanel panel, TraceStackFrame frame) {
+		this.panel = panel;
 		this.frame = frame;
 		this.level = frame.getLevel();
 	}
 
-	private StackFrameRow(DebuggerStackProvider provider) {
-		this.provider = provider;
+	private StackFrameRow(DebuggerLegacyStackPanel panel) {
+		this.panel = panel;
 		this.frame = null;
 		this.level = 0;
 	}
@@ -67,7 +62,7 @@ public class StackFrameRow {
 	}
 
 	public long getSnap() {
-		return provider.current.getSnap();
+		return panel.current.getSnap();
 	}
 
 	public Address getProgramCounter() {
@@ -79,8 +74,8 @@ public class StackFrameRow {
 	}
 
 	public void setComment(String comment) {
-		try (UndoableTransaction tid = UndoableTransaction
-				.start(frame.getStack().getThread().getTrace(), "Frame comment", true)) {
+		try (Transaction tx =
+			frame.getStack().getThread().getTrace().openTransaction("Frame comment")) {
 			frame.setComment(getSnap(), comment);
 		}
 	}
@@ -90,24 +85,12 @@ public class StackFrameRow {
 	}
 
 	public Function getFunction() {
-		if (provider.mappingService == null) {
-			return null;
-		}
-		TraceThread curThread = provider.current.getThread();
-		if (curThread == null) {
-			return null;
-		}
-		Address pc = getProgramCounter();
-		if (pc == null) {
-			return null;
-		}
-		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
-			curThread, Range.singleton(getSnap()), pc);
-		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
-		if (sloc == null) {
-			return null;
-		}
-		return sloc.getProgram().getFunctionManager().getFunctionContaining(sloc.getAddress());
+		return DebuggerStaticMappingUtils.getFunction(getProgramCounter(), panel.current,
+			panel.provider.getTool());
+	}
+
+	public String getModule() {
+		return DebuggerStaticMappingUtils.getModuleName(getProgramCounter(), panel.current);
 	}
 
 	protected void update() {

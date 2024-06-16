@@ -55,6 +55,10 @@ smooth process when submitting a patch:
   opening a dialogue with the Ghidra team to ensure that your efforts will 
   align with the goals of the project.  This will significantly improve the odds
   that your patch gets accepted.
+- Unless it addresses a critical security update, avoid pull requests that update 
+  jars or other 3rd party libraries.  It is preferred that these changes are made
+  internally by the team.  If you have a need for an updated library, please
+  submit an issue with your request instead of a pull request.
 - Before submission, please squash your commits to using a message that starts
   with the issue number and a description of the changes.
 - Isolate multiple patches from each other. If you wish to make several

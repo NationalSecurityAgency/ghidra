@@ -23,8 +23,10 @@ import com.sun.jna.platform.win32.OleAuto;
 import com.sun.jna.platform.win32.WTypes.BSTR;
 import com.sun.jna.platform.win32.WTypes.BSTRByReference;
 import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
+import agent.dbgeng.dbgeng.COMUtilsExtra;
 import agent.dbgmodel.dbgmodel.DbgModel;
 import agent.dbgmodel.dbgmodel.DbgModel.OpaqueCleanable;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostContext;
@@ -55,8 +57,11 @@ public class DebugHostMemoryImpl1 implements DebugHostMemoryInternal {
 		Pointer pContext = context.getPointer();
 		ULONGLONG pulBufferSize = new ULONGLONG(bufferSize);
 		ULONGLONGByReference pulBytesRead = new ULONGLONGByReference();
-		COMUtils.checkRC(
-			jnaData.ReadBytes(pContext, location, buffer, pulBufferSize, pulBytesRead));
+		HRESULT hr = jnaData.ReadBytes(pContext, location, buffer, pulBufferSize, pulBytesRead);
+		if (hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
+			return 0;
+		}
+		COMUtils.checkRC(hr);
 		long read = pulBytesRead.getValue().longValue();
 		buffer.position((int) (read + buffer.position()));
 		return read;

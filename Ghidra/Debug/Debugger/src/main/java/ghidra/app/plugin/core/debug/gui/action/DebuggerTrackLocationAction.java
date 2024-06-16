@@ -17,17 +17,15 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import docking.action.builder.MultiStateActionBuilder;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
+import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.framework.plugintool.Plugin;
 
 public interface DebuggerTrackLocationAction extends TrackLocationAction {
 
-	// TODO: Update the action when new specs enter the class path?
 	static MultiStateActionBuilder<LocationTrackingSpec> builder(Plugin owner) {
 		MultiStateActionBuilder<LocationTrackingSpec> builder = TrackLocationAction.builder(owner);
 		builder.toolBarGroup(owner.getName());
-		for (LocationTrackingSpec spec : LocationTrackingSpec.allSpecs().values()) {
-			builder.addState(spec.getMenuName(), spec.getMenuIcon(), spec);
-		}
+		builder.useCheckboxForIcons(true);
 		return builder;
 	}
 }

@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.decompile.actions.RenameVariableTask;
 import ghidra.framework.options.Options;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
@@ -82,9 +83,8 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	}
 
 	private void renameVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
-		RenameVariableTask rename =
-			new RenameVariableTask(provider.getTool(), highSymbol.getProgram(),
-				provider, tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+		RenameVariableTask rename = new RenameVariableTask(provider.getTool(),
+			highSymbol.getProgram(), provider, tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 		assertTrue(rename.isValid(newName));
 		modifyProgram(p -> {
 			rename.commit();
@@ -93,8 +93,8 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	}
 
 	private void isolateVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
-		IsolateVariableTask isolate = new IsolateVariableTask(provider.getTool(), program,
-			provider, tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+		IsolateVariableTask isolate = new IsolateVariableTask(provider.getTool(), program, provider,
+			tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 		assertTrue(isolate.isValid(newName));
 		modifyProgram(p -> {
 			isolate.commit();
@@ -223,7 +223,8 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertTrue(token instanceof ClangVariableToken);
 		assertNull(token.getHighVariable());		// No HighVariable associated with the token
 		PcodeOp op = ((ClangVariableToken) token).getPcodeOp();
-		Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(provider.getProgram(), op);
+		AddressFactory addrFactory = provider.getProgram().getAddressFactory();
+		Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(addrFactory, op);
 		HighFunction highFunction = getHighFunction();
 		LocalSymbolMap lsym = highFunction.getLocalSymbolMap();
 		HighSymbol highSymbol = lsym.findLocal(addr, null);

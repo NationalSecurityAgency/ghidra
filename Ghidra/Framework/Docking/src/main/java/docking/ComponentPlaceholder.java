@@ -15,10 +15,9 @@
  */
 package docking;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.awt.Frame;
+import java.awt.Window;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -35,6 +34,12 @@ import utilities.util.reflection.ReflectionUtilities;
  * Class to hold information about a dockable component with respect to its position within the
  * windowing system.  It also holds identification information about the provider so that its
  * location can be reused when the provider is re-opened.
+ * <p>
+ * The placeholder will be used to link previously saved position information.  The tool will
+ * initially construct plugins and their component providers with default position information.
+ * Then, any existing xml data will be restored, which may have provider position information.
+ * The restoring of the xml will create placeholders with this saved information.  Finally, the
+ * restored placeholders will be linked with existing component providers.
  */
 public class ComponentPlaceholder {
 	private String name;
@@ -68,7 +73,7 @@ public class ComponentPlaceholder {
 	 * @param name the name of the component
 	 * @param owner the owner of the component
 	 * @param group the window group
-	 * @param title the title 
+	 * @param title the title
 	 * @param show whether or not the component is showing
 	 * @param node componentNode that has this placeholder
 	 * @param instanceID the instance ID
@@ -116,7 +121,7 @@ public class ComponentPlaceholder {
 		if (node != null && disposed) {
 			//
 			// TODO Hack Alert!  (When this is removed, also update ComponentNode)
-			// 
+			//
 			// This should not happen!  We have seen this bug recently
 			Msg.debug(this, "Found disposed component that was not removed from the hierarchy " +
 				"list: " + this, ReflectionUtilities.createJavaFilteredThrowable());
@@ -271,7 +276,7 @@ public class ComponentPlaceholder {
 	 * Requests focus for the component associated with this placeholder.
 	 */
 	void requestFocus() {
-		Component tmp = comp;// put in temp variable in case another thread deletes it
+		DockableComponent tmp = comp;// put in temp variable in case another thread deletes it
 		if (tmp == null) {
 			return;
 		}
@@ -525,7 +530,7 @@ public class ComponentPlaceholder {
 
 		ActionContext actionContext = componentProvider.getActionContext(null);
 		if (actionContext == null) {
-			actionContext = new ActionContext(componentProvider, null);
+			actionContext = new DefaultActionContext(componentProvider, null);
 		}
 		for (DockingActionIf action : actions) {
 			action.setEnabled(

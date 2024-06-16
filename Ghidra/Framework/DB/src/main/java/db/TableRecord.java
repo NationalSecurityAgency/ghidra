@@ -250,7 +250,7 @@ class TableRecord implements Comparable<TableRecord> {
 	 * @return table's record count
 	 */
 	int getRecordCount() {
-		return record.getIntValue(RECORD_COUNT_COLUMN);
+		return (record == null ? 0 : record.getIntValue(RECORD_COUNT_COLUMN));
 	}
 
 	/**

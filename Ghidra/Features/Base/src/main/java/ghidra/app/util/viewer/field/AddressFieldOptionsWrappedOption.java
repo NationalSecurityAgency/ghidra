@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import ghidra.framework.options.CustomOption;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.GProperties;
 
 /**
  * An option class that allows the user to edit a related group of options pertaining to
@@ -108,18 +107,18 @@ public class AddressFieldOptionsWrappedOption implements CustomOption {
 // Persistence
 //==================================================================================================
 	@Override
-	public void readState(SaveState saveState) {
-		padWithZeros = saveState.getBoolean(PAD_WITH_ZEROS, padWithZeros);
-		minHexDigits = saveState.getInt(MIN_HEXL_DIGITS, minHexDigits);
-		rightJustify = saveState.getBoolean(RIGHT_JUSTIFY, rightJustify);
-		showBlockName = saveState.getBoolean(SHOW_BLOCK_NAME, showBlockName);
+	public void readState(GProperties properties) {
+		padWithZeros = properties.getBoolean(PAD_WITH_ZEROS, padWithZeros);
+		minHexDigits = properties.getInt(MIN_HEXL_DIGITS, minHexDigits);
+		rightJustify = properties.getBoolean(RIGHT_JUSTIFY, rightJustify);
+		showBlockName = properties.getBoolean(SHOW_BLOCK_NAME, showBlockName);
 	}
 
 	@Override
-	public void writeState(SaveState saveState) {
-		saveState.putBoolean(PAD_WITH_ZEROS, padWithZeros);
-		saveState.putInt(MIN_HEXL_DIGITS, minHexDigits);
-		saveState.putBoolean(RIGHT_JUSTIFY, rightJustify);
-		saveState.putBoolean(SHOW_BLOCK_NAME, showBlockName);
+	public void writeState(GProperties properties) {
+		properties.putBoolean(PAD_WITH_ZEROS, padWithZeros);
+		properties.putInt(MIN_HEXL_DIGITS, minHexDigits);
+		properties.putBoolean(RIGHT_JUSTIFY, rightJustify);
+		properties.putBoolean(SHOW_BLOCK_NAME, showBlockName);
 	}
 }

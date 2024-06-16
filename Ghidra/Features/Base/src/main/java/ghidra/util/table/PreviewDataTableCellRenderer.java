@@ -22,6 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 import ghidra.docking.settings.Settings;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
@@ -33,8 +34,10 @@ import ghidra.util.table.column.AbstractGColumnRenderer;
  * used directly with {@link PreviewTableCellData} column data.
  */
 public class PreviewDataTableCellRenderer extends AbstractGColumnRenderer<PreviewTableCellData> {
-	private static final Color DEFAULT_OFFCUT_FOREGROUND_COLOR = Color.RED;
-	private static final Color DEFAULT_SELECTED_OFFCUT_FOREGROUND_COLOR = Color.PINK;
+	private static final Color DEFAULT_OFFCUT_FOREGROUND_COLOR =
+		new GColor("color.fg.table.offcut.unselected");
+	private static final Color DEFAULT_SELECTED_OFFCUT_FOREGROUND_COLOR =
+		new GColor("color.fg.table.offcut.selected");
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {

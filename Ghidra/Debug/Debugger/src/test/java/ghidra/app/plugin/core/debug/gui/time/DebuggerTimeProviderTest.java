@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.time;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Calendar;
 import java.util.List;
@@ -23,8 +24,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.trace.database.time.DBTraceSnapshot;
@@ -32,9 +34,8 @@ import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 
-public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerTimePlugin timePlugin;
 	protected DebuggerTimeProvider timeProvider;
@@ -47,7 +48,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 
 	protected void addSnapshots() {
 		DBTraceTimeManager timeManager = tb.trace.getTimeManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceSnapshot first = timeManager.createSnapshot("First");
 			Calendar c = Calendar.getInstance(); // System time zone
 			c.set(2020, 0, 1, 9, 0, 0);
@@ -60,7 +61,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 
 	protected void addScratchSnapshot() {
 		DBTraceTimeManager timeManager = tb.trace.getTimeManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceSnapshot scratch = timeManager.getSnapshot(Long.MIN_VALUE, true);
 			scratch.setDescription("Scratch");
 			scratch.setSchedule(TraceSchedule.parse("0:t0-5"));
@@ -149,7 +150,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 	public void testActivateByThreadThenAddSnapshotsPopulatesProvider() throws Exception {
 		createSnaplessTrace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.trace.getThreadManager().createThread("Thread 1", 0);
 		}
 		traceManager.openTrace(tb.trace);
@@ -193,7 +194,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 
 		assertProviderPopulated();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getTimeManager().getSnapshot(10, false).delete();
 		}
 		waitForDomainObject(tb.trace);
@@ -233,13 +234,13 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 
 		assertProviderEmpty();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			addSnapshots();
 			waitForDomainObject(tb.trace);
 
 			assertProviderPopulated();
 
-			tid.abort();
+			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
 
@@ -286,8 +287,10 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 			tb.trace.getTimeManager().getSnapshot(0, false).getDescription());
 	}
 
+	// TODO: Test activation bolds the row
+
 	@Test
-	public void testSelectRowActivatesSnap() throws Exception {
+	public void testDoubleClickRowActivatesSnap() throws Exception {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
 		addSnapshots();
@@ -298,47 +301,11 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
-
-		timeProvider.mainPanel.snapshotFilterPanel.setSelectedItem(data.get(0));
-		waitForSwing();
-
+		clickTableCell(timeProvider.mainPanel.snapshotTable, 0, 0, 2);
 		assertEquals(0, traceManager.getCurrentSnap());
 
-		timeProvider.mainPanel.snapshotFilterPanel.setSelectedItem(data.get(1));
-		waitForSwing();
-
+		clickTableCell(timeProvider.mainPanel.snapshotTable, 1, 0, 2);
 		assertEquals(10, traceManager.getCurrentSnap());
-	}
-
-	@Test
-	public void testActivateSnapSelectsRow() throws Exception {
-		createSnaplessTrace();
-		traceManager.openTrace(tb.trace);
-		addSnapshots();
-		waitForDomainObject(tb.trace);
-
-		assertProviderEmpty();
-
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
-
-		traceManager.activateSnap(0);
-		waitForSwing();
-
-		assertEquals(data.get(0), timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
-
-		traceManager.activateSnap(10);
-		waitForSwing();
-
-		assertEquals(data.get(1), timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
-
-		traceManager.activateSnap(5);
-		waitForSwing();
-
-		assertNull(timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
 	}
 
 	@Test

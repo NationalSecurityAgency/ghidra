@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.symboltree.actions;
 
-import static docking.KeyBindingPrecedence.ActionMapLevel;
+import static docking.KeyBindingPrecedence.*;
 
 import java.awt.datatransfer.*;
 import java.awt.event.InputEvent;
@@ -35,10 +35,10 @@ import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeTransferHandler;
 import ghidra.app.plugin.core.symboltree.*;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class CutAction extends SymbolTreeContextAction {
-	private final static Icon CUT_ICON = ResourceManager.loadImage("images/edit-cut22.png");
+	private final static Icon CUT_ICON = Icons.CUT_ICON;
 	private final SymbolTreeProvider provider;
 	private ClipboardOwner clipboardOwner;
 
@@ -86,7 +86,7 @@ public class CutAction extends SymbolTreeContextAction {
 
 		clearClipboardFromPreviousCut();
 
-		List<GTreeNode> transferableList = createList(selectionPaths);
+		List<GTreeNode> transferableList = createList(context.getSymbolTree(), selectionPaths);
 		setClipboardContents(context.getSymbolTree(), provider.getClipboard(), transferableList);
 
 		setNodesCut(transferableList, true);
@@ -109,12 +109,13 @@ public class CutAction extends SymbolTreeContextAction {
 		}
 	}
 
-	private List<GTreeNode> createList(TreePath[] paths) {
+	private List<GTreeNode> createList(GTree gTree, TreePath[] paths) {
 		ArrayList<GTreeNode> list = new ArrayList<>();
 		if (paths != null) {
 			for (TreePath element : paths) {
 				GTreeNode node = (GTreeNode) element.getLastPathComponent();
-				list.add(node);
+				GTreeNode modelNode = gTree.getModelNode(node);
+				list.add(modelNode);
 			}
 		}
 		return list;

@@ -34,22 +34,30 @@ public class ElfLoaderOptionsFactory {
 	public static final String PERFORM_RELOCATIONS_NAME = "Perform Symbol Relocations";
 	static final boolean PERFORM_RELOCATIONS_DEFAULT = true;
 
+	public static final String APPLY_UNDEFINED_SYMBOL_DATA_NAME = "Apply Undefined Symbol Data";
+	static final boolean APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT = true;
+
 	// NOTE: Using too large of an image base can cause problems for relocation processing
 	// for some language scenarios which utilize 32-bit relocations.  This may be due to
 	// an assumed virtual memory of 32-bits.
 
 	public static final String IMAGE_BASE_OPTION_NAME = "Image Base";
-	public static final long IMAGE_BASE_DEFAULT = 0x00010000;
+	public static final long IMAGE16_BASE_DEFAULT = 0x00001000;
+	public static final long IMAGE32_BASE_DEFAULT = 0x00010000;
 	public static final long IMAGE64_BASE_DEFAULT = 0x00100000L;
-	
+
 	public static final String IMAGE_DATA_IMAGE_BASE_OPTION_NAME = "Data Image Base";
 
 	public static final String INCLUDE_OTHER_BLOCKS = "Import Non-Loaded Data";// as OTHER overlay blocks
 	static final boolean INCLUDE_OTHER_BLOCKS_DEFAULT = true;
 
-	public static final String RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME =
-		"Fixup Unresolved External Symbols";
-	public static final boolean RESOLVE_EXTERNAL_SYMBOLS_DEFAULT = true;
+	public static final String DISCARDABLE_SEGMENT_SIZE_OPTION_NAME =
+		"Max Zero-Segment Discard Size";
+
+	// Maximum length of discardable segment
+	// If program contains section headers, any zeroed segment smaller than this size
+	// will be eligible for removal.
+	private static final int DEFAULT_DISCARDABLE_SEGMENT_SIZE = 0xff;
 
 	private ElfLoaderOptionsFactory() {
 	}
@@ -62,19 +70,31 @@ public class ElfLoaderOptionsFactory {
 		options.add(new Option(PERFORM_RELOCATIONS_NAME, PERFORM_RELOCATIONS_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-applyRelocations"));
 
+		options.add(
+			new Option(APPLY_UNDEFINED_SYMBOL_DATA_NAME, APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT,
+				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyUndefinedData"));
+
 		ElfHeader elf = new ElfHeader(provider, null);
+		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
+
+		Language language = loadSpec.getLanguageCompilerSpec().getLanguage();
 
 		long imageBase = elf.findImageBase();
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {
-			imageBase = elf.is64Bit() ? IMAGE64_BASE_DEFAULT : IMAGE_BASE_DEFAULT;
+			if (extensionAdapter != null) {
+				imageBase = extensionAdapter.getDefaultImageBase(elf);
+			}
+			else {
+				imageBase = elf.is64Bit() ? IMAGE64_BASE_DEFAULT : IMAGE32_BASE_DEFAULT;
+			}
 		}
-		Language language = loadSpec.getLanguageCompilerSpec().getLanguage();
+
 		AddressSpace defaultSpace = language.getDefaultSpace();
 
 		String hexValueStr = getBaseAddressOffsetString(imageBase, defaultSpace);
 		options.add(new Option(IMAGE_BASE_OPTION_NAME, hexValueStr, String.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-imagebase"));
-		
+
 		if (includeDataImageBaseOption(elf, language)) {
 			long minDataImageBase = getRecommendedMinimumDataImageBase(elf, language);
 			hexValueStr =
@@ -87,16 +107,15 @@ public class ElfLoaderOptionsFactory {
 			Loader.COMMAND_LINE_ARG_PREFIX + "-includeOtherBlocks"));
 
 		options.add(
-			new Option(RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, RESOLVE_EXTERNAL_SYMBOLS_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-resolveExternalSymbols"));
+			new Option(DISCARDABLE_SEGMENT_SIZE_OPTION_NAME, DEFAULT_DISCARDABLE_SEGMENT_SIZE,
+				Integer.class, Loader.COMMAND_LINE_ARG_PREFIX + "-maxSegmentDiscardSize"));
 
-		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
 		if (extensionAdapter != null) {
 			extensionAdapter.addLoadOptions(elf, options);
 		}
 
 	}
-	
+
 	private static boolean includeDataImageBaseOption(ElfHeader elf, Language language) {
 		// only include option if all segments and section have a 0 address
 		AddressSpace defaultSpace = language.getDefaultSpace();
@@ -106,18 +125,18 @@ public class ElfLoaderOptionsFactory {
 		}
 		return elf.isRelocatable() && elf.getImageBase() == 0;
 	}
-	
+
 	private static long getRecommendedMinimumDataImageBase(ElfHeader elf, Language language) {
-		
+
 		String minDataOffset =
 			language.getProperty(GhidraLanguagePropertyKeys.MINIMUM_DATA_IMAGE_BASE);
 		if (minDataOffset != null) {
 			return NumericUtilities.parseHexLong(minDataOffset);
 		}
-		
+
 		AddressSpace defaultDataSpace = language.getDefaultDataSpace();
 		int unitSize = defaultDataSpace.getAddressableUnitSize();
-		
+
 		// logic assumes memory mapped registers reside at low-end addresses (e.g., 0)
 		long minOffset = 0;
 		for (Register reg : language.getRegisters()) {
@@ -148,8 +167,7 @@ public class ElfLoaderOptionsFactory {
 		int minNibbles = Math.min(8, space.getSize() / 4);
 		int baseOffsetStrLen = baseOffsetStr.length();
 		if (baseOffsetStrLen < minNibbles) {
-			baseOffsetStr =
-				StringUtilities.pad(baseOffsetStr, '0', minNibbles - baseOffsetStrLen);
+			baseOffsetStr = StringUtilities.pad(baseOffsetStr, '0', minNibbles - baseOffsetStrLen);
 		}
 		return baseOffsetStr;
 	}
@@ -158,26 +176,40 @@ public class ElfLoaderOptionsFactory {
 		Language language;
 		try {
 			language = loadSpec.getLanguageCompilerSpec().getLanguage();
-		} catch (LanguageNotFoundException e) {
+		}
+		catch (LanguageNotFoundException e) {
 			throw new RuntimeException(e);
 		}
 		for (Option option : options) {
 			String name = option.getName();
-			if (name.equals(PERFORM_RELOCATIONS_NAME)) {
-				if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
-					return "Invalid type for option: " + name + " - " + option.getValueClass();
-				}
-			}
-			else if (name.equals(INCLUDE_OTHER_BLOCKS)) {
+			if (name.equals(PERFORM_RELOCATIONS_NAME) || name.equals(INCLUDE_OTHER_BLOCKS) ||
+				name.equals(APPLY_UNDEFINED_SYMBOL_DATA_NAME)) {
 				if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
 					return "Invalid type for option: " + name + " - " + option.getValueClass();
 				}
 			}
 			else if (name.equals(IMAGE_BASE_OPTION_NAME)) {
-				return validateAddressSpaceOffsetOption(option, language.getDefaultSpace());
+				String err = validateAddressSpaceOffsetOption(option, language.getDefaultSpace());
+				if (err != null) {
+					return err;
+				}
 			}
 			else if (name.equals(IMAGE_DATA_IMAGE_BASE_OPTION_NAME)) {
-				return validateAddressSpaceOffsetOption(option, language.getDefaultDataSpace());
+				String err =
+					validateAddressSpaceOffsetOption(option, language.getDefaultDataSpace());
+				if (err != null) {
+					return err;
+				}
+			}
+			else if (name.equals(DISCARDABLE_SEGMENT_SIZE_OPTION_NAME)) {
+				if (!Integer.class.isAssignableFrom(option.getValueClass())) {
+					return "Invalid type for option: " + name + " - " + option.getValueClass();
+				}
+				int val = (Integer) option.getValue();
+				if (val < 0 || val > DEFAULT_DISCARDABLE_SEGMENT_SIZE) {
+					return "Option value out-of-range: " + name + " (0.." +
+						DEFAULT_DISCARDABLE_SEGMENT_SIZE + ")";
+				}
 			}
 		}
 		return null;
@@ -206,6 +238,11 @@ public class ElfLoaderOptionsFactory {
 			PERFORM_RELOCATIONS_DEFAULT);
 	}
 
+	public static boolean applyUndefinedSymbolData(List<Option> options) {
+		return OptionUtils.getOption(APPLY_UNDEFINED_SYMBOL_DATA_NAME, options,
+			APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT);
+	}
+
 	static boolean includeOtherBlocks(List<Option> options) {
 		return OptionUtils.getOption(INCLUDE_OTHER_BLOCKS, options, INCLUDE_OTHER_BLOCKS_DEFAULT);
 	}
@@ -217,9 +254,14 @@ public class ElfLoaderOptionsFactory {
 	public static String getImageBaseOption(List<Option> options) {
 		return OptionUtils.getOption(IMAGE_BASE_OPTION_NAME, options, (String) null);
 	}
-	
+
 	public static String getDataImageBaseOption(List<Option> options) {
 		return OptionUtils.getOption(IMAGE_DATA_IMAGE_BASE_OPTION_NAME, options, (String) null);
+	}
+
+	public static int getMaxSegmentDiscardSize(List<Option> options) {
+		return OptionUtils.getOption(DISCARDABLE_SEGMENT_SIZE_OPTION_NAME, options,
+			DEFAULT_DISCARDABLE_SEGMENT_SIZE);
 	}
 
 }

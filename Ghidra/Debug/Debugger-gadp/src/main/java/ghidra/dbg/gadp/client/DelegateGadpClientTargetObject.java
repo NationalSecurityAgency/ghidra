@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.gadp.GadpRegistry;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
@@ -58,8 +59,8 @@ public class DelegateGadpClientTargetObject
 			for (Map.Entry<K, MethodHandle> ent : that.handles.entrySet()) {
 				MethodHandle old = handles.put(ent.getKey(), ent.getValue());
 				if (old != null) {
-					throw new AssertionError("Conflict over handler for " + ent.getKey() +
-						": " + old + " and " + ent.getValue());
+					throw new AssertionError("Conflict over handler for " + ent.getKey() + ": " +
+						old + " and " + ent.getValue());
 				}
 			}
 		}
@@ -80,7 +81,7 @@ public class DelegateGadpClientTargetObject
 				}
 				if (!Arrays.equals(paramClasses, method.getParameterTypes())) {
 					throw new AssertionError("@" + annotationType.getSimpleName() +
-						" methods must have typed parameters: " + paramClasses);
+						" methods must have typed parameters: " + Arrays.toString(paramClasses));
 				}
 				MethodHandle handle;
 				try {
@@ -159,8 +160,8 @@ public class DelegateGadpClientTargetObject
 
 		Set<Class<? extends TargetObject>> allMixins = new HashSet<>(mixins);
 		allMixins.add(GadpClientTargetObject.class);
-		this.eventHandlers = EVENT_HANDLER_MAPS_BY_COMPOSITION.computeIfAbsent(allMixins,
-			GadpEventHandlerMap::new);
+		this.eventHandlers =
+			EVENT_HANDLER_MAPS_BY_COMPOSITION.computeIfAbsent(allMixins, GadpEventHandlerMap::new);
 	}
 
 	@Override
@@ -184,22 +185,25 @@ public class DelegateGadpClientTargetObject
 	}
 
 	@Override
-	public CompletableFuture<Void> resync(boolean attributes, boolean elements) {
-		return client.sendChecked(Gadp.ResyncRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(path))
-				.setAttributes(attributes)
-				.setElements(elements),
-			Gadp.ResyncReply.getDefaultInstance()).thenApply(rep -> null);
+	public CompletableFuture<Void> resync(RefreshBehavior attributes, RefreshBehavior elements) {
+		return client
+				.sendChecked(
+					Gadp.ResyncRequest.newBuilder()
+							.setPath(GadpValueUtils.makePath(path))
+							.setAttributes(attributes.equals(RefreshBehavior.REFRESH_ALWAYS))
+							.setElements(elements.equals(RefreshBehavior.REFRESH_ALWAYS)),
+					Gadp.ResyncReply.getDefaultInstance())
+				.thenApply(rep -> null);
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestAttributes(boolean refresh) {
-		return resync(refresh, false);
+	protected CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
+		return resync(refresh, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
-		return resync(false, refresh);
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		return resync(RefreshBehavior.REFRESH_NEVER, refresh);
 	}
 
 	@Override
@@ -236,9 +240,11 @@ public class DelegateGadpClientTargetObject
 	public synchronized CompletableFuture<Void> invalidateCaches() {
 		assertValid();
 		doClearCaches();
-		return client.sendChecked(Gadp.CacheInvalidateRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(path)),
-			Gadp.CacheInvalidateReply.getDefaultInstance()).thenApply(rep -> null);
+		return client
+				.sendChecked(
+					Gadp.CacheInvalidateRequest.newBuilder().setPath(GadpValueUtils.makePath(path)),
+					Gadp.CacheInvalidateReply.getDefaultInstance())
+				.thenApply(rep -> null);
 	}
 
 	protected synchronized CachedMemory getMemoryCache(AddressSpace space) {
@@ -274,12 +280,7 @@ public class DelegateGadpClientTargetObject
 
 	protected synchronized ListenerSet<TargetBreakpointAction> getActions(boolean createIfAbsent) {
 		if (actions == null && createIfAbsent) {
-			actions = new ListenerSet<>(TargetBreakpointAction.class) {
-				// Want strong references on actions
-				protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-					return Collections.synchronizedMap(new LinkedHashMap<>());
-				};
-			};
+			actions = new ListenerSet<>(TargetBreakpointAction.class, false);
 		}
 		return actions;
 	}

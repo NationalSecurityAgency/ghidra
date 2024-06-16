@@ -95,7 +95,7 @@ public class CombinedStringSearcher {
 		// Add defined strings to the accumulator that haven't been found by the StringSearcher
 		monitor.setIndeterminate(true);
 		while (nextDefinedString != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!inRange(updatedAddressSet, nextDefinedString)) {
 				updateNextString();
 				continue;

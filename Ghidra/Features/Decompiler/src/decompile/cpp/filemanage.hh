@@ -15,8 +15,8 @@
  */
 // Generic (POSIX) class for searching files and managing paths
 
-#ifndef __FILEMANAGE__
-#define __FILEMANAGE__
+#ifndef __FILEMANAGE_HH__
+#define __FILEMANAGE_HH__
 
 #include <vector>
 #include <string>
@@ -24,11 +24,17 @@
 #include <sstream>
 #include <fstream>
 
-using namespace std;
+namespace ghidra {
+
+using std::vector;
+using std::string;
+using std::ifstream;
+using std::ostringstream;
 
 class FileManage {
   vector<string> pathlist;	// List of paths to search for files
   static char separator;
+  static char separatorClass[];	// Characters that can be accepted as a separator
   static string buildPath(const vector<string> &pathels,int level);
   static bool testDevelopmentPath(const vector<string> &pathels,int level,string &root);
   static bool testInstallPath(const vector<string> &pathels,int level,string &root);
@@ -37,6 +43,7 @@ public:
   void addCurrentDir(void);
   void findFile(string &res,const string &name) const; // Resolve full pathname
   void matchList(vector<string> &res,const string &match,bool isSuffix) const; // List of files with suffix
+  static bool isSeparator(char c);
   static bool isDirectory(const string &path);
   static void matchListDir(vector<string> &res,const string &match,bool isSuffix,const string &dir,bool allowdot);
   static void directoryList(vector<string> &res,const string &dirname,bool allowdot=false);
@@ -46,4 +53,5 @@ public:
   static string discoverGhidraRoot(const char *argv0);
 };
 
+} // End namespace ghidra
 #endif

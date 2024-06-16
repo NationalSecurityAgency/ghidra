@@ -43,7 +43,7 @@ import ghidra.util.HelpLocation;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Selects addresses from Program Tree",
 	description = "Allows the user to select code in the code browser from a selection" +
 			" of nodes (modules and fragments) in the Program Tree.",			
@@ -55,7 +55,7 @@ public class ProgramTreeSelectionPlugin extends ProgramPlugin {
 	private TreeSelectAction selectModuleAction;
 
 	public ProgramTreeSelectionPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		createActions();
 	}
 

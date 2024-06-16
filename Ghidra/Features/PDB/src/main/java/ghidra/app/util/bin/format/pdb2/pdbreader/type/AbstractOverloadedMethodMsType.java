@@ -48,6 +48,27 @@ public abstract class AbstractOverloadedMethodMsType extends AbstractMsType impl
 	}
 
 	@Override
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Returns the number of methods overloaded with the name
+	 * @return the number of methods
+	 */
+	public int getCount() {
+		return count;
+	}
+
+	/**
+	 * Returns the record number of the method list for this overloaded method name
+	 * @return the record number
+	 */
+	public RecordNumber getTypeMethodListRecordNumber() {
+		return methodListRecordNumber;
+	}
+
+	@Override
 	public void emit(StringBuilder builder, Bind bind) {
 		// No API for this.  Just outputting something that might be useful.
 		// At this time, not doing anything with bind here; don't think it is warranted.

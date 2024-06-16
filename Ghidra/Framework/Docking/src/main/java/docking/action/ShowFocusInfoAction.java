@@ -25,14 +25,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.*;
-import ghidra.util.ReservedKeyBindings;
+import generic.util.action.SystemKeyBindings;
 
 public class ShowFocusInfoAction extends DockingAction {
 	static final Logger log = LogManager.getLogger(ShowFocusInfoAction.class);
 
 	public ShowFocusInfoAction() {
-		super("Show Focus Info", DockingWindowManager.DOCKING_WINDOWS_OWNER, false);
-		createReservedKeyBinding(ReservedKeyBindings.FOCUS_INFO_KEY);
+		super("Show Focus Info", DockingWindowManager.DOCKING_WINDOWS_OWNER);
+		createSystemKeyBinding(SystemKeyBindings.FOCUS_INFO_KEY);
 		setEnabled(true);
 
 		// System action; no help needed
@@ -82,6 +82,7 @@ public class ShowFocusInfoAction extends DockingAction {
 		Object mouseOverObject = DockingWindowManager.getMouseOverObject();
 		if (mouseOverObject instanceof Component) {
 			log.info("Mouse-over Object: " + printComp((Component) mouseOverObject));
+			log.info("Focusable?: " + ((Component) mouseOverObject).isFocusable());
 		}
 		log.info("");
 	}

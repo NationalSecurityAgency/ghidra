@@ -18,15 +18,13 @@ package ghidra.trace.database.symbol;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SymbolType;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.annot.DBAnnotatedObjectInfo;
@@ -59,26 +57,26 @@ public class DBTraceNamespaceSymbol extends AbstractDBTraceSymbol implements Tra
 
 	// Internal
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		// TODO: Cache this computation and/or keep it as transient fields?
 		long min = Long.MAX_VALUE;
 		long max = Long.MIN_VALUE;
-		Range<Long> range = super.getLifespan();
+		Lifespan range = super.getLifespan();
 		if (range != null) {
-			min = DBTraceUtils.lowerEndpoint(range);
-			max = DBTraceUtils.upperEndpoint(range);
+			min = range.lmin();
+			max = range.lmax();
 		}
 		for (AbstractDBTraceSymbol child : getChildren()) {
 			range = child.getLifespan();
 			if (range != null) {
-				min = Math.min(min, DBTraceUtils.lowerEndpoint(range));
-				max = Math.min(max, DBTraceUtils.upperEndpoint(range));
+				min = Math.min(min, range.lmin());
+				max = Math.min(max, range.lmax());
 			}
 		}
 		if (min > max) {
 			return null;
 		}
-		return DBTraceUtils.toRange(min, max);
+		return Lifespan.span(min, max);
 	}
 
 	@Override

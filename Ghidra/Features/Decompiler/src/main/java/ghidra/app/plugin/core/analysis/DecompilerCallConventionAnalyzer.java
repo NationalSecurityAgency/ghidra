@@ -27,6 +27,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
@@ -179,7 +180,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 		BookmarkManager bkMgr = program.getBookmarkManager();
 
 		for (Function function : functions) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// must not be a bookmark here, and paying attention to bookmarks
 			if (!ignoreBookmarks) {
@@ -206,8 +207,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 
 			// must be an unknown signature
 			String callingConventionName = function.getCallingConventionName();
-
-			if (!callingConventionName.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+			if (!CompilerSpec.isUnknownCallingConvention(callingConventionName)) {
 				continue;
 			}
 

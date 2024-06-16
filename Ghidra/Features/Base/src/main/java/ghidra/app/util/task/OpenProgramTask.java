@@ -15,80 +15,83 @@
  */
 package ghidra.app.util.task;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URL;
+import java.util.*;
 
-import docking.widgets.OptionDialog;
-import ghidra.app.util.dialog.CheckoutDialog;
-import ghidra.framework.client.ClientUtil;
-import ghidra.framework.client.RepositoryAdapter;
-import ghidra.framework.main.AppInfo;
+import ghidra.app.plugin.core.progmgr.ProgramLocator;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.remote.User;
-import ghidra.framework.store.ExclusiveCheckoutException;
-import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.model.listing.Program;
-import ghidra.util.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * Task for opening one or more programs.
+ */
 public class OpenProgramTask extends Task {
-
-	private final List<DomainFileInfo> domainFileInfoList = new ArrayList<>();
-	private List<Program> programList = new ArrayList<>();
+	private List<ProgramLocator> programsToOpen = new ArrayList<>();
+	private List<OpenProgramRequest> openedPrograms = new ArrayList<>();
+	private ProgramOpener programOpener;
 
 	private final Object consumer;
-	private boolean silent; // if true operation does not permit interaction
-	private boolean noCheckout; // if true operation should not perform optional checkout
 
-	private String openPromptText = "Open";
-
-	public OpenProgramTask(DomainFile domainFile, int version, boolean forceReadOnly,
-			Object consumer) {
+	/**
+	 * Construct a task for opening one or more programs.
+	 * @param programLocatorList the list of program locations to open
+	 * @param consumer the consumer to use for opening the programs
+	 */
+	public OpenProgramTask(List<ProgramLocator> programLocatorList, Object consumer) {
 		super("Open Program(s)", true, false, true);
 		this.consumer = consumer;
-		domainFileInfoList.add(new DomainFileInfo(domainFile, version, forceReadOnly));
+		programOpener = new ProgramOpener(consumer);
+		programsToOpen.addAll(programLocatorList);
 	}
 
+	/**
+	 * Construct a task for opening a program.
+	 * @param locator the program location to open
+	 * @param consumer the consumer to use for opening the programs
+	 */
+	public OpenProgramTask(ProgramLocator locator, Object consumer) {
+		this(Arrays.asList(locator), consumer);
+	}
+
+	/**
+	 * Construct a task for opening a program
+	 * @param domainFile the {@link DomainFile} to open
+	 * @param version the version to open (versions other than the current version will be
+	 * opened read-only)
+	 * @param consumer the consumer to use for opening the programs
+	 */
 	public OpenProgramTask(DomainFile domainFile, int version, Object consumer) {
-		this(domainFile, version, false, consumer);
+		this(new ProgramLocator(domainFile, version), consumer);
 	}
 
-	public OpenProgramTask(DomainFile domainFile, boolean forceReadOnly, Object consumer) {
-		this(domainFile, DomainFile.DEFAULT_VERSION, forceReadOnly, consumer);
-	}
-
+	/**
+	 * Construct a task for opening the current version of a program
+	 * @param domainFile the {@link DomainFile} to open
+	 * @param consumer the consumer to use for opening the programs
+	 */
 	public OpenProgramTask(DomainFile domainFile, Object consumer) {
-		this(domainFile, DomainFile.DEFAULT_VERSION, false, consumer);
+		this(new ProgramLocator(domainFile), consumer);
 	}
 
-	public OpenProgramTask(List<DomainFile> domainFileList, boolean forceReadOnly,
-			Object consumer) {
-		super("Open Program(s)", true, domainFileList.size() > 1, true);
-		this.consumer = consumer;
-		for (DomainFile domainFile : domainFileList) {
-			domainFileInfoList.add(new DomainFileInfo(domainFile, -1, forceReadOnly));
-		}
+	/**
+	 * Construct a task for opening a program from a URL
+	 * @param ghidraURL the URL to the program to be opened
+	 * @param consumer the consumer to use for opening the programs
+	 */
+	public OpenProgramTask(URL ghidraURL, Object consumer) {
+		this(new ProgramLocator(ghidraURL), consumer);
 	}
 
-	public OpenProgramTask(List<DomainFile> domainFileList, Object consumer) {
-		this(domainFileList, false, consumer);
-	}
-
+	/**
+	 * Sets the text to use for the base action type for various prompts that can appear
+	 * when opening programs. (The default is "Open".) For example, you may want to override
+	 * this so be something like "Open Source", or "Open target".
+	 * @param text the text to use as the base action name.
+	 */
 	public void setOpenPromptText(String text) {
-		openPromptText = text;
-	}
-
-	public void addProgramToOpen(DomainFile domainFile, int version) {
-		addProgramToOpen(domainFile, version, false);
-	}
-
-	public void addProgramToOpen(DomainFile domainFile, int version, boolean forceReadOnly) {
-		setHasProgress(true);
-		domainFileInfoList.add(new DomainFileInfo(domainFile, version, forceReadOnly));
+		programOpener.setPromptText(text);
 	}
 
 	/**
@@ -98,7 +101,7 @@ public class OpenProgramTask extends Task {
 	 * may still be displayed if they occur.
 	 */
 	public void setSilent() {
-		this.silent = true;
+		programOpener.setSilent();
 	}
 
 	/**
@@ -107,219 +110,43 @@ public class OpenProgramTask extends Task {
 	 * user.
 	 */
 	public void setNoCheckout() {
-		this.noCheckout = true;
+		programOpener.setNoCheckout();
 	}
 
-	public List<Program> getOpenPrograms() {
-		return programList;
+	/**
+	 * Get all successful open program requests
+	 * @return all successful open program requests
+	 */
+	public List<OpenProgramRequest> getOpenPrograms() {
+		return Collections.unmodifiableList(openedPrograms);
 	}
 
-	public Program getOpenProgram() {
-		if (programList.isEmpty()) {
+	/**
+	 * Get the first successful open program request
+	 * @return first successful open program request or null if none
+	 */
+	public OpenProgramRequest getOpenProgram() {
+		if (openedPrograms.isEmpty()) {
 			return null;
 		}
-		return programList.get(0);
+		return openedPrograms.get(0);
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) {
 
-		taskMonitor.initialize(domainFileInfoList.size());
+		taskMonitor.initialize(programsToOpen.size());
 
-		for (DomainFileInfo domainFileInfo : domainFileInfoList) {
+		for (ProgramLocator locator : programsToOpen) {
 			if (taskMonitor.isCancelled()) {
 				return;
 			}
-			openDomainFile(domainFileInfo);
-
+			Program program = programOpener.openProgram(locator, monitor);
+			if (program != null) {
+				openedPrograms.add(new OpenProgramRequest(program, locator, consumer));
+			}
 			taskMonitor.incrementProgress(1);
 		}
-	}
-
-	private void openDomainFile(DomainFileInfo domainFileInfo) {
-		int version = domainFileInfo.getVersion();
-		DomainFile domainFile = domainFileInfo.getDomainFile();
-		if (version != DomainFile.DEFAULT_VERSION) {
-			openVersionedFile(domainFile, version);
-		}
-		else if (domainFileInfo.isReadOnly()) {
-			openReadOnlyFile(domainFile, version);
-		}
-		else {
-			openUnversionedFile(domainFile);
-		}
-	}
-
-	private void openReadOnlyFile(DomainFile domainFile, int version) {
-		taskMonitor.setMessage("Opening " + domainFile.getName());
-		openReadOnly(domainFile, version);
-	}
-
-	private void openVersionedFile(DomainFile domainFile, int version) {
-		taskMonitor.setMessage("Getting Version " + version + " for " + domainFile.getName());
-		openReadOnly(domainFile, version);
-	}
-
-	private void openReadOnly(DomainFile domainFile, int version) {
-		String contentType = null;
-		try {
-			contentType = domainFile.getContentType();
-			Program program =
-				(Program) domainFile.getReadOnlyDomainObject(consumer, version, taskMonitor);
-
-			if (program == null) {
-				String errorMessage = "Can't open program - \"" + domainFile.getPathname() + "\"";
-				if (version != DomainFile.DEFAULT_VERSION) {
-					errorMessage += " version " + version;
-				}
-
-				Msg.showError(this, null, "DomainFile Not Found", errorMessage);
-			}
-			else {
-				programList.add(program);
-			}
-		}
-		catch (CancelledException e) {
-			// we don't care, the task has been cancelled
-		}
-		catch (IOException e) {
-			if (domainFile.isInWritableProject()) {
-				ClientUtil.handleException(AppInfo.getActiveProject().getRepository(), e,
-					"Get Versioned Object", null);
-			}
-			else {
-				Msg.showError(this, null, "Error Getting Versioned Object",
-					"Could not get version " + version + " for " + domainFile.getName(), e);
-			}
-		}
-		catch (VersionException e) {
-			VersionExceptionHandler.showVersionError(null, domainFile.getName(), contentType,
-				"Open", e);
-		}
-	}
-
-	private void openUnversionedFile(DomainFile domainFile) {
-		String filename = domainFile.getName();
-		taskMonitor.setMessage("Opening " + filename);
-		performOptionalCheckout(domainFile);
-		try {
-			openFileMaybeUgrade(domainFile);
-		}
-		catch (VersionException e) {
-			String contentType = domainFile.getContentType();
-			VersionExceptionHandler.showVersionError(null, filename, contentType, "Open", e);
-		}
-		catch (CancelledException e) {
-			// we don't care, the task has been cancelled
-		}
-		catch (LanguageNotFoundException e) {
-			Msg.showError(this, null, "Error Opening " + filename,
-				e.getMessage() + "\nPlease contact the Ghidra team for assistance.");
-		}
-		catch (Exception e) {
-			if (domainFile.isInWritableProject() && (e instanceof IOException)) {
-				RepositoryAdapter repo = domainFile.getParent().getProjectData().getRepository();
-				ClientUtil.handleException(repo, e, "Open File", null);
-			}
-			else {
-				Msg.showError(this, null, "Error Opening " + filename,
-					"Getting domain object failed.\n" + e.getMessage(), e);
-			}
-		}
-	}
-
-	private void openFileMaybeUgrade(DomainFile domainFile)
-			throws IOException, CancelledException, VersionException {
-
-		boolean recoverFile = false;
-		if (!silent && domainFile.isInWritableProject() && domainFile.canRecover()) {
-			recoverFile = askRecoverFile(domainFile.getName());
-		}
-
-		try {
-			Program program =
-				(Program) domainFile.getDomainObject(consumer, false, recoverFile, taskMonitor);
-
-			if (program != null) {
-				programList.add(program);
-			}
-
-		}
-		catch (VersionException e) {
-			if (VersionExceptionHandler.isUpgradeOK(null, domainFile, openPromptText, e)) {
-				Program program =
-					(Program) domainFile.getDomainObject(consumer, true, recoverFile, taskMonitor);
-				if (program != null) {
-					programList.add(program);
-				}
-			}
-		}
-	}
-
-	private boolean askRecoverFile(final String filename) {
-
-		int option = OptionDialog.showYesNoDialog(null, "Crash Recovery Data Found",
-			"<html>" + HTMLUtilities.escapeHTML(filename) + " has crash data.<br>" +
-				"Would you like to recover unsaved changes?");
-		return option == OptionDialog.OPTION_ONE;
-	}
-
-	private void performOptionalCheckout(DomainFile domainFile) {
-
-		if (silent || noCheckout || !domainFile.canCheckout()) {
-			return;
-		}
-
-		User user = domainFile.getParent().getProjectData().getUser();
-
-		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
-		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
-			try {
-				taskMonitor.setMessage("Checking Out " + domainFile.getName());
-				if (domainFile.checkout(dialog.exclusiveCheckout(), taskMonitor)) {
-					return;
-				}
-				Msg.showError(this, null, "Checkout Failed", "Exclusive checkout failed for: " +
-					domainFile.getName() + "\nOne or more users have file checked out!");
-			}
-			catch (CancelledException e) {
-				// we don't care, the task has been cancelled
-			}
-			catch (ExclusiveCheckoutException e) {
-				Msg.showError(this, null, "Checkout Failed", e.getMessage());
-			}
-			catch (IOException e) {
-				Msg.showError(this, null, "Error on Check Out", e.getMessage(), e);
-			}
-		}
-	}
-
-	static class DomainFileInfo {
-		private final DomainFile domainFile;
-		private final int version;
-		private boolean forceReadOnly;
-
-		public DomainFileInfo(DomainFile domainFile, int version, boolean forceReadOnly) {
-			this.domainFile = domainFile;
-			this.version =
-				(domainFile.isReadOnly() && domainFile.isVersioned()) ? domainFile.getVersion()
-						: version;
-			this.forceReadOnly = forceReadOnly;
-		}
-
-		public boolean isReadOnly() {
-			return forceReadOnly || domainFile.isReadOnly() ||
-				version != DomainFile.DEFAULT_VERSION;
-		}
-
-		public DomainFile getDomainFile() {
-			return domainFile;
-		}
-
-		public int getVersion() {
-			return version;
-		}
-
 	}
 
 }

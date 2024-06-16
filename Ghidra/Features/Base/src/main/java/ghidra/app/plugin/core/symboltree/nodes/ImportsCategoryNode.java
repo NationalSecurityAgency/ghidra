@@ -17,17 +17,17 @@ package ghidra.app.plugin.core.symboltree.nodes;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import resources.ResourceManager;
 
 public class ImportsCategoryNode extends SymbolCategoryNode {
 
 	private static Icon CLOSED_FOLDER_EXTERNALS_ICON =
-		ResourceManager.loadImage("images/closedFolderExternals.png");
+		new GIcon("icon.plugin.symboltree.node.category.imports.closed");
 	private static Icon OPEN_FOLDER_EXTERNALS_ICON =
-		ResourceManager.loadImage("images/openFolderExternals.png");
+		new GIcon("icon.plugin.symboltree.node.category.imports.open");
 
 	public ImportsCategoryNode(Program program) {
 		super(SymbolCategory.IMPORTS_CATEGORY, program);

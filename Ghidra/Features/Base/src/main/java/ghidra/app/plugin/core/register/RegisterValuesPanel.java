@@ -26,9 +26,12 @@ import javax.swing.*;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
-import ghidra.app.services.*;
+import ghidra.app.services.MarkerService;
+import ghidra.app.services.MarkerSet;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
@@ -45,7 +48,8 @@ class RegisterValuesPanel extends JPanel {
 	private static final String VALUE_COLUMN_NAME = "Value";
 	private static final String START_ADDRESS_COLUMN_NAME = "Start Address";
 	private static final String END_ADDRESS_COLUMN_NAME = "End Address";
-	private static final Color REGISTER_MARKER_COLOR = new Color(0, 153, 153);
+	private static final Color REGISTER_MARKER_COLOR =
+		new GColor("color.bg.plugin.register.marker");
 
 	private Program currentProgram;
 	private GhidraTable table;
@@ -115,8 +119,7 @@ class RegisterValuesPanel extends JPanel {
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setRowSelectionAllowed(true);
 		table.setColumnSelectionAllowed(false);
-		GoToService goToService = tool.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
+		table.installNavigation(tool);
 		table.setNavigateOnSelectionEnabled(true);
 		return table;
 	}
@@ -490,11 +493,15 @@ class RegisterValueRange {
 
 class RegisterValueRenderer extends GTableCellRenderer {
 
-	private Color defaultColor = Color.LIGHT_GRAY;
+	private Color defaultColor = Palette.LIGHT_GRAY;
 
 	RegisterValueRenderer(JTable table) {
 		setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-		setFont(new Font("monospaced", Font.PLAIN, 12));
+	}
+
+	@Override
+	protected Font getDefaultFont() {
+		return fixedWidthFont;
 	}
 
 	@Override

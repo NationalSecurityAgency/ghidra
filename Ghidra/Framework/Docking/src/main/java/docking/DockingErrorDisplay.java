@@ -69,7 +69,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 
 		// Wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
 		// a reasonable line length based on historical print margins.
-		// Update: increased the limit to handle long messages containing stack trace elements, 
+		// Update: increased the limit to handle long messages containing stack trace elements,
 		//         which look odd when wrapped
 		int limit = 120;
 		List<String> lines = HtmlLineSplitter.split(text, limit, true);
@@ -81,7 +81,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			}
 
 			if (StringUtils.isBlank(line)) {
-				// this will trim all leading blank lines, but preserve internal blank lines, 
+				// this will trim all leading blank lines, but preserve internal blank lines,
 				// which clients may be providing for visual line separation
 				continue;
 			}
@@ -99,21 +99,19 @@ public class DockingErrorDisplay implements ErrorDisplay {
 
 	private void displayMessage(MessageType messageType, ErrorLogger errorLogger, Object originator,
 			Component parent, String title, Object message, Throwable throwable) {
+		Swing.runIfSwingOrRunLater(() -> doDisplayMessage(messageType, errorLogger, originator,
+			parent, title, message, throwable));
+	}
+
+	private void doDisplayMessage(MessageType messageType, ErrorLogger errorLogger,
+			Object originator, Component parent, String title, Object message,
+			Throwable throwable) {
 
 		int dialogType = OptionDialog.PLAIN_MESSAGE;
 
-		String messageString = message != null ? message.toString() : null;
-		if (messageString != null) {
-			// prevent excessive message degenerate cases
-			int maxChars = 1000;
-			String safeMessage = StringUtilities.trimMiddle(messageString, maxChars);
+		String cleanMessage = cleanupMessage(message);
 
-			// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
-			// a reasonable line length based on historical print margins
-			messageString = wrap(safeMessage);
-		}
-
-		String unformattedMessage = HTMLUtilities.fromHTML(messageString);
+		String unformattedMessage = HTMLUtilities.fromHTML(cleanMessage);
 		switch (messageType) {
 			case INFO:
 				dialogType = OptionDialog.INFORMATION_MESSAGE;
@@ -133,7 +131,25 @@ public class DockingErrorDisplay implements ErrorDisplay {
 				break;
 		}
 
-		showDialog(title, throwable, dialogType, messageString, getWindow(parent));
+		showDialog(title, throwable, dialogType, cleanMessage, getWindow(parent));
+	}
+
+	private String cleanupMessage(Object message) {
+
+		if (message == null) {
+			return null;
+		}
+
+		// prevent excessive message degenerate cases
+		int maxChars = 1000;
+		String messageString = message.toString();
+		String safeMessage = StringUtilities.trimMiddle(messageString, maxChars);
+
+		// wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
+		// a reasonable line length based on historical print margins
+		messageString = wrap(safeMessage);
+
+		return messageString;
 	}
 
 	private Component getWindow(Component component) {
@@ -143,23 +159,19 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		return component;
 	}
 
-	private void showDialog(final String title, final Throwable throwable, final int dialogType,
-			final String messageString, final Component parent) {
+	private void showDialog(String title, Throwable throwable, int dialogType, String messageString,
+			Component parent) {
 
-		Swing.runIfSwingOrRunLater(() -> {
-
-			if (dialogType == OptionDialog.ERROR_MESSAGE) {
-				showDialogOnSwing(title, throwable, dialogType, messageString, parent);
-			}
-			else {
-				DockingWindowManager.showDialog(parent,
-					new OkDialog(title, messageString, dialogType));
-			}
-		});
+		if (dialogType == OptionDialog.ERROR_MESSAGE) {
+			showErrorDialogOnSwing(title, throwable, messageString, parent);
+		}
+		else {
+			DockingWindowManager.showDialog(parent, new OkDialog(title, messageString, dialogType));
+		}
 	}
 
-	private void showDialogOnSwing(String title, Throwable throwable, int dialogType,
-			String messageString, Component parent) {
+	private void showErrorDialogOnSwing(String title, Throwable throwable, String messageString,
+			Component parent) {
 
 		if (activeDialog != null) {
 			activeDialog.addException(messageString, throwable);
@@ -169,6 +181,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		activeDialog = createErrorDialog(title, throwable, messageString);
 		activeDialog.setClosedCallback(() -> {
 			activeDialog.setClosedCallback(null);
+			activeDialog.dispose();
 			activeDialog = null;
 		});
 		DockingWindowManager.showDialog(parent, activeDialog);

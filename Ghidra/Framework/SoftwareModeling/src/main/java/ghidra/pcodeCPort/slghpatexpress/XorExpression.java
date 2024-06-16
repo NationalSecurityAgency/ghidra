@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,14 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.utils.MutableInt;
-import ghidra.sleigh.grammar.Location;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.io.PrintStream;
+import java.io.IOException;
+
+import generic.stl.VectorSTL;
+import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.program.model.pcode.Encoder;
+import ghidra.sleigh.grammar.Location;
 
 public class XorExpression extends BinaryExpression {
 
@@ -34,13 +35,6 @@ public class XorExpression extends BinaryExpression {
 	}
 
 	@Override
-	public long getValue(ParserWalker pos) {
-		long leftval = getLeft().getValue(pos);
-		long rightval = getRight().getValue(pos);
-		return leftval ^ rightval;
-	}
-
-	@Override
 	public long getSubValue(VectorSTL<Long> replace, MutableInt listpos) {
 		long leftval = getLeft().getSubValue(replace, listpos); // Must be left first
 		long rightval = getRight().getSubValue(replace, listpos);
@@ -48,10 +42,10 @@ public class XorExpression extends BinaryExpression {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<xor_exp>\n");
-		super.saveXml(s);
-		s.append("</xor_exp>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_XOR_EXP);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_XOR_EXP);
 	}
 
 }

@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.disassembler;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,14 +25,14 @@ import javax.swing.event.ChangeListener;
 
 import docking.WindowPosition;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.util.PseudoDisassembler;
-import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
-import ghidra.app.util.viewer.field.FieldFactory;
-import ghidra.app.util.viewer.options.OptionsGui;
+import ghidra.app.util.viewer.field.*;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.OptionsChangeListener;
@@ -47,13 +48,13 @@ import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 
 /**
- * A plugin to disassemble the address at the current ProgramLocation and to 
+ * A plugin to disassemble the address at the current ProgramLocation and to
  * display the Instruction.  This work of this plugin is temporary in that it
  * will not change the state of the program.
  * 
  * 
  * 
- *  TODO Change the PseudoCodeUnit's getComment(int) method or change its 
+ *  TODO Change the PseudoCodeUnit's getComment(int) method or change its
  *       getPreview(int) method not to call getComment(int) and then change
  *       this class to not handle the UnsupportedOperationException.
  *  TODO are the category and names correct?
@@ -77,8 +78,11 @@ import ghidra.util.exception.UsrException;
 )
 //@formatter:on
 public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjectListener {
+	private static final Color ADDRESS_COLOR =
+		new GColor("color.fg.plugin.disassembledview.address");
+
 	/**
-	 * The number of addresses that should be disassembled, including the 
+	 * The number of addresses that should be disassembled, including the
 	 * address of the current {@link ProgramLocation}.
 	 */
 	private static final int LOOK_AHEAD_COUNT = 5;
@@ -90,7 +94,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		new DisassembledViewComponentProvider();
 
 	/**
-	 * The last program location received from the 
+	 * The last program location received from the
 	 * {@link #locationChanged(ProgramLocation)} method.
 	 */
 	private ProgramLocation lastUpdatedLocation;
@@ -109,9 +113,9 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	public DisassembledViewPlugin(PluginTool plugintool) {
 		// We want to know about program activated events, location changed
 		// events and selection changed events.  The first type we get from
-		// our parent, the other two we get by passing true to our parent's 
+		// our parent, the other two we get by passing true to our parent's
 		// constructor
-		super(plugintool, true, true);
+		super(plugintool);
 	}
 
 	/**
@@ -149,8 +153,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * We want to make sure that we no longer have any contents when the 
-	 * program is deactivated so that we do not make any more calls to the 
+	 * We want to make sure that we no longer have any contents when the
+	 * program is deactivated so that we do not make any more calls to the
 	 * program or its plugins.
 	 * 
 	 * @param program The program being deactivated.
@@ -185,7 +189,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		// we only want to update if:
 		// 1) we have a valid location,
 		// 2) the location is different than the last location we processed, and
-		//    TODO: **Note: this step is believed to be a bug--we should only be 
+		//    TODO: **Note: this step is believed to be a bug--we should only be
 		//            getting one location change at a time, not two
 		// 3) the display is visible.
 		if (loc == null || loc.equals(lastUpdatedLocation) || !displayComponent.isVisible()) {
@@ -207,7 +211,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	/**
 	 * Called when we receive program selection events.
 	 * 
-	 * @param selection The ProgramSelection object that is the current 
+	 * @param selection The ProgramSelection object that is the current
 	 *        selection.
 	 * @see ProgramPlugin#selectionChanged(ProgramSelection)
 	 */
@@ -218,19 +222,19 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		// TODO:
-		// if there are multiple lines selected then we need to update the 
+		// if there are multiple lines selected then we need to update the
 		// display.  Should we:
-		// 1) Show each line selected with some sort of visual delimiter 
+		// 1) Show each line selected with some sort of visual delimiter
 		//    between each value?
 		// 2) Clear the display when there are multiple values selected?
 		// 3) Do nothing and allow selections, while showing only the current
 		//    location as determined by the cursor?
-		// 
-		// Currently solution 3) is used        
+		//
+		// Currently solution 3) is used
 		if (selection != null) {
 			if (containsMultipleSelection()) {
 				disassembleLocation(currentLocation);
-// changed in SCR 6875                
+// changed in SCR 6875
 //                displayComponent.clearContents();
 			}
 			else if (selection.isEmpty()) {
@@ -246,7 +250,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 	/**
 	 * Gets the pseudo disassembler used by this class.  This method will lazy
-	 * load the disassembler to prevent wasting of resources.  If the 
+	 * load the disassembler to prevent wasting of resources.  If the
 	 * program location changes, then the disassembler will be recreated.
 	 * 
 	 * @return the pseudo disassembler used by this class.
@@ -259,8 +263,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * Gets the {@link DisassembledAddressInfo}s for the given address.  
-	 * This method will disassamble {@link #LOOK_AHEAD_COUNT a few} addresses 
+	 * Gets the {@link DisassembledAddressInfo}s for the given address.
+	 * This method will disassamble {@link #LOOK_AHEAD_COUNT a few} addresses
 	 * after the one that is passed in.
 	 * 
 	 * @param  address The address for which an info object will be obtained.
@@ -274,7 +278,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			try {
 				DisassembledAddressInfo addressInfo = new DisassembledAddressInfo(address);
 
-				// Now get some follow-on addresses to provide a small level of 
+				// Now get some follow-on addresses to provide a small level of
 				// context.  This loop will stop if we cannot find an Address
 				// or a CodeUnit for a given address.
 				for (int i = 0; (i < LOOK_AHEAD_COUNT) && (address != null) &&
@@ -300,7 +304,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * Takes the provided program location object and locates a 
+	 * Takes the provided program location object and locates a
 	 * {@link CodeUnit} for it's address that is used to display a disassembled
 	 * preview of the location.
 	 * 
@@ -313,7 +317,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			DisassembledAddressInfo[] addressInfos =
 				getAddressInformation(newLocation.getAddress());
 
-			// add our preview content to our display (this will be empty if we 
+			// add our preview content to our display (this will be empty if we
 			// did not get a valid address or any valid code unit previews)
 			displayComponent.setContents(addressInfos);
 		}
@@ -324,33 +328,15 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	 */
 	private class DisassembledViewComponentProvider extends ComponentProviderAdapter {
 		/**
-		 * Constant for the selection color setting.
-		 */
-
-		/**
-		 * Constant for the address foreground color setting.
-		 */
-		private static final String ADDRESS_COLOR_OPTION = "Address Color";
-
-		/**
-		 * Constant for the browser font setting.
-		 */
-		private static final String ADDRESS_FONT_OPTION = "BASE FONT";
-		/**
-		 * Constant for the browser's background setting.
-		 */
-		private static final String BACKGROUND_COLOR_OPTION = "Background Color";
-
-		/**
 		 * The constant part of the tooltip text for the list cells.  This
-		 * string is prepended to the currently selected address in the 
+		 * string is prepended to the currently selected address in the
 		 * program.
 		 * <p>
 		 * Note: This value was just set on the list, but when that was done
 		 * the help key triggers (Ctrl-F1) did not work correctly.
 		 */
 		private static final String TOOLTIP_TEXT_PREPEND =
-			"<HTML>Currently selected<br> Code Browser program location<br>" + "address: ";
+			"<html>Currently selected<br> Code Browser program location<br>address: ";
 
 		/**
 		 * The component that will house our view.
@@ -361,27 +347,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		 * The list that will render the disassembled addresses.
 		 */
 		private JList<DisassembledAddressInfo> contentList;
-
-		/**
-		 * The color of the address in the list that represents the current
-		 * selection in the code browser.
-		 */
-		private Color selectedAddressColor;
-
-		/**
-		 * The color of the preview text.
-		 */
-		private Color addressForegroundColor;
-
-		/**
-		 * The color for the list background.
-		 */
-		private Color backgroundColor;
-
-		/**
-		 * The font for the list items.
-		 */
-		private Font font;
 
 		/**
 		 * The preview style of the addresses being displayed.
@@ -420,6 +385,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 			initializeDisplay();
 
+			String viewName = "Disassembled View";
+			contentList.setName(viewName);
+			contentList.getAccessibleContext().setAccessibleName(viewName);
+
 			// we need to do some custom rendering
 			contentList.setCellRenderer(new GListCellRenderer<DisassembledAddressInfo>() {
 
@@ -437,7 +406,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					super.getListCellRendererComponent(list, value, index, isSelected,
 						cellHasFocus);
 
-					setFont(font);
+					setFont(Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID));
 
 					setToolTipText(TOOLTIP_TEXT_PREPEND +
 						HTMLUtilities.escapeHTML(currentLocation.getAddress().toString()));
@@ -445,12 +414,12 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					// make sure the first value is highlighted to indicate
 					// that it is the selected program location
 					if (index == 0) {
-						Color foreground = addressForegroundColor;
-						Color background = selectedAddressColor;
+						Color foreground = ADDRESS_COLOR;
+						Color background = GhidraOptions.DEFAULT_SELECTION_COLOR;
 
 						if (isSelected) {
-							foreground = foreground.brighter();
-							background = background.darker();
+							foreground = Gui.brighter(foreground);
+							background = Gui.darker(background);
 						}
 
 						setForeground(foreground);
@@ -470,10 +439,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			ToolOptions opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 			opt.addOptionsChangeListener(optionsChangeListener);
 
-			// current address background color
-			selectedAddressColor = opt.getColor(GhidraOptions.OPTION_SELECTION_COLOR,
-				GhidraOptions.DEFAULT_SELECTION_COLOR);
-
 			// the address preview style
 			addressPreviewFormat = new BrowserCodeUnitFormat(tool);
 			addressPreviewFormat.addChangeListener(addressFormatChangeListener);
@@ -481,20 +446,9 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 			opt.addOptionsChangeListener(optionsChangeListener);
 
-			// the preview text color
-			addressForegroundColor = opt.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-				OptionsGui.SEPARATOR.getDefaultColor());
-
-			// background color
-			backgroundColor = opt.getColor(OptionsGui.BACKGROUND.getColorOptionName(),
-				OptionsGui.BACKGROUND.getDefaultColor());
-
-			// font
-			font = opt.getFont(ADDRESS_FONT_OPTION, FieldFactory.DEFAULT_FIELD_FONT);
-
-			contentList.setForeground(addressForegroundColor);
-			contentList.setBackground(backgroundColor);
-			contentList.setFont(font);
+			contentList.setForeground(ADDRESS_COLOR);
+			contentList.setBackground(ListingColors.BACKGROUND);
+			Gui.registerFont(contentList, "font.listing.base");
 		}
 
 		/**
@@ -509,22 +463,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			opt.removeOptionsChangeListener(optionsChangeListener);
 		}
 
-		/**
-		 * Adds the given listener to be notified when the user selects list
-		 * items in the view.
-		 * 
-		 * @param listener The listener to add.
-		 */
-//        void addListSelectionListener( ListSelectionListener listener )
-//        {
-//            contentList.addListSelectionListener( listener );
-//        }
-
-		/**
-		 * Sets the contents to the provided value.
-		 * 
-		 * @param displayContents The value that the view should display.
-		 */
 		void setContents(DisassembledAddressInfo[] addressInfos) {
 			contentList.setListData(addressInfos);
 		}
@@ -547,10 +485,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Notifies the provider that the user pressed the "close" button.  
-		 * The provider should take appropriate action.  Usually the 
-		 * appropriate action is to hide the component or remove the 
-		 * component.  If the provider does nothing in this method, 
+		 * Notifies the provider that the user pressed the "close" button.
+		 * The provider should take appropriate action.  Usually the
+		 * appropriate action is to hide the component or remove the
+		 * component.  If the provider does nothing in this method,
 		 * then the close button will appear broken.
 		 */
 		@Override
@@ -580,25 +518,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			@Override
 			public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 					Object newValue) {
-				if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
-					if (optionName.equals(GhidraOptions.OPTION_SELECTION_COLOR)) {
-						selectedAddressColor = (Color) newValue;
-					}
-				}
-				else if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_DISPLAY)) {
-					if (optionName.equals(ADDRESS_COLOR_OPTION)) {
-						addressForegroundColor = (Color) newValue;
-						contentList.setForeground(addressForegroundColor);
-					}
-					else if (optionName.equals(BACKGROUND_COLOR_OPTION)) {
-						backgroundColor = (Color) newValue;
-						contentList.setBackground(backgroundColor);
-					}
-					else if (optionName.equals(ADDRESS_FONT_OPTION)) {
-						font = (Font) newValue;
-					}
-				}
-
 				// update the display
 				contentList.repaint();
 			}
@@ -606,9 +525,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * An object that provides information about the address that it wraps.
-	 * The info knows how to locate a {@link CodeInfo} object for the address
-	 * and can generate a string preview of the address.
+	 * An object that provides information about the address that it wraps.  The info knows how to
+	 * locate an info object for the address and can generate a string preview of the address.
 	 */
 	private class DisassembledAddressInfo {
 		/**
@@ -617,7 +535,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		private Address wrappedAddress;
 
 		/**
-		 * The code unit for the address of this info.  This will be null 
+		 * The code unit for the address of this info.  This will be null
 		 * after construction if not code unit exists for the address.
 		 */
 		private CodeUnit addressCodeUnit;
@@ -644,7 +562,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Returns the address described by this info.
 		 * 
-		 * @return Returns the address described by this info. 
+		 * @return Returns the address described by this info.
 		 */
 		private Address getAddress() {
 
@@ -652,10 +570,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Returns true if there is a {@link CodeUnit} for the address 
+		 * Returns true if there is a {@link CodeUnit} for the address
 		 * wrapped by this info.  If not, then we do not have a valid addreess.
 		 * 
-		 * @return true if there is a {@link CodeUnit} for the address 
+		 * @return true if there is a {@link CodeUnit} for the address
 		 *         wrapped by this info.
 		 */
 		public boolean isValidAddress() {
@@ -663,14 +581,14 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Gets the length of the {@link CodeUnit} for the address wrapped 
-		 * by this info.  
+		 * Gets the length of the {@link CodeUnit} for the address wrapped
+		 * by this info.
 		 * <p>
 		 * Note: If {@link #isValidAddress()} returns false, then this method
 		 * will return <code>-1</code>.
 		 * 
-		 * @return the length of the code unit for the address wrapped by this 
-		 *         info. 
+		 * @return the length of the code unit for the address wrapped by this
+		 *         info.
 		 */
 		public int getCodeUnitLength() {
 			if (isValidAddress()) {
@@ -683,8 +601,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Get the code unit from the program location.
 		 *
-		 * @param  The address from which we want the CodeUnit.
-		 * @return CodeUnit null if there is no location.
+		 * @param address the address from which we want the CodeUnit.
+		 * @return null if there is no location.
 		 */
 		private CodeUnit getCodeUnitForAddress(Address address) {
 			CodeUnit codeUnit = null;
@@ -693,8 +611,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 				Listing listing = currentProgram.getListing();
 				codeUnit = listing.getCodeUnitAt(address);
 
-				// if the CodeUnit is Data and is not defined, then we 
-				// need to try to virutally disassemble it
+				// if the CodeUnit is Data and is not defined, then we need to try to virtually
+				// disassemble it
 				if (codeUnit instanceof Data) {
 					if (!((Data) codeUnit).isDefined()) {
 						CodeUnit virtualCodeUnit = virtuallyDisassembleAddress(address);
@@ -710,8 +628,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Attempts to disassemble the provided address virtually 
-		 * (without changing the state of the program) by making use of the 
+		 * Attempts to disassemble the provided address virtually
+		 * (without changing the state of the program) by making use of the
 		 * {@link PseudoDisassembler}.
 		 * 
 		 * @param  address The address that will be disassembled.
@@ -727,18 +645,15 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					codeUnit = disassembler.disassemble(address);
 				}
 				catch (UsrException ue) {
-					// these exceptions happen if there is insufficient data
-					// from the program: InsufficientBytesException, 
-					// UnknownInstructionException, UnknownContextException
+					// these exceptions happen if there is insufficient data from the program:
+					// InsufficientBytesException, UnknownInstructionException,
+					// UnknownContextException
 				}
 			}
 
 			return codeUnit;
 		}
 
-		/**
-		 * Gets the preview String for the provided code unit.
-		 */
 		public String getAddressPreview(CodeUnitFormat format) {
 			return getAddress().toString() + " " + format.getRepresentationString(addressCodeUnit);
 		}

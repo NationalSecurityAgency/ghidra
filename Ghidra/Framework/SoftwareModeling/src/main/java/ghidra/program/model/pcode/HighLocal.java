@@ -17,9 +17,6 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 public class HighLocal extends HighVariable {
 
@@ -53,18 +50,24 @@ public class HighLocal extends HighVariable {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("high");
-		long symref = SpecXmlUtils.decodeLong(el.getAttribute("symref"));
+	public void decode(Decoder decoder) throws DecoderException {
+		//int el = decoder.openElement(ElementId.ELEM_HIGH);
+		long symref = decoder.readUnsignedInteger(AttributeId.ATTRIB_SYMREF);
 		offset = -1;
-		String attrString = el.getAttribute("offset");
-		if (attrString != null) {
-			offset = SpecXmlUtils.decodeInt(attrString);
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_OFFSET.id()) {
+				offset = (int) decoder.readSignedInteger();
+				break;
+			}
 		}
-		restoreInstances(parser, el);
+		decodeInstances(decoder);
 		symbol = function.getLocalSymbolMap().getSymbol(symref);
 		if (symbol == null) {
-			throw new PcodeXMLException("HighLocal is missing symbol");
+			throw new DecoderException("HighLocal is missing symbol");
 		}
 		if (offset < 0) {
 			name = symbol.getName();
@@ -75,7 +78,7 @@ public class HighLocal extends HighVariable {
 		pcaddr = symbol.getPCAddress();
 		symbol.setHighVariable(this);
 
-		parser.end(el);
+		//decoder.closeElement(el);
 	}
 
 }

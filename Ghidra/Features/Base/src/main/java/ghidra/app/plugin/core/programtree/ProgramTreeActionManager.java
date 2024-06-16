@@ -20,6 +20,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.swing.KeyStroke;
 import javax.swing.event.TreeSelectionEvent;
@@ -30,6 +32,8 @@ import javax.swing.tree.TreePath;
 import docking.ActionContext;
 import docking.action.*;
 import docking.dnd.GClipboard;
+import docking.widgets.tree.GTreeNode;
+import generic.timer.ExpiringSwingTimer;
 import ghidra.app.cmd.module.*;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.program.model.address.Address;
@@ -1055,6 +1059,22 @@ class ProgramTreeActionManager implements ClipboardOwner {
 
 	}
 
+	private void getModelNode(ProgramNode parent, Group group, Consumer<ProgramNode> consumer) {
+
+		int expireMs = 3000;
+		Supplier<ProgramNode> supplier = () -> {
+			int nchild = parent.getChildCount();
+			for (int i = 0; i < nchild; i++) {
+				ProgramNode child = (ProgramNode) parent.getChildAt(i);
+				if (child.getGroup() == group) {
+					return child;
+				}
+			}
+			return null;
+		};
+		ExpiringSwingTimer.get(supplier, expireMs, consumer);
+	}
+
 	/**
 	 * Find the node corresponding to the given group. Start the cell
 	 * editor for the child node.
@@ -1063,15 +1083,11 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		if (!parent.wasVisited()) {
 			tree.visitNode(parent);
 		}
-		int nchild = parent.getChildCount();
-		for (int i = 0; i < nchild; i++) {
-			ProgramNode child = (ProgramNode) parent.getChildAt(i);
-			if (child.getGroup() == group) {
-				tree.setEditable(true);
-				tree.startEditingAtPath(child.getTreePath());
-				break;
-			}
-		}
+
+		getModelNode(parent, group, c -> {
+			tree.setEditable(true);
+			tree.startEditingAtPath(c.getTreePath());
+		});
 	}
 
 	///////////////////////////////////////////////////////////////////////

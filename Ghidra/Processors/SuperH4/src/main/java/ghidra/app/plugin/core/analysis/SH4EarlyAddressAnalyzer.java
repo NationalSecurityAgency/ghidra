@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import ghidra.app.services.AnalysisPriority;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.RefType;
@@ -45,15 +46,19 @@ public class SH4EarlyAddressAnalyzer extends SH4AddressAnalyzer {
 
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
-		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+		ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 
 				// if this is a call, some processors use the register value
 				// used in the call for PIC calculations
 				if (refType.isFlow()) {
+					if (address.isExternalAddress()) {
+						return true;
+					}
+					
 					// set the called function to have a constant value for this register
 					// WARNING: This might not always be the case, if called directly or with a different register
 					//          But then it won't matter, because the function won't depend on the registers value.
@@ -63,7 +68,7 @@ public class SH4EarlyAddressAnalyzer extends SH4AddressAnalyzer {
 
 					if (refType.isComputed()) {
 						boolean doRef = super.evaluateReference(context, instr, pcodeop, address,
-							size, refType);
+							size, dataType, refType);
 						if (!doRef) {
 							return false;
 						}

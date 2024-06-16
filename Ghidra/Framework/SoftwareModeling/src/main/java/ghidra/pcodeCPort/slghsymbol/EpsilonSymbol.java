@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,15 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 // Another name for zero pattern/value
 public class EpsilonSymbol extends PatternlessSymbol {
@@ -35,7 +32,7 @@ public class EpsilonSymbol extends PatternlessSymbol {
 
 	public EpsilonSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public EpsilonSymbol(Location location, String nm, AddrSpace spc) {
 		super(location, nm);
@@ -48,41 +45,23 @@ public class EpsilonSymbol extends PatternlessSymbol {
 	}
 
 	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = const_space;
-		hand.offset_space = null; // Not a dynamic value
-		hand.offset_offset = 0;
-		hand.size = 0; // Cannot provide size
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		s.append('0');
-	}
-
-	@Override
 	public VarnodeTpl getVarnode() {
-		return new VarnodeTpl(location, new ConstTpl(const_space), new ConstTpl(
-			ConstTpl.const_type.real, 0), new ConstTpl(ConstTpl.const_type.real, 0));
+		return new VarnodeTpl(location, new ConstTpl(const_space),
+			new ConstTpl(ConstTpl.const_type.real, 0), new ConstTpl(ConstTpl.const_type.real, 0));
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<epsilon_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_EPSILON_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.closeElement(ELEM_EPSILON_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<epsilon_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		const_space = trans.getConstantSpace();
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_EPSILON_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_EPSILON_SYM_HEAD);
 	}
 
 }

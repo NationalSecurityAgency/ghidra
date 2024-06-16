@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
 
 import org.antlr.runtime.*;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.jdom.JDOMException;
 
+import generic.jar.ResourceFile;
 import generic.stl.*;
 import ghidra.pcode.utils.MessageFormattingUtils;
+import ghidra.pcode.utils.SlaFormat;
 import ghidra.pcodeCPort.address.Address;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.error.LowlevelError;
@@ -36,8 +37,9 @@ import ghidra.pcodeCPort.slghpatexpress.*;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.utils.Utils;
-import ghidra.pcodeCPort.xml.DocumentStorage;
 import ghidra.program.model.lang.SpaceNames;
+import ghidra.program.model.pcode.PackedEncode;
+import ghidra.program.model.pcode.XmlEncode;
 import ghidra.sleigh.grammar.*;
 import ghidra.util.Msg;
 import utilities.util.FileResolutionResult;
@@ -255,6 +257,7 @@ public class SleighCompile extends SleighBase {
 	private boolean warnalllocalcollisions;	// True if local export collisions generate individual warnings
 	private boolean warnallnops;		// True if pcode NOPs generate individual warnings
 	private boolean failinsensitivedups;	// True if case insensitive register duplicates cause error
+	private boolean debugoutput;		// True if output .sla is written in XML debug format
 	private VectorSTL<String> noplist = new VectorSTL<>();
 
 	private Deque<WithBlock> withstack = new LinkedList<>();
@@ -289,6 +292,8 @@ public class SleighCompile extends SleighBase {
 		symtab.addSymbol(startsym);
 		EndSymbol endsym = new EndSymbol(location, "inst_next", getConstantSpace());
 		symtab.addSymbol(endsym);
+		Next2Symbol next2sym = new Next2Symbol(location, "inst_next2", getConstantSpace());
+		symtab.addSymbol(next2sym);
 		EpsilonSymbol epsilon = new EpsilonSymbol(location, "epsilon", getConstantSpace());
 		symtab.addSymbol(epsilon);
 	}
@@ -486,6 +491,8 @@ public class SleighCompile extends SleighBase {
 		}
 		for (int i = 0; i < tables.size(); ++i) {
 			if (tables.get(i).isError()) {
+				reportError(tables.get(i).getLocation(),
+					"Problem in table: '" + tables.get(i).getName());
 				errors += 1;
 			}
 			if (tables.get(i).getPattern() == null) {
@@ -698,6 +705,7 @@ public class SleighCompile extends SleighBase {
 		largetemporarywarning = false;
 		warnallnops = false;
 		failinsensitivedups = true;
+		debugoutput = false;
 		root = null;
 		pcode.resetLabelCount();
 	}
@@ -794,6 +802,11 @@ public class SleighCompile extends SleighBase {
 	public void setInsensitiveDuplicateError(boolean val) {
 		entry("setInsensitiveDuplicateError", val);
 		failinsensitivedups = val;
+	}
+
+	public void setDebugOutput(boolean val) {
+		entry("setDebugOutput", val);
+		debugoutput = val;
 	}
 
 	// Do all post processing on the parsed data structures
@@ -921,13 +934,28 @@ public class SleighCompile extends SleighBase {
 
 	public void addTokenField(Location location, TokenSymbol sym, FieldQuality qual) {
 		entry("addTokenField", location, sym, qual);
+		if (qual.high < qual.low) {
+			reportError(location, "Field '" + qual.name + "' starts at " +
+				Integer.toString(qual.low) + " and ends at " + Integer.toString(qual.high));
+		}
+		if (sym.getToken().getSize() * 8 <= qual.high) {
+			reportError(location, "Field '" + qual.name + "' high must be less than token size");
+		}
 		TokenField field =
 			new TokenField(location, sym.getToken(), qual.signext, qual.low, qual.high);
 		addSymbol(new ValueSymbol(location, qual.name, field));
 	}
 
-	public boolean addContextField(VarnodeSymbol sym, FieldQuality qual) {
+	public boolean addContextField(Location location, VarnodeSymbol sym, FieldQuality qual) {
 		entry("addContextField", sym, qual);
+		if (qual.high < qual.low) {
+			reportError(location, "Context field '" + qual.name + "' starts at " +
+				Integer.toString(qual.low) + " and ends at " + Integer.toString(qual.high));
+		}
+		if (sym.getSize() * 8 <= qual.high) {
+			reportError(location,
+				"Context field '" + qual.name + "' high must be less than context size");
+		}
 		if (contextlock) {
 			return false; // Context layout has already been satisfied
 		}
@@ -989,7 +1017,7 @@ public class SleighCompile extends SleighBase {
 	public void setEndian(int end) {
 		entry("setEndian", end);
 		target_endian = end;
-		predefinedSymbols(); // Set up symbols now that we know endianess
+		predefinedSymbols(); // Set up symbols now that we know endianness
 	}
 
 	public void setAlignment(int val) {
@@ -1280,7 +1308,8 @@ public class SleighCompile extends SleighBase {
 		VectorSTL<PatternValue> vallist = new VectorSTL<>();
 		pe.listValues(vallist);
 		for (int i = 0; i < vallist.size(); ++i) {
-			if (vallist.get(i) instanceof EndInstructionValue) {
+			PatternValue v = vallist.get(i);
+			if (v instanceof EndInstructionValue || v instanceof Next2InstructionValue) {
 				return false;
 			}
 		}
@@ -1739,12 +1768,6 @@ public class SleighCompile extends SleighBase {
 		macrotable.push_back(rtl);
 	}
 
-	// Virtual functions (not used by the compiler)
-	@Override
-	public void initialize(DocumentStorage store) {
-		// do nothing
-	}
-
 	@Override
 	public int instructionLength(Address baseaddr) {
 		return 0;
@@ -1758,7 +1781,8 @@ public class SleighCompile extends SleighBase {
 	public void setAllOptions(Map<String, String> preprocs, boolean unnecessaryPcodeWarning,
 			boolean lenientConflict, boolean allCollisionWarning, boolean allNopWarning,
 			boolean deadTempWarning, boolean unusedFieldWarning, boolean enforceLocalKeyWord,
-			boolean largeTemporaryWarning, boolean caseSensitiveRegisterNames) {
+			boolean largeTemporaryWarning, boolean caseSensitiveRegisterNames,
+			boolean debugOutput) {
 		Set<Entry<String, String>> entrySet = preprocs.entrySet();
 		for (Entry<String, String> entry : entrySet) {
 			setPreprocValue(entry.getKey(), entry.getValue());
@@ -1772,6 +1796,7 @@ public class SleighCompile extends SleighBase {
 		setEnforceLocalKeyWord(enforceLocalKeyWord);
 		setLargeTemporaryWarning(largeTemporaryWarning);
 		setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
+		setDebugOutput(debugOutput);
 	}
 
 	public int run_compilation(String filein, String fileout)
@@ -1817,9 +1842,21 @@ public class SleighCompile extends SleighBase {
 			}
 			if ((parseres == 0) && (numErrors() == 0)) {
 				// If no errors
-				PrintStream s = new PrintStream(new FileOutputStream(new File(fileout)));
-				saveXml(s); // Dump output xml
-				s.close();
+				ResourceFile resourceFile = new ResourceFile(fileout);
+				if (debugoutput) {
+					// If the debug output format was requested, use XML encoder
+					XmlEncode encoder = new XmlEncode();
+					encode(encoder);
+					OutputStream stream = resourceFile.getOutputStream();
+					encoder.writeTo(stream);
+					stream.close();
+				}
+				else {
+					// Use the standard .sla format encoder
+					PackedEncode encoder = SlaFormat.buildEncoder(resourceFile);
+					encode(encoder);		// Dump compiler output
+					encoder.getOutputStream().close();
+				}
 			}
 			else {
 				Msg.error(SleighCompile.class, "No output produced");
@@ -1847,11 +1884,10 @@ public class SleighCompile extends SleighBase {
 	 * compiler without using the launcher.  The full SoftwareModeling classpath 
 	 * must be established including any dependencies.
 	 * @param args compiler command line arguments
-	 * @throws JDOMException for XML errors
 	 * @throws IOException for file access errors
 	 * @throws RecognitionException for parsing errors
 	 */
-	public static void main(String[] args) throws JDOMException, IOException, RecognitionException {
+	public static void main(String[] args) throws IOException, RecognitionException {
 		System.exit(SleighCompileLauncher.runMain(args));
 	}
 }

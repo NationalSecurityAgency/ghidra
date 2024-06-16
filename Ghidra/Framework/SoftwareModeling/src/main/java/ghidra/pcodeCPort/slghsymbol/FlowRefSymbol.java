@@ -15,11 +15,6 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-
-import ghidra.pcodeCPort.address.Address;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
@@ -32,7 +27,7 @@ import ghidra.sleigh.grammar.Location;
  */
 public class FlowRefSymbol extends SpecificSymbol {
 	private AddrSpace const_space;
-	
+
 	public FlowRefSymbol(Location location, String nm, AddrSpace cspc) {
 		super(location, nm);
 		const_space = cspc;
@@ -41,22 +36,13 @@ public class FlowRefSymbol extends SpecificSymbol {
 	}
 
 	@Override
-    public PatternExpression getPatternExpression() {
+	public PatternExpression getPatternExpression() {
 		return null;		// Cannot be used in pattern expressions
 	}
 
 	@Override
 	public symbol_type getType() {
-		return symbol_type.start_symbol;
-	}
-
-	@Override
-    public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
-		Address refAddr = walker.getFlowRefAddr();
-		hand.space = const_space;
-		hand.offset_space = null;
-		hand.offset_offset = refAddr.getOffset();
-		hand.size = refAddr.getAddrSize();
+		return symbol_type.flowref_symbol;
 	}
 
 	@Override
@@ -67,10 +53,4 @@ public class FlowRefSymbol extends SpecificSymbol {
 		return new VarnodeTpl(location, spc, off, sz_zero);
 	}
 
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		long val = pos.getFlowRefAddr().getOffset();
-		s.append("0x");
-		s.print(Long.toHexString(val));
-	}
 }

@@ -24,11 +24,10 @@ import org.apache.logging.log4j.core.LoggerContext;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 public class LoggingInitialization {
 
-	private static final String LOG4J2_CONFIGURATION_PROPERTY = "log4j.configurationFile";
+	public static final String LOG4J2_CONFIGURATION_PROPERTY = "log4j.configurationFile";
 
 	private static final String PRODUCTION_LOGGING_CONFIGURATION_FILE = "generic.log4j.xml";
 	private static final String DEVELOPMENT_LOGGING_CONFIGURATION_FILE = "generic.log4jdev.xml";
@@ -90,7 +89,7 @@ public class LoggingInitialization {
 			loggingConfigFilename = DEVELOPMENT_LOGGING_CONFIGURATION_FILE;
 		}
 
-		return ResourceManager.getResource(loggingConfigFilename);
+		return LoggingInitialization.class.getClassLoader().getResource(loggingConfigFilename);
 	}
 
 	private static URL getLogFileFromSystemProperty() {
@@ -100,7 +99,7 @@ public class LoggingInitialization {
 		}
 
 		// first see if the given filename is something that is in our classpath
-		URL resource = ResourceManager.getResource(configString);
+		URL resource = LoggingInitialization.class.getClassLoader().getResource(configString);
 		if (resource != null) {
 			return resource;
 		}
@@ -153,9 +152,9 @@ public class LoggingInitialization {
 	}
 
 	/**
-	 * Use this to override the default application log file, before you initialize the logging 
+	 * Use this to override the default application log file, before you initialize the logging
 	 * system.
-	 * 
+	 *
 	 * @param file The file to use as the application log file
 	 */
 	synchronized static void setApplicationLogFile(File file) {
@@ -168,13 +167,12 @@ public class LoggingInitialization {
 		}
 		APPLICATION_LOG_FILE = file;
 
-		// Need to set the system property that the log4j2 configuration reads in order to 
-		// determine the log file name. Once that's set, the log configuration must be 'kicked' to 
+		// Need to set the system property that the log4j2 configuration reads in order to
+		// determine the log file name. Once that's set, the log configuration must be 'kicked' to
 		// pick up the change.
 		System.setProperty("logFilename", file.getAbsolutePath());
-		if (INITIALIZED) {
-			((LoggerContext) LogManager.getContext(false)).reconfigure();
-		}
+
+		reinitialize();
 	}
 
 	/**
@@ -192,7 +190,7 @@ public class LoggingInitialization {
 	/**
 	 * Use this to override the default application log file, before you
 	 * initialize the logging system.
-	 * 
+	 *
 	 * @param file The file to use as the application log file
 	 */
 	synchronized static void setScriptLogFile(File file) {
@@ -205,11 +203,21 @@ public class LoggingInitialization {
 		}
 		SCRIPT_LOG_FILE = file;
 
-		// Need to set the system property that the log4j2 configuration reads in order to 
-		// determine the script log file name. Once that's set, the log configuration must be 
+		// Need to set the system property that the log4j2 configuration reads in order to
+		// determine the script log file name. Once that's set, the log configuration must be
 		// 'kicked' to pick up the change.
 		System.setProperty("scriptLogFilename", file.getAbsolutePath());
 
+		reinitialize();
+	}
+
+	/**
+	 * Signals to reload the log settings from the log configuration files in use.  This is useful
+	 * for tests that wish to temporarily change log settings, restoring them when done.
+	 * <p>
+	 * This method will do nothing if {@link #initializeLoggingSystem()} has not been called.
+	 */
+	public synchronized static void reinitialize() {
 		if (INITIALIZED) {
 			((LoggerContext) LogManager.getContext(false)).reconfigure();
 		}

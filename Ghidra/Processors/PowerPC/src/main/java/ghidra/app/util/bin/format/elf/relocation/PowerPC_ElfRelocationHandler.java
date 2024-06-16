@@ -15,16 +15,32 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
+import java.util.Map;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.extend.PowerPC_ElfExtension;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 
-public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
+public class PowerPC_ElfRelocationHandler extends
+		AbstractElfRelocationHandler<PowerPC_ElfRelocationType, PowerPC_ElfRelocationContext> {
+
+	// Masks for manipulating Power PC relocation targets
+	private static final int PPC_WORD32 = 0xFFFFFFFF;
+	private static final int PPC_WORD30 = 0xFFFFFFFC;
+	private static final int PPC_LOW24 = 0x03FFFFFC;
+	private static final int PPC_LOW14 = 0x0020FFFC;
+	private static final int PPC_HALF16 = 0xFFFF;
+
+	/**
+	 * Constructor
+	 */
+	public PowerPC_ElfRelocationHandler() {
+		super(PowerPC_ElfRelocationType.class);
+	}
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
@@ -32,37 +48,29 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
-			Address relocationAddress) throws MemoryAccessException, NotFoundException {
+	public PowerPC_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
+			Map<ElfSymbol, Address> symbolMap) {
+		return new PowerPC_ElfRelocationContext(this, loadHelper, symbolMap);
+	}
 
-		ElfHeader elf = elfRelocationContext.getElfHeader();
-		if (elf.e_machine() != ElfConstants.EM_PPC || !elf.is32Bit()) {
-			return;
-		}
+	@Override
+	public int getRelrRelocationType() {
+		return PowerPC_ElfRelocationType.R_PPC_RELATIVE.typeId;
+	}
+
+	@Override
+	protected RelocationResult relocate(PowerPC_ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation, PowerPC_ElfRelocationType type, Address relocationAddress,
+			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
+			throws MemoryAccessException {
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 
-		int type = relocation.getType();
-		if (type == PowerPC_ElfRelocationConstants.R_PPC_NONE) {
-			return;
-		}
 		int symbolIndex = relocation.getSymbolIndex();
-
-		Language language = elfRelocationContext.getProgram().getLanguage();
-		if (!"PowerPC".equals(language.getProcessor().toString()) ||
-			language.getLanguageDescription().getSize() != 32) {
-			markAsError(program, relocationAddress, Long.toString(type), null,
-				"Unsupported language for 32-bit PowerPC relocation",
-				elfRelocationContext.getLog());
-		}
 
 		// NOTE: Based upon glibc source it appears that PowerPC only uses RELA relocations
 		int addend = (int) relocation.getAddend();
-
-		int offset = (int) relocationAddress.getOffset();
-
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
 
 //		if (sym.isLocal() && sym.getSectionHeaderIndex() != ElfSectionHeaderConstants.SHN_UNDEF) {
 //
@@ -72,114 +80,107 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 //
 //			// Relocation addend already includes original symbol value but needs to account 
 //			// for any image base adjustment
-//			symbolValue = (int) elfRelocationContext.getImageBaseWordAdjustmentOffset();
+//			symbolValue = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 //		}
-//		else {
-		Address symbolAddr = (elfRelocationContext.getSymbolAddress(sym));
-		int symbolValue = (int) elfRelocationContext.getSymbolValue(sym);
-//		}
-		String symbolName = sym.getNameAsString();
 
+		long relocbase = elfRelocationContext.getImageBaseWordAdjustmentOffset();
+
+		int offset = (int) relocationAddress.getOffset();
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		switch (type) {
-			case PowerPC_ElfRelocationConstants.R_PPC_COPY:
-				markAsWarning(program, relocationAddress, "R_PPC_COPY", symbolName,
-					symbolIndex, "Runtime copy not supported", elfRelocationContext.getLog());
-				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR32:
-			case PowerPC_ElfRelocationConstants.R_PPC_UADDR32:
-			case PowerPC_ElfRelocationConstants.R_PPC_GLOB_DAT:
-				newValue = symbolValue + addend;
+			case R_PPC_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			case R_PPC_ADDR32:
+			case R_PPC_UADDR32:
+			case R_PPC_GLOB_DAT:
+				newValue = (int) symbolValue + addend;
 				memory.setInt(relocationAddress, newValue);
-				if (addend != 0) {
-					warnExternalOffsetRelocation(program, relocationAddress,
-						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
+					warnExternalOffsetRelocation(program, relocationAddress, symbolAddr, symbolName,
+						addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);
 				}
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR24:
-				newValue = (symbolValue + addend) >> 2;
-				newValue = (oldValue & ~PowerPC_ElfRelocationConstants.PPC_LOW24) | (newValue << 2);
+			case R_PPC_ADDR24:
+				newValue = ((int) symbolValue + addend) >> 2;
+				newValue = (oldValue & ~PPC_LOW24) | (newValue << 2);
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16:
-			case PowerPC_ElfRelocationConstants.R_PPC_UADDR16:
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_LO:
-				newValue = symbolValue + addend;
+			case R_PPC_ADDR16:
+			case R_PPC_UADDR16:
+				newValue = (int) symbolValue + addend;
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_HI:
-				newValue = (symbolValue + addend) >> 16;
+			case R_PPC_ADDR16_LO:
+				if (Long.compareUnsigned(symbolValue, relocbase) > 0 &&
+					Long.compareUnsigned(symbolValue, relocbase + addend) <= 0) {
+					/**
+					 * (freebsd) Addend values are sometimes relative to sections in rela,
+					 * where in reality they are relative to relocbase.  Detect this condition.
+					 */
+					symbolValue = (int) relocbase;
+				}
+				newValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
-			/**
-			 * 
-			R_POWERPC_ADDR16_HA: ((Symbol + Addend + 0x8000) >> 16) & 0xffff
-			static inline void addr16_ha(unsigned char* view, Address value)
-			{ This::addr16_hi(view, value + 0x8000); }
-			
-			static inline void
-			addr16_hi(unsigned char* view, Address value)
-			{ This::template rela<16,16>(view, 16, 0xffff, value + 0x8000, CHECK_NONE); }
-			
-			rela(unsigned char* view,
-			unsigned int right_shift,
-			typename elfcpp::Valtype_base<fieldsize>::Valtype dst_mask,
-			Address value,
-			Overflow_check overflow)
-			{
-			typedef typename elfcpp::Swap<fieldsize, big_endian>::Valtype Valtype;
-			Valtype* wv = reinterpret_cast<Valtype*>(view);
-			Valtype val = elfcpp::Swap<fieldsize, big_endian>::readval(wv);  // original bytes
-			
-			Valtype reloc = value >> 16;
-			val &= ~0xffff;
-			reloc &= dst_mask;
-			elfcpp::Swap<fieldsize, big_endian>::writeval(wv, val | reloc); // write instr btes
-			return overflowed<valsize>(value >> 16, overflow);
-			}
-			
-			
-			 */
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_HA:
-				newValue = (symbolValue + addend + 0x8000) >> 16;
+			case R_PPC_ADDR16_HI:
+				newValue = ((int) symbolValue + addend) >> 16;
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR14:
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR14_BRTAKEN:
-			case PowerPC_ElfRelocationConstants.R_PPC_ADDR14_BRNTAKEN:
-				newValue = (symbolValue + addend) >> 2;
-				newValue = (oldValue & ~PowerPC_ElfRelocationConstants.PPC_LOW14) |
-					((newValue << 2) & PowerPC_ElfRelocationConstants.PPC_LOW24);
+			case R_PPC_ADDR16_HA:
+				if (Long.compareUnsigned(symbolValue, relocbase) > 0 &&
+					Long.compareUnsigned(symbolValue, relocbase + addend) <= 0) {
+					/**
+					 * (freebsd) Addend values are sometimes relative to sections in rela,
+					 * where in reality they are relative to relocbase.  Detect this condition.
+					 */
+					symbolValue = (int) relocbase;
+				}
+				newValue = (int) (symbolValue + addend);
+				newValue = (newValue >> 16) + ((newValue & 0x8000) != 0 ? 1 : 0);
+				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
+				break;
+			case R_PPC_ADDR14:
+			case R_PPC_ADDR14_BRTAKEN:
+			case R_PPC_ADDR14_BRNTAKEN:
+				newValue = ((int) symbolValue + addend) >> 2;
+				newValue = (oldValue & ~PPC_LOW14) | ((newValue << 2) & PPC_LOW24);
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_REL24:
-				newValue = (symbolValue + addend - offset) >> 2;
-				newValue = ((newValue << 2) & PowerPC_ElfRelocationConstants.PPC_LOW24);
-				newValue = (oldValue & ~PowerPC_ElfRelocationConstants.PPC_LOW24) | newValue;
+			case R_PPC_REL24:
+				newValue = ((int) symbolValue + addend - offset) >> 2;
+				newValue = ((newValue << 2) & PPC_LOW24);
+				newValue = (oldValue & ~PPC_LOW24) | newValue;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_RELATIVE:
+			case R_PPC_RELATIVE:
 				newValue = (int) elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_REL32:
-				newValue = (symbolValue + addend - offset);
+			case R_PPC_REL32:
+				newValue = ((int) symbolValue + addend - offset);
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_REL14:
-			case PowerPC_ElfRelocationConstants.R_PPC_REL14_BRTAKEN:
-			case PowerPC_ElfRelocationConstants.R_PPC_REL14_BRNTAKEN:
-				newValue = (symbolValue + addend - offset) >> 2;
-				newValue = (oldValue & ~PowerPC_ElfRelocationConstants.PPC_LOW14) |
-					((newValue << 2) & PowerPC_ElfRelocationConstants.PPC_LOW14);
+			case R_PPC_REL14:
+			case R_PPC_REL14_BRTAKEN:
+			case R_PPC_REL14_BRNTAKEN:
+				newValue = ((int) symbolValue + addend - offset) >> 2;
+				newValue = (oldValue & ~PPC_LOW14) | ((newValue << 2) & PPC_LOW14);
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case PowerPC_ElfRelocationConstants.R_PPC_JMP_SLOT:
-				int value = symbolValue + addend;
-				ElfDynamicTable dynamicTable = elf.getDynamicTable();
+			case R_PPC_JMP_SLOT:
+				int value = (int) symbolValue + addend;
+				ElfDynamicTable dynamicTable =
+					elfRelocationContext.getElfHeader().getDynamicTable();
 				if (dynamicTable != null &&
 					dynamicTable.containsDynamicValue(PowerPC_ElfExtension.DT_PPC_GOT)) {
 					// Old ABI - presence of dynamic entry DT_PPC_GOT used as indicator
@@ -203,14 +204,63 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 					// and we may only have room in the plt for two instructions.
 					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 						elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				break;
+			case R_PPC_EMB_SDA21:
+				// NOTE: PPC EABI V1.0 specifies this relocation on a 24-bit field address while 
+				// GNU assumes a 32-bit field address.  We cope with this difference by 
+				// forcing a 32-bit alignment of the relocation address. 
+				long alignedRelocOffset = relocationAddress.getOffset() & ~3;
+				relocationAddress = relocationAddress.getNewAddress(alignedRelocOffset);
+
+				oldValue = memory.getInt(relocationAddress);
+
+				Address symAddr = elfRelocationContext.getSymbolAddress(sym);
+				MemoryBlock block = memory.getBlock(symAddr);
+				Integer sdaBase = null;
+				Integer gprID = null;
+
+				if (block != null) {
+					String blockName = block.getName();
+					if (".sdata".equals(blockName) || ".sbss".equals(blockName)) {
+						sdaBase = elfRelocationContext.getSDABase();
+						gprID = 13;
+					}
+					else if (".sdata2".equals(blockName) || ".sbss2".equals(blockName)) {
+						sdaBase = elfRelocationContext.getSDA2Base();
+						gprID = 2;
+					}
+					else if (".PPC.EMB.sdata0".equals(blockName) ||
+						".PPC.EMB.sbss0".equals(blockName)) {
+						sdaBase = 0;
+						gprID = 0;
+					}
+					else if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(blockName)) {
+						markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+							"Unsupported relocation for external symbol",
+							elfRelocationContext.getLog());
+						return RelocationResult.FAILURE;
+					}
+				}
+				if (gprID == null || sdaBase == null) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"Failed to identfy appropriate data block", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+
+				newValue = ((int) symbolValue - sdaBase + addend) & 0xffff;
+				newValue |= gprID << 16;
+				newValue |= oldValue & 0xffe00000;
+				memory.setInt(relocationAddress, newValue);
+				break;
+
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
-
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 }

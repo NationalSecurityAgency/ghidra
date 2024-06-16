@@ -15,44 +15,66 @@
  */
 package ghidra.app.util;
 
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.InvalidNameException;
 
 public class DataTypeNamingUtil {
-	
+
+	private static final String ANONYMOUS_FUNCTION_DEF_PREFIX = "_func";
+
 	private DataTypeNamingUtil() {
 		// no construct
 	}
-	
+
 	/**
-	 * Generate a simple mangled function definition name and apply it to the specified functionDefinition.
+	 * Generate a simple mangled function definition name and apply it to the specified
+	 * functionDefinition.  Generated name will start with {@code _func}.
 	 * @param functionDefinition function definition whose name should be set
-	 * @param namePrefix prefix to be applied to generated name.  An underscore will separate this prefix from the 
-	 * remainder of the mangled name.  If null specified a prefix of "_function" will be used.
 	 * @return name applied to functionDefinition
-	 * @throws IllegalArgumentException if generated name contains unsupported characters
 	 */
 	public static String setMangledAnonymousFunctionName(
-			FunctionDefinitionDataType functionDefinition, String namePrefix)
-			throws IllegalArgumentException {
+			FunctionDefinitionDataType functionDefinition) {
+		String name = generateMangledSignature(functionDefinition);
+		try {
+			functionDefinition.setName(name);
+		}
+		catch (InvalidNameException e) {
+			// Note that we created the name using generateMangledSignature(functionDefinition).
+			//  An invalid name is a programming error on our part.
+			throw new AssertionError(e);
+		}
+		return name;
+	}
+
+	/**
+	 * Generate a simple mangled function signature.  Generated string will start with
+	 * {@code _func}.
+	 * @param functionDefinition function definition is used for generating the name
+	 * @return generated name
+	 */
+	public static String generateMangledSignature(FunctionDefinitionDataType functionDefinition) {
 
 		DataType returnType = functionDefinition.getReturnType();
 		ParameterDefinition[] parameters = functionDefinition.getArguments();
 
-		if (namePrefix == null) {
-			namePrefix = "_function";
-		}
-		StringBuilder sb = new StringBuilder(namePrefix);
+		StringBuilder sb = new StringBuilder(ANONYMOUS_FUNCTION_DEF_PREFIX);
 
-		GenericCallingConvention convention = functionDefinition.getGenericCallingConvention();
-		if (convention != null && convention != GenericCallingConvention.unknown) {
-			sb.append(convention.getDeclarationName());
+		if (functionDefinition.hasNoReturn()) {
+			sb.append("_").append(FunctionSignature.NORETURN_DISPLAY_STRING);
 		}
+
+		String convention = functionDefinition.getCallingConventionName();
+		if (!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(convention)) {
+			sb.append("_").append(convention);
+		}
+
 		sb.append("_");
-
-		sb.append(mangleDTName(returnType.getName()));
+		sb.append(mangleDTName(returnType));
 		for (ParameterDefinition p : parameters) {
-			sb.append("_").append(mangleDTName(p.getDataType().getName()));
+			sb.append("_").append(mangleDTName(p.getDataType()));
 		}
 
 		if (functionDefinition.hasVarArgs()) {
@@ -60,17 +82,16 @@ public class DataTypeNamingUtil {
 		}
 
 		String name = sb.toString();
-		try {
-			functionDefinition.setName(name);
-		}
-		catch (InvalidNameException e) {
-			throw new IllegalArgumentException(e);
+		if (!DataUtilities.isValidDataTypeName(name)) {
+			// Note that we created the name.  An invalid name is a programming error on our part.
+			throw new AssertionError("Unexpected bad name: " + name);
 		}
 		return name;
 	}
 
-	private static String mangleDTName(String s) {
-		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
+	private static String mangleDTName(DataType dt) {
+		String name = DataTypeUtilities.getNameWithoutConflict(dt);
+		return name.replaceAll(" ", "_").replaceAll("\\*", "ptr");
 	}
 
 }

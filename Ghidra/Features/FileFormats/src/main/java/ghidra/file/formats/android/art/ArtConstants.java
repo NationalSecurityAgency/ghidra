@@ -20,7 +20,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 
 /**
- * https://android.googlesource.com/platform/art/+/master/runtime/image.cc#31
+ * <a href="https://android.googlesource.com/platform/art/+/master/runtime/image.cc">master/runtime/image.cc</a>
  */
 public final class ArtConstants {
 
@@ -30,53 +30,54 @@ public final class ArtConstants {
 
 	public final static int VERSION_LENGTH = 4;
 
-	public final static String VERSION_KITKAT_RELEASE = "005";
-	public final static String VERSION_LOLLIPOP_RELEASE = "009";
-	public final static String VERSION_LOLLIPOP_MR1_WFC_RELEASE = "012";
-	public final static String VERSION_MARSHMALLOW_RELEASE = "017";
-	public final static String VERSION_NOUGAT_RELEASE = "029";
-	public final static String VERSION_NOUGAT_MR2_PIXEL_RELEASE = "030";
-	public final static String VERSION_OREO_RELEASE = "043";
-	public final static String VERSION_OREO_DR1_RELEASE = "044";
-	public final static String VERSION_OREO_MR1_RELEASE = "046";
-	public final static String VERSION_PIE_RELEASE = "056";
-	public final static String VERSION_10_RELEASE = "074";//Q
-	public final static String VERSION_11_RELEASE = "085";//R
-	public final static String VERSION_12_RELEASE = "099";//S
-
-	//	"005",// kitkat-release
-	//	"009",// lollipop-release
-	//	"012",// lollipop-mr1-wfc-release
-	//	"017",// marshmallow-release
-	//	"029",// nougat-release
-	//	"030",// nougat-mr2-pixel-release
-	//	"043",// oreo-release
-	//	"044",// taimen-op1
-	//	"046",// oreo-mr1-release
-	//	"051",// 
-	//	"056",// pie-release
-	//	"059",// android-o-mr1-iot-release-1.0.0
-	//	"060",// android-o-mr1-iot-release-1.0.1
-	//	"061",// android-n-iot-release-polk-at1
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/image.cc#26">kitkat-release/runtime/image.c</a> */
+	public final static String ART_VERSION_005 = "005";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-release/runtime/image.cc#26">lollipop-release/runtime/image.c</a>  */
+	public final static String ART_VERSION_009 = "009";
+	/** <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-wfc-release/runtime/image.cc#26">lollipop-mr1-wfc-release/runtime/image.c</a> */
+	public final static String ART_VERSION_012 = "012";
+	/** <a href="https://android.googlesource.com/platform/art/+/marshmallow-release/runtime/image.cc#26">marshmallow-release/runtime/image.c</a> */
+	public final static String ART_VERSION_017 = "017";
+	/** <a href="https://android.googlesource.com/platform/art/+/nougat-release/runtime/image.cc#26">nougat-release/runtime/image.c</a> */
+	public final static String ART_VERSION_029 = "029";
+	/** <a href="https://android.googlesource.com/platform/art/+/nougat-mr2-pixel-release/runtime/image.cc#26">nougat-mr2-pixel-release/runtime/image.c</a> */
+	public final static String ART_VERSION_030 = "030";
+	/** <a href="https://android.googlesource.com/platform/art/+/oreo-release/runtime/image.cc#28">oreo-release/runtime/image.c</a> */
+	public final static String ART_VERSION_043 = "043";
+	/** <a href="https://android.googlesource.com/platform/art/+/oreo-dr1-release/runtime/image.cc#28">oreo-dr1-release/runtime/image.c</a> */
+	public final static String ART_VERSION_044 = "044";
+	/** <a href="https://android.googlesource.com/platform/art/+/oreo-mr1-release/runtime/image.cc#28">oreo-mr1-release/runtime/image.c</a> */
+	public final static String ART_VERSION_046 = "046";
+	/** <a href="https://android.googlesource.com/platform/art/+/pie-release/runtime/image.cc#28">pie-release/runtime/image.c</a> */
+	public final static String ART_VERSION_056 = "056";
+	/** <a href="https://android.googlesource.com/platform/art/+/android10-release/runtime/image.cc#31">android10-release/runtime/image.c</a> */
+	public final static String ART_VERSION_074 = "074";//Q
+	/** <a href="https://android.googlesource.com/platform/art/+/android11-release/runtime/image.cc#31">android11-release/runtime/image.c</a> */
+	public final static String ART_VERSION_085 = "085";//R
+	/** <a href="https://android.googlesource.com/platform/art/+/android12-release/runtime/image.cc#31">android12-release/runtime/image.c</a> */
+	public final static String ART_VERSION_099 = "099";//S
+	/** <a href="https://android.googlesource.com/platform/art/+/android13-release/runtime/image.cc#31">android13-release/runtime/image.c</a> */
+	public final static String ART_VERSION_106 = "106";//S v2, 13
 
 	/**
 	 * NOTE: only going to support RELEASE versions
 	 */
 	public final static String[] SUPPORTED_VERSIONS = new String[] {
 		//@formatter:off
-		VERSION_KITKAT_RELEASE,
-		VERSION_LOLLIPOP_RELEASE, 
-		VERSION_LOLLIPOP_MR1_WFC_RELEASE, 
-		VERSION_MARSHMALLOW_RELEASE,
-		VERSION_NOUGAT_RELEASE, 
-		VERSION_NOUGAT_MR2_PIXEL_RELEASE, 
-		VERSION_OREO_RELEASE,
-		VERSION_OREO_DR1_RELEASE, 
-		VERSION_OREO_MR1_RELEASE, 
-		VERSION_PIE_RELEASE, 
-		VERSION_10_RELEASE,
-		VERSION_11_RELEASE,
-		VERSION_12_RELEASE,
+		ART_VERSION_005,
+		ART_VERSION_009, 
+		ART_VERSION_012, 
+		ART_VERSION_017,
+		ART_VERSION_029, 
+		ART_VERSION_030, 
+		ART_VERSION_043,
+		ART_VERSION_044, 
+		ART_VERSION_046, 
+		ART_VERSION_056, 
+		ART_VERSION_074,
+		ART_VERSION_085,
+		ART_VERSION_099,
+		ART_VERSION_106,
 		//@formatter:on 
 	};
 

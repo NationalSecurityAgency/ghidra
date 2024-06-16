@@ -21,12 +21,13 @@ import java.util.stream.Collectors;
 
 import com.sun.jdi.Location;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -142,7 +143,7 @@ public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl 
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(null);
 	}
 }

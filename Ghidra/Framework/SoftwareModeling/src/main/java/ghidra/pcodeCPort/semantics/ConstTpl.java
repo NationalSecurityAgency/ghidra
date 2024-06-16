@@ -15,19 +15,15 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 
 public class ConstTpl {
 	@Override
@@ -41,6 +37,7 @@ public class ConstTpl {
 		handle,
 		j_start,
 		j_next,
+		j_next2,
 		j_curspace,
 		j_curspace_size,
 		spaceid,
@@ -91,8 +88,8 @@ public class ConstTpl {
 		handle_index = ht;
 		select = vf;
 	}
-	
-	public ConstTpl(const_type tp,int ht,v_field vf,long plus) {
+
+	public ConstTpl(const_type tp, int ht, v_field vf, long plus) {
 		type = const_type.handle;
 		handle_index = ht;
 		select = vf;
@@ -119,7 +116,7 @@ public class ConstTpl {
 	public const_type getType() {
 		return type;
 	}
-	
+
 	public v_field getSelect() {
 		return select;
 	}
@@ -198,138 +195,6 @@ public class ConstTpl {
 		return 0;
 	}
 
-	public long fix(ParserWalker walker) {
-		// Get the value of the ConstTpl in context
-		// NOTE: if the property is dynamic this returns the property
-		// of the temporary storage
-		switch (type) {
-			case j_start:
-				return walker.getAddr().getOffset(); // Fill in starting address placeholder with real address
-			case j_next:
-				return walker.getNaddr().getOffset(); // Fill in next address placeholder with real address
-			case j_curspace_size:
-				return walker.getCurSpace().getAddrSize();
-			case j_curspace:
-				return AddrSpaceToIdSymmetryMap.getID(walker.getCurSpace());
-			case handle: {
-				FixedHandle hand = walker.getFixedHandle(handle_index);
-				switch (select) {
-					case v_space:
-						if (hand.offset_space == null) {
-							return AddrSpaceToIdSymmetryMap.getID(hand.space);
-						}
-						return AddrSpaceToIdSymmetryMap.getID(hand.temp_space);
-					case v_offset:
-						if (hand.offset_space == null) {
-							return hand.offset_offset;
-						}
-						return hand.temp_offset;
-					case v_size:
-						return hand.size;
-					case v_offset_plus:
-						if (hand.space != walker.getConstSpace()) {		// If we are not a constant
-							if (hand.offset_space == null) {
-								return hand.offset_offset + (value_real&0xffff);
-							}
-							return hand.temp_offset + (value_real&0xffff);
-						}
-						// If we are a constant, return a shifted value
-						long val;
-						if (hand.offset_space == null)
-							val = hand.offset_offset;
-						else
-							val = hand.temp_offset;
-						val >>= 8 * (value_real >> 16);
-						return val;
-				}
-				break;
-			}
-			case j_relative:
-			case real:
-				return value_real;
-			case spaceid:
-				return AddrSpaceToIdSymmetryMap.getID(spaceid);
-			default:
-				break;
-		}
-		return 0;			// Should never reach here
-	}
-
-	// Get the value of the ConstTpl in context
-	// when we know it is a space
-	public AddrSpace fixSpace(ParserWalker walker) {
-		// Get the value of the ConstTpl in context
-		// when we know it is a space
-		switch (type) {
-			case j_curspace:
-				return walker.getCurSpace();
-			case handle: {
-				FixedHandle hand = walker.getFixedHandle(handle_index);
-				switch (select) {
-					case v_space:
-						if (hand.offset_space == null) {
-							return hand.space;
-						}
-						return hand.temp_space;
-					default:
-						break;
-				}
-				break;
-			}
-			case spaceid:
-				return spaceid;
-			default:
-				break;
-		}
-		throw new LowlevelError("ConstTpl is not a spaceid as expected");
-	}
-
-	// Fill in the space portion of a FixedHandle, base on this ConstTpl
-	public void fillinSpace(FixedHandle hand, ParserWalker walker) {
-		switch (type) {
-			case j_curspace:
-				hand.space = walker.getCurSpace();
-				return;
-			case handle: {
-				FixedHandle otherhand = walker.getFixedHandle(handle_index);
-				switch (select) {
-					case v_space:
-						hand.space = otherhand.space;
-						return;
-					default:
-						break;
-				}
-				break;
-			}
-			case spaceid:
-				hand.space = spaceid;
-				return;
-			default:
-				break;
-		}
-		throw new LowlevelError("ConstTpl is not a spaceid as expected");
-	}
-
-	// Fillin the offset portion of a FixedHandle, based on this ConstTpl
-	// If the offset value is dynamic, indicate this in the handle
-	// we don't just fill in the temporary variable offset
-	// we assume hand.space is already filled in
-	public void fillinOffset(FixedHandle hand, ParserWalker walker) {
-		if (type == const_type.handle) {
-			FixedHandle otherhand = walker.getFixedHandle(handle_index);
-			hand.offset_space = otherhand.offset_space;
-			hand.offset_offset = otherhand.offset_offset;
-			hand.offset_size = otherhand.offset_size;
-			hand.temp_space = otherhand.temp_space;
-			hand.temp_offset = otherhand.temp_offset;
-		}
-		else {
-			hand.offset_space = null;
-			hand.offset_offset = fix(walker);
-			hand.offset_offset &= hand.space.getMask();
-		}
-	}
-
 	private void copyIntoMe(ConstTpl other) {
 		type = other.type;
 		spaceid = other.spaceid;
@@ -358,49 +223,18 @@ public class ConstTpl {
 			case v_offset_plus:
 				long tmp = value_real;
 				copyIntoMe(newhandle.getPtrOffset());
-				if (type == const_type.real)
+				if (type == const_type.real) {
 					value_real += (tmp & 0xffff);
-				else if ((type == const_type.handle)&&(select == v_field.v_offset)) {
+				}
+				else if ((type == const_type.handle) && (select == v_field.v_offset)) {
 					select = v_field.v_offset_plus;
 					value_real = tmp;
 				}
-				else
+				else {
 					throw new LowlevelError("Cannot truncate macro input in this way");
+				}
 				break;
 		}
-	}
-
-	private static void printHandleSelector(PrintStream s, v_field val) {
-		switch (val) {
-			case v_space:
-				s.append("space");
-				break;
-			case v_offset:
-				s.append("offset");
-				break;
-			case v_size:
-				s.append("size");
-				break;
-			case v_offset_plus:
-				s.append("offset_plus");
-				break;
-		}
-	}
-
-	private static v_field readHandleSelector(String name) {
-		if (name.equals("space")) {
-			return v_field.v_space;
-		}
-		if (name.equals("offset")) {
-			return v_field.v_offset;
-		}
-		if (name.equals("size")) {
-			return v_field.v_size;
-		}
-		if (name.equals("offset_plus")) {
-			return v_field.v_offset_plus;
-		}
-		throw new LowlevelError("Bad handle selector");
 	}
 
 	public void changeHandleIndex(VectorSTL<Integer> handmap) {
@@ -409,110 +243,68 @@ public class ConstTpl {
 		}
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<const_tpl type=\"");
+	public void encode(Encoder encoder) throws IOException {
 		switch (type) {
 			case real:
-				s.append("real\" val=\"0x");
-				s.append(Long.toHexString(value_real));
-				s.append("\"/>");
+				encoder.openElement(ELEM_CONST_REAL);
+				encoder.writeUnsignedInteger(ATTRIB_VAL, value_real);
+				encoder.closeElement(ELEM_CONST_REAL);
 				break;
 			case handle:
-				s.append("handle\" val=\"");
-				s.print(handle_index);
-				s.append("\" ");
-				s.append("s=\"");
-				printHandleSelector(s, select);
-				s.append('\"');
-				if (select == v_field.v_offset_plus)
-					s.append(" plus=\"0x").append(Long.toHexString(value_real)).append('\"');
-				s.append("/>");
+				encoder.openElement(ELEM_CONST_HANDLE);
+				encoder.writeSignedInteger(ATTRIB_VAL, handle_index);
+				encoder.writeSignedInteger(ATTRIB_S, select.ordinal());
+				if (select == v_field.v_offset_plus) {
+					encoder.writeUnsignedInteger(ATTRIB_PLUS, value_real);
+				}
+				encoder.closeElement(ELEM_CONST_HANDLE);
 				break;
 			case j_start:
-				s.append("start\"/>");
+				encoder.openElement(ELEM_CONST_START);
+				encoder.closeElement(ELEM_CONST_START);
 				break;
 			case j_next:
-				s.append("next\"/>");
+				encoder.openElement(ELEM_CONST_NEXT);
+				encoder.closeElement(ELEM_CONST_NEXT);
+				break;
+			case j_next2:
+				encoder.openElement(ELEM_CONST_NEXT2);
+				encoder.closeElement(ELEM_CONST_NEXT2);
 				break;
 			case j_curspace:
-				s.append("curspace\"/>");
+				encoder.openElement(ELEM_CONST_CURSPACE);
+				encoder.closeElement(ELEM_CONST_CURSPACE);
 				break;
 			case j_curspace_size:
-				s.append("curspace_size\"/>");
+				encoder.openElement(ELEM_CONST_CURSPACE_SIZE);
+				encoder.closeElement(ELEM_CONST_CURSPACE_SIZE);
 				break;
 			case spaceid:
-				s.append("spaceid\" name=\"");
-				s.append(spaceid.getName());
-				s.append("\"/>");
+				encoder.openElement(ELEM_CONST_SPACEID);
+				encoder.writeSpace(ATTRIB_SPACE, spaceid.getIndex(), spaceid.getName());
+				encoder.closeElement(ELEM_CONST_SPACEID);
 				break;
 			case j_relative:
-				s.append("relative\" val=\"0x");
-				s.append(Long.toHexString(value_real));
-				s.append("\"/>");
+				encoder.openElement(ELEM_CONST_RELATIVE);
+				encoder.writeUnsignedInteger(ATTRIB_VAL, value_real);
+				encoder.closeElement(ELEM_CONST_RELATIVE);
 				break;
 			case j_flowref:
-				s.append("flowref\"/>");
+				encoder.openElement(ELEM_CONST_FLOWREF);
+				encoder.closeElement(ELEM_CONST_FLOWREF);
 				break;
 			case j_flowref_size:
-				s.append("flowref_size\"/>");
+				encoder.openElement(ELEM_CONST_FLOWREF_SIZE);
+				encoder.closeElement(ELEM_CONST_FLOWREF_SIZE);
 				break;
 			case j_flowdest:
-				s.append("flowdest\"/>");
+				encoder.openElement(ELEM_CONST_FLOWDEST);
+				encoder.closeElement(ELEM_CONST_FLOWDEST);
 				break;
 			case j_flowdest_size:
-				s.append("flowdest_size\"/>");
+				encoder.openElement(ELEM_CONST_FLOWDEST_SIZE);
+				encoder.closeElement(ELEM_CONST_FLOWDEST_SIZE);
 				break;
-		}
-	}
-
-	public void restoreXml(Element el, Translate trans) {
-		String typestring = el.getAttributeValue("type");
-		if (typestring.equals("real")) {
-			type = const_type.real;
-			value_real = XmlUtils.decodeUnknownLong(el.getAttributeValue("val"));
-		}
-		else if (typestring.equals("handle")) {
-			type = const_type.handle;
-			handle_index = XmlUtils.decodeUnknownInt(el.getAttributeValue("val"));
-			select = readHandleSelector(el.getAttributeValue("s"));
-			if (select == v_field.v_offset_plus) {
-				value_real = XmlUtils.decodeUnknownLong(el.getAttributeValue("plus"));
-			}
-		}
-		else if (typestring.equals("start")) {
-			type = const_type.j_start;
-		}
-		else if (typestring.equals("next")) {
-			type = const_type.j_next;
-		}
-		else if (typestring.equals("curspace")) {
-			type = const_type.j_curspace;
-		}
-		else if (typestring.equals("curspace_size")) {
-			type = const_type.j_curspace_size;
-		}
-		else if (typestring.equals("spaceid")) {
-			type = const_type.spaceid;
-			spaceid = trans.getSpaceByName(el.getAttributeValue("name"));
-		}
-		else if (typestring.equals("relative")) {
-			type = const_type.j_relative;
-			value_real = XmlUtils.decodeUnknownLong(el.getAttributeValue("val"));
-		}
-		else if (typestring.equals("flowref")) {
-			type = const_type.j_flowref;
-		}
-		else if (typestring.equals("flowref_size")) {
-			type = const_type.j_flowref_size;
-		}
-		else if (typestring.equals("flowdest")) {
-			type = const_type.j_flowdest;
-		}
-		else if (typestring.equals("flowdest_size")) {
-			type = const_type.j_flowdest_size;
-		}
-		else {
-			throw new LowlevelError("Bad constant type");
 		}
 	}
 

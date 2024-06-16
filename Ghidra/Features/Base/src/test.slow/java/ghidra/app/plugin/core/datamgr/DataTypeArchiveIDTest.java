@@ -18,8 +18,9 @@ package ghidra.app.plugin.core.datamgr;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -27,6 +28,7 @@ import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.Application;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 
 public class DataTypeArchiveIDTest extends AbstractGenericTest {
 
@@ -36,45 +38,71 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	private static final String GENERIC_CLIB_64_GDT_PATH = "typeinfo/generic/generic_clib_64.gdt";
 	private static final String MAC_OS_10_9_GDT_PATH = "typeinfo/mac_10.9/mac_osx.gdt";
 
-	private static final HashMap<String, String> archiveIdMap = new HashMap<>();
-	static {
-		archiveIdMap.put(WIN_VS12_32_GDT_PATH, "2644092282468053077");
-		archiveIdMap.put(WIN_VS12_64_GDT_PATH, "3193696833254024484");
-		archiveIdMap.put(GENERIC_CLIB_32_GDT_PATH, "2644097909188870631");
-		archiveIdMap.put(GENERIC_CLIB_64_GDT_PATH, "3193699959493190971");
-		archiveIdMap.put(MAC_OS_10_9_GDT_PATH, "2650667045259492112");
+	//@formatter:off
+	private static final Map<String, String> archiveIdMap = Map.ofEntries(
+			Map.entry(WIN_VS12_32_GDT_PATH, "2644092282468053077"),
+			Map.entry(WIN_VS12_64_GDT_PATH, "3193696833254024484"),
+			Map.entry(GENERIC_CLIB_32_GDT_PATH, "2644097909188870631"),
+			Map.entry(GENERIC_CLIB_64_GDT_PATH, "3193699959493190971"),
+			Map.entry(MAC_OS_10_9_GDT_PATH, "2650667045259492112"),
+			Map.entry("typeinfo/golang/golang_1.15_anybit_any.gdt", "3600806988729184131"),
+			Map.entry("typeinfo/golang/golang_1.16_anybit_any.gdt", "3597021567582750001"),
+			Map.entry("typeinfo/golang/golang_1.17_anybit_any.gdt", "3533627828569507753"),
+			Map.entry("typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936"),
+			Map.entry("typeinfo/golang/golang_1.19_anybit_any.gdt", "3533812166493410774"),
+			Map.entry("typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616"),
+			Map.entry("typeinfo/golang/golang_1.21_anybit_any.gdt", "3574190573109087960"),
+			Map.entry("typeinfo/golang/golang_1.22_anybit_any.gdt", "3596108668808850319"),
+			Map.entry("typeinfo/rust/rust-common.gdt", "3557867258392862055"));
+	//@formatter:on
+
+	private Map<ResourceFile, String> getCurrentGdts() {
+		return Application.findFilesByExtensionInApplication(".gdt")
+				.stream()
+				.filter(f -> f.getAbsolutePath().contains("/data/typeinfo/"))
+				.collect(Collectors.toMap(Function.identity(), f -> getGdtUniversalId(f)));
+	}
+
+	private String getGdtUniversalId(ResourceFile gdtFile) {
+		FileDataTypeManager dtm = null;
+		try {
+			dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+			assertEquals(dtm.getWarningMessage(true), ArchiveWarning.NONE, dtm.getWarning());
+			return dtm.getUniversalID().toString();
+		}
+		catch (IOException e) {
+			return "failed to read " + gdtFile.getName();
+		}
+		finally {
+			dtm.close();
+		}
+	}
+
+	private String getGdtRelativePath(ResourceFile gdtFile) {
+		String path = gdtFile.getAbsolutePath();
+		int ix = path.indexOf("/typeinfo/");
+		path = path.substring(ix + 1);
+		return path;
 	}
 
 	@Test
-	public void testArchiveIDMatch() throws IOException {
+	public void testArchiveIDMatch() {
 
-		HashSet<String> notFound = new HashSet<>(archiveIdMap.keySet());
+		Map<ResourceFile, String> currentGdts = getCurrentGdts();
+		Set<String> notFound = new HashSet<>(archiveIdMap.keySet());
+		for (ResourceFile gdtFile : currentGdts.keySet()) {
+			String currentID = currentGdts.get(gdtFile);
 
-		for (ResourceFile gdtFile : Application.findFilesByExtensionInApplication(".gdt")) {
-
-			String path = gdtFile.getAbsolutePath();
-			if (!path.contains("/data/typeinfo/")) {
-				continue; // only verify standard archives
-			}
-
-			int ix = path.indexOf("/typeinfo/");
-			path = path.substring(ix + 1); // path starts with typeinfo/...
-
-			String oldID = archiveIdMap.get(path);
+			String gdtRelativePath = getGdtRelativePath(gdtFile);
+			String oldID = archiveIdMap.get(gdtRelativePath);
 			if (oldID == null) {
-				fail("New archive added, test must be updated: " + path);
+				fail("New archive added, test must be updated: %s, ID: %s"
+						.formatted(gdtRelativePath, currentID));
 			}
 
-			notFound.remove(path);
+			notFound.remove(gdtRelativePath);
 
-			FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
-			try {
-				assertEquals("Archive UniversalID mismatch: " + path, oldID,
-					dtm.getUniversalID().toString());
-			}
-			finally {
-				dtm.close();
-			}
+			assertEquals("Archive UniversalID mismatch: " + gdtRelativePath, oldID, currentID);
 		}
 
 		if (!notFound.isEmpty()) {
@@ -101,6 +129,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckWindowsVS12_32() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(WIN_VS12_32_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/winsock.h/fd_set");
 			assertNotNull(dt);
@@ -112,11 +141,11 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 		}
 	}
 
-
 	@Test
 	public void spotCheckWindowsVS12_64() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(WIN_VS12_64_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/winsock.h/fd_set");
 			assertNotNull(dt);
@@ -132,6 +161,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckGenericCLib32() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(GENERIC_CLIB_32_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/select.h/fd_set");
 			assertNotNull(dt);
@@ -147,6 +177,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckGenericCLib64() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(GENERIC_CLIB_64_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/select.h/fd_set");
 			assertNotNull(dt);
@@ -162,6 +193,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckMacOS10_9() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(MAC_OS_10_9_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/_fd_def.h/fd_set");
 			assertNotNull(dt);

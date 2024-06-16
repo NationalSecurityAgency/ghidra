@@ -19,16 +19,16 @@
  */
 package ghidra.app.plugin.processors.sleigh.pattern;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.StringUtilities;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
- * 
- *
  * Pattern which depends only on the non-instruction stream bits
  * of the context
  */
@@ -36,9 +36,6 @@ public class ContextPattern extends DisjointPattern {
 
 	private PatternBlock maskvalue;
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.DisjointPattern#getBlock(boolean)
-	 */
 	@Override
 	public PatternBlock getBlock(boolean context) {
 		return context ? maskvalue : null;
@@ -56,49 +53,36 @@ public class ContextPattern extends DisjointPattern {
 		return maskvalue;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#simplifyClone()
-	 */
 	@Override
 	public Pattern simplifyClone() {
 		return new ContextPattern((PatternBlock) maskvalue.clone());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#shiftInstruction(int)
-	 */
 	@Override
 	public void shiftInstruction(int sa) {
 		// do nothing
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#doOr(ghidra.app.plugin.processors.sleigh.Pattern, int)
-	 */
 	@Override
 	public Pattern doOr(Pattern b, int sa) {
-		if (!(b instanceof ContextPattern))
+		if (!(b instanceof ContextPattern)) {
 			return b.doOr(this, -sa);
+		}
 
 		return new OrPattern((DisjointPattern) simplifyClone(),
 			(DisjointPattern) b.simplifyClone());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#doAnd(ghidra.app.plugin.processors.sleigh.Pattern, int)
-	 */
 	@Override
 	public Pattern doAnd(Pattern b, int sa) {
-		if (!(b instanceof ContextPattern))
+		if (!(b instanceof ContextPattern)) {
 			return b.doAnd(this, -sa);
+		}
 
 		PatternBlock resblock = maskvalue.andBlock(((ContextPattern) b).maskvalue);
 		return new ContextPattern(resblock);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.pattern.Pattern#isMatch(ghidra.app.plugin.processors.sleigh.ParserWalker, ghidra.app.plugin.processors.sleigh.SleighDebugLogger)
-	 */
 	@Override
 	public boolean isMatch(ParserWalker walker, SleighDebugLogger debug)
 			throws MemoryAccessException {
@@ -149,39 +133,27 @@ public class ContextPattern extends DisjointPattern {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysTrue()
-	 */
 	@Override
 	public boolean alwaysTrue() {
 		return maskvalue.alwaysTrue();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysFalse()
-	 */
 	@Override
 	public boolean alwaysFalse() {
 		return maskvalue.alwaysFalse();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysInstructionTrue()
-	 */
 	@Override
 	public boolean alwaysInstructionTrue() {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser) {
-		XmlElement el = parser.start("context_pat");
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_CONTEXT_PAT);
 		maskvalue = new PatternBlock(true);
-		maskvalue.restoreXml(parser);
-		parser.end(el);
+		maskvalue.decode(decoder);
+		decoder.closeElement(el);
 	}
 
 	@Override

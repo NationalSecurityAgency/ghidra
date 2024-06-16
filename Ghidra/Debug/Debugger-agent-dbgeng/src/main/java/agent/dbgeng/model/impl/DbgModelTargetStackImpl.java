@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
@@ -52,7 +53,7 @@ public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return thread.getThread().listStackFrames().thenAccept(f -> {
 			List<TargetObject> frames;
 			synchronized (this) {
@@ -85,7 +86,7 @@ public class DbgModelTargetStackImpl extends DbgModelTargetObjectImpl
 
 	public void threadStateChangedSpecific(DbgState state, DbgReason reason) {
 		if (!state.equals(DbgState.RUNNING)) {
-			requestElements(true).exceptionally(e -> {
+			requestElements(RefreshBehavior.REFRESH_ALWAYS).exceptionally(e -> {
 				Msg.error(this, "Could not update stack " + this + " on STOPPED");
 				return null;
 			});

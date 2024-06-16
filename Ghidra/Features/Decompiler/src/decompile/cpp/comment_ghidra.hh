@@ -15,11 +15,13 @@
  */
 /// \file comment_ghidra.hh
 /// \brief Obtain comments by talking to a Ghidra client
-#ifndef __COMMENT_GHIDRA__
-#define __COMMENT_GHIDRA__
+#ifndef __COMMENT_GHIDRA_HH__
+#define __COMMENT_GHIDRA_HH__
 
 #include "comment.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An implementation of CommentDatabase backed by a Ghidra client
 ///
@@ -47,8 +49,9 @@ public:
   virtual CommentSet::const_iterator endComment(const Address &fad) const;
   virtual void encode(Encoder &encoder) const {
     throw LowlevelError("commentdb::encode unimplemented"); }
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *trans) {
+  virtual void decode(Decoder &decoder) {
     throw LowlevelError("CommentDatabaseGhidra::decode unimplemented"); }
 };
 
+} // End namespace ghidra
 #endif

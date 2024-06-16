@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.program.model.address.*;
 import ghidra.util.HTMLUtilities;
@@ -152,12 +153,13 @@ public class ConflictInfoPanel extends JPanel {
 	}
 
 	private void addCount(StringBuffer buf, long value) {
-		buf.append("<font color=\"#990000\">" + value + "</font>");
+		buf.append("<font color=\"" + Palette.MAROON + "\">" + value + "</font>");
 	}
 
 	private void addAddress(StringBuffer buf, Address addr) {
 		buf.append(
-			"<font color=\"#990000\">" + HTMLUtilities.escapeHTML(addr.toString()) + "</font>");
+			"<font color=\"" + Palette.MAROON + "\">" + HTMLUtilities.escapeHTML(addr.toString()) +
+				"</font>");
 	}
 
 	private void updateWest() {

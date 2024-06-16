@@ -103,7 +103,7 @@ public abstract class Lcs<T> {
 		}
 
 		for (int i = 1; i < tempC.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			for (int j = 1; j < tempC[i].length; j++) {
 				if (matches(valueOfX(i), valueOfY(j))) {
 					tempC[i][j] = tempC[i - 1][j - 1] + 1;
@@ -195,7 +195,7 @@ public abstract class Lcs<T> {
 
 		List<T> result = new ArrayList<>();
 		while (x > 0 && y > 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (c[x][y] == c[x - 1][y - 1] + 1 && matches(valueOfX(x), valueOfY(y))) {
 				result.add(0, valueOfX(x));

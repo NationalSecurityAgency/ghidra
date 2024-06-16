@@ -15,9 +15,22 @@
  */
 package ghidra.trace.database.listing;
 
+/**
+ * An abstract implementation of a single-type view
+ * 
+ * @implNote This class cannot be removed. Despite it appearing not to do anything, this class
+ *           serves as an upper bound on the views composed by
+ *           {@link AbstractComposedDBTraceCodeUnitsView}.
+ * @param <T> the implementation type of the units contained in the view
+ */
 public abstract class AbstractSingleDBTraceCodeUnitsView<T extends DBTraceCodeUnitAdapter>
 		extends AbstractBaseDBTraceCodeUnitsView<T> {
 
+	/**
+	 * Construct a view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public AbstractSingleDBTraceCodeUnitsView(DBTraceCodeSpace space) {
 		super(space);
 	}

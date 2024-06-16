@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.Range;
-
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.impl.GdbMemoryMapping;
 import agent.gdb.manager.impl.cmd.GdbCommandError;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import generic.ULongSpan;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.TargetMemory;
@@ -62,45 +62,64 @@ public class GdbModelTargetProcessMemory
 		this.inferior = inferior.inferior;
 	}
 
+	protected CompletableFuture<Map<BigInteger, GdbMemoryMapping>> defaultUsingAddressSize() {
+		return inferior.evaluate("sizeof(int*)").thenApply(sizeStr -> {
+			int size;
+			try {
+				size = Integer.parseInt(sizeStr);
+			}
+			catch (NumberFormatException e) {
+				throw new GdbCommandError("Couldn't determine address size: " + e);
+			}
+
+			BigInteger start = BigInteger.ZERO;
+			BigInteger end = BigInteger.ONE.shiftLeft(size * 8);
+			if (size >= 0 && size < 8) {
+				GdbMemoryMapping mapping = new GdbMemoryMapping(start, end,
+					end.subtract(start), BigInteger.ZERO, "rwx", "default");
+				return Map.of(start, mapping);
+			}
+			if (size == 8) {
+				// TODO: This split shouldn't be necessary.
+				BigInteger lowEnd = BigInteger.valueOf(Long.MAX_VALUE);
+				BigInteger highStart = lowEnd.add(BigInteger.ONE);
+
+				GdbMemoryMapping lowMapping = new GdbMemoryMapping(start, lowEnd,
+					lowEnd.subtract(start), BigInteger.ZERO, "rwx", "defaultLow");
+				GdbMemoryMapping highMapping = new GdbMemoryMapping(highStart, end,
+					end.subtract(highStart), BigInteger.ZERO, "rwx", "defaultHigh");
+				return Map.of(start, lowMapping, highStart, highMapping);
+			}
+			throw new GdbCommandError("Unexpected address size: " + size);
+		});
+	}
+
 	protected void updateUsingMappings(Map<BigInteger, GdbMemoryMapping> byStart) {
-		List<GdbModelTargetMemoryRegion> regions;
 		synchronized (this) {
-			regions =
-				byStart.values().stream().map(this::getTargetRegion).collect(Collectors.toList());
-			if (regions.isEmpty() && valid) {
-				Map<BigInteger, GdbMemoryMapping> defaultMap =
-					new HashMap<BigInteger, GdbMemoryMapping>();
-				AddressSet addressSet = impl.getAddressFactory().getAddressSet();
-				BigInteger start = addressSet.getMinAddress().getOffsetAsBigInteger();
-				BigInteger end = addressSet.getMaxAddress().getOffsetAsBigInteger();
-				if (end.longValue() < 0) {
-					BigInteger split = BigInteger.valueOf(Long.MAX_VALUE);
-					GdbMemoryMapping lmem = new GdbMemoryMapping(start, split,
-						split.subtract(start), start.subtract(start), "rwx", "defaultLow");
-					defaultMap.put(start, lmem);
-					split = split.add(BigInteger.valueOf(1));
-					GdbMemoryMapping hmem = new GdbMemoryMapping(split, end,
-						end.subtract(split), split.subtract(split), "rwx", "defaultHigh");
-					defaultMap.put(split, hmem);
-				}
-				else {
-					GdbMemoryMapping mem = new GdbMemoryMapping(start, end,
-						end.subtract(start), start.subtract(start), "rwx", "default");
-					defaultMap.put(start, mem);
-				}
-				regions =
-					defaultMap.values()
-							.stream()
-							.map(this::getTargetRegion)
-							.collect(Collectors.toList());
+			if (!valid) {
+				setElements(List.of(), "Refreshed");
 			}
 		}
-
-		setElements(regions, "Refreshed");
+		CompletableFuture<Map<BigInteger, GdbMemoryMapping>> maybeDefault =
+			byStart.isEmpty() ? defaultUsingAddressSize()
+					: CompletableFuture.completedFuture(byStart);
+		maybeDefault.thenAccept(mappings -> {
+			List<GdbModelTargetMemoryRegion> regions;
+			synchronized (this) {
+				regions = mappings.values()
+						.stream()
+						.map(this::getTargetRegion)
+						.collect(Collectors.toList());
+			}
+			setElements(regions, "Refreshed");
+		}).exceptionally(ex -> {
+			Msg.info(this, "Failed to update regions: " + ex);
+			return null;
+		});
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// Can't use refresh getKnownMappings is only populated by listMappings
 		return doRefresh();
 	}
@@ -108,11 +127,12 @@ public class GdbModelTargetProcessMemory
 	protected CompletableFuture<Void> doRefresh() {
 		if (inferior.getPid() == null) {
 			setElements(List.of(), "Refreshed (while no process)");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return inferior.listMappings().exceptionally(ex -> {
 			Msg.error(this, "Could not list regions. Using default.");
-			return Map.of(); // empty map will be replaced with default
+			// empty map will be replaced with default
+			return new TreeMap<>();
 		}).thenAccept(this::updateUsingMappings);
 	}
 
@@ -136,13 +156,12 @@ public class GdbModelTargetProcessMemory
 			throw new IllegalArgumentException("address,length", e);
 		}
 		return inferior.readMemory(offset, buf).thenApply(set -> {
-			Range<Long> r = set.rangeContaining(offset);
-			if (r == null) {
+			ULongSpan s = set.spanContaining(offset);
+			if (s == null) {
 				throw new DebuggerMemoryAccessException("Cannot read at " + address);
 			}
-			byte[] content =
-				Arrays.copyOf(buf.array(), (int) (r.upperEndpoint() - r.lowerEndpoint()));
-			listeners.fire.memoryUpdated(this, address, content);
+			byte[] content = Arrays.copyOf(buf.array(), (int) s.length());
+			broadcast().memoryUpdated(this, address, content);
 			return content;
 		}).exceptionally(e -> {
 			e = AsyncUtils.unwrapThrowable(e);
@@ -150,10 +169,10 @@ public class GdbModelTargetProcessMemory
 				GdbCommandError gce = (GdbCommandError) e;
 				e = new DebuggerMemoryAccessException(
 					"Cannot read at " + address + ": " + gce.getInfo().getString("msg"));
-				listeners.fire.memoryReadError(this, range, (DebuggerMemoryAccessException) e);
+				broadcast().memoryReadError(this, range, (DebuggerMemoryAccessException) e);
 			}
 			if (e instanceof DebuggerMemoryAccessException) {
-				listeners.fire.memoryReadError(this, range, (DebuggerMemoryAccessException) e);
+				broadcast().memoryReadError(this, range, (DebuggerMemoryAccessException) e);
 			}
 			return ExceptionUtils.rethrow(e);
 		});
@@ -169,12 +188,15 @@ public class GdbModelTargetProcessMemory
 		CompletableFuture<Void> future =
 			inferior.writeMemory(address.getOffset(), ByteBuffer.wrap(data));
 		return impl.gateFuture(future.thenAccept(__ -> {
-			listeners.fire.memoryUpdated(this, address, data);
+			broadcast().memoryUpdated(this, address, data);
 		}));
 	}
 
 	protected void invalidateMemoryCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		if (!valid) {
+			return;
+		}
+		broadcast().invalidateCacheRequested(this);
 	}
 
 	public void memoryChanged(long offset, int len) {

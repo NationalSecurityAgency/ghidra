@@ -1,0 +1,1111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+    <TITLE>Database Configuration</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/languages.css">
+    <META name="generator" content="DocBook XSL Stylesheets V1.79.1">
+    <LINK rel="home" href="index.html" title="BSim Database">
+    <LINK rel="up" href="index.html" title="BSim Database">
+    <LINK rel="prev" href="DatabaseOverview.html" title="BSim Database">
+    <LINK rel="next" href="IngestProcess.html" title="Ingesting Executables">
+  </HEAD>
+
+  <BODY>
+    <DIV class="chapter">
+      <DIV class="titlepage">
+        <DIV>
+          <DIV>
+            <H1 class="title"><A name="DatabaseConfiguration"></A>Database Configuration</H1>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="ConfigOverview"></A>Overview</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>The server for the BSim Database is distinct from the traditional Ghidra server,
+        although for many use cases it is convenient to have both running and view the BSim server
+        as a loosely coupled extension to the base Ghidra Server. In terms of start-up, shutdown,
+        and configuration however, the two servers are completely separate.</P>
+
+        <P>There are two choices for deploying a shared server for the BSim Database: PostgreSQL or
+          Elasticsearch. Both options support multiple users and allow multiple simultaneous connections
+	  to the remote server.  A single database can ingest large datasets, while
+	  still maintaining short query times.</P>
+	<P>
+	  Alternately, a single user can create a BSim database on their local file-system,
+	  without a server, by utilizing the H2 database engine integrated into Ghidra. This option
+	  is intended for querying against small datasets and does not require installation of
+	  additional server software.</P>
+
+        <P>A PostgreSQL server, which must be built with a BSim specific extension,
+          runs on a single host and makes efficient use of whatever CPU, memory, and disk resources
+	  are made available to it. PostgreSQL is a robust and capable server that should perform well
+	  on minimally configured workstations up to high-end production hardware. Source for the
+	  BSim extension to PostgreSQL is included as part of the Ghidra installation, but the
+	  PostgreSQL source may need to be obtained separately by the database administrator.
+	  See <A class="xref" href="DatabaseConfiguration.html#PostBuild">&ldquo;Building the Server&rdquo;</A>
+	</P>
+
+        <P>An Elasticsearch server, which must have a BSim specific plug-in installed, runs
+          as a scalable database that automatically distributes itself across machines in a cluster,
+	  allowing individual database queries and requests to be serviced in parallel. The Elasticsearch
+	  BSim plug-in is included with the Ghidra installation, but the core server software must be obtained
+	  separately by the database administrator.
+	  See <A class="xref" href="DatabaseConfiguration.html#ElasticInstall">&ldquo;Installing the Plug-in&rdquo;</A>
+	</P>
+
+        <P>BSim clients included in the base Ghidra distribution can interface to any of these
+          databases. Users that just want to connect to an existing shared server via a BSim client do not need to
+	  install any server software themselves.</P>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="ServerConfig"></A>Server
+              Configuration</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="PostConfig"></A>PostgreSQL Configuration</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostBuild"></A>Building the Server</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>In order to use PostgreSQL as a BSim server, it must be built with a BSim specific
+              extension, provided as part of the Ghidra installation. Prebuilt servers, like those
+              provided as OS distribution packages, will not work as is with BSim. For users on Linux
+              and macOS, the Ghidra installation provides a script, <CODE>make-postgres.sh</CODE>,
+              in the module directory <CODE>Ghidra/Features/BSim</CODE> that builds both the PostgreSQL
+              server and the BSim extension from source and prepares the installation for use with
+              Ghidra.  If not already included in the Ghidra installation, the source distribution
+              file, currently <CODE>postgresql-15.3.tar.gz</CODE>, can be obtained from the PostgreSQL
+              website at </P>
+	    
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/ftp/source/v15.3
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+	    
+	    <P>The steps to build the PostgreSQL server with the BSim extension then are:</P>
+
+	    <P>1) If not already present, place the PostgreSQL source distribution file
+	      <CODE>postgresql-15.3.tar.gz</CODE> in the Ghidra installation at</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/postgresql-15.3.tar.gz
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+	    <P>2) From the command-line, within the same directory, run the script <CODE>make-postgres.sh</CODE></P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">cd $(ROOT)/Ghidra/Features/BSim
+		  </CODE></TD>
+                </TR>
+                <TR>
+                  <TD><CODE class="computeroutput">./make-postgres.sh
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+	    <P>Additional packages or software may need to be installed on the host OS in order for the
+	      build to complete successfully, OpenSSL in particular is required for BSim.  For the
+	      full list of PostgreSQL software dependencies, refer to:</P>
+	    
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/docs/current/install-requirements.html
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Once the build has completed successfully, 
+              the <SPAN class="bold"><STRONG>bsim_ctl</STRONG></SPAN> command-line script is ready to use
+	      for starting a server (see
+	      <A class="xref" href="DatabaseConfiguration.html#PostStartStop">&ldquo;Starting and Stopping the Server&rdquo;</A>).
+	      The PostgreSQL server software will run out of the Ghidra installation at</P>
+	    
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+		<TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/linux64/postgresql
+                      OR</CODE></TD>
+		</TR>
+		
+		<TR>
+                  <TD><CODE class=
+			    "computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/osx64/postgresql</CODE></TD>
+		</TR>
+              </TABLE>
+            </DIV>
+	    
+            <P>Other than having the extension itself, a BSim enabled PostgreSQL server is completely standard,
+              and can be configured like any other stand-alone PostgreSQL server. There are no direct restrictions
+	      on modifying the configuration values. A default configuration is provided with this installation that
+	      has been tuned specifically for the BSim Database application, so in practice there may be little reason to
+	      modify it. But there are a few standard configuration values for the server that might need
+	      adjusting. See
+	      <A class="xref" href="DatabaseConfiguration.html#PostAdditionalConfig">&ldquo;Additional Configuration&rdquo;</A>.</P>
+	  </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostStartStop"></A>Starting and Stopping the
+                  Server</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>The basic start-up and shut-down is accomplished with the same command-line script,
+            which takes either the keyword <SPAN class="command"><STRONG>start</STRONG></SPAN> or
+            <SPAN class="command"><STRONG>stop</STRONG></SPAN> as the first parameter. The second
+            parameter must be an absolute path to the chosen data directory.</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl start
+                  /path/to/datadir</CODE></TD>
+                </TR>
+
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl start /path/to/datadir
+                  --port&nbsp;8000</CODE></TD>
+                </TR>
+
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl stop
+                  /path/to/datadir</CODE></TD>
+                </TR>
+
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl stop /path/to/datadir
+                  force</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>The data directory should already exist and should initially not contain any files.
+            The first time a server is started for a particular data directory, a large number of
+            configuration files and other sub-directories associated with the PostgreSQL server
+            will automatically be created. Upon subsequent restarts the existing configuration will
+            be reused.</P>
+
+            <P>The <SPAN class="bold"><STRONG>start</STRONG></SPAN> command can take an optional
+            <SPAN class="bold"><STRONG>--port</STRONG></SPAN> parameter. This can be used to specify
+            a non-standard port for the PostgreSQL server to listen on. In this case, any
+            subsequent reference to the BSim server, in the Ghidra client, or with the <SPAN class=
+            "command"><STRONG>bsim</STRONG></SPAN> command described below, must specify the port.
+            When using the <SPAN class="command"><STRONG>bsim</STRONG></SPAN> command, a
+            non-default port must be explicitly specified with the BSim <SPAN class=
+            "command"><STRONG>postgresql://</STRONG></SPAN> URL (see <A class="xref" href=
+            "CommandLineReference.html#URLs">&ldquo;Ghidra and BSim URLs&rdquo;</A> for more
+            details).</P>
+
+            <P>The <SPAN class="command"><STRONG>stop</STRONG></SPAN> command can take the keyword
+            <SPAN class="command"><STRONG>force</STRONG></SPAN> as an optional parameter. Without
+            this, the shutdown of the server will wait until all currently connected clients finish
+            their sessions. Adding this parameter will cause all clients to be disconnected
+            immediately, rolling back any transactions, and the server will shutdown
+            immediately.</P>
+          </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostSecurityAuthentication"></A>Security and
+                  Authentication</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>BSim makes use of PostgreSQL security mechanisms to enforce privileges and
+            authenticate users. The <SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN> command
+            wraps the subset of functionality described here, but other adjustments are possible by
+            connecting directly to the server and issuing SQL commands.</P>
+
+            <P>The PostgreSQL server, as configured for BSim, only accepts connections via SSL, so
+            communications in transit are always encrypted regardless of the authentication
+            settings.</P>
+
+            <P>PostgreSQL uses the concept of <SPAN class="emphasis"><EM>roles</EM></SPAN> to grant
+            access privileges based on particular users. Generally, a user's role is determined by
+            the <SPAN class="emphasis"><EM>username</EM></SPAN> used to establish the connection.
+            For BSim, each user role is granted one of two privilege levels: <SPAN class=
+            "command"><STRONG>user</STRONG></SPAN>, which allows read-only access to the server for
+            normal queries, and <SPAN class="command"><STRONG>admin</STRONG></SPAN>, which
+            additionally allows database creation, ingest, update, and deletion.</P>
+
+            <P>BSim supports three different authentication methods, when connecting as a client or
+            during database ingest and maintenance. This method is established for a server by the
+            initial <SPAN class="command"><STRONG>start</STRONG></SPAN> command.</P>
+
+            <DIV class="informalexample">
+              <DIV class="variablelist">
+                <DL class="variablelist">
+                  <DT><SPAN class="term"><SPAN class=
+                  "bold"><STRONG>trust</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir
+                    --auth&nbsp;trust</CODE></P>
+
+                    <P>This is currently the default. No authentication is performed and privilege
+                    is granted based on the user name presented. Masquerading is possible.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class=
+                  "bold"><STRONG>password</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir
+                    --auth&nbsp;password</CODE></P>
+
+                    <P>Users are authenticated via password. A default password 'changeme' is
+                    established when the new user is created. Passwords can be changed by the user
+                    from the BSim client or can be reset by an administrator via the <SPAN class=
+                    "command"><STRONG>resetpassword</STRONG></SPAN> command.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class="bold"><STRONG>pki</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir --auth&nbsp;pki
+                    --cafile&nbsp;"/path/to/rootcert"</CODE></P>
+
+                    <P>Users are authenticated by PKI certificates. Upon initialization, the BSim
+                    server must be provided (via the <SPAN class=
+                    "command"><STRONG>--cafile</STRONG></SPAN> option) a file containing the public keys
+                    for the certificate authorities used to issue user's certificates. The file
+                    consists of the authoritative certificates in PEM format concatenated
+                    together.</P>
+
+                    <P>BSim users must register their certificate with the Ghidra client using the
+                    <SPAN class="emphasis"><EM>Edit-&gt;Set PKI Certificate...</EM></SPAN> menu
+                    option from the Project dialog. The BSim client will automatically submit the
+                    certificate to a server that requests it, and the password to unlock it will be
+                    requested as needed. This is the same mechanism used to a access a PKI
+                    protected Ghidra server, and if a user needs access to both a BSim server and
+                    Ghidra server that are PKI protected, the servers should probably be configured
+                    with the same certificate authorities so that they will accept the same
+                    certificate from the user.</P>
+
+                    <P>With PKI authentication enabled, at the time a new user role is established
+                    with the server, the X.509 Distinguished Name, as bound to the user's
+                    certificate, must be associated with the user name via the <SPAN class=
+                    "command"><STRONG>--dn</STRONG></SPAN> option. See <A class="xref" href=
+                    "#PostAddUser" title="Adding Users to the Database">&ldquo;Adding Users to the
+                    Database&rdquo;</A>.</P>
+                  </DD>
+                </DL>
+              </DIV>
+            </DIV>
+
+            <P>The authentication method should be established once, the first time the <SPAN
+            class="command"><STRONG>start</STRONG></SPAN> command is issued for the server on an
+            empty data directory. Subsequent restarts of the server will not change these settings.
+            If the settings really need to be changed, the <SPAN class=
+            "command"><STRONG>changeauth</STRONG></SPAN> command can be issued. It takes the same
+            options as the <SPAN class="command"><STRONG>start</STRONG></SPAN> command and can only
+            be run if the server is shutdown first.</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl changeauth
+                  /datadir/path --auth&nbsp;password</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Using the <SPAN class="command"><STRONG>changeauth</STRONG></SPAN> command on a
+            server with an established set of users will likely require other disruptive changes to
+            create passwords or associate Distinguished Names with users, if they didn't exist
+            before.</P>
+
+            <P>If it is determined that only the database administrators have OS level, local,
+            access to the server's host machine, they can choose to use the <SPAN class=
+            "command"><STRONG>noLocalAuth</STRONG></SPAN> option as part of the <SPAN class=
+            "command"><STRONG>start</STRONG></SPAN> or <SPAN class=
+            "command"><STRONG>changeauth</STRONG></SPAN> commands. This disables authentication for
+            users connecting to the server by the 'localhost' interface. This may facilitate the
+            use of scripts for ingest etc., where working with passwords is cumbersome.
+            Authentication is still enforced for any remote connection.</P>
+          </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostAddUser"></A>Adding Users to the Database</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>The username used to start the server for the first time, causing the initialization
+            of the data directory, becomes the administrator for that server. No other
+            username/role is initially known to the server. New usernames/roles can be added to the
+            server using the following command:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser <SPAN class=
+                  "emphasis"><EM>username</EM></SPAN></CODE></TD>
+                </TR>
+
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser <SPAN class=
+                  "emphasis"><EM>username</EM></SPAN> --dn&nbsp;"C=US,ST=MD,CN=Firstname User"</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>If password authentication has been set for the server, the new user's password will
+            initially be set to 'changeme'. If PKI authentication has been set for the server, The
+            Distinguished Name, as bound to the new user's certificated must be provided when
+            issuing the <SPAN class="command"><STRONG>adduser</STRONG></SPAN> command, via the
+            <SPAN class="command"><STRONG>--dn</STRONG></SPAN> option. The Distinguished Name must
+            be presented as a string containing a comma separated sequence of attribute/value pairs
+            that uniquely identifies a certificate. Currently, the Common Name (CN=) is the only
+            attribute inspected by the PostgreSQL server, so other attributes can be omitted.</P>
+
+            <P>New users are by default only given <SPAN class=
+            "command"><STRONG>user</STRONG></SPAN> permissions, meaning that they can only place
+            queries to the database and cannot ingest, update, or delete data. The new user can be
+            given <SPAN class="command"><STRONG>admin</STRONG></SPAN> privileges (by an existing
+            administrator) by issuing the command:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl changeprivilege <SPAN
+                  class="emphasis"><EM>username</EM></SPAN> admin</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+          </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostAdditionalConfig"></A>Additional
+                  Configuration</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>The relevant configuration files are at the top level of the data directory:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">postgresql.conf</CODE></TD>
+                </TR>
+
+                <TR>
+                  <TD><CODE class="computeroutput">pg_hba.conf</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>The most important configuration parameters in <CODE class=
+            "filename">postgresql.conf</CODE> are:</P>
+
+            <DIV class="informalexample">
+              <DIV class="variablelist">
+                <DL class="variablelist">
+                  <DT><SPAN class="term"><SPAN class=
+                  "bold"><STRONG>shared_buffers</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>This controls the amount of RAM available for caching database pages across
+                    all connections to the server. The default should be reasonable in most
+                    situations, but for large databases or many simultaneous connections it might
+                    make sense to increase this.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class=
+                  "bold"><STRONG>max_wal_size</STRONG></SPAN>,</SPAN> <SPAN class="term"><SPAN
+                  class="bold"><STRONG>checkpoint_timeout</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>These control how often the server forces database pages to be written back
+                    out to the file-system. The defaults are set to minimize disk writes when
+                    ingesting large numbers of records in one session. There should be little
+                    reason to change these values.</P>
+                  </DD>
+
+                  <DT><SPAN class="term"><SPAN class=
+                  "bold"><STRONG>ssl_min_protocol_version</STRONG></SPAN></SPAN></DT>
+
+                  <DD>
+                    <P>This controls the minimum SSL/TLS protocol version used when the server negotiates a connection.
+		    The current default is 'TLSv1.2'</P>
+                  </DD>
+                </DL>
+              </DIV>
+            </DIV>
+
+            <P>The <CODE class="filename">pg_hba.conf</CODE> file is used to configure which
+            connections the server accepts for a particular outward facing IP address and what
+            security mechanisms are enforced for those connections. Currently all addresses are
+            configured to accept SSL connections only, except possibly for 'localhost'.
+            Administrators <SPAN class="emphasis"><EM>can</EM></SPAN> currently filter connections
+            based on usernames and the particular database (which corresponds to Ghidra's concept
+            of <SPAN class="emphasis"><EM>repository</EM></SPAN>).</P>
+
+            <DIV class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
+              <H3 class="title">Warning</H3>
+
+              <P>By default, the server accepts all connections from all users.</P>
+            </DIV>
+          </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="ConfigDefaults"></A>Configuration Defaults</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>There is a <CODE class="filename">serverconfig.xml</CODE> which contains a few of
+            the default configuration values that are most crucial for the BSim Database. <SPAN
+            class="bold"><STRONG>Beware:</STRONG></SPAN> This file is currently parsed only once
+            for the entire <SPAN class="emphasis"><EM>lifetime</EM></SPAN> of a particular data
+            directory: it is read only when the data directory is first initialized, i.e. the first
+            time the <SPAN class="command"><STRONG>bsim_ctl start</STRONG></SPAN> command is
+            invoked on the empty directory. This file is intended to provide reasonable defaults
+            that are different from the standard PostgreSQL defaults. To provide site specific
+            configuration, changes should be made to the normal PostgreSQL configuration files.</P>
+          </DIV>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="ElasticConfig"></A>Elasticsearch Configuration</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>A full description of how to configure an Elasticsearch cluster is beyond the scope of
+            this document. In particular, the <SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN>
+            command-line, as described in <A class="xref" href="DatabaseConfiguration.html#PostConfig" title=
+            "PostgreSQL Configuration">&ldquo;PostgreSQL Configuration&rdquo;</A>, does not apply to
+            Elasticsearch. Complete documentation for administering a database is available on-line
+            from the Elasticsearch website.</P>
+
+          <P>The following discussion describes how to set up a toy, or single node, server, using the
+            free and open Elasticsearch distribution. This distribution includes a REST API for administering
+            a database, which can be accessed using <CODE>curl</CODE> commands or some other method
+            to send HTTP requests directly to the node.
+          </P>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="ElasticInstall"></A>Installing the Plug-in</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>In order to make use of Elasticsearch with BSim, the database administrator must
+            install the <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> plug-in as part of the
+            Elasticsearch deployment. The plug-in is available in the Ghidra add-on named <SPAN
+            class="emphasis"><EM>BSimElasticPlugin</EM></SPAN>, which unpacks into a standard
+            Ghidra installation. The file <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> is a
+            standard Elasticsearch plug-in that must be installed on every node of the cluster
+            before a BSim repository can be created. The description below shows how to enable
+            the BSim plug-in for a single node, but this will need to be repeated for any
+            additional nodes.</P>
+
+            <P>Assuming the add-on has been unpacked, the plug-in can be installed to a single node
+            using the <SPAN class="emphasis"><EM>elasticsearch-plugin</EM></SPAN> command in the
+            <SPAN class="emphasis"><EM>bin</EM></SPAN> directory of the node's Elasticsearch
+            installation.</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">bin/elasticsearch-plugin install
+                  file:///path/to/ghidra/Ghidra/contrib/BSimElasticPlugin/data/lsh.zip</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Replace the initial portion of the absolute path in the URL to point to the Ghidra
+            installation. Once the plug-in is installed, the toy deployment can be (re)started from
+            the command-line by running</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">bin/elasticsearch</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>This will dump logging messages to the console, and you should see <CODE class=
+            "computeroutput">[lsh]</CODE> listed among the loaded plug-ins as the node starts
+            up.</P>
+          </DIV>
+
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="ElasticSecurity"></A>Elasticsearch Security</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>The open Elasticsearch distribution starts with up with password authentication
+            enabled by default.  When a node is started up for the first time, as described above, an
+            <SPAN class="bold"><STRONG>elastic</STRONG></SPAN> user is created with a randomly
+            generated password that is reported, once, to the console. For a toy deployment, it may
+            be convenient to add additional users via <CODE>curl</CODE> commands. The
+            following example creates a user named <SPAN class="bold"><STRONG>ghidrauser</STRONG></SPAN>
+            with a default password "changeme", using the <STRONG>elastic</STRONG> users credentials.
+            The generated password for the <STRONG>elastic</STRONG> user must be substituted for the XXXXXX
+            at the beginning of the command.
+	    </P>
+	    
+            <DIV class="informalexample"><PRE class="programlisting">
+curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrauser?pretty" -H 'Content-Type: application/json' -d'
+{
+  "password" : "changeme",
+  "roles" : [ "viewer" ],
+  "full_name" : "Ghidra User",
+  "email" : "ghidrauser@example.com"
+}
+'
+	      </PRE>
+            </DIV>
+
+	    <P>Elasticsearch uses the concept of <EM>roles</EM> to grant access privileges to particular users. The
+	      built-in role <STRONG>viewer</STRONG>, as in the example above, can be used to grant users
+	      read-only access to a database.  The built-in <STRONG>superuser</STRONG> role grants
+	      administrator privileges.</P>
+          </DIV>
+	  
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="ElasticURL"></A>The Elasticsearch URL</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>Assuming an Elasticsearch cluster is running and the plug-in has been properly
+            installed, all other parts of BSim interact transparently with the cluster. The <SPAN
+            class="command"><STRONG>bsim</STRONG></SPAN> command, described in <A class="xref"
+            href="IngestProcess.html" title="Ingesting Executables"><I>Ingesting
+            Executables</I></A>, and the Ghidra/BSim client, described in <A class="xref" href=
+            "../BSimSearchPlugin/BSimSearch.html" title="Querying a BSim Database"><I>Querying a BSim
+            Database</I></A>, require no additional configuration to work with Elasticsearch,
+            except users must provide the correct URL to establish a connection. Elasticsearch
+            communicates over <SPAN class="emphasis"><EM>https</EM></SPAN>, and BSim clients
+            automatically assume they are communicating with Elasticsearch when they see this
+            protocol. Alternatively, the protocol may be specified as <SPAN class=
+            "emphasis"><EM>elastic</EM></SPAN> when using the <SPAN class=
+            "command"><STRONG>bsim</STRONG></SPAN> command. Elasticsearch use by BSim assumes a
+            default port of 9200 unless otherwise specified when specifying the server host. See <A
+            class="xref" href="CommandLineReference.html#URLs">&ldquo;Ghidra and BSim
+            URLs&rdquo;</A> for additional information about URLs.</P>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="CreateDatabase"></A>Creating a
+              Database</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>If using either PostgreSQL or Elasticsearch the server must be properly configured and
+        running before a <SPAN class="bold"><STRONG>database</STRONG></SPAN> can be created. In the
+        case of an H2 file-based database there is no server requirement. Only after a database has
+        been created can data be ingested or queries performed. In this context, a database is a
+        single container of reverse engineered functions. Metadata pertaining to executables and
+        call-graph relationships is also stored, but the principle database record describes a
+        <SPAN class="emphasis"><EM>function</EM></SPAN>. A single PostgreSQL or Elasticsearch
+        server can hold multiple independent databases.</P>
+
+        <P>A database is created using the <SPAN class="command"><STRONG>bsim</STRONG></SPAN>
+        command script. The basic command looks like</P>
+
+        <DIV class="informalexample">
+          <TABLE border="0" summary="Simple list" class="simplelist">
+            <TR>
+              <TD><CODE class="computeroutput">$(ROOT)/support/bsim createdatabase <SPAN class=
+              "emphasis"><EM>bsimURL</EM></SPAN> <SPAN class=
+              "emphasis"><EM>config_template</EM></SPAN></CODE></TD>
+            </TR>
+          </TABLE>
+        </DIV>
+
+        <P>A BSim database is completely distinct from the Ghidra Server or Ghidra project, so the
+        executables and functions contained within do not need to coincide at all.</P>
+
+        <P>The Ghidra GUI client specifies a BSim database with its explicit characteristics (i.e.,
+        DB type, name, host/port if applicable, etc.), while the <SPAN class=
+        "command"><STRONG>bsim</STRONG></SPAN> command accepts a <SPAN class=
+        "emphasis"><EM>bsimURL</EM></SPAN> which includes similar details (see <A class="xref"
+        href="CommandLineReference.html#URLs">&ldquo;Ghidra and BSim URLs&rdquo;</A> for more
+        details).</P>
+
+        <P>The <SPAN class="emphasis"><EM>config_template</EM></SPAN> parameter passed to <SPAN
+        class="command"><STRONG>bsim createdatabase</STRONG></SPAN> names a collection of specific
+        configuration values for the newly created database. A standard Ghidra distribution
+        provides a number of predefined templates (See below) designed for specific database use
+        cases. It is simplest to use a predefined template when creating a database, but it is
+        possible to edit an existing template or create a new template (See <A class="xref" href=
+        "DatabaseConfiguration.html#DatabaseTemplates" title=
+        "Creating Database Templates">&ldquo;Creating Database Templates&rdquo;</A>).</P>
+
+        <P>There are two critical database properties being determined by the template that need to
+        be kept in mind: the <SPAN class="bold"><STRONG>index tuning</STRONG></SPAN> and the <SPAN
+        class="bold"><STRONG>weighting scheme</STRONG></SPAN> relative to the size of the database.
+        The two pieces of the template name, separated by the '_' character, refer to these
+        concerns.</P>
+
+        <P>The index tuning affects the use of the database by trading off between, the time
+        required to perform individual queries, the amount of variation between matching functions
+        a query can tolerate, and the amount of storage required per database record. Ideally, the
+        database is tuned, before the initial ingest occurs, to the <SPAN class=
+        "emphasis"><EM>anticipated size</EM></SPAN> of the database. The database can trade off
+        storage size (per record) and latency for overall query response time, but the decision
+        needs to be made before the database is populated. Currently there is a <SPAN class=
+        "bold"><STRONG>medium</STRONG></SPAN> tuning that is ideal for repositories that will store
+        on the order of 10 million functions. There is also a <SPAN class=
+        "bold"><STRONG>large</STRONG></SPAN> tuning, which uses more storage but can maintain fast
+        query times for databases with 100 million functions or more. There is a large overlap for
+        these tunings, so if its unclear how large a database might grow, go ahead and use the
+        medium tuning.</P>
+
+        <P>The weighting scheme affects how BSim views the relative importance of individual code
+        constructs within a function. Code constructions are extracted as <SPAN class=
+        "emphasis"><EM>features</EM></SPAN>, and each feature is assigned a weight. The basic
+        schemes are: <SPAN class="bold"><STRONG>32</STRONG></SPAN> for 32-bit compiled code, <SPAN
+        class="bold"><STRONG>64</STRONG></SPAN> for 64-bit code. The scheme that matches the
+        predominant form of code in the repository being ingested should be used. Mixed schemes are
+        possible, but a corpus which is predominantly 32-bit, even with a small number of 64-bit
+        executables mixed in, should still use the 32-bit weights.</P>
+
+        <P>There are some weighting schemes designed for more specialized code. The <SPAN class=
+        "bold"><STRONG>64_32</STRONG></SPAN> scheme is for 64-bit code using 32-bit pointers. The
+        <SPAN class="bold"><STRONG>nosize</STRONG></SPAN> scheme allows better matching of 32-bit
+        functions to 64-bit functions, when they are compiled from the same source. The <SPAN
+        class="bold"><STRONG>cpool</STRONG></SPAN> scheme is designed for Java byte-code or Dalvik
+        executables. For more discussion of weighting, see <A class="xref" href=
+        "FeatureWeight.html#WeightingSoftware" title="Weighting Software Features">&ldquo;Weighting
+        Software Features&rdquo;</A>.</P>
+
+        <P>The full template name incorporates both an index tuning and a weight scheme. Some
+        common examples of template names:</P>
+
+        <DIV class="informalexample">
+          <DIV class="variablelist">
+            <DL class="variablelist">
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>medium_32</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>A medium index tuning with a weighting scheme designed for 32-bit
+                executables.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>medium_64</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>A medium index tuning with a weighting scheme designed for 64-bit
+                executables.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>large_32</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>A 32-bit weighting scheme with tuning for a large database size.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>medium_cpool</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>A medium index tuning with a weighting scheme for Java executables.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+              "bold"><STRONG>medium_nosize</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>A medium index tuning with a weighting scheme allowing matches between 32-bit
+                and 64-bit code.</P>
+              </DD>
+            </DL>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="TailorBSim"></A>Tailoring BSim
+              Metadata</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>There is some facility to tailor a specific BSim database instance so that it can ingest
+        and/or report information about executables or functions to make results more useful for a
+        specific project or user. Capabilities can be added after a database has been created and
+        is running by issuing specific <SPAN class="command"><STRONG>bsim</STRONG></SPAN> commands,
+        but they can also be added to a <SPAN class="emphasis"><EM>configuration
+        template</EM></SPAN> prior to creating the database, which provides a record of the
+        specific additions should the database instance need to be recreated or multiple tailored
+        instances be deployed. For additions that allow the ingest of more metadata about
+        executables or functions, users must provide additional scripts to Ghidra during the ingest
+        process in order to read in or discover the new metadata.</P>
+
+        <P>The <SPAN class="bold"><STRONG>Name</STRONG></SPAN>, <SPAN class=
+        "bold"><STRONG>Owner</STRONG></SPAN>, and <SPAN class=
+        "bold"><STRONG>Description</STRONG></SPAN> associated with a BSim instance can be trivially
+        tailored with the <SPAN class="command"><STRONG>bsim setmetadata</STRONG></SPAN>
+        command.</P>
+
+        <DIV class="informalexample">
+          <TABLE border="0" summary="Simple list" class="simplelist">
+            <TR>
+              <TD><CODE class="computeroutput">$(ROOT)/support/bsim setmetadata <SPAN class=
+              "emphasis"><EM>bsimURL</EM></SPAN> --name&nbsp;"BSim Database"</CODE></TD>
+            </TR>
+
+            <TR>
+              <TD><CODE class="computeroutput">$(ROOT)/support/bsim setmetadata <SPAN class=
+              "emphasis"><EM>bsimURL</EM></SPAN> --owner&nbsp;"Administrators"</CODE></TD>
+            </TR>
+
+            <TR>
+              <TD><CODE class="computeroutput">$(ROOT)/support/bsim setmetadata <SPAN class=
+              "emphasis"><EM>bsimURL</EM></SPAN> --description&nbsp;"Files of interest"</CODE></TD>
+            </TR>
+          </TABLE>
+        </DIV>
+
+        <P>This information is displayed in various windows by the BSim client. The values can be
+        changed at any time and do not otherwise affect the records contained in the database.
+        Multiple command-line parameters can be fed to <SPAN class="command"><STRONG>bsim
+        setmetadata</STRONG></SPAN> so long as each one starts with <SPAN class=
+        "bold"><STRONG>--name</STRONG></SPAN>, <SPAN class="bold"><STRONG>--owner</STRONG></SPAN>, or
+        <SPAN class="bold"><STRONG>--description</STRONG></SPAN> respectively. Quoting of values may be
+        necessary to get some strings to be interpreted as a single command-line parameter.</P>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="ExeCat"></A>Executable Categories</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>BSim provides the powerful ability to associate new types of metadata with each
+          executable that the database ingests. Any method of categorizing executables that
+          describes an executable with a simple string value, referred to here as an executable
+          <SPAN class="bold"><STRONG>category</STRONG></SPAN>, can be added as a field to the
+          database. With only minor adjustments to the ingest process, new category values can be
+          automatically attached to incoming executables and are treated like any other executable
+          field that BSim understands. Category values are retrieved with queries, can be used for
+          filtering, and show up as sortable columns in result tables.</P>
+
+          <P>All categories have a formal name (or type), which is used both in the ingest process
+          (See below) and as the label for table columns. The name can contain alphanumeric
+          characters or punctuation from the limited set, ' ._:/()'. For each executable there can
+          be zero, one, or more <SPAN class="emphasis"><EM>string</EM></SPAN> values associated
+          with the category. No value is required for the executable, and any single value can be
+          used for filtering (either the executable is labeled with the value or it is not) even if
+          there are multiple values for that category. If there are multiple values, a query that
+          matches the executable will return all the values as a single sorted column entry.</P>
+
+          <P>It is also possible to create a special time-based category. This category can have
+          any name as above, but instead of associating string values with the executable, it
+          associates a single time-stamp. The time-stamp has precision down to the millisecond and
+          provides filtering and sorting based on time. Internally, this new category repurposes
+          the column storage originally providing an executable's <SPAN class="emphasis"><EM>Ingest
+          Date</EM></SPAN> field. As a result, any BSim instance
+          can have only one time category and only one time-stamp within it. The ingest scripting
+          must provide any actual time-stamp value for the executable, or the database will fill in
+          the "epoch", 12:00 am, Jan 1, 1970.</P>
+
+          <P>A new category can be added to the database at any time using the <SPAN class=
+          "command"><STRONG>bsim addexecategory</STRONG></SPAN> command.</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim addexecategory <SPAN class=
+                "emphasis"><EM>bsimURL</EM></SPAN> MyCategoryName</CODE></TD>
+              </TR>
+
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim addexecategory <SPAN class=
+                "emphasis"><EM>bsimURL</EM></SPAN> MyTimeField date</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>The single time-stamp field can be renamed by appending the keyword "date" to the
+          command after the name of the category. Once a category, the corresponding program
+          options set for any new executables will automatically read into the database as part of
+          the ingest process. Previously ingested executables, assuming they have the new program
+          options set, can be updated within the BSim database using one of the <SPAN class=
+          "command"><STRONG>bsim updaterepo</STRONG></SPAN> command variants. In either case, the
+          relevant program options typically need to be filled by running a Ghidra script (See <A
+          class="xref" href="IngestProcess.html#IngestExeCat" title=
+          "Ingesting Executable Categories">&ldquo;Ingesting Executable Categories&rdquo;</A>).
+          There is currently no method for deleting a category once it has been created.</P>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="FunctionTags"></A>Function Tags</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>BSim can be configured to recognize specific <SPAN class="bold"><STRONG>Function
+          Tags</STRONG></SPAN>, which are named Boolean properties on individual functions within
+          an executable. Within a Ghidra program, any number of different function tags can be
+          established by the user and are used to label individual functions or specific subsets of
+          functions that share a particular property. This would typically be used to label classes
+          of functions that are important to analysts, unpacked functions could be labeled with the
+          tag <SPAN class="emphasis"><EM>UNPACKED</EM></SPAN> for instance.</P>
+
+          <P>In order for BSim to recognize specific function tags, they must be individually
+          registered with the BSim database. These tags are then automatically ingested into the
+          database, along with the other standard metadata describing functions, and can be used to
+          filter match results when querying the database. A function tag has a formal name, which
+          can be displayed as part of the function header within the main code browser and is used
+          for BSim columns and filter labels. Once the tag is created for a program, functions
+          universally have the tag as a Boolean property, either the name applies to a function or
+          it doesn't, and arbitrary subsets can be <SPAN class="emphasis"><EM>tagged</EM></SPAN>
+          with that name.</P>
+
+          <P>A tag must be <SPAN class="emphasis"><EM>registered</EM></SPAN> with a BSim database
+          before it can be used as a filter or seen in results. A tag can be registered at any time
+          with the <SPAN class="command"><STRONG>bsim addfunctiontag</STRONG></SPAN> command.</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim addfunctiontag <SPAN class=
+                "emphasis"><EM>bsimURL</EM></SPAN> MyTagName</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>The new tag will automatically be read in when any new executables are ingested. If
+          previously ingested executables already had the new tags before they were registered,
+          their metadata within BSim database can be updated using the <SPAN class=
+          "command"><STRONG>bsim updaterepo</STRONG></SPAN> command variants. BSim is limited to 29
+          registered tag names, and there is currently no way to remove a tag once it has been
+          registered.</P>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="DatabaseTemplates"></A>Creating Database Templates</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>It is possible to create tailored database configuration templates so that
+          implementers have a permanent and accessible record of a particular set-up and don't need
+          to repeatedly issue <SPAN class="command"><STRONG>bsim setmetadata</STRONG></SPAN> and
+          <SPAN class="command"><STRONG>bsim addexecategory</STRONG></SPAN> when creating a
+          database. Other aspects of a database can also be manipulated, like weighting schemes and
+          index tuning, but doing this properly is beyond the scope of this document. A <SPAN
+          class="bold"><STRONG>database template</STRONG></SPAN> is the basic set of configuration
+          parameters used to set up BSim database instance. The configuration parameters are
+          established for a particular database when the <SPAN class="command"><STRONG>bsim
+          createdatabase</STRONG></SPAN> command is run (See <A class="xref" href=
+          "DatabaseConfiguration.html#CreateDatabase" title="Creating a Database">&ldquo;Creating a
+          Database&rdquo;</A>). The template name passed on the command-line actually identifies an
+          XML file-name, appended with the '.xml' suffix, in the directory:</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/data</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>The file has a root tag of <SPAN class="emphasis"><EM>&lt;dbconfig&gt;</EM></SPAN>,
+          and the first child tag of this root is the <SPAN class=
+          "emphasis"><EM>&lt;info&gt;</EM></SPAN> tag. This tag contains all the metadata tags that
+          can be easily changed or added to the database. A list of the metadata tags follows. The
+          metadata is provided as formal text content within the tag, and none of the tags
+          currently take attributes.</P>
+
+          <DIV class="informalexample">
+            <DIV class="table">
+              <TABLE width="80%" frame="none">
+                <COL width="30%">
+                <COL width="70%">
+
+                <THEAD>
+                  <TR>
+                    <TD><SPAN class="bold"><STRONG>XML Tag</STRONG></SPAN></TD>
+
+                    <TD><SPAN class="bold"><STRONG>Description</STRONG></SPAN></TD>
+                  </TR>
+                </THEAD>
+
+                <TBODY>
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;name&gt;</CODE></TD>
+
+                    <TD>Name of the database</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;owner&gt;</CODE></TD>
+
+                    <TD>Owner of the database</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;description&gt;</CODE></TD>
+
+                    <TD>An overarching description of the database</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;major&gt;</CODE></TD>
+
+                    <TD>Major decompiler version used for ingest (Should be set to zero)</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;minor&gt;</CODE></TD>
+
+                    <TD>Minor decompiler version used for ingest (Should be set to zero)</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;settings&gt;</CODE></TD>
+
+                    <TD>Specific settings for the signature strategy (Should be set to zero)</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;execategory&gt;</CODE></TD>
+
+                    <TD>The name of an executable category (to be) defined for this database
+                    instance</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;datename&gt;</CODE></TD>
+
+                    <TD>The name of the timestamp column</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><CODE class="computeroutput">&lt;functiontag&gt;</CODE></TD>
+
+                    <TD>The name of a function tag (to be) registered with this database
+                    instance</TD>
+                  </TR>
+                </TBODY>
+              </TABLE>
+            </DIV>
+          </DIV>
+
+          <P>There can be multiple <SPAN class="emphasis"><EM>&lt;execategory&gt;</EM></SPAN> tags
+          if more than one category is desired and both <SPAN class=
+          "emphasis"><EM>&lt;execategory&gt;</EM></SPAN> and <SPAN class=
+          "emphasis"><EM>&lt;datename&gt;</EM></SPAN> are optional tags. The date column name
+          defaults to 'Ingest Date' and is drawn from the corresponding Ghidra program option. The
+          tag order needs to be preserved. There can be multiple <SPAN class=
+          "emphasis"><EM>&lt;functiontag&gt;</EM></SPAN> tags, one for each function tag to be
+          registered with the database.</P>
+
+          <P>It is easiest to copy an existing template and just edit the tags described above. The
+          remaining tags in the file are more dangerous to manipulate. The <SPAN class=
+          "emphasis"><EM>&lt;k&gt;</EM></SPAN> and <SPAN class="emphasis"><EM>&lt;L&gt;</EM></SPAN>
+          tags pertain to the index tuning. The <SPAN class=
+          "emphasis"><EM>&lt;weightsfile&gt;</EM></SPAN> tag gives the name of the weights file,
+          within the same directory, which is also another XML file. It is simplest to choose from
+          the existing weight files provided with the distribution. See <A class="xref" href=
+          "FeatureWeight.html#WeightingSoftware" title=
+          "Weighting Software Features">&ldquo;Weighting Software Features&rdquo;</A>.</P>
+        </DIV>
+      </DIV>
+    </DIV>
+  </BODY>
+</HTML>

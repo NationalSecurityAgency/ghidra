@@ -27,6 +27,7 @@ import org.junit.Test;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 
@@ -38,8 +39,8 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		HighlightFactory factory = (field, text, cursorTextOffset) -> {
-			return new Highlight[] { new Highlight(4, 4, Color.YELLOW) };
+		FieldHighlightFactory factory = (field, text, cursorTextOffset) -> {
+			return new Highlight[] { new Highlight(4, 4, Palette.YELLOW) };
 		};
 
 		Font font = new Font("Times New Roman", 0, 14);
@@ -63,12 +64,12 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 		 	Wow
 		 */
 
-		elements.add(new TextFieldElement(new AttributedString("Hello ", Color.BLUE, fm), 0, 0));
+		elements.add(new TextFieldElement(new AttributedString("Hello ", Palette.BLUE, fm), 0, 0));
 		elements.add(new TextFieldElement(
-			new AttributedString("World ", Color.RED, fm, true, Color.BLUE), 1, 0));
+			new AttributedString("World ", Palette.RED, fm, true, Palette.BLUE), 1, 0));
 		elements.add(
-			new TextFieldElement(new AttributedString(CLIPPED_STRING, Color.GREEN, fm), 2, 0));
-		elements.add(new TextFieldElement(new AttributedString("Wow! ", Color.GRAY, fm), 3, 0));
+			new TextFieldElement(new AttributedString(CLIPPED_STRING, Palette.GREEN, fm), 2, 0));
+		elements.add(new TextFieldElement(new AttributedString("Wow! ", Palette.GRAY, fm), 3, 0));
 
 		textField = new FlowLayoutTextField(elements, 100, 100, 3, factory);
 	}
@@ -113,13 +114,13 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 		assertEquals(new RowColLocation(1, 4), textField.dataToScreenLocation(2, 4));
 
 		// Supercalifra (12 chars); ... (3 chars); Supercalifra... (15 chars)
-		assertEquals(new DefaultRowColLocation(1, 12), textField.dataToScreenLocation(2, 15));
+		assertEquals(new RowColLocation(1, 12), textField.dataToScreenLocation(2, 15));
 
 		assertEquals(new RowColLocation(2, 0), textField.dataToScreenLocation(3, 0));
 		assertEquals(new RowColLocation(2, 4), textField.dataToScreenLocation(3, 4));
 
-		assertEquals(new DefaultRowColLocation(0, 12), textField.dataToScreenLocation(0, 12));
-		assertEquals(new DefaultRowColLocation(0, 12), textField.dataToScreenLocation(0, 75));
+		assertEquals(new DefaultRowColLocation(0, 0), textField.dataToScreenLocation(0, 12));
+		assertEquals(new DefaultRowColLocation(0, 0), textField.dataToScreenLocation(0, 75));
 	}
 
 	@Test

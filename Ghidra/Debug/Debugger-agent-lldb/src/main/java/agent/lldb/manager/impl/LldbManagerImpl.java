@@ -59,7 +59,7 @@ public class LldbManagerImpl implements LldbManager {
 			System.loadLibrary(lldb);
 		}
 		catch (UnsatisfiedLinkError ule) {
-			Msg.error(LldbManagerImpl.class, "java.library.path => " + libPath);
+			Msg.error(LldbManagerImpl.class, ule.getMessage());
 			Msg.error(LldbManagerImpl.class,
 				"liblldb not found - add relevant java.library.path to support/launch.properties");
 		}
@@ -67,7 +67,7 @@ public class LldbManagerImpl implements LldbManager {
 			System.loadLibrary("lldb-java");
 		}
 		catch (UnsatisfiedLinkError ule) {
-			Msg.error(LldbManagerImpl.class, "java.library.path => " + libPath);
+			Msg.error(LldbManagerImpl.class, ule.getMessage());
 			Msg.error(LldbManagerImpl.class,
 				"liblldb-java not found - add relevant java.library.path to support/launch.properties");
 		}
@@ -94,7 +94,7 @@ public class LldbManagerImpl implements LldbManager {
 	private final HandlerMap<LldbEvent<?>, Void, DebugStatus> handlerMap = new HandlerMap<>();
 	private final Map<Class<?>, DebugStatus> statusMap = new LinkedHashMap<>();
 	private final ListenerSet<LldbEventsListener> listenersEvent =
-		new ListenerSet<>(LldbEventsListener.class);
+		new ListenerSet<>(LldbEventsListener.class, true);
 
 	private SBEvent currentEvent;
 	private SBTarget currentSession;
@@ -116,7 +116,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBThreadImpl#remove()} instead
-	 * 
+	 *
 	 * @param id the thread ID to remove
 	 */
 	public void removeThread(String processId, String id) {
@@ -136,8 +136,9 @@ public class LldbManagerImpl implements LldbManager {
 
 	public void addThreadIfAbsent(SBProcess process, SBThread thread) {
 		synchronized (threads) {
-			if (!process.IsValid())
+			if (!process.IsValid()) {
 				return;
+			}
 			Map<String, SBThread> map = threads.get(DebugClient.getId(process));
 			if (map == null) {
 				map = new HashMap<>();
@@ -165,7 +166,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBProcessImpl#remove(LldbCause)} instead
-	 * 
+	 *
 	 * @param id the process ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -188,18 +189,10 @@ public class LldbManagerImpl implements LldbManager {
 			for (String tid : toRemove) {
 				removeThread(processId, tid);
 			}
-			getEventListeners().fire.processRemoved(id, cause);
+			getEventListeners().invoke().processRemoved(id, cause);
 		}
 	}
 
-	/**
-	 * Update the selected process
-	 * 
-	 * @param process the process that now has focus
-	 * @param cause the cause of the focus change
-	 * @param fire signal listeners
-	 * @return success status
-	 */
 	@Override
 	public SBProcess getProcess(SBTarget session, String id) {
 		synchronized (processes) {
@@ -214,8 +207,9 @@ public class LldbManagerImpl implements LldbManager {
 
 	public void addProcessIfAbsent(SBTarget session, SBProcess process) {
 		synchronized (processes) {
-			if (!session.IsValid())
+			if (!session.IsValid()) {
 				return;
+			}
 			String sessionId = DebugClient.getId(session);
 			Map<String, SBProcess> map = processes.get(sessionId);
 			if (map == null) {
@@ -229,11 +223,12 @@ public class LldbManagerImpl implements LldbManager {
 					DebugProcessInfo info = new DebugProcessInfo(process);
 					if (!map.containsKey(id)) {
 						getClient().processEvent(new LldbProcessCreatedEvent(info));
+						map.put(id, process);
 					}
 					else {
 						getClient().processEvent(new LldbProcessReplacedEvent(info));
+						map.put(id, process);
 					}
-					map.put(id, process);
 				}
 			}
 		}
@@ -241,7 +236,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBTargetImpl#remove(LldbCause)} instead
-	 * 
+	 *
 	 * @param id the session ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -251,7 +246,7 @@ public class LldbManagerImpl implements LldbManager {
 			if (sessions.remove(id) == null) {
 				throw new IllegalArgumentException("There is no session with id " + id);
 			}
-			getEventListeners().fire.sessionRemoved(id, cause);
+			getEventListeners().invoke().sessionRemoved(id, cause);
 		}
 	}
 
@@ -268,6 +263,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	public void addSessionIfAbsent(SBTarget session) {
 		synchronized (sessions) {
+			this.currentSession = eventSession = session;
 			String id = DebugClient.getId(session);
 			SBTarget pred = sessions.get(id);
 			if (!sessions.containsKey(id) || !session.equals(pred)) {
@@ -288,7 +284,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBModule#remove()} instead
-	 * 
+	 *
 	 * @param id the module name to remove
 	 */
 	public void removeModule(SBTarget session, String id) {
@@ -308,8 +304,9 @@ public class LldbManagerImpl implements LldbManager {
 
 	public void addModuleIfAbsent(SBTarget session, SBModule module) {
 		synchronized (modules) {
-			if (!session.IsValid())
+			if (!session.IsValid()) {
 				return;
+			}
 			String sessionId = DebugClient.getId(session);
 			Map<String, SBModule> map = modules.get(sessionId);
 			if (map == null) {
@@ -345,8 +342,9 @@ public class LldbManagerImpl implements LldbManager {
 
 	public void addBreakpointIfAbsent(SBTarget session, Object bpt) {
 		synchronized (breakpoints) {
-			if (!session.IsValid())
+			if (!session.IsValid()) {
 				return;
+			}
 			String sessionId = DebugClient.getId(session);
 			Map<String, Object> map = breakpoints.get(sessionId);
 			if (map == null) {
@@ -482,13 +480,11 @@ public class LldbManagerImpl implements LldbManager {
 		state.set(null, Causes.UNCLAIMED);
 		boolean create = true;
 		if (args.length == 0) {
-			executor =
-				new LldbClientThreadExecutor(() -> DebugClient.debugCreate().createClient());
+			executor = new LldbClientThreadExecutor(() -> DebugClient.debugCreate().createClient());
 		}
 		else {
 			// TODO - process args
-			executor =
-				new LldbClientThreadExecutor(() -> DebugClient.debugCreate().createClient());
+			executor = new LldbClientThreadExecutor(() -> DebugClient.debugCreate().createClient());
 			create = false;
 		}
 		executor.setManager(this);
@@ -538,7 +534,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Schedule a command for execution
-	 * 
+	 *
 	 * @param cmd the command to execute
 	 * @return the pending command, which acts as a future for later completion
 	 */
@@ -739,16 +735,14 @@ public class LldbManagerImpl implements LldbManager {
 	@Override
 	public void updateState(SBProcess process) {
 		currentProcess = eventProcess = process;
-		if (currentSession == null ||
-			!currentSession.IsValid() ||
+		if (currentSession == null || !currentSession.IsValid() ||
 			!currentSession.equals(process.GetTarget())) {
 			SBTarget candidateSession = currentProcess.GetTarget();
 			if (candidateSession != null && candidateSession.IsValid()) {
 				currentSession = eventSession = candidateSession;
 			}
 		}
-		if (currentThread == null ||
-			!currentThread.IsValid() ||
+		if (currentThread == null || !currentThread.IsValid() ||
 			!currentThread.equals(process.GetSelectedThread())) {
 			SBThread candidateThread = currentProcess.GetSelectedThread();
 			if (candidateThread != null && candidateThread.IsValid()) {
@@ -762,7 +756,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Default handler for events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -773,7 +767,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -783,7 +777,7 @@ public class LldbManagerImpl implements LldbManager {
 		for (int i = 0; i < currentSession.GetNumBreakpoints(); i++) {
 			SBBreakpoint bpt = currentSession.GetBreakpointAtIndex(i);
 			if (bpt.IsValid() && (bpt.GetID() == id.intValue())) {
-				getEventListeners().fire.breakpointHit(bpt, evt.getCause());
+				getEventListeners().invoke().breakpointHit(bpt, evt.getCause());
 			}
 		}
 		return statusMap.get(evt.getClass());
@@ -791,7 +785,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -799,7 +793,7 @@ public class LldbManagerImpl implements LldbManager {
 	protected DebugStatus processException(LldbExceptionEvent evt, Void v) {
 		/*
 		Integer eventId = updateState(evt);
-		
+
 		DebugExceptionRecord64 info = evt.getInfo();
 		String key = Integer.toHexString(info.code);
 		if (statusByNameMap.containsKey(key)) {
@@ -811,7 +805,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -822,72 +816,72 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for thread created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processThreadCreated(LldbThreadCreatedEvent evt, Void v) {
 		SBThread thread = evt.getInfo().thread;
-		getEventListeners().fire.threadCreated(thread, LldbCause.Causes.UNCLAIMED);
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getEventListeners().invoke().threadCreated(thread, LldbCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().threadSelected(thread, null, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for thread created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processThreadReplaced(LldbThreadReplacedEvent evt, Void v) {
 		SBThread thread = evt.getInfo().thread;
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getEventListeners().invoke().threadSelected(thread, null, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for thread exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processThreadExited(LldbThreadExitedEvent evt, Void v) {
-		getEventListeners().fire.threadExited(eventThread, eventProcess, evt.getCause());
+		getEventListeners().invoke().threadExited(eventThread, eventProcess, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for thread selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processThreadSelected(LldbThreadSelectedEvent evt, Void v) {
 		currentThread = evt.getThread();
-		getEventListeners().fire.threadSelected(currentThread, evt.getFrame(), evt.getCause());
+		getEventListeners().invoke().threadSelected(currentThread, evt.getFrame(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for frame selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processFrameSelected(LldbSelectedFrameChangedEvent evt, Void v) {
 		currentThread = evt.getThread();
-		getEventListeners().fire.threadSelected(currentThread, evt.getFrame(), evt.getCause());
+		getEventListeners().invoke().threadSelected(currentThread, evt.getFrame(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for process created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -895,17 +889,17 @@ public class LldbManagerImpl implements LldbManager {
 	protected DebugStatus processProcessCreated(LldbProcessCreatedEvent evt, Void v) {
 		DebugProcessInfo info = evt.getInfo();
 		SBProcess proc = info.process;
-		getEventListeners().fire.processAdded(proc, LldbCause.Causes.UNCLAIMED);
-		getEventListeners().fire.processSelected(proc, evt.getCause());
+		getEventListeners().invoke().processAdded(proc, LldbCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().processSelected(proc, evt.getCause());
 
 		SBThread thread = proc.GetSelectedThread();
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getEventListeners().invoke().threadSelected(thread, null, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for process replaced events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -913,17 +907,17 @@ public class LldbManagerImpl implements LldbManager {
 	protected DebugStatus processProcessReplaced(LldbProcessReplacedEvent evt, Void v) {
 		DebugProcessInfo info = evt.getInfo();
 		SBProcess proc = info.process;
-		getEventListeners().fire.processReplaced(proc, LldbCause.Causes.UNCLAIMED);
-		getEventListeners().fire.processSelected(proc, evt.getCause());
+		getEventListeners().invoke().processReplaced(proc, LldbCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().processSelected(proc, evt.getCause());
 
 		SBThread thread = proc.GetSelectedThread();
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getEventListeners().invoke().threadSelected(thread, null, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for process exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -931,73 +925,74 @@ public class LldbManagerImpl implements LldbManager {
 	protected DebugStatus processProcessExited(LldbProcessExitedEvent evt, Void v) {
 		SBThread thread = getCurrentThread();
 		SBProcess process = getCurrentProcess();
-		getEventListeners().fire.threadExited(thread, process, evt.getCause());
-		getEventListeners().fire.processExited(process, evt.getCause());
-		getEventListeners().fire.processRemoved(process.GetProcessID().toString(), evt.getCause());
+		getEventListeners().invoke().threadExited(thread, process, evt.getCause());
+		getEventListeners().invoke().processExited(process, evt.getCause());
+		getEventListeners().invoke()
+				.processRemoved(process.GetProcessID().toString(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for process selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processProcessSelected(LldbProcessSelectedEvent evt, Void v) {
 		currentProcess = evt.getProcess();
-		getEventListeners().fire.processSelected(currentProcess, evt.getCause());
+		getEventListeners().invoke().processSelected(currentProcess, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for session created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processSessionCreated(LldbSessionCreatedEvent evt, Void v) {
 		DebugSessionInfo info = evt.getInfo();
-		getEventListeners().fire.sessionAdded(info.session, LldbCause.Causes.UNCLAIMED);
-		getEventListeners().fire.sessionSelected(info.session, evt.getCause());
+		getEventListeners().invoke().sessionAdded(info.session, LldbCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().sessionSelected(info.session, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for session replaced events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processSessionReplaced(LldbSessionReplacedEvent evt, Void v) {
 		DebugSessionInfo info = evt.getInfo();
-		getEventListeners().fire.sessionReplaced(info.session, LldbCause.Causes.UNCLAIMED);
-		getEventListeners().fire.sessionSelected(info.session, evt.getCause());
+		getEventListeners().invoke().sessionReplaced(info.session, LldbCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().sessionSelected(info.session, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for session exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processSessionExited(LldbSessionExitedEvent evt, Void v) {
 		removeSession(evt.sessionId, LldbCause.Causes.UNCLAIMED);
-		getEventListeners().fire.sessionRemoved(evt.sessionId, evt.getCause());
-		getEventListeners().fire.threadExited(eventThread, eventProcess, evt.getCause());
-		getEventListeners().fire.processExited(eventProcess, evt.getCause());
-		getEventListeners().fire.processRemoved(eventProcess.GetProcessID().toString(),
-			evt.getCause());
+		getEventListeners().invoke().sessionRemoved(evt.sessionId, evt.getCause());
+		getEventListeners().invoke().threadExited(eventThread, eventProcess, evt.getCause());
+		getEventListeners().invoke().processExited(eventProcess, evt.getCause());
+		getEventListeners().invoke()
+				.processRemoved(eventProcess.GetProcessID().toString(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for module loaded events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1007,14 +1002,14 @@ public class LldbManagerImpl implements LldbManager {
 		long n = info.getNumberOfModules();
 		SBProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.moduleLoaded(process, info, i, evt.getCause());
+			getEventListeners().invoke().moduleLoaded(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for module unloaded events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1024,14 +1019,14 @@ public class LldbManagerImpl implements LldbManager {
 		long n = info.getNumberOfModules();
 		SBProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.moduleUnloaded(process, info, i, evt.getCause());
+			getEventListeners().invoke().moduleUnloaded(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for state changed events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1078,7 +1073,9 @@ public class LldbManagerImpl implements LldbManager {
 		}
 		if (status.equals(DebugStatus.GO)) {
 			waiting = true;
-			processEvent(new LldbRunningEvent(DebugClient.getId(eventThread)));
+			if (eventThread != null) {
+				processEvent(new LldbRunningEvent(DebugClient.getId(eventThread)));
+			}
 			return DebugStatus.GO;
 		}
 
@@ -1088,20 +1085,20 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for session selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processSessionSelected(LldbSessionSelectedEvent evt, Void v) {
 		SBTarget session = evt.getSession();
-		getEventListeners().fire.sessionSelected(session, evt.getCause());
+		getEventListeners().invoke().sessionSelected(session, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	/**
 	 * Handler for systems events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1112,13 +1109,13 @@ public class LldbManagerImpl implements LldbManager {
 
 	protected void processConsoleOutput(LldbConsoleOutputEvent evt, Void v) {
 		if (evt.getOutput() != null) {
-			getEventListeners().fire.consoleOutput(evt.getOutput(), evt.getMask());
+			getEventListeners().invoke().consoleOutput(evt.getOutput(), evt.getMask());
 		}
 	}
 
 	/**
 	 * Handler for breakpoint-created event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1130,7 +1127,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1142,7 +1139,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-deleted event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1153,7 +1150,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-enable event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1164,7 +1161,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-deleted event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1175,7 +1172,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-invalidated event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1187,7 +1184,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1200,12 +1197,11 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-locations added event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
-	protected void processBreakpointLocationsAdded(LldbBreakpointLocationsAddedEvent evt,
-			Void v) {
+	protected void processBreakpointLocationsAdded(LldbBreakpointLocationsAddedEvent evt, Void v) {
 		SBTarget session = getCurrentSession();
 		Object info = evt.getBreakpointInfo();
 		doBreakpointModified(session, info, evt.getCause());
@@ -1213,7 +1209,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-locations removed event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1226,7 +1222,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1239,7 +1235,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1251,7 +1247,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1264,7 +1260,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1276,7 +1272,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1288,7 +1284,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1300,31 +1296,31 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Fire breakpoint created event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the creation
 	 */
 	@Internal
 	public void doBreakpointCreated(SBTarget session, Object info, LldbCause cause) {
 		addKnownBreakpoint(session, info, false);
-		getEventListeners().fire.breakpointCreated(info, cause);
+		getEventListeners().invoke().breakpointCreated(info, cause);
 	}
 
 	/**
 	 * Fire breakpoint modified event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the modification
 	 */
 	@Internal
 	public void doBreakpointModified(SBTarget session, Object info, LldbCause cause) {
 		addKnownBreakpoint(session, info, true);
-		getEventListeners().fire.breakpointModified(info, cause);
+		getEventListeners().invoke().breakpointModified(info, cause);
 	}
 
 	/**
 	 * Fire breakpoint deleted event
-	 * 
+	 *
 	 * @param number the deleted breakpoint number
 	 * @param cause the cause of the deletion
 	 */
@@ -1334,13 +1330,13 @@ public class LldbManagerImpl implements LldbManager {
 		if (oldInfo == null) {
 			return;
 		}
-		getEventListeners().fire.breakpointDeleted(oldInfo, cause);
+		getEventListeners().invoke().breakpointDeleted(oldInfo, cause);
 	}
 
 	protected void doBreakpointModifiedSameLocations(SBTarget session, Object info,
 			LldbCause cause) {
 		addKnownBreakpoint(session, info, true);
-		getEventListeners().fire.breakpointModified(info, cause);
+		getEventListeners().invoke().breakpointModified(info, cause);
 	}
 
 	@Internal
@@ -1436,7 +1432,13 @@ public class LldbManagerImpl implements LldbManager {
 	@Override
 	public void sendInterruptNow() {
 		Msg.info(this, "Interrupting");
-		currentSession.GetProcess().SendAsyncInterrupt();
+		SBProcess proc = currentSession.GetProcess();
+		if (proc.IsValid()) {
+			proc.SendAsyncInterrupt();
+		}
+		else {
+			getClient().execute("process signal SIGINT");
+		}
 	}
 
 	@Override
@@ -1468,6 +1470,11 @@ public class LldbManagerImpl implements LldbManager {
 	@Override
 	public CompletableFuture<?> attach(String url, boolean wait, boolean async) {
 		return execute(new LldbAttachCommand(this, url, wait));
+	}
+
+	@Override
+	public CompletableFuture<?> connect(String url, boolean auto, boolean async, boolean kernel) {
+		return execute(new LldbRemoteConnectionCommand(this, url, auto, async, kernel));
 	}
 
 	@Override
@@ -1531,14 +1538,39 @@ public class LldbManagerImpl implements LldbManager {
 	}
 
 	public SBThread getCurrentThread() {
-		if (currentThread != null && !currentThread.IsValid()) {
-			currentProcess = currentSession.GetProcess();
-			for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
-				SBThread thread = currentProcess.GetThreadAtIndex(i);
-			}
-			currentThread = SBThread.GetThreadFromEvent(currentEvent);
+		if (currentThread != null && currentThread.IsValid()) {
+			return currentThread;
 		}
-		return currentThread != null ? currentThread : eventThread;
+		if (currentEvent != null) {
+			eventThread = SBThread.GetThreadFromEvent(currentEvent);
+			if (eventThread != null && eventThread.IsValid()) {
+				currentThread = eventThread;
+				Msg.warn(this, "defaulting to event thread");
+				return currentThread;
+			}
+		}
+		if (currentProcess == null) {
+			currentProcess = eventProcess = currentSession.GetProcess();
+			if (currentProcess == null) {
+				return null;
+			}
+		}
+		currentThread = currentProcess.GetSelectedThread();
+		if (currentThread != null && currentThread.IsValid()) {
+			Msg.warn(this, "defaulting to active thread");
+			return currentThread;
+		}
+
+		for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
+			SBThread thread = currentProcess.GetThreadAtIndex(i);
+			if (thread.IsValid()) {
+				Msg.warn(this, "defaulting to thread " + i);
+				currentThread = thread;
+				break;
+			}
+		}
+
+		return currentThread;
 	}
 
 	public void setCurrentThread(SBThread thread) {
@@ -1598,10 +1630,10 @@ public class LldbManagerImpl implements LldbManager {
 	public CompletableFuture<Void> console(String command) {
 		if (continuation != null) {
 			String prompt = command.equals("") ? LldbModelTargetInterpreter.LLDB_PROMPT : ">>>";
-			getEventListeners().fire.promptChanged(prompt);
+			getEventListeners().invoke().promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return execute(
 			new LldbConsoleExecCommand(this, command, LldbConsoleExecCommand.Output.CONSOLE))

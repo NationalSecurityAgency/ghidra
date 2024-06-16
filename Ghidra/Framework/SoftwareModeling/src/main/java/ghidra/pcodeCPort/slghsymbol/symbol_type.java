@@ -27,6 +27,7 @@ public enum symbol_type {
 	operand_symbol,
 	start_symbol,  // inst_start, inst_ref, inst_def
 	end_symbol,    // inst_next
+	next2_symbol,    // inst_next2
 	subtable_symbol,
 	macro_symbol,
 	section_symbol,
@@ -34,5 +35,7 @@ public enum symbol_type {
 	context_symbol,
 	epsilon_symbol,
 	label_symbol,
+	flowdest_symbol,
+	flowref_symbol,
 	dummy_symbol
 }

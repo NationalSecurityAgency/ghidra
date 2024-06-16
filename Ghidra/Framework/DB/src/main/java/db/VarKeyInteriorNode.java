@@ -155,7 +155,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 				}
 
 				consistent &= node.isConsistent(tableName, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			finally {
 				if (node != null) {
@@ -164,7 +164,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 				}
 			}
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		return consistent;
 	}
 

@@ -169,7 +169,7 @@ public class DataTypeWriter {
 		monitor.initialize(dataTypes.length);
 		int cnt = 0;
 		for (DataType dataType : dataTypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			write(dataType, monitor);
 			monitor.setProgress(++cnt);
 		}
@@ -192,7 +192,7 @@ public class DataTypeWriter {
 		monitor.initialize(dataTypes.size());
 		int cnt = 0;
 		for (DataType dataType : dataTypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			write(dataType, monitor, throwExceptionOnInvalidType);
 			monitor.setProgress(++cnt);
 		}
@@ -461,7 +461,7 @@ public class DataTypeWriter {
 		sb.append(EOL);
 
 		for (DataTypeComponent component : composite.getComponents()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			writeComponent(component, composite, sb, monitor);
 		}
 
@@ -520,16 +520,31 @@ public class DataTypeWriter {
 		}
 
 		if (componentString == null) {
-
 			if (dataType instanceof BitFieldDataType) {
 				BitFieldDataType bfDt = (BitFieldDataType) dataType;
 				name += ":" + bfDt.getDeclaredBitSize();
 				dataType = bfDt.getBaseDataType();
 			}
-			else if (dataType instanceof Array) {
-				Array array = (Array) dataType;
-				name += getArrayDimensions(array);
-				dataType = getArrayBaseType(array);
+
+			while (true) {
+				if (dataType instanceof Array array) {
+					name += "[" + array.getNumElements() + "]";
+					dataType = array.getDataType();
+				}
+				else if (dataType instanceof Pointer pointer) {
+					DataType elem = pointer.getDataType();
+					if (elem == null) {
+						break;
+					}
+					name = "*" + name;
+					dataType = elem;
+					if (dataType instanceof Array) {
+						name = "(" + name + ")";
+					}
+				}
+				else {
+					break;
+				}
 			}
 
 			DataType baseDataType = getBaseDataType(dataType);
@@ -565,8 +580,7 @@ public class DataTypeWriter {
 	private void writeEnum(Enum enumm, TaskMonitor monitor) throws IOException {
 
 		String enumName = enumm.getDisplayName();
-		if (enumName.startsWith("define_") && enumName.length() > 7 && enumm.getCount() == 1 &&
-			enumm.getLength() == 8) {
+		if (enumName.startsWith("define_") && enumName.length() > 7 && enumm.getCount() == 1) {
 			long val = enumm.getValues()[0];
 			writer.append("#define " + enumName.substring(7) + " " + Long.toString(val));
 			writer.write(EOL);

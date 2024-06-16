@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +23,16 @@ import ghidra.util.exception.InvalidInputException;
 
 /**
  * A command to create a new function memory parameter.
+ * 
+ * @deprecated function signatures should be modified in their entirety using 
+ * either {@link UpdateFunctionCommand} or {@link ApplyFunctionSignatureCmd}. 
  */
+@Deprecated(since = "11.1")
 public class AddMemoryParameterCommand extends AddParameterCommand {
 
-	private Address memAddr;
-	private String name;
-	private DataType dataType;
+	private final Address memAddr;
+	private final String name;
+	private final DataType dataType;
 
 	public AddMemoryParameterCommand(Function function, Address memAddr, String name,
 			DataType dataType, int ordinal, SourceType source) {
@@ -37,7 +40,6 @@ public class AddMemoryParameterCommand extends AddParameterCommand {
 		this.memAddr = memAddr;
 		this.name = name;
 		this.dataType = dataType;
-		this.ordinal = ordinal;
 	}
 
 	@Override
@@ -45,9 +47,6 @@ public class AddMemoryParameterCommand extends AddParameterCommand {
 		return new ParameterImpl(name, dataType, memAddr, program);
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Create Memory Parameter";

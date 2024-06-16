@@ -20,6 +20,8 @@ extern "C" {
 #include "pcodeparse.hh"
 #include "blockaction.hh"
 
+namespace ghidra {
+
 // Constructing this registers the capability
 IfaceDecompCapability IfaceDecompCapability::ifaceDecompCapability;
 
@@ -53,10 +55,13 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcCleararch(),"clear","architecture");
   status->registerCom(new IfcMapaddress(),"map","address");
   status->registerCom(new IfcMaphash(),"map","hash");
+  status->registerCom(new IfcMapParam(),"map","param");
+  status->registerCom(new IfcMapReturn(),"map","return");
   status->registerCom(new IfcMapfunction(),"map","function");
   status->registerCom(new IfcMapexternalref(),"map","externalref");
   status->registerCom(new IfcMaplabel(),"map","label");
   status->registerCom(new IfcMapconvert(),"map","convert");
+  status->registerCom(new IfcMapunionfacet(), "map", "unionfacet");
   status->registerCom(new IfcPrintdisasm(),"disassemble");
   status->registerCom(new IfcDecompile(),"decompile");
   status->registerCom(new IfcDump(),"dump");
@@ -113,6 +118,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcRename(),"rename");
   status->registerCom(new IfcRetype(),"retype");
   status->registerCom(new IfcRemove(),"remove");
+  status->registerCom(new IfcIsolate(),"isolate");
   status->registerCom(new IfcLockPrototype(),"prototype","lock");
   status->registerCom(new IfcUnlockPrototype(),"prototype","unlock");
   status->registerCom(new IfcCommentInstr(),"comment","instruction");
@@ -124,6 +130,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcCallGraphList(),"callgraph","list");
   status->registerCom(new IfcCallFixup(),"fixup","call");
   status->registerCom(new IfcCallOtherFixup(),"fixup","callother");
+  status->registerCom(new IfcFixupApply(),"fixup","apply");
   status->registerCom(new IfcVolatile(),"volatile");
   status->registerCom(new IfcReadonly(),"readonly");
   status->registerCom(new IfcPointerSetting(),"pointer","setting");
@@ -314,7 +321,7 @@ void IfcOption::execute(istream &s)
   }
   
   try {
-    string res = dcp->conf->options->set(ElementId::find(optname),p1,p2,p3);
+    string res = dcp->conf->options->set(ElementId::find(optname,0),p1,p2,p3);
     *status->optr << res << endl;
   }
   catch(ParseError &err) {
@@ -593,6 +600,49 @@ void IfcMaphash::execute(istream &s)
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
 
+/// \class IfcMapParam
+/// \brief Map a parameter symbol for the current function: `map param #i <address> <typedeclaration>`
+///
+/// The position of the parameter in the input list is parsed as an integer, starting at 0.
+/// The address range used for parameter is explicitly set.  The data-type and name of the parameter
+/// are parsed from the type declaration.  The parameter is treated as name and type locked.
+void IfcMapParam::execute(istream &s)
+
+{
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function loaded");
+  int4 i;
+  string name;
+  int4 size;
+  ParameterPieces piece;
+  s >> dec >> i;		// Position of the parameter
+  piece.addr = parse_machaddr(s,size,*dcp->conf->types);	// Starting address of parameter
+  piece.type = parse_type(s,name,dcp->conf);
+  piece.flags = ParameterPieces::typelock | ParameterPieces::namelock;
+
+  dcp->fd->getFuncProto().setParam(i, name, piece);
+}
+
+/// \class IfcMapReturn
+/// \brief Map the return storage for the current function: `map return <address> <typedeclaration>`
+///
+/// The address range used for return storage is explicitly set, and the return value is set to the
+/// parsed data-type.  The function's output is considered locked.
+void IfcMapReturn::execute(istream &s)
+
+{
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function loaded");
+  string name;
+  int4 size;
+  ParameterPieces piece;
+  piece.addr = parse_machaddr(s,size,*dcp->conf->types);	// Starting address of return storage
+  piece.type = parse_type(s,name,dcp->conf);
+  piece.flags = ParameterPieces::typelock;
+
+  dcp->fd->getFuncProto().setOutput(piece);
+}
+
 /// \class IfcMapfunction
 /// \brief Create a new function: `map function <address> [<functionname>] [nocode]`
 ///
@@ -709,6 +759,39 @@ void IfcMapconvert::execute(istream &s)
   s >> hex >> hash;		// Parse the hash value
 
   dcp->fd->getScopeLocal()->addEquateSymbol("", format, value, addr, hash);
+}
+
+/// \class IfcMapunionfacet
+/// \brief Create a union field forcing directive: `map facet <union> <fieldnum> <address> <hash>`
+///
+/// Creates a \e facet directive that associates a given field of a \e union data-type with
+/// a varnode in the context of a specific p-code op accessing it. The varnode and p-code op
+/// are specified by dynamic hash.
+void IfcMapunionfacet::execute(istream &s)
+
+{
+  Datatype *ct;
+  string unionName;
+  int4 fieldNum;
+  int4 size;
+  uint8 hash;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function loaded");
+  s >> ws >> unionName;
+  ct = dcp->conf->types->findByName(unionName);
+  if (ct == (Datatype *)0 || ct->getMetatype() != TYPE_UNION)
+    throw IfaceParseError("Bad union data-type: " + unionName);
+  s >> ws >> dec >> fieldNum;
+  if (fieldNum < -1 || fieldNum >= ct->numDepend())
+    throw IfaceParseError("Bad field index");
+  Address addr = parse_machaddr(s,size,*dcp->conf->types); // Read pc address of hash
+
+  s >> hex >> hash;		// Parse the hash value
+  ostringstream s2;
+  s2 << "unionfacet" << dec << (fieldNum + 1) << '_' << hex << addr.getOffset();
+  Symbol *sym = dcp->fd->getScopeLocal()->addUnionFacetSymbol(s2.str(), ct, fieldNum, addr, hash);
+  dcp->fd->getScopeLocal()->setAttribute(sym, Varnode::typelock | Varnode::namelock);
 }
 
 /// \class IfcPrintdisasm
@@ -880,9 +963,11 @@ void IfcPrintCXml::execute(istream &s)
     throw IfaceExecutionError("No function selected");
 
   dcp->conf->print->setOutputStream(status->fileoptr);
-  dcp->conf->print->setXML(true);
+  dcp->conf->print->setMarkup(true);
+  dcp->conf->print->setPackedOutput(false);
   dcp->conf->print->docFunction(dcp->fd);
-  dcp->conf->print->setXML(false);
+  *status->fileoptr << endl;
+  dcp->conf->print->setMarkup(false);
 }
 
 /// \class IfcPrintCStruct
@@ -1328,6 +1413,29 @@ void IfcRetype::execute(istream &s)
     sym->getScope()->renameSymbol(sym,newname);
     sym->getScope()->setAttribute(sym,Varnode::namelock);
   }
+}
+
+/// \class IfcIsolate
+/// \brief Mark a symbol as isolated from speculative merging: `isolate <name>`
+void IfcIsolate::execute(istream &s)
+
+{
+  string symbolName;
+
+  s >> ws >> symbolName;
+  if (symbolName.size() == 0)
+    throw IfaceParseError("Missing symbol name");
+
+  Symbol *sym;
+  vector<Symbol *> symList;
+  dcp->readSymbol(symbolName,symList);
+  if (symList.empty())
+    throw IfaceExecutionError("No symbol named: "+symbolName);
+  if (symList.size() == 1)
+    sym = symList[0];
+  else
+    throw IfaceExecutionError("More than one symbol named: "+symbolName);
+  sym->setIsolated(true);
 }
 
 /// The Varnode is selected from the \e current function.  It is specified as a
@@ -2724,7 +2832,7 @@ void IfcCallGraphLoad::execute(istream &s)
   Document *doc = store.parseDocument(is);
 
   dcp->allocateCallGraph();
-  XmlDecode decoder(doc->getRoot());
+  XmlDecode decoder(dcp->conf,doc->getRoot());
   dcp->cgraph->decoder(decoder);
   *status->optr << "Successfully read in callgraph" << endl;
 
@@ -2847,6 +2955,43 @@ void IfcCallOtherFixup::execute(istream &s)
   dcp->conf->userops.manualCallOtherFixup(useropname,outname,inname,pcodestring,dcp->conf);
 
   *status->optr << "Successfully registered callotherfixup" << endl;
+}
+
+/// \class IfcFixupApply
+/// \brief Apply a call-fixup to a particular function: `fixup apply <fixup> <function>`
+///
+/// The call-fixup and function are named from the command-line. If they both exist,
+/// the fixup is set on the function's prototype.
+void IfcFixupApply::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("No load image present");
+
+  string fixupName,funcName;
+
+  s >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing fixup name");
+  s >> fixupName >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing function name");
+  s >> funcName;
+
+  int4 injectid = dcp->conf->pcodeinjectlib->getPayloadId(InjectPayload::CALLFIXUP_TYPE, fixupName);
+  if (injectid < 0)
+    throw IfaceExecutionError("Unknown fixup: " + fixupName);
+
+  string basename;
+  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcName,"::",basename,(Scope *)0);
+  if (funcscope == (Scope *)0)
+    throw IfaceExecutionError("Bad namespace: "+funcName);
+  Funcdata *fd = funcscope->queryFunction( basename ); // Is function already in database
+  if (fd == (Funcdata *)0)
+    throw IfaceExecutionError("Unknown function name: "+funcName);
+
+  fd->getFuncProto().setInjectId(injectid);
+  *status->optr << "Successfully applied callfixup" << endl;
 }
 
 /// \class IfcVolatile
@@ -3016,8 +3161,8 @@ void IfcStructureBlocks::execute(istream &s)
 
   try {
     BlockGraph ingraph;
-    XmlDecode decoder(doc->getRoot());
-    ingraph.decode(decoder,dcp->conf);
+    XmlDecode decoder(dcp->conf,doc->getRoot());
+    ingraph.decode(decoder);
     
     BlockGraph resultgraph;
     vector<FlowBlock *> rootlist;
@@ -3472,8 +3617,8 @@ void execute(IfaceStatus *status,IfaceDecompData *dcp)
     *status->optr << "Low-level ERROR: " << err.explain << endl;
     dcp->abortFunction(*status->optr);
   }
-  catch(XmlError &err) {
-    *status->optr << "XML ERROR: " << err.explain << endl;
+  catch(DecoderError &err) {
+    *status->optr << "Decoding ERROR: " << err.explain << endl;
     dcp->abortFunction(*status->optr);
   }
   status->evaluateError();
@@ -3516,3 +3661,5 @@ void IfcSource::execute(istream &s)
   s >> filename;
   status->pushScript(filename,filename+"> ");
 }
+
+} // End namespace ghidra

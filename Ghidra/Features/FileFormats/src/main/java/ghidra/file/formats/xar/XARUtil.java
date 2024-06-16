@@ -15,17 +15,17 @@
  */
 package ghidra.file.formats.xar;
 
+import java.util.Arrays;
+
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.listing.Program;
 
-import java.util.Arrays;
-
 public class XARUtil {
 	
 	public final static boolean isXAR( Program program ) {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory(), 
-														program.getAddressFactory().getDefaultAddressSpace() );
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, true);
 		return isXAR( provider );
 	}
 

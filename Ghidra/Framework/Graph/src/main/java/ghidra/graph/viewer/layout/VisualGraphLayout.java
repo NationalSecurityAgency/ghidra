@@ -76,6 +76,7 @@ public interface VisualGraphLayout<V extends VisualVertex,
 	 * 
 	 * @param graph the graph that contains the vertices to layout 
 	 * @param monitor the task monitor used to report progress or to cancel
+	 * @return the layout locations
 	 */
 	public LayoutPositions<V, E> calculateLocations(VisualGraph<V, E> graph, TaskMonitor monitor);
 

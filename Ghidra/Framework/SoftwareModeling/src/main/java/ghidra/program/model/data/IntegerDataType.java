@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Basic implementation for an signed Integer dataType 
  */
-public class IntegerDataType extends AbstractIntegerDataType {
-
-	private final static long serialVersionUID = 1;
+public class IntegerDataType extends AbstractSignedIntegerDataType {
 
 	/** A statically defined IntegerDataType instance.*/
 	public final static IntegerDataType dataType = new IntegerDataType();
@@ -30,7 +28,7 @@ public class IntegerDataType extends AbstractIntegerDataType {
 	}
 
 	public IntegerDataType(DataTypeManager dtm) {
-		super("int", true, dtm);
+		super("int", dtm);
 	}
 
 	/**

@@ -20,13 +20,10 @@ import java.util.NoSuchElementException;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.google.common.collect.Range;
-
 import generic.util.PeekableIterator;
 import ghidra.program.model.address.Address;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 
 public abstract class AbstractDBTraceAddressSnapRangePropertyMapOcclusionIterable<T>
@@ -48,7 +45,7 @@ public abstract class AbstractDBTraceAddressSnapRangePropertyMapOcclusionIterabl
 	 * @param range the given range
 	 * @return the range possibly containing entries which occlude the given range
 	 */
-	protected abstract Range<Long> getOcclusionRange(Range<Long> range);
+	protected abstract Lifespan getOcclusionRange(Lifespan range);
 
 	@Override
 	public PeekableIterator<Entry<TraceAddressSnapRange, T>> iterator() {
@@ -90,7 +87,7 @@ public abstract class AbstractDBTraceAddressSnapRangePropertyMapOcclusionIterabl
 				}
 				// Now, I must check if another entry will occlude it
 				Entry<TraceAddressSnapRange, T> occludes = null;
-				Range<Long> occlusionRange = getOcclusionRange(topAtAddress.getKey().getLifespan());
+				Lifespan occlusionRange = getOcclusionRange(topAtAddress.getKey().getLifespan());
 				if (occlusionRange != null) {
 					occludes = space.reduce(TraceAddressSnapRangeQuery.intersecting(address,
 						within.getX2(), within.getY1(), within.getY2()))

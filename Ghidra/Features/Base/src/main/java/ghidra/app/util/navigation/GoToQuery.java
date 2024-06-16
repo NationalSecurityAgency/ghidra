@@ -17,10 +17,10 @@ package ghidra.app.util.navigation;
 
 import java.awt.Component;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.SwingUtilities;
-
-import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import ghidra.GhidraOptions;
@@ -31,7 +31,7 @@ import ghidra.app.plugin.core.gotoquery.GoToQueryResultsTableModel;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.*;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.Plugin;
@@ -50,7 +50,13 @@ import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
 
 public class GoToQuery {
-	private final String FILE_OFFSET_PREFIX = "file:";
+
+	/**
+	 * Regex used for going to a file offset.  We expect something of the form <code>file(n)</code>,
+	 * where <code>n</code> can be hex or decimal.  Spaces should be ignored. 
+	 */
+	private Pattern FILE_OFFSET_REGEX = Pattern
+			.compile("file\\s*\\(\\s*((0x[0-9a-fA-F]+|[0-9]+))\\s*\\)", Pattern.CASE_INSENSITIVE);
 
 	private QueryData queryData;
 	private Address fromAddress;
@@ -76,9 +82,9 @@ public class GoToQuery {
 		this.goToService = goToService;
 		this.navigationOptions = navigationOptions;
 
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		this.maxHits =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 		this.fromAddress = fromAddr;
 		this.monitor = monitor;
 
@@ -102,29 +108,31 @@ public class GoToQuery {
 		if (processAddressExpression()) {
 			return true;
 		}
+
 		if (processWildCard()) {
 			return true;
 		}
+
 		if (processFileOffset()) {
 			return true;
 		}
+
 		if (processSymbolInParsedScope()) {
 			return true;
 		}
-		if (processSymbolInCurrentProgram()) {
+
+		if (processSymbolInPrograms(getSearchPrograms())) {
 			return true;
 		}
-		if (!navigationOptions.isGoToRestrictedToCurrentProgram()) {
-			if (processInputAsSymbolInAllPrograms()) {
-				return true;
-			}
-		}
+
 		if (processAddress()) {
 			return true;
 		}
+
 		if (processDynamicOrCaseInsensitive()) {
 			return true;
 		}
+
 		notifyListener(false);
 		return false;
 	}
@@ -150,8 +158,7 @@ public class GoToQuery {
 		}
 
 		String queryString = queryData.getQueryString();
-
-		for (Program program : programs) {
+		for (Program program : getSearchPrograms()) {
 			Address[] addresses = program.parseAddress(queryString, queryData.isCaseSensitive());
 			Address[] validAddresses = validateAddresses(program, addresses);
 			if (validAddresses.length > 0) {
@@ -159,6 +166,7 @@ public class GoToQuery {
 				return true;
 			}
 		}
+
 		// check once more if the current location has an address for the address string.  This
 		// will catch the case where the current location is in FILE space.
 		Program currentProgram = navigatable.getProgram();
@@ -187,7 +195,7 @@ public class GoToQuery {
 		return null;
 	}
 
-	private void goToAddresses(final Program program, final Address[] validAddresses) {
+	private void goToAddresses(Program program, Address[] validAddresses) {
 		if (validAddresses.length == 1) {
 			goTo(program, validAddresses[0], fromAddress);
 			notifyListener(true);
@@ -201,8 +209,7 @@ public class GoToQuery {
 		});
 	}
 
-	private void goToProgramLocations(final Program program,
-			final List<ProgramLocation> locations) {
+	private void goToProgramLocations(Program program, List<ProgramLocation> locations) {
 
 		if (locations.size() == 1) {
 			goTo(program, locations.get(0));
@@ -230,11 +237,11 @@ public class GoToQuery {
 		return true;
 	}
 
-	private boolean processInputAsSymbolInAllPrograms() {
-		for (Program program : programs) {
-			List<ProgramLocation> programLocations = getValidSymbolLocationsForProgram(program);
-			if (programLocations.size() > 0) {
-				goToProgramLocations(program, programLocations);
+	private boolean processSymbolInPrograms(Iterable<Program> searchPrograms) {
+		for (Program program : searchPrograms) {
+			List<ProgramLocation> locations = getValidSymbolLocationsForProgram(program);
+			if (!locations.isEmpty()) {
+				goToProgramLocations(program, locations);
 				return true;
 			}
 		}
@@ -242,28 +249,28 @@ public class GoToQuery {
 	}
 
 	private List<ProgramLocation> getValidSymbolLocationsForProgram(Program program) {
-		List<ProgramLocation> list = new ArrayList<>();
+
+		List<ProgramLocation> locations = new ArrayList<>();
 		SymbolTable symTable = program.getSymbolTable();
 		SymbolIterator it = symTable.getSymbols(queryData.getQueryString());
-
-		while (it.hasNext() && (list.size() < maxHits)) {
+		while (it.hasNext() && locations.size() < maxHits) {
 			Symbol symbol = it.next();
 			ProgramLocation location = getProgramLocationForSymbol(symbol, program);
 			if (location != null) {
-				list.add(location);
+				locations.add(location);
 			}
 			else {
-				list.addAll(getExtenalLinkageLocations(symbol));
+				locations.addAll(getExtenalLinkageLocations(symbol));
 			}
 		}
 
-		return list;
+		return locations;
 	}
 
 	private Collection<ProgramLocation> getExtenalLinkageLocations(Symbol symbol) {
+
 		Collection<ProgramLocation> locations = new ArrayList<>();
 		Program program = symbol.getProgram();
-
 		Address[] externalLinkageAddresses =
 			NavigationUtils.getExternalLinkageAddresses(program, symbol.getAddress());
 		for (Address address : externalLinkageAddresses) {
@@ -305,14 +312,21 @@ public class GoToQuery {
 		return false;
 	}
 
+	private Iterable<Program> getSearchPrograms() {
+		return navigationOptions.isGoToRestrictedToCurrentProgram()
+				? Collections.singleton(navigatable.getProgram())
+				: programs;
+	}
+
 	private boolean processAddressExpression() {
 		String queryInput = queryData.getQueryString();
 		if (!isAddressExpression(queryInput)) {
 			return false;
 		}
+
 		boolean relative = queryInput.matches("^\\s*[+-].*");
 		Address baseAddr = relative ? fromAddress : null;
-		for (Program program : programs) {
+		for (Program program : getSearchPrograms()) {
 			Address evalAddr = AddressEvaluator.evaluate(program, baseAddr, queryInput);
 			if (evalAddr != null) {
 				boolean success = goTo(program, new ProgramLocation(program, evalAddr));
@@ -340,7 +354,7 @@ public class GoToQuery {
 	}
 
 	private boolean processWildCard() {
-		if (!isWildCard()) {
+		if (!queryData.isWildCard()) {
 			return false;
 		}
 
@@ -355,11 +369,12 @@ public class GoToQuery {
 
 	private boolean processFileOffset() {
 		String input = queryData.getQueryString();
-		if (StringUtils.startsWithIgnoreCase(input, FILE_OFFSET_PREFIX)) {
+		Matcher matcher = FILE_OFFSET_REGEX.matcher(input);
+		if (matcher.matches()) {
 			try {
-				long offset = Long.decode(input.substring(FILE_OFFSET_PREFIX.length()));
+				long offset = Long.decode(matcher.group(1));
 				// NOTE: Addresses are parsed via AbstractAddressSpace.parseString(String addr)
-				Program currentProgram = programs.iterator().next();
+				Program currentProgram = navigatable.getProgram();
 				Memory mem = currentProgram.getMemory();
 				List<Address> addresses = mem.locateAddressesForFileOffset(offset);
 				if (addresses.size() > 0) {
@@ -372,12 +387,6 @@ public class GoToQuery {
 			}
 		}
 		return false;
-	}
-
-	public boolean isWildCard() {
-		String queryInput = queryData.getQueryString();
-		return queryInput.indexOf(PluginConstants.ANYSUBSTRING_WILDCARD_CHAR) > -1 ||
-			queryInput.indexOf(PluginConstants.ANYSINGLECHAR_WILDCARD_CHAR) > -1;
 	}
 
 	private boolean isAddressExpression(String input) {
@@ -439,7 +448,7 @@ public class GoToQuery {
 	}
 
 	private boolean goToSymbolInScope(String scopeName, String symbolStr) {
-		for (Program program : programs) {
+		for (Program program : getSearchPrograms()) {
 			SymbolTable symTable = program.getSymbolTable();
 			Namespace scope = getScope(program, program.getGlobalNamespace(), scopeName);
 			if (scope != null) {
@@ -509,29 +518,7 @@ public class GoToQuery {
 		}
 		SymbolTable symTable = program.getSymbolTable();
 		Namespace namespace = symTable.getNamespace(scopeName, parent);
-		if (namespace != null) {
-			return namespace;
-		}
-		return null;
-	}
-
-	private boolean processSymbolInCurrentProgram() {
-		Program program = navigatable.getProgram();
-		SymbolTable symTable = program.getSymbolTable();
-
-		List<Symbol> symbols = new ArrayList<>();
-		SymbolIterator symbolIterator = symTable.getSymbols(queryData.getQueryString());
-		while (symbolIterator.hasNext()) {
-			Symbol symbol = symbolIterator.next();
-			symbols.add(symbol);
-		}
-
-		if (!symbols.isEmpty()) {
-			gotoLabels(program, symbols);
-			notifyListener(true);
-			return true;
-		}
-		return false;
+		return namespace;
 	}
 
 	private boolean gotoLabel(Program program, Symbol symbol) {
@@ -658,7 +645,7 @@ public class GoToQuery {
 			SwingUtilities.invokeLater(() -> Msg.showWarn(getClass(), parent,
 				"Search Limit Exceeded!",
 				"Stopped search after finding " + matchCount + " matches.\n" +
-					"The Search limit can be changed in the Edit->Options, under Tool Options"));
+					"The search limit can be changed at Edit->Tool Options, under Search."));
 		}
 	}
 

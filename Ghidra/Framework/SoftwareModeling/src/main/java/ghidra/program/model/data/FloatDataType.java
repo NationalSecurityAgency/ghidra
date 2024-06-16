@@ -30,7 +30,12 @@ public class FloatDataType extends AbstractFloatDataType {
 	}
 
 	public FloatDataType(DataTypeManager dtm) {
-		super("float", dtm);
+		super("float", getDataOrganization(dtm).getFloatSize(), dtm);
+	}
+
+	@Override
+	protected String buildDescription() {
+		return "Compiler-defined 'float' " + super.buildDescription();
 	}
 
 	@Override
@@ -44,11 +49,6 @@ public class FloatDataType extends AbstractFloatDataType {
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
-	}
-
-	@Override
-	public int getLength() {
-		return getDataOrganization().getFloatSize();
 	}
 
 }

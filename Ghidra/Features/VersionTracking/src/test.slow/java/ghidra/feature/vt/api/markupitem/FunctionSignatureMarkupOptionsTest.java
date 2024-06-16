@@ -22,7 +22,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.feature.vt.api.main.VTMarkupItemStatus;
 import ghidra.feature.vt.api.markuptype.FunctionSignatureMarkupType;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
 import ghidra.framework.options.ToolOptions;
@@ -32,7 +33,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatureMarkupTest {
 
@@ -795,7 +796,7 @@ private void setLanguage(Program program, String languageID, String compilerSpec
 				}
 			}
 			assertNotNull(compilerSpecID);
-			program.setLanguage(language, compilerSpecID, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.setLanguage(language, compilerSpecID, true, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transaction, true);

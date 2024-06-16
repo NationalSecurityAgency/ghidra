@@ -25,12 +25,13 @@ import javax.swing.event.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.script.ScriptInfo;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.UserSearchUtils;
 
 /**
- * A widget that allows the user to choose an existing script by typing its name or picking it 
+ * A widget that allows the user to choose an existing script by typing its name or picking it
  * from a list.
  */
 public class ScriptSelectionEditor {
@@ -101,7 +102,7 @@ public class ScriptSelectionEditor {
 
 	/**
 	 * Adds a document listener to the text field editing component of this editor so that users
-	 * can be notified when the text contents of the editor change.  You may verify whether the 
+	 * can be notified when the text contents of the editor change.  You may verify whether the
 	 * text changes represent a valid DataType by calling {@link #validateUserSelection()}.
 	 * @param listener the listener to add.
 	 * @see #validateUserSelection()
@@ -175,7 +176,7 @@ public class ScriptSelectionEditor {
 	}
 
 	private boolean containsValidScript() {
-		// look for the case where the user made a selection from the matching window, but 
+		// look for the case where the user made a selection from the matching window, but
 		// then changed the text field text.
 		ScriptInfo selectedInfo = selectionField.getSelectedValue();
 		if (selectedInfo != null &&
@@ -210,7 +211,7 @@ public class ScriptSelectionEditor {
 
 //=================================================================================================
 // Inner Classes
-//=================================================================================================	
+//=================================================================================================
 
 	private class ScriptTextFieldModel extends DefaultDropDownSelectionDataModel<ScriptInfo> {
 
@@ -251,7 +252,7 @@ public class ScriptSelectionEditor {
 		protected boolean shouldReplaceTextFieldTextWithSelectedItem(String textFieldText,
 				ScriptInfo selectedItem) {
 
-			// This is called when the user presses Enter with a list item selected.  By 
+			// This is called when the user presses Enter with a list item selected.  By
 			// default, the text field will not replace the text field text if the given item
 			// does not match the text.  This is to allow users to enter custom text.  We do
 			// not want custom text, as the user must pick an existing script.  Thus, we always
@@ -264,14 +265,15 @@ public class ScriptSelectionEditor {
 
 		@Override
 		public String getString(ScriptInfo info) {
-			StringBuilder buffy = new StringBuilder("<HTML><P>");
+			StringBuilder buffy = new StringBuilder("<html><P>");
 
 			KeyStroke keyBinding = info.getKeyBinding();
 			if (keyBinding != null) {
 				// show the keybinding at the top softly so the user can quickly see it without
 				// it interfering with the overall description
 				buffy.append("<P>");
-				buffy.append("<FONT COLOR=\"GRAY\"><I>&nbsp;");
+				buffy.append("<FONT COLOR=\"" +
+					Palette.GRAY.toHexString() + "\"><I>&nbsp;");
 				buffy.append(keyBinding.toString());
 				buffy.append("</I></FONT>");
 				buffy.append("<P><P>");
@@ -287,9 +289,9 @@ public class ScriptSelectionEditor {
 		private String formatDescription(String description) {
 			//
 			// We are going to wrap lines at 50 columns so that they fit the tooltip window.  We
-			// will also try to keep the original structure of manually separated lines by 
+			// will also try to keep the original structure of manually separated lines by
 			// preserving empty lines included in the original description.  Removing all newlines
-			// except for the blank lines allows the line wrapping utility to create the best 
+			// except for the blank lines allows the line wrapping utility to create the best
 			// output.
 			//
 
@@ -307,7 +309,7 @@ public class ScriptSelectionEditor {
 			}
 
 			// Remove all newlines, except for consecutive newlines, which represent blank lines.
-			// Then, for any remaining newline, add back the extra blank line.  
+			// Then, for any remaining newline, add back the extra blank line.
 			String trimmed = bufffy.toString();
 			String stripped = trimmed.replaceAll("(?<!\n)\n", "");
 			stripped = stripped.replaceAll("\n", "\n\n");

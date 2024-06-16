@@ -67,11 +67,11 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 		int count = 0;
 		List<PluginDescription> allPluginDescriptions = pluginModel.getAllPluginDescriptions();
 		for (PluginDescription pluginDescription : allPluginDescriptions) {
-			assertTrue(FrontEndable.class.isAssignableFrom(pluginDescription.getPluginClass()));
+			assertTrue(ApplicationLevelPlugin.class.isAssignableFrom(pluginDescription.getPluginClass()));
 			count++;
 		}
 
-		List<Class<? extends FrontEndable>> classes = ClassSearcher.getClasses(FrontEndable.class);
+		List<Class<? extends ApplicationLevelPlugin>> classes = ClassSearcher.getClasses(ApplicationLevelPlugin.class);
 		assertEquals(count, classes.size());
 	}
 
@@ -99,7 +99,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 
 		DockingActionIf action = getAction(tool, "Project Window", "Configure Tool");
 		performAction(action, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		runSwing(() -> tool.showConfig(false, false));
 
 		managePluginsDialog = tool.getManagePluginsDialog();

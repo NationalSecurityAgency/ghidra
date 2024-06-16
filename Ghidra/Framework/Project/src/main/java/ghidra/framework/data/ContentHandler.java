@@ -17,11 +17,10 @@ package ghidra.framework.data;
 
 import java.io.IOException;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 
-import db.DBHandle;
-import ghidra.framework.model.ChangeSet;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FolderItem;
 import ghidra.util.InvalidNameException;
@@ -31,15 +30,17 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * NOTE:  ALL ContentHandler CLASSES MUST END IN "ContentHandler".  If not,
+ * NOTE:  ALL ContentHandler implementations MUST END IN "ContentHandler".  If not,
  * the ClassSearcher will not find them.
  * 
  * <code>ContentHandler</code> defines an application interface for converting 
  * between a specific domain object implementation and folder item storage. 
  * This interface also defines a method which provides an appropriate icon 
  * corresponding to the content.
+ * 
+ * @param <T> {@link DomainObjectAdapter} implementation class
  */
-public interface ContentHandler extends ExtensionPoint {
+public interface ContentHandler<T extends DomainObjectAdapter> extends ExtensionPoint {
 
 	public static final String UNKNOWN_CONTENT = "Unknown-File";
 	public static final String MISSING_CONTENT = "Missing-File";
@@ -56,7 +57,8 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param domainObject the domain object to store in the newly created folder item
 	 * @param monitor the monitor that allows the user to cancel
 	 * @return checkout ID for new item
-	 * @throws IOException if an i/o error occurs
+	 * @throws IOException if an IO error occurs or an unsupported {@code domainObject} 
+	 * implementation is specified.
 	 * @throws InvalidNameException if the specified name contains invalid characters
 	 * @throws CancelledException if the user cancels
 	 */
@@ -77,14 +79,13 @@ public interface ContentHandler extends ExtensionPoint {
 	 * set.
 	 * @param monitor the monitor that allows the user to cancel
 	 * @return immutable domain object
-	 * @throws IOException if a folder item access error occurs
+	 * @throws IOException if an IO or folder item access error occurs
 	 * @throws CancelledException if operation is cancelled by user
 	 * @throws VersionException if unable to handle file content due to version 
 	 * difference which could not be handled.
 	 */
-	DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
-			int minChangeVersion, TaskMonitor monitor)
-			throws IOException, CancelledException, VersionException;
+	T getImmutableObject(FolderItem item, Object consumer, int version, int minChangeVersion,
+			TaskMonitor monitor) throws IOException, CancelledException, VersionException;
 
 	/**
 	 * Open a folder item for read-only use.  While changes are permitted on the
@@ -98,14 +99,13 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param consumer consumer of the returned object
 	 * @param monitor the monitor that allows the user to cancel
 	 * @return read-only domain object
-	 * @throws IOException if a folder item access error occurs
+	 * @throws IOException if an IO or folder item access error occurs
 	 * @throws CancelledException if operation is cancelled by user
 	 * @throws VersionException if unable to handle file content due to version 
 	 * difference which could not be handled.
 	 */
-	DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
-			Object consumer, TaskMonitor monitor)
-			throws IOException, VersionException, CancelledException;
+	T getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade, Object consumer,
+			TaskMonitor monitor) throws IOException, VersionException, CancelledException;
 
 	/**
 	 * Open a folder item for update.  Changes made to the returned object may be
@@ -121,13 +121,13 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param consumer consumer of the returned object
 	 * @param monitor cancelable task monitor
 	 * @return updateable domain object
-	 * @throws IOException if a folder item access error occurs
+	 * @throws IOException if an IO or folder item access error occurs
 	 * @throws CancelledException if operation is cancelled by user
 	 * @throws VersionException if unable to handle file content due to version 
 	 * difference which could not be handled.
 	 */
-	DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
-			boolean okToUpgrade, boolean okToRecover, Object consumer, TaskMonitor monitor)
+	T getDomainObject(FolderItem item, FileSystem userfs, long checkoutId, boolean okToUpgrade,
+			boolean okToRecover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException;
 
 	/**
@@ -138,7 +138,7 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param newerVersion the newer version number
 	 * @return the set of changes that were made 
 	 * @throws VersionException if a database version change prevents reading of data.
-	 * @throws IOException if a folder item access error occurs or change set was 
+	 * @throws IOException if an IO or folder item access error occurs or change set was 
 	 * produced by newer version of software and can not be read
 	 */
 	ChangeSet getChangeSet(FolderItem versionedFolderItem, int olderVersion, int newerVersion)
@@ -161,55 +161,89 @@ public interface ContentHandler extends ExtensionPoint {
 	/**
 	 * Returns true if the content type is always private 
 	 * (i.e., can not be added to the versioned filesystem).
+	 * @return true if private content type, else false
 	 */
 	boolean isPrivateContentType();
 
 	/**
-	 * Returns list of unique content-types supported.
-	 * A minimum of one content-type will be returned. If more than one
-	 * is returned, these are considered equivalent aliases.
+	 * Returns a unique content-type identifier
+	 * @return content type identifier for associated domain object(s).
 	 */
 	String getContentType();
 
 	/**
 	 * A string that is meant to be presented to the user.
+	 * @return user friendly content type for associated domain object(s).
 	 */
 	String getContentTypeDisplayString();
 
 	/**
 	 * Returns the Icon associated with this handlers content type.
+	 * @return base icon to be used for a {@link DomainFile} with the associated content type.
 	 */
 	Icon getIcon();
 
 	/**
-	 * Returns the name of the default tool that should be used to open this content type
+	 * Returns the name of the default tool/template that should be used to open this content type.
+	 * @return associated default tool name for this content type
 	 */
 	String getDefaultToolName();
 
 	/**
 	 * Returns domain object implementation class supported.
+	 * @return implementation class for the associated {@link DomainObjectAdapter} implementation.
 	 */
-	Class<? extends DomainObject> getDomainObjectClass();
+	Class<T> getDomainObjectClass();
 
 	/**
-	 * Create user data file associated with existing content.
-	 * This facilitates the lazy creation of the user data file.
-	 * @param associatedDomainObj associated domain object corresponding to this content handler
-	 * @param userDbh user data handle
-	 * @param userfs private user data filesystem
-	 * @param monitor task monitor
-	 * @throws IOException if an access error occurs
-	 * @throws CancelledException if operation is cancelled by user
+	 * If linking is supported return an instanceof the appropriate {@link LinkHandler}.
+	 * @return corresponding link handler or null if not supported.
 	 */
-	void saveUserDataFile(DomainObject associatedDomainObj, DBHandle userDbh, FileSystem userfs,
-			TaskMonitor monitor) throws CancelledException, IOException;
+	default LinkHandler<?> getLinkHandler() {
+		return null;
+	}
 
 	/**
-	 * Remove user data file associated with an existing folder item.
-	 * @param item folder item
-	 * @param userFilesystem
-	 * @throws IOException if an access error occurs
+	 * Determine if this content handler supports the use of 
+	 * {@link #resetDBSourceFile(FolderItem, DomainObjectAdapterDB)} .
+	 * <p>
+	 * A versioned {@link DomainObjectAdapterDB domain object} open for update may have its 
+	 * underlying database reset to the latest buffer file version:
+	 * <ol>
+	 * <li>The {@link #resetDBSourceFile(FolderItem, DomainObjectAdapterDB)} method is
+	 * invoked (synchronized on filesystem) to reset the underlying database source file and
+	 * and any corresponding change sets held by the specified domain object to the latest 
+	 * version,</li>
+	 * <li>afterwhich the caller must {@link DomainObjectAdapter#invalidate() invalidate} the domain 
+	 * object instance which will clear all caches and generate a {@link DomainObjectEvent#RESTORED} 
+	 * event.</li>
+	 *  </ol>
+	 * @return true if this content handler supports DB source file replacement, else false
 	 */
-	void removeUserDataFile(FolderItem item, FileSystem userFilesystem) throws IOException;
+	public default boolean canResetDBSourceFile() {
+		return false;
+	}
+
+	/**
+	 * Reset the database for the specified domain object to its latest buffer file version.
+	 * It is very important that the specified folder item matches the item which was used to 
+	 * originally open the specified domain object. This method should be invoked with a 
+	 * filesystem lock.
+	 * <p>
+	 * Following the invocation of this method, the specified domain object should be 
+	 * {@link DomainObjectAdapter#invalidate() invalidated} without a filesystem lock.
+	 * 
+	 * @param item local versioned database folder item currently checked-out. An error will be
+	 * thrown if not an instanceof LocalDatabaseItem.  This should always be the case for an item
+	 * which has just processed a versioning action with a retained checkout (e.g., checkin,
+	 * merge, add-to-version-control).
+	 * @param domainObj domain object which is currently open for update
+	 * @throws IOException if an IO error occurs
+	 * @throws IllegalArgumentException if invalid or unsupported arguments are provided
+	 */
+	public default void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		throw new UnsupportedOperationException();
+	}
 
 }

@@ -68,11 +68,16 @@ public class RegExMemSearcherAlgorithm implements MemorySearchAlgorithm {
 		else {
 			AddressRangeIterator rangeIterator = searchSet.getAddressRanges();
 			int progress = 0;
+			int searchLimit = searchInfo.getSearchLimit();
 			while (rangeIterator.hasNext()) {
 				AddressRange range = rangeIterator.next();
 				searchAddressSet(new AddressSet(range), accumulator, monitor, progress);
 				progress += (int) range.getLength();
 				monitor.setProgress(progress);
+
+				if (accumulator.size() >= searchLimit) {
+					return;
+				}
 			}
 		}
 	}
@@ -85,8 +90,13 @@ public class RegExMemSearcherAlgorithm implements MemorySearchAlgorithm {
 			return;
 		}
 		List<AddressSet> sets = breakSetsByMemoryBlock(addressSet);
+		int searchLimit = searchInfo.getSearchLimit();
 		for (AddressSet set : sets) {
 			searchSubAddressSet(set, accumulator, monitor, progressCount);
+
+			if (accumulator.size() >= searchLimit) {
+				return;
+			}
 		}
 	}
 
@@ -111,7 +121,7 @@ public class RegExMemSearcherAlgorithm implements MemorySearchAlgorithm {
 		SearchData searchData = searchInfo.getSearchData();
 		Pattern pattern = ((RegExSearchData) searchData).getRegExPattern();
 		Memory memory = program.getMemory();
-		int matchLimit = searchInfo.getMatchLimit();
+		int searchLimit = searchInfo.getSearchLimit();
 
 		try {
 			MemoryAddressSetCharSequence charSet =
@@ -129,7 +139,7 @@ public class RegExMemSearcherAlgorithm implements MemorySearchAlgorithm {
 					accumulator.add(result);
 					monitor.setProgress(progressCount + startIndex);
 
-					if (accumulator.size() >= matchLimit) {
+					if (accumulator.size() >= searchLimit) {
 						return;
 					}
 				}

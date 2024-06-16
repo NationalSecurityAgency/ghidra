@@ -106,7 +106,7 @@ public class ApplyDataTypes {
 		monitor.setMessage("Building PDB datatypes... ");
 
 		for (CompositeDefinition compositeDefinition : verticesInPostOrder) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// namespace qualified name used for cache lookups
 			DataType cachedDataType = pdbParser.getCachedDataType(compositeDefinition.name);
@@ -151,7 +151,7 @@ public class ApplyDataTypes {
 		String elementType = isClasses ? "classes" : "datatypes";
 
 		while (xmlParser.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			XmlElement elem = xmlParser.peek();
 			if (elem.isEnd() && elem.getName().equals(elementType)) {
 				xmlParser.next();

@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.bookmark.BookmarkPlugin;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPlugin;
 import ghidra.app.plugin.core.clear.ClearPlugin;
@@ -32,13 +33,12 @@ import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersPlugin;
 import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
-import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServiceProxyPlugin;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.plugin.core.equate.EquatePlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.app.plugin.core.label.LabelMgrPlugin;
 import ghidra.app.plugin.core.symtable.SymbolTablePlugin;
-import ghidra.app.plugin.debug.MemoryUsagePlugin;
+import ghidra.app.plugin.runtimeinfo.RuntimeInfoPlugin;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.Undefined4DataType;
@@ -48,10 +48,9 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
-public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected ToyDBTraceBuilder ub;
 
@@ -59,7 +58,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public void setUpManualTest() throws IOException {
 		createTrace();
 		ub = new ToyDBTraceBuilder("dynamic2-" + name.getMethodName(), LANGID_TOYBE64);
-		try (UndoableTransaction tid = ub.startTransaction()) {
+		try (Transaction tx = ub.startTransaction()) {
 			ub.trace.getTimeManager().createSnapshot("First snap");
 		}
 	}
@@ -89,7 +88,6 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 		addPlugin(tool, DebuggerTargetsPlugin.class);
 		addPlugin(tool, DebuggerThreadsPlugin.class);
 		addPlugin(tool, DebuggerTimePlugin.class);
-		addPlugin(tool, DebuggerWorkflowServiceProxyPlugin.class);
 
 		//addPlugin(tool, AssemblerPlugin.class);
 		addPlugin(tool, ByteViewerPlugin.class);
@@ -111,7 +109,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 		addPlugin(tool, LabelMgrPlugin.class);
 		//addPlugin(tool, LocationReferencesPlugin.class);
 		//addPlugin(tool, MarkerManagerPlugin.class);
-		addPlugin(tool, MemoryUsagePlugin.class);
+		addPlugin(tool, RuntimeInfoPlugin.class);
 		//addPlugin(tool, MemSearchPlugin.class);
 		//addPlugin(tool, MnemonicSearchPlugin.class);
 		//addPlugin(tool, NextPrevAddressPlugin.class);
@@ -120,7 +118,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 		//addPlugin(tool, NextPrevSelectedRangePlugin.class);
 		addPlugin(tool, SymbolTablePlugin.class);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion("Region", 0, tb.range(0x4000, 0x4fff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -129,7 +127,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 			tb.trace.getThreadManager().createThread("Thread 2", 4);
 
 			tb.addData(0, tb.addr(0x4004), Undefined4DataType.dataType, tb.buf(6, 7, 8, 9));
-			tb.addInstruction(0, tb.addr(0x4008), null, tb.buf(0xf4, 0));
+			tb.addInstruction(0, tb.addr(0x4008), tb.host, tb.buf(0xf4, 0));
 
 			Language x86 = getSLEIGH_X86_LANGUAGE();
 			DBTraceGuestPlatform guest =

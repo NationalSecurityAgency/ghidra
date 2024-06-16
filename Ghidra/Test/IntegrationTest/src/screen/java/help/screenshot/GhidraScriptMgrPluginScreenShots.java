@@ -24,8 +24,9 @@ import javax.swing.*;
 
 import org.junit.Test;
 
-import docking.ComponentProvider;
+import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
+import docking.widgets.table.GTable;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -33,8 +34,9 @@ import generic.util.Path;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
 import ghidra.app.plugin.core.script.*;
-import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
+import ghidra.jython.JythonScriptProvider;
 import ghidra.util.HelpLocation;
 
 public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator {
@@ -58,6 +60,11 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 		d = waitForJDialog("New Script");
 		pressButtonByText(d, "OK");
+
+		waitForSwing();
+
+		DialogComponentProvider dialog = waitForDialogComponent("Script Path Added/Enabled");
+		close(dialog);
 
 		captureIsolatedProvider(GhidraScriptEditorComponentProvider.class, 597, 600);
 	}
@@ -87,10 +94,8 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testAssign_Key_Binding() throws Exception {
 
-		ComponentProvider componentProvider = showProvider(GhidraScriptComponentProvider.class);
-		JComponent component = componentProvider.getComponent();
-		DraggableScriptTable scriptTable =
-			(DraggableScriptTable) findComponentByName(component, "SCRIPT_TABLE");
+		GhidraScriptComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
+		GTable scriptTable = provider.getTable();
 		selectRow(scriptTable, "HelloWorldScript.java");
 
 		performAction("Key Binding", "GhidraScriptMgrPlugin", false);
@@ -100,10 +105,8 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testSelect_Font() throws Exception {
 
-		ComponentProvider componentProvider = showProvider(GhidraScriptComponentProvider.class);
-		JComponent component = componentProvider.getComponent();
-		DraggableScriptTable scriptTable =
-			(DraggableScriptTable) findComponentByName(component, "SCRIPT_TABLE");
+		GhidraScriptComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
+		GTable scriptTable = provider.getTable();
 
 		selectRow(scriptTable, "HelloWorldScript.java");
 		performAction("Edit", "GhidraScriptMgrPlugin", false);
@@ -131,19 +134,11 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testEdit_Script() throws Exception {
 
-		ResourceFile newScript = createHelloWorldScript("MyHelloWorldScript");
-		ComponentProvider componentProvider = showProvider(GhidraScriptComponentProvider.class);
+		createHelloWorldScript("MyHelloWorldScript");
+		GhidraScriptComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
 
-		JComponent component = componentProvider.getComponent();
-		DraggableScriptTable scriptTable =
-			(DraggableScriptTable) findComponentByName(component, "SCRIPT_TABLE");
-		selectRow(scriptTable, newScript.getName());
 		performAction("Edit", "GhidraScriptMgrPlugin", false);
-
 		waitForSwing();
-
-		GhidraScriptEditorComponentProvider provider =
-			getProvider(GhidraScriptEditorComponentProvider.class);
 
 		moveProviderToFront(provider, 557, 378);
 		captureProvider(provider);
@@ -151,17 +146,14 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testScript_Manager() {
-		ComponentProvider scriptManager = showProvider(GhidraScriptComponentProvider.class);
-		JComponent component = scriptManager.getComponent();
+		GhidraScriptComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
+		JComponent component = provider.getComponent();
 		final JSplitPane splitPane =
 			(JSplitPane) findComponentByName(component, "dataDescriptionSplit");
 		runSwing(() -> splitPane.setDividerLocation(0.63));
 
-		DraggableScriptTable scriptTable =
-			(DraggableScriptTable) findComponentByName(component, "SCRIPT_TABLE");
-
-		GTree scriptCategoryTree = (GTree) findComponentByName(component, "CATEGORY_TREE");
-		removeSuspectNodes(scriptCategoryTree);
+		GTable scriptTable = provider.getTable();
+		GTree scriptCategoryTree = provider.getTree();
 
 		selectPath(scriptCategoryTree, "Scripts", "Examples");
 		collapse(scriptCategoryTree, "Examples");// don't open examples (silly JTree)
@@ -169,8 +161,8 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 		selectRow(scriptTable, "HelloWorldScript.java");
 		scriptTable.scrollToSelectedRow();
 
-		moveProviderToFront(scriptManager, 1333, 570);
-		captureProvider(scriptManager);
+		moveProviderToFront(provider, 1333, 570);
+		captureProvider(provider);
 	}
 
 	@Test
@@ -195,10 +187,8 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	public void testDelete_Script_Confirm() throws Exception {
 		createHelloWorldScript("FooScript");
 
-		ComponentProvider componentProvider = showProvider(GhidraScriptComponentProvider.class);
-		JComponent component = componentProvider.getComponent();
-		DraggableScriptTable scriptTable =
-			(DraggableScriptTable) findComponentByName(component, "SCRIPT_TABLE");
+		GhidraScriptComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
+		GTable scriptTable = provider.getTable();
 		selectRow(scriptTable, "FooScript.java");
 		performAction("Delete", "GhidraScriptMgrPlugin", false);
 		captureDialog();
@@ -230,10 +220,11 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testPick() {
 
-		List<String> items = new ArrayList<>();
-		items.add("Java");
-		items.add("Python");
-		final PickProviderDialog pickDialog = new PickProviderDialog(items, "Java");
+		List<GhidraScriptProvider> items = new ArrayList<>();
+		JavaScriptProvider javaScriptProvider = new JavaScriptProvider();
+		items.add(javaScriptProvider);
+		items.add(new JythonScriptProvider());
+		final PickProviderDialog pickDialog = new PickProviderDialog(items, javaScriptProvider);
 		runSwing(() -> tool.showDialog(pickDialog), false);
 
 		PickProviderDialog dialog = waitForDialogComponent(PickProviderDialog.class);
@@ -274,27 +265,6 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 			GTreeNode exmaplesNode = rootNode.getChild(nodeName);
 			tree.collapseAll(exmaplesNode);
 		});
-	}
-
-	private void removeSuspectNodes(final GTree scriptCategoryTree) {
-		List<String> accepted = new ArrayList<>(
-			Arrays.asList("Examples", "Data Types", "Binary", "Functions", "Import", "Analysis"));
-
-		List<GTreeNode> toRemove = new ArrayList<>();
-		final GTreeNode rootNode = scriptCategoryTree.getViewRoot();
-		List<GTreeNode> children = rootNode.getChildren();
-		for (GTreeNode child : children) {
-			String name = child.getName();
-			if (!accepted.contains(name)) {
-				toRemove.add(child);
-			}
-		}
-
-		for (GTreeNode node : toRemove) {
-			rootNode.removeNode(node);
-		}
-
-		waitForTree(scriptCategoryTree);
 	}
 
 	private ResourceFile createTempScriptFile(String name) {

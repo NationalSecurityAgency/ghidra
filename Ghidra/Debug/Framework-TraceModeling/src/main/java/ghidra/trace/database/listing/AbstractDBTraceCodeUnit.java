@@ -20,7 +20,6 @@ import java.nio.ByteBuffer;
 import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
@@ -29,6 +28,15 @@ import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 
+/**
+ * An abstract implementation of a table-backed code unit
+ *
+ * <p>
+ * This is implemented as a data entry in an address-snap-range property map. This is not suitable
+ * for data components, nor for undefined units.
+ *
+ * @param <T> the implementation type of this unit
+ */
 public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<T>> extends
 		AbstractDBTraceAddressSnapRangePropertyMapData<T> implements DBTraceCodeUnitAdapter {
 
@@ -36,6 +44,14 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 
 	protected ByteBuffer byteCache; // NOTE: Memory cannot be changed under a code unit
 
+	/**
+	 * Construct a code unit
+	 * 
+	 * @param space the space
+	 * @param tree the storage R*-Tree
+	 * @param store the object store
+	 * @param record the record
+	 */
 	public AbstractDBTraceCodeUnit(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<T, ?> tree, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -80,7 +96,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 
 	@Override
 	public void setEndSnap(long endSnap) {
-		doSetLifespan(DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(lifespan), endSnap));
+		doSetLifespan(lifespan.withMax(endSnap));
 	}
 
 	@Override
@@ -106,8 +122,13 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			}
 			// Copy from the cache
 			int toCopyFromCache =
-				Math.max(0, Math.min(byteCache.position() - addressOffset, buffer.remaining()));
-			buffer.put(byteCache.array(), addressOffset, toCopyFromCache);
+				Math.min(byteCache.position() - addressOffset, buffer.remaining());
+			if (toCopyFromCache > 0) {
+				buffer.put(byteCache.array(), addressOffset, toCopyFromCache);
+			}
+			else {
+				toCopyFromCache = 0;
+			}
 			if (byteCache.position() >= end) {
 				return toCopyFromCache;
 			}

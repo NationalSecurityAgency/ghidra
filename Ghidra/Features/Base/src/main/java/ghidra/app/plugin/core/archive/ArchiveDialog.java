@@ -20,10 +20,12 @@ import java.io.File;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.plugintool.PluginTool;
@@ -32,10 +34,9 @@ import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
- * Dialog to prompt the user for the project to archive and the file to archive
- * it to.
+ * Dialog to prompt the user for the project to archive and the file to archive it to.
  */
-public class ArchiveDialog extends DialogComponentProvider {
+public class ArchiveDialog extends ReusableDialogComponentProvider {
 	private static final int NUM_TEXT_COLUMNS = 40;
 
 	private boolean actionComplete;
@@ -43,14 +44,12 @@ public class ArchiveDialog extends DialogComponentProvider {
 	private JTextField archiveField;
 	private JButton archiveBrowse;
 
-	private GhidraFileChooser jarFileChooser;
 	private ProjectLocator projectLocator;
 	private String archivePathName;
 
 	/**
 	 * Constructor
 	 *
-	 * @param parent the parent frame of the NumberInputDialog.
 	 * @param plugin the archive plugin using this dialog.
 	 */
 	ArchiveDialog(ArchivePlugin plugin) {
@@ -93,8 +92,8 @@ public class ArchiveDialog extends DialogComponentProvider {
 				archiveField.setText(archivePathName);
 			}
 		});
-		Font font = archiveBrowse.getFont();
-		archiveBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+
+		Gui.registerFont(archiveBrowse, Font.BOLD);
 		archiveBrowse.setName("archiveBrowse");
 
 		// Layout the components.
@@ -179,8 +178,9 @@ public class ArchiveDialog extends DialogComponentProvider {
 	 * Display this dialog.
 	 * @param pProjectLocator the project URL to display when the dialog pops up.
 	 * @param pArchivePathName the archive file name to display when the dialog pops up.
+	 * @param tool the tool
 	 *
-	 * @return true if the user submitted valid values for the project and 
+	 * @return true if the user submitted valid values for the project and
 	 * archive file, false if user cancelled.
 	 */
 	public boolean showDialog(ProjectLocator pProjectLocator, String pArchivePathName,
@@ -223,7 +223,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 	/////////////////////////////////////////////
 
 	/**
-	 * Check the entry to determine if the user input is valid for archiving 
+	 * Check the entry to determine if the user input is valid for archiving
 	 * a project.
 	 *
 	 * @return boolean true if input is OK
@@ -237,7 +237,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 
 		File file = new File(pathname);
 		String name = file.getName();
-		if (!isValidName(name)) {
+		if (!NamingUtilities.isValidProjectName(name)) {
 			setStatusText("Archive name contains invalid characters.");
 			return false;
 		}
@@ -256,8 +256,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 			String filePathName) {
 
 		GhidraFileChooser fileChooser = new GhidraFileChooser(getComponent());
-
-		fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		fileChooser.setFileFilter(new GhidraFileFilter() {
 			@Override
 			public boolean accept(File file, GhidraFileChooserModel model) {
@@ -269,8 +268,9 @@ public class ArchiveDialog extends DialogComponentProvider {
 					return true;
 				}
 
-				return file.getAbsolutePath().toLowerCase().endsWith(
-					ArchivePlugin.ARCHIVE_EXTENSION);
+				return file.getAbsolutePath()
+						.toLowerCase()
+						.endsWith(ArchivePlugin.ARCHIVE_EXTENSION);
 			}
 
 			@Override
@@ -302,18 +302,17 @@ public class ArchiveDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Brings up a file chooser for the user to specify a directory and 
+	 * Brings up a file chooser for the user to specify a directory and
 	 * filename of the archive file.
 	 * @param approveButtonText The label for the "Open" button on the file chooser
 	 * @param approveToolTip The tool tip for the "Open" button on the file chooser
 	 * @return the archive file path.
 	 */
-	String chooseArchiveFile(String approveButtonText, String approveToolTip) {
-		if (jarFileChooser == null) {
-			jarFileChooser = createFileChooser(ArchivePlugin.ARCHIVE_EXTENSION, "Ghidra Archives",
-				archivePathName);
-			jarFileChooser.setTitle("Archive a Ghidra Project");
-		}
+	private String chooseArchiveFile(String approveButtonText, String approveToolTip) {
+
+		GhidraFileChooser jarFileChooser =
+			createFileChooser(ArchivePlugin.ARCHIVE_EXTENSION, "Ghidra Archives", archivePathName);
+		jarFileChooser.setTitle("Archive a Ghidra Project");
 		File jarFile = null;
 		if (archivePathName != null && archivePathName.length() != 0) {
 			jarFile = new File(archivePathName);
@@ -336,7 +335,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 			File file = selectedFile;
 			String chosenPathname = file.getAbsolutePath();
 			String name = file.getName();
-			if (!NamingUtilities.isValidName(name)) {
+			if (!NamingUtilities.isValidProjectName(name)) {
 				Msg.showError(getClass(), null, "Invalid Archive Name",
 					name + " is not a valid archive name");
 				continue;
@@ -352,32 +351,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 
 			pathname = chosenPathname;
 		}
-
+		jarFileChooser.dispose();
 		return pathname;
 	}
-
-	/**
-	 * tests whether the given string is a valid name.
-	 * @param name name to validate
-	 */
-	public boolean isValidName(String name) {
-		if (name == null) {
-			return false;
-		}
-
-		if ((name.length() < 1)) {
-			return false;
-		}
-
-		for (int i = 0; i < name.length(); i++) {
-			char c = name.charAt(i);
-			if (!Character.isLetterOrDigit(c) && c != '.' && c != '-' && c != ' ' && c != '_' &&
-				c != '\\' && c != '~' && c != '/' && c != ':') {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
 }

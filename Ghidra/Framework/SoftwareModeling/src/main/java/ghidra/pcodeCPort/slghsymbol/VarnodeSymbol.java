@@ -15,21 +15,19 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
-import org.jdom.Element;
-
-import generic.util.UnsignedDataUtils;
 // A global varnode
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class VarnodeSymbol extends PatternlessSymbol {
@@ -38,7 +36,7 @@ public class VarnodeSymbol extends PatternlessSymbol {
 
 	public VarnodeSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public void markAsContext() {
 // note: this value was never read		
@@ -52,11 +50,6 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	@Override
 	public int getSize() {
 		return fix.size;
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		s.append(getName());
 	}
 
 	@Override
@@ -76,9 +69,9 @@ public class VarnodeSymbol extends PatternlessSymbol {
 		int addrSize = base.getAddrSize();
 		long maxByteOffset = ((long) base.getWordSize() << (8 * addrSize)) - 1;
 		long endOffset = offset + size - 1;
-		boolean sizeError = size != 0 && UnsignedDataUtils.unsignedGreaterThan(offset, endOffset);
+		boolean sizeError = size != 0 && Long.compareUnsigned(offset, endOffset) > 0;
 		if (!sizeError && addrSize < 8) {
-			sizeError = UnsignedDataUtils.unsignedGreaterThan(endOffset, maxByteOffset);
+			sizeError = Long.compareUnsigned(endOffset, maxByteOffset) > 0;
 		}
 		if (sizeError) {
 			throw new SleighError(nm + ":" + size + " @ " + base.getName() + ":" +
@@ -99,41 +92,22 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	}
 
 	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = fix.space;
-		hand.offset_space = null; // Not a dynamic symbol
-		hand.offset_offset = fix.offset;
-		hand.size = fix.size;
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VARNODE_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.writeSpace(ATTRIB_SPACE, fix.space.getIndex(), fix.space.getName());
+		encoder.writeUnsignedInteger(ATTRIB_OFF, fix.offset);
+		encoder.writeSignedInteger(ATTRIB_SIZE, fix.size);
+		encoder.closeElement(ELEM_VARNODE_SYM);
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<varnode_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.append(" space=\"").append(fix.space.getName()).append("\"");
-		s.append(" offset=\"0x").append(Long.toHexString(fix.offset)).append("\"");
-		s.append(" size=\"").print(fix.size);
-		s.append("\"");
-		s.append(">\n");
-		super.saveXml(s);
-		s.append("</varnode_sym>\n");
-	}
-
-	@Override
-	public void saveXmlHeader(PrintStream s)
+	public void encodeHeader(Encoder encoder) throws IOException
 
 	{
-		s.append("<varnode_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		fix.space = trans.getSpaceByName(el.getAttributeValue("space"));
-		fix.offset = XmlUtils.decodeUnknownLong(el.getAttributeValue("offset"));
-		fix.size = XmlUtils.decodeUnknownInt(el.getAttributeValue("size"));
-		// PatternlessSymbol does not need restoring
+		encoder.openElement(ELEM_VARNODE_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_VARNODE_SYM_HEAD);
 	}
 
 }

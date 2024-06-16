@@ -17,7 +17,10 @@ package ghidra.program.emulation;
 
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
-import ghidra.pcode.emulate.callother.CountLeadingZerosOpBehavior;
+import ghidra.pcode.emulate.callother.OpBehaviorOther;
+import ghidra.pcode.memstate.MemoryState;
+import ghidra.pcodeCPort.error.LowlevelError;
+import ghidra.program.model.pcode.Varnode;
 
 public class m68kEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 
@@ -41,10 +44,7 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 		ISA_MODE0 = new RegisterValue(isaModeReg, BigInteger.ZERO);
 */
 
-		// These classes are defined here:
-		// ghidra/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/emulate/callother
-
-		registerPcodeOpBehavior("countLeadingZeros", new CountLeadingZerosOpBehavior());
+		//registerPcodeOpBehavior("findFirstOne", new FindFirstOneOpBehavior());
 	}
 
 	/**
@@ -107,4 +107,34 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
             }
     }
 */
+
+	private static class FindFirstOneOpBehavior implements OpBehaviorOther {
+
+		@Override
+		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
+			if (out == null) {
+				throw new LowlevelError("CALLOTHER: Find First One op missing required output");
+			}
+
+			if (inputs.length != 2 || inputs[1].getSize() == 0 || !inputs[1].isRegister()) {
+				throw new LowlevelError(
+					"CALLOTHER: Find First One op requires one register varnode input");
+			}
+
+			Varnode in = inputs[1];
+			MemoryState memoryState = emu.getMemoryState();
+
+			long value = memoryState.getValue(in);
+			long size = in.getSize() * 8;
+			long count = size - 1;
+			long mask = 1L << count;
+			while ((count >= 0) && ((mask & value) == 0)) {
+				--count;
+				value = value << 1;
+			}
+
+			memoryState.setValue(out, count >= 0 ? count : size);
+		}
+
+	}
 }

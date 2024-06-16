@@ -23,19 +23,32 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-release/runtime/oat.h#163
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/oat.h#165
- * https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat.h#162
- * https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat.h#172
- * https://android.googlesource.com/platform/art/+/refs/heads/nougat-mr1-release/runtime/oat.h#172
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat.h#172
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/oat.h#172
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/oat.h#176
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat.h#177
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/oat.h#150
- * https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/oat_file.h#75
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat_file.h#75
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-release/runtime/oat.h#163">lollipop-mr1-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/oat.h#165">ollipop-wear-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat.h#162">marshmallow-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat.h#172">nougat-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-mr1-release/runtime/oat.h#172">nougat-mr1-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat.h#172">oreo-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/oat.h#172">oreo-dr3-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/oat.h#176">oreo-m2-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat.h#177">pie-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/oat.h#150">android10-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/oat_file.h#75">android11-release/runtime/oat_file.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat_file.h#75">android12-release/runtime/oat_file.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/oat_file.h#75">android13-release/runtime/oat_file.h</a>
+ * <br>
  */
 public class OatMethodOffsets implements StructConverter {
 

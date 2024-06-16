@@ -81,7 +81,7 @@ public class YAFFS2Analyzer extends FileFormatAnalyzer implements AnalysisWorker
 
 		Address address = program.getMinAddress();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		int index = 0;

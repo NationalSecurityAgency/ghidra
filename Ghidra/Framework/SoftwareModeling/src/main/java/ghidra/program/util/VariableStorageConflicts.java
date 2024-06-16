@@ -64,7 +64,7 @@ public class VariableStorageConflicts {
 		AddressSet set2 = null;
 
 		for (int i = 0; i < variables1.size(); i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Variable var1 = variables1.get(i);
 			if (var1 == null) {
 				continue; // already consumed
@@ -145,7 +145,7 @@ public class VariableStorageConflicts {
 						nonOverlappingVariables2, set1);
 			}
 			for (int i = 0; !set2.isEmpty() && i < variables1.size(); i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				expanded |=
 					findOverlaps(firstUseOffset, variables1, i, overlapList1, set1,
 						nonOverlappingVariables1, set2);

@@ -25,7 +25,7 @@ import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * test for creating a new empty tool with the new front end
@@ -117,7 +117,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		project.close();
 		Project project2 = ProjectTestUtils.getProject(testDir, PROJECT_NAME2);
 		try {
-			project2.addProjectView(GhidraURL.makeURL(testDir, PROJECT_NAME1));
+			project2.addProjectView(GhidraURL.makeURL(testDir, PROJECT_NAME1), true);
 		}
 		catch (Exception e) {
 			Assert.fail("View Not found");
@@ -367,7 +367,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 
 		DomainFolder f = df.createFolder(to);
 		DomainFolder f2 = df.getFolder(from);
-		f2.copyTo(f, TaskMonitorAdapter.DUMMY_MONITOR);
+		f2.copyTo(f, TaskMonitor.DUMMY);
 	}
 
 	private static void moveTree(Project proj, String from, String to) throws Exception {

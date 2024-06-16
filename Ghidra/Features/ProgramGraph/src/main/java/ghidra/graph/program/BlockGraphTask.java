@@ -21,7 +21,6 @@ import java.util.*;
 
 import docking.action.builder.ActionBuilder;
 import docking.widgets.EventTrigger;
-import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.graph.*;
@@ -54,8 +53,6 @@ public class BlockGraphTask extends Task {
 	private boolean showCode = false;
 	private int codeLimitPerBlock = 10;
 
-	private ColorizingService colorizingService;
-
 	private final static String ENTRY_NEXUS_NAME = "Entry Points";
 	private static final int MAX_SYMBOLS = 10;
 	private CodeBlockModel blockModel;
@@ -70,10 +67,10 @@ public class BlockGraphTask extends Task {
 	private String graphTitle;
 	private ProgramGraphType graphType;
 
-	public BlockGraphTask(ProgramGraphType graphType,
-			boolean graphEntryPointNexus, boolean reuseGraph, boolean appendGraph,
-			PluginTool tool, ProgramSelection selection, ProgramLocation location,
-			CodeBlockModel blockModel, GraphDisplayProvider graphProvider) {
+	public BlockGraphTask(ProgramGraphType graphType, boolean graphEntryPointNexus,
+			boolean reuseGraph, boolean appendGraph, PluginTool tool, ProgramSelection selection,
+			ProgramLocation location, CodeBlockModel blockModel,
+			GraphDisplayProvider graphProvider) {
 
 		super("Graph Program", true, false, true);
 		this.graphType = graphType;
@@ -84,24 +81,19 @@ public class BlockGraphTask extends Task {
 		this.tool = tool;
 		this.blockModel = blockModel;
 		this.graphProvider = graphProvider;
-		this.colorizingService = tool.getService(ColorizingService.class);
 		this.selection = selection;
 		this.location = location;
 		this.program = blockModel.getProgram();
 		this.graphTitle = graphType.getName() + ": ";
 	}
 
-	/**
-	 * Runs the move memory operation.
-	 */
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		this.graphScope = getGraphScopeAndGenerateGraphTitle();
 		AttributedGraph graph = createGraph(graphTitle);
 		monitor.setMessage("Generating Graph...");
 		try {
-			GraphDisplay display =
-				graphProvider.getGraphDisplay(reuseGraph, monitor);
+			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, monitor);
 			GraphDisplayOptions graphOptions = new ProgramGraphDisplayOptions(graphType, tool);
 			if (showCode) { // arrows need to be bigger as this generates larger vertices
 				graphOptions.setArrowLength(30);
@@ -140,14 +132,14 @@ public class BlockGraphTask extends Task {
 	private void addActions(GraphDisplay display,
 			java.util.function.Function<AttributedVertex, Address> addressFunction) {
 
-		display.addAction(new ActionBuilder("Rename Symbol", "Block Graph")
-				.popupMenuPath("Rename Symbol")
-				.withContext(VertexGraphActionContext.class)
-				.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename_Symbol"))
-				// only enable action when vertex corresponds to an address
-				.enabledWhen(c -> addressFunction.apply(c.getClickedVertex()) != null)
-				.onAction(c -> updateVertexName(addressFunction, c))
-				.build());
+		display.addAction(
+			new ActionBuilder("Rename Symbol", "Block Graph").popupMenuPath("Rename Symbol")
+					.withContext(VertexGraphActionContext.class)
+					.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename_Symbol"))
+					// only enable action when vertex corresponds to an address
+					.enabledWhen(c -> addressFunction.apply(c.getClickedVertex()) != null)
+					.onAction(c -> updateVertexName(addressFunction, c))
+					.build());
 	}
 
 	private void updateVertexName(
@@ -231,16 +223,18 @@ public class BlockGraphTask extends Task {
 		AddressSet set = new AddressSet();
 		set.add(function.getBody());
 		try {
-			CodeBlock block = blockModel.getCodeBlockAt(function.getEntryPoint(), taskMonitor);
-			CodeBlockReferenceIterator it = blockModel.getDestinations(block, taskMonitor);
-			while (it.hasNext()) {
-				CodeBlockReference next = it.next();
-				set.add(next.getDestinationBlock());
-			}
-			it = blockModel.getSources(block, taskMonitor);
-			while (it.hasNext()) {
-				CodeBlockReference next = it.next();
-				set.add(next.getSourceBlock());
+			for (CodeBlock block : blockModel.getCodeBlocksContaining(function.getEntryPoint(),
+				taskMonitor)) {
+				CodeBlockReferenceIterator it = blockModel.getDestinations(block, taskMonitor);
+				while (it.hasNext()) {
+					CodeBlockReference next = it.next();
+					set.add(next.getDestinationBlock());
+				}
+				it = blockModel.getSources(block, taskMonitor);
+				while (it.hasNext()) {
+					CodeBlockReference next = it.next();
+					set.add(next.getSourceBlock());
+				}
 			}
 		}
 		catch (CancelledException e) {
@@ -262,8 +256,7 @@ public class BlockGraphTask extends Task {
 	}
 
 	private Address graphBlock(AttributedGraph graph, CodeBlock curBB,
-			List<AttributedVertex> entries)
-			throws CancelledException {
+			List<AttributedVertex> entries) throws CancelledException {
 
 		Address[] startAddrs = curBB.getStartAddresses();
 
@@ -426,7 +419,7 @@ public class BlockGraphTask extends Task {
 				if (count != 0) {
 					buf.append('\n');
 				}
-				// limit the number of symbols to include (there can be a ridiculous # of symbols) 
+				// limit the number of symbols to include (there can be a ridiculous # of symbols)
 				if (count++ > MAX_SYMBOLS) {
 					buf.append("...");
 					break;

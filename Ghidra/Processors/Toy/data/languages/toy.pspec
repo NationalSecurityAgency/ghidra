@@ -2,4 +2,22 @@
 
 <processor_spec>
   <programcounter register="pc"/>
+  <register_data>
+    <register name="r0" alias="a0"/>
+    <register name="r1" alias="a1"/>
+    <register name="r2" alias="a2"/>
+    <register name="r3" alias="a3"/>
+    <register name="r4" alias="a4"/>
+    <register name="r5" alias="a5"/>
+    <register name="r6" alias="a6"/>
+    <register name="r7" alias="a7"/>
+    <register name="r8" alias="a8"/>
+    <register name="r9" alias="a9"/>
+    <register name="r10" alias="a10"/>
+    <register name="r11" alias="a11"/>
+    <register name="r12" alias="a12"/>
+    <register name="sp" alias="a13"/>
+    <register name="lr" alias="a14"/>
+    <register name="pc" alias="a15"/>
+  </register_data>
 </processor_spec>

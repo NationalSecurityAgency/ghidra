@@ -17,14 +17,13 @@ package ghidra.app.cmd.comments;
 
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
 /**
  * Command for editing and removing comments at an address.
  */
-public class SetCommentsCmd implements Command {
+public class SetCommentsCmd implements Command<Program> {
 
 	private Address address;
 	private String preComment;
@@ -79,35 +78,35 @@ public class SetCommentsCmd implements Command {
 		return !oldValue.equals(newValue);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		CodeUnit cu = getCodeUnit(program);
 
 		if (cu != null) {
 			if (commentChanged(cu.getComment(CodeUnit.PRE_COMMENT), preComment)) {
-				String updatedPreComment = CommentUtils.fixupAnnoations(preComment, program);
+				String updatedPreComment = CommentUtils.fixupAnnotations(preComment, program);
+				updatedPreComment = CommentUtils.sanitize(updatedPreComment);
 				cu.setComment(CodeUnit.PRE_COMMENT, updatedPreComment);
 			}
 			if (commentChanged(cu.getComment(CodeUnit.POST_COMMENT), postComment)) {
-				String updatedPostComment = CommentUtils.fixupAnnoations(postComment, program);
+				String updatedPostComment = CommentUtils.fixupAnnotations(postComment, program);
+				updatedPostComment = CommentUtils.sanitize(updatedPostComment);
 				cu.setComment(CodeUnit.POST_COMMENT, updatedPostComment);
 			}
 			if (commentChanged(cu.getComment(CodeUnit.EOL_COMMENT), eolComment)) {
-				String updatedEOLComment = CommentUtils.fixupAnnoations(eolComment, program);
+				String updatedEOLComment = CommentUtils.fixupAnnotations(eolComment, program);
+				updatedEOLComment = CommentUtils.sanitize(updatedEOLComment);
 				cu.setComment(CodeUnit.EOL_COMMENT, updatedEOLComment);
 			}
 			if (commentChanged(cu.getComment(CodeUnit.PLATE_COMMENT), plateComment)) {
-				String updatedPlateComment = CommentUtils.fixupAnnoations(plateComment, program);
+				String updatedPlateComment = CommentUtils.fixupAnnotations(plateComment, program);
+				updatedPlateComment = CommentUtils.sanitize(updatedPlateComment);
 				cu.setComment(CodeUnit.PLATE_COMMENT, updatedPlateComment);
 			}
 			if (commentChanged(cu.getComment(CodeUnit.REPEATABLE_COMMENT), repeatableComment)) {
 				String updatedRepeatableComment =
-					CommentUtils.fixupAnnoations(repeatableComment, program);
+					CommentUtils.fixupAnnotations(repeatableComment, program);
+				updatedRepeatableComment = CommentUtils.sanitize(updatedRepeatableComment);
 				cu.setComment(CodeUnit.REPEATABLE_COMMENT, updatedRepeatableComment);
 			}
 		}
@@ -133,9 +132,6 @@ public class SetCommentsCmd implements Command {
 		return cu;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;

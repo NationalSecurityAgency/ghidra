@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.concept;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.concept.DynamicConceptProviderConcept;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.concept.IDynamicConceptProviderConcept;
 import agent.dbgmodel.jna.dbgmodel.concept.WrapIDynamicConceptProviderConcept;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -33,22 +33,16 @@ public interface DynamicConceptProviderConceptInternal extends DynamicConceptPro
 
 	static DynamicConceptProviderConceptInternal instanceFor(
 			WrapIDynamicConceptProviderConcept data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DynamicConceptProviderConceptImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DynamicConceptProviderConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDynamicConceptProviderConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDynamicConceptProviderConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(
-						IDynamicConceptProviderConcept.IID_IDYNAMIC_CONCEPT_PROVIDER_CONCEPT),
-					WrapIDynamicConceptProviderConcept.class) //
-				.build();
+	List<Preferred<WrapIDynamicConceptProviderConcept>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDynamicConceptProviderConcept.IID_IDYNAMIC_CONCEPT_PROVIDER_CONCEPT,
+			WrapIDynamicConceptProviderConcept.class));
 
 	static DynamicConceptProviderConceptInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DynamicConceptProviderConceptInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DynamicConceptProviderConceptInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

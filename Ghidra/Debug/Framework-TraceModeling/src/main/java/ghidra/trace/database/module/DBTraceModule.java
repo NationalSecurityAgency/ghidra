@@ -17,18 +17,17 @@ package ghidra.trace.database.module;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -111,7 +110,7 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 			this.name = name;
 			update(NAME_COLUMN);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.CHANGED, null, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_CHANGED, null, this));
 	}
 
 	@Override
@@ -129,7 +128,7 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 			}
 			doSetRange(range);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_CHANGED, space, this));
 	}
 
 	@Override
@@ -176,8 +175,8 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 	}
 
 	@Override
-	public void setLifespan(Range<Long> newLifespan) throws DuplicateNameException {
-		Range<Long> oldLifespan;
+	public void setLifespan(Lifespan newLifespan) throws DuplicateNameException {
+		Lifespan oldLifespan;
 		try (LockHold hold = LockHold.lock(space.manager.writeLock())) {
 			space.manager.checkModulePathConflicts(this, path, newLifespan);
 			ArrayList<? extends DBTraceSection> sections = new ArrayList<>(getSections());
@@ -191,12 +190,12 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 				traceSection.doSetLifespan(newLifespan);
 			}
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.LIFESPAN_CHANGED,
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_LIFESPAN_CHANGED,
 			null, this, oldLifespan, newLifespan));
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
 			return lifespan;
 		}
@@ -204,25 +203,25 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 
 	@Override
 	public void setLoadedSnap(long loadedSnap) throws DuplicateNameException {
-		setLifespan(DBTraceUtils.toRange(loadedSnap, DBTraceUtils.upperEndpoint(lifespan)));
+		setLifespan(Lifespan.span(loadedSnap, getUnloadedSnap()));
 	}
 
 	@Override
 	public long getLoadedSnap() {
 		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
-			return DBTraceUtils.lowerEndpoint(lifespan);
+			return lifespan.lmin();
 		}
 	}
 
 	@Override
 	public void setUnloadedSnap(long unloadedSnap) throws DuplicateNameException {
-		setLifespan(DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(lifespan), unloadedSnap));
+		setLifespan(Lifespan.span(getLoadedSnap(), unloadedSnap));
 	}
 
 	@Override
 	public long getUnloadedSnap() {
 		try (LockHold hold = LockHold.lock(space.manager.readLock())) {
-			return DBTraceUtils.upperEndpoint(lifespan);
+			return lifespan.lmax();
 		}
 	}
 

@@ -20,6 +20,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
 
 /**
  * This class maintains the running state while
@@ -200,23 +201,21 @@ public class RelocationState {
 		if (block == null || !block.isInitialized()) {
 			return;
 		}
+
+		boolean success = false;
 		try {
 			int value = memory.getInt(address);
-
-			byte[] bytes = new byte[4];
-			memory.getBytes(address, bytes);
-			long[] values = new long[] { addend };
-
-			// TODO does PEF have symbol names?
-			String symbolName = null;
-			program.getRelocationTable().add(address, -1, values, bytes, symbolName);
-
 			value += addend;
 			memory.setInt(address, value);
+			success = true;
 		}
 		catch (MemoryAccessException e) {
 			log.appendMsg("Unable to perform change memory at " + address);
 		}
+
+		// TODO does PEF have symbol names?
+		Status status = success ? Status.APPLIED : Status.FAILURE;
+		program.getRelocationTable().add(address, status, -1, new long[] { addend }, 4, null);
 	}
 
 	private MemoryBlock getBlockContaining(Address address) {

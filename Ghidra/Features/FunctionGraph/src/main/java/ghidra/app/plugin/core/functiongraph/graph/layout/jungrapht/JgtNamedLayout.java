@@ -104,7 +104,7 @@ public class JgtNamedLayout extends AbstractFGLayout {
 
 		Set<FGVertex> jungVertices = jGraph.vertexSet();
 		for (FGVertex fgVertex : jungVertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Point point = layoutModel.get(fgVertex);
 			columns.put(point.x, 0);
@@ -114,7 +114,7 @@ public class JgtNamedLayout extends AbstractFGLayout {
 		Function<FGEdge, List<Point>> articulator = getArticulator(layoutAlgorithm);
 		Set<FGEdge> edges = jGraph.edgeSet();
 		for (FGEdge fgEdge : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<Point> ariculations = articulator.apply(fgEdge);
 			for (Point point : ariculations) {
@@ -126,19 +126,19 @@ public class JgtNamedLayout extends AbstractFGLayout {
 		// translate the real coordinates to grid coordinates (row and column indices)
 		int counter = 0;
 		for (Double x : columns.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			columns.put(x, counter++);
 		}
 
 		counter = 0;
 		for (Double y : rows.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			rows.put(y, counter++);
 		}
 
 		jungVertices = jGraph.vertexSet();
 		for (FGVertex fgVertex : jungVertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Point point = layoutModel.get(fgVertex);
 			grid.set(fgVertex, rows.get(point.y), columns.get(point.x));
@@ -146,7 +146,7 @@ public class JgtNamedLayout extends AbstractFGLayout {
 
 		edges = jGraph.edgeSet();
 		for (FGEdge fgEdge : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<java.awt.Point> newPoints = new ArrayList<>();
 

@@ -19,22 +19,26 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.DialogComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ConvertFileSystem;
+import ghidra.framework.data.TransientDataManager;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.*;
 import ghidra.util.*;
@@ -42,7 +46,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.task.*;
-import resources.ResourceManager;
+import help.Help;
+import help.HelpService;
 
 /**
  * Dialog to show project information. Allows the user to convert a local project to a shared project,
@@ -51,7 +56,7 @@ import resources.ResourceManager;
  */
 public class ProjectInfoDialog extends DialogComponentProvider {
 
-	private final static Icon CONVERT_ICON = ResourceManager.loadImage("images/wand.png");
+	private final static Icon CONVERT_ICON = new GIcon("icon.project.info.convert");
 	public final static String CHANGE = "Change Shared Project Info...";
 	final static String CONVERT = "Convert to Shared...";
 
@@ -91,9 +96,9 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
-		connectionButton.setBorder(
-			isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		connectionButton
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		updateConnectButtonToolTip();
 		if (isConnected) {
 			try {
@@ -177,8 +182,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		String toolTipForChange = "Change server information or specify another repository.";
 		String toolTipForConvert = "Convert project to be a shared project.";
-		changeConvertButton.setToolTipText(
-			repository != null ? toolTipForChange : toolTipForConvert);
+		changeConvertButton
+				.setToolTipText(repository != null ? toolTipForChange : toolTipForConvert);
 
 		Class<? extends LocalFileSystem> fsClass = project.getProjectData().getLocalStorageClass();
 		String convertStorageButtonLabel = null;
@@ -194,8 +199,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			convertStorageButton.addActionListener(e -> convertToIndexedFilesystem());
 			help.registerHelp(changeConvertButton,
 				new HelpLocation(GenericHelpTopics.FRONT_END, "Convert_Project_Storage"));
-			convertStorageButton.setToolTipText(
-				"Convert/Upgrade project storage to latest Indexed Filesystem");
+			convertStorageButton
+					.setToolTipText("Convert/Upgrade project storage to latest Indexed Filesystem");
 		}
 
 		JPanel p = new JPanel(new FlowLayout());
@@ -250,15 +255,15 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JLabel connectLabel = new GDLabel("Connection Status:", SwingConstants.RIGHT);
 		panel.add(connectLabel);
 
-		connectionButton = new JButton(
+		connectionButton = new GButton(
 			isConnected ? FrontEndPlugin.CONNECTED_ICON : FrontEndPlugin.DISCONNECTED_ICON);
 		connectionButton.addActionListener(e -> connect());
 		connectionButton.setName("Connect Button");
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
-		connectionButton.setBorder(
-			isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		connectionButton
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		updateConnectButtonToolTip();
 		HelpService help = Help.getHelpService();
 		help.registerHelp(connectionButton,
@@ -337,10 +342,16 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	}
 
 	private void updateSharedProjectInfo() {
-		if (filesAreOpen()) {
+		int openCount = getOpenFileCount();
+		if (openCount != 0) {
 			Msg.showInfo(getClass(), getComponent(), "Cannot Change Project Info with Open Files",
-				"Before your project info can be updated, you must close\n" +
-					"files in running tools and make sure you have no files\n" + "checked out.");
+				"Found " + openCount + " open project file(s).\n" +
+					"Before your project info can be updated, you must\n" +
+					"close all open project files and tools.");
+			return;
+		}
+
+		if (!checkToolsClose()) {
 			return;
 		}
 
@@ -356,8 +367,10 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 				currentRepository.getName().equals(rep.getName())) {
 				Msg.showInfo(getClass(), getComponent(), "No Changes Made",
 					"No changes were made to the shared project information.");
+				return;
 			}
-			else if (OptionDialog.showOptionDialog(getComponent(), "Update Shared Project Info",
+
+			if (OptionDialog.showOptionDialog(getComponent(), "Update Shared Project Info",
 				"Are you sure you want to update your shared project information?", "Update",
 				OptionDialog.QUESTION_MESSAGE) == OptionDialog.OPTION_ONE) {
 
@@ -376,12 +389,29 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 	}
 
+	private boolean checkToolsClose() {
+		PluginTool[] runningTools = project.getToolManager().getRunningTools();
+		for (PluginTool runningTool : runningTools) {
+			if (!PluginToolAccessUtils.canClose(runningTool)) {
+				return false;
+			}
+			runningTool.close();
+		}
+		return true;
+	}
+
 	private void convertToIndexedFilesystem() {
-		if (filesAreOpen()) {
+		int openCount = getOpenFileCount();
+		if (openCount != 0) {
 			Msg.showInfo(getClass(), getComponent(),
 				"Cannot Convert/Upgrade Project Storage with Open Files",
-				"Before your project can be converted, you must close\n" +
-					"files in running tools.");
+				"Found " + openCount + " open project file(s).\n" +
+					"Before your project can be converted, you must close\n" +
+					"all open project files and tools.");
+			return;
+		}
+
+		if (!checkToolsClose()) {
 			return;
 		}
 
@@ -415,10 +445,17 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	}
 
 	private void convertToShared() {
-		if (filesAreOpen()) {
+
+		int openCount = getOpenFileCount();
+		if (openCount != 0) {
 			Msg.showInfo(getClass(), getComponent(), "Cannot Convert Project with Open Files",
-				"Before your project can be converted, you must close\n" +
-					"files in running tools and make sure you have no files\n" + "checked out.");
+				"Found " + openCount + " open project file(s).\n" +
+					"Before your project can be converted, you must close\n" +
+					"all open project files and tools.");
+			return;
+		}
+
+		if (!checkToolsClose()) {
 			return;
 		}
 
@@ -430,7 +467,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		if (rep != null) {
 			StringBuffer confirmMsg = new StringBuffer();
 			confirmMsg.append("All version history on your files will be\n" +
-				"lost after your project is converted.\n" +
+				"lost after your project is converted and checkouts terminated.\n" +
 				"Do you want to convert your project?\n");
 			confirmMsg.append(" \n");
 			confirmMsg.append("WARNING: Convert CANNOT be undone!");
@@ -442,11 +479,12 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 				ConvertProjectTask task = new ConvertProjectTask(rep);
 				new TaskLauncher(task, getComponent(), 500);
 				// block until task completes
+				ProjectLocator projectLocator = project.getProjectLocator();
 				if (task.getStatus()) {
 					close();
 					FileActionManager actionMgr = plugin.getFileActionManager();
 					actionMgr.closeProject(false);
-					actionMgr.openProject(project.getProjectLocator());
+					actionMgr.openProject(projectLocator);
 					plugin.getProjectActionManager().showProjectInfo();
 				}
 				else {
@@ -456,36 +494,27 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		}
 	}
 
-	private boolean filesAreOpen() {
-		PluginTool[] tools = project.getToolManager().getRunningTools();
-
-		if (tools.length > 0) {
-			for (PluginTool tool : tools) {
-				if (tool.getDomainFiles().length > 0) {
-					return true;
-				}
-			}
-		}
-
-		return false;
+	private int getOpenFileCount() {
+		List<DomainFile> openFiles = new ArrayList<>();
+		project.getProjectData().findOpenFiles(openFiles);
+		TransientDataManager.getTransients(openFiles);
+		return openFiles.size();
 	}
 
 	private class ConvertProjectTask extends Task {
-		private RepositoryAdapter taskRepository;
+		private RepositoryAdapter newRepository;
 		private boolean status;
 
 		ConvertProjectTask(RepositoryAdapter repository) {
 			super("Convert Project to Shared", true, false, true);
-			this.taskRepository = repository;
+			this.newRepository = repository;
 		}
 
-		/* (non-Javadoc)
-		 * @see ghidra.util.task.Task#run(ghidra.util.task.TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
-				project.getProjectData().convertProjectToShared(taskRepository, monitor);
+				newRepository.connect();
+				project.getProjectData().convertProjectToShared(newRepository, monitor);
 				status = true;
 			}
 			catch (IOException e) {
@@ -515,9 +544,6 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			this.projectLocator = projectLocator;
 		}
 
-		/* (non-Javadoc)
-		 * @see ghidra.util.task.Task#run(ghidra.util.task.TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
@@ -544,22 +570,20 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	}
 
 	private class UpdateInfoTask extends Task {
-		private RepositoryAdapter taskRepository;
+		private RepositoryAdapter newRepository;
 		private boolean status;
 
 		UpdateInfoTask(RepositoryAdapter repository) {
 			super("Update Shared Project Info", true, false, true);
-			this.taskRepository = repository;
+			this.newRepository = repository;
 		}
 
-		/* (non-Javadoc)
-		 * @see ghidra.util.task.Task#run(ghidra.util.task.TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
-				// NOTE: conversion of non-shared project will lose version history
-				project.getProjectData().updateRepositoryInfo(taskRepository, monitor);
+				newRepository.connect();
+				boolean force = useForcedCheckoutTransition(monitor);
+				project.getProjectData().updateRepositoryInfo(newRepository, force, monitor);
 				status = true;
 			}
 			catch (IOException e) {
@@ -573,6 +597,37 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			catch (CancelledException e) {
 				Msg.info(this, "Convert project was canceled.");
 			}
+		}
+
+		private boolean useForcedCheckoutTransition(TaskMonitor monitor)
+				throws CancelledException, IOException {
+			if (repository == null) {
+				return false;
+			}
+
+			ProjectData projectData = project.getProjectData();
+			List<DomainFile> checkoutFiles = projectData.findCheckedOutFiles(monitor);
+			if (checkoutFiles.isEmpty() ||
+				!projectData.hasInvalidCheckouts(checkoutFiles, newRepository, monitor)) {
+				return false;
+			}
+
+			if (OptionDialog.showOptionDialog(getComponent(), "Terminate Unrecognized Checkouts",
+				"One or more project file checkouts are not recognized by the selected repository.\n" +
+					"These checkouts will be terminated and a local .keep file created." +
+					(repository.isConnected() ? ""
+							: "  Doing this\n" +
+								"will abandon such checkouts on the old repository since you are not connected.") +
+					"\n\n" +
+					"Are you sure you want to continue changing your shared project information?",
+				"Terminate Checkouts and Continue",
+				OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
+
+				throw new CancelledException();
+			}
+
+			// Must force termination if not connected to current repository
+			return !repository.isConnected();
 		}
 
 		boolean getStatus() {

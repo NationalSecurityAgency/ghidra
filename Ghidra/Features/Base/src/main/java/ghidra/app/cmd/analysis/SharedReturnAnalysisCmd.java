@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,12 @@
  */
 package ghidra.app.cmd.analysis;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.cmd.disassemble.SetFlowOverrideCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -27,14 +28,11 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Identifies functions to which Jump references exist and converts 
  * the associated branching instruction flow to a CALL-RETURN
  */
-public class SharedReturnAnalysisCmd extends BackgroundCommand {
+public class SharedReturnAnalysisCmd extends BackgroundCommand<Program> {
 
 	private AddressSetView set;
 	private boolean assumeContiguousFunctions = false;
@@ -59,9 +57,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		try {
 
@@ -69,7 +65,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			SymbolTable symbolTable = program.getSymbolTable();
 			SymbolIterator fnSymbols = symbolTable.getSymbols(set, SymbolType.FUNCTION, true);
 			while (fnSymbols.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Symbol s = fnSymbols.next();
 				Address entry = s.getAddress();
 
@@ -83,7 +79,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 
 				fnSymbols = symbolTable.getSymbols(set, SymbolType.FUNCTION, true);
 				while (fnSymbols.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Symbol s = fnSymbols.next();
 					checkAboveFunction(s, jumpScanSet);
 					checkBelowFunction(s, jumpScanSet);
@@ -97,7 +93,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 				ReferenceManager refMgr = program.getReferenceManager();
 				AddressIterator refSrcIter = refMgr.getReferenceSourceIterator(jumpScanSet, true);
 				while (refSrcIter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Address srcAddr = refSrcIter.next();
 					RefType flow = null;
 					Address destAddr = null;
@@ -181,8 +177,8 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 						}
 
 						// if we have not passed lastFunctionAfter then no change to lastFunctionBefore
-						if (functionBeforeSrc != null &&
-							(functionAfterSrc == Address.NO_ADDRESS || srcAddr.compareTo(functionAfterSrc) < 0)) {
+						if (functionBeforeSrc != null && (functionAfterSrc == Address.NO_ADDRESS ||
+							srcAddr.compareTo(functionAfterSrc) < 0)) {
 							// we have not passed lastFunctionAfterSrc - no change to lastFunctionBeforeSrc
 						}
 						else {
@@ -266,9 +262,36 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			processFunctionJumpReferences(program, entry, monitor);
 		}
 		else {
+			// check if there could be any fallthru flow to the potential entry point
+			if (checkIfCouldHaveFallThruTo(program, entry)) {
+				// if there could be, even later in analysis, don't create the function
+				return;
+			}
 			AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 			analysisMgr.createFunction(entry, false);
 		}
+	}
+
+	private boolean checkIfCouldHaveFallThruTo(Program program, Address location) {
+		Instruction instr = program.getListing().getInstructionAt(location);
+		if (instr == null) {
+			return true;
+		}
+		Address fallFrom = instr.getFallFrom();
+		if (fallFrom != null) {
+			Instruction fallInstr = program.getListing().getInstructionContaining(fallFrom);
+			if (fallInstr != null && location.equals(fallInstr.getFallThrough())) {
+				// if there is no instruction yet, function may not be created yet
+				return true;
+			}
+		}
+
+		if (instr.getFlowType() == RefType.TERMINATOR) {
+			// a single instruction that is terminal consider
+			// as having a possible future fallthru to
+			return true;
+		}
+		return false;
 	}
 
 	private void checkAboveFunction(Symbol functionSymbol, AddressSet jumpScanSet) {
@@ -316,39 +339,39 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 
 	}
 
-	private void checkAllJumpReferences(Program program, TaskMonitor monitor)
-			throws CancelledException {
-
-		SymbolTable symbolTable = program.getSymbolTable();
-
-		InstructionIterator instructionIter = program.getListing().getInstructions(set, true);
-		while (instructionIter.hasNext()) {
-			monitor.checkCanceled();
-			Instruction instr = instructionIter.next();
-			FlowType ft = instr.getFlowType();
-			if (!ft.isJump()) {
-				continue;
-			}
-			Reference ref = getSingleFlowReferenceFrom(instr);
-			if (ref == null) {
-				continue;
-			}
-			// if there is a function at this address, this is a thunk
-			//    Handle differently
-			if (program.getFunctionManager().getFunctionAt(instr.getMinAddress()) != null) {
-				continue;
-			}
-			Symbol s = symbolTable.getPrimarySymbol(ref.getToAddress());
-			if (s != null && s.getSymbolType() == SymbolType.FUNCTION) {
-				if (instr.getFlowOverride() != FlowOverride.NONE) {
-					continue;
-				}
-				SetFlowOverrideCmd cmd =
-					new SetFlowOverrideCmd(instr.getMinAddress(), FlowOverride.CALL_RETURN);
-				cmd.applyTo(program);
-			}
-		}
-	}
+//	private void checkAllJumpReferences(Program program, TaskMonitor monitor)
+//			throws CancelledException {
+//
+//		SymbolTable symbolTable = program.getSymbolTable();
+//
+//		InstructionIterator instructionIter = program.getListing().getInstructions(set, true);
+//		while (instructionIter.hasNext()) {
+//			monitor.checkCancelled();
+//			Instruction instr = instructionIter.next();
+//			FlowType ft = instr.getFlowType();
+//			if (!ft.isJump()) {
+//				continue;
+//			}
+//			Reference ref = getSingleFlowReferenceFrom(instr);
+//			if (ref == null) {
+//				continue;
+//			}
+//			// if there is a function at this address, this is a thunk
+//			//    Handle differently
+//			if (program.getFunctionManager().getFunctionAt(instr.getMinAddress()) != null) {
+//				continue;
+//			}
+//			Symbol s = symbolTable.getPrimarySymbol(ref.getToAddress());
+//			if (s != null && s.getSymbolType() == SymbolType.FUNCTION) {
+//				if (instr.getFlowOverride() != FlowOverride.NONE) {
+//					continue;
+//				}
+//				SetFlowOverrideCmd cmd =
+//					new SetFlowOverrideCmd(instr.getMinAddress(), FlowOverride.CALL_RETURN);
+//				cmd.applyTo(program);
+//			}
+//		}
+//	}
 
 	private void processFunctionJumpReferences(Program program, Address entry, TaskMonitor monitor)
 			throws CancelledException {
@@ -361,8 +384,10 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			return;
 		}
 
+		FunctionManager funcMgr = program.getFunctionManager();
+
 		for (Reference ref : fnRefList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instr = program.getListing().getInstructionAt(ref.getFromAddress());
 			if (instr == null) {
 				continue;
@@ -371,17 +396,29 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			if (checkRef == null) {
 				continue;
 			}
+
 			// if there is a function at this address, this is a thunk
 			//    Handle differently
-			if (program.getFunctionManager().getFunctionAt(instr.getMinAddress()) != null) {
+			Address refInstrAddr = instr.getMinAddress();
+
+			if (funcMgr.getFunctionAt(refInstrAddr) != null) {
 				continue;
 			}
+
+			// if this instruction is contained in the body of the function
+			// then it is just an internal jump reference to the top of the
+			// function
+			Function functionContaining = funcMgr.getFunctionContaining(refInstrAddr);
+			if (functionContaining != null && functionContaining.getEntryPoint().equals(entry)) {
+				continue;
+			}
+
 			if (checkRef.getToAddress().equals(ref.getToAddress())) {
 				if (instr.getFlowOverride() != FlowOverride.NONE) {
 					continue;
 				}
 				SetFlowOverrideCmd cmd =
-					new SetFlowOverrideCmd(instr.getMinAddress(), FlowOverride.CALL_RETURN);
+					new SetFlowOverrideCmd(refInstrAddr, FlowOverride.CALL_RETURN);
 				cmd.applyTo(program);
 			}
 		}
@@ -392,7 +429,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 		List<Reference> fnRefList = null;
 		ReferenceIterator referencesTo = program.getReferenceManager().getReferencesTo(entry);
 		while (referencesTo.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Reference ref = referencesTo.next();
 			if (!ref.getReferenceType().isJump()) {
 				continue;

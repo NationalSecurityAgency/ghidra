@@ -18,8 +18,9 @@ package ghidra.program.database.map;
 import java.io.IOException;
 import java.util.*;
 
-import db.DBConstants;
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
+import ghidra.program.database.ProgramAddressFactory;
 import ghidra.program.database.map.AddressMapDBAdapter.AddressMapEntry;
 import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.model.address.*;
@@ -180,15 +181,15 @@ public class AddressMapDB implements AddressMap {
 	 * @throws IOException thrown if a dabase io error occurs.
 	 * @throws VersionException if the database version does not match the expected version.
 	 */
-	public AddressMapDB(DBHandle handle, int openMode, AddressFactory factory, long baseImageOffset,
-			TaskMonitor monitor) throws IOException, VersionException {
-		this.readOnly = (openMode == DBConstants.READ_ONLY);
+	public AddressMapDB(DBHandle handle, OpenMode openMode, AddressFactory factory,
+			long baseImageOffset, TaskMonitor monitor) throws IOException, VersionException {
+		this.readOnly = (openMode == OpenMode.IMMUTABLE);
 		this.addrFactory = factory;
 		this.baseImageOffset = baseImageOffset;
 		defaultAddrSpace = addrFactory.getDefaultAddressSpace();
 		adapter = AddressMapDBAdapter.getAdapter(handle, openMode, addrFactory, monitor);
 		oldAddrMap = (adapter.oldAddrMap != null) ? adapter.oldAddrMap : this;
-		useOldAddrMap = (openMode == DBConstants.READ_ONLY && oldAddrMap != this);
+		useOldAddrMap = (openMode == OpenMode.IMMUTABLE && oldAddrMap != this);
 		baseAddrs = adapter.getBaseAddresses(false);
 		init(true);
 	}
@@ -219,7 +220,6 @@ public class AddressMapDB implements AddressMap {
 		for (int i = 0; i < sortedBaseStartAddrs.length; i++) {
 			long max = sortedBaseStartAddrs[i].getAddressSpace().getMaxAddress().getOffset();
 			max = max < 0 ? MAX_OFFSET : Math.min(max, MAX_OFFSET);
-			// Avoid use of add which fails for overlay addresses which have restricted min/max offsets
 			long off = sortedBaseStartAddrs[i].getOffset() | max;
 			sortedBaseEndAddrs[i] =
 				sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
@@ -912,8 +912,8 @@ public class AddressMapDB implements AddressMap {
 	@Override
 	public Address getImageBase() {
 		if (defaultAddrSpace instanceof SegmentedAddressSpace) {
-			return ((SegmentedAddressSpace) defaultAddrSpace).getAddress(
-				(int) (baseImageOffset >> 4), 0);
+			return ((SegmentedAddressSpace) defaultAddrSpace)
+					.getAddress((int) (baseImageOffset >> 4), 0);
 		}
 		return defaultAddrSpace.getAddress(baseImageOffset);
 	}
@@ -925,7 +925,7 @@ public class AddressMapDB implements AddressMap {
 	 * @param translator translates address spaces from the old language to the new language.
 	 * @throws IOException if IO error occurs
 	 */
-	public synchronized void setLanguage(Language newLanguage, AddressFactory addrFactory,
+	public synchronized void setLanguage(Language newLanguage, ProgramAddressFactory addrFactory,
 			LanguageTranslator translator) throws IOException {
 
 		List<AddressMapEntry> entries = adapter.getEntries();

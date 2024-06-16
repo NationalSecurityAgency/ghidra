@@ -82,7 +82,7 @@ public class DbgModelTargetContinuationOptionImpl extends DbgModelTargetObjectIm
 	public void setAttributes() {
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getName() + " : " + optionCont.description, //
-			VALUE_ATTRIBUTE_NAME, optionCont, //
+			VALUE_ATTRIBUTE_NAME, optionCont.val, //
 			ENABLED_ATTRIBUTE_NAME,
 			optionCont.equals(DebugFilterContinuationOption.DEBUG_FILTER_GO_HANDLED)),
 			"Refreshed");

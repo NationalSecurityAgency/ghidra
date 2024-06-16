@@ -542,14 +542,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 *   0 x 1 <= A (this)
 	 * 0 0 0 0
 	 * x 0 x x
 	 * 1 0 x 1
 	 * ^
 	 * B (that)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -575,14 +575,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * To handle unknown bits, the solution is derived from the following truth table, where
 	 * {@code *} indicates no solution:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 *   0 x 1 <= A (that)
 	 * 0 x x 0
 	 * x x x x
 	 * 1 * 1 1
 	 * ^
 	 * B (this)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -614,14 +614,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 *   0 x 1 <= A (this)
 	 * 0 0 x 1
 	 * x x x 1
 	 * 1 1 1 1
 	 * ^
 	 * B (that)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -649,14 +649,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * To handle unknown bits, the solution is derived from the following truth table, where
 	 * {@code *} indicates no solution:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 *   0 x 1 <= A (that)
 	 * 0 0 0 *
 	 * x x x x
 	 * 1 1 x x
 	 * ^
 	 * B (this)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -687,14 +687,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 *   0 x 1 <= A (this)
 	 * 0 0 x 1
 	 * x x x x
 	 * 1 1 x 0
 	 * ^
 	 * B (that)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -726,10 +726,10 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 * 0 x 1 <= A (this)
 	 * 1 x 0
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @return the result.
 	 */

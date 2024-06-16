@@ -15,36 +15,21 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
-
 /**
  * Used for creating a wrapper for when there is not associated type to the PDB type (or if we
  * have not yet created the association).
  */
 public class NoTypeApplier extends MsTypeApplier {
 
+	// Intended for: AbstractMsType
 	/**
 	 * Constructor for nested type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractMsType} to process.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public NoTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public NoTypeApplier(DefaultPdbApplicator applicator)
 			throws IllegalArgumentException {
-		super(applicator, msType);
-	}
-
-	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
-	}
-
-	@Override
-	void apply() {
-		// Do nothing (maybe should log something... not sure)
-		// applicator.getLog().appendMsg("");
+		super(applicator);
 	}
 
 }

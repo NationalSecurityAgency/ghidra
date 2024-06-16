@@ -17,17 +17,17 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action for use in the composite data type editor.
@@ -35,7 +35,7 @@ import resources.ResourceManager;
  */
 public class UnpackageAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON = ResourceManager.loadImage("images/Unpackage.gif");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.unpackage");
 	public final static String ACTION_NAME = "Unpackage Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Replace the selected composite with its components";
@@ -43,7 +43,7 @@ public class UnpackageAction extends CompositeEditorTableAction {
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public UnpackageAction(StructureEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();

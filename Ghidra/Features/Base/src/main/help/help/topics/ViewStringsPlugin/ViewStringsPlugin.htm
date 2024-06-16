@@ -7,7 +7,7 @@
 
     <TITLE>View Defined Strings</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -22,7 +22,8 @@
     <P>&nbsp;</P>
 
     <P>This plugin is <I><B>not</B></I> intended to be used to locate undefined strings. Please see
-    <A href="help/topics/Search/Search_for_Strings.htm">Search for Strings</A> for this
+    <A href="../Search/Search_for_Strings.htm">Search for Strings</A> or 
+    <A href="../Search/Search_for_Strings.htm#Encoded_Strings_Dialog">Search for Encoded Strings</A> for this
     feature.</P>
 
 	<h2>Defined Strings Table Columns</h2>
@@ -36,15 +37,16 @@
 	  <a href="../DataPlugin/Data.htm#StringSettings">String Settings</a> for formatting settings)
 	  or the translated value of the string.  Double click in this column to change the string's 
 	  representation into a value of your choice.  This is the
-	  same as using the <b>Translate <IMG src="../../shared/arrow.gif" alt="-&gt;" border="0">
+	  same as using the <b>Translate <IMG src="help/shared/arrow.gif" alt="-&gt;" border="0">
 	  Manual</b> menu item.</li>
 	  <li>Data Type - mnemonic or data type for the string type.</li>
 	  <li>Is Ascii - boolean flag that indicates the string has non-ASCII characters.</li>
 	  <li>Has Encoding Error - boolean flag that indicates the string had byte(s) that could not be converted by the character set.
 	  This is usually caused by having the wrong character set or if the string isn't really a string.</li>
 	  <li>Charset - name of the character set that this string is encoded in.</li>
+	  <li>Unicode Script - a list of the the scripts (alphabets) used in the string.</li>
 	</ul>
-	<p>The <b>Is Ascii</b>, <b>Has Encoding Error</b>, and <b>Charset</b> columns are not visible by default.  To display
+	<p>The <b>Is Ascii</b>, <b>Has Encoding Error</b>, <b>Unicode Script</b>, and <b>Charset</b> columns are not visible by default.  To display
 	them in the table, right click on the column header row and select
 	<b>Add/Remove Columns...</b>.</p>
 	</blockquote>
@@ -72,7 +74,7 @@
 		  <li>Select the <img src="Icons.REFRESH_ICON">button on the tool bar.</li>
 		</ul>
 		
-			<p><img border="0" src="../../shared/note.png">The refresh icon on the toolbar will
+			<p><img border="0" src="help/shared/note.png">The refresh icon on the toolbar will
 			appear grayed-out by default.  If potential changes to string data are detected, 
 			the icon will become green in color.   The toolbar button can be pressed in either state
 			for a full table reload.

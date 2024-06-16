@@ -15,13 +15,14 @@
  */
 package ghidra.program.model.listing;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
@@ -41,13 +42,18 @@ public interface FunctionManager extends ManagerDB {
 	public Program getProgram();
 
 	/**
-	 * Gets the names associated with each of the current calling conventions associated with this
-	 * program. Within the exception of "unknown", all of these calling convention names should have
-	 * a PrototypeModel.
+	 * Get the ordered list of defined calling convention names.  The reserved names 
+	 * "unknown" and "default" are not included.  The returned collection may not include all names 
+	 * referenced by various functions and function-definitions.  This set is limited to those
+	 * defined by the associated compiler specification.  
+	 * See {@link DataTypeManager#getDefinedCallingConventionNames}.
+	 * <p>
+	 * For a set of all known names (including those that are not defined by compiler spec)
+	 * see {@link DataTypeManager#getKnownCallingConventionNames()}.
 	 *
 	 * @return the calling convention names.
 	 */
-	public List<String> getCallingConventionNames();
+	public Collection<String> getCallingConventionNames();
 
 	/**
 	 * Gets the default calling convention's prototype model in this program.
@@ -62,13 +68,6 @@ public interface FunctionManager extends ManagerDB {
 	 * @return the named function calling convention prototype model or null.
 	 */
 	public PrototypeModel getCallingConvention(String name);
-
-	/**
-	 * Gets all the calling convention prototype models in this program that have names.
-	 *
-	 * @return the function calling convention prototype models.
-	 */
-	public PrototypeModel[] getCallingConventions();
 
 	/**
 	 * Create a function with the given body at entry point within the global namespace.

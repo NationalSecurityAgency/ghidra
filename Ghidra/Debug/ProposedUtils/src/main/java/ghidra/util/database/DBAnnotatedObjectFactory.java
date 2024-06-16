@@ -17,6 +17,11 @@ package ghidra.util.database;
 
 import db.DBRecord;
 
+/**
+ * Needed by a {@link DBCachedObjectStore} to describe how to construct the objects it manages
+ *
+ * @param <T> the type of objects in the store
+ */
 public interface DBAnnotatedObjectFactory<T extends DBAnnotatedObject> {
 	T create(DBCachedObjectStore<T> store, DBRecord record);
 }

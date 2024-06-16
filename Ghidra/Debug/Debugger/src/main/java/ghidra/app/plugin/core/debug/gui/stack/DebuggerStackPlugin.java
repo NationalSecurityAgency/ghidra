@@ -23,19 +23,18 @@ import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-		shortDescription = "Debugger stack view", //
-		description = "GUI to navigate the stack", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			TraceActivatedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-		} // 
-)
+@PluginInfo(
+	shortDescription = "Debugger stack view",
+	description = "GUI to navigate the stack",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+	})
 public class DebuggerStackPlugin extends AbstractDebuggerPlugin {
 
 	protected DebuggerStackProvider provider;
@@ -58,9 +57,11 @@ public class DebuggerStackPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.coordinatesActivated(ev.getActiveCoordinates());
+		}
+		else if (event instanceof TraceClosedPluginEvent ev) {
+			provider.traceClosed(ev.getTrace());
 		}
 	}
 }

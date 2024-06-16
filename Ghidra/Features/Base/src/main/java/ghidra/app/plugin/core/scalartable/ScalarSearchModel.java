@@ -16,11 +16,12 @@
 package ghidra.app.plugin.core.scalartable;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-import javax.swing.*;
-import javax.swing.table.TableModel;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
@@ -149,7 +150,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		for (Instruction instruction : instructions) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if (tooManyResults()) {
@@ -160,7 +161,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 			for (int opIndex = 0; opIndex <= numOperands; opIndex++) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Object[] opObjs = instruction.getOpObjects(opIndex);
 				Reference[] operandReferences = instruction.getOperandReferences(opIndex);
@@ -177,7 +178,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		while (dataIterator.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if (tooManyResults()) {
@@ -201,7 +202,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			TaskMonitor monitor) throws CancelledException {
 
 		for (Object opObj : opObjs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Scalar scalar = getScalarFromOperand(opObj, monitor);
 			if (scalar != null) {
@@ -234,7 +235,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		for (int i = 0; i < numComponents; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data component = data.getComponent(i);
 			getScalarsFromCompositeData(data, component, monitor);
 		}
@@ -251,7 +252,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		for (int i = 0; i < numSubComponents; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data subComponent = component.getComponent(i);
 			getScalarsFromCompositeData(data, subComponent, monitor);
 		}
@@ -321,7 +322,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 //==================================================================================================
 // Columns & Column helpers
-//==================================================================================================	
+//==================================================================================================
 
 	private class ScalarComparator implements Comparator<Scalar> {
 
@@ -339,9 +340,9 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				return (o1.isSigned() ? 1 : -1);
 			}
 
-			return o1.compareTo(o2);
+			return o1.isSigned() ? Long.compare(o1.getSignedValue(), o2.getSignedValue())
+					: Long.compareUnsigned(o1.getUnsignedValue(), o2.getUnsignedValue());
 		}
-
 	}
 
 	private abstract class AbstractScalarValueRenderer extends AbstractGColumnRenderer<Scalar> {
@@ -409,15 +410,14 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			}
 
 			@Override
-			protected void configureFont(JTable table, TableModel model, int column) {
-				setFont(fixedWidthFont);
+			protected Font getDefaultFont() {
+				return fixedWidthFont;
 			}
 
 			@Override
 			public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
 				return ColumnConstraintFilterMode.ALLOW_ALL_FILTERS;
 			}
-
 		};
 
 		@Override
@@ -439,10 +439,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		public Scalar getValue(ScalarRowObject rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			Scalar scalar = rowObject.getScalar();
-
-			Scalar unsigned = new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), false);
-			return unsigned;
-
+			return new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), false);
 		}
 	}
 

@@ -19,9 +19,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import agent.frida.frida.FridaRegionInfo;
 import agent.frida.manager.*;
 import agent.frida.manager.cmd.FridaReadKernelMemoryCommand;
@@ -30,12 +27,13 @@ import agent.frida.manager.impl.FridaManagerImpl;
 import agent.frida.model.iface2.FridaModelTargetMemoryContainer;
 import agent.frida.model.iface2.FridaModelTargetMemoryRegion;
 import agent.frida.model.methods.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -56,16 +54,15 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 	protected final FridaModelTargetMemoryScanImpl scan;
 	protected final FridaModelTargetMemoryProtectImpl prot;
 	protected final FridaModelTargetMemoryWatchImpl watch;
-	protected final  FridaModelTargetUnloadScriptImpl unload;
+	protected final FridaModelTargetUnloadScriptImpl unload;
 
 	protected final Map<String, FridaModelTargetMemoryRegionImpl> memoryRegions =
 		new WeakValueHashMap<>();
 
-
 	public FridaModelTargetKernelMemoryContainerImpl(FridaModelTargetKernelImpl kernel) {
 		super(kernel.getModel(), kernel, "Memory", "MemoryContainer");
 		this.kernel = kernel;
-		
+
 		this.scan = new FridaModelTargetMemoryScanImpl(this, true);
 		this.prot = new FridaModelTargetMemoryProtectImpl(this, true);
 		this.watch = new FridaModelTargetMemoryWatchImpl(this);
@@ -76,15 +73,15 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 			watch.getName(), watch, //
 			unload.getName(), unload //
 		), "Initialized");
-		
+
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
-			listeners.fire.invalidateCacheRequested(this);
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
+			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listKernelMemory();
 	}
@@ -100,20 +97,20 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 		return new FridaModelTargetMemoryRegionImpl(this, region);
 	}
 
-	private byte[] readAssist(Address address, ByteBuffer buf, long offset, RangeSet<Long> set) {
+	private byte[] readAssist(Address address, ByteBuffer buf, AddressSetView set) {
 		if (set == null) {
 			return new byte[0];
 		}
-		Range<Long> range = set.rangeContaining(offset);
+		AddressRange range = set.getRangeContaining(address);
 		if (range == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
-		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
-		return Arrays.copyOf(buf.array(), (int) (range.upperEndpoint() - range.lowerEndpoint()));
+		broadcast().memoryUpdated(getProxy(), address, buf.array());
+		return Arrays.copyOf(buf.array(), (int) range.getLength());
 	}
 
 	private void writeAssist(Address address, byte[] data) {
-		listeners.fire.memoryUpdated(getProxy(), address, data);
+		broadcast().memoryUpdated(getProxy(), address, data);
 	}
 
 	@Override
@@ -128,12 +125,12 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 				"Cannot process command readMemory while engine is waiting for events");
 		}
 		ByteBuffer buf = ByteBuffer.allocate(length);
-		long offset = address.getOffset();
 		if (!manager.isKernelMode() || address.getAddressSpace().getName().equals("ram")) {
 			return manager
-					.execute(new FridaReadKernelMemoryCommand(manager, address, buf, buf.remaining()))
+					.execute(
+						new FridaReadKernelMemoryCommand(manager, address, buf, buf.remaining()))
 					.thenApply(set -> {
-						return readAssist(address, buf, offset, set);
+						return readAssist(address, buf, set);
 					});
 		}
 		return CompletableFuture.completedFuture(new byte[length]);
@@ -153,7 +150,8 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 		ByteBuffer buf = ByteBuffer.wrap(data);
 		if (!manager.isKernelMode() || address.getAddressSpace().getName().equals("ram")) {
 			return manager
-					.execute(new FridaWriteKernelMemoryCommand(manager, address, buf, buf.remaining()))
+					.execute(
+						new FridaWriteKernelMemoryCommand(manager, address, buf, buf.remaining()))
 					.thenAccept(___ -> {
 						writeAssist(address, data);
 					});
@@ -162,7 +160,8 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 	}
 
 	@Override
-	public void regionAdded(FridaProcess process, FridaRegionInfo info, int index, FridaCause cause) {
+	public void regionAdded(FridaProcess process, FridaRegionInfo info, int index,
+			FridaCause cause) {
 		FridaModelTargetMemoryRegion targetRegion;
 		FridaMemoryRegionInfo region = info.getRegion(index);
 		synchronized (this) {
@@ -182,7 +181,8 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 	}
 
 	@Override
-	public void regionReplaced(FridaProcess process, FridaRegionInfo info, int index, FridaCause cause) {
+	public void regionReplaced(FridaProcess process, FridaRegionInfo info, int index,
+			FridaCause cause) {
 		FridaMemoryRegionInfo region = info.getRegion(index);
 		changeElements(List.of(), List.of(getTargetMemory(region)), Map.of(), "Replaced");
 		FridaModelTargetMemoryRegion targetRegion = getTargetMemory(region);
@@ -190,7 +190,8 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 	}
 
 	@Override
-	public void regionRemoved(FridaProcess process, FridaRegionInfo info, int index, FridaCause cause) {
+	public void regionRemoved(FridaProcess process, FridaRegionInfo info, int index,
+			FridaCause cause) {
 		FridaModelTargetMemoryRegion targetRegion = getTargetMemory(info.getRegion(index));
 		if (targetRegion != null) {
 			FridaModelImpl impl = (FridaModelImpl) model;

@@ -60,4 +60,9 @@ public class VariableStorageDBAdapterNoTable extends VariableStorageDBAdapter {
 	int getRecordCount() {
 		return 0;
 	}
+
+	@Override
+	void deleteTable() {
+		// do nothing
+	}
 }

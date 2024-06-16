@@ -15,16 +15,16 @@
  */
 package ghidra.program.model.pcode;
 
-import ghidra.program.model.address.*;
+import java.io.IOException;
+
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractFloatDataType;
+import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A normal mapping of a HighSymbol to a particular Address, consuming a set number of bytes
@@ -53,44 +53,28 @@ public class MappedEntry extends SymbolEntry {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		HighFunction function = symbol.function;
-		Program program = function.getFunction().getProgram();
-		AddressFactory addrFactory = function.getAddressFactory();
-
-		XmlElement addrel = parser.start("addr");
+	public void decode(Decoder decoder) throws DecoderException {
 		int sz = symbol.type.getLength();
 		if (sz == 0) {
-			throw new PcodeXMLException(
+			throw new DecoderException(
 				"Invalid symbol 0-sized data-type: " + symbol.type.getName());
 		}
-		try {
-			Address varAddr = AddressXML.readXML(addrel, addrFactory);
-			AddressSpace spc = varAddr.getAddressSpace();
-			if ((spc == null) || (spc.getType() != AddressSpace.TYPE_VARIABLE)) {
-				storage = new VariableStorage(program, varAddr, sz);
-			}
-			else {
-				storage = function.readXMLVarnodePieces(addrel, varAddr);
-			}
-		}
-		catch (InvalidInputException e) {
-			throw new PcodeXMLException("Invalid storage: " + e.getMessage());
-		}
-		parser.end(addrel);
+		int addrel = decoder.openElement(ElementId.ELEM_ADDR);
+		storage = AddressXML.decodeStorageFromAttributes(sz, decoder, symbol.function);
+		decoder.closeElement(addrel);
 
-		parseRangeList(parser);
+		decodeRangeList(decoder);
 	}
 
 	@Override
-	public void saveXml(StringBuilder buf) {
+	public void encode(Encoder encoder) throws IOException {
 		int logicalsize = 0; // Assume datatype size and storage size are the same
 		int typeLength = symbol.type.getLength();
 		if (typeLength != storage.size() && symbol.type instanceof AbstractFloatDataType) {
 			logicalsize = typeLength; // Force a logicalsize
 		}
-		AddressXML.buildXML(buf, storage.getVarnodes(), logicalsize);
-		buildRangelistXML(buf);
+		AddressXML.encode(encoder, storage.getVarnodes(), logicalsize);
+		encodeRangelist(encoder);
 	}
 
 	@Override
@@ -104,59 +88,44 @@ public class MappedEntry extends SymbolEntry {
 	}
 
 	@Override
-	public boolean isReadOnly() {
+	public int getMutability() {
 		Address addr = storage.getMinAddress();
+		return getMutabilityOfAddress(addr, symbol.getProgram());
+	}
+
+	/**
+	 * Get the underlying mutability setting of an Address based on the Program
+	 * configuration and the MemoryBlock.  Ignore any overrides of Data at the address. 
+	 * @param addr is the Address
+	 * @param program is the Program containing the Address
+	 * @return the mutability
+	 */
+	public static int getMutabilityOfAddress(Address addr, Program program) {
 		if (addr == null) {
-			return false;
+			return MutabilitySettingsDefinition.NORMAL;
 		}
-		boolean readonly = false;
-		Program program = symbol.getProgram();
+		if (program.getLanguage().isVolatile(addr)) {
+			return MutabilitySettingsDefinition.VOLATILE;
+		}
 		MemoryBlock block = program.getMemory().getBlock(addr);
 		if (block != null) {
-			readonly = !block.isWrite();
+			if (block.isVolatile()) {
+				return MutabilitySettingsDefinition.VOLATILE;
+			}
 			// if the block says read-only, check the refs to the variable
-			// if the block says read-only, check the refs to the variable
-			if (readonly) {
+			if (!block.isWrite()) {
 				ReferenceIterator refIter = program.getReferenceManager().getReferencesTo(addr);
 				int count = 0;
-//				boolean foundRead = false;
 				while (refIter.hasNext() && count < 100) {
 					Reference ref = refIter.next();
 					if (ref.getReferenceType().isWrite()) {
-						readonly = false;
-						break;
-					}
-					if (ref.getReferenceType().isRead()) {
-//						foundRead = true;
+						return MutabilitySettingsDefinition.NORMAL;
 					}
 					count++;
 				}
-				// TODO: Don't do override if no read reference found
-				//
-				// if we only have indirect refs to it, don't assume readonly!
-				//if (!foundRead && readonly && count > 1) {
-				//	readonly = false;
-				//}
-				// they must be reading it multiple times for some reason
-				// if (readonly && count > 1) {
-				// 	readonly = false;
-				// }
+				return MutabilitySettingsDefinition.CONSTANT;
 			}
 		}
-		return readonly;
-	}
-
-	@Override
-	public boolean isVolatile() {
-		Address addr = storage.getMinAddress();
-		if (addr == null) {
-			return false;
-		}
-		Program program = symbol.getProgram();
-		if (program.getLanguage().isVolatile(addr)) {
-			return true;
-		}
-		MemoryBlock block = program.getMemory().getBlock(addr);
-		return (block != null && block.isVolatile());
+		return MutabilitySettingsDefinition.NORMAL;
 	}
 }

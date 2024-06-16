@@ -41,18 +41,13 @@ public class ApplyMarkupItemTask extends VtTask {
 		this.markupItems = markupItems;
 		this.options = options;
 	}
-	
+
 	@Override
 	protected boolean shouldSuspendSessionEvents() {
 		return markupItems.size() > 20;
 	}
 
-	/**
-	 * Template Method pattern to allow subclasses to plug-in to this task.
-	 * @param markupItem the markup
-	 * @param markupItemOptions
-	 * @return
-	 */
+	// Template Method pattern to allow subclasses to plug-in to this task.
 	protected VTMarkupItemApplyActionType getApplyActionType(VTMarkupItem markupItem,
 			ToolOptions markupItemOptions) {
 		VTMarkupType markupType = markupItem.getMarkupType();
@@ -65,7 +60,7 @@ public class ApplyMarkupItemTask extends VtTask {
 		monitor.initialize(markupItems.size());
 
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				markupItem.getAssociation().setAccepted();
 				VTMarkupItemApplyActionType actionType = getApplyActionType(markupItem, options);

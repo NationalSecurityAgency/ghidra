@@ -147,5 +147,18 @@
     <description>Dalvik DEX Android12</description>
     <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
   </language>
- 
+
+  <!-- Android 13 is identical to Android 12, so just reuse -->
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Android13"
+            version="1.0"
+            slafile="Dalvik_DEX_Android12.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Android13">
+    <description>Dalvik DEX Android13</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
 </language_definitions>

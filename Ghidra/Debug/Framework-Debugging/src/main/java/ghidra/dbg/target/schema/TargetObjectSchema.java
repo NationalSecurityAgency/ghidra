@@ -18,11 +18,12 @@ package ghidra.dbg.target.schema;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetAggregate;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.util.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -42,6 +43,11 @@ import ghidra.util.Msg;
  * by matching on the keys (indices and names), the result being a subordinate
  * {@link TargetObjectSchema}. Keys must match exactly, unless the "pattern" is the empty string,
  * which matches any key. Similarly, the wild-card index is {@code []}.
+ * 
+ * <p>
+ * The schema can specify attribute aliases, which implies that a particular key ("from") will
+ * always have the same value as another ("to"). As a result, the schemas of aliased keys will also
+ * implicitly match.
  */
 public interface TargetObjectSchema {
 	public static final ResyncMode DEFAULT_ELEMENT_RESYNC = ResyncMode.NEVER;
@@ -107,9 +113,9 @@ public interface TargetObjectSchema {
 	 * 
 	 * <p>
 	 * Each object specifies a element sync mode, and an attribute sync mode. These describe when
-	 * the client must call {@link TargetObject#resync(boolean, boolean)} to refresh/resync to
-	 * ensure it has a fresh cache of elements and/or attributes. Note that any client requesting a
-	 * resync will cause all clients to receive the updates.
+	 * the client must call {@link TargetObject#resync(RefreshBehavior, RefreshBehavior)} to
+	 * refresh/resync to ensure it has a fresh cache of elements and/or attributes. Note that any
+	 * client requesting a resync will cause all clients to receive the updates.
 	 */
 	enum ResyncMode {
 		/**
@@ -318,12 +324,8 @@ public interface TargetObjectSchema {
 	 * @return the named schema
 	 */
 	default SchemaName getElementSchema(String index) {
-		for (Entry<String, SchemaName> ent : getElementSchemas().entrySet()) {
-			if (ent.getKey().equals(index)) {
-				return ent.getValue();
-			}
-		}
-		return getDefaultElementSchema();
+		SchemaName schemaName = getElementSchemas().get(index);
+		return schemaName == null ? getDefaultElementSchema() : schemaName;
 	}
 
 	/**
@@ -336,9 +338,41 @@ public interface TargetObjectSchema {
 	/**
 	 * Get the map of attribute names to named schemas
 	 * 
+	 * <p>
+	 * The returned map will include aliases. To determine whether or not an attribute key is an
+	 * alias, check whether the entry's key matches the name of the attribute (see
+	 * {@link AttributeSchema#getName()}). It is possible the schema's name is empty, i.e., the
+	 * default schema. This indicates an alias to a key that was not named in the schema. Use
+	 * {@link #getAttributeAliases()} to determine the name of that key.
+	 * 
 	 * @return the map
 	 */
 	Map<String, AttributeSchema> getAttributeSchemas();
+
+	/**
+	 * Get the map of attribute name aliases
+	 * 
+	 * <p>
+	 * The returned map must provide the <em>direct</em> alias names. For any given key, the client
+	 * need only query the map once to determine the name of the attribute to which the alias
+	 * refers. Consequently, the map also cannot indicate a cycle.
+	 * 
+	 * <p>
+	 * An aliased attribute takes the value of its target implicitly.
+	 * 
+	 * @return the map
+	 */
+	Map<String, String> getAttributeAliases();
+
+	/**
+	 * Check if the given name is an alias and get the target attribute name
+	 * 
+	 * @param name the name
+	 * @return the alias' target, or the given name if not an alias
+	 */
+	default String checkAliasedAttribute(String name) {
+		return getAttributeAliases().getOrDefault(name, name);
+	}
 
 	/**
 	 * Get the default schema for attributes
@@ -359,19 +393,15 @@ public interface TargetObjectSchema {
 	 * Get the attribute schema for a given attribute name
 	 * 
 	 * <p>
-	 * If there's a schema specified for the given name, that schema is taken. Otherwise, the
-	 * default attribute schema is taken.
+	 * If there's a schema specified for the given name, that schema is taken. If the name refers to
+	 * an alias, its schema is taken. Otherwise, the default attribute schema is taken.
 	 * 
 	 * @param name the name
 	 * @return the attribute schema
 	 */
 	default AttributeSchema getAttributeSchema(String name) {
-		for (Entry<String, AttributeSchema> ent : getAttributeSchemas().entrySet()) {
-			if (ent.getKey().equals(name)) {
-				return ent.getValue();
-			}
-		}
-		return getDefaultAttributeSchema();
+		AttributeSchema attributeSchema = getAttributeSchemas().get(name);
+		return attributeSchema == null ? getDefaultAttributeSchema() : attributeSchema;
 	}
 
 	/**
@@ -429,6 +459,39 @@ public interface TargetObjectSchema {
 	}
 
 	/**
+	 * Get the list of schemas traversed from this schema along the given (sub) path
+	 * 
+	 * <p>
+	 * This list always begins with this schema, followed by the child schema for each key in the
+	 * path. Thus, for a path of length n, the resulting list has n+1 entries. This is useful for
+	 * searches along the ancestry of a given path:
+	 * 
+	 * <pre>
+	 * List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+	 * for (; path != null; path = PathUtils.parent(path)) {
+	 * 	TargetObjectSchema schema = schemas.get(path.size());
+	 * 	// ...
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * All entries are non-null, though they may be {@link EnumerableTargetObjectSchema#VOID}.
+	 * 
+	 * @param path the relative path from an object having this schema to the desired successor
+	 * @return the list of schemas traversed, ending with the successor's schema
+	 */
+	default List<TargetObjectSchema> getSuccessorSchemas(List<String> path) {
+		List<TargetObjectSchema> result = new ArrayList<>();
+		TargetObjectSchema schema = this;
+		result.add(schema);
+		for (String key : path) {
+			schema = schema.getChildSchema(key);
+			result.add(schema);
+		}
+		return result;
+	}
+
+	/**
 	 * Do the same as {@link #searchFor(Class, List, boolean)} with an empty prefix
 	 */
 	default PathMatcher searchFor(Class<? extends TargetObject> type, boolean requireCanonical) {
@@ -453,7 +516,8 @@ public interface TargetObjectSchema {
 			throw new IllegalArgumentException("Must provide a specific interface");
 		}
 		PathMatcher result = new PathMatcher();
-		Private.searchFor(this, result, prefix, true, type, requireCanonical, new HashSet<>());
+		Private.searchFor(this, result, prefix, true, type, false, requireCanonical,
+			new HashSet<>());
 		return result;
 	}
 
@@ -550,77 +614,90 @@ public interface TargetObjectSchema {
 			}
 		}
 
+		private static class InAggregateSearch extends BreadthFirst<SearchEntry> {
+			final Set<TargetObjectSchema> visited = new HashSet<>();
+
+			public InAggregateSearch(TargetObjectSchema seed) {
+				super(Set.of(new SearchEntry(List.of(), seed)));
+			}
+
+			@Override
+			public boolean descend(SearchEntry ent) {
+				return ent.schema.getInterfaces().contains(TargetAggregate.class);
+			}
+
+			@Override
+			public void expandAttribute(Set<SearchEntry> nextLevel, SearchEntry ent,
+					TargetObjectSchema schema, List<String> path) {
+				if (visited.add(schema)) {
+					nextLevel.add(new SearchEntry(path, schema));
+				}
+			}
+
+			@Override
+			public void expandDefaultAttribute(Set<SearchEntry> nextLevel, SearchEntry ent) {
+			}
+
+			@Override
+			public void expandElements(Set<SearchEntry> nextLevel, SearchEntry ent) {
+			}
+
+			@Override
+			public void expandDefaultElement(Set<SearchEntry> nextLevel, SearchEntry ent) {
+			}
+		}
+
 		private static void searchFor(TargetObjectSchema sch, PathMatcher result,
 				List<String> prefix, boolean parentIsCanonical, Class<? extends TargetObject> type,
-				boolean requireCanonical, Set<TargetObjectSchema> visited) {
+				boolean requireAggregate, boolean requireCanonical,
+				Set<TargetObjectSchema> visited) {
+			if (sch instanceof EnumerableTargetObjectSchema) {
+				return;
+			}
+			if (sch.getInterfaces().contains(type) && (parentIsCanonical || !requireCanonical)) {
+				result.addPattern(prefix);
+				return;
+			}
 			if (!visited.add(sch)) {
 				return;
 			}
-
-			if (sch.getInterfaces().contains(type) && parentIsCanonical) {
-				result.addPattern(prefix);
+			if (requireAggregate && !sch.getInterfaces().contains(TargetAggregate.class)) {
+				return;
 			}
 			SchemaContext ctx = sch.getContext();
 			boolean isCanonical = sch.isCanonicalContainer();
 			for (Entry<String, SchemaName> ent : sch.getElementSchemas().entrySet()) {
 				List<String> extended = PathUtils.index(prefix, ent.getKey());
 				TargetObjectSchema elemSchema = ctx.getSchema(ent.getValue());
-				searchFor(elemSchema, result, extended, isCanonical, type, requireCanonical,
-					visited);
+				searchFor(elemSchema, result, extended, isCanonical, type, requireAggregate,
+					requireCanonical, visited);
 			}
 			List<String> deExtended = PathUtils.extend(prefix, "[]");
 			TargetObjectSchema deSchema = ctx.getSchema(sch.getDefaultElementSchema());
-			searchFor(deSchema, result, deExtended, isCanonical, type, requireCanonical, visited);
+			searchFor(deSchema, result, deExtended, isCanonical, type, requireAggregate,
+				requireCanonical, visited);
 
 			for (Entry<String, AttributeSchema> ent : sch.getAttributeSchemas().entrySet()) {
 				List<String> extended = PathUtils.extend(prefix, ent.getKey());
 				TargetObjectSchema attrSchema = ctx.getSchema(ent.getValue().getSchema());
-				searchFor(attrSchema, result, extended, parentIsCanonical, type, requireCanonical,
-					visited);
+				searchFor(attrSchema, result, extended, isCanonical, type, requireAggregate,
+					requireCanonical, visited);
 			}
 			List<String> daExtended = PathUtils.extend(prefix, "");
 			TargetObjectSchema daSchema =
 				ctx.getSchema(sch.getDefaultAttributeSchema().getSchema());
-			searchFor(daSchema, result, daExtended, parentIsCanonical, type, requireCanonical,
-				visited);
+			searchFor(daSchema, result, daExtended, isCanonical, type, requireAggregate,
+				requireCanonical, visited);
 
 			visited.remove(sch);
 		}
 
-		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
-				Class<? extends TargetObject> type) {
-			Set<SearchEntry> init = Set.of(new SearchEntry(List.of(), seed));
-			BreadthFirst<SearchEntry> breadth = new BreadthFirst<>(init) {
-				final Set<TargetObjectSchema> visited = new HashSet<>();
-
-				@Override
-				public boolean descend(SearchEntry ent) {
-					return ent.schema.getInterfaces().contains(TargetAggregate.class);
-				}
-
-				@Override
-				public void expandAttribute(Set<SearchEntry> nextLevel, SearchEntry ent,
-						TargetObjectSchema schema, List<String> path) {
-					if (visited.add(schema)) {
-						nextLevel.add(new SearchEntry(path, schema));
-					}
-				}
-
-				@Override
-				public void expandDefaultAttribute(Set<SearchEntry> nextLevel, SearchEntry ent) {
-				}
-
-				@Override
-				public void expandElements(Set<SearchEntry> nextLevel, SearchEntry ent) {
-				}
-
-				@Override
-				public void expandDefaultElement(Set<SearchEntry> nextLevel, SearchEntry ent) {
-				}
-			};
-			while (!breadth.allOnLevel.isEmpty()) {
-				Set<SearchEntry> found = breadth.allOnLevel.stream()
-						.filter(ent -> ent.schema.getInterfaces().contains(type))
+		static List<String> searchForInAggregate(TargetObjectSchema seed,
+				Predicate<SearchEntry> predicate) {
+			InAggregateSearch inAgg = new InAggregateSearch(seed);
+			while (!inAgg.allOnLevel.isEmpty()) {
+				Set<SearchEntry> found = inAgg.allOnLevel.stream()
+						.filter(predicate)
 						.collect(Collectors.toSet());
 				if (!found.isEmpty()) {
 					if (found.size() == 1) {
@@ -628,9 +705,31 @@ public interface TargetObjectSchema {
 					}
 					return null;
 				}
-				breadth.nextLevel();
+				inAgg.nextLevel();
 			}
 			return null;
+		}
+
+		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
+				Class<? extends TargetObject> type) {
+			return searchForInAggregate(seed, ent -> ent.schema.getInterfaces().contains(type));
+		}
+
+		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
+				TargetObjectSchema schema) {
+			return searchForInAggregate(seed, ent -> ent.schema == schema);
+		}
+
+		static List<String> searchForSuitableContainerInAggregate(TargetObjectSchema seed,
+				Class<? extends TargetObject> type) {
+			return searchForInAggregate(seed, ent -> {
+				if (!ent.schema.isCanonicalContainer()) {
+					return false;
+				}
+				TargetObjectSchema deSchema =
+					ent.schema.getContext().getSchema(ent.schema.getDefaultElementSchema());
+				return deSchema.getInterfaces().contains(type);
+			});
 		}
 	}
 
@@ -705,13 +804,100 @@ public interface TargetObjectSchema {
 		return null;
 	}
 
+	/**
+	 * Search for a suitable object with this schema at the given path
+	 * 
+	 * @param type the type of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable object, or null
+	 */
 	default List<String> searchForSuitable(Class<? extends TargetObject> type, List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
 		for (; path != null; path = PathUtils.parent(path)) {
-			TargetObjectSchema schema = getSuccessorSchema(path);
+			TargetObjectSchema schema = schemas.get(path.size());
 			if (schema.getInterfaces().contains(type)) {
 				return path;
 			}
 			List<String> inAgg = Private.searchForSuitableInAggregate(schema, type);
+			if (inAgg != null) {
+				return PathUtils.extend(path, inAgg);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Search for a suitable object with this schema at the given path
+	 * 
+	 * @param schema the schema of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable object, or null
+	 */
+	default List<String> searchForSuitable(TargetObjectSchema schema, List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema check = schemas.get(path.size());
+			if (check == schema) {
+				return path;
+			}
+			List<String> inAgg = Private.searchForSuitableInAggregate(check, schema);
+			if (inAgg != null) {
+				return PathUtils.extend(path, inAgg);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Search for all suitable objects with this schema at the given path
+	 * 
+	 * <p>
+	 * This behaves like {@link #searchForSuitable(Class, List)}, except that it returns a matcher
+	 * for all possibilities. Conventionally, when the client uses the matcher to find suitable
+	 * objects and must choose from among the results, those having the longer paths should be
+	 * preferred. More specifically, it should prefer those sharing the longer path prefixes with
+	 * the given path. The client should <em>not</em> just take the first objects, since these will
+	 * likely have the shortest paths. If exactly one object is required, consider using
+	 * {@link #searchForSuitable(Class, List)} instead.
+	 * 
+	 * @param type
+	 * @param path
+	 * @return the predicates for finding objects
+	 */
+	default PathPredicates matcherForSuitable(Class<? extends TargetObject> type,
+			List<String> path) {
+		PathMatcher result = new PathMatcher();
+		Set<TargetObjectSchema> visited = new HashSet<>();
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = schemas.get(path.size());
+			Private.searchFor(schema, result, path, false, type, true, false, visited);
+		}
+		return result;
+	}
+
+	/**
+	 * Like {@link #searchForSuitable(Class, List)}, but searches for the canonical container whose
+	 * elements have the given type
+	 * 
+	 * @param type the type of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable container of those objects, or null
+	 */
+	default List<String> searchForSuitableContainer(Class<? extends TargetObject> type,
+			List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = schemas.get(path.size());
+			if (!schema.isCanonicalContainer()) {
+				continue;
+			}
+			TargetObjectSchema deSchema =
+				schema.getContext().getSchema(schema.getDefaultElementSchema());
+			if (deSchema.getInterfaces().contains(type)) {
+				return path;
+			}
+			List<String> inAgg = Private.searchForSuitableContainerInAggregate(schema, type);
 			if (inAgg != null) {
 				return PathUtils.extend(path, inAgg);
 			}
@@ -741,6 +927,32 @@ public interface TargetObjectSchema {
 	}
 
 	/**
+	 * Find the nearest ancestor which is the canonical container of the given interface
+	 * 
+	 * <p>
+	 * If the given path is such a container, it is returned, i.e., it is not strictly an ancestor.
+	 * 
+	 * @param type the interface whose canonical container to search for
+	 * @param path the seed path
+	 * @return the found path, or {@code null} if no such ancestor was found
+	 */
+	default List<String> searchForAncestorContainer(Class<? extends TargetObject> type,
+			List<String> path) {
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = getSuccessorSchema(path);
+			if (!schema.isCanonicalContainer()) {
+				continue;
+			}
+			TargetObjectSchema deSchema =
+				schema.getContext().getSchema(schema.getDefaultElementSchema());
+			if (deSchema.getInterfaces().contains(type)) {
+				return path;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Check if the given key should be hidden for an object having this schema
 	 * 
 	 * <p>
@@ -760,7 +972,9 @@ public interface TargetObjectSchema {
 			return false;
 		}
 		AttributeSchema schema = getAttributeSchema(key);
-		if (schema == AttributeSchema.DEFAULT_ANY || schema == AttributeSchema.DEFAULT_OBJECT) {
+		if (schema == AttributeSchema.DEFAULT_ANY ||
+			schema == AttributeSchema.DEFAULT_OBJECT ||
+			schema == AttributeSchema.DEFAULT_VOID) {
 			// FIXME: Remove this hack once we stop depending on this prefix
 			return key.startsWith(TargetObject.PREFIX_INVISIBLE);
 		}
@@ -771,7 +985,10 @@ public interface TargetObjectSchema {
 	 * Verify that the given value is of this schema's required type and, if applicable, implements
 	 * the required interfaces
 	 * 
-	 * @param value the value
+	 * @param value the value being assigned to the key
+	 * @param parentPath the path of the object whose key is being assigned, for diagnostics
+	 * @param key the key that is being assigned
+	 * @param strict true to throw an exception upon violation; false to just log and continue
 	 */
 	default void validateTypeAndInterfaces(Object value, List<String> parentPath, String key,
 			boolean strict) {
@@ -905,5 +1122,131 @@ public interface TargetObjectSchema {
 			TargetObjectSchema schema = getContext().getSchema(getElementSchema(ent.getKey()));
 			schema.validateTypeAndInterfaces(element, parentPath, ent.getKey(), strict);
 		}
+	}
+
+	/**
+	 * Search for a suitable register container
+	 * 
+	 * <p>
+	 * This will try with and without considerations for frames. If the schema indicates that
+	 * register containers are not contained within frames, then frameLevel must be 0, otherwise
+	 * this will return empty. If dependent on frameLevel, this will return two singleton paths: one
+	 * for a decimal index and another for a hexadecimal index. If not, this will return a singleton
+	 * path. If it fails to find a unique container, this will return empty.
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This must be used at the top of the search scope, probably the root schema. For
+	 * example, to search the entire model for a register container related to {@code myObject}:
+	 * 
+	 * <pre>
+	 * for (PathPattern regPattern : myObject.getModel()
+	 * 		.getSchema()
+	 * 		.searchForRegisterContainer(0, myObject.getPath())) {
+	 * 	TargetObject objRegs = myObject.getModel().getModelObject(regPattern.getSingletonPath());
+	 * 	if (objRegs != null) {
+	 * 		// found it
+	 * 	}
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * This places some conventional restrictions / expectations on models where registers are given
+	 * on a frame-by-frame basis. The schema should present the {@link TargetRegisterContainer} as
+	 * the same object or a successor to {@link TargetStackFrame}, which must in turn be a successor
+	 * to {@link TargetStack}. The frame level (an index) must be in the path from stack to frame.
+	 * There can be no wild cards between the frame and the register container. For example, the
+	 * container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers}, where
+	 * {@code n} is the frame level. {@code Threads[1].Stack} would have the {@link TargetStack}
+	 * interface, {@code Threads[1].Stack[0]} would have the {@link TargetStackFrame} interface, and
+	 * {@code Threads[1].Stack[0].Registers} would have the {@link TargetRegisterContainer}
+	 * interface. Note it is not sufficient for {@link TargetRegisterContainer} to be a successor of
+	 * {@link TargetStack} with a single index between. There <em>must</em> be an intervening
+	 * {@link TargetStackFrame}, and the frame level (index) must precede it.
+	 * 
+	 * @param frameLevel the frame level. May be ignored if not applicable
+	 * @param path the path of the seed object relative to the root
+	 * @return the predicates where the register container should be found, possibly empty
+	 */
+	default PathPredicates searchForRegisterContainer(int frameLevel, List<String> path) {
+		List<String> simple = searchForSuitable(TargetRegisterContainer.class, path);
+		if (simple != null) {
+			return PathPredicates.pattern(simple);
+		}
+		List<String> stackPath = searchForSuitable(TargetStack.class, path);
+		if (stackPath == null) {
+			return PathPredicates.EMPTY;
+		}
+		PathPattern framePatternRelStack =
+			getSuccessorSchema(stackPath).searchFor(TargetStackFrame.class, false)
+					.getSingletonPattern();
+		if (framePatternRelStack == null) {
+			return PathPredicates.EMPTY;
+		}
+
+		if (framePatternRelStack.countWildcards() != 1) {
+			return null;
+		}
+
+		PathMatcher result = new PathMatcher();
+		for (String index : List.of(Integer.toString(frameLevel),
+			"0x" + Integer.toHexString(frameLevel))) {
+			List<String> framePathRelStack =
+				framePatternRelStack.applyKeys(index).getSingletonPath();
+			List<String> framePath = PathUtils.extend(stackPath, framePathRelStack);
+			List<String> regsPath =
+				searchForSuitable(TargetRegisterContainer.class, framePath);
+			if (regsPath != null) {
+				result.addPattern(regsPath);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Compute the frame level of the object at the given path relative to this schema
+	 * 
+	 * <p>
+	 * If there is no {@link TargetStackFrame} in the path, this will return 0 since it is not
+	 * applicable to the object. If there is a stack frame in the path, this will examine its
+	 * ancestry, up to and excluding the {@link TargetStack} for an index. If there isn't a stack in
+	 * the path, it is assumed to be an ancestor of this schema, meaning the examination will
+	 * exhaust the ancestry provided in the path. If no index is found, an exception is thrown,
+	 * because the frame level is applicable, but couldn't be computed from the path given. In that
+	 * case, the client should include more ancestry in the path. Ideally, this is invoked relative
+	 * to the root schema.
+	 * 
+	 * @param path the path
+	 * @return the frame level, or 0 if not applicable
+	 * @throws IllegalArgumentException if frame level is applicable but not given in the path
+	 */
+	default int computeFrameLevel(List<String> path) {
+		List<String> framePath = searchForAncestor(TargetStackFrame.class, path);
+		if (framePath == null) {
+			return 0;
+		}
+		List<String> stackPath = searchForAncestor(TargetStack.class, framePath);
+		for (int i = stackPath == null ? 0 : stackPath.size(); i < framePath.size(); i++) {
+			String key = framePath.get(i);
+			if (PathUtils.isIndex(key)) {
+				return Integer.decode(PathUtils.parseIndex(key));
+			}
+		}
+		throw new IllegalArgumentException("No index between stack and frame");
+	}
+
+	/**
+	 * Check if this schema can accept a value of the given other schema
+	 * 
+	 * <p>
+	 * This works analogously to {@link Class#isAssignableFrom(Class)}, except that schemas are
+	 * quite a bit less flexible. Only {@link EnumerableTargetObjectSchema#ANY} and
+	 * {@link EnumerableTargetObjectSchema#OBJECT} can accept anything other than exactly
+	 * themselves.
+	 * 
+	 * @param that
+	 * @return true if an object of that schema can be assigned to this schema.
+	 */
+	default boolean isAssignableFrom(TargetObjectSchema that) {
+		return this.equals(that);
 	}
 }

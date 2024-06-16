@@ -24,7 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractGTableModel;
 import docking.widgets.table.RowObjectTableModel;
@@ -33,7 +33,6 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 
 	private DropDownSelectionTextField<T> field;
 	protected boolean cancelled;
-	private RowObjectTableModel<T> userTableModel;
 	private DataToStringConverter<T> searchConverter;
 	private DataToStringConverter<T> descriptionConverter;
 	private List<T> data;
@@ -61,8 +60,12 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		this.data = data;
 		this.searchConverter = searchConverter;
 		this.descriptionConverter = descriptionConverter;
+
+		// Use a separate list for the drop down widget, since it needs to sort its data and we do
+		// not want to change the client data sort.
+		List<T> dropDownData = new ArrayList<>(data);
 		DefaultDropDownSelectionDataModel<T> model = new DefaultDropDownSelectionDataModel<>(
-			new ArrayList<>(data), searchConverter, descriptionConverter) {
+			dropDownData, searchConverter, descriptionConverter) {
 
 			// overridden to return all data for an empty search; this lets the down-arrow
 			// show the full list
@@ -134,7 +137,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		panel.add(jLabel, BorderLayout.WEST);
 		panel.add(field, BorderLayout.CENTER);
 
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browse());
 		panel.add(browseButton, BorderLayout.EAST);
 		return panel;
@@ -151,14 +154,18 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 	}
 
 	private RowObjectTableModel<T> getTableModel() {
-		if (userTableModel != null) {
-			return userTableModel;
-		}
-
-		return new DefaultTableModel();
+		return new DefaultTableModel(data);
 	}
 
 	private class DefaultTableModel extends AbstractGTableModel<T> {
+
+		private List<T> modelData;
+
+		DefaultTableModel(List<T> modelData) {
+			// copy the data so that a call to dispose() will not clear the data in the outer class
+			this.modelData = new ArrayList<>(modelData);
+		}
+
 		@Override
 		public String getColumnName(int columnIndex) {
 			if (columnIndex == 0) {
@@ -184,7 +191,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 
 		@Override
 		public List<T> getModelData() {
-			return data;
+			return modelData;
 		}
 
 		@Override
@@ -221,8 +228,8 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		list.add("bOb");
 		list.add("bobby");
 		list.add("zzz");
-		ListSelectionDialog<String> dialog = ListSelectionDialog.getStringListSelectionDialog(
-			"String Picker", "Choose String:", list);
+		ListSelectionDialog<String> dialog = ListSelectionDialog
+				.getStringListSelectionDialog("String Picker", "Choose String:", list);
 
 		String selectedValue = dialog.show(jFrame);
 		System.out.println("Selected: " + selectedValue);

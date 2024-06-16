@@ -19,10 +19,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import db.Transaction;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
+import ghidra.program.database.ProgramOverlayAddressSpace;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -47,6 +50,11 @@ public class StubProgram implements Program {
 	}
 
 	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public int startTransaction(String description, AbortedTransactionListener listener) {
 		throw new UnsupportedOperationException();
 	}
@@ -57,7 +65,7 @@ public class StubProgram implements Program {
 	}
 
 	@Override
-	public Transaction getCurrentTransaction() {
+	public TransactionInfo getCurrentTransactionInfo() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -139,6 +147,16 @@ public class StubProgram implements Program {
 
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -298,6 +316,16 @@ public class StubProgram implements Program {
 	}
 
 	@Override
+	public List<String> getAllUndoNames() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void addTransactionListener(TransactionListener listener) {
 		throw new UnsupportedOperationException();
 	}
@@ -369,7 +397,7 @@ public class StubProgram implements Program {
 
 	@Override
 	public String getCompiler() {
-		throw new UnsupportedOperationException();
+		return "unknown";
 	}
 
 	@Override
@@ -483,17 +511,28 @@ public class StubProgram implements Program {
 	}
 
 	@Override
+	public ProgramOverlayAddressSpace createOverlaySpace(String overlaySpaceName,
+			AddressSpace baseSpace) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void renameOverlaySpace(String oldOverlaySpaceName, String newName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean removeOverlaySpace(String overlaySpaceName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public Address[] parseAddress(String addrStr) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Address[] parseAddress(String addrStr, boolean caseSensitive) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void invalidate() {
 		throw new UnsupportedOperationException();
 	}
 

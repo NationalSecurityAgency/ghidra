@@ -71,7 +71,7 @@ public class ElfProgramHeaderType {
 	/**
 	 * Add the specified program header type to the specified map.
 	 * @param type program header type
-	 * @param programHeaderTypeMap
+	 * @param programHeaderTypeMap map of program header types
 	 * @throws DuplicateNameException if new type name already defined within
 	 * the specified map
 	 */

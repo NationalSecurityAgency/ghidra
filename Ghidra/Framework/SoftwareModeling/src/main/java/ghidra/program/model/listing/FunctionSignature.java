@@ -15,7 +15,9 @@
  */
 package ghidra.program.model.listing;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.lang.PrototypeModel;
 
 /**
  * Interface describing all the things about a function that are portable
@@ -23,6 +25,7 @@ import ghidra.program.model.data.*;
  */
 
 public interface FunctionSignature {
+	public static final String NORETURN_DISPLAY_STRING = "noreturn";
 	public static final String VAR_ARGS_DISPLAY_STRING = "...";
 	public static final String VOID_PARAM_DISPLAY_STRING = "void";
 
@@ -32,43 +35,73 @@ public interface FunctionSignature {
 	public String getName();
 
 	/**
-	 * Return a string representation of the function signature without the
+	 * Get string representation of the function signature without the
 	 * calling convention specified.
+	 * @return function signature string
 	 */
 	public String getPrototypeString();
 
 	/**
-	 * Return a string representation of the function signature
+	 * Get string representation of the function signature
 	 * @param includeCallingConvention if true prototype will include call convention
-	 * declaration if known.
+	 * declaration if known as well as <code>noreturn</code> indicator if applicable.
+	 * @return function signature string
 	 */
 	public String getPrototypeString(boolean includeCallingConvention);
 
 	/**
-	 * Return an array of parameters for the function
+	 * Get function signature parameter arguments
+	 * @return an array of parameters for the function
 	 */
 	public ParameterDefinition[] getArguments();
 
 	/**
-	 * Return the return data type
+	 * Get function signature return type
+	 * @return the return data type
 	 */
 	public DataType getReturnType();
 
 	/**
-	 * Return the comment string
+	 * Get descriptive comment for signature
+	 * @return the comment string
 	 */
 	public String getComment();
 
 	/**
-	 * Returns true if this function signature has a variable argument list (VarArgs).
+	 * @return true if this function signature has a variable argument list (VarArgs).
 	 */
 	public boolean hasVarArgs();
 
 	/**
-	 * Returns the generic calling convention associated with this function definition.
-	 * The "unknown" convention should be returned instead of null.
+	 * @return true if this function signature corresponds to a non-returning function.
 	 */
-	public GenericCallingConvention getGenericCallingConvention();
+	public boolean hasNoReturn();
+
+	/**
+	 * Gets the calling convention prototype model for this function if associated with a 
+	 * compiler specificfation.  This method will always return null if signature is not 
+	 * associated with a specific program architecture.
+	 * 
+	 * @return the prototype model of the function's current calling convention or null.
+	 */
+	public PrototypeModel getCallingConvention();
+
+	/**
+	 * Returns the calling convention name associated with this function definition.
+	 * Reserved names may also be returned: {@link Function#UNKNOWN_CALLING_CONVENTION_STRING},
+	 * {@link Function#DEFAULT_CALLING_CONVENTION_STRING}.
+	 * The "unknown" convention must be returned instead of null.
+	 * @return calling convention name
+	 */
+	public String getCallingConventionName();
+
+	/**
+	 * Determine if this signature has an unknown or unrecognized calling convention name.
+	 * @return true if calling convention is unknown or unrecognized name, else false.
+	 */
+	public default boolean hasUnknownCallingConventionName() {
+		return getCallingConvention() == null;
+	}
 
 	/**
 	 * Returns true if the given signature is equivalent to this signature.  The

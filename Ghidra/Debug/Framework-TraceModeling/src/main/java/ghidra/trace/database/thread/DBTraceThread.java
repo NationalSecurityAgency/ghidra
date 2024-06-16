@@ -17,14 +17,12 @@ package ghidra.trace.database.thread;
 
 import java.io.IOException;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -64,7 +62,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 
 	public final DBTraceThreadManager manager;
 
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	protected DBTraceThread(DBTraceThreadManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -72,11 +70,11 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 		this.manager = manager;
 	}
 
-	public void set(String path, String name, Range<Long> lifespan) {
+	public void set(String path, String name, Lifespan lifespan) {
 		this.path = path;
 		this.name = name;
-		this.creationSnap = DBTraceUtils.lowerEndpoint(lifespan);
-		this.destructionSnap = DBTraceUtils.upperEndpoint(lifespan);
+		this.creationSnap = lifespan.lmin();
+		this.destructionSnap = lifespan.lmax();
 		update(PATH_COLUMN, NAME_COLUMN, CREATION_SNAP_COLUMN, DESTRUCTION_SNAP_COLUMN);
 
 		this.lifespan = lifespan;
@@ -87,7 +85,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 		if (created) {
 			return;
 		}
-		lifespan = DBTraceUtils.toRange(creationSnap, destructionSnap);
+		lifespan = Lifespan.span(creationSnap, destructionSnap);
 	}
 
 	@Override
@@ -120,13 +118,13 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 			this.name = name;
 			update(NAME_COLUMN);
 			manager.trace
-					.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.CHANGED, null, this));
+					.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_CHANGED, null, this));
 		}
 	}
 
 	@Override
 	public void setCreationSnap(long creationSnap) throws DuplicateNameException {
-		setLifespan(DBTraceUtils.toRange(creationSnap, destructionSnap));
+		setLifespan(Lifespan.span(creationSnap, destructionSnap));
 	}
 
 	@Override
@@ -138,7 +136,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 
 	@Override
 	public void setDestructionSnap(long destructionSnap) throws DuplicateNameException {
-		setLifespan(DBTraceUtils.toRange(creationSnap, destructionSnap));
+		setLifespan(Lifespan.span(creationSnap, destructionSnap));
 	}
 
 	@Override
@@ -147,24 +145,23 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 	}
 
 	@Override
-	public void setLifespan(Range<Long> newLifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan newLifespan) throws DuplicateNameException {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			manager.checkConflictingPath(this, path, newLifespan);
-			Range<Long> oldLifespan = this.lifespan;
-			this.creationSnap = DBTraceUtils.lowerEndpoint(newLifespan);
-			this.destructionSnap = DBTraceUtils.upperEndpoint(newLifespan);
+			Lifespan oldLifespan = this.lifespan;
+			this.creationSnap = newLifespan.lmin();
+			this.destructionSnap = newLifespan.lmax();
 			update(CREATION_SNAP_COLUMN, DESTRUCTION_SNAP_COLUMN);
 
 			this.lifespan = newLifespan;
 
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceThreadChangeType.LIFESPAN_CHANGED, null,
-					this, oldLifespan, newLifespan));
+			manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_LIFESPAN_CHANGED,
+				null, this, oldLifespan, newLifespan));
 		}
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 
@@ -174,7 +171,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 			this.comment = comment;
 			update(COMMENT_COLUMN);
 			manager.trace
-					.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.CHANGED, null, this));
+					.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_CHANGED, null, this));
 		}
 	}
 
@@ -186,5 +183,12 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 	@Override
 	public void delete() {
 		manager.deleteThread(this);
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			return lifespan.contains(snap);
+		}
 	}
 }

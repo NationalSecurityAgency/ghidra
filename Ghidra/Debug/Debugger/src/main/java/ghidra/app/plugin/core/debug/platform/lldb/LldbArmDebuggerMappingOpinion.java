@@ -19,6 +19,8 @@ import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.DebuggerMappingOffer;
+import ghidra.debug.api.model.DebuggerMappingOpinion;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 
@@ -66,7 +68,7 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		String arch = env.getArchitecture();
 		boolean is64Bit = arch.contains("AARCH64") || arch.contains("arm64");
 		String os = env.getOperatingSystem();
-		if (os.contains("macos")) {
+		if (os.contains("macos") || os.contains("ios")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new LldbAarch64MacosOffer((TargetProcess) target));

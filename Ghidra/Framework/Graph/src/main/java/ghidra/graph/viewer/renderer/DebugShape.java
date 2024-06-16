@@ -19,11 +19,11 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.swing.SwingUtilities;
-
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.util.Swing;
 
 public class DebugShape<V, E> implements Paintable {
 
@@ -75,7 +75,7 @@ public class DebugShape<V, E> implements Paintable {
 
 		g.draw(shape);
 
-		g.setColor(Color.black);
+		g.setColor(Palette.BLACK);
 		FontMetrics fontMetrics = g.getFontMetrics();
 		Rectangle2D stringBounds = fontMetrics.getStringBounds(text, g);
 		Point location = shape.getBounds().getLocation();
@@ -88,12 +88,7 @@ public class DebugShape<V, E> implements Paintable {
 	private boolean shapeIsOutdated() {
 		if (drawingIterationID != drawingIterationCounter.get()) {
 			// we are no longer drawing this shape
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					viewer.removePostRenderPaintable(DebugShape.this);
-				}
-			});
+			Swing.runLater(() -> viewer.removePostRenderPaintable(DebugShape.this));
 			return true;
 		}
 		return false;

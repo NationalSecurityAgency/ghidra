@@ -15,8 +15,9 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import ghidra.app.services.*;
 import ghidra.app.util.bin.*;
@@ -67,8 +68,8 @@ public class ObjectiveC2_ClassAnalyzer extends AbstractAnalyzer {
 		ObjectiveC2_State state =
 			new ObjectiveC2_State(program, monitor, ObjectiveC2_Constants.CATEGORY_PATH);
 
-		try (ByteProvider provider = new MemoryByteProvider(program.getMemory(),
-			program.getAddressFactory().getDefaultAddressSpace())) {
+		try (ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false)) {
 			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
 			// Create a map of Objective-C specific memory blocks.  If this is a dyld_shared_cache

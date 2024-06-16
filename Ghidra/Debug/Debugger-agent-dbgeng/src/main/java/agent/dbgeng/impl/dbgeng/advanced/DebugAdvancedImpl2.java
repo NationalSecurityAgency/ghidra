@@ -38,7 +38,7 @@ public class DebugAdvancedImpl2 extends DebugAdvancedImpl1 {
 	public DebugThreadBasicInformation getThreadBasicInformation(DebugThreadId tid) {
 		ULONG ulWhich = new ULONG(WhichSystemObjectInformation.THREAD_BASIC_INFORMATION.ordinal());
 		ULONGLONG ullUnused = new ULONGLONG(0);
-		ULONG ulThreadId = new ULONG(tid.id);
+		ULONG ulThreadId = new ULONG(tid.value());
 		DEBUG_THREAD_BASIC_INFORMATION sInfo = new DEBUG_THREAD_BASIC_INFORMATION();
 		ULONG ulBufferSize = new ULONG(sInfo.size());
 		COMUtils.checkRC(jnaAdvanced.GetSystemObjectInformation(ulWhich, ullUnused, ulThreadId,

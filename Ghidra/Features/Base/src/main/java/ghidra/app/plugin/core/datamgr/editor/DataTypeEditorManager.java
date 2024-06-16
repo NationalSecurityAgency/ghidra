@@ -15,32 +15,29 @@
  */
 package ghidra.app.plugin.core.datamgr.editor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.ComponentProvider;
 import docking.actions.DockingToolActions;
 import docking.actions.SharedDockingActionPlaceholder;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.actions.AbstractFindReferencesToFieldAction;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.FunctionSignature;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.*;
 
 /**
  * Manages program and archive data type editors.
  */
-public class DataTypeEditorManager
-		implements EditorListener, StructureEditorOptionManager, UnionEditorOptionManager {
+public class DataTypeEditorManager implements EditorListener {
 
-	private ArrayList<EditorProvider> editorList;
+	private List<EditorProvider> editorList;
 	private EditorOptionManager editorOptionMgr; // manages editor tool options
 	private DataTypeManagerPlugin plugin;
 
@@ -136,6 +133,7 @@ public class DataTypeEditorManager
 
 	private void installEditorActions() {
 
+		// composite editor actions
 		registerAction(ApplyAction.ACTION_NAME);
 		registerAction(InsertUndefinedAction.ACTION_NAME);
 		registerAction(MoveUpAction.ACTION_NAME);
@@ -146,7 +144,7 @@ public class DataTypeEditorManager
 		registerAction(DeleteAction.ACTION_NAME);
 		registerAction(PointerAction.ACTION_NAME);
 		registerAction(ArrayAction.ACTION_NAME);
-		registerAction(FindReferencesToField.ACTION_NAME);
+		registerAction(AbstractFindReferencesToFieldAction.BASE_ACTION_NAME);
 		registerAction(UnpackageAction.ACTION_NAME);
 		registerAction(EditComponentAction.ACTION_NAME);
 		registerAction(EditFieldAction.ACTION_NAME);
@@ -155,6 +153,12 @@ public class DataTypeEditorManager
 		registerAction(ShowComponentPathAction.ACTION_NAME);
 		registerAction(AddBitFieldAction.ACTION_NAME);
 		registerAction(EditBitFieldAction.ACTION_NAME);
+		registerAction(ShowDataTypeInTreeAction.ACTION_NAME);
+
+		// enum editor actions
+		registerAction(EnumEditorProvider.ACTION_NAME_ADD);
+		registerAction(EnumEditorProvider.ACTION_NAME_APPLY);
+		registerAction(EnumEditorProvider.ACTION_NAME_DELETE);
 	}
 
 	private void registerAction(String name) {
@@ -358,14 +362,21 @@ public class DataTypeEditorManager
 			DataTypeManager dataTypeManager = editor.getDataTypeManager();
 			DataTypeManager programDataTypeManager = domainObject.getDataTypeManager();
 			if (dataTypeManager == programDataTypeManager) {
-				DataTypePath dtPath = editor.getDtPath();
-				CategoryPath categoryPath = dtPath.getCategoryPath();
-				String name = dtPath.getDataTypeName();
-				DataType dataType = programDataTypeManager.getDataType(categoryPath, name);
-				if (dataType == null || dataType.isDeleted()) {
-					dismissEditor(editor);
-					continue;
-				}
+				/*
+				
+				 It is not clear why this check was added.  It seem reasonable to always let the
+				 editor know about the event.  With this code enabled, editors with new, unsaved
+				 types will be closed.
+				
+					DataTypePath dtPath = editor.getDtPath();
+					CategoryPath categoryPath = dtPath.getCategoryPath();
+					String name = dtPath.getDataTypeName();
+					DataType dataType = programDataTypeManager.getDataType(categoryPath, name);
+					if (dataType == null || dataType.isDeleted()) {
+						dismissEditor(editor);
+						continue;
+					}
+				*/
 				editor.domainObjectRestored(domainObject);
 			}
 		}
@@ -447,18 +458,10 @@ public class DataTypeEditorManager
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.core.compositeeditor.StructureEditorOptionManager#showStructureCompOffsetInHex()
-	 */
-	@Override
 	public boolean showStructureNumbersInHex() {
 		return editorOptionMgr.showStructureNumbersInHex();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.core.compositeeditor.UnionEditorOptionManager#showUnionCompLengthInHex()
-	 */
-	@Override
 	public boolean showUnionNumbersInHex() {
 		return editorOptionMgr.showUnionNumbersInHex();
 	}
@@ -519,8 +522,8 @@ public class DataTypeEditorManager
 		PluginTool tool = plugin.getTool();
 		DTMEditFunctionSignatureDialog editSigDialog = new DTMEditFunctionSignatureDialog(
 			plugin.getTool(), "Edit Function Signature", category, functionDefinition);
-		editSigDialog.setHelpLocation(
-			new HelpLocation("DataTypeManagerPlugin", "Function_Definition"));
+		editSigDialog
+				.setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Function_Definition"));
 		tool.showDialog(editSigDialog);
 	}
 
@@ -530,31 +533,57 @@ public class DataTypeEditorManager
 
 	/**
 	 * <code>DTMEditFunctionSignatureDialog</code> provides the ability to edit the
-	 * function signature associated with a specific {@link FunctionDefinition}.  
+	 * function signature associated with a specific {@link FunctionDefinition}.
 	 * Use of this editor requires the presence of the tool-based datatype manager service.
 	 */
 	private class DTMEditFunctionSignatureDialog extends AbstractEditFunctionSignatureDialog {
-		private final FunctionDefinition functionDefinition;
+		private final FunctionDefinition functionDefinition; // may be null
 		private final FunctionSignature oldSignature;
 		private final Category category;
 
+		/**
+		 * Construct function signature editor model
+		 * @param pluginTool plugin tool
+		 * @param title Dialog title
+		 * @param category datatype category
+		 * @param functionDefinition function definition to be modified (null for new definition)
+		 */
 		DTMEditFunctionSignatureDialog(PluginTool pluginTool, String title, Category category,
 				FunctionDefinition functionDefinition) {
-			super(pluginTool, title, false, false, false);
+			super(pluginTool, title, false, true, false);
 			this.functionDefinition = functionDefinition;
 			this.category = category;
 			this.oldSignature = buildSignature();
+			if (isAdhocCallingConventionPermitted()) {
+				callingConventionComboBox.setEditable(true);
+			}
+		}
+
+		/**
+		 * Determine if an adhoc calling convention entry is permitted (i.e., text entry)
+		 * @return true if calling convention name may be edited with text entry, else false
+		 */
+		private boolean isAdhocCallingConventionPermitted() {
+			// DataTypeManager dtm = functionDefinition.getDataTypeManager();
+			// return dtm == null || dtm.getProgramArchitecture() == null;
+			// TODO: not sure we should allow unrestricted entries which could lead to using misspelled names
+			return false;
 		}
 
 		private FunctionSignature buildSignature() {
 			if (functionDefinition != null) {
 				if (category.getDataTypeManager() != functionDefinition.getDataTypeManager()) {
 					throw new IllegalArgumentException(
-						"functionDefinition and category must have same Datatypemanager");
+						"FunctionDefinition and Category must have same DataTypeManager");
 				}
 				return functionDefinition;
 			}
-			return new FunctionDefinitionDataType("newFunction");
+			return new FunctionDefinitionDataType("newFunction", category.getDataTypeManager());
+		}
+
+		@Override
+		protected boolean hasNoReturn() {
+			return functionDefinition != null ? functionDefinition.hasNoReturn() : false;
 		}
 
 		@Override
@@ -579,17 +608,21 @@ public class DataTypeEditorManager
 
 		@Override
 		protected String getCallingConventionName() {
-			return getFunctionSignature().getGenericCallingConvention().toString();
+			return getFunctionSignature().getCallingConventionName();
 		}
 
 		@Override
 		protected List<String> getCallingConventionNames() {
-			GenericCallingConvention[] values = GenericCallingConvention.values();
-			List<String> choices = new ArrayList<>();
-			for (GenericCallingConvention value : values) {
-				choices.add(value.toString());
+			// can't rely on functionDefinition which may be null for new definition
+			DataTypeManager dtMgr = getDataTypeManager();
+			if (dtMgr instanceof CompositeViewerDataTypeManager) {
+				dtMgr = ((CompositeViewerDataTypeManager) dtMgr).getOriginalDataTypeManager();
 			}
-			return choices;
+			ArrayList<String> list = new ArrayList<>();
+			list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
+			list.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
+			list.addAll(dtMgr.getDefinedCallingConventionNames());
+			return list;
 		}
 
 		@Override
@@ -613,36 +646,53 @@ public class DataTypeEditorManager
 				return false;
 			}
 
-			GenericCallingConvention callingConvention =
-				GenericCallingConvention.getGenericCallingConvention(getCallingConvention());
-			newDefinition.setGenericCallingConvention(callingConvention);
+			String callingConvention = getCallingConvention();
+			boolean hasNoReturn = hasNoReturnSelected();
+			try {
+				newDefinition.setCallingConvention(callingConvention);
+				newDefinition.setNoReturn(hasNoReturn);
 
-			DataTypeManager manager = getDataTypeManager();
-			SourceArchive sourceArchive = manager.getLocalSourceArchive();
-			if (functionDefinition == null) {
-				newDefinition.setSourceArchive(sourceArchive);
-				newDefinition.setCategoryPath(category.getCategoryPath());
-				int id = manager.startTransaction("Create Function Definition");
-				manager.addDataType(newDefinition, DataTypeConflictHandler.REPLACE_HANDLER);
-				manager.endTransaction(id, true);
-			}
-			else {
-				int id = manager.startTransaction("Edit Function Definition");
-				try {
-					if (!functionDefinition.getName().equals(newDefinition.getName())) {
-						functionDefinition.setName(newDefinition.getName());
+				DataTypeManager manager = getDataTypeManager();
+				SourceArchive sourceArchive = manager.getLocalSourceArchive();
+				if (functionDefinition == null) {
+					newDefinition.setSourceArchive(sourceArchive);
+					newDefinition.setCategoryPath(category.getCategoryPath());
+					int id = manager.startTransaction("Create Function Definition");
+					try {
+						manager.addDataType(newDefinition, DataTypeConflictHandler.REPLACE_HANDLER);
 					}
-					functionDefinition.setArguments(newDefinition.getArguments());
-					functionDefinition.setGenericCallingConvention(
-						newDefinition.getGenericCallingConvention());
-					functionDefinition.setReturnType(newDefinition.getReturnType());
-					functionDefinition.setVarArgs(newDefinition.hasVarArgs());
+					finally {
+						manager.endTransaction(id, true);
+					}
 				}
-				catch (InvalidNameException | DuplicateNameException e) {
-					// not sure why we are squashing this? ...assuming this can't happen
-					Msg.error(this, "Unexpected Exception", e);
+				else {
+					int id = manager.startTransaction("Edit Function Definition");
+					try {
+						if (!functionDefinition.getName().equals(newDefinition.getName())) {
+							functionDefinition.setName(newDefinition.getName());
+						}
+						functionDefinition.setArguments(newDefinition.getArguments());
+						if (!Objects.equals(callingConvention,
+							functionDefinition.getCallingConventionName())) {
+							functionDefinition.setCallingConvention(callingConvention);
+						}
+						functionDefinition.setReturnType(newDefinition.getReturnType());
+						functionDefinition.setVarArgs(newDefinition.hasVarArgs());
+						functionDefinition.setNoReturn(hasNoReturn);
+					}
+					catch (InvalidNameException | DuplicateNameException e) {
+						// not sure why we are squashing this? ...assuming this can't happen
+						Msg.error(this, "Unexpected Exception", e);
+					}
+					finally {
+						manager.endTransaction(id, true);
+					}
 				}
-				manager.endTransaction(id, true);
+			}
+			catch (InvalidInputException e) {
+				setStatusText("Unknown calling convention specified: " + callingConvention,
+					MessageType.ERROR);
+				return false;
 			}
 
 			return true;
@@ -655,7 +705,7 @@ public class DataTypeEditorManager
 		private String name;
 
 		DtSharedActionPlaceholder(String name) {
-			this.name = CompositeEditorTableAction.EDIT_ACTION_PREFIX + name;
+			this.name = name;
 		}
 
 		@Override

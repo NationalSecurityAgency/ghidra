@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.*;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface1.JdiModelSelectableObject;
@@ -75,7 +76,7 @@ public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl implement
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		//this.arguments = new JdiModelTargetValueContainer(this, "Arguments", frame.getArgumentValues());
 

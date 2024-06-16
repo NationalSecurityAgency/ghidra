@@ -23,9 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.Gui;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -40,6 +43,8 @@ import resources.Icons;
  * By default the progress bar and progress icon (spinning globe) are visible.
  */
 public class TaskMonitorComponent extends JPanel implements TaskMonitor {
+
+	private static final String MESSAGE_FONT_ID = "font.task.monitor.label.message";
 
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
@@ -106,8 +111,13 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		shouldCancelRunnable = () -> {
 			int currentTaskID = taskID.get();
 
+			String trailingText = "?";
+			String name = getTaskName();
+			if (!StringUtils.isBlank(name)) {
+				trailingText = " " + name + "?";
+			}
 			boolean userSaysYes = OptionDialog.showYesNoDialog(null, "Cancel?",
-				"Do you really want to cancel " + getTaskName() + "?") == OptionDialog.OPTION_ONE;
+				"Do you really want to cancel" + trailingText) == OptionDialog.OPTION_ONE;
 
 			if (userSaysYes && currentTaskID == taskID.get()) {
 				cancel();
@@ -451,7 +461,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 				// don't care
 			}
 		};
-		messageLabel.setFont(messageLabel.getFont().deriveFont((float) 10.0));
+		Gui.registerFont(messageLabel, MESSAGE_FONT_ID);
 		Dimension d = messageLabel.getPreferredSize();
 		d.width = 180;
 		messageLabel.setPreferredSize(d);
@@ -488,7 +498,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		mainContentPanel.add(progressBarPanel, BorderLayout.CENTER);
 		mainContentPanel.add(progressPanel, BorderLayout.EAST);
 
-		ImageIcon icon = Icons.STOP_ICON;
+		Icon icon = Icons.STOP_ICON;
 		cancelButton = new EmptyBorderButton(icon);
 
 		cancelButton.setName("CANCEL_TASK");

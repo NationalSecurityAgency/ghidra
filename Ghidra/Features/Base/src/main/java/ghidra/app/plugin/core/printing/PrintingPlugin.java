@@ -66,7 +66,7 @@ public class PrintingPlugin extends ProgramPlugin {
 	private PageFormat format;
 
 	public PrintingPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		setupActions();
 	}
 
@@ -74,6 +74,15 @@ public class PrintingPlugin extends ProgramPlugin {
 	public void init() {
 		super.init();
 		cvService = tool.getService(CodeViewerService.class);
+	}
+
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (pod != null) {
+			pod.dispose();
+		}
 	}
 
 	@Override
@@ -336,19 +345,19 @@ public class PrintingPlugin extends ProgramPlugin {
 						while (curAddress.compareTo(curRange.getMaxAddress()) <= 0) {
 							//Add the layout for the present address
 							BigInteger curIndex = indexMap.getIndex(curAddress);
-							
+
 							// curIndex may be null when processing resource images; just 
 							// move to the next address and try again.
 							if (curIndex == null) {
 								curAddress = curAddress.next();
-								
+
 								if (curAddress == null) {
 									break;
 								}
-								
+
 								continue;
 							}
-							
+
 							if (!curIndex.equals(lastIndex)) {
 								Layout layout = lm.getLayout(curIndex);
 								if (layout != null) {

@@ -140,11 +140,6 @@ class ChangeManager implements DomainFolderChangeListener {
 		}
 	}
 
-//    @Override
-//    public void domainFileSaved(DomainFile file, DomainObject dobj) {
-//    	treePanel.getActionManager().adjustActions();	
-//    }
-
 	@Override
 	public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 		DomainFileNode fileNode = findDomainFileNode(file, true);
@@ -152,7 +147,6 @@ class ChangeManager implements DomainFolderChangeListener {
 			fileNode.refresh();
 		}
 		treePanel.domainChange();
-//		treePanel.getActionManager().adjustActions();
 	}
 
 	private void getFolderPath(DomainFolder df, List<String> list) {
@@ -176,39 +170,14 @@ class ChangeManager implements DomainFolderChangeListener {
 			if (lazy && !folderNode.isLoaded()) {
 				return null; // not visited 
 			}
-			// must look at all children since a folder and file may have the same name
-			boolean found = false;
-			for (GTreeNode node : folderNode.getChildren()) {
-				if (!(node instanceof DomainFolderNode)) {
-					continue;
-				}
-				if (name.equals(node.getName())) {
-					folderNode = (DomainFolderNode) node;
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
+			folderNode =
+				(DomainFolderNode) folderNode.getChild(name, n -> (n instanceof DomainFolderNode));
+			if (folderNode == null) {
 				return null;
 			}
 		}
 		return folderNode;
 	}
-
-//	private DomainFileNode findDomainFileNode(DomainFolder parent, String name, boolean lazy) {
-//		DomainFolderNode folderNode = findDomainFolderNode(parent, lazy);
-//		if (folderNode == null) {
-//			return null;
-//		}
-//		if (lazy && !folderNode.isChildrenLoadedOrInProgress()) {
-//			return null; // not visited 
-//		}
-//		GTreeNode child = folderNode.getChild(name);
-//		if (child instanceof DomainFileNode) {
-//			return (DomainFileNode) child;
-//		}
-//		return null;
-//	}
 
 	private DomainFileNode findDomainFileNode(DomainFile domainFile, boolean lazy) {
 		DomainFolderNode folderNode = findDomainFolderNode(domainFile.getParent(), lazy);
@@ -219,11 +188,8 @@ class ChangeManager implements DomainFolderChangeListener {
 			return null; // not visited 
 		}
 
-		GTreeNode child = folderNode.getChild(domainFile.getName());
-		if (child instanceof DomainFileNode) {
-			return (DomainFileNode) child;
-		}
-		return null;
+		return (DomainFileNode) folderNode.getChild(domainFile.getName(),
+			n -> (n instanceof DomainFileNode));
 	}
 
 	private void updateFolderNode(DomainFolder parent) {
@@ -249,27 +215,4 @@ class ChangeManager implements DomainFolderChangeListener {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.model.DomainFolderChangeListener#domainFileObjectReplaced(ghidra.framework.model.DomainFile, ghidra.framework.model.DomainObject)
-	 */
-	@Override
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		// ignored
-	}
-
-	/*
-	 * @see ghidra.framework.model.DomainFolderChangeListener#domainFileObjectOpenedForUpdate(ghidra.framework.model.DomainFile, ghidra.framework.model.DomainObject)
-	 */
-	@Override
-	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-		// ignored
-	}
-
-	/*
-	 * @see ghidra.framework.model.DomainFolderChangeListener#domainFileObjectClosed(ghidra.framework.model.DomainFile, ghidra.framework.model.DomainObject)
-	 */
-	@Override
-	public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-		// ignored
-	}
 }

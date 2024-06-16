@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,20 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
+import java.awt.Component;
+import java.io.IOException;
+
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.program.model.data.BuiltInDataTypeManager;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.exception.DuplicateFileException;
 
-import java.awt.Component;
-import java.io.IOException;
-
-import javax.swing.ImageIcon;
-
-import resources.ResourceManager;
-
 public class BuiltInArchive implements Archive {
 
-	private static ImageIcon CLOSED_ICON = ResourceManager.loadImage("images/closedBookBrown.png");
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openBookBrown.png");
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.built.in.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.built.in.open");
 	private DataTypeManagerHandler archiveManager;
 	private BuiltInDataTypeManager dataTypeManager;
 
@@ -39,43 +37,53 @@ public class BuiltInArchive implements Archive {
 		this.dataTypeManager = dataTypeManager;
 	}
 
+	@Override
 	public DataTypeManager getDataTypeManager() {
 		return dataTypeManager;
 	}
 
+	@Override
 	public String getName() {
 		return dataTypeManager.getName();
 	}
 
+	@Override
 	public int compareTo(Archive archive) {
 		return -1; // Built-ins are always at the top 
 	}
 
+	@Override
 	public boolean isModifiable() {
 		return false; // Can't change the data types that are in Built-Ins.
 	}
 
+	@Override
 	public void close() {
 		// Not allowed to close the Built In Data Type Manager.
 	}
 
+	@Override
 	public boolean isChanged() {
 		return false; // Can't change.
 	}
 
+	@Override
 	public boolean isSavable() {
 		return false; // Can't save.
 	}
 
+	@Override
 	public void save() throws DuplicateFileException, IOException {
 		// Can't "Save" so do nothing.
 	}
 
+	@Override
 	public void saveAs(Component component) throws IOException {
 		// Can't "Save As" so do nothing.
 	}
 
-	public ImageIcon getIcon(boolean expanded) {
+	@Override
+	public Icon getIcon(boolean expanded) {
 		return expanded ? OPEN_ICON : CLOSED_ICON;
 	}
 }

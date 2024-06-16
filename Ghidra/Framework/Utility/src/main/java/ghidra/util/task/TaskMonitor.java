@@ -18,22 +18,24 @@ package ghidra.util.task;
 import ghidra.util.exception.CancelledException;
 
 /**
- * <CODE>TaskMonitor</CODE> provides an interface by means of which a
- * potentially long running task can show its progress and also check if the user
- * has cancelled the operation. 
+ * <CODE>TaskMonitor</CODE> provides an interface that allows potentially long running tasks to show
+ * progress and check for user has cancellation.
  * <p>
- * Operations that support a task monitor should periodically
- * check to see if the operation has been cancelled and abort. If possible, the 
- * operation should also provide periodic progress information. If it can estimate a 
- * percentage done, then it should use the <code>setProgress(int)</code> method, 
- * otherwise it should just call the <code>setMessage(String)</code> method. 
+ * Tasks that support a task monitor should periodically check to see if the operation has been
+ * cancelled and abort. If possible, the task should also provide periodic progress information. If
+ * your task can estimate the amount of work done, then it should use the {@link #setProgress(long)}
+ * method, otherwise it should call {@link #setMessage(String)} method to provide status updates.
  */
 public interface TaskMonitor {
 
+	/**
+	 * A 'do nothing' task monitor that can be passed to APIs when the client has not progress to
+	 * report.
+	 */
 	public static final TaskMonitor DUMMY = new StubTaskMonitor();
 
 	/**
-	 * Returns the given task monitor if it is not {@code null}.  Otherwise, a {@link #DUMMY} 
+	 * Returns the given task monitor if it is not {@code null}.  Otherwise, a {@link #DUMMY}
 	 * monitor is returned.
 	 * @param tm the monitor to check for {@code null}
 	 * @return a non-null task monitor
@@ -47,21 +49,21 @@ public interface TaskMonitor {
 
 	/**
 	 * Returns true if the user has cancelled the operation
-	 * 
+	 *
 	 * @return true if the user has cancelled the operation
 	 */
 	public boolean isCancelled();
 
 	/**
 	 * True (the default) signals to paint the progress information inside of the progress bar
-	 * 
+	 *
 	 * @param showProgressValue true to paint the progress value; false to not
 	 */
 	public void setShowProgressValue(boolean showProgressValue);
 
 	/**
 	 * Sets the message displayed on the task monitor
-	 * 
+	 *
 	 * @param message the message to display
 	 */
 	public void setMessage(String message);
@@ -81,10 +83,21 @@ public interface TaskMonitor {
 	/**
 	 * Initialized this TaskMonitor to the given max values.  The current value of this monitor
 	 * will be set to zero.
-	 * 
+	 *
 	 * @param max maximum value for progress
 	 */
 	public void initialize(long max);
+
+	/**
+	 * Initializes the progress value to 0, sets the max value and message of this monitor.
+	 * 
+	 * @param max maximum value for progress
+	 * @param message the message to display
+	 */
+	default public void initialize(long max, String message) {
+		initialize(max);
+		setMessage(message);
+	}
 
 	/**
 	 * Set the progress maximum value
@@ -95,14 +108,14 @@ public interface TaskMonitor {
 	 */
 	public void setMaximum(long max);
 
-	/** 
+	/**
 	 * Returns the current maximum value for progress
 	 * @return the maximum progress value
 	 */
 	public long getMaximum();
 
 	/**
-	 * An indeterminate task monitor may choose to show an animation instead of updating progress 
+	 * An indeterminate task monitor may choose to show an animation instead of updating progress
 	 * @param indeterminate true if indeterminate
 	 */
 	public void setIndeterminate(boolean indeterminate);
@@ -114,22 +127,61 @@ public interface TaskMonitor {
 	public boolean isIndeterminate();
 
 	/**
-	 * Check to see if this monitor has been canceled
+	 * Check to see if this monitor has been cancelled
 	 * @throws CancelledException if monitor has been cancelled
+	 * @deprecated Use {@link #checkCancelled()} instead
 	 */
+	@Deprecated(since = "10.3")
 	public void checkCanceled() throws CancelledException;
 
 	/**
-	 * A convenience method to increment the current progress by the given value
+	 * Check to see if this monitor has been cancelled
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	public default void checkCancelled() throws CancelledException {
+		// note: call checkCancelled() until it is removed; this produces the least number of changes
+		checkCanceled();
+	}
+
+	/**
+	 * Increases the progress value by 1.
+	 */
+	default public void incrementProgress() {
+		incrementProgress(1);
+	}
+
+	/**
+	 * Changes the progress value by the specified amount.
+	 * 
 	 * @param incrementAmount The amount by which to increment the progress
 	 */
 	public void incrementProgress(long incrementAmount);
 
 	/**
-	 * Returns the current progress value or {@link #NO_PROGRESS_VALUE} if there is no value
-	 * set
-	 * @return the current progress value or {@link #NO_PROGRESS_VALUE} if there is no value
-	 * set
+	 * Increases the progress value by 1, and checks if this monitor has been cancelled.
+	 * 
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	default public void increment() throws CancelledException {
+		checkCancelled();
+		incrementProgress(1);
+	}
+
+	/**
+	 * Changes the progress value by the specified amount, and checks if this monitor has 
+	 * been cancelled.
+	 * 
+	 * @param incrementAmount The amount by which to increment the progress
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	default public void increment(long incrementAmount) throws CancelledException {
+		checkCancelled();
+		incrementProgress(incrementAmount);
+	}
+
+	/**
+	 * Returns the current progress value or {@link #NO_PROGRESS_VALUE} if there is no value set
+	 * @return the current progress value or {@link #NO_PROGRESS_VALUE} if there is no value set
 	 */
 	public long getProgress();
 
@@ -164,8 +216,16 @@ public interface TaskMonitor {
 
 	/**
 	 * Clear the cancellation so that this TaskMonitor may be reused
-	 *
+	 * @deprecated Use {@link #clearCancelled()} instead
 	 */
+	@Deprecated(since = "10.3")
 	public void clearCanceled();
 
+	/**
+	 * Clear the cancellation so that this TaskMonitor may be reused
+	 */
+	public default void clearCancelled() {
+		// note: call clearCancelled() until it is removed; this produces the least number of changes
+		clearCanceled();
+	}
 }

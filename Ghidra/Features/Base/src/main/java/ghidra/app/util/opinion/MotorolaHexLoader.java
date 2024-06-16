@@ -22,8 +22,8 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -160,9 +160,10 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, LoadException, CancelledException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
 		CompilerSpec importerCompilerSpec =
@@ -170,45 +171,38 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 
 		Program prog = createProgram(provider, programName, null, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
+		List<Loaded<Program>> loadedList =
+			List.of(new Loaded<>(prog, programName, programFolderPath));
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor);
-			if (success) {
-				createDefaultMemoryBlocks(prog, importerLanguage, log);
-			}
+			loadInto(provider, loadSpec, options, log, prog, monitor);
+			createDefaultMemoryBlocks(prog, importerLanguage, log);
+			success = true;
+			return loadedList;
 		}
 		finally {
 			if (!success) {
-				prog.release(consumer);
-				prog = null;
+				release(loadedList, consumer);
 			}
 		}
-		List<Program> results = new ArrayList<Program>();
-		if (prog != null) {
-			results.add(prog);
-		}
-		return results;
 	}
 
 	@Override
-	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws IOException, LoadException, CancelledException {
 		Address baseAddr = getBaseAddr(options);
 
 		if (baseAddr == null) {
 			baseAddr = prog.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		}
-		boolean success = false;
 		try {
 			processMotorolaHex(provider, options, prog, baseAddr, monitor);
-			success = true;
 		}
 		catch (AddressOverflowException e) {
-			throw new IOException(
+			throw new LoadException(
 				"Hex file specifies range greater than allowed address space - " + e.getMessage());
 		}
-		return success;
 	}
 
 	private void processMotorolaHex(ByteProvider provider, List<Option> options, Program program,
@@ -233,7 +227,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 			new BufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
 			while ((line = in.readLine()) != null) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				int index = 0;
 				int checkSum = 0;

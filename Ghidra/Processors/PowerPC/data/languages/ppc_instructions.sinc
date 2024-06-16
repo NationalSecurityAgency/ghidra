@@ -41,8 +41,8 @@
 :addc. D,A,B	is OP=31 & D & A & B & OE=0 & XOP_1_9=10 & Rc=1	
 { 	
 	xer_ca = carry(A,B);
-	D = A + B; 
-	cr0flags(D); 
+	D = A + B;
+	cr0flags(D);
 }
 
 #addco r1,r2,r3  0x7c 22 1c 14
@@ -67,7 +67,7 @@
 {	
 	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
 	addExtendedCarry(A,B);
-	D=A + B + zextCarry; 
+	D=A + B + zextCarry;
 }
 
 #adde. r1,r2,r3  0x7c 22 19 15
@@ -127,14 +127,14 @@
 :addic D,A,SIMM		is $(NOTVLE) & OP=12 & D & A & SIMM_SIGN=0 & SIMM
 {
 	xer_ca=carry(A,SIMM);
-	D = A + SIMM; 
+	D = A + SIMM;
 }
 
 #subic r0,r0,2 0x30 00 FF FE	# addi simplified mnemonic
 :subic D,A,tmp		is $(NOTVLE) & OP=12 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
 {
 	xer_ca=carry(A,SIMM);
-	D = A + SIMM; 
+	D = A + SIMM;
 }
 
 #addic. r0,r0,5 0x34 00 00 05
@@ -149,7 +149,7 @@
 :subic. D,A,tmp		is $(NOTVLE) & OP=13 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
 {
 	xer_ca=carry(A,SIMM);
-	D = A + SIMM; 
+	D = A + SIMM;
 	cr0flags( D );
 }
 
@@ -183,7 +183,7 @@
 	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
 	local BVal:$(REGISTER_SIZE) = ~(0);
 	addExtendedCarry(A,BVal);
-	D=A + BVal + zextCarry; 
+	D=A + BVal + zextCarry;
 }
 
 #addme. r0,r0 0x7c 00 01 D5
@@ -192,7 +192,7 @@
 	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
 	local BVal:$(REGISTER_SIZE) = ~(0);
 	addExtendedCarry(A,BVal);
-	D=A + BVal + zextCarry; 
+	D=A + BVal + zextCarry;
 	cr0flags(D);
 }
 
@@ -203,7 +203,7 @@
 	local BVal:$(REGISTER_SIZE) = ~(0);
 	addExtendedOverflow(A,BVal);
 	addExtendedCarry(A,BVal);
-	D=A + BVal + zextCarry; 
+	D=A + BVal + zextCarry;
 }
 
 #addmeo. r0,r0 0x7C 00 05 D5
@@ -380,14 +380,14 @@
 								    REL_ABS & LK=0
 								    [ linkreg=0; globalset(inst_start,linkreg); ] # affects both flows, but not at this instruction
 {
-	if (CC) goto addressBD; 
+	if (CC) goto addressBD;
 }
 ## do a special linkreg setting only if linkreg is set, since this happens all over the code
 :b^CC^REL_ABS addressBD 	is linkreg=1 & OP=16 & CC & addressBD & BO_0=0 & BO_2=1 & BI_CR= 0 &
 								    REL_ABS & LK=0
 								    [ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (CC) goto addressBD; 
+	if (CC) goto addressBD;
 }
 
 #bltl LAB_0000		0x41 80 00 01
@@ -395,8 +395,8 @@
 								    REL_ABS & LK=1
 								    [ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call addressBD;
 }
 
@@ -413,8 +413,8 @@
 										REL_ABS & LK=1
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call addressBD;
 }
 
@@ -429,8 +429,8 @@
 :bd^CTR_DEC^"l"^REL_ABS addressBD 		is $(NOTVLE) & OP=16 & CTR_DEC & REL_ABS & addressBD & BO_0=1 & BO_2=0 & LK=1
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next; 
 	LR = inst_next;
+	if (!CTR_DEC) goto inst_next;
 	call addressBD;
 }
 
@@ -446,8 +446,8 @@
 :bd^CTR_DEC^CC_TF^"l"^REL_ABS CC_OP,addressBD 		is $(NOTVLE) & OP=16 & CC_TF & CTR_DEC & REL_ABS & CC_OP & addressBD & BO_0=0 & BO_2=0 & LK=1
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
 	LR = inst_next;
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	call addressBD;
 }
 
@@ -494,12 +494,12 @@
 #bgectr		0x4c 80 04 20
 :b^CC^"ctr" 	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 :b^CC^"ctr" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 
@@ -507,29 +507,29 @@
 :b^CC^"ctrl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 :b^CC^"ctrl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 
 #bgectr cr3		0x4c 8c 04 20
 :b^CC^"ctr" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 
 #bnectr cr2,#0x3 0x4c 8c 1c 20
 :b^CC^"ctr" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 
@@ -537,8 +537,8 @@
 :b^CC^"ctrl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 
@@ -546,8 +546,8 @@
 :b^CC^"ctrl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 
@@ -585,13 +585,13 @@
 :b^CC^"lr"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	return [LR];
 }
 :b^CC^"lr" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [LR];
 }
 
@@ -599,17 +599,17 @@
 :b^CC^"lrl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 :b^CC^"lrl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 
@@ -617,7 +617,7 @@
 :b^CC^"lr" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	return [LR];
 }
 
@@ -625,7 +625,7 @@
 :b^CC^"lr" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [LR];
 }
 
@@ -633,9 +633,9 @@
 :b^CC^"lrl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next;
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 
@@ -643,9 +643,9 @@
 :b^CC^"lrl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 
@@ -655,13 +655,13 @@
 :bd^CTR_DEC^"lr"  		is $(NOTVLE) & OP=19 & BH=0 & CTR_DEC & BO_0=1 & BO_2=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next; 
+	if (!CTR_DEC) goto inst_next;
 	goto [LR];
 }
 :bd^CTR_DEC^"lr" BH  		is $(NOTVLE) & OP=19 & BH & CTR_DEC & BO_0=1 & BO_2=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next; 
+	if (!CTR_DEC) goto inst_next;
 	goto [LR];
 }
 
@@ -669,17 +669,17 @@
 :bd^CTR_DEC^"lrl" 		is $(NOTVLE) & OP=19 & CTR_DEC & BH=0 & BO_0=1 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next;
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CTR_DEC) goto inst_next;
 	call [tmp];
 }
 :bd^CTR_DEC^"lrl" BH 		is $(NOTVLE) & OP=19 & CTR_DEC & BH & BO_0=1 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next;
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CTR_DEC) goto inst_next;
 	call [tmp];
 }
 
@@ -688,7 +688,7 @@
 :bd^CTR_DEC^CC_TF^"lr" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16 
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	goto [LR];
 }
 
@@ -697,7 +697,7 @@
 :bd^CTR_DEC^CC_TF^"lr" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=16 
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	goto [LR];
 }
 
@@ -706,9 +706,9 @@
 :bd^CTR_DEC^CC_TF^"lrl" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BH=0 & BO_0=0 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	call [tmp];
 }
 
@@ -717,9 +717,9 @@
 :bd^CTR_DEC^CC_TF^"lrl" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BH & BO_0=0 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	call [tmp];
 }
 
@@ -814,13 +814,13 @@
 #cntlzd  r0,r0 		0x7c 00 00 74
 :cntlzd A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=58 & Rc=0
 {
-	A = countLeadingZeros(S);
+	A = lzcount(S);
 }
 
 #cntlzd. r0,r0		0x7c 00 00 75
 :cntlzd. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=58 & Rc=1
 {
-	A = countLeadingZeros(S);
+	A = lzcount(S);
 	cr0flags(A);
 }
 @endif
@@ -828,13 +828,13 @@
 #cntlzw  r0,r0 		0x7c 00 00 34
 :cntlzw A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=26 & Rc=0
 {
-	A = countLeadingZeros(S:4);
+	A = lzcount(S:4);
 }
 
 #cntlzw. r0,r0		0x7c 00 00 35
 :cntlzw. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=26 & Rc=1
 {
-	A = countLeadingZeros(S:4);
+	A = lzcount(S:4);
 	cr0flags(A);
 }
 #===========================================================
@@ -1086,6 +1086,13 @@
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	externalControlOut(ea, S);
 }
+
+#===========================================================
+#          EIEIO
+#===========================================================
+# binutils-descr: "eieio",	X(31,854),	0xffffffff,  PPC,   BOOKE|PPCA2|PPC476,	{0}
+# binutils: mytest.d:   20:	7c 00 06 ac 	eieio
+:eieio  is OP=31 & XOP_1_10=854 & BITS_11_25=0 & BIT_0=0   { enforceInOrderExecutionIO(); }
 
 #===========================================================
 #          EQVx
@@ -1918,7 +1925,7 @@
 	local tmpfB = fB;
 	zero:4=0;
 	fD=fC;
-	if (tmpfA f> int2float(zero)) goto inst_next;
+	if (tmpfA f>= int2float(zero)) goto inst_next;
 	fD=tmpfB;
 }
 
@@ -1929,9 +1936,10 @@
 	local tmpfB = fB;
 	zero:4=0;
 	fD=fC;
-	cr1flags();
-	if (tmpfA f> int2float(zero)) goto inst_next;
+	if (tmpfA f>= int2float(zero)) goto <end>;
 	fD=tmpfB;
+<end>
+	cr1flags();
 }
 
 #fsqrt f0r,fr0	0xfc 00 00 2c
@@ -2044,13 +2052,6 @@
 	instructionCacheCongruenceClassInvalidate(ea);	
 }
 @endif
-
-#icread 0,r0           0x7c 00 07 cc
-:icread RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=998 & BIT_0=0 & RA_OR_ZERO
-{
-	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
-	instructionCacheRead(ea);	
-}
 
 #lbz	r0,3(0)		0x88 00 00 03
 #lbz	r0,3(r2)	0x88 02 00 03
@@ -2284,7 +2285,8 @@ define pcodeop lswxOp;
 #lwax r0,r2,r0	0x7c 02 02 aa	
 :lwax D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=341 & BIT_0=0
 {
-	D = sext(*:4(RA_OR_ZERO));
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = sext(*:4(ea));
 }
 @endif
 
@@ -2342,607 +2344,10 @@ define pcodeop lswxOp;
 @endif
 }
 
-#macchw r0,r0,r0	0x10 00 01 58
-:macchw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=172 & Rc=0
-{
-        D = macchw(D, A, B);
-}
-
-#macchw. r0,r0,r0	0x10 00 01 59
-:macchw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=172 & Rc=1
-{
-        D = macchw(D, A, B);
-	cr0flags(D);	
-}
-
-#macchwo r0,r0,r0	0x10 00 05 58
-:macchwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=172 & Rc=0
-{
-        D = macchw(D, A, B);
-        xer_mac_update(D, A, B);
-}
 
 @ifndef NoLegacyIntegerMultiplyAccumulate
-#macchwo. r0,r0,r0	0x10 00 05 59
-:macchwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=172 & Rc=1
-{
-        D = macchw(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
+@include "mulhwInstructions.sinc"
 @endif
-
-#macchws r0,r0,r0	0x10 00 01 d8
-:macchws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=236 & Rc=0
-{
-        D = macchws(D, A, B);
-}
-
-#macchws. r0,r0,r0	0x10 00 01 d9
-:macchws. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=236 & Rc=1
-{
-        D = macchws(D, A, B);
-	cr0flags(D);	
-}
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#macchwso r0,r0,r0	0x10 00 05 d8
-:macchwso D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=236 & Rc=0
-{
-        D = macchws(D, A, B);
-        xer_mac_update(D, A, B);
-}
-@endif
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#macchwso. r0,r0,r0	0x10 00 05 d9
-:macchwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=236 & Rc=1
-{
-        D = macchws(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-@endif
-
-#macchwsu r0,r0,r0	0x10 00 01 98
-:macchwsu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=204 & Rc=0
-{
-        D = macchwsu(D, A, B);
-}
-
-#macchwsu. r0,r0,r0	0x10 00 01 99
-:macchwsu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=204 & Rc=1
-{
-        D = macchwsu(D, A, B);
-	cr0flags(D);	
-}
-
-#macchwsuo r0,r0,r0	0x10 00 05 98
-:macchwsuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=204 & Rc=0
-{
-        D = macchwsu(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#macchwsuo. r0,r0,r0	0x10 00 05 99
-:macchwsuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=204 & Rc=1
-{
-        D = macchwsu(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#macchwu r0,r0,r0	0x10 00 01 18
-:macchwu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=140 & Rc=0
-{
-        D = macchwu(D, A, B);
-}
-
-#macchwu. r0,r0,r0	0x10 00 01 19
-:macchwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=140 & Rc=1
-{
-        D = macchwu(D, A, B);
-	cr0flags(D);	
-}
-
-#macchwuo r0,r0,r0	0x10 00 05 18
-:macchwuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=140 & Rc=0
-{
-        D = macchwu(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#macchwuo. r0,r0,r0	0x10 00 05 19
-:macchwuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=140 & Rc=1
-{
-        D = macchwu(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-
-#machhw r0,r0,r0	0x10 00 00 58
-:machhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=44 & Rc=0
-{
-        D = machhw(D, A, B);
-}
-
-#machhw. r0,r0,r0	0x10 00 00 59
-:machhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=44 & Rc=1
-{
-        D = machhw(D, A, B);
-	cr0flags(D);	
-}
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#machhwo r0,r0,r0	0x10 00 04 58
-:machhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=44 & Rc=0
-{
-        D = machhw(D, A, B);
-        xer_mac_update(D, A, B);
-}
-@endif
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#machhwo. r0,r0,r0	0x10 00 04 59
-:machhwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=44 & Rc=1
-{
-        D = machhw(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-@endif
-
-#machhws r0,r0,r0	0x10 00 00 d8
-:machhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=108 & Rc=0
-{
-        D = machhws(D, A, B);
-}
-
-#machhws. r0,r0,r0	0x10 00 00 d9
-:machhws. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=108 & Rc=1
-{
-        D = machhws(D, A, B);
-	cr0flags(D);	
-}
-
-#machhwso r0,r0,r0	0x10 00 04 d8
-:machhwso D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=108 & Rc=0
-{
-        D = machhws(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#machhwso. r0,r0,r0	0x10 00 04 d9
-:machhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=108 & Rc=1
-{
-        D = machhws(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#machhwsu r0,r0,r0	0x10 00 00 98
-:machhwsu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=76 & Rc=0
-{
-        D = machhwsu(D, A, B);
-}
-
-#machhwsu. r0,r0,r0	0x10 00 00 99
-:machhwsu. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=76 & Rc=1
-{
-        D = machhwsu(D, A, B);
-	cr0flags(D);	
-}
-
-#machhwsuo r0,r0,r0	0x10 00 04 98
-:machhwsuo D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=76 & Rc=0
-{
-        D = machhwsu(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#machhwsuo. r0,r0,r0	0x10 00 04 99
-:machhwsuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=76 & Rc=1
-{
-        D = machhwsu(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#machhwu r0,r0,r0	0x10 00 00 18
-:machhwu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=12 & Rc=0
-{
-        D = machhwu(D, A, B);
-}
-
-#machhwu. r0,r0,r0	0x10 00 00 19
-:machhwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=12 & Rc=1
-{
-        D = machhwu(D, A, B);
-	cr0flags(D);	
-}
-
-#machhwuo r0,r0,r0	0x10 00 04 18
-:machhwuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=12 & Rc=0
-{
-        D = machhwu(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#machhwuo. r0,r0,r0	0x10 00 04 19
-:machhwuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=12 & Rc=1
-{
-        D = machhwu(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-
-#maclhw r0,r0,r0	0x10 00 03 58
-:maclhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=428 & Rc=0
-{
-        D = maclhw(D, A, B);
-}
-
-#maclhw. r0,r0,r0	0x10 00 03 59
-:maclhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=428 & Rc=1
-{
-        D = maclhw(D, A, B);
-	cr0flags(D);	
-}
-
-#maclhwo r0,r0,r0	0x10 00 07 58
-:maclhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=428 & Rc=0
-{
-        D = maclhw(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#maclhwo. r0,r0,r0	0x10 00 07 59
-:maclhwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=428 & Rc=1
-{
-        D = maclhw(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#maclhws r0,r0,r0	0x10 00 03 d8
-:maclhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=492 & Rc=0
-{
-        D = maclhws(D, A, B);
-}
-
-#maclhws. r0,r0,r0	0x10 00 03 d9
-:maclhws. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=492 & Rc=1
-{
-        D = maclhws(D, A, B);
-	cr0flags(D);	
-}
-
-#maclhwso r0,r0,r0	0x10 00 07 d8
-:maclhwso D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=492 & Rc=0
-{
-        D = maclhws(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#maclhwso. r0,r0,r0	0x10 00 07 d9
-:maclhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=492 & Rc=1
-{
-        D = maclhws(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#maclhwsu r0,r0,r0	0x10 00 03 98
-:maclhwsu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=460 & Rc=0
-{
-        D = maclhwsu(D, A, B);
-}
-
-#maclhwsu. r0,r0,r0	0x10 00 03 99
-:maclhwsu. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=460 & Rc=1
-{
-        D = maclhwsu(D, A, B);
-	cr0flags(D);	
-}
-
-#maclhwsuo r0,r0,r0	0x10 00 07 98
-:maclhwsuo D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=460 & Rc=0
-{
-        D = maclhwsu(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#maclhwsuo. r0,r0,r0	0x10 00 07 99
-:maclhwsuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=460 & Rc=1
-{
-        D = maclhwsu(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#maclhwu r0,r0,r0	0x10 00 03 18
-:maclhwu D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=396 & Rc=0
-{
-        D = maclhwu(D, A, B);
-}
-@endif
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#maclhwu. r0,r0,r0	0x10 00 03 19
-:maclhwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=396 & Rc=1
-{
-        D = maclhwu(D, A, B);
-	cr0flags(D);	
-}
-@endif
-
-#maclhwuo r0,r0,r0	0x10 00 07 18
-:maclhwuo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=396 & Rc=0
-{
-        D = maclhwu(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#maclhwuo. r0,r0,r0	0x10 00 07 19
-:maclhwuo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=396 & Rc=1
-{
-        D = maclhwu(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#mulchw r0,r0,r0	0x10 00 01 50
-:mulchw D,A,B		is OP=4 & D & A & B & XOP_1_10=168 & Rc=0
-{
-        D = mulchw(D, A, B);
-}
-
-#mulchw. r0,r0,r0	0x10 00 01 51
-:mulchw. D,A,B		is OP=4 & D & A & B & XOP_1_10=168 & Rc=1
-{
-        D = mulchw(D, A, B);
-	cr0flags(D);	
-}
-
-#mulchwu r0,r0,r0	0x10 00 01 10
-:mulchwu D,A,B		is OP=4 & D & A & B & XOP_1_10=136 & Rc=0
-{
-        D = mulchwu(D, A, B);
-}
-
-#mulchwu. r0,r0,r0	0x10 00 01 11
-:mulchwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=136 & Rc=1
-{
-        D = mulchwu(D, A, B);
-	cr0flags(D);	
-}
-
-#mulhhw r0,r0,r0	0x10 00 00 50
-:mulhhw D,A,B		is OP=4 & D & A & B & XOP_1_10=40 & Rc=0
-{
-        D = mulhhw(D, A, B);
-}
-
-#mulhhw. r0,r0,r0	0x10 00 00 51
-:mulhhw. D,A,B		is OP=4 & D & A & B & XOP_1_10=40 & Rc=1
-{
-        D = mulhhw(D, A, B);
-	cr0flags(D);	
-}
-
-#mulhhwu r0,r0,r0	0x10 00 00 10
-:mulhhwu D,A,B		is OP=4 & D & A & B & XOP_1_10=8 & Rc=0
-{
-        D = mulhhwu(D, A, B);
-}
-
-#mulhhwu. r0,r0,r0	0x10 00 00 11
-:mulhhwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=8 & Rc=1
-{
-        D = mulhhwu(D, A, B);
-	cr0flags(D);	
-}
-
-#mullhw r0,r0,r0	0x10 00 03 50
-:mullhw D,A,B		is OP=4 & D & A & B & XOP_1_10=424 & Rc=0
-{
-        D = mullhw(D, A, B);
-}
-
-#mullhw. r0,r0,r0	0x10 00 03 51
-:mullhw. D,A,B		is OP=4 & D & A & B & XOP_1_10=424 & Rc=1
-{
-        D = mullhw(D, A, B);
-	cr0flags(D);	
-}
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-# mulhwu r0,r0,r0	0x10 00 03 10
-:mullhwu D,A,B		is OP=4 & D & A & B & XOP_1_10=392 & Rc=0
-{
-		D = mullhwu(D, A, B);
-}
-@endif
-
-@ifndef NoLegacyIntegerMultiplyAccumulate
-#mullhwu. r0,r0,r0	0x10 00 03 11
-:mullhwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=392 & Rc=1
-{
-        D = mullhwu(D, A, B);
-	cr0flags(D);	
-}
-@endif
-
-#nmacchw r0,r0,r0	0x10 00 01 5c
-:nmacchw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=174 & Rc=0
-{
-        D = nmacchw(D, A, B);
-}
-
-#nmacchw. r0,r0,r0	0x10 00 01 5d
-:nmacchw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=174 & Rc=1
-{
-        D = nmacchw(D, A, B);
-	cr0flags(D);	
-}
-
-#nmacchwo r0,r0,r0	0x10 00 05 5c
-:nmacchwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=174 & Rc=0
-{
-        D = nmacchw(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#nmacchwo. r0,r0,r0	0x10 00 05 5d
-:nmacchwo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=174 & Rc=1
-{
-        D = nmacchw(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#nmacchws r0,r0,r0	0x10 00 01 dc
-:nmacchws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=238 & Rc=0
-{
-        D = nmacchws(D, A, B);
-}
-
-#nmacchws. r0,r0,r0	0x10 00 01 dd
-:nmacchws. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=238 & Rc=1
-{
-        D = nmacchws(D, A, B);
-	cr0flags(D);	
-}
-
-#nmacchwso r0,r0,r0	0x10 00 05 dc
-:nmacchwso D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=238 & Rc=0
-{
-        D = nmacchws(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#nmacchwso. r0,r0,r0	0x10 00 05 dd
-:nmacchwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=238 & Rc=1
-{
-        D = nmacchws(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#nmachhw r0,r0,r0	0x10 00 00 5c
-:nmachhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=46 & Rc=0
-{
-        D = nmachhw(D, A, B);
-}
-
-#nmachhw. r0,r0,r0	0x10 00 00 5d
-:nmachhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=46 & Rc=1
-{
-        D = nmachhw(D, A, B);
-	cr0flags(D);	
-}
-
-#nmachhwo r0,r0,r0	0x10 00 04 5c
-:nmachhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=46 & Rc=0
-{
-        D = nmachhw(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#nmachhwo. r0,r0,r0	0x10 00 04 5d
-:nmachhwo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=46 & Rc=1
-{
-        D = nmachhw(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#nmachhws r0,r0,r0	0x10 00 00 dc
-:nmachhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=110 & Rc=0
-{
-        D = nmachhws(D, A, B);
-}
-
-#nmachhws. r0,r0,r0	0x10 00 00 dd
-:nmachhws. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=110 & Rc=1
-{
-        D = nmachhws(D, A, B);
-	cr0flags(D);	
-}
-
-#nmachhwso r0,r0,r0	0x10 00 04 dc
-:nmachhwso D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=110 & Rc=0
-{
-        D = nmachhws(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#nmachhwso. r0,r0,r0	0x10 00 04 dd
-:nmachhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=110 & Rc=1
-{
-        D = nmachhws(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#nmaclhw r0,r0,r0	0x10 00 03 5c
-:nmaclhw D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=430 & Rc=0
-{
-        D = nmaclhw(D, A, B);
-}
-
-#nmaclhw. r0,r0,r0	0x10 00 03 5d
-:nmaclhw. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=430 & Rc=1
-{
-        D = nmaclhw(D, A, B);
-	cr0flags(D);	
-}
-
-#nmaclhwo r0,r0,r0	0x10 00 07 5c
-:nmaclhwo D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=430 & Rc=0
-{
-        D = nmaclhw(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#nmaclhwo. r0,r0,r0	0x10 00 07 5d
-:nmaclhwo. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=430 & Rc=1
-{
-        D = nmaclhw(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
-
-#nmaclhws r0,r0,r0	0x10 00 03 dc
-:nmaclhws D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=494 & Rc=0
-{
-        D = nmaclhws(D, A, B);
-}
-
-#nmaclhws. r0,r0,r0	0x10 00 03 dd
-:nmaclhws. D,A,B	is OP=4 & D & A & B & OE=0 & XOP_1_9=494 & Rc=1
-{
-        D = nmaclhws(D, A, B);
-	cr0flags(D);	
-}
-
-#nmaclhwso r0,r0,r0	0x10 00 07 dc
-:nmaclhwso D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=494 & Rc=0
-{
-        D = nmaclhws(D, A, B);
-        xer_mac_update(D, A, B);
-}
-
-#nmaclhwso. r0,r0,r0	0x10 00 07 dd
-:nmaclhwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=494 & Rc=1
-{
-        D = nmaclhws(D, A, B);
-        xer_mac_update(D, A, B);
-	cr0flags(D);	
-}
 
 #mcrf cr0,cr0	0x4c 00 00 00
 :mcrf CRFD,CRFS		is $(NOTVLE) & OP=19 & CRFD & BITS_21_22=0 & CRFS & BITS_0_17=0 
@@ -2975,7 +2380,7 @@ define pcodeop lswxOp;
 			zext(cr4 & 0xf) << 12 |
 			zext(cr5 & 0xf) << 8 |
 			zext(cr6 & 0xf) << 4 |
-			zext(cr7 & 0xf); 
+			zext(cr7 & 0xf);
 @ifdef BIT_64
 	D = zext(tmp);
 @else
@@ -3028,7 +2433,7 @@ define pcodeop lswxOp;
 @else
 	tmp:$(REGISTER_SIZE) = (B >> 28);
 @endif
-	D = *[register]:4 ($(SEG_REGISTER_BASE)+tmp); 
+	D = *[register]:4 ($(SEG_REGISTER_BASE)+tmp);
 }
 
 #mtcrf 10,r0		0x7c 01 01 20
@@ -3087,13 +2492,13 @@ define pcodeop lswxOp;
 	tmp:4 = 0;
 	packFPSCR(tmp);
 	
-	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28; 
-	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24; 
-	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20; 
-	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16; 
-	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12; 
-	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8; 
-	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4; 
+	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28;
+	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24;
+	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20;
+	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16;
+	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12;
+	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8;
+	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4;
 	mask7:4 = zext((FM7:1 == 1)* 0xf);
 	
 	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
@@ -3109,13 +2514,13 @@ define pcodeop lswxOp;
 	tmp:4 = 0;
 	packFPSCR(tmp);
 	
-	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28; 
-	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24; 
-	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20; 
-	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16; 
-	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12; 
-	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8; 
-	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4; 
+	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28;
+	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24;
+	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20;
+	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16;
+	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12;
+	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8;
+	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4;
 	mask7:4 = zext((FM7:1 == 1)* 0xf);
 	
 	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
@@ -3151,29 +2556,41 @@ define pcodeop lswxOp;
 	cr1flags();
 }
 
-# This instruction is not exclusive to 64 bit processors, per page 1259 of the PowerISA manual.
-# However, it does seem to require 64 bit registers, so it is currently restricted to 64 bit machines.
+# This instruction is not exclusive to 64 bit processors, per page 1405 of the PowerISA manual.
+# Prior to the Power ISA introduction, PowerPC architecture had 32-bit versions of the MSR in 32-bit implementations.
+# Since this instruction requires 64-bit processsors, it is currently restricted to 64 bit machines.
+# mtmsrd varies from processor to processor. This version is consistent with PowerISA v2.07B
 @ifdef BIT_64
 #mtmsrd r0,0		0x7c 00 01 64
 :mtmsrd S,0		is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & MSR_L=0 & BITS_11_15=0 & XOP_1_10=178 & BIT_0=0
 {
-	bit0:8 = S >> 63 & 1;
-	bit1:8 = S >> 62 & 1;
-	bit49:8 = (S >> 14)& 1;	
-	bit59:8 = (S >> 4) & 1;	
-	tmp:8 = S & 0x6fffffffffff6fcf;  
-	tmp = tmp & ((bit0 | bit1) << 63);
-	tmp = tmp & ((bit59 | bit49) << 5);
-	MSR = MSR & 0xefffffff00009020 | tmp;
+	local bit59:$(REGISTER_SIZE) = (S >> 4)  & 1;	#bit 59
+	local bit58:$(REGISTER_SIZE) = (S >> 5)  & 1;	#bit 58
+	local bit49:$(REGISTER_SIZE) = (S >> 14) & 1;	#bit 49
+	local bit48:$(REGISTER_SIZE) = (S >> 15) & 1;	#bit 48
+	
+	local bits2931:$(REGISTER_SIZE) = zext(S[32,3]); #bits 29-31
+	local mbits2931:$(REGISTER_SIZE) = zext(MSR[32,3]); #bits 29-31
+	local cond = (mbits2931 != 0x2)|(bits2931 != 0);
+	bits2931 = (zext(cond) * bits2931) + (zext(!cond) * mbits2931);
+	local mask:$(REGISTER_SIZE) =0xeffffff8ffff6fce;
+	tmp:8 = S & mask; #preserves (RS) 0:2 4:40 42:47 49:50 52:57 60:62
+
+	tmp = tmp | (bits2931) << 32;
+	tmp = tmp | ((bit48 | bit49) << 15); # MSR 48 <- (RS) 48 | (RS) 49
+	tmp = tmp | ((bit58 | bit49) << 5);  # MSR 58 <- (RS) 58 | (RS) 49
+	tmp = tmp | ((bit59 | bit49) << 4);  # MSR 59 <- (RS) 59 | (RS) 49
+	MSR = (MSR & ~mask) | tmp;
 }
 
 #mtmsrd r0,1		0x7c 01 01 64
 :mtmsrd S,1		is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=178 & BIT_0=0 
 {
-	mask:8 = 0x000000000000fffe & S;
+	mask:$(REGISTER_SIZE) = 0x8002;
 	MSR = (MSR & ~mask) | (S & mask);
 }
 @endif
+
 CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #mtocrf 10,r0		0x7c 21 01 20
 :mtocrf CRM_val,S	is OP=31 & S & BIT_20=1 & CRM_val & CRM0 & CRM1 & CRM2 & CRM3 & CRM4 & CRM5 & CRM6 & CRM7 & BIT_11=0 & XOP_1_10=144 & BIT_0=0 
@@ -3301,26 +2718,26 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :mulhwu D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=11 & Rc=0	
 { 
 @ifdef BIT_64
-	tmp:8 = zext(A:4) * zext(B:4); 
-	tmp2:4 = tmp(4); 
+	tmp:8 = zext(A:4) * zext(B:4);
+	tmp2:4 = tmp(4);
 	D=zext(tmp2);
 @else
 	tmp:8 = zext(A) * zext(B);
-	D = tmp(4); 
+	D = tmp(4);
 @endif 
 }
 #mulhwu.	r0,r0,r0	0x7c 00 00 17
 :mulhwu. D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=11 & Rc=1	
 { 
 @ifdef BIT_64
-	tmp:8 = zext(A:4) * zext(B:4); 
-	tmp2:4 = tmp(4); 
+	tmp:8 = zext(A:4) * zext(B:4);
+	tmp2:4 = tmp(4);
 	D=zext(tmp2);
 @else
 	tmp:8 = zext(A) * zext(B);
-	D = tmp(4); 
+	D = tmp(4);
 @endif 
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 @ifdef BIT_64
@@ -3361,7 +2778,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #mulli r0,r0,r0		0x1C 00 00 00
 :mulli D,A,SIMM		is $(NOTVLE) & OP=7 & D & A & SIMM				
 {
- 	D = A * SIMM; 
+ 	D = A * SIMM;
 }
 
 #mullw r0,r0,r0		0x7C 00 01 D6
@@ -3382,7 +2799,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 @else
 	D = A*B;
 @endif
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 #mullwo r0,r0,r0		0x7C 00 05 D6
@@ -3409,7 +2826,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	mulOverflow64(tmp);
 	D = tmp:4;
 @endif
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 #nand r0,r0,r0 0x7C 00 03 B8
@@ -3516,30 +2933,30 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #rldcl r0,r0,r0,0	0x78 00 00 10
 :rldcl A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=8 & Rc=0
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 }
 #rldcl. r0,r0,r0,0	0x78 00 00 11
 :rldcl. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=8 & Rc=1
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 	cr0flags(A);
 }
 #rldcr r0,r0,r0,0	0x78 00 00 12
 :rldcr A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=0 & rotmask_Z
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & rotmask_Z; 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & rotmask_Z;
 }
 #rldcr. r0,r0,r0,0	0x78 00 00 13
 :rldcr. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=1 & rotmask_Z
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = tmp & rotmask_Z;  
 	cr0flags(A);
 }
@@ -3548,15 +2965,15 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :rldic A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=0 & rotmask_SH
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = tmp & rotmask_SH;
 }
 #rldic. r0,r0,r0,0	0x78 00 00 09
 :rldic. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=1 & rotmask_SH
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & rotmask_SH; 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & rotmask_SH;
 	cr0flags(A);
 }
 
@@ -3564,44 +2981,44 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :rldicl A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=0
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 }
 #rldicl. r0,r0,r0,0	0x78 00 00 01
 :rldicl. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=1
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 	cr0flags(A);
 }
 #rldicr r0,r0,r0,0	0x78 00 00 04
 :rldicr A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=1 & Rc=0
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff << (63-MB)); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff << (63-MB));
 }
 #rldicr. r0,r0,r0,0	0x78 00 00 05
 :rldicr. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=1 & Rc=1
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff << (63-MB)); 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff << (63-MB));
 	cr0flags(A);
 }
 #rldimi r0,r0,r0,0	0x78 00 00 0c
 :rldimi A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=0 & rotmask_SH
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = (tmp & rotmask_SH) | (A & ~rotmask_SH);
 }
 #rldimi. r0,r0,r0,0	0x78 00 00 0d
 :rldimi. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=1 & rotmask_SH
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = (tmp & rotmask_SH) | (A & ~rotmask_SH);
 	cr0flags(A);
 }
@@ -3618,7 +3035,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = (tmp2 & rotmask) | (A & ~(rotmask));
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask) | (A & ~rotmask);
 @endif
 }
@@ -3632,7 +3049,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = (tmp2 & rotmask) | (A & ~(rotmask));
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask) | (A & ~rotmask);
 @endif
 	cr0flags(A);
@@ -3647,7 +3064,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 }
@@ -3661,7 +3078,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 	cr0flags(A);
@@ -3676,7 +3093,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 }
@@ -3690,7 +3107,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 	cr0flags(A);
@@ -4075,7 +3492,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :sthbrx S,RA_OR_ZERO,B			is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=918 & BIT_0=0
 {
 	tmp:2 = zext(S:1) <<8;
-	tmp2:2 = S:2 >>8; 
+	tmp2:2 = S:2 >>8;
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*:2(ea) = tmp2 | tmp;
 }
@@ -4233,7 +3650,7 @@ define pcodeop stswxOp;
 { 	
 	xer_ca = (A <= B);
 	D = B - A;
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 #subfco r0,r0,r0  0x7c 00 04 10
@@ -4256,15 +3673,15 @@ define pcodeop stswxOp;
 #subfe r0,r0,r0  0x7c 00 01 10
 :subfe D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=0
 {	
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	subExtendedCarry(B,A);
-	D = B - tmp; 
+	D = B - tmp;
 }
 
 #subfe. r0,r0,r0  0x7c 00 01 11
 :subfe. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=1	
 { 	
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	subExtendedCarry(B,A);
 	D = B - tmp;
 	cr0flags(D);
@@ -4274,7 +3691,7 @@ define pcodeop stswxOp;
 :subfeo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=0
 { 
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
-	subExtendedOverflow(B,A); 
+	subExtendedOverflow(B,A);
 	subExtendedCarry(B,A);
 	D = B - tmp;
 }
@@ -4282,7 +3699,7 @@ define pcodeop stswxOp;
 #subfeo. r0,r0,r0  0x7c 00 05 11
 :subfeo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=1
 { 	
-	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
 	subExtendedOverflow(B,A);
 	subExtendedCarry(B,A);
 	D = B - tmp;
@@ -4292,14 +3709,14 @@ define pcodeop stswxOp;
 #subfic r0,r0,2 0x20 00 00 02
 :subfic D,A,SIMM		is $(NOTVLE) & OP=8 & D & A & SIMM
 {
-	xer_ca = !(SIMM<A); 
+	xer_ca = !(SIMM<A);
 	D = SIMM - A;
 }
 
 #subfme r0,r0	0x7c 00 01 d0
 :subfme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=0
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedCarry(Bval,A);
 	D = Bval - tmp;
@@ -4308,7 +3725,7 @@ define pcodeop stswxOp;
 #subfme. r0,r0	0x7c 00 01 d1
 :subfme. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=1
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedCarry(Bval,A);
 	D = Bval - tmp;
@@ -4317,7 +3734,7 @@ define pcodeop stswxOp;
 
 :subfmeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=0
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedOverflow(Bval,A);
 	subExtendedCarry(Bval,A);
@@ -4327,7 +3744,7 @@ define pcodeop stswxOp;
 #subfmeo. r0,r0	0x7c 00 05 d1
 :subfmeo. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=1
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedOverflow(Bval,A);
 	subExtendedCarry(Bval,A);
@@ -4496,7 +3913,7 @@ define pcodeop TLBSynchronize; # Outputs/affect TBD
 }
 
 #xor. r0,r0,r0	0x7c 00 02 79
-:xor. A,S,B		is $(NOTVLE) & OP=31 & S & A & B & XOP_1_10=316 & Rc=1
+:xor. A,S,B		is OP=31 & S & A & B & XOP_1_10=316 & Rc=1
 {
 	A = S ^ B;
 	cr0flags(A);

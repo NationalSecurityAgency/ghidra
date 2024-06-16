@@ -14,19 +14,19 @@ crc32_type: "w"		is TMode=1 & thv_c0405=0b10 { }
 
 define pcodeop Crc32Calc;
 
-# F5.1.39,40 p2650,2653 CRC32,CRC32C A1
+# F5.1.39,40 p7226,7229 CRC32,CRC32C A1
 :crc32^crc32_type	Rd,Rn,Rm
 	is TMode=0 & c2831=0b1110 & c2327=0b00010 & c2020=0 & c0407=0b0100 & c1011=0b00 & c0808=0
 	& crc32_type & Rn & Rd & Rm
 	{ Rd = Crc32Calc(Rn,Rm); }
 
-# F5.1.39 p2650 CRC32 T1
+# F5.1.39 p7226 CRC32 T1
 :crc32^crc32_type	thv_Rt2,thv_Rn,thv_Rm
 	is TMode=1 & thv_c2031=0b111110101100 & thv_c1215=0b1111 & thv_c0607=0b10
 	& crc32_type & thv_Rn & thv_Rt2 & thv_Rm
 	{ thv_Rt2 = Crc32Calc(thv_Rn,thv_Rm); }
 
-# F5.1.40 p2653 CRC32C T1
+# F5.1.40 p7229 CRC32C T1
 :crc32c^crc32_type	thv_Rt2,thv_Rn,thv_Rm
 	is TMode=1 & thv_c2031=0b111110101101 & thv_c1215=0b1111 & thv_c0607=0b10
 	& crc32_type & thv_Rn & thv_Rt2 & thv_Rm
@@ -38,12 +38,12 @@ dcps_lev:1		is TMode=1 & thv_c0001=0b01 { export 1:1; }
 dcps_lev:2		is TMode=1 & thv_c0001=0b10 { export 2:1; }
 dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 
-# F5.1.42 p2657 DCPS1,DCPS2,DCPS3 DSPS1 variant
+# F5.1.43 p7235 DCPS1,DCPS2,DCPS3 DSPS1 variant
 :dcps^dcps_lev
 	is TMode=1 & thv_c1631=0b1111011110001111 & thv_c0215=0b10000000000000 & (thv_c0101=1 | thv_c0000=1) & dcps_lev
 	{ DCPSInstruction(dcps_lev:1); }
 
-# F5.1.53 p2683 LDA
+# F5.1.57 p7268 LDA
 :lda^COND Rd,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xc9f
 	{
@@ -51,7 +51,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = *Rn;
 	}
 
-# F5.1.53 p2683 LDA
+# F5.1.57 p7268 LDA
 :lda thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1010
 	& ItCond & thv_Rn & thv_Rt
@@ -60,7 +60,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rt = *thv_Rn;
 	}
 
-# F5.1.54 p2684 LDAB
+# F5.1.58 p7270 LDAB
 :ldab^COND Rd,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xc9f
 	{
@@ -69,7 +69,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = zext(val);
 	}
 
-# F5.1.54 p2684 LDAB
+# F5.1.58 p7270 LDAB
 :ldab thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1000
 	& ItCond & thv_Rt & thv_Rn
@@ -79,7 +79,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rt = zext(val);
 	}
 
-# F5.1.55 p2685 LDAEX
+# F5.1.59 p7272 LDAEX
 :ldaex^COND Rd,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xe9f
 	{
@@ -87,7 +87,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = *Rn;
 	}
 
-# F5.1.55 p2685 LDAEX
+# F5.1.59 p7272 LDAEX
 :ldaex thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1110
 	& ItCond & thv_Rt & thv_Rn
@@ -96,7 +96,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rt = *thv_Rn;
 	}
 
-# F5.1.56 p2687 LDAEXB
+# F5.1.60 p7274 LDAEXB
 :ldaexb^COND Rd,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xe9f
 	{
@@ -105,7 +105,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = zext(val);
 	}
 
-# F5.1.56 p2687 LDAEXB
+# F5.1.60 p7274 LDAEXB
 :ldaexb thv_Rt,thv_Rn
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1100
 	& ItCond & thv_Rt & thv_Rn
@@ -115,7 +115,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rt = zext(val);
 	}
 
-# F5.1.57 p2689 LDAEXD
+# F5.1.61 p7274 LDAEXD
 :ldaexd^COND Rd,Rd2,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xe9f
 	{
@@ -129,7 +129,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 @endif	# ENDIAN == "little"
 	}
 
-# F5.1.57 p2689 LDAEXD
+# F5.1.61 p7274 LDAEXD
 :ldaexd thv_Rt,thv_Rt2,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1111
 	& ItCond & thv_Rt & thv_Rt2 & thv_Rn
@@ -144,7 +144,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 @endif	# ENDIAN == "little"
 	}
 
-# F5.1.58 p2691 LDAEXH
+# F5.1.62 p7278 LDAEXH
 :ldaexh^COND Rd,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xe9f
 	{
@@ -153,7 +153,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = zext(val);
 	}
 
-# F5.1.58 p2691 LDAEXH
+# F5.1.62 p7278 LDAEXH
 :ldaexh thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1101
 	& ItCond & thv_Rt & thv_Rn
@@ -163,7 +163,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rt = zext(val);
 	}
 
-# F5.1.59 p2693 LDAH
+# F5.1.63 p7280 LDAH
 :ldah^COND Rd,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xc9f
 	{
@@ -172,7 +172,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = zext(val);
 	}
 
-# F5.1.59 p2693 LDAH
+# F5.1.63 p7280 LDAH
 :ldah thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1001
 	& ItCond & thv_Rt & thv_Rn
@@ -182,7 +182,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rt = zext(val);
 	}
 
-# F5.1.178 p2969 SEVL A1 variant
+# F5.1.185 p7573 SEVL A1 variant
 :sevl^COND
 	is TMode=0 & ARMcond=1 & COND & c1627=0b001100100000 & c0007=0b00000101
 	{
@@ -190,7 +190,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		SendEvent();
 	}
 
-# F5.1.178 p2969 SEVL T2 variant
+# F5.1.185 p7573 SEVL T2 variant
 :sevl.w
 	is TMode=1 & thv_c2031=0b111100111010 & thv_c1415=0b10 & thv_c1212=0 & thv_c0010=0b00000000101
 	& ItCond
@@ -199,7 +199,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		SendEvent();
 	}
 
-# F5.1.209 p3035 STL
+# F5.1.217 p7642 STL
 :stl^COND Rm,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x18 & Rn & c0415=0xfc9 & Rm
 	{
@@ -207,7 +207,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		*Rn = Rm;
 	}
 
-# F5.1.209 p3035 STL
+# F5.1.217 p7642 STL
 :stl thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1010
 	& ItCond & thv_Rt & thv_Rn
@@ -216,7 +216,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		*thv_Rn = thv_Rt;
 	}
 
-# F5.1.210 p3036 STLB
+# F5.1.218 p7644 STLB
 :stlb^COND Rm,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1c & Rn & c0415=0xfc9 & Rm
 	{
@@ -224,7 +224,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		*:1 Rn = Rm[0,8];
 	}
 
-# F5.1.210 p3036 STLB
+# F5.1.218 p7644 STLB
 :stlb thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1000
 	& ItCond & thv_Rt & thv_Rn
@@ -233,7 +233,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		*:1 thv_Rn = thv_Rt[0,8];
 	}
 
-# F5.1.211 p3037 STLEX
+# F5.1.219 p7646 STLEX
 :stlex^COND Rd,Rm,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x18 & Rn & Rd & c0411=0xe9 & Rm
 	{
@@ -242,7 +242,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = 0;
 	}
 
-# F5.1.211 p3037 STLEX
+# F5.1.219 p7646 STLEX
 :stlex thv_Rm,thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1110
 	& ItCond & thv_Rm & thv_Rt & thv_Rn
@@ -252,7 +252,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rm = 0;
 	}
 
-# F5.1.212 p3040 STLEXB
+# F5.1.220 p7649 STLEXB
 :stlexb^COND Rd,Rm,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1c & Rn & Rd & c0411=0xe9 & Rm
 	{
@@ -261,7 +261,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = 0;
 	}
 
-# F5.1.212 p3040 STLEXB
+# F5.1.220 p7649 STLEXB
 :stlexb thv_Rm,thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1100
 	& ItCond & thv_Rm & thv_Rt & thv_Rn
@@ -271,7 +271,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rm = 0;
 	}
 
-# F5.1.213 p3042 STLEXD
+# F5.1.221 p7651 STLEXD
 :stlexd^COND Rd,Rm,Rm2,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1a & Rn & Rd & c0411=0xe9 & Rm & Rm2
 	{
@@ -286,7 +286,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = 0;
 	}
 
-# F5.1.213 p3042 STLEXD
+# F5.1.221 p7651 STLEXD
 :stlexd thv_Rm,thv_Rt,thv_Rt2,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1111
 	& ItCond & thv_Rm & thv_Rt & thv_Rt2 & thv_Rn
@@ -302,7 +302,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rm = 0;
 	}
 
-# F5.1.214 p3045 STLEXH
+# F5.1.222 p7654 STLEXH
 :stlexh^COND Rd,Rm,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1e & Rn & Rd & c0411=0xe9 & Rm
 	{
@@ -311,7 +311,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		Rd = 0;
 	}
 
-# F5.1.214 p3045 STLEXH
+# F5.1.222 p7654 STLEXH
 :stlexh thv_Rm,thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1101
 	& ItCond & thv_Rm & thv_Rt & thv_Rn
@@ -321,7 +321,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		thv_Rm = 0;
 	}
 
-# F5.1.215 p3048 STLH
+# F5.1.223 p7657 STLH
 :stlh^COND Rm,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1e & Rn & c0415=0xfc9 & Rm
 	{
@@ -329,7 +329,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 		*:2 Rn = Rm[0,16];
 	}
 
-# F5.1.215 p3048 STLH
+# F5.1.223 p7657 STLH
 :stlh thv_Rt,[thv_Rn]
 	is TMode=1 & thv_c2031=0b111010001100 & thv_c0407=0b1001
 	& ItCond & thv_Rt & thv_Rn
@@ -363,11 +363,7 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 #######
 # pcodeop declarations
 
-# CryptOp(val)
-#	Various crypto algorithms, too numerous for explication at
-#	this time
 
-define pcodeop CryptOp;
 
 # FixedToFP(fp, M, N, fbits, unsigned, rounding)
 # 	Convert M-bit fixed point with fbits fractional bits to N-bit
@@ -416,176 +412,38 @@ define pcodeop FPRoundInt;
 
 define pcodeop PolynomialMult;
 
-#######
-# AESD single round decryption
 
-# F6.1.1 p3235 A1/T1
-:aesd.8		Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b00 &     c1617=0b00 &     c0611=0b001101 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b00 & thv_c1617=0b00 & thv_c0611=0b001101 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qd | Qm); }
-
-#######
-# AESE single round encryption
-
-# F6.1.2 p3237 A1/T1
-:aese.8		Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b00 &     c1617=0b00 &     c0611=0b001100 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b00 & thv_c1617=0b00 & thv_c0611=0b001100 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qd | Qm); }
-
-#######
-# AESIMC inverse mix columns
-
-# F6.1.3 p3239 A1/T1
-:aesimc.8	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b00 &     c1617=0b00 &     c0611=0b001111 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b00 & thv_c1617=0b00 & thv_c0611=0b001111 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qm); }
-
-#######
-# AESMC mix columns
-
-# F6.1.4 p3240 A1/T1
-:aesmc.8	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b00 &     c1617=0b00 &     c0611=0b001110 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b00 & thv_c1617=0b00 & thv_c0611=0b001110 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qm); }
-
-#######
-# SHA1C SHA1 hash update (choose)
-
-# F6.1.7 p3248 A1/T1
-:sha1c.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00100 &     c2021=0b00 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11110 & thv_c2021=0b00 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
-
-#######
-# SHA1H SHA1 fixed rotate
-
-# F6.1.8 p3250 A1/T1
-:sha1h.32	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b01 &     c0611=0b001011 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b01 & thv_c0611=0b001011 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qm); }
-
-#######
-# SHA1M SHA1 hash update (majority)
-
-# F6.1.9 p3251 A1/T1
-:sha1m.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00100 &     c2021=0b10 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11110 & thv_c2021=0b10 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
-
-#######
-# SHA1P SHA1 hash update (parity)
-
-# F6.1.10 p3253 A1/T1
-:sha1p.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00100 &     c2021=0b01 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11110 & thv_c2021=0b01 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
-
-#######
-# SHA1SU0 SHA1 schedule update 0
-
-# F6.1.11 p3255 A1/T1
-:sha1su0.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00100 &     c2021=0b11 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11110 & thv_c2021=0b11 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
-
-#######
-# SHA1SU1 SHA1 schedule update 1
-
-# F6.1.12 p3257 A1/T1
-:sha1su1.32	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c0611=0b001110 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b10 & thv_c0611=0b001110 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qd,Qm); }
-
-#######
-# SHA256H SHA256 hash update part 1
-
-# F6.1.13 p3259 A1/T1
-:sha256h.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b00 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
-
-#######
-# SHA256H2 SHA256 hash update part 2
-
-# F6.1.14 p3260 A1/T1
-:sha256h2.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b01 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
-
-#######
-# SHA256SU0 SHA256 schedule update 0
-
-# F6.1.15 p3261 A1/T1
-:sha256su0.32	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c0611=0b001111 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b10 & thv_c0611=0b001111 & thv_c0404=0))
-	& Qd & Qm
-	{ Qd = CryptOp(Qd,Qm); }
-
-#######
-# SHA256SU1 SHA256 schedule update 1
-
-# F6.1.16 p3263 A1/T1
-:sha256su1.32	Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1100 &     c0606=1 &     c0404=0)
-	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b10 & thv_c0811=0b1100 & thv_c0606=1 & thv_c0404=0))
-	& Qn & Qd & Qm
-	{ Qd = CryptOp(Qd,Qn,Qm); }
 
 #######
 # The VCVT instructions are a large family for converting between
 # floating point numbers and integers, of all sizes and combinations
 
-# F6.1.54 p3350 A1 cases size = 10 (c0809)
+# F6.1.58 p7998 A1 cases size = 10 (c0809)
 :vcvt^COND^".f64.f32"	Dd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11011 &     c1616=1 &     c1011=0b10 &     c0707=1 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11011 & thv_c1616=1 & thv_c1011=0b10 & thv_c0707=1 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& COND & Dd & Sm
 	{ build COND; Dd = float2float(Sm); }
 
-# F6.1.54 p3350 A1 cases size = 11 (c0809)
+# F6.1.58 p7998 A1 cases size = 11 (c0809)
 :vcvt^COND^".f32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11011 &     c1616=1 &     c1011=0b10 &     c0707=1 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11011 & thv_c1616=1 & thv_c1011=0b10 & thv_c0707=1 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
 	& COND & Sd & Dm
 	{ build COND; Sd = float2float(Dm); }
 
-# F6.1.55 p3352 A1 op == 1 (c0808)
+# F6.1.59 p8000 A1 op == 1 (c0808)
 :vcvt.f32.f16	Qd,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b01 & thv_c1617=0b10 & thv_c0911=0b011 & thv_c0607=0b00 & thv_c0404=0 & thv_c0808=1))
 	& Qd & Dm
 	{ 
 		Qd = float2float(Dm:2);
 	}
 
-# F6.1.55 p3352 A1 op == 0 (c0808)
+# F6.1.59 p8000 A1 op == 0 (c0808)
 :vcvt.f16.f32	Dd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b01 & thv_c1617=0b10 & thv_c0911=0b011 & thv_c0607=0b00 & thv_c0404=0 & thv_c0808=0))
 	& Dd & Qm
 	{ Dd = float2float(Qm); }
@@ -632,42 +490,42 @@ vcvt_56_128_dt: ".u32.f32"
 	& Qd & Qm
 	{ Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, $(FPRounding_ZERO)); }
 
-# F6.1.56 p3354 A1 Q == 0 (c0606)
+# F6.1.60 p8002 A1 Q == 0 (c0606)
 :vcvt^vcvt_56_64_dt	Dd,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c0911=0b011 & thv_c0404=0 & thv_c0606=0))
 	& vcvt_56_64_dt & Dd & Dm
-	{ }
+    { }
 
-# F6.1.56 p3354 A1 Q == 1 (c0606)
+# F6.1.60 p8002 A1 Q == 1 (c0606)
 :vcvt^vcvt_56_128_dt	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c0911=0b011 & thv_c0404=0 & thv_c0606=1))
 	& vcvt_56_128_dt & Qd & Qm
 	{ }
 
-# F6.1.57 p3356 A1 opc2==100 && size==10 (c1618, c0809)
+# F6.1.61 p8005 A1 opc2==100 && size==10 (c1618, c0809)
 :vcvt^COND^".u32.f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b10))
 	& COND & Sd & Sm
-	{ build COND; Sd = trunc(Sm); }
+	{ build COND; Sd = zext(Sm f> 0) * (trunc(Sm)); }
 
-# F6.1.57 p3356 A1 opc2==101 && size==10 (c1618, c0809)
+# F6.1.61 p8005 A1 opc2==101 && size==10 (c1618, c0809)
 :vcvt^COND^".s32.f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b10))
 	& COND & Sd & Sm
-	{ build COND; Sd = trunc(Sm); }
+	{ build COND; Sd = trunc(Sm);  }
 
-# F6.1.57 p3356 A1 opc2==100 && size==11 (c1618, c0809)
+# F6.1.61 p8005 A1 opc2==100 && size==11 (c1618, c0809)
 :vcvt^COND^".u32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b11))
 	& COND & Sd & Dm
-	{ build COND; local tmp:8 = trunc(Dm); Sd = tmp:4; }
+	{ build COND; local tmp:8 = zext(Dm f> 0) * (trunc(Dm)); Sd = tmp:4; }
 
-# F6.1.57 p3356 A1 opc2==101 && size==11 (c1618, c0809)
+# F6.1.61 p8005 A1 opc2==101 && size==11 (c1618, c0809)
 :vcvt^COND^".s32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b11))
@@ -698,14 +556,14 @@ vcvt_58_6432_dt: ".f64.s32"
 	& Dd & Sm
 	{ local tmp:8 = sext(Sm); Dd = int2float(tmp); }
 
-# F6.1.58 p3359 A1 size == 10 (c0809)
+# F6.1.62 p8009 A1 size == 10 (c0809)
 :vcvt^COND^vcvt_58_3232_dt	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11100 &     c1616=0 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11100 & thv_c1616=0 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& COND & vcvt_58_3232_dt & Sd & Sm
 	{ build COND; build vcvt_58_3232_dt; }
 
-# F6.1.58 p3359 A1 size == 11 (c0809)
+# F6.1.62 p8009 A1 size == 11 (c0809)
 :vcvt^COND^vcvt_58_6432_dt	Dd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11100 &     c1616=0 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11100 & thv_c1616=0 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
@@ -718,61 +576,101 @@ vcvt_59_fbits:   "#"^fbits is TMode=0 &     c1621 [ fbits = 64 -     c1621; ] { 
 vcvt_59_fbits:   "#"^fbits is TMode=1 & thv_c1621 [ fbits = 64 - thv_c1621; ] { }
 
 vcvt_59_32_dt: ".f32.s32"
-	is ((TMode=0 &     c0808=0 &     c2424=0)
-	|   (TMode=1 & thv_c0808=0 & thv_c2828=0))
+	is ((TMode=0 &     c0809=2 &     c2424=0)
+	|   (TMode=1 & thv_c0809=2 & thv_c2828=0))
 	& Dd & Dm & vcvt_59_fbits_built
 	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
 vcvt_59_32_dt: ".f32.u32"
-	is ((TMode=0 &     c0808=0 &     c2424=1)
-	|   (TMode=1 & thv_c0808=0 & thv_c2828=1))
+	is ((TMode=0 &     c0809=2 &     c2424=1)
+	|   (TMode=1 & thv_c0809=2 & thv_c2828=1))
 	& Dd & Dm & vcvt_59_fbits_built
 	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
 vcvt_59_32_dt: ".s32.f32"
-	is ((TMode=0 &     c0808=1 &     c2424=0)
-	|   (TMode=1 & thv_c0808=1 & thv_c2828=0))
+	is ((TMode=0 &     c0809=3 &     c2424=0)
+	|   (TMode=1 & thv_c0809=3 & thv_c2828=0))
 	& Dd & Dm & vcvt_59_fbits_built
 	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
 vcvt_59_32_dt: ".u32.f32"
-	is ((TMode=0 &     c0808=1 &     c2424=1)
-	|   (TMode=1 & thv_c0808=1 & thv_c2828=1))
+	is ((TMode=0 &     c0809=3 &     c2424=1)
+	|   (TMode=1 & thv_c0809=3 & thv_c2828=1))
 	& Dd & Dm & vcvt_59_fbits_built
 	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
-
+vcvt_59_32_dt: ".f16.s16"
+	is ((TMode=0 &     c0809=0 &     c2424=0)
+	|   (TMode=1 & thv_c0809=0 & thv_c2828=0))
+	& Dd & Dm & vcvt_59_fbits_built
+	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_32_dt: ".f16.u16"
+	is ((TMode=0 &     c0809=0 &     c2424=1)
+	|   (TMode=1 & thv_c0809=0 & thv_c2828=1))
+	& Dd & Dm & vcvt_59_fbits_built
+	{ Dd = FixedToFP(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_32_dt: ".s16.f16"
+	is ((TMode=0 &     c0809=1 &     c2424=0)
+	|   (TMode=1 & thv_c0809=1 & thv_c2828=0))
+	& Dd & Dm & vcvt_59_fbits_built
+	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_59_32_dt: ".u16.f16"
+	is ((TMode=0 &     c0809=1 &     c2424=1)
+	|   (TMode=1 & thv_c0809=1 & thv_c2828=1))
+	& Dd & Dm & vcvt_59_fbits_built
+	{ Dd = FPToFixed(Dm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
+	
 vcvt_59_64_dt: ".f32.s32"
-	is ((TMode=0 &     c0808=0 &     c2424=0)
-	|   (TMode=1 & thv_c0808=0 & thv_c2828=0))
+	is ((TMode=0 &     c0809=2 &     c2424=0)
+	|   (TMode=1 & thv_c0809=2 & thv_c2828=0))
 	& Qd & Qm & vcvt_59_fbits_built
 	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
 vcvt_59_64_dt: ".f32.u32"
-	is ((TMode=0 &     c0808=0 &     c2424=1)
-	|   (TMode=1 & thv_c0808=0 & thv_c2828=1))
+	is ((TMode=0 &     c0809=2 &     c2424=1)
+	|   (TMode=1 & thv_c0809=2 & thv_c2828=1))
 	& Qd & Qm & vcvt_59_fbits_built
 	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
 vcvt_59_64_dt: ".s32.f32"
-	is ((TMode=0 &     c0808=1 &     c2424=0)
-	|   (TMode=1 & thv_c0808=1 & thv_c2828=0))
+	is ((TMode=0 &     c0809=3 &     c2424=0)
+	|   (TMode=1 & thv_c0809=3 & thv_c2828=0))
 	& Qd & Qm & vcvt_59_fbits_built
 	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
 vcvt_59_64_dt: ".u32.f32"
-	is ((TMode=0 &     c0808=1 &     c2424=1)
-	|   (TMode=1 & thv_c0808=1 & thv_c2828=1))
+	is ((TMode=0 &     c0809=3 &     c2424=1)
+	|   (TMode=1 & thv_c0809=3 & thv_c2828=1))
+	& Qd & Qm & vcvt_59_fbits_built
+	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
+vcvt_59_64_dt: ".f16.s16"
+	is ((TMode=0 &     c0809=0 &     c2424=0)
+	|   (TMode=1 & thv_c0809=0 & thv_c2828=0))
+	& Qd & Qm & vcvt_59_fbits_built
+	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_64_dt: ".f16.u16"
+	is ((TMode=0 &     c0809=0 &     c2424=1)
+	|   (TMode=1 & thv_c0809=0 & thv_c2828=1))
+	& Qd & Qm & vcvt_59_fbits_built
+	{ Qd = FixedToFP(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_TIEEVEN)); }
+vcvt_59_64_dt: ".s16.f16"
+	is ((TMode=0 &     c0809=1 &     c2424=0)
+	|   (TMode=1 & thv_c0809=1 & thv_c2828=0))
+	& Qd & Qm & vcvt_59_fbits_built
+	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 0:1, $(FPRounding_ZERO)); }
+vcvt_59_64_dt: ".u16.f16"
+	is ((TMode=0 &     c0809=1 &     c2424=1)
+	|   (TMode=1 & thv_c0809=1 & thv_c2828=1))
 	& Qd & Qm & vcvt_59_fbits_built
 	{ Qd = FPToFixed(Qm, 32:1, 32:1, vcvt_59_fbits_built, 1:1, $(FPRounding_ZERO)); }
 
 # Should add rounding here, if dt2 is s32 or u32 then rounding is
 # FPRounding_ZERO otherwise FPROunding_TIEEVEN
 
-# F6.1.59 p3361 A1 Q = 0 (c0606)
+# F6.1.63 p8012 A1 Q = 0 (c0606)
 :vcvt^vcvt_59_32_dt	Dd,Dm,vcvt_59_fbits
-	is ((TMode=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c0911=0b111 &     c0707=0 &     c0404=1 &     c0606=0)
-	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c0911=0b111 & thv_c0707=0 & thv_c0404=1 & thv_c0606=0))
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=0)
+	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c1011=0b11 & thv_c0707=0 & thv_c0404=1 & thv_c0606=0))
 	& vcvt_59_32_dt & vcvt_59_fbits & Dd & Dm
-	{ }
+    { }	
 
-# F6.1.59 p3361 A1 Q = 1 (c0606)
+# F6.1.63 p8012 A1 Q = 1 (c0606)
 :vcvt^vcvt_59_64_dt	Qd,Qm,vcvt_59_fbits
-	is ((TMode=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c0911=0b111 &     c0707=0 &     c0404=1 &     c0606=1)
-	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c0911=0b111 & thv_c0707=0 & thv_c0404=1 & thv_c0606=1))
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=1)
+	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c1011=0b11 & thv_c0707=0 & thv_c0404=1 & thv_c0606=1))
 	& vcvt_59_64_dt & vcvt_59_fbits & Qd & Qm
 	{ }
 
@@ -867,14 +765,14 @@ vcvt_60_64_dt: ".u32.f64"
 	& Dd & Dd2 & vcvt_60_fbits_built
 	{ Dd = FPToFixed(Dd2, 64:1, 32:1, vcvt_60_fbits_built, 1:1, $(FPRounding_ZERO)); }
 
-# F6.1.60 p3364 A1 op=0/1 sf=10 (c1818, c0809)
+# F6.1.63 p8012 A1 op=0/1 sf=10 (c1818, c0809)
 :vcvt^COND^vcvt_60_32_dt	Sd,Sd2,vcvt_60_fbits
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1717=1 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c1818 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1717=1 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c1818 & thv_c0809=0b10))
 	& COND & vcvt_60_fbits & vcvt_60_32_dt & Sd & Sd2
 	{ build COND; build vcvt_60_32_dt; }
 
-# F6.1.60 p3364 A1 op=0/1 sf=11 (c1818, c0809)
+# F6.1.63 p8012 A1 op=0/1 sf=11 (c1818, c0809)
 :vcvt^COND^vcvt_60_64_dt	Dd,Dd2,vcvt_60_fbits
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1717=1 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c1818 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1717=1 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c1818 & thv_c0809=0b11))
@@ -911,16 +809,16 @@ vcvt_amnp_simd_128_dt: ".s32" is TMode=1 & thv_c0707=0 & thv_c0809 & vcvt_amnp_s
 vcvt_amnp_simd_128_dt: ".u32" is TMode=0 &     c0707=1 &     c0809 & vcvt_amnp_simd_RM & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_simd_RM); }
 vcvt_amnp_simd_128_dt: ".u32" is TMode=1 & thv_c0707=1 & thv_c0809 & vcvt_amnp_simd_RM & Qd & Qm { Qd = FPToFixed(Qm, 32:1, 32:1, 0:1, 1:1, vcvt_amnp_simd_RM); }
 
-# F6.1.61,64,66,68 p3367,3374,3378,3384 A1 64-bit SIMD vector variant Q = 0 (c0606)
+# F6.1.65,69,71,73 p8019,8028,8032,8036 A1 64-bit SIMD vector variant Q = 0 (c0606)
 :vcvt^vcvt_amnp_simd_RM^vcvt_amnp_simd_64_dt^".f32"	Dd,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c1011=0b00 & thv_c0404=0 & thv_c0606=0))
 	& vcvt_amnp_simd_RM & vcvt_amnp_simd_64_dt & Dd & Dm
-	{ }
+    { }	
 
-# F6.1.61,64,66,68 p3367,3374,3378,3384 A1 128-bit SIMD vector variant Q = 1(c0606)
+# F6.1.65,69,71,73 p8019,8028,8032,8036 A1 128-bit SIMD vector variant Q = 1(c0606)
 :vcvt^vcvt_amnp_simd_RM^vcvt_amnp_simd_128_dt^".f32"	Qd,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c1011=0b00 & thv_c0404=0 & thv_c0606=1))
 	& vcvt_amnp_simd_RM & vcvt_amnp_simd_128_dt & Qd & Qm
 	{ }
@@ -952,16 +850,23 @@ vcvt_amnp_fp_d_dt: ".u32" is TMode=1 & thv_c0707=0 & thv_c1617 & vcvt_amnp_fp_RM
 vcvt_amnp_fp_d_dt: ".s32" is TMode=0 &     c0707=1 &     c1617 & vcvt_amnp_fp_RM & Sd & Dm { Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 0:1, vcvt_amnp_fp_RM); }
 vcvt_amnp_fp_d_dt: ".s32" is TMode=1 & thv_c0707=1 & thv_c1617 & vcvt_amnp_fp_RM & Sd & Dm { Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 0:1, vcvt_amnp_fp_RM); }
 
-# F6.1.62,65,67,69 p3369,3376,3380,3384 Single-precision scalar variant size = 11 (c0809)
+# F6.1.66,70,72,74 p8021,8030,8034,8038 Single-precision scalar variant size = 01 (c0809)
+:vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_s_dt^".f16"	Sd,Sm
+	is ((TMode=0 & ARMcond=0 &    c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b01)
+	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b01))
+	& vcvt_amnp_fp_RM & vcvt_amnp_fp_s_dt & Sd & Sm
+	unimpl
+	
+# F6.1.66,70,72,74 p8021,8030,8034,8038 Single-precision scalar variant size = 11 (c0809)
 :vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_s_dt^".f32"	Sd,Sm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
+	is ((TMode=0 &  ARMcond=0 &   c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& vcvt_amnp_fp_RM & vcvt_amnp_fp_s_dt & Sd & Sm
 	{ }
 
-# F6.1.62,65,67,69 p3369,3376,3380,3384 Double-precision scalar variant size = 10 (c0809)
+# F6.1.66,70,72,74 p8021,8030,8034,8038 Double-precision scalar variant size = 11 (c0809)
 :vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_d_dt^".f64"	Sd,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
 	& vcvt_amnp_fp_RM & vcvt_amnp_fp_d_dt & Sd & Dm
 	{ }
@@ -1012,32 +917,32 @@ vcvt_bt1664_op:	"t"
 	& Sd & Dm
 	{ tmp:2 = float2float(Dm); Sd = (zext(tmp)<<16) | zext(Sd[0,16]); }
 
-# F6.1.63 p3371 A1 cases op:sz = 00 (c1616, c0808)
-# F6.1.71 p3389 A1 cases op:sz = 00 (c1616, c0808)
+# F6.1.67 p8023 A1 cases op:sz = 00 (c1616, c0808)
+# F6.1.76 p8044 A1 cases op:sz = 00 (c1616, c0808)
 :vcvt^vcvt_bt3216_op^COND^".f32.f16"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=0 &     c0808=0)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=0 & thv_c0808=0))
 	& COND & vcvt_bt3216_op & Sd & Sm
 	{ build COND; build vcvt_bt3216_op; }
 
-# F6.1.63 p3371 A1 cases op:sz = 01 (c1616, c0808)
-# F6.1.71 p3389 A1 cases op:sz = 01 (c1616, c0808)
+# F6.1.67 p8023 A1 cases op:sz = 01 (c1616, c0808)
+# F6.1.76 p8044 A1 cases op:sz = 01 (c1616, c0808)
 :vcvt^vcvt_bt6416_op^COND^".f64.f16"	Dd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=0 &     c0808=1)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=0 & thv_c0808=1))
 	& COND & vcvt_bt6416_op & Dd & Sm
 	{ build COND; build vcvt_bt6416_op; }
 
-# F6.1.63 p3371 A1 cases op:sz = 10 (c1616, c0808)
-# F6.1.71 p3389 A1 cases op:sz = 10 (c1616, c0808)
+# F6.1.67 p8023 A1 cases op:sz = 10 (c1616, c0808)
+# F6.1.76 p8044 A1 cases op:sz = 10 (c1616, c0808)
 :vcvt^vcvt_bt1632_op^COND^".f16.f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=1 &     c0808=0)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=1 & thv_c0808=0))
 	& COND & vcvt_bt1632_op & Sd & Sm
 	{ build COND; build vcvt_bt1632_op; }
 
-# F6.1.63 p3371 A1 cases op:sz = 11 (c1616, c0808)
-# F6.1.71 p3389 A1 cases op:sz = 11 (c1616, c0808)
+# F6.1.67 p8023 A1 cases op:sz = 11 (c1616, c0808)
+# F6.1.76 p8044 A1 cases op:sz = 11 (c1616, c0808)
 :vcvt^vcvt_bt1664_op^COND^".f16.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1721=0b11001 &     c0911=0b101 &     c0606=1 &     c0404=0 &     c1616=1 &     c0808=1)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1721=0b11001 & thv_c0911=0b101 & thv_c0606=1 & thv_c0404=0 & thv_c1616=1 & thv_c0808=1))
@@ -1046,28 +951,28 @@ vcvt_bt1664_op:	"t"
 
 # vcvtr
 
-# F6.1.70 p3386 A1 case opc2=100 size=10 (c1618, c0809)
+# F6.1.75 p8040 A1 case opc2=100 size=10 (c1618, c0809)
 :vcvtr^COND^".u32.f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b100 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b10))
 	& COND & Sd & Sm
 	{ build COND; Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 1:1, $(FPSCR_RMODE)); }
 
-# F6.1.70 p3386 A1 case opc2=101 size=10
+# F6.1.75 p8040 A1 case opc2=101 size=10
 :vcvtr^COND^".s32.f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b10))
 	& COND & Sd & Sm
 	{ build COND; Sd = FPToFixed(Sm, 32:1, 32:1, 0:1, 0:1, $(FPSCR_RMODE)); }
 
-# F6.1.70 p3386 A1 case opc2=100 size=11
+# F6.1.75 p8040 A1 case opc2=100 size=11
 :vcvtr^COND^".u32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b100 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b11))
 	& COND & Sd & Dm
 	{ build COND; Sd = FPToFixed(Dm, 64:1, 32:1, 0:1, 1:1, $(FPSCR_RMODE)); }
 
-# F6.1.70 p3386 A1 case opc2=101 size=11
+# F6.1.75 p8040 A1 case opc2=101 size=11
 :vcvtr^COND^".s32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b11))
@@ -1090,100 +995,100 @@ define pcodeop FPMaxNum;
 
 define pcodeop FPMinNum;
 
-# F6.1.101 p3471 A1/T1 Q = 0 (c0606)
+# F6.1.117 p8178 A1/T1 Q = 0 (c0606)
 :vmaxnm^".f32"		Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b00 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMaxNum(Dn, Dm); }
 
-# F6.1.101 p3471 A1/T1 Q = 1 (c0606)
+# F6.1.117 p8178 A1/T1 Q = 1 (c0606)
 :vmaxnm^".f32"		Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b00 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b00 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMaxNum(Qn, Qm); }
 
-# F6.1.101 p3471 A1/T1 Q = 0 (c0606)
+# F6.1.117 p8178 A1/T1 Q = 0 (c0606)
 :vmaxnm^".f16"		Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b01 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMaxNum(Dn, Dm); }
 
-# F6.1.101 p3471 A1/T1 Q = 1 (c0606)
+# F6.1.117 p8178 A1/T1 Q = 1 (c0606)
 :vmaxnm^".f16"		Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b01 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b01 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMaxNum(Qn, Qm); }
 
-# F6.1.101 p3471 A2/T2 size = 01 (c0809)
+# F6.1.117 p8178 A2/T2 size = 01 (c0809)
 :vmaxnm^".f16"		Sd,Sn,Sm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b01)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b01)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b01))
 	& Sd & Sn & Sm
 	{ Sd = FPMaxNum(Sn, Sm); }
 
-# F6.1.101 p3471 A2/T2 size = 10 (c0809)
+# F6.1.117 p8178 A2/T2 size = 10 (c0809)
 :vmaxnm^".f32"		Sd,Sn,Sm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b10))
 	& Sd & Sn & Sm
 	{ Sd = FPMaxNum(Sn, Sm); }
 
-# F6.1.101 p3471 A2/T2 size = 11 (c0809)
+# F6.1.117 p8178 A2/T2 size = 11 (c0809)
 :vmaxnm^".f64"		Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b11))
 	& Dd & Dn & Dm
 	{ Dd = FPMaxNum(Dn, Dm); }
 
-# F6.1.104 p3478 A1/T1 Q = 0 (c0606)
+# F6.1.120 p8178 A1/T1 Q = 0 (c0606)
 :vminnm^".f32"		Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b10 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMinNum(Dn, Dm); }
 
-# F6.1.104 p3478 A1/T1 Q = 1 (c0606)
+# F6.1.120 p8178 A1/T1 Q = 1 (c0606)
 :vminnm^".f32"		Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b10 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b10 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMinNum(Qn, Qm); }
 
-# F6.1.104 p3478 A1/T1 Q = 0 (c0606)
+# F6.1.120 p8178 A1/T1 Q = 0 (c0606)
 :vminnm^".f16"		Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=0)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b11 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=0))
 	& Dd & Dn & Dm
 	{ Dd = FPMinNum(Dn, Dm); }
 
-# F6.1.104 p3478 A1/T1 Q = 1 (c0606)
+# F6.1.120 p8178 A1/T1 Q = 1 (c0606)
 :vminnm^".f16"		Qd,Qn,Qm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=1)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00110 &     c2021=0b11 &     c0811=0b1111 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11110 & thv_c2021=0b11 & thv_c0811=0b1111 & thv_c0404=1 & thv_c0606=1))
 	& Qd & Qn & Qm
 	{ Qd = FPMinNum(Qn, Qm); }
 
-# F6.1.104 p3478 A2/T2 size = 01 (c0809)
+# F6.1.120 p8178 A2/T2 size = 01 (c0809)
 :vminnm^".f16"		Sd,Sn,Sm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b01)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b01)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b01))
 	& Sd & Sn & Sm
 	{ Sd = FPMinNum(Sn, Sm); }
 
-# F6.1.104 p3478 A2/T2 size = 10 (c0809)
+# F6.1.120 p8178 A2/T2 size = 10 (c0809)
 :vminnm^".f32"		Sd,Sn,Sm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& Sd & Sn & Sm
 	{ Sd = FPMinNum(Sn, Sm); }
 
-# F6.1.104 p3478 A2/T2 size = 11 (c0809)
+# F6.1.120 p8178 A2/T2 size = 11 (c0809)
 :vminnm^".f64"		Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b00 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b00 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
 	& Dd & Dn & Dm
 	{ Dd = FPMinNum(Dn, Dm); }
@@ -1231,17 +1136,17 @@ vmull_dt: ".p64"
 	|   (TMode=1 & thv_c0909=1 & thv_c2828=0 & thv_c2021=0b10))
 	{ }
 
-# F6.1.130 p3537 VMULL (-integer and +polynomial) op=1 (c0909) (with condition U!=1 and size!=0b11 and size!=01)
+# F6.1.149 p8266 VMULL (-integer and +polynomial) op=1 (c0909) (with condition U!=1 and size!=0b11 and size!=01)
 :vmull^vmull_dt		Qd,Dn,Dm
-	is ((TMode=0 &     c2531=0b1111001 &     c2424=0 &     c2323=1       & (    c2121     &     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=1)
-	|   (TMode=1 & thv_c2931=0b111     & thv_c2828=0 & thv_c2327=0b11111 & (thv_c2121     & thv_c2020=0) & thv_c1011=0b11 & thv_c0808=0 & thv_c0606=0 & thv_c0404=0 & thv_c0909=1))
+	is ((TMode=0 & ARMcond=0 &     c2531=0b1111001 &     c2424=0 &     c2323=1       & (    c2121     &     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=1)
+	|   (TMode=1 &             thv_c2931=0b111     & thv_c2828=0 & thv_c2327=0b11111 & (thv_c2121     & thv_c2020=0) & thv_c1011=0b11 & thv_c0808=0 & thv_c0606=0 & thv_c0404=0 & thv_c0909=1))
 	& vmull_dt & Qd & Dn & Dm
 	{ Qd = PolynomialMult(Dn, Dm); }
 
-# F6.1.130 p3537 VMULL (+integer and -polynomial) op=0 (c0909) (with condition size!=0b11)
+# F6.1.149 p8266 VMULL (+integer and -polynomial) op=0 (c0909) (with condition size!=0b11)
 :vmull^vmull_dt		Qd,Dn,Dm
-	is ((TMode=0 &     c2531=0b1111001 &     c2424     &     c2323=1       & (    c2121=0 |     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=0)
-	|   (TMode=1 & thv_c2931=0b111     & thv_c2828     & thv_c2327=0b11111 & (thv_c2121=0 | thv_c2020=0) & thv_c1011=0b11 & thv_c0808=0 & thv_c0606=0 & thv_c0404=0 & thv_c0909=0))
+	is ((TMode=0 & ARMcond=0 &     c2531=0b1111001 &     c2323=1       & (    c2121=0 |     c2020=0) &     c1011=0b11 &     c0808=0 &     c0606=0 &     c0404=0 &     c0909=0)
+	|   (TMode=1 &             thv_c2931=0b111     & thv_c2327=0b11111 & (thv_c2121=0 | thv_c2020=0) & thv_c1011=0b11 & thv_c0808=0 & thv_c0606=0 & thv_c0404=0 & thv_c0909=0))
 	& vmull_dt & Qd & Dn & Dm
 	{ Qd = VectorMultiply(Dn, Dm); }
 
@@ -1307,14 +1212,14 @@ vrint_simd_ixf:
 	{ }
 
 
-# F6.1.178,180,182,184,187,189 p3646,3650,3654,3658,3664,3668 Q = 0 (c0606)
+# F6.1.199,201,203,205,208,210 p8396,8400,8404,8408,8414,8420 Q = 0 (c0606)
 :vrint^vrint_simd_RM^".f32"	Dd,Dm
 	is ((TMode=0 &     c2331=0b111100111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c1011=0b01 & ((    c0707=0 &     c0909=0) | (    c0707=1 &     c0909=1) | (    c0707=1 &     c0909=0)) &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2331=0b111111111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b10 & thv_c1011=0b01 & ((thv_c0707=0 & thv_c0909=0) | (thv_c0707=1 & thv_c0909=1) | (thv_c0707=1 & thv_c0909=0)) & thv_c0404=0 & thv_c0606=0))
 	& vrint_simd_RM & vrint_simd_exact & vrint_simd_ixf & Dd & Dm
 	{ Dd = FPRoundInt(Dm, 32:1, vrint_simd_RM, 0:1); build vrint_simd_ixf; }
 
-# F6.1.178,180,182,184,187,189 p3646,3650,3654,3658,3664,3668 Q = 1 (c0606)
+# F6.1.199,201,203,205,208,210 p8396,8400,8404,8408,8414,8420 Q = 1 (c0606)
 :vrint^vrint_simd_RM^".f32"	Qd,Qm
 	is ((TMode=0 &     c2331=0b111100111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b10 &     c1011=0b01 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2331=0b111111111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b10 & thv_c1011=0b01 & thv_c0404=0 & thv_c0606=1))
@@ -1341,16 +1246,16 @@ vrint_fp_RM: "p"
 	|   (TMode=1 & thv_c1617=0b10))
 	{ export $(FPRounding_POSINF); }
 
-# F6.1.179,181,183,185 p3648,3652,3656,3660 size = 10 (c0809)
+# F6.1.200,202,204,206 p8398,8402,8406,8410 size = 10 (c0809)
 :vrint^vrint_fp_RM^".f32"	Sd,Sm
-	is ((TMode=0 &     c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b10)
+	is ((TMode=0 & ARMcond=0 & c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2331=0b111111101 & thv_c1821=0b1110 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c0809=0b10))
 	& vrint_fp_RM & Sd & Sm
 	{ Sd = FPRoundInt(Sm, 32:1, vrint_fp_RM, 0:1); }
 
-# F6.1.179,181,183,185 p3648,3652,3656,3660 size = 11 (c0809)
+# F6.1.200,202,204,206 p8398,8402,8406,8410 size = 11 (c0809)
 :vrint^vrint_fp_RM^".f64"	Dd,Dm
-	is ((TMode=0 &     c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b11)
+	is ((TMode=0 & ARMcond=0 & c2331=0b111111101 &     c1821=0b1110 &     c1011=0b10 &     c0607=0b01 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2331=0b111111101 & thv_c1821=0b1110 & thv_c1011=0b10 & thv_c0607=0b01 & thv_c0404=0 & thv_c0809=0b11))
 	& vrint_fp_RM & Dd & Dm
 	{ Dd = FPRoundInt(Dm, 32:1, vrint_fp_RM, 0:1); }
@@ -1392,14 +1297,14 @@ vrint_rxz_ixf:
 	|   (TMode=1 & (thv_c1616=0 | thv_c0707=1)))
 	{ }
 
-# F6.1.186,188,190 p3662,3666,3670 A1 size = 10 (c0809)
+# F6.1.207,209,211 p8412,8416,8420 A1 size = 10 (c0809)
 :vrint^vrint_rxz_RM^COND^".f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b110 &     c1718=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 & ((    c1616=0) | (    c1616=1 &     c0707=0)) &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b110 & thv_c1718=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & ((thv_c1616=0) | (thv_c1616=1 & thv_c0707=0)) & thv_c0809=0b10))
 	& vrint_rxz_RM & vrint_rxz_exact & vrint_rxz_ixf & COND & Sd & Sm
 	{ build COND; Sd = FPRoundInt(Sm, 32:1, vrint_rxz_RM, vrint_rxz_exact); build vrint_rxz_ixf; }
 
-# F6.1.186,188,190 p3662,3666,3670 A1 size = 11 (c0809)
+# F6.1.207,209,211 p8412,8416,8420 A1 size = 11 (c0809)
 :vrint^vrint_rxz_RM^COND^".f64"	Dd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b110 &     c1718=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 & ((    c1616=0) | (    c1616=1 &     c0707=0)) &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b110 & thv_c1718=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & ((thv_c1616=0) | (thv_c1616=1 & thv_c0707=0)) & thv_c0809=0b11))
@@ -1426,16 +1331,16 @@ vselcond: "vs"
 	|   (TMode=1 & thv_c2021=0b01))
 	{ tmp:1 = OV; export tmp; }
 
-# F6.1.200 p3690 A1/T1 size = 11 doubleprec (c0809)
+# F6.1.223 p8447 A1/T1 size = 11 doubleprec (c0809)
 :vsel^vselcond^".f64" Dd,Dn,Dm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11100 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b11))
 	& vselcond & Dn & Dd & Dm
 	{ Dd = zext(vselcond != 0) * Dn + zext(vselcond == 0) * Dm; }
 
-# F6.1.200 p3690 A1/T1 size = 10 singleprec (c0809)
+# F6.1.223 p8447 A1/T1 size = 10 singleprec (c0809)
 :vsel^vselcond".f32" Sd,Sn,Sm
-	is ((TMode=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
+	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11100 &     c1011=0b10 &     c0606=0 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11100 & thv_c1011=0b10 & thv_c0606=0 & thv_c0404=0 & thv_c0809=0b10))
 	& vselcond & Sn & Sd & Sm
 	{ Sd = zext(vselcond != 0) * Sn + zext(vselcond == 0) * Sm; }

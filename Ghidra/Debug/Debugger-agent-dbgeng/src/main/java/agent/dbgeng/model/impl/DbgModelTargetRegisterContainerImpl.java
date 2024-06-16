@@ -21,15 +21,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgRegister;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.ConversionUtils;
+import ghidra.docking.settings.FormatSettingsDefinition;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterContainer",
@@ -56,7 +59,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 		this.thread = thread.getThread();
 
 		if (!getModel().isSuppressDescent()) {
-			requestElements(false);
+			requestElements(RefreshBehavior.REFRESH_NEVER);
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this //
 			), "Initialized");
@@ -64,7 +67,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return thread.listRegisters().thenAccept(regs -> {
 			if (regs.size() != registersByName.size()) {
 				DbgModelImpl impl = (DbgModelImpl) model;
@@ -108,9 +111,9 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			Collection<String> names) {
 		return model.gateFuture(thread.listRegisters().thenCompose(regs -> {
 			if (regs.size() != registersByName.size() || getCachedElements().isEmpty()) {
-				return requestElements(false);
+				return requestElements(RefreshBehavior.REFRESH_NEVER);
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}).thenCompose(__ -> {
 			Set<DbgRegister> toRead = new LinkedHashSet<>();
 			for (String regname : names) {
@@ -134,15 +137,16 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 				changeAttrs(reg, value);
 			}
 			this.values = result;
-			listeners.fire.registersUpdated(getProxy(), result);
+			broadcast().registersUpdated(getProxy(), result);
 			return result;
 		}));
 	}
 
 	@Override
 	public CompletableFuture<Void> writeRegistersNamed(Map<String, byte[]> values) {
+		DbgManagerImpl manager = getManager();
 		return model.gateFuture(thread.listRegisters().thenCompose(regs -> {
-			return requestElements(false);
+			return requestElements(RefreshBehavior.REFRESH_NEVER);
 		}).thenCompose(__ -> {
 			Map<String, ? extends TargetObject> regs = getCachedElements();
 			Map<DbgRegister, BigInteger> toWrite = new LinkedHashMap<>();
@@ -159,19 +163,28 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			return thread.writeRegisters(toWrite);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).thenAccept(__ -> {
-			listeners.fire.registersUpdated(getProxy(), values);
+			manager.getEventListeners().invoke().threadStateChanged(thread, thread.getState(),
+				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
+			broadcast().registersUpdated(getProxy(), values);
 		}));
 	}
 
 	private void changeAttrs(DbgModelTargetRegister reg, BigInteger value) {
 		String oldval = (String) reg.getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
+		int bitLength = reg.getBitLength();
+		boolean negative = value.signum() < 0;
+		if (negative) {
+			// force use of unsigned value
+			value = value.add(BigInteger.valueOf(2).pow(bitLength));
+		}
+		String valstr = value.toString(16);
 		String newval = (value.longValue() == 0) ? reg.getName()
-				: reg.getName() + " : " + value.toString(16);
+				: reg.getName() + " : " + valstr;
 		reg.changeAttributes(List.of(), Map.of( //
-			VALUE_ATTRIBUTE_NAME, value.toString(16), //
+			VALUE_ATTRIBUTE_NAME, valstr, //
 			DISPLAY_ATTRIBUTE_NAME, newval //
 		), "Refreshed");
-		reg.setModified(!value.toString(16).equals(oldval));
+		reg.setModified(!valstr.equals(oldval));
 	}
 
 	@Override

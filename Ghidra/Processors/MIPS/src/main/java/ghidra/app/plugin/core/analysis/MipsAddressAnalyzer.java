@@ -25,6 +25,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -247,7 +248,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
-		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+		ConstantPropagationContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 			private Address localGPAssumptionValue = currentGPAssumptionValue;
 
 			private boolean mustStopNow = false; // if something discovered in processing, mustStop flag
@@ -267,13 +268,13 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 				// this was copylefted from the arm analyzer
 				Varnode raVal = context.getRegisterVarnodeValue(rareg);
 				if (raVal != null) {
-					if (raVal.isConstant()) {
+					if (context.isConstant(raVal)) {
 						long target = raVal.getAddress().getOffset();
 						Address addr = instr.getMaxAddress();
 						if (target == (addr.getOffset() + 1) && !instr.getFlowType().isCall()) {
 							instr.setFlowOverride(FlowOverride.CALL);
 							// need to trigger disassembly below! if not already
-							MipsExtDisassembly(program, instr, context, addr.add(1), monitor);
+							mipsExtDisassembly(program, instr, context, addr.add(1), monitor);
 
 							// need to trigger re-function creation!
 							Function f = program.getFunctionManager().getFunctionContaining(
@@ -317,22 +318,25 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 										lastSetInstr = instructionAt;
 									}
 								}
-								symEval.makeReference(context, lastSetInstr, -1,
-									instr.getMinAddress().getAddressSpace().getSpaceID(),
-									unsignedValue, 1, RefType.DATA, PcodeOp.UNIMPLEMENTED, true,
-									monitor);
-								if (localGPAssumptionValue == null) {
-									program.getBookmarkManager().setBookmark(
-										lastSetInstr.getMinAddress(), BookmarkType.WARNING,
-										"GP Global Register Set",
-										"Global GP Register is set here.");
-								}
-								if (localGPAssumptionValue != null &&
-									!localGPAssumptionValue.equals(gpRefAddr)) {
-									localGPAssumptionValue = gp_assumption_value = null;
-								}
-								else {
-									localGPAssumptionValue = gp_assumption_value = gpRefAddr;
+								// if an instruction actually set the GP
+								if (lastSetAddr != null) {
+									symEval.makeReference(context, lastSetInstr, -1,
+										instr.getMinAddress().getAddressSpace().getSpaceID(),
+										unsignedValue, 1, null, RefType.DATA, PcodeOp.UNIMPLEMENTED, true,
+										false, monitor);
+									if (localGPAssumptionValue == null) {
+										program.getBookmarkManager().setBookmark(
+											lastSetInstr.getMinAddress(), BookmarkType.WARNING,
+											"GP Global Register Set",
+											"Global GP Register is set here.");
+									}
+									if (localGPAssumptionValue != null &&
+										!localGPAssumptionValue.equals(gpRefAddr)) {
+										localGPAssumptionValue = gp_assumption_value = null;
+									}
+									else {
+										localGPAssumptionValue = gp_assumption_value = gpRefAddr;
+									}
 								}
 							}
 						}
@@ -372,9 +376,13 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 
 				Address addr = address;
+				
+				if (addr == Address.NO_ADDRESS) {
+					return false;
+				}
 
 				//if (instr.getFlowType().isJump() && !instr.getPrototype().hasDelaySlots()) {
 				// if this isn't straight code (thunk computation), let someone else lay down the reference
@@ -386,9 +394,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 				}
 
 				if ((refType.isJump() || refType.isCall()) & refType.isComputed()) {
-					//if (refType.isJump() || refType.isCall()) {
-					addr = MipsExtDisassembly(program, instr, context, address, monitor);
-					//addr = flowISA(program, instr, context, address);
+					addr = mipsExtDisassembly(program, instr, context, address, monitor);
 					if (addr == null) {
 						addr = address;
 					}
@@ -396,7 +402,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				// if this is a call, some processors use the register value
 				// used in the call for PIC calculations
-				if (refType.isCall()) {
+				if (refType.isCall() && !addr.isExternalAddress()) {
 					// set the called function to have a constant value for this register
 					// WARNING: This might not always be the case, if called directly or with a different register
 					//          But then it won't matter, because the function won't depend on the registers value.
@@ -412,7 +418,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 									context.clearRegister(reg);
 
 									// need to add the reference here, register operand will no longer have a value
-									instr.addOperandReference(0, addr, refType,
+									instr.addOperandReference(0, addr, instr.getFlowType(),
 										SourceType.ANALYSIS);
 
 									// set the register value on the target address
@@ -433,7 +439,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					}
 				}
 
-				return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+				return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 			}
 
 			@Override
@@ -463,7 +469,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					// will pick it up.
 					if (func != null) {
 						Address funcAddr = func.getEntryPoint();
-						Long value = new Long(funcAddr.getOffset());
+						Long value = Long.valueOf(funcAddr.getOffset());
 						try {
 							ProgramContext progContext = program.getProgramContext();
 							// if T9 hasn't already been set
@@ -476,6 +482,12 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 									AutoAnalysisManager.getAnalysisManager(program);
 								coveredSet.add(func.getBody());
 								amgr.codeDefined(coveredSet);
+							}
+							else {
+								// else T9 was set at the beginning of the function
+								// something within the function must have set it to
+								// an unknown value, so can continue
+								return null;
 							}
 						}
 						catch (ContextChangeException e) {
@@ -491,6 +503,12 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 				return null;
 			}
 		};
+		
+		eval.setTrustWritableMemory(trustWriteMemOption)
+			    .setMinSpeculativeOffset(minSpeculativeRefAddress)
+			    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+			    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+			    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, null, eval, true, monitor);
 
@@ -501,17 +519,16 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 		return resultSet;
 	}
 
-	Address MipsExtDisassembly(Program program, Instruction instruction, VarnodeContext context,
+	Address mipsExtDisassembly(Program program, Instruction instruction, VarnodeContext context,
 			Address target, TaskMonitor monitor) {
-		if (target == null) {
+		if (target == null || target.isExternalAddress()) {
 			return null;
 		}
 
 		Address addr = flowISA(program, instruction, context, target);
 		if (addr != null) {
 			MemoryBlock block = program.getMemory().getBlock(addr);
-			if (block == null || !block.isExecute() || !block.isInitialized() ||
-				block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+			if (block == null || !block.isExecute() || !block.isInitialized() || block.isExternalBlock()) {
 				return addr;
 			}
 
@@ -704,33 +721,40 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		return false;
 	}
+	
+	
+
+	@Override
+	public void registerOptions(Options options, Program program) {
+		super.registerOptions(options, program);
+		
+		options.registerOption(OPTION_NAME_SWITCH_TABLE, trySwitchTables, null,
+			OPTION_DESCRIPTION_SWITCH_TABLE);
+
+		options.registerOption(OPTION_NAME_MARK_DUAL_INSTRUCTION,
+			markupDualInstructionOption, null, OPTION_DESCRIPTION_MARK_DUAL_INSTRUCTION);
+
+		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, assumeT9EntryAddress, null,
+			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
+
+		options.registerOption(OPTION_NAME_RECOVER_GP, discoverGlobalGPSetting, null,
+			OPTION_DESCRIPTION_RECOVER_GP);
+	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
 		super.optionsChanged(options, program);
 
-		options.registerOption(OPTION_NAME_SWITCH_TABLE, OPTION_DEFAULT_SWITCH_TABLE, null,
-			OPTION_DESCRIPTION_SWITCH_TABLE);
-
-		options.registerOption(OPTION_NAME_MARK_DUAL_INSTRUCTION,
-			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION, null, OPTION_DESCRIPTION_MARK_DUAL_INSTRUCTION);
-
-		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY, null,
-			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
-
-		options.registerOption(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP, null,
-			OPTION_DESCRIPTION_RECOVER_GP);
-
-		trySwitchTables = options.getBoolean(OPTION_NAME_SWITCH_TABLE, OPTION_DEFAULT_SWITCH_TABLE);
+		trySwitchTables = options.getBoolean(OPTION_NAME_SWITCH_TABLE, trySwitchTables);
 
 		markupDualInstructionOption = options.getBoolean(OPTION_NAME_MARK_DUAL_INSTRUCTION,
-			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION);
+			markupDualInstructionOption);
 
 		assumeT9EntryAddress =
-			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY);
+			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, assumeT9EntryAddress);
 
 		discoverGlobalGPSetting =
-			options.getBoolean(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP);
+			options.getBoolean(OPTION_NAME_RECOVER_GP, discoverGlobalGPSetting);
 	}
 
 }

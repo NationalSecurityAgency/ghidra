@@ -15,14 +15,20 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
-import ghidra.app.plugin.processors.sleigh.VarnodeData;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.lang.protorules.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
@@ -36,10 +42,11 @@ public class ParamListStandard implements ParamList {
 
 	protected int numgroup;			// Number of "groups" in this parameter convention
 //	protected int maxdelay;
-	protected int pointermax;		// If non-zero, maximum size of a datatype before converting to a pointer
 	protected boolean thisbeforeret;	// Do hidden return pointers usurp the storage of the this pointer
-	protected int resourceTwoStart;		// Group id starting the section resource section (or 0 if only one section)
+	protected boolean splitMetatype;	// Are metatyped entries in separate resource sections
+//	protected int[] resourceStart;		// The starting group for each resource section
 	protected ParamEntry[] entry;
+	protected ModelRule[] modelRules;	// Rules to apply when assigning addresses
 	protected AddressSpace spacebase;	// Space containing relative offset parameters
 
 	/**
@@ -61,113 +68,131 @@ public class ParamListStandard implements ParamList {
 	}
 
 	/**
-	 * Assign next available memory chunk to type
-	 * @param program is the Program
-	 * @param tp type being assigned storage
-	 * @param status  status from previous assignments
-	 * @param ishiddenret is true if the parameter is a hidden return value
-	 * @param isindirect is true if parameter is really a pointer to the real parameter value
-	 * @return Address of assigned memory chunk
+	 * Assign storage for given parameter class, using the fallback assignment algorithm
+	 * 
+	 * Given a resource list, a data-type, and the status of previously allocated slots,
+	 * select the storage location for the parameter.  The status array is
+	 * indexed by group: a positive value indicates how many slots have been allocated
+	 * from that group, and a -1 indicates the group/resource is fully consumed.
+	 * If an Address can be assigned to the parameter, it and other details are passed back in the
+	 * ParameterPieces object and the SUCCESS code is returned.  Otherwise, the FAIL code is returned.
+	 * @param resource  is the resource list to allocate from
+	 * @param tp is the data-type of the parameter
+	 * @param matchExact is false if TYPECLASS_GENERAL is considered a match for any storage class
+	 * @param status is an array marking how many slots have already been consumed in a group
+	 * @param param will hold the address and other details of the assigned parameter
+	 * @return either SUCCESS or FAIL
 	 */
-	protected VariableStorage assignAddress(Program program, DataType tp, int[] status,
-			boolean ishiddenret, boolean isindirect) {
-		if (tp == null) {
-			tp = DataType.DEFAULT;
-		}
-		DataType baseType = tp;
-		if (baseType instanceof TypeDef) {
-			baseType = ((TypeDef) baseType).getBaseDataType();
-		}
-		if (baseType instanceof VoidDataType) {
-			return VariableStorage.VOID_STORAGE;
-		}
-		int sz = tp.getLength();
-		if (sz == 0) {
-			return VariableStorage.UNASSIGNED_STORAGE;
-		}
+	public int assignAddressFallback(StorageClass resource, DataType tp, boolean matchExact,
+			int[] status, ParameterPieces param) {
 		for (ParamEntry element : entry) {
 			int grp = element.getGroup();
 			if (status[grp] < 0) {
 				continue;
 			}
-			if ((element.getType() != ParamEntry.TYPE_UNKNOWN) &&
-				(ParamEntry.getMetatype(tp) != element.getType())) {
-				continue;		// Wrong type
+			if (resource != element.getType()) {
+				if (matchExact || element.getType() != StorageClass.GENERAL) {
+					continue;
+				}
 			}
 
-			VarnodeData res = new VarnodeData();
-			status[grp] = element.getAddrBySlot(status[grp], tp.getLength(), res);
-			if (res.space == null) {
+			status[grp] =
+				element.getAddrBySlot(status[grp], tp.getAlignedLength(), tp.getAlignment(), param);
+			if (param.address == null) {
 				continue;	// -tp- does not fit in this entry
 			}
 			if (element.isExclusion()) {
-				int maxgrp = grp + element.getGroupSize();
-				for (int j = grp; j < maxgrp; ++j) {
+				for (int group : element.getAllGroups()) {
 					// For an exclusion entry
-					status[j] = -1;			// some number of groups are taken up
-				}
-				if (element.isFloatExtended()) {
-					sz = element.getSize();			// Still use the entire container size, when assigning storage
+					status[group] = -1;			// some number of groups are taken up
 				}
 			}
-			VariableStorage store;
-			try {
-				if (res.space.getType() == AddressSpace.TYPE_JOIN) {
-					Varnode[] pieces = element.getJoinRecord();
-					store = new DynamicVariableStorage(program, false, pieces);
-				}
-				else {
-					Address addr = res.space.getAddress(res.offset);
-					if (ishiddenret) {
-						store = new DynamicVariableStorage(program,
-							AutoParameterType.RETURN_STORAGE_PTR, addr, sz);
-					}
-					else if (isindirect) {
-						store = new DynamicVariableStorage(program, true, addr, sz);
-					}
-					else {
-						store = new DynamicVariableStorage(program, false, addr, sz);
-					}
-				}
-			}
-			catch (InvalidInputException e) {
-				break;
-			}
-			return store;
+			param.type = tp;
+			return AssignAction.SUCCESS;
 		}
-		if (ishiddenret) {
-			return DynamicVariableStorage
-					.getUnassignedDynamicStorage(AutoParameterType.RETURN_STORAGE_PTR);
+		param.address = null;
+		return AssignAction.FAIL;
+	}
+
+	/**
+	 * Fill in the Address and other details for the given parameter
+	 * 
+	 * Attempt to apply a ModelRule first. If these do not succeed, use the fallback assignment algorithm.
+	 * @param dt is the data-type assigned to the parameter
+	 * @param proto is the description of the function prototype
+	 * @param pos is the position of the parameter to assign (pos=-1 for output, pos >=0 for input)
+	 * @param dtManager is the data-type manager for (possibly) transforming the parameter's data-type
+	 * @param status is the consumed resource status array
+	 * @param res is parameter description to be filled in
+	 * @return the response code
+	 */
+	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
+			int[] status, ParameterPieces res)
+
+	{
+		if (dt.isZeroLength()) {
+			return AssignAction.NO_ASSIGNMENT;
 		}
-		return DynamicVariableStorage.getUnassignedDynamicStorage(isindirect);
+		for (ModelRule modelRule : modelRules) {
+			int responseCode = modelRule.assignAddress(dt, proto, pos, dtManager, status, res);
+			if (responseCode != AssignAction.FAIL) {
+				return responseCode;
+			}
+		}
+		StorageClass store = ParamEntry.getBasicTypeClass(dt);
+		return assignAddressFallback(store, dt, false, status, res);
+	}
+
+	/**
+	 * @return the number of ParamEntry objets in this list
+	 */
+	public int getNumParamEntry() {
+		return entry.length;
+	}
+
+	/**
+	 * Within this list, get the ParamEntry at the given index
+	 * @param index is the given index
+	 * @return the selected ParamEntry
+	 */
+	public ParamEntry getEntry(int index) {
+		return entry[index];
 	}
 
 	@Override
-	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
-			boolean addAutoParams) {
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
 
 		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
-			DataTypeManager dtm = prog.getDataTypeManager();
-			Pointer pointer = dtm.getPointer(proto[0]);
-			VariableStorage store = assignAddress(prog, pointer, status, true, false);
-			res.set(1, store);
-		}
-		for (int i = 1; i < proto.length; ++i) {
-			VariableStorage store;
-			if ((pointermax != 0) && (proto[i] != null) && (proto[i].getLength() > pointermax)) {	// DataType is too big
-				// Assume datatype is stored elsewhere and only the pointer is passed
-				DataTypeManager dtm = prog.getDataTypeManager();
-				Pointer pointer = dtm.getPointer(proto[i]);
-				store = assignAddress(prog, pointer, status, false, true);
+			ParameterPieces last = res.get(res.size() - 1);
+			StorageClass store;
+			if (last.hiddenReturnPtr) {
+				store = StorageClass.HIDDENRET;
 			}
 			else {
-				store = assignAddress(prog, proto[i], status, false, false);
+				store = ParamEntry.getBasicTypeClass(last.type);
 			}
+			assignAddressFallback(store, last.type, false, status, last);
+			last.hiddenReturnPtr = true;
+		}
+		for (int i = 0; i < proto.intypes.size(); ++i) {
+			ParameterPieces store = new ParameterPieces();
 			res.add(store);
+			int resCode = assignAddress(proto.intypes.get(i), proto, i, dtManager, status, store);
+			if (resCode == AssignAction.FAIL || resCode == AssignAction.NO_ASSIGNMENT) {
+				// Do not continue to assign after first failure
+				++i;
+				while (i < proto.intypes.size()) {
+					store = new ParameterPieces();		// Fill out with UNASSIGNED pieces
+					res.add(store);
+					++i;
+				}
+				return;
+			}
 		}
 	}
 
@@ -199,61 +224,67 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer, boolean isInput) {
-		buffer.append(isInput ? "<input" : "<output");
-		if (pointermax != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "pointermax", pointermax);
-		}
+	public void encode(Encoder encoder, boolean isInput) throws IOException {
+		encoder.openElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 		if (thisbeforeret) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "thisbeforeretpointer", "yes");
+			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
-		if (isInput && resourceTwoStart == 0) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "separatefloat", false);
+		if (isInput && !splitMetatype) {
+			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
-		buffer.append(">\n");
 		int curgroup = -1;
 		for (ParamEntry el : entry) {
 			if (curgroup >= 0) {
 				if (!el.isGrouped() || el.getGroup() != curgroup) {
-					buffer.append("</group>\n");
+					encoder.closeElement(ELEM_GROUP);
 					curgroup = -1;
 				}
 			}
 			if (el.isGrouped()) {
 				if (curgroup < 0) {
-					buffer.append("<group>\n");
+					encoder.openElement(ELEM_GROUP);
 					curgroup = el.getGroup();
 				}
 			}
-			el.saveXml(buffer);
-			buffer.append('\n');
+			el.encode(encoder);
 		}
 		if (curgroup >= 0) {
-			buffer.append("</group>\n");
+			encoder.closeElement(ELEM_GROUP);
 		}
-		buffer.append(isInput ? "</input>" : "</output>");
+		for (ModelRule modelRule : modelRules) {
+			modelRule.encode(encoder);
+		}
+		encoder.closeElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 	}
 
 	private void parsePentry(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,
 			int groupid, boolean splitFloat, boolean grouped) throws XmlParseException {
+		StorageClass lastClass = StorageClass.CLASS4;
+		if (!pe.isEmpty()) {
+			ParamEntry lastEntry = pe.get(pe.size() - 1);
+			lastClass = lastEntry.isGrouped() ? StorageClass.GENERAL : lastEntry.getType();
+		}
 		ParamEntry pentry = new ParamEntry(groupid);
 		pe.add(pentry);
 		pentry.restoreXml(parser, cspec, pe, grouped);
 		if (splitFloat) {
-			if (!grouped && pentry.getType() == ParamEntry.TYPE_FLOAT) {
-				if (resourceTwoStart >= 0) {
+			StorageClass currentClass = grouped ? StorageClass.GENERAL : pentry.getType();
+			if (lastClass != currentClass) {
+				if (lastClass.getValue() < currentClass.getValue()) {
 					throw new XmlParseException(
-						"parameter list floating-point entries must come first");
+						"parameter list entries must be ordered by storage class");
 				}
-			}
-			else if (resourceTwoStart < 0) {
-				resourceTwoStart = groupid;	// First time we have seen an integer slot
+//				int[] newResourceStart = new int[resourceStart.length + 1];
+//				System.arraycopy(resourceStart, 0, newResourceStart, 0, resourceStart.length);
+//				newResourceStart[resourceStart.length] = groupid;
+//				resourceStart = newResourceStart;
 			}
 		}
 		if (pentry.getSpace().isStackSpace()) {
 			spacebase = pentry.getSpace();
 		}
-		int maxgroup = pentry.getGroup() + pentry.getGroupSize();
+		int[] groupSet = pentry.getAllGroups();
+		int maxgroup = groupSet[groupSet.length - 1] + 1;
 		if (maxgroup > numgroup) {
 			numgroup = maxgroup;
 		}
@@ -288,9 +319,9 @@ public class ParamListStandard implements ParamList {
 		ArrayList<ParamEntry> pe = new ArrayList<>();
 		numgroup = 0;
 		spacebase = null;
-		pointermax = 0;
+		int pointermax = 0;
 		thisbeforeret = false;
-		boolean splitFloat = true;
+		splitMetatype = true;
 		XmlElement mainel = parser.start();
 		String attribute = mainel.getAttribute("pointermax");
 		if (attribute != null) {
@@ -302,24 +333,61 @@ public class ParamListStandard implements ParamList {
 		}
 		attribute = mainel.getAttribute("separatefloat");
 		if (attribute != null) {
-			splitFloat = SpecXmlUtils.decodeBoolean(attribute);
+			splitMetatype = SpecXmlUtils.decodeBoolean(attribute);
 		}
-		resourceTwoStart = splitFloat ? -1 : 0;
+//		resourceStart = new int[0];
 		for (;;) {
 			XmlElement el = parser.peek();
 			if (!el.isStart()) {
 				break;
 			}
 			if (el.getName().equals("pentry")) {
-				parsePentry(parser, cspec, pe, numgroup, splitFloat, false);
+				parsePentry(parser, cspec, pe, numgroup, splitMetatype, false);
 			}
 			else if (el.getName().equals("group")) {
-				parseGroup(parser, cspec, pe, numgroup, splitFloat);
+				parseGroup(parser, cspec, pe, numgroup, splitMetatype);
+			}
+			else if (el.getName().equals("rule")) {
+				break;
 			}
 		}
-		parser.end(mainel);
 		entry = new ParamEntry[pe.size()];
 		pe.toArray(entry);
+
+		ArrayList<ModelRule> rules = new ArrayList<>();
+		for (;;) {
+			XmlElement subId = parser.peek();
+			if (!subId.isStart()) {
+				break;
+			}
+			if (subId.getName().equals("rule")) {
+				ModelRule rule = new ModelRule();
+				rule.restoreXml(parser, this);
+				rules.add(rule);
+			}
+			else {
+				throw new XmlParseException(
+					"<pentry> and <group> elements must come before any <modelrule>");
+			}
+		}
+
+		parser.end(mainel);
+//		int[] newResourceStart = new int[resourceStart.length + 1];
+//		System.arraycopy(resourceStart, 0, newResourceStart, 0, resourceStart.length);
+//		newResourceStart[resourceStart.length] = numgroup;
+//		resourceStart = newResourceStart;
+		if (pointermax > 0) {	// Add a ModelRule at the end that converts too big data-types to pointers
+			SizeRestrictedFilter typeFilter = new SizeRestrictedFilter(pointermax + 1, 0);
+			ConvertToPointer action = new ConvertToPointer(this);
+			try {
+				rules.add(new ModelRule(typeFilter, action, this));
+			}
+			catch (InvalidInputException e) {
+				throw new XmlParseException(e.getMessage());
+			}
+		}
+		modelRules = new ModelRule[rules.size()];
+		rules.toArray(modelRules);
 	}
 
 	@Override
@@ -364,12 +432,17 @@ public class ParamListStandard implements ParamList {
 		ParamEntry curentry = entry[num];
 		res.slot = curentry.getSlot(loc, 0);
 		if (curentry.isExclusion()) {
-			res.slotsize = curentry.getGroupSize();
+			res.slotsize = curentry.getAllGroups().length;
 		}
 		else {
 			res.slotsize = ((size - 1) / curentry.getAlign()) + 1;
 		}
 		return true;
+	}
+
+	@Override
+	public AddressSpace getSpacebase() {
+		return spacebase;
 	}
 
 	@Override
@@ -386,7 +459,15 @@ public class ParamListStandard implements ParamList {
 				return false;
 			}
 		}
-		if (numgroup != op2.numgroup || pointermax != op2.pointermax) {
+		if (modelRules.length != op2.modelRules.length) {
+			return false;
+		}
+		for (int i = 0; i < modelRules.length; ++i) {
+			if (!modelRules[i].isEquivalent(op2.modelRules[i])) {
+				return false;
+			}
+		}
+		if (numgroup != op2.numgroup) {
 			return false;
 		}
 		if (!SystemUtilities.isEqual(spacebase, op2.spacebase)) {

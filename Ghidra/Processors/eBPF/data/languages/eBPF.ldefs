@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+   <language processor="eBPF"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.0"
+            slafile="eBPF_le.sla"
+            processorspec="eBPF.pspec"
+            id="eBPF:LE:64:default">
+    <description>eBPF processor 64-bit little-endian</description>
+    <compiler name="default" spec="eBPF.cspec" id="default"/>
+	<external_name tool="DWARF.register.mapping.file" name="eBPF.dwarf"/>
+  </language>
+</language_definitions>

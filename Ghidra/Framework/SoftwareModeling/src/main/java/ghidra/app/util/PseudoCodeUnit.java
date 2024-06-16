@@ -24,10 +24,9 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.util.*;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * 
@@ -412,20 +411,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	}
 
 	/**
-	 * Invokes the visit() method of the specified PropertyVisitor if the named
-	 * property exists for this code unit.
-	 * 
-	 * @param visitor
-	 *            the class implementing the PropertyVisitor interface.
-	 * @param propertyName
-	 *            the name of the property to be visited.
-	 */
-	@Override
-	public void visitProperty(PropertyVisitor visitor, String propertyName) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
 	 * Get the label for this code unit.
 	 * 
 	 * @throws ConcurrentModificationException
@@ -518,19 +503,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		if (program == null)
 			return null;
 		return program.getListing().getCodeUnitBefore(address);
-	}
-
-	/**
-	 * Return true if the given CodeUnit follows directly after this code unit.
-	 * 
-	 * @throws ConcurrentModificationException
-	 *             if this object is no longer valid.
-	 */
-	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
-		Address min = codeUnit.getMinAddress();
-
-		return this.getMaxAddress().isSuccessor(min);
 	}
 
 	@Override

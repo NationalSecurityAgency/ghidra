@@ -24,8 +24,8 @@ import ghidra.app.nav.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.navigation.GoToServiceImpl;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.Options;
@@ -40,7 +40,7 @@ import ghidra.program.util.ProgramSelection;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Go To Service",
 	description = "This plugin provides the service used by other plugins to " +
 			"go to an address in the program, or to an address in another program." +
@@ -62,13 +62,13 @@ public final class GoToServicePlugin extends ProgramPlugin {
 	 * @param tool the tool
 	 */
 	public GoToServicePlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
-		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 
 		// we register this option here, since the other search plugins all depend on this service
 		opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT,
-			PluginConstants.DEFAULT_SEARCH_LIMIT, null,
+			SearchConstants.DEFAULT_SEARCH_LIMIT, null,
 			"The maximum number of search results.");
 
 		gotoService = new GoToServiceImpl(this, new DefaultNavigatable());
@@ -88,9 +88,9 @@ public final class GoToServicePlugin extends ProgramPlugin {
 	}
 
 	int getMaxHits() {
-		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		int maxSearchHits =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 
 		return maxSearchHits;
 	}
@@ -225,7 +225,8 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+		public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+				Program program) {
 			CodeViewerService service = tool.getService(CodeViewerService.class);
 			if (service != null) {
 				service.removeHighlightProvider(highlightProvider, program);
@@ -233,7 +234,8 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+		public void setHighlightProvider(ListingHighlightProvider highlightProvider,
+				Program program) {
 			CodeViewerService service = tool.getService(CodeViewerService.class);
 			if (service != null) {
 				service.setHighlightProvider(highlightProvider, program);

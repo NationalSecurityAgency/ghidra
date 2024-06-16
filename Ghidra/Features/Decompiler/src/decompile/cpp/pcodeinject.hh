@@ -16,10 +16,12 @@
 /// \file pcodeinject.hh
 /// \brief Classes for managing \b p-code \b injection.
 
-#ifndef __PCODEINJECT__
-#define __PCODEINJECT__
+#ifndef __PCODEINJECT_HH__
+#define __PCODEINJECT_HH__
 
 #include "emulateutil.hh"
+
+namespace ghidra {
 
 class Architecture;
 
@@ -69,6 +71,7 @@ public:
 /// concrete Varnodes. This class contains the context dependent data to resolve:
 ///   - inst_start  -- the address where the injection occurs
 ///   - inst_next   -- the address of the instruction following (the instruction being injected)
+///   - inst_next2  -- the address of the instruction after the next instruction (Not Supported)
 ///   - inst_dest   -- Original destination of CALL being injected
 ///   - inst_ref    -- Target of reference on injected instruction
 ///   - \<input>     -- Input Varnode of the injection referenced by name
@@ -270,4 +273,5 @@ public:
   virtual const vector<OpBehavior *> &getBehaviors(void)=0;
 };
 
+} // End namespace ghidra
 #endif

@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.RangeSet;
-
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
@@ -31,6 +29,7 @@ import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.manager.reason.GdbReason;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.*;
 
 /**
@@ -82,7 +81,7 @@ public class GdbThreadImpl implements GdbThread {
 		this.inferior.addThread(this);
 		this.manager.addThread(this);
 		state.addChangeListener((oldState, newState, pair) -> {
-			manager.event(() -> manager.listenersEvent.fire.threadStateChanged(this, newState,
+			manager.event(() -> manager.listenersEvent.invoke().threadStateChanged(this, newState,
 				pair.cause, pair.reason), "threadState");
 		});
 	}
@@ -136,7 +135,7 @@ public class GdbThreadImpl implements GdbThread {
 	@Override
 	public CompletableFuture<Void> setActive(boolean internal) {
 		// Bypass the select-me-first logic
-		return manager.execute(new GdbSetActiveThreadCommand(manager, id, null, internal));
+		return manager.execute(new GdbSetActiveThreadCommand(manager, id, internal));
 	}
 
 	@Override
@@ -250,7 +249,7 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		return execute(new GdbReadMemoryCommand(manager, id, addr, buf, len));
 	}
 
@@ -285,6 +284,17 @@ public class GdbThreadImpl implements GdbThread {
 	@Override
 	public CompletableFuture<Void> step(StepCmd suffix) {
 		return execute(new GdbStepCommand(manager, id, suffix));
+	}
+
+	@Override
+	public CompletableFuture<Void> advance(String loc) {
+		// There's no exec-advance or similar in MI2....
+		return console("advance " + loc, CompletesWithRunning.MUST);
+	}
+
+	@Override
+	public CompletableFuture<Void> advance(long addr) {
+		return advance(String.format("*0x%x", addr));
 	}
 
 	@Override

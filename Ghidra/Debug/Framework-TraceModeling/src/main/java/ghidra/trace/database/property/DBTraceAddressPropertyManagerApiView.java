@@ -19,7 +19,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import ghidra.trace.model.property.*;
+import ghidra.trace.model.property.TraceAddressPropertyManager;
+import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.util.exception.DuplicateNameException;
 
 class DBTraceAddressPropertyManagerApiView implements TraceAddressPropertyManager {
@@ -43,20 +44,21 @@ class DBTraceAddressPropertyManagerApiView implements TraceAddressPropertyManage
 	}
 
 	@Override
-	public <T> TracePropertyMap<T> getOrCreatePropertyMap(String name, Class<T> valueClass) {
+	public <T> TracePropertyMap<? extends T> getPropertyMapExtends(String name,
+			Class<T> valueClass) {
+		return internalView.getPropertyMapExtends(API_PREFIX + name, valueClass);
+	}
+
+	@Override
+	public <T> TracePropertyMap<T> getOrCreatePropertyMap(String name,
+			Class<T> valueClass) {
 		return internalView.getOrCreatePropertyMap(API_PREFIX + name, valueClass);
 	}
 
 	@Override
-	public <T> TracePropertyGetter<T> getPropertyGetter(String name,
+	public <T> TracePropertyMap<? super T> getOrCreatePropertyMapSuper(String name,
 			Class<T> valueClass) {
-		return internalView.getPropertyGetter(API_PREFIX + name, valueClass);
-	}
-
-	@Override
-	public <T> TracePropertySetter<T> getOrCreatePropertySetter(String name,
-			Class<T> valueClass) {
-		return internalView.getOrCreatePropertySetter(API_PREFIX + name, valueClass);
+		return internalView.getOrCreatePropertyMapSuper(API_PREFIX + name, valueClass);
 	}
 
 	@Override

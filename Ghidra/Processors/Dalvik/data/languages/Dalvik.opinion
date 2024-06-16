@@ -1,8 +1,54 @@
 <opinions>
     <constraint loader="Dalvik Executable (DEX)" compilerSpecID="default">
-        <constraint primary="1"       processor="Dalvik"   endian="little"    size="32" />
+        <constraint primary="1"				  processor="Dalvik" endian="little"    size="32" />
     </constraint>
+
     <constraint loader="Compact Dalvik Executable (CDEX)" compilerSpecID="default">
-        <constraint primary="1"       processor="Dalvik"   endian="little"    size="32" />
+        <constraint primary="1"				  processor="Dalvik" endian="little" size="32" />
     </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" 			  processor="Dalvik" endian="little" size="32"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="K" processor="Dalvik" endian="little" size="32" variant="DEX KitKat"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="L" processor="Dalvik" endian="little" size="32" variant="DEX Lollipop"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="M" processor="Dalvik" endian="little" size="32" variant="DEX Marshmallow"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="N" processor="Dalvik" endian="little" size="32" variant="DEX Nougat"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="O" processor="Dalvik" endian="little" size="32" variant="DEX Oreo"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="P" processor="Dalvik" endian="little" size="32" variant="DEX Pie"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="Q" processor="Dalvik" endian="little" size="32" variant="DEX Android10"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="R" processor="Dalvik" endian="little" size="32" variant="DEX Android11"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="S" processor="Dalvik" endian="little" size="32" variant="DEX Android12"	/>
+    </constraint>
+
+    <constraint loader="Android APK" compilerSpecID="default">
+        <constraint primary="1" secondary="T" processor="Dalvik" endian="little" size="32" variant="DEX Android13"	/>
+    </constraint>
+
 </opinions>

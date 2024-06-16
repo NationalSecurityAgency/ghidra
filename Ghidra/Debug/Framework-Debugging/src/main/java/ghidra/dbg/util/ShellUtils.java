@@ -15,8 +15,9 @@
  */
 package ghidra.dbg.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ShellUtils {
 	enum State {
@@ -109,6 +110,19 @@ public class ShellUtils {
 		return argsList;
 	}
 
+	public static String removePath(String exec) {
+		return Paths.get(exec).getFileName().toString();
+	}
+
+	public static List<String> removePath(List<String> args) {
+		if (args.isEmpty()) {
+			return List.of();
+		}
+		List<String> copy = new ArrayList<>(args);
+		copy.set(0, removePath(args.get(0)));
+		return List.copyOf(copy);
+	}
+
 	public static String generateLine(List<String> args) {
 		if (args.isEmpty()) {
 			return "";
@@ -138,5 +152,12 @@ public class ShellUtils {
 			line.append(a);
 		}
 		return line.toString();
+	}
+
+	public static String generateEnvBlock(Map<String, String> env) {
+		return env.entrySet()
+				.stream()
+				.map(e -> e.getKey() + "=" + e.getValue() + "\0")
+				.collect(Collectors.joining()); // NB. JNA adds final terminator
 	}
 }

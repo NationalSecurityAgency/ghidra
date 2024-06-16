@@ -17,46 +17,29 @@ package agent.dbgeng.manager.cmd;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.*;
-
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
  * Implementation of {@link DbgThread#readMemory(long, ByteBuffer, int)}
  */
-public class DbgReadBusDataCommand extends AbstractDbgCommand<RangeSet<Long>> {
+public class DbgReadBusDataCommand extends AbstractDbgReadCommand {
 
-	private final long addr;
-	private final ByteBuffer buf;
-	private final int len;
 	private final int busDataType;
 	private final int busNumber;
 	private final int slotNumber;
 
-	private int readLen;
-
 	public DbgReadBusDataCommand(DbgManagerImpl manager, long addr, ByteBuffer buf, int len,
 			int busDataType, int busNumber, int slotNumber) {
-		super(manager);
-		this.addr = addr;
-		this.buf = buf;
-		this.len = len;
+		super(manager, addr, buf, len);
 		this.busDataType = busDataType;
 		this.busNumber = busNumber;
 		this.slotNumber = slotNumber;
 	}
 
 	@Override
-	public RangeSet<Long> complete(DbgPendingCommand<?> pending) {
-		RangeSet<Long> rangeSet = TreeRangeSet.create();
-		rangeSet.add(Range.closedOpen(addr, addr + readLen));
-		return rangeSet;
-	}
-
-	@Override
-	public void invoke() {
-		readLen =
-			manager.getDataSpaces().readBusData(busDataType, busNumber, slotNumber, addr, buf, len);
+	protected int doRead(long addr, ByteBuffer buf, int len) {
+		return manager.getDataSpaces()
+				.readBusData(busDataType, busNumber, slotNumber, addr, buf, len);
 	}
 }

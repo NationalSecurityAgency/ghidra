@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.function.editor;
 
 import java.awt.Component;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -26,7 +26,9 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.combobox.GhidraComboBox;
+import docking.widgets.table.FocusableEditor;
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
@@ -35,7 +37,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.util.Msg;
 
-class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellEditor {
+class VarnodeLocationCellEditor extends AbstractCellEditor
+		implements TableCellEditor, FocusableEditor {
 	private Program program;
 	private VarnodeType type;
 	private Component editorComponent;
@@ -43,12 +46,8 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 	private AddressInput addressInput;
 	private IntegerTextField offsetInput;
 
-	private Comparator<Register> registerWrapperComparator = new Comparator<Register>() {
-		@Override
-		public int compare(Register r1, Register r2) {
-			return r1.toString().compareToIgnoreCase(r2.toString());
-		}
-	};
+	private Comparator<Register> registerWrapperComparator =
+		(r1, r2) -> r1.toString().compareToIgnoreCase(r2.toString());
 	private VarnodeInfo currentVarnode;
 	private int maxRegisterSize;
 
@@ -138,19 +137,24 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 		return editorComponent;
 	}
 
+	@Override
+	public void focusEditor() {
+		if (editorComponent instanceof AddressInput input) {
+			input.focusEditor();
+		}
+		else {
+			editorComponent.requestFocusInWindow();
+		}
+	}
+
 	private Component createAddressEditor(VarnodeInfo varnode) {
-		addressInput = new AddressInput();
+		addressInput = new AddressInput(BorderFactory.createEmptyBorder());
 		addressInput.setAddressFactory(program.getAddressFactory());
 		Address address = varnode.getAddress();
 		if (address != null) {
 			addressInput.setAddress(address);
 		}
-		addressInput.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
+		addressInput.addActionListener(e -> stopCellEditing());
 		return addressInput;
 	}
 
@@ -161,13 +165,10 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 		if (address != null) {
 			offsetInput.setValue(address.getOffset());
 		}
-		offsetInput.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
-		return offsetInput.getComponent();
+		offsetInput.addActionListener(e -> stopCellEditing());
+		JComponent component = offsetInput.getComponent();
+		component.setBorder(BorderFactory.createLineBorder(Palette.GRAY, 1));
+		return component;
 	}
 
 	private Component createRegisterCombo(VarnodeInfo varnode) {
@@ -212,21 +213,8 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 			}
 		});
 
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
+		combo.addActionListener(e -> stopCellEditing());
 
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				combo.showPopup();
-				combo.requestFocus();
-			}
-		});
 		return combo;
 	}
 }

@@ -18,8 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Database adapter for managing built-in data types.
@@ -35,14 +35,14 @@ public abstract class BuiltinDBAdapter {
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
-	 * @param monitor the monitor to use for displaying status or for canceling.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @return the adapter for accessing the table of built-in data types.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	static BuiltinDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
+	static BuiltinDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix)
 			throws VersionException, IOException {
-		return new BuiltinDBAdapterV0(handle, openMode == DBConstants.CREATE);
+		return new BuiltinDBAdapterV0(handle, tablePrefix, openMode == OpenMode.CREATE);
 	}
 
 	/**
@@ -53,7 +53,8 @@ public abstract class BuiltinDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract DBRecord createRecord(String name, String className, long categoryID) throws IOException;
+	abstract DBRecord createRecord(String name, String className, long categoryID)
+			throws IOException;
 
 	/**
 	 * Gets the Built-in data type record with the indicated ID.
@@ -93,4 +94,10 @@ public abstract class BuiltinDBAdapter {
 	 * @throws IOException if IO error occurs
 	 */
 	abstract RecordIterator getRecords() throws IOException;
+
+	/**
+	 * Get the number of built-in datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 }

@@ -26,10 +26,12 @@ import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 
-@FactoryDescription( //
-		brief = "GADP connection over TCP", //
-		htmlDetails = "Connect to an optionally remote agent via GADP/TCP." //
-)
+@FactoryDescription(
+	brief = "Ghidra debug agent (GADP)",
+	htmlDetails = """
+			Connect to a Ghidra debug agent using GADP.
+			This is Ghidra's debugging protocol.
+			Use this if launching a (usually remote) agent manually.""")
 public class GadpTcpDebuggerModelFactory implements DebuggerModelFactory {
 
 	private String host = "localhost";

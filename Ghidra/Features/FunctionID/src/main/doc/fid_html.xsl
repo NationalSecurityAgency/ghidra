@@ -2,7 +2,7 @@
 <xsl:stylesheet
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-<xsl:import href="/usr/share/sgml/docbook/xsl-stylesheets/html/chunk.xsl"/>
+<xsl:import href="http://docbook.sourceforge.net/release/xsl/current/html/chunk.xsl"/>
 
 <xsl:include href="fid_common.xsl" />
 
@@ -40,9 +40,15 @@
   </xsl:element>
 </xsl:template>
 
+<xsl:template name="body.attributes">
+  <!-- Remove all BODY attributes so that CSS stylesheet can provide everything -->
+</xsl:template>
+
+<xsl:param name="suppress.navigation" select="1"/>  <!-- Turn off header/footer navigation links -->
+
 <xsl:param name="use.id.as.filename" select="1"/>  <!-- Split up into files based on id attribute -->
 
-<xsl:param name="html.stylesheet" select="'../../shared/Frontpage.css'"/>    <!-- Use our custom cascading style sheet -->
+<xsl:param name="html.stylesheet" select="'help/shared/DefaultStyle.css'"/>    <!-- Use our custom cascading style sheet -->
 
 <xsl:param name="chunk.section.depth" select="0"/>
 

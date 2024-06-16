@@ -93,30 +93,29 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			set = set.subtract(EXTERNAL_SET);
 		}
 
-		String baseMonitorMessage = monitor.getMessage();
-		int memorySymbolCount =
-			demangleSymbols(program, set, 0, baseMonitorMessage, options, log, monitor);
+		int memorySymbolCount = demangleSymbols(program, set, 0, options, log, monitor);
 		if (demangleExternals) {
 			// process external symbols last
-			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, baseMonitorMessage, options,
-				log, monitor);
+			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, options, log, monitor);
 		}
 
 		return true;
 	}
 
 	private int demangleSymbols(Program program, AddressSetView set, int initialCount,
-			String baseMonitorMessage, DemanglerOptions options, MessageLog log,
-			TaskMonitor monitor) throws CancelledException {
+			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
+			throws CancelledException {
 
 		int count = initialCount;
 		SymbolTable symbolTable = program.getSymbolTable();
+		// TODO: iterator will continually need to reinitialize due to symbol changes
+		//       consider copying primary symbols to alt storage for iteration
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (++count % 100 == 0) {
-				monitor.setMessage(baseMonitorMessage + " - " + count + " symbols");
+				monitor.setMessage(getName() + " - " + count + " symbols");
 			}
 
 			Symbol symbol = it.next();
@@ -129,7 +128,27 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			DemangledObject demangled = demangle(mangled, address, options, log);
 			if (demangled != null) {
 				apply(program, address, demangled, options, log, monitor);
+				continue;
 			}
+
+			// Only attempt to demangle a non-primary symbol if primary is imported and will
+			// not demangle.
+			if (symbol.getSource() != SourceType.IMPORTED) {
+				continue;
+			}
+
+			for (Symbol altSym : symbolTable.getSymbols(address)) {
+				if (altSym.isPrimary() || skipSymbol(altSym)) {
+					continue;
+				}
+				mangled = cleanSymbol(address, altSym.getName());
+				demangled = demangle(mangled, address, options, log);
+				if (demangled != null) {
+					apply(program, address, demangled, options, log, monitor);
+					break;
+				}
+			}
+
 		}
 		return count;
 	}
@@ -263,28 +282,33 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			if (demangled.applyTo(program, address, options, monitor)) {
 				return;
 			}
-			logApplyErrorMessage(log, demangled, address, null);
+			String errorString = demangled.getErrorMessage();
+			logApplyErrorMessage(log, demangled, address, null, errorString);
 		}
 		catch (Exception e) {
-			logApplyErrorMessage(log, demangled, address, e);
+			logApplyErrorMessage(log, demangled, address, e, null);
 		}
 
 	}
 
 	private void logApplyErrorMessage(MessageLog log, DemangledObject demangled, Address address,
-			Exception exception) {
+			Exception exception, String errorString) {
 
 		String message;
 		String name;
-		if (exception == null) {
+		if (exception != null) {
+			message = ExceptionUtils.getMessage(exception);
+			name = StringUtils.EMPTY;
+		}
+		else if (errorString != null) {
+			message = errorString;
+			name = StringUtils.EMPTY;
+		}
+		else {
 			// Eventually, if we switch all errors over to being passed by an exception, then
 			// we can eliminate this block of code (and not pass null into this method).
 			message = "Unknown error at address " + address;
 			name = "\n\t" + demangled.getName();
-		}
-		else {
-			message = ExceptionUtils.getMessage(exception);
-			name = StringUtils.EMPTY;
 		}
 
 		String className = demangled.getClass().getSimpleName();

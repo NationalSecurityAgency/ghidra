@@ -20,29 +20,41 @@ import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.dbg.target.*;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
+import ghidra.framework.model.*;
+import ghidra.trace.model.*;
 import ghidra.trace.model.target.*;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.LockHold;
 import ghidra.util.datastruct.WeakValueHashMap;
 import utilities.util.IDKeyed;
 
 public class ObjectTreeModel implements DisplaysModified {
+	public static final GIcon ICON_PENDING = new GIcon("icon.pending");
 
-	class ListenerForChanges extends TraceDomainObjectListener {
+	class ListenerForChanges extends TraceDomainObjectListener
+			implements DomainObjectClosedListener {
 		public ListenerForChanges() {
-			listenFor(TraceObjectChangeType.CREATED, this::objectCreated);
-			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueCreated);
-			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueDeleted);
-			listenFor(TraceObjectChangeType.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::domainObjectRestored);
+			listenFor(TraceEvents.OBJECT_CREATED, this::objectCreated);
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+			listenFor(TraceEvents.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
+		}
+
+		@Override
+		public void domainObjectClosed(DomainObject dobj) {
+			setTrace(null);
+		}
+
+		public void domainObjectRestored(DomainObjectChangeRecord rec) {
+			reloadSameTrace();
 		}
 
 		protected boolean isEventValue(TraceObjectValue value) {
@@ -78,7 +90,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		private void valueCreated(TraceObjectValue value) {
-			if (!DBTraceUtils.intersect(value.getLifespan(), span)) {
+			if (!value.getLifespan().intersects(span)) {
 				return;
 			}
 			AbstractNode node = nodeCache.getByObject(value.getParent());
@@ -95,7 +107,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		private void valueDeleted(TraceObjectValue value) {
-			if (!DBTraceUtils.intersect(value.getLifespan(), span)) {
+			if (!value.getLifespan().intersects(span)) {
 				return;
 			}
 			AbstractNode node = nodeCache.getByObject(value.getParent());
@@ -111,10 +123,10 @@ public class ObjectTreeModel implements DisplaysModified {
 			node.childDeleted(value);
 		}
 
-		private void valueLifespanChanged(TraceObjectValue value, Range<Long> oldSpan,
-				Range<Long> newSpan) {
-			boolean inOld = DBTraceUtils.intersect(oldSpan, span);
-			boolean inNew = DBTraceUtils.intersect(newSpan, span);
+		private void valueLifespanChanged(TraceObjectValue value, Lifespan oldSpan,
+				Lifespan newSpan) {
+			boolean inOld = oldSpan.intersects(span);
+			boolean inNew = newSpan.intersects(span);
 			if (inOld == inNew) {
 				return;
 			}
@@ -153,10 +165,12 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		protected AbstractNode getOrCreateNode(TraceObjectValue value) {
 			if (value.getParent() == null) {
+				root.unloadChildren();
 				return root;
 			}
 			AbstractNode node =
 				byValue.computeIfAbsent(new IDKeyed<>(value), k -> createNode(value));
+			//node.unloadChildren();
 			//AbstractNode node = createNode(value);
 			if (value.isCanonical()) {
 				byObject.put(new IDKeyed<>(value.getChild()), node);
@@ -174,10 +188,94 @@ public class ObjectTreeModel implements DisplaysModified {
 			}
 			return byObject.get(new IDKeyed<>(object));
 		}
+
+		public void invalidate() {
+			byObject.clear();
+			byValue.clear();
+		}
+	}
+
+	public static class PendingNode extends GTreeLazyNode {
+		@Override
+		public String getName() {
+			return ""; // Want it sorted to the front
+		}
+
+		@Override
+		public String getDisplayText() {
+			return "Refreshing...";
+		}
+
+		@Override
+		public Icon getIcon(boolean expanded) {
+			return ICON_PENDING;
+		}
+
+		@Override
+		public boolean isLeaf() {
+			return true;
+		}
+
+		@Override
+		protected List<GTreeNode> generateChildren() {
+			return List.of();
+		}
+
+		@Override
+		public String getToolTip() {
+			return null;
+		}
 	}
 
 	public abstract class AbstractNode extends GTreeLazyNode {
 		public abstract TraceObjectValue getValue();
+
+		public synchronized void addNodeSorted(AbstractNode node) {
+			int i = Collections.binarySearch(getChildren(), node);
+			if (i >= 0) {
+				throw new AssertionError("Duplicate node name: " + node.getName());
+			}
+			i = -i - 1;
+			addNode(i, node);
+		}
+
+		@Override
+		public void dispose() {
+			/**
+			 * Our nodes are re-usable. They're cached so that as an item comes and goes, its
+			 * corresponding node can also come and go without being re-instantiated each time.
+			 * Furthermore, it's likely to have all the same children as before, too. For now, we'll
+			 * just ignore dispose. If there's too many unexpected behaviors resulting from this,
+			 * then perhaps we should just have dispose also remove itself from the node cache.
+			 */
+			// DO NOTHING
+		}
+
+		@Override
+		public int compareTo(GTreeNode node) {
+			if (!(node instanceof AbstractNode that)) {
+				return -1;
+			}
+			int c;
+			c = TargetObjectKeyComparator.CHILD.compare(this.getValue().getEntryKey(),
+				that.getValue().getEntryKey());
+			if (c != 0) {
+				return c;
+			}
+			c = Lifespan.DOMAIN.compare(this.getValue().getMinSnap(), that.getValue().getMinSnap());
+			if (c != 0) {
+				return c;
+			}
+			return 0;
+		}
+
+		@Override
+		public String getName() {
+			return getValue().getEntryKey() + "@" + System.identityHashCode(getValue());
+		}
+
+		@Override
+		public abstract String getDisplayText();
 
 		protected void childCreated(TraceObjectValue value) {
 			if (getParent() == null || !isLoaded()) {
@@ -185,7 +283,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			}
 			if (isValueVisible(value)) {
 				AbstractNode child = nodeCache.getOrCreateNode(value);
-				addNode(child);
+				addNodeSorted(child);
 			}
 		}
 
@@ -222,9 +320,53 @@ public class ObjectTreeModel implements DisplaysModified {
 		protected boolean isModified() {
 			return isValueModified(getValue());
 		}
+
+		protected synchronized void reloadChildrenNow() {
+			if (!isLoaded()) {
+				return;
+			}
+			// Use a merge to effect the minimal changes to set the children
+			var current = List.copyOf(children());
+			var generated = generateChildren();
+			// NB. The two lists ought to be sorted already.
+			int ic = 0;
+			int ig = 0;
+			int diff = 0;
+			while (ic < current.size() && ig < generated.size()) {
+				GTreeNode nc = current.get(ic);
+				GTreeNode ng = generated.get(ig);
+				int comp = nc.compareTo(ng);
+				if (comp == 0) {
+					ic++;
+					ig++;
+				}
+				else if (comp < 0) {
+					removeNode(nc);
+					diff--;
+					ic++;
+				}
+				else { // comp > 0
+					addNode(ic + diff, ng);
+					diff++;
+					ig++;
+				}
+			}
+			while (ic < current.size()) {
+				GTreeNode nc = current.get(ic);
+				removeNode(nc);
+				// diff--; // Not really needed
+				ic++;
+			}
+			while (ig < generated.size()) {
+				GTreeNode ng = generated.get(ig);
+				addNode(ic + diff, ng);
+				diff++;
+				ig++;
+			}
+		}
 	}
 
-	class RootNode extends AbstractNode {
+	public class RootNode extends AbstractNode {
 		@Override
 		public TraceObjectValue getValue() {
 			if (trace == null) {
@@ -239,15 +381,20 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getName() {
+			return "<Root>";
+		}
+
+		@Override
+		public String getDisplayText() {
 			if (trace == null) {
-				return "<html><em>No trace is active</em>";
+				return "<html><em>No&nbsp;trace&nbsp;is&nbsp;active</em>";
 			}
 			TraceObject root = trace.getObjectManager().getRootObject();
 			if (root == null) {
-				return "<html><em>Trace has no model</em>";
+				return "<html><em>Trace&nbsp;has&nbsp;no&nbsp;model</em>";
 			}
-			return "<html>" +
-				HTMLUtilities.escapeHTML(display.getObjectDisplay(root.getCanonicalParent(0)));
+			return "<html>" + HTMLUtilities
+					.escapeHTML(display.getObjectDisplay(root.getCanonicalParent(0)), true);
 		}
 
 		@Override
@@ -291,6 +438,13 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		protected void childCreated(TraceObjectValue value) {
+			if (!isValueVisible(value)) {
+				return;
+			}
+			if (nodeCache.getByValue(value) != null) {
+				super.childCreated(value);
+				return;
+			}
 			try (KeepTreeState keep = KeepTreeState.ifNotNull(getTree())) {
 				unloadChildren();
 			}
@@ -315,9 +469,10 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			String html = HTMLUtilities.escapeHTML(
-				value.getEntryKey() + ": " + display.getPrimitiveValueDisplay(value.getValue()));
+				value.getEntryKey() + ": " + display.getPrimitiveValueDisplay(value.getValue()),
+				true);
 			return "<html>" + html;
 		}
 
@@ -363,9 +518,9 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
-			return "<html>" + HTMLUtilities.escapeHTML(value.getEntryKey()) + ": <em>" +
-				HTMLUtilities.escapeHTML(display.getObjectLinkDisplay(value)) + "</em>";
+		public String getDisplayText() {
+			return "<html>" + HTMLUtilities.escapeHTML(value.getEntryKey(), true) + ":&nbsp;<em>" +
+				HTMLUtilities.escapeHTML(display.getObjectLinkDisplay(value), true) + "</em>";
 		}
 
 		@Override
@@ -405,8 +560,8 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
-			return "<html>" + HTMLUtilities.escapeHTML(display.getObjectDisplay(value));
+		public String getDisplayText() {
+			return "<html>" + HTMLUtilities.escapeHTML(display.getObjectDisplay(value), true);
 		}
 
 		@Override
@@ -467,7 +622,7 @@ public class ObjectTreeModel implements DisplaysModified {
 	private long snap;
 	private Trace diffTrace;
 	private long diffSnap;
-	private Range<Long> span = Range.all();
+	private Lifespan span = Lifespan.ALL;
 	private boolean showHidden;
 	private boolean showPrimitives;
 	private boolean showMethods;
@@ -568,9 +723,6 @@ public class ObjectTreeModel implements DisplaysModified {
 		if (!showMethods && value.isObject() && value.getChild().isMethod(snap)) {
 			return false;
 		}
-		if (!DBTraceUtils.intersect(value.getLifespan(), span)) {
-			return false;
-		}
 		return true;
 	}
 
@@ -587,8 +739,9 @@ public class ObjectTreeModel implements DisplaysModified {
 
 	protected List<GTreeNode> generateObjectChildren(TraceObject object) {
 		List<GTreeNode> result = ObjectTableModel
-				.distinctCanonical(object.getValues().stream().filter(this::isValueVisible))
+				.distinctCanonical(object.getValues(span).stream().filter(this::isValueVisible))
 				.map(v -> nodeCache.getOrCreateNode(v))
+				.sorted()
 				.collect(Collectors.toList());
 		return result;
 	}
@@ -600,12 +753,14 @@ public class ObjectTreeModel implements DisplaysModified {
 	protected void removeOldListeners() {
 		if (trace != null) {
 			trace.removeListener(listenerForChanges);
+			trace.removeCloseListener(listenerForChanges);
 		}
 	}
 
 	protected void addNewListeners() {
 		if (trace != null) {
 			trace.addListener(listenerForChanges);
+			trace.addCloseListener(listenerForChanges);
 		}
 	}
 
@@ -613,10 +768,23 @@ public class ObjectTreeModel implements DisplaysModified {
 		for (AbstractNode node : nodeCache.byObject.values()) {
 			node.fireNodeChanged();
 		}
+		root.fireNodeChanged();
 	}
 
 	protected void reload() {
+		nodeCache.invalidate();
 		root.unloadChildren();
+	}
+
+	protected void reloadSameTrace() {
+		try (LockHold hold = trace == null ? null : trace.lockRead()) {
+			for (AbstractNode node : List.copyOf(nodeCache.byObject.values())) {
+				node.reloadChildrenNow();
+				node.fireNodeChanged();
+			}
+			root.reloadChildrenNow();
+			root.fireNodeChanged();
+		}
 	}
 
 	public void setTrace(Trace trace) {
@@ -710,10 +878,10 @@ public class ObjectTreeModel implements DisplaysModified {
 	}
 
 	protected void spanChanged() {
-		reload();
+		reloadSameTrace();
 	}
 
-	public void setSpan(Range<Long> span) {
+	public void setSpan(Lifespan span) {
 		if (Objects.equals(this.span, span)) {
 			return;
 		}
@@ -721,12 +889,12 @@ public class ObjectTreeModel implements DisplaysModified {
 		spanChanged();
 	}
 
-	public Range<Long> getSpan() {
+	public Lifespan getSpan() {
 		return span;
 	}
 
 	protected void showHiddenChanged() {
-		reload();
+		reloadSameTrace();
 	}
 
 	public void setShowHidden(boolean showHidden) {
@@ -742,7 +910,7 @@ public class ObjectTreeModel implements DisplaysModified {
 	}
 
 	protected void showPrimitivesChanged() {
-		reload();
+		reloadSameTrace();
 	}
 
 	public void setShowPrimitives(boolean showPrimitives) {
@@ -758,7 +926,7 @@ public class ObjectTreeModel implements DisplaysModified {
 	}
 
 	protected void showMethodsChanged() {
-		reload();
+		reloadSameTrace();
 	}
 
 	public void setShowMethods(boolean showMethods) {

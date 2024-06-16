@@ -206,7 +206,7 @@ public class AddressEvaluator {
 		}
 
 		/*
-		 * Make sure we account for endianess of the program.
+		 * Make sure we account for endianness of the program.
 		 * Computing the number of bits to shift the current byte value
 		 * is different for Little vs. Big Endian. Need to multiply by
 		 * 8 to shift in 1-byte increments.
@@ -257,7 +257,7 @@ public class AddressEvaluator {
 		if (globalSymbols.size() == 1) {
 			return globalSymbols.get(0).getAddress();
 		}
-		return null;
+		return getValueObject(tok);
 	}
 
 	private static Object getValueObject(String strValue) {
@@ -268,10 +268,14 @@ public class AddressEvaluator {
 				start = 2;
 				radix = 16;
 			}
-			if (strValue.endsWith("UL")) {
+			strValue = strValue.toLowerCase();
+			if (strValue.endsWith("ull") || strValue.endsWith("llu")) {
+				strValue = strValue.substring(start, strValue.length() - 3);
+			}
+			else if (strValue.endsWith("ul") || strValue.endsWith("lu") || strValue.endsWith("ll")) {
 				strValue = strValue.substring(start, strValue.length() - 2);
 			}
-			else if (strValue.endsWith("L") || strValue.endsWith("l") || strValue.endsWith("U")) {
+			else if (strValue.endsWith("l") || strValue.endsWith("u")) {
 				strValue = strValue.substring(start, strValue.length() - 1);
 			}
 			else {

@@ -16,7 +16,7 @@
 package ghidra.program.model.data;
 
 /**
- * Provides a definition of a {@code complex} built-in data type consisting of two 16 byte floating point
+ * Provides a definition of a {@code complex} built-in data type consisting of two 128-bit floating point
  * numbers in the IEEE 754 double precision format.
  */
 public class Complex32DataType extends AbstractComplexDataType {

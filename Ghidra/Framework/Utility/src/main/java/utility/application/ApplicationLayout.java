@@ -16,20 +16,18 @@
 package utility.application;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
-import utilities.util.FileUtilities;
 
 /**
- * The Application Layout base class defines the customizable elements of the application's 
+ * The Application Layout base class defines the customizable elements of the application's
  * directory structure.  Create a subclass to define a custom layout.
  * <p>
- * If a layout changes in a significant way, the 
- * {@link ApplicationProperties#APPLICATION_LAYOUT_VERSION_PROPERTY} should be incremented so 
+ * If a layout changes in a significant way, the
+ * {@link ApplicationProperties#APPLICATION_LAYOUT_VERSION_PROPERTY} should be incremented so
  * external things like Eclipse GhidraDev know to look in different places for things.
  */
 public abstract class ApplicationLayout {
@@ -47,7 +45,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the application properties from the application layout
-	 * 
+	 *
 	 * @return The application properties.  Should never be null.
 	 */
 	public final ApplicationProperties getApplicationProperties() {
@@ -56,7 +54,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the application root directories from the application layout.
-	 * 
+	 *
 	 * @return A collection of application root directories (or null if not set).
 	 */
 	public final Collection<ResourceFile> getApplicationRootDirs() {
@@ -65,7 +63,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the application installation directory from the application layout.
-	 * 
+	 *
 	 * @return The application installation directory (or null if not set).
 	 */
 	public final ResourceFile getApplicationInstallationDir() {
@@ -74,7 +72,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the application's modules from the application layout.
-	 * 
+	 *
 	 * @return The application's modules as a map (mapping module name to module for convenience).
 	 */
 	public final Map<String, GModule> getModules() {
@@ -83,7 +81,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the user temp directory from the application layout.
-	 * 
+	 *
 	 * @return The user temp directory (or null if not set).
 	 */
 	public final File getUserTempDir() {
@@ -92,7 +90,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the user cache directory from the application layout.
-	 * 
+	 *
 	 * @return The user cache directory (or null if not set).
 	 */
 	public final File getUserCacheDir() {
@@ -101,7 +99,7 @@ public abstract class ApplicationLayout {
 
 	/**
 	 * Gets the user settings directory from the application layout.
-	 * 
+	 *
 	 * @return The user settings directory (or null if not set).
 	 */
 	public final File getUserSettingsDir() {
@@ -109,19 +107,33 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the directory where archived application Extensions are stored.
-	 * 
-	 * @return the application Extensions archive directory.  Could be null if the 
+	 * Returns the directory where archived application Extensions are stored.  This directory may
+	 * contain both zip files and subdirectories.   This directory is only used inside of an
+	 * installation; development mode does not use this directory.   This directory is used to ship 
+	 * pre-built Ghidra extensions as part of a distribution.
+	 * <P>
+	 * This should be at the following location:<br>
+	 * <ul>
+	 * <li><code>{install dir}/Extensions/Ghidra</code></li>
+	 * </ul>
+	 *
+	 * @return the application Extensions archive directory.  Could be null if the
 	 *   {@link ApplicationLayout} does not support application Extensions.
-	 * 
+	 *
 	 */
 	public final ResourceFile getExtensionArchiveDir() {
 		return extensionArchiveDir;
 	}
 
 	/**
-	 * Returns an {@link List ordered list} of the application Extensions installation directories.
-	 * 
+	 * Returns a prioritized {@link List ordered list} of the application Extensions installation 
+	 * directories.   Typically, the values may be any of the following locations:<br>
+	 * <ul>
+	 * <li><code>[user settings dir]/Extensions</code></li>
+	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
+	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
+	 * </ul>
+	 *
 	 * @return an {@link List ordered list} of the application Extensions installation directories.
 	 *   Could be empty if the {@link ApplicationLayout} does not support application Extensions.
 	 */
@@ -139,42 +151,14 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Creates the application's user directories (or ensures they already exist).
-	 *  
-	 * @throws IOException if there was a problem creating the application's user directories.
-	 */
-	public final void createUserDirs() throws IOException {
-		if (userTempDir != null) {
-			if (!FileUtilities.mkdirs(userTempDir)) {
-				throw new IOException("Failed to create user temp directory: " + userTempDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userTempDir);
-		}
-
-		if (userCacheDir != null) {
-			if (!FileUtilities.mkdirs(userCacheDir)) {
-				throw new IOException("Failed to create user cache directory: " + userCacheDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userCacheDir);
-		}
-
-		if (userSettingsDir != null) {
-			if (!FileUtilities.mkdirs(userSettingsDir)) {
-				throw new IOException(
-					"Failed to create user settings directory: " + userSettingsDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userSettingsDir);
-		}
-	}
-
-	/**
-	 * Checks whether or not the application is using a "single jar" layout.  Custom application 
-	 * layouts that extend this class can override this method once they determine they are in 
+	 * Checks whether or not the application is using a "single jar" layout.  Custom application
+	 * layouts that extend this class can override this method once they determine they are in
 	 * single jar mode.
-	 * 
+	 *
 	 * @return true if the application is using a "single jar" layout; otherwise, false.
 	 */
 	public boolean inSingleJarMode() {
 		return false;
 	}
+
 }

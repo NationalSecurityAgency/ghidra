@@ -71,9 +71,9 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		assertNotNull(dialog);
 
 		worker.setDone();
-		worker.get(TaskMonitorAdapter.DUMMY_MONITOR);
+		worker.get(TaskMonitor.DUMMY);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -97,11 +97,11 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		assertNotNull(dialog);
 
 		worker.setDone();
-		worker.get(TaskMonitorAdapter.DUMMY_MONITOR);
+		worker.get(TaskMonitor.DUMMY);
 		r1.join();
 		assertEquals(ITEM_COUNT, r1.size());
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -125,11 +125,11 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		assertNotNull(dialog);
 
 		worker.setDone();
-		worker.get(TaskMonitorAdapter.DUMMY_MONITOR);
+		worker.get(TaskMonitor.DUMMY);
 		r1.join();
 		assertEquals(ITEM_COUNT, r1.size());
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -150,9 +150,9 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		assertNotNull(dialog);
 
 		dialog.cancel();
-		worker.get(TaskMonitorAdapter.DUMMY_MONITOR);
+		worker.get(TaskMonitor.DUMMY);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -286,7 +286,7 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 
 		@Override
 		public void run() {
-			result = worker.get(TaskMonitorAdapter.DUMMY_MONITOR);
+			result = worker.get(TaskMonitor.DUMMY);
 		}
 	}
 }

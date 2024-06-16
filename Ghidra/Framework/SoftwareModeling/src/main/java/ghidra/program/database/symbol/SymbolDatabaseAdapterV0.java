@@ -93,7 +93,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		int cnt = 0;
 		RecordIterator iter = symbolTable.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			if (rec.getBooleanValue(V0_SYMBOL_LOCAL_COL)) {
 				SymbolManager.saveLocalSymbol(handle, rec.getKey(),
@@ -253,6 +253,13 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		StringField val = new StringField(name);
 		return new V0ConvertedRecordIterator(
 			symbolTable.indexIterator(V0_SYMBOL_NAME_COL, val, val, true));
+	}
+
+	@Override
+	RecordIterator scanSymbolsByName(String startName) throws IOException {
+		StringField val = new StringField(startName);
+		return new V0ConvertedRecordIterator(
+			symbolTable.indexIterator(V0_SYMBOL_NAME_COL, val, null, true));
 	}
 
 	private class V0ConvertedRecordIterator implements RecordIterator {

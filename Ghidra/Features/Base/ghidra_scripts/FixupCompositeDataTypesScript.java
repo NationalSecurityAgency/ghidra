@@ -29,6 +29,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.ProjectDataTypeManager;
 import ghidra.program.database.data.*;
 import ghidra.program.model.data.BuiltInDataTypeManager;
 import ghidra.program.model.data.DataTypeManager;

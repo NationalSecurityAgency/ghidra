@@ -159,7 +159,18 @@ public class CliBlob implements StructConverter {
 
 	@Override
 	public DataType toDataType() {
-		Structure struct = new StructureDataType(new CategoryPath(PATH), "Blob_" + getName(), 0);
+		return toDataType(null);
+	}
+
+	/**
+	 * Create CLI Blob structure.
+	 * NOTE: This form is provided to reduce resolution time when target datatype manager is known.
+	 * @param dtm datatype manager or null if target datatype manager is unknown.
+	 * @return blob structure
+	 */
+	public DataType toDataType(DataTypeManager dtm) {
+		Structure struct =
+			new StructureDataType(new CategoryPath(PATH), "Blob_" + getName(), 0, dtm);
 		struct.add(getSizeDataType(), "Size", "coded integer - blob size");
 		struct.add(getContentsDataType(), getContentsName(), getContentsComment());
 		return struct;

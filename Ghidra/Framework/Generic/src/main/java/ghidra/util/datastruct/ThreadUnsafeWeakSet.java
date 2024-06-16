@@ -17,6 +17,7 @@ package ghidra.util.datastruct;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 
@@ -24,34 +25,26 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 		// restrict access; use factory method in base class
 	}
 
-	/**
-	 * Add the given object to the set.
-	 */
 	@Override
-	public void add(T t) {
+	public boolean add(T t) {
 		maybeWarnAboutAnonymousValue(t);
+		boolean contains = weakHashStorage.containsKey(t);
 		weakHashStorage.put(t, null);
+		return !contains;
 	}
 
-	/**
-	 * Remove the given object from the data structure
-	 */
 	@Override
-	public void remove(T t) {
+	public boolean remove(Object t) {
+		boolean contains = weakHashStorage.containsKey(t);
 		weakHashStorage.remove(t);
+		return contains;
 	}
 
-	/**
-	 * Remove all elements from this data structure
-	 */
 	@Override
 	public void clear() {
 		weakHashStorage.clear();
 	}
 
-	/**
-	 * Returns an iterator over the elements in this data structure.
-	 */
 	@Override
 	public Iterator<T> iterator() {
 		return weakHashStorage.keySet().iterator();
@@ -73,12 +66,45 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public boolean contains(T t) {
+	public boolean contains(Object t) {
 		return weakHashStorage.containsKey(t);
 	}
 
 	@Override
 	public String toString() {
 		return weakHashStorage.toString();
+	}
+
+	@Override
+	public Stream<T> stream() {
+		return values().stream();
+	}
+
+	@Override
+	public boolean addAll(Collection<? extends T> c) {
+		boolean changed = false;
+		for (T t : c) {
+			changed |= add(t);
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean retainAll(Collection<?> c) {
+		boolean changed = false;
+		Iterator<T> it = iterator();
+		while (it.hasNext()) {
+			T t = it.next();
+			if (!c.contains(t)) {
+				it.remove();
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean removeAll(Collection<?> c) {
+		return weakHashStorage.keySet().removeAll(c);
 	}
 }

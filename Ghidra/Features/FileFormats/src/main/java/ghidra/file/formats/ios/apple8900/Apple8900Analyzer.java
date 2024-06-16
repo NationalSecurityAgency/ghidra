@@ -27,33 +27,38 @@ import ghidra.util.task.TaskMonitor;
 
 public class Apple8900Analyzer extends FileFormatAnalyzer {
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return Apple8900Util.is8900(program);
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		return Apple8900Util.is8900(program);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Annotates an Apple 8900 file.";
 	}
 
+	@Override
 	public String getName() {
 		return "Apple 8900 Annotation";
 	}
 
+	@Override
 	public boolean isPrototype() {
 		return true;
 	}
 
+	@Override
 	public boolean analyze(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws Exception {
 		monitor.setMessage("Processing Apple 8900 header...");
 
 		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(),
-				program.getAddressFactory().getDefaultAddressSpace());
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		Apple8900Header header = new Apple8900Header(reader);

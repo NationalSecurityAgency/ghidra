@@ -22,25 +22,21 @@ import java.util.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 
-public class PairedTransactionTest extends AbstractGenericTest {
+public class PairedTransactionTest extends AbstractGuiTest {
 
-	DummyDomainObject obj1;
-	DummyDomainObject obj2;
+	private DummyDomainObject obj1;
+	private DummyDomainObject obj2;
 
-	MyListener obj1Listener;
-	MyListener obj2Listener;
+	private MyListener obj1Listener;
+	private MyListener obj2Listener;
 
-	Options propertyList1;
-	Options propertyList2;
-
-	public PairedTransactionTest() {
-		super();
-	}
+	private Options propertyList1;
+	private Options propertyList2;
 
 	@Before
 	public void setUp() throws Exception {
@@ -89,7 +85,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 	class MyListener implements TransactionListener {
 
 		private List<String> events = new ArrayList<>();
-		private Transaction lastTransaction;
+		private TransactionInfo lastTransaction;
 		private DomainObjectAdapterDB obj;
 
 		MyListener(DomainObjectAdapterDB obj) {
@@ -105,7 +101,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		@Override
 		public synchronized void transactionStarted(DomainObjectAdapterDB domainObj,
-				Transaction tx) {
+				TransactionInfo tx) {
 			assertEquals(obj, domainObj);
 			events.add(START);
 			lastTransaction = tx;
@@ -130,7 +126,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		}
 
 		String[] getEvents() {
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			synchronized (this) {
 				String[] a = new String[events.size()];
 				events.toArray(a);
@@ -139,8 +135,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 			}
 		}
 
-		Transaction getLastTransaction() {
-			waitForPostedSwingRunnables();
+		TransactionInfo getLastTransaction() {
+			waitForSwing();
 			synchronized (this) {
 				return lastTransaction;
 			}
@@ -151,8 +147,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 	@Test
 	public void testAddSynchronizedDomainObject() throws IOException {
 
-		assertNull(obj1.getCurrentTransaction());
-		assertNull(obj2.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
+		assertNull(obj2.getCurrentTransactionInfo());
 
 		assertEquals(1, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());
@@ -162,7 +158,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertFalse(obj1.canRedo());
 		assertFalse(obj2.canRedo());
 
-		Transaction tx = obj1Listener.getLastTransaction();
+		TransactionInfo tx = obj1Listener.getLastTransaction();
 		obj1Listener.getEvents();
 		assertNotNull(tx);
 
@@ -208,7 +204,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		int txId1 = obj1.startTransaction("Test1");
 		try {
 
-			assertNotNull(obj2.getCurrentTransaction());
+			assertNotNull(obj2.getCurrentTransactionInfo());
 
 			propertyList1.setString("A1.B1", "TestB1");
 
@@ -247,7 +243,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals("NULL", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("NULL", propertyList2.getString("A2.B2", "NULL"));
 
-		assertNull(obj1.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
 
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(0, obj2.getUndoStackDepth());
@@ -267,7 +263,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		txId1 = obj1.startTransaction("Test1");
 		try {
 
-			assertNotNull(obj2.getCurrentTransaction());
+			assertNotNull(obj2.getCurrentTransactionInfo());
 
 			propertyList1.setString("A1.B1", "TestB1");
 
@@ -305,7 +301,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals("TestB1", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("TestB2", propertyList2.getString("A2.B2", "NULL"));
 
-		assertNull(obj1.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
 
 		assertEquals(1, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());
@@ -389,7 +385,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		txId1 = obj1.startTransaction("Test1");
 		try {
 
-			assertNull(obj2.getCurrentTransaction());
+			assertNull(obj2.getCurrentTransactionInfo());
 
 			propertyList1.setString("A1.C1", "TestC1");
 
@@ -427,7 +423,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals("NULL", propertyList1.getString("A1.C1", "NULL"));
 		assertEquals("TestC2", propertyList2.getString("A2.C2", "NULL"));
 
-		assertNull(obj1.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
 
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());
@@ -443,7 +439,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertTrue(Arrays.equals(new String[] {}, events2));
 
 		assertEquals("", obj1.getUndoName());
-		assertEquals("obj2: Test2", obj2.getUndoName());
+		assertEquals("Test2", obj2.getUndoName());
 		assertEquals("", obj1.getRedoName());
 		assertEquals("", obj2.getRedoName());
 

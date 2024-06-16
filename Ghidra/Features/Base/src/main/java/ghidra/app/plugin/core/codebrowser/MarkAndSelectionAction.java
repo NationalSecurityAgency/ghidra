@@ -16,11 +16,11 @@
 package ghidra.app.plugin.core.codebrowser;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.util.HelpTopics;
@@ -28,8 +28,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-import resources.MultiIconBuilder;
-import resources.ResourceManager;
 
 /**
  * Actions for creating a selection using two distinct steps. The first time the action
@@ -55,23 +53,14 @@ public class MarkAndSelectionAction extends ToggleDockingAction {
 			new ToolBarData(unarmedIcon, ToolConstants.TOOLBAR_GROUP_THREE, "Z"));
 
 		setHelpLocation((new HelpLocation(HelpTopics.SELECTION, "Mark_And_Select")));
-		setSupportsDefaultToolContext(true);
+		setContextClass(NavigatableActionContext.class, true);
 		addToWindowWhen(NavigatableActionContext.class);
 
 	}
 
 	private void buildIcons() {
-		ImageIcon baseImage = ResourceManager.loadImage("images/MarkSelection.png");
-		ImageIcon mediaStart = ResourceManager.loadImage("images/media-playback-start.png");
-		ImageIcon mediaStop = ResourceManager.loadImage("images/media-playback-stop.png");
-
-		MultiIconBuilder builder = new MultiIconBuilder(baseImage);
-		builder.addLowerRightIcon(mediaStart, 12, 12);
-		unarmedIcon = builder.build();
-
-		builder = new MultiIconBuilder(baseImage);
-		builder.addLowerRightIcon(mediaStop, 12, 12);
-		armedIcon = builder.build();
+		unarmedIcon = new GIcon("icon.plugin.codebrowser.mark.and.select.unarmed");
+		armedIcon = new GIcon("icon.plugin.codebrowser.mark.and.select.armed");
 	}
 
 	@Override
@@ -114,7 +103,7 @@ public class MarkAndSelectionAction extends ToggleDockingAction {
 		if (markedLocation != null) {
 			Address address = markedLocation.getByteAddress();
 			menuName = "Create Selection from " + address;
-			description = "Create seletion from marked location: " + address;
+			description = "Create selection from marked location: " + address;
 			icon = armedIcon;
 		}
 

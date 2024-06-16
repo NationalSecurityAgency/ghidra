@@ -4,7 +4,7 @@
   <HEAD>
     <TITLE>Project Info</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -73,7 +73,7 @@
     </DIV>
 
     <P>To access <I>Project Information</I>, select <B>Project</B><IMG border="0" src=
-    "../../shared/arrow.gif"><B>View Project Info...</B> from the <A href=
+    "help/shared/arrow.gif"><B>View Project Info...</B> from the <A href=
     "Ghidra_Front_end.htm">Ghidra Project Window</A>. The image below shows information and
     functionality for a shared project:</P>
 
@@ -96,7 +96,7 @@
     Access Level</A> indicates your privileges in the project (Administrator, Read Only, or Read/Write).
     The User Access Level is only displayed while in a connected state.</P>
     
-    <A name="Indexed_Filesystem"></A><P align="left"><IMG border="0" src="../../shared/note.png">As 
+    <A name="Indexed_Filesystem"></A><P align="left"><IMG border="0" src="help/shared/note.png">As 
     of version 5.5 Ghidra utilizes
     an <i>Indexed Filesystem</i> for storage of project files, however, projects created prior to version 5.5
     utilize a <i>Mangled Filesystem</i>.  The <i>Mangled Filesystem</i> uses a name mangling scheme for files
@@ -119,11 +119,20 @@
 
     <H2><A name="Change_Shared_Project_Info"></A>Changing Shared Project Information</H2>
 
+	<P>Changing shared project details may become neccessary when a server's IP address or name 
+	has changed.  While other cases are supported, these may cause some issues with private and 
+	checked-out project files.  Any checked-out file which does not match-up properly will be 
+	renamed to a private <I>.keep</I> file within the project and a checkin will no longer be 
+	possible.  In addition, when switching to and a different repository private files may conflict
+	with those in the repository resulting in 
+	<A href="Ghidra_Front_end.htm#HijackedFile">hijacked files</A>.
+	
     <BLOCKQUOTE>
       <P>To update repository information:</P>
 
       <OL>
-        <LI>Close all open files and make sure that all files are checked in.</LI>
+        <LI>Close all open files.  Closing all of your active tools (e.g., CodeBrowser) may be
+        the simplest way to accomplish this.</LI>
 
         <LI>In <I>Project Information</I>, click on the <B>Change Shared Project Info...</B> button
         to start the&nbsp;<I>Change Shared Project Information</I> wizard.&nbsp;</LI>
@@ -142,7 +151,7 @@
           <P align="left"><A name="ChangeRepository"></A>Press the <B>Next &gt;&gt;</B> button to
           connect to the specified server and port.</P>
 
-          <P align="left"><IMG border="0" src="../../shared/note.png">If you
+          <P align="left"><IMG border="0" src="help/shared/note.png">If you
           are changing the Ghidra Server name or port number and you fail to connect, refer to the
           <A href=
           "help/topics/VersionControl/project_repository.htm#Troubleshooting">Troubleshooting</A>
@@ -194,30 +203,34 @@
       </OL>
 
       <BLOCKQUOTE>
-        <P><IMG border="0" src="../../shared/note.png">If you are
+        <P><IMG border="0" src="help/shared/note.png">If you are
         associating your project with an <I>existing</I> repository, then you will not see the
         <I>Project Access</I> panel as part of the <I>Change Shared Project Information</I>
         wizard.&nbsp; If you are an administrator in the existing repository, then you can display
         and modify user privileges by choosing the <B>Project</B><IMG border="0" src=
-        "../../shared/arrow.gif"><B><A href=
+        "help/shared/arrow.gif"><B><A href=
         "Ghidra_Front_end.htm#Edit_Project_Access_List">Edit Project Access List...</A></B> <A
-        href="Ghidra_Front_end.htm">option</A>.&nbsp;</P>
+        href="Ghidra_Front_end.htm"></A> option.&nbsp;</P>
       </BLOCKQUOTE>
 
       <OL start="8">
         <LI>Select the <B>Finish</B> button.&nbsp; &nbsp;</LI>
 
         <LI><A name="Step9"></A>A confirmation dialog is displayed; select the <B>Update</B> button
-        to complete the <I>Change Shared Project Information</I>  process.</LI>
+        to start the <I>Change Shared Project Information</I> process.</LI>
       </OL>
     </BLOCKQUOTE>
 
-    <BLOCKQUOTE>
-      <P><IMG border="0" src="../../shared/note.png"> After you have updated
-      your project information, you may end up with <A href=
-      "Ghidra_Front_end.htm#HijackedFile">hijacked files</A> if a file of the same name exists in
-      the repository.&nbsp;&nbsp;</P>
-    </BLOCKQUOTE>
+	<BLOCKQUOTE>
+        <P><IMG border="0" src="help/shared/warning.png">
+        If one or more checked-out files do not match-up properly with the new repository you will
+        be prompted to allow these checkouts to be terminated and converted to private <I>.keep</I>
+        files.  Such file conversion will prevent such files from ever being checked-in and
+        should be avoided when possible.  Click <B>Terminate Checkouts and Continue</B> to proceed
+        with change or <B>Cancel</B> to abort change. The conversion of these files to private .keep
+        files can not be undone.
+        </P>
+      </BLOCKQUOTE>
 
     <H2>&nbsp;</H2>
 
@@ -225,10 +238,14 @@
 
     <BLOCKQUOTE>
       <P>The image below shows project information for a project that is not shared. Note that the
-      repository information is disabled. Before you can convert your project, you must first close
-      any files that you have opened, and check in any files that you have checked out.</P>
+      repository information will not be displayed for a private project.  If repository information
+      is displayed this is already a shared project.</P>
+      
+      <P>Before you can convert your project, you must first close
+      any files that you have opened.  Closing all of your active tools (e.g., CodeBrowser) may be
+      the simplest way to accomplish this.</P>
 
-      <P><IMG border="0" src="../../shared/warning.png"> You will lose all
+      <P><IMG border="0" src="help/shared/warning.png"> You will lose all
       version history for files under local <A href=
       "help/topics/VersionControl/project_repository.htm#Versioning">version control</A> after you
       convert your project.</P>
@@ -241,15 +258,15 @@
 
     <BLOCKQUOTE>
       <P>The steps to converting your project are the same as those described for <A href=
-      "#Change_Shared_Project_Info">changing your repository information</A>. However, at <A href=
+      "#Change_Shared_Project_Info">Change Shared Project Information</A>. However, at <A href=
       "#Step9">Step 9</A> above you will get a dialog that warns you about losing version history
       on versioned files. From the warning dialog, click on the <B>Convert</B> button to complete
       the conversion process.&nbsp;</P>
 
-      <P><IMG border="0" src="../../shared/warning.png"> The conversion
+      <P><IMG border="0" src="help/shared/warning.png"> The conversion
       process cannot be undone.</P>
 
-      <P><IMG border="0" src="../../shared/note.png"> After you have
+      <P><IMG border="0" src="help/shared/note.png"> After you have
       converted your project, all of your files (including the ones that were under version
       control) become <A href="Ghidra_Front_end.htm#PrivateFile">private files</A>. You may end up
       with <A href="Ghidra_Front_end.htm#HijackedFile">hijacked files</A> if files of the same

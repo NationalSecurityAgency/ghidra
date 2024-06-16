@@ -21,7 +21,7 @@ import java.util.*;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
+import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * TODO: Provide class-level documentation that describes what this loader does.
  */
-public class SkeletonLoader extends AbstractLibrarySupportLoader {
+public class SkeletonLoader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public String getName() {

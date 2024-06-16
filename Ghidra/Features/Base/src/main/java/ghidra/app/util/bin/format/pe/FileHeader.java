@@ -22,7 +22,6 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
 import ghidra.program.model.data.*;
@@ -179,9 +178,6 @@ public class FileHeader implements StructConverter {
 	private SectionHeader[] sectionHeaders;
 	private List<DebugCOFFSymbol> symbols = new ArrayList<>();
 
-	// TODO: This is x86-64 architecture-specific and needs to be generalized.
-	private List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = new ArrayList<>();
-
 	private BinaryReader reader;
 	private int startIndex;
 	private NTHeader ntHeader;
@@ -239,15 +235,6 @@ public class FileHeader implements StructConverter {
 	}
 
 	/**
-	 * Returns the array of RUNTIME_INFO entries, if any are present.
-	 * @return An array of _IMAGE_RUNTIME_FUNCTION_ENTRY. The array can be empty.
-	 * TODO: This is x86-64 architecture-specific and needs to be generalized.
-	 */
-	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getImageRuntimeFunctionEntries() {
-		return irfes;
-	}
-
-	/**
 	 * Returns the section header that contains the specified virtual address.
 	 * @param virtualAddr the virtual address
 	 * @return the section header that contains the specified virtual address
@@ -271,6 +258,20 @@ public class FileHeader implements StructConverter {
 	public SectionHeader getSectionHeader(int index) {
 		if (index >= 0 && index < sectionHeaders.length) {
 			return sectionHeaders[index];
+		}
+		return null;
+	}
+
+	/**
+	 * Get the first section header defined with the specified name
+	 * @param name section name
+	 * @return first section header defined with the specified name or null if not found
+	 */
+	public SectionHeader getSectionHeader(String name) {
+		for (SectionHeader element : sectionHeaders) {
+			if (element.getName().equals(name)) {
+				return element;
+			}
 		}
 		return null;
 	}
@@ -331,7 +332,7 @@ public class FileHeader implements StructConverter {
 		return ptrToSections;
 	}
 
-	void processSections(OptionalHeader optHeader) throws IOException {
+	void processSections(OptionalHeader optHeader, boolean symbolsProcessed) throws IOException {
 		long oldIndex = reader.getPointerIndex();
 
 		int tmpIndex = getPointerToSections();
@@ -342,35 +343,46 @@ public class FileHeader implements StructConverter {
 			Msg.error(this, "File alignment == 0: section processing skipped");
 		}
 		else {
-			long stringTableOffset = getStringTableOffset();
+			long stringTableOffset = symbolsProcessed ? getStringTableOffset() : -1;
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
-				sectionHeaders[i] =
+				SectionHeader section =
 					SectionHeader.readSectionHeader(reader, tmpIndex, stringTableOffset);
+				sectionHeaders[i] = section;
+
+				int pointerToRawData = section.getPointerToRawData();
+				int sizeOfRawData = section.getSizeOfRawData();
 
 				// Ensure PointerToRawData + SizeOfRawData doesn't exceed the length of the file
-				int pointerToRawData = sectionHeaders[i].getPointerToRawData();
-				int sizeOfRawData = (int) Math.min(reader.length() - pointerToRawData,
-					sectionHeaders[i].getSizeOfRawData());
+				if (pointerToRawData >= reader.length()) {
+					sizeOfRawData = 0;
+					Msg.warn(this, "Section " + section.getName() + " begins after end of file!");
+				}
+				else if (pointerToRawData + sizeOfRawData > reader.length()) {
+					sizeOfRawData = (int) (reader.length() - pointerToRawData);
+					Msg.warn(this,
+						String.format("Section %s exceeds file length...truncating from %d to %d",
+							section.getName(), section.getSizeOfRawData(), sizeOfRawData));
+				}
+				section.setSizeOfRawData(sizeOfRawData);
 
 				// Ensure VirtualSize is large enough to accommodate SizeOfRawData, but do not
 				// exceed the next alignment boundary.  We can only do this if the VirtualAddress is
 				// already properly aligned, since we currently don't support moving sections to
 				// different addresses to enforce alignment.
-				int virtualAddress = sectionHeaders[i].getVirtualAddress();
-				int virtualSize = sectionHeaders[i].getVirtualSize();
+				int virtualAddress = section.getVirtualAddress();
+				int virtualSize = section.getVirtualSize();
 				int alignedVirtualAddress = PortableExecutable.computeAlignment(virtualAddress,
 					optHeader.getSectionAlignment());
 				int alignedVirtualSize = PortableExecutable.computeAlignment(virtualSize,
 					optHeader.getSectionAlignment());
 				if (virtualAddress == alignedVirtualAddress) {
 					if (sizeOfRawData > virtualSize) {
-						sectionHeaders[i]
-								.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
+						section.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
 					}
 				}
 				else {
-					Msg.warn(this, "Section " + sectionHeaders[i].getName() + " is not aligned!");
+					Msg.warn(this, "Section " + section.getName() + " is not aligned!");
 				}
 				tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 			}
@@ -379,37 +391,12 @@ public class FileHeader implements StructConverter {
 		reader.setPointerIndex(oldIndex);
 	}
 
-	void processImageRuntimeFunctionEntries() throws IOException {
-		FileHeader fh = ntHeader.getFileHeader();
-		SectionHeader[] sections = fh.getSectionHeaders();
-
-		// Look for an exception handler section for an array of
-		// RUNTIME_FUNCTION structures, bail if one isn't found
-		SectionHeader irfeHeader = null;
-		for (SectionHeader header : sections) {
-			if (header.getName().equals(".pdata")) {
-				irfeHeader = header;
-				break;
-			}
-		}
-
-		if (irfeHeader == null) {
+	void processSymbols() throws IOException {
+		if (ntHeader.isRVAResoltionSectionAligned()) {
+			// Symbols table offsets are only valid when parsing from file, not memory
 			return;
 		}
 
-		long oldIndex = reader.getPointerIndex();
-
-		int start = ntHeader.rvaToPointer(irfeHeader.getVirtualAddress());
-		reader.setPointerIndex(start);
-
-		ImageRuntimeFunctionEntries entries =
-			new ImageRuntimeFunctionEntries(reader, start, ntHeader);
-		irfes = entries.getRuntimeFunctionEntries();
-
-		reader.setPointerIndex(oldIndex);
-	}
-
-	void processSymbols() throws IOException {
 		if (isLordPE()) {
 			return;
 		}
@@ -457,6 +444,10 @@ public class FileHeader implements StructConverter {
 	 * @throws IOException if io error
 	 */
 	long getStringTableOffset() throws IOException {
+		if (ntHeader.isRVAResoltionSectionAligned()) {
+			// String table offsets are only valid when parsing from file, not memory
+			return -1;
+		}
 		if (pointerToSymbolTable <= 0 || numberOfSymbols < 0) {
 			return -1;
 		}

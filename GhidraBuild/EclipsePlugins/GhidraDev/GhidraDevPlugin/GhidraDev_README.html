@@ -19,7 +19,7 @@
 <h1>GhidraDev README</h1>
 <p>GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 </p>
-<p>The information provided in this document is effective as of GhidraDev 3.0.0 and is subject to
+<p>The information provided in this document is effective as of GhidraDev 3.1.0 and is subject to
 change with future releases.</p>
 
 <ul>
@@ -36,6 +36,7 @@ change with future releases.</p>
     <li><a href="#NewGhidraScript">New Ghidra Script</a></li>
     <li><a href="#NewGhidraScriptProject">New Ghidra Script Project</a></li>
     <li><a href="#NewGhidraModuleProject">New Ghidra Module Project</a></li>
+    <li><a href="#ImportGhidraModuleSource">Import Ghidra Module Source</a></li>
     <li><a href="#ExportGhidraModuleExtension">Export Ghidra Module Extension</a></li>
     <li><a href="#Preferences">Preferences</a></li>
     <li><a href="#LinkGhidra">Link Ghidra</a></li>
@@ -53,10 +54,50 @@ change with future releases.</p>
 </ul>
 
 <h2><a name="ChangeHistory"></a>Change History</h2>
+<p><u><b>3.1.0</b>:</u> 
+<ul>
+  <li>
+    GhidraDev has been upgraded to be compatible with Ghidra 11.1 and later. Older versions of
+    GhidraDev will report an error when trying to link against Ghidra 11.1 or later.
+  </li>
+   <li>
+    GhidraDev now supports importing a Ghidra module source directory. This will work best
+    with Ghidra module projects created from Ghidra 11.1 or later.
+  </li>
+  <li>
+    GhidraDev will now fail to launch Ghidra if a top-level <i>build</i> directory is detected.
+    Presence of this intermediate build artifact can cause Ghidra to have runtime/debugging issues.
+  </li>
+</ul>
+<p><u><b>3.0.2</b>:</u> 
+<ul>
+  <li>
+    GhidraDev no longer throws an IOException when performing a "Link Ghidra" action on a Ghidra 
+    project whose original Ghidra installation moved.
+  </li>
+  <li>
+    GhidraDev now prevents unsupported versions of PyDev from being used.
+  </li>
+</ul>
+<p><u><b>3.0.1</b>:</u> 
+<ul>
+  <li>
+    Exporting a Ghidra Module Extension produces an intermediate <i>build</i> directory within the 
+    project. This <i>build</i> directory now gets automatically cleaned up to avoid Ghidra
+    runtime/debugging issues.
+  </li>
+  <li>
+    GhidraDev now prevents unsupported Ghidra source repositories from being added as a Ghidra
+    installations.
+  </li>
+</ul>
 <p><u><b>3.0.0</b>:</u> 
 <ul>
   <li>
-    GhidraDev now requires Eclipse 2020-09 4.17 or later.
+    GhidraDev now requires Eclipse 2021-12 4.22 or later.
+  </li>
+  <li>
+    GhidraDev now requires JDK 17.
   </li>
   <li>
     Fixed an issue that could cause old extensions to incorrectly remain on the Ghidra project 
@@ -135,15 +176,19 @@ that specify other projects on their build paths.</p>
 
 <h2><a name="MinimumRequirements"></a>Minimum Requirements</h2>
 <ul>
-  <li>Eclipse 2020-09 4.17 or later</li>
+  <li>Eclipse 2021-12 4.22 or later</li>
   <li>Ghidra 9.1 or later</li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="OptionalRequirements"></a>Optional Requirements</h2>
 <ul>
-  <li>PyDev 6.3.1 or later (<a href="#PyDevSupport">more info</a>)</li>
+  <li>PyDev 6.3.1 - 9.3.0 (<a href="#PyDevSupport">more info</a>)</li>
   <li>CDT 8.6.0 or later</li>
+  <li>
+    Gradle - required version(s) specified by linked Ghidra release 
+    (<a href="#ExportGhidraModuleExtension">more info</a>)
+  </li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
 
@@ -166,7 +211,8 @@ plugins are installed.  From Eclipse:</p>
   <li>Click <b>Next</b></li>
   <li>Accept the terms of the license agreement</li>
   <li>Click <b>Finish</b></li>
-  <li>Click <b>Install anyway</b></li>
+  <li>Check <b>Unsigned</b> table entry</li>
+  <li>Click <b>Trust Selected</b></li>
   <li>Click <b>Restart Now</b></li>
 </ol>
 <h3><a name="AutoInstall"></a>Automatic Installation through Ghidra</h3>
@@ -207,6 +253,13 @@ installed into Ghidra as an "extension".</p>
       point for implementing advanced Ghidra features such as Analyzers, Plugins, Loaders, etc.
     </li>
   </ul>
+    <li>Import</li>
+  <ul>
+    <li>
+      <a name="ImportGhidraModuleSource"></a><b>Ghidra Module Source:</b> Opens a wizard that
+      imports a Ghidra module source directory as a new Ghidra module project.
+    </li>
+  </ul>
   <li>Export</li>
   <ul>
     <li>
@@ -214,7 +267,7 @@ installed into Ghidra as an "extension".</p>
       exports a Ghidra module project as a Ghidra extension to the project's <i>dist</i> folder.  
       The exported extension archive file can be distributed to other users and imported via 
       Ghidra's front-end GUI.  The export process requires Gradle, which is configured in the 
-      wizard.
+      wizard.  Note that the Gradle version to use is specified by the linked Ghidra release.
     </li>
   </ul>
   <li><a name="Preferences"></a>Preferences</li>
@@ -390,6 +443,15 @@ installation directory.</p>
         to your Ghida module project, which automatically happens when the project is created.
         Simply <a href="#LinkGhidra">relink</a> your Ghidra installation to the project, and your
         project will pick up any newly discovered Ghidra extensions.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <b><i>Why doesn't GhidraDev support PyDev 10.0 or later?</i></b>
+    <ul>
+      <li>
+        <p>PyDev dropped support for Python 2 in their 10.0 release.  Ghidra currently does not 
+        support Python 3.</p>
       </li>
     </ul>
   </li>

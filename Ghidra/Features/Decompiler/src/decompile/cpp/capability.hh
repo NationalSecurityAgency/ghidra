@@ -15,14 +15,17 @@
  */
 /// \file capability.hh
 /// \brief Infrastructure for discovering code extensions to the decompiler
-#ifndef __CAPABILITY__
-#define __CAPABILITY__
+#ifndef __CAPABILITY_HH__
+#define __CAPABILITY_HH__
 
 #include "types.h"
 #include <vector>
 #include <string>
 
-using namespace std;
+namespace ghidra {
+
+using std::vector;
+using std::string;
 
 /// \brief Class for automatically registering extension points to the decompiler
 ///
@@ -48,5 +51,5 @@ public:
   static void initializeAll(void);	///< Finish initialization for all extension points
 };
 
-
+} // End namespace ghidra
 #endif

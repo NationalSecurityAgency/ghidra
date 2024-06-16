@@ -25,9 +25,9 @@ import ghidra.program.model.data.*;
  * using a bitmap pays for itself since few classes will have 160
  * methods.
  * 
- * https://android.googlesource.com/platform/art/+/lollipop-release/runtime/oat.h#152
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat_file.h#66
+ * <a href="https://android.googlesource.com/platform/art/+/lollipop-release/runtime/oat.h#152">lollipop-release/runtime/oat.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat_file.h#66">android-s-beta-5/runtime/oat_file.h</a>
  */
 public enum OatClassType {
 

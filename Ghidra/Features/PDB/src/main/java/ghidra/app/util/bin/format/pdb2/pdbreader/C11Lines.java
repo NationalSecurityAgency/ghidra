@@ -19,18 +19,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
- * C11Lines information.  As best as we know, only one of C11Lines or C13Lines (not implemented
- * yet) can be found after the symbol information in module debug streams.
+ * C11Lines information.  As best as we know, only one of C11Lines or C13Lines can be found after
+ * the symbol information in module debug streams.
  * <P>
  * Note: we have not tested or put this to use yet.
  */
 public class C11Lines {
 
 	private AbstractPdb pdb;
-
 	private int cFile; // unsigned short
 	private int cSeg; // unsigned short
 	// array of (Windows C) unsigned long values (which is 32-bit int); we are limiting to java int.
@@ -50,12 +48,14 @@ public class C11Lines {
 	private List<List<List<Long>>> offsets; // unsigned int
 	private List<List<List<Integer>>> lineNumbers; // unsigned short
 
-	public C11Lines(AbstractPdb pdb) {
-		this.pdb = pdb;
+	public static C11Lines parse(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
+		return new C11Lines(pdb, reader);
 	}
 
-	public void parse(PdbByteReader reader, TaskMonitor monitor)
+	private C11Lines(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
+		this.pdb = pdb;
 		if (reader.numRemaining() < 4) {
 			return;
 		}
@@ -65,7 +65,7 @@ public class C11Lines {
 		startEnd = new ArrayList<>();
 		seg = new ArrayList<>();
 		for (int i = 0; i < cFile; i++) {
-			monitor.checkCanceled();
+			pdb.checkCancelled();
 			int val = reader.parseInt();
 			if (val < 0) {
 				throw new PdbException("beyond our max integer limitation");
@@ -73,13 +73,13 @@ public class C11Lines {
 			baseSrcFile.add(val);
 		}
 		for (int i = 0; i < cSeg; i++) {
-			monitor.checkCanceled();
+			pdb.checkCancelled();
 			StartEnd se = new StartEnd();
 			se.parse(reader);
 			startEnd.add(se);
 		}
 		for (int i = 0; i < cSeg; i++) {
-			monitor.checkCanceled();
+			pdb.checkCancelled();
 			seg.add(reader.parseUnsignedShortVal());
 		}
 		ccSegs = new ArrayList<>();
@@ -90,14 +90,14 @@ public class C11Lines {
 		offsets = new ArrayList<>();
 		lineNumbers = new ArrayList<>();
 		for (int i = 0; i < cFile; i++) {
-			monitor.checkCanceled();
+			pdb.checkCancelled();
 			reader.setIndex(baseSrcFile.get(i));
 			int ccSeg = reader.parseUnsignedShortVal();
 			ccSegs.add(ccSeg);
 			reader.skip(2); // padding
 			List<Integer> baseSrcLn = new ArrayList<>();
 			for (int j = 0; j < ccSeg; j++) {
-				monitor.checkCanceled();
+				pdb.checkCancelled();
 				baseSrcLn.add(reader.parseInt());
 			}
 			baseSrcLines.add(baseSrcLn);
@@ -114,20 +114,20 @@ public class C11Lines {
 			List<List<Long>> fileSegOffsets = new ArrayList<>(); // unsigned int
 			List<List<Integer>> fileSegLineNums = new ArrayList<>(); // unsigned short
 			for (int j = 0; j < ccSeg; j++) {
-				monitor.checkCanceled();
+				pdb.checkCancelled();
 				reader.setIndex(baseSrcLn.get(j));
 				int segNum = reader.parseUnsignedShortVal();
 				segNums.add(segNum);
 				int cPair = reader.parseUnsignedShortVal();
 				List<Long> segOffsets = new ArrayList<>(); // unsigned ints
 				for (int k = 0; k < cPair; k++) {
-					monitor.checkCanceled();
+					pdb.checkCancelled();
 					segOffsets.add(reader.parseUnsignedIntVal());
 				}
 				fileSegOffsets.add(segOffsets);
 				List<Integer> segLineNums = new ArrayList<>(); // unsigned shorts
 				for (int k = 0; k < cPair; k++) {
-					monitor.checkCanceled();
+					pdb.checkCancelled();
 					segLineNums.add(reader.parseUnsignedShortVal());
 				}
 				fileSegLineNums.add(segLineNums);
@@ -140,25 +140,34 @@ public class C11Lines {
 
 	@Override
 	public String toString() {
-		return dump();
+		try {
+			return dump();
+		}
+		catch (CancelledException e) {
+			return "";
+		}
 	}
 
 	/**
 	 * Dumps this class.  This package-protected method is for debugging only.
 	 * @return the {@link String} output.
+	 * @throws CancelledException upon user cancellation
 	 */
-	String dump() {
+	String dump() throws CancelledException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Lines-------------------------------------------------------\n");
 		builder.append("cFile: " + cFile + " cSeg: " + cSeg + "\n");
 		for (int i = 0; i < cFile; i++) {
+			pdb.checkCancelled();
 			builder.append("baseSrcFile[" + i + "]: " + baseSrcFile.get(i) + "\n");
 		}
 		for (int i = 0; i < cSeg; i++) {
+			pdb.checkCancelled();
 			builder.append(i + ": start:" + startEnd.get(i).getStart() + " end: " +
 				startEnd.get(i).getEnd() + " seg: " + seg.get(i) + "\n");
 		}
 		for (int i = 0; i < cFile; i++) {
+			pdb.checkCancelled();
 			builder.append(
 				"  file[" + i + "]: cSeg: " + ccSegs.get(i) + " name: " + names.get(i) + "\n");
 			List<Integer> myBaseSrcLn = baseSrcLines.get(i);
@@ -172,6 +181,7 @@ public class C11Lines {
 			List<List<Long>> fileSegOffsets = offsets.get(i);
 			List<List<Integer>> fileSegLineNums = lineNumbers.get(i);
 			for (int j = 0; j < fileSegOffsets.size(); j++) {
+				pdb.checkCancelled();
 				List<Long> segOffsets = fileSegOffsets.get(j);
 				List<Integer> segLineNums = fileSegLineNums.get(j);
 				builder.append("  seg[" + j + "]: Seg: " + segNums.get(j) + " cPair: " +

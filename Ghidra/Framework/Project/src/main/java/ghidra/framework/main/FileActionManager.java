@@ -29,16 +29,17 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  * Helper class to manage actions on the File menu.
@@ -49,9 +50,10 @@ class FileActionManager {
 	private final static int OPEN_ACCELERATOR = KeyEvent.VK_O;
 	private final static int CLOSE_ACCELERATOR = KeyEvent.VK_W;
 	private final static int SAVE_ACCELERATOR = KeyEvent.VK_S;
-	private final static Icon NEW_PROJECT_ICON = ResourceManager.loadImage("images/folder_add.png");
-	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 
+	private final static Icon NEW_PROJECT_ICON = new GIcon("icon.menu.file.new.project");
+
+	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 	private static final String DISPLAY_DATA = "DISPLAY_DATA";
 
 	private FrontEndTool tool;
@@ -64,7 +66,6 @@ class FileActionManager {
 	private DockingAction saveAction;
 
 	private List<ViewInfo> reopenList;
-	private GhidraFileChooser fileChooser;
 
 	private boolean firingProjectOpened;
 
@@ -123,7 +124,7 @@ class FileActionManager {
 		closeProjectAction = new DockingAction("Close Project", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				closeProject(false); //not exiting
+				closeProject(false); // not exiting
 			}
 		};
 		closeProjectAction.setEnabled(false);
@@ -187,7 +188,7 @@ class FileActionManager {
 			// if all is well and we already have an active project, close it
 			Project activeProject = plugin.getActiveProject();
 			if (activeProject != null) {
-				if (!closeProject(false)) { // false -->not exiting
+				if (!closeProject(false)) { // false --> not exiting
 					return; // user canceled
 				}
 			}
@@ -237,19 +238,16 @@ class FileActionManager {
 		if (activeProject != null) {
 			currentProjectLocator = activeProject.getProjectLocator();
 		}
-		if (fileChooser == null) {
-			fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
-		}
 
+		GhidraFileChooser fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
 		ProjectLocator projectLocator =
 			plugin.chooseProject(fileChooser, "Open", LAST_SELECTED_PROJECT_DIRECTORY);
 		if (projectLocator != null) {
-
 			if (!doOpenProject(projectLocator) && currentProjectLocator != null) {
 				doOpenProject(currentProjectLocator);
 			}
-
 		}
+		fileChooser.dispose();
 	}
 
 	private class OpenTaskRunnable implements Runnable {
@@ -354,31 +352,31 @@ class FileActionManager {
 	 * all domain objects.
 	 */
 	private DomainObject[] lockDomainObjects(List<DomainFile> files) {
-		DomainObject[] objs = new DomainObject[files.size()];
+		DomainObject[] domainObjects = new DomainObject[files.size()];
 		int lastIndex = 0;
 		boolean locked = true;
 		while (lastIndex < files.size()) {
 			try {
-				objs[lastIndex] = files.get(lastIndex).getDomainObject(this, false, false, null);
+				domainObjects[lastIndex] =
+					files.get(lastIndex).getDomainObject(this, false, false, null);
 			}
 			catch (Throwable t) {
 				Msg.error(this, "Failed to aqcuire domain object instance", t);
 				locked = false;
 				break;
 			}
-			if (!objs[lastIndex].lock(null)) {
+			if (!domainObjects[lastIndex].lock(null)) {
 				String title = "Exit Ghidra";
 				StringBuffer buf = new StringBuffer();
-				UndoableDomainObject udo = (UndoableDomainObject) objs[lastIndex];
+				DomainObject d = domainObjects[lastIndex];
 				buf.append("The File " + files.get(lastIndex).getPathname() +
 					" is currently being modified by the\n");
 				buf.append("the following actions:\n \n");
-				Transaction t = udo.getCurrentTransaction();
+				TransactionInfo t = d.getCurrentTransactionInfo();
 				List<String> list = t.getOpenSubTransactions();
-				Iterator<String> it = list.iterator();
-				while (it.hasNext()) {
+				for (String element : list) {
 					buf.append("\n     ");
-					buf.append(it.next());
+					buf.append(element);
 				}
 				buf.append("\n \n");
 				buf.append(
@@ -393,22 +391,22 @@ class FileActionManager {
 
 				if (result == OptionDialog.CANCEL_OPTION) {
 					locked = false;
-					objs[lastIndex].release(this);
+					domainObjects[lastIndex].release(this);
 					break;
 				}
-				udo.forceLock(true, null);
+				d.forceLock(true, null);
 			}
 			++lastIndex;
 		}
 		if (!locked) {
 			//skip the last one that could not be locked...
 			for (int i = 0; i < lastIndex; i++) {
-				objs[i].unlock();
-				objs[i].release(this);
+				domainObjects[i].unlock();
+				domainObjects[i].release(this);
 			}
 			return null;
 		}
-		return objs;
+		return domainObjects;
 	}
 
 	/**
@@ -431,7 +429,7 @@ class FileActionManager {
 		// check for any changes since last saved
 		PluginTool[] runningTools = activeProject.getToolManager().getRunningTools();
 		for (PluginTool runningTool : runningTools) {
-			if (!runningTool.canClose(isExiting)) {
+			if (!PluginToolAccessUtils.canClose(runningTool)) {
 				return false;
 			}
 		}
@@ -578,11 +576,11 @@ class FileActionManager {
 	 * menu listener for File | Delete Project...
 	 */
 	private void deleteProject() {
-		if (fileChooser == null) {
-			fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
-		}
+
+		GhidraFileChooser fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
 		ProjectLocator projectLocator =
 			plugin.chooseProject(fileChooser, "Delete", LAST_SELECTED_PROJECT_DIRECTORY);
+		fileChooser.dispose();
 		if (projectLocator == null) {
 			return; // user canceled
 		}
@@ -602,7 +600,7 @@ class FileActionManager {
 		confirmMsg.append(" ?\n");
 		boolean isActiveProject =
 			(activeProject != null && activeProject.getProjectLocator().equals(projectLocator));
-		// also give special warning if we open this project as read-only voew
+		// also give special warning if we open this project as read-only view
 		boolean isOpenProjectView = isOpenProjectView(projectLocator);
 
 		if (!allowDelete(isActiveProject ? activeProject : null)) {

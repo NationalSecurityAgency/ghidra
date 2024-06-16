@@ -23,12 +23,11 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.*;
-import docking.help.HelpService;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -38,7 +37,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
-import resources.ResourceManager;
+import help.HelpService;
 
 /**
  * Displays the results of a query from the {@link ScalarSearchPlugin}. Consists of 2 components:
@@ -49,7 +48,7 @@ import resources.ResourceManager;
  */
 public class ScalarSearchProvider extends ComponentProviderAdapter {
 
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/dataW.gif");
+	public static final Icon ICON = new GIcon("icon.plugin.scalartable.provider");
 
 	private ScalarSearchPlugin plugin;
 
@@ -118,8 +117,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 			buffy.append(" [filter: ")
 					.append(minValueText)
 					.append(" - ")
-					.append(
-						maxValueText)
+					.append(maxValueText)
 					.append(']');
 		}
 
@@ -182,10 +180,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 		filter.dispose();
 	}
 
-	ProgramSelection getSelection() {
-		return scalarTable.getProgramSelection();
-	}
-
 	void reload() {
 		if (isVisible()) {
 			scalarModel.reload();
@@ -218,8 +212,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 		scalarModel.addTableModelListener(
 			e -> setSubTitle(primarySubTitle + ' ' + scalarModel.getRowCount() + " items"));
 
-		GoToService goToService = tool.getService(GoToService.class);
-		scalarTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		scalarTable.installNavigation(tool);
 
 		mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(threadedTablePanel, BorderLayout.CENTER);

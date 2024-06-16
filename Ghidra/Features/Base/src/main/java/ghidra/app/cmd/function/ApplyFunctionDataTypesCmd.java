@@ -20,13 +20,14 @@ import java.util.*;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -34,15 +35,14 @@ import ghidra.util.task.TaskMonitor;
  * any user defined label that has the same name as the function
  * signature.
  */
-public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
+public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	private Program program;
 	private BookmarkManager bookmarkMgr;
-	private List<DataTypeManager> managers;
+	private List<Category> sourceCategories;
 	private AddressSetView addresses;
 	private SourceType source;
 	private boolean alwaysReplace;
 	private boolean createBookmarksEnabled;
-	private Map<String, FunctionDefinition> functionNameMap = new HashMap<>();
 
 	/**
 	 * Constructs a new command to apply all function signature data types
@@ -61,23 +61,60 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	public ApplyFunctionDataTypesCmd(List<DataTypeManager> managers, AddressSetView set,
 			SourceType source, boolean alwaysReplace, boolean createBookmarksEnabled) {
 		super("Apply Function Data Types", true, false, false);
-		this.managers = managers;
+		this.sourceCategories = getRootCategories(managers);
 		this.addresses = set;
 		this.source = source;
 		this.alwaysReplace = alwaysReplace;
 		this.createBookmarksEnabled = createBookmarksEnabled;
 	}
 
+	/**
+	 * Constructs a new command to apply all function signature data types
+	 * in the given data type category (includes all subcategories).
+	 * 
+	 * @param sourceCategory datatype category containing the function signature data types
+	 * @param set set of addresses containing labels to match against function names.
+	 * 			  The addresses must not already be included in the body of any existing function.
+	 *  		  If null, all symbols will be processed
+	 * @param source the source of this command.
+	 * @param alwaysReplace true to always replace the existing function signature with the
+	 * 						function signature data type.
+	 * @param createBookmarksEnabled true to create a bookmark when a function signature
+	 * 								 has been applied.
+	 */
+	public ApplyFunctionDataTypesCmd(Category sourceCategory, AddressSetView set, SourceType source,
+			boolean alwaysReplace, boolean createBookmarksEnabled) {
+		super("Apply Function Data Types", true, false, false);
+		this.sourceCategories = List.of(sourceCategory);
+		this.addresses = set;
+		this.source = source;
+		this.alwaysReplace = alwaysReplace;
+		this.createBookmarksEnabled = createBookmarksEnabled;
+	}
+
+	private static List<Category> getRootCategories(List<DataTypeManager> managers) {
+		List<Category> roots = new ArrayList<>();
+		for (DataTypeManager dtm : managers) {
+			roots.add(dtm.getRootCategory());
+		}
+		return roots;
+	}
+
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 		bookmarkMgr = program.getBookmarkManager();
 
 		monitor.setMessage("Applying Function Signatures");
 
 		Map<String, List<Symbol>> symbolMap = createSymMap();
 
-		applyDataTypes(monitor, symbolMap);
+		try {
+			applyFunctionDefinitions(monitor, symbolMap);
+		}
+		catch (CancelledException e) {
+			// ignore and return
+		}
 
 		return true;
 	}
@@ -136,39 +173,23 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Apply all descendants starting at node.
+	 * Apply all descendants starting at each category node.
+	 * @param monitor task monitor
+	 * @param symbolMap symbol map where possible function definitions may be applied
+	 * @throws CancelledException if task cancelled
 	 */
-	private void applyDataTypes(TaskMonitor monitor, Map<String, List<Symbol>> symbolMap) {
+	private void applyFunctionDefinitions(TaskMonitor monitor, Map<String, List<Symbol>> symbolMap)
+			throws CancelledException {
 
-		for (DataTypeManager dataTypeManager : managers) {
-			Iterator<DataType> iter = dataTypeManager.getAllDataTypes();
-			while (iter.hasNext()) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-
-				DataType dt = iter.next();
-				if (!(dt instanceof FunctionDefinition)) {
-					continue;
-				}
-
-				FunctionDefinition fdef = (FunctionDefinition) dt;
-				String name = fdef.getName();
-				if (functionNameMap.containsKey(name)) {
-					FunctionDefinition dupeFdef = functionNameMap.get(name);
-					if (!fdef.isEquivalent(dupeFdef)) {
-						// set the functionDef to null to mark dupes
-						functionNameMap.put(name, null);
-					}
-				}
-				else {
-					functionNameMap.put(name, fdef);
-				}
-			}
-
+		Map<String, FunctionDefinition> functionNameMap = new HashMap<>();
+		for (Category cat : sourceCategories) {
+			collectFunctionDefinitions(cat, monitor, functionNameMap);
 		}
+
 		monitor.initialize(functionNameMap.size());
 		for (String functionName : functionNameMap.keySet()) {
+			monitor.checkCancelled();
+
 			FunctionDefinition fdef = functionNameMap.get(functionName);
 			checkForSymbol(monitor, functionName, fdef, symbolMap, null);
 
@@ -178,6 +199,36 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 			monitor.incrementProgress(1);
 		}
 
+	}
+
+	private void collectFunctionDefinitions(Category cat, TaskMonitor monitor,
+			Map<String, FunctionDefinition> functionNameMap) throws CancelledException {
+
+		monitor.checkCancelled();
+
+		for (DataType dt : cat.getDataTypes()) {
+			monitor.checkCancelled();
+			if (!(dt instanceof FunctionDefinition)) {
+				continue;
+			}
+
+			FunctionDefinition fdef = (FunctionDefinition) dt;
+			String name = fdef.getName();
+			if (functionNameMap.containsKey(name)) {
+				FunctionDefinition dupeFdef = functionNameMap.get(name);
+				if (!fdef.isEquivalent(dupeFdef)) {
+					// set the functionDef to null to mark dupes
+					functionNameMap.put(name, null);
+				}
+			}
+			else {
+				functionNameMap.put(name, fdef);
+			}
+		}
+
+		for (Category subcat : cat.getCategories()) {
+			collectFunctionDefinitions(subcat, monitor, functionNameMap);
+		}
 	}
 
 	private void checkForSymbol(TaskMonitor monitor, String functionName, FunctionDefinition fdef,
@@ -269,7 +320,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 		if (instrBefore != null && address.equals(instrBefore.getFallThrough())) {
 			return false;
 		}
-		
+
 		// check if part of a larger code-block
 		ReferenceIterator referencesTo = program.getReferenceManager().getReferencesTo(address);
 		for (Reference reference : referencesTo) {
@@ -330,7 +381,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	}
 
 	private SourceType getMostTrustedParameterSource(Function func) {
-		SourceType highestSource = SourceType.DEFAULT;
+		SourceType highestSource = func.getSignatureSource();
 		Parameter[] parameters = func.getParameters();
 		for (Parameter parameter : parameters) {
 			SourceType paramSource = parameter.getSource();
@@ -347,7 +398,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	 * 
 	 * @param symbolMap map of symbol names to all matching symbols
 	 * @param prefix  optional prefix on symbol to lookup
-	 * @param fdef    function definition
+	 * @param functionName    function name
 	 * @return symbol definition; null if no symbol is found for the given name
 	 */
 	private List<Symbol> lookupSymbol(Map<String, List<Symbol>> symbolMap, String prefix,

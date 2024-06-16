@@ -15,15 +15,17 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import generic.theme.GColor;
+import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -38,6 +40,7 @@ import ghidra.program.util.ProgramLocation;
  */
 public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Function Repeatable Comment";
+	public static final GColor COLOR = new GColor("color.fg.listing.comment.repeatable");
 
 	/**
 	 * Default constructor
@@ -54,7 +57,7 @@ public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	public FunctionRepeatableCommentFieldFactory(FieldFormatModel model,
-			HighlightProvider hlProvider, Options displayOptions, Options fieldOptions) {
+			ListingHighlightProvider hlProvider, Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
 	}
@@ -69,15 +72,16 @@ public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 		Function f = (Function) obj;
 		Program program = f.getProgram();
 		String[] commentArr = f.getRepeatableCommentAsArray();
-		FieldElement[] fields = new FieldElement[commentArr.length];
-		AttributedString prototype = new AttributedString("prototype", color, getMetrics());
+		List<FieldElement> fields = new ArrayList<>();
+		AttributedString prototype =
+			new AttributedString("prototype", CommentColors.REPEATABLE, getMetrics());
 		for (int i = 0; i < commentArr.length; i++) {
-			fields[i] = CommentUtils.parseTextForAnnotations(commentArr[i], program, prototype, i);
+			fields.add(CommentUtils.parseTextForAnnotations(commentArr[i], program, prototype, i));
 		}
 
 		if (commentArr.length > 0) {
 			return ListingTextField.createMultilineTextField(this, proxy, fields, x, width,
-				Integer.MAX_VALUE, hlProvider);
+				hlProvider);
 		}
 		return null;
 	}
@@ -119,18 +123,10 @@ public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 
 		return new FunctionRepeatableCommentFieldFactory(formatModel, provider, options,
 			fieldOptions);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.COMMENT_EOL.getDefaultColor();
 	}
 }

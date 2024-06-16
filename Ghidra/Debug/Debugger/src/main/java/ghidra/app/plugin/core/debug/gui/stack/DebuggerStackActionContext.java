@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.debug.gui.stack;
 
 import java.awt.Component;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 
-public class DebuggerStackActionContext extends ActionContext {
+public class DebuggerStackActionContext extends DefaultActionContext {
 
 	private final StackFrameRow frame;
 

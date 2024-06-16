@@ -16,16 +16,15 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 /**
- * This class is the version of {@link AbstractSectionContribution} for Microsoft v6.00 PDB.
+ * This class is the version of {@link SectionContribution} for Microsoft v6.00 PDB.
  */
-public class SectionContribution600 extends AbstractSectionContribution {
+public class SectionContribution600 extends SectionContribution {
 
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================
 	@Override
 	void deserialize(PdbByteReader reader) throws PdbException {
-		//System.out.println(reader.dump(0x200));
 		isect = reader.parseUnsignedShortVal();
 		reader.parseBytes(2); // I think there is padding here.
 		offset = reader.parseInt();

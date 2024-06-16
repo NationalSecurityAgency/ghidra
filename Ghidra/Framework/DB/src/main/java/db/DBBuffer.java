@@ -43,10 +43,10 @@ public class DBBuffer {
 	 * @param offset the split point.  The byte at this offset becomes the first
 	 * byte within the new buffer.
 	 * @return the new DBBuffer object.
-	 * @throws ArrayIndexOutOfBoundsException if offset is invalid.
+	 * @throws IndexOutOfBoundsException if offset is invalid.
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	public DBBuffer split(int offset) throws IOException {
+	public DBBuffer split(int offset) throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
 			dbh.checkTransaction();
 			return new DBBuffer(dbh, buf.split(offset));
@@ -58,6 +58,8 @@ public class DBBuffer {
 	 * @param size new size
 	 * @param preserveData if true, existing data is preserved at the original offsets.  If false,
 	 * no additional effort will be expended to preserve data.
+	 * @throws UnsupportedOperationException thrown if this ChainedBuffer utilizes an 
+	 * Uninitialized Data Source or is read-only
 	 * @throws IOException thrown if an IO error occurs.
 	 */
 	public void setSize(int size, boolean preserveData) throws IOException {
@@ -69,7 +71,7 @@ public class DBBuffer {
 
 	/**
 	 * Returns the length;
-	 * @return
+	 * @return this buffers length
 	 */
 	public int length() {
 		synchronized (dbh) {
@@ -94,8 +96,12 @@ public class DBBuffer {
 	 * @param startOffset starting offset, inclusive
 	 * @param endOffset ending offset, exclusive
 	 * @param fillByte byte value
+	 * @throws IndexOutOfBoundsException if an invalid offsets are provided
+	 * or the end of buffer was encountered while storing the data.
+	 * @throws IOException thrown if an IO error occurs
 	 */
-	public void fill(int startOffset, int endOffset, byte fillByte) throws IOException {
+	public void fill(int startOffset, int endOffset, byte fillByte)
+			throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
 			dbh.checkTransaction();
 			buf.fill(startOffset, endOffset, fillByte);
@@ -107,6 +113,8 @@ public class DBBuffer {
 	 * The size of this buffer increases by the size of dbBuf.  When the operation 
 	 * is complete, dbBuf object is no longer valid and must not be used.
 	 * @param buffer the buffer to be appended to this buffer.
+	 * @throws UnsupportedOperationException if read-only, uninitialized data source is used,
+	 * or both buffers do not have the same obfuscation enablement
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	public void append(DBBuffer buffer) throws IOException {
@@ -120,13 +128,14 @@ public class DBBuffer {
 	 * Get the 8-bit byte value located at the specified offset.
 	 * @param offset byte offset from start of buffer.
 	 * @return the byte value at the specified offset.
-	 * @throws ArrayIndexOutOfBoundsException is thrown if an invalid offset is
+	 * @throws IndexOutOfBoundsException is thrown if an invalid offset is
 	 * specified.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
 	 */
-	public byte getByte(int offset) throws IOException {
+	public byte getByte(int offset) throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
+			dbh.checkIsClosed();
 			return buf.getByte(offset);
 		}
 	}
@@ -138,13 +147,15 @@ public class DBBuffer {
 	 * @param data byte array to store the data.
 	 * @param dataOffset offset into the data buffer
 	 * @param length amount of data to read
-	 * @throws ArrayIndexOutOfBoundsException if an invalid offset, dataOffset,
+	 * @throws IndexOutOfBoundsException if an invalid offset, dataOffset,
 	 * or length is specified.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
 	 */
-	public void get(int offset, byte[] data, int dataOffset, int length) throws IOException {
+	public void get(int offset, byte[] data, int dataOffset, int length)
+			throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
+			dbh.checkIsClosed();
 			buf.get(offset, data, dataOffset, length);
 		}
 	}
@@ -171,12 +182,13 @@ public class DBBuffer {
 	 * @param bytes the byte data to be stored.
 	 * @param dataOffset the starting offset into the data.
 	 * @param length the number of bytes to be stored.
-	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided
+	 * @throws IndexOutOfBoundsException if an invalid offset is provided
 	 * or the end of buffer was encountered while storing the data.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
 	 */
-	public void put(int offset, byte[] bytes, int dataOffset, int length) throws IOException {
+	public void put(int offset, byte[] bytes, int dataOffset, int length)
+			throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
 			dbh.checkTransaction();
 			buf.put(offset, bytes, dataOffset, length);
@@ -190,12 +202,12 @@ public class DBBuffer {
 	 * array.
 	 * @param offset byte offset from start of buffer.
 	 * @param bytes the byte data to be stored.
-	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided
+	 * @throws IndexOutOfBoundsException if an invalid offset is provided
 	 * or the end of buffer was encountered while storing the data.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
 	 */
-	public void put(int offset, byte[] bytes) throws IOException {
+	public void put(int offset, byte[] bytes) throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
 			dbh.checkTransaction();
 			buf.put(offset, bytes);
@@ -206,11 +218,11 @@ public class DBBuffer {
 	 * Put the 8-bit byte value into the buffer at the specified offset. 
 	 * @param offset byte offset from start of buffer.
 	 * @param b the byte value to be stored.
-	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided.
+	 * @throws IndexOutOfBoundsException if an invalid offset is provided.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
 	 */
-	public void putByte(int offset, byte b) throws IOException {
+	public void putByte(int offset, byte b) throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
 			dbh.checkTransaction();
 			buf.putByte(offset, b);
@@ -220,21 +232,25 @@ public class DBBuffer {
 	/**
 	 * Get the byte data located at the specified offset.
 	 * @param offset byte offset from start of buffer.
-	 * @throws ArrayIndexOutOfBoundsException is thrown if an invalid offset is
+	 * @param data data buffer to be filled
+	 * @throws IndexOutOfBoundsException is thrown if an invalid offset is
 	 * specified or the end of the buffer was encountered while reading the
 	 * data.
 	 * @throws IOException is thrown if an error occurs while accessing the
 	 * underlying storage.
 	 */
-	public void get(int offset, byte[] data) throws IOException {
+	public void get(int offset, byte[] data) throws IndexOutOfBoundsException, IOException {
 		synchronized (dbh) {
+			dbh.checkIsClosed();
 			buf.get(offset, data);
 		}
 
 	}
 
 	/**
-	 * Delete and release all underlying DataBuffers. 
+	 * Delete and release all underlying DataBuffers.
+	 * @throws IOException is thrown if an error occurs while accessing the
+	 * underlying storage. 
 	 */
 	public void delete() throws IOException {
 		synchronized (dbh) {

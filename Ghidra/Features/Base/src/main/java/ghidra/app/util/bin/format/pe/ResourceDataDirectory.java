@@ -157,6 +157,16 @@ public class ResourceDataDirectory extends DataDirectory {
 	 */
 	public final static byte RT_MANIFEST = 24;
 
+	/**
+	 * Gets a program property name to represent PE resource property with the given key name
+	 * 
+	 * @param key The key name
+	 * @return A program property name to represent PE resource property with the given key name
+	 */
+	public static String getPeResourceProperty(String key) {
+		return "PE Property[" + key.replaceAll("\\.", "_dot_") + "]";
+	}
+
 	private ResourceDirectory rootDirectory;
 
 	public static Set<Integer> directoryMap;
@@ -252,6 +262,19 @@ public class ResourceDataDirectory extends DataDirectory {
 						try {
 							if (program.getMemory().getInt(addr) == 0x46464952) {
 								dataType = new WAVEDataType();
+							}
+						}
+						catch (MemoryAccessException e) {
+							// ignore - let createData produce error
+						}
+						PeUtils.createData(program, addr, dataType, log);
+					}
+					else if (info.getName().startsWith("Rsrc_MIDI")) {
+						DataType dataType = null;
+						// Check for MIDI magic number
+						try {
+							if (program.getMemory().getInt(addr) == 0x6468544d) {
+								dataType = new MIDIDataType();
 							}
 						}
 						catch (MemoryAccessException e) {
@@ -386,7 +409,6 @@ public class ResourceDataDirectory extends DataDirectory {
 
 	private void processVersionInfo(Address addr, ResourceInfo info, Program program,
 			MessageLog log, TaskMonitor monitor) throws IOException {
-		Options infoList = program.getOptions(Program.PROGRAM_INFO);
 		VS_VERSION_INFO versionInfo = null;
 		try {
 			int ptr = ntHeader.rvaToPointer(info.getAddress());
@@ -409,13 +431,14 @@ public class ResourceDataDirectory extends DataDirectory {
 			markupChild(child, addr, program, log, monitor);
 		}
 
+		Options programInfoOptions = program.getOptions(Program.PROGRAM_INFO);
 		String[] keys = versionInfo.getKeys();
 		for (String key : keys) {
 			if (monitor.isCancelled()) {
 				return;
 			}
 			String value = versionInfo.getValue(key);
-			infoList.setString(key, value);
+			programInfoOptions.setString(getPeResourceProperty(key), value);
 		}
 	}
 
@@ -670,7 +693,7 @@ public class ResourceDataDirectory extends DataDirectory {
 					}
 
 					String menuString = fixupStringRepForDisplay(
-						data.getComponentAt(offset).getDefaultValueRepresentation());
+						data.getComponentContaining(offset).getDefaultValueRepresentation());
 					menuString = menuString.replaceAll("\"", "");
 					if (menuString.equals("")) {
 						comment.append("-------------------\n");

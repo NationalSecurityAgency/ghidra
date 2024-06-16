@@ -17,10 +17,12 @@
 /// \file heritage.hh
 /// \brief Utilities for building Static Single Assignment (SSA) form 
 
-#ifndef __CPUI_HERITAGE__
-#define __CPUI_HERITAGE__
+#ifndef __HERITAGE_HH__
+#define __HERITAGE_HH__
 
 #include "block.hh"
+
+namespace ghidra {
 
 /// Container holding the stack system for the renaming algorithm.  Every disjoint address
 /// range (indexed by its initial address) maps to its own Varnode stack.
@@ -233,7 +235,7 @@ class Heritage {
   void removeRevisitedMarkers(const vector<Varnode *> &remove,const Address &addr,int4 size);
   int4 collect(Address addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &input,vector<Varnode *> &remove) const;
   bool callOpIndirectEffect(const Address &addr,int4 size,PcodeOp *op) const;
-  Varnode *normalizeReadSize(Varnode *vn,const Address &addr,int4 size);
+  Varnode *normalizeReadSize(Varnode *vn,PcodeOp *op,const Address &addr,int4 size);
   Varnode *normalizeWriteSize(Varnode *vn,const Address &addr,int4 size);
   Varnode *concatPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,Varnode *finalvn);
   void splitPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,const Address &addr,int4 size,Varnode *startvn);
@@ -246,10 +248,17 @@ class Heritage {
   bool protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   bool discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &freeStores,bool checkFreeStores);
   void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
-  void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
+  void guard(const Address &addr,int4 size,bool guardPerformed,
+	     vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
   void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size);
-  bool guardCallOverlappingOutput(FuncCallSpecs *fc,const Address &addr,int4 size,vector<Varnode *> &write);
+  void guardOutputOverlap(PcodeOp *callOp,const Address &addr,int4 size,const Address &retAddr,int4 retSize,
+			  vector<Varnode *> &write);
+  bool tryOutputOverlapGuard(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size,
+			     vector<Varnode *> &write);
+  bool tryOutputStackGuard(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size,
+			   int4 outputCharacter,vector<Varnode *> &write);
+  void guardOutputOverlapStack(PcodeOp *callOp,const Address &addr,int4 size,const Address &retAddr,int4 retSize,vector<Varnode *> &write);
   void guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
   void guardLoads(uint4 fl,const Address &addr,int4 size,vector<Varnode *> &write);
@@ -265,7 +274,7 @@ class Heritage {
   void visitIncr(FlowBlock *qnode,FlowBlock *vnode);
   void calcMultiequals(const vector<Varnode *> &write);
   void renameRecurse(BlockBasic *bl,VariableStack &varstack);
-  void bumpDeadcodeDelay(Varnode *vn);
+  void bumpDeadcodeDelay(AddrSpace *spc);
   void placeMultiequals(void);
   void rename(void);
 public:
@@ -293,4 +302,5 @@ public:
   const LoadGuard *getStoreGuard(PcodeOp *op) const;	///< Get LoadGuard record associated with given PcodeOp
 };
 
+} // End namespace ghidra
 #endif

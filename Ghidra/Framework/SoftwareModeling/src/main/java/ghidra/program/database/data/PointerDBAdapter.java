@@ -18,6 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -36,22 +38,34 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	static final int PTR_CATEGORY_COL = 1;
 	static final int PTR_LENGTH_COL = 2;
 
-	static PointerDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
+	/**
+	 * Gets an adapter for working with the enumeration data type values database table. The adapter is based
+	 * on the version of the database associated with the specified database handle and the openMode.
+	 * @param handle handle to the database to be accessed.
+	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param monitor the monitor to use for displaying status or for canceling.
+	 * @return the adapter for accessing the table of enumeration data type values.
+	 * @throws VersionException if the database handle's version doesn't match the expected version.
+	 * @throws IOException if there is trouble accessing the database.
+	 * @throws CancelledException if task is cancelled
+	 */
+	static PointerDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 
-		if (openMode == DBConstants.CREATE) {
-			return new PointerDBAdapterV2(handle, true);
+		if (openMode == OpenMode.CREATE) {
+			return new PointerDBAdapterV2(handle, tablePrefix, true);
 		}
 		try {
-			return new PointerDBAdapterV2(handle, false);
+			return new PointerDBAdapterV2(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			PointerDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, adapter, monitor);
+			if (openMode == OpenMode.UPGRADE) {
+				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
 		}
@@ -67,22 +81,25 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	}
 
 	static PointerDBAdapter upgrade(DBHandle handle, PointerDBAdapter oldAdapter,
-			TaskMonitor monitor) throws VersionException, IOException {
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
 		PointerDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new PointerDBAdapterV2(tmpHandle, true);
+			tmpAdapter = new PointerDBAdapterV2(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
-			PointerDBAdapter newAdapter = new PointerDBAdapterV2(handle, true);
+			PointerDBAdapter newAdapter = new PointerDBAdapterV2(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
@@ -147,4 +164,10 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	 * @throws IOException if the database can't be accessed.
 	 */
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
+
+	/**
+	 * Get the number of pointer datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 }

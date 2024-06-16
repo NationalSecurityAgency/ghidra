@@ -19,38 +19,50 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Data;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.space.DBTraceSpaceKey;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
+/**
+ * The implementation for an undefined {@link TraceData} for {@link DBTrace}
+ * 
+ * <p>
+ * These are not backed by a table. They are generated ephemerally. Each is exactly one unit in size
+ * in both time and space.
+ */
 public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey {
 	protected final DBTrace trace;
 	protected final long snap;
-	protected final Range<Long> lifespan;
+	protected final Lifespan lifespan;
 	protected final Address address;
 	protected final TraceThread thread;
 	protected final int frameLevel;
 
+	/**
+	 * Construct an undefined unit
+	 * 
+	 * @param trace the trace
+	 * @param snap the snap
+	 * @param address the address
+	 * @param thread the thread, if in a per-thread space
+	 * @param frameLevel the frame, if in a per-frame space
+	 */
 	public UndefinedDBTraceData(DBTrace trace, long snap, Address address, TraceThread thread,
 			int frameLevel) {
 		this.trace = trace;
 		this.snap = snap;
-		this.lifespan = DBTraceUtils.toRange(snap, snap);
+		this.lifespan = Lifespan.at(snap);
 		this.address = address;
 		this.thread = thread;
 		this.frameLevel = frameLevel;
@@ -82,8 +94,8 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	}
 
 	@Override
-	public TraceGuestPlatform getGuestPlatform() {
-		return null;
+	public TracePlatform getPlatform() {
+		return trace.getPlatformManager().getHostPlatform();
 	}
 
 	@Override
@@ -99,7 +111,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 
@@ -244,7 +256,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	}
 
 	@Override
-	public Data getComponentContaining(int offset) {
+	public TraceData getComponentContaining(int offset) {
 		return null;
 	}
 
@@ -276,7 +288,8 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 
 	@Override
 	public DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent) {
-		return getTrace().getDataSettingsAdapter().get(this, createIfAbsent);
+		return (DBTraceDataSettingsOperations) getTrace().getDataSettingsAdapter()
+				.get(this, createIfAbsent);
 	}
 
 	@Override

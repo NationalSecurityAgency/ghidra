@@ -15,17 +15,18 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.awt.Color;
 import java.util.*;
 import java.util.stream.Stream;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.pcode.PcodeFactory;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.*;
 
 /**
- * A node in a tree of C code tokens. 
+ * A sequence of tokens that form a meaningful group in source code.  This group may
+ * break up into subgroups and may be part of a larger group.
  */
 public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	private ClangNode parent;
@@ -49,9 +50,13 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		return maxaddress;
 	}
 
-	public void AddTokenGroup(Object obj) {
-		Address minaddr = ((ClangNode) obj).getMinAddress();
-		Address maxaddr = ((ClangNode) obj).getMaxAddress();
+	/**
+	 * Add additional text to this group
+	 * @param obj is the additional text
+	 */
+	public void AddTokenGroup(ClangNode obj) {
+		Address minaddr = obj.getMinAddress();
+		Address maxaddr = obj.getMaxAddress();
 
 		if (minaddr != null) {
 			if (minaddress == null) {
@@ -69,7 +74,7 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 				maxaddress = maxaddr;
 			}
 		}
-		tokgroup.add((ClangNode) obj);
+		tokgroup.add(obj);
 	}
 
 	@Override
@@ -106,47 +111,56 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		}
 	}
 
-	public void restoreFromXML(XmlPullParser parser, PcodeFactory pfactory) {
-		XmlElement node = parser.start(ClangXML.FUNCTION, ClangXML.RETURN_TYPE, ClangXML.VARDECL,
-			ClangXML.STATEMENT, ClangXML.FUNCPROTO, ClangXML.BLOCK, ClangXML.VARIABLE, ClangXML.OP,
-			ClangXML.SYNTAX, ClangXML.BREAK, ClangXML.FUNCNAME, ClangXML.TYPE, ClangXML.COMMENT,
-			ClangXML.LABEL);
-		while (parser.peek().isStart()) {
-			XmlElement elem = parser.peek();
-			if (elem.getName().equals(ClangXML.RETURN_TYPE)) {
+	/**
+	 * Decode this text from an encoded stream.
+	 * @param decoder is the decoder for the stream
+	 * @param pfactory is used to look up p-code attributes to associate with tokens
+	 * @throws DecoderException for problems decoding the stream
+	 */
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		for (;;) {
+			int elem = decoder.openElement();
+			if (elem == 0) {
+				break;
+			}
+			if (elem == ELEM_RETURN_TYPE.id()) {
 				ClangReturnType child = new ClangReturnType(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.VARDECL)) {
+			else if (elem == ELEM_VARDECL.id()) {
 				ClangVariableDecl child = new ClangVariableDecl(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.STATEMENT)) {
+			else if (elem == ELEM_STATEMENT.id()) {
 				ClangStatement child = new ClangStatement(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.FUNCPROTO)) {
+			else if (elem == ELEM_FUNCPROTO.id()) {
 				ClangFuncProto child = new ClangFuncProto(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.BLOCK)) {
+			else if (elem == ELEM_BLOCK.id()) {
 				ClangTokenGroup child = new ClangTokenGroup(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
 			else {
-				ClangToken tok = ClangToken.buildToken(this, parser, pfactory);
+				ClangToken tok = ClangToken.buildToken(elem, this, decoder, pfactory);
 				AddTokenGroup(tok);
 			}
+			decoder.closeElement(elem);
 		}
-		parser.end(node);
 	}
 
-	private boolean isLetterDigitOrUnderscore(char c) {
+	/**
+	 * @param c is a character
+	 * @return true if the given character is a letter, digit, or underscore
+	 */
+	private static boolean isLetterDigitOrUnderscore(char c) {
 		return Character.isLetterOrDigit(c) || c == '_';
 	}
 
@@ -175,6 +189,17 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	@Override
 	public Iterator<ClangNode> iterator() {
 		return tokgroup.iterator();
+	}
+
+	/**
+	 * Create iterator across all ClangToken objects in this group.
+	 * The iterator will run over tokens in display order (forward=true) or in reverse of
+	 * display order (forward=false)
+	 * @param forward is true for a forward iterator, false for a backward iterator
+	 * @return the iterator
+	 */
+	public Iterator<ClangToken> tokenIterator(boolean forward) {
+		return new TokenIterator(this, forward);
 	}
 
 	/**

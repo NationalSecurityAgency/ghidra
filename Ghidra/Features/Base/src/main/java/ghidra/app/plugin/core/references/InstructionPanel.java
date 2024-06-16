@@ -32,6 +32,9 @@ import docking.actions.KeyBindingUtils;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.program.model.address.Address;
@@ -42,16 +45,14 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 
 class InstructionPanel extends JPanel implements ChangeListener {
+	private static Color FOCUS_COLOR = new GColor("color.palette.yellow");
+	private static final int BORDER_SIZE = 2;
+	private static final Border EMPTY_BORDER =
+		new EmptyBorder(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
+	private static final Border ETCHED_BORDER = new EtchedBorder();
 
-	private static final int ETCHED_BORDER_THICKNESS = 2;
-
-	private static final Border ETCHED_BORDER = new EtchedBorder(Color.BLACK, Color.GRAY);
-	private static final Border EMPTY_BORDER = new EmptyBorder(ETCHED_BORDER_THICKNESS,
-		ETCHED_BORDER_THICKNESS, ETCHED_BORDER_THICKNESS, ETCHED_BORDER_THICKNESS);
-
-	private final static Color UNLOCKED_LABEL_COLOR = Color.blue;
-	private final static Color NOT_IN_MEMORY_COLOR = Color.red;
-	private final static Color DEFAULT_FG_COLOR = Color.black;
+	private final static Color NOT_IN_MEMORY_COLOR = Colors.ERROR;
+	private final static Color DEFAULT_FG_COLOR = Colors.FOREGROUND;
 
 	private static final DataFlavor[] ACCEPTABLE_DROP_FLAVORS =
 		new DataFlavor[] { SelectionTransferable.localProgramSelectionFlavor };
@@ -65,7 +66,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	private JLabel[] operandLabels;
 	private DropTarget[] dropTargets; // 0: mnemonic, >= 1: operands
 	private JPanel innerPanel;
-	private Font monoFont;
 	private int activeIndex;
 	private int activeSubIndex;
 	private CodeUnit currentCodeUnit;
@@ -76,78 +76,13 @@ class InstructionPanel extends JPanel implements ChangeListener {
 
 	private boolean dropSupported;
 	private DropTgtAdapter dropTargetAdapter;
-	private Droppable dropHandler = new Droppable() {
-
-		/**
-		 * Set drag feedback according to the ok parameter.
-		 * @param ok true means the drop action is OK
-		 * @param e event that has current state of drag and drop operation
-		 */
-		@Override
-		public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		}
-
-		/**
-		 * Return true if is OK to drop the transferable at the location
-		 * specified the event.
-		 * @param e event that has current state of drag and drop operation
-		 * @param data data that is being dragged
-		 */
-		@Override
-		public boolean isDropOk(DropTargetDragEvent e) {
-
-			Component targetComp = e.getDropTargetContext().getComponent();
-			if (targetComp instanceof JLabel) {
-
-				updateLabels(getLabelIndex((JLabel) targetComp), -1);
-
-				try {
-					Object data = e.getTransferable().getTransferData(
-						SelectionTransferable.localProgramSelectionFlavor);
-					AddressSetView view = ((SelectionTransferData) data).getAddressSet();
-					if (memory.contains(view)) {
-						return true;
-					}
-				}
-				catch (UnsupportedFlavorException e1) {
-				}
-				catch (IOException e1) {
-				}
-			}
-			return false;
-		}
-
-		/**
-		 * Revert back to normal if any drag feedback was set.
-		 */
-		@Override
-		public void undoDragUnderFeedback() {
-		}
-
-		/**
-		 * Add the object to the droppable component. The DropTargetAdapter
-		 * calls this method from its drop() method.
-		 * @param obj Transferable object that is to be dropped; in this
-		 * case, it is an AddressSetView
-		 * @param e  has current state of drop operation
-		 * @param f represents the opaque concept of a data format as
-		 * would appear on a clipboard, during drag and drop.
-		 */
-		@Override
-		public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
-			AddressSetView view = ((SelectionTransferData) obj).getAddressSet();
-			if (view.getNumAddressRanges() == 0) {
-				return;
-			}
-			listener.selectionDropped(view, currentCodeUnit, activeIndex);
-		}
-
-	};
+	private Droppable dropHandler = new InstructionPanelDroppable();
+	private int nOperands;
 
 	InstructionPanel(int topPad, int leftPad, int bottomPad, int rightPad,
 			DockingAction goHomeAction, ReferencesPlugin plugin,
 			InstructionPanelListener listener) {
-		super();
+		super(new BorderLayout());
 		this.dropSupported = listener != null ? listener.dropSupported() : false;
 		this.goHomeAction = goHomeAction;
 		this.symbolInspector = plugin.getSymbolInspector();
@@ -156,26 +91,41 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		create(topPad, leftPad, bottomPad, rightPad);
 	}
 
-	/**
-	 * Returns the current code unit displayed.
-	 */
+	private int getNextIndex() {
+		if (operandLabels.length == 0) {
+			return ReferenceManager.MNEMONIC;
+		}
+		if (activeIndex == ReferenceManager.MNEMONIC) {
+			return 0;
+		}
+		if (activeIndex < nOperands - 1) {
+			return activeIndex + 1;
+		}
+		return ReferenceManager.MNEMONIC;
+	}
+
+	private int getPreviousIndex() {
+		if (operandLabels.length == 0) {
+			return ReferenceManager.MNEMONIC;
+		}
+		if (activeIndex == ReferenceManager.MNEMONIC) {
+			return nOperands - 1;
+		}
+		if (activeIndex > 0) {
+			return activeIndex - 1;
+		}
+		return ReferenceManager.MNEMONIC;
+	}
+
 	CodeUnit getCurrentCodeUnit() {
 		return currentCodeUnit;
 	}
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		updateLabels(activeIndex, activeSubIndex);
+		updateActiveIndex(activeIndex, activeSubIndex);
 	}
 
-	/**
-	 * Set the code unit location.
-	 * @param cu code unit
-	 * @param loc location
-	 * @param opIndex operand index
-	 * @param showBlockID ID for what to show for the block name in the
-	 * operand
-	 */
 	void setCodeUnitLocation(CodeUnit cu, int opIndex, int subIndex, boolean locked) {
 		if (cu != null) {
 			this.locked = locked;
@@ -191,12 +141,12 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		}
 		currentCodeUnit = cu;
 		activeIndex = ReferenceManager.MNEMONIC - 1; // force updateLabels to work
-		updateLabels(opIndex, subIndex);
+		updateActiveIndex(opIndex, subIndex);
 		updateDropTargets(cu != null ? cu.getNumOperands() : -1);
 	}
 
 	void setSelectedOpIndex(int index, int subIndex) {
-		updateLabels(index, subIndex);
+		updateActiveIndex(index, subIndex);
 	}
 
 	int getSelectedOpIndex() {
@@ -211,21 +161,15 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	 * Create the components for this panel.
 	 */
 	private void create(int topPad, int leftPad, int bottomPad, int rightPad) {
-		setLayout(new BorderLayout());
-		//setBorder(new EmptyBorder(topPad, leftPad, bottomPad, rightPad));
-
 		Border border = new TitledBorder(new EtchedBorder(), "Source");
 		setBorder(border);
 
 		addressLabel = new GDLabel("FFFFFFFF"); // use a default
-
-		Font font = addressLabel.getFont();
-		monoFont = new Font("monospaced", font.getStyle(), font.getSize());
-		addressLabel.setFont(monoFont);
+		Gui.registerFont(addressLabel, "font.monospaced");
 		addressLabel.setName("addressLabel");
 
 		mnemonicLabel = new GDLabel("movl");
-		mnemonicLabel.setFont(monoFont);
+		Gui.registerFont(mnemonicLabel, "font.monospaced");
 		mnemonicLabel.setName("mnemonicLabel");
 		mnemonicLabel.addMouseListener(mouseListener);
 
@@ -233,22 +177,27 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		for (int i = 0; i < operandLabels.length; i++) {
 			operandLabels[i] = new GDLabel("%ebp, ");
 			operandLabels[i].setName("operandLabels[" + i + "]");
-			operandLabels[i].setFont(monoFont);
 			operandLabels[i].addMouseListener(mouseListener);
+			Gui.registerFont(operandLabels[i], "font.monospaced");
 		}
 
 		innerPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(innerPanel, BoxLayout.X_AXIS);
 		innerPanel.setLayout(bl);
+		setName("Instruction Panel");
+		setToolTipText("This component selects which instruction piece is active for this dialog");
+		innerPanel.getAccessibleContext()
+				.setAccessibleDescription("Use left or right arrows to choose which mnemonic or" +
+					" operand piece this dialog applies to");
+		updateAccessibleInfo();
 
 		if (goHomeAction != null) {
 			Action action = KeyBindingUtils.adaptDockingActionToNonContextAction(goHomeAction);
 			JButton homeButton = new JButton(action);
 			homeButton.setText(null);
 			homeButton.setMargin(new Insets(0, 0, 0, 0));
-			homeButton.setFocusable(false);
 			innerPanel.add(Box.createHorizontalStrut(5));
-			innerPanel.add(homeButton);
+			add(homeButton, BorderLayout.WEST);
 		}
 
 		innerPanel.add(Box.createHorizontalStrut(5));
@@ -256,6 +205,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		innerPanel.add(Box.createHorizontalStrut(20));
 		innerPanel.add(mnemonicLabel);
 		innerPanel.add(Box.createHorizontalStrut(10));
+		innerPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
 		for (JLabel operandLabel : operandLabels) {
 			innerPanel.add(operandLabel);
@@ -281,12 +231,41 @@ class InstructionPanel extends JPanel implements ChangeListener {
 			}
 
 		}
+		innerPanel.setFocusable(true);
+		innerPanel.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				switch (e.getKeyCode()) {
+					case KeyEvent.VK_LEFT:
+						updateActiveIndex(getPreviousIndex(), -1);
+						e.consume();
+						break;
+					case KeyEvent.VK_RIGHT:
+						updateActiveIndex(getNextIndex(), -1);
+						e.consume();
+						break;
+				}
+			}
+		});
+		innerPanel.addFocusListener(new FocusListener() {
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				innerPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+			}
+
+			@Override
+			public void focusGained(FocusEvent e) {
+				innerPanel.setBorder(BorderFactory.createLineBorder(FOCUS_COLOR, 1));
+			}
+		});
+
 	}
 
 	/**
 	 * Enable drop on specified number of operands.
 	 * A value of -1 will disable all drop targets.
-	 * @param numOperands
+	 * @param numOperands the number of operands
 	 */
 	private void updateDropTargets(int numOperands) {
 		++numOperands;
@@ -300,10 +279,30 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	/**
 	 * Method updateLabels.
 	 */
-	private void updateLabels(int index, int subIndex) {
+	private void updateActiveIndex(int index, int subIndex) {
 		int prevIndex = activeIndex;
 		activeIndex = index;
 		activeSubIndex = subIndex;
+		updateLabels();
+		updateAccessibleInfo();
+		if (activeIndex != prevIndex && listener != null) {
+			listener.operandSelected(activeIndex, activeSubIndex);
+		}
+		updateAccessibleInfo();
+	}
+
+	private void updateAccessibleInfo() {
+		String accessibleName = "Instruction Reference Panel";
+		if (activeIndex < 0) {
+			accessibleName += ", mnemonic selected";
+		}
+		else {
+			accessibleName += ", operand " + activeIndex + " selected";
+		}
+		innerPanel.getAccessibleContext().setAccessibleName(accessibleName);
+	}
+
+	private void updateLabels() {
 		for (JLabel operandLabel : operandLabels) {
 			operandLabel.setText("");
 			operandLabel.setBorder(EMPTY_BORDER);
@@ -311,7 +310,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		}
 		if (currentCodeUnit != null) {
 
-			int nOperands = currentCodeUnit.getNumOperands();
+			nOperands = currentCodeUnit.getNumOperands();
 			for (int i = 0; i < nOperands; i++) {
 				String opRep = cuFormat.getOperandRepresentationString(currentCodeUnit, i);
 				if (i < nOperands - 1) {
@@ -329,9 +328,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		}
 		innerPanel.invalidate();
 		repaint();
-		if (activeIndex != prevIndex && listener != null) {
-			listener.operandSelected(activeIndex, activeSubIndex);
-		}
 	}
 
 	/**
@@ -374,7 +370,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 
 		if (activeIndex == opIndex) {
 			operandLabels[opIndex].setBorder(ETCHED_BORDER);
-			operandLabels[opIndex].setBackground(EditReferencesProvider.HIGHLIGHT_COLOR);
+			operandLabels[opIndex].setBackground(EditReferencesProvider.BG_COLOR_ACTIVE_OPERAND);
 			operandLabels[opIndex].setOpaque(true);
 		}
 		else {
@@ -393,7 +389,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		mnemonicLabel.setForeground(DEFAULT_FG_COLOR);
 
 		if (activeIndex == ReferenceManager.MNEMONIC) {
-			mnemonicLabel.setBackground(EditReferencesProvider.HIGHLIGHT_COLOR);
+			mnemonicLabel.setBackground(EditReferencesProvider.BG_COLOR_ACTIVE_OPERAND);
 			mnemonicLabel.setBorder(ETCHED_BORDER);
 			mnemonicLabel.setOpaque(true);
 		}
@@ -432,9 +428,48 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		public void mousePressed(MouseEvent e) {
 			if (!locked) {
 				JLabel label = (JLabel) e.getSource();
-				updateLabels(getLabelIndex(label), -1);
+				updateActiveIndex(getLabelIndex(label), -1);
 			}
 		}
 	}
 
+	private class InstructionPanelDroppable implements Droppable {
+
+		@Override
+		public boolean isDropOk(DropTargetDragEvent e) {
+
+			Component targetComp = e.getDropTargetContext().getComponent();
+			if (!(targetComp instanceof JLabel)) {
+				return false;
+			}
+
+			updateActiveIndex(getLabelIndex((JLabel) targetComp), -1);
+
+			try {
+				Object data = e.getTransferable()
+						.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
+				AddressSetView view = ((SelectionTransferData) data).getAddressSet();
+				if (memory.contains(view)) {
+					return true;
+				}
+			}
+			catch (UnsupportedFlavorException e1) {
+				// return false
+			}
+			catch (IOException e1) {
+				// return false
+			}
+			return false;
+		}
+
+		@Override
+		public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
+			AddressSetView view = ((SelectionTransferData) obj).getAddressSet();
+			if (view.getNumAddressRanges() == 0) {
+				return;
+			}
+			listener.selectionDropped(view, currentCodeUnit, activeIndex);
+		}
+
+	}
 }

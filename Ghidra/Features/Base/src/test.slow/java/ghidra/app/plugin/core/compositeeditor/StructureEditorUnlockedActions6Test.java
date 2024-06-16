@@ -27,7 +27,7 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
 public class StructureEditorUnlockedActions6Test
-		extends AbstractStructureEditorUnlockedActionsTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testArrayOnArray() throws Exception {

@@ -44,6 +44,15 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 		filterPanel.dispose();
 	}
 
+	/**
+	 * Sets the accessible name prefix for both the table and the filter panel
+	 * @param prefix the name prefix
+	 */
+	public void setAccessibleNamePrefix(String prefix) {
+		table.setAccessibleNamePrefix(prefix);
+		filterPanel.setAccessibleNamePrefix(prefix);
+	}
+
 	private void buildTable() {
 		if (model instanceof ThreadedTableModel) {
 			buildThreadedTable();
@@ -76,7 +85,6 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 	}
 
 	private void buildThreadedTable() {
-		@SuppressWarnings("unchecked")
 		GThreadedTablePanel<ROW_OBJECT> tablePanel =
 			createThreadedTablePanel((ThreadedTableModel<ROW_OBJECT, ?>) model);
 		table = tablePanel.getTable();
@@ -200,5 +208,19 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 
 	public void setFiterText(String text) {
 		filterPanel.setFilterText(text);
+	}
+
+	public int getRow(Point point) {
+		return table.rowAtPoint(point);
+	}
+
+	public int getColumn(Point point) {
+		return table.columnAtPoint(point);
+	}
+
+	public Object getCellValue(Point point) {
+		int row = getRow(point);
+		int col = getColumn(point);
+		return table.getValueAt(row, col);
 	}
 }

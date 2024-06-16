@@ -15,9 +15,21 @@
  * limitations under the License.
  */
 #include "float.hh"
-#include <sstream>
-#include <cmath>
 #include "address.hh"
+
+#include <cmath>
+#include <limits>
+
+namespace ghidra {
+
+using std::ldexp;
+using std::frexp;
+using std::signbit;
+using std::sqrt;
+using std::floor;
+using std::ceil;
+using std::round;
+using std::fabs;
 
 /// Set format for a given encoding size according to IEEE 754 standards
 /// \param sz is the size of the encoding in bytes
@@ -79,7 +91,7 @@ FloatFormat::floatclass FloatFormat::extractExpSig(double x,bool *sgn,uintb *sig
 {
   int4 e;
 
-  *sgn = std::signbit(x);
+  *sgn = signbit(x);
   if (x == 0.0) return zero;
   if (std::isinf(x)) return infinity;
   if (std::isnan(x)) return nan;
@@ -232,11 +244,13 @@ double FloatFormat::getHostFloat(uintb encoding,floatclass *type) const
   else if (exp == maxexponent) {
     if ( frac == 0 ) {		// Floating point infinity
       *type = infinity;
-      return sgn ? -INFINITY : +INFINITY;
+      double infinity = std::numeric_limits<double>::infinity();
+      return sgn ? -infinity : +infinity;
     }
     *type = nan;
     // encoding is "Not a Number" NaN
-    return sgn ? -NAN : +NAN; // Sign is usually ignored
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    return sgn ? -nan : +nan; // Sign is usually ignored
   }
   else
     *type = normalized;
@@ -555,8 +569,7 @@ uintb FloatFormat::opSqrt(uintb a) const
 uintb FloatFormat::opInt2Float(uintb a,int4 sizein) const
 
 {
-  intb ival = (intb)a;
-  sign_extend(ival,8*sizein-1);
+  intb ival = sign_extend(a,8*sizein-1);
   double val = (double) ival;	// Convert integer to float
   return getEncoding(val);
 }
@@ -615,64 +628,4 @@ uintb FloatFormat::opRound(uintb a) const
   return getEncoding(round(val)); // round half away from zero
 }
 
-/// Write the format out to a \<floatformat> XML tag.
-/// \param s is the output stream
-void FloatFormat::saveXml(ostream &s) const
-
-{
-  s << "<floatformat";
-  a_v_i(s,"size",size);
-  a_v_i(s,"signpos",signbit_pos);
-  a_v_i(s,"fracpos",frac_pos);
-  a_v_i(s,"fracsize",frac_size);
-  a_v_i(s,"exppos",exp_pos);
-  a_v_i(s,"expsize",exp_size);
-  a_v_i(s,"bias",bias);
-  a_v_b(s,"jbitimplied",jbitimplied);
-  s << "/>\n";
-}
-
-/// Restore \b object from a \<floatformat> XML tag
-/// \param el is the element
-void FloatFormat::restoreXml(const Element *el)
-
-{
-  {
-    istringstream s(el->getAttributeValue("size"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> size;
-  }
-  {
-    istringstream s(el->getAttributeValue("signpos"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> signbit_pos;
-  }
-  {
-    istringstream s(el->getAttributeValue("fracpos"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> frac_pos;
-  }
-  {
-    istringstream s(el->getAttributeValue("fracsize"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> frac_size;
-  }
-  {
-    istringstream s(el->getAttributeValue("exppos"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> exp_pos;
-  }
-  {
-    istringstream s(el->getAttributeValue("expsize"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> exp_size;
-  }
-  {
-    istringstream s(el->getAttributeValue("bias"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> bias;
-  }
-  jbitimplied = xml_readbool(el->getAttributeValue("jbitimplied"));
-  maxexponent = (1<<exp_size)-1;
-  calcPrecision();
-}
+} // End namespace ghidra

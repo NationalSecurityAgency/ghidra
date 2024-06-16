@@ -27,7 +27,7 @@ import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemorySpaceInputStream;
 
 public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
@@ -96,14 +96,14 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	}
 
 	private final DBTraceProgramView program;
-	private final DBTraceMemoryRegisterSpace space;
+	private final DBTraceMemorySpace space;
 	private final AddressRange range;
 
 	private final List<MemoryBlockSourceInfo> info =
 		Collections.singletonList(new DBTraceProgramViewRegisterMemoryBlockSourceInfo());
 
 	public DBTraceProgramViewRegisterMemoryBlock(DBTraceProgramView program,
-			DBTraceMemoryRegisterSpace space) {
+			DBTraceMemorySpace space) {
 		this.program = program;
 		this.space = space;
 		this.range = new AddressRangeImpl(space.getAddressSpace().getMinAddress(),
@@ -116,7 +116,7 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	}
 
 	@Override
-	public int getPermissions() {
+	public int getFlags() {
 		return MemoryBlock.READ | MemoryBlock.WRITE;
 	}
 
@@ -128,6 +128,11 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	@Override
 	public boolean contains(Address addr) {
 		return range.contains(addr);
+	}
+
+	@Override
+	public AddressRange getAddressRange() {
+		return range;
 	}
 
 	@Override
@@ -212,6 +217,16 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 
 	@Override
 	public void setVolatile(boolean v) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isArtificial() {
+		return false;
+	}
+
+	@Override
+	public void setArtificial(boolean a) {
 		throw new UnsupportedOperationException();
 	}
 

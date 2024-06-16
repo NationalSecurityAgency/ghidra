@@ -20,8 +20,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.ArmDisassembleCommand;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
@@ -32,7 +32,6 @@ import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
-import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -81,8 +80,6 @@ public class ProgramBuilder {
 
 	public static final String _TOY = _TOY_BE;
 
-	private static final String LANGUAGE_DELIMITER = ":";
-
 	protected static final String _TOY_LANGUAGE_PREFIX = "Toy:";
 
 	private static final Map<String, Language> LANGUAGE_CACHE = new HashMap<>();
@@ -96,7 +93,7 @@ public class ProgramBuilder {
 	 * Construct program builder using the big-endian Toy language and default compiler spec.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * @throws Exception if there is an exception creating the program 
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder() throws Exception {
 		this("Test Program", _TOY);
@@ -139,7 +136,20 @@ public class ProgramBuilder {
 		CompilerSpec compilerSpec = compilerSpecID == null ? language.getDefaultCompilerSpec()
 				: language.getCompilerSpecByID(new CompilerSpecID(compilerSpecID));
 		program = new ProgramDB(name, language, compilerSpec, consumer == null ? this : consumer);
-		setAnalyzed(true);
+		setAnalyzed();
+		program.setTemporary(true); // ignore changes
+	}
+
+	/**
+	 * Construct program builder using a full language object rather than a language id string
+	 * @param name program name
+	 * @param language Language object
+	 * @throws Exception if there is an exception creating the program
+	 */
+	public ProgramBuilder(String name, Language language) throws Exception {
+		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
+		program = new ProgramDB(name, language, compilerSpec, this);
+		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
 
@@ -216,7 +226,7 @@ public class ProgramBuilder {
 	private void flushEvents() {
 		program.flushEvents();
 		if (!SystemUtilities.isInHeadlessMode()) {
-			AbstractGenericTest.waitForSwing();
+			AbstractGuiTest.waitForSwing();
 		}
 	}
 
@@ -250,55 +260,14 @@ public class ProgramBuilder {
 		}
 	}
 
-	private Language getLanguage(String languageName) throws Exception {
-		Language language = LANGUAGE_CACHE.get(languageName);
-		if (language != null) {
-			return language;
+	private static Language getLanguage(String languageId) throws LanguageNotFoundException {
+		Language language = LANGUAGE_CACHE.get(languageId);
+		if (language == null) {
+			language =
+				DefaultLanguageService.getLanguageService().getLanguage(new LanguageID(languageId));
+			LANGUAGE_CACHE.put(languageId, language);
 		}
-
-		ResourceFile ldefFile = null;
-		if (languageName.contains(LANGUAGE_DELIMITER)) {
-			switch (languageName.split(LANGUAGE_DELIMITER)[0]) {
-				case "x86":
-					ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
-					break;
-				case "8051":
-					ldefFile = Application.getModuleDataFile("8051", "languages/8051.ldefs");
-					break;
-				case "sparc":
-					ldefFile = Application.getModuleDataFile("Sparc", "languages/SparcV9.ldefs");
-					break;
-				case "ARM":
-					ldefFile = Application.getModuleDataFile("ARM", "languages/ARM.ldefs");
-					break;
-				case "AARCH64":
-					ldefFile = Application.getModuleDataFile("AARCH64", "languages/AARCH64.ldefs");
-					break;
-				case "MIPS":
-					ldefFile = Application.getModuleDataFile("MIPS", "languages/mips.ldefs");
-					break;
-				case "Toy":
-					ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-					break;
-				case "PowerPC":
-					ldefFile = Application.getModuleDataFile("PowerPC", "languages/ppc.ldefs");
-					break;
-				default:
-					break;
-			}
-		}
-		if (ldefFile != null) {
-			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			try {
-				language = languageService.getLanguage(new LanguageID(languageName));
-			}
-			catch (LanguageNotFoundException e) {
-				throw new LanguageNotFoundException("Unsupported test language: " + languageName);
-			}
-			LANGUAGE_CACHE.put(languageName, language);
-			return language;
-		}
-		throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+		return language;
 	}
 
 //==================================================================================================
@@ -309,12 +278,11 @@ public class ProgramBuilder {
 		AbstractGenericTest.setInstanceField("recordChanges", program, Boolean.valueOf(enabled));
 	}
 
-	/** 
+	/**
 	 * This prevents the 'ask to analyze' dialog from showing when called with {@code true}
-	 * @param analyzed true to mark the program as analyzed
 	 */
-	public void setAnalyzed(boolean analyzed) {
-		GhidraProgramUtilities.setAnalyzedFlag(program, analyzed);
+	public void setAnalyzed() {
+		GhidraProgramUtilities.markProgramAnalyzed(program);
 	}
 
 	public MemoryBlock createMemory(String name, String address, int size) {
@@ -351,8 +319,8 @@ public class ProgramBuilder {
 
 		return tx(() -> {
 			return program.getMemory()
-					.createInitializedBlock(name, addr(address), size, (byte) 0,
-						TaskMonitor.DUMMY, true);
+					.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
+						true);
 		});
 	}
 
@@ -442,7 +410,7 @@ public class ProgramBuilder {
 			DisassembleCommand cmd = new DisassembleCommand(addresses, addresses, followFlows);
 
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -450,7 +418,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			DisassembleCommand cmd = new DisassembleCommand(set, set, true);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -458,7 +426,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			DisassembleCommand cmd = new DisassembleCommand(set, set, followFlows);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -468,7 +436,7 @@ public class ProgramBuilder {
 			DisassembleCommand cmd = new ArmDisassembleCommand(address,
 				new AddressSet(address, address.add(length - 1)), true);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -516,8 +484,7 @@ public class ProgramBuilder {
 		});
 	}
 
-	public void addFunctionVariable(Function f, Variable v)
-			throws Exception {
+	public void addFunctionVariable(Function f, Variable v) throws Exception {
 		tx(() -> f.addLocalVariable(v, SourceType.USER_DEFINED));
 	}
 
@@ -560,13 +527,13 @@ public class ProgramBuilder {
 
 			Function function = null;
 			if (namespace == null) {
-				function = functionManager.createFunction(
-					name, entryPoint, body, SourceType.USER_DEFINED);
+				function =
+					functionManager.createFunction(name, entryPoint, body, SourceType.USER_DEFINED);
 			}
 			else {
 				Namespace ns = getNamespace(namespace);
-				function = functionManager.createFunction(
-					name, ns, entryPoint, body, SourceType.USER_DEFINED);
+				function = functionManager.createFunction(name, ns, entryPoint, body,
+					SourceType.USER_DEFINED);
 			}
 
 			Parameter[] myParams = params;
@@ -595,6 +562,15 @@ public class ProgramBuilder {
 		}
 		return createEmptyFunction(name, namespace, callingConventionName, false, address, size,
 			returnType, params);
+	}
+
+	public void deleteFunction(String address) throws Exception {
+
+		tx(() -> {
+			Address entryPoint = addr(address);
+			FunctionManager functionManager = program.getFunctionManager();
+			functionManager.removeFunction(entryPoint);
+		});
 	}
 
 	public Library createLibrary(String libraryName)
@@ -665,7 +641,7 @@ public class ProgramBuilder {
 
 	public void applyFixedLengthDataType(String addressString, DataType dt, int length) {
 		tx(() -> {
-			DataUtilities.createData(program, addr(addressString), dt, length, false,
+			DataUtilities.createData(program, addr(addressString), dt, length,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		});
 	}
@@ -676,6 +652,7 @@ public class ProgramBuilder {
 
 	/**
 	 * Creates a data instance at the specified address, repeated {@code N} times.
+	 * Any conflicting Data will be overwritten.
 	 *
 	 * @param addressString address.
 	 * @param dt {@link DataType} to place at address, {@link Dynamic} length datatype not supported.
@@ -685,7 +662,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			Address address = addr(addressString);
 			for (int i = 0; i < n; i++) {
-				CreateDataCmd cmd = new CreateDataCmd(address, dt);
+				CreateDataCmd cmd = new CreateDataCmd(address, true, dt);
 				if (!cmd.applyTo(program)) {
 					throw new AssertException(
 						"Could not apply data at address " + address + ". " + cmd.getStatusMsg());
@@ -710,7 +687,7 @@ public class ProgramBuilder {
 			int previousDataLength = 0;
 			for (int i = 0; i < n; i++) {
 				address = address.addNoWrap(previousDataLength);
-				Data newStringInstance = DataUtilities.createData(program, address, dt, -1, false,
+				Data newStringInstance = DataUtilities.createData(program, address, dt, -1,
 					ClearDataMode.CLEAR_SINGLE_DATA);
 				previousDataLength = newStringInstance.getLength();
 			}
@@ -844,15 +821,15 @@ public class ProgramBuilder {
 		return createString(address, bytes, charset, dataType);
 	}
 
-	public Data createString(String address, byte[] stringBytes, Charset charset,
-			DataType dataType) throws Exception {
+	public Data createString(String address, byte[] stringBytes, Charset charset, DataType dataType)
+			throws Exception {
 		Address addr = addr(address);
 		setBytes(address, stringBytes);
 		if (dataType != null) {
 			startTransaction();
 			try {
 				Data data = DataUtilities.createData(program, addr, dataType, stringBytes.length,
-					false, ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 				CharsetSettingsDefinition.CHARSET.setCharset(data, charset.name());
 				return data;
 			}
@@ -1097,7 +1074,8 @@ public class ProgramBuilder {
 
 		tx(() -> {
 			PropertyMapManager pm = program.getUsrPropertyManager();
-			ObjectPropertyMap propertyMap = pm.getObjectPropertyMap(propertyName);
+			ObjectPropertyMap<? extends Saveable> propertyMap =
+				pm.getObjectPropertyMap(propertyName);
 			if (propertyMap == null) {
 				propertyMap = pm.createObjectPropertyMap(propertyName, value.getClass());
 			}

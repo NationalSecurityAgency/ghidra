@@ -38,7 +38,7 @@ import ghidra.file.formats.ios.prelink.MachoPrelinkFileSystem;
 import ghidra.file.jad.JadProcessWrapper;
 import ghidra.file.jad.JarDecompiler;
 import ghidra.formats.gfilesystem.*;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugins.fsbrowser.*;
@@ -60,7 +60,7 @@ import ghidra.util.task.TaskMonitor;
 	description = "This plugin provides file format related actions to the File System Browser."
 )
 //@formatter:on
-public class FileFormatsPlugin extends Plugin implements FrontEndable {
+public class FileFormatsPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	private GhidraFileChooser chooserEclipse;
 	private GhidraFileChooser chooserJarFolder;
@@ -86,6 +86,14 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 	@Override
 	protected void dispose() {
 		super.dispose();
+
+		if (chooserJarFolder != null) {
+			chooserJarFolder.dispose();
+		}
+
+		if (chooserEclipse != null) {
+			chooserEclipse.dispose();
+		}
 
 		actions.forEach(action -> getTool().removeAction(action));
 	}

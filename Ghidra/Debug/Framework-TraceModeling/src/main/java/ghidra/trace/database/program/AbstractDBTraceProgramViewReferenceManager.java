@@ -15,15 +15,13 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.help.UnsupportedOperationException;
-
-import com.google.common.collect.Range;
 
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
@@ -32,6 +30,7 @@ import ghidra.program.model.listing.Variable;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.TraceCodeOperations;
 import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.trace.model.symbol.TraceReference;
@@ -73,11 +72,11 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 		return code;
 	}
 
-	protected Range<Long> chooseLifespan(Address fromAddr) {
+	protected Lifespan chooseLifespan(Address fromAddr) {
 		TraceCodeUnit unit = code(false) == null
 				? null
 				: code.codeUnits().getAt(program.snap, fromAddr);
-		return unit == null ? Range.atLeast(program.snap) : unit.getLifespan();
+		return unit == null ? Lifespan.nowOn(program.snap) : unit.getLifespan();
 	}
 
 	@Override
@@ -147,7 +146,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 		if (refs(false) == null) {
 			return;
 		}
-		refs.clearReferencesFrom(Range.closed(program.snap, program.snap),
+		refs.clearReferencesFrom(Lifespan.at(program.snap),
 			new AddressRangeImpl(beginAddr, endAddr));
 	}
 
@@ -156,7 +155,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 		if (refs(false) == null) {
 			return;
 		}
-		refs.clearReferencesFrom(Range.closed(program.snap, program.snap),
+		refs.clearReferencesFrom(Lifespan.at(program.snap),
 			new AddressRangeImpl(fromAddr, fromAddr));
 	}
 
@@ -165,7 +164,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 		if (refs(false) == null) {
 			return;
 		}
-		refs.clearReferencesTo(Range.closed(program.snap, program.snap),
+		refs.clearReferencesTo(Lifespan.at(program.snap),
 			new AddressRangeImpl(toAddr, toAddr));
 	}
 
@@ -242,7 +241,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 
 	protected Iterator<Reference> getReferenceIteratorForSnap(long snap, Address startAddr) {
 		AddressIterator addresses =
-			refs.getReferenceSources(Range.singleton(snap)).getAddresses(startAddr, true);
+			refs.getReferenceSources(Lifespan.at(snap)).getAddresses(startAddr, true);
 		return NestedIterator.start(addresses, a -> {
 			return refs.getReferencesFrom(snap, a).iterator();
 		});
@@ -303,7 +302,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return new EmptyAddressIterator();
 		}
 		return program.viewport.unionedAddresses(
-			s -> refs.getReferenceSources(Range.singleton(s))).getAddresses(startAddr, forward);
+			s -> refs.getReferenceSources(Lifespan.at(s))).getAddresses(startAddr, forward);
 	}
 
 	@Override
@@ -312,7 +311,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return new EmptyAddressIterator();
 		}
 		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
-			s -> refs.getReferenceSources(Range.singleton(s)))).getAddresses(forward);
+			s -> refs.getReferenceSources(Lifespan.at(s)))).getAddresses(forward);
 	}
 
 	@Override
@@ -321,7 +320,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return new EmptyAddressIterator();
 		}
 		return program.viewport.unionedAddresses(
-			s -> refs.getReferenceDestinations(Range.singleton(s)))
+			s -> refs.getReferenceDestinations(Lifespan.at(s)))
 				.getAddresses(startAddr, forward);
 	}
 
@@ -332,7 +331,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return new EmptyAddressIterator();
 		}
 		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
-			s -> refs.getReferenceDestinations(Range.singleton(s)))).getAddresses(forward);
+			s -> refs.getReferenceDestinations(Lifespan.at(s)))).getAddresses(forward);
 	}
 
 	@Override
@@ -365,7 +364,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return 0;
 		}
 		return (int) program.viewport
-				.unionedAddresses(s -> refs.getReferenceDestinations(Range.singleton(s)))
+				.unionedAddresses(s -> refs.getReferenceDestinations(Lifespan.at(s)))
 				.getNumAddresses();
 	}
 
@@ -377,7 +376,7 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 			return 0;
 		}
 		return (int) program.viewport
-				.unionedAddresses(s -> refs.getReferenceSources(Range.singleton(s)))
+				.unionedAddresses(s -> refs.getReferenceSources(Lifespan.at(s)))
 				.getNumAddresses();
 	}
 

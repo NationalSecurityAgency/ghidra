@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.ObjectPropertyMap;
@@ -27,57 +28,57 @@ import ghidra.util.Msg;
 import ghidra.util.Saveable;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.exception.*;
-import ghidra.util.prop.PropertyVisitor;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Property manager that deals with properties that are of
- * a Saveable Object type and store within a database table.
+ * a {@link Saveable} Object type and store within a database table.
+ * @param <T> {@link Saveable} property value type
  */
-public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectPropertyMap {
+public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
+		implements ObjectPropertyMap<T> {
 
-	private Class<? extends Saveable> saveableObjectClass;
+	private Class<T> saveableObjectClass;
 	private int saveableObjectVersion;
 	private boolean supportsPrivate;
 
 	/**
 	 * Construct an Saveable object property map.
 	 * @param dbHandle database handle.
-	 * @param openMode the mode that the program was opened in.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
 	 * @param errHandler database error handler.
 	 * @param changeMgr change manager for event notification
 	 * @param addrMap address map.
 	 * @param name property name.
+	 * @param saveableObjectClass saveable implementation class
 	 * @param monitor progress monitor that is only used when upgrading
+	 * @param supportsPrivate if private saveable changes should not be broadcast
 	 * @throws CancelledException if the user cancels the upgrade operation.
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException the map version is incompatible with
 	 * the current Saveable object class version.  This will never be thrown
 	 * if upgrade is true.
 	 */
-	public ObjectPropertyMapDB(DBHandle dbHandle, int openMode, ErrorHandler errHandler,
-			ChangeManager changeMgr, AddressMap addrMap, String name,
-			Class<? extends Saveable> saveableObjectClass, TaskMonitor monitor,
-			boolean supportsPrivate) throws VersionException, CancelledException, IOException {
+	@SuppressWarnings("unchecked")
+	public ObjectPropertyMapDB(DBHandle dbHandle, OpenMode openMode, ErrorHandler errHandler,
+			ChangeManager changeMgr, AddressMap addrMap, String name, Class<T> saveableObjectClass,
+			TaskMonitor monitor, boolean supportsPrivate)
+			throws VersionException, CancelledException, IOException {
 		super(dbHandle, errHandler, changeMgr, addrMap, name);
 		this.saveableObjectClass = saveableObjectClass;
 		this.supportsPrivate = supportsPrivate;
-		Saveable tokenInstance = null;
+		T tokenInstance = null;
 		try {
 			if (saveableObjectClass == GenericSaveable.class) {
-				tokenInstance = new GenericSaveable(null, null);
+				tokenInstance = (T) new GenericSaveable(null, null);
 			}
 			else {
-				tokenInstance = saveableObjectClass.newInstance();
+				tokenInstance = saveableObjectClass.getDeclaredConstructor().newInstance();
 			}
 		}
-		catch (InstantiationException e) {
-			throw new RuntimeException(
-				saveableObjectClass.getName() + " must provide public default constructor");
-		}
-		catch (IllegalAccessException e) {
-			throw new RuntimeException(
-				saveableObjectClass.getName() + " must provide public default constructor");
+		catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 		saveableObjectVersion = tokenInstance.getSchemaVersion();
 		checkMapVersion(openMode, tokenInstance, monitor);
@@ -123,11 +124,14 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 
 	/**
 	 * Verify that the storage schema has not changed.
-	 * @param upgrade
-	 * @param tokenInstance
-	 * @throws VersionException
+	 * @param openMode open mode
+	 * @param tokenInstance token saveable instance
+	 * @param monitor task monitor
+	 * @throws VersionException if saveable schema version error occurs
+	 * @throws CancelledException if task is cancelled
+	 * @throws IOException if IO error occurs
 	 */
-	private void checkMapVersion(int openMode, Saveable tokenInstance, TaskMonitor monitor)
+	private void checkMapVersion(OpenMode openMode, T tokenInstance, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		if (propertyTable == null) {
 			return;
@@ -142,14 +146,13 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		}
 		else if (addrMap.isUpgraded() || schemaVersion < saveableObjectVersion) {
 			// An older version was used to create the database
-			if (openMode != DBConstants.UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				throw new VersionException(true);
 			}
 			if (!upgradeTable(tokenInstance, monitor)) {
 				Msg.showError(this, null, "Properties Removed on Upgrade",
 					"Warning! unable to upgrade properties for " + saveableObjectClass.getName() +
 						"\nThese properties have been removed.");
-
 			}
 		}
 	}
@@ -157,11 +160,14 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 	/**
 	 * Attempt to upgrade the map table records to the current schema.
 	 * If unable to upgrade any of the map records, the table is removed.
-	 * @param tokenInstance
+	 * @param tokenInstance token saveable instance
+	 * @param monitor task monitor
 	 * @return true if all records were successfully upgrade.  A false
 	 * value indicates that one or more entries were dropped.
+	 * @throws CancelledException if task is cancelled
+	 * @throws IOException if IO error occurs
 	 */
-	private boolean upgradeTable(Saveable tokenInstance, TaskMonitor monitor)
+	private boolean upgradeTable(T tokenInstance, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		boolean allRecordsUpgraded = true;
@@ -247,14 +253,14 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 	}
 
 	@Override
-	public void add(Address addr, Saveable value) {
+	public void add(Address addr, T value) {
 		lock.acquire();
 		try {
 			if (!saveableObjectClass.isAssignableFrom(value.getClass())) {
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException("value is not " + saveableObjectClass.getName());
 			}
 			long key = addrMap.getKey(addr, true);
-			Saveable oldValue = (Saveable) getObject(addr);
+			T oldValue = get(addr);
 
 			String tableName = getTableName();
 			Schema s;
@@ -316,17 +322,18 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 	}
 
 	@Override
-	public Class<?> getObjectClass() {
+	public Class<T> getValueClass() {
 		return saveableObjectClass;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Object getObject(Address addr) {
+	public T get(Address addr) {
 		if (propertyTable == null) {
 			return null;
 		}
 
-		Saveable obj = null;
+		T obj = null;
 
 		lock.acquire();
 		try {
@@ -334,7 +341,7 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 			if (key == AddressMap.INVALID_ADDRESS_KEY) {
 				return null;
 			}
-			obj = (Saveable) cache.get(key);
+			obj = (T) cache.get(key);
 			if (obj != null) {
 				return obj;
 			}
@@ -345,10 +352,10 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 			}
 			ObjectStorageAdapterDB objStorage = new ObjectStorageAdapterDB(rec);
 			if (saveableObjectClass == GenericSaveable.class) {
-				obj = new GenericSaveable(rec, propertyTable.getSchema());
+				obj = (T) new GenericSaveable(rec, propertyTable.getSchema());
 			}
 			else {
-				obj = saveableObjectClass.newInstance();
+				obj = saveableObjectClass.getDeclaredConstructor().newInstance();
 				obj.restore(objStorage);
 			}
 		}
@@ -372,22 +379,6 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		return obj;
 	}
 
-	@Override
-	public void applyValue(PropertyVisitor visitor, Address addr) {
-		Saveable obj = (Saveable) getObject(addr);
-		if (obj != null) {
-			visitor.visit(obj);
-		}
-	}
-
-	// @see PropertyMapDB#getPropertyFieldClass() <- doesn't exist
-	/**
-	 * NOTE: Custom schema is utilized.
-	 */
-	protected Class<?> getPropertyFieldClass() {
-		throw new AssertException();
-	}
-
 	/**
 	 * Create the necessary table(s) to support this property.
 	 * Schema will vary depending upon Saveable object.
@@ -396,23 +387,4 @@ public class ObjectPropertyMapDB extends PropertyMapDB implements ObjectProperty
 		throw new AssertException();
 	}
 
-	/**
-	 * Attempt to upgrade the specified object map.
-	 * @param dbHandle
-	 * @param errHandler
-	 * @param changeMgr
-	 * @param addrMap
-	 * @param name
-	 * @param saveableObjectClass
-	 * @param version
-	 * @return upgraded map instance or null if unable to upgrade.
-	 */
-	static ObjectPropertyMapDB upgradeMap(DBHandle dbHandle, ErrorHandler errHandler,
-			ChangeManager changeMgr, AddressMap addrMap, String name, Class<?> saveableObjectClass,
-			int version) {
-
-// TODO Fill-in stuff here....
-
-		return null;
-	}
 }

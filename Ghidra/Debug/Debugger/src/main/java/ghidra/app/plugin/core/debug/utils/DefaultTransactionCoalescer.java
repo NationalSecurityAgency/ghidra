@@ -17,10 +17,10 @@ package ghidra.app.plugin.core.debug.utils;
 
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.util.Msg;
 
-public class DefaultTransactionCoalescer<T extends UndoableDomainObject, U extends AutoCloseable>
+public class DefaultTransactionCoalescer<T extends DomainObject, U extends AutoCloseable>
 		implements TransactionCoalescer {
 
 	protected class Coalescer {
@@ -74,6 +74,10 @@ public class DefaultTransactionCoalescer<T extends UndoableDomainObject, U exten
 		@Override
 		public void close() {
 			synchronized (lock) {
+				if (tx == null) {
+					// TODO: This smells really bad
+					return;
+				}
 				tx.exit();
 			}
 		}

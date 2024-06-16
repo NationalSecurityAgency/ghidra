@@ -18,6 +18,7 @@ package pdb.symbolserver;
 import java.io.*;
 import java.util.*;
 
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -59,6 +60,23 @@ public class SameDirSymbolStore implements SymbolStore {
 		SymbolFileLocation symbolFileLocation =
 			new SymbolFileLocation(symbolFile.getName(), samedirSymbolStore, symbolFileInfo);
 		return symbolFileLocation;
+	}
+
+	/**
+	 * Creates a {@link SymbolServer} for the "Program's Import Location" item.  May return either
+	 * a {@link SameDirSymbolStore} instance, or a {@link ContainerFileSymbolServer}.
+	 *  
+	 * @param locationString will be "."
+	 * @param context {@link SymbolServerInstanceCreatorContext}
+	 * @return new {@link SymbolServer}
+	 */
+	public static SymbolServer createInstance(String locationString,
+			SymbolServerInstanceCreatorContext context) {
+		FSRL programFSRL = context.getProgramFSRL();
+		if (programFSRL != null && programFSRL.getNestingDepth() != 1) {
+			return new ContainerFileSymbolServer(programFSRL);
+		}
+		return new SameDirSymbolStore(context.getRootDir());
 	}
 
 	private final File rootDir;

@@ -31,6 +31,7 @@ import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.test.TestUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.data.CreateDataCmd;
+import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
@@ -231,7 +232,10 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		env.connectTools(tool, tool2);
 		env.connectTools(tool2, tool);
-		env.open(program); // do this again now that the tools are in-sync
+		env.open(program);
+
+		// open same program in second tool - cannot rely on tool connection for this
+		tool2.firePluginEvent(new OpenProgramPluginEvent("Test", program));
 
 		Address addr = addr(0x01006420);
 		sendProgramLocation(addr, CodeUnit.EOL_COMMENT);
@@ -247,8 +251,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setFieldWidth(browser, EolCommentFieldFactory.FIELD_NAME, 100);
 
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		options.setBoolean(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, true);
-		options.setInt(EolCommentFieldFactory.MAX_DISPLAY_LINES_MSG, 100);
+		options.setBoolean(EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY, true);
+		options.setInt(EolCommentFieldFactory.MAX_DISPLAY_LINES_KEY, 100);
 
 		runSwing(() -> tool.getToolFrame().setSize(800, 800));
 
@@ -262,8 +266,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(17, browser.getCurrentFieldLoction().getRow());
 		assertEquals(4, browser.getCurrentFieldLoction().getCol());
 
-		assertEquals(3, browser2.getCurrentFieldLoction().getRow());
-		assertEquals(46, browser2.getCurrentFieldLoction().getCol());
+		assertEquals(4, browser2.getCurrentFieldLoction().getRow());
+		assertEquals(4, browser2.getCurrentFieldLoction().getCol());
 	}
 
 	@Test
@@ -543,6 +547,34 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testCommentWithAddressAnnotationFromSelectedText() throws Exception {
+
+		openX86ProgramInTool();
+
+		String commentAddress = "01008094";
+		String comment = "This is a comment with address " + commentAddress + " in it.";
+
+		CommentsDialog dialog = editComment(addr(0x01006990));
+		JTextArea commentTextArea = getTextArea(dialog, CodeUnit.EOL_COMMENT);
+
+		runSwing(() -> {
+			commentTextArea.setText(comment);
+			int start = comment.indexOf(commentAddress);
+			int end = start + commentAddress.length();
+			commentTextArea.select(start, end);
+		});
+
+		pressButtonByText(dialog, "Add Annotation");
+		pressButtonByText(dialog, "OK");
+
+		String updatedText = runSwing(() -> {
+			return commentTextArea.getText();
+		});
+		assertEquals("This is a comment with address {@address " + commentAddress + "} in it.",
+			updatedText);
+	}
+
+	@Test
 	public void testNavigationFromSymbol() throws Exception {
 		openX86ProgramInTool();
 
@@ -750,34 +782,51 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			!editAction.isEnabledForContext(browser.getProvider().getActionContext(null)));
 	}
 
+	@Test
+	public void testIllegalCharacters() throws Exception {
+		openX86ProgramInTool();
+		Address addr = addr(0x01006420);
+		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
+
+		String illegal = "null\0 comment";
+		String legal = "null comment";
+		setAt(addr, CodeUnit.PRE_COMMENT, illegal, "OK");
+		assertEquals(legal, cu.getComment(CodeUnit.PRE_COMMENT));
+	}
+
 	private void setAt(Address addr, int commentType, String comment, String nameOfButtonToClick)
 			throws Exception {
 
-		assertTrue(browser.goToField(addr, AddressFieldFactory.FIELD_NAME, 0, 0));
+		CommentsDialog dialog = editComment(addr);
+		assertEquals("Set Comment(s) at Address " + addr.toString(), dialog.getTitle());
+		JTextArea commentTextArea = getTextArea(dialog, commentType);
 
+		setText(commentTextArea, comment);
+
+		JButton button = findButtonByText(dialog.getComponent(), nameOfButtonToClick);
+		assertNotNull(button);
+		pressButton(button, false);
+		waitForSwing();
+		waitForBusyTool(tool);
+	}
+
+	private CommentsDialog editComment(Address a) {
+		assertTrue(browser.goToField(a, AddressFieldFactory.FIELD_NAME, 0, 0));
 		performAction(editAction, browser.getProvider(), false);
 		waitForSwing();
+		return waitForDialogComponent(CommentsDialog.class);
+	}
 
-		CommentsDialog dialog = waitForDialogComponent(CommentsDialog.class);
-		assertNotNull(dialog);
-		assertEquals("Set Comment(s) at Address " + addr.toString(), dialog.getTitle());
-
+	private JTextArea getTextArea(CommentsDialog dialog, int commentType) {
 		runSwing(() -> dialog.setCommentType(commentType));
 		waitForSwing();
 
 		JTabbedPane tab = findComponent(dialog.getComponent(), JTabbedPane.class);
 		assertNotNull(tab);
 		JScrollPane scroll = (JScrollPane) tab.getSelectedComponent();
-		JTextArea commentTextArea = (JTextArea) scroll.getViewport().getView();
-		assertNotNull(commentTextArea);
-
-		runSwing(() -> commentTextArea.setText(comment));
-		waitForSwing();
-
-		JButton button = findButtonByText(dialog.getComponent(), nameOfButtonToClick);
-		assertNotNull(button);
-		pressButton(button, false);
-		waitForSwing();
+		JTextArea textArea = (JTextArea) scroll.getViewport().getView();
+		assertNotNull(textArea);
+		return textArea;
 	}
 
 	private void removeAt(Address addr, int commentType) throws Exception {
@@ -831,8 +880,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		env.getProject()
 				.getProjectData()
 				.getRootFolder()
-				.createFile("Test", program,
-					TaskMonitor.DUMMY);
+				.createFile("Test", program, TaskMonitor.DUMMY);
 		env.showTool(program);
 	}
 
@@ -864,8 +912,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		return modifyProgram(program, p -> {
 			return p.getReferenceManager()
-					.addMemoryReference(addr(fromOffset),
-						addr(toOffset), refType, SourceType.USER_DEFINED, 0);
+					.addMemoryReference(addr(fromOffset), addr(toOffset), refType,
+						SourceType.USER_DEFINED, 0);
 		});
 	}
 
@@ -873,11 +921,10 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		return modifyProgram(program, p -> {
 
-			Function function =
-				p.getFunctionManager()
-						.createFunction(name, addr(functionEntry),
-							new AddressSet(addr(functionEntry), addr(functionEntry + size - 1)),
-							SourceType.USER_DEFINED);
+			Function function = p.getFunctionManager()
+					.createFunction(name, addr(functionEntry),
+						new AddressSet(addr(functionEntry), addr(functionEntry + size - 1)),
+						SourceType.USER_DEFINED);
 			ReturnParameterImpl returnParam =
 				new ReturnParameterImpl(IntegerDataType.dataType, program);
 			ParameterImpl param1 = new ParameterImpl("p1", ByteDataType.dataType, program);
@@ -905,9 +952,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		while (i++ < 50) {
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel =
-					(GThreadedTablePanel<?>) TestUtils.getInstanceField("threadedPanel",
-						providers[0]);
+				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
+						.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);

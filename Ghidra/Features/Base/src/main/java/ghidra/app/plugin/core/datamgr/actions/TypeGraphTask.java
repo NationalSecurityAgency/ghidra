@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.datamgr.actions;
 
 import java.awt.Color;
 
+import generic.theme.GColor;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.service.graph.*;
@@ -32,6 +33,13 @@ import ghidra.util.task.TaskMonitor;
  * Nodes are generated for pointers and embedded structures
  */
 public class TypeGraphTask extends Task {
+
+	private static final Color BG_COLOR_DEFAULT =
+		new GColor("color.bg.plugin.datamgr.edge.default");
+	private static final Color BG_COLOR_COMPOSITE =
+		new GColor("color.bg.plugin.datamgr.edge.composite");
+	private static final Color BG_COLOR_REFERERNCE =
+		new GColor("color.bg.plugin.datamgr.edge.reference");
 
 	private DataType type;
 	private String graphTitle;
@@ -64,9 +72,9 @@ public class TypeGraphTask extends Task {
 				.build();
 
 		GraphDisplayOptions options = new GraphDisplayOptionsBuilder(graphType)
-				.defaultVertexColor(Color.BLUE)
-				.edge(COMPOSITE, Color.MAGENTA)
-				.edge(REFERENCE, Color.BLUE)
+				.defaultVertexColor(BG_COLOR_DEFAULT)
+				.edge(COMPOSITE, BG_COLOR_COMPOSITE)
+				.edge(REFERENCE, BG_COLOR_REFERERNCE)
 				.build();
 
 		AttributedGraph graph = new AttributedGraph(graphTitle, graphType);
@@ -113,7 +121,7 @@ public class TypeGraphTask extends Task {
 		}
 
 		for (DataTypeComponent inner : struct.getComponents()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dt = inner.getDataType();
 			if (dt instanceof TypeDef) {
 				dt = ((TypeDef) dt).getBaseDataType();
@@ -130,7 +138,7 @@ public class TypeGraphTask extends Task {
 
 	private void recursePointer(Pointer pointer, AttributedGraph graph, AttributedVertex lastVertex,
 			TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		DataType ptrType = pointer.getDataType();
 		if (ptrType == null) {
 			return;

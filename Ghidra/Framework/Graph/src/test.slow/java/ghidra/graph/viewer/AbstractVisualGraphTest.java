@@ -32,7 +32,6 @@ import org.junit.Before;
 
 import docking.test.AbstractDockingTest;
 import edu.uci.ics.jung.algorithms.layout.Layout;
-import generic.test.AbstractGenericTest;
 import ghidra.graph.graphs.AbstractTestVertex;
 import ghidra.graph.graphs.TestEdge;
 import ghidra.graph.support.*;
@@ -123,11 +122,11 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 	}
 
 	protected void swing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		runSwing(r);
 	}
 
 	protected <T> T swing(Supplier<T> s) {
-		return AbstractGenericTest.runSwing(s);
+		return runSwing(s);
 	}
 
 	protected void waitForAnimation() {
@@ -258,7 +257,7 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 
 	protected void clickViewer(int x, int y) {
 		GraphViewer<AbstractTestVertex, TestEdge> viewer = graphComponent.getPrimaryViewer();
-		AbstractGenericTest.clickMouse(viewer, MouseEvent.BUTTON1, x, y, 1, 0);
+		clickMouse(viewer, MouseEvent.BUTTON1, x, y, 1, 0);
 		waitForSwing();
 	}
 
@@ -276,7 +275,7 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 		Point p = getViewLocation(v);
 		int x = p.x + xOffset;
 		int y = p.y + yOffset;
-		AbstractGenericTest.clickMouse(viewer, MouseEvent.BUTTON1, x, y, clickCount, 0);
+		clickMouse(viewer, MouseEvent.BUTTON1, x, y, clickCount, 0);
 		waitForSwing();
 
 		AbstractTestVertex focused = swing(() -> graph.getFocusedVertex());
@@ -318,12 +317,12 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 
 		int x = (int) p.getX();
 		int y = (int) p.getY();
-		AbstractGenericTest.moveMouse(viewer, x, y);
+		moveMouse(viewer, x, y);
 	}
 
 	protected void drag(int x1, int y1, int x2, int y2) {
 		GraphViewer<AbstractTestVertex, TestEdge> viewer = graphComponent.getPrimaryViewer();
-		AbstractGenericTest.dragMouse(viewer, MouseEvent.BUTTON1, x1, y1, x2, y2, 0);
+		dragMouse(viewer, MouseEvent.BUTTON1, x1, y1, x2, y2, 0);
 		waitForAnimation();
 	}
 

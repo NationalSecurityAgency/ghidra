@@ -17,27 +17,46 @@ package ghidra.app.plugin.core.debug.service.tracemgr;
 
 import static org.junit.Assert.*;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
+import ghidra.trace.database.target.DBTraceObjectManager;
+import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerTest {
+
+	protected DebuggerControlService editingService;
+
+	@Before
+	public void setUpTraceManagerTest() throws Exception {
+		addPlugin(tool, DebuggerControlServicePlugin.class);
+		editingService = tool.getService(DebuggerControlService.class);
+	}
 
 	@Test
 	public void testGetOpenTraces() throws Exception {
@@ -115,23 +134,24 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertNull(traceManager.getCurrentThread());
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread 1", 0);
 		}
 		waitForDomainObject(tb.trace);
 
 		assertEquals(thread, traceManager.getCurrentThread());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 
 		assertNull(traceManager.getCurrentTrace());
-		assertEquals(thread, traceManager.getCurrentThreadFor(tb.trace));
+		assertEquals(thread, traceManager.getCurrentFor(tb.trace).getThread());
 
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
 
-		assertNull(traceManager.getCurrentThreadFor(tb.trace));
+		assertNull(traceManager.getCurrentFor(tb.trace).getThread());
 	}
 
 	@Test
@@ -158,6 +178,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertEquals(5, traceManager.getCurrentSnap());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 
@@ -188,10 +209,56 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertEquals(5, traceManager.getCurrentFrame());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 
 		assertEquals(0, traceManager.getCurrentFrame());
+	}
+
+	@Test
+	public void testGetCurrentObject() throws Exception {
+		assertEquals(null, traceManager.getCurrentObject());
+
+		createTrace();
+		waitForDomainObject(tb.trace);
+
+		assertEquals(null, traceManager.getCurrentObject());
+
+		traceManager.openTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(null, traceManager.getCurrentObject());
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(null, traceManager.getCurrentObject());
+
+		SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
+		TraceObject objThread0;
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceObjectManager objectManager = tb.trace.getObjectManager();
+			objectManager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
+			objThread0 =
+				objectManager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
+		}
+		// Manager listens for the root-created event to activate it. Wait for it to clear.
+		waitForDomainObject(tb.trace);
+		TraceThread thread =
+			Objects.requireNonNull(objThread0.queryInterface(TraceObjectThread.class));
+
+		traceManager.activateObject(objThread0);
+		waitForSwing();
+
+		assertEquals(objThread0, traceManager.getCurrentObject());
+		assertEquals(thread, traceManager.getCurrentThread());
+
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
+		traceManager.activateTrace(null);
+		waitForSwing();
+
+		assertEquals(null, traceManager.getCurrentObject());
 	}
 
 	@Test
@@ -288,20 +355,20 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testAutoActivatePresent() throws Exception {
-		assertTrue(traceManager.isAutoActivatePresent());
-
+	public void testFollowPresent() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);
 		traceManager.activateTrace(trace);
 		waitForSwing();
 
+		assertEquals(ControlMode.RO_TARGET, editingService.getCurrentMode(trace));
 		long initSnap = recorder.getSnap();
 		assertEquals(initSnap, traceManager.getCurrentSnap());
 
@@ -311,7 +378,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(initSnap + 1, recorder.getSnap());
 		assertEquals(initSnap + 1, traceManager.getCurrentSnap());
 
-		traceManager.setAutoActivatePresent(false);
+		editingService.setCurrentMode(trace, ControlMode.RO_TRACE);
 
 		recorder.forceSnapshot();
 		waitForSwing();
@@ -319,7 +386,11 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(initSnap + 2, recorder.getSnap());
 		assertEquals(initSnap + 1, traceManager.getCurrentSnap());
 
-		traceManager.setAutoActivatePresent(true);
+		editingService.setCurrentMode(trace, ControlMode.RO_TARGET);
+		waitForSwing();
+
+		assertEquals(initSnap + 2, recorder.getSnap());
+		assertEquals(initSnap + 2, traceManager.getCurrentSnap());
 
 		recorder.forceSnapshot();
 		waitForSwing();
@@ -330,8 +401,6 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testSynchronizeFocusTraceToModel() throws Throwable {
-		assertTrue(traceManager.isSynchronizeFocus());
-
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -381,23 +450,16 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		waitForPass(() -> assertEquals(frame0, mb.testModel.session.getFocus()));
-
-		traceManager.setSynchronizeFocus(false);
-		traceManager.activateFrame(1);
-		waitForSwing();
-
-		waitForPass(() -> assertEquals(frame0, mb.testModel.session.getFocus()));
 	}
 
 	@Test
 	public void testSynchronizeFocusModelToTrace() throws Throwable {
-		assertTrue(traceManager.isSynchronizeFocus());
-
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);
@@ -414,6 +476,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitOn(mb.testModel.session.requestFocus(mb.testThread1));
 
 		TraceThread thread1 = recorder.getTraceThread(mb.testThread1);
+		assertNotNull(thread1);
 		waitForPass(() -> assertEquals(thread1, traceManager.getCurrentThread()));
 
 		TestTargetStack stack = mb.testThread1.addStack();
@@ -434,12 +497,5 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitOn(mb.testModel.session.requestFocus(frame0));
 
 		waitForPass(() -> assertEquals(0, traceManager.getCurrentFrame()));
-
-		traceManager.setSynchronizeFocus(false);
-		waitOn(mb.testModel.session.requestFocus(frame1));
-		// Not super reliable, but at least wait for it to change in case it does
-		Thread.sleep(200);
-
-		assertEquals(0, traceManager.getCurrentFrame());
 	}
 }

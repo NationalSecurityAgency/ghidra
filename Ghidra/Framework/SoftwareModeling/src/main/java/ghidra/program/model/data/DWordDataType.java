@@ -18,7 +18,7 @@ package ghidra.program.model.data;
 /**
  * Provides a definition of a Double Word within a program.
  */
-public class DWordDataType extends AbstractIntegerDataType {
+public class DWordDataType extends AbstractUnsignedIntegerDataType {
 
 	private static final long serialVersionUID = 1L;
 
@@ -30,7 +30,7 @@ public class DWordDataType extends AbstractIntegerDataType {
 	}
 
 	public DWordDataType(DataTypeManager dtm) {
-		super("dword", false, dtm);
+		super("dword", dtm);
 	}
 
 	@Override

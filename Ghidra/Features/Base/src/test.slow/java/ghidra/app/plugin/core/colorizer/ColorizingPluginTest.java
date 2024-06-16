@@ -27,12 +27,14 @@ import javax.swing.JButton;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.options.editor.GhidraColorChooser;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
@@ -48,6 +50,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
 
 public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -119,7 +122,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNavigationActionsEnabled(false);
 		assertSetColorActionEnabled(true);
 
-		Color color = Color.RED;
+		Color color = Palette.RED;
 		setColor(color);
 		assertColorForAddress(color);
 
@@ -133,7 +136,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertSetColorActionEnabled(true);
 
-		Color selectionColor = Color.BLUE;
+		Color selectionColor = Palette.BLUE;
 		setColor(selectionColor);
 		assertColorForSelection(selectionColor);
 
@@ -150,7 +153,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Address address1 = cb.getCurrentAddress();
 		Address address2 = address1.add(8);
-		Color color = Color.RED;
+		Color color = Palette.RED;
 		setColor(color, address1, address2);
 		assertColorForAddress(color, address1, address2);
 
@@ -160,7 +163,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createSelection();
 
-		Color selectionColor = Color.BLUE;
+		Color selectionColor = Palette.BLUE;
 		setColor(selectionColor);
 		assertColorForSelection(selectionColor);
 
@@ -178,7 +181,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address2 = address1.add(8);
 		Address address3 = address2.add(16);
 
-		Color color = new Color(100, 100, 100, 100);
+		Color color = ColorUtils.getColor(100, 100, 100, 100);
 		setColor(color, address1, address2, address3);
 		assertColorForAddress(color, address1, address2, address3);
 
@@ -198,7 +201,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// change the location so that the current line marker does not affect our color check below
 		address = address.add(400);
-		Color color = new Color(100, 100, 100);
+		Color color = ColorUtils.getColor(100, 100, 100);
 		setBackgroundFromAPI(address, color);
 
 		assertMarkerColorAtAddress(address, color);
@@ -218,7 +221,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address2 = address1.add(8);
 		Address address3 = address2.add(8);
 
-		Color color = new Color(100, 100, 100, 100);
+		Color color = ColorUtils.getColor(100, 100, 100, 100);
 		setColor(color, address1, address2, address3);
 
 		// start before the first address to test that the next range action is enabled and the
@@ -254,7 +257,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertPreviousButtonEnabled(true);
 	}
 
-	/**
+	/*
 	 * Tests navigation of offcut ranges when coloring is set from a GUI/API point-of-view.
 	 * 
 	 * @throws Exception
@@ -266,7 +269,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNavigationActionsEnabled(false);
 
 		Address initialAddress = cb.getCurrentAddress();	// 0x1001000
-		Color selectionColor = Color.YELLOW;
+		Color selectionColor = Palette.YELLOW;
 
 		createSelectionBytes("0x10036c0", 0, 0, "0x10036c6", 1, 2);  // Sets offcut at end of range
 		setColor(selectionColor);
@@ -320,7 +323,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	/**
+	/*
 	 * Tests navigation of offcut ranges when coloring is set from a plugin point-of-view.
 	 * 
 	 * @throws Exception
@@ -333,7 +336,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Set some color ranges
 		//
-		Color selectionColor = Color.GRAY;
+		Color selectionColor = Palette.GRAY;
 		setColorOverRange(selectionColor, addr("0x10036c0"), addr("0x10036c9"));
 		setColorOverRange(selectionColor, addr("0x10036d3"), addr("0x10036d6"));
 		setColorOverRange(selectionColor, addr("0x10036e1"), addr("0x10036e6"));
@@ -439,7 +442,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertColorForAddress(Color color, Address address) {
 		Color appliedColor = colorizingService.getBackgroundColor(address);
-		assertEquals(color, appliedColor);
+		assertColorsEqual(color, appliedColor);
 
 		assertMarkerColorAtAddress(address, color);
 	}
@@ -633,7 +636,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private ActionContext getActionContext() {
 		ActionContext context = cb.getProvider().getActionContext(null);
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}

@@ -17,7 +17,7 @@ package ghidra.program.model.listing;
 
 import java.awt.Color;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 /**
  * Interface for bookmark types.
@@ -41,7 +41,7 @@ public interface BookmarkType {
 	 * set by a plugin.
 	 * @return the icon.
 	 */
-	public ImageIcon getIcon();
+	public Icon getIcon();
 
 	/**
 	 * Returns marker color associated with this type or null if one has not been 

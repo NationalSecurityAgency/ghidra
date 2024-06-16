@@ -16,52 +16,51 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Objects;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Parser for detecting the appropriate {@link AbstractMsf} format for the filename given.
- *  It then creates and returns the appropriate {@link AbstractMsf} object.
+ * Parser for detecting the appropriate {@link Msf} format for the filename given.
+ *  It then creates and returns the appropriate {@link Msf} object.
  */
 public class MsfParser {
 
 	/**
-	 * Detects, creates, and returns the appropriate {@link AbstractMsf} object found for
-	 * the filename given. 
-	 * @param filename Filename of the file to process.
-	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation. 
-	 * @return Derived {@link AbstractMsf} object.
-	 * @throws IOException For file I/O reasons
-	 * @throws PdbException If an appropriate object cannot be created.
-	 * @throws CancelledException Upon user cancellation.
+	 * Detects, creates, and returns the appropriate {@link Msf} object found for
+	 * the filename given
+	 * @param byteProvider the ByteProvider providing bytes for the MSF
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return derived {@link Msf} object
+	 * @throws IOException for file I/O reasons
+	 * @throws PdbException if an appropriate object cannot be created
+	 * @throws CancelledException upon user cancellation
 	 */
-	public static AbstractMsf parse(String filename, PdbReaderOptions pdbOptions,
+	public static Msf parse(ByteProvider byteProvider, PdbReaderOptions pdbOptions,
 			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
-		Objects.requireNonNull(filename, "filename cannot be null");
+		Objects.requireNonNull(byteProvider, "byteProvider cannot be null");
 		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
 		Objects.requireNonNull(monitor, "monitor cannot be null");
 
-		AbstractMsf msf;
-		RandomAccessFile file = new RandomAccessFile(filename, "r");
-		if (Msf200.detected(file)) {
-			msf = new Msf200(file, pdbOptions);
+		Msf msf;
+		if (Msf200.detected(byteProvider)) {
+			msf = new Msf200(byteProvider, monitor, pdbOptions);
 		}
-		else if (Msf700.detected(file)) {
-			msf = new Msf700(file, pdbOptions);
+		else if (Msf700.detected(byteProvider)) {
+			msf = new Msf700(byteProvider, monitor, pdbOptions);
 		}
 		else {
-			// Must close the file here.  In cases where MSF is created, the MSF takes
+			// Must close the ByteProvider here.  In cases where MSF is created, the MSF takes
 			//  responsibility for closing the file.
-			file.close();
+			byteProvider.close();
 			throw new PdbException("MSF format not detected");
 		}
-		msf.deserialize(monitor);
+		msf.deserialize();
 		return msf;
 	}
 

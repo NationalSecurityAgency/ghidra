@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.beans.*;
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +31,6 @@ import javax.swing.table.TableColumn;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
@@ -51,6 +48,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 import utilities.util.FileUtilities;
 
 class AnalysisPanel extends JPanel implements PropertyChangeListener {
@@ -442,6 +441,22 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		configureEnabledColumnWidth(60);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.getSelectionModel().addListSelectionListener(this::selectedAnalyzerChanged);
+
+		// add ability to toggle analyzers enablement using the keyboard space bar
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+					int row = table.getSelectedRow();
+					int column = COLUMN_ANALYZER_IS_ENABLED;
+					if (row >= 0) {
+						boolean enabledState = (Boolean) model.getValueAt(row, column);
+						model.setValueAt(!enabledState, row, column);
+					}
+				}
+			}
+		});
+
 	}
 
 	private void selectedAnalyzerChanged(ListSelectionEvent event) {
@@ -580,17 +595,27 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private void copyOptionsTo(Program program) {
+
+		// fetching the autoAnalysisManager for the  program here allows analyzers to register their
+		// options in that program's db. 
+		AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
+
 		Options destinationOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
 
-		// first remove all options in destination
-		for (String optionName : destinationOptions.getOptionNames()) {
-			destinationOptions.removeOption(optionName);
+		// copy the analyzer options (at the db level)
+		for (String optionName : analysisOptions.getOptionNames()) {
+			Object optionValue = analysisOptions.getObject(optionName, null);
+			if (optionValue == null && !destinationOptions.isRegistered(optionName)) {
+				Msg.warn(this, "Unable to copy null option %s to program %s".formatted(optionName,
+					program.getName()));
+			}
+			else {
+				destinationOptions.putObject(optionName, optionValue);
+			}
 		}
 
-		// now copy all the options in the source
-		for (String optionName : analysisOptions.getOptionNames()) {
-			destinationOptions.putObject(optionName, analysisOptions.getObject(optionName, null));
-		}
+		// update the analyzers on the program with new option values
+		aam.initializeOptions(analysisOptions);
 	}
 
 	private void replaceOldOptions() {
@@ -775,7 +800,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	private boolean isAnalyzed() {
 		Options options = programs.get(0).getOptions(Program.PROGRAM_INFO);
-		return options.getBoolean(Program.ANALYZED, false);
+		return options.getBoolean(Program.ANALYZED_OPTION_NAME, false);
 	}
 
 	private Options[] loadPossibleOptionsChoicesForComboBox() {

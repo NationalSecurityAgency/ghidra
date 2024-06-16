@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,9 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.ParserWalkerChange;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
+import java.io.IOException;
 
-import java.io.PrintStream;
-
-import org.jdom.Element;
+import ghidra.program.model.pcode.Encoder;
 
 // Change to context command
 public abstract class ContextChange {
@@ -31,11 +27,7 @@ public abstract class ContextChange {
 
 	public abstract void validate();
 
-	public abstract void saveXml(PrintStream s);
-
-	public abstract void restoreXml(Element el, SleighBase trans);
-
-	public abstract void apply(ParserWalkerChange pos);
+	public abstract void encode(Encoder encoder) throws IOException;
 
 	public void dispose() {
 	}

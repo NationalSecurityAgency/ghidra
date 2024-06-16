@@ -21,14 +21,13 @@ import java.awt.Window;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.util.image.ToolIconURL;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.framework.main.FrontEndPlugin;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.project.tool.GhidraTool;
 import ghidra.program.database.ProgramDB;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
@@ -47,8 +46,9 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 
 	private void launchTool() throws Exception {
 		// Launch our own tool for the Diff so that we can close it and handle "Save Tool?".
-		runSwing(() -> tool =
-			(PluginTool) frontEndTool.getProject().getToolServices().launchTool("MyDiffTestTool",
+		runSwing(() -> tool = frontEndTool.getProject()
+			.getToolServices()
+			.launchTool("MyDiffTestTool",
 				null));
 
 		cb = getPlugin(tool, CodeBrowserPlugin.class);
@@ -56,7 +56,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		diffListingPanel = diffPlugin.getListingPanel();
 		fp1 = cb.getFieldPanel();
 		fp2 = diffListingPanel.getFieldPanel();
-		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Program View");
+		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Diff View");
 	}
 
 	private void showNewTool() throws Exception {
@@ -73,7 +73,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		diffListingPanel = diffPlugin.getListingPanel();
 		fp1 = cb.getFieldPanel();
 		fp2 = diffListingPanel.getFieldPanel();
-		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Program View");
+		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Diff View");
 	}
 
 	@Override
@@ -176,8 +176,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		ProgramManagerPlugin pm = getPlugin(tool, ProgramManagerPlugin.class);
 		DockingActionIf closeAllProgramAction = getAction(pm, "Close All");
 		assertNotNull(closeAllProgramAction);
-		ActionContext defaultContext = tool.getDefaultToolContext();
-		performAction(closeAllProgramAction, defaultContext, true);
+		performAction(closeAllProgramAction, new DefaultActionContext(), true);
 
 		openProgram(p3);
 

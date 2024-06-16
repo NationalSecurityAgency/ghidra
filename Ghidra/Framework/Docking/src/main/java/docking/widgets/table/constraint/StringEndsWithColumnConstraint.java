@@ -45,6 +45,6 @@ public class StringEndsWithColumnConstraint extends StringColumnConstraint {
 	@Override
 	protected Pattern generateMatchesPattern(String patternString) {
 		return UserSearchUtils.createEndsWithPattern(patternString, true,
-			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.DOTALL);
 	}
 }

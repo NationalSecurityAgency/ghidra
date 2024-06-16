@@ -25,6 +25,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
+//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger static mapping manager",
 	description = "GUI to manage static mappings",
@@ -39,6 +40,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		DebuggerStaticMappingService.class,
 		DebuggerTraceManagerService.class,
 	})
+//@formatter:on
 public class DebuggerStaticMappingPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerStaticMappingProvider provider;
 
@@ -55,18 +57,17 @@ public class DebuggerStaticMappingPlugin extends AbstractDebuggerPlugin {
 	@Override
 	protected void dispose() {
 		tool.removeComponentProvider(provider);
+		provider.dispose();
 		super.dispose();
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.setTrace(ev.getActiveCoordinates().getTrace());
 		}
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramActivatedPluginEvent ev) {
 			provider.setProgram(ev.getActiveProgram());
 		}
 	}

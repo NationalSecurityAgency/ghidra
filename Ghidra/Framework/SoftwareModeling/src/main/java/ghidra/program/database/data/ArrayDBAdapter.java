@@ -18,6 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -33,47 +35,61 @@ abstract class ArrayDBAdapter {
 	static final int ARRAY_ELEMENT_LENGTH_COL = ArrayDBAdapterV1.V1_ARRAY_ELEMENT_LENGTH_COL;
 	static final int ARRAY_CAT_COL = ArrayDBAdapterV1.V1_ARRAY_CAT_COL;
 
-	static ArrayDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
-		if (openMode == DBConstants.CREATE) {
-			return new ArrayDBAdapterV1(handle, true);
+	/**
+	 * Gets an adapter for working with the {@link ArrayDB} database table.
+	 * @param handle handle to the database to be accessed.
+	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param monitor task monitor
+	 * @return adapter instance
+	 * @throws VersionException if the database handle's version doesn't match the expected version.
+	 * @throws IOException if there is a problem accessing the database.
+	 * @throws CancelledException task cancelled
+	 */
+	static ArrayDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+		if (openMode == OpenMode.CREATE) {
+			return new ArrayDBAdapterV1(handle, tablePrefix, true);
 		}
 		try {
-			return new ArrayDBAdapterV1(handle, false);
+			return new ArrayDBAdapterV1(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			ArrayDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, adapter);
+			if (openMode == OpenMode.UPGRADE) {
+				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
 		}
 	}
 
-	static ArrayDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
+	private static ArrayDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
 		return new ArrayDBAdapterV0(handle);
 	}
 
-	static ArrayDBAdapter upgrade(DBHandle handle, ArrayDBAdapter oldAdapter)
-			throws VersionException, IOException {
+	private static ArrayDBAdapter upgrade(DBHandle handle, ArrayDBAdapter oldAdapter,
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
 		ArrayDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new ArrayDBAdapterV1(tmpHandle, true);
+			tmpAdapter = new ArrayDBAdapterV1(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
-			ArrayDBAdapterV1 newAdapter = new ArrayDBAdapterV1(handle, true);
+			ArrayDBAdapterV1 newAdapter = new ArrayDBAdapterV1(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
@@ -99,5 +115,11 @@ abstract class ArrayDBAdapter {
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
+
+	/**
+	 * Get the number of array datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 
 }

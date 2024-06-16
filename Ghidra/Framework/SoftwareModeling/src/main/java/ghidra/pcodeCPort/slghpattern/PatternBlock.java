@@ -15,17 +15,14 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.utils.Utils;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 
 public class PatternBlock {
 
@@ -364,71 +361,17 @@ public class PatternBlock {
 		return res;
 	}
 
-	public boolean isInstructionMatch(ParserWalker pos, int off) {
-		if (nonzerosize <= 0) {
-			return (nonzerosize == 0);
-		}
-		off += offset;
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_PAT_BLOCK);
+		encoder.writeSignedInteger(ATTRIB_OFF, offset);
+		encoder.writeSignedInteger(ATTRIB_NONZERO, nonzerosize);
 		for (int i = 0; i < maskvec.size(); ++i) {
-			int data = pos.getInstructionBytes(off, 4);
-			if ((maskvec.get(i) & data) != valvec.get(i)) {
-				return false;
-			}
-			off += 4;
+			encoder.openElement(ELEM_MASK_WORD);
+			encoder.writeUnsignedInteger(ATTRIB_MASK, Utils.unsignedInt(maskvec.get(i)));
+			encoder.writeUnsignedInteger(ATTRIB_VAL, Utils.unsignedInt(valvec.get(i)));
+			encoder.closeElement(ELEM_MASK_WORD);
 		}
-		return true;
-	}
-
-	public boolean isContextMatch(ParserWalker pos, int off) {
-		if (nonzerosize <= 0) {
-			return (nonzerosize == 0);
-		}
-		off += offset;
-		for (int i = 0; i < maskvec.size(); ++i) {
-			int data = pos.getContextBytes(off, 4);
-			if ((maskvec.get(i) & data) != valvec.get(i)) {
-				return false;
-			}
-			off += 4;
-		}
-		return true;
-	}
-
-	public void saveXml(PrintStream s) {
-		s.append("<pat_block ");
-		s.append("offset=\"");
-		s.print(offset);
-		s.append("\" ");
-		s.append("nonzero=\"");
-		s.print(nonzerosize);
-		s.append("\">\n");
-		for (int i = 0; i < maskvec.size(); ++i) {
-			s.append("  <mask_word ");
-			s.append("mask=\"0x");
-			s.append(Utils.toUnsignedIntHex(maskvec.get(i)));
-			s.append("\" ");
-			s.append("val=\"0x");
-			s.append(Utils.toUnsignedIntHex(valvec.get(i)));
-			s.append("\"/>\n");
-		}
-		s.append("</pat_block>\n");
-	}
-
-	public void restoreXml(Element el) {
-		offset = XmlUtils.decodeUnknownInt(el.getAttributeValue("offset"));
-		nonzerosize = XmlUtils.decodeUnknownInt(el.getAttributeValue("nonzero"));
-
-		List<?> list = el.getChildren();
-		Iterator<?> it = list.iterator();
-
-		while (it.hasNext()) {
-			Element subel = (Element) it.next();
-			int mask = XmlUtils.decodeUnknownInt(subel.getAttributeValue("mask"));
-			int val = XmlUtils.decodeUnknownInt(subel.getAttributeValue("val"));
-			maskvec.push_back(mask);
-			valvec.push_back(val);
-		}
-		normalize();
+		encoder.closeElement(ELEM_PAT_BLOCK);
 	}
 
 	@Override

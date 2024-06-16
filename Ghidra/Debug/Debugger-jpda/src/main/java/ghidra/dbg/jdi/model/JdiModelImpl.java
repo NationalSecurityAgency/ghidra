@@ -72,6 +72,11 @@ public class JdiModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	@Override
+	public TargetObjectSchema getRootSchema() {
+		return ROOT_SCHEMA;
+	}
+
+	@Override
 	public String getBrief() {
 		return "JDI@" + Integer.toHexString(System.identityHashCode(this));
 	}

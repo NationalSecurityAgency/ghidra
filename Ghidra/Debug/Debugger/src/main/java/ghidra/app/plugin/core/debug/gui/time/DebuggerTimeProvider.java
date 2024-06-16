@@ -17,29 +17,50 @@ package ghidra.app.plugin.core.debug.gui.time;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
+import javax.swing.Icon;
 import javax.swing.JComponent;
 
 import docking.ActionContext;
-import docking.action.DockingActionIf;
-import docking.action.ToggleDockingAction;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.HelpLocation;
 
 public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	private static final AutoConfigState.ClassHandler<DebuggerTimeProvider> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerTimeProvider.class, MethodHandles.lookup());
+
+	interface GoToTimeAction {
+		String NAME = "Go To Time";
+		String DESCRIPTION = "Go to a specific time, optionally using emulation";
+		String GROUP = GROUP_TRACE;
+		Icon ICON = ICON_TIME;
+		String HELP_ANCHOR = "goto_time";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.keyBinding("CTRL G")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
 		if (!Objects.equals(a.getTrace(), b.getTrace())) {
@@ -56,15 +77,18 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
 	@AutoServiceConsumed
-	protected DebuggerTraceManagerService viewManager;
+	protected DebuggerTraceManagerService traceManager;
 	@SuppressWarnings("unused")
 	private final Wiring autoServiceWiring;
 
-	/*testing*/ final DebuggerSnapshotTablePanel mainPanel = new DebuggerSnapshotTablePanel();
+	/*testing*/ final DebuggerSnapshotTablePanel mainPanel;
+
+	protected final DebuggerTimeSelectionDialog timeDialog;
+
+	DockingAction actionGoToTime;
+	ToggleDockingAction actionHideScratch;
 
 	private DebuggerSnapActionContext myActionContext;
-
-	ToggleDockingAction actionHideScratch;
 
 	@AutoConfigStateField
 	/*testing*/ boolean hideScratch = true;
@@ -80,6 +104,9 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		setHelpLocation(HELP_PROVIDER_TIME);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
 
+		timeDialog = new DebuggerTimeSelectionDialog(tool);
+
+		mainPanel = new DebuggerSnapshotTablePanel(tool);
 		buildMainPanel();
 
 		myActionContext = new DebuggerSnapActionContext(current.getTrace(), current.getSnap());
@@ -117,20 +144,56 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 				myActionContext = null;
 				return;
 			}
-			if (snap.longValue() == current.getSnap().longValue()) {
+			if (snap.longValue() == current.getSnap()) {
 				return;
 			}
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);
-			viewManager.activateSnap(snap);
 			contextChanged();
+		});
+		mainPanel.snapshotTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					activateSelectedSnapshot();
+				}
+			}
+		});
+		mainPanel.snapshotTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					activateSelectedSnapshot();
+					e.consume(); // lest it select the next row down
+				}
+			}
 		});
 	}
 
+	private void activateSelectedSnapshot() {
+		Long snap = mainPanel.getSelectedSnapshot();
+		if (snap != null && traceManager != null) {
+			traceManager.activateSnap(snap);
+		}
+	}
+
 	protected void createActions() {
+		actionGoToTime = GoToTimeAction.builder(plugin)
+				.enabledWhen(c -> current.getTrace() != null)
+				.onAction(c -> activatedGoToTime())
+				.buildAndInstall(tool);
 		actionHideScratch = DebuggerResources.HideScratchSnapshotsAction.builder(plugin)
 				.selected(hideScratch)
 				.onAction(this::activatedHideScratch)
 				.buildAndInstallLocal(this);
+	}
+
+	private void activatedGoToTime() {
+		TraceSchedule time = timeDialog.promptTime(current.getTrace(), current.getTime());
+		if (time == null) {
+			// Cancelled
+			return;
+		}
+		traceManager.activateTime(time);
 	}
 
 	private void activatedHideScratch(ActionContext ctx) {
@@ -146,7 +209,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		current = coordinates;
 
 		mainPanel.setTrace(current.getTrace());
-		mainPanel.setSelectedSnapshot(current.getSnap());
+		mainPanel.setCurrentSnapshot(current.getSnap());
 	}
 
 	public void writeConfigState(SaveState saveState) {

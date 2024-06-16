@@ -22,9 +22,9 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.menu.HorizontalRuleAction;
 import docking.menu.MultiActionDockingAction;
 import ghidra.app.util.datatype.DataTypeUrl;
-import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.HelpLocation;

@@ -29,7 +29,7 @@ import javax.swing.table.TableCellEditor;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import generic.stl.Pair;
@@ -69,7 +69,6 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(program);
 		env.dispose();
 	}
 
@@ -100,7 +99,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		JTextField catField = getTextField(panel, "Category");
 		assertNotNull(catField);
 		assertEquals("notepad/Category1", catField.getText());
-		assertTrue(!catField.isEditable());
+		assertFalse(catField.isEditable());
 
 		// size should be "1"
 		@SuppressWarnings("unchecked")
@@ -114,12 +113,12 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		// add action should be enabled
 		// apply action should be disabled
 		// delete action should be disabled
-		DockingActionIf addAction = getAction(plugin, "Add Enum Value");
+		DockingActionIf addAction = getAddAction();
 		assertTrue(addAction.isEnabled());
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
-		assertTrue(!applyAction.isEnabled());
-		DockingActionIf deleteAction = getAction(plugin, "Delete Enum Value");
-		assertTrue(!deleteAction.isEnabled());
+		DockingActionIf applyAction = getApplyAction();
+		assertFalse(applyAction.isEnabled());
+		DockingActionIf deleteAction = getDeleteAction();
+		assertFalse(deleteAction.isEnabled());
 
 		// sort column should be on the value column
 		JTable table = (JTable) findContainer(panel, JTable.class);
@@ -141,7 +140,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		addEnumValue();
 
 		waitForSwing();
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getApplyAction();
 		assertTrue(applyAction.isEnabled());
 		assertTrue(panel.needsSave());
 
@@ -149,25 +148,25 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(1)", model.getValueAt(1, NAME_COL));
-		assertEquals("0x1", model.getValueAt(1, VALUE_COL));
+		assertEquals(1L, model.getValueAt(1, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(2)", model.getValueAt(2, NAME_COL));
-		assertEquals("0x2", model.getValueAt(2, VALUE_COL));
+		assertEquals(2L, model.getValueAt(2, VALUE_COL));
 
 		editValueInTable(1, "0x5");
 
 		// 5 gets moved to the end
-		assertEquals("0x5", model.getValueAt(2, VALUE_COL));
+		assertEquals(5L, model.getValueAt(2, VALUE_COL));
 
 		// apply the change
-		runSwing(() -> applyAction.actionPerformed(new ActionContext()));
+		runSwing(() -> applyAction.actionPerformed(new DefaultActionContext()));
 		program.flushEvents();
 		waitForSwing();
 
@@ -192,7 +191,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		addEnumValue();
 
 		waitForSwing();
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getApplyAction();
 		assertTrue(applyAction.isEnabled());
 		assertTrue(panel.needsSave());
 
@@ -200,25 +199,25 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 
 		addEnumValue();
 
 		String editName = "New_Name_(1)";
 		assertEquals(editName, model.getValueAt(1, NAME_COL));
-		assertEquals("0x1", model.getValueAt(1, VALUE_COL));
+		assertEquals(1L, model.getValueAt(1, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(2)", model.getValueAt(2, NAME_COL));
-		assertEquals("0x2", model.getValueAt(2, VALUE_COL));
+		assertEquals(2L, model.getValueAt(2, VALUE_COL));
 
 		int row = getRowFor(editName);
 
 		editValueInTable(row, "0x777");
 
 		row = getRowFor(editName); // the row may have changed if we are sorted on the values col
-		assertEquals("0x77", model.getValueAt(row, VALUE_COL));
+		assertEquals(0x77L, model.getValueAt(row, VALUE_COL));
 	}
 
 	@Test
@@ -243,33 +242,33 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		addEnumValue();
 		waitForSwing();
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getApplyAction();
 		assertTrue(applyAction.isEnabled());
 		assertTrue(panel.needsSave());
 
-		final JTable table = panel.getTable();
-		final EnumTableModel model = (EnumTableModel) table.getModel();
+		JTable table = panel.getTable();
+		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 
 		addEnumValue();
 
 		String editName = "New_Name_(1)";
 		assertEquals(editName, model.getValueAt(1, NAME_COL));
-		assertEquals("0x1", model.getValueAt(1, VALUE_COL));
+		assertEquals(1L, model.getValueAt(1, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(2)", model.getValueAt(2, NAME_COL));
-		assertEquals("0x2", model.getValueAt(2, VALUE_COL));
+		assertEquals(2L, model.getValueAt(2, VALUE_COL));
 
 		int row = getRowFor(editName);
 
 		editValueInTable(row, "0xfff777777");
 
 		row = getRowFor(editName); // the row may have changed if we are sorted on the values col
-		assertEquals("0xfff77777", model.getValueAt(row, VALUE_COL));
+		assertEquals(0xfff77777L, model.getValueAt(row, VALUE_COL));
 	}
 
 	@Test
@@ -281,8 +280,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		edit(enumm);
 
 		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
-		final JTable table = panel.getTable();
-		final EnumTableModel model = (EnumTableModel) table.getModel();
+		JTable table = panel.getTable();
+		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		addEnumValue();
 		waitForSwing();
@@ -297,7 +296,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 
 		runSwing(() -> editor.stopCellEditing());
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 	}
 
 	@Test
@@ -389,12 +388,12 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> {
 			int lastRow = model.getRowCount() - 1;
 			table.addRowSelectionInterval(lastRow, lastRow);
-			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
-			addAction.actionPerformed(new ActionContext());
+			DockingActionIf addAction = getAddAction();
+			addAction.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 
-		assertEquals("0x31", model.getValueAt(3, VALUE_COL));
+		assertEquals(0x31L, model.getValueAt(3, VALUE_COL));
 	}
 
 	@Test
@@ -766,8 +765,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
-		int transactionID = program.startTransaction("Test");
-		try {
+		tx(program, () -> {
 			enumm.add("Zero", 0);
 			enumm.add("One", 1);
 
@@ -783,10 +781,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			structY.add(new ByteDataType());
 			structY.add(enumm);
 			category.addDataType(structY, DataTypeConflictHandler.DEFAULT_HANDLER);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
 		edit(enumm);
 
@@ -836,8 +831,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
-		int transactionID = program.startTransaction("Test");
-		try {
+		tx(program, () -> {
 			enumm.add("Zero", 0);
 			enumm.add("One", 1);
 			enumm.setDescription("ABCD");
@@ -854,10 +848,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			structY.add(new ByteDataType());
 			structY.add(enumm);
 			category.addDataType(structY, DataTypeConflictHandler.DEFAULT_HANDLER);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
 		edit(enumm);
 
@@ -1165,8 +1156,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void apply() {
 		runSwing(() -> {
-			DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
-			applyAction.actionPerformed(new ActionContext());
+			DockingActionIf applyAction = getApplyAction();
+			applyAction.actionPerformed(new DefaultActionContext());
 		}, false);
 		program.flushEvents();
 		waitForSwing();
@@ -1290,12 +1281,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void editValueInTable(int row, String newValue) {
-
 		editCellInTable(row, VALUE_COL, newValue);
 	}
 
 	private void editNameInTable(int row, String newValue) {
-
 		editCellInTable(row, NAME_COL, newValue);
 	}
 
@@ -1331,9 +1320,21 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void addEnumValue() {
 		runSwing(() -> {
-			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
-			addAction.actionPerformed(new ActionContext());
+			DockingActionIf addAction = getAddAction();
+			addAction.actionPerformed(new DefaultActionContext());
 		});
+	}
+
+	private DockingActionIf getAddAction() {
+		return getAction(plugin, "Add Enum Value");
+	}
+
+	private DockingActionIf getApplyAction() {
+		return getAction(plugin, "Apply Enum Changes");
+	}
+
+	private DockingActionIf getDeleteAction() {
+		return getAction(plugin, "Delete Enum Value");
 	}
 
 	private int getRowFor(String theName) {

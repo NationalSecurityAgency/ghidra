@@ -20,16 +20,19 @@ import java.util.Collections;
 import java.util.List;
 
 import docking.options.editor.GhidraColorChooser;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.viewer.listingpanel.PropertyBasedBackgroundColorModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.ColorUtils;
 import ghidra.util.exception.DuplicateNameException;
 
 class ColorizingServiceProvider implements ColorizingService {
 
-	private static final Color DEFAULT_COLOR = new Color(0x84AFD3);
+	private static final Color DEFAULT_COLOR = new GColor("color.bg.plugin.colorizer.default");
 	static final String COLOR_CHOOSER_TITLE = "Please Select Background Color";
 
 	private final PluginTool tool;
@@ -86,7 +89,7 @@ class ColorizingServiceProvider implements ColorizingService {
 	public Color getColorFromUser(Color suggestedColor) {
 		if (colorChooser == null) {
 			colorChooser =
-				new GhidraColorChooser(suggestedColor == null ? Color.WHITE : suggestedColor);
+				new GhidraColorChooser(suggestedColor == null ? Palette.WHITE : suggestedColor);
 			colorChooser.setTitle(COLOR_CHOOSER_TITLE);
 			if (savedColorHistory != null) {
 				colorChooser.setColorHistory(savedColorHistory);
@@ -133,9 +136,9 @@ class ColorizingServiceProvider implements ColorizingService {
 	public Color getBackgroundColor(Address address) {
 		IntRangeMap map = getColorRangeMap(false);
 		if (map != null) {
-			Integer value = map.getValue(address);
-			if (value != null) {
-				return new Color(value, true);
+			Integer rgba = map.getValue(address);
+			if (rgba != null) {
+				return ColorUtils.getColor(rgba);
 			}
 		}
 		return null;

@@ -15,9 +15,7 @@
  */
 package agent.frida.model.methods;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.frida.manager.FridaThread;
@@ -26,9 +24,7 @@ import agent.frida.model.iface2.FridaModelTargetThreadContainer;
 import agent.frida.model.impl.FridaModelTargetObjectImpl;
 import agent.frida.model.impl.FridaModelTargetThreadImpl;
 import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "ThreadStalk",
@@ -92,7 +88,7 @@ public class FridaModelTargetThreadStalkImpl extends FridaModelTargetObjectImpl
 		ParameterDescription<Boolean> e_compile = ParameterDescription.create(Boolean.class, "EventCompile",
 			true, false, "event=compile", "block compiled");
 		ParameterDescription<String> onReceive = ParameterDescription.create(String.class, "OnReceive",
-			false, "", "onRecv file", "JS file with onReceive implemenation");
+			false, "", "onRecv file", "JS file with onReceive implementation");
 		ParameterDescription<String> onCallSummary = ParameterDescription.create(String.class, "OnCallSummary",
 			false, "", "onCall file", "JS file with onCallSummary implementation");
 		ParameterDescription<String> name = ParameterDescription.create(String.class, "Name",

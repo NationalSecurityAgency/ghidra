@@ -40,8 +40,12 @@ public class PrototypesIDItem implements StructConverter {
 		if (parametersOffset > 0) {
 			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex(DexUtil.adjustOffset(parametersOffset, dexHeader));
-				_parameters = new TypeList(reader);
+				//starting in Android 12, CDEX files are incomplete
+				int adjustedParametersOffset = DexUtil.adjustOffset(parametersOffset, dexHeader);
+				if (reader.isValidIndex(adjustedParametersOffset)) {
+					reader.setPointerIndex(adjustedParametersOffset);
+					_parameters = new TypeList(reader);
+				}
 			}
 			finally {
 				reader.setPointerIndex(oldIndex);

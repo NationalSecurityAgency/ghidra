@@ -15,17 +15,13 @@
  */
 package ghidra.app.extension.datatype.finder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.commons.collections4.IterableUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import generic.io.NullPrintWriter;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.parallel.*;
@@ -37,7 +33,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.BuiltInDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -90,7 +87,9 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt(); // reset the flag
-			Msg.debug(this, "Interrupted while decompiling functions");
+			if (!monitor.isCancelled()) {
+				Msg.debug(this, "Interrupted while decompiling functions");
+			}
 		}
 		catch (Exception e) {
 			Msg.error(this, "Encountered an exception decompiling functions", e);
@@ -112,7 +111,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		Listing listing = program.getListing();
 		FunctionIterator it = listing.getFunctions(true);
 		for (Function f : it) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (results.contains(f)) {
 				continue;
 			}
@@ -125,11 +124,25 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		// note: do this here, so that don't cause the code above to skip processing these functions
 		Set<Function> callers = new HashSet<>();
 		for (Function f : results) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Set<Function> callingFunctions = f.getCallingFunctions(monitor);
 			callers.addAll(callingFunctions);
 		}
 
+		results.addAll(callers);
+		
+		// Add any callers to external function that use any form of the data type
+		it = listing.getExternalFunctions();
+		callers = new HashSet<>();
+		for (Function f : it) {
+			monitor.checkCancelled();
+
+			if (usesAnyType(f, types)) {
+				Set<Function> callingFunctions = f.getCallingFunctions(monitor);
+				callers.addAll(callingFunctions);
+			}
+		}
+		
 		results.addAll(callers);
 
 		return results;
@@ -285,8 +298,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		private DataType dataType;
 		private FieldMatcher fieldMatcher;
 
-		private ByteArrayOutputStream debugBytes = new ByteArrayOutputStream();
-		private PrintWriter debugWriter = new PrintWriter(debugBytes);
+		private String dbgPrefix;
 
 		DecompilerDataTypeFinder(DecompileResults results, Function function, DataType dataType,
 				FieldMatcher fieldMatcher) {
@@ -295,16 +307,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			this.dataType = dataType;
 			this.fieldMatcher = fieldMatcher;
 
-			if (SystemUtilities.isInTestingMode()) {
-				debugWriter = new PrintWriter(debugBytes);
-			}
-			else {
-				debugWriter = new NullPrintWriter();
-			}
-
-			// TODO Disabling the debug output for now, as we have not seen the sporadic test
-			//      failure.  This code can be deleted if the test failures do not reappear.
-			debugWriter = new NullPrintWriter();
+			this.dbgPrefix = "f: " + function + "\n\t";
 		}
 
 		List<DataTypeReference> findUsage() {
@@ -328,21 +331,16 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				return;
 			}
 
-			debugWriter.println("f: " + function + "\n\tchecking vars...");
+			DtrfDbg.println(dbgPrefix + "checking vars...");
 			List<DecompilerReference> variables = findVariableReferences(tokens);
-			debugWriter.println("f: " + function + "\n\t...done checking");
-
-			debugWriter.flush();
-			String output = debugBytes.toString();
-			if (!StringUtils.isBlank(output)) {
-				Msg.debug(this, "Final Debug:\n" + output);
-			}
+			DtrfDbg.println(dbgPrefix + "DONE searching decompilation\nMatching results");
 
 			variables.forEach(v -> matchUsage(v, results));
 		}
 
 		/** Finds any search input match in the given reference */
 		private void matchUsage(DecompilerReference reference, List<DataTypeReference> results) {
+			DtrfDbg.println("Checking " + reference);
 			reference.accumulateMatches(dataType, fieldMatcher, results);
 		}
 
@@ -390,12 +388,12 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			VariableAccessDR access = null;
 			for (ClangToken token : filteredTokens) {
 
-				debugWriter.println("f: " + function + "\n\tchecking token: " + token);
+				DtrfDbg.println(dbgPrefix + "checking token: " + token);
 
 				if (token instanceof ClangTypeToken) {
 
 					if (token.Parent() instanceof ClangReturnType) {
-						debugWriter.println("f: " + function + "\n\t\treturn type: " + line);
+						DtrfDbg.println(dbgPrefix + "\treturn type: " + line);
 
 						results.add(new ReturnTypeDR(line, (ClangTypeToken) token));
 					}
@@ -403,13 +401,13 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 						// Note: variable refs will get their variable in an upcoming token
 						if (isFunctionPrototype(token.Parent())) {
 
-							debugWriter.println("f: " + function + "\n\t\tparameter: " + line);
+							DtrfDbg.println(dbgPrefix + "\tparameter: " + line);
 
 							declaration = new ParameterDR(line, (ClangTypeToken) token);
 						}
 						else {
 
-							debugWriter.println("f: " + function + "\n\t\tlocal var: " + line);
+							DtrfDbg.println(dbgPrefix + "\tlocal var: " + line);
 
 							declaration = new LocalVariableDR(line, (ClangTypeToken) token);
 						}
@@ -418,7 +416,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					}
 					else {
 
-						debugWriter.println("f: " + function + "\n\t\tadding a cast");
+						DtrfDbg.println(dbgPrefix + "\tadding a cast");
 
 						// Assumption: this is a cast inside of a ClangStatement
 						// Assumption: there can be multiple casts concatenated
@@ -440,8 +438,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					//
 					if (declaration != null) {
 
-						debugWriter.println(
-							"f: " + function + "\n\t\thave declaration - " + declaration);
+						DtrfDbg.println(dbgPrefix + "\thave declaration - " + declaration);
 
 						declaration.setVariable((ClangVariableToken) token);
 						declaration = null;
@@ -449,8 +446,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					else {
 						if (access == null || access.getVariable() != null) {
 
-							debugWriter.println(
-								"f: " + function + "\n\t\tcreating variable access: " + line);
+							DtrfDbg.println(dbgPrefix + "\tcreating variable access: " + line);
 
 							access = new VariableAccessDR(line);
 							results.add(access);
@@ -483,8 +479,8 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					ClangFieldToken field = (ClangFieldToken) token;
 					if (typesDoNotMatch(access, field)) {
 
-						debugWriter.println("f: " + function +
-							"\n\t\tcreating an anonymous variable access: " + line);
+						DtrfDbg.println(
+							dbgPrefix + "\tcreating an anonymous variable access: " + line);
 
 						// this can happen when a field is used anonymously, such as directly
 						// after a nested array index operation

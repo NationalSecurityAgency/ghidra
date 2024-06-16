@@ -29,7 +29,6 @@ import docking.widgets.DropDownSelectionTextField;
 import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.util.PluginConstants;
 import ghidra.app.util.bean.SetEquateDialog;
 import ghidra.app.util.datatype.ApplyEnumDialog;
 import ghidra.framework.options.Options;
@@ -516,7 +515,7 @@ public class EquatePlugin2Test extends AbstractProgramBasedTest {
 	}
 
 	private ApplyEnumDialog performApplyEnum() {
-		ComponentProvider provider = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
+		ComponentProvider provider = cb.getProvider();
 		DockingActionIf action = getAction(equatePlugin, "Apply Enum");
 		performAction(action, provider, false);
 		ApplyEnumDialog d = waitForDialogComponent(ApplyEnumDialog.class);

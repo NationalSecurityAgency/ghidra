@@ -18,13 +18,12 @@ package ghidra.test;
 import java.io.*;
 import java.util.*;
 
-import db.DBConstants;
 import db.DBHandle;
 import db.buffers.BufferFile;
-import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.*;
 import ghidra.app.util.xml.*;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.*;
 import ghidra.framework.store.db.PrivateDatabase;
 import ghidra.program.database.ProgramDB;
@@ -243,7 +242,7 @@ public class TestProgramManager {
 		while (true) {
 			try {
 				DomainFile df = folder.createFile(name, gzf, TaskMonitor.DUMMY);
-				AbstractGenericTest.waitForPostedSwingRunnables();
+				AbstractGuiTest.waitForSwing();
 				DomainObject dobj = df.getDomainObject(this, true, false, null);
 				try {
 					if (dobj.isChanged()) {
@@ -290,7 +289,7 @@ public class TestProgramManager {
 		boolean success = false;
 		try {
 			dbh = db.open(TaskMonitor.DUMMY);
-			program = new ProgramDB(dbh, DBConstants.UPDATE, null, this);
+			program = new ProgramDB(dbh, OpenMode.UPDATE, null, this);
 			success = true;
 		}
 		catch (VersionException ve) {
@@ -321,7 +320,7 @@ public class TestProgramManager {
 
 			Msg.info(this, message + (endTime - startTime));
 			dbh = db.open(TaskMonitor.DUMMY);
-			program = new ProgramDB(dbh, DBConstants.UPDATE, null, this);
+			program = new ProgramDB(dbh, OpenMode.UPDATE, null, this);
 			dbh = null;
 			success = true;
 		}
@@ -467,8 +466,7 @@ public class TestProgramManager {
 
 		DBHandle dbh = db.openForUpdate(TaskMonitor.DUMMY);
 		try {
-			ProgramDB program =
-				new ProgramDB(dbh, DBConstants.UPGRADE, TaskMonitor.DUMMY, this);
+			ProgramDB program = new ProgramDB(dbh, OpenMode.UPGRADE, TaskMonitor.DUMMY, this);
 			if (dbh != null) {
 				dbh.save(null, null, TaskMonitor.DUMMY);
 			}

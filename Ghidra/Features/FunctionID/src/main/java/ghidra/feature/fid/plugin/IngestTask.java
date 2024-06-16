@@ -127,7 +127,7 @@ public class IngestTask extends Task {
 		LinkedList<String> res = new LinkedList<String>();
 		String line = reader.readLine();
 		while (line != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (line.length() != 0) {
 				res.add(line);
 			}
@@ -151,15 +151,19 @@ public class IngestTask extends Task {
 		}
 		DomainFile[] files = myFolder.getFiles();
 		for (DomainFile domainFile : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
+			// Do not follow folder-links or consider program links.  Using content type
+			// to filter is best way to control this.  If program links should be considered
+			// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
+			// should be used.
 			if (domainFile.getContentType().equals(ProgramContentHandler.PROGRAM_CONTENT_TYPE)) {
 				programs.add(domainFile);
 			}
 		}
 		DomainFolder[] folders = myFolder.getFolders();
 		for (DomainFolder domainFolder : folders) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			findPrograms(programs, domainFolder, monitor);
 		}

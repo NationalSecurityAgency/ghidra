@@ -19,9 +19,9 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 
-public class FunctionDefinitionDataTypeTest extends AbstractGTest {
+public class FunctionDefinitionDataTypeTest extends AbstractGenericTest {
 	private StandAloneDataTypeManager dtm;
 	private FunctionDefinition functionDt;
 

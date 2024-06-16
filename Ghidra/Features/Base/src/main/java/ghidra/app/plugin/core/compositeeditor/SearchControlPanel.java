@@ -25,14 +25,12 @@ import javax.swing.event.DocumentListener;
 
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GLabel;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 public class SearchControlPanel extends JPanel {
 
-	private static final Icon NEXT_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/go-down.tango.16.png"), 16, 16);
-	private static final Icon PREV_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/go-up.tango.16.png"), 16, 16);
+	private static final Icon NEXT_ICON = new GIcon("icon.plugin.composite.editor.search.next");
+	private static final Icon PREV_ICON = new GIcon("icon.plugin.composite.editor.search.previous");
 	private CompositeEditorPanel editorPanel;
 	private JTextField textField;
 

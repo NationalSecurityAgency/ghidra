@@ -117,9 +117,28 @@
       </killedbycall>
     </prototype>
   </default_proto>
+  <prototype name="processEntry" extrapop="0" stackshift="0">
+    <input pointermax="4">
+      <pentry minsize="1" maxsize="4">
+        <register name="r0"/>
+      </pentry>
+      <pentry minsize="1" maxsize="500" align="4">
+        <addr offset="0" space="stack"/>
+      </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="4">
+          <register name="r0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="sp"/>
+      </unaffected>
+    </prototype>
   
   <callfixup name="switch8_r3">
     <target name="switch8_r3"/>
+    <target name="__ARM_common_switch8"/>
     <pcode>
       <body><![CDATA[
             tmpptr = lr - 1;

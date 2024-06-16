@@ -21,17 +21,18 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import help.Help;
+import help.HelpService;
+import resources.Icons;
 import resources.ResourceManager;
 
 public class HelpAction extends DockingAction {
 
-	private static Icon ICON = ResourceManager.loadImage("images/help-browser.png");
+	private static Icon ICON = Icons.HELP_ICON;
 
 	public HelpAction() {
 		super("Version Tracking Help Action", VTPlugin.OWNER);

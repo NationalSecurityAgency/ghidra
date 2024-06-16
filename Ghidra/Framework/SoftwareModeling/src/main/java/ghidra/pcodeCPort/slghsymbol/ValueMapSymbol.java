@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,14 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.translate.BadDataError;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-
-import org.jdom.Element;
 
 public class ValueMapSymbol extends ValueSymbol {
 	private VectorSTL<Long> valuetable = new VectorSTL<Long>();
@@ -64,73 +56,23 @@ public class ValueMapSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public Constructor resolve(ParserWalker pos) {
-		if (!tableisfilled) {
-			int ind = (int) patval.getValue(pos);
-			if ((ind >= valuetable.size()) || (ind < 0) || (valuetable.get(ind) == 0xBADBEEF)) {
-				throw new BadDataError("No corresponding entry in nametable <" + getName() +
-					">, index=" + ind);
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		// The resolve routine has checked that -ind- must be a valid index
-		hand.space = pos.getConstSpace();
-		hand.offset_space = null; // Not a dynamic value
-		hand.offset_offset = valuetable.get(ind);
-		hand.size = 0;		// Cannot provide size
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		// ind is already checked to be in range by the resolve routine
-		Long val = valuetable.get(ind);
-		if (val >= 0) {
-			s.append("0x").append(Long.toHexString(val));
-		}
-		else {
-			s.append("-0x").append(Long.toHexString(-val));
-		}
-	}
-
-	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<valuemap_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.append(">\n");
-		patval.saveXml(s);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VALUEMAP_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		patval.encode(encoder);
 		for (int i = 0; i < valuetable.size(); ++i) {
-			s.append("<valuetab val=\"").append(Long.toString(valuetable.get(i))).append("\"/>\n");
+			encoder.openElement(ELEM_VALUETAB);
+			encoder.writeSignedInteger(ATTRIB_VAL, valuetable.get(i));
+			encoder.closeElement(ELEM_VALUETAB);
 		}
-		s.append("</valuemap_sym>\n");
+		encoder.closeElement(ELEM_VALUEMAP_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<valuemap_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		Element element = (Element) iter.next();
-		patval = (PatternValue) PatternExpression.restoreExpression(element, trans);
-		patval.layClaim();
-		while (iter.hasNext()) {
-			Element child = (Element) iter.next();
-			long value = XmlUtils.decodeUnknownLong(child.getAttributeValue("val"));
-			valuetable.push_back(value);
-		}
-		checkTableFill();
-
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VALUEMAP_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_VALUEMAP_SYM_HEAD);
 	}
 
 }

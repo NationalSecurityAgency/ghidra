@@ -300,16 +300,19 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String newName) throws InvalidNameException, DuplicateNameException {
 		lock.acquire();
 		try {
 			checkDeleted();
+			if (getName().equals(newName)) {
+				return;
+			}
 			CategoryPath categoryPath = getCategoryPath();
-			if (dataMgr.getDataType(categoryPath, name) != null) {
-				throw new DuplicateNameException("DataType named " + name +
+			if (dataMgr.getDataType(categoryPath, newName) != null) {
+				throw new DuplicateNameException("DataType named " + newName +
 					" already exists in category " + categoryPath.getPath());
 			}
-			doSetName(name);
+			doSetName(newName);
 		}
 		finally {
 			lock.release();
@@ -338,9 +341,12 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		lock.acquire();
 		try {
 			checkDeleted();
-			DataType type = dataMgr.getDataType(path, getName());
-			if (type != null) {
-				throw new DuplicateNameException("DataType named " + getDisplayName() +
+			if (getCategoryPath().equals(path)) {
+				return;
+			}
+			String currentName = getName();
+			if (dataMgr.getDataType(path, currentName) != null) {
+				throw new DuplicateNameException("DataType named " + currentName +
 					" already exists in category " + path.getPath());
 			}
 			doSetCategoryPath(path);
@@ -374,7 +380,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		lock.acquire();
 		try {
 			checkDeleted();
-			if (dataMgr.getDataType(path, name) != null) {
+			DataType dt = dataMgr.getDataType(path, name);
+			if (dt != null) {
+				if (dt == this) {
+					return; // unchanged
+				}
 				throw new DuplicateNameException(
 					"DataType named " + name + " already exists in category " + path.getPath());
 			}
@@ -382,7 +392,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			// generate a name that would not cause a duplicate in either the current path
 			// or
 			// the new path. Use the new name if possible.
-			String uniqueName = dataMgr.getUniqueName(path, getCategoryPath(), name);
+			String uniqueName = dataMgr.getTemporaryUniqueName(path, getCategoryPath(), name);
 			doSetName(uniqueName);
 
 			// set the path - this is guaranteed to work since we make a name that won't
@@ -508,9 +518,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public SourceArchive getSourceArchive() {
-		if (dataMgr == null) {
-			return null;
-		}
 		return dataMgr.getSourceArchive(getSourceArchiveID());
 	}
 
@@ -576,6 +583,35 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
 			throws DataTypeEncodeException {
 		throw new DataTypeEncodeException("Encoding not supported", repr, this);
+	}
+
+	/**
+	 * Perform equivalence check while resolving the specified dataType.  If the specified conflict 
+	 * handler under a conflict situation indicates that the existing data type (i.e., this type)
+	 * be used in place of the specified dataType this method will return true.
+	 * @param dataType datatype being resolved
+	 * @param handler resolve conflict handler (if null perform normal {@link #isEquivalent(DataType)}
+	 * @return true if the specified dataType should be considered equivalent to this datatype.
+	 */
+	protected abstract boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler);
+
+	/**
+	 * If possible, perform equivalence check while resolving the specified dataType if the 
+	 * existingDataType is an instance of DataTypeDB.  Otherwise, perform a normal 
+	 * isEquivalent operation.  If the specified conflict 
+	 * handler under a conflict situation indicates that the existing data type (i.e., this type)
+	 * be used in place of the specified dataType this method will return true.
+	 * @param existingDataType existing datatype
+	 * @param otherDataType datatype being resolved
+	 * @param handler resolve conflict handler (if null perform normal {@link #isEquivalent(DataType)}
+	 * @return true if the specified dataType should be considered equivalent to this datatype.
+	 */
+	static boolean isEquivalent(DataType existingDataType, DataType otherDataType,
+			DataTypeConflictHandler handler) {
+		if (existingDataType instanceof DataTypeDB existingDataTypeDB) {
+			return existingDataTypeDB.isEquivalent(otherDataType, handler);
+		}
+		return existingDataType.isEquivalent(otherDataType);
 	}
 
 }

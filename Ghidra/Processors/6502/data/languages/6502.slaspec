@@ -31,6 +31,7 @@ define token data (16)
 ;
 
 macro popSR() {
+	SP = SP + 1;
 	local ccr = *:1 SP;
 	N = ccr[7,1];
 	V = ccr[6,1];
@@ -70,7 +71,7 @@ macro subtraction_flags1(register, operand, result) {
 
 
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 
 define pcodeop readIRQ;
@@ -117,7 +118,7 @@ OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; 
 
 ADDR8:  imm8    is imm8		{ export *:1 imm8; }
 ADDR16: imm16   is imm16   	{ export *:1 imm16; }
-ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
+ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 
 # Instructions
@@ -399,10 +400,10 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	OP2 = tmp;
 	resultFlags(tmp);	
 }
+
 :RTI      is op=0x40
 {
 	popSR();
-	SP = SP+1;
 	
     SP = SP+1;
 	tmp:2 = *:2 SP;
@@ -478,6 +479,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :TSX     is op=0xBA
 {
 	X = S;
+    resultFlags(X);	
 }
 
 :TXA     is op=0x8A

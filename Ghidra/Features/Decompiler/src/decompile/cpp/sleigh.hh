@@ -16,10 +16,12 @@
 /// \file sleigh.hh
 /// \brief Classes and utilities for the main SLEIGH engine
 
-#ifndef __SLEIGH__
-#define __SLEIGH__
+#ifndef __SLEIGH_HH__
+#define __SLEIGH_HH__
 
 #include "sleighbase.hh"
+
+namespace ghidra {
 
 class LoadImage;
 
@@ -103,6 +105,7 @@ public:
 /// accessing the ContextDatabase and resolving context variables from the SLEIGH spec.
 /// ParserContext objects are stored in a hash-table keyed by the address of the instruction.
 class DisassemblyCache {
+  Translate *translate;		///< The Translate object that owns this cache
   ContextCache *contextcache;	///< Cached values from the ContextDatabase
   AddrSpace *constspace;	///< The constant address space
   int4 minimumreuse;		///< Can call getParserContext this many times, before a ParserContext is reused
@@ -113,7 +116,7 @@ class DisassemblyCache {
   void initialize(int4 min,int4 hashsize);	///< Initialize the hash-table of ParserContexts
   void free(void);		///< Free the hash-table of ParserContexts
 public:
-  DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize);	///< Constructor
+  DisassemblyCache(Translate *trans,ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize);	///< Constructor
   ~DisassemblyCache(void) { free(); }	///< Destructor
   ParserContext *getParserContext(const Address &addr);		///< Get the parser for a particular Address
 };
@@ -521,4 +524,6 @@ public:
 
   
  */
+
+} // End namespace ghidra
 #endif

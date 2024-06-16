@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import db.Transaction;
 import ghidra.test.TestEnv;
 import ghidra.util.TestUniversalIdGenerator;
 import ghidra.util.exception.AssertException;
@@ -44,13 +45,16 @@ public class RealProgramMTFModel extends AbstractMTFModel {
 		originalProgram = programGenerator.generateProgram(programName);
 
 		latestProgram = cloneProgram(originalProgram, this);
-		modifier.modifyLatest(latestProgram);
+		try (Transaction tx = latestProgram.openTransaction("Modify Latest Program")){
+			modifier.modifyLatest(latestProgram);
+		}
 
 		resultProgram = cloneProgram(latestProgram, this);
 
 		privateProgram = cloneProgram(originalProgram, this);
-		modifier.modifyPrivate(privateProgram);
-
+		try (Transaction tx = privateProgram.openTransaction("Modify Private Program")){
+			modifier.modifyPrivate(privateProgram);
+		}
 		recordChanges();
 		clearChanges();
 	}
@@ -62,13 +66,19 @@ public class RealProgramMTFModel extends AbstractMTFModel {
 
 		MergeProgramGenerator programGenerator = createProgramGenerator(programName);
 		originalProgram = programGenerator.generateProgram(programName);
-		modifier.modifyOriginal(originalProgram);
+		try (Transaction tx = originalProgram.openTransaction("Modify Original Program")){
+			modifier.modifyOriginal(originalProgram);
+		}
 
 		privateProgram = cloneProgram(originalProgram, this);
-		modifier.modifyPrivate(privateProgram);
+		try (Transaction tx = privateProgram.openTransaction("Modify Private Program")){
+			modifier.modifyPrivate(privateProgram);
+		}
 
 		latestProgram = cloneProgram(originalProgram, this);
-		modifier.modifyLatest(latestProgram);
+		try (Transaction tx = latestProgram.openTransaction("Modify Latest Program")){
+			modifier.modifyLatest(latestProgram);
+		}
 
 		resultProgram = cloneProgram(latestProgram, this);
 

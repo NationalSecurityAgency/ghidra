@@ -137,8 +137,6 @@ public enum GadpValueUtils {
 
 	public static TargetStepKind getStepKind(Gadp.StepKind kind) {
 		switch (kind) {
-			case SK_ADVANCE:
-				return TargetStepKind.ADVANCE;
 			case SK_FINISH:
 				return TargetStepKind.FINISH;
 			case SK_INTO:
@@ -164,8 +162,6 @@ public enum GadpValueUtils {
 
 	public static Gadp.StepKind makeStepKind(TargetStepKind kind) {
 		switch (kind) {
-			case ADVANCE:
-				return Gadp.StepKind.SK_ADVANCE;
 			case FINISH:
 				return Gadp.StepKind.SK_FINISH;
 			case INTO:
@@ -238,10 +234,6 @@ public enum GadpValueUtils {
 				return TargetEventType.THREAD_CREATED;
 			case EV_THREAD_EXITED:
 				return TargetEventType.THREAD_EXITED;
-			case EV_MODULE_LOADED:
-				return TargetEventType.MODULE_LOADED;
-			case EV_MODULE_UNLOADED:
-				return TargetEventType.MODULE_UNLOADED;
 			case EV_BREAKPOINT_HIT:
 				return TargetEventType.BREAKPOINT_HIT;
 			case EV_STEP_COMPLETED:
@@ -268,10 +260,6 @@ public enum GadpValueUtils {
 				return Gadp.TargetEventType.EV_THREAD_CREATED;
 			case THREAD_EXITED:
 				return Gadp.TargetEventType.EV_THREAD_EXITED;
-			case MODULE_LOADED:
-				return Gadp.TargetEventType.EV_MODULE_LOADED;
-			case MODULE_UNLOADED:
-				return Gadp.TargetEventType.EV_MODULE_UNLOADED;
 			case BREAKPOINT_HIT:
 				return Gadp.TargetEventType.EV_BREAKPOINT_HIT;
 			case STEP_COMPLETED:
@@ -539,7 +527,10 @@ public enum GadpValueUtils {
 
 	public static Gadp.Value makeValue(List<String> path, Object value) {
 		Gadp.Value.Builder b = Gadp.Value.newBuilder();
-		if (value instanceof Boolean) {
+		if (value == null) {
+			b.clearSpec();
+		}
+		else if (value instanceof Boolean) {
 			b.setBoolValue((Boolean) value);
 		}
 		else if (value instanceof Integer) {

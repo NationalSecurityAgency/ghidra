@@ -75,7 +75,7 @@ public class DynamicHash {
 		0,				// CAST is skipped
 		PcodeOp.INT_ADD, PcodeOp.INT_ADD,		// PTRADD and PTRSUB hash same as INT_ADD
 		PcodeOp.SEGMENTOP, PcodeOp.CPOOLREF, PcodeOp.NEW, PcodeOp.INSERT, PcodeOp.EXTRACT,
-		PcodeOp.POPCOUNT };
+		PcodeOp.POPCOUNT, PcodeOp.LZCOUNT };
 
 	/**
 	 * An edge between a Varnode and a PcodeOp
@@ -294,6 +294,9 @@ public class DynamicHash {
 					buildOpUp(markop.get(opproc));
 				}
 				gatherUnmarkedVn();
+				for (; vnproc < markvn.size(); ++vnproc) {
+					buildVnUp(markvn.get(vnproc));
+				}
 				break;
 			case 6:
 				gatherUnmarkedOp();
@@ -301,6 +304,9 @@ public class DynamicHash {
 					buildOpDown(markop.get(opproc));
 				}
 				gatherUnmarkedVn();
+				for (; vnproc < markvn.size(); ++vnproc) {
+					buildVnDown(markvn.get(vnproc));
+				}
 				break;
 			default:
 				break;
@@ -415,7 +421,7 @@ public class DynamicHash {
 		hash <<= 4;
 		hash |= method;			// 4-bits
 		hash <<= 7;
-		hash |= op.getOpcode();	// 7-bits
+		hash |= transtable[op.getOpcode()];	// 7-bits
 		hash <<= 5;
 		hash |= slot & 0x1f;	// 5-bits
 
@@ -705,6 +711,21 @@ public class DynamicHash {
 		}
 	}
 
+	private static void dedupVarnodes(ArrayList<Varnode> varlist) {
+		if (varlist.size() < 2) {
+			return;
+		}
+		ArrayList<Varnode> resList = new ArrayList<>();
+		HashSet<Varnode> hashSet = new HashSet<>();
+		for (Varnode vn : varlist) {
+			if (hashSet.add(vn)) {
+				resList.add(vn);
+			}
+		}
+		varlist.clear();
+		varlist.addAll(resList);
+	}
+
 	public static void gatherFirstLevelVars(ArrayList<Varnode> varlist, PcodeSyntaxTree fd,
 			Address addr, long h) {
 		int opc = getOpCodeFromHash(h);
@@ -714,7 +735,7 @@ public class DynamicHash {
 
 		while (iter.hasNext()) {
 			PcodeOp op = iter.next();
-			if (op.getOpcode() != opc) {
+			if (transtable[op.getOpcode()] != opc) {
 				continue;
 			}
 			if (slot < 0) {
@@ -745,6 +766,7 @@ public class DynamicHash {
 				varlist.add(vn);
 			}
 		}
+		dedupVarnodes(varlist);
 	}
 
 	public static int getSlotFromHash(long h) {

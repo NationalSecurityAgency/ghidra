@@ -54,7 +54,7 @@ public class FileOptionsTest extends AbstractGenericTest {
 
 		assertEquals(10, restored.getInt("aaa", 0));
 		assertFalse(restored.contains("bbb"));		// default value should not have been saved
-		assertEquals(Color.BLUE, restored.getColor("ccc", null));
+		assertEquals(Color.BLUE.getRGB(), restored.getColor("ccc", null).getRGB());
 		assertEquals(custom, restored.getCustomOption("ddd", null));
 	}
 
@@ -75,17 +75,17 @@ public class FileOptionsTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void readState(SaveState saveState) {
-			name = saveState.getString("name", null);
-			count = saveState.getInt("count", 0);
-			active = saveState.getBoolean("active", false);
+		public void readState(GProperties properties) {
+			name = properties.getString("name", null);
+			count = properties.getInt("count", 0);
+			active = properties.getBoolean("active", false);
 		}
 
 		@Override
-		public void writeState(SaveState saveState) {
-			saveState.putString("name", name);
-			saveState.putInt("count", count);
-			saveState.putBoolean("active", active);
+		public void writeState(GProperties properties) {
+			properties.putString("name", name);
+			properties.putInt("count", count);
+			properties.putBoolean("active", active);
 		}
 
 		@Override

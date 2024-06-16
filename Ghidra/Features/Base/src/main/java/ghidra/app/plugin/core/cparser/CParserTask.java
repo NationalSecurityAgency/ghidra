@@ -19,42 +19,105 @@ import java.io.File;
 
 import javax.swing.SwingUtilities;
 
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import docking.widgets.dialogs.MultiLineMessageDialog;
+import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
- *  This is called by the dialog box.
+ *  Background task to parse files for cparser plugin
  * 
  * 
  */
 class CParserTask extends Task {
-	private String[] filenames;
-	private String options;
+
 	private CParserPlugin plugin;
 	private String dataFileName;
+	
+	private String[] filenames;
+	private String[] includePaths;
+	
+	private String options;
+	
+	private String languageString;
+	private String compilerString;
+	
 	private DataTypeManager dtMgr;
 
-	CParserTask(CParserPlugin plugin, String[] filenames, String options, String dataFileName) {
+
+	/**
+	 * Create task to parse to a dataFile
+	 * 
+	 * @param plugin CParserPlugin that will do the work
+	 * @param dataFileName name of the file to parse to
+	 */
+	CParserTask(CParserPlugin plugin, String dataFileName) {
 		super("Parsing C Files", true, false, false);
 
 		this.plugin = plugin;
-		this.filenames = filenames;
-		this.options = options;
 		this.dataFileName = dataFileName;
 	}
 
-	public CParserTask(CParserPlugin plugin, String[] filenames, String options,
-			DataTypeManager dataTypeManager) {
+	/**
+	 * Create task to parse to a dataTypeManager
+	 * 
+	 * @param plugin
+	 * @param dataTypeManager
+	 */
+	public CParserTask(CParserPlugin plugin, DataTypeManager dataTypeManager) {
 		super("Parsing C Files", true, false, false);
 
 		this.plugin = plugin;
-		this.filenames = filenames;
-		this.options = options;
 		this.dtMgr = dataTypeManager;
+	}
+
+	/**
+	 * Create task to parse to a ProgramDataTypeManager
+	 * 
+	 * @param plugin
+	 * @param dataTypeManager
+	 */
+	public CParserTask(CParserPlugin plugin, ProgramBasedDataTypeManager dataTypeManager) {
+		super("Parsing C Files", true, false, false);
+		
+		this.plugin = plugin;
+		this.dtMgr = dataTypeManager;
+	}
+	
+	public CParserTask setLanguageID(String languageID) {
+		this.languageString = languageID;
+		return this;
+	}
+	
+	public CParserTask setCompilerID(String compilerID) {
+		this.compilerString = compilerID;
+		return this;
+	}
+	
+	public CParserTask setIncludePaths(String includePaths[]) {
+		this.includePaths = includePaths.clone();
+		return this;
+	}
+	
+	public CParserTask setFileNames(String names[]) {
+		this.filenames = names.clone();
+		return this;
+	}
+	
+	public CParserTask setOptions(String options) {
+		this.options = options;
+		return this;
+	}
+
+	private String getFirstMessageLine(final String errMsg) {
+		int indexOf = errMsg.indexOf('\n');
+		String msg = errMsg;
+		if (indexOf > 0) {
+			msg = msg.substring(0, indexOf);
+		}
+		return msg;
 	}
 
 	@Override
@@ -67,22 +130,13 @@ class CParserTask extends Task {
 				fileDtMgr = dtMgr;
 			}
 
-			plugin.parse(filenames, options, dtMgr, monitor);
+			plugin.parse(filenames, includePaths, options, languageString, compilerString, dtMgr, monitor);
 			if (dataFileName != null) {
+				// TODO: does not consider existing datatypes
 				if (dtMgr.getDataTypeCount(true) != 0) {
 					try {
 						((FileDataTypeManager) dtMgr).save();
 						dtMgr.close();
-						SwingUtilities.invokeLater(new Runnable() {
-							@Override
-							public void run() {
-								Msg.showInfo(
-									getClass(), plugin.getDialog().getComponent(),
-									"Created Archive File", "Successfully created archive file\n" +
-										((FileDataTypeManager) dtMgr).getFilename());
-							}
-
-						});
 					}
 					catch (DuplicateFileException e) {
 						Msg.showError(this, plugin.getDialog().getComponent(), "Error During Save",
@@ -102,8 +156,16 @@ class CParserTask extends Task {
 					SwingUtilities.invokeLater(new Runnable() {
 						@Override
 						public void run() {
-							Msg.showInfo(getClass(),
-								plugin.getDialog().getComponent(), "Parse Errors", "File was not created due to parse errors.");
+							// no results, was canceled
+							if (plugin.getParseResults() == null) {
+								return;
+							}
+							MultiLineMessageDialog.showModalMessageDialog(
+								plugin.getDialog().getComponent(), "Parse Errors",
+								"File was not created due to parse errors: " +
+									((FileDataTypeManager) dtMgr).getFilename(),
+								plugin.getFormattedParseMessage(null),
+								MultiLineMessageDialog.INFORMATION_MESSAGE);
 						}
 					});
 				}
@@ -115,8 +177,10 @@ class CParserTask extends Task {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					Msg.showInfo(getClass(),
-						plugin.getDialog().getComponent(), "Parse Errors", errMsg);
+					String msg = getFirstMessageLine(errMsg);
+					MultiLineMessageDialog.showModalMessageDialog(plugin.getDialog().getComponent(),
+						"Parse Errors", msg, plugin.getFormattedParseMessage(errMsg),
+						MultiLineMessageDialog.ERROR_MESSAGE);
 				}
 			});
 		}
@@ -126,14 +190,22 @@ class CParserTask extends Task {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					Msg.showInfo(getClass(),
-						plugin.getDialog().getComponent(), "Parse Errors", errMsg);
+					String msg = getFirstMessageLine(errMsg);
+					MultiLineMessageDialog.showModalMessageDialog(plugin.getDialog().getComponent(),
+						"PreProcessor Parse Errors", msg, plugin.getFormattedParseMessage(errMsg),
+						MultiLineMessageDialog.ERROR_MESSAGE);
 				}
 			});
 		}
 		catch (Exception e) {
+			final String errMsg = e.getMessage();
+			String msg = getFirstMessageLine(errMsg);
 			Msg.showError(this, plugin.getDialog().getComponent(), "Error During Parse",
-				"Parse header files failed", e);
+				"Parse header files failed" + "\n\nParser Messages:\n" + plugin.getParseMessage(),
+				e);
+			MultiLineMessageDialog.showModalMessageDialog(plugin.getDialog().getComponent(),
+				"Error During Parse", msg, plugin.getFormattedParseMessage(errMsg),
+				MultiLineMessageDialog.ERROR_MESSAGE);
 		}
 		finally {
 			if (fileDtMgr != null) {

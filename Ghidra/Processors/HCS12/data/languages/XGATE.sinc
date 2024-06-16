@@ -54,7 +54,6 @@ attach variables [reg8_hi ] [R0.H R1.H R2.H R3.H R4.H R5.H R6.H R7.H];
 # Pseudo Instructions
 ################################################################
 
-define pcodeop findFirstOne;
 define pcodeop leftShiftCarry;
 define pcodeop rightShiftCarry;
 define pcodeop parity;
@@ -139,10 +138,10 @@ macro computePage(addr) {
 #rel9 defined in HCS_HC12.sinc
 # range -256 through +255
 with : XGATE=1 {
-rel9: reloc is immrel8   [ reloc = inst_next + (immrel8 * 2); ]  { export * reloc; }
+rel9: reloc is immrel8   [ reloc = inst_next + (immrel8 * 2); ]  { export *:1 reloc; }
 
 # range -512 through +512
-rel10: reloc is immrel9   [ reloc = inst_next + (immrel9 * 2); ]  { export * reloc; }
+rel10: reloc is immrel9   [ reloc = inst_next + (immrel9 * 2); ]  { export *:1 reloc; }
 
 rd : reg8 is reg8 { export reg8; }
 
@@ -277,9 +276,8 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
     # 15 - count leading zeros
     tmp:2 = rs1;
-    $(XC) = (rd == 0);
-    #TODO: implement findFirstOne behavior
-    rd = findFirstOne(tmp);
+    $(XC) = (rs1 == 0);
+    rd = zext(tmp != 0) * (15 - lzcount(tmp));
 
 	default_flags(rd);
 }

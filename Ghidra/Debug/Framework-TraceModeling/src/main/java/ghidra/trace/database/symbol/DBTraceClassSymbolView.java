@@ -16,10 +16,10 @@
 package ghidra.trace.database.symbol;
 
 import ghidra.program.model.symbol.*;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceClassSymbolView;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -43,8 +43,7 @@ public class DBTraceClassSymbolView extends AbstractDBTraceSymbolSingleTypeView<
 			manager.assertUniqueName(name, dbnsParent);
 			DBTraceClassSymbol cls = store.create();
 			cls.set(name, dbnsParent, source);
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceSymbolChangeType.ADDED, null, cls));
+			manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_ADDED, null, cls));
 			return cls;
 		}
 	}

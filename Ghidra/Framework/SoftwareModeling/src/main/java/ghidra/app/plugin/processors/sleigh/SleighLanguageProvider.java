@@ -27,6 +27,7 @@ import org.xml.sax.*;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
@@ -62,11 +63,35 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 	public final static String LANGUAGE_DIR_NAME = "languages";
 
-	public SleighLanguageProvider() throws Exception {
-		createLanguages();
+	private static SleighLanguageProvider instance; // sleigh language provider instance (singleton)
+
+	public static synchronized SleighLanguageProvider getSleighLanguageProvider() {
+		if (instance == null) {
+			instance = new SleighLanguageProvider();
+		}
+		return instance;
 	}
 
-	public SleighLanguageProvider(ResourceFile ldefsFile) throws Exception {
+	/**
+	 * Construct sleigh language provider (singleton use)
+	 */
+	private SleighLanguageProvider() {
+		try {
+			createLanguages();
+		}
+		catch (Exception e) {
+			Msg.error(SleighLanguageProvider.class,
+				"Sleigh language provider initiailization failed", e);
+		}
+	}
+
+	/**
+	 * Construct language provider (intended for test use only)
+	 * @param ldefsFile language definitions file
+	 * @throws SAXException if parse error occurs
+	 * @throws IOException if IO error occurs
+	 */
+	SleighLanguageProvider(ResourceFile ldefsFile) throws SAXException, IOException {
 		createLanguages(ldefsFile);
 	}
 
@@ -77,7 +102,7 @@ public class SleighLanguageProvider implements LanguageProvider {
 		}
 	}
 
-	private void createLanguages(ResourceFile file) throws Exception {
+	private void createLanguages(ResourceFile file) throws SAXException, IOException {
 		try {
 			SleighLanguageValidator.validateLdefsFile(file);
 			createLanguageDescriptions(file);
@@ -95,19 +120,15 @@ public class SleighLanguageProvider implements LanguageProvider {
 	}
 
 	@Override
-	public Language getLanguage(LanguageID languageId) {
-		return getNewSleigh(languageId);
-	}
-
-	@Override
 	public boolean isLanguageLoaded(LanguageID languageId) {
 		return languages.get(languageId) != null;
 	}
 
-	private Language getNewSleigh(LanguageID languageId) {
+	@Override
+	public Language getLanguage(LanguageID languageId) {
 		SleighLanguageDescription description = descriptions.get(languageId);
 		SleighLanguage lang = languages.get(languageId);
-		if (lang == null) {
+		if (lang == null && description != null) {
 			try {
 				lang = new SleighLanguage(description);
 				languages.put(languageId, lang);
@@ -117,17 +138,16 @@ public class SleighLanguageProvider implements LanguageProvider {
 					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw e;
 			}
+			catch (DecoderException e) {
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
+				throw new SleighException("Format violation in the .sla file", e);
+			}
 			catch (FileNotFoundException e) {
 				Msg.showError(this, null, "Error",
 					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw new SleighException(
 					"File not found - language probably did not compile properly", e);
-			}
-			catch (UnknownInstructionException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw new SleighException(
-					"Unknown instruction - language probably did not compile properly", e);
 			}
 			catch (SAXException e) {
 				Msg.showError(this, null, "Error",
@@ -158,7 +178,8 @@ public class SleighLanguageProvider implements LanguageProvider {
 		return d;
 	}
 
-	private void createLanguageDescriptions(final ResourceFile specFile) throws Exception {
+	private void createLanguageDescriptions(final ResourceFile specFile)
+			throws SAXException, IOException {
 		ErrorHandler errHandler = new ErrorHandler() {
 			@Override
 			public void error(SAXParseException exception) throws SAXException {

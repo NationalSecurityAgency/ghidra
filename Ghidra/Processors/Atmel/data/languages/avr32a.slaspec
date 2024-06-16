@@ -637,19 +637,19 @@ RBSelector: rb9[ri0"<U> << 2]" is rb9 & ri0; selectorxy4_2=0x2 { ptr:4 = rb9 + (
 RBSelector: rb9[ri0"<T> << 2]" is rb9 & ri0; selectorxy4_2=0x3 { ptr:4 = rb9 + (((ri0 >> 24) & 0xff) << 0x02); export ptr; }
 
 RS0A: rs0		is rs0 { export rs0; }
-RS0A: rs0		is rs0 & rs0=0xf { export inst_start; }
+RS0A: rs0		is rs0 & rs0=0xf { export *[const]:4 inst_start; }
 
 RS9A: rs9		is rs9 { export rs9; }
-RS9A: rs9		is rs9 & rs9=0xf { export inst_start; }
+RS9A: rs9		is rs9 & rs9=0xf { export *[const]:4 inst_start; }
 
 RX9A: rx9		is rx9 { export rx9; }
-RX9A: rx9		is rx9 & rx9=0xf { export inst_start; }
+RX9A: rx9		is rx9 & rx9=0xf { export *[const]:4 inst_start; }
 
 RY0A: ry0		is ry0 { export ry0; }
-RY0A: ry0		is ry0 & ry0=0xf { export inst_start; }
+RY0A: ry0		is ry0 & ry0=0xf { export *[const]:4 inst_start; }
 
 RD0A: rd0		is rd0 { export rd0; }
-RD0A: rd0		is rd0 & rd0=0xf { export inst_start; }
+RD0A: rd0		is rd0 & rd0=0xf { export *[const]:4 inst_start; }
 
 macro ZSTATUS(RES) {
         Z = RES == 0;

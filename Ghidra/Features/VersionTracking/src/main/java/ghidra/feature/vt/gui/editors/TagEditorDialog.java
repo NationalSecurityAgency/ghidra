@@ -20,7 +20,7 @@ import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTMatchTag;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action;
-import ghidra.framework.model.Transaction;
+import ghidra.framework.model.TransactionInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -322,7 +322,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 			monitor.initialize(tags.size());
 
 			for (TagState tagState : tags) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				switch (tagState.action) {
 					case ADD:
 						addTag(tagState.getTagName());
@@ -348,7 +348,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 
 		private boolean hasTransactionsOpen(VTSessionDB sessionDB) {
 			Program program = sessionDB.getDestinationProgram();
-			Transaction transaction = program.getCurrentTransaction();
+			TransactionInfo transaction = program.getCurrentTransactionInfo();
 			if (transaction != null) {
 				Msg.showWarn(this, null, "Unable to Set Match Tag",
 					"The program \"" + program.getName() + "\"already has a transaction open: " +
@@ -356,7 +356,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 				return true;
 			}
 
-			Transaction matchSetTransaction = sessionDB.getCurrentTransaction();
+			TransactionInfo matchSetTransaction = sessionDB.getCurrentTransactionInfo();
 			if (matchSetTransaction != null) {
 				Msg.showWarn(this, null, "Unable to Set Match Tag",
 					"Transaction already open for the Match Set Manager ");

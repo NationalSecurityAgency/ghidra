@@ -18,13 +18,10 @@ package agent.dbgeng.model.iface2;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import agent.dbgeng.manager.DbgEventsListenerAdapter;
-import agent.dbgeng.manager.DbgStackFrame;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgThreadImpl;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -51,7 +48,8 @@ public interface DbgModelTargetStackFrame extends //
 	@Override
 	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
-		DbgThreadImpl thread = manager.getCurrentThread();
+		DbgModelTargetThread targetThread = getParentThread();
+		DbgThread thread = targetThread.getThread();
 		String name = this.getName();
 		String stripped = name.substring(1, name.length() - 1);
 		int index = Integer.decode(stripped);
@@ -63,33 +61,33 @@ public interface DbgModelTargetStackFrame extends //
 		AddressSpace space = getModel().getAddressSpace("ram");
 		return requestNativeAttributes().thenCompose(attrs -> {
 			if (attrs == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			map.putAll(attrs);
 			DbgModelTargetObject attributes = (DbgModelTargetObject) attrs.get("Attributes");
 			if (attributes == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			return attributes.requestAugmentedAttributes().thenCompose(ax -> {
 				if (!isValid()) {
-					return AsyncUtils.NIL;
+					return AsyncUtils.nil();
 				}
 				Map<String, ?> subattrs = attributes.getCachedAttributes();
 				DbgModelTargetObject frameNumber =
 					(DbgModelTargetObject) subattrs.get("FrameNumber");
 				if (frameNumber == null) {
-					return AsyncUtils.NIL;
+					return AsyncUtils.nil();
 				}
 				return frameNumber.requestAugmentedAttributes().thenCompose(bx -> {
 					if (!isValid()) {
-						return AsyncUtils.NIL;
+						return AsyncUtils.nil();
 					}
 					Object noval = frameNumber.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
 					String nostr = noval.toString();
 					DbgModelTargetObject instructionOffset =
 						(DbgModelTargetObject) subattrs.get("InstructionOffset");
 					if (instructionOffset == null) {
-						return AsyncUtils.NIL;
+						return AsyncUtils.nil();
 					}
 					return instructionOffset.requestAugmentedAttributes().thenAccept(cx -> {
 						if (!isValid()) {
@@ -111,10 +109,6 @@ public interface DbgModelTargetStackFrame extends //
 
 	public void setFrame(DbgStackFrame frame);
 
-	public TargetObject getThread();
-
 	public Address getPC();
-
-	public DbgModelTargetProcess getProcess();
 
 }

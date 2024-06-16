@@ -386,12 +386,10 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		}
 	}
 
-	/**
-	 * Cancels the task and closes this dialog
-	 */
 	@Override
 	public void dispose() {
 		internalCancel();
+		super.dispose();
 	}
 
 	private void cleanup() {
@@ -497,12 +495,12 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	@Override
 	public synchronized void clearCanceled() {
-		monitorComponent.clearCanceled();
+		monitorComponent.clearCancelled();
 	}
 
 	@Override
 	public void checkCanceled() throws CancelledException {
-		monitorComponent.checkCanceled();
+		monitorComponent.checkCancelled();
 	}
 
 	@Override

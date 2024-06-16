@@ -7,20 +7,15 @@
 
     <TITLE>Debugger: Memory (Dynamic Bytes)</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Memory (Dynamic Bytes)</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerMemoryBytesPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerMemoryBytesPlugin.png">
+    </DIV>
 
     <P><A name="Toggle_Header"></A>The memory, or dynamic bytes, window is analogous to Ghidra's
     bytes window for static analysis, but in the dynamic context. It displays memory contents from
@@ -36,21 +31,20 @@
     use clones to display different points in time for the same trace.</P>
 
     <P>Because not all memory is recorded, some background coloring is used to indicate the state
-    of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
-    trace, are displayed in the window, defaulting to 00. "Stale" memory, that is ranges of memory
-    which have not been read at the current time, are displayed with a darker background. Where
-    that memory is marked "read-only" and has been successfully read previously, that coloring is
+    of attempted memory reads. Regardless of state, the most-recent contents recorded in the trace
+    are displayed in the window, defaulting to 00. "Stale" memory, that is ranges of memory which
+    have not been read at the current time, are displayed with a darker background. Where that
+    memory is marked "read-only" and has been successfully read previously, that coloring is
     subdued, since the contents are not likely to have changed. Where a read was attempted but
-    failed, the first address in the failed range is displayed with a pink background. Otherwise,
-    up-to-date contents are displayed with the default background color.</P>
+    failed, the entire range is displayed with a pink background. Otherwise, up-to-date contents
+    are displayed with the default background color.</P>
 
-    <P>The dynamic listing supports editing memory via the <A href=
-    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">Machine State Editing
-    Plugin and Service</A>. Such edits are performed as usual: Toggling edits and typing into the
-    editor, or by pasting byte strings. These edits may be directed toward a live target, the
-    trace, or the emulator. <B>NOTE:</B> Please be wary of hand-typing large edits into the
-    emulator, since every keystroke may produce a unique scratch snapshot. It is better to paste
-    such edits instead.</P>
+    <P>The dynamic bytes viewer supports editing memory. See <A href=
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State</A>.
+    Such edits are performed as usual: Toggling edits and typing into the editor, or by pasting
+    byte strings. These edits may be directed toward a live target, the trace, or the emulator.
+    <B>NOTE:</B> Please be wary of hand-typing large edits into the emulator, since every keystroke
+    may produce a unique scratch snapshot. It is better to paste such edits instead.</P>
 
     <H2>Actions</H2>
 
@@ -73,70 +67,32 @@
 
     <H3><A name="track_location"></A>Track Location</H3>
 
-    <P>This action is always available on all memory windows. It configures automatic navigation
-    for the window. When location tracking is enabled, the window is automatically navigated to an
-    address computed from the trace's or target's machine state. <B>NOTE:</B> This feature is
-    disabled when the edit toggle is on. The address is also highlighted in green. The computed
-    address is affected by the tool's current "coordinates," that is the selected thread, frame,
-    and point in time. The options are pluggable, but currently consist of:</P>
-
-    <UL>
-      <LI>Do Not Track - disables automatic navigation.</LI>
-
-      <LI>Track Program Counter - (default) navigates this window to the current program counter.
-      If the stack contains a record of the program counter, it is preferred to the recorded
-      register value. Note that debuggers may vary in how they report the program counter, and its
-      meaning may vary among platforms. While there may be some nuances to the register value, the
-      value recorded in the stack should indicate the next instruction to be executed.</LI>
-
-      <LI>Track Stack Pointer - navigates this window to the current stack pointer. Again,
-      platforms may vary in how they define the stack pointer.</LI>
-    </UL>
+    <P>This action is equivalent to the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#track_location">same action</A>
+    in the Dynamic Listing window. <B>NOTE:</B> This feature is disabled when the edit toggle is
+    on.</P>
 
     <H3><A name="go_to"></A>Go To (G)</H3>
 
-    <P>This action is available whenever a trace is active in the window. It prompts the user for
-    an address, which can be expressed in Sleigh, then attempts to navigate to it. The expression
-    is evaluated in the context of the current thread, frame, and point in time. If the current
-    trace is live and at the present, the target may be queried to retrieve any machine state
-    required to evaluate the expression.</P>
+    <P>This action is equivalent to the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#go_to">same action</A> in the
+    Dynamic Listing window.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "help/topics/DebuggerListingPlugin/images/DebuggerGoToDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="help/topics/DebuggerListingPlugin/images/DebuggerGoToDialog.png">
+    </DIV>
 
     <H3><A name="read_memory"></A>Read Memory</H3>
 
-    <P>This action is available when the current trace is "at the present" with a live target, and
-    there is a selection of addresses in the memory window. It will instruct the recorder to read
-    and record the contents of memory for the selected range(s). Typically, the viewable addresses
-    are automatically read &mdash; see the Auto-Read action.</P>
+    <P>This action is equivalent to the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">same action</A> in
+    the Dynamic Listing window.</P>
 
     <H3><A name="auto_memory"></A>Auto-Read Memory</H3>
 
-    <P>This action is always available on all memory windows. It configures whether or not the
-    memory range(s) displayed in the window are automatically read and recorded. Like the Read
-    Memory action, it is only permitted when the current trace is "at the present" with a live
-    target. It occurs when the user scrolls the window, or when the window is otherwise navigated
-    to a new location. Note that other components may read memory, regardless of this windows's
-    configuration. For example, the recorder typically reads the page of memory pointed to by the
-    program counter. In other words, this action <EM>cannot</EM> "disable all memory reads." The
-    options are pluggable, but currently consist of:</P>
-
-    <UL>
-      <LI>Do Not Read Memory - disables automatic memory reads <EM>for this window only</EM>.</LI>
-
-      <LI>Read Visible Memory - automatically reads stale ranges that enter this window's
-      view.</LI>
-
-      <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
-      neglect read-only ranges that have been read previously.</LI>
-    </UL>
+    <P>This action is equivalent to the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#auto_memory">same action</A> in
+    the Dynamic Listing window.</P>
 
     <H3><A name="Byte_Viewer_Options"></A>Byte Viewer Options</H3>
 
@@ -145,13 +101,9 @@
     <H3><A name="Enable_Disable_Byteviewer_Editing"></A>Toggle Editing</H3>
 
     <P>This action does the same as it does for the static context. Edits may be rejected if the
-    trace's editing mode is set to Read-Only in the tool. <B>NOTE:</B> This toggle also disables
-    automatic navigation in order to prevent the cursor from being moved unexpectedly while typing
-    edits.</P>
-
-    <H2><A name="colors"></A>Tool Options: Colors</H2>
-
-    <P>The memory-state and tracked-location background colors are replicated from the <A href=
-    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A>.</P>
+    trace <A href=
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">control mode</A> is
+    set to Read-Only in the tool. <B>NOTE:</B> This toggle also disables automatic navigation in
+    order to prevent the cursor from being moved unexpectedly while typing edits.</P>
   </BODY>
 </HTML>

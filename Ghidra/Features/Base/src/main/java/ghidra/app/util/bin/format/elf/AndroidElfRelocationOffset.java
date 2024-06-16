@@ -17,14 +17,12 @@ package ghidra.app.util.bin.format.elf;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.AbstractLeb128DataType;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.Memory;

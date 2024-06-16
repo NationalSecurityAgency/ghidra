@@ -53,7 +53,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Construct toy program builder using toy language "builder" variant.
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
-	 * @param bigEndian language endianess
+	 * @param bigEndian language endianness
 	 * @throws Exception
 	 */
 	public ToyProgramBuilder(String name, boolean bigEndian) throws Exception {
@@ -64,7 +64,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Construct toy program builder using toy language "builder" variant.
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
-	 * @param bigEndian language endianess
+	 * @param bigEndian language endianness
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
 	 * @throws Exception
 	 */
@@ -76,7 +76,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * Construct toy program builder using toy language "builder" variant.
 	 * This builder will be the program consumer and must be disposed
 	 * @param name program name
-	 * @param bigEndian language endianess
+	 * @param bigEndian language endianness
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
 	 * @throws Exception
 	 */
@@ -492,6 +492,27 @@ public class ToyProgramBuilder extends ProgramBuilder {
 		Address dest = addr(destAddr);
 		short relDest = getByteRelativeOffset(address, dest);
 		addInstructionWords(address, (short) (0xe000 | (relDest << 4))); // breq rel
+	}
+
+	/**
+	 * Add conditional skip (consumes 2-bytes)
+	 * @param offset instruction address offset
+	 * @throws MemoryAccessException
+	 */
+	public void addBytesSkipConditional(long offset)
+			throws MemoryAccessException {
+		addBytesSkipConditional(toHex(offset));
+	}
+
+	/**
+	 * Add conditional skip (consumes 2-bytes)
+	 * @param addr instruction address
+	 * @throws MemoryAccessException
+	 */
+	public void addBytesSkipConditional(String addr)
+			throws MemoryAccessException {
+		Address address = addr(addr);
+		addInstructionWords(address, (short) (0x8000)); // skeq
 	}
 
 	/**

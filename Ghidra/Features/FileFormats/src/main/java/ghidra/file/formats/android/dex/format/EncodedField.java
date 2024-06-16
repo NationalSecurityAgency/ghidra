@@ -17,9 +17,7 @@ package ghidra.file.formats.android.dex.format;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -35,12 +33,12 @@ public class EncodedField implements StructConverter {
 
 	public EncodedField(BinaryReader reader) throws IOException {
 
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		_fileOffset = leb128.getOffset();
 		fieldIndexDifference = leb128.asUInt32();
 		fieldIndexDifferenceLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		accessFlags = leb128.asUInt32();
 		accessFlagsLength = leb128.getLength();
 	}
@@ -59,12 +57,11 @@ public class EncodedField implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "encoded_field_" + fieldIndexDifferenceLength + "_" + accessFlagsLength;
+		String name =
+			"encoded_field_%d_%d".formatted(fieldIndexDifferenceLength, accessFlagsLength);
 		Structure structure = new StructureDataType(name, 0);
-		structure.add(new ArrayDataType(BYTE, fieldIndexDifferenceLength, BYTE.getLength()),
-			"field_idx_diff", null);
-		structure.add(new ArrayDataType(BYTE, accessFlagsLength, BYTE.getLength()), "accessFlags",
-			null);
+		structure.add(ULEB128, fieldIndexDifferenceLength, "field_idx_diff", null);
+		structure.add(ULEB128, accessFlagsLength, "accessFlags", null);
 		structure.setCategoryPath(new CategoryPath("/dex/encoded_field"));
 		return structure;
 	}

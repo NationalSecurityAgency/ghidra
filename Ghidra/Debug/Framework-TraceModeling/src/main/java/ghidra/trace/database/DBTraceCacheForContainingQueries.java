@@ -20,14 +20,10 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceCacheForContainingQueries.GetKey;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
+import ghidra.util.datastruct.FixedSizeHashMap;
 
 public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 	public static class GetKey {
@@ -75,16 +71,7 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 	public DBTraceCacheForContainingQueries(int snapBreadth, int addressBreadth, int maxPoints) {
 		this.snapBreadth = snapBreadth;
 		this.addressBreadth = addressBreadth;
-		this.pointCache = CacheBuilder.newBuilder()
-				.removalListener(this::getContainingRemoved)
-				.maximumSize(maxPoints)
-				.concurrencyLevel(2)
-				.build()
-				.asMap();
-	}
-
-	private void getContainingRemoved(RemovalNotification<K, V> rn) {
-		// Nothing
+		this.pointCache = new FixedSizeHashMap<>(maxPoints);
 	}
 
 	protected abstract void loadRangeCache(TraceAddressSnapRange range);
@@ -141,30 +128,33 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		return pointCache.computeIfAbsent(key, this::doGetContaining);
 	}
 
-	public void notifyNewEntry(Range<Long> lifespan, Address address, T item) {
+	public void notifyNewEntry(Lifespan lifespan, Address address, T item) {
 		// TODO: Can this be smarter?
 		pointCache.clear();
-		if (rangeCacheRange != null && rangeCacheRange.getLifespan().isConnected(lifespan) &&
+		if (rangeCacheRange != null &&
+			!rangeCacheRange.getLifespan().intersect(lifespan).isEmpty() &&
 			rangeCacheRange.getRange().contains(address)) {
 			rangeCache.add(new ImmutablePair<>(
 				new ImmutableTraceAddressSnapRange(address, lifespan), item));
 		}
 	}
 
-	public void notifyNewEntry(Range<Long> lifespan, AddressRange range, T item) {
+	public void notifyNewEntry(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		pointCache.clear();
-		if (rangeCacheRange != null && rangeCacheRange.getLifespan().isConnected(lifespan) &&
+		if (rangeCacheRange != null &&
+			!rangeCacheRange.getLifespan().intersect(lifespan).isEmpty() &&
 			rangeCacheRange.getRange().intersects(range)) {
 			rangeCache.add(new ImmutablePair<>(
 				new ImmutableTraceAddressSnapRange(range, lifespan), item));
 		}
 	}
 
-	public void notifyNewEntries(Range<Long> lifespan, AddressSetView addresses, T item) {
+	public void notifyNewEntries(Lifespan lifespan, AddressSetView addresses, T item) {
 		// TODO: Can this be smarter?
 		pointCache.clear();
-		if (rangeCacheRange != null && rangeCacheRange.getLifespan().isConnected(lifespan)) {
+		if (rangeCacheRange != null &&
+			!rangeCacheRange.getLifespan().intersect(lifespan).isEmpty()) {
 			for (AddressRange range : addresses) {
 				if (rangeCacheRange.getRange().intersects(range)) {
 					rangeCache.add(new ImmutablePair<>(
@@ -174,12 +164,12 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 		}
 	}
 
-	public void notifyEntryRemoved(Range<Long> lifespan, AddressRange range, T item) {
+	public void notifyEntryRemoved(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}
 
-	public void notifyEntryShapeChanged(Range<Long> lifespan, AddressRange range, T item) {
+	public void notifyEntryShapeChanged(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}

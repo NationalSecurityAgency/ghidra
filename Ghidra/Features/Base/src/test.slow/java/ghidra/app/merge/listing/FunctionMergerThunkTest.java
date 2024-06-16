@@ -36,7 +36,7 @@ import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramDiff;
 import ghidra.program.util.ProgramDiffFilter;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the multi-user merge of thunk functions.
@@ -69,8 +69,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -81,20 +79,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -105,13 +97,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -122,11 +110,11 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		AddressSet expectedDifferences = new AddressSet();
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -138,28 +126,20 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create data.
 					Address addr = addr(program, THUNK_A_ENTRY);
 					Listing listing = program.getListing();
 					Data data = listing.createData(addr, new ByteDataType());
 					assertNotNull(data);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -170,13 +150,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -191,11 +167,11 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		AddressSet expectedDifferences = new AddressSet(entryAddress, entryAddress);
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -207,8 +183,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -219,20 +193,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, new DWordDataType());
@@ -247,13 +215,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -276,14 +240,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -294,23 +253,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -321,13 +271,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -338,12 +284,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -362,14 +308,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -380,23 +321,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -407,13 +339,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -424,12 +352,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -451,8 +379,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -463,14 +389,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -479,8 +400,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -491,13 +410,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -511,12 +426,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -541,8 +456,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -553,14 +466,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -569,8 +477,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -581,13 +487,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -601,12 +503,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -631,8 +533,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -643,14 +543,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -659,8 +554,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, OVERLAP_ENTRY),
@@ -671,13 +564,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, OVERLAP_ENTRY));
@@ -692,12 +581,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		expectedDifferences.add(addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -722,8 +611,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -734,14 +621,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -750,8 +632,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, OVERLAP_ENTRY),
@@ -762,13 +642,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, OVERLAP_ENTRY));
@@ -783,12 +659,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		expectedDifferences.add(addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -813,8 +689,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -830,20 +704,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, new DWordDataType());
@@ -858,13 +726,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -891,8 +755,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
@@ -908,20 +770,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -937,13 +793,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -971,8 +823,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
@@ -988,20 +838,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -1017,13 +861,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1051,8 +891,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
@@ -1068,20 +906,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -1097,13 +929,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1153,8 +981,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
@@ -1170,20 +996,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -1199,13 +1019,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1233,8 +1049,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
@@ -1250,20 +1064,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -1279,13 +1087,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1313,8 +1117,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -1330,20 +1132,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "scanf" }, new DWordDataType());
@@ -1358,13 +1154,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1393,8 +1185,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
@@ -1410,20 +1200,14 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "scanf" }, new DWordDataType());
@@ -1438,13 +1222,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1472,8 +1252,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -1484,13 +1262,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create non-thunk function in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -1499,8 +1273,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -1511,13 +1283,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -1531,12 +1299,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1561,8 +1329,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -1573,13 +1339,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create non-thunk function in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -1588,8 +1350,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -1600,13 +1360,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -1620,12 +1376,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1651,8 +1407,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				FunctionManager functionManager = program.getFunctionManager();
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1665,13 +1419,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					}
 					Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 					function.setName("LatestThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 				assertNotNull(function);
@@ -1681,8 +1431,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				FunctionManager functionManager = program.getFunctionManager();
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1695,13 +1443,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					}
 					Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 					function.setName("MyThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 				assertNotNull(function);
@@ -1714,12 +1458,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		AddressSet expectedDifferences = new AddressSet(addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1747,8 +1491,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				FunctionManager functionManager = program.getFunctionManager();
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1761,13 +1503,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					}
 					Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 					function.setName("LatestThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 				assertNotNull(function);
@@ -1777,8 +1515,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				FunctionManager functionManager = program.getFunctionManager();
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1791,13 +1527,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 					}
 					Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 					function.setName("MyThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 				assertNotNull(function);
@@ -1811,12 +1543,12 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			new AddressSet(addr(resultProgram, THUNK_A_ENTRY), addr(resultProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(resultProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);

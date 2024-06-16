@@ -100,7 +100,7 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 	private final DebuggerModelListener listener;
 
 	private final Map<TargetObject, ObjectRecord> records = new HashMap<>();
-	private CompletableFuture<Void> lastEvent = AsyncUtils.NIL;
+	private CompletableFuture<Void> lastEvent = AsyncUtils.nil();
 
 	private volatile boolean disposed = false;
 
@@ -373,5 +373,9 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 		for (ObjectRecord rec : volRecs) {
 			rec.cancel();
 		}
+	}
+
+	public CompletableFuture<Void> flushEvents() {
+		return lastEvent.thenApply(v -> v);
 	}
 }

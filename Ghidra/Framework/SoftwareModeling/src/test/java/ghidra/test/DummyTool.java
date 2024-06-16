@@ -31,9 +31,9 @@ import docking.actions.PopupActionProvider;
 import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.ServiceListener;
+import ghidra.framework.plugintool.util.UndoRedoToolState;
 import ghidra.program.model.listing.Program;
 
 public class DummyTool extends PluginTool {
@@ -65,16 +65,10 @@ public class DummyTool extends PluginTool {
 	}
 
 	@Override
-	public void exit() {
-		//do nothing
-	}
-
-	@Override
 	public void close() {
 		if (project != null) {
 			project.getToolServices().closeTool(this);
 		}
-
 	}
 
 	@Override
@@ -266,7 +260,7 @@ public class DummyTool extends PluginTool {
 	}
 
 	@Override
-	public boolean canClose(boolean isExiting) {
+	public boolean canClose() {
 		return true;
 	}
 
@@ -407,7 +401,7 @@ public class DummyTool extends PluginTool {
 
 	@Override
 	public void removeContextListener(DockingContextListener listener) {
-		//do nothing		
+		//do nothing
 	}
 
 	@Override
@@ -422,16 +416,16 @@ public class DummyTool extends PluginTool {
 
 	@Override
 	public void addServiceListener(ServiceListener listener) {
-		//do nothing		
+		//do nothing
 	}
 
 	@Override
 	public void removeServiceListener(ServiceListener listener) {
-		//do nothing		
+		//do nothing
 	}
 
 	@Override
-	public PluginClassManager getPluginClassManager() {
+	public PluginsConfiguration createPluginsConfigurations() {
 		return null;
 	}
 

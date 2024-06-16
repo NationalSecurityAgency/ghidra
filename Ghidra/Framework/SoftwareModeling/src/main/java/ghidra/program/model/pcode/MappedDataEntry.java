@@ -15,9 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A normal address based HighSymbol mapping with an associated Data object
@@ -52,24 +52,22 @@ public class MappedDataEntry extends MappedEntry {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		super.restoreXML(parser);
+	public void decode(Decoder decoder) throws DecoderException {
+		super.decode(decoder);
 		data = symbol.getProgram().getListing().getDataAt(storage.getMinAddress());
 	}
 
 	@Override
-	public boolean isReadOnly() {
-		if (data.isConstant()) {
-			return true;
-		}
-		return super.isReadOnly();
-	}
-
-	@Override
-	public boolean isVolatile() {
+	public int getMutability() {
 		if (data.isVolatile()) {
-			return true;
+			return MutabilitySettingsDefinition.VOLATILE;
 		}
-		return super.isVolatile();
+		if (data.isConstant()) {
+			return MutabilitySettingsDefinition.CONSTANT;
+		}
+		if (data.isWritable()) {
+			return MutabilitySettingsDefinition.NORMAL;
+		}
+		return super.getMutability();
 	}
 }

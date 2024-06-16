@@ -15,14 +15,14 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.app.util.viewer.proxy.VariableProxy;
 import ghidra.framework.options.Options;
@@ -48,11 +48,11 @@ public class VariableCommentFieldFactory extends AbstractVariableFieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private VariableCommentFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private VariableCommentFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
@@ -71,15 +71,15 @@ public class VariableCommentFieldFactory extends AbstractVariableFieldFactory {
 		String comment = sv.getComment();
 		String[] comments = StringUtilities.toLines(comment);
 		if ((comments != null) && (comments.length > 0)) {
-			FieldElement[] fields = new FieldElement[comments.length];
+			List<FieldElement> elements = new ArrayList<>(comments.length);
 			for (int i = 0; i < comments.length; i++) {
 				AttributedString as =
 					new AttributedString(comments[i], getColor(sv), getMetrics(sv));
-				fields[i] = new TextFieldElement(as, i, 0);
+				elements.add(new TextFieldElement(as, i, 0));
 			}
 
-			return ListingTextField.createMultilineTextField(this, proxy, fields, startX + varWidth,
-				width, Integer.MAX_VALUE, hlProvider);
+			return ListingTextField.createMultilineTextField(this, proxy, elements,
+				startX + varWidth, width, hlProvider);
 		}
 		return null;
 	}
@@ -177,16 +177,8 @@ public class VariableCommentFieldFactory extends AbstractVariableFieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new VariableCommentFieldFactory(formatModel, provider, displayOptions, fieldOptions);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.VARIABLE.getDefaultColor();
 	}
 }

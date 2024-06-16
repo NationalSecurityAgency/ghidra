@@ -16,10 +16,12 @@
 package agent.dbgeng.impl.dbgeng;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.Guid.IID;
 import com.sun.jna.platform.win32.Guid.REFIID;
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
@@ -35,28 +37,33 @@ public abstract class DbgEngUtil {
 	private DbgEngUtil() {
 	}
 
+	public record Preferred<T> (REFIID refiid, Class<? extends T> cls) {
+		public Preferred(IID iid, Class<? extends T> cls) {
+			this(new REFIID(iid), cls);
+		}
+	}
+
 	public static interface InterfaceSupplier {
 		HRESULT get(REFIID refiid, PointerByReference pClient);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <I> I tryPreferredInterfaces(Class<I> cls,
-			Map<REFIID, ? extends Class<?>> preferred, InterfaceSupplier supplier) {
+	public static <I, T> I tryPreferredInterfaces(Class<I> cls, List<Preferred<T>> preferred,
+			InterfaceSupplier supplier) {
 		PointerByReference ppClient = new PointerByReference();
-		for (Map.Entry<REFIID, ? extends Class<?>> ent : preferred.entrySet()) {
+		for (Preferred<T> pref : preferred) {
 			try {
-				COMUtils.checkRC(supplier.get(ent.getKey(), ppClient));
+				COMUtils.checkRC(supplier.get(pref.refiid, ppClient));
 				if (ppClient.getValue() == null) {
 					continue;
 				}
-				Object impl =
-					ent.getValue().getConstructor(Pointer.class).newInstance(ppClient.getValue());
-				Method instanceFor = cls.getMethod("instanceFor", ent.getValue());
+				T impl = pref.cls.getConstructor(Pointer.class).newInstance(ppClient.getValue());
+				Method instanceFor = cls.getMethod("instanceFor", pref.cls);
 				Object instance = instanceFor.invoke(null, impl);
 				return (I) instance;
 			}
 			catch (COMException e) {
-				Msg.debug(DbgEngUtil.class, e + " (" + ent.getValue() + ")");
+				Msg.debug(DbgEngUtil.class, e + " (" + pref.cls + ")");
 				// TODO: Only try next on E_NOINTERFACE?
 				// Try next
 			}

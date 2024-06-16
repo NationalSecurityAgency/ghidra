@@ -15,11 +15,9 @@
  */
 package ghidra.app.plugin.core.calltree;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,10 +45,6 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 	private OutgoingFunctionCallNode node;
 	private String nodeAddress = "0x0000";
 
-	public OutgoingFunctionCallNodeTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		builder = new ToyProgramBuilder("Call Node Test", true);
@@ -61,7 +55,9 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		program = builder.getProgram();
 
 		Address source = builder.addr("0x1000"); // fake
-		node = new OutgoingFunctionCallNode(program, function, source, true, new AtomicInteger(5));
+		CallTreeOptions callTreeOptions = new CallTreeOptions();
+		callTreeOptions = callTreeOptions.withRecurseDepth(5);
+		node = new OutgoingFunctionCallNode(program, function, source, callTreeOptions);
 	}
 
 	@Test

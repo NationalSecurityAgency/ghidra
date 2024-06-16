@@ -23,24 +23,23 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class ElfStringTable implements ElfFileSection {
 
-	private ElfHeader header;
+	private final ElfHeader header;
 
-	private ElfSectionHeader stringTableSection; // may be null
-	private long fileOffset;
-	private long addrOffset;
-	private long length;
+	private final ElfSectionHeader stringTableSection; // may be null
+	private final long fileOffset;
+	private final long addrOffset;
+	private final long length;
 
 	/**
 	 * Construct and parse an Elf string table
-	 * @param reader the binary reader containing the elf string table
 	 * @param header elf header
 	 * @param stringTableSection string table section header or null if associated with a dynamic table entry
 	 * @param fileOffset symbol table file offset
 	 * @param addrOffset memory address of symbol table (should already be adjusted for prelink)
 	 * @param length length of symbol table in bytes of -1 if unknown
 	 */
-	public ElfStringTable(BinaryReader reader, ElfHeader header,
-			ElfSectionHeader stringTableSection, long fileOffset, long addrOffset, long length) {
+	public ElfStringTable(ElfHeader header, ElfSectionHeader stringTableSection, long fileOffset,
+			long addrOffset, long length) {
 		this.header = header;
 		this.stringTableSection = stringTableSection;
 		this.fileOffset = fileOffset;
@@ -50,7 +49,7 @@ public class ElfStringTable implements ElfFileSection {
 
 	/**
 	 * Read string from table at specified relative table offset
-	 * @param reader byte reader
+	 * @param reader byte reader (position remains unchanged)
 	 * @param stringOffset table relative string offset
 	 * @return string or null on error
 	 */
@@ -62,7 +61,7 @@ public class ElfStringTable implements ElfFileSection {
 			if (stringOffset >= length) {
 				throw new IOException("String read beyond table bounds");
 			}
-			return reader.readAsciiString(fileOffset + stringOffset);
+			return reader.readUtf8String(fileOffset + stringOffset).trim();
 		}
 		catch (IOException e) {
 			header.logError(

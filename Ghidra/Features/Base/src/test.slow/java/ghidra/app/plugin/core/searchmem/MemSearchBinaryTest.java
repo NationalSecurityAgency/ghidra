@@ -107,6 +107,17 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		myTypeText("01110000 01110000");
 		assertEquals("01110000 01110000", valueField.getText());
 	}
+	
+	@Test
+	public void testBinaryPasteNumberWithPrefix() {
+		// paste a number with a binary prefix;
+		// the prefix should be removed before the insertion
+		setValueText("0b00101010");
+		assertEquals("00101010", valueField.getText());
+		
+		setValueText("0B1010 10");
+		assertEquals("1010 10", valueField.getText());
+	}
 
 	@Test
 	public void testBinarySearch() throws Exception {
@@ -166,7 +177,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		Address addr = addr(0x01001000);
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test", new ProgramLocation(program,
 			addr), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// enter a Binary value and hit the search button
 		setValueText("01110101");

@@ -15,15 +15,16 @@
  */
 package ghidra.app.plugin.match;
 
+import java.util.*;
+
 import generic.stl.Pair;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.search.trie.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
 
 public class MatchData {
 	private MatchData() {
@@ -67,7 +68,7 @@ public class MatchData {
 
 		DataIterator aProgDataIter = aProgram.getListing().getDefinedData(setA, true);
 		while (aProgDataIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Data aData = aProgDataIter.next();
 			final int length = aData.getLength();
@@ -80,7 +81,10 @@ public class MatchData {
 						bytes = aData.getBytes();
 					}
 					catch (MemoryAccessException e) {
-						throw new RuntimeException(e);
+						// if all the bytes for this data cannot be accessed then skip it
+						Msg.warn(MatchData.class, "Cannot process data at " + aData.getAddress() +
+							" because it runs into uninitialized memory.");
+						continue;
 					}
 					byte first = bytes[0];
 					for (int ii = 1; ii < bytes.length; ++ii) {
@@ -97,7 +101,10 @@ public class MatchData {
 							bytes = aData.getBytes();
 						}
 						catch (MemoryAccessException e) {
-							throw new RuntimeException(e);
+							// if all the bytes for this data cannot be accessed then skip it
+							Msg.warn(MatchData.class, "Cannot process data at " +
+								aData.getAddress() + " because it runs into uninitialized memory.");
+							continue;
 						}
 					}
 					ByteTrieNodeIfc<Pair<Set<Address>, Set<Address>>> node = trie.find(bytes);
@@ -150,7 +157,7 @@ public class MatchData {
 		monitor.initialize(searchResults.size());
 		monitor.setMessage("(3 of 4) Post-process search results");
 		for (SearchResult<Address, Pair<Set<Address>, Set<Address>>> searchResult : searchResults) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Address bLocation = searchResult.getPosition();
 			if (bLocation.getOffset() % alignment != 0) {
@@ -183,7 +190,7 @@ public class MatchData {
 		monitor.initialize(searchResults.size());
 		monitor.setMessage("(4 of 4) Create match objects");
 		for (SearchResult<Address, Pair<Set<Address>, Set<Address>>> searchResult : searchResults) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			ByteTrieNodeIfc<Pair<Set<Address>, Set<Address>>> node = searchResult.getNode();
 			if (!done.contains(node)) {

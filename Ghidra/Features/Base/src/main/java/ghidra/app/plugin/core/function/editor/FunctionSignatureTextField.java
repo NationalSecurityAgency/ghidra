@@ -15,10 +15,8 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import static java.awt.Color.blue;
-import static java.awt.Color.red;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,16 +26,25 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 import docking.actions.KeyBindingUtils;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.util.Swing;
 
 class FunctionSignatureTextField extends JTextPane {
 	private static final String ENTER_ACTION_NAME = "ENTER";
 	private static final String ESCAPE_ACTION_NAME = "ESCAPE";
 	private static final String TAB_ACTION_NAME = "TAB";
-	public static Color DEFAULT_COLOR = Color.black;
-	public static Color PARAMETER_NAME_COLOR = new Color(155, 50, 155);
-	public static Color FUNCTION_NAME_COLOR = blue;
-	public static Color ERROR_NAME_COLOR = red;
+
+	private static final String FONT_ID = "font.plugin.function.text.editor";
+
+	public static Color DEFAULT_COLOR =
+		new GColor("color.fg.plugin.function.editor.dialog.textfield.default");
+	public static Color PARAMETER_NAME_COLOR =
+		new GColor("color.fg.plugin.function.editor.dialog.textfield.parameter");
+	public static Color FUNCTION_NAME_COLOR =
+		new GColor("color.fg.plugin.function.editor.dialog.textfield.function.name");
+	public static Color ERROR_NAME_COLOR =
+		new GColor("color.fg.plugin.function.editor.dialog.textfield.error");
 
 	private StyledDocument doc;
 	private SimpleAttributeSet paramNameAttributes;
@@ -50,8 +57,7 @@ class FunctionSignatureTextField extends JTextPane {
 	private SimpleAttributeSet errorAttributes;
 
 	FunctionSignatureTextField() {
-		Font myFont = getFont();
-		setFont(myFont.deriveFont(24.0f));
+		Gui.registerFont(this, FONT_ID);
 		doc = getStyledDocument();
 		AttributeSet inputAttributes = getInputAttributes();
 

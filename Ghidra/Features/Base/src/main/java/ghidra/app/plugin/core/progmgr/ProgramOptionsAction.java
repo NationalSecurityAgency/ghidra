@@ -27,7 +27,7 @@ public class ProgramOptionsAction extends AbstractProgramNameSwitchingAction {
 	public ProgramOptionsAction(ProgramManagerPlugin plugin) {
 		super(plugin, "Program Options");
 		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_EDIT, "P&rogram Options..." });
+			new MenuData(new String[] { ToolConstants.MENU_EDIT, "Program Options" });
 		menuData.setMenuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP);
 		menuData.setMenuSubGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP + "b");
 		setMenuBarData(menuData);
@@ -39,8 +39,8 @@ public class ProgramOptionsAction extends AbstractProgramNameSwitchingAction {
 			getMenuBarData().setMenuItemName("Program Options");
 		}
 		else {
-			String programName = "'" + program.getDomainFile().getName() + "'";
-			getMenuBarData().setMenuItemName("Options for " + programName + "...");
+			String menuString = "Options for '%s'".formatted(program.getDomainFile().getName());
+			getMenuBarData().setMenuItemNamePlain(menuString);
 		}
 	}
 

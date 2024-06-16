@@ -40,6 +40,7 @@ define token instrThumb (16)
   op9=(9,15)
   op11=(11,15)
   op12=(12,15)
+  op13=(13,15)
   op0=(0,15)
   sop0407=(4,7)
   sop0507=(5,7)
@@ -55,8 +56,10 @@ define token instrThumb (16)
   Rd0003=(0,3)
   Rd0810=(8,10)
   Rd0811=(8,11)
+  Rd1215hi=(12,15)
   Rn0002=(0,2)
   Rn0003=(0,3)
+  Rd0003hi=(0,3)
   Rn0305=(3,5)
   Rn0810=(8,10)
   Rm0305=(3,5)
@@ -106,8 +109,13 @@ define token instrThumb (16)
 
   thcond=(8,11)
   thcpn=(8,11)
+  thcop=(8,10)
   thopcode1=(4,7)
+  thop1=(4,6)
   thopcode2=(5,7)
+  thop2=(7,7)
+  thopcode3=(0,5)
+  thop3=(4,5)
   l07=(7,7)
   l11=(11,11)
   h1=(7,7)
@@ -194,20 +202,23 @@ define token instrThumb (16)
   thc1315=(13,15)
   thc1415=(14,15)
   thc1515=(15,15)
+
 ;
 
 attach variables [ Rd0002 Rd0810 Rn0002 Rn0305  Rn0810 Rm0305 Rm0608 Rs0305 ]
                  [ r0 r1 r2 r3 r4 r5 r6 r7 ];
 
 attach variables [ Rm0003 Rm0306 Rd0811 Rn0003 Rt1215 Rt0811 Ra1215 Rd0003 part2Rt part2Rd0003 ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
+attach variables [ Rd1215hi Rd0003hi ] [ r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc _ ];
 
 attach variables [ thCRn thCRd thCRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ]; 	
 
 attach names [ thcpn ] [ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15  ];
+attach names [ thcop ] [ p0 p1 p2 p3 p4 p5 p6 p7  ];
 
 attach variables [ hrn0002 hrm0305 hrd0002 ]
                  [ r8 r9 r10 r11 r12 sp lr pc ];
-                 
+
 macro th_addflags(op1,op2) {
   tmpCY = carry(op1,op2);
   tmpOV = scarry(op1,op2);
@@ -260,6 +271,33 @@ macro th_logicflags() {
 
 macro th_affectflags() {
   CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV;
+}
+
+macro readAPSR_nzcvq(r) {
+# TODO: GE bits have not been included
+	r = zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27;
+}
+
+macro writeAPSR_nzcvq(r) {
+# TODO: GE bits have not been included
+  local tmp = r >> 27 & 0x1f;
+  Q  = ((tmp     ) & 0x1) != 0;
+  OV = ((tmp >> 1) & 0x1) != 0;
+  CY = ((tmp >> 2) & 0x1) != 0;
+  ZR = ((tmp >> 3) & 0x1) != 0;
+  NG = ((tmp >> 4) & 0x1) != 0;
+}
+
+macro readAPSR_nzcv(r) {
+	r = zext( (NG<<3) | (ZR<<2) | (CY<<1) | (OV) ) << 28;
+}
+
+macro writeAPSR_nzcv(r) {
+  local tmp = r >> 28 & 0xf;
+  OV = ((tmp)      & 0x1) != 0;
+  CY = ((tmp >> 1) & 0x1) != 0;
+  ZR = ((tmp >> 2) & 0x1) != 0;
+  NG = ((tmp >> 3) & 0x1) != 0;
 }
 
 ###############################################################################
@@ -883,7 +921,7 @@ thsdec4: thsdec5					is thc0404=0 & thsdec5				{ }
 thsdec3: r3							is thc0303=1 & r3 & thc0415=0		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
 thsdec3: r3,thsdec4					is thc0303=1 & thsdec4 & r3					{ * mult_addr=r3; mult_addr = mult_addr - 4; }
 thsdec3: thsdec4					is thc0303=0 & thsdec4				{ }
-thsdec2: r2							is thc0202=1 & r2 & thc0415=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+thsdec2: r2							is thc0202=1 & r2 & thc0315=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
 thsdec2: r2,thsdec3					is thc0202=1 & thsdec3 & r2					{ * mult_addr=r2; mult_addr = mult_addr - 4; }
 thsdec2: thsdec3					is thc0202=0 & thsdec3				{ }
 thsdec1: r1							is thc0101=1  & r1 & thc0215=0		{ * mult_addr=r1; mult_addr = mult_addr - 4; }
@@ -1024,11 +1062,8 @@ RtGotoCheck:       is Rt1215 {}
 #
 
 
-@if defined(VERSION_6T2) || defined(VERSION_7)
-# Ensure that the recursive rule for ARMcond is applied for assembly
+# Ensure that the condition check phase has been completed
 with : ARMcondCk=1 {
-@endif
-
 
 :adc^CheckInIT_CZNO^ItCond	Rd0002,Rm0305 		is TMode=1 & ItCond & op6=0x105 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
@@ -1367,7 +1402,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:bic^ItCond   Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=1 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
+:bic^thSBIT_ZN^ItCond   Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=1 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   build ThumbExpandImm12;
@@ -1446,22 +1481,31 @@ macro th_set_carry_for_asr(op1,shift_count) {
 
 @ifndef VERSION_6T2
 
-:bl^ItCond 	"#"^off 			is TMode=1 & ItCond & op11=0x1e & soffset11 [ off = inst_start + 4 + (soffset11 << 12); ]
+:bl^ItCond "#"^off		is TMode=1 & ItCond & op11=0x1e & soffset11 [ off = inst_start + 4 + (soffset11 << 12); ]
 {
   build ItCond;
   lr = off:4;
 }
 
-:bl^ItCond 	"#"^off 			is TMode=1 & ItCond & op11=0x1f & offset11 [ off = offset11 << 1; ]
+:bl^ItCond "#"^off		is TMode=1 & ItCond & op11=0x1f & offset11 [ off = offset11 << 1; ]
 {
   build ItCond;
   local dest = lr + off:4;
   lr = inst_next|1;
   SetThumbMode(1);
-  goto [dest];
+  call [dest];
 }
 
-:blx^ItCond 	"#"^off 			is TMode=1 & ItCond & op11=0x1d & offset11 & thc0000=0 [ off = offset11 << 1; ]
+:bl^ItCond lr			is TMode=1 & ItCond & op11=0x1f & offset11=0 & lr
+{
+  build ItCond;
+  local dest = lr;
+  lr = inst_next|1;
+  SetThumbMode(1);
+  call [dest];
+}
+
+:blx^ItCond "#"^off 	is TMode=1 & ItCond & op11=0x1d & offset11 & thc0000=0 [ off = offset11 << 1; ]
 {
   build ItCond;
   local dest = (lr & (~0x3)) + off:4;
@@ -1469,6 +1513,16 @@ macro th_set_carry_for_asr(op1,shift_count) {
   SetThumbMode(0);
   call [dest];
 }
+
+:blx^ItCond lr			is TMode=1 & ItCond & op11=0x1d & offset11=0 & thc0000=0 & lr
+{
+  build ItCond;
+  local dest = (lr & (~0x3));
+  lr = inst_next|1;
+  SetThumbMode(0);
+  call [dest];
+}
+
 @endif
 
 :bl^ItCond 	ThAddr24 			is TMode=1 & CALLoverride=1 & ItCond & (op11=0x1e; part2c1415=3 & part2c1212=1) & ThAddr24
@@ -1573,6 +1627,7 @@ bxns: "ns" is thc0002=0b100 { }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
+@ifndef CDE
 :cdp^ItCond thcpn,thopcode1,thCRd,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thopcode1 & thCRn; thCRd & thcpn & thopcode2 & thc0404=0 & thCRm
 {
   build ItCond;
@@ -1590,6 +1645,7 @@ bxns: "ns" is thc0002=0b100 { }
   t_op2:4 = thopcode2;
   coprocessor_function2(t_cpn,t_op1,t_op2,thCRd,thCRn,thCRm);
 }
+@endif #CDE
 
 define pcodeop IndexCheck;
 
@@ -1611,7 +1667,7 @@ define pcodeop IndexCheck;
 :clz^ItCond	Rd0811,Rm0003		is TMode=1 & ItCond & op4=0xfab & Rm0003; op12=15 & Rd0811
 {
   build ItCond;
-  Rd0811 = count_leading_zeroes(Rm0003);
+  Rd0811 = lzcount(Rm0003);
 }
 
 :cmn^ItCond	Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=8 & thc0404=1 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12
@@ -1886,6 +1942,7 @@ XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
 	# just sets up the condition and If Then/Else mask
 }
 
+@ifndef CDE
 :ldc^ItCond thcpn,thCRd,taddrmode5 	is (TMode=1 & ItCond & op9=0x76 & thN6=0 & thL4=1; thCRd & thcpn) & taddrmode5
 {
   build ItCond;
@@ -1917,7 +1974,7 @@ XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
   t_cpn:4 = thcpn;
   coprocessor_loadlong(t_cpn,thCRd,taddrmode5);
 }
-
+@endif # CDE
 @endif # VERSION_6T2 || VERSION_7
 
 :ldmia^ItCond	Rn_exclaim,ldbrace	is TMode=1 & ItCond & op11=0x19 & Rn_exclaim & ldbrace & Rn_exclaim_WB
@@ -2117,6 +2174,22 @@ define pcodeop ExclusiveAccess;
   Rt1215 = *tmp;
 }
 
+# overlaps patterns with the other ldr intructions when Rn==1111, therefore it must occur first
+:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf85 & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
+{
+  build ItCond;
+  build PcrelOffset12;
+  Rt1215 = PcrelOffset12:4;
+  build RtGotoCheck;
+}
+
+:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8d & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
+{
+  build ItCond;
+  build PcrelOffset12;
+  Rt1215 = PcrelOffset12:4;
+  build RtGotoCheck;
+}
 
 :ldr^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf8d; Rt1215 & RtGotoCheck) & RnIndirect12
 {
@@ -2131,23 +2204,6 @@ define pcodeop ExclusiveAccess;
   build ItCond;
   build RnIndirectPUW;
   Rt1215 = *RnIndirectPUW;
-  build RtGotoCheck;
-}
-
-:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8d & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
-{
-  build ItCond;
-  build PcrelOffset12;
-  Rt1215 = PcrelOffset12:4;
-  build RtGotoCheck;
-}
-
-# overlaps pattern with next ldr intruction, must occur first
-:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf85 & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
-{
-  build ItCond;
-  build PcrelOffset12;
-  Rt1215 = PcrelOffset12:4;
   build RtGotoCheck;
 }
 
@@ -2167,6 +2223,23 @@ define pcodeop ExclusiveAccess;
   build RtGotoCheck;
 }
 
+:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf81 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   build PcrelOffset12;
+   tmp:1 = PcrelOffset12:1;
+   Rt1215 = zext(tmp);
+}
+
+# overlaps patterns with the other ldrb intructions when Rn==1111, therefore it must occur first
+:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf89 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   build PcrelOffset12;
+   tmp:1 = PcrelOffset12:1;
+   Rt1215 = zext(tmp);
+}
+
 :ldrb^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf89; Rt1215) & RnIndirect12
 {
    build ItCond;
@@ -2183,21 +2256,6 @@ define pcodeop ExclusiveAccess;
    Rt1215 = zext(tmp);
 }
 
-:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf89 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   build PcrelOffset12;
-   tmp:1 = PcrelOffset12:1;
-   Rt1215 = zext(tmp);
-}
-:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf81 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   build PcrelOffset12;
-   tmp:1 = PcrelOffset12:1;
-   Rt1215 = zext(tmp);
-}
-
 :ldrb^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
 {
    build ItCond;
@@ -2206,12 +2264,24 @@ define pcodeop ExclusiveAccess;
   Rt1215 = zext(val);
 }
 
+
 :ldrbt^ItCond^".w"    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
    build ItCond;
   local tmp = Rn0003 + Immed8;
   val:1 = *tmp;
   Rt1215 = zext(val);
+}
+
+
+# overlaps patterns with the other ldrd intructions when Rn==1111, therefore it must occur first
+:ldrd^ItCond  Rt1215,Rt0811,Pcrel8_s8         is TMode=1 & ItCond & op9=0x74 & thc0606=1 & thc0404=1 & sop0003=15; Rt1215 & Rt0811 & Pcrel8_s8
+{
+   build ItCond;
+   build Pcrel8_s8;
+   local val = Pcrel8_s8;
+   Rt1215 = val(4);
+   Rt0811 = val(0);
 }
 
 :ldrd^ItCond    Rt1215,Rt0811,RnIndirectPUW1   is TMode=1 & ItCond & (op9=0x74 & thc0606=1 & thc0404=1 & Rn0003; Rt1215 & Rt0811) & $(RN_INDIRECT_PUW1)
@@ -2222,13 +2292,42 @@ define pcodeop ExclusiveAccess;
   Rt0811 = *(RnIndirectPUW1+4);
 }
 
-:ldrd^ItCond  Rt1215,Rt0811,Pcrel8_s8         is TMode=1 & ItCond & op9=0x74 & thc0606=1 & thc0404=1 & sop0003=15; Rt1215 & Rt0811 & Pcrel8_s8
+
+# pldw must come before ldrh.w because of overlap of Rt != 1111 in ldrh.w
+:pldw^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op6=0x3e2 & thwbit=1 & thc0404=1 & Rn0003; op12=0xf & offset12
+{
+  build ItCond;
+  addr:4 = Rn0003 + offset12;
+  HintPreloadDataForWrite(addr);
+}
+
+:pldw^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xfc & immed8
+{
+  build ItCond;
+  addr:4 = Rn0003 - immed8;
+  	HintPreloadDataForWrite(addr);
+}
+
+:pldw^ItCond	Rn0003,Rm0003,"lsl #"^thc0405 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xf0 & thc0607=0 & thc0405 & Rm0003
+{
+  build ItCond;
+  addr:4 = Rn0003 + (Rm0003 << thc0405);
+  	HintPreloadDataForWrite(addr);
+}
+
+
+# overlaps patterns with the other ldrh intructions when Rn==1111, therefore it must occur first
+:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf83 & sop0003=15; Rt1215) & PcrelOffset12
 {
    build ItCond;
-   build Pcrel8_s8;
-   local val = Pcrel8_s8;
-   Rt1215 = val(4);
-   Rt0811 = val(0);
+   local tmp = PcrelOffset12:2;
+   Rt1215 = zext(tmp);
+}
+:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8b & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   tmp:2 = PcrelOffset12:2;
+   Rt1215 = zext(tmp);
 }
 
 :ldrh.w^ItCond	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf8B; Rt1215) & RnIndirect12
@@ -2244,19 +2343,6 @@ define pcodeop ExclusiveAccess;
    build ItCond;
    build RnIndirectPUW;
    tmp:2 = *RnIndirectPUW;
-   Rt1215 = zext(tmp);
-}
-
-:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf83 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   local tmp = PcrelOffset12:2;
-   Rt1215 = zext(tmp);
-}
-:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8b & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   tmp:2 = PcrelOffset12:2;
    Rt1215 = zext(tmp);
 }
 
@@ -2276,25 +2362,56 @@ define pcodeop ExclusiveAccess;
   Rt1215 = zext(val);
 }
 
-:ldrsb^ItCond".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12
+
+# pli moevd above ldrsb to avoid conflict for ldrsb when Rt == 1111
+:pli^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op4=0xf99 & Rn0003; op12=0xf & offset12
+{
+  build ItCond;
+  addr:4 = Rn0003 + offset12;
+  HintPreloadInstruction(addr);
+}
+
+:pli^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op8=0xfc & immed8
+{
+  build ItCond;
+  addr:4 = Rn0003 - immed8;
+  HintPreloadInstruction(addr);
+}
+
+:pli^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
+{
+   build ItCond;
+   HintPreloadInstruction(PcrelOffset12);
+}
+
+:pli^ItCond	Rn0003,Rm0003"lsl #"^thc0405 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op6=0x3c0 & thc0405 & Rm0003
+{
+  build ItCond;
+  addr:4 = Rn0003 + (Rm0003 << thc0405);
+  HintPreloadInstruction(addr);
+}
+
+
+# overlaps patterns with the other ldrsb intructions when Rn==1111, therefore it must occur first
+:ldrsb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   tmp:1 = *PcrelOffset12;
+   Rt1215 = sext(tmp);
+}
+
+:ldrsb^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12
 {
    build ItCond;
    tmp:1 = *RnIndirect12;
    Rt1215 = sext(tmp);
 }
 
-:ldrsb^ItCond".w"	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf91; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
+:ldrsb^ItCond^".w"	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf91; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
 {
    build ItCond;
    build RnIndirectPUW;
    tmp:1 = *RnIndirectPUW;
-   Rt1215 = sext(tmp);
-}
-
-:ldrsb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   tmp:1 = *PcrelOffset12;
    Rt1215 = sext(tmp);
 }
 
@@ -2314,6 +2431,16 @@ define pcodeop ExclusiveAccess;
   Rt1215 = sext(val);
 }
 
+
+# overlaps patterns with the other ldr intructions when Rn==1111, therefore it must occur first
+:ldrsh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=1 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   build PcrelOffset12;
+   tmp:2 = *PcrelOffset12;
+   Rt1215 = sext(tmp);
+}
+
 :ldrsh^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf9B; Rt1215) & RnIndirect12
 {
    build ItCond;
@@ -2326,14 +2453,6 @@ define pcodeop ExclusiveAccess;
    build ItCond;
    build RnIndirectPUW;
    tmp:2 = *RnIndirectPUW;
-   Rt1215 = sext(tmp);
-}
-
-:ldrsh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=1 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   build PcrelOffset12;
-   tmp:2 = *PcrelOffset12;
    Rt1215 = sext(tmp);
 }
 
@@ -2463,7 +2582,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 
 
 @endif # VERSION_6T2 || VERSION_7
-
+@ifndef CDE
 :mcr^ItCond thcpn,thc0507,Rt1215,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thc0507 & thc0404=0 & thCRn; Rt1215 & thcpn & thopcode2 & thc0404=1 & thCRm
 {
   build ItCond;
@@ -2497,7 +2616,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   t_op:4 = thopcode1;
   coprocessor_moveto2(t_cpn,t_op,Rt1215,Rn0003,thCRm);
 }
-
+@endif # CDE
 
 :mov^CheckInIT_ZN^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=4 & Rd0810 & Immed8 & CheckInIT_ZN
 {
@@ -2574,7 +2693,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   Rd0811 = (zext(Immed16) << 16) | (Rd0811 & 0xffff);
 }
 
-
+@ifndef CDE
 :mrc^ItCond thcpn,thc0507,Rt1215,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thc0507 & thc0404=1 & thCRn; Rt1215 & thcpn & thopcode2 & thc0404=1 & thCRm
 {
   build ItCond;
@@ -2582,6 +2701,15 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   t_op1:4 = thc0507;
   t_op2:4 = thopcode2;
   Rt1215 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+}
+:mrc^ItCond thcpn,thc0507,"APSR_nzcv",thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thc0507 & thc0404=1 & thCRn; Rt1215=15 & thcpn & thopcode2 & thc0404=1 & thCRm
+{
+  build ItCond;
+  t_cpn:4 = thcpn;
+  t_op1:4 = thc0507;
+  t_op2:4 = thopcode2;
+  local tmp:4 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+  writeAPSR_nzcv(tmp);
 }
 
 :mrc2^ItCond thcpn,thc0507,Rt1215,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xfe & thc0507 & thc0404=1 & thCRn; Rt1215 & thcpn & thopcode2 & thc0404=1 & thCRm
@@ -2591,6 +2719,15 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   t_op1:4 = thc0507;
   t_op2:4 = thopcode2;
   Rt1215 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+}
+:mrc2^ItCond thcpn,thc0507,"APSR_nzcv",thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xfe & thc0507 & thc0404=1 & thCRn; Rt1215=15 & thcpn & thopcode2 & thc0404=1 & thCRm
+{
+  build ItCond;
+  t_cpn:4 = thcpn;
+  t_op1:4 = thc0507;
+  t_op2:4 = thopcode2;
+  local tmp:4 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+  writeAPSR_nzcv(tmp);
 }
 
 :mrrc^ItCond thcpn,thopcode1,Rt1215,Rn0003,thCRm   is TMode=1 & ItCond & op4=0xec5 & Rn0003; Rt1215 & thcpn & thopcode1 & thCRm
@@ -2610,22 +2747,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   Rt1215 = coprocessor_movefromRt(t_cpn,t_op,thCRm);
   Rn0003 = coprocessor_movefromRt2(t_cpn,t_op,thCRm);
 }
-
-macro readAPSR(r) {
-# TODO: GE bits have not been included
-	r = r | zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27;
-}
-
-macro writeAPSR(r) {
-# TODO: GE bits have not been included
-  local tmp = r >> 27 & 0x1f;
-  Q  = ((tmp     ) & 0x1) != 0;
-  OV = ((tmp >> 1) & 0x1) != 0;
-  CY = ((tmp >> 2) & 0x1) != 0;
-  ZR = ((tmp >> 3) & 0x1) != 0;
-  NG = ((tmp >> 4) & 0x1) != 0;
-}
-
+@endif #CDE
 @if defined(VERSION_7M)
 
 define pcodeop getMainStackPointer;
@@ -2644,7 +2766,7 @@ mrsipsr: 		is thc0000=0 { }
 mrsepsr: "e"	is thc0101=1 { }
 mrsepsr:		is thc0101=0 { }
 mrsapsr: 		is thc0202=1 { }
-mrsapsr: "a"	is thc0202=0 & Rd0811 { readAPSR(Rd0811); }
+mrsapsr: "a"	is thc0202=0 & Rd0811 { readAPSR_nzcvq(Rd0811); }
 
 mrspsr: mrsipsr^mrsepsr^mrsapsr^"psr"	is	mrsipsr & mrsepsr & mrsapsr & Rd0811	{
 	Rd0811 = 0;
@@ -2742,7 +2864,7 @@ control: "control" 			is epsilon {}
 {
   build ItCond;
   tmp:4 = 0;
-  readAPSR(tmp);
+  readAPSR_nzcvq(tmp);
   Rd0811 = tmp;
 }
 
@@ -2762,7 +2884,7 @@ msrepsr: 		is thc0101=0 { }
 msrapsr: 		is thc0202=1 { }
 msrapsr: "a"	is thc0202=0 & Rn0003 {
 	cpsr = cpsr | (Rn0003 & 0xf8000000);
-	writeAPSR(cpsr);
+	writeAPSR_nzcvq(cpsr);
 }
 
 msrpsr: msripsr^msrepsr^msrapsr^"psr"	is	msripsr & msrepsr & msrapsr	{
@@ -2877,7 +2999,7 @@ thcpsrmask: cpsr^thpsrmask	is thpsrmask & cpsr { export thpsrmask; }
   build ItCond;
   build thcpsrmask;
   cpsr = (cpsr& ~thcpsrmask) | (Rn0003 & thcpsrmask);
-  writeAPSR(cpsr);
+  writeAPSR_nzcvq(cpsr);
 }
 
 thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
@@ -3026,25 +3148,12 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   HintPreloadData(addr);
 }
 
-:pldw^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op6=0x3e2 & thwbit=1 & thc0404=1 & Rn0003; op12=0xf & offset12
-{
-  build ItCond;
-  addr:4 = Rn0003 + offset12;
-  HintPreloadDataForWrite(addr);
-}
 
 :pld^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=0 & thc0404=1 & Rn0003; op8=0xfc & immed8
 {
   build ItCond;
   addr:4 = Rn0003 - immed8;
   HintPreloadData(addr);
-}
-
-:pldw^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xfc & immed8
-{
-  build ItCond;
-  addr:4 = Rn0003 - immed8;
-  	HintPreloadDataForWrite(addr);
 }
 
 :pld^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf8 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
@@ -3060,40 +3169,9 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   HintPreloadData(addr);
 }
 
-:pldw^ItCond	Rn0003,Rm0003,"lsl #"^thc0405 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xf0 & thc0607=0 & thc0405 & Rm0003
-{
-  build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
-  	HintPreloadDataForWrite(addr);
-}
+# pld.w moved above ldrh to avoid conflicts
 
-
-:pli^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op4=0xf99 & Rn0003; op12=0xf & offset12
-{
-  build ItCond;
-  addr:4 = Rn0003 + offset12;
-  HintPreloadInstruction(addr);
-}
-
-:pli^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op8=0xfc & immed8
-{
-  build ItCond;
-  addr:4 = Rn0003 - immed8;
-  HintPreloadInstruction(addr);
-}
-
-:pli^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
-{
-   build ItCond;
-   HintPreloadInstruction(PcrelOffset12);
-}
-
-:pli^ItCond	Rn0003,Rm0003"lsl #"^thc0405 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op6=0x3c0 & thc0405 & Rm0003
-{
-  build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
-  HintPreloadInstruction(addr);
-}
+#pli moved above ldrsb
 
 
 @endif # VERSION_6T2 || VERSION_7
@@ -3739,7 +3817,7 @@ macro th_set_carry_for_ror(result, count) {
 :sdiv^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfb9 & Rn0003; op12=0xf & Rd0811 & thc0407=0xf & Rm0003
 {
     build ItCond;
-    local result = Rn0003 / Rm0003;
+    local result = Rn0003 s/ Rm0003;
     Rd0811 = result;
 }
 
@@ -4225,7 +4303,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 @endif # VERSION_6
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
-
+@ifndef CDE
 :stc^ItCond thcpn,thCRd,taddrmode5 	is (TMode=1 & ItCond & op9=0x76 & thN6=0 & thL4=0; thCRd & thcpn) & taddrmode5
 {
   build ItCond;
@@ -4257,6 +4335,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   t_cpn:4 = thcpn;
   coprocessor_storelong(t_cpn,thCRd,taddrmode5);
 }
+@endif # CDE
 
 :stm^ItCond    Rn0003,thstrlist_inc           is TMode=1 & ItCond & op11=0x1d & thc0910=0 & sop0608=2 & thwbit=0 & thc0404=0 & Rn0003; thc1515=0 & thc1313=0 & thstrlist_inc
 {
@@ -4449,13 +4528,14 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :strex^ItCond    Rd0811,Rt1215,[Rn0003,Immed8_4]   is TMode=1 & ItCond & op4=0xe84 & Rn0003; Rt1215 & Rd0811 & Immed8_4
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003 + Immed8_4;
+  local tmpRt = Rt1215;
   access:1 = hasExclusiveAccess(tmp);
   Rd0811 = 1;
   if (!access) goto inst_next;
   Rd0811 = 0;
-  *tmp = Rt1215;
+  *tmp = tmpRt;
 }
 
 @endif # VERSION_6T2 || VERSION_7
@@ -4464,39 +4544,41 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :strexb^ItCond    Rd0003,Rt1215,[Rn0003]   is TMode=1 & ItCond & op4=0xe8c & Rn0003; Rt1215 & thc0811=15 & thc0407=4 & Rd0003
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003;
+  local tmpRt = Rt1215;
   access:1 = hasExclusiveAccess(tmp);
   Rd0003 = 1;
   if (!access) goto inst_next;
   Rd0003 = 0;
-  local tmpRt1215 = Rt1215;
-  *tmp = tmpRt1215:1;
+  *tmp = tmpRt:1;
 }
 
 :strexh^ItCond    Rd0003,Rt1215,[Rn0003]   is TMode=1 & ItCond & op4=0xe8c & Rn0003; Rt1215 & thc0811=15 & thc0407=5 & Rd0003
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003;
+  local tmpRt = Rt1215;
   access:1 = hasExclusiveAccess(tmp);
   Rd0003 = 1;
   if (!access) goto inst_next;
   Rd0003 = 0;
-  local tmpRt1215 = Rt1215;
-  *tmp = tmpRt1215:1;
+  *tmp = tmpRt:2;
 }
 
 :strexd^ItCond    Rd0003,Rt1215,Rt0811,[Rn0003]   is TMode=1 & ItCond & op4=0xe8c & Rn0003; Rt1215 & Rt0811 & thc0407=7 & Rd0003
 {
    build ItCond;
   local tmp = Rn0003;
+  local tmpRt = Rt1215;
+  local tmpRt2 = Rt0811;
   access:1 = hasExclusiveAccess(tmp);
   Rd0003 = 1;
   if (!access) goto inst_next;
   Rd0003 = 0;
-  *tmp = Rt1215;
+  *tmp = tmpRt;
   tmp = tmp + 4;
-  *tmp = Rt0811;
+  *tmp = tmpRt2;
 }
 
 @endif # VERSION_7
@@ -4767,13 +4849,13 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    goto [pc];
 }
 
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=0 [ cloc = inst_next; ] 
+Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=0 & pc
 {
-   local tmp = Rm0003; tmp = cloc + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
+   local tmp = Rm0003; tmp = inst_next + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
 }
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ] 
+Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
 {
-   local tmp = Rm0003; tmp = cloc + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
+   local tmp = Rm0003; tmp = inst_next + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
 }
 
 :tbb^ItCond  Pcrel    is TMode=1 & ItCond & op4=0xe8d & thc0003=15; op8=0xf0 & thc0507=0 & thc0404=0 & Pcrel
@@ -5291,6 +5373,6 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
 	HintYield();
 }
+@endif #VERSION_6T2 || VERSION_7
 
 } # End with : ARMcondCk=1
-@endif # VERSION_6T2 || VERSION_7

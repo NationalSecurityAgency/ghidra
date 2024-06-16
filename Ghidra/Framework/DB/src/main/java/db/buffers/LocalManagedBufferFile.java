@@ -157,7 +157,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	 * <code>preSaveThread</code> corresponds to the PreSaveTask which creates the 
 	 * preSaveFile when this buffer file is updateable.
 	 */
-	//private Thread preSaveThread;
 	private PreSaveTask preSaveTask;
 
 	/**
@@ -228,8 +227,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 		setFreeIndexes(versionFileHandler.getFreeIndexList());
 		String[] names = versionFileHandler.getOldParameterNames();
 		clearParameters();
-		for (int i = 0; i < names.length; i++) {
-			setParameter(names[i], versionFileHandler.getOldParameter(names[i]));
+		for (String name : names) {
+			setParameter(name, versionFileHandler.getOldParameter(name));
 		}
 	}
 
@@ -545,7 +544,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 			TaskMonitor monitor) throws CancelledException, IOException {
 
 		if (monitor != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage("Opening versioned file for update...");
 			monitor.setProgress(0);
 		}
@@ -559,7 +558,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 		BufferFile changeDataFile = null;
 		try {
 			if (monitor != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Creating new file version...");
 			}
 			outFile.setVersionComment(fileComment);
@@ -607,7 +606,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized ManagedBufferFile getSaveFile() throws IOException {
 		try {
-			return getSaveFile(TaskMonitorAdapter.DUMMY_MONITOR);
+			return getSaveFile(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// unexpected
@@ -858,7 +857,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 					// ignore
 				}
 				if (taskMonitor != null) {
-					taskMonitor.checkCanceled();
+					taskMonitor.checkCancelled();
 				}
 			}
 		}

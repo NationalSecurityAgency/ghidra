@@ -5,7 +5,7 @@
             endian="little"
             size="32"
             variant="default"
-            version="2.13"
+            version="4.0"
             slafile="x86.sla"
             processorspec="x86.pspec"
             manualindexfile="../manuals/x86.idx"
@@ -16,6 +16,7 @@
     <compiler name="gcc" spec="x86gcc.cspec" id="gcc"/>
     <compiler name="Borland C++" spec="x86borland.cspec" id="borlandcpp"/>
     <compiler name="Delphi" spec="x86delphi.cspec" id="borlanddelphi"/>
+    <compiler name="golang" spec="x86-32-golang.cspec" id="golang"/>
     <external_name tool="gnu" name="i386:intel"/>
     <external_name tool="IDA-PRO" name="8086"/>
 	<external_name tool="IDA-PRO" name="80486p"/>
@@ -28,12 +29,14 @@
 	<external_name tool="IDA-PRO" name="p4"/>
 	<external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
+    <external_name tool="Golang.register.info.file" name="x86-32-golang.register.info"/>
+    <external_name tool="qemu" name="qemu-i386"/>
   </language>
   <language processor="x86"
             endian="little"
             size="32"
             variant="System Management Mode"
-            version="2.13"
+            version="4.0"
             slafile="x86.sla"
             processorspec="x86-16.pspec"
             manualindexfile="../manuals/x86.idx"
@@ -46,7 +49,7 @@
             endian="little"
             size="16"
             variant="Real Mode"
-            version="2.13"
+            version="4.0"
             slafile="x86.sla"
             processorspec="x86-16-real.pspec"
             manualindexfile="../manuals/x86.idx"
@@ -61,12 +64,12 @@
 	<external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="gnu" name="i8086"/>
     <external_name tool="gdis.disassembler.options.file" name="x86-16.gdis"/>
-    </language>
+  </language>
   <language processor="x86"
             endian="little"
             size="16"
             variant="Protected Mode"
-            version="2.13"
+            version="4.0"
             slafile="x86.sla"
             processorspec="x86-16.pspec"
             manualindexfile="../manuals/x86.idx"
@@ -76,12 +79,12 @@
 	<external_name tool="IDA-PRO" name="8086p"/>
     <external_name tool="gnu" name="i8086"/>
     <external_name tool="gdis.disassembler.options.file" name="x86-16.gdis"/>
-    </language>
-    <language processor="x86"
+  </language>
+  <language processor="x86"
             endian="little"
             size="64"
             variant="default"
-            version="2.13"
+            version="4.0"
             slafile="x86-64.sla"
             processorspec="x86-64.pspec"
             manualindexfile="../manuals/x86.idx"
@@ -90,9 +93,27 @@
     <compiler name="Visual Studio" spec="x86-64-win.cspec" id="windows"/>
     <compiler name="clang" spec="x86-64-win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86-64-gcc.cspec" id="gcc"/>
+    <compiler name="golang" spec="x86-64-golang.cspec" id="golang"/>
+    <compiler name="Swift" spec="x86-64-swift.cspec" id="swift"/>
     <external_name tool="gnu" name="i386:x86-64:intel"/>
     <external_name tool="gnu" name="i386:x86-64"/>
     <external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="DWARF.register.mapping.file" name="x86-64.dwarf"/>
+    <external_name tool="Golang.register.info.file" name="x86-64-golang.register.info"/>
+    <external_name tool="qemu" name="qemu-x86_64"/>
+  </language>
+  <language processor="x86"
+            endian="little"
+            size="64"
+            variant="compat32"
+            version="4.0"
+            slafile="x86-64.sla"
+            processorspec="x86-64-compat32.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:64:compat32">
+    <description>Intel/AMD 64-bit x86 in 32-bit compatibility mode (long mode off)</description>
+    <compiler name="Visual Studio" spec="x86win.cspec" id="windows"/>
+    <compiler name="gcc" spec="x86gcc.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
   </language>
 </language_definitions>

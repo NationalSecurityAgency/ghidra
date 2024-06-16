@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.symbol;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -30,7 +30,7 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class SymbolUtilities1Test extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -56,7 +56,7 @@ public class SymbolUtilities1Test extends AbstractGhidraHeadedIntegrationTest {
 		Memory memory = program.getMemory();
 		transactionID = program.startTransaction("Test");
 		memory.createInitializedBlock("test", addr(0), 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		symbolTable = program.getSymbolTable();
 		refMgr = program.getReferenceManager();
 		listing = program.getListing();
@@ -99,7 +99,7 @@ public class SymbolUtilities1Test extends AbstractGhidraHeadedIntegrationTest {
 			new ProgramProcessorContext(program.getProgramContext(), addr(0x200));
 		DumbMemBufferImpl membuf = new DumbMemBufferImpl(program.getMemory(), addr(0x200));
 		InstructionPrototype proto = program.getLanguage().parse(membuf, context, false);
-		listing.createInstruction(addr(0x200), proto, membuf, context);
+		listing.createInstruction(addr(0x200), proto, membuf, context, 0);
 		Symbol symbol = symbolTable.getPrimarySymbol(addr(0x200));
 		assertEquals("LAB_00000200", symbol.getName());
 

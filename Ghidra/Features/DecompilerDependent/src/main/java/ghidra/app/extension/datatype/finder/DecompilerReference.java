@@ -156,15 +156,17 @@ public abstract class DecompilerReference {
 	public static DataType getFieldDataType(ClangFieldToken field) {
 		DataType fieldDt = field.getDataType();
 		fieldDt = DecompilerReference.getBaseType(fieldDt);
-		if (fieldDt instanceof Structure) {
-			Structure parent = (Structure) fieldDt;
+		if (fieldDt instanceof Structure parent) {
 			int offset = field.getOffset();
 			int n = parent.getLength();
 			if (offset >= 0 && offset < n) {
 				DataTypeComponent dtc = parent.getComponentContaining(field.getOffset());
-				fieldDt = dtc.getDataType();
+				if (dtc != null) {
+					return dtc.getDataType();
+				}
 			}
 		}
+
 		return fieldDt;
 	}
 

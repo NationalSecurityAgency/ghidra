@@ -73,7 +73,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		implements OptionsChangeListener, BlockModelServiceListener, GraphDisplayBrokerListener {
 
 	private static final String PLUGIN_NAME = "Program Graph";
-
+	private static final String DEFAULT_BLOCK_MODEL_FOR_CALL_GRAPH = "Isolated Entry";
 	private static final String OPTIONS_PREFIX = PLUGIN_NAME + Options.DELIMITER;
 	private static final String MAX_CODE_LINES_DISPLAYED =
 		OPTIONS_PREFIX + "Max Code Lines Displayed";
@@ -105,18 +105,15 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	private GraphDisplayProvider defaultGraphService;
 
 	public ProgramGraphPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		intializeOptions();
 		registerProgramFlowGraphDisplayOptionsWithTool();
 	}
 
 	private void registerProgramFlowGraphDisplayOptionsWithTool() {
-		ProgramGraphDisplayOptions displayOptions =
-			new ProgramGraphDisplayOptions(new BlockFlowGraphType(), null);
-
-		// this will register Program Flow Graph Type options with the tool
-		HelpLocation help = new HelpLocation(getName(), "Program Graphs Display Options");
-		displayOptions.registerOptions(tool.getOptions("Graph"), help);
+		// We don't need one of this right now, but creating it will make sure it
+		// shows up in the tool options
+		new ProgramGraphDisplayOptions(new BlockFlowGraphType(), tool);
 	}
 
 	private void intializeOptions() {
@@ -188,15 +185,13 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private void createActions() {
 
-		new ActionBuilder("Graph Block Flow", getName())
-				.menuPath(MENU_GRAPH, "&Block Flow")
+		new ActionBuilder("Graph Block Flow", getName()).menuPath(MENU_GRAPH, "&Block Flow")
 				.menuGroup(MENU_GRAPH, "A")
 				.onAction(c -> graphBlockFlow())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Graph Code Flow", getName())
-				.menuPath(MENU_GRAPH, "C&ode Flow")
+		new ActionBuilder("Graph Code Flow", getName()).menuPath(MENU_GRAPH, "C&ode Flow")
 				.menuGroup(MENU_GRAPH, "B")
 				.onAction(c -> graphCodeFlow())
 				.enabledWhen(this::canGraph)
@@ -205,7 +200,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		new ActionBuilder("Graph Calls Using Default Model", getName())
 				.menuPath(MENU_GRAPH, "&Calls")
 				.menuGroup(MENU_GRAPH, "C")
-				.onAction(c -> graphSubroutines())
+				.onAction(c -> createDefaultCallGraph())
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 
@@ -237,8 +232,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 				.buildAndInstall(tool);
 
 		reuseGraphAction =
-			new ToggleActionBuilder("Reuse Graph", getName())
-					.menuPath(MENU_GRAPH, "Reuse Graph")
+			new ToggleActionBuilder("Reuse Graph", getName()).menuPath(MENU_GRAPH, "Reuse Graph")
 					.menuGroup("Graph Options")
 					.selected(reuseGraph)
 					.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
@@ -246,8 +240,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 					.buildAndInstall(tool);
 
 		appendGraphAction =
-			new ToggleActionBuilder("Append Graph", getName())
-					.menuPath(MENU_GRAPH, "Append Graph")
+			new ToggleActionBuilder("Append Graph", getName()).menuPath(MENU_GRAPH, "Append Graph")
 					.menuGroup("Graph Options")
 					.selected(false)
 					.onAction(c -> updateAppendAndReuseGraph())
@@ -312,7 +305,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 				.menuPath(MENU_GRAPH, "Calls Using Model", blockModelName)
 				.menuGroup(MENU_GRAPH, "C")
 				.helpLocation(helpLoc)
-				.onAction(c -> graphSubroutinesUsing(blockModelName))
+				.onAction(c -> createCallGraphUsing(blockModelName))
 				.enabledWhen(this::canGraph)
 				.buildAndInstall(tool);
 	}
@@ -325,11 +318,11 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		graph(new CodeFlowGraphType(), blockModelService.getActiveBlockModelName());
 	}
 
-	private void graphSubroutines() {
-		graph(new CallGraphType(), blockModelService.getActiveSubroutineModelName());
+	private void createDefaultCallGraph() {
+		createCallGraphUsing(DEFAULT_BLOCK_MODEL_FOR_CALL_GRAPH);
 	}
 
-	private void graphSubroutinesUsing(String modelName) {
+	private void createCallGraphUsing(String modelName) {
 		graph(new CallGraphType(), modelName);
 	}
 
@@ -349,10 +342,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		try {
 			CodeBlockModel model =
 				blockModelService.getNewModelByName(modelName, currentProgram, true);
-			BlockGraphTask task =
-				new BlockGraphTask(graphType, graphEntryPointNexus,
-				reuseGraph, appendToGraph, tool, currentSelection, currentLocation, model,
-				defaultGraphService);
+			BlockGraphTask task = new BlockGraphTask(graphType, graphEntryPointNexus, reuseGraph,
+				appendToGraph, tool, currentSelection, currentLocation, model, defaultGraphService);
 			task.setCodeLimitPerBlock(codeLimitPerBlock);
 			new TaskLauncher(task, tool.getToolFrame());
 		}

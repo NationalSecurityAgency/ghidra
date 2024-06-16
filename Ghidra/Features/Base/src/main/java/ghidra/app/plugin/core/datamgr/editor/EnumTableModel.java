@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.datamgr.editor;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.TableSortState;
 import ghidra.program.model.data.EnumDataType;
@@ -66,6 +68,9 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
+		if (columnIndex == VALUE_COL) {
+			return Long.class;
+		}
 		return String.class;
 	}
 
@@ -79,28 +84,8 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		switch (columnIndex) {
 			case NAME_COL:
 				return v.getName();
-
 			case VALUE_COL:
-				long mask;
-
-				switch (enuum.getLength()) {
-					case 1:
-						mask = 0xffL;
-						break;
-					case 2:
-						mask = 0xffffL;
-						break;
-					case 4:
-						mask = 0xffffffffL;
-						break;
-					default:
-					case 8:
-						mask = 0xffffffffffffffffL;
-						break;
-				}
-
-				return "0x" + Long.toHexString(v.getValue() & mask);
-
+				return v.getValue();
 			case COMMENT_COL:
 				return v.getComment();
 		}
@@ -200,7 +185,13 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		if (columnIndex == NAME_COL) {
 			return new EnumNameComparator();
 		}
-		return new EnumValueComparator();
+		else if (columnIndex == VALUE_COL) {
+			return new EnumValueComparator();
+		}
+		else if (columnIndex == COMMENT_COL) {
+			return new EnumCommentComparator();
+		}
+		return null;
 	}
 
 	EnumDataType getEnum() {
@@ -269,14 +260,15 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 			afterRow = 0;
 		}
 		long value = enumEntryList.get(afterRow).getValue() + 1;
-		if (isTooBig(value)) {
+		if (!isValidValue(value)) {
 			value = 0;
 		}
 		boolean wrapOK = value != 0;
 		while (enuum.getName(value) != null) {
-			if (isTooBig(++value)) {
+			if (!isValidValue(++value)) {
 				if (wrapOK) {
 					value = 0;
+					wrapOK = false;
 				}
 				else {
 					break;
@@ -286,17 +278,10 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		return value;
 	}
 
-	boolean isValueTooBigForLength(long value, int length) {
-		if (length < 8) {
-			long max = (1L << (8 * length)) - 1;
-			return value > max || value < 0;
-		}
-		return false;
-	}
-
-	private boolean isTooBig(long value) {
-		int len = enuum.getLength();
-		return isValueTooBigForLength(value, len);
+	private boolean isValidValue(long value) {
+		long min = enuum.getMinPossibleValue();
+		long max = enuum.getMaxPossibleValue();
+		return value >= min && value <= max;
 	}
 
 	private String getUniqueName() {
@@ -367,4 +352,10 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		}
 	}
 
+	private class EnumCommentComparator implements Comparator<EnumEntry> {
+		@Override
+		public int compare(EnumEntry entry1, EnumEntry entry2) {
+			return StringUtils.compare(entry1.getComment(), entry2.getComment());
+		}
+	}
 }

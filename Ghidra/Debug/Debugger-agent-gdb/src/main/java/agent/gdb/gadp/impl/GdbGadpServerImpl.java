@@ -21,8 +21,8 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.gadp.GdbGadpServer;
 import agent.gdb.model.impl.GdbModelImpl;
-import agent.gdb.pty.PtyFactory;
 import ghidra.dbg.gadp.server.AbstractGadpServer;
+import ghidra.pty.PtyFactory;
 
 public class GdbGadpServerImpl implements GdbGadpServer {
 	public class GadpSide extends AbstractGadpServer {

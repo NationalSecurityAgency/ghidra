@@ -15,21 +15,24 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
-import docking.widgets.table.AbstractDynamicTableColumn;
-import docking.widgets.table.RangeSetTableCellRenderer;
+import docking.widgets.table.*;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import generic.Span;
+import generic.Span.SpanSet;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.Trace;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueLifePlotColumn
-		extends AbstractDynamicTableColumn<ValueRow, RangeSet<Long>, Trace> {
+		extends AbstractDynamicTableColumn<ValueRow, SpanSet<Long, ?>, Trace> {
 
-	private final RangeSetTableCellRenderer<Long> cellRenderer = new RangeSetTableCellRenderer<>();
+	private final SpanSetTableCellRenderer<Long> cellRenderer = new SpanSetTableCellRenderer<>();
+	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
+		new RangeCursorTableHeaderRenderer<>(0L, this);
 
 	@Override
 	public String getColumnName() {
@@ -37,20 +40,35 @@ public class TraceValueLifePlotColumn
 	}
 
 	@Override
-	public RangeSet<Long> getValue(ValueRow rowObject, Settings settings, Trace data,
+	public LifeSet getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return rowObject.getLife();
 	}
 
 	@Override
-	public GColumnRenderer<RangeSet<Long>> getColumnRenderer() {
+	public GColumnRenderer<SpanSet<Long, ?>> getColumnRenderer() {
 		return cellRenderer;
 	}
 
-	// TODO: The header renderer
+	@Override
+	public GTableHeaderRenderer getHeaderRenderer() {
+		return headerRenderer;
+	}
 
-	public void setFullRange(Range<Long> fullRange) {
+	public void setFullRange(Lifespan fullRange) {
 		cellRenderer.setFullRange(fullRange);
-		// TODO: set header's full range, too
+		headerRenderer.setFullRange(fullRange);
+	}
+
+	public Span<Long, ?> getFullRange() {
+		return cellRenderer.getFullRange();
+	}
+
+	public void setSnap(long snap) {
+		headerRenderer.setCursorPosition(snap);
+	}
+
+	public void addSeekListener(SeekListener listener) {
+		headerRenderer.addSeekListener(listener);
 	}
 }

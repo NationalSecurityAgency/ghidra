@@ -16,11 +16,15 @@
 package docking;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.swing.JMenuBar;
 
 import docking.action.DockingActionIf;
 import docking.menu.*;
+import generic.concurrent.ReentryGuard;
+import generic.concurrent.ReentryGuard.Guarded;
+import ghidra.util.Msg;
 
 public class WindowActionManager {
 	private Map<DockingActionIf, DockingActionProxy> actionToProxyMap;
@@ -29,6 +33,24 @@ public class WindowActionManager {
 	private final WindowNode node;
 
 	private boolean disposed;
+
+	/**
+	 * Some actions' {@link DockingActionIf#isEnabledForContext(ActionContext)} methods may
+	 * inadvertently display an error dialog, allowing for the Swing thread to reenter and modify
+	 * the {@link #actionToProxyMap}. We want to allow this, but detect it and bail early.
+	 */
+	private ReentryGuard<Throwable> reentryGuard = new ReentryGuard<>() {
+		@Override
+		protected Throwable violated(boolean nested, Throwable previous) {
+			if (previous != null) {
+				return previous;
+			}
+			Throwable t = new Throwable();
+			Msg.error(WindowActionManager.this,
+				"Modified action list during context change update", t);
+			return t;
+		}
+	};
 
 	WindowActionManager(WindowNode node, MenuHandler menuBarHandler,
 			DockingWindowManager winMgr, MenuGroupMap menuGroupMap) {
@@ -40,6 +62,7 @@ public class WindowActionManager {
 	}
 
 	void setActions(List<DockingActionIf> actionList) {
+		reentryGuard.checkAccess();
 		menuBarMgr.clearActions();
 		toolBarMgr.clearActions();
 		actionToProxyMap.clear();
@@ -49,6 +72,7 @@ public class WindowActionManager {
 	}
 
 	void addAction(DockingActionIf action) {
+		reentryGuard.checkAccess();
 		if (action.getMenuBarData() != null || action.getToolBarData() != null) {
 			DockingActionProxy proxyAction = new DockingActionProxy(action);
 			actionToProxyMap.put(action, proxyAction);
@@ -58,6 +82,7 @@ public class WindowActionManager {
 	}
 
 	void removeAction(DockingActionIf action) {
+		reentryGuard.checkAccess();
 		DockingActionProxy proxyAction = actionToProxyMap.remove(action);
 		if (proxyAction != null) {
 			menuBarMgr.removeAction(proxyAction);
@@ -80,6 +105,7 @@ public class WindowActionManager {
 	}
 
 	void dispose() {
+		reentryGuard.checkAccess();
 		disposed = true;
 		node.setToolBar(null);
 		node.setMenuBar(null);
@@ -88,43 +114,68 @@ public class WindowActionManager {
 		toolBarMgr.dispose();
 	}
 
-	void contextChanged(ActionContext globalContext, ActionContext localContext,
-			Set<DockingActionIf> excluded) {
-
-		if (!node.isVisible() || disposed) {
-			return;
-		}
-
-		// Update actions - make a copy so that we don't get concurrent modification
-		// exceptions during reentrant operations
-		List<DockingActionIf> list = new ArrayList<>(actionToProxyMap.keySet());
-		for (DockingActionIf action : list) {
-			if (excluded.contains(action)) {
-				continue;
+	void contextChanged(Map<Class<? extends ActionContext>, ActionContext> defaultContextMap,
+			ActionContext localContext, Set<DockingActionIf> excluded) {
+		/**
+		 * We need the guard against reentrant changes to the actionToProxyMap, lest the iterator
+		 * throw a ConcurrentModificationException. If the guard finds a violation, i.e., the map
+		 * has changed, we just bail. Whatever changed the map should also trigger an update to
+		 * context, and so we should have a fresh go here with the new map.
+		 * 
+		 * There are three points where there could be reentrant modifications. Those are 1) when
+		 * computing an action's context, 2) when checking if the action is enabled for that
+		 * context, and 3) when setting the proxy's enabled state. There are minimal performance
+		 * trade-offs to consider when deciding which points to check. Critically, we must check
+		 * somewhere between the last point and the end of the loop, i.e., before stepping the
+		 * iterator. We opt to check only that last point, since reentry is uncommon here.
+		 */
+		try (Guarded guarded = reentryGuard.enter()) {
+			if (!node.isVisible() || disposed) {
+				return;
 			}
 
-			DockingActionIf proxyAction = actionToProxyMap.get(action);
-			if (proxyAction.isValidContext(localContext)) {
-				proxyAction.setEnabled(proxyAction.isEnabledForContext(localContext));
-			}
-			else if (isValidDefaultToolContext(proxyAction, globalContext)) {
-				proxyAction.setEnabled(proxyAction.isEnabledForContext(globalContext));
-			}
-			else {
-				proxyAction.setEnabled(false);
+			for (Entry<DockingActionIf, DockingActionProxy> ent : actionToProxyMap.entrySet()) {
+				DockingActionIf action = ent.getKey();
+				DockingActionIf proxyAction = ent.getValue();
+				if (excluded.contains(action)) {
+					continue;
+				}
+
+				// Reentry point 1
+				ActionContext context =
+					getContextForAction(action, localContext, defaultContextMap);
+				// Reentry point 2
+				boolean enabled =
+					context == null ? false : proxyAction.isEnabledForContext(context);
+				// Reentry point 3, which we check
+				proxyAction.setEnabled(enabled);
+				if (reentryGuard.isViolated()) {
+					break;
+				}
 			}
 		}
 	}
 
-	private boolean isValidDefaultToolContext(DockingActionIf action, ActionContext toolContext) {
-		return action.supportsDefaultToolContext() &&
-			action.isValidContext(toolContext);
+	private ActionContext getContextForAction(DockingActionIf action, ActionContext localContext,
+			Map<Class<? extends ActionContext>, ActionContext> defaultContextMap) {
+
+		if (action.isValidContext(localContext)) {
+			return localContext;
+		}
+		if (action.supportsDefaultContext()) {
+			ActionContext context = defaultContextMap.get(action.getContextClass());
+			if (context != null && action.isValidContext(context)) {
+				return context;
+			}
+		}
+		return null;
 	}
 
 	/**
 	 * Returns the set of actions for this window.
 	 * 
-	 * <p>Note this returns the the original passed-in actions and not the proxy actions that the
+	 * <p>
+	 * Note this returns the the original passed-in actions and not the proxy actions that the
 	 * window uses.
 	 * 
 	 * @return the set of actions for this window

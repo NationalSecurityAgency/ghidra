@@ -37,9 +37,10 @@ import ghidra.util.datastruct.WeakSet;
 class DomainObjectChangeSupport {
 
 	private WeakSet<DomainObjectListener> listeners =
-		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
+		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 	private List<EventNotification> notificationQueue = new ArrayList<>();
 	private List<DomainObjectChangeRecord> recordsQueue = new ArrayList<>();
+
 	private GhidraTimer timer;
 
 	private DomainObject src;
@@ -64,24 +65,8 @@ class DomainObjectChangeSupport {
 		this.timer =
 			GhidraTimerFactory.getGhidraTimer(timeInterval, timeInterval, this::sendEventNow);
 		timer.setInitialDelay(25);
-		timer.setDelay(500);
+		timer.setDelay(timeInterval);
 		timer.setRepeats(true);
-	}
-
-	// Note: must be called on the Swing thread
-	private void sendEventNow() {
-		List<EventNotification> notifications = withLock(() -> {
-
-			DomainObjectChangedEvent e = createEventFromQueuedRecords();
-			notificationQueue.add(new EventNotification(e, new ArrayList<>(listeners.values())));
-			List<EventNotification> existingNotifications = new ArrayList<>(notificationQueue);
-			notificationQueue.clear();
-			return existingNotifications;
-		});
-
-		for (EventNotification notification : notifications) {
-			notification.doNotify();
-		}
 	}
 
 	// Note: must be called inside of withLock()
@@ -106,13 +91,17 @@ class DomainObjectChangeSupport {
 		withLock(() -> {
 
 			// Capture the pending event to send to the existing listeners.  This prevents the new
-			// listener from getting events registered before the listener was added.
-			DomainObjectChangedEvent pendingEvent = createEventFromQueuedRecords();
-			List<DomainObjectListener> previousListeners = new ArrayList<>(listeners.values());
+			// listener from getting events registered before the listener was added.  Also, create
+			// a new set of listeners so that any events already posted to the Swing thread do not
+			// see the newly added listener.
+			Collection<DomainObjectListener> previousListeners = listeners.values();
 			listeners.add(listener);
 
-			notificationQueue.add(new EventNotification(pendingEvent, previousListeners));
-			timer.start();
+			DomainObjectChangedEvent pendingEvent = createEventFromQueuedRecords();
+			if (pendingEvent != null) {
+				notificationQueue.add(new EventNotification(pendingEvent, previousListeners));
+				timer.start();
+			}
 		});
 	}
 
@@ -121,6 +110,10 @@ class DomainObjectChangeSupport {
 			return;
 		}
 
+		//
+		// Note: any events posted to the Swing thread may still notify this listener after it has
+		//       been removed, since a copy of the set will be used.
+		//
 		withLock(() -> listeners.remove(listener));
 	}
 
@@ -138,7 +131,38 @@ class DomainObjectChangeSupport {
 			throw new IllegalStateException("Cannot call flush() with locks!");
 		}
 
-		Swing.runNow(this::sendEventNow);
+		sendEventNow();
+	}
+
+	private void sendEventNow() {
+		List<EventNotification> notifications = withLock(() -> {
+
+			DomainObjectChangedEvent e = createEventFromQueuedRecords();
+			if (e != null) {
+				notificationQueue.add(new EventNotification(e, listeners.values()));
+			}
+
+			if (notificationQueue.isEmpty()) {
+				return Collections.emptyList();
+			}
+
+			List<EventNotification> existingNotifications = new ArrayList<>(notificationQueue);
+			notificationQueue.clear();
+			return existingNotifications;
+		});
+
+		if (notifications.isEmpty()) {
+			return;
+		}
+
+		Swing.runNow(() -> doSendEventsNow(notifications));
+	}
+
+	// Note: must be called on the Swing thread
+	private void doSendEventsNow(List<EventNotification> notifications) {
+		for (EventNotification notification : notifications) {
+			notification.doNotify();
+		}
 	}
 
 	void fireEvent(DomainObjectChangeRecord docr) {
@@ -166,7 +190,7 @@ class DomainObjectChangeSupport {
 
 		Runnable errorTask = () -> {
 			List<DomainObjectChangeRecord> records =
-				Arrays.asList(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_ERROR, null, t));
+				Arrays.asList(new DomainObjectChangeRecord(DomainObjectEvent.ERROR, null, t));
 			DomainObjectChangedEvent ev = new DomainObjectChangedEvent(src, records);
 			for (DomainObjectListener l : listenersCopy) {
 				try {
@@ -249,9 +273,10 @@ class DomainObjectChangeSupport {
 	private class EventNotification {
 
 		private DomainObjectChangedEvent event;
-		private List<DomainObjectListener> receivers;
+		private Collection<DomainObjectListener> receivers;
 
-		EventNotification(DomainObjectChangedEvent event, List<DomainObjectListener> recievers) {
+		EventNotification(DomainObjectChangedEvent event,
+				Collection<DomainObjectListener> recievers) {
 			this.event = event;
 			this.receivers = recievers;
 		}

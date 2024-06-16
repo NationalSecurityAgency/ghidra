@@ -15,6 +15,15 @@
  */
 package ghidra.trace.model.listing;
 
+/**
+ * This interface is the entry for operating on code units of a trace
+ * 
+ * <p>
+ * See {@link TraceCodeManager} for some examples. This interface does not directly support
+ * operating on the units. Rather it provides access to various "views" of the code units,
+ * supporting a fluent syntax for operating on the units. The views are various subsets of units by
+ * type.
+ */
 public interface TraceCodeOperations {
 	/**
 	 * Get a view of all the code units in the listing
@@ -26,6 +35,7 @@ public interface TraceCodeOperations {
 	/**
 	 * Get a view of only the instructions in the listing
 	 * 
+	 * <p>
 	 * This view supports the creation of new instruction units. This view also supports clearing.
 	 * 
 	 * @return the instruction-units view
@@ -42,6 +52,7 @@ public interface TraceCodeOperations {
 	/**
 	 * Get a view of only the defined data units in the listing
 	 * 
+	 * <p>
 	 * This view supports the creation of new data units. This view also supports clearing.
 	 * 
 	 * @return the defined-data-units view
@@ -58,6 +69,7 @@ public interface TraceCodeOperations {
 	/**
 	 * Get a view of only the defined units (data and instructions) in the listing
 	 * 
+	 * <p>
 	 * This view support clearing.
 	 * 
 	 * @return the defined-units-view

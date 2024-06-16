@@ -67,4 +67,9 @@ public interface AddressIterator extends Iterator<Address>, Iterable<Address> {
 	@Override
 	public boolean hasNext();
 
+	@Override
+	default Iterator<Address> iterator() {
+		return this;
+	}
+
 }

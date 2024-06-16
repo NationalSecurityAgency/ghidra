@@ -17,9 +17,7 @@ package ghidra.file.formats.android.dex.format;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -34,11 +32,11 @@ public class DebugInfoItem implements StructConverter {
 	private byte[] stateMachineOpcodes;
 
 	public DebugInfoItem(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		lineStart = leb128.asUInt32();
 		lineStartLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		parametersSize = leb128.asUInt32();
 		parametersSizeLength = leb128.getLength();
 
@@ -46,7 +44,7 @@ public class DebugInfoItem implements StructConverter {
 		parameterNamesLengths = new int[parametersSize];
 
 		for (int i = 0; i < parametersSize; ++i) {
-			leb128 = LEB128.readUnsignedValue(reader);
+			leb128 = reader.readNext(LEB128Info::unsigned);
 
 			parameterNames[i] = leb128.asUInt32() - 1;// uleb128p1
 			parameterNamesLengths[i] = leb128.getLength();
@@ -102,16 +100,12 @@ public class DebugInfoItem implements StructConverter {
 
 		Structure structure = new StructureDataType(builder.toString(), 0);
 
-		structure.add(new ArrayDataType(BYTE, lineStartLength, BYTE.getLength()), "line_start",
-			null);
-		structure.add(new ArrayDataType(BYTE, parametersSizeLength, BYTE.getLength()),
-			"parameters_size", null);
+		structure.add(ULEB128, lineStartLength, "line_start", null);
+		structure.add(ULEB128, parametersSizeLength, "parameters_size", null);
 
 		for (int i = 0; i < parametersSize; ++i) {
-			ArrayDataType dataType =
-				new ArrayDataType(BYTE, parameterNamesLengths[i], BYTE.getLength());
-			structure.add(dataType, "parameter_" + i, null);
-			builder.append(dataType.getLength() + "");
+			structure.add(ULEB128, parameterNamesLengths[i], "parameter_" + i, null);
+			builder.append("%d".formatted(parameterNamesLengths[i]));
 		}
 
 		ArrayDataType stateMachineArray =

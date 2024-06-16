@@ -15,15 +15,15 @@
  */
 package agent.dbgeng.impl.dbgeng.control;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
 import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint;
 import agent.dbgeng.jna.dbgeng.control.*;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -59,18 +59,14 @@ public interface DebugControlInternal extends DebugControl {
 		return DbgEngUtil.lazyWeakCache(CACHE, control, DebugControlImpl7::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugControl>> PREFERRED_CONTROL_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugControl>> PREFERRED_CONTROL_IIDS =
-		PREFERRED_CONTROL_IIDS_BUILDER //
-				.put(new REFIID(IDebugControl7.IID_IDEBUG_CONTROL7), WrapIDebugControl7.class) //
-				.put(new REFIID(IDebugControl6.IID_IDEBUG_CONTROL6), WrapIDebugControl6.class) //
-				.put(new REFIID(IDebugControl5.IID_IDEBUG_CONTROL5), WrapIDebugControl5.class) //
-				.put(new REFIID(IDebugControl4.IID_IDEBUG_CONTROL4), WrapIDebugControl4.class) //
-				.put(new REFIID(IDebugControl3.IID_IDEBUG_CONTROL3), WrapIDebugControl3.class) //
-				.put(new REFIID(IDebugControl2.IID_IDEBUG_CONTROL2), WrapIDebugControl2.class) //
-				.put(new REFIID(IDebugControl.IID_IDEBUG_CONTROL), WrapIDebugControl.class) //
-				.build();
+	List<Preferred<WrapIDebugControl>> PREFERRED_CONTROL_IIDS = List.of(
+		new Preferred<>(IDebugControl7.IID_IDEBUG_CONTROL7, WrapIDebugControl7.class),
+		new Preferred<>(IDebugControl6.IID_IDEBUG_CONTROL6, WrapIDebugControl6.class),
+		new Preferred<>(IDebugControl5.IID_IDEBUG_CONTROL5, WrapIDebugControl5.class),
+		new Preferred<>(IDebugControl4.IID_IDEBUG_CONTROL4, WrapIDebugControl4.class),
+		new Preferred<>(IDebugControl3.IID_IDEBUG_CONTROL3, WrapIDebugControl3.class),
+		new Preferred<>(IDebugControl2.IID_IDEBUG_CONTROL2, WrapIDebugControl2.class),
+		new Preferred<>(IDebugControl.IID_IDEBUG_CONTROL, WrapIDebugControl.class));
 
 	static DebugControlInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugControlInternal.class, PREFERRED_CONTROL_IIDS,

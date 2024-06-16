@@ -25,6 +25,8 @@ import javax.swing.border.Border;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.table.*;
@@ -66,7 +68,7 @@ public class NewLanguagePanel extends JPanel {
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 
 		descriptionLabel = new GDLabel(DEFAULT_DESCRIPTION_TEXT);
-		descriptionLabel.setFont(descriptionLabel.getFont().deriveFont(Font.ITALIC));
+		Gui.registerFont(descriptionLabel, Font.ITALIC);
 
 		recommendedCheckbox = new GCheckBox("Show Only Recommended Language/Compiler Specs");
 		recommendedCheckbox.addItemListener(e -> {
@@ -84,7 +86,7 @@ public class NewLanguagePanel extends JPanel {
 
 		formatLabel = new GDLabel();
 		formatLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		formatLabel.setForeground(Color.BLUE);
+		formatLabel.setForeground(Messages.NORMAL);
 	}
 
 	private void layoutEverything() {
@@ -210,7 +212,6 @@ public class NewLanguagePanel extends JPanel {
 		LanguageCompilerSpecPair selectedLcsPair = getSelectedLcsPair();
 		if (selectedLcsPair == null) {
 			descriptionLabel.setText(DEFAULT_DESCRIPTION_TEXT);
-			descriptionLabel.setFont(descriptionLabel.getFont().deriveFont(Font.ITALIC));
 		}
 		else {
 			try {
@@ -219,7 +220,6 @@ public class NewLanguagePanel extends JPanel {
 			catch (LanguageNotFoundException e) {
 				descriptionLabel.setText("<LanguageNotFound>");
 			}
-			descriptionLabel.setFont(descriptionLabel.getFont().deriveFont(Font.PLAIN));
 		}
 //		notifyListenersOfValidityChanged();
 		if (!listeners.isEmpty()) {
@@ -298,6 +298,9 @@ public class NewLanguagePanel extends JPanel {
 	}
 
 	public boolean setSelectedLcsPair(LanguageCompilerSpecPair lcsPair) {
+		if (lcsPair == null) {
+			return false;
+		}
 		int index = tableModel.getFirstLcsPairIndex(lcsPair);
 		if (index == -1) {
 			return false;

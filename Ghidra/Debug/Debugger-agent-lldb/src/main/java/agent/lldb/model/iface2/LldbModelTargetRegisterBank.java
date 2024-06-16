@@ -22,9 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import SWIG.SBValue;
 import SWIG.StateType;
 import agent.lldb.manager.LldbReason;
+import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetRegisterBank;
 
-public interface LldbModelTargetRegisterBank extends LldbModelTargetObject, TargetRegisterBank {
+public interface LldbModelTargetRegisterBank extends LldbModelTargetObject, 
+		TargetRegisterBank, TargetAggregate {
 
 	public LldbModelTargetRegister getTargetRegister(SBValue register);
 

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.util.ColorUtils;
 
 /**
  * Class for blending two {@link ListingBackgroundColorModel}s.  If neither model has a color
@@ -52,10 +53,7 @@ public class LayeredColorModel implements ListingBackgroundColorModel {
 	}
 
 	private Color blend(Color primary, Color secondary) {
-		int red = (primary.getRed() * 2 + secondary.getRed()) / 3;
-		int green = (primary.getGreen() * 2 + secondary.getGreen()) / 3;
-		int blue = (primary.getBlue() * 2 + secondary.getBlue()) / 3;
-		return new Color(red, green, blue);
+		return ColorUtils.blend(primary, secondary, 0.67);
 	}
 
 	@Override

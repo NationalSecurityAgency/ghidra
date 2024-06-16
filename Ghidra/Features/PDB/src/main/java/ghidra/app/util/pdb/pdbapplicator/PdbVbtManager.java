@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractPublicMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
@@ -38,7 +37,7 @@ public class PdbVbtManager extends VbtManager {
 	private Map<String, Address> addressByMangledName;
 	private Memory memory;
 
-	private static Memory getMemory(PdbApplicator applicator) throws PdbException {
+	private static Memory getMemory(DefaultPdbApplicator applicator) throws PdbException {
 		Program program = applicator.getProgram();
 		if (program == null) {
 			throw new PdbException("Program null for VbtManager");
@@ -49,8 +48,8 @@ public class PdbVbtManager extends VbtManager {
 	// TODO: Research whether we ever find VBT symbols put into the program by the "loader."
 	//  If we find some this way, then need to modify PdbVbtManager to also look
 	//  through the loader symbol for them.
-	private static Map<String, Address> findVirtualBaseTableSymbols(PdbApplicator applicator)
-			throws CancelledException {
+	private static Map<String, Address> findVirtualBaseTableSymbols(DefaultPdbApplicator applicator)
+			throws CancelledException, PdbException {
 
 		TaskMonitor monitor = applicator.getMonitor();
 		Map<String, Address> myAddressByMangledName = new HashMap<>();
@@ -68,12 +67,12 @@ public class PdbVbtManager extends VbtManager {
 
 		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		applicator.setMonitorMessage("PDB: Searching for virtual base table symbols...");
+		monitor.setMessage("PDB: Searching for virtual base table symbols...");
 		monitor.initialize(offsets.size());
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;
@@ -96,11 +95,11 @@ public class PdbVbtManager extends VbtManager {
 
 	/**
 	 * Virtual Base Table Lookup Manager
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @throws PdbException If Program is null;
 	 * @throws CancelledException upon user cancellation
 	 */
-	PdbVbtManager(PdbApplicator applicator) throws PdbException, CancelledException {
+	PdbVbtManager(DefaultPdbApplicator applicator) throws PdbException, CancelledException {
 		this(applicator.getDataTypeManager(), getMemory(applicator),
 			findVirtualBaseTableSymbols(applicator));
 	}

@@ -20,7 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.app.services.QueryData;
-import ghidra.app.util.PluginConstants;
 import ghidra.app.util.query.ProgramLocationPreviewTableModel;
 import ghidra.framework.model.DomainObjectException;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -102,7 +101,7 @@ public class GoToQueryResultsTableModel extends ProgramLocationPreviewTableModel
 		}
 
 		String queryString = queryData.getQueryString();
-		if (!isWildQuery(queryString)) {
+		if (!queryData.isWildCard()) {
 			// if no wild cards, just parse off the address from the string and go there.
 			parseDynamic(accumulator, queryString);
 			return;
@@ -115,7 +114,7 @@ public class GoToQueryResultsTableModel extends ProgramLocationPreviewTableModel
 		AddressSet addressSet = getProgram().getAddressFactory().getAddressSet();
 		AddressIterator addrIt = refMgr.getReferenceDestinationIterator(addressSet, true);
 		while (addrIt.hasNext() && accumulator.size() < maxSearchHits) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = addrIt.next();
 			Symbol s = symbolTable.getPrimarySymbol(addr);
 			if (!s.isDynamic()) {
@@ -130,11 +129,6 @@ public class GoToQueryResultsTableModel extends ProgramLocationPreviewTableModel
 				}
 			}
 		}
-	}
-
-	private boolean isWildQuery(String queryString) {
-		return queryString.indexOf(PluginConstants.ANYSUBSTRING_WILDCARD_CHAR) > -1 ||
-			queryString.indexOf(PluginConstants.ANYSINGLECHAR_WILDCARD_CHAR) > -1;
 	}
 
 	private void parseDynamic(Accumulator<ProgramLocation> accumulator, String queryString) {
@@ -160,7 +154,7 @@ public class GoToQueryResultsTableModel extends ProgramLocationPreviewTableModel
 			symbolTable.getSymbolIterator(queryData.getQueryString(), queryData.isCaseSensitive());
 
 		while (it.hasNext() && accumulator.size() < maxSearchHits) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol s = it.next();
 			ProgramLocation programLocation = s.getProgramLocation();
 			if (programLocation != null) {

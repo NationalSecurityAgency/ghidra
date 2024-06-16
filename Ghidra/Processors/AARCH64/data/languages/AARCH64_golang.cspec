@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+	<data_organization>
+		<absolute_max_alignment value="0" />
+		<machine_alignment value="2" />
+		<default_alignment value="1" />
+		<default_pointer_alignment value="8" />
+		<pointer_size value="8" />
+		<wchar_size value="4" /> <!-- matches go's 'rune' -->
+		<short_size value="2" />
+		<integer_size value="8" />
+		<long_size value="8" />
+		<long_long_size value="8" />
+		<float_size value="4" />
+		<double_size value="8" />
+		<long_double_size value="16" />
+		<size_alignment_map>
+				<entry size="1" alignment="1" />
+				<entry size="2" alignment="2" />
+				<entry size="4" alignment="4" />
+				<entry size="8" alignment="8" />
+		</size_alignment_map>
+	</data_organization>
+
+	<global>
+		<range space="ram"/>
+	</global>
+  
+	<context_data>
+	</context_data>
+
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="4"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
+  
+	<returnaddress>
+		<varnode space="stack" offset="0" size="8"/>
+	</returnaddress>
+
+    <default_proto>
+		<prototype name="abi-internal" extrapop="8" stackshift="8">
+			<input>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q0"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q1"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q2"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q3"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q4"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q5"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q6"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q7"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q8"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q9"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q10"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q11"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q12"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q13"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q14"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q15"/>
+				</pentry>
+		        
+				<pentry minsize="1" maxsize="8">
+					<register name="x0"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x1"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x2"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x3"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x4"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x5"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x6"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x7"/>
+				</pentry>
+				<pentry minsize="1" maxsize="8">
+					<register name="x8"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x9"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x10"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x11"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x12"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x13"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x14"/>
+				</pentry>
+                <pentry minsize="1" maxsize="8">
+					<register name="x15"/>
+				</pentry>
+		        
+				<pentry minsize="1" maxsize="500" align="16">
+					<addr offset="8" space="stack"/>
+				</pentry>
+			</input>
+	      
+			<output>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="q0"/>
+				</pentry>
+		        
+				<pentry minsize="1" maxsize="8">
+					<register name="x0"/>
+				</pentry>
+				<pentry minsize="9" maxsize="16">
+					<addr space="join" piece2="x0" piece1="x1"/>
+				</pentry>
+				<pentry minsize="17" maxsize="24">
+					<addr space="join" piece3="x0" piece2="x1" piece1="x2"/>
+				</pentry>
+				<pentry minsize="25" maxsize="32">
+					<addr space="join" piece4="x0" piece3="x1" piece2="x2" piece1="x3"/>
+				</pentry>
+				<pentry minsize="33" maxsize="40">
+					<addr space="join" piece5="x0" piece4="x1" piece3="x2" piece2="x3" piece1="x4"/>
+				</pentry>
+				<pentry minsize="41" maxsize="48">
+					<addr space="join" piece6="x0" piece5="x1" piece4="x2" piece3="x3" piece2="x4" piece1="x5"/>
+				</pentry>
+				<pentry minsize="49" maxsize="56">
+					<addr space="join" piece7="x0" piece6="x1" piece5="x2" piece4="x3" piece3="x4" piece2="x5" piece1="x6"/>
+				</pentry>
+				<pentry minsize="57" maxsize="64">
+					<addr space="join" piece8="x0" piece7="x1" piece6="x2" piece5="x3" piece4="x4" piece3="x5" piece2="x6" piece1="x7"/>
+				</pentry>
+				<pentry minsize="65" maxsize="72">
+					<addr space="join" piece9="x0" piece8="x1" piece7="x2" piece6="x3" piece5="x4" piece4="x5" piece3="x6" piece2="x7" piece1="x8"/>
+				</pentry>
+			</output>
+	      
+			<killedbycall>
+				<register name="x0"/>
+				<register name="x1"/>
+				<register name="x2"/>
+				<register name="x3"/>
+				<register name="x4"/>
+				<register name="x5"/>
+				<register name="x6"/>
+				<register name="x7"/>
+				<register name="x8"/>
+				<register name="x9"/>
+				<register name="x10"/>
+				<register name="x11"/>
+				<register name="x12"/>
+				<register name="x13"/>
+				<register name="x14"/>
+                <register name="x15"/>
+			</killedbycall>
+			<unaffected>
+				<register name="x16"/>
+				<register name="x17"/>
+			</unaffected>
+		</prototype>
+	</default_proto>
+	
+	<prototype name="abi0" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="500" align="8">
+				<addr offset="8" space="stack"/>
+			</pentry>
+		</input>
+      
+		<output>
+		</output>
+      
+		<killedbycall>
+			<register name="x0"/>
+			<register name="x1"/>
+			<register name="x2"/>
+			<register name="x3"/>
+			<register name="x4"/>
+			<register name="x5"/>
+			<register name="x6"/>
+			<register name="x7"/>
+			<register name="x8"/>
+			<register name="x9"/>
+			<register name="x10"/>
+			<register name="x11"/>
+			<register name="x12"/>
+			<register name="x13"/>
+			<register name="x14"/>
+			<register name="x15"/>
+		</killedbycall>
+		<unaffected>
+			<register name="x16"/>
+			<register name="x17"/>
+		</unaffected>
+	</prototype>
+	
+	<prototype name="duffzero" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="8">
+				<register name="x20"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="8">
+				<register name="x20"/>
+			</pentry>
+		</output>
+      
+		<killedbycall>
+			<register name="x20"/>
+		</killedbycall>
+		<unaffected>
+			<register name="x16"/>
+			<register name="x17"/>
+		</unaffected>
+	</prototype>
+		
+		
+	<prototype name="duffcopy" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="8">
+				<register name="x21"/>
+			</pentry>
+			<pentry minsize="1" maxsize="8">
+				<register name="x20"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="8">
+				<register name="x21"/>
+			</pentry>
+			<pentry minsize="9" maxsize="16">
+				<addr space="join" piece2="x21" piece1="x20"/>
+			</pentry>
+		</output>
+      
+		<killedbycall>
+			<register name="x21"/>
+			<register name="x20"/>
+			<register name="x26"/>
+			<register name="x27"/>
+		</killedbycall>
+		<unaffected>
+			<register name="x0"/>
+			<register name="x1"/>
+			<register name="x2"/>
+			<register name="x3"/>
+			<register name="x4"/>
+			<register name="x5"/>
+			<register name="x6"/>
+			<register name="x7"/>
+			<register name="x8"/>
+			<register name="x9"/>
+			<register name="x10"/>
+			<register name="x11"/>
+			<register name="x12"/>
+			<register name="x13"/>
+			<register name="x14"/>
+			<register name="x15"/>
+			<register name="x16"/>
+			<register name="x17"/>
+		</unaffected>
+	</prototype>
+		
+		
+</compiler_spec>
+	

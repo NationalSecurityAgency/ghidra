@@ -16,13 +16,14 @@
 package ghidra.file.formats.dump.apport;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
-import ghidra.file.formats.dump.*;
+import ghidra.file.formats.dump.DumpFile;
+import ghidra.file.formats.dump.DumpFileReader;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
@@ -59,13 +60,18 @@ public class Apport extends DumpFile {
 		header = new ApportHeader(reader, 0L, monitor);
 		
 		boolean createBlocks =
-				OptionUtils.getBooleanOptionValue(DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_NAME,
-					options, DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
+			OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME,
+				options, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
 		if (createBlocks) {
 			createBlocksFromElf(loadSpec, monitor);
 		}
 
 		buildStructures(loadSpec, monitor);
+	}
+
+	@Override
+	public boolean joinBlocksEnabled() {
+		return false;
 	}
 
 	public ApportHeader getFileHeader() {
@@ -169,6 +175,21 @@ public class Apport extends DumpFile {
 	public FileBytes getFileBytes(TaskMonitor monitor) throws IOException, CancelledException {
 		// FileBytes not used for original file content
 		return null;
+	}
+
+	/**
+	 * Get default <code>Apport</code> dump loader options.
+	 * Limited to {@link DumpFile#CREATE_MEMORY_BLOCKS_OPTION_NAME}.
+	 * @param reader dump file reader
+	 * @return default collection of Userdump loader options
+	 */
+	public static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
+		List<Option> list = new ArrayList<>();
+
+		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
+			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
+
+		return list;
 	}
 
 }

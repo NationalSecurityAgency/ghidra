@@ -28,7 +28,6 @@ import ghidra.util.Msg;
  */
 public class DialogManager {
 	private PluginTool tool;
-	private SaveToolConfigDialog saveToolDialog;
 
 	public DialogManager(PluginTool tool) {
 		this.tool = tool;
@@ -40,11 +39,9 @@ public class DialogManager {
 	 * @return false if the user cancelled
 	 */
 	public boolean saveToolAs() {
-		if (saveToolDialog == null) {
-			saveToolDialog = new SaveToolConfigDialog(tool, tool.getToolServices());
-		}
+		SaveToolConfigDialog saveToolDialog =
+			new SaveToolConfigDialog(tool, tool.getToolServices());
 		saveToolDialog.show(tool.getName(), tool.getToolName());
-
 		return !saveToolDialog.didCancel();
 	}
 

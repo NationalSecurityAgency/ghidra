@@ -20,24 +20,19 @@ import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
-import ghidra.app.services.GoToService;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
-import resources.ResourceManager;
 
-/**
- * Provider for the equates table.
- */
 class DataWindowProvider extends ComponentProviderAdapter {
 
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/dataW.gif");
+	public static final Icon ICON = new GIcon("icon.plugin.datawindow.provider");
 
 	private DataWindowPlugin plugin;
 
@@ -78,9 +73,6 @@ class DataWindowProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
-	/*
-	 * @see ghidra.framework.docking.HelpTopic#getHelpLocation()
-	 */
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation(plugin.getName(), plugin.getName());
@@ -93,7 +85,9 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	}
 
 	void programClosed() {
-		dataModel.reload(null);
+		if (isVisible()) {
+			dataModel.reload(null);
+		}
 	}
 
 	void dispose() {
@@ -108,7 +102,6 @@ class DataWindowProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(dataModel, 1000);
 		dataTable = threadedTablePanel.getTable();
-		dataTable.setName("DataTable");
 		dataTable.setAutoLookupColumn(DataTableModel.DATA_COL);
 		dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		dataTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
@@ -130,19 +123,19 @@ class DataWindowProvider extends ComponentProviderAdapter {
 			setSubTitle(buffy.toString());
 		});
 
-		GoToService goToService = tool.getService(GoToService.class);
-		dataTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		dataTable.installNavigation(tool);
 
-		JTableHeader dataHeader = dataTable.getTableHeader();
-		dataHeader.setUpdateTableInRealTime(true);
 		setDataTableRenderer();
 
 		filterPanel = new GhidraTableFilterPanel<>(dataTable, dataModel);
-		dataTable.getModel();
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Defined Data";
+		dataTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}
@@ -151,15 +144,12 @@ class DataWindowProvider extends ComponentProviderAdapter {
 		tool.contextChanged(this);
 	}
 
-	ProgramSelection selectData() {
-		return dataTable.getProgramSelection();
-	}
-
 	private void setDataTableRenderer() {
-		dataTable.getColumnModel().getColumn(DataTableModel.LOCATION_COL).setPreferredWidth(
-			DataTableModel.ADDRESS_COL_WIDTH);
-		dataTable.getColumnModel().getColumn(DataTableModel.SIZE_COL).setPreferredWidth(
-			DataTableModel.SIZE_COL_WIDTH);
+		TableColumnModel columnModel = dataTable.getColumnModel();
+		columnModel.getColumn(DataTableModel.LOCATION_COL)
+				.setPreferredWidth(DataTableModel.ADDRESS_COL_WIDTH);
+		columnModel.getColumn(DataTableModel.SIZE_COL)
+				.setPreferredWidth(DataTableModel.SIZE_COL_WIDTH);
 	}
 
 	void reload() {
@@ -174,7 +164,7 @@ class DataWindowProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public GhidraTable getTable() {
+	GhidraTable getTable() {
 		return dataTable;
 	}
 }

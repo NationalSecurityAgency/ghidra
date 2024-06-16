@@ -15,14 +15,13 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import generic.theme.GColor;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -32,23 +31,22 @@ import ghidra.program.util.ProgramLocation;
 
 public class FunctionPurgeFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Function Purge";
+	public static final GColor COLOR = new GColor("color.fg.listing.function.purge");
 
 	public FunctionPurgeFieldFactory() {
 		super(FIELD_NAME);
 	}
 
-	private FunctionPurgeFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private FunctionPurgeFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-		color = displayOptions.getColor(OptionsGui.BYTES.getColorOptionName(),
-			OptionsGui.BYTES.getDefaultColor());
 
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel newModel, HighlightProvider newHlProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionPurgeFieldFactory(newModel, newHlProvider, displayOptions, fieldOptions);
+	public FieldFactory newInstance(FieldFormatModel newModel, ListingHighlightProvider newHlProvider,
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionPurgeFieldFactory(newModel, newHlProvider, toolOptions, fieldOptions);
 	}
 
 	/**
@@ -79,7 +77,7 @@ public class FunctionPurgeFieldFactory extends FieldFactory {
 					stringDepth = Integer.toHexString(depth);
 				}
 		}
-		AttributedString as = new AttributedString(stringDepth, Color.BLUE, getMetrics());
+		AttributedString as = new AttributedString(stringDepth, COLOR, getMetrics());
 		FieldElement text = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, text, startX + varWidth,
 			width, hlProvider);
@@ -123,5 +121,4 @@ public class FunctionPurgeFieldFactory extends FieldFactory {
 		}
 		return (category == FieldFormatModel.FUNCTION);
 	}
-
 }

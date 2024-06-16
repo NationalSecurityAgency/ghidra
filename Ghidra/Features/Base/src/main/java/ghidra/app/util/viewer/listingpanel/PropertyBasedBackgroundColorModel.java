@@ -15,19 +15,22 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.Color;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import generic.theme.GColor;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
+import ghidra.util.ColorUtils;
 
 /**
  * Default {@link BackgroundColorModel} for the ListingPanel where the color returned
@@ -40,7 +43,7 @@ public class PropertyBasedBackgroundColorModel
 	public static final String COLOR_PROPERTY_NAME = "LISTING_COLOR";
 	private IntRangeMap colorMap;
 	private AddressIndexMap indexMap;
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = new GColor("color.bg.listing");
 	private Map<Integer, Color> colorCache = new HashMap<>();
 	private Program program;
 	private boolean enabled = false;
@@ -93,7 +96,7 @@ public class PropertyBasedBackgroundColorModel
 		}
 		Color c = colorCache.get(value);
 		if (c == null) {
-			c = new Color(value, true);
+			c = ColorUtils.getColor(value);
 			colorCache.put(value, c);
 		}
 		return c;
@@ -111,10 +114,8 @@ public class PropertyBasedBackgroundColorModel
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_REMOVED)) {
+		if (ev.contains(INT_PROPERTY_MAP_ADDED, INT_PROPERTY_MAP_REMOVED)) {
 			colorMap = program.getIntRangeMap(COLOR_PROPERTY_NAME);
-
 		}
 
 	}

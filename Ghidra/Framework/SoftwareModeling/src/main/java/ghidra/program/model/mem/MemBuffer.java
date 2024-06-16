@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.mem;
 
+import java.io.InputStream;
 import java.math.BigInteger;
 
 import ghidra.program.model.address.Address;
@@ -86,7 +87,7 @@ public interface MemBuffer {
 	 * @throws MemoryAccessException if memory cannot be read at the specified offset
 	 */
 	default public int getUnsignedByte(int offset) throws MemoryAccessException {
-		return getByte(offset) & 0xff;
+		return Byte.toUnsignedInt(getByte(offset));
 	}
 
 	/**
@@ -125,9 +126,9 @@ public interface MemBuffer {
 	public boolean isBigEndian();
 
 	/**
-	 * returns the short at the given offset, taking into account the endianess.
+	 * returns the short at the given offset, taking into account the endianness.
 	 * @param offset the offset from the membuffers origin (the address that it is set at)
-	 * @return the short at the given offset, taking into account the endianess.
+	 * @return the short at the given offset, taking into account the endianness.
 	 * @throws MemoryAccessException if a 2-byte short value cannot be read at the specified offset
 	 */
 	public short getShort(int offset) throws MemoryAccessException;
@@ -135,45 +136,45 @@ public interface MemBuffer {
 	/**
 	 * Returns the unsigned short at the given offset, taking into account the endian-ness.
 	 * @param offset the offset from the membuffers origin (the address that it is set at)
-	 * @return the unsigned short at the given offset, as a {@code int}, taking into account the endianess.
+	 * @return the unsigned short at the given offset, as a {@code int}, taking into account the endianness.
 	 * @throws MemoryAccessException if a 2-byte short value cannot be read at the specified offset
 	 */
 	default public int getUnsignedShort(int offset) throws MemoryAccessException {
-		return getShort(offset) & 0xffff;
+		return Short.toUnsignedInt(getShort(offset));
 	}
 
 	/**
-	 * returns the int at the given offset, taking into account the endianess.
+	 * returns the int at the given offset, taking into account the endianness.
 	 * @param offset the offset from the membuffers origin (the address that it is set at)
-	 * @return the int at the given offset, taking into account the endianess.
+	 * @return the int at the given offset, taking into account the endianness.
 	 * @throws MemoryAccessException if a 4-byte integer value cannot be read at the specified offset
 	 */
 	public int getInt(int offset) throws MemoryAccessException;
 
 	/**
-	 * Returns the unsigned int at the given offset, taking into account the endianess.
+	 * Returns the unsigned int at the given offset, taking into account the endianness.
 	 * @param offset the offset from the membuffers origin (the address that it is set at)
-	 * @return the unsigned int at the given offset, as a {@code long}, taking into account the endianess.
+	 * @return the unsigned int at the given offset, as a {@code long}, taking into account the endianness.
 	 * @throws MemoryAccessException if a 4-byte integer value cannot be read at the specified offset
 	 */
 	default public long getUnsignedInt(int offset) throws MemoryAccessException {
-		return getInt(offset) & 0xFFFF_FFFFL;
+		return Integer.toUnsignedLong(getInt(offset));
 	}
 
 	/**
-	 * returns the long at the given offset, taking into account the endianess.
+	 * returns the long at the given offset, taking into account the endianness.
 	 * @param offset the offset from the membuffers origin (the address that it is set at)
-	 * @return the long at the given offset, taking into account the endianess.
+	 * @return the long at the given offset, taking into account the endianness.
 	 * @throws MemoryAccessException if a 8-byte long value cannot be read at the specified offset
 	 */
 	public long getLong(int offset) throws MemoryAccessException;
 
 	/**
-	 * returns the value at the given offset, taking into account the endianess.
+	 * returns the value at the given offset, taking into account the endianness.
 	 * @param offset the offset from the membuffers origin (the address that it is set at)
 	 * @param size the number of bytes to include in the value
 	 * @param signed true if value should be treated as a signed twos-compliment value.
-	 * @return the value at the given offset, taking into account the endianess.
+	 * @return the value at the given offset, taking into account the endianness.
 	 * @throws MemoryAccessException if the request size value cannot be read at the specified offset
 	 */
 	public BigInteger getBigInteger(int offset, int size, boolean signed)
@@ -222,4 +223,31 @@ public interface MemBuffer {
 				throw new MemoryAccessException("Invalid length for read: " + len);
 		}
 	}
+
+	/**
+	 * Returns a stream that supplies the bytes of this buffer, starting at offset 0.
+	 * <p>
+	 * Note: the default implementation will produce invalid results if the underlying
+	 * MemBuffer instance is is mutated to point to different memory.
+	 * 
+	 * @return an InputStream that returns the bytes of this mem buffer
+	 */
+	default public InputStream getInputStream() {
+		return new MemBufferInputStream(this);
+	}
+
+	/**
+	 * Returns a stream that supplies the bytes of this buffer, starting at the specified offset.
+	 * <p>
+	 * Note: the default implementation will produce invalid results if the underlying
+	 * MemBuffer instance is is mutated to point to different memory.
+	 * 
+	 * @param initialPosition location in membuffer where the stream should start
+	 * @param length number of bytes to limit the stream to 
+	 * @return an InputSTream that returns the bytes of this mem buffer
+	 */
+	default public InputStream getInputStream(int initialPosition, int length) {
+		return new MemBufferInputStream(this, initialPosition, length);
+	}
+
 }

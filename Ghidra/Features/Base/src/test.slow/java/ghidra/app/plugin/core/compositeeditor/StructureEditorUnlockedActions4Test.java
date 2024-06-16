@@ -28,7 +28,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.UsrException;
 
 public class StructureEditorUnlockedActions4Test
-		extends AbstractStructureEditorUnlockedActionsTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testChangeSizeToZero() throws Exception {

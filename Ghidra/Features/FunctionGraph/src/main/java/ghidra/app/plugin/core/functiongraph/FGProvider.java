@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Supplier;
@@ -32,8 +35,9 @@ import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
@@ -129,17 +133,17 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			new SwingUpdateManager(250, 750, () -> setPendingLocationFromUpdateManager());
 
 		clipboardProvider = new FGClipboardProvider(tool, controller);
-		ClipboardService service = tool.getService(ClipboardService.class);
-		setClipboardService(service);
+		setDefaultFocusComponent(controller.getViewComponent());
+
 	}
 
 	@Override
 	public boolean isSnapshot() {
-		// we are a snapshot when we are 'disconnected' 
+		// we are a snapshot when we are 'disconnected'
 		return !isConnected();
 	}
 
-	public void setClipboardService(ClipboardService service) {
+	void setClipboardService(ClipboardService service) {
 		clipboardService = service;
 		if (clipboardService != null) {
 			clipboardService.registerClipboardContentProvider(clipboardProvider);
@@ -241,7 +245,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	/**
 	 * Gives to the clipboard of this provider the given string.  This will prime the clipboard
 	 * such that a copy action will copy the given string.
-	 * 
+	 *
 	 * @param string the string to set
 	 */
 	public void setClipboardStringContent(String string) {
@@ -351,7 +355,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	/**
 	 * Called to signal to this provider that it should update its state due to a new function
-	 * being graphed.  The UI is updated by the controller without this provider's knowledge. 
+	 * being graphed.  The UI is updated by the controller without this provider's knowledge.
 	 * This call here is to signal that the provider needs to update its metadata.
 	 */
 	public void functionGraphDataChanged() {
@@ -413,15 +417,15 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	/**
 	 * Called from within the FunctionGraph when locations are changed (e.g., if a user clicks
 	 * inside of a vertex)
-	 * 
-	 * @param newLocation the new location 
+	 *
+	 * @param newLocation the new location
 	 */
 	public void graphLocationChanged(ProgramLocation newLocation) {
 		storeLocation(newLocation);
 
 		if (isFocusedProvider()) {
 
-			// Note: this is the easy way to avoid odd event bouncing--only send events out if 
+			// Note: this is the easy way to avoid odd event bouncing--only send events out if
 			//       we are focused, as this implies the user is driving the events.  A better
 			//       metaphor for handling external and internal program locations is needed to
 			//       simplify the logic of when to broadcast location changes.
@@ -434,8 +438,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	/**
 	 * Called from within the FunctionGraph when selections are changed (e.g., if a user clicks
 	 * inside of a vertex)
-	 * 
-	 * @param selection the new selection 
+	 *
+	 * @param selection the new selection
 	 */
 	public void graphSelectionChanged(ProgramSelection selection) {
 		storeSelection(selection);
@@ -476,10 +480,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Called when for location changes that are <b>external</b> to the function graph (e.g., 
+	 * Called when for location changes that are <b>external</b> to the function graph (e.g.,
 	 * when the user clicks in Ghidra's Listing window)
-	 * 
-	 * @param newLocation the new location 
+	 *
+	 * @param newLocation the new location
 	 */
 	void setLocation(ProgramLocation newLocation) {
 		pendingLocation = newLocation;
@@ -494,6 +498,13 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		ProgramLocation newLocation = pendingLocation;
 		pendingLocation = null;
 		if (SystemUtilities.isEqual(currentLocation, newLocation)) {
+			return;
+		}
+
+		Program program = newLocation.getProgram();
+		if (program.isClosed()) {
+			// this method is called from an update manager, which means that the callback may
+			// happen after the notification that the program was closed
 			return;
 		}
 
@@ -522,7 +533,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Tells this provider to refresh, which means to rebuild the graph and relayout the 
+	 * Tells this provider to refresh, which means to rebuild the graph and relayout the
 	 * vertices.
 	 */
 	private void refresh(boolean keepPerspective) {
@@ -537,7 +548,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			Address address = function.getEntryPoint();
 			Address currentAddress = currentLocation.getAddress();
 			if (function.getBody().contains(currentAddress)) {
-				// prefer the current address if it is within the current function (i.e., the 
+				// prefer the current address if it is within the current function (i.e., the
 				// location hasn't changed out from under the graph due to threading issues)
 				address = currentAddress;
 			}
@@ -568,7 +579,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	/**
-	 * Tells the graph that some display data may have changed, but the changes are not worth 
+	 * Tells the graph that some display data may have changed, but the changes are not worth
 	 * performing a full rebuild
 	 */
 	public void refreshDisplayWithoutRebuilding() {
@@ -597,32 +608,28 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 		//
 		// Note: since we are not looping and we are using 'else if's, order is important!
-		// 
+		//
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_BODY_CHANGED)) {
+		if (ev.contains(RESTORED, FUNCTION_BODY_CHANGED)) {
 			if (graphDataMissing()) {
 				controller.clear();
 				return; // something really destructive has happened--give up!
 			}
-
 			graphChangedButNotRebuilt = !handleObjectRestored(ev, rebuildGraphOnChanges);
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED)) {
+		else if (ev.contains(SYMBOL_ADDED, SYMBOL_REMOVED)) {
 
 			if (currentGraphContainsEventAddress(ev)) {
 				graphChangedButNotRebuilt = !handleSymbolAddedRemoved(ev, rebuildGraphOnChanges);
 			}
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_REMOVED)) {
+		else if (ev.contains(REFERENCE_ADDED, REFERENCE_REMOVED)) {
 
 			if (currentGraphContainsReferenceChangedEvent(ev)) {
 				graphChangedButNotRebuilt = !handleReferenceAddedRemoved(ev, rebuildGraphOnChanges);
 			}
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+		else if (ev.contains(SYMBOL_RENAMED)) {
 			handleSymbolRenamed(ev);
 		}
 
@@ -658,7 +665,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private void updateGraphForAffectedAddresses(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			controller.invalidateAllCacheForProgram(currentProgram);
 			return;
 		}
@@ -703,11 +710,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		// Do we need to modify the affected vertex?
 		//
 		for (DomainObjectChangeRecord record : ev) {
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_MEM_REFERENCE_ADDED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.REFERENCE_ADDED) {
 				handleReferenceAdded(record);
 			}
-			else if (eventType == ChangeManager.DOCR_MEM_REFERENCE_REMOVED) {
+			else if (eventType == ProgramEvent.REFERENCE_REMOVED) {
 				handleReferenceRemoved(record);
 			}
 		}
@@ -716,7 +723,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private void handleReferenceRemoved(DomainObjectChangeRecord record) {
-		// 
+		//
 		// Get the affected vertex (if any).  Determine if we have to combine the vertex with
 		// the vertex below it (adding a reference creates a new basic block, which creates a new
 		// vertex--we may need to reverse that process)
@@ -730,7 +737,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return; // this particular removal doesn't affect our graph
 		}
 
-		// 
+		//
 		// How do we know if we can combine this vertex with its parent?  Well, we have some
 		// tests that must hold true:
 		// -There must be only a fallthrough edge to the affected vertex
@@ -774,7 +781,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	private void handleReferenceAdded(DomainObjectChangeRecord record) {
 
-		// 
+		//
 		// Get the affected vertex (if any).  Determine if we have to split the vertex.
 		//
 		FGData functionGraphData = controller.getFunctionGraphData();
@@ -786,10 +793,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return; // this particular removal doesn't affect our graph
 		}
 
-		// 
+		//
 		// How do we know if we need to split this vertex?  Well, we have some
 		// tests that must hold true:
-		// -The 'to' address for the reference must not be to the minimum address for that vertex		
+		// -The 'to' address for the reference must not be to the minimum address for that vertex
 		//
 		AddressSetView addresses = destinationVertex.getAddresses();
 		Address minAddress = addresses.getMinAddress();
@@ -811,11 +818,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		// Do we need to modify the affected vertex?
 		//
 		for (DomainObjectChangeRecord record : ev) {
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_SYMBOL_ADDED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.SYMBOL_ADDED) {
 				handleSymbolAdded(record);
 			}
-			else if (eventType == ChangeManager.DOCR_SYMBOL_REMOVED) {
+			else if (eventType == ProgramEvent.SYMBOL_REMOVED) {
 				handleSymbolRemoved(record);
 			}
 		}
@@ -824,7 +831,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private void handleSymbolRemoved(DomainObjectChangeRecord record) {
-		// 
+		//
 		// Get the affected vertex (if any).  Determine if we have to combine the vertex with
 		// the vertex below it (adding a symbol creates a new basic block, which creates a new
 		// vertex--we may need to reverse that process)
@@ -837,13 +844,13 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return; // this particular removal doesn't affect our graph
 		}
 
-		// 
+		//
 		// How do we know if we can combine this vertex with its parent?  Well, we have some
 		// tests that must hold true:
 		// -There must be only a fallthrough edge to the affected vertex
 		// -The parent vertex must have only one flow--FallThrough
 		// -There must not be any other references to the entry of the vertex
-		// -There must not be any non-dynamic labels on the vertex		
+		// -There must not be any non-dynamic labels on the vertex
 		//
 		Graph<FGVertex, FGEdge> graph = functionGraph;
 		Collection<FGEdge> inEdgesForDestination = graph.getInEdges(destinationVertex);
@@ -895,7 +902,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private void handleSymbolAdded(DomainObjectChangeRecord record) {
-		// 
+		//
 		// Get the affected vertex (if any).  Determine if we have to split the vertex.
 		//
 		FGData functionGraphData = controller.getFunctionGraphData();
@@ -906,10 +913,10 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return; // this particular removal doesn't affect our graph
 		}
 
-		// 
+		//
 		// How do we know if we need to split this vertex?  Well, we have some
 		// tests that must hold true:
-		// -The address for the symbol must not be to the minimum address for that vertex		
+		// -The address for the symbol must not be to the minimum address for that vertex
 		//
 		AddressSetView addresses = destinationVertex.getAddresses();
 		Address minAddress = addresses.getMinAddress();
@@ -924,8 +931,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	private void handleSymbolRenamed(DomainObjectChangedEvent ev) {
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord record = ev.getChangeRecord(i);
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_SYMBOL_RENAMED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.SYMBOL_RENAMED) {
 				Address address = getChangedAddress(record);
 				if (address != null) {
 					controller.refreshDisplayForAddress(address);
@@ -976,15 +983,15 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		FunctionGraph graph = functionGraphData.getFunctionGraph();
 
 		for (DomainObjectChangeRecord record : ev) {
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_MEM_REFERENCE_ADDED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.REFERENCE_ADDED) {
 				Reference reference = (Reference) record.getNewValue();
 				Address toAddress = reference.getToAddress();
 				if (graph.getVertexForAddress(toAddress) != null) {
 					return true;
 				}
 			}
-			else if (eventType == ChangeManager.DOCR_MEM_REFERENCE_REMOVED) {
+			else if (eventType == ProgramEvent.REFERENCE_REMOVED) {
 				Reference reference = (Reference) record.getOldValue();
 				Address toAddress = reference.getToAddress();
 				if (graph.getVertexForAddress(toAddress) != null) {
@@ -1032,6 +1039,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	@Override
 	public void closeComponent() {
+		super.closeComponent();
 		controller.cleanup();
 		plugin.closeProvider(this);
 	}
@@ -1128,6 +1136,16 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		controller.setGraphPerspective(info);
 	}
 
+	void addMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		controller.addMarkerProviderSupplier(supplier);
+		refreshAndKeepPerspective();
+	}
+
+	void removeMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		controller.removeMarkerProviderSupplier(supplier);
+		refreshAndKeepPerspective();
+	}
+
 //==================================================================================================
 // Navigatable interface methods
 //==================================================================================================
@@ -1155,7 +1173,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return null;
 		}
 
-		// we want to limit the selections we return here to that which is inside of our 
+		// we want to limit the selections we return here to that which is inside of our
 		// graph (the current selection of this provider is that for the entire program)
 		Function function = currentData.getFunction();
 		AddressSetView functionBody = function.getBody();
@@ -1174,7 +1192,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			return null;
 		}
 
-		// we want to limit the selections we return here to that which is inside of our 
+		// we want to limit the selections we return here to that which is inside of our
 		// graph (the current selection of this provider is that for the entire program)
 		Function function = currentData.getFunction();
 		AddressSetView functionBody = function.getBody();
@@ -1271,16 +1289,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
-	public void requestFocus() {
-		if (!isVisible()) {
-			return; // we will popup incorrectly without this check
-		}
-
-		controller.requestFocus();
-		tool.toFront(this);
-	}
-
-	@Override
 	public boolean isFocusedProvider() {
 		return focusStatusDelegate.get();
 	}
@@ -1290,12 +1298,13 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 	}
 

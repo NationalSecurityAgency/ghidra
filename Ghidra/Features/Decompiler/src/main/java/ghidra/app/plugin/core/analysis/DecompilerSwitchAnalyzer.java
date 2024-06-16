@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,8 +29,12 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.InjectPayload;
+import ghidra.program.model.lang.PcodeInjectLibrary;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
@@ -51,10 +54,11 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 	public static final int OPTION_DEFAULT_DECOMPILER_TIMEOUT_SECS = 60;
 	private int decompilerTimeoutSecondsOption = OPTION_DEFAULT_DECOMPILER_TIMEOUT_SECS;
 
+	// cache for pcode callother injection payloads
+	private HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<>();
+
 	private boolean hitNonReturningFunction = false;
 
-	private Register isaModeSwitchRegister = null;
-	private Register isaModeRegister = null;
 
 //==================================================================================================
 // Interface Methods
@@ -93,27 +97,30 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		isaModeSwitchRegister = program.getRegister("ISAModeSwitch");
-		isaModeRegister = program.getRegister("ISA_MODE");
-
 		try {
 			ArrayList<Address> locations = findLocations(program, set, monitor);
 			if (locations.isEmpty()) {
 				return true;
 			}
 
-			Set<Function> functions = findFunctions(program, locations, monitor);
+			List<Function> definedFunctions = new ArrayList<>();
+			List<Function> undefinedFunctions = new ArrayList<>();
+			findFunctions(program, locations, definedFunctions, undefinedFunctions, monitor);
 
 			if (hitNonReturningFunction) {
 				hitNonReturningFunction = false;
 				// if hit a non-returning function, code needs to be fixed up
 				//  before wasting time on analyzing potentially bad code
 				// This will also clean out locations that were thunks for the next go round.
-				restartRemainingLater(program, functions);
+				restartRemainingLater(program, definedFunctions, undefinedFunctions);
 				return true;
 			}
 
-			runDecompilerAnalysis(program, functions, monitor);
+			monitor.checkCancelled();
+			runDecompilerAnalysis(program, definedFunctions, monitor);
+			monitor.checkCancelled();
+			runDecompilerAnalysis(program, undefinedFunctions, monitor);
+			monitor.checkCancelled();
 		}
 		catch (CancelledException ce) {
 			throw ce;
@@ -130,9 +137,13 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	private void restartRemainingLater(Program program, Set<Function> functions) {
+	private void restartRemainingLater(Program program, Collection<Function> definedFunctions,
+			Collection<Function> undefinedFunctions) {
 		AddressSet funcSet = new AddressSet();
-		for (Function function : functions) {
+		for (Function function : definedFunctions) {
+			funcSet.add(function.getBody());
+		}
+		for (Function function : undefinedFunctions) {
 			funcSet.add(function.getBody());
 		}
 		AutoAnalysisManager.getAnalysisManager(program)
@@ -144,7 +155,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 // End Interface Methods
 //==================================================================================================
 
-	private void runDecompilerAnalysis(Program program, Set<Function> functions,
+	private void runDecompilerAnalysis(Program program, Collection<Function> functions,
 			TaskMonitor monitor) throws InterruptedException, Exception {
 
 		DecompilerCallback<Void> callback =
@@ -170,8 +181,9 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 
 	}
 
-	private Set<Function> findFunctions(final Program program, ArrayList<Address> locations,
-			final TaskMonitor monitor) throws InterruptedException, Exception, CancelledException {
+	private void findFunctions(Program program, ArrayList<Address> locations,
+			Collection<Function> definedFunctions, Collection<Function> undefinedFunctions,
+			TaskMonitor monitor) throws InterruptedException, Exception, CancelledException {
 
 		GThreadPool pool = AutoAnalysisManager.getSharedAnalsysThreadPool();
 		FindFunctionCallback callback = new FindFunctionCallback(program);
@@ -190,7 +202,6 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 
 		Collection<QResult<Address, Function>> results = queue.waitForResults();
 
-		Set<Function> functions = new HashSet<>();
 		for (QResult<Address, Function> result : results) {
 			Function function = result.getResult();
 			if (function == null) {
@@ -203,12 +214,25 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				}
 				continue;
 			}
-			functions.add(function);
+			if (function instanceof UndefinedFunction) {
+				undefinedFunctions.add(function);
+			}
+			else {
+				definedFunctions.add(function);
+			}
 		}
-
-		return functions;
 	}
 
+	/**
+	 * Find locations that could be an unrecovered switches
+	 * 
+	 * @param program program
+	 * @param set area of program to check
+	 * @param monitor monitor
+	 * @return list of addresses that could be a switch
+	 * 
+	 * @throws CancelledException if monitor cancels
+	 */
 	private ArrayList<Address> findLocations(Program program, AddressSetView set,
 			TaskMonitor monitor) throws CancelledException {
 
@@ -220,7 +244,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		Listing list = program.getListing();
 		InstructionIterator iterator = list.getInstructions(set, true);
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Instruction instruction = iterator.next();
 			FlowType flowType = instruction.getFlowType();
@@ -229,6 +253,12 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 					continue;
 				}
 			}
+			
+			// check for break type construct
+			if (hasUnrecoverableCallOther(program, instruction)) {
+				continue;
+			}
+
 
 			Address address = instruction.getMinAddress();
 			locations.add(address);
@@ -237,6 +267,110 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		}
 
 		return locations;
+	}
+
+	/**
+	 * Check an instruction for an unrecoverable computed destination due
+	 * to calling a callOther pcode op that has no associated injection.
+	 * If there is an associated injection, then it might yet be recoverable.
+	 * 
+	 * @param program program
+	 * @param instr branching instruction to check
+	 * @return true if there is a callOther that will block switch recovery
+	 */
+	private boolean hasUnrecoverableCallOther(Program program, Instruction instr) {
+		HashSet<Varnode> callOtherOutputs = new HashSet<Varnode>();
+
+		PcodeOp[] pcode = instr.getPcode(true);
+		for (PcodeOp op : pcode) {
+			if (op.getOpcode() == PcodeOp.CALLOTHER) {
+				// if callother has defined pcode inject replacement
+				// then could recover
+				if (hasPcodeInject(program, op)) {
+					continue;
+				}
+				// save callother output varnode
+				Varnode dest = op.getOutput();
+				if (dest != null) {
+					callOtherOutputs.add(dest);
+				}
+				continue;
+			}
+			if (!callOtherOutputs.isEmpty() && op.getOpcode()==PcodeOp.BRANCHIND) {
+				// check if branching to an output varnode of callother
+				if (callOtherOutputs.contains(op.getInput(0))) {
+					// target is computed from a callother output
+					return true;
+				}
+				continue;
+			}
+			
+			// if have a callother destinations, check for it as an input
+			if (!callOtherOutputs.isEmpty()) {
+				Varnode[] inputs = op.getInputs();
+				for (Varnode in : inputs) {
+					if (callOtherOutputs.contains(in)) {
+						Varnode dest = op.getOutput();
+						if (dest != null) {
+							callOtherOutputs.add(dest);
+						}
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Check if the callOther Pcode op has an associated injection
+	 * 
+	 * @param program program
+	 * @param op callother pcode op
+	 * @return true if there is a pcode injection, false otherwise 
+	 */
+	private boolean hasPcodeInject(Program program, PcodeOp op) {
+		long callOtherIndex = op.getInput(0).getOffset();
+		InjectPayload payload = findPcodeInjection(program, callOtherIndex);
+
+		return payload != null;
+	}
+	
+	/**
+	 * Find out if a callother pcode op has a pcodeInjection attached to it
+	 * 
+	 * @param program program
+	 * @param callOtherIndex callOther ID index
+	 * @return injection payload or null if no register injections
+	 */
+	private InjectPayload findPcodeInjection(Program program, long callOtherIndex) {
+		InjectPayload payload = injectPayloadCache.get(callOtherIndex);
+
+		// has a payload value for the pcode callother index
+		if (payload != null) {
+			return payload;
+		}
+
+		// value null, if contains the key, then already looked up
+		if (injectPayloadCache.containsKey(callOtherIndex)) {
+			return null;
+		}
+		PcodeInjectLibrary snippetLibrary = program.getCompilerSpec().getPcodeInjectLibrary();
+
+		String opName = program.getLanguage().getUserDefinedOpName((int) callOtherIndex);
+
+		// segment is special named injection
+		if ("segment".equals(opName)) {
+			payload =
+				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, "segment_pcode");
+		}
+		else {
+			payload = snippetLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, opName);
+		}
+
+		// save payload in cache for next lookup
+		injectPayloadCache.put(callOtherIndex, payload);
+		return payload;
 	}
 
 	private boolean isCallFixup(Program program, Instruction instr, FlowType flowType) {
@@ -350,33 +484,13 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				new ContextEvaluatorAdapter() {
 					@Override
 					public boolean evaluateReference(VarnodeContext context, Instruction instr,
-							int pcodeop, Address address, int size, RefType refType) {
+							int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 						// go ahead and place the reference, since it is a constant.
 						if (refType.isComputed() && refType.isFlow() &&
 							program.getMemory().contains(address)) {
-							propogateCodeMode(context, address);
 							foundCount.incrementAndGet();
-							return true;
 						}
 						return false;
-					}
-
-					private void propogateCodeMode(VarnodeContext context, Address addr) {
-						// get CodeModeRegister and flow it to destination, if it is set here
-
-						if (isaModeSwitchRegister == null) {
-							return;
-						}
-						BigInteger value = context.getValue(isaModeSwitchRegister, false);
-						if (value != null && program.getListing().getInstructionAt(addr) == null) {
-							try {
-								program.getProgramContext()
-										.setValue(isaModeRegister, addr, addr, value);
-							}
-							catch (ContextChangeException e) {
-								// ignore
-							}
-						}
 					}
 				}, false, monitor);
 

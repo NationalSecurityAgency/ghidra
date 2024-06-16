@@ -59,6 +59,12 @@ public class LabelTableColumn
 		if (symbol != null) {
 			return symbol.getName();
 		}
+
+		Address address = rowObject.getAddress();
+		if (address == Address.EXT_FROM_ADDRESS) {
+			return address.toString();
+		}
+
 		return null;
 	}
 

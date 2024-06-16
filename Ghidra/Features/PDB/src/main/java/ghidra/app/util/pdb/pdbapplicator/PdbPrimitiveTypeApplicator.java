@@ -23,8 +23,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * Takes care of allocating unique instances of primitive data types for the {@link PdbApplicator},
- * and is used principally by the many instances of {@link PrimitiveTypeApplier}.
+ * Takes care of allocating unique instances of primitive data types for the
+ * {@link DefaultPdbApplicator}, and is used principally by the many instances of
+ * {@link PrimitiveTypeApplier}.
  */
 public class PdbPrimitiveTypeApplicator {
 
@@ -59,7 +60,7 @@ public class PdbPrimitiveTypeApplicator {
 	}
 
 	/**
-	 * Returns the {@link DataTypeManager} associated with this analyzer. 
+	 * Returns the {@link DataTypeManager} associated with this analyzer.
 	 * @return DataTypeManager which this analyzer is using.
 	 */
 	private DataTypeManager getDataTypeManager() {
@@ -78,8 +79,7 @@ public class PdbPrimitiveTypeApplicator {
 
 	DataType getVoidType() {
 		if (voidGhidraPrimitive == null) {
-			DataType dataType = new VoidDataType(getDataTypeManager());
-			voidGhidraPrimitive = resolve(dataType);
+			voidGhidraPrimitive = resolve(VoidDataType.dataType);
 		}
 		return voidGhidraPrimitive;
 	}
@@ -516,21 +516,24 @@ public class PdbPrimitiveTypeApplicator {
 		return getRealType(16, "float128");
 	}
 
-	/* 
+	/**
 	 * First get type from "other" list, which are typedefs to underlying primitives. If it does
 	 * not exist, then find the proper underlying primitive, create the typedef, and cache this
 	 * newly minted (typedef) unique primitive type.
+	 * @param rawSize "raw" encoding size in bytes
+	 * @param name assigned type name
 	 */
-	private DataType getRealType(int size, String name) {
+	private DataType getRealType(int rawSize, String name) {
 		DataType dataType = otherPrimitives.get(name);
 		if (dataType != null) {
 			return dataType;
 		}
-		dataType = floatGhidraPrimitives.get(size);
+		dataType = floatGhidraPrimitives.get(rawSize);
 		DataType resolved;
 		if (dataType == null) {
-			resolved = resolve(AbstractFloatDataType.getFloatDataType(size, getDataTypeManager()));
-			floatGhidraPrimitives.put(size, resolved);
+			resolved =
+				resolve(AbstractFloatDataType.getFloatDataType(rawSize, getDataTypeManager()));
+			floatGhidraPrimitives.put(rawSize, resolved);
 			if (resolved instanceof Undefined) { // Not a real type implemented in Ghidra.
 				DataType type = createTypedef(name, resolved);
 				resolved = resolve(type);
@@ -629,7 +632,7 @@ public class PdbPrimitiveTypeApplicator {
 		return getBooleanType(16, "T_BOOL128");
 	}
 
-	/* 
+	/*
 	 * First get type from "other" list, which are typedefs to underlying primitives. If it does
 	 * not exist, then find the proper underlying primitive, create the typedef, and cache this
 	 * newly minted (typedef) unique primitive type.

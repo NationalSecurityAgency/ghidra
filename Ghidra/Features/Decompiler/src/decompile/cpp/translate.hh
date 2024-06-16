@@ -18,11 +18,13 @@
 ///
 /// Classes for keeping track of spaces and registers (for a single architecture).
 
-#ifndef __CPUI_TRANSLATE__
-#define __CPUI_TRANSLATE__
+#ifndef __TRANSLATE_HH__
+#define __TRANSLATE_HH__
 
 #include "pcoderaw.hh"
 #include "float.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_CODE;		///< Marshaling attribute "code"
 extern AttributeId ATTRIB_CONTAIN;	///< Marshaling attribute "contain"
@@ -108,23 +110,7 @@ public:
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize)=0;
 
   /// Emit pcode directly from an \<op> element
-  void decodeOp(Decoder &decoder,const AddrSpaceManager *trans);
-
-  enum {			// Tags for packed pcode format
-    unimpl_tag = 0x20,
-    inst_tag = 0x21,
-    op_tag = 0x22,
-    void_tag = 0x23,
-    spaceid_tag = 0x24,
-    addrsz_tag = 0x25,
-    end_tag = 0x60
-  };
-  /// Helper function for unpacking an offset from a pcode byte stream
-  static const uint1 *unpackOffset(const uint1 *ptr,uintb &off);
-  /// Helper function for unpacking a varnode from a pcode byte stream
-  static const uint1 *unpackVarnodeData(const uint1 *ptr,VarnodeData &v,const AddrSpaceManager *trans);
-  /// Emit pcode directly from a packed byte stream
-  const uint1 *restorePackedOp(const Address &addr,const uint1 *ptr,const AddrSpaceManager *trans);
+  void decodeOp(const Address &addr,Decoder &decoder);
 };
 
 /// \brief Abstract class for emitting disassembly to an application
@@ -192,14 +178,13 @@ class SpacebaseSpace : public AddrSpace {
   VarnodeData baseOrig;		///< Original base register before any truncation
   void setBaseRegister(const VarnodeData &data,int4 origSize,bool stackGrowth); ///< Set the base register at time space is created
 public:
-  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl);
+  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl,bool isFormal);
   SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with decode
   virtual int4 numSpacebase(void) const;
   virtual const VarnodeData &getSpacebase(int4 i) const;
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;
   virtual bool stackGrowsNegative(void) const { return isNegativeStack; }
   virtual AddrSpace *getContain(void) const { return contain; } ///< Return containing space
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -210,7 +195,7 @@ public:
 /// from \e most \e significant to \e least \e significant.
 class JoinRecord {
   friend class AddrSpaceManager;
-  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol
+  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol, most significant to least
   VarnodeData unified; ///< Special entry representing entire symbol in one chunk
 public:
   int4 numPieces(void) const { return pieces.size(); }	///< Get number of pieces in this record
@@ -249,7 +234,7 @@ class AddrSpaceManager {
   vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
   AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
-  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from an XML tag
+  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from a stream
   void setDefaultCodeSpace(int4 index); ///< Set the default address space (for code)
   void setDefaultDataSpace(int4 index);	///< Set the default address space for data
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space
@@ -294,6 +279,9 @@ public:
 
   /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
   void renormalizeJoinAddress(Address &addr,int4 size);
+
+  /// \brief Parse a string with just an \e address \e space name and a hex offset
+  Address parseAddressSimple(const string &val);
 };
 
 /// \brief The interface to a translation engine for a processor.
@@ -615,4 +603,5 @@ inline uint4 Translate::getUniqueStart(UniqueLayout layout) const {
   return (layout != ANALYSIS) ? layout + unique_base : layout;
 }
 
+} // End namespace ghidra
 #endif

@@ -49,14 +49,12 @@
 	dataCacheBlockClearToZero(ea);
 }
 
-@ifndef IS_ISA
-# this is equilent to "mbar 0"
-#eieio 			0x7c 00 06 ac
-:eieio			is $(NOTVLE) & OP=31 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=854 & BIT_0=0
+define pcodeop memoryBarrier;
+#mbar 0         7c 00 06 ac
+:mbar MO        is OP=31 & MO & XOP_1_10=854
 {
-	enforceInOrderExecutionIO();
+	memoryBarrier(MO:1);
 }
-@endif
 
 #icbi r0,r0		0x7c 00 07 ac
 :icbi RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=982 & BIT_0=0 & RA_OR_ZERO
@@ -113,35 +111,32 @@
 	DCRN = D;
 }
 
+# mtmsr varies from processor to processor. This version is consistent with PowerISA v2.07B
 #mtmsr r0,0		0x7c 00 01 24
 :mtmsr S,0		is OP=31 & S & BITS_17_20=0 & MSR_L=0 & BITS_11_15=0 & XOP_1_10=146 & BIT_0=0
 {
-	bit58:$(REGISTER_SIZE) = (S >> 5) & 1;	#bit 58
-	bit49:$(REGISTER_SIZE) = (S >> 14)& 1;	#bit 49
-	bit59:$(REGISTER_SIZE) = (S >> 4) & 1;	#bit 59
-@ifdef BIT_64
-	tmp:8 = S & 0x00000000ffff6fcf;  #0b00000000000000000000000000000000 1111 1111 1111 1111 0110 1111 1100 1111
-	tmp = tmp & ((bit58 | bit49) << 5);
-	tmp = tmp & ((bit59 | bit49) << 4);
-	MSR = MSR & 0xffffffff00009030 | tmp;
-@else
-	tmp:4 = S & 0xffff6fcf;
-	tmp = tmp & ((bit58 | bit49) << 5);
-	tmp = tmp & ((bit59 | bit49) << 4);
-	MSR = MSR & 0x00009000 | tmp;
-@endif	
+
+	bit59:$(REGISTER_SIZE) = (S >> 4)  & 1;	#bit 59
+	bit58:$(REGISTER_SIZE) = (S >> 5)  & 1;	#bit 58
+	bit49:$(REGISTER_SIZE) = (S >> 14) & 1;	#bit 49
+	bit48:$(REGISTER_SIZE) = (S >> 15) & 1;	#bit 48
+
+	local mask:$(REGISTER_SIZE) = 0xffff6fcf; # preserves bits 32:47 49:50 52:57 60:62
+	local tmp:$(REGISTER_SIZE) = S & mask;    # 1111 1111 1111 1111 0110 1111 1100 1111
+
+	tmp = tmp | ((bit48 | bit49) << 15); # MSR 48 <- (RS) 48 | (RS) 49
+	tmp = tmp | ((bit58 | bit49) << 5);  # MSR 58 <- (RS) 58 | (RS) 49
+	tmp = tmp | ((bit59 | bit49) << 4);  # MSR 59 <- (RS) 59 | (RS) 49
+	MSR = (MSR & ~mask) | tmp;
 }
 
 #mtmsr r0,1		0x7c 01 01 24
 :mtmsr S,1		is OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=146 & BIT_0=0 
 {
-@ifdef BIT_64
-	mask:8 = 0x000000000000fffe;
-@else 
-	mask:4 = 0x0000fffe;
-@endif
+	mask:$(REGISTER_SIZE) = 0x8002; #preserves bits 48 and 62
 	MSR = (MSR & ~mask) | (S & mask);
 }
+
 
 #mtspr spr000,r0	0x7c 00 02 a6
 :mtspr SPRVAL,S		is OP=31 & SPRVAL & S & XOP_1_10=467 & BIT_0=0

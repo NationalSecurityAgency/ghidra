@@ -16,6 +16,7 @@
 package docking.widgets.tree;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.swing.Icon;
@@ -198,6 +199,22 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
+	 * Returns the child node of this node with the given name which satisfies predicate filter.
+	 * 
+	 * @param name the name of the child to be returned
+	 * @param filter predicate filter
+	 * @return the child with the given name
+	 */
+	public GTreeNode getChild(String name, Predicate<GTreeNode> filter) {
+		for (GTreeNode node : children()) {
+			if (name.equals(node.getName()) && filter.test(node)) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Returns the child node at the given index. Returns null if the index is out of bounds.
 	 * 
 	 * @param index the index of the child to be returned
@@ -371,10 +388,9 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	public GTreeNode filter(GTreeFilter filter, TaskMonitor monitor)
 			throws CancelledException, CloneNotSupportedException {
 		List<GTreeNode> list = new ArrayList<>();
-
 		if (isLoaded()) {
 			for (GTreeNode child : children()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				GTreeNode filtered = child.filter(filter, monitor);
 				if (filtered != null) {
 					list.add(filtered);
@@ -405,7 +421,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		monitor = new TreeTaskMonitor(monitor, children.size());
 		int count = 1;
 		for (GTreeNode child : children) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += child.loadAll(monitor);
 			monitor.incrementProgress(1);
 		}
@@ -486,6 +502,15 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		if (tree != null) {
 			tree.expandPath(this);
 		}
+	}
+
+	/**
+	 * Determine if this node may be auto-expanded.  Some special node cases may need to prevent
+	 * or limit auto-expansion due to tree depth or other special conditions.
+	 * @return true if this node allows auto-expansion, else false.
+	 */
+	public boolean isAutoExpandPermitted() {
+		return !isLeaf();
 	}
 
 	/**

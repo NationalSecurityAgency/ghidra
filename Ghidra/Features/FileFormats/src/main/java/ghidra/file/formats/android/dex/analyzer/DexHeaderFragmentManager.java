@@ -107,7 +107,7 @@ class DexHeaderFragmentManager {
 			return;
 		}
 		monitor.incrementProgress(1);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("DEX: creating fragment: " + fragmentName + " ...");
 		try {
 			ProgramModule module = program.getListing().getDefaultRootModule();
@@ -116,7 +116,7 @@ class DexHeaderFragmentManager {
 				fragment = module.createFragment(fragmentName);
 			}
 			for (AddressRange range : addressSet) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				fragment.move(range.getMinAddress(), range.getMaxAddress());
 			}
 		}
@@ -129,11 +129,15 @@ class DexHeaderFragmentManager {
 		if (!isCreateFragments) {
 			return;
 		}
-
 		monitor.setMessage("DEX: creating fragments");
 		if (header.getDataSize() > 0) {
 			Address start = baseAddress.add(header.getDataOffset());
-			api.createFragment("data", start, header.getDataSize());
+			try {
+				api.createFragment("data", start, header.getDataSize());
+			}
+			catch (NotFoundException e) {
+				//ignore, case for incomplete CDEX
+			}
 		}
 	}
 

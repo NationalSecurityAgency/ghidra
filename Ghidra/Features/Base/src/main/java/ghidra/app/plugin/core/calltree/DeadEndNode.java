@@ -15,6 +15,13 @@
  */
 package ghidra.app.plugin.core.calltree;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Icon;
+
+import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -23,33 +30,29 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.widgets.tree.GTreeNode;
-
 public class DeadEndNode extends CallNode {
 
-	private static final Icon ICON = ResourceManager.loadImage("images/stopNode.png");
+	private static final Icon ICON = new GIcon("icon.plugin.calltree.node.dead.end");
 
 	private final Reference reference;
 	private String name;
 
 	private final Program program;
 
-	DeadEndNode(Program program, Reference reference) {
-		super(new AtomicInteger(0)); // can't recurse
+	DeadEndNode(Program program, Reference reference, CallTreeOptions callTreeOptions) {
+		super(callTreeOptions);
 		this.program = program;
 		this.reference = reference;
 	}
 
 	@Override
+	public int loadAll(TaskMonitor monitor) throws CancelledException {
+		return 1; // this node cannot be opened
+	}
+
+	@Override
 	CallNode recreate() {
-		return new DeadEndNode(program, reference);
+		return new DeadEndNode(program, reference, callTreeOptions);
 	}
 
 	@Override
@@ -100,6 +103,6 @@ public class DeadEndNode extends CallNode {
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		return new ArrayList<GTreeNode>();
+		return new ArrayList<>();
 	}
 }

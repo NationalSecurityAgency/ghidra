@@ -113,7 +113,7 @@ public class ElfSectionHeaderType {
 	/**
 	 * Add the specified section header type to the specified map.
 	 * @param type section header type
-	 * @param sectionHeaderTypeMap
+	 * @param sectionHeaderTypeMap map of section header types
 	 * @throws DuplicateNameException if new type name already defined within
 	 * the specified map
 	 */

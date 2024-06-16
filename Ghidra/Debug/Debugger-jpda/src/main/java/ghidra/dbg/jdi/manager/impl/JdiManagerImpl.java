@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.sun.jdi.*;
@@ -40,9 +41,9 @@ public class JdiManagerImpl implements JdiManager {
 	private final Map<String, VirtualMachine> unmodifiableVMs = Collections.unmodifiableMap(vms);
 
 	protected final ListenerSet<JdiTargetOutputListener> listenersTargetOutput =
-		new ListenerSet<>(JdiTargetOutputListener.class);
+		new ListenerSet<>(JdiTargetOutputListener.class, true);
 	protected final ListenerSet<JdiConsoleOutputListener> listenersConsoleOutput =
-		new ListenerSet<>(JdiConsoleOutputListener.class);
+		new ListenerSet<>(JdiConsoleOutputListener.class, true);
 	protected final ExecutorService eventThread = Executors.newSingleThreadExecutor();
 
 	protected JdiEventHandler globalEventHandler = new JdiEventHandler();
@@ -207,24 +208,25 @@ public class JdiManagerImpl implements JdiManager {
 	@Override
 	public CompletableFuture<VirtualMachine> addVM(Connector cx,
 			Map<String, Connector.Argument> args) {
-		// TODO: Since this is making a blocking-on-the-network call, it should be supplyAsync
-		try {
-			curVM = connectVM(cx, args);
-			JdiEventHandler eventHandler = new JdiEventHandler(curVM, globalEventHandler);
-			eventHandler.start();
-			eventHandler.setState(ThreadReference.THREAD_STATUS_NOT_STARTED, Causes.UNCLAIMED);
-			eventHandlers.put(curVM, eventHandler);
-			vms.put(curVM.name(), curVM);
-			connectors.put(curVM, cx);
-		}
-		catch (VMDisconnectedException e) {
-			System.out.println("Virtual Machine is disconnected.");
-			return CompletableFuture.failedFuture(e);
-		}
-		catch (Exception e) {
-			return CompletableFuture.failedFuture(e);
-		}
-		return CompletableFuture.completedFuture(curVM);
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				curVM = connectVM(cx, args);
+				JdiEventHandler eventHandler = new JdiEventHandler(curVM, globalEventHandler);
+				eventHandler.start();
+				eventHandler.setState(ThreadReference.THREAD_STATUS_NOT_STARTED, Causes.UNCLAIMED);
+				eventHandlers.put(curVM, eventHandler);
+				vms.put(curVM.name(), curVM);
+				connectors.put(curVM, cx);
+			}
+			catch (VMDisconnectedException e) {
+				System.out.println("Virtual Machine is disconnected.");
+				return ExceptionUtils.rethrow(e);
+			}
+			catch (Exception e) {
+				return ExceptionUtils.rethrow(e);
+			}
+			return curVM;
+		});
 	}
 
 	@Override

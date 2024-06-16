@@ -15,8 +15,13 @@
  */
 /// \file raw_arch.hh
 /// \brief Bare bones capability for treating a file as a raw executable image
+#ifndef __RAW_ARCH_HH__
+#define __RAW_ARCH_HH__
+
 #include "sleigh_arch.hh"
 #include "loadimage.hh"
+
+namespace ghidra {
 
 extern ElementId ELEM_RAW_SAVEFILE;	///< Marshaling element \<raw_savefile>
 
@@ -46,3 +51,5 @@ public:
   virtual ~RawBinaryArchitecture(void) {}
 };
 
+} // End namespace ghidra
+#endif

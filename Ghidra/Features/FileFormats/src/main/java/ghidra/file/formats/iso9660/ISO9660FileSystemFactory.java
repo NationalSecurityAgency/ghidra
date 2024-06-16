@@ -15,8 +15,9 @@
  */
 package ghidra.file.formats.iso9660;
 
-import java.io.IOException;
 import java.util.Arrays;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.FSRLRoot;
@@ -28,6 +29,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class ISO9660FileSystemFactory
 		implements GFileSystemFactoryByteProvider<ISO9660FileSystem>, GFileSystemProbeByteProvider {
+	private static final byte[] MAGIC_BYTES = { 0x43, 0x44, 0x30, 0x30, 0x31 }; // "CD001"
+
 	private static final long[] SIGNATURE_PROBE_OFFSETS = new long[] { 0x8000L, 0x8800L, 0x9000L };
 
 	@Override
@@ -43,10 +46,10 @@ public class ISO9660FileSystemFactory
 	}
 
 	private boolean isMagicSignatureAt(ByteProvider provider, long offset) throws IOException {
-		int magicLen = ISO9660Constants.MAGIC_BYTES.length;
+		int magicLen = MAGIC_BYTES.length;
 		long providerLen = provider.length();
 		return (providerLen > offset + magicLen) &&
-			Arrays.equals(provider.readBytes(offset, magicLen), ISO9660Constants.MAGIC_BYTES);
+			Arrays.equals(provider.readBytes(offset, magicLen), MAGIC_BYTES);
 	}
 
 	@Override

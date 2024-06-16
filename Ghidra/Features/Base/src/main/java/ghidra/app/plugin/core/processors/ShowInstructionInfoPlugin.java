@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.processors;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
@@ -30,12 +31,16 @@ import javax.swing.JPanel;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.dnd.GClipboard;
+import docking.dnd.StringTransferable;
+import docking.widgets.OptionDialog;
 import docking.widgets.label.GDLabel;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -83,7 +88,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 	public ShowInstructionInfoPlugin(PluginTool tool) {
 
-		super(tool, true, false);
+		super(tool);
 
 		createStatusPanels();
 		createActions();
@@ -186,7 +191,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	private File writeWrapperFile(URL fileURL) throws IOException {
 		File f;
 		if (manualWrapperFiles.size() < MAX_MANUAL_WRAPPER_FILE_COUNT) {
-			f = File.createTempFile("pdfView", ".html");
+			f = Application.createTempFile("pdfView", ".html");
 			f.deleteOnExit();
 		}
 		else {
@@ -217,7 +222,19 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		String missingDescription = entry.getMissingManualDescription();
 		if (filename == null || !new File(filename).exists()) {
 			String message = buildMissingManualMessage(language, filename, missingDescription);
-			Msg.showInfo(this, null, "Missing Processor Manual", message);
+
+			int choice =
+				OptionDialog.showOptionNoCancelDialog(null, "Missing Processor Manual", message,
+					"Copy \uFF06 Close", // & in Java is for mnemonics; use unicode value
+					"Close",
+					OptionDialog.INFORMATION_MESSAGE);
+			if (choice == OptionDialog.OPTION_ONE) {
+				Clipboard systemClipboard = GClipboard.getSystemClipboard();
+				String copyText = "Missing file: " + filename + "\nDetails: " + missingDescription;
+				StringTransferable transferable = new StringTransferable(copyText);
+				systemClipboard.setContents(transferable, null);
+			}
+
 			return null;
 		}
 
@@ -467,7 +484,7 @@ class ShowInfoAction extends ListingContextAction {
 
 		this.plugin = plugin;
 
-		setPopupMenuData(new MenuData(new String[] { "Instruction Info..." }, null, "Disassembly"));
+		setPopupMenuData(new MenuData(new String[] { "Instruction Info" }, null, "Disassembly"));
 
 	}
 
@@ -489,8 +506,8 @@ class ShowProcessorManualAction extends ProgramContextAction {
 		this.plugin = plugin;
 
 		setMenuBarData(
-			new MenuData(new String[] { "Tools", "Processor Manual..." }, null, "Disassembly"));
-		setPopupMenuData(new MenuData(new String[] { "Processor Manual..." }, null, "Disassembly"));
+			new MenuData(new String[] { "Tools", "Processor Manual" }, null, "Disassembly"));
+		setPopupMenuData(new MenuData(new String[] { "Processor Manual" }, null, "Disassembly"));
 
 		this.setEnabled(true);
 	}

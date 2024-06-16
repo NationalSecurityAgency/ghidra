@@ -17,6 +17,7 @@ package ghidra.app.util;
 
 import java.util.*;
 
+import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.query.TableService;
@@ -26,8 +27,10 @@ import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.table.ReferencesFromTableModel;
 import ghidra.util.table.field.ReferenceEndpoint;
+import resources.ResourceManager;
 
 public class XReferenceUtils {
 
@@ -204,13 +207,41 @@ public class XReferenceUtils {
 	public static void showXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
 			TableService service, ProgramLocation location, Collection<Reference> xrefs) {
 
-		ReferencesFromTableModel model = new ReferencesFromTableModel(new ArrayList<>(xrefs),
-			serviceProvider, location.getProgram());
+		Address address = location.getAddress();
+		Program program = location.getProgram();
+		FunctionManager fm = program.getFunctionManager();
+		Function function = fm.getFunctionAt(address);
+
+		ReferencesFromTableModel model;
+		if (function == null) {
+			model = new ReferencesFromTableModel(xrefs, serviceProvider, program);
+		}
+		else {
+			model = new FunctionXrefsTableModel(function, xrefs, serviceProvider, program);
+		}
 
 		String title = generateXRefTitle(location);
 		TableComponentProvider<ReferenceEndpoint> provider =
-			service.showTable(title, "XRefs", model, "XRefs", navigatable);
+			service.showTable(title, "Xrefs", model, "Xrefs", navigatable);
 		provider.installRemoveItemsAction();
+
+		if (function != null) {
+			//@formatter:off
+			String actionName = "Show Thunk Xrefs";
+			new ToggleActionBuilder(actionName, provider.getActionOwner())
+				.toolBarIcon(ResourceManager.loadImage("images/ThunkFunction.gif"))
+				.toolBarGroup("A")
+				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, actionName))
+				.selected(false)
+				.onAction(c -> {
+					((FunctionXrefsTableModel) model).toggleShowAllThunkXRefs();
+				})
+				.buildAndInstallLocal(provider);
+			//@formatter:on
+
+			return;
+		}
+
 	}
 
 	private static String generateXRefTitle(ProgramLocation location) {

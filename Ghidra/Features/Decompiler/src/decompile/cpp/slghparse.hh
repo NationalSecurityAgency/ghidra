@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,20 +46,31 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_SRC_DECOMPILE_CPP_SLGHPARSE_HH_INCLUDED
-# define YY_YY_SRC_DECOMPILE_CPP_SLGHPARSE_HH_INCLUDED
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
+#ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
+# define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef SLEIGHDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
-extern int yydebug;
+#   define SLEIGHDEBUG 1
+#  else
+#   define SLEIGHDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define SLEIGHDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined SLEIGHDEBUG */
+#if SLEIGHDEBUG
+extern int sleighdebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef SLEIGHTOKENTYPE
+# define SLEIGHTOKENTYPE
+  enum sleightokentype
   {
     OP_BOOL_OR = 258,
     OP_BOOL_AND = 259,
@@ -107,67 +119,67 @@ extern int yydebug;
     OP_CPOOLREF = 302,
     OP_NEW = 303,
     OP_POPCOUNT = 304,
-    BADINTEGER = 305,
-    GOTO_KEY = 306,
-    CALL_KEY = 307,
-    RETURN_KEY = 308,
-    IF_KEY = 309,
-    DEFINE_KEY = 310,
-    ATTACH_KEY = 311,
-    MACRO_KEY = 312,
-    SPACE_KEY = 313,
-    TYPE_KEY = 314,
-    RAM_KEY = 315,
-    DEFAULT_KEY = 316,
-    REGISTER_KEY = 317,
-    ENDIAN_KEY = 318,
-    WITH_KEY = 319,
-    ALIGN_KEY = 320,
-    OP_UNIMPL = 321,
-    TOKEN_KEY = 322,
-    SIGNED_KEY = 323,
-    NOFLOW_KEY = 324,
-    HEX_KEY = 325,
-    DEC_KEY = 326,
-    BIG_KEY = 327,
-    LITTLE_KEY = 328,
-    SIZE_KEY = 329,
-    WORDSIZE_KEY = 330,
-    OFFSET_KEY = 331,
-    NAMES_KEY = 332,
-    VALUES_KEY = 333,
-    VARIABLES_KEY = 334,
-    PCODEOP_KEY = 335,
-    IS_KEY = 336,
-    LOCAL_KEY = 337,
-    DELAYSLOT_KEY = 338,
-    CROSSBUILD_KEY = 339,
-    EXPORT_KEY = 340,
-    BUILD_KEY = 341,
-    CONTEXT_KEY = 342,
-    ELLIPSIS_KEY = 343,
-    GLOBALSET_KEY = 344,
-    BITRANGE_KEY = 345,
-    CHAR = 346,
-    INTEGER = 347,
-    INTB = 348,
-    STRING = 349,
-    SYMBOLSTRING = 350,
-    SPACESYM = 351,
-    SECTIONSYM = 352,
-    TOKENSYM = 353,
-    USEROPSYM = 354,
-    VALUESYM = 355,
-    VALUEMAPSYM = 356,
-    CONTEXTSYM = 357,
-    NAMESYM = 358,
-    VARSYM = 359,
-    BITSYM = 360,
-    SPECSYM = 361,
-    VARLISTSYM = 362,
-    OPERANDSYM = 363,
-    STARTSYM = 364,
-    ENDSYM = 365,
+    OP_LZCOUNT = 305,
+    BADINTEGER = 306,
+    GOTO_KEY = 307,
+    CALL_KEY = 308,
+    RETURN_KEY = 309,
+    IF_KEY = 310,
+    DEFINE_KEY = 311,
+    ATTACH_KEY = 312,
+    MACRO_KEY = 313,
+    SPACE_KEY = 314,
+    TYPE_KEY = 315,
+    RAM_KEY = 316,
+    DEFAULT_KEY = 317,
+    REGISTER_KEY = 318,
+    ENDIAN_KEY = 319,
+    WITH_KEY = 320,
+    ALIGN_KEY = 321,
+    OP_UNIMPL = 322,
+    TOKEN_KEY = 323,
+    SIGNED_KEY = 324,
+    NOFLOW_KEY = 325,
+    HEX_KEY = 326,
+    DEC_KEY = 327,
+    BIG_KEY = 328,
+    LITTLE_KEY = 329,
+    SIZE_KEY = 330,
+    WORDSIZE_KEY = 331,
+    OFFSET_KEY = 332,
+    NAMES_KEY = 333,
+    VALUES_KEY = 334,
+    VARIABLES_KEY = 335,
+    PCODEOP_KEY = 336,
+    IS_KEY = 337,
+    LOCAL_KEY = 338,
+    DELAYSLOT_KEY = 339,
+    CROSSBUILD_KEY = 340,
+    EXPORT_KEY = 341,
+    BUILD_KEY = 342,
+    CONTEXT_KEY = 343,
+    ELLIPSIS_KEY = 344,
+    GLOBALSET_KEY = 345,
+    BITRANGE_KEY = 346,
+    CHAR = 347,
+    INTEGER = 348,
+    INTB = 349,
+    STRING = 350,
+    SYMBOLSTRING = 351,
+    SPACESYM = 352,
+    SECTIONSYM = 353,
+    TOKENSYM = 354,
+    USEROPSYM = 355,
+    VALUESYM = 356,
+    VALUEMAPSYM = 357,
+    CONTEXTSYM = 358,
+    NAMESYM = 359,
+    VARSYM = 360,
+    BITSYM = 361,
+    SPECSYM = 362,
+    VARLISTSYM = 363,
+    OPERANDSYM = 364,
+    JUMPSYM = 365,
     MACROSYM = 366,
     LABELSYM = 367,
     SUBTABLESYM = 368
@@ -175,11 +187,9 @@ extern int yydebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
-union YYSTYPE
+#if ! defined SLEIGHSTYPE && ! defined SLEIGHSTYPE_IS_DECLARED
+union SLEIGHSTYPE
 {
-#line 29 "src/decompile/cpp/slghparse.y" /* yacc.c:1909  */
 
   char ch;
   uintb *i;
@@ -210,8 +220,6 @@ union YYSTYPE
   MacroSymbol *macrosym;
   LabelSymbol *labelsym;
   SubtableSymbol *subtablesym;
-  StartSymbol *startsym;
-  EndSymbol *endsym;
   OperandSymbol *operandsym;
   VarnodeListSymbol *varlistsym;
   VarnodeSymbol *varsym;
@@ -223,17 +231,16 @@ union YYSTYPE
   FamilySymbol *famsym;
   SpecificSymbol *specsym;
 
-#line 212 "src/decompile/cpp/slghparse.hh" /* yacc.c:1909  */
-};
 
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+};
+typedef union SLEIGHSTYPE SLEIGHSTYPE;
+# define SLEIGHSTYPE_IS_TRIVIAL 1
+# define SLEIGHSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern SLEIGHSTYPE sleighlval;
 
-int yyparse (void);
+int sleighparse (void);
 
-#endif /* !YY_YY_SRC_DECOMPILE_CPP_SLGHPARSE_HH_INCLUDED  */
+#endif /* !YY_SLEIGH_SLGHPARSE_HH_INCLUDED  */

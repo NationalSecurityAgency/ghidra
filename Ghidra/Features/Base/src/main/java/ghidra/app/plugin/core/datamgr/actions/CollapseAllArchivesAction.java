@@ -19,7 +19,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -40,7 +40,7 @@ import resources.Icons;
  */
 public class CollapseAllArchivesAction extends DockingAction {
 
-	private ImageIcon collapseIcon = Icons.COLLAPSE_ALL_ICON;
+	private Icon collapseIcon = Icons.COLLAPSE_ALL_ICON;
 	private final DataTypeManagerPlugin plugin;
 
 	public CollapseAllArchivesAction(DataTypeManagerPlugin plugin) {

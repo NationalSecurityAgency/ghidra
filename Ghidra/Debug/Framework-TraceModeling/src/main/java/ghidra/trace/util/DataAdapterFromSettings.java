@@ -48,6 +48,11 @@ public interface DataAdapterFromSettings extends Data {
 	}
 
 	@Override
+	default boolean isWritable() {
+		return hasMutability(MutabilitySettingsDefinition.WRITABLE);
+	}
+
+	@Override
 	default boolean isVolatile() {
 		return hasMutability(MutabilitySettingsDefinition.VOLATILE);
 	}

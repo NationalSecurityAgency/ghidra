@@ -40,7 +40,7 @@ public class AddressTableLengthTableColumn
 	@Override
     public Integer getValue(AddressTable rowObject, Settings settings, Program pgm, 
 	        ServiceProvider serviceProvider) throws IllegalArgumentException {
-		return new Integer(rowObject.getNumberAddressEntries());
+		return Integer.valueOf(rowObject.getNumberAddressEntries());
 	}
 	
     public ProgramLocation getProgramLocation(AddressTable rowObject, Settings settings, 

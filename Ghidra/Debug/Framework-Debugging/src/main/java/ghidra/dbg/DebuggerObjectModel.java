@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Predicate;
 
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.async.*;
 import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
@@ -65,6 +64,30 @@ import ghidra.util.Msg;
  * risk deadlocking Ghidra's UI.
  */
 public interface DebuggerObjectModel {
+
+	public static enum RefreshBehavior {
+		REFRESH_ALWAYS {
+			@Override
+			public boolean isRefresh(Collection<?> col) {
+				return true;
+			}
+		},
+		REFRESH_NEVER {
+			@Override
+			public boolean isRefresh(Collection<?> col) {
+				return false;
+			}
+		},
+		REFRESH_WHEN_ABSENT {
+			@Override
+			public boolean isRefresh(Collection<?> col) {
+				return col.isEmpty();
+			}
+		};
+
+		public abstract boolean isRefresh(Collection<?> col);
+	}
+
 	public static final TypeSpec<Map<String, ? extends TargetObject>> ELEMENT_MAP_TYPE =
 		TypeSpec.auto();
 	public static final TypeSpec<Map<String, ?>> ATTRIBUTE_MAP_TYPE = TypeSpec.auto();
@@ -248,16 +271,16 @@ public interface DebuggerObjectModel {
 	 * @return a future map of attributes
 	 */
 	public CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(List<String> path,
-			boolean refresh);
+			RefreshBehavior refresh);
 
 	/**
 	 * Fetch the attributes of the given model path, without refreshing
 	 * 
-	 * @see #fetchObjectAttributes(List, boolean)
+	 * @see #fetchObjectAttributes(List, RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(
 			List<String> path) {
-		return fetchObjectAttributes(path, false);
+		return fetchObjectAttributes(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -280,16 +303,16 @@ public interface DebuggerObjectModel {
 	 * @return a future map of elements
 	 */
 	public CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
-			List<String> path, boolean refresh);
+			List<String> path, RefreshBehavior refresh);
 
 	/**
 	 * Fetch the elements of the given model path, without refreshing
 	 * 
-	 * @see #fetchObjectElements(List, boolean)
+	 * @see #fetchObjectElements(List, RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
 			List<String> path) {
-		return fetchObjectElements(path, false);
+		return fetchObjectElements(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -346,7 +369,7 @@ public interface DebuggerObjectModel {
 	 * @param refresh true to refresh caches
 	 * @return the found value, or {@code null} if it does not exist
 	 */
-	public CompletableFuture<?> fetchModelValue(List<String> path, boolean refresh);
+	public CompletableFuture<?> fetchModelValue(List<String> path, RefreshBehavior refresh);
 
 	/**
 	 * @see #fetchModelValue(List)
@@ -399,7 +422,7 @@ public interface DebuggerObjectModel {
 	 * @throws DebuggerModelTypeException if the value at the path is not a {@link TargetObject}
 	 */
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path,
-			boolean refresh) {
+			RefreshBehavior refresh) {
 		return fetchModelValue(path, refresh).thenApply(v -> {
 			if (v == null) {
 				return null;
@@ -424,7 +447,7 @@ public interface DebuggerObjectModel {
 	 */
 	@Deprecated
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path) {
-		return fetchModelObject(path, false);
+		return fetchModelObject(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -558,11 +581,15 @@ public interface DebuggerObjectModel {
 	 * @param ex the exception
 	 */
 	default void reportError(Object origin, String message, Throwable ex) {
+		Throwable unwrapped = AsyncUtils.unwrapThrowable(ex);
 		if (ex == null || DebuggerModelTerminatingException.isIgnorable(ex)) {
 			Msg.warn(origin, message + ": " + ex);
 		}
-		else if (AsyncUtils.unwrapThrowable(ex) instanceof RejectedExecutionException) {
+		else if (unwrapped instanceof RejectedExecutionException) {
 			Msg.trace(origin, "Ignoring rejection", ex);
+		}
+		else if (unwrapped instanceof DisposedException) {
+			Msg.trace(origin, "Ignoring disposal", ex);
 		}
 		else {
 			Msg.error(origin, message, ex);

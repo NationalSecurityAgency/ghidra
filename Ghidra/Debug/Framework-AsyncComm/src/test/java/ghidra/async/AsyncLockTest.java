@@ -34,12 +34,12 @@ public class AsyncLockTest {
 
 	private CompletableFuture<Void> doCriticalStuff() {
 		// Placeholder for example
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private CompletableFuture<Void> doMoreCriticalStuff() {
 		// Placeholder for example
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public CompletableFuture<Integer> fetchValue() {
@@ -85,6 +85,18 @@ public class AsyncLockTest {
 		}).then((seq) -> {
 			doMoreCriticalStuff().handle(seq::next);
 		}).finish();
+	}
+
+	@Test
+	public void testWithError() throws Throwable {
+		AsyncLock l = new AsyncLock();
+		int result = l.with(TypeSpec.INT, null).then((own, seq) -> {
+			throw new AssertionError("Blargh");
+		}).finish().exceptionally(exc -> {
+			return 0xdead;
+		}).get(1000, TimeUnit.MILLISECONDS);
+
+		assertEquals(0xdead, result);
 	}
 
 	@Test

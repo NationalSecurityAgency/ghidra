@@ -43,6 +43,14 @@ public class SkeletonExporter extends Exporter {
 	}
 
 	@Override
+	public boolean supportsAddressRestrictedExport() {
+
+		// TODO: return true if addrSet export parameter can be used to restrict export
+
+		return false;
+	}
+
+	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws ExporterException, IOException {
 

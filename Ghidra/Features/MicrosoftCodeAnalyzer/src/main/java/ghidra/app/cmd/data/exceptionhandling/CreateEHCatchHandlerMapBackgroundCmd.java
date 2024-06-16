@@ -97,7 +97,7 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 		Program program = model.getProgram();
 
 		for (int catchHandlerOrdinal = 0; catchHandlerOrdinal < count; catchHandlerOrdinal++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address compAddress;
 			Address typeDescriptorAddress;
 			try {
@@ -161,7 +161,7 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 		boolean result = true;
 		EHCatchHandlerModel catchHandlerModel = createModel(program);
 		for (int catchHandlerOrdinal = 0; catchHandlerOrdinal < count; catchHandlerOrdinal++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address compAddress;
 			Address refAddress;
 			try {

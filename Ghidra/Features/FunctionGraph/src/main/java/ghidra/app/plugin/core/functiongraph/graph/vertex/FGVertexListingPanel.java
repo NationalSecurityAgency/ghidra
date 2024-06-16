@@ -25,6 +25,7 @@ import docking.widgets.fieldpanel.*;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
+import ghidra.app.util.viewer.field.ListingFieldDescriptionProvider;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.program.model.address.AddressSetView;
@@ -38,9 +39,9 @@ public class FGVertexListingPanel extends ListingPanel {
 			//
 			// Unusual Code Alert!: when the data of the listing changes its preferred size
 			// 						may also change.  If we don't invalidate the containing
-			//                      Java component, then the cached preferred size will be 
+			//                      Java component, then the cached preferred size will be
 			//                      invalid.
-			// 
+			//
 			getFieldPanel().invalidate();
 			controller.repaint();
 		}
@@ -72,10 +73,9 @@ public class FGVertexListingPanel extends ListingPanel {
 		Color color = options.getDefaultVertexBackgroundColor();
 		setTextBackgroundColor(color);
 
+		// Custom colors are in use when the ColorizingService is not installed.
 		FGColorProvider colorProvider = controller.getColorProvider();
-		if (!colorProvider.isUsingCustomColors()) {
-			enablePropertyBasedColorModel(true); // turn on user colors in the graph
-		}
+		enablePropertyBasedColorModel(!colorProvider.isUsingCustomColors());
 	}
 
 	@Override
@@ -93,8 +93,8 @@ public class FGVertexListingPanel extends ListingPanel {
 	 * Overridden to set the view before the parent class notifies the listeners.  This prevents
 	 * our methods that calculate preferred size from going 'out to lunch' when attempting to
 	 * examine the entire program instead of just the given view.
-	 * 
-	 * @param model The listing model needed by the layout model	 * 
+	 *
+	 * @param model The listing model needed by the layout model
 	 * @return the new model adapter
 	 */
 	@Override
@@ -142,7 +142,8 @@ public class FGVertexListingPanel extends ListingPanel {
 	private class FGVertexFieldPanel extends FieldPanel {
 
 		public FGVertexFieldPanel(LayoutModel model) {
-			super(model);
+			super(model, "Function Graph Listing Vertex");
+			setFieldDescriptionProvider(new ListingFieldDescriptionProvider());
 		}
 
 		@Override

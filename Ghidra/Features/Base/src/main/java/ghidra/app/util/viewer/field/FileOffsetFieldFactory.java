@@ -15,12 +15,12 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import generic.theme.GColor;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.*;
@@ -41,14 +41,13 @@ import ghidra.util.exception.AssertException;
 public class FileOffsetFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "File Offset";
+	public static final GColor COLOR = new GColor("color.fg.listing.file.offset");
 	public static final String GROUP_TITLE = "File Offset Field";
 	public final static String FILE_OFFSET_DISPLAY_OPTIONS_NAME =
 		GROUP_TITLE + Options.DELIMITER + "File Offset Display Options";
 
 	private boolean showFilename;
 	private boolean useHex;
-	private PropertyEditor fileOffsetFieldOptionsEditor =
-		new FileOffsetFieldOptionsPropertyEditor();
 
 	/**
 	 * Default Constructor
@@ -64,7 +63,7 @@ public class FileOffsetFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private FileOffsetFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private FileOffsetFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		initOptions(fieldOptions);
@@ -75,7 +74,8 @@ public class FileOffsetFieldFactory extends FieldFactory {
 
 		fieldOptions.registerOption(FILE_OFFSET_DISPLAY_OPTIONS_NAME, OptionType.CUSTOM_TYPE,
 			new FileOffsetFieldOptionsWrappedOption(), helpLoc,
-			"Adjusts the File Offset Field display", fileOffsetFieldOptionsEditor);
+			"Adjusts the File Offset Field display",
+			() -> new FileOffsetFieldOptionsPropertyEditor());
 
 		CustomOption customOption =
 			fieldOptions.getCustomOption(FILE_OFFSET_DISPLAY_OPTIONS_NAME, null);
@@ -95,7 +95,8 @@ public class FileOffsetFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions) {
+			ListingHighlightProvider highlightProvider, ToolOptions options,
+			ToolOptions fieldOptions) {
 		return new FileOffsetFieldFactory(formatModel, highlightProvider, options, fieldOptions);
 	}
 
@@ -141,7 +142,7 @@ public class FileOffsetFieldFactory extends FieldFactory {
 			}
 		}
 		FieldElement fieldElement =
-			new TextFieldElement(new AttributedString(text, color, getMetrics()), 0, 0);
+			new TextFieldElement(new AttributedString(text, COLOR, getMetrics()), 0, 0);
 		ListingTextField listingTextField = ListingTextField.createSingleLineTextField(this, proxy,
 			fieldElement, startX + varWidth, width, hlProvider);
 		listingTextField.setPrimary(true);
@@ -191,5 +192,4 @@ public class FileOffsetFieldFactory extends FieldFactory {
 		return (category == FieldFormatModel.INSTRUCTION_OR_DATA ||
 			category == FieldFormatModel.OPEN_DATA || category == FieldFormatModel.ARRAY);
 	}
-
 }

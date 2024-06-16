@@ -41,6 +41,16 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 			type = FridaModelTargetProcessAttachByPidConnectorImpl.class,
 			required = true,
 			fixed = true),
+		@TargetAttributeType(
+			name = "Attach to device by id",
+			type = FridaModelTargetDeviceAttachByIdConnectorImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Attach to device by type",
+			type = FridaModelTargetDeviceAttachByTypeConnectorImpl.class,
+			required = true,
+			fixed = true),
 		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
@@ -53,20 +63,29 @@ public class FridaModelTargetConnectorContainerImpl extends FridaModelTargetObje
 	protected final FridaModelTargetProcessLaunchConnectorImpl processLauncher;
 	protected final FridaModelTargetProcessLaunchWithOptionsConnectorImpl processLauncherEx;
 	protected final FridaModelTargetProcessAttachByPidConnectorImpl processAttacherByPid;
+	protected final FridaModelTargetDeviceAttachByIdConnectorImpl targetAttacherById;
+	protected final FridaModelTargetDeviceAttachByTypeConnectorImpl targetAttacherByType;
 
 	public FridaModelTargetConnectorContainerImpl(FridaModelTargetRoot root) {
 		super(root.getModel(), root, "Connectors", "ConnectorsContainer");
 		this.root = root;
 
 		this.processLauncher =
-				new FridaModelTargetProcessLaunchConnectorImpl(this, "Launch process");
+			new FridaModelTargetProcessLaunchConnectorImpl(this, "Launch process");
 		this.processLauncherEx =
-				new FridaModelTargetProcessLaunchWithOptionsConnectorImpl(this, "Launch process w/ options");
+			new FridaModelTargetProcessLaunchWithOptionsConnectorImpl(this,
+				"Launch process w/ options");
 		this.processAttacherByPid =
 			new FridaModelTargetProcessAttachByPidConnectorImpl(this, "Attach to process by pid");
+		this.targetAttacherById =
+			new FridaModelTargetDeviceAttachByIdConnectorImpl(this, "Attach to device by id");
+		this.targetAttacherByType =
+			new FridaModelTargetDeviceAttachByTypeConnectorImpl(this, "Attach to device by type");
 		this.defaultConnector = processLauncher;
 
 		changeAttributes(List.of(), List.of( //
+			targetAttacherById, //
+			targetAttacherByType, //
 			processAttacherByPid, //
 			processLauncher, //
 			processLauncherEx //

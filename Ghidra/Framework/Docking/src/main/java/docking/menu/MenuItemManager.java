@@ -20,14 +20,15 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.ButtonModel;
-import javax.swing.JMenuItem;
+import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.*;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
+import resources.ResourceManager;
 
 /**
  * Class to manage a JMenuItem for an action.  Handles property changes in the action
@@ -91,6 +92,9 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 			};
 		}
 		return e -> {
+			if (!menuItem.isShowing()) {
+				return;	// model changed, but the user is not moving the mouse
+			}
 			boolean isArmed = menuItem.isArmed();
 			if (isArmed) {
 				menuHandler.menuItemEntered(action);
@@ -183,7 +187,11 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 			String text = menuData.getMenuItemName();
 			String trimmed = StringUtilities.trimMiddle(text, 50);
 			menuItem.setText(trimmed);
-			menuItem.setIcon(menuData.getMenuIcon());
+			Icon menuIcon = menuData.getMenuIcon();
+			menuItem.setIcon(menuIcon);
+			if (menuIcon != null) {
+				menuItem.setDisabledIcon(ResourceManager.getDisabledIcon(menuIcon));
+			}
 			menuItem.setMnemonic(menuData.getMnemonic());
 			menuItem.revalidate();
 		}
@@ -201,7 +209,7 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		}
 
 		try {
-			ActionContext context = new ActionContext();
+			ActionContext context = new DefaultActionContext();
 			context.setSourceObject(e.getSource());
 			if (action.isEnabledForContext(context)) {
 				if (action instanceof ToggleDockingActionIf) {

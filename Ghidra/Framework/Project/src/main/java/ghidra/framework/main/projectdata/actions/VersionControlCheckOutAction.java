@@ -18,11 +18,12 @@ package ghidra.framework.main.projectdata.actions;
 import java.io.IOException;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.CheckoutDialog;
@@ -34,7 +35,6 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 /**
  * Action to checkout domain files from the repository.
@@ -52,7 +52,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 	/*package*/ VersionControlCheckOutAction(String owner, PluginTool tool) {
 		super("CheckOut", owner, tool);
 
-		ImageIcon icon = ResourceManager.loadImage("images/vcCheckOut.png");
+		Icon icon = new GIcon("icon.version.control.check.out");
 		setPopupMenuData(new MenuData(new String[] { "Check Out" }, icon, GROUP));
 		setToolBarData(new ToolBarData(icon, GROUP));
 		setDescription("Check out file");
@@ -122,7 +122,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			monitor.setMaximum(files.size());
 
 			for (DomainFile df : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (df.isVersioned() && !df.isCheckedOut()) {
 					results.add(df);
@@ -134,7 +134,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			if (n == 0) {
 				Msg.showError(this, tool.getToolFrame(), "Checkout Failed",
 					"The specified files do not contain any versioned files available for " +
-						"checkeout");
+						"checkout");
 				return false;
 			}
 
@@ -193,10 +193,10 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 				};
 
 				List<DomainFile> failedCheckouts = new ArrayList<>();
-				int progress = 0;
+				int progress = 1;
 				for (DomainFile df : versionedFiles) {
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					monitor.setMessage("Checkout " + progress + " of " + versionedFiles.size() +
 						": " + df.getName());
 

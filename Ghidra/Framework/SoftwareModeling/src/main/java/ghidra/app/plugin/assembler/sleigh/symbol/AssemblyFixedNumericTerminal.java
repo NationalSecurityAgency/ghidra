@@ -28,7 +28,7 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
  * value.
  */
 public class AssemblyFixedNumericTerminal extends AssemblyNumericTerminal {
-	private final long val;
+	protected final long val;
 
 	/**
 	 * Construct a terminal that accepts only the given numeric value
@@ -64,5 +64,9 @@ public class AssemblyFixedNumericTerminal extends AssemblyNumericTerminal {
 			}
 		}
 		return toks;
+	}
+
+	public long getVal() {
+		return val;
 	}
 }

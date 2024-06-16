@@ -28,7 +28,8 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.AddressSpace;
 
 public class TestTargetSession extends DefaultTargetModelRoot
-		implements TestTargetObject, TargetFocusScope, TargetEventScope, TargetLauncher {
+		implements TestTargetObject, TargetActiveScope, TargetFocusScope, TargetEventScope,
+		TargetLauncher {
 
 	public final TestTargetEnvironment environment;
 	public final TestTargetProcessContainer processes;
@@ -42,10 +43,10 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	public TestTargetSession(TestDebuggerObjectModel model, String rootHint,
 			TargetObjectSchema schema) {
 		super(model, rootHint, schema);
-		environment = new TestTargetEnvironment(this);
-		processes = new TestTargetProcessContainer(this);
-		interpreter = new TestTargetInterpreter(this);
-		mimickJavaLauncher = new TestMimickJavaLauncher(this);
+		environment = model.newTestTargetEnvironment(this);
+		processes = model.newTestTargetProcessContainer(this);
+		interpreter = model.newTestTargetInterpreter(this);
+		mimickJavaLauncher = model.newTestMimickJavaLauncher(this);
 
 		changeAttributes(List.of(),
 			List.of(environment, processes, interpreter, mimickJavaLauncher), Map.of(),
@@ -66,23 +67,30 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	}
 
 	@Override
+	public CompletableFuture<Void> requestActivation(TargetObject obj) {
+		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
+				"Activation requested");
+		}));
+	}
+
+	@Override
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
-			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj //
-			), "Focus requested");
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
+				"Focus requested");
 		}));
 	}
 
 	public void simulateStep(TestTargetThread eventThread) {
 		eventThread.setState(TargetExecutionState.RUNNING);
-		listeners.fire.event(this, eventThread, TargetEventType.STEP_COMPLETED,
+		broadcast().event(this, eventThread, TargetEventType.STEP_COMPLETED,
 			"Test thread completed a step", List.of());
 		eventThread.setState(TargetExecutionState.STOPPED);
 	}
 
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		// TODO: Record the request and allow tests to complete it?
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

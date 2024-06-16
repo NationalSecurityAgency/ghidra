@@ -16,14 +16,12 @@
 package ghidra.app.plugin.core.select;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.math.BigInteger;
 
 import javax.swing.*;
 
 import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
@@ -39,7 +37,7 @@ import ghidra.util.layout.PairLayout;
  * Class to set up dialog box that will enable the user
  * to set the available options for block selection
  */
-class SelectBlockDialog extends DialogComponentProvider {
+class SelectBlockDialog extends ReusableDialogComponentProvider {
 	private static final String OVERFLOW_SELECTION_WARNING =
 		"Selection is larger than available " + "bytes, using the end of the address space";
 
@@ -53,7 +51,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 	private PluginTool tool;
 
 	SelectBlockDialog(PluginTool tool, Navigatable navigatable) {
-		super("Select Bytes", false);
+		super("Select Bytes", false, true, true, false);
 		this.tool = tool;
 		this.navigatable = navigatable;
 //		navigatable.addNavigatableListener(this);
@@ -87,7 +85,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 	private JPanel buildBlockPanel() {
 		JPanel main = new JPanel();
 		main.setBorder(BorderFactory.createTitledBorder("Byte Selection"));
-		
+
 		main.setLayout(new PairLayout());
 
 		main.add(new GLabel("Ending Address:"));
@@ -113,46 +111,34 @@ class SelectBlockDialog extends DialogComponentProvider {
 
 		forwardButton = new GRadioButton("Select Forward", true);
 		forwardButton.setName("forwardButton");
-		forwardButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				setStatusText("Enter number of bytes to select");
-				setAddressFieldEnabled(false);
-				setLengthInputEnabled(true);
-			}
+		forwardButton.addActionListener(ae -> {
+			setStatusText("Enter number of bytes to select");
+			setAddressFieldEnabled(false);
+			setLengthInputEnabled(true);
 		});
 		buttonGroup.add(forwardButton);
 		backwardButton = new GRadioButton("Select Backward");
 		backwardButton.setName("backwardButton");
-		backwardButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				setStatusText("Enter number of bytes to select");
-				setAddressFieldEnabled(false);
-				setLengthInputEnabled(true);
-			}
+		backwardButton.addActionListener(ae -> {
+			setStatusText("Enter number of bytes to select");
+			setAddressFieldEnabled(false);
+			setLengthInputEnabled(true);
 		});
 		buttonGroup.add(backwardButton);
 		allButton = new GRadioButton("Select All");
 		allButton.setName("allButton");
-		allButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				setItemsEnabled(false);
-				clearStatusText();
-			}
+		allButton.addActionListener(ae -> {
+			setItemsEnabled(false);
+			clearStatusText();
 		});
 
 		buttonGroup.add(allButton);
 		toButton = new GRadioButton("To Address");
 		toButton.setName("toButton");
-		toButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				setStatusText("Enter an Address to go to");
-				setAddressFieldEnabled(true);
-				setLengthInputEnabled(false);
-			}
+		toButton.addActionListener(ae -> {
+			setStatusText("Enter an Address to go to");
+			setAddressFieldEnabled(true);
+			setLengthInputEnabled(false);
 		});
 		buttonGroup.add(toButton);
 		gbc.gridx = 0;
@@ -262,8 +248,6 @@ class SelectBlockDialog extends DialogComponentProvider {
 
 		clearStatusText();
 
-		// the number value is a byte size, which means we need to adjust that value by
-		// the addressable unit size of the processor
 		Address currentAddress = navigatable.getLocation().getAddress();
 
 		AddressSet addressSet = new AddressSet(navigatable.getSelection());
@@ -271,14 +255,15 @@ class SelectBlockDialog extends DialogComponentProvider {
 		if (addressSet.isEmpty()) {
 			addressSet.addRange(currentAddress, currentAddress);
 		}
-		length *= currentAddress.getAddressSpace().getAddressableUnitSize();
 
 		AddressRangeIterator aiter = addressSet.getAddressRanges();
 		AddressSet newSet = new AddressSet();
 		while (aiter.hasNext()) {
 			AddressRange range = aiter.next();
 			Address toAddress = createForwardToAddress(range.getMinAddress(), length - 1);
-			newSet.addRange(range.getMinAddress(), toAddress);
+			if (toAddress != null) {
+				newSet.addRange(range.getMinAddress(), toAddress);
+			}
 		}
 		ProgramSelection selection = new ProgramSelection(newSet);
 		NavigationUtils.setSelection(tool, navigatable, selection);
@@ -293,12 +278,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 		}
 		clearStatusText();
 
-		// the number value is a byte size, which means we need to adjust that value by
-		// the addressable unit size of the processor
 		Address currentAddress = navigatable.getLocation().getAddress();
-		length *= currentAddress.getAddressSpace().getAddressableUnitSize();
-
-		AddressFactory addressFactory = navigatable.getProgram().getAddressFactory();
 		AddressSet addressSet = new AddressSet(navigatable.getSelection());
 		if (addressSet.isEmpty()) {
 			addressSet.addRange(currentAddress, currentAddress);
@@ -310,63 +290,73 @@ class SelectBlockDialog extends DialogComponentProvider {
 			AddressRange range = aiter.next();
 
 			Address fromAddress = createBackwardToAddress(range.getMaxAddress(), length - 1);
-			newSet.addRange(fromAddress, range.getMaxAddress());
+			if (fromAddress != null) {
+				newSet.addRange(fromAddress, range.getMaxAddress());
+			}
 		}
 		ProgramSelection selection = new ProgramSelection(newSet);
 		NavigationUtils.setSelection(tool, navigatable, selection);
 	}
 
-	private Address createBackwardToAddress(Address startAddress, long length) {
-		AddressSpace addressSpace = startAddress.getAddressSpace();
+	private Address createBackwardToAddress(Address toAddress, long length) {
+		AddressSpace addressSpace = toAddress.getAddressSpace();
 		if (addressSpace.isOverlaySpace()) {
 			OverlayAddressSpace oas = (OverlayAddressSpace) addressSpace;
-			if (startAddress.getOffset() - length < oas.getMinOffset()) {
+			AddressRange range = oas.getOverlayAddressSet().getRangeContaining(toAddress);
+			if (range == null) {
 				showWarningDialog(OVERFLOW_SELECTION_WARNING);
-				return addressSpace.getAddress(oas.getMinOffset());
+				return toAddress;
+			}
+			long avail = toAddress.subtract(range.getMinAddress());
+			if (avail < (length - 1)) {
+				showWarningDialog(OVERFLOW_SELECTION_WARNING);
+				return range.getMinAddress();
 			}
 		}
 
-		Address toAddress = null;
+		Address addr = null;
 		try {
-			toAddress = startAddress.subtract(length);
+			addr = toAddress.subtractNoWrap(length);
 		}
-		catch (AddressOutOfBoundsException aoobe) {
+		catch (AddressOverflowException aoobe) {
 			showWarningDialog(OVERFLOW_SELECTION_WARNING);
-			toAddress = addressSpace.getMinAddress();
+			addr = addressSpace.getMinAddress();
 		}
 
-		return toAddress;
+		return addr;
 	}
 
-	private Address createForwardToAddress(Address startAddress, long length) {
-		AddressSpace addressSpace = startAddress.getAddressSpace();
+	private Address createForwardToAddress(Address fromAddress, long length) {
+
+		AddressSpace addressSpace = fromAddress.getAddressSpace();
 		if (addressSpace.isOverlaySpace()) {
 			OverlayAddressSpace oas = (OverlayAddressSpace) addressSpace;
-			if (startAddress.getOffset() + length > oas.getMaxOffset()) {
+			AddressRange range = oas.getOverlayAddressSet().getRangeContaining(fromAddress);
+			if (range == null) {
 				showWarningDialog(OVERFLOW_SELECTION_WARNING);
-				return addressSpace.getAddress(oas.getMaxOffset());
+				return fromAddress;
+			}
+			long avail = range.getMaxAddress().subtract(fromAddress);
+			if (avail < (length - 1)) {
+				showWarningDialog(OVERFLOW_SELECTION_WARNING);
+				return range.getMaxAddress();
 			}
 		}
 
-		Address toAddress = null;
+		Address addr = null;
 		try {
-			toAddress = startAddress.add(length);
+			addr = fromAddress.addNoWrap(length);
 		}
-		catch (AddressOutOfBoundsException aoobe) {
+		catch (AddressOverflowException aoobe) {
 			showWarningDialog(OVERFLOW_SELECTION_WARNING);
-			toAddress = addressSpace.getMaxAddress();
+			addr = addressSpace.getMaxAddress();
 		}
 
-		return toAddress;
+		return addr;
 	}
 
 	private void showWarningDialog(final String text) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				JOptionPane.showMessageDialog(getComponent(), text);
-			}
-		});
+		SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(getComponent(), text));
 	}
 
 	public void setNavigatable(Navigatable navigatable) {

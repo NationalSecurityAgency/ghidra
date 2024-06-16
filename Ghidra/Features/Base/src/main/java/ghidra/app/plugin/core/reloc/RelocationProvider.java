@@ -20,11 +20,10 @@ import java.awt.Dimension;
 
 import javax.swing.*;
 
-import ghidra.app.services.GoToService;
+import ghidra.app.plugin.core.reloc.RelocationTableModel.RelocationRowObject;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.reloc.Relocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -34,8 +33,8 @@ class RelocationProvider extends ComponentProviderAdapter {
 	private RelocationTablePlugin plugin;
 	private JPanel mainPanel;
 	private Program currentProgram;
-	private GhidraTableFilterPanel<Relocation> tableFilterPanel;
-	private GhidraThreadedTablePanel<Relocation> threadedPanel;
+	private GhidraTableFilterPanel<RelocationRowObject> tableFilterPanel;
+	private GhidraThreadedTablePanel<RelocationRowObject> threadedPanel;
 
 	RelocationProvider(RelocationTablePlugin plugin) {
 		super(plugin.getTool(), "Relocation Table", plugin.getName());
@@ -76,12 +75,11 @@ class RelocationProvider extends ComponentProviderAdapter {
 		threadedPanel = new GhidraThreadedTablePanel<>(tableModel);
 		table = threadedPanel.getTable();
 
-		GoToService goToService = serviceProvider.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
-
+		table.installNavigation(serviceProvider);
 		table.setPreferredScrollableViewportSize(new Dimension(300, 200));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+		table.getSelectionModel().addListSelectionListener(e -> contextChanged());
 
 		ToolTipManager.sharedInstance().registerComponent(table);
 
@@ -89,6 +87,10 @@ class RelocationProvider extends ComponentProviderAdapter {
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 		panel.add(tableFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Relocations";
+		table.setAccessibleNamePrefix(namePrefix);
+		tableFilterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}

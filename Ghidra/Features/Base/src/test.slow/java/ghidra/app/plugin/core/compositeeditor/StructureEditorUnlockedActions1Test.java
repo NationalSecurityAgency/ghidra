@@ -23,7 +23,7 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
 public class StructureEditorUnlockedActions1Test
-		extends AbstractStructureEditorUnlockedActionsTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testCycleGroupOnComponent() throws Exception {

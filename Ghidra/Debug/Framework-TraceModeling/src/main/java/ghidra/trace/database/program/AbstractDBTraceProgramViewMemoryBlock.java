@@ -110,7 +110,8 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 		return program.trace.getMemoryManager().getMemorySpace(getAddressSpace(), false);
 	}
 
-	protected AddressRange getAddressRange() {
+	@Override
+	public AddressRange getAddressRange() {
 		return new AddressRangeImpl(getStart(), getEnd());
 	}
 
@@ -171,16 +172,7 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();
 		}
-		DBTraceMemorySpace space =
-			program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
-		if (space == null) {
-			throw new MemoryAccessException("Space does not exist");
-		}
-		ByteBuffer buf = ByteBuffer.allocate(1);
-		if (space.getViewBytes(program.snap, addr, buf) != 1) {
-			throw new MemoryAccessException();
-		}
-		return buf.get(0);
+		return program.memory.getByte(addr);
 	}
 
 	@Override
@@ -194,13 +186,8 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();
 		}
-		DBTraceMemorySpace space =
-			program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
-		if (space == null) {
-			throw new MemoryAccessException("Space does not exist");
-		}
 		len = MathUtilities.unsignedMin(len, range.getMaxAddress().subtract(addr) + 1);
-		return space.getViewBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
+		return program.memory.getBytes(addr, b, off, len);
 	}
 
 	@Override
@@ -217,6 +204,7 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 
 	@Override
 	public int putBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
+		// NB. The trace will notify us of the write, and we invalidate then
 		AddressRange range = getAddressRange();
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();
@@ -244,7 +232,6 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 
 	@Override
 	public boolean isOverlay() {
-		// TODO: What effect does this have? Does it makes sense for trace "overlays"?
 		return getAddressSpace().isOverlaySpace();
 	}
 

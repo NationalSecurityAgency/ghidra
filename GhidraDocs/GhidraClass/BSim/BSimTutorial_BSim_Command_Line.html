@@ -1,0 +1,83 @@
+<h1 id="bsim-databases-from-the-command-line">BSim Databases from the Command Line</h1>
+
+<p>The <code>bsim</code> command-line utility, located in the <code>support</code> directory of a Ghidra distribution, is used to create, populate, and manage BSim databases.
+It works for all BSim database backends.
+This utility offers a number of commands, many of which have several options.
+In this section, we cover only a small subset of the possibilities.</p>
+
+<p>Running <code>bsim</code> with no arguments will print a detailed usage message.</p>
+
+<h2 id="generating-signature-files">Generating Signature Files</h2>
+
+<p>The first step is to create signature files from the binaries in the Ghidra project.
+Signature files are XML files which contain the BSim signatures and metadata needed by the BSim server.</p>
+
+<p><strong>Important</strong>: It’s simplest to exit Ghidra before performing the next steps, because:</p>
+<ul>
+  <li>The H2-backed database can only be accessed by one process at a time.</li>
+  <li>In case you have the <code>postgres_object_files</code> project open in Ghidra, signature generation will fail.
+Non-shared projects are locked when open, and the lock will prevent the signature-generating process from accessing the project.</li>
+</ul>
+
+<p>To generate the signature files, execute the following commands in a shell (adjust as necessary for Windows).</p>
+
+<pre><code class="language-bash">cd &lt;ghidra_install_dir&gt;/support
+mkdir ~/bsim_sigs
+./bsim generatesigs ghidra:/&lt;ghidra_project_dir&gt;/postgres_object_files --bsim file:/&lt;database_dir&gt;/example ~/bsim_sigs
+</code></pre>
+
+<ul>
+  <li>The <code>ghidra:/</code> argument is the local project which holds the analyzed binaries.
+Note that there is only one forward slash in the URL for a local project.</li>
+  <li>The <code>--bsim</code> argument is the URL of the BSim database.
+This command does not add any signatures to the database, but it does query the database for its settings.</li>
+</ul>
+
+<h2 id="committing-signature-files">Committing Signature Files</h2>
+
+<p>Now, we commit the signatures to the BSim database with the following command (still in the <code>support</code> directory).</p>
+
+<pre><code class="language-bash">./bsim commitsigs file:/&lt;database_dir&gt;/example ~/bsim_sigs 
+</code></pre>
+
+<p>Once the signatures have been committed, start Ghidra again.</p>
+
+<h2 id="aside-creating-a-database">Aside: Creating a Database</h2>
+
+<p>We continue to use the database <code>example</code>, so this step isn’t necessary for the exercises.</p>
+
+<p>However, if we hadn’t created <code>example</code> using <code>CreateH2BSimDatabaseScript.java</code>, we could have used the following command:</p>
+
+<pre><code class="language-bash">./bsim createdatabase file:/&lt;database_dir&gt;/example medium_nosize
+</code></pre>
+<ul>
+  <li><code>medium_nosize</code> is a database template.
+    <ul>
+      <li>“medium” (vs. “large”) affects the vector index and is not relevant to H2 databases.</li>
+      <li>“nosize” means that size differences for varnodes of size four bytes and above are not incorporated into the BSim features.
+  This is necessary to allow matching between 32-bit and 64-bit code.</li>
+    </ul>
+  </li>
+  <li>The <code>createdatabase</code> command can also be used to create a BSim database on a PostgreSQL or Elasticsearch server, provided the servers are configured and running. 
+See the “BSim” entry in the Ghidra help for details.</li>
+</ul>
+
+<h2 id="aside-executable-categories-and-function-tags">Aside: Executable Categories and Function Tags</h2>
+
+<p>It’s worth a brief note about Executable Categories and Function Tags, although they are not used in any of the following exercises.</p>
+
+<p>A BSim database can record user-defined metadata about an executable (executable categories) or about a function (function tags).
+Categories and tags can then be used as filter elements in a BSim query.
+For example, you could restrict a BSim query to search only in executables of the category “OPEN_SOURCE” or to functions which have been tagged “COMPRESSION_FUNCTIONS”.</p>
+
+<p>Executable categories in BSim are implemented using <em>program properties</em>, and function tags in BSim correspond to function tags in Ghidra. Properties and tags both have uses in Ghidra which are independent of BSim.
+So, if we want a BSim database to record a particular category or tag, we must indicate that explicitly.</p>
+
+<p>For example, to inform the database that we wish to record the ORIGIN category, you would execute the command</p>
+
+<pre><code class="language-bash">./bsim addexecategory file:/&lt;database_dir&gt;/example ORIGIN
+</code></pre>
+
+<p>Executable categories can be added to a program using the script <code>SetExecutableCategoryScript.java</code>.</p>
+
+<p>Next Section: <a href="BSimTutorial_Evaluating_Matches.html">Evaluating Matches and Applying Information</a></p>

@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -31,20 +30,18 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.event.ModelObjectFocusedPluginEvent;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
 import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog.FactoryEntry;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncPairingQueue;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.target.TargetEnvironment;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Swing;
@@ -58,7 +55,7 @@ import ghidra.util.datastruct.CollectionChangeListener;
  * TODO: Cover cases where multiple recorders are present
  */
 @Category(NightlyCategory.class)
-public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -361,15 +358,18 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	@Test
-	public void testGetTraceThreadWithTarget() throws Exception {
+	public void testGetTraceThreadWithTarget() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1),
-			ActionSource.AUTOMATIC);
+		TraceRecorder recorder =
+			modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1),
+				ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 
 		// The most complicated case, lest I want another dimension in a cross product
 		mb.createTestThreadStacksAndFramesHaveRegisterBanks();
+		waitRecorder(recorder);
 
 		waitForPass(() -> {
 			TraceThread traceThread = modelService.getTraceThread(mb.testProcess1, mb.testThread1);
@@ -416,30 +416,6 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	@Test
-	public void testFocusGeneratesEvents() throws Exception {
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-
-		// NOTE: These events are generated whether or not associated with a recorder
-		AsyncPairingQueue<ModelObjectFocusedPluginEvent> focusEvents = new AsyncPairingQueue<>();
-		tool.addListenerForAllPluginEvents(event -> {
-			if (event instanceof ModelObjectFocusedPluginEvent) {
-				ModelObjectFocusedPluginEvent evt = (ModelObjectFocusedPluginEvent) event;
-				focusEvents.give().complete(evt);
-			}
-		});
-
-		mb.testModel.requestFocus(mb.testThread1);
-		mb.testModel.requestFocus(mb.testThread2);
-		ModelObjectFocusedPluginEvent evt1 =
-			focusEvents.take().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		ModelObjectFocusedPluginEvent evt2 =
-			focusEvents.take().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		assertEquals(mb.testThread1, evt1.getFocus());
-		assertEquals(mb.testThread2, evt2.getFocus());
-	}
-
-	@Test
 	public void testCurrentModelNullAfterClose() throws Throwable {
 		createTestModel();
 
@@ -473,15 +449,15 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		DebuggerConnectDialog dialog = waitForDialogComponent(DebuggerConnectDialog.class);
 
 		FactoryEntry fe = (FactoryEntry) dialog.dropdownModel.getSelectedItem();
-		assertEquals(mb.testFactory, fe.factory);
+		assertEquals(mb.testFactory, fe.factory());
 
 		assertEquals(TestDebuggerModelFactory.FAKE_DETAILS_HTML, dialog.description.getText());
 
-		Component[] components = dialog.pairPanel.getComponents();
+		Component[] components = dialog.gridPanel.getComponents();
 
 		assertTrue(components[0] instanceof JLabel);
 		JLabel label = (JLabel) components[0];
-		assertEquals(TestDebuggerModelFactory.FAKE_OPTION_NAME, label.getText());
+		assertEquals("<html>" + TestDebuggerModelFactory.FAKE_OPTION_NAME, label.getText());
 
 		assertTrue(components[1] instanceof JTextField);
 		JTextField field = (JTextField) components[1];
@@ -518,7 +494,7 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		DebuggerConnectDialog connectDialog = waitForDialogComponent(DebuggerConnectDialog.class);
 
 		FactoryEntry fe = (FactoryEntry) connectDialog.dropdownModel.getSelectedItem();
-		assertEquals(mb.testFactory, fe.factory);
+		assertEquals(mb.testFactory, fe.factory());
 
 		pressButtonByText(connectDialog, AbstractConnectAction.NAME, true);
 		// NOTE: testModel is null. Don't use #createTestModel(), which adds to service

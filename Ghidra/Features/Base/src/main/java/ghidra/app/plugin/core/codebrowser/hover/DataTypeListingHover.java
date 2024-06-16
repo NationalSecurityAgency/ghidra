@@ -19,6 +19,7 @@ import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
 import ghidra.app.util.ToolTipUtils;
@@ -102,17 +103,17 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 				toolTipText = toolTipText.replace("Unsized", Integer.toString(dataLen));
 			}
 			if (dataInstance != null) {
-				toolTipText = toolTipText.replace("</HTML>",
-					getLocationSupplimentalToolTipText(dt, dataInstance) + "</HTML>");
+				toolTipText = toolTipText.replace("</html>",
+					getLocationSupplimentalToolTipText(dt, dataInstance) + "</html>");
 			}
 			String warningMsg = "";
 			if (hasInvalidStorage) {
 				warningMsg += "WARNING! Invalid Storage";
 			}
 			if (warningMsg.length() != 0) {
-				String errorText =
-					"<HTML><center><font color=\"red\">" + warningMsg + "!</font></center><BR>";
-				toolTipText = toolTipText.replace("<HTML>", errorText);
+				String errorText = "<html><center><font color=\"" + Messages.ERROR.toHexString() +
+					"\">" + warningMsg + "!</font></center><BR>";
+				toolTipText = toolTipText.replace("<html>", errorText);
 			}
 			return createTooltipComponent(toolTipText);
 		}
@@ -149,7 +150,8 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 				result += "<br>Missing NULL terminator.";
 			}
 			if (sdi.getStringLength() > dataInstance.getLength()) {
-				result += "<br><font color=\"red\">String exceeds data field.</font>";
+				result += "<br><font color=\"" + Messages.ERROR.toHexString() +
+					"\">String exceeds data field.</font>";
 			}
 		}
 		return result;

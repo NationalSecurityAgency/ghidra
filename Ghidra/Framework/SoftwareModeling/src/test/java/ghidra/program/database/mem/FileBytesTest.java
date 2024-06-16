@@ -22,11 +22,11 @@ import java.util.List;
 
 import org.junit.*;
 
-import db.*;
+import db.DBBuffer;
+import db.DBHandle;
 import db.buffers.BufferFile;
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
-import ghidra.framework.Application;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.db.PrivateDatabase;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.*;
@@ -271,7 +271,7 @@ public class FileBytesTest extends AbstractGenericTest {
 
 	private Program restoreProgram(PrivateDatabase db) throws Exception {
 		DBHandle dbh = db.open(TaskMonitor.DUMMY);
-		return new ProgramDB(dbh, DBConstants.UPDATE, null, this);
+		return new ProgramDB(dbh, OpenMode.UPDATE, null, this);
 	}
 
 	@Before
@@ -292,14 +292,8 @@ public class FileBytesTest extends AbstractGenericTest {
 		program.release(this);
 	}
 
-	private Language getLanguage(String languageName) throws Exception {
-
-		ResourceFile ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-		if (ldefFile != null) {
-			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			Language language = languageService.getLanguage(new LanguageID(languageName));
-			return language;
-		}
-		throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return languageService.getLanguage(new LanguageID(languageName));
 	}
 }

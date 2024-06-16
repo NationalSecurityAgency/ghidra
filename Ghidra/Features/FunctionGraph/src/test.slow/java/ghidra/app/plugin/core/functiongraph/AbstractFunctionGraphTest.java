@@ -44,7 +44,6 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.picking.PickedState;
-import generic.test.AbstractGenericTest;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -79,6 +78,8 @@ import ghidra.util.task.RunManager;
 public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedIntegrationTest {
 
 	protected static final Transferable DUMMY_TRANSFERABLE = new DummyTransferable();
+
+	protected static final String SATELLITE_NAME = "Function Graph Satellite";
 
 	protected PluginTool tool;
 	protected FunctionGraphPlugin graphPlugin;
@@ -454,7 +455,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		Object actionManager = getInstanceField("actionManager", graphProvider);
 		final MultiStateDockingAction<?> action =
 			(MultiStateDockingAction<?>) getInstanceField("layoutAction", actionManager);
-		runSwing(() -> action.actionPerformed(new ActionContext()));
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()));
 
 		// wait for the threaded graph layout code
 		FGController controller = getFunctionGraphController();
@@ -2082,8 +2083,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void verifyColor(FGVertex vertex, Color expectedColor) {
 		Color currentBackgroundColor = vertex.getBackgroundColor();
-		assertEquals("Color of vertex is not as expected - vertex: " + vertex, expectedColor,
-			currentBackgroundColor);
+		assertColorsEqual(expectedColor, currentBackgroundColor);
 	}
 
 	protected void verifyDefaultColor(FGVertex... vertices) {
@@ -2122,12 +2122,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void assertNoUndockedProvider() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		assertNull("Undocked satellite provider is installed when it should not be", provider);
 	}
 
 	protected void assertUndockedProviderNotShowing() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		if (provider == null) {
 			return; // no provider; not showing
 		}
@@ -2135,7 +2135,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void assertUndockedProviderShowing() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		assertUndockedProviderShowing(provider);
 	}
 
@@ -2175,7 +2175,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void closeUndockedProvider() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		assertNotNull("Undocked provider is not installed when it should be", provider);
 		tool.showComponentProvider(provider, false);
 		waitForSwing();
@@ -2297,7 +2297,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		DockingActionIf action = getAction(tool, "FunctionGraphPlugin", name);
 		ToggleDockingAction displayAction = (ToggleDockingAction) action;
-		setToggleActionSelected(displayAction, new ActionContext(), expectedVisible);
+		setToggleActionSelected(displayAction, new DefaultActionContext(), expectedVisible);
 //
 //		// make sure the action is not already in the state we expect
 //		assertEquals(name + " action is not selected as expected", !expectedVisible,
@@ -2313,11 +2313,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void swing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		runSwing(r);
 	}
 
 	protected <T> T swing(Supplier<T> s) {
-		return AbstractGenericTest.runSwing(s);
+		return runSwing(s);
 	}
 
 	static class DummyTransferable implements Transferable {

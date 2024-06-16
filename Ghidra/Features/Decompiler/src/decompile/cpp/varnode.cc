@@ -16,11 +16,13 @@
 #include "varnode.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",131);
-AttributeId ATTRIB_GRP = AttributeId("grp",132);
-AttributeId ATTRIB_INPUT = AttributeId("input",133);
-AttributeId ATTRIB_PERSISTS = AttributeId("persists",134);
-AttributeId ATTRIB_UNAFF = AttributeId("unaff",135);
+namespace ghidra {
+
+AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",30);
+AttributeId ATTRIB_GRP = AttributeId("grp",31);
+AttributeId ATTRIB_INPUT = AttributeId("input",32);
+AttributeId ATTRIB_PERSISTS = AttributeId("persists",33);
+AttributeId ATTRIB_UNAFF = AttributeId("unaff",34);
 
 /// Compare by location then by definition.
 /// This is the same as the normal varnode compare, but we distinguish identical frees by their
@@ -171,7 +173,7 @@ int4 Varnode::characterizeOverlap(const Varnode &op) const
 /// I.e. return
 ///     - 0 if it overlaps op's lsb
 ///     - 1 if it overlaps op's second lsb  and so on
-/// \param op is Varnode to test for overlap
+/// \param op is the Varnode to test for overlap
 /// \return the relative overlap point or -1
 int4 Varnode::overlap(const Varnode &op) const
 
@@ -180,6 +182,25 @@ int4 Varnode::overlap(const Varnode &op) const
     return loc.overlap(0,op.loc,op.size);
   else {			// Big endian
     int4 over = loc.overlap(size-1,op.loc,op.size);
+    if (over != -1)
+      return op.size-1-over;
+  }
+  return -1;
+}
+
+/// Return whether \e Least \e Signifigant \e Byte of \b this occurs in \b op.
+/// If \b op is in the \e join space, \b this can be in one of the pieces associated with the \e join range, and
+/// the offset returned will take into account the relative position of the piece within the whole \e join.
+/// Otherwise, this method is equivalent to Varnode::overlap.
+/// \param op is the Varnode to test for overlap
+/// \return the relative overlap point or -1
+int4 Varnode::overlapJoin(const Varnode &op) const
+
+{
+  if (!loc.isBigEndian())	// Little endian
+    return loc.overlapJoin(0,op.loc,op.size);
+  else {			// Big endian
+    int4 over = loc.overlapJoin(size-1,op.loc,op.size);
     if (over != -1)
       return op.size-1-over;
   }
@@ -350,6 +371,22 @@ void Varnode::clearFlags(uint4 fl) const
     if ((fl&Varnode::coverdirty)!=0)
       high->coverDirty();
   }
+}
+
+/// For \b this Varnode and any others attached to the same HighVariable,
+/// remove any SymbolEntry reference and associated properties.
+void Varnode::clearSymbolLinks(void)
+
+{
+  bool foundEntry = false;
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    foundEntry = foundEntry || (vn->mapentry != (SymbolEntry *)0);
+    vn->mapentry = (SymbolEntry *)0;
+    vn->clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
+  }
+  if (foundEntry)
+    high->symbolDirty();
 }
 
 /// Directly change the defining PcodeOp and set appropriate dirty bits
@@ -743,37 +780,104 @@ void Varnode::printRawHeritage(ostream &s,int4 depth) const
     s << endl;
 }
 
-/// If \b this is a constant, or is extended (INT_ZEXT,INT_SEXT) from a constant,
-/// the \e value of the constant is passed back and a non-negative integer is returned, either:
-///   - 0 for a normal constant Varnode
-///   - 1 for a zero extension (INT_ZEXT) of a normal constant
-///   - 2 for a sign extension (INT_SEXT) of a normal constant
-/// \param val is a reference to the constant value that is passed back
-/// \return the extension code (or -1 if \b this cannot be interpreted as a constant)
-int4 Varnode::isConstantExtended(uintb &val) const
+/// If \b this is a constant, or is extended (INT_ZEXT,INT_SEXT,PIECE) from a constant,
+/// the \e value of the constant (currently up to 128 bits) is passed back and \b true is returned.
+/// \param val will hold the 128-bit constant value
+/// \return \b true if a constant was recovered
+bool Varnode::isConstantExtended(uint8 *val) const
 
 {
   if (isConstant()) {
-    val = getOffset();
-    return 0;
+    val[0] = getOffset();
+    val[1] = 0;
+    return true;
   }
-  if (!isWritten()) return -1;
+  if (!isWritten() || size <= 8) return false;
+  if (size > 16) return false;		// Currently only up to 128-bit values
   OpCode opc = def->code();
   if (opc == CPUI_INT_ZEXT) {
     Varnode *vn0 = def->getIn(0);
     if (vn0->isConstant()) {
-      val = vn0->getOffset();
-      return 1;
+      val[0] = vn0->getOffset();
+      val[1] = 0;
+      return true;
     }
   }
   else if (opc == CPUI_INT_SEXT) {
     Varnode *vn0 = def->getIn(0);
     if (vn0->isConstant()) {
-      val = vn0->getOffset();
-      return 2;
+      val[0] = vn0->getOffset();
+      if (vn0->getSize() < 8)
+	val[0] = sign_extend(val[0], vn0->getSize(), size);
+      val[1] = (signbit_negative(val[0], 8)) ? 0xffffffffffffffffL : 0;
+      return true;
     }
   }
-  return -1;
+  else if (opc == CPUI_PIECE) {
+    Varnode *vnlo = def->getIn(1);
+    if (vnlo->isConstant()) {
+      val[0] = vnlo->getOffset();
+      Varnode *vnhi = def->getIn(0);
+      if (vnhi->isConstant()) {
+	val[1] = vnhi->getOffset();
+	if (vnlo->getSize() == 8)
+	  return true;
+	val[0] |= val[1] << 8*vnlo->getSize();
+	val[1] >>= 8*(8-vnlo->getSize());
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Recursively check if the Varnode is either:
+///   - Copied or extended from a constant
+///   - The result of arithmetic or logical operations on constants
+///   - Loaded from a pointer that is a constant
+///
+/// \param maxBinary is the maximum depth of binary operations to inspect (before giving up)
+/// \param maxLoad is the maximum number of CPUI_LOAD operations to allow in a sequence
+/// \return \b true if the Varnode (might) collapse to a constant
+bool Varnode::isEventualConstant(int4 maxBinary,int4 maxLoad) const
+
+{
+  const Varnode *curVn = this;
+  while(!curVn->isConstant()) {
+    if (!curVn->isWritten()) return false;
+    const PcodeOp *op = curVn->getDef();
+    switch(op->code()) {
+      case CPUI_LOAD:
+	if (maxLoad == 0) return false;
+	maxLoad -= 1;
+	curVn = op->getIn(1);
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_SUB:
+      case CPUI_INT_XOR:
+      case CPUI_INT_OR:
+      case CPUI_INT_AND:
+	if (maxBinary == 0) return false;
+	if (!op->getIn(0)->isEventualConstant(maxBinary-1,maxLoad))
+	  return false;
+	return op->getIn(1)->isEventualConstant(maxBinary-1,maxLoad);
+      case CPUI_INT_ZEXT:
+      case CPUI_INT_SEXT:
+      case CPUI_COPY:
+	curVn = op->getIn(0);
+	break;
+      case CPUI_INT_LEFT:
+      case CPUI_INT_RIGHT:
+      case CPUI_INT_SRIGHT:
+      case CPUI_INT_MULT:
+	if (!op->getIn(1)->isConstant()) return false;
+	curVn = op->getIn(0);
+	break;
+      default:
+	return false;
+    }
+  }
+  return true;
 }
 
 /// Make an initial determination of the Datatype of this Varnode. If a Datatype is already
@@ -819,6 +923,24 @@ Datatype *Varnode::getLocalType(bool &blockup) const
   return ct;
 }
 
+/// If \b this varnode is produced by an operation with a boolean output, or if it is
+/// formally marked with a boolean data-type, return \b true. The parameter \b trustAnnotation
+/// toggles whether or not the formal data-type is trusted.
+/// \return \b true if \b this is a formal boolean, \b false otherwise
+bool Varnode::isBooleanValue(bool useAnnotation) const
+
+{
+  if (isWritten()) return def->isCalculatedBool();
+  if (!useAnnotation)
+    return false;
+  if ((flags & (input | typelock)) == (input | typelock)) {
+    if (size == 1 && type->getMetatype() == TYPE_BOOL)
+      return true;
+  }
+  return false;
+}
+
+
 /// Make a local determination if \b this and \b op2 hold the same value. We check if
 /// there is a common ancester for which both \b this and \b op2 are created from a direct
 /// sequence of COPY operations. NOTE: This is a transitive relationship
@@ -842,6 +964,159 @@ bool Varnode::copyShadow(const Varnode *op2) const
     if (vn == op2) return true;	// If the source is the same then this and op2 are same
   }
   return false;
+}
+
+/// \brief Try to find a SUBPIECE operation producing the value in \b this from the given \b whole Varnode
+///
+/// The amount of truncation producing \b this must be known apriori. Allow for COPY and MULTIEQUAL operations
+/// in the flow path from \b whole to \b this.  This method will search recursively through branches
+/// of MULTIEQUAL up to a maximum depth.
+/// \param leastByte is the number of least significant bytes being truncated from \b whole to get \b this
+/// \param whole is the given whole Varnode
+/// \param recurse is the current depth of recursion
+/// \return \b true if \b this and \b whole have the prescribed SUBPIECE relationship
+bool Varnode::findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurse) const
+
+{
+  const Varnode *vn = this;
+  while( vn->isWritten() && vn->getDef()->code() == CPUI_COPY)
+    vn = vn->getDef()->getIn(0);
+  if (!vn->isWritten()) {
+    if (vn->isConstant()) {
+      while( whole->isWritten() && whole->getDef()->code() == CPUI_COPY)
+        whole = whole->getDef()->getIn(0);
+      if (!whole->isConstant()) return false;
+      uintb off = whole->getOffset() >> leastByte*8;
+      off &= calc_mask(vn->getSize());
+      return (off == vn->getOffset());
+   }
+    return false;
+  }
+  OpCode opc = vn->getDef()->code();
+  if (opc == CPUI_SUBPIECE) {
+    const Varnode *tmpvn = vn->getDef()->getIn(0);
+    int4 off = (int4)vn->getDef()->getIn(1)->getOffset();
+    if (off != leastByte || tmpvn->getSize() != whole->getSize())
+      return false;
+    if (tmpvn == whole) return true;
+    while(tmpvn->isWritten() && tmpvn->getDef()->code() == CPUI_COPY) {
+      tmpvn = tmpvn->getDef()->getIn(0);
+      if (tmpvn == whole) return true;
+    }
+  }
+  else if (opc == CPUI_MULTIEQUAL) {
+    recurse += 1;
+    if (recurse > 1) return false;	// Truncate the recursion at maximum depth
+    while( whole->isWritten() && whole->getDef()->code() == CPUI_COPY)
+      whole = whole->getDef()->getIn(0);
+    if (!whole->isWritten()) return false;
+    const PcodeOp *bigOp = whole->getDef();
+    if (bigOp->code() != CPUI_MULTIEQUAL) return false;
+    const PcodeOp *smallOp = vn->getDef();
+    if (bigOp->getParent() != smallOp->getParent()) return false;
+    // Recurse search through all branches of the two MULTIEQUALs
+    for(int4 i=0;i<smallOp->numInput();++i) {
+      if (!smallOp->getIn(i)->findSubpieceShadow(leastByte, bigOp->getIn(i), recurse))
+	return false;
+    }
+    return true;	// All branches were copy shadows
+  }
+  return false;
+}
+
+/// \brief Try to find a PIECE operation that produces \b this from a given Varnode \b piece
+///
+/// \param leastByte is the number of least significant bytes being truncated from the
+/// putative \b this to get \b piece.  The routine can backtrack through COPY operations and
+/// more than one PIECE operations to verify that \b this is formed out of \b piece.
+/// \param piece is the given Varnode piece
+/// \return \b true if \b this and \b whole have the prescribed PIECE relationship
+bool Varnode::findPieceShadow(int4 leastByte,const Varnode *piece) const
+
+{
+  const Varnode *vn = this;
+  while( vn->isWritten() && vn->getDef()->code() == CPUI_COPY)
+    vn = vn->getDef()->getIn(0);
+  if (!vn->isWritten()) return false;
+  OpCode opc = vn->getDef()->code();
+  if (opc == CPUI_PIECE) {
+    const Varnode *tmpvn = vn->getDef()->getIn(1);	// Least significant part
+    if (leastByte >= tmpvn->getSize()) {
+      leastByte -= tmpvn->getSize();
+      tmpvn = vn->getDef()->getIn(0);
+    }
+    else {
+      if (piece->getSize() + leastByte > tmpvn->getSize()) return false;
+    }
+    if (leastByte == 0 && tmpvn->getSize() == piece->getSize()) {
+      if (tmpvn == piece) return true;
+      while(tmpvn->isWritten() && tmpvn->getDef()->code() == CPUI_COPY) {
+	tmpvn = tmpvn->getDef()->getIn(0);
+	if (tmpvn == piece) return true;
+      }
+      return false;
+    }
+    // CPUI_PIECE input is too big, recursively search for another CPUI_PIECE
+    return tmpvn->findPieceShadow(leastByte, piece);
+  }
+  return false;
+}
+
+/// For \b this and another Varnode, establish that either:
+///  - bigger = CONCAT(smaller,..) or
+///  - smaller = SUBPIECE(bigger)
+///
+/// Check through COPY chains and verify that the form of the CONCAT or SUBPIECE matches
+/// a given relative offset between the Varnodes.
+/// \param op2 is the Varnode to compare to \b this
+/// \param relOff is the putative relative byte offset of \b this to \b op2
+/// \return \b true if one Varnode is contained, as a value, in the other
+bool Varnode::partialCopyShadow(const Varnode *op2,int4 relOff) const
+
+{
+  const Varnode *vn;
+
+  if (size < op2->size) {
+    vn = this;
+  }
+  else if (size > op2->size) {
+    vn = op2;
+    op2 = this;
+    relOff = -relOff;
+  }
+  else
+    return false;
+  if (relOff < 0)
+    return false;		// Not proper containment
+  if (relOff + vn->getSize() > op2->getSize())
+    return false;		// Not proper containment
+
+  bool bigEndian = getSpace()->isBigEndian();
+  int4 leastByte = bigEndian ? (op2->getSize() - vn->getSize()) - relOff : relOff;
+  if (vn->findSubpieceShadow(leastByte, op2, 0))
+    return true;
+
+  if (op2->findPieceShadow(leastByte, vn))
+    return true;
+
+  return false;
+}
+
+/// If \b this has a data-type built out of separate pieces, return it.
+/// If \b this is mapped as a partial to a symbol with one of these data-types, return it.
+/// Return null otherwise.
+/// \return the associated structured data-type or null
+Datatype *Varnode::getStructuredType(void) const
+
+{
+  Datatype *ct;
+  if (mapentry != (SymbolEntry *)0)
+    ct = mapentry->getSymbol()->getType();
+  else
+    ct = type;
+  if (ct->isPieceStructured())
+    return ct;
+  return (Datatype *)0;
 }
 
 /// Compare term order of two Varnodes. Used in Term Rewriting strategies to order operands of commutative ops
@@ -892,6 +1167,8 @@ void Varnode::encode(Encoder &encoder) const
     encoder.writeBool(ATTRIB_UNAFF, true);
   if (isInput())
     encoder.writeBool(ATTRIB_INPUT, true);
+  if (isVolatile())
+    encoder.writeBool(ATTRIB_VOLATILE, true);
   encoder.closeElement(ELEM_ADDR);
 }
 
@@ -1451,6 +1728,46 @@ VarnodeLocSet::const_iterator VarnodeBank::endLoc(int4 s,const Address &addr,
   return iter;
 }
 
+/// \brief Given start, return maximal range of overlapping Varnodes
+///
+/// Advance the iterator until no Varnodes after the iterator intersect any Varnodes
+/// from the initial Varnode through the current iterator.  The range is returned as pairs
+/// of iterators to subranges. One subrange for each set of Varnodes with the same size and starting address.
+/// A final iterator to the next Varnode after the overlapping set is also passed back.
+/// \param iter is an iterator to the given start Varnode
+/// \param bounds holds the array of iterator pairs passed back
+/// \return the union of Varnode flags across the range
+uint4 VarnodeBank::overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const
+
+{
+  Varnode *vn = *iter;
+  AddrSpace *spc = vn->getSpace();
+  uintb off = vn->getOffset();
+  uintb maxOff = off + (vn->getSize() - 1);
+  uint4 flags = vn->getFlags();
+  bounds.push_back(iter);
+  iter = endLoc(vn->getSize(),vn->getAddr(),Varnode::written);
+  bounds.push_back(iter);
+  while(iter != loc_tree.end()) {
+    vn = *iter;
+    if (vn->getSpace() != spc || vn->getOffset() > maxOff)
+      break;
+    if (vn->isFree()) {
+      iter = endLoc(vn->getSize(),vn->getAddr(),0);
+      continue;
+    }
+    uintb endOff = vn->getOffset() + (vn->getSize() - 1);
+    if (endOff > maxOff)
+      maxOff = endOff;
+    flags |= vn->getFlags();
+    bounds.push_back(iter);
+    iter = endLoc(vn->getSize(),vn->getAddr(),Varnode::written);
+    bounds.push_back(iter);
+  }
+  bounds.push_back(iter);
+  return flags;
+}
+
 /// \brief Beginning of varnodes with set definition property
 ///
 /// Get an iterator to Varnodes in definition order restricted with the
@@ -1706,3 +2023,4 @@ Varnode *findContiguousWhole(Funcdata &data,Varnode *vn1,Varnode *vn2)
   return (Varnode *)0;
 }
 
+} // End namespace ghidra

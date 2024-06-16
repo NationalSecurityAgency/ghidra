@@ -127,7 +127,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal>
 	 */
 	private static class WhiteSpace extends AssemblyStringTerminal {
 		private WhiteSpace() {
-			super(" ");
+			super(" ", null);
 		}
 
 		@Override
@@ -165,6 +165,11 @@ public class AssemblySentential<NT extends AssemblyNonTerminal>
 		@Override
 		public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
 			return Collections.singleton(" ");
+		}
+
+		@Override
+		public boolean isWhiteSpace() {
+			return true;
 		}
 	}
 
@@ -217,7 +222,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal>
 	 * Add a comma followed by optional whitespace.
 	 */
 	public void addCommaWS() {
-		addSymbol(new AssemblyStringTerminal(","));
+		addSymbol(new AssemblyStringTerminal(",", null));
 		addWS();
 	}
 
@@ -240,7 +245,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal>
 		if (!Character.isLetterOrDigit(first)) {
 			addWS();
 		}
-		addSymbol(new AssemblyStringTerminal(tstr));
+		addSymbol(new AssemblyStringTerminal(tstr, null));
 		char last = tstr.charAt(tstr.length() - 1);
 		if (!str.endsWith(tstr)) {
 			addWS();

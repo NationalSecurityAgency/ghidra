@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.framework.client.*;
 import ghidra.framework.main.datatable.ProjectTreeAction;
 import ghidra.framework.main.datatree.FindCheckoutsDialog;
@@ -31,10 +32,10 @@ import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.ProjectData;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
-import resources.MultiIcon;
-import resources.ResourceManager;
 
 public class FindCheckoutsAction extends ProjectTreeAction {
+
+	private static final Icon FIND_ICON = new GIcon("icon.projectdata.find.checkouts.search");
 
 	private Plugin plugin;
 
@@ -42,12 +43,10 @@ public class FindCheckoutsAction extends ProjectTreeAction {
 		super("Find Checkouts", owner);
 		this.plugin = plugin;
 		String group = "Repository";
-		Icon searchIcon = ResourceManager.loadImage("images/magnifier.png");
-		Icon smallCheckIcon = ResourceManager.loadImage("images/check.png");
-		MultiIcon icon = new MultiIcon(searchIcon);
-		icon.addIcon(smallCheckIcon);
-		setToolBarData(new ToolBarData(icon, group));
-		setPopupMenuData(new MenuData(new String[] { "Find Checkouts..." }, icon, "Repository"));
+
+		setToolBarData(new ToolBarData(FIND_ICON, group));
+		setPopupMenuData(
+			new MenuData(new String[] { "Find Checkouts..." }, FIND_ICON, "Repository"));
 		setDescription("Find my checkouts recursively");
 		setHelpLocation(new HelpLocation("VersionControl", "Find_Checkouts"));
 		setEnabled(false);

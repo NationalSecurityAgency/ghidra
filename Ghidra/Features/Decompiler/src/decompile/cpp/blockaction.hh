@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __BLOCK_ACTION__
-#define __BLOCK_ACTION__
+#ifndef __BLOCKACTION_HH__
+#define __BLOCKACTION_HH__
 
 /// \file blockaction.hh
 /// \brief Actions and classes associated with transforming and structuring the control-flow graph
 
 #include "action.hh"
+
+namespace ghidra {
 
 /// \brief Class for holding an edge while the underlying graph is being manipulated
 ///
@@ -53,7 +55,7 @@ class LoopBody {
 public:
   LoopBody(FlowBlock *h) { head=h; immed_container = (LoopBody *)0; depth=0; }	///< Construct with a loop head
   FlowBlock *getHead(void) const { return head; }			///< Return the head FlowBlock of the loop
-  FlowBlock *getCurrentBounds(FlowBlock **top,FlowBlock *graph);	///< Return current loop bounds (\b head and \b bottom).
+  FlowBlock *update(FlowBlock *graph);					///< Update loop body to current view
   void addTail(FlowBlock *bl) { tails.push_back(bl); }			///< Add a \e tail to the loop
   FlowBlock *getExitBlock(void) const { return exitblock; }		///< Get the exit FlowBlock or NULL
   void findBase(vector<FlowBlock *> &body);				///< Mark the body FlowBlocks of \b this loop
@@ -355,4 +357,5 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+} // End namespace ghidra
 #endif

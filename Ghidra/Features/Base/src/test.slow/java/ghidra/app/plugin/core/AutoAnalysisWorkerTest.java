@@ -29,7 +29,6 @@ import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -134,7 +133,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 		schedule(mgr, new SetTestPropertyCommand("p1", 500), 10);
 
 		try {
-			mgr.scheduleWorker(worker, null, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.scheduleWorker(worker, null, false, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			failWithException("Unexpected exception", e);
@@ -158,7 +157,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 		schedule(mgr, new SetTestPropertyCommand("p1", 500), 10);
 
 		try {
-			mgr.scheduleWorker(worker, null, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.scheduleWorker(worker, null, true, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			failWithException("Unexpected exception", e);
@@ -284,7 +283,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 
 		Runnable r = () -> {
 			try {
-				mgr.scheduleWorker(worker, null, false, TaskMonitorAdapter.DUMMY_MONITOR);
+				mgr.scheduleWorker(worker, null, false, TaskMonitor.DUMMY);
 				Assert.fail("Expected UnsupportedOperationException");
 			}
 			catch (UnsupportedOperationException e1) {
@@ -366,7 +365,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 					pressButtonByText(confirmDialog, "Yes");
 					waitForSwing();
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					Assert.fail("CancelledException expected");
 
@@ -421,12 +420,12 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 		}
 	}
 
-	private void schedule(AutoAnalysisManager mgr, BackgroundCommand cmd, int priority) {
+	private void schedule(AutoAnalysisManager mgr, BackgroundCommand<Program> cmd, int priority) {
 		invokeInstanceMethod("schedule", mgr, new Class[] { BackgroundCommand.class, int.class },
 			new Object[] { cmd, priority });
 	}
 
-	private class SetTestPropertyCommand extends BackgroundCommand {
+	private static class SetTestPropertyCommand extends BackgroundCommand<Program> {
 		private final String property;
 		private final long delay;
 
@@ -437,7 +436,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+		public boolean applyTo(Program p, TaskMonitor monitor) {
 			try {
 				Thread.sleep(delay);
 			}
@@ -445,14 +444,13 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 				Assert.fail();// should never happen
 			}
 
-			Program p = (Program) obj;
 			Options list = p.getOptions("TEST");
 			list.setBoolean(property, true);
 			return true;
 		}
 	}
 
-	private class WorkerBackgroundTestCmd extends BackgroundCommand {
+	private class WorkerBackgroundTestCmd extends BackgroundCommand<Program> {
 
 		private final boolean analyzeChanges;
 		private volatile boolean isFinished = false;
@@ -464,11 +462,10 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager((Program) obj);
+		public boolean applyTo(Program p, TaskMonitor monitor) {
+			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(p);
 			try {
-				return mgr.scheduleWorker(worker, null, analyzeChanges,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+				return mgr.scheduleWorker(worker, null, analyzeChanges, TaskMonitor.DUMMY);
 			}
 			catch (Exception e) {
 				error = e;

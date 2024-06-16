@@ -15,17 +15,20 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.*;
+import java.nio.file.AccessMode;
 import java.util.*;
 
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbByteWriter;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
@@ -57,7 +60,7 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 
 	//==============================================================================================
 	/**
-	 * @throws IOException Upon file IO issues.
+	 * @throws IOException Upon file IO issues
 	 */
 	@BeforeClass
 	public static void setUp() throws IOException {
@@ -90,13 +93,13 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 	//==============================================================================================
 	/**
 	 * Dumps a number bytes of information from a Stream in the AbstractStreamFile to String.
-	 *  for debug purposes.
-	 * @param streamFile The AbstractStreamFile to be used.
-	 * @param streamNumber The streamNumber of the file to dump.
-	 * @param maxOut Maximum number of bytes to dump.
-	 * @return String containing the output.
+	 *  for debug purposes
+	 * @param streamFile the AbstractStreamFile to be used
+	 * @param streamNumber the streamNumber of the file to dump
+	 * @param maxOut maximum number of bytes to dump
+	 * @return string containing the output
 	 */
-	public static String dumpStream(AbstractMsf streamFile, int streamNumber, int maxOut) {
+	public static String dumpStream(Msf streamFile, int streamNumber, int maxOut) {
 		MsfStream stream = streamFile.getStream(streamNumber);
 		StringBuilder builder = new StringBuilder();
 		builder.append("Stream: " + streamNumber + "\n");
@@ -109,8 +112,11 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 	//==============================================================================================
 	@Test
 	public void testStreamFile200Header() {
-		try (AbstractMsf streamFile =
-			MsfParser.parse(testFileName200, new PdbReaderOptions(), TaskMonitor.DUMMY)) {
+		File file = new File(testFileName200);
+		try (ByteProvider byteProvider = new FileByteProvider(file,
+			FileSystemService.getInstance().getLocalFSRL(file), AccessMode.READ);
+				Msf streamFile =
+					MsfParser.parse(byteProvider, new PdbReaderOptions(), TaskMonitor.DUMMY)) {
 			int numStreams = streamFile.getNumStreams();
 			StringBuilder builder = new StringBuilder();
 			builder.append("NumStreams: " + numStreams + "\n");
@@ -127,8 +133,11 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 
 	@Test
 	public void testStreamFile700Header() {
-		try (AbstractMsf streamFile =
-			MsfParser.parse(testFileName700, new PdbReaderOptions(), TaskMonitor.DUMMY)) {
+		File file = new File(testFileName700);
+		try (ByteProvider byteProvider = new FileByteProvider(file,
+			FileSystemService.getInstance().getLocalFSRL(file), AccessMode.READ);
+				Msf streamFile =
+					MsfParser.parse(byteProvider, new PdbReaderOptions(), TaskMonitor.DUMMY)) {
 			int numStreams = streamFile.getNumStreams();
 			StringBuilder builder = new StringBuilder();
 			builder.append("NumStreams: " + numStreams + "\n");

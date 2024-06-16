@@ -115,7 +115,7 @@ public abstract class ArtImageSections {
 				reader.setPointerIndex(kSectionArtFields.getOffset());
 				while (reader.getPointerIndex() < Integer
 						.toUnsignedLong(kSectionArtFields.getEnd())) {
-					if (ArtConstants.VERSION_MARSHMALLOW_RELEASE.equals(header.getVersion())) {
+					if (ArtConstants.ART_VERSION_017.equals(header.getVersion())) {
 						ArtField field = new ArtField(reader);
 						fieldList.add(field);
 					}
@@ -135,7 +135,7 @@ public abstract class ArtImageSections {
 				reader.setPointerIndex(kSectionArtMethods.getOffset());
 				while (reader.getPointerIndex() < Integer
 						.toUnsignedLong(kSectionArtMethods.getEnd())) {
-					if (ArtConstants.VERSION_MARSHMALLOW_RELEASE.equals(header.getVersion())) {
+					if (ArtConstants.ART_VERSION_017.equals(header.getVersion())) {
 						ArtMethod method =
 							new ArtMethod(reader, header.getPointerSize(), header.getVersion());
 						methodList.add(method);
@@ -168,7 +168,7 @@ public abstract class ArtImageSections {
 		monitor.setMaximum(sectionList.size());
 
 		for (int i = 0; i < sectionList.size(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			ArtImageSection section = sectionList.get(i);
@@ -203,7 +203,7 @@ public abstract class ArtImageSections {
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
 
 			for (int i = 0; i < fieldList.size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				ArtField field = fieldList.get(i);
 				DataType dataType = field.toDataType();
 				program.getListing().createData(address, dataType);
@@ -222,7 +222,7 @@ public abstract class ArtImageSections {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
 			for (int i = 0; i < fieldGroupList.size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				ArtFieldGroup fieldGroup = fieldGroupList.get(i);
 				DataType dataType = fieldGroup.toDataType();
 				program.getListing().createData(address, dataType);
@@ -254,7 +254,7 @@ public abstract class ArtImageSections {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
 			for (int i = 0; i < methodList.size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				ArtMethod method = methodList.get(i);
 				DataType dataType = method.toDataType();
@@ -273,7 +273,7 @@ public abstract class ArtImageSections {
 			Address address =
 				program.getMinAddress().getNewAddress(header.getImageBegin() + section.getOffset());
 			for (int i = 0; i < methodGroupList.size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				ArtMethodGroup methodGroup = methodGroupList.get(i);
 				DataType dataType = methodGroup.toDataType();
@@ -316,7 +316,7 @@ public abstract class ArtImageSections {
 
 			Address endAddress = address.add(section.getSize());
 			while (address.compareTo(endAddress) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(pointerSize);
 
 				createDataAt(program, address, pointerSize);
@@ -351,7 +351,7 @@ public abstract class ArtImageSections {
 
 			Address endAddress = address.add(section.getSize());
 			while (address.compareTo(endAddress) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(pointerSize);
 
 				createDataAt(program, address, pointerSize);
@@ -382,7 +382,7 @@ public abstract class ArtImageSections {
 
 			Address endAddress = address.add(section.getSize());
 			while (address.compareTo(endAddress) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(pointerSize);
 
 				createDataAt(program, address, pointerSize);
@@ -412,7 +412,7 @@ public abstract class ArtImageSections {
 
 			Address endAddress = address.add(section.getSize());
 			while (address.compareTo(endAddress) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(4);
 
 				createDataAt(program, address, 4);
@@ -442,7 +442,7 @@ public abstract class ArtImageSections {
 
 			Address endAddress = address.add(section.getSize());
 			while (address.compareTo(endAddress) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(4);
 
 				createDataAt(program, address, 4);
@@ -472,7 +472,7 @@ public abstract class ArtImageSections {
 
 			Address endAddress = address.add(section.getSize());
 			while (address.compareTo(endAddress) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(4);
 
 				address = address.add(4);

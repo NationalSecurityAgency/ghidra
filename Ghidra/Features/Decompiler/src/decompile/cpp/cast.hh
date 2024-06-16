@@ -16,10 +16,12 @@
 /// \file cast.hh
 /// \brief API and specific strategies for applying type casts
 
-#ifndef __CPUI_CAST__
-#define __CPUI_CAST__
+#ifndef __CAST_HH__
+#define __CAST_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 class Varnode;
 class PcodeOp;
@@ -126,7 +128,7 @@ public:
   /// \return \b true if the SUBPIECE should be represented as a cast
   virtual bool isSubpieceCast(Datatype *outtype,Datatype *intype,uint4 offset) const=0;
 
-  /// \brief Is the given data-type truncation considered a cast, given endianess concerns.
+  /// \brief Is the given data-type truncation considered a cast, given endianness concerns.
   ///
   /// This is equivalent to isSubpieceCast() but where the truncation is accomplished by pulling
   /// bytes directly out of memory.  We assume the input data-type is layed down in memory, and
@@ -199,4 +201,5 @@ public:
   virtual bool isZextCast(Datatype *outtype,Datatype *intype) const;
 };
 
+} // End namespace ghidra
 #endif

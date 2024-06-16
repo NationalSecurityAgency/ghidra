@@ -19,11 +19,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import db.Transaction;
 import ghidra.framework.data.DomainObjectEventQueues;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
+import ghidra.program.database.ProgramOverlayAddressSpace;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.CategoryPath;
@@ -34,16 +37,16 @@ import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
-import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceTimeViewport;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.InvalidNameException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceProgramViewRegisters implements TraceProgramView {
@@ -56,8 +59,8 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	private final DBTraceProgramViewRegisterMemory memory;
 	private final DBTraceProgramViewRegistersReferenceManager referenceManager;
 
-	public DBTraceProgramViewRegisters(DBTraceProgramView view, DBTraceCodeRegisterSpace codeSpace,
-			DBTraceMemoryRegisterSpace memorySpace) {
+	public DBTraceProgramViewRegisters(DBTraceProgramView view, DBTraceCodeSpace codeSpace,
+			DBTraceMemorySpace memorySpace) {
 		this.view = view;
 		this.thread = codeSpace.getThread(); // TODO: Bleh, should be parameter
 
@@ -258,11 +261,6 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public void invalidate() {
-		view.invalidate();
-	}
-
-	@Override
 	public Register getRegister(String name) {
 		return view.getRegister(name);
 	}
@@ -290,6 +288,25 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	@Override
 	public Address getImageBase() {
 		return view.getImageBase();
+	}
+
+	@Override
+	public ProgramOverlayAddressSpace createOverlaySpace(String overlaySpaceName,
+			AddressSpace baseSpace) throws IllegalStateException, DuplicateNameException,
+			InvalidNameException, LockException {
+		return view.createOverlaySpace(overlaySpaceName, baseSpace);
+	}
+
+	@Override
+	public void renameOverlaySpace(String overlaySpaceName, String newName)
+			throws NotFoundException, InvalidNameException, DuplicateNameException, LockException {
+		view.renameOverlaySpace(overlaySpaceName, newName);
+	}
+
+	@Override
+	public boolean removeOverlaySpace(String overlaySpaceName)
+			throws LockException, NotFoundException {
+		return view.removeOverlaySpace(overlaySpaceName);
 	}
 
 	@Override
@@ -352,6 +369,11 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return view.openTransaction(description);
+	}
+
+	@Override
 	public int startTransaction(String description) {
 		return view.startTransaction(description);
 	}
@@ -367,8 +389,8 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public Transaction getCurrentTransaction() {
-		return view.getCurrentTransaction();
+	public TransactionInfo getCurrentTransactionInfo() {
+		return view.getCurrentTransactionInfo();
 	}
 
 	@Override
@@ -450,6 +472,16 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
 		view.removeCloseListener(listener);
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -608,6 +640,16 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
+	public List<String> getAllUndoNames() {
+		return view.getAllUndoNames();
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		return view.getAllRedoNames();
+	}
+
+	@Override
 	public void addTransactionListener(TransactionListener listener) {
 		view.addTransactionListener(listener);
 	}
@@ -638,7 +680,7 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public TraceProgramView getViewRegisters(TraceThread thread, boolean createIfAbsent) {
-		return view.getViewRegisters(thread, createIfAbsent);
+	public TraceProgramView getViewRegisters(TraceThread t, boolean createIfAbsent) {
+		return view.getViewRegisters(t, createIfAbsent);
 	}
 }

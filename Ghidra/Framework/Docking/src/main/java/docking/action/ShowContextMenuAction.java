@@ -21,16 +21,26 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
+import ghidra.util.Swing;
 
 /**
- * An action to trigger a context menu over the focus owner.  This allows context menus to be 
+ * An action to trigger a context menu over the focus owner.  This allows context menus to be
  * triggered from the keyboard.
  */
 public class ShowContextMenuAction extends DockingAction {
 
-	public ShowContextMenuAction(KeyStroke keyStroke) {
-		super("Show Context Menu", DockingWindowManager.DOCKING_WINDOWS_OWNER);
-		setKeyBindingData(new KeyBindingData(keyStroke));
+	public ShowContextMenuAction(KeyStroke keyStroke, boolean isPrimary) {
+		super(isPrimary ? "Show Context Menu" : "Show Context Menu Alternate",
+			DockingWindowManager.DOCKING_WINDOWS_OWNER, isPrimary);
+
+		// Only the primary action will appear in the tool' key binding settings UI.  The primary
+		// action can be managed by the users.  The secondary action is not managed at this time.
+		if (isPrimary) {
+			setKeyBindingData(new KeyBindingData(keyStroke));
+		}
+		else {
+			createSystemKeyBinding(keyStroke);
+		}
 	}
 
 	@Override
@@ -42,10 +52,12 @@ public class ShowContextMenuAction extends DockingAction {
 			return;
 		}
 
-		// use the focused component to determine what should get the context menu  
+		// use the focused component to determine what should get the context menu
 		Component focusOwner = kfm.getFocusOwner();
 		if (focusOwner != null) {
-			DockingWindowManager.showContextMenu(focusOwner);
+			Swing.runLater(() -> {
+				DockingWindowManager.showContextMenu(focusOwner);
+			});
 		}
 	}
 

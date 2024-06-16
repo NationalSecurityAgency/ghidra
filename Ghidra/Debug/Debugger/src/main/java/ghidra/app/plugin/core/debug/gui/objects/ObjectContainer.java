@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.jdom.Element;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.xml.XmlUtilities;
@@ -152,11 +153,11 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 	 * 		p.update
 	 */
 
-	public CompletableFuture<ObjectContainer> getOffspring() {
+	public CompletableFuture<ObjectContainer> getOffspring(RefreshBehavior refresh) {
 		if (targetObject == null) {
 			return CompletableFuture.completedFuture(null);
 		}
-		return targetObject.resync(true, true).thenApplyAsync(__ -> {
+		return targetObject.resync(refresh, refresh).thenApplyAsync(__ -> {
 			rebuildContainers(targetObject.getCachedElements(), targetObject.getCachedAttributes());
 			propagateProvider(provider);
 			return this;
@@ -545,6 +546,17 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		return isLink;
 	}
 
+	public boolean isFocused() {
+		if (provider == null || targetObject == null) {
+			return false;
+		}
+		TargetObject focus = provider.getFocus();
+		if (focus == null) {
+			return false;
+		}
+		return PathUtils.isAncestor(targetObject.getPath(), focus.getPath());
+	}
+
 	public String getOrder() {
 		Integer order = (Integer) attributeMap.get(TargetObject.ORDER_ATTRIBUTE_NAME);
 		return order == null ? getName() : Integer.toString(order);
@@ -578,5 +590,4 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		}
 		return this.hashCode() - that.hashCode();
 	}
-
 }

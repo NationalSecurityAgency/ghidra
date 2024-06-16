@@ -45,12 +45,17 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 				prompt = "Password:";
 			}
 			PasswordCallback passCb = new PasswordCallback(prompt, false);
-			ServerPasswordPrompt pp = new ServerPasswordPrompt("Connection Authentication",
-				"Server", getRequestingHost(), nameCb, passCb, null, null, null);
-			SystemUtilities.runSwingNow(pp);
-			if (pp.okWasPressed()) {
-				return new PasswordAuthentication(nameCb != null ? nameCb.getName() : null,
-					passCb.getPassword());
+			try {
+				ServerPasswordPrompt pp = new ServerPasswordPrompt("Connection Authentication",
+					"Server", getRequestingHost(), nameCb, passCb, null, null, null);
+				SystemUtilities.runSwingNow(pp);
+				if (pp.okWasPressed()) {
+					return new PasswordAuthentication(nameCb != null ? nameCb.getName() : null,
+						passCb.getPassword());
+				}
+			}
+			finally {
+				passCb.clearPassword();
 			}
 			return null;
 		}
@@ -91,11 +96,11 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 
 	@Override
 	public char[] getNewPassword(final Component parent, String serverInfo, String username) {
-		final PasswordChangeDialog dlg =
+
+		PasswordChangeDialog dlg =
 			new PasswordChangeDialog("Change Password", "Repository Server", serverInfo, username);
-		Runnable r = () -> DockingWindowManager.showDialog(parent, dlg);
 		try {
-			SystemUtilities.runSwingNow(r);
+			DockingWindowManager.showDialog(parent, dlg);
 			return dlg.getPassword();
 		}
 		finally {
@@ -153,16 +158,17 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 
 		@Override
 		public void run() {
-			PasswordDialog pwdDialog;
+
 			String choicePrompt = null;
 			String[] choices = null;
 			if (choiceCb != null) {
 				choicePrompt = choiceCb.getPrompt();
 				choices = choiceCb.getChoices();
 			}
-			pwdDialog = new PasswordDialog(title, serverType, serverName, passCb.getPrompt(),
-				nameCb != null ? nameCb.getPrompt() : null, getDefaultUserName(), choicePrompt,
-				choices, getDefaultChoice(), anonymousCb != null);
+			PasswordDialog pwdDialog =
+				new PasswordDialog(title, serverType, serverName, passCb.getPrompt(),
+					nameCb != null ? nameCb.getPrompt() : null, getDefaultUserName(), choicePrompt,
+					choices, getDefaultChoice(), anonymousCb != null);
 			if (errorMsg != null) {
 				pwdDialog.setErrorText(errorMsg);
 			}

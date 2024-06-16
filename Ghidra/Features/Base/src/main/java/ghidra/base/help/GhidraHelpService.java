@@ -22,10 +22,13 @@ import java.util.Map.Entry;
 import javax.help.HelpSet;
 import javax.help.HelpSetException;
 
-import docking.help.*;
+import docking.help.GHelpClassLoader;
+import docking.help.HelpManager;
 import generic.jar.ResourceFile;
+import generic.theme.*;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**
@@ -34,7 +37,14 @@ import resources.ResourceManager;
  */
 public class GhidraHelpService extends HelpManager {
 
+	/**
+	 * The hardcoded value to use for all HelpSet 'home id' values.  Subclasses may change this 
+	 * value by overriding {@link #getHomeId()}.
+	 */
+	private static final String GHIDRA_HOME_ID = "Misc_Ghidra_Help_Contents";
+
 	private static final String MASTER_HELP_SET_HS = "Base_HelpSet.hs";
+	private ThemeListener listener = new HelpThemeListener();
 
 	public static void install() {
 		try {
@@ -49,6 +59,7 @@ public class GhidraHelpService extends HelpManager {
 		super(findMasterHelpSetUrl());
 		loadHelpSets();
 		registerHelp();
+		Gui.addThemeListener(listener);
 	}
 
 	private static URL findMasterHelpSetUrl() {
@@ -62,6 +73,11 @@ public class GhidraHelpService extends HelpManager {
 		Msg.error(GhidraHelpService.class,
 			"Failed to locate the primary Help Set.  Try building help to resolve the issue");
 		return ResourceManager.getResource("help/" + HelpService.DUMMY_HELP_SET_NAME);
+	}
+
+	@Override
+	protected String getHomeId() {
+		return GHIDRA_HOME_ID;
 	}
 
 	private void loadHelpSets() {
@@ -114,5 +130,14 @@ public class GhidraHelpService extends HelpManager {
 		}
 
 		return results;
+	}
+
+	class HelpThemeListener implements ThemeListener {
+		@Override
+		public void themeChanged(ThemeEvent event) {
+			if (event.isLookAndFeelChanged()) {
+				reload();
+			}
+		}
 	}
 }

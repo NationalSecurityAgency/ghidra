@@ -39,6 +39,10 @@ public class DefaultSchemaContext implements SchemaContext {
 		schemas.put(schema.getName(), schema);
 	}
 
+	public synchronized void replaceSchema(TargetObjectSchema schema) {
+		schemas.put(schema.getName(), schema);
+	}
+
 	@Override
 	public synchronized TargetObjectSchema getSchemaOrNull(SchemaName name) {
 		return schemas.get(name);
@@ -66,12 +70,10 @@ public class DefaultSchemaContext implements SchemaContext {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof DefaultSchemaContext) {
-			DefaultSchemaContext that = (DefaultSchemaContext) obj;
+		if (obj instanceof DefaultSchemaContext that) {
 			return Objects.equals(this.schemas, that.schemas);
 		}
-		if (obj instanceof SchemaContext) {
-			SchemaContext that = (SchemaContext) obj;
+		if (obj instanceof SchemaContext that) {
 			return this.schemas.values().equals(that.getAllSchemas());
 		}
 		return false;

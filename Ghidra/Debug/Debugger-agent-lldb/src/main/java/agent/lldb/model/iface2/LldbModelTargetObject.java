@@ -22,11 +22,9 @@ import java.util.concurrent.CompletableFuture;
 import agent.lldb.manager.impl.LldbManagerImpl;
 import agent.lldb.model.AbstractLldbModel;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.SpiTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.util.datastruct.ListenerSet;
 
 public interface LldbModelTargetObject extends SpiTargetObject {
 
@@ -54,12 +52,10 @@ public interface LldbModelTargetObject extends SpiTargetObject {
 	public CompletableFuture<? extends Map<String, ?>> requestNativeAttributes();
 
 	public default CompletableFuture<Void> requestAugmentedAttributes() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public CompletableFuture<List<TargetObject>> requestNativeElements();
-
-	public ListenerSet<DebuggerModelListener> getListeners();
 
 	public LldbModelTargetSession getParentSession();
 

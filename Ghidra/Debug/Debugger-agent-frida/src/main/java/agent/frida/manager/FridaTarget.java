@@ -24,27 +24,27 @@ import agent.frida.frida.FridaEng;
 
 public class FridaTarget extends FridaPointer {
 
+	private String id;
 	private String name;
 	private FridaSession session;
 
-	public FridaTarget(Pointer localDevice) {
-		super(localDevice);
-	}
-
-	public Long getID() {
-		return 0L; 
+	public FridaTarget(Pointer device, String id, String name) {
+		super(device);
+		this.id = id;
+		this.name = name;
 	}
 
 	public FridaSession attach(BigInteger processId, FridaError error) {
 		return FridaEng.attach(this, new NativeLong(processId.longValue()), error);
 	}
-	
+
 	public FridaSession launchSimple(String[] argArr, String[] envArr, String workingDir) {
 		return FridaEng.spawn(this, argArr[0], new FridaError());
 	}
 
 	public FridaSession launch(String fileName, String[] argArr, String[] envArr, String pathSTDIN,
-			String pathSTDOUT, String pathSTDERR, String workingDir, long createFlags, boolean stopAtEntry,
+			String pathSTDOUT, String pathSTDERR, String workingDir, long createFlags,
+			boolean stopAtEntry,
 			FridaError error) {
 		return FridaEng.spawn(this, fileName, error);
 	}
@@ -52,15 +52,23 @@ public class FridaTarget extends FridaPointer {
 	public void resumeProcess(NativeLong processId, FridaError error) {
 		FridaEng.resume(this, processId, error);
 	}
-	
+
 	public void killProcess(NativeLong processId, FridaError error) {
 		FridaEng.kill(this, processId, error);
 	}
-	
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
 	public String getName() {
 		return name;
 	}
-	
+
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -76,5 +84,5 @@ public class FridaTarget extends FridaPointer {
 	public FridaProcess getProcess() {
 		return session == null ? null : session.getProcess();
 	}
-	
+
 }

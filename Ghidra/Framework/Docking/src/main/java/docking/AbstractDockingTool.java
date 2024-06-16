@@ -118,6 +118,11 @@ public abstract class AbstractDockingTool implements Tool {
 	}
 
 	@Override
+	public Set<DockingActionIf> getLocalActions(ComponentProvider provider) {
+		return toolActions.getLocalActions(provider);
+	}
+
+	@Override
 	public void removeLocalAction(ComponentProvider provider, DockingActionIf action) {
 		toolActions.removeLocalAction(provider, action);
 	}
@@ -125,6 +130,11 @@ public abstract class AbstractDockingTool implements Tool {
 	@Override
 	public Set<DockingActionIf> getAllActions() {
 		return toolActions.getAllActions();
+	}
+
+	@Override
+	public Set<DockingActionIf> getGlobalActions() {
+		return toolActions.getGlobalActions();
 	}
 
 	@Override

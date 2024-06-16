@@ -16,11 +16,13 @@
 /// \file rangemap.hh
 /// \brief Templates to define interval map containers
 
-#ifndef __RANGEMAP__
-#define __RANGEMAP__
+#ifndef __RANGEMAP_HH__
+#define __RANGEMAP_HH__
 
 #include <set>
 #include <list>
+
+namespace ghidra {
 
 /// \brief An interval map container
 ///
@@ -420,4 +422,5 @@ rangemap<_recordtype>::find_overlap(linetype point,linetype end) const
   return tree.end();
 }
 
+} // End namespace ghidra
 #endif

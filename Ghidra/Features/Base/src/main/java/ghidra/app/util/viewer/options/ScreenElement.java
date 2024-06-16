@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,52 +17,65 @@ package ghidra.app.util.viewer.options;
 
 import java.awt.Color;
 
+import generic.theme.GColor;
 
 public class ScreenElement {
 	private String name;
 	private String optionsName;
 	private Color color;
-	private Color defaultColor;
+	private GColor defaultColor;
 	private int style;
-	
-	ScreenElement(String name, Color defaultColor) {
+
+	ScreenElement(String name, GColor defaultColor) {
 		this(name, name, defaultColor);
 	}
-	
-	ScreenElement(String name, String optionsName, Color defaultColor) {
+
+	ScreenElement(String name, String optionsName, GColor defaultColor) {
 		this.name = name;
 		this.optionsName = optionsName;
 		this.defaultColor = defaultColor;
 		this.color = defaultColor;
 		this.style = -1;
 	}
-	
+
+	public String getThemeColorId() {
+		return defaultColor.getId();
+	}
+
 	public String getName() {
 		return name;
 	}
+
 	public Color getColor() {
 		return color;
 	}
+
 	public int getStyle() {
 		return style;
 	}
-	public Color getDefaultColor() {
+
+	public GColor getDefaultColor() {
 		return defaultColor;
 	}
+
 	public void setColor(Color color) {
 		this.color = color;
 	}
+
 	public void setStyle(int style) {
 		this.style = style;
 	}
+
 	public String getColorOptionName() {
 		return optionsName + " Color";
 	}
+
 	public String getStyleOptionName() {
-		return optionsName+ " Style";
+		return optionsName + " Style";
 	}
+
 	@Override
-    public String toString() {
+	public String toString() {
 		return name;
 	}
 }

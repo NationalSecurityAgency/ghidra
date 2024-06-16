@@ -23,6 +23,7 @@ import ghidra.app.cmd.data.rtti.*;
 import ghidra.app.services.*;
 import ghidra.app.util.datatype.microsoft.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.listing.Program;
@@ -41,6 +42,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "Windows x86 PE RTTI Analyzer";
 	private static final String DESCRIPTION =
 		"Finds and creates RTTI metadata structures and associated vf tables.";
+	public static final String RTTI_FOUND_OPTION = "RTTI Found";
 
 	// TODO If we want the RTTI analyzer to find all type descriptors regardless of whether
 	//      they are used for RTTI, then change the CLASS_PREFIX_CHARS to ".". Need to be
@@ -61,7 +63,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		setPriority(AnalysisPriority.REFERENCE_ANALYSIS.before());
 		setDefaultEnablement(true);
 		validationOptions = new DataValidationOptions();
-		applyOptions = new DataApplyOptions();
+		applyOptions = new DataApplyOptions();		
 	}
 
 	@Override
@@ -72,10 +74,16 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-
+		
+		// "rttiFound" option added in 10.3 so if analyzed with previous version analyzer will rerun
+		if(hasRun(program)) {
+			return true;
+		}
+		
 		Address commonVfTableAddress = RttiUtil.findTypeInfoVftableAddress(program, monitor);
 
-		if (commonVfTableAddress == null) {
+		if (commonVfTableAddress == null) {		
+			setRttiFound(program, false);
 			return true;
 		}
 		
@@ -83,13 +91,41 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		
 		Set<Address> possibleTypeAddresses = locatePotentialRTTI0Entries(program, set, monitor);
 		if (possibleTypeAddresses == null) {
+			setRttiFound(program, false);
 			return true;
 		}
 
 		// We now have a list of potential rtti0 addresses.
 		processRtti0(possibleTypeAddresses, program, monitor);
-
+		setRttiFound(program, true);
+		
 		return true;
+	}
+	
+	/**
+	 * Has this analyzer been run on the given program. NOTE: option new as of 10.3 so this will
+	 * not be accurate for older programs.
+	 * @param program the given program
+	 * @return true if analyzer has run, false if not or unknown (before version 10.3)
+	 */
+	private boolean hasRun(Program program) {
+		Options programOptions = program.getOptions(Program.PROGRAM_INFO);
+		Boolean hasRun = (Boolean) programOptions.getObject(RTTI_FOUND_OPTION, null);
+		if(hasRun == null) {
+			return false;
+		}
+		return true;
+		
+	}
+	
+	/**
+	 * Method to set the RTTI Found option for the given program
+	 * @param program the given program
+	 * @param rttiFound true if RTTI found and processed, false otherwise
+	 */
+	private void setRttiFound(Program program, boolean rttiFound) {
+		Options programOptions = program.getOptions(Program.PROGRAM_INFO);
+		programOptions.setBoolean(RTTI_FOUND_OPTION, rttiFound);
 	}
 
 	/**
@@ -98,7 +134,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	 * @param set restricted set to locate within
 	 * @param monitor monitor for canceling
 	 * @return set of potential RTTI0 entries
-	 * @throws CancelledException
+	 * @throws CancelledException if cancelled
 	 */
 	private Set<Address> locatePotentialRTTI0Entries(Program program, AddressSetView set,
 			TaskMonitor monitor) throws CancelledException {
@@ -125,7 +161,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		ArrayList<Address> rtti0Locations = new ArrayList<>();
 		int count = 0;
 		for (Address rtti0Address : possibleRtti0Addresses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(count++);
 
 			// Validate
@@ -192,7 +228,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 			List<Address> rtti0Locations, DataValidationOptions validationOptions,
 			TaskMonitor monitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		List<Address> addresses =
 			getRefsToRtti0(program, rtti4Blocks, rtti0Locations, validationOptions, monitor);

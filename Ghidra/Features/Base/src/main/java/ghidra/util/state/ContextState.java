@@ -492,7 +492,7 @@ public class ContextState {
 	 */
 	public Varnode get(int spaceID, Varnode offsetValue, int size) {
 		try {
-			return get(spaceID, offsetValue, size, TaskMonitorAdapter.DUMMY_MONITOR);
+			return get(spaceID, offsetValue, size, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e); // unexpected
@@ -585,7 +585,7 @@ public class ContextState {
 	 */
 	public Varnode get(Varnode varnode) {
 		try {
-			return get(varnode, TaskMonitorAdapter.DUMMY_MONITOR);
+			return get(varnode, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e); // unexpected
@@ -692,7 +692,7 @@ public class ContextState {
 
 	/**
 	 * Combine byte values into a single varnode value.
-	 * @param byteValues bytes stored with LSB in bytes[0] and MSB in bytes[bytes.length-1] with correct endianess.
+	 * @param byteValues bytes stored with LSB in bytes[0] and MSB in bytes[bytes.length-1] with correct endianness.
 	 * @return varnode or null
 	 */
 	private Varnode combineByteValues(Varnode[] byteValues, TaskMonitor monitor)

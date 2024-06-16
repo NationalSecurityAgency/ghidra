@@ -33,8 +33,6 @@ import ghidra.util.Swing;
 public class MultipleKeyAction extends DockingKeyBindingAction {
 	private List<ActionData> actions = new ArrayList<>();
 
-	private MultiActionDialog dialog;
-
 	/**
 	 * Creates new MultipleKeyAction
 	 *
@@ -95,7 +93,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	/**
-	 * Enables or disables the action.  This affects all uses of the action.  Note that for popups, 
+	 * Enables or disables the action.  This affects all uses of the action.  Note that for popups,
 	 * this affects whether or not the option is "grayed out", not whether the action is added
 	 * to the popup.
 	 *
@@ -124,14 +122,10 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		// If more than one action, prompt user for selection
 		if (list.size() > 1) {
 			// popup dialog to show multiple actions
-			if (dialog == null) {
-				dialog = new MultiActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
-			}
-			else {
-				dialog.setActionList(list);
-			}
+			MultiActionDialog dialog =
+				new MultiActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
 
-			// doing the show in an invoke later seems to fix a strange swing bug that lock up 
+			// doing the show in an invoke later seems to fix a strange swing bug that lock up
 			// the program if you tried to invoke a new action too quickly after invoking
 			// it the first time
 			Swing.runLater(() -> DockingWindowManager.showDialog(dialog));
@@ -148,8 +142,8 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	private boolean ignoreActionWhileMenuShowing() {
-		if (getKeyBindingPrecedence() == KeyBindingPrecedence.ReservedActionsLevel) {
-			return false; // allow reserved bindings through "no matter what!"
+		if (getKeyBindingPrecedence() == KeyBindingPrecedence.SystemActionsLevel) {
+			return false; // allow system bindings through "no matter what!"
 		}
 
 		MenuSelectionManager menuManager = MenuSelectionManager.defaultManager();
@@ -157,13 +151,13 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	private List<ExecutableAction> getValidContextActions(ActionContext localContext,
-			ActionContext globalContext) {
+			Map<Class<? extends ActionContext>, ActionContext> contextMap) {
 		List<ExecutableAction> list = new ArrayList<>();
 		boolean hasLocalActionsForKeyBinding = false;
 
-		// 
+		//
 		// 1) Prefer local actions for the active provider
-		// 
+		//
 		for (ActionData actionData : actions) {
 			if (actionData.isMyProvider(localContext)) {
 				hasLocalActionsForKeyBinding = true;
@@ -175,14 +169,14 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 		if (hasLocalActionsForKeyBinding) {
 			// At this point, we have local actions that may or may not be enabled. Return here
-			// so that any component specific actions found below will not interfere with the 
+			// so that any component specific actions found below will not interfere with the
 			// provider's local actions
 			return list;
 		}
 
 		//
-		// 2) Check for actions local to the source component 
-		// 
+		// 2) Check for actions local to the source component
+		//
 		for (ActionData actionData : actions) {
 			if (!(actionData.action instanceof ComponentBasedDockingAction)) {
 				continue;
@@ -204,9 +198,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return list;
 		}
 
-		// 
-		// 3) Check for global actions
-		// 
+		//
+		// 3) Check for default context actions
+		//
 		for (ActionData actionData : actions) {
 			if (actionData.isGlobalAction()) {
 				// When looking for context matches, we prefer local context, even though this
@@ -214,9 +208,21 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				// available
 				if (isValidAndEnabled(actionData, localContext)) {
 					list.add(new ExecutableAction(actionData.action, localContext));
+					continue;
 				}
-				else if (isValidAndEnabledGlobally(actionData, globalContext)) {
-					list.add(new ExecutableAction(actionData.action, globalContext));
+
+				// this happens if we are in a dialog, default context is not used
+				if (contextMap == null) {
+					continue;
+				}
+
+				if (!actionData.supportsDefaultContext()) {
+					continue;
+				}
+
+				ActionContext defaultContext = contextMap.get(actionData.getContextType());
+				if (isValidAndEnabled(actionData, defaultContext)) {
+					list.add(new ExecutableAction(actionData.action, defaultContext));
 				}
 			}
 		}
@@ -224,22 +230,16 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	private boolean isValidAndEnabled(ActionData actionData, ActionContext context) {
+		if (context == null) {
+			return false;
+		}
 		DockingActionIf a = actionData.action;
 		return a.isValidContext(context) && a.isEnabledForContext(context);
 	}
 
-	private boolean isValidAndEnabledGlobally(ActionData actionData, ActionContext context) {
-		// the context may be null when we don't want global action such as when getting actions
-		// for a dialog
-		if (context == null) {
-			return false;
-		}
-		return actionData.supportsDefaultToolContext() && isValidAndEnabled(actionData, context);
-	}
-
 	@Override
-	public boolean isReservedKeybindingPrecedence() {
-		return false; // MultipleKeyActions can never be reserved 
+	public boolean isSystemKeybindingPrecedence() {
+		return false; // MultipleKeyActions can never be 'system' 
 	}
 
 	@Override
@@ -281,8 +281,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		ComponentProvider localProvider = getProvider(dwm, eventSource);
 		ActionContext localContext = getLocalContext(localProvider);
 		localContext.setSourceObject(eventSource);
-		ActionContext globalContext = tool.getDefaultToolContext();
-		List<ExecutableAction> validActions = getValidContextActions(localContext, globalContext);
+		Map<Class<? extends ActionContext>, ActionContext> contextMap =
+			tool.getWindowManager().getDefaultActionContextMap();
+		List<ExecutableAction> validActions = getValidContextActions(localContext, contextMap);
 		return validActions;
 	}
 
@@ -293,7 +294,12 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			// this can happen if the dialog is closed during key event processing
 			return Collections.emptyList();
 		}
+
 		ActionContext context = provider.getActionContext(null);
+		if (context == null) {
+			return Collections.emptyList();
+		}
+
 		List<ExecutableAction> validActions = getValidContextActions(context, null);
 		return validActions;
 	}
@@ -312,6 +318,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		return dwm.getActiveWindow();
 	}
 
+	@Override
 	public List<DockingActionIf> getActions() {
 		List<DockingActionIf> list = new ArrayList<>(actions.size());
 		for (ActionData actionData : actions) {
@@ -347,6 +354,14 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			this.provider = provider;
 		}
 
+		public Class<? extends ActionContext> getContextType() {
+			return action.getContextClass();
+		}
+
+		public boolean supportsDefaultContext() {
+			return action.supportsDefaultContext();
+		}
+
 		boolean isGlobalAction() {
 			return provider == null;
 		}
@@ -354,10 +369,6 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		boolean isMyProvider(ActionContext localContext) {
 			ComponentProvider otherProvider = localContext.getComponentProvider();
 			return provider == otherProvider;
-		}
-
-		boolean supportsDefaultToolContext() {
-			return action.supportsDefaultToolContext();
 		}
 
 		@Override

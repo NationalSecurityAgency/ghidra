@@ -13,9 +13,11 @@
       <data>0xb0 000.....  0xbd ....0000 </data> <!-- add, pop -->
       <data> 0x00bf                     </data> <!-- nop -->
       <data> 0x8000f3af                 </data> <!-- nop.w -->
-      <data> 0xe8bd 1....... ........   </data> <!-- pop { rlist, pc } -->
+      <data> 0xe8bd 101..... ........   </data> <!-- pop { rlist, pc !lr !sp } -->
       <data> 0xf746                     </data> <!-- mov pc,lr -->
       <data> 0xf8 0x5d 0xfb 0.......    </data> <!-- ldr.w pc,[sp],#0x.. -->
+      <data> 0xf8 0x5d 0xfb 0x04        </data> <!-- pop.w pc -->
+      <data> 0xe8 0xbd 100..... ........ </data> <!-- pop.w  { pc, !lr, !sp ...} -->
     </prepatterns>
     
     <postpatterns>
@@ -31,20 +33,23 @@
       <data> 0x46 0x..        0xb5 ....0000                </data> <!-- push, mov -->
       <data> 01.01...0x..     0xb5 ....0000                </data> <!-- push, ldr -->
       <data> 0x68 0x..        0xb5 ....0000                </data> <!-- push, ldr -->
-      <data> 0xe92d  010..... ........                     </data> <!-- push { rlist, lr } -->
+      <data> 0xe92d  0100.... ........                     </data> <!-- push { rlist, lr !sp !pc !r12 } -->
+      <data> 0xf8 0x4d  11101101 0x04                      </data>  <!-- push.w lr -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart/>
+      <funcstart validcode="3"/>
     </postpatterns>
   </patternpairs>
   
   <patternpairs totalbits="32" postbits="16">  <!-- 32 bit ARM -->
     <prepatterns>
       <data>0xe12fff1.                  </data> <!-- bx r? -->
-      <data>0xe12fff1e 0x46c0           </data> <!-- bx lr , filler -->
       <data>0xe12fff1e 0xe1a00000       </data> <!-- bx lr , filler -->
+      <data>0xe12fff1e 0x00000000       </data> <!-- bx lr , filler -->
       <data>0xea......                  </data> <!-- b xxxx  probably a shared call return, careful with this, must be a really strong func start after -->
       <data>0xe8 10.11101  10.0.... 0x.. </data> <!-- ldmia   sp!,{pc,...} -->
+      <data>0xe8 10.11101  10.0.... 0x.. 0xe1a00000 </data> <!-- ldmia   sp!,{pc,...}; filler -->
+      <data>0xe8 10.11101  10.0.... 0x.. 0x00000000 </data> <!-- ldmia   sp!,{pc,...}; filler -->
       <data>0xe4 0x9d 0xf0 0x08         </data> <!-- ldr     pc,[sp],#0x8 -->
       <data>0xe1 0xa0 0xf0 0x0e         </data> <!-- mov     pc,lr -->
       <data>0xe320f000 0xe1a00000        </data> <!-- nop, cpy r0,r0 -->
@@ -52,76 +57,91 @@
     </prepatterns>
     
     <postpatterns>
-      <data> 0xe24dd...                              11101001 00101101 .1...... ....0000  </data> <!-- sub sp,sp ; stmdb sp!,{r4+,lr} -->
-      <data> 11101001 00101101 .1...... ....0000     0xe24dd...                           </data> <!--  stmdb sp!,{r4+,lr}; sub sp,sp -->
-      <data> 11101001 00101101 .1...... ....0000     0x........ 0xe24dd...                </data> <!--  stmdb sp!,{r4+,lr}; <instr>; sub sp,sp -->
-      <data> 11101001 00101101 .1...... ....0000     0xe1a0 010.0000 0000000.             </data> <!--  stmdb sp!,{r4+,lr}; mov r4,r0 -->
-      <data> 11101001 00101101 .1...... ....0000                                          </data> <!--  stmdb sp!,{r4+,lr}; if the prepattern is strong -->
+      <data> 0xe24dd...                              11101001 00101101 0100.... ........  </data> <!-- sub sp,sp ; stmdb sp!,{r3+,lr !sp !pc !r12} -->
+      <data> 11101001 00101101 0100.... ........     0xe24dd...                           </data> <!--  stmdb sp!,{r0+, lr !sp !pc !r12}; sub sp,sp -->
+      <data> 11101001 00101101 0100.... ........     0x........ 0xe24dd...                </data> <!--  stmdb sp!,{r0+, lr !sp !pc !r12}; <instr>; sub sp,sp -->
+      <data> 11101001 00101101 0100.... ........     0xe1a0 010.0000 0000000.             </data> <!--  stmdb sp!,{r0+, lr !sp !pc !r12}; mov r4,r0 -->
+      <data> 11101001 00101101 0100.... ........                                          </data> <!--  stmdb sp!,{r0+, lr !sp !pc !r12}; if the prepattern is strong -->
       <data> 0xe24dd...                              11100101 00101101 1110.... ........  </data> <!--  sub sp,sp;  str lr,[sp,#...]; -->
-      <data> 11101001 00101101 .0...... ........     11100101 00101101 11100000 ......00  </data> <!--  stmdb sp!,{xxx !lr};  str lr,[sp,#...]; -->
+      <data> 11101001 00101101 0000.... ........     11100101 00101101 11100000 ......00  </data> <!--  stmdb sp!,{r0+, !lr !sp !pc !r12};  str lr,[sp,#...]; -->
       <data> 11100101 00101101 1110.... ........     0xe24dd...                           </data> <!--  str lr,[sp,#...]; sub sp,sp;   -->
       <data> 11100101 00101101 1110.... ........     0x........    0xe24dd...             </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
       <data> 0xe5 0x2d 0xe0 0x08                                                          </data> <!--  str lr,[sp,#-0x8] -->
-      <data> 0xe1a0c00d                              0xe92d....                          </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
-      <align mark="0" bits="3"/>
+      <data> 0xe1a0c00d                              0xe92d....                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
-      <funcstart/>
+      <funcstart validcode="3"/>
     </postpatterns>
   </patternpairs>
   
   <pattern> <!-- 32 bit ARM -->
-      <data> 0xe24dd... 11101001 00101101 .1...... ....0000 </data> <!-- sub sp,sp ; stmdb sp!,{r4+,lr} -->
-      <align mark="0" bits="3"/>
+      <data> 0xe24dd... 11101001 00101101 0100.... ........ </data> <!-- sub sp,sp ; stmdb sp!,{r0+, lr !sp !pc !r12} -->
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <codeboundary />              <!-- it is at least code -->
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <possiblefuncstart after="defined" validcode="10" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 32 bit ARM -->
-      <data> 11101001 00101101 .1...... ....0000     </data> <!--  stmdb sp!,{r4+,lr}; -->
-      <align mark="0" bits="3"/>
+      <data> 0xe5 1001.... 0....... ........       11101001 00101101 0100.... ....0000 </data> <!-- ldr .., xxx ; stmdb sp!,{r4+, lr !sp !pc !r12} -->
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
-      <funcstart after="data" isvalid="true"/> <!-- must be something defined right before this, and good code -->
+      <codeboundary />              <!-- it is at least code -->
+      <possiblefuncstart after="defined" validcode="10" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 32 bit ARM -->
-      <data> 11101001 00101101 .1...... ....0000      </data> <!--  stmdb sp!,{r4+,lr};  <valid code> -->
-      <align mark="0" bits="3"/>
+      <data> 0xe.......       11101001 00101101 0100.... ....0000 </data> <!-- Any instruction ; stmdb sp!,{r4+, lr !sp !pc !r12} -->
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
-      <funcstart after="defined" isvalid="40"/>     <!-- must be something defined right before this, && must be at least 40 valid instructions after it -->
+      <funcstart after="ptr" validcode="10" contiguous="true" />    <!-- must be a data ptr (non r/w) to this and validcode -->
+  </pattern>
+  
+  <pattern> <!-- 32 bit ARM -->
+      <data> 0xe.......   0xe.......    11101001 00101101 0100.... ....0000 </data> <!-- Any 2 instructions ; stmdb sp!,{r4+, lr !sp !pc !r12} -->
+      <align mark="0" bits="2"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart after="ptr" validcode="10" contiguous="true" />    <!-- must be a data ptr (non r/w) to this and validcode -->
+  </pattern>
+  
+  <pattern> <!-- 32 bit ARM -->
+      <data> 11101001 00101101 0100.... ........      </data> <!--  stmdb sp!,{r0+, lr !sp !pc !r12};  <valid code> -->
+      <align mark="0" bits="2"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart after="defined" validcode="10" contiguous="true" />     <!-- must be something defined right before this, && must be at least 40 valid instructions after it -->
   </pattern>
  
   <pattern> <!-- 32 bit ARM -->
       <data> 0xe24dd... 11100101 00101101 1110.... ........ </data> <!--  sub sp,sp;  str lr,[sp,#...]; -->
-      <align mark="0" bits="3"/>
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="defined" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 32 bit ARM -->
       <data>11100101 00101101 1110.... ........      0xe24dd...                         </data> <!--  str lr,[sp,#...];   -->
-      <align mark="0" bits="3"/>
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" /> <!-- must be something defined right before this -->
   </pattern>
 
   <pattern> <!-- 32 bit ARM -->
       <data> 11101001 00101101 .1...... ....0000   0x........ 0xe24dd...                          </data> <!--  stmdb sp!,{r4+,lr}; <instr>; sub sp,sp -->
-      <align mark="0" bits="3"/>
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" /> <!-- must be something defined right before this -->
   </pattern>
     
   <pattern> <!-- 32 bit ARM -->
       <data>11100101 00101101 1110.... ........      0x........    0xe24dd...                         </data> <!--  str lr,[sp,#...]; <instr>; sub sp,sp;   -->
-      <align mark="0" bits="3"/>
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart after="data" /> <!-- must be something defined right before this -->
   </pattern>
  
    <pattern> <!-- 32 bit ARM --> 
        <data>0xe1a0c00d                             0xe92d....                           </data> <!--  cpy ip,sp; stmdb  sp!,{} -->
-       <align mark="0" bits="3"/>
+       <align mark="0" bits="2"/>
        <setcontext name="TMode" value="0"/>
        <codeboundary />                                 <!-- can't say it is a function yet, have seen instructions before -->
   </pattern>
@@ -130,21 +150,21 @@
       <data> 0xb5 ....0000   0xb0 100.....                </data> <!-- push, sub-->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <funcstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
-      <data> 0xe92d  010..... ........                     </data> <!-- push { rlist, lr } -->
+      <data> 0xe92d  0100.... ........                     </data> <!-- push { rlist, lr !sp !pc !r12 } -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <funcstart after="defined" validcode="10" contiguous="true" />     <!-- must be something defined right before this, && at least n valid instructions -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
       <data> 0xb5 ....0000   0x1c 00......                </data> <!-- push, mov -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <funcstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
@@ -158,44 +178,83 @@
       <data> 0xb5 ....0000    01.01... 0x..                  </data> <!-- push, ldr -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <funcstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
       <data> 0xb5 ....0000    0x68 0x..                    </data> <!-- push, ldr -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <funcstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
       <data> 0xb5 ....0000    01.01... 0x..   0xb0 10...... </data> <!-- push, ldr, sub -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="defined" /> <!-- must be something defined right before this -->
+      <funcstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- 16 bit Thumb -->
       <data> 0xb5 1...0000    0xaf..                      </data> <!-- pop pushr7 addr7sp -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
+      <possiblefuncstart after="defined" validcode="4" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
     <!-- Loosened patterns, but MUST come after a function -->
   <patternpairs totalbits="16" postbits="8"> <!-- 16 bit Thumb -->
     <prepatterns>
-      <data> 0xbd .......0               </data> <!-- pop -->
-      <data> 0xbd .......0  0xbf00      </data> <!-- pop, nop -->
-      <data>0x4770                      </data> <!-- bxlr -->
-      <data>0x4770  0xbf00              </data> <!-- bxlr , nop-->
-    </prepatterns>   
+      <data> 0xbd .......0                         </data> <!-- pop -->
+      <data> 0xbd .......0  0xbf00                 </data> <!-- pop, nop -->
+      <data> 0xe8 0xbd  100..... ........          </data> <!-- pop.w  { pc, !lr, !sp ...} -->
+      <data> 0x4770                                </data> <!-- bxlr -->
+      <data> 0x4770  0xbf00                        </data> <!-- bxlr , nop-->
+      <data> 11110... ........  10.1.... ........  </data> <!-- b.w long -->
+      <data> 111001.. ........             </data> <!-- short branch up -->
+    </prepatterns>
+    
     <postpatterns>
-      <data> 0xb5 .......0                </data> <!-- push-->
+      <data> 0xb5 ........    0xb0 100.....                </data> <!-- push, sub-->
+      <data> 0xb5 ........    0x1c 00......                </data> <!-- push, mov -->
+      <data> 0xb5 ........    0x46 0x..                    </data> <!-- push, mov -->
+      <data> 0xb5 ........    01.01... 0x..                </data> <!-- push, ldr -->
+      <data> 0xb5 ........    0x68 0x..                    </data> <!-- push, ldr -->
+      <data> 0xb5 ........    01.01... 0x..  0xb0 10...... </data> <!-- push, ldr, sub -->
+      <data> 0xb5 1.......    0xaf..                       </data> <!-- pop pushr7 addr7sp -->
+      <data> 0xb0 100.....    0xb5 ....0000                </data> <!-- push, sub-->
+      <data> 0x1c 00......    0xb5 ....0000                </data> <!-- push, mov -->
+      <data> 0x46 0x..        0xb5 ....0000                </data> <!-- push, mov -->
+      <data> 01.01...0x..     0xb5 ....0000                </data> <!-- push, ldr -->
+      <data> 0x68 0x..        0xb5 ....0000                </data> <!-- push, ldr -->
+      <data> 0xe92d  0100.... ........                     </data> <!-- push { rlist, lr !sp !pc !r12 } -->
+      <data> 0xf8 0x4d  11101101 0x04                      </data>  <!-- push.w lr -->
+      <data> 0xb5 ...1....                                 </data> <!-- push lr, r4 -->
+      <data> 0xb4 ...1....                                 </data> <!-- push !lr r4 ... -->
+      <data> 0xb5 .......0                                 </data> <!-- push-->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="function"/>
+      <possiblefuncstart after="function" validcode="4" contiguous="true" />
     </postpatterns>
   </patternpairs>
-  
+ 
+  <pattern> <!-- 32 bit ARM - thunk -->
+      <data> 0xe2 0x8f 1100.... ........
+             0xe2 0x8c 1100.... ........ 
+             0xe5 0xbc 0xf. 0x..  </data> <!-- adr r12, #; add r12,r12,#; ldr pc, [r21, #] -->
+      <align mark="0" bits="2"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart after="defined" thunk="true"/> <!-- must be something defined right before this -->
+  </pattern>
+
+  <pattern> <!-- Thumb - thunk -->
+      <data> 0xb4 0x03 
+             0x48 0x01
+             0x90 0x01 
+             0xbd 0x01 </data> <!-- push {r0,r1} ; ldr r0,[dest] ; str r0, [sp, stack[-4]] ; pop {r0,pc} -->
+      <align mark="0" bits="1"/>
+      <setcontext name="TMode" value="1"/>
+      <funcstart validcode="function" thunk="true" /> <!-- must be something defined right before this -->
+  </pattern>
+    
 </patternlist>

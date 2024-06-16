@@ -16,14 +16,22 @@
 #include "userop.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",122);
-AttributeId ATTRIB_INPUTOP = AttributeId("inputop",123);
-AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",124);
-AttributeId ATTRIB_USEROP = AttributeId("userop",125);
+namespace ghidra {
 
-ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",202);
-ElementId ELEM_JUMPASSIST = ElementId("jumpassist",203);
-ElementId ELEM_SEGMENTOP = ElementId("segmentop",204);
+AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",85);
+AttributeId ATTRIB_INPUTOP = AttributeId("inputop",86);
+AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",87);
+AttributeId ATTRIB_USEROP = AttributeId("userop",88);
+
+ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",127);
+ElementId ELEM_JUMPASSIST = ElementId("jumpassist",128);
+ElementId ELEM_SEGMENTOP = ElementId("segmentop",129);
+
+int4 UserPcodeOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
+
+{
+  throw LowlevelError("Unexpected annotation input for CALLOTHER " + name);
+}
 
 void InjectedUserOp::decode(Decoder &decoder)
 
@@ -68,11 +76,26 @@ string VolatileReadOp::getOperatorName(const PcodeOp *op) const
   return appendSize(name,op->getOut()->getSize());
 }
 
+int4 VolatileReadOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
+
+{
+  const Varnode *outvn = op->getOut();
+  if (outvn != (const Varnode *)0)
+    return op->getOut()->getSize(); // Get size from output of read function
+  return 1;
+}
+
 string VolatileWriteOp::getOperatorName(const PcodeOp *op) const
 
 {
   if (op->numInput() < 3) return name;
   return appendSize(name,op->getIn(2)->getSize());
+}
+
+int4 VolatileWriteOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
+
+{
+  return op->getIn(2)->getSize(); // Get size from the 3rd parameter of write function
 }
 
 /// \param g is the owning Architecture for this instance of the segment operation
@@ -134,7 +157,7 @@ void SegmentOp::decode(Decoder &decoder)
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_SPACE)
-      spc = glb->getSpaceByName(decoder.readString());
+      spc = decoder.readSpace();
     else if (attribId == ATTRIB_FARPOINTER)
       supportsfarpointer = true;
     else if (attribId == ATTRIB_USEROP) {	// Based on existing sleigh op
@@ -157,7 +180,7 @@ void SegmentOp::decode(Decoder &decoder)
       int4 sz;
       decoder.openElement();
       if (decoder.peekElement() != 0) {
-	Address addr = Address::decode(decoder,glb,sz);
+	Address addr = Address::decode(decoder,sz);
 	constresolve.space = addr.getSpace();
 	constresolve.offset = addr.getOffset();
 	constresolve.size = sz;
@@ -291,11 +314,11 @@ void UserOpManage::setDefaults(Architecture *glb)
 
 {
   if (vol_read == (VolatileReadOp *)0) {
-    VolatileReadOp *volread = new VolatileReadOp(glb,"read_volatile",useroplist.size());
+    VolatileReadOp *volread = new VolatileReadOp(glb,"read_volatile",useroplist.size(), false);
     registerOp(volread);
   }
   if (vol_write == (VolatileWriteOp *)0) {
-    VolatileWriteOp *volwrite = new VolatileWriteOp(glb,"write_volatile",useroplist.size());
+    VolatileWriteOp *volwrite = new VolatileWriteOp(glb,"write_volatile",useroplist.size(), false);
     registerOp(volwrite);
   }
 }
@@ -392,28 +415,39 @@ void UserOpManage::decodeSegmentOp(Decoder &decoder,Architecture *glb)
 void UserOpManage::decodeVolatile(Decoder &decoder,Architecture *glb)
 
 {
+  string readOpName;
+  string writeOpName;
+  bool functionalDisplay = false;
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId==ATTRIB_INPUTOP) {
-      VolatileReadOp *vr_op = new VolatileReadOp(glb,decoder.readString(),useroplist.size());
-      try {
-	registerOp(vr_op);
-      } catch(LowlevelError &err) {
-	delete vr_op;
-	throw err;
-      }
+      readOpName = decoder.readString();
     }
     else if (attribId==ATTRIB_OUTPUTOP) {
-      // Read in the volatile output tag
-      VolatileWriteOp *vw_op = new VolatileWriteOp(glb,decoder.readString(),useroplist.size());
-      try {
-	registerOp(vw_op);
-      } catch(LowlevelError &err) {
-	delete vw_op;
-	throw err;
-      }
+      writeOpName = decoder.readString();
     }
+    else if (attribId == ATTRIB_FORMAT) {
+      string format = decoder.readString();
+      if (format == "functional")
+	functionalDisplay = true;
+    }
+  }
+  if (readOpName.size() == 0 || writeOpName.size() == 0)
+    throw LowlevelError("Missing inputop/outputop attributes in <volatile> element");
+  VolatileReadOp *vr_op = new VolatileReadOp(glb,readOpName,useroplist.size(),functionalDisplay);
+  try {
+    registerOp(vr_op);
+  } catch(LowlevelError &err) {
+    delete vr_op;
+    throw err;
+  }
+  VolatileWriteOp *vw_op = new VolatileWriteOp(glb,writeOpName,useroplist.size(),functionalDisplay);
+  try {
+    registerOp(vw_op);
+  } catch(LowlevelError &err) {
+    delete vw_op;
+    throw err;
   }
 }
 
@@ -479,3 +513,5 @@ void UserOpManage::manualCallOtherFixup(const string &useropname,const string &o
     throw err;
   }
 }
+
+} // End namespace ghidra

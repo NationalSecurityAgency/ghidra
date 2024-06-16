@@ -30,7 +30,7 @@ import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.util.ConflictCountPanel;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.program.model.data.SourceArchive;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Panel to select a source archive in order to resolve a conflict.
@@ -104,13 +104,10 @@ class SourceArchiveMergePanel extends JPanel {
 	private void create() {
 
 		buttonGroup = new ButtonGroup();
-		ItemListener listener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
-					mergeManager.clearStatusText();
-					mergeManager.setApplyEnabled(true);
-				}
+		ItemListener listener = e -> {
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				mergeManager.clearStatusText();
+				mergeManager.setApplyEnabled(true);
 			}
 		};
 
@@ -175,7 +172,7 @@ class SourceArchiveMergePanel extends JPanel {
 
 	private JPanel createInfoPanel() {
 
-		Icon icon = ResourceManager.loadImage("images/information.png");
+		Icon icon = Icons.INFO_ICON;
 		JLabel imageLabel = new GIconLabel(icon);
 
 		MultiLineLabel label = new MultiLineLabel(

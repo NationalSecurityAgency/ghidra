@@ -23,11 +23,13 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/nougat-release/runtime/type_lookup_table.h#99
- * https://android.googlesource.com/platform/art/+/oreo-release/runtime/type_lookup_table.h#100
- * https://android.googlesource.com/platform/art/+/oreo-m2-release/runtime/type_lookup_table.h#100
- * https://android.googlesource.com/platform/art/+/pie-release/runtime/type_lookup_table.h#102
- * 
+ * <a href="https://android.googlesource.com/platform/art/+/nougat-release/runtime/type_lookup_table.h#99">nougat-release/runtime/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/oreo-release/runtime/type_lookup_table.h#100">oreo-release/runtime/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/oreo-m2-release/runtime/type_lookup_table.h#100">oreo-m2-release/runtime/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/pie-release/runtime/type_lookup_table.h#102">pie-release/runtime/type_lookup_table.h</a>
  */
 public class TypeLookupTableEntry implements StructConverter {
 

@@ -15,12 +15,12 @@
  */
 package agent.dbgeng.model.iface1;
 
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import ghidra.dbg.error.DebuggerUserException;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
+import ghidra.dbg.target.TargetCmdLineLauncherEx;
 
 /**
  * An interface which indicates this object is capable of launching targets.
@@ -30,10 +30,10 @@ import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
  * 
  * @param <T> type for this
  */
-public interface DbgModelTargetLauncher extends DbgModelTargetObject, TargetCmdLineLauncher {
+public interface DbgModelTargetLauncher extends DbgModelTargetObject, TargetCmdLineLauncherEx {
 
 	@Override
-	public default CompletableFuture<Void> launch(List<String> args) {
+	public default CompletableFuture<Void> launch(Map<String, ?> args) {
 		return getModel().gateFuture(getManager().launch(args)).exceptionally((exc) -> {
 			throw new DebuggerUserException("Launch failed for " + args);
 		}).thenApply(__ -> null);

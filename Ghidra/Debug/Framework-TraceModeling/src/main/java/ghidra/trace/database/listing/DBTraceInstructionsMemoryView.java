@@ -19,20 +19,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.guest.TraceGuestPlatform;
-import ghidra.trace.model.listing.TraceInstructionsView;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeManager#definedData()}
+ */
 public class DBTraceInstructionsMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceInstruction, DBTraceInstructionsView>
-		implements TraceInstructionsView {
+		implements TraceInstructionsView, InternalTraceBaseDefinedUnitsView<TraceInstruction> {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceInstructionsMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}
@@ -43,24 +51,24 @@ public class DBTraceInstructionsMemoryView
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range, boolean clearContext,
+	public void clear(Lifespan span, AddressRange range, boolean clearContext,
 			TaskMonitor monitor) throws CancelledException {
 		delegateDeleteV(range.getAddressSpace(), m -> m.clear(span, range, clearContext, monitor));
 	}
 
 	@Override
-	public DBTraceInstruction create(Range<Long> lifespan, Address address,
-			TraceGuestPlatform platform, InstructionPrototype prototype,
-			ProcessorContextView context) throws CodeUnitInsertionException {
+	public DBTraceInstruction create(Lifespan lifespan, Address address,
+			TracePlatform platform, InstructionPrototype prototype,
+			ProcessorContextView context, int forcedLengthOverride)
+			throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(),
-			m -> m.create(lifespan, address, platform, prototype, context));
+			m -> m.create(lifespan, address, platform, prototype, context, forcedLengthOverride));
 	}
 
 	@Override
-	public AddressSetView addInstructionSet(Range<Long> lifespan, TraceGuestPlatform platform,
+	public AddressSetView addInstructionSet(Lifespan lifespan, TracePlatform platform,
 			InstructionSet instructionSet, boolean overwrite) {
-		InstructionSet mappedSet = manager.platformManager
-				.mapGuestInstructionAddressesToHost(platform, instructionSet);
+		InstructionSet mappedSet = platform.mapGuestInstructionAddressesToHost(instructionSet);
 
 		Map<AddressSpace, InstructionSet> breakDown = new HashMap<>();
 		// TODO: I'm not sure the consequences of breaking an instruction set down.

@@ -5,190 +5,73 @@
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Debugger: Threads and Traces</TITLE>
+    <TITLE>Debugger: Threads</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
-    <H1><A name="plugin"></A>Debugger: Threads and Traces</H1>
+    <H1><A name="plugin"></A>Debugger: Threads</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerThreadsPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerThreadsPlugin.png">
+    </DIV>
 
     <P>In general, a thread refers to a unit of concurrent execution within a target. Typically,
     each thread carries its own execution context, so this window provides a means of navigating
-    those contexts. Furthermore, this window provides a means of navigating and managing open
-    traces, much like the static listing provides a means of navigating open programs. The window
-    also plots a timeline showing thread lifespans, and displays a caret which can be used to
-    navigate the current point in time. This window, the <A href=
-    "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html">Stack</A> window, and the <A href=
+    those contexts. The window also plots a timeline showing thread lifespans, and displays a caret
+    which can be used to navigate the current point in time. This window, the <A href=
+    "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html">Stack</A> window, the <A href=
+    "help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A> window, and the <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> window
     provide a complete trace navigation system.</P>
 
-    <H2>Trace Tabs</H2>
+    <H2>Table Columns</H2>
 
-    <P>The trace tab bar is displayed when at least one trace is open. It displays the name of each
-    open trace in a button, where the "current" or "focused" trace is selected. Clicking a tab will
-    select its trace and focus the tool onto it. A trace associated with a live target has a red
-    "recording" icon at its left. If that icon is not present, or has disappeared, the trace is
-    dead or terminated. A "dead" trace can still be manipulated and marked up, but it will not
-    record any new target information.</P>
+    <UL>
+      <LI>Name - the name or summary of the thread given by the debugger. If a name is not given,
+      this is just an index or unique id assigned to the thread. This field can be modified, but it
+      has no effect on the target.</LI>
 
-    <H3><A name="close_trace"></A><A name="close_all_traces"></A><A name=
-    "close_other_traces"></A><A name="close_dead_traces"></A>Close Trace / All / Other / Dead
-    Traces</H3>
+      <LI>PC - the program counter of the thread. This is typically the address of the next
+      instruction it will execute. If the debugger records frames, this is the PC of the innermost
+      frame.</LI>
 
-    <P>In most cases, a trace is ephemeral, but occasionally, interesting behavior is observed that
-    is difficult to store as static mark-up. When traces are no longer needed, they can be closed
-    by right-clicking a tab and selecting one of the actions. See <A href=
-    "help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html#close_trace">Trace
-    Management</A> for details of each action.</P>
+      <LI>Function - the name of the function containing the PC, if Ghidra has the corresponding
+      module image imported, analyzed, and mapped.</LI>
+
+      <LI>Module - the name of the module containing the PC. This column is hidden by default.</LI>
+
+      <LI>SP - the stack pointer for the thread. If the debugger records per-frame registers, this
+      is the SP from the innermost frame. This column is hidden by default.</LI>
+
+      <LI>State - the thread's current state. Depending on what is reported by the debugger, this
+      should be either RUNNING, STOPPED, or TERMINATED. It might also be ALIVE, if the debugger
+      cannot determine whether or not it is running; or UNKNOWN, if the debugger has lost
+      track.</LI>
+
+      <LI>Plot - a graphical representation of the thread's lifespan. Threads which are alive will
+      appear to extend to the end of time. Unlike other column headers, clicking and dragging in
+      this one may navigate trace snapshots. To rearrange this column, hold <B>SHIFT</B> while
+      dragging.</LI>
+
+      <LI>Comment - a user-modifiable comment about the thread. This column is hidden by
+      default.</LI>
+
+      <LI>Path - the path of the thread object in the target's model. This is hidden by default.
+      See the <A href="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A>
+      window.</LI>
+    </UL>
 
     <H2>Navigating Threads</H2>
 
-    <P>Selecting a thread in the table will navigate to (or "activate" or "focus") that thread.
-    Windows which are sensitive to the current thread will update. Notably, the <A href=
+    <P>Double-clicking a thread in the table will <EM>activate</EM> that thread, i.e., it becomes
+    the current thread throughout the Debugger UI, usually including the debugger's command-line
+    interface. Notably, the <A href=
     "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window will
     display the activated thread's register values. <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A> windows with
     configured location tracking will re-compute that location with the thread's context and
-    navigate to it. The thread timeline plots all recorded threads. Threads which are alive will
-    appear to extend "to the end of time." The threads table displays more detailed information in
-    the following columns:</P>
-
-    <UL>
-      <LI>Name - the name of the thread given by the debugger. Often, this is just an index or
-      unique id assigned to the thread. This field can be modified, but it has no effect on the
-      target.</LI>
-
-      <LI>Created - the snapshot when this thread was first observed. If the thread's creation was
-      observed, then it is its creation time.</LI>
-
-      <LI>Destroyed - if destroyed, the snapshot when this thread was last observed. If the
-      thread's destruction was observed, then it is its destruction time.</LI>
-
-      <LI>State - the thread's current state. For a dead trace, this is either ALIVE or TERMINATED,
-      and depends solely on whether or not a destruction time was recorded. For a live trace, this
-      may also take RUNNING, STOPPED, or UNKNOWN, depending on what is reported by the debugger.
-      The state always reflects the present, or latest known, state.</LI>
-
-      <LI>Comment - a user-modifiable comment about the thread.</LI>
-
-      <LI>Plot - a graphical representation of the thread's lifespan. Unlike other column headers,
-      clicking and dragging in this one will navigate through time. To rearrange this column, hold
-      SHIFT while dragging.</LI>
-    </UL>
-
-    <H2>Navigating Time</H2>
-
-    <P>The user can navigate through time within the current trace by using the caret in the plot
-    column header. There are also actions for "stepping the trace" forward and backward. See the <A
-    href="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time</A> window for a way to
-    display and navigate to specific events in the trace's timeline. Note that stepping away from
-    the present will prevent most windows from interacting with the live target. While some
-    components and scripts may interact with the target and record things "into the present," such
-    updates may not appear on screen until the user steps back to the present. Stepping the trace
-    does not affect the target, except that viewing the present requires querying the live target,
-    which can perturb its state.</P>
-
-    <H3><A name="step_trace_snap_backward"></A><IMG alt="" src="images/arrow_up.png">Step Trace
-    Snap Backward</H3>
-
-    <P>This action is available when there exists a snapshot previous to the current. It steps the
-    trace backward to the previous snapshot, causing most windows to display the recorded data from
-    the new point in time.</P>
-
-    <H3><A name="step_trace_snap_forward"></A><IMG alt="" src="images/arrow_down.png">Step Trace
-    Snap Forward</H3>
-
-    <P>This action is available when there exists a snapshot ahead of the current. It steps the
-    trace forward to the next snapshot, causing most windows to display the recorded data from the
-    new point in time.</P>
-
-    <H3><A name="emu_trace_tick_backward"></A><IMG alt="" src="images/stepback.png">Emulate Trace
-    Tick Backward</H3>
-
-    <P>This action is available when the current point in time includes emulated steps. It steps
-    the trace backward to the previous tick.</P>
-
-    <H3><A name="emu_trace_tick_forward"></A><IMG alt="" src="images/stepinto.png">Emulate Trace
-    Tick Forward</H3>
-
-    <P>This action is available when a thread is selected. It steps the current thread forward to
-    the next tick, using emulation. Note that emulation does not affect the target. Furthermore,
-    emulation may halt early if it encounters certain instructions or causes an exception.</P>
-
-    <H3><A name="emu_trace_skip_tick_forward"></A><IMG alt="" src="images/skipover.png">Emulate
-    Trace Skip Tick Forward</H3>
-
-    <P>This action is available when a thread is selected. It steps the current thread forward by
-    skipping the next instruction, using emulation. Note that emulation does not affect the target.
-    Furthermore, emulation may halt early if it encounters certain instructions or causes an
-    exception. This action may be used skip subroutines; <B>however</B>, the stack may require
-    additional patching, e.g., to clean up stack parameters, depending on the calling convention.
-    This action <EM>does not</EM> perform those patches automatically. It only advances the program
-    counter. You may use <A href="#goto_time">Go To Time</A> to append the require stack patch,
-    e.g., <CODE>t0-{RSP=RSP+8}</CODE>.</P>
-
-    <H3><A name="seek_trace_present"></A><IMG alt="" src="images/continue.png">Seek Trace to
-    Present</H3>
-
-    <P>This toggle is always available and is enabled by default. When first enabled, if the
-    current trace is live, it immediately steps the trace to the present. Furthermore, as long as
-    it is enabled and the current trace is live, whenever the recorder steps forward, the tool
-    steps with it. In most cases, this option should remain on, otherwise stepping the target will
-    not cause any windows to update. Toggling it off then on is a quick way to return to the
-    present after browsing the past.</P>
-
-    <H3><A name="goto_time"></A>Go To Time</H3>
-
-    <P>This action is available when a trace is active. It prompts for a <B>Time Schedule</B>
-    expression. This is the same form as the expression in the title bar of the threads window. In
-    many cases, it is simply the snapshot number, e.g., <CODE>3</CODE>, which will go to the
-    snapshot with key 3. It may optionally include an emulation schedule, for example,
-    <CODE>3:10</CODE> will use snapshot 3 for an emulator's initial state and step 10 machine
-    instructions on snapshot 3's event thread. If the snapshot does not give an event thread, then
-    the thread must be specified in the expression, e.g., <CODE>3:t1-10</CODE>. That expression
-    will start at snapshot 3, get the thread with key 1, and step it 10 machine instructions. The
-    stepping commands can be repeated any number of times, separated by semicolons, to step threads
-    in a specified sequence, e.g., <CODE>3:t1-10;t2-5</CODE> will do the same as before, then get
-    thread 2 and step it 5 times.</P>
-
-    <P>The emulator's state can also be modified by the schedule. Instead of specifying a number of
-    steps, write a <B>Sleigh</B> statement, e.g., <CODE>3:t1-{r0=0x1234};10</CODE>. This will start
-    at snapshot 3, patch thread 1's r0 to 0x1234, then step 10 instructions. Like stepping
-    commands, the thread may be omitted for Sleigh commands. Each command without a thread
-    specified implicitly uses the one from the previous command, or in the case of the first
-    command, the event thread. Only one Sleigh statement is permitted per command.</P>
-
-    <P>A second command sequence may be appended, following a dot, to command the emulator at the
-    level of p-code operations as well. This is particularly useful when debugging a processor
-    specification. See also the <A href=
-    "help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html">P-code Stepper</A>
-    window. For example, <CODE>3:2.10</CODE> will start at snapshot 3 and step the event thread 2
-    machine instructions, followed by 10 p-code operations. The same thread-by-thread sequencing
-    and state patching commands are allowed in the p-code command sequence. The <EM>entire</EM>
-    instruction sequence precedes the entire p-code sequence, i.e., only a single dot is allowed.
-    Once the expression enters p-code mode, it cannot re-enter instruction mode.</P>
-
-    <H2>Other Actions</H2>
-
-    <H3><A name="sync_focus"></A>Synchronize Trace and Target Focus</H3>
-
-    <P>This toggle is always available and is enabled by default. While enabled, any changes in
-    navigation coordinates are translated, to the extent possible, and sent to the connected
-    debugger. This may, for example, issue <CODE>thread</CODE> and/or <CODE>frame</CODE> commands
-    to GDB so that commands typed into its CLI will refer to the same thread and frame as is
-    focused in Ghidra. Conversely, any debugger events which indicate a change in focus are
-    translated, to the extent possible, into navigation coordinates and activated in Ghidra. For
-    example, if the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then
-    Ghidra will navigate to that same frame.</P>
+    navigate to it.</P>
   </BODY>
 </HTML>

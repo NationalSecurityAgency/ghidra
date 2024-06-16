@@ -56,8 +56,7 @@ public interface GadpClientTargetObject extends SpiTargetObject {
 		int channelIndex = evt.getChannel();
 		Channel[] allChannels = Channel.values();
 		if (0 <= channelIndex && channelIndex < allChannels.length) {
-			getDelegate().getListeners().fire.consoleOutput(this, allChannels[channelIndex],
-				evt.getData().toByteArray());
+			broadcast().consoleOutput(this, allChannels[channelIndex], evt.getData().toByteArray());
 		}
 		else {
 			Msg.error(this, "Received output for unknown channel " + channelIndex + ": " +

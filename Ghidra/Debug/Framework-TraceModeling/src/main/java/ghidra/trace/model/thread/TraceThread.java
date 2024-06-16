@@ -17,11 +17,8 @@ package ghidra.trace.model.thread;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -65,10 +62,11 @@ public interface TraceThread extends TraceUniqueObject {
 	void setName(String name);
 
 	/**
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param creationSnap the creation snap, or {@link Long#MIN_VALUE} for "since the beginning of
 	 *            time"
+	 * @throws DuplicateNameException if extending the thread's life would cause a naming conflict
 	 */
 	void setCreationSnap(long creationSnap) throws DuplicateNameException;
 
@@ -80,10 +78,11 @@ public interface TraceThread extends TraceUniqueObject {
 	long getCreationSnap();
 
 	/**
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param destructionSnap the destruction snap, or {@link Long#MAX_VALUE} for "to the end of
 	 *            time"
+	 * @throws DuplicateNameException if extending the thread's life would cause a naming conflict
 	 */
 	void setDestructionSnap(long destructionSnap) throws DuplicateNameException;
 
@@ -102,14 +101,14 @@ public interface TraceThread extends TraceUniqueObject {
 	 *             thread to conflict with that of another whose lifespan would intersect this
 	 *             thread's
 	 */
-	void setLifespan(Range<Long> lifespan) throws DuplicateNameException;
+	void setLifespan(Lifespan lifespan) throws DuplicateNameException;
 
 	/**
 	 * Get the lifespan of this thread
 	 * 
 	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Set a comment on this thread
@@ -131,7 +130,7 @@ public interface TraceThread extends TraceUniqueObject {
 	 * @return false if destroyed, true otherwise
 	 */
 	default boolean isAlive() {
-		return !getLifespan().hasUpperBound();
+		return !getLifespan().maxIsFinite();
 	}
 
 	/**
@@ -147,4 +146,18 @@ public interface TraceThread extends TraceUniqueObject {
 	 * Delete this thread from the trace
 	 */
 	void delete();
+
+	/**
+	 * Check if the thread is valid at the given snapshot
+	 * 
+	 * <p>
+	 * In object mode, a thread's life may be disjoint, so checking if the snap occurs between
+	 * creation and destruction is not quite sufficient. This method encapsulates validity. In
+	 * object mode, it checks that the thread object has a canonical parent at the given snapshot.
+	 * In table mode, it checks that the lifespan contains the snap.
+	 * 
+	 * @param snap the snapshot key
+	 * @return true if valid, false if not
+	 */
+	boolean isValid(long snap);
 }

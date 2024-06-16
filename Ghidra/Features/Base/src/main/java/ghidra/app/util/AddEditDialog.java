@@ -15,9 +15,9 @@
  */
 package ghidra.app.util;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -25,7 +25,7 @@ import javax.swing.border.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
@@ -39,18 +39,17 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
-import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 
 /**
  * Dialog used to a label or to edit an existing label.
  */
-public class AddEditDialog extends DialogComponentProvider {
+public class AddEditDialog extends ReusableDialogComponentProvider {
 	private static final int MAX_RETENTION = 10;
 	private PluginTool tool;
 	private TitledBorder nameBorder;
-	private JComboBox<String> labelNameChoices;
-	private JComboBox<NamespaceWrapper> namespaceChoices;
+	private GhidraComboBox<String> labelNameChoices;
+	private GhidraComboBox<NamespaceWrapper> namespaceChoices;
 	private JCheckBox entryPointCheckBox;
 	private JCheckBox primaryCheckBox;
 
@@ -59,6 +58,8 @@ public class AddEditDialog extends DialogComponentProvider {
 	private Symbol symbol;
 	private Address addr;
 	private JCheckBox pinnedCheckBox;
+
+	private boolean isReusable = false; // most clients are not reusable
 
 	public AddEditDialog(String title, PluginTool tool) {
 		super(title, true, true, true, false);
@@ -73,6 +74,30 @@ public class AddEditDialog extends DialogComponentProvider {
 		addCancelButton();
 
 		setDefaultButton(okButton);
+	}
+
+	/**
+	 * Signals that the client wishes to reuse the dialog instead of creating a new instance each
+	 * time the dialog is shown.  
+	 * <p>
+	 * When not reusable, closing this dialog will call {@link #dispose()}.
+	 * 
+	 * @param isReusable true when being reused
+	 */
+	public void setReusable(boolean isReusable) {
+		this.isReusable = isReusable;
+	}
+
+	@Override
+	public void close() {
+		if (isReusable) {
+			// call the default parent close, which does *not* call dispose
+			super.close();
+		}
+		else {
+			closeDialog();
+			dispose();
+		}
 	}
 
 	/**
@@ -112,10 +137,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 * @param targetProgram the program containing the symbol
 	 */
 	public void editLabel(Symbol targetSymbol, Program targetProgram) {
-		ComponentProvider componentProvider =
-			tool.getComponentProvider(PluginConstants.CODE_BROWSER);
-		JComponent component = componentProvider.getComponent();
-		editLabel(targetSymbol, targetProgram, component);
+		editLabel(targetSymbol, targetProgram, (Component) null);
 	}
 
 	/**
@@ -339,8 +361,7 @@ public class AddEditDialog extends DialogComponentProvider {
 		Namespace currentNamespace = program.getSymbolTable().getNamespace(addr);
 
 		// no symbol or not editing a function symbol
-		if ((symbol == null) ||
-			(symbol != null && symbol.getSymbolType() != SymbolType.FUNCTION)) {
+		if ((symbol == null) || (symbol != null && symbol.getSymbolType() != SymbolType.FUNCTION)) {
 			// walk the tree of namespaces and collect all of the items
 			for (; (currentNamespace != globalNamespace); currentNamespace =
 				currentNamespace.getParentNamespace()) {
@@ -377,8 +398,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 */
 	private void selectNamespace() {
 		if (symbol != null && symbol.getParentNamespace() != null) {
-			namespaceChoices
-					.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
+			namespaceChoices.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
 			return;
 		}
 
@@ -389,12 +409,12 @@ public class AddEditDialog extends DialogComponentProvider {
 		// functions and labels in functions will use the local namespace
 		if (functionSymbol != null) {
 			if (symbol != null && symbol.equals(functionSymbol)) {
-				namespaceChoices.setSelectedItem(
-					new NamespaceWrapper(functionSymbol.getParentNamespace()));
+				namespaceChoices
+						.setSelectedItem(new NamespaceWrapper(functionSymbol.getParentNamespace()));
 			}
 			else if (functionSymbol.getSource() == SourceType.DEFAULT) {
-				namespaceChoices.setSelectedItem(
-					new NamespaceWrapper(functionSymbol.getParentNamespace()));
+				namespaceChoices
+						.setSelectedItem(new NamespaceWrapper(functionSymbol.getParentNamespace()));
 			}
 			else { // there is a function at the current address
 				namespaceChoices.setSelectedItem(new NamespaceWrapper(localNamespace));
@@ -409,8 +429,8 @@ public class AddEditDialog extends DialogComponentProvider {
 			}
 			else { // not in a function
 				if (symbol != null) { // editing a label
-					namespaceChoices.setSelectedItem(
-						new NamespaceWrapper(symbol.getParentNamespace()));
+					namespaceChoices
+							.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
 				}
 				else {
 					// use the global namespace and *not* the lowest-level namespace
@@ -473,8 +493,7 @@ public class AddEditDialog extends DialogComponentProvider {
 		if (s.getSymbolType() == SymbolType.FUNCTION) {
 			String title;
 			if (s.isExternal()) {
-				ExternalLocation extLoc =
-					program.getExternalManager().getExternalLocation(s);
+				ExternalLocation extLoc = program.getExternalManager().getExternalLocation(s);
 				Address fnAddr = extLoc.getAddress();
 				title = "Rename External Function";
 				if (fnAddr != null) {
@@ -527,7 +546,21 @@ public class AddEditDialog extends DialogComponentProvider {
 	 * Define the Main panel for the dialog here.
 	 */
 	private JPanel create() {
-		labelNameChoices = new GhidraComboBox<>();
+		labelNameChoices = new GhidraComboBox<>() {
+			@Override
+			public Dimension getPreferredSize() {
+				Dimension size = super.getPreferredSize();
+				// change the preferred size to use the width determined by the # of columns in
+				// combo box editor instead of the largest item in the combo box data model to
+				// prevent the dialog from growing huge when a large label gets added to its recent
+				// items
+				Dimension editorSize = getEditor().getEditorComponent().getPreferredSize();
+				size.width = editorSize.width;
+				return size;
+			}
+		};
+		// the  number of columns determines the default width of the add/edit label dialog
+		labelNameChoices.setColumnCount(20);
 		labelNameChoices.setName("label.name.choices");
 		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
 		comboBox.setEnterKeyForwarding(true);
@@ -597,12 +630,11 @@ public class AddEditDialog extends DialogComponentProvider {
 	}
 
 	private String getText() {
-		Component comp = labelNameChoices.getEditor().getEditorComponent();
-		if (comp instanceof JTextField) {
-			JTextField textField = (JTextField) comp;
-			return textField.getText().trim();
+		String text = labelNameChoices.getText();
+		if (text != null) {
+			text = text.trim();
 		}
-		throw new AssertException("Using an uneditable JComboBox - this class must be updated.");
+		return text;
 	}
 
 	public class NamespaceWrapper {

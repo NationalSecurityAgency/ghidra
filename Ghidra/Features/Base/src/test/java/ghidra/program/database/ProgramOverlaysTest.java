@@ -27,7 +27,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ProgramOverlaysTest extends AbstractGenericTest {
 
@@ -71,8 +71,9 @@ public class ProgramOverlaysTest extends AbstractGenericTest {
 		AddressSpace space = p.getAddressFactory().getAddressSpace("OV1");
 		assertNotNull(space);
 		memory.setBytes(space.getAddress(0x100), fillB);
-		p.getReferenceManager().addMemoryReference(addr(p, "0x1001003"), addr(p, "OV1:0x100"),
-			RefType.DATA, SourceType.USER_DEFINED, 0);
+		p.getReferenceManager()
+				.addMemoryReference(addr(p, "0x1001003"), addr(p, "OV1:0x100"), RefType.DATA,
+					SourceType.USER_DEFINED, 0);
 		p.endTransaction(id, true);
 
 		return space;
@@ -119,7 +120,7 @@ public class ProgramOverlaysTest extends AbstractGenericTest {
 		assertNotNull(block);
 
 		int id = p.startTransaction("");
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 		p.endTransaction(id, true);
 
 		assertEquals(2, p.getAddressFactory().getNumAddressSpaces()); // ram, OTHER
@@ -140,18 +141,18 @@ public class ProgramOverlaysTest extends AbstractGenericTest {
 		assertNotNull(block);
 
 		int id = p.startTransaction("");
-		block.setName("BOB");
+		block.setName("BOB");  // does not affect name of overlay which was created with block creation
 		p.endTransaction(id, true);
 
 		assertEquals("BOB", block.getName());
 		assertEquals(block, memory.getBlock("BOB"));
 
-		assertEquals("BOB", space.getName());
-		assertEquals(space, p.getAddressFactory().getAddressSpace("BOB"));
+		assertEquals("OV1", space.getName());
+		assertEquals(space, p.getAddressFactory().getAddressSpace("OV1"));
 
 		Reference[] refs = p.getReferenceManager().getReferencesFrom(addr(p, "0x1001003"));
 		assertEquals(1, refs.length);
-		assertEquals("BOB::00000100", refs[0].getToAddress().toString());
+		assertEquals("OV1::00000100", refs[0].getToAddress().toString());
 
 	}
 

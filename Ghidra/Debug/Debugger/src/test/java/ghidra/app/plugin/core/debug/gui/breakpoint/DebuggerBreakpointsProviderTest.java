@@ -20,67 +20,68 @@ import static org.junit.Assert.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.store.LockException;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.SystemUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
 	protected DebuggerBreakpointsPlugin breakpointsPlugin;
 	protected DebuggerBreakpointsProvider breakpointsProvider;
 	protected DebuggerStaticMappingService mappingService;
+	protected DebuggerLogicalBreakpointService breakpointService;
 
 	@Before
 	public void setUpBreakpointsProviderTest() throws Exception {
 		breakpointsPlugin = addPlugin(tool, DebuggerBreakpointsPlugin.class);
 		breakpointsProvider = waitForComponentProvider(DebuggerBreakpointsProvider.class);
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
-	}
-
-	protected void waitAndFlush(TraceRecorder recorder) throws Throwable {
-		waitOn(recorder.getTarget().getModel().flushEvents());
-		waitOn(recorder.flushTransactions());
-		waitForDomainObject(recorder.getTrace());
+		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
 	}
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
+		try (Transaction tx = trace.openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550000)),
+				new DefaultTraceLocation(trace, null, Lifespan.nowOn(0), addr(trace, 0x55550000)),
 				new ProgramLocation(prog, addr(prog, 0x00400000)), 0x1000, false);
 		}
 	}
@@ -97,16 +98,15 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
-	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
-			MemoryConflictException, AddressOverflowException, CancelledException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break", true)) {
+	protected void addStaticMemoryAndBreakpoint() throws LockException, MemoryConflictException,
+			AddressOverflowException, CancelledException {
+		try (Transaction tx = program.openTransaction("Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00400123),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
+					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "");
 		}
 	}
 
@@ -129,8 +129,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
-		waitOn(mb.testModel.flushEvents());
-		waitForDomainObject(trace);
+		waitRecorder(recorder);
 
 		// NB, optionally open trace. Mapping only works if open...
 		traceManager.openTrace(trace);
@@ -246,7 +245,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		// NOTE: This acts on the corresponding target, not directly on trace
 		waitOn(lb.disableForTrace(trace));
-		waitAndFlush(recorder);
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, row.getState()));
 
@@ -257,7 +256,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		// This duplicates the initial case, but without it, I just feel incomplete
 		waitOn(lb.enableForTrace(trace));
-		waitAndFlush(recorder);
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.ENABLED, row.getState()));
 	}
@@ -538,7 +537,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testActionFilters() throws Exception {
+	public void testActionFilters() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -561,42 +560,49 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		addLiveBreakpoint(recorder1, 0x55550321);
 		addLiveMemoryAndBreakpoint(mb.testProcess3, recorder3);
 		addLiveBreakpoint(recorder3, 0x55550321);
+		waitRecorder(recorder1);
+		waitRecorder(recorder3);
 		addStaticMemoryAndBreakpoint();
 		// Note, no program breakpoint for 0321...
+
 		programManager.openProgram(program);
 		traceManager.openTrace(trace1);
+		CompletableFuture<Void> mappingsSettled = mappingService.changesSettled();
+		CompletableFuture<Void> breakpointsSettled = breakpointService.changesSettled();
 		traceManager.openTrace(trace3);
-		// Because mapping service debounces, wait for breakpoints to be reconciled
+		waitForSwing();
+		waitOn(mappingsSettled);
+		waitOn(breakpointsSettled);
+		waitForSwing();
+
 		LogicalBreakpointTableModel bptModel = breakpointsProvider.breakpointTableModel;
-		waitForPass(() -> {
-			List<LogicalBreakpointRow> data = copyModelData(bptModel);
-			assertEquals(2, data.size());
-			LogicalBreakpointRow row1 = data.get(0);
-			LogicalBreakpointRow row2 = data.get(1);
-			LogicalBreakpoint lb1 = row1.getLogicalBreakpoint();
-			LogicalBreakpoint lb2 = row2.getLogicalBreakpoint();
-			assertEquals(program, lb1.getProgram());
-			assertEquals(program, lb2.getProgram());
-			assertEquals(addr(program, 0x00400123), lb1.getAddress());
-			assertEquals(addr(program, 0x00400321), lb2.getAddress());
-			assertEquals(Set.of(trace1, trace3), lb1.getParticipatingTraces());
-			assertEquals(Set.of(trace1, trace3), lb2.getParticipatingTraces());
 
-			// Sanity check / experiment: Equal fields, but from different traces
-			TraceBreakpoint bl1t1 = Unique.assertOne(lb1.getTraceBreakpoints(trace1));
-			TraceBreakpoint bl1t3 = Unique.assertOne(lb1.getTraceBreakpoints(trace3));
-			assertNotEquals(bl1t1, bl1t3);
+		List<LogicalBreakpointRow> data = copyModelData(bptModel);
+		assertEquals(2, data.size());
+		LogicalBreakpointRow row1 = data.get(0);
+		LogicalBreakpointRow row2 = data.get(1);
+		LogicalBreakpoint lb1 = row1.getLogicalBreakpoint();
+		LogicalBreakpoint lb2 = row2.getLogicalBreakpoint();
+		assertEquals(program, lb1.getProgram());
+		assertEquals(program, lb2.getProgram());
+		assertEquals(addr(program, 0x00400123), lb1.getAddress());
+		assertEquals(addr(program, 0x00400321), lb2.getAddress());
+		assertEquals(Set.of(trace1, trace3), lb1.getParticipatingTraces());
+		assertEquals(Set.of(trace1, trace3), lb2.getParticipatingTraces());
 
-			// OK, back to work
-			assertEquals(2, lb1.getTraceBreakpoints().size());
-			assertEquals(2, lb2.getTraceBreakpoints().size());
-		});
+		// Sanity check / experiment: Equal fields, but from different traces
+		TraceBreakpoint bl1t1 = Unique.assertOne(lb1.getTraceBreakpoints(trace1));
+		TraceBreakpoint bl1t3 = Unique.assertOne(lb1.getTraceBreakpoints(trace3));
+		assertNotEquals(bl1t1, bl1t3);
 
-		List<LogicalBreakpointRow> breakData = copyModelData(bptModel);
+		// OK, back to work
+		assertEquals(2, lb1.getTraceBreakpoints().size());
+		assertEquals(2, lb2.getTraceBreakpoints().size());
+
 		List<BreakpointLocationRow> filtLocs =
 			breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
 
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(2, breakRow.getLocationCount());
 		}
 		assertEquals(4, filtLocs.size());
@@ -605,9 +611,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(breakpointsProvider.actionFilterByCurrentTrace);
 
 		// No trace active, so empty :)
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(0, breakRow.getLocationCount());
 		}
 		assertEquals(0, filtLocs.size());
@@ -615,9 +621,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(trace1);
 		waitForSwing();
 
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(1, breakRow.getLocationCount());
 		}
 		assertEquals(2, filtLocs.size());
@@ -626,14 +632,16 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(breakpointsProvider.actionFilterLocationsByBreakpoints);
 
 		// No breakpoint selected, so no change, yet.
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(1, breakRow.getLocationCount());
 		}
 		assertEquals(2, filtLocs.size());
 
-		breakpointsProvider.setSelectedBreakpoints(Set.of(breakData.get(0).getLogicalBreakpoint()));
+		LogicalBreakpointRow bpRow = data.get(0);
+		runSwing(() -> breakpointsProvider
+				.setSelectedBreakpoints(Set.of(bpRow.getLogicalBreakpoint())));
 		waitForSwing();
 
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
@@ -642,9 +650,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		assertTrue(breakpointsProvider.actionFilterByCurrentTrace.isEnabled());
 		performAction(breakpointsProvider.actionFilterByCurrentTrace);
 
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(2, breakRow.getLocationCount());
 		}
 		assertEquals(2, filtLocs.size());
@@ -672,5 +680,111 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 				AbstractClearSelectedBreakpointsAction.NAME));
 
 		// NOTE: With no selection, no actions (even table built-in) apply, so no menu
+	}
+
+	@Test
+	public void testEmuBreakpointState() throws Throwable {
+		addPlugin(tool, DebuggerControlServicePlugin.class);
+
+		createProgram();
+		intoProject(program);
+		programManager.openProgram(program);
+		waitForSwing();
+
+		addStaticMemoryAndBreakpoint();
+		waitForProgram(program);
+
+		LogicalBreakpointRow row = waitForValue(
+			() -> Unique.assertAtMostOne(breakpointsProvider.breakpointTableModel.getModelData()));
+		assertEquals(State.INEFFECTIVE_ENABLED, row.getState());
+
+		// Do our own launch, so that object mode is enabled during load (region creation)
+		createTrace(program.getLanguageID().getIdAsString());
+		try (Transaction startTransaction = tb.startTransaction()) {
+			TraceSnapshot initial = tb.trace.getTimeManager().getSnapshot(0, true);
+			ProgramEmulationUtils.loadExecutable(initial, program, List.of());
+			Address pc = program.getMinAddress();
+			ProgramEmulationUtils.doLaunchEmulationThread(tb.trace, 0, program, pc, pc);
+		}
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		waitForSwing();
+
+		row = waitForValue(
+			() -> Unique.assertAtMostOne(breakpointsProvider.breakpointTableModel.getModelData()));
+		assertEquals(State.INEFFECTIVE_ENABLED, row.getState());
+
+		row.setEnabled(true);
+		waitForSwing();
+
+		row = waitForValue(
+			() -> Unique.assertAtMostOne(breakpointsProvider.breakpointTableModel.getModelData()));
+		assertEquals(State.ENABLED, row.getState());
+	}
+
+	@Test
+	public void testTablesAndStatesWhenhModeChanges() throws Throwable {
+		DebuggerControlService controlService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
+
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
+		createProgramFromTrace(trace);
+		intoProject(trace);
+		intoProject(program);
+
+		mb.testProcess1.addRegion("bin:.text", mb.rng(0x55550000, 0x55550fff), "rx");
+		waitRecorder(recorder);
+		addMapping(trace, program);
+		addStaticMemoryAndBreakpoint();
+		programManager.openProgram(program);
+		traceManager.openTrace(trace);
+		waitForSwing();
+
+		LogicalBreakpointRow lbRow1 = waitForPass(() -> {
+			LogicalBreakpointRow newRow =
+				Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+			LogicalBreakpoint lb = newRow.getLogicalBreakpoint();
+			assertEquals(program, lb.getProgram());
+			assertEquals(Set.of(trace), lb.getMappedTraces());
+			assertEquals(Set.of(), lb.getParticipatingTraces());
+			assertEquals(State.INEFFECTIVE_ENABLED, newRow.getState());
+			return newRow;
+		});
+
+		controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
+		lbRow1.setEnabled(true);
+		TraceBreakpoint emuBpt = waitForValue(
+			() -> Unique.assertAtMostOne(trace.getBreakpointManager().getAllBreakpoints()));
+		assertNull(recorder.getTargetBreakpoint(emuBpt));
+
+		LogicalBreakpointRow lbRow2 =
+			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+		waitForPass(() -> assertEquals(State.ENABLED, lbRow2.getState()));
+
+		waitForPass(() -> {
+			BreakpointLocationRow newRow =
+				Unique.assertOne(breakpointsProvider.locationTableModel.getModelData());
+			assertEquals(State.ENABLED, newRow.getState());
+		});
+
+		for (int i = 0; i < 3; i++) {
+			controlService.setCurrentMode(trace, ControlMode.RO_TARGET);
+			waitOn(breakpointService.changesSettled());
+			waitForSwing();
+			assertEquals(0, breakpointsProvider.locationTableModel.getModelData().size());
+
+			controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
+			waitOn(breakpointService.changesSettled());
+			waitForSwing();
+			assertEquals(1, breakpointsProvider.locationTableModel.getModelData().size());
+		}
 	}
 }

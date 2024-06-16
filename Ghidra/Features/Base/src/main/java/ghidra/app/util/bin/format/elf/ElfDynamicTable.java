@@ -20,7 +20,6 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 
@@ -36,33 +35,36 @@ import ghidra.util.exception.NotFoundException;
  */
 public class ElfDynamicTable implements ElfFileSection {
 
-	private List<ElfDynamic> dynamics = new ArrayList<ElfDynamic>();
+	private final List<ElfDynamic> dynamics = new ArrayList<ElfDynamic>();
 
-	private ElfHeader header;
-	private long fileOffset;
-	private long addrOffset;
+	private final ElfHeader header;
+	private final long fileOffset;
+	private final long addrOffset;
 
-	public ElfDynamicTable(BinaryReader reader, ElfHeader header,
-			long fileOffset, long addrOffset) throws IOException {
-
-		long oldptr = reader.getPointerIndex();
+	/**
+	 * Construct an ELF Dynamic data table
+	 * @param reader byte provider reader (reader is not retained and position is unaffected)
+	 * @param header elf header
+	 * @param fileOffset file offset which will be used to temporarily position reader
+	 * @param addrOffset memory address offset
+	 * @throws IOException if IO error occurs during parse
+	 */
+	public ElfDynamicTable(BinaryReader reader, ElfHeader header, long fileOffset, long addrOffset)
+			throws IOException {
 
 		this.header = header;
 		this.fileOffset = fileOffset;
 		this.addrOffset = addrOffset;
 
-		reader.setPointerIndex(fileOffset);
-
 		// Collect set of all _DYNAMIC array tags specified in .dynamic section
+		BinaryReader entryReader = reader.clone(fileOffset);
 		while (true) {
-			ElfDynamic dyn = new ElfDynamic(reader, header);
+			ElfDynamic dyn = new ElfDynamic(entryReader, header);
 			dynamics.add(dyn);
 			if (dyn.getTag() == ElfDynamicType.DT_NULL.value) {
 				break;
 			}
 		}
-
-		reader.setPointerIndex(oldptr);
 	}
 
 	/**
@@ -114,36 +116,13 @@ public class ElfDynamicTable implements ElfFileSection {
 	}
 
 	/**
-	 * Sets the dynamic with the specified type to the specified value.
-	 * @param type  the dynamic type
-	 * @param value the new value
-	 */
-	public void setDynamicValue(long type, long value) {
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
-			if (dyn.getTag() == type) {
-				dyn.setValue(value);
-			}
-		}
-	}
-
-	/**
-	 * Sets the dynamic with the specified (enum) type to the specified value.
-	 * @param type  the dynamic (enum) type
-	 * @param value the new value
-	 */
-	public void setDynamicValue(ElfDynamicType type, long value) {
-		setDynamicValue(type.value, value);
-	}
-
-	/**
 	 * Returns the value of the specified dynamic type.
 	 * @param type the dynamic type
 	 * @return the dynamic value
+	 * @throws NotFoundException if requested value type not found
 	 */
 	public long getDynamicValue(long type) throws NotFoundException {
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
+		for (ElfDynamic dyn : dynamics) {
 			if (dyn.getTag() == type) {
 				return dyn.getValue();
 			}
@@ -166,8 +145,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	 * @return true if dynamic value exists
 	 */
 	public boolean containsDynamicValue(long type) {
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
+		for (ElfDynamic dyn : dynamics) {
 			if (dyn.getTag() == type) {
 				return true;
 			}
@@ -179,6 +157,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	 * Returns the value of the specified dynamic (enum) type.
 	 * @param type the dynamic (enum) type
 	 * @return the dynamic value
+	 * @throws NotFoundException if requested value type not found
 	 */
 	public long getDynamicValue(ElfDynamicType type) throws NotFoundException {
 		return getDynamicValue(type.value);
@@ -247,22 +226,6 @@ public class ElfDynamicTable implements ElfFileSection {
 	@Override
 	public int getEntrySize() {
 		return header.is32Bit() ? 8 : 16;
-	}
-
-	/**
-	 * Get this dynamic table data as a byte array
-	 * @param dc data converter
-	 * @return data array
-	 */
-	public byte[] toBytes(DataConverter dc)
-			throws ArrayIndexOutOfBoundsException {
-		byte[] data = new byte[(int) getLength()];
-		int entrySize = getEntrySize();
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
-			dyn.write(data, i * entrySize, dc);
-		}
-		return data;
 	}
 
 }

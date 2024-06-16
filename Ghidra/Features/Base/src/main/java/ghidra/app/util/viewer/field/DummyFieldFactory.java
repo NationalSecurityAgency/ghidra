@@ -19,7 +19,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -52,8 +52,8 @@ public class DummyFieldFactory extends FieldFactory {
 			return null;
 		}
 		int x = startX + varWidth;
-		FieldElement text =
-			new TextFieldElement(new AttributedString("", color, getMetrics()), 0, 0);
+		FieldElement text = new TextFieldElement(
+			new AttributedString("", ListingColors.BACKGROUND, getMetrics()), 0, 0);
 
 		return ListingTextField.createSingleLineTextField(this, obj, text, x, width, hlProvider);
 	}
@@ -79,8 +79,8 @@ public class DummyFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hlProvdier,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hlProvdier,
+			ToolOptions options, ToolOptions fieldOptions) {
 		return this;
 	}
 }

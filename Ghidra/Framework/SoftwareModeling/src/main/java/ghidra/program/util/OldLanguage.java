@@ -29,7 +29,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.util.ManualEntry;
 import ghidra.util.XmlProgramUtilities;
 import ghidra.util.task.TaskMonitor;
@@ -252,7 +251,9 @@ class OldLanguage implements Language {
 				langDescription = parseDescription(element, version);
 			}
 			else if ("compiler".equals(elementName)) {
-				associatedCompilerSpecs.add(parseCompilerSpecDescription(element));
+				if (!descriptionOnly) {
+					associatedCompilerSpecs.add(parseCompilerSpecDescription(element));
+				}
 			}
 			else if ("spaces".equals(elementName)) {
 				if (spacesFound) {
@@ -750,5 +751,10 @@ class OldLanguage implements Language {
 	public List<Register> getSortedVectorRegisters() {
 		throw new UnsupportedOperationException(
 			"Language for upgrade use only (getSortedVectorRegisters)");
+	}
+
+	@Override
+	public AddressSetView getRegisterAddresses() {
+		return registerMgr.getRegisterAddresses();
 	}
 }

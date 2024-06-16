@@ -23,6 +23,7 @@ import javax.swing.tree.TreePath;
 
 import org.jdom.Element;
 
+import docking.options.OptionsService;
 import docking.options.editor.OptionsDialog;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
@@ -30,9 +31,9 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 /**
  * Created by PluginTool to manage the set of Options for each category.
@@ -60,6 +61,12 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 
 	@Override
 	public ToolOptions getOptions(String category) {
+
+		if (category.contains(Options.DELIMITER_STRING)) {
+			throw new AssertException(
+				"Options category cannot contain the options path delimiter '" + Options.DELIMITER +
+					"'");
+		}
 
 		ToolOptions opt = optionsMap.get(category);
 		if (opt == null) {
@@ -216,7 +223,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	}
 
 	private OptionsDialog createOptionsDialog() {
-		OptionsDialog dialog = null;
+
 		if (optionsMap.size() == 0) {
 			return null;
 		}
@@ -231,9 +238,10 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 			oldEditor.dispose();
 		}
 
-		keyBindingOptions.registerOptionsEditor(new KeyBindingOptionsEditor());
-		dialog = new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
-			null, true);
+		keyBindingOptions.registerOptionsEditor(() -> new KeyBindingOptionsEditor());
+		OptionsDialog dialog =
+			new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
+				null, true);
 		dialog.setSelectedPath(path);
 		dialog.setHelpLocation(
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "ToolOptions_Dialog"));
@@ -245,8 +253,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	}
 
 	private void removeUnusedOptions(List<String> deleteList) {
-		for (int i = 0; i < deleteList.size(); i++) {
-			String name = deleteList.get(i);
+		for (String name : deleteList) {
 			ToolOptions options = optionsMap.remove(name);
 			options.removeOptionsChangeListener(this);
 		}
@@ -264,7 +271,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 		private KeyBindingsPanel panel;
 
 		KeyBindingOptionsEditor() {
-			panel = new KeyBindingsPanel(tool, getOptions(DockingToolConstants.KEY_BINDINGS));
+			panel = new KeyBindingsPanel(tool);
 		}
 
 		@Override

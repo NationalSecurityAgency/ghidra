@@ -16,13 +16,11 @@
 package ghidra.framework.main.datatree;
 
 import java.awt.event.MouseEvent;
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
@@ -34,7 +32,7 @@ import ghidra.util.HelpLocation;
 public class VersionHistoryDialog extends DialogComponentProvider implements ProjectListener {
 
 	private VersionHistoryPanel versionPanel;
-	private MyFolderListener listener = new MyFolderListener();
+	private MyFolderListener listener;
 	private List<DockingActionIf> popupActions = Collections.emptyList();
 
 	public VersionHistoryDialog(DomainFile domainFile) {
@@ -42,7 +40,7 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 		super("Version History", false);
 		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
 		setHelpLocation(new HelpLocation(GenericHelpTopics.VERSION_CONTROL, "Show_History"));
-		versionPanel = new VersionHistoryPanel(frontEndTool, domainFile, true);
+		versionPanel = new VersionHistoryPanel(frontEndTool, null, true);
 		addWorkPanel(versionPanel);
 		addDismissButton();
 
@@ -59,6 +57,7 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 		Project project = frontEndTool.getProject();
 		if (project != null && df != null) {
 			setTitle("Version History for " + df.getName());
+			listener = new MyFolderListener();
 			project.getProjectData().addDomainFolderChangeListener(listener);
 		}
 	}
@@ -79,11 +78,21 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 		for (DockingActionIf action : popupActions) {
 			removeAction(action);
 		}
+
+		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
+		frontEndTool.removeProjectListener(this);
+		if (listener != null) {
+			Project project = frontEndTool.getProject();
+			if (project != null) {
+				project.getProjectData().removeDomainFolderChangeListener(listener);
+			}
+			listener = null;
+		}
 	}
 
 	@Override
 	public void projectClosed(Project project) {
-		dismissCallback();
+		close();
 	}
 
 	@Override
@@ -102,40 +111,40 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 			if (isFolder) {
 				affectedOldPath += FileSystem.SEPARATOR;
 				if (path.startsWith(affectedOldPath) && !versionPanel.getDomainFile().exists()) {
-					dismissCallback();
+					close();
 				}
 			}
 			else if (affectedOldPath.equals(path)) {
-				if (affectedNewPath == null) {
-					dismissCallback();
-				}
-				else {
-					versionPanel.refresh();
-				}
+				close();
 			}
 		}
 
 		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 			if (file.equals(versionPanel.getDomainFile())) {
-				versionPanel.refresh();
+				try {
+					versionPanel.refresh();
+				}
+				catch (FileNotFoundException e) {
+					close();
+				}
 			}
 		}
 
 		@Override
 		public void domainFileRemoved(DomainFolder parentFolder, String name, String fileID) {
 			DomainFile domainFile = versionPanel.getDomainFile();
-			if (parentFolder.equals(domainFile.getParent()) && domainFile.getName().equals(name)) {
-				// must be done later otherwise concurrent mod exception occurs
-				// in the domain folder notification of listeners.
-				SwingUtilities.invokeLater(() -> dismissCallback());
+			if (domainFile != null && parentFolder.equals(domainFile.getParent()) &&
+				domainFile.getName().equals(name)) {
+				close();
 			}
 		}
+
 	}
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		ActionContext actionContext = new ActionContext(null, this, versionPanel.getTable());
+		ActionContext actionContext = new DefaultActionContext(null, this, versionPanel.getTable());
 		actionContext.setMouseEvent(event);
 		return actionContext;
 	}

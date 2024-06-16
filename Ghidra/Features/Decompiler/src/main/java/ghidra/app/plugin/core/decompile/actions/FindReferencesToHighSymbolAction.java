@@ -65,7 +65,7 @@ public class FindReferencesToHighSymbolAction extends AbstractDecompilerAction {
 		if (token == null) {
 			return false;
 		}
-		HighSymbol highSymbol = findHighSymbolFromToken(token, context.getHighFunction());
+		HighSymbol highSymbol = token.getHighSymbol(context.getHighFunction());
 
 		if (highSymbol == null || highSymbol.getStorage().isBadStorage() ||
 			!highSymbol.isGlobal()) {
@@ -92,7 +92,7 @@ public class FindReferencesToHighSymbolAction extends AbstractDecompilerAction {
 		}
 		else {
 			HighSymbol highSymbol =
-				findHighSymbolFromToken(context.getTokenAtCursor(), context.getHighFunction());
+				context.getTokenAtCursor().getHighSymbol(context.getHighFunction());
 			location = new LabelFieldLocation(context.getProgram(),
 				highSymbol.getStorage().getMinAddress(), highSymbol.getName());
 		}

@@ -64,7 +64,7 @@ public class GdbModelTargetStackFrameRegister
 
 		changeAttributes(List.of(), Map.of( //
 			CONTAINER_ATTRIBUTE_NAME, registers, //
-			LENGTH_ATTRIBUTE_NAME, bitLength, //
+			BIT_LENGTH_ATTRIBUTE_NAME, bitLength, //
 			DISPLAY_ATTRIBUTE_NAME, getName(), //
 			MODIFIED_ATTRIBUTE_NAME, false //
 		), "Initialized");

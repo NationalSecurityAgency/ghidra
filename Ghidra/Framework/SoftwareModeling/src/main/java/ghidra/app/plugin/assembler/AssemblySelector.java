@@ -82,6 +82,7 @@ public class AssemblySelector {
 	 */
 	public Collection<AssemblyParseResult> filterParse(Collection<AssemblyParseResult> parse)
 			throws AssemblySyntaxException {
+		syntaxErrors.clear();
 		boolean gotOne = false;
 		for (AssemblyParseResult pr : parse) {
 			if (pr.isError()) {
@@ -95,6 +96,36 @@ public class AssemblySelector {
 			throw new AssemblySyntaxException(syntaxErrors);
 		}
 		return parse;
+	}
+
+	protected List<AssemblyResolvedPatterns> filterCompatibleAndSort(AssemblyResolutionResults rr,
+			AssemblyPatternBlock ctx) throws AssemblySemanticException {
+		semanticErrors.clear();
+		List<AssemblyResolvedPatterns> sorted = new ArrayList<>();
+		// Select only non-erroneous results whose contexts are compatible.
+		for (AssemblyResolution ar : rr) {
+			if (ar.isError()) {
+				semanticErrors.add((AssemblyResolvedError) ar);
+				continue;
+			}
+			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
+			sorted.add(rc);
+		}
+		if (sorted.isEmpty()) {
+			throw new AssemblySemanticException(semanticErrors);
+		}
+		sorted.sort(compareBySizeThenBits);
+		return sorted;
+	}
+
+	/**
+	 * A resolved selection from the results given to
+	 * {@link AssemblySelector#select(AssemblyResolutionResults, AssemblyPatternBlock)}
+	 * 
+	 * @param ins the resolved instructions bytes, ideally with a full mask
+	 * @param ctx the resolved context bytes for compatibility checks
+	 */
+	public record Selection(AssemblyPatternBlock ins, AssemblyPatternBlock ctx) {
 	}
 
 	/**
@@ -113,30 +144,15 @@ public class AssemblySelector {
 	 * @param rr the collection of resolved constructors
 	 * @param ctx the applicable context.
 	 * @return a single resolved constructor with a full instruction mask.
-	 * @throws AssemblySemanticException
+	 * @throws AssemblySemanticException if all the given results are semantic errors
 	 */
-	public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-			AssemblyPatternBlock ctx) throws AssemblySemanticException {
-		List<AssemblyResolvedPatterns> sorted = new ArrayList<>();
-		// Select only non-erroneous results whose contexts are compatible.
-		for (AssemblyResolution ar : rr) {
-			if (ar.isError()) {
-				semanticErrors.add((AssemblyResolvedError) ar);
-				continue;
-			}
-			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
-			sorted.add(rc);
-		}
-		if (sorted.isEmpty()) {
-			throw new AssemblySemanticException(semanticErrors);
-		}
-		// Sort them
-		sorted.sort(compareBySizeThenBits);
+	public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+			throws AssemblySemanticException {
+		List<AssemblyResolvedPatterns> sorted = filterCompatibleAndSort(rr, ctx);
 
 		// Pick just the first
 		AssemblyResolvedPatterns res = sorted.get(0);
 		// Just set the mask to ffs (effectively choosing 0 for the omitted bits)
-		return AssemblyResolution.resolved(res.getInstruction().fillMask(), res.getContext(),
-			"Selected", null, null, null);
+		return new Selection(res.getInstruction().fillMask(), res.getContext());
 	}
 }

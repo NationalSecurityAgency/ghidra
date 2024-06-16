@@ -15,11 +15,13 @@
  */
 /// \file opbehavior.hh
 /// \brief Classes for describing the behavior of individual p-code operations
-#ifndef __CPUI_OPBEHAVIOR__
-#define __CPUI_OPBEHAVIOR__
+#ifndef __OPBEHAVIOR_HH__
+#define __OPBEHAVIOR_HH__
 
 #include "error.hh"
 #include "opcodes.hh"
+
+namespace ghidra {
 
 class Translate;		// Forward declaration
 
@@ -511,4 +513,12 @@ public:
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
 };
 
+/// CPUI_LZCOUNT behavior
+class OpBehaviorLzcount : public OpBehavior {
+public:
+  OpBehaviorLzcount(void) : OpBehavior(CPUI_LZCOUNT,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
+
+} // End namespace ghidra
 #endif

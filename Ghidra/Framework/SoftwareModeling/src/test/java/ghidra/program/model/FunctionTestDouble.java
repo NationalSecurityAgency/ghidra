@@ -106,7 +106,7 @@ public class FunctionTestDouble implements Function {
 
 	@Override
 	public String getCallFixup() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
@@ -383,12 +383,7 @@ public class FunctionTestDouble implements Function {
 
 	@Override
 	public String getCallingConventionName() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String getDefaultCallingConventionName() {
-		throw new UnsupportedOperationException();
+		return Function.UNKNOWN_CALLING_CONVENTION_STRING;
 	}
 
 	@Override

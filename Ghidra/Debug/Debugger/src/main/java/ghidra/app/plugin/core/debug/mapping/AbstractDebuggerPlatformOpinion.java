@@ -24,19 +24,20 @@ import ghidra.trace.model.target.TraceObject;
 public abstract class AbstractDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 
 	protected abstract Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap,
-			TraceObject env, String debugger, String arch, String os, Endian endian);
+			TraceObject env, String debugger, String arch, String os, Endian endian,
+			boolean includeOverrides);
 
 	@Override
 	public Set<DebuggerPlatformOffer> getOffers(Trace trace, TraceObject object, long snap,
 			boolean includeOverrides) {
 		TraceObject env = DebuggerPlatformOpinion.getEnvironment(object, snap);
 		if (env == null) {
-			return getOffers(object, snap, env, null, null, null, null);
+			return getOffers(object, snap, env, null, null, null, null, includeOverrides);
 		}
 		String debugger = DebuggerPlatformOpinion.getDebugggerFromEnv(env, snap);
 		String arch = DebuggerPlatformOpinion.getArchitectureFromEnv(env, snap);
 		String os = DebuggerPlatformOpinion.getOperatingSystemFromEnv(env, snap);
 		Endian endian = DebuggerPlatformOpinion.getEndianFromEnv(env, snap);
-		return getOffers(object, snap, env, debugger, arch, os, endian);
+		return getOffers(object, snap, env, debugger, arch, os, endian, includeOverrides);
 	}
 }

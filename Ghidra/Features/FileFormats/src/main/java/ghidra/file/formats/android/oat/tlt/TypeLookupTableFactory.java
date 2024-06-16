@@ -27,22 +27,25 @@ public final class TypeLookupTableFactory {
 			throws IOException {
 
 		switch (oatVersion) {
-			case OatConstants.VERSION_NOUGAT_RELEASE:
-			case OatConstants.VERSION_NOUGAT_MR1_RELEASE:
+			case OatConstants.OAT_VERSION_079:
+			case OatConstants.OAT_VERSION_088:
 				return new TypeLookupTable_Nougat(reader);
-			case OatConstants.VERSION_OREO_RELEASE:
-			case OatConstants.VERSION_OREO_M2_RELEASE:
-			case OatConstants.VERSION_OREO_DR3_RELEASE:
+			case OatConstants.OAT_VERSION_124:
+			case OatConstants.OAT_VERSION_131:
+			case OatConstants.OAT_VERSION_126:
 				return new TypeLookupTable_Oreo(reader);
-			case OatConstants.VERSION_PIE_RELEASE:
+			case OatConstants.OAT_VERSION_138:
 				return new TypeLookupTable_Pie(reader);
-			case OatConstants.VERSION_10_RELEASE:
-				return new TypeLookupTable_Android10(reader);
-			case OatConstants.VERSION_11_RELEASE:
-				return new TypeLookupTable_Android11(reader);
-			case OatConstants.VERSION_12_RELEASE:
-			case OatConstants.VERSION_S_V2_PREVIEW:
-				return new TypeLookupTable_Android12(reader);
+			case OatConstants.OAT_VERSION_170:
+				return new TypeLookupTable_Q(reader);
+			case OatConstants.OAT_VERSION_183:
+				return new TypeLookupTable_R(reader);
+			case OatConstants.OAT_VERSION_195:
+			case OatConstants.OAT_VERSION_199:
+			case OatConstants.OAT_VERSION_220:
+			case OatConstants.OAT_VERSION_223:
+			case OatConstants.OAT_VERSION_225:
+				return new TypeLookupTable_S_T(reader);
 			default:
 				throw new IOException(new UnsupportedOatVersionException(
 					"Unsupported TypeLookupTable for OAT version " + oatVersion));

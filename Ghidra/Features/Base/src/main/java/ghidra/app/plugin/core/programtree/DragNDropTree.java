@@ -29,6 +29,8 @@ import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
 import docking.widgets.table.AutoscrollAdapter;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 
 /**
  * Class to support Drag and Drop; it is also responsible for
@@ -37,9 +39,11 @@ import docking.widgets.table.AutoscrollAdapter;
  */
 public abstract class DragNDropTree extends JTree implements Draggable, Droppable, Autoscroll {
 
+	private static final Color BG_COLOR_DRAG_NO_SELECTION = new GColor("color.bg.tree.drag");
+
 	private AutoscrollAdapter autoscroller;
 
-	protected DefaultTreeModel treeModel;
+	protected DefaultTreeModel model;
 	protected DragSource dragSource;
 	protected DragGestureAdapter dragGestureAdapter;
 	protected TreeDragSrcAdapter dragSourceAdapter;
@@ -48,7 +52,6 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 	protected DropTarget dropTarget;
 	protected DropTgtAdapter dropTargetAdapter;
 	protected ProgramNode root;
-	protected ProgramTreeCellEditor cellEditor;
 	protected Color plafSelectionColor;
 	protected DnDTreeCellRenderer dndCellRenderer;
 	protected boolean drawFeedback;
@@ -56,43 +59,37 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 	protected ProgramNode destinationNode; // target for drop site
 
 	// data flavors that this tree can support
-	protected DataFlavor[] acceptableFlavors; // filled in by the
-	// getAcceptableDataFlavors() method
+	protected DataFlavor[] acceptableFlavors;
 
 	protected TreeTransferable transferable;
 	protected Color nonSelectionDragColor;
-	protected int relativeMousePos; // mouse position within the node:
+	protected int relativeMousePos; // mouse position within the node
 
-	// -1 --> above node,
-	//  0 --> at the node
-	//  1 --> below the node
-
-	/**
-	 * Construct a new DragNDropTree.
-	 */
 	public DragNDropTree(DefaultTreeModel model) {
 		super(model);
-		treeModel = model;
+		setBackground(new GColor("color.bg.tree"));
+		this.model = model;
 		this.root = (ProgramNode) model.getRoot();
-		//setEditable(true); // edit interferes with drag gesture listener
+
+		// setEditable(true); // edit interferes with drag gesture listener
 
 		setShowsRootHandles(true);  // need this to "drill down"
-		cellEditor = new ProgramTreeCellEditor();
-		setCellEditor(cellEditor);
+		ProgramTreeCellEditor treeCellEditor = new ProgramTreeCellEditor();
+		setCellEditor(treeCellEditor);
 		dndCellRenderer = new DnDTreeCellRenderer();
 		setCellRenderer(dndCellRenderer);
 		plafSelectionColor = dndCellRenderer.getBackgroundSelectionColor();
-		nonSelectionDragColor = new Color(204, 204, 255);
+		nonSelectionDragColor = BG_COLOR_DRAG_NO_SELECTION;
 		initDragNDrop();
 		ToolTipManager.sharedInstance().registerComponent(this);
 		autoscroller = new AutoscrollAdapter(this, getRowHeight());
 		disableJTreeTransferActions();
 	}
 
-	//// Draggable interface methods
-	/**
-	 * Return true if the location in the event is draggable.
-	 */
+//=================================================================================================
+// Draggable Methods
+//=================================================================================================	
+
 	@Override
 	public boolean isStartDragOk(DragGestureEvent e) {
 		synchronized (root) {
@@ -108,27 +105,16 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		}
 	}
 
-	/**
-	 * Called by the DragGestureAdapter to start the drag.
-	 */
 	@Override
 	public DragSourceListener getDragSourceListener() {
 		return dragSourceAdapter;
 	}
 
-	/**
-	 * Called by the DragGestureAdapter and the DragSourceAdapter to
-	 * know what actions this component allows.
-	 */
 	@Override
 	public int getDragAction() {
 		return DnDConstants.ACTION_COPY_OR_MOVE;
 	}
 
-	/**
-	 * Called by the DragGestureAdapter when the drag is about to
-	 * start.
-	 */
 	@Override
 	public Transferable getTransferable(Point p) {
 		synchronized (root) {
@@ -148,30 +134,16 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		}
 	}
 
-	/**
-	 * Do the move operation. Called from the DragSourceAdapter
-	 * when the drop completes and the user action was a
-	 * DnDConstants.MOVE.
-	 */
 	@Override
-	public abstract void move();
-
-	/**
-	 * Called from the DragSourceAdapter when the drag operation exits the
-	 * drop target without dropping.
-	 */
-	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
+	public void dragFinished(boolean wasCancelled) {
 		draggedNodes = null;
 		dndCellRenderer.setBackgroundSelectionColor(plafSelectionColor);
-		dndCellRenderer.setBackgroundNonSelectionColor(dndCellRenderer.getBackgroundNonSelectionColor());
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	// Droppable interface methods
-	/**
-	 * Return true if OK to drop at the location specified in the event.
-	 */
+//=================================================================================================
+// Droppable Methods
+//=================================================================================================
+
 	@Override
 	public boolean isDropOk(DropTargetDragEvent e) {
 		synchronized (root) {
@@ -195,7 +167,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			}
 
 			// This is tree node transferable... 
-			if (draggedNodes.equals(root)) {
+			if (draggedNodes.length > 0 && draggedNodes[0].equals(root)) {
 				return false;
 			}
 
@@ -208,8 +180,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			return false;
 		}
 
-		for (int i = 0; i < draggedNodes.length; i++) {
-			if (targetNode.equals(draggedNodes[i])) {
+		for (ProgramNode draggedNode : draggedNodes) {
+			if (targetNode.equals(draggedNode)) {
 				return true;
 			}
 		}
@@ -221,19 +193,14 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			return false;
 		}
 
-		for (int i = 0; i < draggedNodes.length; i++) {
-			if (targetNode.isNodeAncestor(draggedNodes[i])) {
+		for (ProgramNode draggedNode : draggedNodes) {
+			if (targetNode.isNodeAncestor(draggedNode)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	/**
-	 * Called from the DropTgtAdapter when the drag operation is going over a drop site; indicate 
-	 * when the drop is OK by providing appropriate feedback. 
-	 * @param ok true means OK to drop
-	 */
 	@Override
 	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
 		synchronized (root) {
@@ -263,8 +230,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			}
 			else {
 				destinationNode = null;
-				dndCellRenderer.setSelectionForDrag(Color.red);
-				dndCellRenderer.setNonSelectionForDrag(Color.red);
+				dndCellRenderer.setSelectionForDrag(Colors.ERROR);
+				dndCellRenderer.setNonSelectionForDrag(Colors.ERROR);
 			}
 			Point p = e.getLocation();
 			dndCellRenderer.setRowForFeedback(getRowForLocation(p.x, p.y));
@@ -272,10 +239,6 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		}
 	}
 
-	/**
-	 * Called from the DropTgtAdapter to revert any feedback
-	 * changes back to normal.
-	 */
 	@Override
 	public void undoDragUnderFeedback() {
 		synchronized (root) {
@@ -284,52 +247,29 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		repaint();
 	}
 
-	/**
-	 * Add the data to the tree. Called from the DropTgtAdapter
-	 * when the drop completes and the user action was a
-	 * DnDConstants.COPY.
-	 */
-	@Override
-	public abstract void add(Object data, DropTargetDropEvent e, DataFlavor chosen);
+//=================================================================================================
+// Autoscroll Methods
+//=================================================================================================
 
-	///////////////////////////////////////////////////////////
-	// Autoscroll Interface methods
-	///////////////////////////////////////////////////////////
-	/**
-	 * This method returns the <code>Insets</code> describing
-	 * the autoscrolling region or border relative
-	 * to the geometry of the implementing Component; called
-	 * repeatedly while dragging.
-	 * @return the Insets
-	 */
 	@Override
 	public Insets getAutoscrollInsets() {
 		return autoscroller.getAutoscrollInsets();
 	}
-
-	/**
-	 * Notify the <code>Component</code> to autoscroll; called repeatedly
-	 * while dragging.
-	 * <P>
-	 * @param p A <code>Point</code> indicating the
-	 * location of the cursor that triggered this operation.
-	 */
 
 	@Override
 	public void autoscroll(Point p) {
 		autoscroller.autoscroll(p);
 	}
 
-	///////////////////////////////////////////////////////////////
-	// protected methods
-	///////////////////////////////////////////////////////////////
-	/**
-	 * Get the data flavors that this tree supports.
-	 */
+//=================================================================================================
+// Protected Methods
+//=================================================================================================	
+
 	protected abstract DataFlavor[] getAcceptableDataFlavors();
 
 	/**
 	 * Return true if the node can accept the drop as indicated by the event.
+	 * @param node the node being dragged
 	 * @param e event that has current state of drag and drop operation 
 	 * @return true if drop is OK
 	 */
@@ -337,11 +277,14 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 
 	/**
 	 * Get the string to use as the tool tip for the specified node.
+	 * @param node the node 
+	 * @return the text
 	 */
 	protected abstract String getToolTipText(ProgramNode node);
 
 	/**
 	 * Get the node at the given point.
+	 * @param p the point
 	 * @return null if there is no node a the point p.
 	 */
 	protected ProgramNode getTreeNode(Point p) {
@@ -352,16 +295,41 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		return null;
 	}
 
-	/**
-	 * Return the drawFeedback state.
-	 */
 	boolean getDrawFeedbackState() {
 		return drawFeedback;
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	// *** private methods
-	//////////////////////////////////////////////////////////////////////
+	/**
+	 * Determine where the mouse pointer is within the node.
+	 * @param p the point
+	 * @param node the node
+	 * @return -1 if the mouse pointer is in the upper quarter of the node, 1 if the mouse pointer 
+	 *  is in the lower quarter of the node, or 0 if the mouse pointer is in the center of the node.
+	 */
+	protected int comparePointerLocation(Point p, ProgramNode node) {
+
+		int localRowHeight = getRowHeight();
+		int row = this.getRowForPath(node.getTreePath());
+		Rectangle rect = getRowBounds(row);
+		if (p.y == rect.y) {
+			return 1;
+		}
+		if ((p.y - rect.y) <= localRowHeight) {
+			int delta = localRowHeight - (p.y - rect.y);
+			int sliceSize = localRowHeight / 4;
+			if (delta < sliceSize) {
+				return 1; // in the lower part of the node
+			}
+			if (delta > (sliceSize * 3)) {
+				return -1; // in the upper part of the node
+			}
+		}
+		return 0;
+	}
+
+//=================================================================================================
+// Private Methods
+//=================================================================================================
 
 	/**
 	 * Set up the drag and drop stuff.
@@ -393,49 +361,16 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			KeyStroke.getKeyStroke(KeyEvent.VK_X, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 	}
 
-	/**
-	 * Determine where the mouse pointer is within the node.
-	 * @return -1 if the mouse pointer is in the upper quarter of the node, 1 if the mouse pointer 
-	 *  is in the lower quarter of the node, or 0 if the mouse pointer is in the center of the node.
-	 */
-	int comparePointerLocation(Point p, ProgramNode node) {
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
 
-		int localRowHeight = getRowHeight();
-		int row = this.getRowForPath(node.getTreePath());
-		Rectangle rect = getRowBounds(row);
-		if (p.y == rect.y) {
-			return 1;
-		}
-		if ((p.y - rect.y) <= localRowHeight) {
-			int delta = localRowHeight - (p.y - rect.y);
-			int sliceSize = localRowHeight / 4;
-			if (delta < sliceSize) {
-				return 1; // in the lower part of the node
-			}
-			if (delta > (sliceSize * 3)) {
-				return -1; // in the upper part of the node
-			}
-		}
-		return 0;
-	}
+	private class ProgramTreeCellEditor extends DefaultTreeCellEditor {
 
-	//////////////////////////////////////////////////////////////////////
-	/**
-	 * TreeCellEditor for the program tree.
-	 */
-	protected class ProgramTreeCellEditor extends DefaultTreeCellEditor {
-
-		/**
-		 * Construct a new ProgramTreeCellEditor.
-		 */
 		public ProgramTreeCellEditor() {
 			super(DragNDropTree.this, null);
 		}
 
-		/**
-		 * Override this method in order to select the contents of
-		 * the editing component which is a JTextField.
-		 */
 		@Override
 		public boolean shouldSelectCell(EventObject anEvent) {
 			((JTextField) editingComponent).selectAll();

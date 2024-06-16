@@ -15,20 +15,22 @@
  */
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 pthread_t thread;
 
 void* work(void* param) {
     printf("I'm %d, PID: %d\n", (int)param, getpid());
     if (param == NULL) {
-        return 1;
+        return (void*)1;
     } else {
         //sleep(10);
-        return 2;
+        return (void*)2;
     }
 }
 
 int main() {
     pthread_create(&thread, NULL, work, (void*)1);
-    return work(NULL);
+    sleep(1); // Not ideal, but some assurance that we break with two threads
+    return (int)work(NULL);
 }

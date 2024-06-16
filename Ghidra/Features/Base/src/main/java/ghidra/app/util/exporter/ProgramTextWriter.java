@@ -17,8 +17,12 @@ package ghidra.app.util.exporter;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
-import ghidra.app.util.DisplayableEol;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import ghidra.app.util.EolComments;
+import ghidra.app.util.template.TemplateSimplifier;
+import ghidra.app.util.viewer.field.EolExtraCommentsOption;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -54,10 +58,6 @@ class ProgramTextWriter {
 			ProgramTextOptions options, ServiceProvider provider) throws FileNotFoundException {
 
 		this.options = options;
-		// Exit if options are INVALID
-		int len = options.getAddrWidth() + options.getBytesWidth() + options.getPreMnemonicWidth() +
-			options.getMnemonicWidth() + options.getOperandWidth() + options.getEolWidth();
-
 		this.program = program;
 		this.listing = program.getListing();
 		this.memory = program.getMemory();
@@ -81,10 +81,11 @@ class ProgramTextWriter {
 
 		//boolean sk = false;
 		if (options.isHTML()) {
-			writer.print("<HTML><BODY BGCOLOR=#ffffe0>");
+			writer.print("<html><BODY BGCOLOR=#ffffe0>");
 			writer.println("<FONT FACE=COURIER SIZE=3><STRONG><PRE>");
 		}
-
+		TemplateSimplifier simplifier = new TemplateSimplifier();
+		simplifier.setEnabled(false);
 		CodeUnitFormatOptions formatOptions = new CodeUnitFormatOptions(
 			options.isShowBlockNameInOperands() ? CodeUnitFormatOptions.ShowBlockName.NON_LOCAL
 					: CodeUnitFormatOptions.ShowBlockName.NEVER,
@@ -94,7 +95,8 @@ class ProgramTextWriter {
 			true, // include extended reference markup
 			true, // include scalar adjustment
 			true, // include library names in namespace
-			true // follow referenced pointers
+			true, // follow referenced pointers
+			simplifier // disabled simplifier
 		);
 
 		CodeUnitFormat cuFormat = new CodeUnitFormat(formatOptions);
@@ -284,34 +286,12 @@ class ProgramTextWriter {
 			processAddress(currentCodeUnit.getMinAddress(), null);
 			processBytes(currentCodeUnit);
 			processMnemonic(currentCodeUnit);
-			processOperand(currentCodeUnit, cuFormat);
+			processOperands(currentCodeUnit, cuFormat);
 
 			//// End of Line Area //////////////////////////////////////////
 
 			if (options.isShowComments()) {
-				DisplayableEol displayableEol = new DisplayableEol(currentCodeUnit, false, false,
-					false, true, 6 /* arbitrary! */, true, true);
-				String[] eol = displayableEol.getComments();
-				if (eol != null && eol.length > 0) {
-					len = options.getAddrWidth() + options.getBytesWidth() +
-						options.getPreMnemonicWidth() + options.getMnemonicWidth() +
-						options.getOperandWidth();
-
-					String fill = genFill(len);
-
-					for (int i = 0; i < eol.length; ++i) {
-						if (i > 0) {
-							buffy.append(fill);
-						}
-						String eolcmt = options.getCommentPrefix() + eol[i];
-						if (eolcmt.length() > options.getEolWidth()) {
-							eolcmt = clip(eolcmt, options.getEolWidth(), true, true);
-						}
-						buffy.append(eolcmt);
-						writer.println(buffy.toString());
-						buffy = new StringBuilder();
-					}
-				}
+				addComments(currentCodeUnit);
 			}
 
 			if (buffy.length() > 0) {
@@ -359,10 +339,39 @@ class ProgramTextWriter {
 		}
 
 		if (options.isHTML()) {
-			writer.println("</PRE></STRONG></FONT></BODY></HTML>");
+			writer.println("</PRE></STRONG></FONT></BODY></html>");
 		}
 
 		writer.close();
+	}
+
+	private void addComments(CodeUnit currentCodeUnit) {
+
+		EolExtraCommentsOption eolOption = new EolExtraCommentsOption();
+		EolComments eolComments =
+			new EolComments(currentCodeUnit, true, 6 /* arbitrary */, eolOption);
+		List<String> comments = eolComments.getComments();
+		if (comments.isEmpty()) {
+			return;
+		}
+
+		int len = options.getAddrWidth() + options.getBytesWidth() +
+			options.getPreMnemonicWidth() + options.getMnemonicWidth() +
+			options.getOperandWidth();
+
+		String fill = genFill(len);
+		for (int i = 0; i < comments.size(); ++i) {
+			if (i > 0) {
+				buffy.append(fill);
+			}
+			String text = options.getCommentPrefix() + comments.get(i);
+			if (text.length() > options.getEolWidth()) {
+				text = clip(text, options.getEolWidth(), true, true);
+			}
+			buffy.append(text);
+			writer.println(buffy.toString());
+			buffy = new StringBuilder();
+		}
 	}
 
 	private void insertUndefinedBytesRemovedMarker(Address bytesRemovedRangeStart,
@@ -372,7 +381,7 @@ class ProgramTextWriter {
 
 		buffy = new StringBuilder();
 		if (options.isHTML()) {
-			writer.print("<FONT COLOR=#ff0000>");
+			writer.print("<FONT COLOR=\"" + Messages.ERROR + "\">");
 		}
 		processAddress(bytesRemovedRangeStart, null);
 		buffy.append(" -> ");
@@ -564,7 +573,13 @@ class ProgramTextWriter {
 		}
 
 		try {
-			byte[] bytes = cu.getBytes();
+			byte[] bytes;
+			if (cu instanceof Instruction instr) {
+				bytes = instr.getParsedBytes();
+			}
+			else {
+				bytes = cu.getBytes();
+			}
 			StringBuffer bytesbuf = new StringBuffer();
 			for (int i = 0; i < bytes.length; ++i) {
 				if (i > 0) {
@@ -582,7 +597,7 @@ class ProgramTextWriter {
 		}
 	}
 
-	private void processOperand(CodeUnit cu, CodeUnitFormat cuFormat) {
+	private void processOperands(CodeUnit cu, CodeUnitFormat cuFormat) {
 
 		int width = options.getOperandWidth();
 		if (width < 1) {
@@ -596,40 +611,46 @@ class ProgramTextWriter {
 			Instruction inst = (Instruction) cu;
 
 			int opCnt = inst.getNumOperands();
-			int opLens = opCnt - 1; // factor-in operand separators
-			if (opCnt > 0) {
+			String firstSeparator = ((Instruction) cu).getSeparator(0);
 
-				String[] opReps = new String[opCnt];
-				for (int i = 0; i < opCnt; ++i) {
-					opReps[i] = cuFormat.getOperandRepresentationString(cu, i);
-					opLens += opReps[i].length();
+			int opLens = 0;
+			int sepLens = firstSeparator != null ? firstSeparator.length() : 0;
+			String[] opSeparators = new String[opCnt];
+			String[] opReps = new String[opCnt];
+			for (int i = 0; i < opCnt; ++i) {
+				opReps[i] = cuFormat.getOperandRepresentationString(cu, i);
+				opLens += opReps[i].length();
+				opSeparators[i] = ((Instruction) cu).getSeparator(i + 1);
+				if (opSeparators[i] == null) {
+					opSeparators[i] = "";
 				}
-				boolean clipRequired = (opLens > width);
-
-				opLens = opCnt - 1; // reset - factor-in operand separators
-				for (int i = 0; i < opCnt; ++i) {
-					if (i > 0) {
-						buffy.append(",");
-					}
-					if (clipRequired) {
-						opReps[i] = clip(opReps[i], (width - opLens) / (opCnt - i), false, true);
-					}
-					opLens += opReps[i].length();
-
-					if (options.isHTML()) {
-						Reference ref =
-							cu.getProgram()
-									.getReferenceManager()
-									.getPrimaryReferenceFrom(cuAddress,
-										i);
-						addReferenceLinkedText(ref, opReps[i], true);
-					}
-					else {
-						buffy.append(opReps[i]);
-					}
-				}
+				sepLens += opSeparators[i].length();
 			}
-			String fill = genFill(width - opLens);
+			boolean clipRequired = (opLens + sepLens) > width;
+
+			// NOTE: Use InstructionDB.toString() as formatting guide
+			int len = sepLens; // reserve space for separator pieces
+			if (firstSeparator != null) {
+				buffy.append(firstSeparator);
+			}
+			for (int i = 0; i < opCnt; ++i) {
+				if (clipRequired) {
+					opReps[i] = clip(opReps[i], (width - len) / (opCnt - i), false, true);
+				}
+				len += opReps[i].length();
+
+				if (options.isHTML()) {
+					Reference ref =
+						cu.getProgram().getReferenceManager().getPrimaryReferenceFrom(cuAddress, i);
+					addReferenceLinkedText(ref, opReps[i], true);
+				}
+				else {
+					buffy.append(opReps[i]);
+				}
+				buffy.append(opSeparators[i]);
+			}
+
+			String fill = genFill(width - len);
 			buffy.append(fill);
 		}
 		else if (cu instanceof Data) {
@@ -660,7 +681,7 @@ class ProgramTextWriter {
 			processAddress(component.getMinAddress(), fill + STRUCT_PREFIX);
 			processDataFieldName(component);
 			processMnemonic(component);
-			processOperand(component, cuFormat);
+			processOperands(component, cuFormat);
 			//processEOLComment();
 			//processXREFs();
 			writer.println(buffy.toString());

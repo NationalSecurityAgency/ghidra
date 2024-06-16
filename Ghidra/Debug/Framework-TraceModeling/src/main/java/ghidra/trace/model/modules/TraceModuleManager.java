@@ -17,9 +17,8 @@ package ghidra.trace.model.modules;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -44,7 +43,7 @@ public interface TraceModuleManager extends TraceModuleOperations {
 	 * @return the new module
 	 */
 	TraceModule addModule(String modulePath, String moduleName, AddressRange range,
-			Range<Long> lifespan) throws DuplicateNameException;
+			Lifespan lifespan) throws DuplicateNameException;
 
 	/**
 	 * Add a module which is still loaded
@@ -56,7 +55,7 @@ public interface TraceModuleManager extends TraceModuleOperations {
 	 */
 	default TraceModule addLoadedModule(String modulePath, String moduleName, AddressRange range,
 			long snap) throws DuplicateNameException {
-		return addModule(modulePath, moduleName, range, Range.atLeast(snap));
+		return addModule(modulePath, moduleName, range, Lifespan.nowOn(snap));
 	}
 
 	/**

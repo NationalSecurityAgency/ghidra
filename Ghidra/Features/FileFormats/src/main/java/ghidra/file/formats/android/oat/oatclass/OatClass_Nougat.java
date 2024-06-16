@@ -23,7 +23,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat_file.h#197
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat_file.h#197">nougat-release/runtime/oat_file.h</a>
  */
 public class OatClass_Nougat extends OatClass_Marshmallow {
 

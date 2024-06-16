@@ -21,19 +21,16 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.apache.commons.collections4.map.LazyMap;
 
-import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
-import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
-import ghidra.app.util.opinion.LibraryPathsDialog;
+import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.*;
@@ -43,7 +40,7 @@ import ghidra.util.layout.*;
  * in a list of Options and generates editors for each of them on th fly.
  */
 public class OptionsEditorPanel extends JPanel {
-	private static final int MAX_PER_COLUMN = 10;
+	private static final int MAX_PER_COLUMN = 11;
 	private static final int MAX_BOOLEANS_WITH_SELECT_ALL = 5;
 	private int columns;
 	private AddressFactoryService addressFactoryService;
@@ -52,7 +49,7 @@ public class OptionsEditorPanel extends JPanel {
 	 * Construct a new OptionsEditorPanel
 	 * @param options the list of options to be edited.
 	 * @param addressFactoryService a service for providing an appropriate AddressFactory if needed
-	 * for editing an options.
+	 * for editing an options.  If null, address based options will not be available.
 	 */
 	public OptionsEditorPanel(List<Option> options, AddressFactoryService addressFactoryService) {
 		super(new VerticalLayout(5));
@@ -67,33 +64,42 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component buildOptionGroupPanel(List<Option> optionGroup) {
+		JPanel panel = new JPanel(new BorderLayout());
 
-		JPanel panel = new JPanel(getBestLayout());
-		String group = optionGroup.get(0).getGroup();
-
-		panel.setBorder(createBorder(group));
-		for (Option option : optionGroup) {
-			panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
-			Component editorComponent = getEditorComponent(option);
-			editorComponent.setName(option.getName()); // set the component name to the option name
-			panel.add(editorComponent);
-		}
+		JPanel innerPanel = buildInnerOptionsPanel(optionGroup);
+		panel.add(innerPanel, BorderLayout.CENTER);
 
 		if (needsSelectAllDeselectAllButton(optionGroup)) {
-			JPanel wrapperPanel = new JPanel(new BorderLayout());
-			wrapperPanel.add(panel, BorderLayout.CENTER);
-			List<JCheckBox> list = findAllCheckBoxes(panel);
-			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-			buttonPanel.add(buildSelectAll(list));
-			buttonPanel.add(buildDeselectAll(list));
-			wrapperPanel.add(buttonPanel, BorderLayout.SOUTH);
-			Border etchedBorder = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-			Border marginBorder = BorderFactory.createEmptyBorder(10, 0, 10, 10);
-			panel.setBorder(BorderFactory.createCompoundBorder(etchedBorder, marginBorder));
-			buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-			return wrapperPanel;
+			panel.add(buildSelectAllDeselectAllButtonPanel(innerPanel), BorderLayout.SOUTH);
 		}
 
+		panel.setBorder(createBorder(optionGroup.get(0).getGroup()));
+		return panel;
+	}
+
+	private Component buildSelectAllDeselectAllButtonPanel(JPanel innerPanel) {
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		List<JCheckBox> list = findAllCheckBoxes(innerPanel);
+		buttonPanel.add(buildSelectAll(list));
+		buttonPanel.add(buildDeselectAll(list));
+		buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+		return buttonPanel;
+	}
+
+	private JPanel buildInnerOptionsPanel(List<Option> optionGroup) {
+		JPanel panel = new JPanel(getBestLayout());
+
+		for (Option option : optionGroup) {
+			Component editorComponent = getEditorComponent(option);
+			if (editorComponent != null) {
+				// Editor not available - omit option from panel
+				GLabel label = new GLabel(option.getName(), SwingConstants.RIGHT);
+				panel.add(label);
+				editorComponent.setName(option.getName()); // set the component name to the option name
+				editorComponent.getAccessibleContext().setAccessibleName(option.getName());
+				panel.add(editorComponent);
+			}
+		}
 		return panel;
 	}
 
@@ -146,7 +152,8 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Map<String, List<Option>> organizeByGroup(List<Option> options) {
-		Map<String, List<Option>> map = LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
+		Map<String, List<Option>> map =
+			LazyMap.lazyMap(new LinkedHashMap<>(), () -> new ArrayList<>());
 
 		for (Option option : options) {
 			String group = option.getGroup();
@@ -175,12 +182,14 @@ public class OptionsEditorPanel extends JPanel {
 		}
 	}
 
-	public Component getEditorComponent(Option option) {
-
-		//special case for load library paths
-		if (option.getName().equals(AbstractLibrarySupportLoader.LIB_OPTION_NAME)) {
-			return buildLoadLibraryPathsEditor(option);
-		}
+	/**
+	 * Get the editor component for the specified option.
+	 * @param option option to be edited
+	 * @return option editor or null if prerequisite state not available to support
+	 * editor (e.g., Address or AddressSpace editor when {@link AddressFactoryService} 
+	 * is not available).
+	 */
+	private Component getEditorComponent(Option option) {
 
 		Component customEditorComponent = option.getCustomEditorComponent();
 		if (customEditorComponent != null) {
@@ -216,26 +225,10 @@ public class OptionsEditorPanel extends JPanel {
 		}
 	}
 
-	private Component buildLoadLibraryPathsEditor(Option option) {
-		JPanel panel = new JPanel(new BorderLayout());
-		JButton button = new JButton("Edit Paths");
-		button.addActionListener(
-			e -> DockingWindowManager.showDialog(panel, new LibraryPathsDialog()));
-		Boolean value = (Boolean) option.getValue();
-		boolean initialState = value != null ? value : false;
-		GCheckBox jCheckBox = new GCheckBox("", initialState);
-		button.setEnabled(initialState);
-		jCheckBox.addActionListener(e -> {
-			boolean b = jCheckBox.isSelected();
-			option.setValue(b);
-			button.setEnabled(b);
-		});
-		panel.add(jCheckBox, BorderLayout.WEST);
-		panel.add(button, BorderLayout.EAST);
-		return panel;
-	}
-
 	private Component getAddressSpaceEditorComponent(Option option) {
+		if (addressFactoryService == null) {
+			return null;
+		}
 		JComboBox<AddressSpace> combo = new GComboBox<>();
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressSpace[] spaces =
@@ -256,53 +249,91 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getStringEditorComponent(Option option) {
+		final SaveState state = option.getState();
+		String defaultValue = (String) option.getValue();
+		String value =
+			state != null ? state.getString(option.getName(), defaultValue) : defaultValue;
+		option.setValue(value);
 		JTextField tf = new JTextField(5);
 		tf.setName(option.getName());
-		tf.getDocument().addDocumentListener(new ImporterDocumentListener(option, tf));
-		String value = option.getValue() == null ? "" : (String) option.getValue();
+		tf.getDocument().addDocumentListener(new ImporterDocumentListener(option, tf, state));
 		tf.setText(value);
 		return tf;
 	}
 
 	private Component getHexLongEditorComponent(Option option) {
+		final SaveState state = option.getState();
+		HexLong defaultValue = (HexLong) option.getValue();
+		long value = state != null ? state.getLong(option.getName(), defaultValue.longValue())
+				: defaultValue.longValue();
+		option.setValue(new HexLong(value));
 		IntegerTextField field = new IntegerTextField();
-		HexLong hexLong = (HexLong) option.getValue();
-		long value = hexLong == null ? 0 : hexLong.longValue();
 		field.setValue(value);
 		field.setHexMode();
-		field.addChangeListener(e -> option.setValue(new HexLong(field.getLongValue())));
+		field.addChangeListener(e -> {
+			option.setValue(new HexLong(field.getLongValue()));
+			if (state != null) {
+				state.putLong(option.getName(), field.getLongValue());
+			}
+		});
 		return field.getComponent();
 	}
 
 	private Component getIntegerEditorComponent(Option option) {
+		final SaveState state = option.getState();
+		int defaultValue = (int) option.getValue();
+		int value = state != null ? state.getInt(option.getName(), defaultValue) : defaultValue;
+		option.setValue(value);
 		IntegerTextField field = new IntegerTextField();
-		Integer value = (Integer) option.getValue();
-		if (value != null) {
-			field.setValue(value);
-		}
-		field.addChangeListener(e -> option.setValue(field.getIntValue()));
+		field.setValue(value);
+		field.addChangeListener(e -> {
+			option.setValue(field.getIntValue());
+			if (state != null) {
+				state.putInt(option.getName(), field.getIntValue());
+			}
+		});
 		return field.getComponent();
 	}
 
 	private Component getLongEditorComponent(Option option) {
+		final SaveState state = option.getState();
+		long defaultValue = (long) option.getValue();
+		long value =
+			state != null ? state.getLong(option.getName(), defaultValue) : defaultValue;
+		option.setValue(value);
 		IntegerTextField field = new IntegerTextField();
-		Long value = (Long) option.getValue();
 		field.setValue(value);
-		field.addChangeListener(e -> option.setValue(field.getLongValue()));
+		field.addChangeListener(e -> {
+			option.setValue(field.getLongValue());
+			if (state != null) {
+				state.putLong(option.getName(), field.getLongValue());
+			}
+		});
 		return field.getComponent();
 	}
 
 	private Component getBooleanEditorComponent(Option option) {
+		final SaveState state = option.getState();
+		boolean defaultValue = (boolean) option.getValue();
+		boolean initialState =
+			state != null ? state.getBoolean(option.getName(), defaultValue) : defaultValue;
+		option.setValue(initialState);
 		GCheckBox cb = new GCheckBox();
 		cb.setName(option.getName());
-		Boolean b = (Boolean) option.getValue();
-		boolean initialState = b != null ? b : false;
 		cb.setSelected(initialState);
-		cb.addItemListener(e -> option.setValue(cb.isSelected()));
+		cb.addItemListener(e -> {
+			option.setValue(cb.isSelected());
+			if (state != null) {
+				state.putBoolean(option.getName(), cb.isSelected());
+			}
+		});
 		return cb;
 	}
 
 	private Component getAddressEditorComponent(Option option) {
+		if (addressFactoryService == null) {
+			return null;
+		}
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressInput addressInput = new AddressInput();
 		addressInput.setName(option.getName());
@@ -316,16 +347,17 @@ public class OptionsEditorPanel extends JPanel {
 		addressInput.addChangeListener(e -> option.setValue(addressInput.getAddress()));//		addressInput.addActionListener(e -> option.setValue(addressInput.getAddress()));
 		return addressInput;
 	}
-
 }
 
 class ImporterDocumentListener implements DocumentListener {
 	private Option option;
 	private JTextField textField;
+	private SaveState state;
 
-	ImporterDocumentListener(Option option, JTextField textField) {
+	ImporterDocumentListener(Option option, JTextField textField, SaveState state) {
 		this.option = option;
 		this.textField = textField;
+		this.state = state;
 	}
 
 	@Override
@@ -346,5 +378,8 @@ class ImporterDocumentListener implements DocumentListener {
 	private void updated() {
 		String text = textField.getText();
 		option.setValue(text);
+		if (state != null) {
+			state.putString(option.getName(), text);
+		}
 	}
 }

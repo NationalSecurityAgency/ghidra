@@ -31,6 +31,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.dnd.GClipboard;
 import docking.widgets.EmptyBorderButton;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.plugin.core.instructionsearch.ui.SelectionModeWidget.InputMode;
@@ -39,7 +40,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Displays the preview string for all instructions in the
@@ -231,12 +232,6 @@ public class PreviewTable extends AbstractInstructionTable {
 		new TaskLauncher(task, PreviewTable.this);
 	}
 
-	/*********************************************************************************************
-	 * PROTECTED METHODS
-	 ********************************************************************************************/
-	/**
-	 * 
-	 */
 	@Override
 	protected Object[] createColumnHeaders() {
 
@@ -246,9 +241,6 @@ public class PreviewTable extends AbstractInstructionTable {
 		return colsNames;
 	}
 
-	/**
-	 * 
-	 */
 	@Override
 	protected JToolBar createToolbar() {
 		JToolBar toolbar1 = new JToolBar();
@@ -293,10 +285,6 @@ public class PreviewTable extends AbstractInstructionTable {
 		return dataObjects;
 	}
 
-	/*********************************************************************************************
-	 * PRIVATE METHODS
-	 ********************************************************************************************/
-
 	private void buildPreviewString(int instrSize, String valueStr, String maskStr, int posptr,
 			int row) {
 
@@ -328,8 +316,8 @@ public class PreviewTable extends AbstractInstructionTable {
 	}
 
 	private void createCopyBtn(JToolBar toolbar1) {
-		Icon copyIcon = ResourceManager.loadImage("images/page_white_copy.png");
-		Action copyAction = new CopyAction("copy", (ImageIcon) copyIcon,
+		Icon copyIcon = Icons.COPY_ICON;
+		Action copyAction = new CopyAction("copy", copyIcon,
 			"Copy the full search string to clipboard");
 		EmptyBorderButton copyBtn = new EmptyBorderButton();
 		copyBtn.setAction(copyAction);
@@ -339,8 +327,8 @@ public class PreviewTable extends AbstractInstructionTable {
 	}
 
 	private EmptyBorderToggleButton createHexViewBtn(JToolBar toolbar1) {
-		Icon hexIcon = ResourceManager.loadImage("images/hexData.png");
-		Action hexAction = new HexAction("hex", (ImageIcon) hexIcon, "hex view");
+		Icon hexIcon = new GIcon("icon.plugin.instructiontable.hex");
+		Action hexAction = new HexAction("hex", hexIcon, "hex view");
 		EmptyBorderToggleButton hexBtn = new EmptyBorderToggleButton();
 		hexBtn.setAction(hexAction);
 		hexBtn.setName("Hex View Button");
@@ -351,8 +339,8 @@ public class PreviewTable extends AbstractInstructionTable {
 	}
 
 	private EmptyBorderToggleButton createBinaryViewBtn(JToolBar toolbar1) {
-		Icon binaryIcon = ResourceManager.loadImage("images/binaryData.gif");
-		Action binaryAction = new BinaryAction("binary", (ImageIcon) binaryIcon, "binary view");
+		Icon binaryIcon = new GIcon("icon.plugin.instructiontable.binary");
+		Action binaryAction = new BinaryAction("binary", binaryIcon, "binary view");
 		EmptyBorderToggleButton binaryBtn = new EmptyBorderToggleButton();
 		binaryBtn.setAction(binaryAction);
 		binaryBtn.setName("binary view button");
@@ -449,19 +437,19 @@ public class PreviewTable extends AbstractInstructionTable {
 		createCopyNoSpacesAction(owner);
 		copyNoSpacesAction.setPopupMenuData(
 			new MenuData(new String[] { "Copy Special", "Selected instructions (no spaces)" },
-				ResourceManager.loadImage("images/page_white_copy.png"), actionMenuGroup,
+				Icons.COPY_ICON, actionMenuGroup,
 				MenuData.NO_MNEMONIC, Integer.toString(1)));
 
 		createCopyInstructionAction(owner);
 		copyInstructionAction.setPopupMenuData(
 			new MenuData(new String[] { "Copy Special", "Selected Instructions" },
-				ResourceManager.loadImage("images/page_white_copy.png"), actionMenuGroup,
+				Icons.COPY_ICON, actionMenuGroup,
 				MenuData.NO_MNEMONIC, Integer.toString(1)));
 
 		createCopyInstructionWithCommentsAction(owner);
 		copyInstructionWithCommentsAction.setPopupMenuData(
 			new MenuData(new String[] { "Copy Special", "Selected Instructions (with comments)" },
-				ResourceManager.loadImage("images/page_white_copy.png"), actionMenuGroup,
+				Icons.COPY_ICON, actionMenuGroup,
 				MenuData.NO_MNEMONIC, Integer.toString(1)));
 
 		dialog.addAction(copyNoSpacesAction);
@@ -488,8 +476,12 @@ public class PreviewTable extends AbstractInstructionTable {
 
 						if (comment != null) {
 							StringBuilder builder = new StringBuilder();
-							builder.append(val).append("\t").append("// ").append(comment).append(
-								"\n");
+							builder.append(val)
+									.append("\t")
+									.append("// ")
+									.append(comment)
+									.append(
+										"\n");
 							val = builder.toString();
 						}
 					}
@@ -566,7 +558,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private class BinaryAction extends AbstractAction {
 
-		public BinaryAction(String text, ImageIcon icon, String desc) {
+		public BinaryAction(String text, Icon icon, String desc) {
 			super(text, icon);
 			putValue(SHORT_DESCRIPTION, desc);
 		}
@@ -580,7 +572,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private class HexAction extends AbstractAction {
 
-		public HexAction(String text, ImageIcon icon, String desc) {
+		public HexAction(String text, Icon icon, String desc) {
 			super(text, icon);
 			putValue(SHORT_DESCRIPTION, desc);
 		}
@@ -594,7 +586,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private class CopyAction extends AbstractAction {
 
-		public CopyAction(String text, ImageIcon icon, String desc) {
+		public CopyAction(String text, Icon icon, String desc) {
 			super(text, icon);
 			putValue(SHORT_DESCRIPTION, desc);
 

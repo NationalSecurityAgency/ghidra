@@ -43,13 +43,10 @@ public class ClearMatchTask extends VtTask {
 		this.controller = controller;
 		this.matches = matches;
 
-		VTSession session = controller.getSession();
-
 		if (!(session instanceof VTSessionDB)) {
 			throw new IllegalArgumentException(
 				"Unexpected condition - VTSession is not a DB object!");
 		}
-
 	}
 
 	@Override
@@ -63,7 +60,7 @@ public class ClearMatchTask extends VtTask {
 		monitor.setMessage("Clearing matches");
 		monitor.initialize(matches.size());
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTAssociation association = match.getAssociation();
 			VTAssociationStatus status = association.getStatus();
 			if (status == VTAssociationStatus.BLOCKED || status == VTAssociationStatus.AVAILABLE) {
@@ -89,7 +86,7 @@ public class ClearMatchTask extends VtTask {
 			return;
 		}
 		for (VTMarkupItem item : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			maybeUnapply(item);
 			maybeClearStatus(item);
 			maybeResetDestinationAddressToDefault(item, correlation, monitor);

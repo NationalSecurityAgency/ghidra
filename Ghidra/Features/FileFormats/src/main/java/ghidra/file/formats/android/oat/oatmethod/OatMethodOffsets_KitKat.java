@@ -22,9 +22,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat.h#107
- *
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat.h#107">kitkat-release/runtime/oat.h</a>
  */
 public class OatMethodOffsets_KitKat extends OatMethodOffsets {
 

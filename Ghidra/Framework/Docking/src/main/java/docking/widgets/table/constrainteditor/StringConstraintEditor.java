@@ -15,13 +15,16 @@
  */
 package docking.widgets.table.constrainteditor;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.StringColumnConstraint;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 /**
  * A constraint editor for String-type values.
@@ -50,10 +53,12 @@ public class StringConstraintEditor extends AbstractColumnConstraintEditor<Strin
 		textField = new JTextField();
 		textField.getDocument().addUndoableEditListener(e -> valueChanged());
 
+		DockingUtils.installUndoRedo(textField);
+
 		panel.add(textField, BorderLayout.CENTER);
 
 		infoLabel = new GDHtmlLabel("abc");  // temporary text in the label so that it sizes properly
-		infoLabel.setForeground(Color.RED);
+		infoLabel.setForeground(Messages.ERROR);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel, BorderLayout.SOUTH);
 		return panel;
@@ -77,7 +82,7 @@ public class StringConstraintEditor extends AbstractColumnConstraintEditor<Strin
 
 	@Override
 	protected void updateInfoMessage(boolean isValid) {
-		// uses &nbsp to presever the labels height.
+		// uses &nbsp to preserve the label's height
 		String status = formatStatus(isValid ? "&nbsp;" : errorMessage, true);
 		infoLabel.setText(status);
 	}

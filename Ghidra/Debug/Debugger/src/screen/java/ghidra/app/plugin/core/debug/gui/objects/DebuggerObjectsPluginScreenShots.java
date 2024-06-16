@@ -51,10 +51,13 @@ public class DebuggerObjectsPluginScreenShots extends GhidraScreenShotGenerator
 	static class ActionyTestTargetObject
 			extends DefaultTestTargetObject<TestTargetObject, TestTargetObject>
 			implements TargetInterpreter, TargetResumable, TargetSteppable, TargetLauncher,
-			TargetAttacher, TargetAttachable {
+			TargetAttacher, TargetAttachable, TargetThread, TargetExecutionStateful {
 
 		public ActionyTestTargetObject(TestTargetObject parent, String name, String typeHint) {
 			super(parent, name, typeHint);
+			setAttributes(Map.of(
+				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.STOPPED),
+				"Init");
 		}
 
 		@Override
@@ -94,7 +97,7 @@ public class DebuggerObjectsPluginScreenShots extends GhidraScreenShotGenerator
 	}
 
 	/**
-	 * NOTE: The icon selection looks like it relies of "duck typing", which is probably not the
+	 * NOTE: The icon selection looks like it relies on "duck typing", which is probably not the
 	 * Right Way. I would have expected it to consume the type hint. Eh. Anyway, let's take a
 	 * screenshot, shall we?
 	 * 
@@ -203,9 +206,9 @@ public class DebuggerObjectsPluginScreenShots extends GhidraScreenShotGenerator
 		waitForSwing();
 		mb.testModel.session.requestFocus(mb.testModel.session);
 		waitForSwing();
-		mb.testModel.session.requestFocus(thread1a34);
-		waitForSwing();
 		teEnvBlock.changeAttributes(List.of("BOGUS FOCUS"), List.of(), Map.of(), "Clean");
+		waitForSwing();
+		mb.testModel.session.requestFocus(thread1a34);
 		waitForSwing();
 
 		captureIsolatedProvider(objectsProvider, 600, 600);

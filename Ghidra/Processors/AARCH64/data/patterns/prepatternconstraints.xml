@@ -1,0 +1,7 @@
+<patternconstraints>
+  <language id="AARCH64:LE:64:*">
+    <compiler id="windows">
+      <patternfile>AARCH64_win_patterns.xml</patternfile>
+    </compiler>
+  </language>
+</patternconstraints>

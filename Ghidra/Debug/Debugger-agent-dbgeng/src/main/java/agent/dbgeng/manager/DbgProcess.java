@@ -236,4 +236,19 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 */
 	CompletableFuture<Void> remove();
 
+	/**
+	 * Get the address of the associated process structure
+	 */
+	Long getOffset();
+
+	/**
+	 * Get the executable's name
+	 */
+	String getExecutableName();
+
+	/**
+	 * Set the executable's name
+	 */
+	void setExecutableName(String name);
+
 }

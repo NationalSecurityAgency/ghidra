@@ -23,9 +23,15 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
-import ghidra.program.model.address.*;
+import ghidra.framework.data.OpenMode;
+import ghidra.program.database.ProgramAddressFactory;
+import ghidra.program.database.ProgramOverlayAddressSpace;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
+import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -60,7 +66,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	 * @param <OT> the type of object containing the field
 	 */
 	public static class AddressDBFieldCodec<OT extends DBAnnotatedObject & DecodesAddresses>
-			extends AbstractDBFieldCodec<Address, OT, BinaryField> {
+			extends AbstractDBFieldCodec<Address, OT, FixedField10> {
 		static final Charset UTF8 = Charset.forName("UTF-8");
 
 		public static byte[] encode(Address address) {
@@ -68,16 +74,8 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 				return null;
 			}
 			AddressSpace as = address.getAddressSpace();
-			ByteBuffer buf = ByteBuffer.allocate(Byte.BYTES + Short.BYTES + Long.BYTES);
-			if (as instanceof OverlayAddressSpace) {
-				buf.put((byte) 1);
-				OverlayAddressSpace os = (OverlayAddressSpace) as;
-				buf.putShort((short) os.getDatabaseKey());
-			}
-			else {
-				buf.put((byte) 0);
-				buf.putShort((short) as.getSpaceID());
-			}
+			ByteBuffer buf = ByteBuffer.allocate(Short.BYTES + Long.BYTES);
+			buf.putShort((short) as.getSpaceID());
 			buf.putLong(address.getOffset());
 			return buf.array();
 		}
@@ -86,29 +84,19 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			if (enc == null) {
 				return null;
 			}
-			else {
-				ByteBuffer buf = ByteBuffer.wrap(enc);
-				byte overlay = buf.get();
-				final AddressSpace as;
-				if (overlay == 1) {
-					short key = buf.getShort();
-					as = osa.spacesByKey.get(key & 0xffffL);
-				}
-				else {
-					short id = buf.getShort();
-					as = osa.trace.getInternalAddressFactory().getAddressSpace(id);
-				}
-				long offset = buf.getLong();
-				return as.getAddress(offset);
-			}
+			ByteBuffer buf = ByteBuffer.wrap(enc);
+			short id = buf.getShort();
+			final AddressSpace as = osa.trace.getInternalAddressFactory().getAddressSpace(id);
+			long offset = buf.getLong();
+			return as.getAddress(offset);
 		}
 
 		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
-			super(Address.class, objectType, BinaryField.class, field, column);
+			super(Address.class, objectType, FixedField10.class, field, column);
 		}
 
 		@Override
-		public void store(Address value, BinaryField f) {
+		public void store(Address value, FixedField10 f) {
 			f.setBinaryData(encode(value));
 		}
 
@@ -133,8 +121,6 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 
 		static final String NAME_COLUMN_NAME = "Name";
 		static final String BASE_COLUMN_NAME = "Base";
-
-		// NOTE: I don't care to record min/max limit
 
 		@DBAnnotatedColumn(NAME_COLUMN_NAME)
 		static DBObjectColumn NAME_COLUMN;
@@ -164,9 +150,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	protected final DBCachedObjectStore<DBTraceOverlaySpaceEntry> overlayStore;
 	protected final DBCachedObjectIndex<String, DBTraceOverlaySpaceEntry> overlaysByName;
 
-	private final Map<Long, AddressSpace> spacesByKey = new HashMap<>();
-
-	public DBTraceOverlaySpaceAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceOverlaySpaceAdapter(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace) throws VersionException, IOException {
 		this.dbh = dbh;
 		this.lock = lock;
@@ -199,48 +183,93 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	}
 
 	protected void resyncAddressFactory(TraceAddressFactory factory) {
-		// Clean and rename existing overlays, first
+
+		// Perform reconciliation of overlay address spaces while attempting to preserve 
+		// address space instances associated with a given key
+
+		// Put all overlay records into key-based map
+		Map<Long, DBTraceOverlaySpaceEntry> keyToRecordMap = new HashMap<>(overlayStore.asMap());
+
+		// Examine existing overlay spaces for removals and renames
+		List<ProgramOverlayAddressSpace> renameList = new ArrayList<>();
 		for (AddressSpace space : factory.getAllAddressSpaces()) {
-			if (!(space instanceof OverlayAddressSpace)) {
-				continue;
-			}
-			OverlayAddressSpace os = (OverlayAddressSpace) space;
-			DBTraceOverlaySpaceEntry ent = overlayStore.getObjectAt(os.getDatabaseKey());
-			if (ent == null) {
-				spacesByKey.remove(os.getDatabaseKey());
-				factory.removeOverlaySpace(os.getName());
-			}
-			else if (!os.getName().equals(ent.name)) {
-				factory.removeOverlaySpace(os.getName());
-				os.setName(ent.name);
-				try {
-					factory.addOverlayAddressSpace(os);
+			if (space instanceof ProgramOverlayAddressSpace os) {
+				String name = os.getName();
+				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(os.getKey());
+				if (ent == null || !isCompatibleOverlay(os, ent, factory)) {
+					// Remove overlay if entry does not exist or base space differs
+					factory.removeOverlaySpace(name);
 				}
-				catch (DuplicateNameException e) {
-					throw new AssertionError(); // I just removed it
+				else if (name.equals(ent.name)) {
+					keyToRecordMap.remove(os.getKey());
+					continue; // no change to space
+				}
+				else {
+					// Add space to map of those that need to be renamed
+					renameList.add(os);
+					factory.removeOverlaySpace(name);
 				}
 			}
-			// else it's already in sync
 		}
-		// Add missing overlays
-		for (DBTraceOverlaySpaceEntry ent : overlayStore.asMap().values()) {
-			AddressSpace exists = factory.getAddressSpace(ent.name);
-			if (exists != null) {
-				// it's already in sync and/or its a physical space
-				continue;
+
+		try {
+			// Handle all renamed overlays which had been temporarily removed from factory
+			for (ProgramOverlayAddressSpace existingSpace : renameList) {
+				long key = existingSpace.getKey();
+				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(key);
+				existingSpace.setName(ent.name);
+				factory.addOverlaySpace(existingSpace); // re-add renamed space
+				keyToRecordMap.remove(key);
 			}
-			AddressSpace baseSpace = factory.getAddressSpace(ent.baseSpace);
-			try {
-				OverlayAddressSpace space = factory.addOverlayAddressSpace(ent.name, true,
-					baseSpace, baseSpace.getMinAddress().getOffset(),
-					baseSpace.getMaxAddress().getOffset());
-				space.setDatabaseKey(ent.getKey());
-				spacesByKey.put(space.getDatabaseKey(), space);
-			}
-			catch (IllegalArgumentException e) {
-				throw new AssertionError(); // Name should be validated already, no?
+
+			// Add any remaing overlay which are missing from factory
+			for (long key : keyToRecordMap.keySet()) {
+				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(key);
+				String spaceName = ent.name;
+				AddressSpace baseSpace = factory.getAddressSpace(ent.baseSpace);
+				factory.addOverlaySpace(key, spaceName, baseSpace);
 			}
 		}
+		catch (IllegalArgumentException | DuplicateNameException e) {
+			throw new AssertionError("Unexpected error updating overlay address spaces", e);
+		}
+
+		factory.refreshStaleOverlayStatus();
+	}
+
+	private boolean isCompatibleOverlay(ProgramOverlayAddressSpace os, DBTraceOverlaySpaceEntry ent,
+			ProgramAddressFactory factory) {
+		AddressSpace baseSpace = factory.getAddressSpace(ent.baseSpace);
+		if (baseSpace == null) {
+			// Error condition should be handled better - language may have dropped original base space
+			throw new RuntimeException("Base space for overlay not found: " + ent.baseSpace);
+		}
+		return baseSpace == os.getOverlayedSpace();
+	}
+
+	protected AddressSpace doCreateOverlaySpace(String name, AddressSpace base)
+			throws DuplicateNameException {
+		TraceAddressFactory factory = trace.getInternalAddressFactory();
+
+		if (!factory.isValidOverlayBaseSpace(base)) {
+			throw new IllegalArgumentException(
+				"Invalid address space for overlay: " + base.getName());
+		}
+
+		if (factory.getAddressSpace(name) != null) {
+			throw new DuplicateNameException(
+				"Overlay space '" + name + "' duplicates name of another address space");
+		}
+
+		DBTraceOverlaySpaceEntry ent = overlayStore.create();
+		ProgramOverlayAddressSpace space = factory.addOverlaySpace(ent.getKey(), name, base);
+
+		// Only if it succeeds do we store the record
+		ent.set(space.getName(), base.getName());
+		trace.updateViewsAddSpaceBlock(space);
+		trace.setChanged(
+			new TraceChangeRecord<>(TraceEvents.OVERLAY_ADDED, null, trace, null, space));
+		return space;
 	}
 
 	public AddressSpace createOverlayAddressSpace(String name, AddressSpace base)
@@ -251,15 +280,24 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			if (factory.getAddressSpace(name) != null) {
 				throw new DuplicateNameException("Address space " + name + " already exists.");
 			}
+			return doCreateOverlaySpace(name, base);
+		}
+	}
 
-			OverlayAddressSpace space =
-				factory.addOverlayAddressSpace(name, true, base, base.getMinAddress().getOffset(),
-					base.getMaxAddress().getOffset());
-			// Only if it succeeds do we store the record
-			DBTraceOverlaySpaceEntry ent = overlayStore.create();
-			ent.set(space.getName(), base.getName());
-			trace.updateViewsAddSpaceBlock(space);
-			return space;
+	public AddressSpace getOrCreateOverlayAddressSpace(String name, AddressSpace base) {
+		// TODO: Exclusive lock?
+		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			TraceAddressFactory factory = trace.getInternalAddressFactory();
+			AddressSpace space = factory.getAddressSpace(name);
+			if (space != null) {
+				return space.getPhysicalSpace() == base ? space : null;
+			}
+			try {
+				return doCreateOverlaySpace(name, base);
+			}
+			catch (DuplicateNameException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 
@@ -276,6 +314,10 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			assert space != null;
 			factory.removeOverlaySpace(name);
 			trace.updateViewsDeleteSpaceBlock(space);
+			trace.setChanged(
+				new TraceChangeRecord<>(TraceEvents.OVERLAY_DELETED, null, trace, space, null));
+			invalidateCache(true);
 		}
 	}
+
 }

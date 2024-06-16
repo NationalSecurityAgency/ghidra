@@ -48,7 +48,13 @@ public class ApplicationProperties extends Properties {
 	 * The application's layout version.  The layout version should get incremented any time
 	 * something changes about the application that could affect external tools that need to 
 	 * navigate the application in some way (such as the Eclipse GhidraDev plugin).
-	 * For example, "1".
+	 * <p>
+	 * Current application versions are:
+	 * <ul>
+	 *   <li>1: Layout used by Ghidra &lt; 11.1</li>
+	 *   <li>2: Introduced with Ghidra 11.1.  Default user settings/cache/temp directories changed,
+	 *       and XDG environment variables are supported.
+	 * </ul>
 	 */
 	public static final String APPLICATION_LAYOUT_VERSION_PROPERTY = "application.layout.version";
 
@@ -58,14 +64,23 @@ public class ApplicationProperties extends Properties {
 	public static final String APPLICATION_GRADLE_MIN_PROPERTY = "application.gradle.min";
 
 	/**
-	 * The minimum major version of Java required to run the application. For example, "8".
+	 * The earliest version of gradle after {@link #APPLICATION_GRADLE_MIN_PROPERTY} that is
+	 * unsupported.
+	 * <p>
+	 * If all versions of Gradle greater than or equal to {@link #APPLICATION_GRADLE_MIN_PROPERTY}
+	 * are supported, this property should not be set.
+	 */
+	public static final String APPLICATION_GRADLE_MAX_PROPERTY = "application.gradle.max";
+
+	/**
+	 * The minimum major version of Java required to run the application.
 	 */
 	public static final String APPLICATION_JAVA_MIN_PROPERTY = "application.java.min";
 
 	/**
-	 * The maximum major version of Java the application will run under. For example, "8".
+	 * The maximum major version of Java the application will run under.
 	 * <p>
-	 * If all versions of Java greater than {@link #APPLICATION_JAVA_MIN_PROPERTY} are
+	 * If all versions of Java greater than or equal to {@link #APPLICATION_JAVA_MIN_PROPERTY} are
 	 * supported, this property should not be set.
 	 */
 	public static final String APPLICATION_JAVA_MAX_PROPERTY = "application.java.max";

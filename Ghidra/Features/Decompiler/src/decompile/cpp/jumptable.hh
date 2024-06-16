@@ -16,11 +16,13 @@
 /// \file jumptable.hh
 /// \brief Classes to support jump-tables and their recovery
 
-#ifndef __CPUI_JUMPTABLE__
-#define __CPUI_JUMPTABLE__
+#ifndef __JUMPTABLE_HH__
+#define __JUMPTABLE_HH__
 
 #include "emulateutil.hh"
 #include "rangeutil.hh"
+
+namespace ghidra {
 
 class EmulateFunction;
 
@@ -60,7 +62,7 @@ public:
   LoadTable(const Address &ad,int4 sz,int4 nm) { addr = ad; size = sz; num = nm; }	///< Construct a full table
   bool operator<(const LoadTable &op2) const { return (addr < op2.addr); }	///< Compare \b this with another table by address
   void encode(Encoder &encoder) const;				///< Encode a description of \b this as an \<loadtable> element
-  void decode(Decoder &decoder,Architecture *glb);		///< Decode \b this table from a \<loadtable> element
+  void decode(Decoder &decoder);				///< Decode \b this table from a \<loadtable> element
   static void collapseTable(vector<LoadTable> &table);		///< Collapse a sequence of table descriptions
 };
 
@@ -111,8 +113,7 @@ public:
 class EmulateFunction : public EmulatePcodeOp {
   Funcdata *fd;				///< The function being emulated
   map<Varnode *,uintb> varnodeMap;	///< Light-weight memory state based on Varnodes
-  bool collectloads;			///< Set to \b true if the emulator collects individual LOAD addresses
-  vector<LoadTable> loadpoints;		///< The set of collected LOAD records
+  vector<LoadTable> *loadpoints;	///< The set of collected LOAD records (if non-null)
   virtual void executeLoad(void);
   virtual void executeBranch(void);
   virtual void executeBranchind(void);
@@ -122,12 +123,11 @@ class EmulateFunction : public EmulatePcodeOp {
   virtual void fallthruOp(void);
 public:
   EmulateFunction(Funcdata *f);		///< Constructor
-  void setLoadCollect(bool val) { collectloads = val; }	///< Set whether we collect LOAD information
+  void setLoadCollect(vector<LoadTable> *val) { loadpoints = val; }	///< Set where/if we collect LOAD information
   virtual void setExecuteAddress(const Address &addr);
   virtual uintb getVarnodeValue(Varnode *vn) const;
   virtual void setVarnodeValue(Varnode *vn,uintb val);
   uintb emulatePath(uintb val,const PathMeld &pathMeld,PcodeOp *startop,Varnode *startvn);
-  void collectLoadPoints(vector<LoadTable> &res) const;	///< Recover any LOAD table descriptions
 };
 
 class FlowInfo;
@@ -141,13 +141,15 @@ class JumpTable;
 class GuardRecord {
   PcodeOp *cbranch;		///< PcodeOp CBRANCH the branches around the switch
   PcodeOp *readOp;		///< The immediate PcodeOp causing the restriction
-  int4 indpath;			///< Specific CBRANCH path going to the switch
-  CircleRange range;		///< Range of values causing the CBRANCH to take the path to the switch
   Varnode *vn;			///< The Varnode being restricted
   Varnode *baseVn;		///< Value being (quasi)copied to the Varnode
+  int4 indpath;			///< Specific CBRANCH path going to the switch
   int4 bitsPreserved;		///< Number of bits copied (all other bits are zero)
+  CircleRange range;		///< Range of values causing the CBRANCH to take the path to the switch
+  bool unrolled;		///< \b true if guarding CBRANCH is duplicated across multiple blocks
 public:
-  GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v);	///< Constructor
+  GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v,bool unr=false);	///< Constructor
+  bool isUnrolled(void) const { return unrolled; }	///< Is \b this guard duplicated across multiple blocks
   PcodeOp *getBranch(void) const { return cbranch; }	///< Get the CBRANCH associated with \b this guard
   PcodeOp *getReadOp(void) const { return readOp; }	///< Get the PcodeOp immediately causing the restriction
   int4 getPath(void) const { return indpath; }		///< Get the specific path index going towards the switch
@@ -182,6 +184,7 @@ public:
   virtual PcodeOp *getStartOp(void) const=0;		///< Get the PcodeOp associated with the current value
   virtual bool isReversible(void) const=0;	///< Return \b true if the current value can be reversed to get a label
   virtual JumpValues *clone(void) const=0;	///< Clone \b this iterator
+  static const uint8 NO_LABEL;			///< Jump-table label reserved to indicate \e no \e label
 };
 
 /// \brief single entry switch variable that can take a range of values
@@ -215,7 +218,7 @@ class JumpValuesRangeDefault : public JumpValuesRange {
   uintb extravalue;		///< The extra value
   Varnode *extravn;		///< The starting Varnode associated with the extra value
   PcodeOp *extraop;		///< The starting PcodeOp associated with the extra value
-  mutable bool lastvalue;	///< \b true is the extra value has been visited by the iterator
+  mutable bool lastvalue;	///< \b true if the extra value has been visited by the iterator
 public:
   void setExtraValue(uintb val) { extravalue = val; }	///< Set the extra value explicitly
   void setDefaultVn(Varnode *vn) { extravn = vn; }	///< Set the associated start Varnode
@@ -267,7 +270,9 @@ public:
   /// \param indop is the root BRANCHIND of the switch
   /// \param addresstable will hold the list of Addresses
   /// \param loadpoints if non-null will hold LOAD table information used by the model
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const=0;
+  /// \param loadcounts if non-null will hold number of LOADs per switch value
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const=0;
 
   /// \brief Recover the unnormalized switch variable
   ///
@@ -312,16 +317,31 @@ public:
   /// Individual addresses are checked against the function or its program to determine
   /// if they are reasonable. This method can optionally remove addresses from the table.
   /// If it does so, the underlying model is changed to reflect the removal.
+  /// Passing in \b loadcounts indicates that LOAD addresses were collected in \b loadpoints,
+  /// which may need to have elements removed as well.
   /// \param fd is the function containing the switch
   /// \param indop is the root BRANCHIND of the switch
   /// \param addresstable is the list of recovered Addresses, which may be modified
+  /// \param loadpoints are any LOAD addresses associated with the table
+  /// \param loadcounts (if non-null) associates each switch value with the count of LOADs used
   /// \return \b true if there are (at least some) reasonable addresses in the table
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts)=0;
 
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
-  virtual void clear(void) {}				///< Clear any non-permanent aspects of the model
-  virtual void encode(Encoder &encoder) const {} 	///< Encode this model to a stream
-  virtual void decode(Decoder &decoder,Architecture *glb) {} ///< Decode \b this model from a stream
+
+  /// \brief Clear any non-permanent aspects of the model
+  virtual void clear(void) {}
+
+  /// \brief Encode \b this model to a stream
+  ///
+  /// \param encoder is the stream encoder
+  virtual void encode(Encoder &encoder) const {}
+
+  /// \brief Decode \b this model from a stream
+  ///
+  /// \param decoder is the stream decoder
+  virtual void decode(Decoder &decoder) {}
 };
 
 /// \brief A trivial jump-table model, where the BRANCHIND input Varnode is the switch variable
@@ -337,12 +357,14 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return size; }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop) { return (Varnode *)0; }
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
 };
 
@@ -364,6 +386,7 @@ protected:
   static bool ispoint(Varnode *vn);	///< Is it possible for the given Varnode to be a switch variable?
   static int4 getStride(Varnode *vn);	///< Get the step/stride associated with the Varnode
   static uintb backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn);
+  static uintb getMaxValue(Varnode *vn);	///< Get maximum value associated with the given Varnode
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);
   void calcRange(Varnode *vn,CircleRange &rng) const;
@@ -372,6 +395,8 @@ protected:
   void markFoldableGuards();
   void markModel(bool val);		///< Mark (or unmark) all PcodeOps involved in the model
   bool flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp);	///< Check if the given Varnode flows to anything other than \b this model
+  bool checkCommonCbranch(vector<Varnode *> &varArray,BlockBasic *bl);	///< Check that all incoming blocks end with a CBRANCH
+  void checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmask);
 
   /// \brief Eliminate the given guard to \b this switch
   ///
@@ -391,12 +416,14 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return jrange->getSize(); }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable);
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts);
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
 };
@@ -454,16 +481,18 @@ public:
   virtual bool isOverride(void) const { return true; }
   virtual int4 getTableSize(void) const { return addrtable.size(); }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   // findUnnormalized inherited from JumpBasic
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   // foldInNormalization inherited from JumpBasic
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
   virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,Architecture *glb);
+  virtual void decode(Decoder &decoder);
 };
 
 class JumpAssistOp;
@@ -491,23 +520,38 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return sizeIndices+1; }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void) { assistOp = (PcodeOp *)0; switchvn = (Varnode *)0; }
 };
 
 /// \brief A map from values to control-flow targets within a function
 ///
-/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all
-/// the information necessary to model the indirect jump as a \e switch statement.
-/// It knows how to map from specific switch variable values to the destination
-/// \e case block and how to label the value.
+/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all the information necessary
+/// to model the indirect jump as a \e switch statement. It knows how to map from specific switch variable
+/// values to the destination \e case block and how to label the value.  The table also establishes a
+/// \e default target which is either
+///   - the \e default case of the switch or
+///   - the exit point of the switch
 class JumpTable {
+public:
+  /// \brief Recovery status for a specific JumpTable
+  enum RecoveryMode {
+    success = 0,		///< JumpTable is fully recovered
+    fail_normal = 1,		///< Normal failure to recover
+    fail_thunk = 2,		///< Likely \b thunk
+    fail_noflow = 3,		///< No legal flow to BRANCHIND
+    fail_return = 4,  		///< Likely \b return operation
+    fail_callother = 5		///< Address formed by CALLOTHER
+  };
+private:
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block
@@ -528,15 +572,15 @@ class JumpTable {
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
   int4 defaultBlock;		///< The out-edge corresponding to the \e default switch destination (-1 = undefined)
   int4 lastBlock;		///< Block out-edge corresponding to last entry in the address table
-  uint4 maxtablesize;		///< Maximum table size we allow to be built (sanity check)
   uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
   uint4 maxleftright;		///< Maximum shifts to normalize
   uint4 maxext;			///< Maximum extensions to normalize
   int4 recoverystage;		///< 0=no stages recovered, 1=additional stage needed, 2=complete
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
+  bool defaultIsFolded;		///< The \e default block is the target of a folded CBRANCH (and cannot have a label)
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
-  void sanityCheck(Funcdata *fd);	///< Perform sanity check on recovered address targets
+  void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
   int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function
 public:
@@ -554,16 +598,17 @@ public:
   const Address &getOpAddress(void) const { return opaddress; }	///< Get the address of the BRANCHIND for the switch
   PcodeOp *getIndirectOp(void) const { return indirect; }	///< Get the BRANCHIND PcodeOp
   void setIndirectOp(PcodeOp *ind) { opaddress = ind->getAddr(); indirect = ind; }	///< Set the BRANCHIND PcodeOp
-  void setMaxTableSize(uint4 val) { maxtablesize = val; }	///< Set the maximum entries allowed in the address table
   void setNormMax(uint4 maddsub,uint4 mleftright,uint4 mext) {
     maxaddsub = maddsub; maxleftright = mleftright; maxext = mext; }	///< Set the switch variable normalization model restrictions
   void setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
-  void setLastAsMostCommon(void);		///< Set the most common jump-table target to be the last address in the table
+  void setLastAsDefault(void);		///< Set the \e default jump-table target to be the last address in the table
   void setDefaultBlock(int4 bl) { defaultBlock = bl; }		///< Set out-edge of the switch destination considered to be \e default
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected
+  void setFoldedDefault(void) { defaultIsFolded = true; }	///< Mark that the \e default block is a folded CBRANCH target
+  bool hasFoldedDefault(void) const { return defaultIsFolded; }	///< Return \b true if the \e default block is a folded CBRANCH target
   void addBlockToSwitch(BlockBasic *bl,uintb lab);		///< Force a given basic-block to be a switch destination
   void switchOver(const FlowInfo &flow);				///< Convert absolute addresses to block indices
   uintb getLabelByIndex(int4 index) const { return label[index]; }	///< Given a \e case index, get its label
@@ -596,4 +641,5 @@ inline bool JumpTable::IndexPair::compareByPosition(const IndexPair &op1,const I
   return (op1.blockPosition < op2.blockPosition);
 }
 
+} // End namespace ghidra
 #endif

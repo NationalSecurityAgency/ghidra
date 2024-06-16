@@ -21,6 +21,8 @@ import java.beans.PropertyEditorSupport;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.framework.options.CustomOptionsEditor;
 import ghidra.util.layout.PairLayout;
 
@@ -86,7 +88,7 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 		}
 
 		JPanel panel = new JPanel(new PairLayout(6, 10));
-		
+
 		panel.add(new GDLabel(""));
 		GDLabel label = new GDLabel("seconds", SwingConstants.RIGHT);
 		panel.add(label);
@@ -95,8 +97,8 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 			label = new GDLabel(taskName, SwingConstants.RIGHT);
 			label.setToolTipText(taskName);
 			panel.add(label);
-			
-			Long timeMS = times.getTime(taskName); 
+
+			Long timeMS = times.getTime(taskName);
 			if (timeMS == null) {
 				continue;
 			}
@@ -108,19 +110,17 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 		}
 
 		label = new GDLabel("TOTAL", SwingConstants.RIGHT);
-		label.setFont(label.getFont().deriveFont(Font.BOLD));
+		Gui.registerFont(label, Font.BOLD);
 		panel.add(label);
 
 		JTextField valueField =
 			new JTextField(StoredAnalyzerTimes.formatTimeMS(times.getTotalTime()));
 		valueField.setEditable(false);
 		valueField.setHorizontalAlignment(SwingConstants.RIGHT);
-		valueField.setBorder(BorderFactory.createLineBorder(Color.black, 2));
+		valueField.setBorder(BorderFactory.createLineBorder(Colors.BORDER, 2));
 		panel.add(valueField);
 
 		return panel;
 	}
-
-
 
 }

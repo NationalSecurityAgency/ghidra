@@ -19,10 +19,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 import ghidra.program.model.symbol.*;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceNamespaceSymbolView;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -37,7 +37,7 @@ public class DBTraceNamespaceSymbolView
 
 	@Override
 	public DBTraceNamespaceSymbol add(String name, TraceNamespaceSymbol parent, SourceType source)
-			throws DuplicateNameException, InvalidInputException, IllegalArgumentException {
+			throws DuplicateNameException, InvalidInputException {
 		if (source == SourceType.DEFAULT) {
 			throw new IllegalArgumentException();
 		}
@@ -47,8 +47,8 @@ public class DBTraceNamespaceSymbolView
 			manager.assertUniqueName(name, dbnsParent);
 			DBTraceNamespaceSymbol namespace = store.create();
 			namespace.set(name, dbnsParent, source);
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceSymbolChangeType.ADDED, null, namespace));
+			manager.trace
+					.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_ADDED, null, namespace));
 			return namespace;
 		}
 	}

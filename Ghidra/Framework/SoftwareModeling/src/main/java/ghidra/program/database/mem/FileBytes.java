@@ -208,9 +208,10 @@ public class FileBytes {
 	 * 
 	 * @param offset the offset into the file bytes.
 	 * @param b the new byte value;
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException if the write to the database fails.
 	 */
-	synchronized void putByte(long offset, byte b) throws IOException {
+	synchronized void putByte(long offset, byte b) throws IndexOutOfBoundsException, IOException {
 
 		checkValid();
 
@@ -252,6 +253,7 @@ public class FileBytes {
 	 * @param off the offset into the byte array to get the bytes to write.
 	 * @param length the number of bytes to write.
 	 * @return the number of bytes written
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException if the write to the database fails.
 	 */
 	synchronized int putBytes(long offset, byte[] b, int off, int length) throws IOException {
@@ -294,7 +296,8 @@ public class FileBytes {
 		return length;
 	}
 
-	private byte getByte(DBBuffer[] buffers, long offset) throws IOException {
+	private byte getByte(DBBuffer[] buffers, long offset)
+			throws IndexOutOfBoundsException, IOException {
 
 		checkValid();
 
@@ -313,7 +316,7 @@ public class FileBytes {
 	}
 
 	private int getBytes(DBBuffer[] buffers, long offset, byte[] b, int off, int length)
-			throws IOException {
+			throws IndexOutOfBoundsException, IOException {
 
 		checkValid();
 

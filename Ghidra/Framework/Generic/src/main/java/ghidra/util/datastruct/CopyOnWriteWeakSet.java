@@ -16,6 +16,7 @@
 package ghidra.util.datastruct;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.IteratorUtils;
 
@@ -25,12 +26,12 @@ import org.apache.commons.collections4.IteratorUtils;
  * number of event notification operations significantly out numbers mutations to this structure
  * (e.g., adding and removing items.
  * <p>
- * An example use cases where using this class is a good fit would be a listener list where
+ * An example use case where using this class is a good fit would be a listener list where
  * listeners are added during initialization, but not after that.   Further, this hypothetical
- * list fires a large number of events.
+ * list is used to fire a large number of events.
  * <p>
  * A bad use of this class would be as a container to store widgets where the container the
- * contents are changed often, but iterated over very little.
+ * contents are changed often, but iterated very little.
  * <p>
  * Finally, if this structure is only ever used from a single thread, like the Swing thread, then
  * you do not need the overhead of this class, as the Swing thread synchronous access guarantees
@@ -47,21 +48,27 @@ class CopyOnWriteWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public synchronized Iterator<T> iterator() {
+	public Iterator<T> iterator() {
 		return IteratorUtils.unmodifiableIterator(weakHashStorage.keySet().iterator());
 	}
 
 	@Override
-	public synchronized void add(T t) {
+	public synchronized boolean add(T t) {
 		maybeWarnAboutAnonymousValue(t);
-		weakHashStorage = new WeakHashMap<>(weakHashStorage);
-		weakHashStorage.put(t, null);
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		boolean contains = newStorage.containsKey(t);
+		newStorage.put(t, null);
+		weakHashStorage = newStorage;
+		return !contains;
 	}
 
 	@Override
-	public synchronized void remove(T t) {
-		weakHashStorage = new WeakHashMap<>(weakHashStorage);
-		weakHashStorage.remove(t);
+	public synchronized boolean remove(Object t) {
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		boolean contains = newStorage.containsKey(t);
+		newStorage.remove(t);
+		weakHashStorage = newStorage;
+		return contains;
 	}
 
 	@Override
@@ -70,22 +77,76 @@ class CopyOnWriteWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public synchronized Collection<T> values() {
+	public Collection<T> values() {
 		return weakHashStorage.keySet();
 	}
 
 	@Override
-	public synchronized boolean isEmpty() {
+	public boolean isEmpty() {
 		return weakHashStorage.isEmpty();
 	}
 
 	@Override
-	public synchronized int size() {
+	public int size() {
 		return weakHashStorage.size();
 	}
 
 	@Override
-	public synchronized boolean contains(T t) {
+	public boolean contains(Object t) {
 		return weakHashStorage.containsKey(t);
+	}
+
+	@Override
+	public Stream<T> stream() {
+		return values().stream();
+	}
+
+	@Override
+	public String toString() {
+		return values().toString();
+	}
+
+	/**
+	 * Adds all items to this set.
+	 * <p>
+	 * Note: calling this method will only result in one copy operation.  If {@link #add(Object)}
+	 * were called instead for each item of the iterator, then each call would copy this set.
+	 *
+	 * @param c the items
+	 */
+	@Override
+	public synchronized boolean addAll(Collection<? extends T> c) {
+		// only make one copy for the entire set of changes instead of for each change, as calling
+		// add() would do
+		boolean changed = false;
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		for (T t : c) {
+			changed |= !newStorage.containsKey(t);
+			newStorage.put(t, null);
+		}
+		weakHashStorage = newStorage;
+		return changed;
+	}
+
+	@Override
+	public synchronized boolean retainAll(Collection<?> c) {
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		boolean changed = false;
+		for (T t : newStorage.keySet()) {
+			if (!c.contains(t)) {
+				newStorage.remove(t);
+				changed = true;
+			}
+		}
+		weakHashStorage = newStorage;
+		return changed;
+	}
+
+	@Override
+	public synchronized boolean removeAll(Collection<?> c) {
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		boolean changed = newStorage.keySet().removeAll(c);
+		weakHashStorage = newStorage;
+		return changed;
 	}
 }

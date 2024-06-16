@@ -64,7 +64,7 @@ public class RawEnumeratorImpl extends UnknownExImpl implements RawEnumeratorInt
 		ULONGByReference ulKind = new ULONGByReference();
 		PointerByReference ppValue = new PointerByReference();
 		HRESULT hr = jnaData.GetNext(bref, ulKind, ppValue);
-		if (hr.equals(COMUtilsExtra.E_BOUNDS)) {
+		if (hr.equals(COMUtilsExtra.E_BOUNDS) || hr.equals(COMUtilsExtra.E_CANNOT_READ)) {
 			return null;
 		}
 		COMUtils.checkRC(hr);

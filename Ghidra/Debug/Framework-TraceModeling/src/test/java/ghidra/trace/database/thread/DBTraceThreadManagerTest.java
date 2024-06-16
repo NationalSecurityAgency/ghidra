@@ -19,14 +19,15 @@ import static org.junit.Assert.*;
 
 import java.util.Set;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -38,9 +39,9 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 	TraceThread thread2;
 
 	protected void addThreads() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread1 = threadManager.createThread("Threads[1]", 0);
-			thread2 = threadManager.addThread("Threads[2]", Range.closed(0L, 10L));
+			thread2 = threadManager.addThread("Threads[2]", Lifespan.span(0, 10));
 		}
 	}
 
@@ -58,7 +59,7 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Test
 	public void testAddThread() throws Exception {
 		addThreads();
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			// TODO: Let this work by expanding the life instead
 			threadManager.createThread("Threads[1]", 1);
 			fail();
@@ -87,6 +88,28 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(thread2), Set.copyOf(threadManager.getThreadsByPath("Threads[2]")));
 	}
 
+	protected static class InvalidThreadMatcher extends BaseMatcher<TraceThread> {
+		private final long snap;
+
+		public InvalidThreadMatcher(long snap) {
+			this.snap = snap;
+		}
+
+		@Override
+		public boolean matches(Object actual) {
+			return actual == null || actual instanceof TraceThread thread && !thread.isValid(snap);
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("An invalid or null thread");
+		}
+	}
+
+	protected static InvalidThreadMatcher invalidThread(long snap) {
+		return new InvalidThreadMatcher(snap);
+	}
+
 	@Test
 	public void testLiveThreadByPath() throws Exception {
 		assertNull(threadManager.getLiveThreadByPath(0, "Threads[1]"));
@@ -96,8 +119,8 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(thread2, threadManager.getLiveThreadByPath(0, "Threads[2]"));
 		assertEquals(thread2, threadManager.getLiveThreadByPath(10, "Threads[2]"));
 		assertNull(threadManager.getLiveThreadByPath(0, "Threads[3]"));
-		assertNull(threadManager.getLiveThreadByPath(-1, "Threads[2]"));
-		assertNull(threadManager.getLiveThreadByPath(11, "Threads[2]"));
+		assertThat(threadManager.getLiveThreadByPath(-1, "Threads[2]"), invalidThread(-1));
+		assertThat(threadManager.getLiveThreadByPath(11, "Threads[2]"), invalidThread(11));
 	}
 
 	@Test

@@ -98,7 +98,7 @@ public class CreateRtti2BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	private boolean createRtti1(int rtti1Index)
 			throws CancelledException, InvalidDataTypeException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		CreateRtti1BackgroundCmd cmd =
 			new CreateRtti1BackgroundCmd(model.getRtti1Model(rtti1Index), applyOptions);
@@ -108,7 +108,7 @@ public class CreateRtti2BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected boolean createMarkup() throws CancelledException, InvalidDataTypeException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Program program = model.getProgram();
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
@@ -117,7 +117,7 @@ public class CreateRtti2BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 			return true;
 		}
 		
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Label
 		boolean shouldCreateComment = true;

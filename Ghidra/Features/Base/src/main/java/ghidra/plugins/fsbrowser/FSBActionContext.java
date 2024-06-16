@@ -22,7 +22,7 @@ import java.util.List;
 
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.formats.gfilesystem.*;
@@ -30,7 +30,7 @@ import ghidra.formats.gfilesystem.*;
 /**
  * {@link FileSystemBrowserPlugin}-specific action.
  */
-public class FSBActionContext extends ActionContext {
+public class FSBActionContext extends DefaultActionContext {
 
 	private GTree gTree;
 

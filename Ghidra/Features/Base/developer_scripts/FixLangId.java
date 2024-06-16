@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -37,7 +39,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class FixLangId extends GhidraScript {
 
@@ -78,7 +80,7 @@ public class FixLangId extends GhidraScript {
 			return;
 		}
 
-		dbh.save("Set Language", null, TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh.save("Set Language", null, TaskMonitor.DUMMY);
 		dbh.close();
 	}
 
@@ -137,7 +139,7 @@ public class FixLangId extends GhidraScript {
 
 	public DomainFile askProgramFile(String title) {
 		final DomainFile[] domainFile = new DomainFile[] { null };
-		final DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+		final DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
 		dtd.addOkActionListener(e -> {
 			dtd.close();
 			domainFile[0] = dtd.getDomainFile();

@@ -23,6 +23,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerMappingOffer;
+import ghidra.debug.api.model.DebuggerMappingOpinion;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 

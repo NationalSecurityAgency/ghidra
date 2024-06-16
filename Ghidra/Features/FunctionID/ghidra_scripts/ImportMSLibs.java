@@ -17,7 +17,8 @@
 //@category FunctionID
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.function.Predicate;
 
 import ghidra.app.script.GhidraScript;
@@ -26,9 +27,9 @@ import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.Loader;
-import ghidra.app.util.opinion.MSCoffLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.lang.LanguageDescription;
 import ghidra.program.model.listing.Program;
@@ -68,13 +69,13 @@ public class ImportMSLibs extends GhidraScript {
 		monitor.initialize(non_debug_files.size() + debug_files.size());
 
 		for (File file : non_debug_files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			importLibrary(root, file, false, log);
 		}
 
 		for (File file : debug_files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			importLibrary(root, file, true, log);
 		}
@@ -89,46 +90,49 @@ public class ImportMSLibs extends GhidraScript {
 			CoffArchiveHeader coffArchiveHeader = CoffArchiveHeader.read(provider, TaskMonitor.DUMMY);
 			HashSet<Long> offsetsSeen = new HashSet<Long>();
 			for (CoffArchiveMemberHeader archiveMemberHeader : coffArchiveHeader.getArchiveMemberHeaders()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (offsetsSeen.contains(archiveMemberHeader.getPayloadOffset())) {
 					continue;
 				}
 				offsetsSeen.add(archiveMemberHeader.getPayloadOffset());
 				if (archiveMemberHeader.isCOFF()) {
+					String preferredName = archiveMemberHeader.getName();
 					try (ByteProvider coffProvider = new ByteProviderWrapper(provider,
 						archiveMemberHeader.getPayloadOffset(), archiveMemberHeader.getSize())) {
 						CoffFileHeader header = new CoffFileHeader(coffProvider);
 						if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
-							String preferredName = archiveMemberHeader.getName();
 							String[] splits = splitPreferredName(preferredName);
 
-							List<Program> programs =
+							LoadResults<? extends DomainObject> loadResults =
 								AutoImporter.importFresh(
 									coffProvider,
-									root,
+									state.getProject(),
+									root.getPathname(),
 									this,
 									log,
 									new CancelOnlyWrappingTaskMonitor(monitor),
 									LOADER_FILTER,
 									LOADSPEC_CHOOSER,
 									mangleNameBecauseDomainFoldersAreSoRetro(splits[splits.length - 1]),
-									OptionChooser.DEFAULT_OPTIONS,
-									MultipleProgramsStrategy.ONE_PROGRAM_OR_EXCEPTION);
+									OptionChooser.DEFAULT_OPTIONS);
 
-							if (programs == null || programs.isEmpty()) {
-								printerr("no programs loaded from " + file + " - " +
-									preferredName);
-							}
-
-							if (programs != null) {
-								for (Program program : programs) {
-									program.release(this);
-									DomainFolder destination =
-										establishFolder(root, file, program, isDebug, splits);
-									program.getDomainFile().moveTo(destination);
+							try {
+								for (Loaded<? extends DomainObject> loaded : loadResults) {
+									if (loaded.getDomainObject() instanceof Program program) {
+										loaded.save(state.getProject(), log, monitor);
+										DomainFolder destination =
+											establishFolder(root, file, program, isDebug, splits);
+										program.getDomainFile().moveTo(destination);
+									}
 								}
 							}
+							finally {
+								loadResults.release(this);
+							}
 						}
+					}
+					catch (LoadException e) {
+						printerr("no programs loaded from " + file + " - " + preferredName);
 					}
 				}
 			}
@@ -240,7 +244,7 @@ public class ImportMSLibs extends GhidraScript {
 	private void findFiles(ArrayList<File> non_debug_files, ArrayList<File> debug_files,
 			ArrayList<File> directories) throws CancelledException {
 		for (File directory : directories) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findFiles(non_debug_files, debug_files, directory);
 		}
 	}
@@ -254,7 +258,7 @@ public class ImportMSLibs extends GhidraScript {
 
 		if (files != null) {
 			for (File file : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (file.isFile()) {
 					String lowerName = file.getName().toLowerCase();
 					if (lowerName.endsWith("d.lib")) {
@@ -271,7 +275,7 @@ public class ImportMSLibs extends GhidraScript {
 		}
 
 		for (File file : my_debug) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String lowerName = file.getName().toLowerCase();
 			String non_debug_name = lowerName.substring(0, lowerName.length() - 5) + ".lib";
 			boolean notfound = true;
@@ -294,7 +298,7 @@ public class ImportMSLibs extends GhidraScript {
 		non_debug_files.addAll(my_non_debug);
 
 		for (File subdir : subdirs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findFiles(non_debug_files, debug_files, subdir);
 		}
 	}

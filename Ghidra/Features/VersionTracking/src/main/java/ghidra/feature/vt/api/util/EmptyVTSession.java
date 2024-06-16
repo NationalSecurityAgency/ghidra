@@ -15,7 +15,13 @@
  */
 package ghidra.feature.vt.api.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+import db.Transaction;
 import ghidra.feature.vt.api.main.*;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -23,10 +29,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 public class EmptyVTSession implements VTSession {
 
@@ -87,6 +89,16 @@ public class EmptyVTSession implements VTSession {
 
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
 		// do nothing
 	}
 
@@ -159,7 +171,7 @@ public class EmptyVTSession implements VTSession {
 	}
 
 	@Override
-	public Transaction getCurrentTransaction() {
+	public TransactionInfo getCurrentTransactionInfo() {
 		return null;
 	}
 
@@ -176,6 +188,11 @@ public class EmptyVTSession implements VTSession {
 	@Override
 	public void releaseSynchronizedDomainObject() throws LockException {
 		// do nothing
+	}
+
+	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -301,8 +318,8 @@ public class EmptyVTSession implements VTSession {
 	}
 
 	@Override
-	public void saveToPackedFile(File outputFile, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		// do nothing
 	}
 
@@ -364,6 +381,16 @@ public class EmptyVTSession implements VTSession {
 	@Override
 	public void redo() throws IOException {
 		// do nothing
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public List<String> getAllUndoNames() {
+		return Collections.emptyList();
 	}
 
 	@Override

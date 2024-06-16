@@ -38,6 +38,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -74,22 +75,21 @@ public class PdbPlugin extends Plugin {
 
 	private void createActions() {
 		new ActionBuilder("Load PDB File", this.getName())
-				.supportsDefaultToolContext(true)
-				.withContext(ProgramActionContext.class)
-				.validContextWhen(pac -> pac.getProgram() != null &&
-					PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
-				.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")
-				.menuGroup("Import PDB", "3")
-				.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Load PDB File"))
-				.onAction(pac -> loadPDB(pac))
-				.buildAndInstall(tool);
+			.withContext(ProgramActionContext.class, true)
+			.validContextWhen(pac -> pac.getProgram() != null &&
+				PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
+			.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")
+			.menuGroup("Import PDB", "3")
+			.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Load PDB File"))
+			.onAction(pac -> loadPDB(pac))
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Symbol Server Config", this.getName())
-				.menuPath(ToolConstants.MENU_EDIT, "Symbol Server Config")
-				.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP)
-				.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Symbol Server Config"))
-				.onAction(ac -> configPDB())
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_EDIT, "Symbol Server Config")
+			.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP)
+			.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Symbol Server Config"))
+			.onAction(ac -> configPDB())
+			.buildAndInstall(tool);
 	}
 
 	private void configPDB() {
@@ -106,8 +106,7 @@ public class PdbPlugin extends Plugin {
 			return;
 		}
 
-		boolean analyzed =
-			program.getOptions(Program.PROGRAM_INFO).getBoolean(Program.ANALYZED, false);
+		boolean analyzed = GhidraProgramUtilities.isAnalyzed(program);
 
 		if (analyzed) {
 			int response =
@@ -146,8 +145,8 @@ public class PdbPlugin extends Plugin {
 			LoadPdbTask loadPdbTask = new LoadPdbTask(program, pdbFile,
 				loadPdbResults.useMsDiaParser, loadPdbResults.control, dataTypeManagerService);
 			TaskBuilder.withTask(loadPdbTask)
-					.setStatusTextAlignment(SwingConstants.LEADING)
-					.setLaunchDelay(0);
+				.setStatusTextAlignment(SwingConstants.LEADING)
+				.setLaunchDelay(0);
 			new TaskLauncher(loadPdbTask, null, 0);
 
 			// Check for error messages & exceptions and handle them here
@@ -222,6 +221,53 @@ public class PdbPlugin extends Plugin {
 	}
 
 	/**
+	 * Searches the currently configured symbol server paths for a Pdb symbol file.
+	 * <p>
+	 * Any "SameDir" search location in the configuration will be ignored because there is
+	 * not an associated Program.   
+	 * 
+	 * @param symbolFileInfo info about the pdb that is being searched for.  
+	 * See {@link SymbolFileInfo#fromValues(String, String, int)} 
+	 * @param findOptions options that control how to search for the symbol file
+	 * @param monitor a {@link TaskMonitor} that allows the user to cancel
+	 * @return a File that points to the found Pdb symbol file, or null if no file was found
+	 */
+	public static File findPdb(SymbolFileInfo symbolFileInfo, Set<FindOption> findOptions,
+			TaskMonitor monitor) {
+
+		if (symbolFileInfo == null) {
+			return null;
+		}
+
+		try {
+			// make a copy and add in the ONLY_FIRST_RESULT option
+			findOptions = findOptions.isEmpty()
+					? EnumSet.noneOf(FindOption.class)
+					: EnumSet.copyOf(findOptions);
+			findOptions.add(FindOption.ONLY_FIRST_RESULT);
+
+			SymbolServerInstanceCreatorContext temporarySymbolServerInstanceCreatorContext =
+				SymbolServerInstanceCreatorRegistry.getInstance().getContext();
+
+			SymbolServerService temporarySymbolServerService =
+				getSymbolServerService(temporarySymbolServerInstanceCreatorContext);
+
+			List<SymbolFileLocation> results =
+				temporarySymbolServerService.find(symbolFileInfo, findOptions, monitor);
+			if (!results.isEmpty()) {
+				return temporarySymbolServerService.getSymbolFile(results.get(0), monitor);
+			}
+		}
+		catch (CancelledException e) {
+			// ignore
+		}
+		catch (IOException e) {
+			Msg.error(PdbPlugin.class, "Error getting symbol file", e);
+		}
+		return null;
+	}
+
+	/**
 	 * Returns a new instance of a {@link SymbolServerService} configured with values from the
 	 * application's preferences, defaulting to a minimal instance if there is no config.
 	 * 
@@ -234,15 +280,15 @@ public class PdbPlugin extends Plugin {
 			SymbolServerInstanceCreatorContext symbolServerInstanceCreatorContext) {
 		SymbolServer temporarySymbolServer =
 			symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
-					.newSymbolServer(Preferences.getProperty(SYMBOL_STORAGE_DIR_OPTION, "", true),
-						symbolServerInstanceCreatorContext);
+				.newSymbolServer(Preferences.getProperty(SYMBOL_STORAGE_DIR_OPTION, "", true),
+					symbolServerInstanceCreatorContext);
 		SymbolStore symbolStore =
 			(temporarySymbolServer instanceof SymbolStore) ? (SymbolStore) temporarySymbolServer
 					: new SameDirSymbolStore(symbolServerInstanceCreatorContext.getRootDir());
 		List<SymbolServer> symbolServers =
 			symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
-					.createSymbolServersFromPathList(getSymbolSearchPaths(),
-						symbolServerInstanceCreatorContext);
+				.createSymbolServersFromPathList(getSymbolSearchPaths(),
+					symbolServerInstanceCreatorContext);
 		return new SymbolServerService(symbolStore, symbolServers);
 	}
 
@@ -259,9 +305,9 @@ public class PdbPlugin extends Plugin {
 				symbolServerService.getSymbolStore().getName());
 
 			String path = symbolServerService.getSymbolServers()
-					.stream()
-					.map(SymbolServer::getName)
-					.collect(Collectors.joining(";"));
+				.stream()
+				.map(SymbolServer::getName)
+				.collect(Collectors.joining(";"));
 			Preferences.setProperty(SYMBOL_SEARCH_PATH_OPTION, path);
 		}
 		else {

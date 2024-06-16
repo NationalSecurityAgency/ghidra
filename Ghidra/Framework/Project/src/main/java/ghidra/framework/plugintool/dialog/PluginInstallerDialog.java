@@ -15,21 +15,25 @@
  */
 package ghidra.framework.plugintool.dialog;
 
+import static ghidra.framework.plugintool.dialog.PluginInstallerTableModel.*;
+
 import java.awt.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import docking.DialogComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.table.*;
+import generic.theme.GColor;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Dialog that displays plugins in a tabular format, allowing users to install or uninstall them. The
@@ -37,6 +41,11 @@ import ghidra.util.HelpLocation;
  *
  */
 public class PluginInstallerDialog extends DialogComponentProvider {
+
+	private static final Color FG_COLOR_HAS_DEPENDENTS =
+		new GColor("color.fg.plugin.installer.table.has.dependents");
+	private static final Color FG_COLOR_HAS_DEPENDENTS_SELECTED =
+		new GColor("color.fg.plugin.installer.table.has.dependents.selected");
 
 	private PluginTool tool;
 	private PluginConfigurationModel model;
@@ -143,31 +152,23 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		tableFilterPanel = new GTableFilterPanel<>(table, tableModel);
 
 		JScrollPane sp = new JScrollPane(table);
-		sp.getViewport().setBackground(table.getBackground());
-
 		pluginTablePanel.add(sp, BorderLayout.CENTER);
 		pluginTablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
 
 		// Restrict the size of the first couple columns - the default size is
 		// way too large. This is annoying but our table column classes don't have a nice
 		// way to restrict column width.
-		TableColumn inst_col =
-			table.getColumnModel().getColumn(PluginInstallerTableModel.INSTALLED_COL);
-		inst_col.setMaxWidth(30);
-		TableColumn status_col =
-			table.getColumnModel().getColumn(PluginInstallerTableModel.STATUS_COL);
-		status_col.setMaxWidth(24);
+		TableColumnModel columnModel = table.getColumnModel();
+		TableColumn installedColumn = columnModel.getColumn(INSTALLED_COL);
+		installedColumn.setMaxWidth(30);
+		TableColumn statusColumn = columnModel.getColumn(STATUS_COL);
+		statusColumn.setMaxWidth(24);
 
-		tableModel.setTableSortState(
-			TableSortState.createDefaultSortState(PluginInstallerTableModel.NAME_COL));
+		tableModel.setTableSortState(TableSortState.createDefaultSortState(NAME_COL));
 		tableModel.refresh();
 
-		table.getColumnModel()
-				.getColumn(PluginInstallerTableModel.NAME_COL)
-				.setCellRenderer(new NameCellRenderer());
-		table.getColumnModel()
-				.getColumn(PluginInstallerTableModel.STATUS_COL)
-				.setCellRenderer(new StatusCellRenderer());
+		columnModel.getColumn(NAME_COL).setCellRenderer(new NameCellRenderer());
+		columnModel.getColumn(STATUS_COL).setCellRenderer(new StatusCellRenderer());
 
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, new HelpLocation(GenericHelpTopics.TOOL, "PluginDialog"));
@@ -197,7 +198,6 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	private class StatusCellRenderer extends GTableCellRenderer {
 
 		public StatusCellRenderer() {
-			super();
 			setHorizontalAlignment(SwingConstants.CENTER);
 		}
 
@@ -210,10 +210,10 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 			renderer.setIcon((value instanceof Icon) ? (Icon) value : null);
 			String toolTipText = "";
-			if (value == PluginInstallerTableModel.EXPERIMENTAL_ICON) {
+			if (value == EXPERIMENTAL_ICON) {
 				toolTipText = "This plugin is usable, but not fully tested or documented";
 			}
-			else if (value == PluginInstallerTableModel.DEV_ICON) {
+			else if (value == DEV_ICON) {
 				toolTipText =
 					"This plugin is under development and not intended for general use.\n" +
 						"It could cause Ghidra to become unstable!";
@@ -231,8 +231,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 		NameCellRenderer() {
 			defaultFont = getFont();
-			boldFont = new Font(defaultFont.getName(), defaultFont.getStyle() | Font.BOLD,
-				defaultFont.getSize());
+			boldFont = defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD);
 			setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 		}
 
@@ -253,7 +252,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 			if (isSelected) {
 				if (hasDependents) {
-					renderer.setForeground(Color.pink);
+					renderer.setForeground(FG_COLOR_HAS_DEPENDENTS_SELECTED);
 					renderer.setFont(boldFont);
 				}
 				else {
@@ -264,7 +263,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 			else {
 				// set color to red if other plugins depend on this plugin
 				if (hasDependents) {
-					renderer.setForeground(Color.red);
+					renderer.setForeground(FG_COLOR_HAS_DEPENDENTS);
 					renderer.setFont(boldFont);
 				}
 				else {

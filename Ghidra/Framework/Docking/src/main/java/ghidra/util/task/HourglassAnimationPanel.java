@@ -16,44 +16,44 @@
 package ghidra.util.task;
 
 import java.awt.BorderLayout;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
 
 import docking.util.AnimatedIcon;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 /**
  * Panel that displays an animation of a spinning hourglass
  */
 public class HourglassAnimationPanel extends JPanel {
 
+	//@formatter:off
+	private static final List<Icon> ICONS = List.of(
+		new GIcon("icon.task.progress.hourglass.1"),
+		new GIcon("icon.task.progress.hourglass.2"),
+		new GIcon("icon.task.progress.hourglass.2"),
+		new GIcon("icon.task.progress.hourglass.3"),
+		new GIcon("icon.task.progress.hourglass.3"),
+		new GIcon("icon.task.progress.hourglass.4"),
+		new GIcon("icon.task.progress.hourglass.4"),
+		new GIcon("icon.task.progress.hourglass.5"),
+		new GIcon("icon.task.progress.hourglass.5"),
+		new GIcon("icon.task.progress.hourglass.6"),
+		new GIcon("icon.task.progress.hourglass.6"),
+		new GIcon("icon.task.progress.hourglass.7"),
+		new GIcon("icon.task.progress.hourglass.7"),
+		new GIcon("icon.task.progress.hourglass.8"),
+		new GIcon("icon.task.progress.hourglass.8"),
+		new GIcon("icon.task.progress.hourglass.9"),
+		new GIcon("icon.task.progress.hourglass.10"),
+		new GIcon("icon.task.progress.hourglass.11")
+	);
+	//@formatter:on
+
 	public HourglassAnimationPanel() {
-		
 		setLayout(new BorderLayout());
-		
-		List<Icon> iconList = new ArrayList<>();
-		iconList.add(ResourceManager.loadImage("images/hourglass24_01.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_02.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_02.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_03.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_03.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_04.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_04.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_05.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_05.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_06.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_06.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_07.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_07.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_08.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_08.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_09.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_10.png"));
-		iconList.add(ResourceManager.loadImage("images/hourglass24_11.png"));
-		AnimatedIcon progressIcon = new AnimatedIcon(iconList, 150, 0);
-		
+		AnimatedIcon progressIcon = new AnimatedIcon(ICONS, 150, 0);
 		add(new JLabel(progressIcon), BorderLayout.NORTH);
 	}
 }

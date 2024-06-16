@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -66,6 +67,11 @@ public class GdbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 		public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
 			return new GdbDebuggerPlatformMapper(tool, trace, cSpec);
 		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == GdbDebuggerPlatformMapper.class;
+		}
 	}
 
 	protected static class GdbDebuggerPlatformMapper extends DefaultDebuggerPlatformMapper {
@@ -78,13 +84,13 @@ public class GdbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 	protected Set<GdbDebuggerPlatformOffer> offersForLanguageAndCSpec(String arch, Endian endian,
 			LanguageCompilerSpecPair lcsp)
 			throws CompilerSpecNotFoundException, LanguageNotFoundException {
-		return Set.of(GdbDebuggerPlatformOffer.fromArchLCSP("Default GDB for " + arch, lcsp));
+		return Set.of(GdbDebuggerPlatformOffer.fromArchLCSP(arch, lcsp));
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
-		if (!"gdb".equals(debugger.toLowerCase())) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
+		if (debugger == null || !"gdb".equals(debugger.toLowerCase())) {
 			return Set.of();
 		}
 		return getCompilerSpecsForGnu(arch, endian).stream().flatMap(lcsp -> {

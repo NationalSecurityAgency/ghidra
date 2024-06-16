@@ -15,14 +15,13 @@
  */
 package ghidra.app.decompiler;
 
-import java.io.InputStream;
+import static ghidra.program.model.pcode.ElementId.*;
 
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.symbol.IllegalCharCppTransformer;
 
 /**
  * Class for getting at the various structures returned
@@ -64,7 +63,7 @@ public class DecompileResults {
 	private DecompileProcess.DisposeState processState;
 
 	public DecompileResults(Function f, Language language, CompilerSpec compilerSpec,
-			PcodeDataTypeManager d, String e, InputStream raw,
+			PcodeDataTypeManager d, String e, Decoder decoder,
 			DecompileProcess.DisposeState processState) {
 		function = f;
 		this.language = language;
@@ -74,8 +73,9 @@ public class DecompileResults {
 		hfunc = null;
 		hparamid = null;
 		docroot = null;
+		this.processState = processState;
 		//dumpResults(raw);
-		parseRawString(raw);
+		decodeStream(decoder);
 	}
 
 //	private void dumpResults(String raw) {
@@ -145,6 +145,14 @@ public class DecompileResults {
 		return processState == DecompileProcess.DisposeState.DISPOSED_ON_STARTUP_FAILURE;
 	}
 
+	/** 
+	 * Returns true if the decompile completed normally
+	 * @return true if the decompile completed normally
+	 */
+	public boolean isValid() {
+		return errMsg == null || errMsg.isBlank();
+	}
+
 	/**
 	 * Return any error message associated with the
 	 * decompilation producing these results.  Generally,
@@ -181,7 +189,7 @@ public class DecompileResults {
 	/**
 	 * Get the marked up C code associated with these
 	 * decompilation results. If there was an error, or
-	 * code generation was turned off, retur null
+	 * code generation was turned off, return null
 	 * @return the resulting root of C markup
 	 */
 	public ClangTokenGroup getCCodeMarkup() {
@@ -199,67 +207,59 @@ public class DecompileResults {
 		if (docroot == null) {
 			return null;
 		}
-		PrettyPrinter printer = new PrettyPrinter(function, docroot);
-		return printer.print(true);
+		PrettyPrinter printer =
+			new PrettyPrinter(function, docroot, new IllegalCharCppTransformer());
+		return printer.print();
 	}
 
-	private void parseRawString(InputStream rawxml) {
-		if (rawxml == null) {
+	private void decodeStream(Decoder decoder) {
+		if (decoder == null || decoder.isEmpty()) {
 			return;
 		}
-		XmlPullParser parser = null;
 		try {
-			try {
-				parser =
-					HighFunction.stringTree(
-						rawxml,
-						HighFunction.getErrorHandler(this, "decompiler results for function at " +
-							function.getEntryPoint()));
-				hfunc = null;
-				hparamid = null;
-				docroot = null;
-				parser.start("doc");
-				while(parser.peek().isStart()) {
-					XmlElement el = parser.peek();
-					if (el.getName().equals("function")) {
-						if (hfunc ==  null) {
-							hfunc = new HighFunction(function, language, compilerSpec, dtmanage);
-							hfunc.readXML(parser);
-						}
-						else {		// TODO: This is an ugly kludge to get around duplicate XML tag names
-							docroot = ClangXML.buildClangTree(parser, hfunc);
-							if (docroot == null) {
-								errMsg = "Unable to parse C (xml)";
-							}							
-						}
+			hfunc = null;
+			hparamid = null;
+			docroot = null;
+			int docel = decoder.openElement(ELEM_DOC);
+			for (;;) {
+				int el = decoder.peekElement();
+				if (el == 0) {
+					break;
+				}
+				if (el == ELEM_FUNCTION.id()) {
+					if (hfunc == null) {
+						hfunc = new HighFunction(function, language, compilerSpec, dtmanage);
+						hfunc.decode(decoder);
 					}
-					else if (el.getName().equals("parammeasures")) {
-						hparamid = new HighParamID(function, language, compilerSpec, dtmanage);
-						hparamid.readXML(parser);
-					}
-					else {
-						errMsg = "Unknown decompiler tag: "+el.getName();
-						return;
+					else {		// TODO: This is an ugly kludge to get around duplicate XML tag names
+						docroot = ClangMarkup.buildClangTree(decoder, hfunc);
+						if (docroot == null) {
+							errMsg = "Unable to decode C markup";
+						}
 					}
 				}
+				else if (el == ELEM_PARAMMEASURES.id()) {
+					hparamid = new HighParamID(function, language, compilerSpec, dtmanage);
+					hparamid.decode(decoder);
+				}
+				else {
+					errMsg = "Unknown decompiler tag";
+					return;
+				}
 			}
-			catch (PcodeXMLException e) {		// Error while walking the DOM
-				errMsg = e.getMessage();
-				hfunc = null;
-				hparamid = null;
-				return;
-			}
-			catch (RuntimeException e) {		// Exception from the raw parser
-				errMsg = e.getMessage();
-				hfunc = null;
-				hparamid = null;
-				return;
-			}
+			decoder.closeElement(docel);
 		}
-		finally {
-			if (parser != null) {
-				parser.dispose();
-			}
+		catch (DecoderException e) {		// Error while walking the DOM
+			errMsg = e.getMessage();
+			hfunc = null;
+			hparamid = null;
+			return;
+		}
+		catch (Exception e) {				// Exception with the underlying stream
+			errMsg = e.getMessage();
+			hfunc = null;
+			hparamid = null;
+			return;
 		}
 	}
 }

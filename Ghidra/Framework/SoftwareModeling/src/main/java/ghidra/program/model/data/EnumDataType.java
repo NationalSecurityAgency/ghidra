@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import static ghidra.program.database.data.EnumSignedState.*;
+
 import java.math.BigInteger;
 import java.util.*;
 
@@ -23,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.data.DataTypeUtilities;
+import ghidra.program.database.data.EnumSignedState;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
@@ -34,11 +37,12 @@ public class EnumDataType extends GenericDataType implements Enum {
 		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
 
 	private Map<String, Long> nameMap; // name to value
-	private TreeMap<Long, List<String>> valueMap; // value to names
 	private Map<String, String> commentMap; // name to comment
+	private SortedMap<Long, List<String>> valueMap; // value to names 
 	private int length;
 	private String description;
 	private List<BitGroup> bitGroups;
+	private EnumSignedState signedState = NONE;
 
 	public EnumDataType(String name, int length) {
 		this(CategoryPath.ROOT, name, length, null);
@@ -144,6 +148,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	@Override
 	public void add(String valueName, long value, String comment) {
+		doAdd(valueName, value, comment);
+		signedState = computeSignedness();
+	}
+
+	private void doAdd(String valueName, long value, String comment) {
 		bitGroups = null;
 		checkValue(value);
 		if (nameMap.containsKey(valueName)) {
@@ -157,30 +166,27 @@ public class EnumDataType extends GenericDataType implements Enum {
 		if (!StringUtils.isBlank(comment)) {
 			commentMap.put(valueName, comment);
 		}
-
 	}
 
-	private void checkValue(long value) {
-		if (length == 8) {
-			return; // all long values permitted
+	private EnumSignedState computeSignedness() {
+		if (valueMap.isEmpty()) {
+			return NONE;
 		}
-		// compute maximum enum value as a positive value: (2^length)-1
-		long max = (1L << (getLength() * 8)) - 1;
-		if (value > max) {
-			throw new IllegalArgumentException(
-				getName() + " enum value 0x" + Long.toHexString(value) +
-					" is outside the range of 0x0 to 0x" + Long.toHexString(max));
+		long minValue = valueMap.firstKey();
+		long maxValue = valueMap.lastKey();
 
+		if (maxValue > getMaxPossibleValue(length, true)) {
+			if (minValue < 0) {
+				return INVALID;
+			}
+			return UNSIGNED;
 		}
-	}
 
-	private boolean isTooBig(int testLength, long value) {
-		if (length == 8) {
-			return false; // all long values permitted
+		if (minValue < 0) {
+			return SIGNED;
 		}
-		// compute maximum enum value as a positive value: (2^length)-1
-		long max = (1L << (testLength * 8)) - 1;
-		return value > max;
+
+		return NONE;		// we have no negatives and no large unsigned values
 	}
 
 	@Override
@@ -205,6 +211,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		}
 
 		commentMap.remove(valueName);
+		signedState = computeSignedness();
 	}
 
 	@Override
@@ -239,17 +246,104 @@ public class EnumDataType extends GenericDataType implements Enum {
 		return length;
 	}
 
-	public void setLength(int length) {
-		String[] names = getNames();
-		for (String valueName : names) {
-			long value = getValue(valueName);
-			if (isTooBig(length, value)) {
-				throw new IllegalArgumentException("Setting the length of this Enum to a size " +
-					"that cannot contain the current value for \"" + valueName + "\" of " +
-					Long.toHexString(value));
+	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	public void setLength(int newLength) {
+		if (newLength == length) {
+			return;
+		}
+
+		int minLength = getMinimumPossibleLength();
+		if (newLength < minLength || newLength > 8) {
+			throw new IllegalArgumentException(
+				"Enum length must be between " + minLength + "and 8 inclusive");
+
+		}
+		this.length = newLength;
+	}
+
+	private void checkValue(long value) {
+		if (length == 8) {
+			return; // all long values permitted
+		}
+
+		long min = getMinPossibleValue();
+		long max = getMaxPossibleValue();
+		if (value < min || value > max) {
+			throw new IllegalArgumentException(
+				"Attempted to add a value outside the range for this enum: (" + min + ", " + max +
+					"): " + value);
+		}
+	}
+
+	@Override
+	public boolean isSigned() {
+		return signedState == SIGNED;
+	}
+
+	@Override
+	public EnumSignedState getSignedState() {
+		return signedState;
+	}
+
+	@Override
+	public long getMinPossibleValue() {
+		return getMinPossibleValue(length, signedState != UNSIGNED);
+	}
+
+	@Override
+	public long getMaxPossibleValue() {
+		return getMaxPossibleValue(length, signedState == SIGNED);
+	}
+
+	@Override
+	public int getMinimumPossibleLength() {
+		if (valueMap.isEmpty()) {
+			return 1;
+		}
+
+		long minValue = valueMap.firstKey();
+		long maxValue = valueMap.lastKey();
+		boolean hasNegativeValues = minValue < 0;
+
+		// check the min and max values in this enum to see if they fit in 1 byte enum, then 
+		// 2 byte enum, then 4 byte enum. If the min min and max values fit, then all other values
+		// will fit as well
+		for (int size = 1; size < 8; size *= 2) {
+			long minPossible = getMinPossibleValue(size, hasNegativeValues);
+			long maxPossible = getMaxPossibleValue(size, hasNegativeValues);
+			if (minValue >= minPossible && maxValue <= maxPossible) {
+				return size;
 			}
 		}
-		this.length = length;
+		return 8;
+	}
+
+	private long getMaxPossibleValue(int bytes, boolean allowNegativeValues) {
+		if (bytes == 8) {
+			return Long.MAX_VALUE;
+		}
+		int bits = bytes * 8;
+		if (allowNegativeValues) {
+			bits -= 1;  // take away 1 bit for the sign
+		}
+
+		// the largest value that can be held in n bits in 2^n -1
+		return (1L << bits) - 1;
+	}
+
+	private long getMinPossibleValue(int bytes, boolean allowNegativeValues) {
+		if (!allowNegativeValues) {
+			return 0;
+		}
+		int bits = bytes * 8;
+
+		// smallest value (largest negative) that can be stored in n bits is when the sign bit
+		// is on (and sign extended), and all less significant bits are 0
+		return -1L << (bits - 1);
 	}
 
 	@Override
@@ -421,13 +515,33 @@ public class EnumDataType extends GenericDataType implements Enum {
 		commentMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
+		signedState = enumm.getSignedState();
 		for (String valueName : names) {
-			add(valueName, enumm.getValue(valueName), enumm.getComment(valueName));
+			doAdd(valueName, enumm.getValue(valueName), enumm.getComment(valueName));
 		}
 	}
 
 	@Override
 	public String getDefaultLabelPrefix() {
 		return name;
+	}
+
+	@Override
+	public boolean contains(String entryName) {
+		return nameMap.containsKey(entryName);
+
+	}
+
+	@Override
+	public boolean contains(long value) {
+		return valueMap.containsKey(value);
+	}
+
+	/**
+	 * Sets this enum to it smallest (power of 2) size that it can be and still represent all its
+	 * current values.
+	 */
+	public void pack() {
+		setLength(getMinimumPossibleLength());
 	}
 }

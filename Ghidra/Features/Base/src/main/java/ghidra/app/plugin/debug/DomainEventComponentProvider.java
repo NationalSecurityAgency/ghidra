@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.debug;
 
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,13 +24,14 @@ import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class DomainEventComponentProvider extends ComponentProviderAdapter {
 	final static int LIMIT = 200;
-	private final static ImageIcon ICON = ResourceManager.loadImage("images/monitor.png");
+	private final static Icon ICON = new GIcon("icon.plugin.debug.domaineventviewer.provider");
 
 	private JTextArea textArea;
 	private JScrollPane scrollPane;
@@ -58,20 +58,9 @@ public class DomainEventComponentProvider extends ComponentProviderAdapter {
 		return scrollPane;
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentHidden()
-	 */
 	@Override
 	public void componentHidden() {
 		clear();
-	}
-
-	public Font getFont() {
-		return textArea.getFont();
-	}
-
-	public void setFont(Font font) {
-		textArea.setFont(font);
 	}
 
 	private void createAction() {
@@ -84,7 +73,7 @@ public class DomainEventComponentProvider extends ComponentProviderAdapter {
 
 		clearAction.markHelpUnnecessary();
 		clearAction.setEnabled(true);
-		ImageIcon icon = ResourceManager.loadImage("images/erase16.png");
+		Icon icon = Icons.CLEAR_ICON;
 		clearAction.setToolBarData(new ToolBarData(icon));
 		addLocalAction(clearAction);
 	}
@@ -109,8 +98,7 @@ public class DomainEventComponentProvider extends ComponentProviderAdapter {
 			}
 			textArea.setText("");
 			int length = 0;
-			for (int i = 0; i < eventList.size(); i++) {
-				String str = eventList.get(i);
+			for (String str : eventList) {
 				textArea.append(str);
 				length += str.length();
 			}

@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -30,7 +27,6 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 
@@ -66,6 +62,12 @@ public class ApplyFunctionDataTypesAction extends DockingAction {
 		}
 
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
+
+		if (node instanceof CategoryNode) {
+			CategoryNode catNode = (CategoryNode) node;
+			node = catNode.getArchiveNode();
+		}
+
 		return (node instanceof FileArchiveNode) || (node instanceof ProjectArchiveNode) ||
 			(node instanceof ProgramArchiveNode);
 	}
@@ -74,14 +76,12 @@ public class ApplyFunctionDataTypesAction extends DockingAction {
 	public void actionPerformed(ActionContext context) {
 		GTree gTree = (GTree) context.getContextObject();
 		TreePath selectionPath = gTree.getSelectionPath();
-		ArchiveNode node = (ArchiveNode) selectionPath.getLastPathComponent();
+		CategoryNode node = (CategoryNode) selectionPath.getLastPathComponent();
 
 		Program program = plugin.getProgram();
-		DataTypeManager manager = node.getArchive().getDataTypeManager();
-		List<DataTypeManager> managerList = new ArrayList<DataTypeManager>();
-		managerList.add(manager);
 		ApplyFunctionDataTypesCmd cmd =
-			new ApplyFunctionDataTypesCmd(managerList, null, SourceType.USER_DEFINED, true, true);
+			new ApplyFunctionDataTypesCmd(node.getCategory(), null, SourceType.USER_DEFINED, true,
+				true);
 		PluginTool tool = plugin.getTool();
 		tool.executeBackgroundCommand(cmd, program);
 	}

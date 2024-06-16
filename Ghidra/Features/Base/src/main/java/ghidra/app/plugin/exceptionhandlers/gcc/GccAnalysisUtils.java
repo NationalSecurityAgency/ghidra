@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.SignedLeb128DataType;
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.scalar.Scalar;
+import ghidra.program.model.mem.MemoryAccessException;
 
 /**
  * Utility methods for use by the gcc exception handling analysis.
@@ -79,62 +78,49 @@ public class GccAnalysisUtils {
 	 * @param buffer the array to save the bytes that were read.
 	 * @throws MemoryAccessException if the expected number of bytes can't be read.
 	 */
-	public static void readBytes(Program program, Address addr, byte[] buffer) throws MemoryAccessException {
+	public static void readBytes(Program program, Address addr, byte[] buffer)
+			throws MemoryAccessException {
 		program.getMemory().getBytes(addr, buffer);
 	}
 
 	/**
 	 * Reads an unsigned little endian base 128 integer from memory.
+	 * 
 	 * @param program the program with memory to be read.
 	 * @param addr the address in memory to begin reading the unsigned LEB128.
-	 * @return the unsigned LEB128 integer.
+	 * @return {@link LEB128Info} (value + metadata)
 	 */
-	public static long readULEB128(Program program, Address addr) {
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		Scalar scalar = (Scalar) uleb.getValue(buf, uleb.getDefaultSettings(), uleb.getLength(buf, -1));
-		return scalar.getUnsignedValue();
-	}
-
-	/**
-	 * Gets the size of an unsigned little endian base 128 integer.
-	 * @param program the program with memory to be read.
-	 * @param addr the address in memory to begin reading the unsigned LEB128.
-	 * @return the length of the unsigned LEB128 integer.
-	 */
-	public static int getULEB128Length(Program program, Address addr) {
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		return uleb.getLength(buf, -1);
+	public static LEB128Info readULEB128Info(Program program, Address addr)
+			throws MemoryAccessException {
+		LEB128Info uleb128 = readLEB128Info(program, addr, false);
+		return uleb128;
 	}
 
 	/**
 	 * Reads an signed little endian base 128 integer from memory.
+	 * 
 	 * @param program the program with memory to be read.
 	 * @param addr the address in memory to begin reading the signed LEB128.
-	 * @return the signed LEB128 integer.
+	 * @return {@link LEB128Info} (value + metadata)
 	 */
-	public static long readSLEB128(Program program, Address addr) {
-		SignedLeb128DataType sleb = SignedLeb128DataType.dataType;
-
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		Scalar scalar = (Scalar) sleb.getValue(buf, sleb.getDefaultSettings(), sleb.getLength(buf, -1));
-		return scalar.getUnsignedValue();
+	public static LEB128Info readSLEB128Info(Program program, Address addr)
+			throws MemoryAccessException {
+		LEB128Info sleb128 = readLEB128Info(program, addr, true);
+		return sleb128;
 	}
 
-	/**
-	 * Gets the size of a signed little endian base 128 integer.
-	 * @param program the program with memory to be read.
-	 * @param addr the address in memory to begin reading the signed LEB128.
-	 * @return the length of the signed LEB128 integer.
-	 */
-	public static int getSLEB128Length(Program program, Address addr) {
-		SignedLeb128DataType sleb = SignedLeb128DataType.dataType;
+	private static LEB128Info readLEB128Info(Program program, Address addr, boolean isSigned)
+			throws MemoryAccessException {
+		try (MemoryByteProvider mbp =
+			new MemoryByteProvider(program.getMemory(), addr.getAddressSpace())) {
+			BinaryReader br = new BinaryReader(mbp, !program.getMemory().isBigEndian());
+			br.setPointerIndex(addr.getOffset());
 
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		return sleb.getLength(buf, -1);
+			return LEB128Info.readValue(br, isSigned);
+		}
+		catch (IOException e) {
+			throw new MemoryAccessException("Error reading LEB128 value at " + addr.toString(), e);
+		}
 	}
 
 }

@@ -16,10 +16,25 @@
 package ghidra.trace.model.bookmark;
 
 import ghidra.program.model.address.AddressSpace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.program.model.lang.Register;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.util.TraceRegisterUtils;
 
 public interface TraceBookmarkSpace extends TraceBookmarkOperations {
 	AddressSpace getAddressSpace();
 
-	TraceThread getThread();
+	default TraceBookmark addBookmark(Lifespan lifespan, Register register,
+			TraceBookmarkType type, String category, String comment) {
+		return addBookmark(lifespan, register.getAddress(), type, category, comment);
+	}
+
+	default Iterable<? extends TraceBookmark> getBookmarksEnclosed(Lifespan lifespan,
+			Register register) {
+		return getBookmarksEnclosed(lifespan, TraceRegisterUtils.rangeForRegister(register));
+	}
+
+	default Iterable<? extends TraceBookmark> getBookmarksIntersecting(Lifespan lifespan,
+			Register register) {
+		return getBookmarksIntersecting(lifespan, TraceRegisterUtils.rangeForRegister(register));
+	}
 }

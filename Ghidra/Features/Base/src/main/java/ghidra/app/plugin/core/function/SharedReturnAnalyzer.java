@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.function;
 
 import ghidra.app.cmd.analysis.SharedReturnAnalysisCmd;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -32,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
  * associated branching instruction flow to a CALL-RETURN
  */
 public class SharedReturnAnalyzer extends AbstractAnalyzer {
-
+	
 	private static final String NAME = "Shared Return Calls";
 	protected static final String DESCRIPTION =
 		"Converts branches to calls, followed by an immediate return, when the destination is a function.  " +
@@ -54,12 +55,11 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 		"Signals to allow conditional jumps to be consider for " +
 			"shared return jumps to other functions.";
 
-	private final static boolean OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED = false;
+	private final static boolean OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED = true;
 	private final static boolean OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED = false;
 
 	private boolean assumeContiguousFunctions = OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED;
-	private boolean considerConditionalBranches =
-		OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED;
+	private boolean considerConditionalBranches = OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED;
 
 	public SharedReturnAnalyzer() {
 		this(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
@@ -88,6 +88,15 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 
 		boolean sharedReturnEnabled = language.getPropertyAsBoolean(
 			GhidraLanguagePropertyKeys.ENABLE_SHARED_RETURN_ANALYSIS, true);
+		if (GoRttiMapper.isGolangProgram(program)) {
+			sharedReturnEnabled = false;
+		}
+	
+		// If the language (in the .pspec file) overrides this setting, use that value
+		boolean contiguousFunctionsEnabled = language.getPropertyAsBoolean(
+			GhidraLanguagePropertyKeys.ENABLE_ASSUME_CONTIGUOUS_FUNCTIONS_ONLY, assumeContiguousFunctions);
+		
+		assumeContiguousFunctions = contiguousFunctionsEnabled;
 
 		return sharedReturnEnabled;
 	}
@@ -98,11 +107,11 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 			"Auto_Analysis_Option_Instructions");
 
 		options.registerOption(OPTION_NAME_ASSUME_CONTIGUOUS_FUNCTIONS,
-			OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED, helpLocation,
+			assumeContiguousFunctions, helpLocation,
 			OPTION_DESCRIPTION_ASSUME_CONTIGUOUS_FUNCTIONS);
 
 		options.registerOption(OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS,
-			OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED, helpLocation,
+			considerConditionalBranches, helpLocation,
 			OPTION_DESCRIPTION_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS);
 	}
 
@@ -110,11 +119,10 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 	public void optionsChanged(Options options, Program program) {
 
 		assumeContiguousFunctions = options.getBoolean(OPTION_NAME_ASSUME_CONTIGUOUS_FUNCTIONS,
-			OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED);
+			assumeContiguousFunctions);
 
-		considerConditionalBranches =
-			options.getBoolean(OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS,
-				OPTION_DEFAULT_CONSIDER_CONDITIONAL_BRANCHES_ENABLED);
+		considerConditionalBranches = options.getBoolean(OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS,
+				considerConditionalBranches);
 
 	}
 

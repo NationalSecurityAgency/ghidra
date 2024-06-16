@@ -104,7 +104,8 @@ public class LibObjcOptimization implements StructConverter {
 	}
 
 	/**
-	 * Gets the relative method selector base address offset.  This will be 0 if the version < 16.
+	 * Gets the relative method selector base address offset.  This will be 0 if the version is less
+	 * than 16.
 	 * 
 	 * @return The relative method selector base address offset
 	 */
@@ -123,7 +124,7 @@ public class LibObjcOptimization implements StructConverter {
 	public void markup(Program program, AddressSpace space, MessageLog log, TaskMonitor monitor) {
 		Address addr = space.getAddress(getAddr());
 		try {
-			DataUtilities.createData(program, addr, toDataType(), -1, false,
+			DataUtilities.createData(program, addr, toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {

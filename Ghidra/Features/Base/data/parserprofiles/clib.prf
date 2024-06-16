@@ -78,13 +78,17 @@ wchar.h
 wctype.h
 wordexp.h
 
--IU:\linux_include\include
--IU:\linux_include\include\sys
--IU:\linux_include\i386-redhat-linux\4.1.2\include
 -D_X86_
 -D__STDC__
 -D__WORDSIZE=32
 -D__builtin_va_list=void *
 -D__DO_NOT_DEFINE_COMPILE
 -D_Complex
--D_WCHAR_T
+
+U:\linux_include\include
+U:\linux_include\include\sys
+U:\linux_include\i386-redhat-linux\4.1.2\include
+
+x86:LE:32:default
+
+gcc

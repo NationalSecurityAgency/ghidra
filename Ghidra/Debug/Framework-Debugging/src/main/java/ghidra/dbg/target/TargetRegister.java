@@ -23,15 +23,37 @@ import ghidra.dbg.util.PathUtils;
  * This is a description of a register
  * 
  * <p>
- * This describes a register abstractly. It does not represent the actual value of a register. For
- * values, see {@link TargetRegisterBank}. The description and values are separated, since the
- * descriptions typically apply to the entire platform, and so can be presented just once.
+ * There are two conventions for presenting registers and their values:
+ * 
+ * <ol>
+ * <li><b>Descriptions separated from values:</b> In this convention, the target presents one
+ * {@link TargetRegisterContainer}, and in it the various {@link TargetRegister}s, perhaps organized
+ * into groups. Each {@link TargetRegister} is then just an abstract description of the register,
+ * notably its name and size. Values are read and written using the
+ * {@link TargetRegisterBank#readRegister(TargetRegister)} and
+ * {@link TargetRegisterBank#writeRegister(TargetRegister, byte[])} methods, and related convenience
+ * methods. The {@link TargetRegisterBank} is the suitable bank for the desired object, usually a
+ * thread or frame.</li>
+ * <li><b>Descriptions and values together:</b> In this convention, the
+ * {@link TargetRegisterContainer} is the same object as the {@link TargetRegisterBank}, and so its'
+ * replicated for every object that has registers. The registers may be presented in groups under
+ * the container/bank. Each register provides its name (i.e., its index or key), its size, and its
+ * value (in the {@value TargetObject#VALUE_ATTRIBUTE_NAME} attribute).</li>
+ * </ol>
+ * 
+ * <p>
+ * Despite the apparent efficiencies of presenting the descriptions only once, we are gravitating
+ * toward the descriptions-and-values together convention. This simplifies the client and
+ * model-inspection code a bit and will make things easier if we ever deal with targets having mixed
+ * architectures. If we settle on this convention, we will probably remove the
+ * {@link TargetRegisterContainer} interface in favor of using {@link TargetRegisterBank}. We may
+ * also formally introduce a {@code TargetRegisterGroup} interface.
  */
 @DebuggerTargetObjectIface("Register")
 public interface TargetRegister extends TargetObject {
 
 	String CONTAINER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "container";
-	String LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
+	String BIT_LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
 
 	/**
 	 * Get the container of this register.
@@ -60,12 +82,25 @@ public interface TargetRegister extends TargetObject {
 	 * @return the length of the register
 	 */
 	@TargetAttributeType(
-		name = LENGTH_ATTRIBUTE_NAME,
+		name = BIT_LENGTH_ATTRIBUTE_NAME,
 		required = true,
 		fixed = true,
 		hidden = true)
 	default int getBitLength() {
-		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+		return getTypedAttributeNowByName(BIT_LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+	}
+
+	/**
+	 * Get the length, in bytes, of the register
+	 * 
+	 * <p>
+	 * For registers whose bit lengths are not a multiple of 8, this should be the minimum number of
+	 * bytes required to bit all the bits, i.e., it should divide by 8 rounding up.
+	 * 
+	 * @return the length of the register
+	 */
+	default int getByteLength() {
+		return (getBitLength() + 7) / 8;
 	}
 
 	/**

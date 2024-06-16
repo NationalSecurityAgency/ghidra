@@ -36,7 +36,12 @@ public class MDNestedName extends MDParsableItem {
 		if (dmang.peek() != '?') {
 			throw new MDException("Missing '?' in MDNestedName parsing");
 		}
-		dmang.increment(); // Skip the first '?'
+		// We include the mode check because we want to control this special case as much as
+		//  possible... not wanting the missing question mark to be overlooked unless we are
+		//  expecting the condition.
+		if (dmang.peek(1) == '?' && !dmang.isLlvmProcessingMode()) {
+			dmang.increment(); // Skip the first '?'
+		}
 		int beginIndex = dmang.getIndex();
 		objectCPP = new MDObjectCPP(dmang); // There is another '?' processed here.
 		objectCPP.parse();
@@ -55,6 +60,11 @@ public class MDNestedName extends MDParsableItem {
 	public String getMangled() {
 		return mangled;
 	}
+
+	public MDObjectCPP getNestedObject() {
+		return objectCPP;
+	}
+
 }
 
 /******************************************************************************/

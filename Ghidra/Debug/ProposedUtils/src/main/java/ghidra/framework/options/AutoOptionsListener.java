@@ -21,7 +21,6 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.framework.options.*;
 import ghidra.framework.options.AutoOptions.*;
 import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.options.annotation.AutoOptionDefined;
@@ -205,7 +204,7 @@ public class AutoOptionsListener<R> implements OptionsChangeListener {
 				Set<OptionSetter<R>> settersForReceiver =
 					settersByOption.computeIfAbsent(key, k -> new HashSet<>());
 				settersForReceiver.add((OptionSetter) setter);
-				categories.add(key.getCategory());
+				categories.add(key.category());
 			}
 		}
 
@@ -228,10 +227,10 @@ public class AutoOptionsListener<R> implements OptionsChangeListener {
 
 		public void notifyCurrentValues(PluginTool tool, R receiver) {
 			for (Map.Entry<CategoryAndName, Set<OptionSetter<R>>> ent : settersByOption
-				.entrySet()) {
+					.entrySet()) {
 				CategoryAndName key = ent.getKey();
-				ToolOptions options = tool.getOptions(key.getCategory());
-				Option opt = options.getOption(key.getName(), OptionType.NO_TYPE, null);
+				ToolOptions options = tool.getOptions(key.category());
+				Option opt = options.getOption(key.name(), OptionType.NO_TYPE, null);
 				if (!opt.isRegistered()) {
 					continue;
 				}
@@ -316,7 +315,7 @@ public class AutoOptionsListener<R> implements OptionsChangeListener {
 	public AutoOptionsListener(Plugin plugin, R receiver) {
 		this.receiver = receiver;
 		this.profile = (ReceiverProfile<R>) PROFILES_BY_RECEIVER_CLASS
-			.computeIfAbsent(receiver.getClass(), cls -> new ReceiverProfile<>(cls, plugin));
+				.computeIfAbsent(receiver.getClass(), cls -> new ReceiverProfile<>(cls, plugin));
 	}
 
 	@Override

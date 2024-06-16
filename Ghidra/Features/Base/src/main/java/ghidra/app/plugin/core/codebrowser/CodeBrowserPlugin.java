@@ -23,6 +23,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.*;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
@@ -37,6 +38,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 
+//@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
@@ -59,6 +61,7 @@ import ghidra.program.util.ProgramSelection;
 		ProgramClosedPluginEvent.class, ProgramLocationPluginEvent.class,
 		ViewChangedPluginEvent.class, ProgramHighlightPluginEvent.class },
 	eventsProduced = { ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class })
+//@formatter:on
 public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvider> {
 
 	public CodeBrowserPlugin(PluginTool tool) {
@@ -66,6 +69,25 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 
 		registerServiceProvided(FieldMouseHandlerService.class,
 			connectedProvider.getFieldNavigator());
+
+		// sets the primary code viewer window as the default component to get focus
+		tool.setDefaultComponent(connectedProvider);
+
+		// sets the primary code viewer window as the default context provider for actions 
+		// that use the specified context types. 
+		tool.registerDefaultContextProvider(ProgramActionContext.class, connectedProvider);
+		tool.registerDefaultContextProvider(NavigatableActionContext.class, connectedProvider);
+		tool.registerDefaultContextProvider(CodeViewerActionContext.class, connectedProvider);
+		tool.registerDefaultContextProvider(ListingActionContext.class, connectedProvider);
+	}
+
+	@Override
+	protected void dispose() {
+		tool.unregisterDefaultContextProvider(ProgramActionContext.class, connectedProvider);
+		tool.unregisterDefaultContextProvider(NavigatableActionContext.class, connectedProvider);
+		tool.unregisterDefaultContextProvider(CodeViewerActionContext.class, connectedProvider);
+		tool.unregisterDefaultContextProvider(ListingActionContext.class, connectedProvider);
+		super.dispose();
 	}
 
 	@Override

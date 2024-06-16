@@ -187,6 +187,27 @@ public class MemSearchHexTest extends AbstractMemSearchTest {
 
 		assertEquals("01 23 45 67 89", valueField.getText());
 	}
+	
+	@Test
+	public void testHexPasteNumberWithPrefixAndSuffix() {
+		// paste a number with a hex prefix;
+		// the prefix should be removed before the insertion
+		setValueText("0xabcdef");
+		assertEquals("abcdef", valueField.getText());
+		
+		setValueText("$68000"); 
+		assertEquals("68000", valueField.getText());
+		
+		// same for 'h' the suffix
+		setValueText("ABCDEFh");
+		assertEquals("ABCDEF", valueField.getText());
+		
+		// should also somehow work with leading and trailing white spaces
+		setValueText("  0X321  ");
+		assertEquals("321", valueField.getText().strip());
+		setValueText("  123H ");
+		assertEquals("123", valueField.getText().strip());
+	}
 
 	@Test
 	public void testHexSearch() throws Exception {

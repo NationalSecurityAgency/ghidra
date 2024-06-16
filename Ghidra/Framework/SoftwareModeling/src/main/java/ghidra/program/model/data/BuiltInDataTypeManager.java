@@ -15,24 +15,29 @@
  */
 package ghidra.program.model.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.event.ChangeListener;
 
 import ghidra.framework.ShutdownHookRegistry;
 import ghidra.framework.ShutdownPriority;
+import ghidra.program.database.symbol.VariableStorageManager;
+import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassFilter;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Data type manager for built in types that do not live anywhere except
  * in memory.
  */
-public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
+public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 
 	// TODO: There appear to be many public methods in DataTypeManagerDB which could potentially modify the 
 	// underlying database - these methods should probably be overridden
@@ -62,6 +67,19 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	private BuiltInDataTypeManager() {
 		super(BUILT_IN_DATA_TYPES_NAME);
 		initialize();
+		setImmutable();
+	}
+
+	@Override
+	protected final void setProgramArchitecture(ProgramArchitecture programArchitecture,
+			VariableStorageManager variableStorageMgr, boolean force, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		throw new UnsupportedOperationException("program architecture change not permitted");
+	}
+
+	@Override
+	protected final boolean isArchitectureChangeAllowed() {
+		return false;
 	}
 
 	@Override
@@ -152,9 +170,8 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		if (dataType instanceof BuiltInDataType) {
 			return DataTypeManager.BUILT_IN_ARCHIVE_UNIVERSAL_ID;
 		}
-		throw new IllegalArgumentException(
-			"Only Built-in data types can be resolved by the " + getClass().getSimpleName() +
-				" manager.");
+		throw new IllegalArgumentException("Only Built-in data types can be resolved by the " +
+			getClass().getSimpleName() + " manager.");
 	}
 
 	@Override

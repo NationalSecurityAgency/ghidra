@@ -18,25 +18,24 @@ package ghidra.app.plugin.core.debug.gui.thread;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-		shortDescription = "Debugger registers manager", //
-		description = "GUI to view and modify register values", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { TraceOpenedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-			TraceActivatedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-			DebuggerTraceManagerService.class, //
-		} // 
-)
+@PluginInfo(
+	shortDescription = "Debugger registers manager",
+	description = "GUI to view and modify register values",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = { TraceOpenedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+	})
 public class DebuggerThreadsPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerThreadsProvider provider;
 
@@ -59,17 +58,8 @@ public class DebuggerThreadsPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceOpenedPluginEvent) {
-			TraceOpenedPluginEvent ev = (TraceOpenedPluginEvent) event;
-			provider.traceOpened(ev.getTrace());
-		}
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.coordinatesActivated(ev.getActiveCoordinates());
-		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
-			provider.traceClosed(ev.getTrace());
 		}
 	}
 }

@@ -15,15 +15,16 @@
  */
 package ghidra.app.plugin.core.debug.mapping;
 
+import db.Transaction;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.guest.TraceGuestPlatform;
-import ghidra.trace.model.guest.TracePlatformManager;
+import ghidra.trace.model.guest.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.MathUtilities;
+import ghidra.util.Msg;
 
 public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
 
@@ -48,20 +49,32 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 	}
 
 	@Override
-	protected CompilerSpec getCompilerSpec(TraceObject object) {
+	public CompilerSpec getCompilerSpec(TraceObject object) {
 		return cSpec;
 	}
 
 	@Override
 	public void addToTrace(long snap) {
-		TracePlatformManager platformManager = trace.getPlatformManager();
-		TraceGuestPlatform platform = platformManager.getOrAddGuestPlatform(cSpec);
-		if (platform == null) {
-			return; // It's the host compiler spec
+		String description = "Add guest " + cSpec.getLanguage().getLanguageDescription() + "/" +
+			cSpec.getCompilerSpecDescription();
+		try (Transaction tx = trace.openTransaction(description)) {
+			TracePlatformManager platformManager = trace.getPlatformManager();
+			TracePlatform platform = platformManager.getOrAddPlatform(cSpec);
+			if (platform.isHost()) {
+				return;
+			}
+			addMappedRanges((TraceGuestPlatform) platform);
 		}
-		addMappedRanges(platform);
 	}
 
+	/**
+	 * Add mapped ranges if not already present
+	 * 
+	 * <p>
+	 * A transaction is already started when this method is invoked.
+	 * 
+	 * @param platform the platform
+	 */
 	protected void addMappedRanges(TraceGuestPlatform platform) {
 		Trace trace = platform.getTrace();
 		AddressSpace hostSpace = trace.getBaseAddressFactory().getDefaultAddressSpace();
@@ -85,6 +98,15 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 		}
 		catch (AddressOverflowException e) {
 			throw new AssertionError(e);
+		}
+
+		try {
+			platform.addMappedRegisterRange();
+		}
+		catch (AddressOverflowException e) {
+			Msg.showError(this, null, "Map Registers",
+				"The host language cannot accomodate register storage for the" +
+					" guest platform (language: " + platform.getLanguage() + ")");
 		}
 	}
 }

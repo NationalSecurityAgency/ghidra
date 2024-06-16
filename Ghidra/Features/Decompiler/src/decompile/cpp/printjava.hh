@@ -16,10 +16,12 @@
 /// \file printjava.hh
 /// \brief Classes supporting the java-language back-end to the decompiler
 
-#ifndef __PRINTJAVA__
-#define __PRINTJAVA__
+#ifndef __PRINTJAVA_HH__
+#define __PRINTJAVA_HH__
 
 #include "printc.hh"
+
+namespace ghidra {
 
 /// \brief Factory and static initializer for the "java-language" back-end to the decompiler
 ///
@@ -71,4 +73,6 @@ public:
   virtual void opCallind(const PcodeOp *op);
   virtual void opCpoolRefOp(const PcodeOp *op);
 };
+
+} // End namespace ghidra
 #endif

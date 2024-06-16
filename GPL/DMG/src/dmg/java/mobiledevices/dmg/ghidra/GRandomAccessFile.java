@@ -17,7 +17,6 @@ public class GRandomAccessFile {
 	private static final byte[] EMPTY = new byte[0];
 	private static final int BUFFER_SIZE = 0x100000;
 
-	private File file;
 	private RandomAccessFile randomAccessFile;
 	private byte[] buffer = EMPTY;
 	private long bufferOffset = 0;
@@ -77,7 +76,6 @@ public class GRandomAccessFile {
 	 *            while opening or creating the file
 	 */
 	public GRandomAccessFile(File file, String mode) throws IOException {
-		this.file = file;
 		randomAccessFile = new RandomAccessFile(file, mode);
 		this.open = true;
 	}

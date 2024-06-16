@@ -20,20 +20,25 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.DbgModelTargetModule;
 import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.lifecycle.Internal;
 
-@TargetObjectSchemaInfo(name = "ModuleContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetModuleImpl.class) //
-}, //
-		elementResync = ResyncMode.ONCE, //
-		attributes = { //
-			@TargetAttributeType(type = Void.class) //
-		}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ModuleContainer",
+	elements = {
+		@TargetElementType(type = DbgModelTargetModuleImpl.class)
+	},
+	elementResync = ResyncMode.ONCE,
+	attributes = {
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetModuleContainer {
 	// NOTE: -file-list-shared-libraries omits the main module and system-supplied DSO.
@@ -45,9 +50,16 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		super(process.getModel(), process, "Modules", "ModuleContainer");
 		this.targetProcess = process;
 		this.process = process.process;
-		if (!getModel().isSuppressDescent()) {
-			requestElements(false);
+		DbgManagerImpl manager = getManager();
+		if (manager.isKernelMode()) {
+			if (!this.process.getId().isSystem()) {
+				return;
+			}
 		}
+		if (getModel().isSuppressDescent()) {
+			return;
+		}
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
@@ -63,11 +75,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 			//modulesByName.remove(name);
 			module = getTargetModule(name);
 		}
-		TargetThread eventThread =
-			(TargetThread) getModel().getModelObject(getManager().getEventThread());
 		changeElements(List.of(), List.of(module), Map.of(), "Loaded");
-		getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-			"Library " + name + " loaded", List.of(module));
 	}
 
 	@Override
@@ -75,10 +83,6 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	public void libraryUnloaded(String name) {
 		DbgModelTargetModule targetModule = getTargetModule(name);
 		if (targetModule != null) {
-			TargetThread eventThread =
-				(TargetThread) getModel().getModelObject(getManager().getEventThread());
-			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-				"Library " + name + " unloaded", List.of(targetModule));
 			DbgModelImpl impl = (DbgModelImpl) model;
 			impl.deleteModelObject(targetModule.getDbgModule());
 		}
@@ -96,7 +100,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		List<TargetObject> result = new ArrayList<>();
 		return process.listModules().thenAccept(byName -> {
 			synchronized (this) {
@@ -108,6 +112,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		});
 	}
 
+	@Override
 	public DbgModelTargetModule getTargetModule(String name) {
 		// Only get here from libraryLoaded or getElements. The known list should be fresh.
 		DbgModule module = process.getKnownModules().get(name);

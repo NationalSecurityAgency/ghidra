@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.sequence;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -23,13 +23,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.google.common.collect.RangeSet;
-
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugClient.DebugAttachFlags;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.cmd.*;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.TypeSpec;
 import ghidra.comm.util.BitmaskSet;
 import ghidra.dbg.target.TargetAttachable;
@@ -52,6 +51,8 @@ public class DbgProcessImpl implements DbgProcess {
 	private DebugProcessId id;
 	private Long pid;
 	private Long exitCode;
+	private Long offset;
+	private String name;
 
 	/**
 	 * Construct a new inferior
@@ -59,6 +60,13 @@ public class DbgProcessImpl implements DbgProcess {
 	 * @param manager the manager creating the process
 	 * @param id the dbgeng-assigned process ID
 	 */
+	public DbgProcessImpl(DbgManagerImpl manager, DebugProcessId id, long pid, String name) {
+		this.manager = manager;
+		this.id = id;
+		this.pid = pid;
+		this.name = name;
+	}
+
 	public DbgProcessImpl(DbgManagerImpl manager, DebugProcessId id, long pid) {
 		this.manager = manager;
 		this.id = id;
@@ -133,6 +141,7 @@ public class DbgProcessImpl implements DbgProcess {
 	 * @param thread the thread to add
 	 */
 	public void addThread(DbgThreadImpl thread) {
+		assert(thread.getProcess().equals(this));
 		DbgThreadImpl exists = threads.get(thread.getId());
 		if (exists != null) {
 			Msg.warn(this, "Adding pre-existing thread " + exists);
@@ -207,6 +216,9 @@ public class DbgProcessImpl implements DbgProcess {
 
 	@Override
 	public CompletableFuture<Map<DebugThreadId, DbgThread>> listThreads() {
+		if (manager.isKernelMode() && !id.isSystem()) {
+			return CompletableFuture.completedFuture(getKnownThreads());
+		}
 		return manager.execute(new DbgListThreadsCommand(manager, this));
 	}
 
@@ -258,6 +270,7 @@ public class DbgProcessImpl implements DbgProcess {
 		return sequence(TypeSpec.cls(DbgThread.class).set()).then((seq) -> {
 			setActive().handle(seq::next);
 		}).then((seq) -> {
+			id = new DebugProcessRecord(toPid);
 			pid = toPid; // TODO: Wait for successful completion?
 			manager.execute(
 				new DbgAttachCommand(manager, this, BitmaskSet.of(DebugAttachFlags.DEFAULT)))
@@ -332,7 +345,7 @@ public class DbgProcessImpl implements DbgProcess {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		// I can't imagine this working without a thread....
 		return preferThread(t -> t.readMemory(addr, buf, len),
 			() -> manager.execute(new DbgReadMemoryCommand(manager, addr, buf, len)));
@@ -374,4 +387,27 @@ public class DbgProcessImpl implements DbgProcess {
 	public CompletableFuture<String> evaluate(String expression) {
 		return manager.execute(new DbgEvaluateCommand(manager, expression));
 	}
+
+	public Long getOffset() {
+		return offset;
+	}
+
+	public void setOffset(long offset) {
+		this.offset = offset;
+	}
+
+	public void setPid(Long pid) {
+		this.pid = pid;
+	}
+
+	@Override
+	public String getExecutableName() {
+		return name;
+	}
+
+	@Override
+	public void setExecutableName(String name) {
+		this.name = name;
+	}
+
 }

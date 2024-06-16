@@ -23,8 +23,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -38,9 +36,9 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.context.TraceRegisterContextSpace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -81,6 +79,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected final DBTraceRegisterContextManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -91,10 +91,13 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		new HashMap<>();
 
 	public DBTraceRegisterContextSpace(DBTraceRegisterContextManager manager, DBHandle dbh,
-			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
+			AddressSpace space, DBTraceSpaceEntry ent, TraceThread thread)
+			throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -129,7 +132,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	protected long getThreadKey() {
@@ -139,7 +142,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	protected String tableName(Language language, Register register) {
@@ -152,7 +155,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		String name = tableName(lr.getLeft(), lr.getRight());
 		try {
 			return new DBTraceAddressSnapRangePropertyMapSpace<>(name, trace.getStoreFactory(),
-				lock, space, DBTraceRegisterContextEntry.class, DBTraceRegisterContextEntry::new);
+				lock, space, thread, frameLevel, DBTraceRegisterContextEntry.class,
+				DBTraceRegisterContextEntry::new);
 		}
 		catch (IOException e) {
 			manager.dbError(e);
@@ -204,11 +208,11 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 		if (from.getY1().compareTo(inter.getY1()) < 0) {
 			diff.add(new ImmutableTraceAddressSnapRange(from.getRange(),
-				Range.closed(from.getY1(), inter.getY1() - 1)));
+				Lifespan.span(from.getY1(), inter.getY1() - 1)));
 		}
 		if (from.getY2().compareTo(inter.getY2()) > 0) {
 			diff.add(new ImmutableTraceAddressSnapRange(from.getRange(),
-				Range.closed(inter.getY2() + 1, from.getY2())));
+				Lifespan.span(inter.getY2() + 1, from.getY2())));
 		}
 		return diff;
 	}
@@ -234,7 +238,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 	}
 
-	protected void doSetBaseValue(Language language, RegisterValue baseValue, Range<Long> lifespan,
+	protected void doSetBaseValue(Language language, RegisterValue baseValue, Lifespan lifespan,
 			AddressRange range) {
 		TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(range, lifespan);
 		Register base = baseValue.getRegister();
@@ -264,7 +268,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public void setValue(Language language, RegisterValue value, Range<Long> lifespan,
+	public void setValue(Language language, RegisterValue value, Lifespan lifespan,
 			AddressRange range) {
 		assertInSpace(range);
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
@@ -274,7 +278,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public void removeValue(Language language, Register register, Range<Long> span,
+	public void removeValue(Language language, Register register, Lifespan span,
 			AddressRange range) {
 		Register base = register.getBaseRegister();
 		TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(range, span);
@@ -363,20 +367,30 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 	}
 
+	protected RegisterValue getValueWithDefault(Language language, Register register,
+			long snap, Address hostAddress, Address langAddress) {
+		Register base = register.getBaseRegister();
+		RegisterValue baseValue = doGetBaseValue(language, base, snap, hostAddress);
+		if (baseValue == null) {
+			return getDefaultValue(language, register, langAddress);
+		}
+		RegisterValue defaultBaseValue = getDefaultValue(language, base, langAddress);
+		if (defaultBaseValue == null) {
+			return baseValue.getRegisterValue(register);
+		}
+		return defaultBaseValue.combineValues(baseValue).getRegisterValue(register);
+	}
+
 	@Override
-	public RegisterValue getValueWithDefault(Language language, Register register, long snap,
-			Address address) {
+	public RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
+			Address guestAddress) {
+		Language language = platform.getLanguage();
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			Register base = register.getBaseRegister();
-			RegisterValue baseValue = doGetBaseValue(language, base, snap, address);
-			if (baseValue == null) {
-				return getDefaultValue(language, register, address);
+			Address hostAddress = platform.mapGuestToHost(guestAddress);
+			if (hostAddress == null) {
+				return getDefaultValue(language, register, guestAddress);
 			}
-			RegisterValue defaultBaseValue = getDefaultValue(language, base, address);
-			if (defaultBaseValue == null) {
-				return baseValue.getRegisterValue(register);
-			}
-			return defaultBaseValue.combineValues(baseValue).getRegisterValue(register);
+			return getValueWithDefault(language, register, snap, hostAddress, guestAddress);
 		}
 	}
 
@@ -393,7 +407,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 			return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(within.getAddressSpace(),
 				lock,
 				valueMap.reduce(
-					TraceAddressSnapRangeQuery.intersecting(within, Range.closed(snap, snap))),
+					TraceAddressSnapRangeQuery.intersecting(within, Lifespan.at(snap))),
 				val -> new RegisterValue(base, val).getRegisterValue(register).hasAnyValue());
 		}
 	}
@@ -415,8 +429,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 				return false;
 			}
 			for (Entry<TraceAddressSnapRange, byte[]> entry : valueMap.reduce(
-				TraceAddressSnapRangeQuery.intersecting(within,
-					Range.closed(snap, snap))).entries()) {
+				TraceAddressSnapRangeQuery.intersecting(within, Lifespan.at(snap))).entries()) {
 				RegisterValue baseValue = new RegisterValue(base, entry.getValue());
 				if (baseValue.getRegisterValue(register).hasAnyValue()) {
 					return true;
@@ -432,7 +445,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range) {
+	public void clear(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> valueMap : registerValueMaps
 					.values()) {

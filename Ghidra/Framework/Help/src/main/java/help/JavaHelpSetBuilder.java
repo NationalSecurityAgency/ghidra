@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,14 @@
  */
 package help;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 public class JavaHelpSetBuilder {
 	private static final String TAB = "\t";
-	private static final Set<String> searchFileNames =
-		new HashSet<String>(Arrays.asList(new String[] { "DOCS", "DOCS.TAB", "OFFSETS",
-			"POSITIONS", "SCHEMA", "TMAP" }));
+	private static final Set<String> searchFileNames = new HashSet<String>(Arrays
+			.asList(new String[] { "DOCS", "DOCS.TAB", "OFFSETS", "POSITIONS", "SCHEMA", "TMAP" }));
 	private static int indentionLevel;
 
 	private final String moduleName;
@@ -97,7 +88,7 @@ public class JavaHelpSetBuilder {
 		indentionLevel++;
 		writeLine("<name>TOC</name>", writer);
 		writeLine("<label>Ghidra Table of Contents</label>", writer);
-		writeLine("<type>docking.help.CustomTOCView</type>", writer);
+		writeLine("<type>" + CustomTOCView.class.getName() + "</type>", writer);
 		writeLine("<data>" + helpSetTOCFile.getFileName() + "</data>", writer);
 		indentionLevel--;
 
@@ -116,7 +107,7 @@ public class JavaHelpSetBuilder {
 		writeLine("<name>Search</name>", writer);
 		writeLine("<label>Search for Keywords</label>", writer);
 //		writeLine("<type>javax.help.SearchView</type>", writer);
-		writeLine("<type>docking.help.CustomSearchView</type>", writer);
+		writeLine("<type>" + CustomSearchView.class.getName() + "</type>", writer);
 
 		if (hasIndexerFiles(helpSearchDirectory)) {
 			writeLine("<data engine=\"com.sun.java.help.search.DefaultSearchEngine\">" +
@@ -148,7 +139,7 @@ public class JavaHelpSetBuilder {
 //        writeLine( "<label>Favorites</label>", writer );
 //        writeLine( "<type>javax.help.FavoritesView</type>", writer );
 		writeLine("<label>Ghidra Favorites</label>", writer);
-		writeLine("<type>docking.help.CustomFavoritesView</type>", writer);
+		writeLine("<type>" + CustomFavoritesView.class.getName() + "</type>", writer);
 		indentionLevel--;
 
 		writeLine("</view>", writer);
@@ -158,8 +149,8 @@ public class JavaHelpSetBuilder {
 			throws IOException {
 		writer.write("<?xml version='1.0' encoding='ISO-8859-1' ?>");
 		writer.newLine();
-		writer.write("<!DOCTYPE helpset PUBLIC \"-//Sun Microsystems Inc.//DTD JavaHelp "
-			+ "HelpSet Version 2.0//EN\" \"http://java.sun.com/products/javahelp/helpset_2_0.dtd\">");
+		writer.write("<!DOCTYPE helpset PUBLIC \"-//Sun Microsystems Inc.//DTD JavaHelp " +
+			"HelpSet Version 2.0//EN\" \"http://java.sun.com/products/javahelp/helpset_2_0.dtd\">");
 		writer.newLine();
 		writer.newLine();
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +44,11 @@ public abstract class NavigatableComponentProviderAdapter extends ComponentProvi
 	@Override
 	public Icon getIcon() {
 		if (isConnected()) {
-			return super.getIcon();
+			return getBaseIcon();
 		}
 
 		if (navigatableIcon == null) {
-			Icon primaryIcon = super.getIcon();
+			Icon primaryIcon = getBaseIcon();
 			navigatableIcon = NavigatableIconFactory.createSnapshotOverlayIcon(primaryIcon);
 		}
 		return navigatableIcon;

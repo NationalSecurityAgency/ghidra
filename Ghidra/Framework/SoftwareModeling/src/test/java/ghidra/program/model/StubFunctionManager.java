@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
@@ -50,11 +51,6 @@ public class StubFunctionManager implements FunctionManager {
 
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public PrototypeModel[] getCallingConventions() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -104,7 +100,7 @@ public class StubFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public FunctionIterator getFunctions(Address start, boolean foward) {
+	public FunctionIterator getFunctions(Address start, boolean forward) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -119,7 +115,7 @@ public class StubFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public FunctionIterator getFunctionsNoStubs(Address start, boolean foward) {
+	public FunctionIterator getFunctionsNoStubs(Address start, boolean forward) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -156,7 +152,7 @@ public class StubFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		throw new UnsupportedOperationException();
 	}

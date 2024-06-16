@@ -15,6 +15,7 @@
  */
 package pdbquery;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -59,9 +60,10 @@ public class PdbFactory {
 		println(script, "Opening PDB: " + filename);
 
 		try {
-			AbstractPdb pdb = PdbParser.parse(filename, new PdbReaderOptions(), monitor);
+			File pdbFile = new File(filename);
+			AbstractPdb pdb = PdbParser.parse(pdbFile, new PdbReaderOptions(), monitor);
 			PdbIdentifiers identifiers = pdb.getIdentifiers();
-			pdb.deserialize(monitor);
+			pdb.deserialize();
 			PdbReaderMetrics metrics = pdb.getPdbReaderMetrics();
 			pdbInfo = new PdbInfo(filename, identifiers, pdb, metrics);
 			pdbInfoByFile.put(filename, pdbInfo);

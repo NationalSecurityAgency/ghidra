@@ -18,9 +18,6 @@ package ghidra.program.model.pcode;
 import java.util.ArrayList;
 
 import ghidra.program.model.data.DataType;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -58,7 +55,7 @@ public abstract class HighVariable {
 	protected void setHighOnInstances() {
 		for (Varnode instance : instances) {
 			if (instance instanceof VarnodeAST) {
-				((VarnodeAST)instance).setHigh(this);
+				((VarnodeAST) instance).setHigh(this);
 			}
 		}
 	}
@@ -141,33 +138,29 @@ public abstract class HighVariable {
 	}
 
 	/**
-	 * Restore the data-type and the Varnode instances of this HighVariable.
+	 * Decode the data-type and the Varnode instances of this HighVariable.
 	 * The "representative" Varnode is also populated.
-	 * @param parser is the XML stream
-	 * @param el is the root {@code <high>} tag
-	 * @throws PcodeXMLException if the XML is not valid
+	 * @param decoder is the stream decoder
+	 * @throws DecoderException for invalid encodings
 	 */
-	protected void restoreInstances(XmlPullParser parser, XmlElement el)
-			throws PcodeXMLException {
-		int repref = SpecXmlUtils.decodeInt(el.getAttribute("repref"));
+	protected void decodeInstances(Decoder decoder) throws DecoderException {
+		int repref = (int) decoder.readUnsignedInteger(AttributeId.ATTRIB_REPREF);
 		Varnode rep = function.getRef(repref);
 		if (rep == null) {
-			throw new PcodeXMLException("Undefined varnode reference");
+			throw new DecoderException("Undefined varnode reference");
 		}
 
 		type = null;
 
-		ArrayList<Varnode> vnlist = new ArrayList<Varnode>();
-		if (parser.peek().isStart()) {
-			type = function.getDataTypeManager().readXMLDataType(parser);
-		}
+		ArrayList<Varnode> vnlist = new ArrayList<>();
+		type = function.getDataTypeManager().decodeDataType(decoder);
 
-		if (type == null) {
-			throw new PcodeXMLException("Missing <type> for HighVariable");
-		}
-
-		while (parser.peek().isStart()) {
-			Varnode vn = Varnode.readXML(parser, function);
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			Varnode vn = Varnode.decode(decoder, function);
 			vnlist.add(vn);
 		}
 		Varnode[] vnarray = new Varnode[vnlist.size()];
@@ -193,9 +186,9 @@ public abstract class HighVariable {
 	}
 
 	/**
-	 * Restore this HighVariable from a {@code <high>} XML tag
-	 * @param parser is the XML stream
-	 * @throws PcodeXMLException if the XML is not valid
+	 * Decode this HighVariable from a {@code <high>} element in the stream
+	 * @param decoder is the stream decoder
+	 * @throws DecoderException for invalid encodings
 	 */
-	public abstract void restoreXml(XmlPullParser parser) throws PcodeXMLException;
+	public abstract void decode(Decoder decoder) throws DecoderException;
 }

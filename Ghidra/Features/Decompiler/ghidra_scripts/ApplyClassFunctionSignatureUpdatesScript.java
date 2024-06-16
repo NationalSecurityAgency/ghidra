@@ -46,20 +46,20 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			return;
 		}
 
-		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, monitor);
-		
-		if(currentAddress == null) {
+		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, state.getTool(),
+			this, false, false, false, monitor);
+
+		if (currentAddress == null) {
 			println("Cursor must be in a class function.");
 			return;
 		}
 		Function function = getFunctionContaining(currentAddress);
-		if(function == null) {
+		if (function == null) {
 			println("Cursor must be in a class function.");
 			return;
 		}
-		
-		if(function.isThunk()) {
+
+		if (function.isThunk()) {
 			println("User should not edit thunks as they are auto-updated from thunked function. " +
 				"Please undo changes to thunk then edit thunked function and rerun script");
 			return;
@@ -69,14 +69,13 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println("Function definitions are not affected by purecall changes.");
 			return;
 		}
-	
 
 		Namespace classNamespace = classHelper.getClassNamespace(currentAddress);
 		if (classNamespace == null) {
 			println("Cursor must be in a class function.");
 			return;
 		}
-		
+
 		// get a vftable that points to this function - doesn't matter which since it will
 		// be used to get the underlying function definition which will then be used to update
 		// all related function signatures
@@ -84,16 +83,15 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 
 		// get all vftables that point to given function
 		if (vftablesContainingFunction.isEmpty()) {
-			println(
-				"Function is not a virtual function so has no function definition or related " +
-					"function signatures to update");
+			println("Function is not a virtual function so has no function definition or related " +
+				"function signatures to update");
 			return;
 		}
 
 		// get one that has a class vftableStructure applied there
 		Address vftableWithAppliedStructure = null;
 		for (Address vftableAddress : vftablesContainingFunction) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data dataAt = getDataAt(vftableAddress);
 			if (dataAt == null) {
@@ -107,7 +105,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 				break;
 			}
 		}
-	
+
 		if (vftableWithAppliedStructure == null) {
 			println(
 				"The vftable(s) containing this function do not have a valid vftable structure " +
@@ -134,7 +132,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println();
 			println("Updated structures:");
 			for (Structure structure : structuresOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(structure.getPathName());
 			}
 		}
@@ -143,7 +141,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println();
 			println("Updated function definition:");
 			for (FunctionDefinition functionDef : functionDefinitionsOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(functionDef.getPathName());
 			}
 		}
@@ -152,12 +150,11 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println();
 			println("Updated functions:");
 			for (Function functionOnList : functionsOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(functionOnList.getEntryPoint().toString());
 			}
 		}
 
 	}
-
 
 }

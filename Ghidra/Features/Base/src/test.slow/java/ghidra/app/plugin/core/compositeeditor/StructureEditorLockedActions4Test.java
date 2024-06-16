@@ -22,7 +22,7 @@ import org.junit.Test;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
-public class StructureEditorLockedActions4Test extends AbstractStructureEditorLockedActionsTest {
+public class StructureEditorLockedActions4Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testArrayBeforeUndefineds() throws Exception {
@@ -66,7 +66,7 @@ public class StructureEditorLockedActions4Test extends AbstractStructureEditorLo
 
 		// Make array of 5 quadwords
 		invoke(arrayAction, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Enter Number", dialog.getTitle());

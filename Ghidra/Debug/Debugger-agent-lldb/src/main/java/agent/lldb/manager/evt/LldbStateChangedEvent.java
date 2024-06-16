@@ -41,7 +41,17 @@ public class LldbStateChangedEvent extends AbstractLldbEvent<DebugProcessInfo> {
 	}
 
 	public SBFrame getFrame(SBThread thread) {
-		return null;
+		DebugProcessInfo info = getInfo();
+		SWIG.SBEvent event = info == null ? null : info.event;
+		SBFrame frame = event == null ? null : SBThread.GetStackFrameFromEvent(event);
+		if (frame != null) {
+			return frame;
+		}
+		frame = thread.GetSelectedFrame();
+		if (frame != null) {
+			return frame;
+		}
+		return thread.GetFrameAtIndex(0);
 	}
 
 	@Override

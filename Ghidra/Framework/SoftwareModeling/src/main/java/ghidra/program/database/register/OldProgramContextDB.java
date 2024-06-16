@@ -21,6 +21,7 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -207,10 +208,8 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 
 		ArrayList<RegisterValueRange> ranges = new ArrayList<RegisterValueRange>();
 
-		Iterator<Address> it = changePoints.iterator();
 		Address currentAddress = start;
-		while (it.hasNext()) {
-			Address nextChange = it.next();
+		for (Address nextChange : changePoints) {
 			addRange(reg, ranges, currentAddress, nextChange.previous());
 			currentAddress = nextChange;
 		}
@@ -327,7 +326,7 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 	}
 

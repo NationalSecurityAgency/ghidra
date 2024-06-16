@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +14,8 @@
  * limitations under the License.
  */
 #include "crc32.hh"
+
+namespace ghidra {
 
 // Table for bytewise calculation of a 32-bit Cyclic Redundancy Check
 uint4 crc32tab[] = {
@@ -70,3 +71,4 @@ uint4 crc32tab[] = {
   0x54de5729,0x23d967bf,0xb3667a2e,0xc4614ab8,0x5d681b02,
   0x2a6f2b94,0xb40bbe37,0xc30c8ea1,0x5a05df1b,0x2d02ef8d };
 
+} // End namespace ghidra

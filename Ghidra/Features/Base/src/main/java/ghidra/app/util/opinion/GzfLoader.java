@@ -15,26 +15,27 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-
 import java.io.*;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.*;
+import ghidra.framework.Application;
+import ghidra.framework.data.OpenMode;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.framework.store.local.ItemSerializer;
 import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.model.listing.Program;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
@@ -56,7 +57,8 @@ public class GzfLoader implements Loader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null && options.size() > 0) {
 			return "GzfLoader takes no options";
 		}
@@ -70,42 +72,19 @@ public class GzfLoader implements Loader {
 	}
 
 	@Override
-	public List<DomainObject> load(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
-			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+	public LoadResults<? extends DomainObject> load(ByteProvider provider, String programName,
+			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog messageLog, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException, VersionException {
 
-		DomainObject dobj;
-		if (programFolder == null) {
-			dobj = loadPackedProgramDatabase(provider, programName, consumer, monitor);
-		}
-		else {
-			DomainFile df = doLoad(provider, programName, programFolder, monitor);
-			boolean success = false;
-			try {
-				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(df.getContentType())) {
-					throw new IOException("File imported is not a Program: " + programName);
-				}
-				monitor.setMessage("Opening " + programName);
-				dobj = df.getDomainObject(consumer, true, false, monitor);
-				success = true;
-			}
-			finally {
-				if (!success) {
-					df.delete();
-				}
-			}
-		}
-
-		List<DomainObject> results = new ArrayList<>();
-		results.add(dobj);
-		return results;
+		Program program = loadPackedProgramDatabase(provider, programName, consumer, monitor);
+		return new LoadResults<>(program, programName, projectFolderPath);
 	}
 
-	private DomainObject loadPackedProgramDatabase(ByteProvider provider, String programName,
+	private Program loadPackedProgramDatabase(ByteProvider provider, String programName,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException, LanguageNotFoundException {
-		DomainObject dobj;
+		Program program;
 		File file = provider.getFile();
 		File tmpFile = null;
 		if (file == null) {
@@ -117,15 +96,15 @@ public class GzfLoader implements Loader {
 			boolean success = false;
 			DBHandle dbh = null;
 			try {
-				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(
-					packedDatabase.getContentType())) {
+				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE
+						.equals(packedDatabase.getContentType())) {
 					throw new IOException("File imported is not a Program: " + programName);
 				}
 
 				monitor.setMessage("Restoring " + provider.getName());
 
 				dbh = packedDatabase.open(monitor);
-				dobj = new ProgramDB(dbh, DBConstants.UPGRADE, monitor, consumer);
+				program = new ProgramDB(dbh, OpenMode.UPGRADE, monitor, consumer);
 				success = true;
 			}
 			finally {
@@ -138,7 +117,7 @@ public class GzfLoader implements Loader {
 					}
 				}
 			}
-			return dobj;
+			return program;
 		}
 		finally {
 			if (tmpFile != null) {
@@ -148,10 +127,10 @@ public class GzfLoader implements Loader {
 	}
 
 	@Override
-	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+	public void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			MessageLog messageLog, Program program, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		throw new UnsupportedOperationException("cannot add GZF to program");
+			throws IOException, LoadException, CancelledException {
+		throw new LoadException("Cannot add GZF to program");
 	}
 
 	@Override
@@ -169,33 +148,9 @@ public class GzfLoader implements Loader {
 		return FilenameUtils.removeExtension(provider.getName());
 	}
 
-	private DomainFile doLoad(ByteProvider provider, String programName,
-			DomainFolder programFolder, TaskMonitor monitor)
-			throws InvalidNameException, CancelledException, IOException {
-
-		File file = provider.getFile();
-		File tmpFile = null;
-		if (file == null) {
-			file = tmpFile = createTmpFile(provider, monitor);
-		}
-		DomainFolder folder = programFolder;
-
-		monitor.setMessage("Restoring " + provider.getName());
-
-		try {
-			DomainFile df = folder.createFile(programName, file, monitor);
-			return df;
-		}
-		finally {
-			if (tmpFile != null) {
-				tmpFile.delete();
-			}
-		}
-	}
-
 	private static File createTmpFile(ByteProvider provider, TaskMonitor monitor)
 			throws IOException {
-		File tmpFile = File.createTempFile("ghidra_gzf_loader", null);
+		File tmpFile = Application.createTempFile("ghidra_gzf_loader", null);
 		try (InputStream is = provider.getInputStream(0);
 				FileOutputStream fos = new FileOutputStream(tmpFile)) {
 			FileUtilities.copyStreamToStream(is, fos, monitor);

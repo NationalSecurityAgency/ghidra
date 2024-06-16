@@ -15,23 +15,29 @@
  */
 package ghidra.app.plugin.core.debug.gui;
 
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.JLabel;
 
 import org.apache.commons.collections4.ComparatorUtils;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import docking.ActionContext;
+import docking.ComponentProvider;
+import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionActionContext;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleActionContext;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionActionContext;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerLocationLabel extends JLabel {
@@ -44,19 +50,19 @@ public class DebuggerLocationLabel extends JLabel {
 			updateLabelDebouncer
 					.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdateLabel()));
 
-			listenFor(TraceMemoryRegionChangeType.ADDED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.DELETED, this::regionChanged);
+			listenFor(TraceEvents.REGION_ADDED, this::regionChanged);
+			listenFor(TraceEvents.REGION_CHANGED, this::regionChanged);
+			listenFor(TraceEvents.REGION_LIFESPAN_CHANGED, this::regionChanged);
+			listenFor(TraceEvents.REGION_DELETED, this::regionChanged);
 
-			listenFor(TraceModuleChangeType.ADDED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.DELETED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_ADDED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_DELETED, this::moduleChanged);
 
-			listenFor(TraceSectionChangeType.ADDED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.DELETED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_ADDED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_CHANGED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_DELETED, this::sectionChanged);
 		}
 
 		private void doUpdateLabel() {
@@ -136,7 +142,10 @@ public class DebuggerLocationLabel extends JLabel {
 		if (sections.isEmpty()) {
 			return null;
 		}
-		// TODO: DB's R-Tree could probably do this natively
+		/**
+		 * TODO: DB's R-Tree could probably do this natively. Not sure it's an optimization, though,
+		 * since few, if any, overlapping sections are expected.
+		 */
 		sections.sort(ComparatorUtils.chainedComparator(List.of(
 			Comparator.comparing(s -> s.getRange().getMinAddress()),
 			Comparator.comparing(s -> -s.getRange().getLength()))));
@@ -199,5 +208,35 @@ public class DebuggerLocationLabel extends JLabel {
 	public void updateLabel() {
 		String label = computeLocationString();
 		setText(label);
+		setToolTipText(label);
+	}
+
+	public ActionContext getActionContext(ComponentProvider provider, MouseEvent event) {
+		TraceProgramView view = current.getView();
+		if (view == null) {
+			return null;
+		}
+		if (address == null) {
+			return null;
+		}
+		try {
+			TraceSection section = getNearestSectionContaining();
+			if (section != null) {
+				return new DebuggerSectionActionContext(provider, Set.of(section), this, true);
+			}
+			TraceModule module = getNearestModuleContaining();
+			if (module != null) {
+				return new DebuggerModuleActionContext(provider, Set.of(module), this, true);
+			}
+			TraceMemoryRegion region = getRegionContaining();
+			if (region != null) {
+				return new DebuggerRegionActionContext(provider, Set.of(region), this, true);
+			}
+			return null;
+		}
+		catch (Throwable t) {
+			// The error should already be displayed in the label
+			return null;
+		}
 	}
 }

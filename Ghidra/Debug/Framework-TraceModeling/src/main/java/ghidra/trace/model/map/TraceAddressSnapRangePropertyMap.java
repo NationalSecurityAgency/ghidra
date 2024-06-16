@@ -22,9 +22,9 @@ public interface TraceAddressSnapRangePropertyMap<T>
 		extends TraceAddressSnapRangePropertyMapOperations<T> {
 	String getName();
 
-	TraceAddressSnapRangePropertyMapRegisterSpace<T> getRegisterSpace(TraceThread thread,
+	TraceAddressSnapRangePropertyMapSpace<T> getRegisterSpace(TraceThread thread,
 			boolean createIfAbsent);
 
-	TraceAddressSnapRangePropertyMapRegisterSpace<T> getRegisterSpace(TraceStackFrame frame,
+	TraceAddressSnapRangePropertyMapSpace<T> getRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent);
 }

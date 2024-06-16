@@ -15,7 +15,7 @@
  */
 package ghidra.generic.util.datastruct;
 
-import java.util.List;
+import ghidra.generic.util.datastruct.ValueSortedMap.LesserList;
 
 /**
  * An interface for sorted lists
@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @param <E> the type of elements in this list
  */
-public interface SortedList<E> extends List<E> {
+public interface SortedList<E> extends LesserList<E> {
 	/**
 	 * Returns the greatest index in this list whose element is strictly less than the specified
 	 * element

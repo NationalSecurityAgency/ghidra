@@ -18,10 +18,11 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -32,6 +33,7 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 
 public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 
+	private final PluginTool tool;
 	private final Set<TraceBreakpointKind> kinds;
 	private final long length;
 
@@ -41,10 +43,13 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	// They may have different names and/or different conditions
 	private final Map<Trace, TraceBreakpointSet> traceBreaks = new HashMap<>();
 
-	protected MappedLogicalBreakpoint(Program program, Address progAddr, long length,
+	protected MappedLogicalBreakpoint(PluginTool tool, Program program, Address progAddr,
+			long length,
 			Collection<TraceBreakpointKind> kinds) {
-		this.length = length;
+		this.tool = tool;
 		this.kinds = Set.copyOf(kinds);
+		this.length = length;
+
 		this.progBreak = new ProgramBreakpoint(program, progAddr, length, this.kinds);
 	}
 
@@ -75,34 +80,20 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		return true;
 	}
 
-	protected TraceRecorder requireRecorder(DebuggerModelService modelService, Trace trace) {
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder == null) {
-			throw new AssertionError("This trace is not live");
-		}
-		return recorder;
-	}
-
-	/**
-	 * TODO: How best to allow the user to control behavior when a new static mapping is created
-	 * that could generate new breakpoints in the target. Options:
-	 * 
-	 * 1) A toggle during mapping creation for how to sync breakpoints.
-	 * 
-	 * 2) A prompt when the mapping is created, asking the user to sync breakpoints.
-	 * 
-	 * 3) A UI indicator (probably in the breakpoints provider) that some breakpoints are not in
-	 * sync. Different actions for directions of sync.
-	 * 
-	 * I'm thinking both 1 and 3. Option 2 is probably too abrasive, esp., if several mappings are
-	 * created at once.
-	 */
-
 	@Override
 	public void enableForProgram() {
 		progBreak.enable();
 	}
 
+	/**
+	 * Place the program's bookmark with a comment specifying a desired name
+	 * 
+	 * <p>
+	 * <b>WARNING:</b> Use only when this breakpoint was just placed, otherwise, this will reset
+	 * other extrinsic properties, such as the sleigh injection.
+	 * 
+	 * @param name the desired name
+	 */
 	public void enableForProgramWithName(String name) {
 		progBreak.toggleWithComment(true, name);
 	}
@@ -125,7 +116,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planEnable(actions, length, kinds);
 		return actions.execute();
@@ -139,7 +130,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planDisable(actions, length, kinds);
 		return actions.execute();
@@ -153,7 +144,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planDelete(actions, length, kinds);
 		return actions.execute();
@@ -190,6 +181,24 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		// TODO: Consider more fields than name in comment
 		enableForProgramWithName(name);
 		return enableForTraces();
+	}
+
+	@Override
+	public String generateStatusEnable(Trace trace) {
+		// NB. It'll place a breakpoint if mappable but not present
+		if (trace == null) {
+			if (!traceBreaks.values().isEmpty()) {
+				return null;
+			}
+			return "A breakpoint is not mapped to any trace. Cannot enable it. " +
+				"Is there a target? Check your module map.";
+		}
+		TraceBreakpointSet breaks = traceBreaks.get(trace);
+		if (breaks != null) {
+			return null;
+		}
+		return "A breakpoint is not mapped to the trace. " +
+			"Cannot enable it. Is there a target? Check your module map.";
 	}
 
 	@Override
@@ -277,9 +286,18 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public void setTraceAddress(TraceRecorder recorder, Address address) {
+	public void setTraceAddress(Trace trace, Address address) {
 		synchronized (traceBreaks) {
-			traceBreaks.put(recorder.getTrace(), new TraceBreakpointSet(recorder, address));
+			TraceBreakpointSet newSet = new TraceBreakpointSet(tool, trace, address);
+			newSet.setEmuSleigh(progBreak.getEmuSleigh());
+			traceBreaks.put(trace, newSet);
+		}
+	}
+
+	@Override
+	public void setTarget(Trace trace, Target target) {
+		synchronized (traceBreaks) {
+			traceBreaks.get(trace).setTarget(target);
 		}
 	}
 
@@ -307,7 +325,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(trace);
 		}
-		return breaks == null ? Set.of() : new HashSet<>(breaks.getBreakpoints());
+		return breaks == null ? Set.of() : breaks.getBreakpoints();
 	}
 
 	@Override
@@ -421,6 +439,39 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		return progMode.combineTrace(traceMode, Perspective.LOGICAL);
 	}
 
+	protected String computeTraceSleigh() {
+		String sleigh = null;
+		synchronized (traceBreaks) {
+			for (TraceBreakpointSet breaks : traceBreaks.values()) {
+				String s = breaks.computeSleigh();
+				if (sleigh != null && !sleigh.equals(s)) {
+					return null;
+				}
+				sleigh = s;
+			}
+			return sleigh;
+		}
+	}
+
+	@Override
+	public String getEmuSleigh() {
+		return progBreak.getEmuSleigh();
+	}
+
+	protected void setTraceBreakEmuSleigh(String sleigh) {
+		synchronized (traceBreaks) {
+			for (TraceBreakpointSet breaks : traceBreaks.values()) {
+				breaks.setEmuSleigh(sleigh);
+			}
+		}
+	}
+
+	@Override
+	public void setEmuSleigh(String sleigh) {
+		progBreak.setEmuSleigh(sleigh);
+		setTraceBreakEmuSleigh(sleigh);
+	}
+
 	@Override
 	public boolean canMerge(Program program, Bookmark bookmark) {
 		return progBreak.canMerge(program, bookmark);
@@ -454,10 +505,21 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 
 	@Override
 	public boolean trackBreakpoint(Bookmark bookmark) {
-		return progBreak.add(bookmark);
+		if (progBreak.add(bookmark)) {
+			String sleigh = progBreak.getEmuSleigh();
+			if (sleigh != null && !SleighUtils.UNCONDITIONAL_BREAK.equals(sleigh)) {
+				setEmuSleigh(sleigh);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	protected void makeBookmarkConsistent() {
+		// NB. Apparently it is specified that the bookmark should be created automatically
+		/*if (progBreak.isEmpty()) {
+			return;
+		}*/
 		TraceMode traceMode = computeTraceMode();
 		if (traceMode == TraceMode.ENABLED) {
 			progBreak.enable();
@@ -474,6 +536,15 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(breakpoint.getTrace());
 		}
 		boolean result = breaks.add(breakpoint);
+		if (result) {
+			String traceSleigh = computeTraceSleigh();
+			if (traceSleigh != null && !SleighUtils.UNCONDITIONAL_BREAK.equals(traceSleigh)) {
+				String progSleigh = progBreak.getEmuSleigh();
+				if (progSleigh == null || SleighUtils.UNCONDITIONAL_BREAK.equals(progSleigh)) {
+					progBreak.setEmuSleigh(traceSleigh);
+				}
+			}
+		}
 		makeBookmarkConsistent();
 		return result;
 	}

@@ -21,22 +21,23 @@ import java.io.IOException;
 
 import org.junit.*;
 
-import db.*;
+import db.DBHandle;
+import db.Table;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.Saveable;
-import ghidra.util.prop.PropertyVisitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
  */
-public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest implements ErrorHandler {
+public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
+		implements ErrorHandler {
 
 	private DBHandle db;
 	private ProgramDB program;
@@ -48,7 +49,6 @@ public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	/**
 	 * Constructor for VoidPropertyMapDBTest.
-	 * @param arg0
 	 */
 	public VoidPropertyMapDBTest() {
 		super();
@@ -63,7 +63,7 @@ public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		db = program.getDBHandle();
 		addrSpace = program.getAddressFactory().getDefaultAddressSpace();
-		memMap = (MemoryMapDB) program.getMemory();
+		memMap = program.getMemory();
 		addrMap = (AddressMap) getInstanceField("addrMap", memMap);
 		transactionID = program.startTransaction("Test");
 
@@ -86,8 +86,8 @@ public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 	}
 
 	private void createPropertyMap(String name) throws Exception {
-		propertyMap = new VoidPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		propertyMap = new VoidPropertyMapDB(db, OpenMode.CREATE, this, null, addrMap, name,
+			TaskMonitor.DUMMY);
 		propertyMap.setCacheSize(2);
 	}
 
@@ -129,18 +129,14 @@ public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	@Test
 	public void testApplyValue() throws Exception {
-		MyVoidVisitor visitor = new MyVoidVisitor();
 		createPropertyMap("TEST");
 
 		for (int i = 0; i < 20; i++) {
-			propertyMap.add(addr(i * 100));
+			propertyMap.add(addr(i * 100), (i % 2) == 0);
 		}
 		for (int i = 0; i < 20; i++) {
-			visitor.state = false;
-			propertyMap.applyValue(visitor, addr(i * 100));
-			assertTrue(visitor.state);
+			assertEquals((i % 2) == 0, propertyMap.hasProperty(addr(i * 100)));
 		}
-
 	}
 
 	@Test
@@ -386,47 +382,9 @@ public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 		assertNull(iter.next());
 	}
 
-	/**
-	 * @see ghidra.program.db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		throw new RuntimeException(e.getMessage());
 	}
 
-}
-
-class MyVoidVisitor implements PropertyVisitor {
-
-	boolean state;
-
-	/** Handle the case of a void property type. */
-	@Override
-	public void visit() {
-		state = true;
-	}
-
-	/** Handle the case of a String property type. */
-	@Override
-	public void visit(String value) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of an Object property type. */
-	@Override
-	public void visit(Object value) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of a Saveable property type*/
-	@Override
-	public void visit(Saveable value) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of an int property type. */
-	@Override
-	public void visit(int value) {
-		throw new RuntimeException();
-	}
 }

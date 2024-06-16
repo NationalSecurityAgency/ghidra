@@ -9,7 +9,7 @@
     <META name="ProgId" content="FrontPage.Editor.Document">
 
     <TITLE>Symbol Tree</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -21,7 +21,7 @@
 
     <P align="left">To display the Symbol Tree, select the icon <IMG alt="" src=
     "images/sitemap_color.png"> on the tool bar, OR select the option <B>Window</B><IMG alt="" src=
-    "../../shared/arrow.gif"> <IMG alt="" src="images/sitemap_color.png"> <B>Symbol Tree</B>.</P>
+    "help/shared/arrow.gif"> <IMG alt="" src="images/sitemap_color.png"> <B>Symbol Tree</B>.</P>
 
     <P align="center"><IMG alt="" src="images/SymbolTree.png"></P>
 
@@ -92,7 +92,7 @@
       speeding up the bulk operation as it will no longer have to keep updating the nodes in the tree.</P> 
 
       <BLOCKQUOTE>
-        <P align="left"><IMG alt="" src="../../shared/note.png"> The Symbol Tree does not show
+        <P align="left"><IMG alt="" src="help/shared/note.png"> The Symbol Tree does not show
         <I>dynamic</I> symbols, i.e., those symbols that are created due to references. Use the <A
         href="help/topics/SymbolTablePlugin/symbol_table.htm">Symbol Table</A> display to view
         dynamic symbols; turn off the <A href=
@@ -229,7 +229,7 @@
       <B>Rename</B> option. Enter the new name in the cell editor in the tree.</P>
 
       <BLOCKQUOTE>
-        <P><IMG alt="" src="../../shared/note.png">Category names and group nodes are not editable;
+        <P><IMG alt="" src="help/shared/note.png">Category names and group nodes are not editable;
         they exist only for organizational purposes.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
@@ -274,7 +274,7 @@
         click and select the <B>Cut</B> option; select a destination symbol, right mouse click and
         select the <B>Paste</B> option.</P>
 
-        <P><IMG alt="" src="../../shared/note.png">Other points of interest on moving symbols:</P>
+        <P><IMG alt="" src="help/shared/note.png">Other points of interest on moving symbols:</P>
 
         <OL>
           <LI>Parameters and stack variables within a function cannot be moved.</LI>
@@ -348,10 +348,10 @@
     </BLOCKQUOTE>
 
     <H2>View Qualified Names in Code Browser</H2>
-
+	
     <BLOCKQUOTE>
       <P>To include namespace names in the display of labels and names within the Code Browser,
-      select <B>Edit</B> <IMG alt="" src="../../shared/arrow.gif"> <B>Tool Options...</B> from the
+      select <B>Edit</B> <IMG alt="" src="help/shared/arrow.gif"> <B>Tool Options...</B> from the
       tool menu. &nbsp; This will display the <I>Options</I> dialog. &nbsp;Within the
       <I><B>Options</B></I> tree, navigate to the folder node <B><I>Listing Fields</I></B>.
       &nbsp;The <I><B>Display Namespace</B></I> option in the right-hand panel should be checked to
@@ -359,6 +359,57 @@
       "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm">CodeBrowser Options</A>).<BR>
       </P>
     </BLOCKQUOTE>
+    
+    
+    <H2><A NAME="Create_Table"></A>Create Table From Selection</H2>
+    
+    <BLOCKQUOTE>
+    	<P>Create a new temporary 
+    	<A HREF="help/topics/SymbolTablePlugin/symbol_table_transient.htm">Symbol Table</A> with the symbols 
+    	in the current selection.  The table's features are similar to the 
+    	<A HREF="help/topics/Search/Query_Results_Dialog.htm">search results table.</A>
+    	</P>
+    </BLOCKQUOTE>
+    
+    
+    
+    <H2>Symbol Tree Snapshots</H2>
+
+    <BLOCKQUOTE>
+    	<P>Pressing the <IMG SRC="icon.provider.clone" /> action will create a copy of the current 
+    	Symbol Tree in a new window.  The new disconnected Symbol Tree will not respond to program 
+    	activation events.	This allows users to keep the new window open while working with various
+    	 programs, without affecting the contents.
+    	</P>
+
+		<H3><A name="Symbol_Tree_Clone"></A>Symbol Tree Clone Action <IMG SRC="icon.provider.clone" /></H3>
+	
+	      <BLOCKQUOTE>
+	      	<P>Creates a new disconnected snapshot (cloned) view of the Symbol Tree.  This action is on
+	      	 the primary Symbol Tree, as well as any cloned symbol trees.</P>
+	      </BLOCKQUOTE>
+	
+		<H3><A name="Disable_Category"></A>Disable Category</H3>
+	
+	    <BLOCKQUOTE>
+	    	<P>When working in a snapshot Symbol Tree, you can choose to disable a root-level folder
+	    	by right-clicking and selected <B>Disable Category</B>.  Once disabled, the node will remain
+	    	in the tree with a disabled icon.  A disabled node will no longer show any children.
+	    	</P>
+	    </BLOCKQUOTE>
+	
+		<H3><A name="Enable_Category"></A>Enable Category</H3>
+	
+	    <BLOCKQUOTE>
+	    	<P>This action is used to re-enable categories that were previously disabled.
+	    	</P>
+	    </BLOCKQUOTE>
+    
+     </BLOCKQUOTE>
+    
+
+
+
 
     <P class="providedbyplugin">Provided By: <I>SymbolTreePlugin</I></P>
 

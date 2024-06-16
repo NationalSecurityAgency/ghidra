@@ -15,34 +15,46 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.Trace.TraceCodeChangeType;
-import ghidra.trace.model.Trace.TraceCompositeDataChangeType;
-import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.listing.TraceDefinedDataView;
+import ghidra.trace.model.*;
+import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 
+/**
+ * The implementation of {@link TraceCodeSpace#definedData()}
+ */
 public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<DBTraceData>
-		implements TraceDefinedDataView {
+		implements InternalTraceDefinedDataView {
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceDefinedDataView(DBTraceCodeSpace space) {
 		super(space, space.dataMapSpace);
 	}
 
 	@Override // NOTE: "Adapter" because using DataType.DEFAULT gives UndefinedDBTraceData
-	public DBTraceDataAdapter create(Range<Long> lifespan, Address address, DataType dataType)
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType dataType)
 			throws CodeUnitInsertionException {
 		return create(lifespan, address, dataType, dataType.getLength());
 	}
 
+	/**
+	 * Check if the given data type represents a function definition
+	 * 
+	 * <p>
+	 * This recursively resolves typedefs and checks each.
+	 * 
+	 * @param dt the data type
+	 * @return true if it is a function definition, false otherwise
+	 */
 	protected boolean isFunctionDefinition(DataType dt) {
 		if (dt instanceof FunctionDefinition) {
 			return true;
@@ -56,14 +68,14 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 
 	@Override
 	// TODO: Probably add language parameter....
-	public DBTraceDataAdapter create(Range<Long> lifespan, Address address, DataType origType,
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType origType,
 			int origLength) throws CodeUnitInsertionException {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			DBTraceMemorySpace memSpace = space.trace.getMemoryManager().get(space, true);
 			// NOTE: User-given length could be ignored....
 			// Check start address first. After I know length, I can check for other existing units
-			long startSnap = DBTraceUtils.lowerEndpoint(lifespan);
-			if (!space.undefinedData.coversRange(Range.closed(startSnap, startSnap),
+			long startSnap = lifespan.lmin();
+			if (!space.undefinedData.coversRange(Lifespan.at(startSnap),
 				new AddressRangeImpl(address, address))) {
 				// TODO: Figure out the conflicting unit?
 				throw new CodeUnitInsertionException("Code units cannot overlap");
@@ -118,23 +130,10 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			Address endAddress = address.addNoWrap(length - 1);
 			AddressRangeImpl createdRange = new AddressRangeImpl(address, endAddress);
 
-			// First, truncate lifespan to the next unit in the range, if end is unbounded
-			if (!lifespan.hasUpperBound()) {
-				lifespan = space.instructions.truncateSoonestDefined(lifespan, createdRange);
-				lifespan = space.definedData.truncateSoonestDefined(lifespan, createdRange);
-			}
-
-			// Second, extend to the next change of bytes in the range within lifespan
-			// Then, check that against existing code units.
-			long endSnap = memSpace.getFirstChange(lifespan, createdRange);
-			if (endSnap == Long.MIN_VALUE) {
-				endSnap = DBTraceUtils.upperEndpoint(lifespan);
-			}
-			else {
-				endSnap--;
-			}
+			// Truncate, then check that against existing code units.
+			long endSnap = computeTruncatedMax(lifespan, null, createdRange);
 			TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(createdRange,
-				DBTraceUtils.toRange(startSnap, endSnap));
+				Lifespan.span(startSnap, endSnap));
 			if (!space.undefinedData.coversRange(tasr)) {
 				// TODO: Figure out the conflicting unit?
 				throw new CodeUnitInsertionException("Code units cannot overlap");
@@ -144,24 +143,25 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 				return space.undefinedData.getAt(startSnap, address);
 			}
 
-			DBTraceData created = space.dataMapSpace.put(tasr, null);
+			long dataTypeID = space.dataTypeManager.getResolvedID(dataType);
+			DBTraceData created = mapSpace.put(tasr, null);
 			// TODO: data units with a guest platform
-			created.set(null, dataType);
+			created.set(space.trace.getPlatformManager().getHostPlatform(), dataTypeID);
 			// TODO: Explicitly remove undefined from cache, or let weak refs take care of it?
 
-			cacheForContaining.notifyNewEntry(lifespan, createdRange, created);
-			cacheForSequence.notifyNewEntry(lifespan, createdRange, created);
+			cacheForContaining.notifyNewEntry(tasr.getLifespan(), createdRange, created);
+			cacheForSequence.notifyNewEntry(tasr.getLifespan(), createdRange, created);
 			space.undefinedData.invalidateCache();
 
 			if (dataType instanceof Composite || dataType instanceof Array ||
 				dataType instanceof Dynamic) {
 				// TODO: Track composites?
-				space.trace.setChanged(new TraceChangeRecord<>(TraceCompositeDataChangeType.ADDED,
+				space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_ADDED,
 					space, tasr, created));
 			}
 
-			space.trace.setChanged(new TraceChangeRecord<>(TraceCodeChangeType.ADDED,
-				space, tasr, created));
+			space.trace.setChanged(
+				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space, tasr, created));
 			return created;
 		}
 		catch (AddressOverflowException e) {
@@ -175,19 +175,19 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 		DataType dataType = unit.getBaseDataType();
 		if (dataType instanceof Composite || dataType instanceof Array ||
 			dataType instanceof Dynamic) {
-			space.trace.setChanged(new TraceChangeRecord<>(TraceCompositeDataChangeType.REMOVED,
+			space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_REMOVED,
 				space, unit.getBounds(), unit, null));
 		}
 	}
 
 	@Override
-	protected void unitSpanChanged(Range<Long> oldSpan, DBTraceData unit) {
+	protected void unitSpanChanged(Lifespan oldSpan, DBTraceData unit) {
 		super.unitSpanChanged(oldSpan, unit);
 		DataType dataType = unit.getBaseDataType();
 		if (dataType instanceof Composite || dataType instanceof Array ||
 			dataType instanceof Dynamic) {
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceCompositeDataChangeType.LIFESPAN_CHANGED,
+				new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_LIFESPAN_CHANGED,
 					space, unit, oldSpan, unit.getLifespan()));
 		}
 	}

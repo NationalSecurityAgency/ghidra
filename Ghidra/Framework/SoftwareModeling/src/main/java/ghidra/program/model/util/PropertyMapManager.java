@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,15 @@
  */
 package ghidra.program.model.util;
 
+import java.util.Iterator;
+
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.util.Saveable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.map.TypeMismatchException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.Iterator;
 
 /**
  *
@@ -33,6 +34,7 @@ public interface PropertyMapManager {
 	/**
 	 * Creates a new IntPropertyMap with the given name.
 	 * @param propertyName the name for the new property.
+	 * @return newly created integer object map
 	 * @exception DuplicateNameException thrown if a PropertyMap already
 	 * exists with that name. 
 	 */
@@ -41,6 +43,7 @@ public interface PropertyMapManager {
 	/**
 	 * Creates a new LongPropertyMap with the given name.
 	 * @param propertyName the name for the new property.
+	 * @return newly created long object map
 	 * @exception DuplicateNameException thrown if a PropertyMap already
 	 * exists with that name. 
 	 */
@@ -49,6 +52,7 @@ public interface PropertyMapManager {
 	/**
 	 * Creates a new StringPropertyMap with the given name.
 	 * @param propertyName the name for the new property.
+	 * @return newly created string object map
 	 * @exception DuplicateNameException thrown if a PropertyMap already
 	 * exists with that name.
 	 */
@@ -57,16 +61,20 @@ public interface PropertyMapManager {
 
 	/**
 	 * Creates a new ObjectPropertyMap with the given name.
+	 * @param <T> {@link Saveable} property value type
 	 * @param propertyName the name for the new property.
+	 * @param objectClass {@link Saveable} implementation class
+	 * @return newly created {@link Saveable} object map
 	 * @exception DuplicateNameException thrown if a PropertyMap already
 	 * exists with that name.
 	 */
-	public ObjectPropertyMap createObjectPropertyMap(String propertyName,
-			Class<? extends Saveable> objectClass) throws DuplicateNameException;
+	public <T extends Saveable> ObjectPropertyMap<T> createObjectPropertyMap(String propertyName,
+			Class<T> objectClass) throws DuplicateNameException;
 
 	/**
 	 * Creates a new VoidPropertyMap with the given name.
 	 * @param propertyName the name for the new property.
+	 * @return newly created void map
 	 * @exception DuplicateNameException thrown if a PropertyMap already
 	 * exists with that name.
 	 */
@@ -75,13 +83,15 @@ public interface PropertyMapManager {
 	/**
 	 * Returns the PropertyMap with the given name or null if no PropertyMap
 	 * exists with that name.
+	 * @return existing map or null if not found
 	 * @param propertyName the name of the property to retrieve.
 	 */
-	public PropertyMap getPropertyMap(String propertyName);
+	public PropertyMap<?> getPropertyMap(String propertyName);
 
 	/**
 	 * Returns the IntPropertyMap associated with the given name.
 	 * @param propertyName the name of the property to retrieve.
+	 * @return existing map or null if not found
 	 * @throws TypeMismatchException if a propertyMap named propertyName
 	 * exists but is not an IntPropertyMap.
 	 */
@@ -90,6 +100,7 @@ public interface PropertyMapManager {
 	/**
 	 * Returns the LongPropertyMap associated with the given name.
 	 * @param propertyName the name of the property to retrieve.
+	 * @return existing map or null if not found
 	 * @throws TypeMismatchException if a propertyMap named propertyName
 	 * exists but is not an LongPropertyMap.
 	 */
@@ -98,6 +109,7 @@ public interface PropertyMapManager {
 	/**
 	 * Returns the StringPropertyMap associated with the given name.
 	 * @param propertyName the name of the property to retrieve.
+	 * @return existing map or null if not found
 	 * @throws TypeMismatchException if a propertyMap named propertyName
 	 * exists but is not a StringPropertyMap.
 	 */
@@ -106,14 +118,16 @@ public interface PropertyMapManager {
 	/**
 	 * Returns the ObjectPropertyMap associated with the given name.
 	 * @param propertyName the name of the property to retrieve.
+	 * @return existing map or null if not found
 	 * @throws TypeMismatchException if a propertyMap named propertyName
 	 * exists but is not an ObjectPropertyMap.
 	 */
-	public ObjectPropertyMap getObjectPropertyMap(String propertyName);
+	public ObjectPropertyMap<? extends Saveable> getObjectPropertyMap(String propertyName);
 
 	/**
 	 * Returns the VoidPropertyMap associated with the given name.
 	 * @param propertyName the name of the property to retrieve.
+	 * @return existing map or null if not found
 	 * @throws TypeMismatchException if a propertyMap named propertyName
 	 * exists but is not a VoidPropertyMap.
 	 */
@@ -140,7 +154,10 @@ public interface PropertyMapManager {
 
 	/**
 	 * Removes all properties in the given range from all user 
-	 * defined PropertyMaps.
+	 * defined PropertyMaps. 
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
+	 * 
 	 * @param startAddr the first address in the range of addresses where 
 	 * propertie values are to be removed.
 	 * @param endAddr the last address in the range of addresses where 

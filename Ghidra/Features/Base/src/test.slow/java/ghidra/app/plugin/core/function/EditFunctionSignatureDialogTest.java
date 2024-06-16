@@ -25,6 +25,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.FunctionTestDouble;
 import ghidra.program.model.TestDoubleFunctionSignature;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
@@ -118,11 +119,9 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 //==================================================================================================
 
 	private class LocalFunctionStub extends FunctionTestDouble {
-		private DataType returnType;
 
 		public LocalFunctionStub(String name, String signature) {
 			super("Name", new LocalFunctionSignatureTestDouble(name, signature));
-			this.returnType = returnType;
 		}
 
 		@Override
@@ -132,7 +131,7 @@ public class EditFunctionSignatureDialogTest extends AbstractGhidraHeadedIntegra
 
 		@Override
 		public String getCallingConventionName() {
-			return GenericCallingConvention.stdcall.toString();
+			return CompilerSpec.CALLING_CONVENTION_stdcall;
 		}
 
 		@Override

@@ -18,20 +18,10 @@ package ghidra.util;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.*;
-
 import generic.util.PeekableIterator;
 
 /**
  * An iterator which merges sorted iterators according to a comparator
- * 
- * <P>
- * TODO: This may be replaceable with {@link Iterators#mergeSorted(Iterable, Comparator)}. I
- * hesitate, since I benefit from this implementation complying with {@link PeekableIterator}, while
- * Guava's does not -- though, they would use {@link PeekingIterator} instead. Currently, my
- * {@link UnionAddressRangeIterator} takes advantage of the {@link PeekableIterator} interface of
- * this implementation. I could use {@link Iterators#peekingIterator(Iterator)}, but this would
- * introduce a wrapper.
  * 
  * @param <T> the type of elements in each iterator
  */
@@ -112,7 +102,7 @@ public class MergeSortingIterator<T> implements PeekableIterator<T> {
 	public static <L, T> MergeSortingIterator<Entry<L, T>> withLabels(
 			Map<L, ? extends Iterator<? extends T>> iterMap, Comparator<T> comparator) {
 		Collection<LabeledIterator<L, T>> iterators =
-			Collections2.transform(iterMap.entrySet(), LabeledIterator::create);
+			iterMap.entrySet().stream().map(LabeledIterator::create).toList();
 		Comparator<Entry<L, T>> comp = Comparator.comparing(Entry::getValue, comparator);
 		return new MergeSortingIterator<Map.Entry<L, T>>(iterators, comp);
 	}

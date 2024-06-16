@@ -25,13 +25,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingActionIf;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.format.actions.*;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Class to manage the tabbed panel for field formats.
@@ -40,15 +40,6 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 
 	private FormatManager formatManager;
 	private FormatModelListener formatListener = new FormatModelListener() {
-		@Override
-		public void formatModelAdded(FieldFormatModel formatModel) {
-			createTabs();
-		}
-
-		@Override
-		public void formatModelRemoved(FieldFormatModel formatModel) {
-			createTabs();
-		}
 
 		@Override
 		public void formatModelChanged(FieldFormatModel formatModel) {
@@ -227,7 +218,7 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 //		try {
 //			ClassSearcher.setXmlRestoreFile(GenericRunInfo.getUserDataDirPath() +
 //				File.separatorChar + "TestClasses.xml");
-//			ClassSearcher.search(false, TaskMonitorAdapter.DUMMY_MONITOR);
+//			ClassSearcher.search(false, TaskMonitor.DUMMY);
 //		}
 //		catch (CancelledException e) {
 //			// can't happen--dummy monitor

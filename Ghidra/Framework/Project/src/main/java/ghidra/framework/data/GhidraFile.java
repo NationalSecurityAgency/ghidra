@@ -15,8 +15,8 @@
  */
 package ghidra.framework.data;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 import javax.swing.Icon;
@@ -25,17 +25,15 @@ import ghidra.framework.model.*;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.framework.store.Version;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.InvalidNameException;
-import ghidra.util.ReadOnlyException;
+import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class GhidraFile implements DomainFile {
 
 	// FIXME: This implementation assumes a single implementation of the DomainFile and DomainFolder interfaces
 
-	protected ProjectFileManager fileManager;
+	protected DefaultProjectData projectData;
 
 	private LocalFileSystem fileSystem;
 	private DomainFolderChangeListener listener;
@@ -47,16 +45,16 @@ public class GhidraFile implements DomainFile {
 		this.parent = parent;
 		this.name = name;
 
-		this.fileManager = parent.getProjectFileManager();
+		this.projectData = parent.getProjectData();
 		this.fileSystem = parent.getLocalFileSystem();
 		this.listener = parent.getChangeListener();
 	}
 
 	public LocalFileSystem getUserFileSystem() {
-		return fileManager.getUserFileSystem();
+		return projectData.getUserFileSystem();
 	}
 
-	private GhidraFileData getFileData() throws IOException {
+	private GhidraFileData getFileData() throws FileNotFoundException, IOException {
 		return parent.getFileData(name);
 	}
 
@@ -91,6 +89,7 @@ public class GhidraFile implements DomainFile {
 	/**
 	 * Reassign a new file-ID to resolve file-ID conflict.
 	 * Conflicts can occur as a result of a cancelled check-out.
+	 * @throws IOException if an IO error occurs
 	 */
 	void resetFileID() throws IOException {
 		getFileData().resetFileID();
@@ -98,8 +97,8 @@ public class GhidraFile implements DomainFile {
 
 	void clearDomainObj() {
 		String path = getPathname();
-		DomainObjectAdapter doa = fileManager.getOpenedDomainObject(path);
-		if (doa != null && fileManager.clearDomainObject(getPathname())) {
+		DomainObjectAdapter doa = projectData.getOpenedDomainObject(path);
+		if (doa != null && projectData.clearDomainObject(getPathname())) {
 			listener.domainFileObjectClosed(this, doa);
 		}
 	}
@@ -121,7 +120,29 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
-		return fileManager.getProjectLocator();
+		return projectData.getProjectLocator();
+	}
+
+	@Override
+	public URL getSharedProjectURL(String ref) {
+		try {
+			return getFileData().getSharedProjectURL(ref);
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
+		try {
+			return getFileData().getLocalProjectURL(ref);
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		return null;
 	}
 
 	@Override
@@ -136,6 +157,37 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
+	public boolean isLinkFile() {
+		try {
+			return getFileData().isLinkFile();
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	@Override
+	public DomainFolder followLink() {
+		try {
+			return FolderLinkContentHandler.getReadOnlyLinkedFolder(this);
+		}
+		catch (IOException e) {
+			Msg.error(this, "Failed to following folder-link: " + getPathname());
+		}
+		return null;
+	}
+
+	@Override
+	public boolean isLinkingSupported() {
+		try {
+			return getFileData().isLinkingSupported();
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	@Override
 	public Class<? extends DomainObject> getDomainObjectClass() {
 		try {
 			return getFileData().getDomainObjectClass();
@@ -147,7 +199,7 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public DomainFolder getParent() {
+	public GhidraFolder getParent() {
 		return parent;
 	}
 
@@ -163,10 +215,10 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public DomainObject getOpenedDomainObject(Object consumer) {
-		DomainObjectAdapter domainObj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter domainObj = projectData.getOpenedDomainObject(getPathname());
 		if (domainObj != null) {
 			if (!domainObj.addConsumer(consumer)) {
-				fileManager.clearDomainObject(getPathname());
+				projectData.clearDomainObject(getPathname());
 				throw new IllegalStateException("Domain Object is closed: " + domainObj.getName());
 			}
 		}
@@ -177,26 +229,26 @@ public class GhidraFile implements DomainFile {
 	public DomainObject getDomainObject(Object consumer, boolean okToUpgrade, boolean okToRecover,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		return getFileData().getDomainObject(consumer, okToUpgrade, okToRecover,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainObject getReadOnlyDomainObject(Object consumer, int version, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		return getFileData().getReadOnlyDomainObject(consumer, version,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainObject getImmutableDomainObject(Object consumer, int version, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		return getFileData().getImmutableDomainObject(consumer, version,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public void save(TaskMonitor monitor) throws IOException, CancelledException {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
 			throw new AssertException("Cannot save, domainObj not open");
 		}
@@ -206,12 +258,12 @@ public class GhidraFile implements DomainFile {
 		if (isReadOnly()) {
 			throw new ReadOnlyException("Cannot save to read-only file");
 		}
-		dobj.save(null, monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+		dobj.save(null, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public boolean canSave() {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
 			return false;
 		}
@@ -258,7 +310,7 @@ public class GhidraFile implements DomainFile {
 		catch (IOException e) {
 			fileError(e);
 		}
-		return GhidraFileData.UNSUPPORTED_FILE_ICON;
+		return UNSUPPORTED_FILE_ICON;
 	}
 
 	@Override
@@ -330,10 +382,11 @@ public class GhidraFile implements DomainFile {
 	@Override
 	public boolean canAddToRepository() {
 		try {
-			return getFileData().canAddToRepository();
+			getFileData().checkCanAddToRepository();
+			return true;
 		}
 		catch (IOException e) {
-			fileError(e);
+			// ignore
 		}
 		return false;
 	}
@@ -352,17 +405,6 @@ public class GhidraFile implements DomainFile {
 			fileError(e);
 		}
 		return true;
-	}
-
-	@Override
-	public boolean isVersionControlSupported() {
-		try {
-			return getFileData().isVersionControlSupported();
-		}
-		catch (IOException e) {
-			fileError(e);
-		}
-		return false;
 	}
 
 	@Override
@@ -426,29 +468,31 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public boolean checkout(boolean exclusive, TaskMonitor monitor) throws IOException,
-			CancelledException {
-		return getFileData().checkout(exclusive,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+	public boolean checkout(boolean exclusive, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		return getFileData().checkout(exclusive, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
-		getFileData().checkin(checkinHandler, okToUpgrade,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+		getFileData().checkin(checkinHandler, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
-	public void merge(boolean okToUpgrade, TaskMonitor monitor) throws IOException,
-			VersionException, CancelledException {
-		getFileData().merge(okToUpgrade,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+	public void merge(boolean okToUpgrade, TaskMonitor monitor)
+			throws IOException, VersionException, CancelledException {
+		getFileData().merge(okToUpgrade, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public void undoCheckout(boolean keep) throws IOException {
 		getFileData().undoCheckout(keep, false);
+	}
+
+	@Override
+	public void undoCheckout(boolean keep, boolean force) throws IOException {
+		getFileData().undoCheckout(keep, force, false);
 	}
 
 	@Override
@@ -478,39 +522,58 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public GhidraFile moveTo(DomainFolder newParent) throws IOException {
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support moveTo");
+		}
 		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
 		return getFileData().moveTo(newGhidraParent.getFolderData());
 	}
 
 	@Override
-	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor) throws IOException,
-			CancelledException {
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
+	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support copyTo");
+		}
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
 		return getFileData().copyTo(newGhidraParent.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support copyToAsLink");
+		}
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
+		return getFileData().copyToAsLink(newGhidraParent.getFolderData());
 	}
 
 	@Override
 	public DomainFile copyVersionTo(int version, DomainFolder destFolder, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		GhidraFolder destGhidraFolder = (GhidraFolder) destFolder; // assumes single implementation
+		if (!GhidraFolder.class.isAssignableFrom(destFolder.getClass())) {
+			throw new UnsupportedOperationException("destFolder does not support copyVersionTo");
+		}
+		GhidraFolder destGhidraFolder = (GhidraFolder) destFolder;
 		return getFileData().copyVersionTo(version, destGhidraFolder.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	/**
 	 * Copy this file to make a private file if it is versioned. This method should be called
 	 * only when a non shared project is being converted to a shared project.
-	 * @throws IOException
+	 * @param monitor task monitor
+	 * @throws IOException if an IO error occurs
+	 * @throws CancelledException if task is cancelled
 	 */
 	void convertToPrivateFile(TaskMonitor monitor) throws IOException, CancelledException {
-		getFileData().convertToPrivateFile(
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+		getFileData().convertToPrivateFile(monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public ArrayList<?> getConsumers() {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
 			return new ArrayList<>();
 		}
@@ -519,13 +582,13 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public boolean isChanged() {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		return dobj != null && dobj.isChanged();
 	}
 
 	@Override
 	public boolean isOpen() {
-		return fileManager.getOpenedDomainObject(getPathname()) != null;
+		return projectData.getOpenedDomainObject(getPathname()) != null;
 	}
 
 	@Override
@@ -543,7 +606,7 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public void packFile(File file, TaskMonitor monitor) throws IOException, CancelledException {
-		getFileData().packFile(file, monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+		getFileData().packFile(file, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -577,7 +640,7 @@ public class GhidraFile implements DomainFile {
 			return false;
 		}
 		GhidraFile other = (GhidraFile) obj;
-		if (fileManager != other.fileManager) {
+		if (projectData != other.projectData) {
 			return false;
 		}
 		return getPathname().equals(other.getPathname());
@@ -590,7 +653,11 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public String toString() {
-		return fileManager.getProjectLocator().getName() + ":" + getPathname();
+		ProjectLocator projectLocator = projectData.getProjectLocator();
+		if (projectLocator.isTransient()) {
+			return projectLocator.getName() + getPathname();
+		}
+		return projectLocator.getName() + ":" + getPathname();
 	}
 
 }

@@ -26,16 +26,18 @@ import ghidra.app.plugin.core.analysis.EmbeddedMediaAnalyzer;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.Application;
-import ghidra.framework.HeadlessGhidraApplicationConfiguration;
+import ghidra.app.util.opinion.LoadException;
+import ghidra.app.util.opinion.LoadResults;
+import ghidra.framework.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
+import utility.application.ApplicationUtilities;
 
 /**
  * Wrapper for Ghidra code to find images (and maybe other artifacts later) in a program
@@ -79,17 +81,24 @@ public class ProgramExaminer {
 	private ProgramExaminer(ByteProvider provider) throws GhidraException {
 		initializeGhidra();
 		messageLog = new MessageLog();
+		LoadResults<Program> loadResults = null;
 		try {
-			program = AutoImporter.importByUsingBestGuess(provider, null, this, messageLog,
-				TaskMonitorAdapter.DUMMY_MONITOR);
-
-			if (program == null) {
-				program = AutoImporter.importAsBinary(provider, null, defaultLanguage, null, this,
-					messageLog, TaskMonitorAdapter.DUMMY_MONITOR);
+			try {
+				loadResults = AutoImporter.importByUsingBestGuess(provider, null, null, this,
+					messageLog, TaskMonitor.DUMMY);
+				program = loadResults.getPrimaryDomainObject();
 			}
-			if (program == null) {
-				throw new GhidraException(
-					"Can't create program from input: " + messageLog.toString());
+			catch (LoadException e) {
+				try {
+					program = AutoImporter
+							.importAsBinary(provider, null, null, defaultLanguage, null, this,
+								messageLog, TaskMonitor.DUMMY)
+							.getDomainObject();
+				}
+				catch (LoadException e1) {
+					throw new GhidraException(
+						"Can't create program from input: " + messageLog.toString());
+				}
 			}
 		}
 		catch (Exception e) {
@@ -97,6 +106,9 @@ public class ProgramExaminer {
 			throw new GhidraException(e);
 		}
 		finally {
+			if (loadResults != null) {
+				loadResults.releaseNonPrimary(this);
+			}
 			try {
 				provider.close();
 			}
@@ -110,8 +122,9 @@ public class ProgramExaminer {
 		if (!Application.isInitialized()) {
 			ApplicationLayout layout;
 			try {
-				layout =
-					new GhidraTestApplicationLayout(new File(System.getProperty("java.io.tmpdir")));
+				layout = new GhidraTestApplicationLayout(ApplicationUtilities.getDefaultUserTempDir(
+					new ApplicationProperties(ApplicationUtilities.findDefaultApplicationRootDirs())
+							.getApplicationName()));
 			}
 			catch (IOException e) {
 				throw new GhidraException(e);
@@ -172,8 +185,7 @@ public class ProgramExaminer {
 		int txID = program.startTransaction("find images");
 		try {
 			EmbeddedMediaAnalyzer imageAnalyzer = new EmbeddedMediaAnalyzer();
-			imageAnalyzer.added(program, program.getMemory(), TaskMonitorAdapter.DUMMY_MONITOR,
-				messageLog);
+			imageAnalyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, messageLog);
 		}
 		catch (CancelledException e) {
 			// using Dummy, can't happen

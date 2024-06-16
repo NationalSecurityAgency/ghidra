@@ -15,6 +15,8 @@
  */
 #include "cpool_ghidra.hh"
 
+namespace ghidra {
+
 ConstantPoolGhidra::ConstantPoolGhidra(ArchitectureGhidra *g)
 
 {
@@ -32,16 +34,16 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
 {
   const CPoolRecord *rec = cache.getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    XmlDecode decoder;
     bool success;
+    PackedDecode decoder(ghidra);
     try {
       success = ghidra->getCPoolRef(refs,decoder);
     }
     catch(JavaError &err) {
       throw LowlevelError("Error fetching constant pool record: " + err.explain);
     }
-    catch(XmlError &err) {
-      throw LowlevelError("Error in constant pool record xml: "+err.explain);
+    catch(DecoderError &err) {
+      throw LowlevelError("Error in constant pool record encoding: "+err.explain);
     }
     if (!success) {
       ostringstream s;
@@ -64,3 +66,5 @@ void ConstantPoolGhidra::decode(Decoder &decoder,TypeFactory &typegrp)
 {
   throw LowlevelError("Cannot access constant pool with this method");
 }
+
+} // End namespace ghidra

@@ -23,6 +23,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.*;
+import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.context.ListingActionContext;
@@ -57,6 +58,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	private Program program;
 	private Address address;
+	private CodeUnit codeUnit;
 
 	private final KeyListener listenerForKeys = new KeyAdapter() {
 		@Override
@@ -86,7 +88,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Create a new action owned by the given plugin, having the given name
-	 * 
+	 *
 	 * @param owner the plugin owning the action
 	 * @param name the name of the action
 	 */
@@ -105,32 +107,32 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Add the given focus listener to your input field(s)
-	 * 
+	 *
 	 * <p>
 	 * The action uses this to know when those fields have lost focus, so it can cancel the action.
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	protected abstract void addInputFocusListener(FocusListener listener);
 
 	/**
 	 * Add the given key listener to your input field(s)
-	 * 
+	 *
 	 * <p>
 	 * The listener handles Escape and Enter, canceling or accepting the input, respectively.
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	protected abstract void addInputKeyListener(KeyListener listener);
 
 	/**
 	 * If needed, add your layout listeners to this action's layout manager
-	 * 
+	 *
 	 * <p>
 	 * If there are additional components that need to move, e.g., when the panel is scrolled, then
 	 * you need a layout listener. If this is overridden, then
 	 * {@link #removeLayoutListeners(FieldPanelOverLayoutManager)} must also be overridden.
-	 * 
+	 *
 	 * @param fieldLayoutManager the layout manager
 	 */
 	protected void addLayoutListeners(FieldPanelOverLayoutManager fieldLayoutManager) {
@@ -139,7 +141,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Remove your layout listeners from this action's layout manager
-	 * 
+	 *
 	 * @see #addLayoutListeners(FieldPanelOverLayoutManager)
 	 */
 	protected void removeLayoutListeners(FieldPanelOverLayoutManager fieldLayoutManager) {
@@ -148,17 +150,17 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Set your input field(s) font to the given one
-	 * 
+	 *
 	 * <p>
 	 * This ensures your field's font matches the listing over which it is placed.
-	 * 
+	 *
 	 * @param font the listing's base font
 	 */
 	protected abstract void setInputFont(Font font);
 
 	/**
 	 * Get the program on which this action was invoked
-	 * 
+	 *
 	 * @return the current program
 	 */
 	protected Program getProgram() {
@@ -166,8 +168,17 @@ public abstract class AbstractPatchAction extends DockingAction {
 	}
 
 	/**
+	 * Get the code unit on which this action was invoked
+	 *
+	 * @return the current code unit
+	 */
+	protected CodeUnit getCodeUnit() {
+		return codeUnit;
+	}
+
+	/**
 	 * Get the address at which this action was invoked
-	 * 
+	 *
 	 * @return the current address
 	 */
 	protected Address getAddress() {
@@ -201,13 +212,13 @@ public abstract class AbstractPatchAction extends DockingAction {
 		fieldPanel = listingPanel.getFieldPanel();
 
 		fieldLayoutManager = new FieldPanelOverLayoutManager(fieldPanel);
-		fieldPanel.setLayout(fieldLayoutManager);
 		addLayoutListeners(fieldLayoutManager);
+		fieldPanel.setLayout(fieldLayoutManager);
 	}
 
 	/**
 	 * Invoked when the user presses Enter
-	 * 
+	 *
 	 * <p>
 	 * This should validate the user's input and complete the action. If the action is completed
 	 * successfully, then call {@link #hide()}. Note that the Enter key can be ignored by doing
@@ -218,7 +229,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Hide the input field(s)
-	 * 
+	 *
 	 * <p>
 	 * This removes any components added to the listing's field panel, usually via
 	 * {@link #showInputs(FieldPanel)}, and returns focus to the listing. If other components were
@@ -232,7 +243,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Cancel the current patch action
-	 * 
+	 *
 	 * <p>
 	 * This hides the input field(s) without completing the action.
 	 */
@@ -242,12 +253,12 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Locate a listing field by name and address
-	 * 
+	 *
 	 * <p>
 	 * Generally, this is used in {@link #showInputs(FieldPanel)} to find constraints suitable for
 	 * use in {@link Container#add(Component, Object)} on the passed {@code fieldPanel}. Likely, the
 	 * address should be obtained from {@link #getAddress()}.
-	 * 
+	 *
 	 * @param address the address for the line (row) in the listing
 	 * @param fieldName the column name for the field in the listing
 	 * @return if found, the field location, or null
@@ -258,8 +269,9 @@ public abstract class AbstractPatchAction extends DockingAction {
 		BigInteger index = adapter.getAddressIndexMap().getIndex(address);
 		int count = layout.getNumFields();
 		for (int i = 0; i < count; i++) {
-			ListingField field = (ListingField) layout.getField(i);
-			if (field.getFieldFactory().getFieldName().equals(fieldName)) {
+			Field f = layout.getField(i);
+			if ((f instanceof ListingField field) &&
+				field.getFieldFactory().getFieldName().equals(fieldName)) {
 				return new FieldLocation(index, i);
 			}
 		}
@@ -268,7 +280,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Check if the action is applicable to the given code unit
-	 * 
+	 *
 	 * @param unit the code unit at the user's cursor
 	 * @return true if applicable, false if not
 	 */
@@ -276,14 +288,12 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		if (!(context instanceof ListingActionContext)) {
+		CodeUnit cu = getCodeUnit(context);
+		if (cu == null || !isApplicableToUnit(cu)) {
 			return false;
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
-		if (!isApplicableToUnit(lac.getCodeUnit())) {
-			return false;
-		}
 
 		ComponentProvider provider = lac.getComponentProvider();
 		if (!(provider instanceof CodeViewerProvider)) {
@@ -313,19 +323,17 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Perform preparation and save any information needed later in {@link #accept()}.
-	 * 
-	 * @param unit the code unit at the user's cursor
 	 */
-	protected abstract void prepare(CodeUnit unit);
+	protected void prepare() {
+	}
 
 	/**
 	 * Put the input fields in their place, show them, and place focus appropriately
-	 * 
+	 *
 	 * <p>
 	 * Use {{@link #findFieldLocation(Address, String)} to locate fields in the listing and place
 	 * your inputs over them.
-	 * 
-	 * @param address the address of the user's cursor
+	 *
 	 * @param fieldPanel the currently-focused listing field panel
 	 * @return false if inputs could not be placed and shown
 	 */
@@ -333,26 +341,36 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Pre-fill the input fields and place the caret appropriately (usually at the end)
-	 * 
-	 * @param unit the code unit at the user's cursor
 	 */
-	protected abstract void fillInputs(CodeUnit unit);
+	protected abstract void fillInputs();
+
+	protected CodeUnit getCodeUnit(ActionContext context) {
+		if (!(context instanceof ListingActionContext)) {
+			return null;
+		}
+
+		ListingActionContext lac = (ListingActionContext) context;
+		ComponentProvider provider = lac.getComponentProvider();
+		if (!(provider instanceof CodeViewerProvider)) {
+			return null;
+		}
+
+		CodeViewerProvider codeViewProvider = (CodeViewerProvider) provider;
+		if (codeViewProvider.isReadOnly()) {
+			return null;
+		}
+		return lac.getCodeUnit();
+	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (!(context instanceof ListingActionContext)) {
+		codeUnit = getCodeUnit(context);
+		if (codeUnit == null || !isApplicableToUnit(codeUnit)) {
 			return;
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
 		prepareLayout(lac);
-		if (codeViewerProvider.isReadOnly()) {
-			return;
-		}
-		CodeUnit cu = lac.getCodeUnit();
-		if (!isApplicableToUnit(cu)) {
-			return;
-		}
 
 		ProgramLocation cur = lac.getLocation();
 		program = cur.getProgram();
@@ -365,7 +383,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 			return;
 		}
 
-		prepare(cu);
+		prepare();
 
 		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 		Font font = displayOptions.getFont(GhidraOptions.OPTION_BASE_FONT, null);
@@ -377,7 +395,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 		if (!showInputs(fieldPanel)) {
 			return;
 		}
-		fillInputs(cu);
+		fillInputs();
 
 		fieldLayoutManager.layoutContainer(fieldPanel);
 	}

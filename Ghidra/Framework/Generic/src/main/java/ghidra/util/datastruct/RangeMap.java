@@ -17,7 +17,7 @@ package ghidra.util.datastruct;
 
 import ghidra.util.LongIterator;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.IntPropertySet;
+import ghidra.util.map.IntValueMap;
 
 /**
  * Stores ranges of int values throughout "long" space. Every "long" index has
@@ -33,7 +33,7 @@ import ghidra.util.prop.IntPropertySet;
  */
 public class RangeMap {
 	
-	IntPropertySet map;
+	IntValueMap map;
 	int defaultValue;
 	
 	/**
@@ -48,7 +48,7 @@ public class RangeMap {
 	 * @param defaultValue the default value
 	 */
 	public RangeMap(int defaultValue) {
-		map = new IntPropertySet("RangeMap");
+		map = new IntValueMap("RangeMap");
 		this.defaultValue = defaultValue;
 		map.putInt(0, defaultValue);		
 	}

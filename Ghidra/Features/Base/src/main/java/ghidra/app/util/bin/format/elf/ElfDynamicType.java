@@ -114,7 +114,7 @@ public class ElfDynamicType {
 	//  public static ElfDynamicType DT_ENCODING = addDefaultDynamicType(32, "DT_ENCODING",
 	//	  "Start of encoded range", ElfDynamicValueType.VALUE);
 	public static ElfDynamicType DT_PREINIT_ARRAY = addDefaultDynamicType(32, "DT_PREINIT_ARRAY",
-		"Array with addresses of preinit fct", ElfDynamicValueType.VALUE);
+		"Array with addresses of preinit fct", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_PREINIT_ARRAYSZ = addDefaultDynamicType(33,
 		"DT_PREINIT_ARRAYSZ", "Size in bytes of DT_PREINIT_ARRAY", ElfDynamicValueType.VALUE);
 
@@ -163,6 +163,8 @@ public class ElfDynamicType {
 
 	// Address Range (??): 0x6ffffe00 - 0x6ffffeff
 
+	public static ElfDynamicType DT_GNU_XHASH = addDefaultDynamicType(0x6ffffef4, "DT_GNU_XHASH",
+			"GNU-style extended hash table", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_GNU_HASH = addDefaultDynamicType(0x6ffffef5, "DT_GNU_HASH",
 		"GNU-style hash table", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_TLSDESC_PLT =
@@ -243,7 +245,7 @@ public class ElfDynamicType {
 	/**
 	 * Add the specified dynamic entry type to the specified map.
 	 * @param type dynamic entry type
-	 * @param dynamicTypeMap
+	 * @param dynamicTypeMap map of dynamic types
 	 * @throws DuplicateNameException if new type name already defined within
 	 * the specified map
 	 */

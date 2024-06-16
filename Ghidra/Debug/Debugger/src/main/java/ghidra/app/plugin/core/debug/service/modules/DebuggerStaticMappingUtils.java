@@ -15,30 +15,27 @@
  */
 package ghidra.app.plugin.core.debug.service.modules;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-
-import com.google.common.collect.Range;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
-import ghidra.app.services.MapEntry;
-import ghidra.framework.data.OpenedDomainFile;
-import ghidra.framework.model.*;
-import ghidra.framework.store.FileSystem;
+import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.modules.MapEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.ProjectData;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Library;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.ComparatorMath;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 public enum DebuggerStaticMappingUtils {
 	;
@@ -48,121 +45,50 @@ public enum DebuggerStaticMappingUtils {
 		return null;
 	}
 
-	public static DomainFile resolve(DomainFolder folder, String path) {
-		StringBuilder fullPath = new StringBuilder(folder.getPathname());
-		if (!fullPath.toString().endsWith(FileSystem.SEPARATOR)) {
-			// Only root should end with /, anyway
-			fullPath.append(FileSystem.SEPARATOR_CHAR);
-		}
-		fullPath.append(path);
-		return folder.getProjectData().getFile(fullPath.toString());
-	}
-
-	public static Set<DomainFile> findPrograms(String modulePath, DomainFolder folder) {
-		// TODO: If not found, consider filenames with space + extra info
-		while (folder != null) {
-			DomainFile found = resolve(folder, modulePath);
-			if (found != null) {
-				return Set.of(found);
-			}
-			folder = folder.getParent();
-		}
-		return Set.of();
-	}
-
-	public static Set<DomainFile> findProgramsByPathOrName(String modulePath,
-			DomainFolder folder) {
-		Set<DomainFile> found = findPrograms(modulePath, folder);
-		if (!found.isEmpty()) {
-			return found;
-		}
-		int idx = modulePath.lastIndexOf(FileSystem.SEPARATOR);
-		if (idx == -1) {
-			return Set.of();
-		}
-		found = findPrograms(modulePath.substring(idx + 1), folder);
-		if (!found.isEmpty()) {
-			return found;
-		}
-		return Set.of();
-	}
-
-	public static Set<DomainFile> findProgramsByPathOrName(String modulePath, Project project) {
-		return findProgramsByPathOrName(modulePath, project.getProjectData().getRootFolder());
-	}
-
-	protected static String normalizePath(String path) {
-		path = path.replace('\\', FileSystem.SEPARATOR_CHAR);
-		while (path.startsWith(FileSystem.SEPARATOR)) {
-			path = path.substring(1);
-		}
-		return path;
-	}
-
-	public static Set<DomainFile> findProbableModulePrograms(TraceModule module, Project project) {
-		// TODO: Consider folders containing existing mapping destinations
-		DomainFile df = module.getTrace().getDomainFile();
-		String modulePath = normalizePath(module.getName());
-		if (df == null) {
-			return findProgramsByPathOrName(modulePath, project);
-		}
-		DomainFolder parent = df.getParent();
-		if (parent == null) {
-			return findProgramsByPathOrName(modulePath, project);
-		}
-		return findProgramsByPathOrName(modulePath, parent);
-	}
-
-	protected static void collectLibraries(ProjectData project, Program cur, Set<Program> col,
-			TaskMonitor monitor) throws CancelledException {
-		if (!col.add(cur)) {
+	protected static void collectLibraries(ProjectData project, DomainFile cur,
+			Set<DomainFile> col) {
+		if (!Program.class.isAssignableFrom(cur.getDomainObjectClass()) || !col.add(cur)) {
 			return;
 		}
-		ExternalManager externs = cur.getExternalManager();
-		for (String extName : externs.getExternalLibraryNames()) {
-			monitor.checkCanceled();
-			Library lib = externs.getExternalLibrary(extName);
-			String libPath = lib.getAssociatedProgramPath();
-			if (libPath == null) {
-				continue;
+		Set<String> paths = new HashSet<>();
+		try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(cur)) {
+			if (!(peek.object instanceof Program program)) {
+				return;
 			}
-			DomainFile libFile = project.getFile(libPath);
+			ExternalManager externalManager = program.getExternalManager();
+			for (String libraryName : externalManager.getExternalLibraryNames()) {
+				Library library = externalManager.getExternalLibrary(libraryName);
+				String path = library.getAssociatedProgramPath();
+				if (path != null) {
+					paths.add(path);
+				}
+			}
+		}
+
+		for (String libraryPath : paths) {
+			DomainFile libFile = project.getFile(libraryPath);
 			if (libFile == null) {
-				Msg.info(DebuggerStaticMappingUtils.class,
-					"Referenced external program not found: " + libPath);
 				continue;
 			}
-			try (OpenedDomainFile<Program> program =
-				OpenedDomainFile.open(Program.class, libFile, monitor)) {
-				collectLibraries(project, program.content, col, monitor);
-			}
-			catch (ClassCastException e) {
-				Msg.info(DebuggerStaticMappingUtils.class,
-					"Referenced external program is not a program: " + libPath + " is " +
-						libFile.getDomainObjectClass());
-				continue;
-			}
-			catch (VersionException | CancelledException | IOException e) {
-				Msg.info(DebuggerStaticMappingUtils.class,
-					"Referenced external program could not be opened: " + e);
-				continue;
-			}
+			collectLibraries(project, libFile, col);
 		}
 	}
 
 	/**
-	 * Recursively collect external programs, i.e., libraries, starting at the given seed
+	 * Recursively collect external programs, i.e., libraries, starting at the given seeds
 	 * 
-	 * @param seed the seed, usually the executable
-	 * @param monitor a monitor to cancel the process
-	 * @return the set of found programs, including the seed
-	 * @throws CancelledException if cancelled by the monitor
+	 * <p>
+	 * This will only descend into domain files that are already opened. This will only include
+	 * results whose content type is a {@link Program}.
+	 * 
+	 * @param seeds the seeds, usually including the executable
+	 * @return the set of found domain files, including the seeds
 	 */
-	public static Set<Program> collectLibraries(Program seed, TaskMonitor monitor)
-			throws CancelledException {
-		Set<Program> result = new LinkedHashSet<>();
-		collectLibraries(seed.getDomainFile().getParent().getProjectData(), seed, result,
-			monitor);
+	public static Set<DomainFile> collectLibraries(Collection<DomainFile> seeds) {
+		Set<DomainFile> result = new LinkedHashSet<>();
+		for (DomainFile seed : seeds) {
+			collectLibraries(seed.getParent().getProjectData(), seed, result);
+		}
 		return result;
 	}
 
@@ -207,16 +133,16 @@ public enum DebuggerStaticMappingUtils {
 		Address end = fromAddress.addWrap(length - 1);
 		// Also check end in the destination
 		AddressRangeImpl range = new AddressRangeImpl(fromAddress, end);
-		Range<Long> fromLifespan = from.getLifespan();
+		Lifespan fromLifespan = from.getLifespan();
 		if (truncateExisting) {
-			long truncEnd = DBTraceUtils.lowerEndpoint(fromLifespan) - 1;
+			long truncEnd = fromLifespan.lmin() - 1;
 			for (TraceStaticMapping existing : List
 					.copyOf(manager.findAllOverlapping(range, fromLifespan))) {
 				existing.delete();
-				if (fromLifespan.hasLowerBound() &&
-					Long.compare(existing.getStartSnap(), truncEnd) <= 0) {
+				if (fromLifespan.minIsFinite() &&
+					Lifespan.DOMAIN.compare(existing.getStartSnap(), truncEnd) <= 0) {
 					manager.add(existing.getTraceAddressRange(),
-						Range.closed(existing.getStartSnap(), truncEnd),
+						Lifespan.span(existing.getStartSnap(), truncEnd),
 						existing.getStaticProgramURL(), existing.getStaticAddress());
 				}
 			}
@@ -232,41 +158,81 @@ public enum DebuggerStaticMappingUtils {
 		addMapping(fromLoc, toLoc, length, truncateExisting);
 	}
 
-	public static void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
-			boolean truncateExisting) {
-		Map<String, Address> mins = new HashMap<>();
-		Map<String, Address> maxs = new HashMap<>();
-		for (AddressRange range : toProgram.getMemory().getAddressRanges()) {
-			mins.compute(range.getAddressSpace().getName(), (n, min) -> {
-				Address can = range.getMinAddress();
-				if (min == null || can.compareTo(min) < 0) {
-					return can;
-				}
-				return min;
-			});
-			maxs.compute(range.getAddressSpace().getName(), (n, max) -> {
-				Address can = range.getMaxAddress();
-				if (max == null || can.compareTo(max) > 0) {
-					return can;
-				}
-				return max;
-			});
+	public static class Extrema {
+		private Address min = null;
+		private Address max = null;
+
+		public void consider(Address min, Address max) {
+			this.min = this.min == null ? min : ComparatorMath.cmin(this.min, min);
+			this.max = this.max == null ? max : ComparatorMath.cmax(this.max, max);
 		}
-		for (String name : mins.keySet()) {
-			AddressRange range = clippedRange(from, name, mins.get(name).getOffset(),
-				maxs.get(name).getOffset());
-			if (range == null) {
+
+		public void consider(AddressRange range) {
+			consider(range.getMinAddress(), range.getMaxAddress());
+		}
+
+		public void consider(Address address) {
+			consider(address, address);
+		}
+
+		public Address getMin() {
+			return min;
+		}
+
+		public Address getMax() {
+			return max;
+		}
+
+		public long getLength() {
+			return max.subtract(min) + 1;
+		}
+
+		public AddressRange getRange() {
+			return new AddressRangeImpl(getMin(), getMax());
+		}
+	}
+
+	public static boolean isReal(MemoryBlock block) {
+		return block.isLoaded() && !block.isOverlay() && !block.isExternalBlock();
+	}
+
+	public static void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
+			boolean truncateExisting) throws TraceConflictedMappingException {
+		AddressSet failures = new AddressSet();
+		Set<TraceStaticMapping> conflicts = new HashSet<>();
+		Map<AddressSpace, Extrema> extremaBySpace = new HashMap<>();
+		for (MemoryBlock block : toProgram.getMemory().getBlocks()) {
+			if (!isReal(block)) {
+				continue;
+			}
+			AddressRange range = new AddressRangeImpl(block.getStart(), block.getEnd());
+			extremaBySpace.computeIfAbsent(range.getAddressSpace(), s -> new Extrema())
+					.consider(range);
+		}
+
+		for (Extrema extrema : extremaBySpace.values()) {
+			AddressRange fromRange =
+				clippedRange(from, extrema.getMin().getAddressSpace().getName(),
+					extrema.getMin().getOffset(), extrema.getMax().getOffset());
+			if (fromRange == null) {
 				continue;
 			}
 			try {
-				addMapping(new DefaultTraceLocation(from, null, lifespan, range.getMinAddress()),
-					new ProgramLocation(toProgram, mins.get(name)), range.getLength(),
+				addMapping(
+					new DefaultTraceLocation(from, null, lifespan, fromRange.getMinAddress()),
+					new ProgramLocation(toProgram, extrema.getMin()), fromRange.getLength(),
 					truncateExisting);
 			}
 			catch (TraceConflictedMappingException e) {
+				failures.add(fromRange);
+				conflicts.addAll(e.getConflicts());
 				Msg.error(DebuggerStaticMappingUtils.class,
-					"Could not add identity mapping " + range + ": " + e.getMessage());
+					"Could not add identity mapping " + fromRange + ": " + e.getMessage());
 			}
+		}
+		if (!failures.isEmpty()) {
+			throw new TraceConflictedMappingException("Conflicting mappings for " + failures,
+				conflicts);
 		}
 	}
 
@@ -284,5 +250,114 @@ public enum DebuggerStaticMappingUtils {
 			return new AddressRangeImpl(space.getAddress(min), spaceMax);
 		}
 		return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
+	}
+
+	/**
+	 * Parse the final file name from the given URL.
+	 * 
+	 * <p>
+	 * This is used when listing the "image" name for mappings, since displaying a full URL would
+	 * probably clutter the table. This generally matches the "program name," but in certain cases
+	 * may not.
+	 * 
+	 * @param staticProgramURL the URL of the static program image
+	 * @return the piece after the final "/"
+	 */
+	public static String getImageName(URL staticProgramURL) {
+		String[] parts = staticProgramURL.toExternalForm().split("/");
+		return parts[parts.length - 1];
+	}
+
+	/**
+	 * Compute a string suitable for displaying the mapped module names for a given range
+	 * 
+	 * <p>
+	 * Ideally, the entire range is covered by a single mapping entry. In that case, the "image
+	 * name" (see {@link #getImageName(URL)}) for that one mapping is returned. If a single mapping
+	 * is found, but it only partially covers the given range, an asterisk is appended. If no
+	 * mappings are found, the empty string is returned. If multiple mappings are found, they are
+	 * each listed alphabetically. No asterisk is displayed in the case of multiple images, since
+	 * it's implied that none cover the entire range.
+	 * 
+	 * @param trace the trace whose mappings to query
+	 * @param snap the relevant snapshot
+	 * @param range the address range to consider
+	 * @return the names of any mapped images
+	 */
+	public static String computeMappedFiles(Trace trace, long snap, AddressRange range) {
+		List<TraceStaticMapping> mappings = List.copyOf(
+			trace.getStaticMappingManager().findAllOverlapping(range, Lifespan.at(snap)));
+		if (mappings.isEmpty()) {
+			return "";
+		}
+		if (mappings.size() == 1) {
+			TraceStaticMapping single = mappings.get(0);
+			AddressRange mappedRange = single.getTraceAddressRange();
+			if (mappedRange.contains(range.getMinAddress()) &&
+				mappedRange.contains(range.getMaxAddress())) {
+				return getImageName(single.getStaticProgramURL());
+			}
+			return getImageName(single.getStaticProgramURL()) + "*";
+		}
+		/**
+		 * Its possible multiple mappings to the same image are at play. This would happen if the
+		 * user is mapping by sections instead of modules.
+		 */
+		List<String> names = mappings.stream()
+				.map(m -> getImageName(m.getStaticProgramURL()))
+				.sorted()
+				.distinct()
+				.toList();
+		if (names.size() == 1) {
+			return names.get(0) + "*";
+		}
+		return names.stream().collect(Collectors.joining(","));
+	}
+
+	public static Function getFunction(Address pc, DebuggerCoordinates coordinates,
+			ServiceProvider serviceProvider) {
+		if (pc == null) {
+			return null;
+		}
+		DebuggerStaticMappingService mappingService =
+			serviceProvider.getService(DebuggerStaticMappingService.class);
+		if (mappingService == null) {
+			return null;
+		}
+		TraceLocation dloc = new DefaultTraceLocation(coordinates.getTrace(),
+			null, Lifespan.at(coordinates.getSnap()), pc);
+		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
+		if (sloc == null) {
+			return null;
+		}
+		return sloc.getProgram().getFunctionManager().getFunctionContaining(sloc.getAddress());
+	}
+
+	public static String computeModuleShortName(String path) {
+		int sep = path.lastIndexOf('\\');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		sep = path.lastIndexOf('/');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		return path;
+	}
+
+	public static String getModuleName(Address pc, DebuggerCoordinates coordinates) {
+		if (pc == null) {
+			return null;
+		}
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			return null;
+		}
+		for (TraceModule module : trace.getModuleManager()
+				.getModulesAt(coordinates.getSnap(), pc)) {
+			// Just take the first
+			return computeModuleShortName(module.getName());
+		}
+		return null;
 	}
 }

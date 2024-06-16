@@ -27,6 +27,9 @@ import javax.swing.text.View;
 import docking.DockingUtils;
 import docking.widgets.*;
 import docking.widgets.label.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationProperties;
@@ -36,14 +39,18 @@ import resources.ResourceManager;
 import utilities.util.FileUtilities;
 
 /**
- * Window to display version information about the current release of 
- * the ghidra application.
+ * Window to display version information about the current release of the application.
  */
 class InfoPanel extends JPanel {
 
-	private final static Color RED = new Color(199, 0, 0);
-
 	private final static int MARGIN = 10;
+
+	private final static String SPLASH_FILENAME = "splash.txt";
+	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
+	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
+	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
+
+	private static final String FONT_ID = "font.splash.infopanel";
 
 	private String version;
 	private String marking;
@@ -51,14 +58,10 @@ class InfoPanel extends JPanel {
 
 	private Color bgColor; // background color for all panels
 	private int imageWidth;
-	private final static String SPLASH_FILENAME = "splash.txt";
-	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
-	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
-	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
 
 	InfoPanel() {
 		getAboutInfo();
-		bgColor = new Color(243, 250, 255);
+		bgColor = new GColor("color.bg.splash.infopanel");
 		create();
 	}
 
@@ -105,7 +108,7 @@ class InfoPanel extends JPanel {
 		// If the splash.txt file contains non-HTML text, view is null
 		View view = (View) resizer.getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
 		if (view == null) {
-			// must not be HTML content in the splash screen text (this shouldn't 
+			// must not be HTML content in the splash screen text (this shouldn't
 			// happen, but let's just protect against this anyway).
 			JLabel label = new GDLabel(content) {
 				@Override
@@ -122,14 +125,14 @@ class InfoPanel extends JPanel {
 		float w = view.getPreferredSpan(View.X_AXIS);
 		float h = view.getPreferredSpan(View.Y_AXIS);
 
-		JLabel distribLabel = new GHtmlLabel(content);
-		distribLabel.setPreferredSize(new Dimension((int) Math.ceil(w), (int) Math.ceil(h + 10)));
-		return distribLabel;
+		JLabel distLabel = new GHtmlLabel(content);
+		distLabel.setPreferredSize(new Dimension((int) Math.ceil(w), (int) Math.ceil(h + 10)));
+		return distLabel;
 	}
 
 	private Component buildMarkingLabel() {
 		MultiLineLabel markingLabel = new MultiLineLabel(marking, 0, 3, MultiLineLabel.CENTER);
-		markingLabel.setForeground(RED);
+		markingLabel.setForeground(Palette.RED);
 		return markingLabel;
 	}
 
@@ -144,7 +147,7 @@ class InfoPanel extends JPanel {
 	private Component buildTestBuildLabel() {
 		MultiLineLabel testLabel =
 			new MultiLineLabel("-- UNSUPPORTED TEST BUILD --", 0, 3, MultiLineLabel.CENTER);
-		testLabel.setForeground(RED);
+		testLabel.setForeground(Palette.RED);
 		return testLabel;
 	}
 
@@ -171,10 +174,8 @@ class InfoPanel extends JPanel {
 
 	private Component buildVersionLabel() {
 		MultiLineLabel versionLabel = new MultiLineLabel(version, 0, 3, MultiLineLabel.CENTER);
-		Font font = versionLabel.getFont();
-		font = font.deriveFont(14f).deriveFont(Font.BOLD);
-		versionLabel.setFont(font);
-		versionLabel.setForeground(Color.BLACK);
+		Gui.registerFont(versionLabel, FONT_ID);
+		versionLabel.setForeground(new GColor("color.fg.infopanel.version"));
 		return versionLabel;
 	}
 
@@ -194,7 +195,7 @@ class InfoPanel extends JPanel {
 	private HyperlinkComponent buildJavaVersionComponent() {
 		String anchorName = "java_version";
 		final HyperlinkComponent javaVersionComponent =
-			new HyperlinkComponent("<HTML><CENTER>Java Version " + "<A HREF=\"" + anchorName +
+			new HyperlinkComponent("<html><CENTER>Java Version " + "<A HREF=\"" + anchorName +
 				"\">" + System.getProperty("java.version") + "</A></CENTER>");
 		javaVersionComponent.addHyperlinkListener(anchorName, e -> {
 			if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
@@ -271,18 +272,5 @@ class InfoPanel extends JPanel {
 			Msg.debug(this, "Unable to read splash screen text from: " + SPLASH_FILENAME, e);
 			return SPLASH_FILENAME + " file is unreadable!";
 		}
-	}
-
-	public static void main(String[] args) {
-		JFrame f = new JFrame("Ghidra");
-		InfoPanel p = new InfoPanel();
-		f.getContentPane().add(p);
-		f.pack();
-		f.setVisible(true);
-
-		JDialog d = new JDialog(f, "About Ghidra", true);
-		d.getContentPane().add(new InfoPanel());
-		d.pack();
-		d.setVisible(true);
 	}
 }

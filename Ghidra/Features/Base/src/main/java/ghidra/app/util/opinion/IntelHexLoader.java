@@ -21,8 +21,8 @@ import java.util.*;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -142,9 +142,10 @@ public class IntelHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
 		CompilerSpec importerCompilerSpec =
@@ -152,45 +153,38 @@ public class IntelHexLoader extends AbstractProgramLoader {
 
 		Program prog = createProgram(provider, programName, null, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
+		List<Loaded<Program>> loadedList =
+			List.of(new Loaded<>(prog, programName, programFolderPath));
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor);
-			if (success) {
-				createDefaultMemoryBlocks(prog, importerLanguage, log);
-			}
+			loadInto(provider, loadSpec, options, log, prog, monitor);
+			createDefaultMemoryBlocks(prog, importerLanguage, log);
+			success = true;
+			return loadedList;
 		}
 		finally {
 			if (!success) {
-				prog.release(consumer);
-				prog = null;
+				release(loadedList, consumer);
 			}
 		}
-		List<Program> results = new ArrayList<Program>();
-		if (prog != null) {
-			results.add(prog);
-		}
-		return results;
 	}
 
 	@Override
-	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws IOException, LoadException, CancelledException {
 		Address baseAddr = getBaseAddr(options);
 
 		if (baseAddr == null) {
 			baseAddr = prog.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		}
-		boolean success = false;
 		try {
 			processIntelHex(provider, options, log, prog, monitor);
-			success = true;
 		}
 		catch (AddressOverflowException e) {
-			throw new IOException(
+			throw new LoadException(
 				"Hex file specifies range greater than allowed address space - " + e.getMessage());
 		}
-		return success;
 	}
 
 	private void processIntelHex(ByteProvider provider, List<Option> options, MessageLog log,
@@ -215,7 +209,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		try (BufferedReader in =
 			new BufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
 			while ((line = in.readLine()) != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				lineNum++;
 				if (lineNum % 1000 == 1) {
@@ -230,7 +224,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		}
 
 		String msg = memImage.createMemory(getName(), provider.getName(),
-			isOverlay ? blockName : null, isOverlay, program, monitor);
+			blockName, isOverlay, program, monitor);
 
 		if (msg.length() > 0) {
 			log.appendMsg(msg);

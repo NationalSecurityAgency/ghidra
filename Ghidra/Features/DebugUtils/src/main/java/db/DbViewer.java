@@ -16,30 +16,30 @@
 package db;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.TableModel;
 
 import db.buffers.LocalBufferFile;
 import docking.framework.DockingApplicationConfiguration;
-import docking.framework.DockingApplicationLayout;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import ghidra.app.plugin.debug.dbtable.DbLargeTableModel;
+import docking.widgets.table.GTable;
+import docking.widgets.table.GTableFilterPanel;
+import generic.application.GenericApplicationLayout;
 import ghidra.app.plugin.debug.dbtable.DbSmallTableModel;
 import ghidra.framework.Application;
+import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.layout.PairLayout;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
 /**
@@ -47,7 +47,7 @@ import utility.application.ApplicationLayout;
  * Ghidra database.
  */
 public class DbViewer extends JFrame {
-	private GhidraFileChooser fileChooser;
+	private static final String LAST_BUFFER_FILE_DIRECTORY = "LastBufferFileDirectory";
 	private File dbFile;
 	private DBHandle dbh;
 	private JMenuItem openItem;
@@ -57,10 +57,11 @@ public class DbViewer extends JFrame {
 	private JComboBox<String> combo;
 	private Table[] tables;
 	private Hashtable<String, TableStatistics[]> tableStats = new Hashtable<>();
+	private GTableFilterPanel<DBRecord> tableFilterPanel;
 
 	DbViewer() {
 		super("Database Viewer");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		buildGui();
 	}
 
@@ -70,29 +71,14 @@ public class DbViewer extends JFrame {
 		menuBar.add(menu);
 		openItem = new JMenuItem("Open Database...");
 		menu.add(openItem);
-		openItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				openDb();
-			}
-		});
+		openItem.addActionListener(e -> openDb());
 		closeItem = new JMenuItem("Close Database");
 		menu.add(closeItem);
 		closeItem.setEnabled(false);
-		closeItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				closeDb();
-			}
-		});
+		closeItem.addActionListener(e -> closeDb());
 		JMenuItem exitItem = new JMenuItem("Exit");
 		menu.add(exitItem);
-		exitItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
-			}
-		});
+		exitItem.addActionListener(e -> System.exit(0));
 		setJMenuBar(menuBar);
 	}
 
@@ -106,14 +92,16 @@ public class DbViewer extends JFrame {
 	}
 
 	private void openDb() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(this);
-			fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
-			fileChooser.setFileFilter(new ExtensionFileFilter("gbf", "Ghidra Buffer File"));
-			fileChooser.setCurrentDirectory(new File("C:\\"));
-		}
+
+		GhidraFileChooser fileChooser = new GhidraFileChooser(this);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+		fileChooser.setFileFilter(new ExtensionFileFilter("gbf", "Ghidra Buffer File"));
+		fileChooser.setCurrentDirectory(new File("C:\\"));
+
+		fileChooser.setLastDirectoryPreference(LAST_BUFFER_FILE_DIRECTORY);
 
 		File selectedFile = fileChooser.getSelectedFile(true);
+		fileChooser.dispose();
 		if (selectedFile == null) {
 			return;
 		}
@@ -133,9 +121,9 @@ public class DbViewer extends JFrame {
 		}
 		catch (IOException e) {
 			try {
-				PackedDatabase pdb = PackedDatabase.getPackedDatabase(selectedFile,
-					TaskMonitorAdapter.DUMMY_MONITOR);
-				dbh = pdb.open(TaskMonitorAdapter.DUMMY_MONITOR);
+				PackedDatabase pdb =
+					PackedDatabase.getPackedDatabase(selectedFile, TaskMonitor.DUMMY);
+				dbh = pdb.open(TaskMonitor.DUMMY);
 				tables = dbh.getTables();
 				Arrays.sort(tables, new TableNameComparator());
 			}
@@ -169,12 +157,7 @@ public class DbViewer extends JFrame {
 				tables[i].getName() + " (" + Integer.toString(tables[i].getRecordCount()) + ")";
 		}
 		combo = new GComboBox<>(names);
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateTable();
-			}
-		});
+		combo.addActionListener(e -> updateTable());
 		subNorthPanel.add(combo);
 		northPanel.add(subNorthPanel);
 		mainPanel.add(northPanel, BorderLayout.NORTH);
@@ -196,17 +179,13 @@ public class DbViewer extends JFrame {
 
 	private JPanel createSouthPanel(Table table) {
 		JPanel panel = new JPanel(new BorderLayout());
-		TableModel model = null;
-		if (table.getRecordCount() <= 10000) {
-			model = new DbSmallTableModel(table);
-		}
-		else {
-			model = new DbLargeTableModel(table);
-		}
-		JTable jtable = new JTable(model);
+		DbSmallTableModel model = new DbSmallTableModel(new ServiceProviderStub(), table);
+		GTable gTable = new GTable(model);
 
-		JScrollPane scroll = new JScrollPane(jtable);
+		tableFilterPanel = new GTableFilterPanel<>(gTable, model);
+		JScrollPane scroll = new JScrollPane(gTable);
 		panel.add(scroll, BorderLayout.CENTER);
+		panel.add(tableFilterPanel, BorderLayout.SOUTH);
 
 		TableStatistics[] stats = getStats(table);
 		String recCnt = "Records: " + Integer.toString(table.getRecordCount());
@@ -235,10 +214,9 @@ public class DbViewer extends JFrame {
 
 	/**
 	 * Get the statistics for the specified table.
-	 * @param table
-	 * @return arrays containing statistics. Element 0 provides
-	 * statsitics for primary table, element 1 provides combined
-	 * statsitics for all index tables.  Remaining array elements 
+	 * @param table the table
+	 * @return arrays containing statistics. Element 0 provides statistics for primary table, 
+	 * element 1 provides combined statistics for all index tables.  Remaining array elements
 	 * should be ignored since they have been combined into element 1.
 	 */
 	private TableStatistics[] getStats(Table table) {
@@ -257,39 +235,21 @@ public class DbViewer extends JFrame {
 				tableStats.put(table.getName(), stats);
 			}
 			catch (IOException e) {
+				Msg.error(this, "Exception loading stats", e);
 			}
 		}
 		return stats;
 	}
 
-	/**
-	 * Launch the DbViewer application.
-	 * @param args (not used)
-	 */
 	public static void main(String[] args) throws IOException {
-
-		ApplicationLayout layout = new DockingApplicationLayout("DB Viewer", "1.0");
-
+		ApplicationLayout layout = new GenericApplicationLayout("DB Viewer", "1.0");
 		DockingApplicationConfiguration configuration = new DockingApplicationConfiguration();
 		configuration.setShowSplashScreen(false);
-
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		}
-		catch (ClassNotFoundException e) {
-		}
-		catch (InstantiationException e) {
-		}
-		catch (IllegalAccessException e) {
-		}
-		catch (UnsupportedLookAndFeelException e) {
-		}
 		Application.initializeApplication(layout, configuration);
 
 		DbViewer viewer = new DbViewer();
 		viewer.setSize(new Dimension(500, 400));
 		viewer.setVisible(true);
-
 	}
 
 }

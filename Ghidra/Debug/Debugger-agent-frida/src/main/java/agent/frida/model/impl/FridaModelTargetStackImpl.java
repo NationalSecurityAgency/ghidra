@@ -27,6 +27,7 @@ import agent.frida.model.iface2.FridaModelTargetProcess;
 import agent.frida.model.iface2.FridaModelTargetStack;
 import agent.frida.model.iface2.FridaModelTargetStackFrame;
 import agent.frida.model.iface2.FridaModelTargetThread;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetElementType;
@@ -57,11 +58,11 @@ public class FridaModelTargetStackImpl extends FridaModelTargetObjectImpl
 	public FridaModelTargetStackImpl(FridaModelTargetThread thread, FridaModelTargetProcess process) {
 		super(thread.getModel(), thread, NAME, "Stack");
 		this.thread = thread;
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listStackFrames(thread.getThread()).thenAccept(f -> {
 			List<TargetObject> frames;
 			synchronized (this) {
@@ -85,7 +86,7 @@ public class FridaModelTargetStackImpl extends FridaModelTargetObjectImpl
 
 	public void threadStateChangedSpecific(FridaState state, FridaReason reason) {
 		if (state.equals(FridaState.FRIDA_THREAD_STOPPED)) {
-			requestElements(true).thenAccept(__ -> {
+			requestElements(RefreshBehavior.REFRESH_ALWAYS).thenAccept(__ -> {
 				for (TargetObject element : getCachedElements().values()) {
 					if (element instanceof FridaModelTargetStackFrame) {
 						FridaModelTargetStackFrameImpl frame =

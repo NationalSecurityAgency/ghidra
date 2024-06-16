@@ -16,6 +16,8 @@
 #include "database_ghidra.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 Scope *ScopeGhidra::buildSubScope(uint8 id,const string &nm)
 
 {
@@ -40,7 +42,7 @@ ScopeGhidra::~ScopeGhidra(void)
 
 /// The Ghidra client reports a \e namespace id associated with
 /// Symbol. Determine if a matching \e namespace Scope already exists in the cache and build
-/// it if it isn't. This may mean creating a new \e namespace Scope.
+/// it if it isn't. This may mean creating the \e namespace Scope and its ancestors.
 /// \param id is the ID associated with the Ghidra namespace
 /// \return the Scope matching the id.
 Scope *ScopeGhidra::reresolveScope(uint8 id) const
@@ -52,23 +54,11 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
   if (cacheScope != (Scope *)0)
     return cacheScope;		// Scope was previously cached
 
-  XmlDecode decoder;
+  PackedDecode decoder(ghidra);
   if (!ghidra->getNamespacePath(id,decoder))
     throw LowlevelError("Could not get namespace info");
 
-  Scope *curscope = symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
-  uint4 elemId = decoder.openElement();
-  uint4 subId = decoder.openElement();
-  decoder.closeElementSkipping(subId);		// Skip element describing the root scope
-  for(;;) {
-    subId = decoder.openElement();
-    if (subId == 0) break;
-    uint8 scopeId = decoder.readUnsignedInteger(ATTRIB_ID);
-    curscope = symboltab->findCreateScope(scopeId, decoder.readString(ATTRIB_CONTENT), curscope);
-    decoder.closeElement(subId);
-  }
-  decoder.closeElement(elemId);
-  return curscope;
+  return symboltab->decodeScopePath(decoder);
 }
 
 /// The Ghidra client can respond to a query negatively by sending a
@@ -85,7 +75,7 @@ void ScopeGhidra::decodeHole(Decoder &decoder) const
   uint4 elemId = decoder.openElement(ELEM_HOLE);
   uint4 flags = 0;
   Range range;
-  range.decodeFromAttributes(decoder,ghidra);
+  range.decodeFromAttributes(decoder);
   decoder.rewindAttributes();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -212,7 +202,7 @@ Symbol *ScopeGhidra::removeQuery(const Address &addr) const
 
   // Have we queried this address before
   if (holes.inRange(addr,1)) return (Symbol *)0;
-  XmlDecode decoder;
+  PackedDecode decoder(ghidra);
   if (ghidra->getMappedSymbolsXML(addr,decoder)) {	// Query GHIDRA about this address
     sym = dump2Cache(decoder);	// Add it to the cache
   }
@@ -349,9 +339,9 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
   if (resFd == (Funcdata *)0) {
     // If the function isn't in cache, we use the special
     // getExternalRefXML interface to recover the external function
+    PackedDecode decoder(ghidra);
     SymbolEntry *entry = sym->getFirstWholeMap();
-    XmlDecode decoder;
-    if (ghidra->getExternalRefXML(entry->getAddr(),decoder)) {
+    if (ghidra->getExternalRef(entry->getAddr(),decoder)) {
       FunctionSymbol *funcSym;
       // Make sure referenced function is cached
       funcSym = dynamic_cast<FunctionSymbol *>(dump2Cache(decoder));
@@ -389,3 +379,5 @@ bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const
   uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getId() : 0;
   return ghidra->isNameUsed(nm, uniqueId, otherId);
 }
+
+} // End namespace ghidra

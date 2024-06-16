@@ -30,7 +30,7 @@ public class DbgReadRegistersCommand extends AbstractDbgCommand<Map<DbgRegister,
 	private final DbgThreadImpl thread;
 	private final Set<DbgRegister> regs;
 	private DebugRegisters registers;
-	private DebugThreadId previous;
+	private Map<DbgRegister, BigInteger> result = new LinkedHashMap<>();
 
 	public DbgReadRegistersCommand(DbgManagerImpl manager, DbgThreadImpl thread, Integer frameId,
 			Set<DbgRegister> regs) {
@@ -41,31 +41,31 @@ public class DbgReadRegistersCommand extends AbstractDbgCommand<Map<DbgRegister,
 
 	@Override
 	public Map<DbgRegister, BigInteger> complete(DbgPendingCommand<?> pending) {
-		DebugSystemObjects so = manager.getSystemObjects();
 		if (regs.isEmpty()) {
 			return Collections.emptyMap();
 		}
-		Map<DbgRegister, BigInteger> result = new LinkedHashMap<>();
-		if (registers != null) {
-			for (DbgRegister r : regs) {
-				if (r.isBaseRegister()) {
-					DebugValue value = registers.getValueByName(r.getName());
-					if (value != null) {
-						BigInteger bval = new BigInteger(value.encodeAsBytes());
-						result.put(r, bval);
-					}
-				}
-			}
-		}
-		so.setCurrentThreadId(previous);
 		return result;
 	}
 
 	@Override
 	public void invoke() {
-		DebugSystemObjects so = manager.getSystemObjects();
-		previous = so.getCurrentThreadId();
-		so.setCurrentThreadId(thread.getId());
-		registers = manager.getClient().getRegisters();
+		try {
+			setThread(thread);
+			registers = manager.getClient().getRegisters();
+			if (registers != null) {
+				for (DbgRegister r : regs) {
+					if (r.isBaseRegister()) {
+						DebugValue value = registers.getValueByName(r.getName());
+						if (value != null) {
+							BigInteger bval = new BigInteger(value.encodeAsBytes());
+							result.put(r, bval);
+						}
+					}
+				}
+			}
+		} 
+		finally {
+			resetThread();
+		}
 	}
 }

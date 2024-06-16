@@ -15,21 +15,23 @@
  */
 #include "translate.hh"
 
-AttributeId ATTRIB_CODE = AttributeId("code",104);
-AttributeId ATTRIB_CONTAIN = AttributeId("contain",105);
-AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",106);
-AttributeId ATTRIB_UNIQBASE = AttributeId("uniqbase",107);
+namespace ghidra {
 
-ElementId ELEM_OP = ElementId("op",180);
-ElementId ELEM_SLEIGH = ElementId("sleigh",181);
-ElementId ELEM_SPACE = ElementId("space",182);
-ElementId ELEM_SPACEID = ElementId("spaceid",183);
-ElementId ELEM_SPACES = ElementId("spaces",184);
-ElementId ELEM_SPACE_BASE = ElementId("space_base",185);
-ElementId ELEM_SPACE_OTHER = ElementId("space_other",186);
-ElementId ELEM_SPACE_OVERLAY = ElementId("space_overlay",187);
-ElementId ELEM_SPACE_UNIQUE = ElementId("space_unique",188);
-ElementId ELEM_TRUNCATE_SPACE = ElementId("truncate_space",189);
+AttributeId ATTRIB_CODE = AttributeId("code",43);
+AttributeId ATTRIB_CONTAIN = AttributeId("contain",44);
+AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",45);
+AttributeId ATTRIB_UNIQBASE = AttributeId("uniqbase",46);
+
+ElementId ELEM_OP = ElementId("op",27);
+ElementId ELEM_SLEIGH = ElementId("sleigh",28);
+ElementId ELEM_SPACE = ElementId("space",29);
+ElementId ELEM_SPACEID = ElementId("spaceid",30);
+ElementId ELEM_SPACES = ElementId("spaces",31);
+ElementId ELEM_SPACE_BASE = ElementId("space_base",32);
+ElementId ELEM_SPACE_OTHER = ElementId("space_other",33);
+ElementId ELEM_SPACE_OVERLAY = ElementId("space_overlay",34);
+ElementId ELEM_SPACE_UNIQUE = ElementId("space_unique",35);
+ElementId ELEM_TRUNCATE_SPACE = ElementId("truncate_space",36);
 
 /// Parse a \<truncate_space> element to configure \b this object
 /// \param decoder is the stream decoder
@@ -43,7 +45,7 @@ void TruncationTag::decode(Decoder &decoder)
 }
 
 /// Construct a virtual space.  This is usually used for the stack
-/// space, but multiple such spaces are allowed.
+/// space, which is indicated by the \b isFormal parameters, but multiple such spaces are allowed.
 /// \param m is the manager for this \b program \b specific address space
 /// \param t is associated processor translator
 /// \param nm is the name of the space
@@ -51,13 +53,16 @@ void TruncationTag::decode(Decoder &decoder)
 /// \param sz is the size of the space
 /// \param base is the containing space
 /// \param dl is the heritage delay
+/// \param isFormal is the formal stack space indicator
 SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,
-			       AddrSpace *base,int4 dl)
-  : AddrSpace(m,t,IPTR_SPACEBASE,nm,sz,base->getWordSize(),ind,0,dl)
+			       AddrSpace *base,int4 dl,bool isFormal)
+  : AddrSpace(m,t,IPTR_SPACEBASE,nm,t->isBigEndian(),sz,base->getWordSize(),ind,0,dl,dl)
 {
   contain = base;
   hasbaseregister = false;	// No base register assigned yet
   isNegativeStack = true;	// default stack growth
+  if (isFormal)
+    setFlags(formal_stackspace);
 }
 
 /// This is a partial constructor, which must be followed up
@@ -118,21 +123,12 @@ const VarnodeData &SpacebaseSpace::getSpacebaseFull(int4 i) const
   return baseOrig;
 }
 
-void SpacebaseSpace::saveXml(ostream &s) const
-
-{
-  s << "<space_base";
-  saveBasicAttributes(s);
-  a_v(s,"contain",contain->getName());
-  s << "/>\n";
-}
-
 void SpacebaseSpace::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_SPACE_BASE);
   decodeBasicAttributes(decoder);
-  contain = getManager()->getSpaceByName(decoder.readString(ATTRIB_CONTAIN));
+  contain = decoder.readSpace(ATTRIB_CONTAIN);
   decoder.closeElement(elemId);
 }
 
@@ -624,7 +620,8 @@ AddrSpace *AddrSpaceManager::getNextSpaceInOrder(AddrSpace *spc) const
 }
 
 /// Given a list of memory locations, the \e pieces, either find a pre-existing JoinRecord or
-/// create a JoinRecord that represents the logical joining of the pieces.
+/// create a JoinRecord that represents the logical joining of the pieces.  The pieces must
+/// be in order from most significant to least significant.
 /// \param pieces if the list memory locations to be joined
 /// \param logicalsize of a \e single \e piece join, or zero
 /// \return a pointer to the JoinRecord
@@ -846,19 +843,64 @@ void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
     return;
   }
   vector<VarnodeData> newPieces;
-  newPieces.push_back(joinRecord->pieces[pos1]);
   int4 sizeTrunc1 = (int4)(addr1.getOffset() - joinRecord->pieces[pos1].offset);
-  pos1 += 1;
-  while(pos1 <= pos2) {
+  int4 sizeTrunc2 = joinRecord->pieces[pos2].size - (int4)(addr2.getOffset() - joinRecord->pieces[pos2].offset) - 1;
+
+  if (pos2 < pos1) {		// Little endian
+    newPieces.push_back(joinRecord->pieces[pos2]);
+    pos2 += 1;
+    while(pos2 <= pos1) {
+      newPieces.push_back(joinRecord->pieces[pos2]);
+      pos2 += 1;
+    }
+    newPieces.back().offset = addr1.getOffset();
+    newPieces.back().size -= sizeTrunc1;
+    newPieces.front().size -= sizeTrunc2;
+  }
+  else {
     newPieces.push_back(joinRecord->pieces[pos1]);
     pos1 += 1;
+    while(pos1 <= pos2) {
+      newPieces.push_back(joinRecord->pieces[pos1]);
+      pos1 += 1;
+    }
+    newPieces.front().offset = addr1.getOffset();
+    newPieces.front().size -= sizeTrunc1;
+    newPieces.back().size -= sizeTrunc2;
   }
-  int4 sizeTrunc2 = joinRecord->pieces[pos2].size - (int4)(addr2.getOffset() - joinRecord->pieces[pos2].offset) - 1;
-  newPieces.front().offset = addr1.getOffset();
-  newPieces.front().size -= sizeTrunc1;
-  newPieces.back().size -= sizeTrunc2;
-  JoinRecord *newJoinRecord = findAddJoin(newPieces, size);
+  JoinRecord *newJoinRecord = findAddJoin(newPieces, 0);
   addr = Address(newJoinRecord->unified.space,newJoinRecord->unified.offset);
+}
+
+/// The string \e must contain a hexadecimal offset.  The offset may be optionally prepended with "0x".
+/// The string may optionally start with the name of the address space to associate with the offset, followed
+/// by ':' to separate it from the offset.  If the name is not present, the default data space is assumed.
+/// \param val is the string to parse
+/// \return the parsed address
+Address AddrSpaceManager::parseAddressSimple(const string &val)
+
+{
+  string::size_type col = val.find(':');
+  AddrSpace *spc;
+  if (col==string::npos) {
+    spc = getDefaultDataSpace();
+    col = 0;
+  }
+  else {
+    string spcName = val.substr(0,col);
+    spc = getSpaceByName(spcName);
+    if (spc == (AddrSpace *)0)
+      throw LowlevelError("Unknown address space: " + spcName);
+    col += 1;
+  }
+  if (col + 2 <= val.size()) {
+    if (val[col] == '0' && val[col+1] == 'x')
+      col += 2;
+  }
+  istringstream s(val.substr(col));
+  uintb off;
+  s >> hex >> off;
+  return Address(spc,AddrSpace::addressToByte(off, spc->getWordSize()));
 }
 
 /// This constructs only a shell for the Translate object.  It
@@ -903,129 +945,31 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
   return (const FloatFormat *)0;
 }
 
-/// A convenience method for passing around pcode operations via stream.
-/// A single pcode operation is parsed from an \<op> element and
+/// A convenience method for passing around p-code operations via stream.
+/// A single p-code operation is parsed from an \<op> element and
 /// returned to the application via the PcodeEmit::dump method.
+/// \param addr is the address (of the instruction) to associate with the p-code op
 /// \param decoder is the stream decoder
-/// \param manage is the AddrSpace manager object of the associated processor
-void PcodeEmit::decodeOp(Decoder &decoder,const AddrSpaceManager *manage)
+void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
 
 {
   int4 opcode;
+  int4 isize;
   VarnodeData outvar;
-  VarnodeData invar[30];
+  VarnodeData invar[16];
   VarnodeData *outptr;
 
   uint4 elemId = decoder.openElement(ELEM_OP);
-  opcode = decoder.readSignedInteger(ATTRIB_CODE);
-  Address pc = Address::decode(decoder,manage);
-  uint4 subId = decoder.peekElement();
-  if (subId == ELEM_VOID) {
-    decoder.openElement();
-    decoder.closeElement(subId);
-    outptr = (VarnodeData *)0;
-  }
+  isize = decoder.readSignedInteger(ATTRIB_SIZE);
+  outptr = &outvar;
+  if (isize <= 16)
+    opcode = PcodeOpRaw::decode(decoder, isize, invar, &outptr);
   else {
-    outvar.decode(decoder,manage);
-    outptr = &outvar;
-  }
-  int4 isize = 0;
-  while(isize < 30) {
-    subId = decoder.peekElement();
-    if (subId == 0) break;
-    if (subId == ELEM_SPACEID) {
-      decoder.openElement();
-      invar[isize].space = manage->getConstantSpace();
-      invar[isize].offset = (uintb)(uintp)manage->getSpaceByName( decoder.readString(ATTRIB_NAME) );
-      invar[isize].size = sizeof(void *);
-      decoder.closeElement(subId);
-    }
-    else
-      invar[isize].decode(decoder,manage);
-    isize += 1;
+    vector<VarnodeData> varStorage(isize,VarnodeData());
+    opcode = PcodeOpRaw::decode(decoder, isize, varStorage.data(), &outptr);
   }
   decoder.closeElement(elemId);
-  dump(pc,(OpCode)opcode,outptr,invar,isize);
-}
-
-/// A Helper function for PcodeEmit::restorePackedOp that reads an unsigned offset from a packed stream
-/// \param ptr is a pointer into a packed byte stream
-/// \param off is where the offset read from the stream is stored
-/// \return a pointer to the next unconsumed byte of the stream
-const uint1 *PcodeEmit::unpackOffset(const uint1 *ptr,uintb &off)
-
-{
-  uintb res = 0;
-  int4 shift;
-  for(shift=0;shift<67;shift+=6) {
-    uint1 val = *ptr++;
-    if (val == end_tag) {
-      off = res;
-      return ptr;
-    }
-    uintb bits = ((uintb)(val-0x20))<<shift;
-    res |= bits;
-  }
-  throw LowlevelError("Bad packed offset");
-}
-
-/// A Helper function for PcodeEmit::restorePackedOp that reads a varnode from a packed stream
-/// \param ptr is a pointer into a packed byte stream
-/// \param v is the VarnodeData object being filled in by the stream
-/// \param manage is the AddrSpace manager object of the associated processor
-/// \return a pointer to the next unconsumed byte of the stream
-const uint1 *PcodeEmit::unpackVarnodeData(const uint1 *ptr,VarnodeData &v,const AddrSpaceManager *manage)
-
-{
-  uint1 tag = *ptr++;
-  if (tag == addrsz_tag) {
-    int4 spcindex = (int4)(*ptr++ - 0x20);
-    v.space = manage->getSpace(spcindex);
-    ptr = unpackOffset(ptr,v.offset);
-    v.size = (uint4)(*ptr++ - 0x20);
-  }
-  else if (tag == spaceid_tag) {
-    v.space = manage->getConstantSpace();
-    int4 spcindex = (int4)(*ptr++ - 0x20);
-    v.offset = (uintb)(uintp)manage->getSpace( spcindex );
-    v.size = sizeof(void *);
-  }
-  else
-    throw LowlevelError("Bad packed VarnodeData");
-  return ptr;
-}
-
-/// A convenience method for passing around pcode operations via a special packed format.
-/// A single pcode operation is parsed from a byte stream and returned to the application
-/// via the PcodeEmit::dump method.
-/// \param addr is the address of the instruction that generated this pcode
-/// \param ptr is a pointer into a packed byte stream
-/// \param manage is the AddrSpace manager object of the associated processor
-/// \return a pointer to the next unconsumed byte of the stream
-const uint1 *PcodeEmit::restorePackedOp(const Address &addr,const uint1 *ptr,const AddrSpaceManager *manage)
-
-{
-  int4 opcode;
-  VarnodeData outvar;
-  VarnodeData invar[30];
-  VarnodeData *outptr;
-
-  ptr += 1;			// Consume the -op- tag
-  opcode = (int4)(*ptr++ - 0x20);	// Opcode
-  if (*ptr == void_tag) {
-    ptr += 1;
-    outptr = (VarnodeData *)0;
-  }
-  else {
-    ptr = unpackVarnodeData(ptr,outvar,manage);
-    outptr = &outvar;
-  }
-  int4 isize = 0;
-  while(*ptr != end_tag) {
-    ptr = unpackVarnodeData(ptr,invar[isize],manage);
-    isize += 1;
-  }
-  ptr += 1;			// Consume the end tag
   dump(addr,(OpCode)opcode,outptr,invar,isize);
-  return ptr;
 }
+
+} // End namespace ghidra

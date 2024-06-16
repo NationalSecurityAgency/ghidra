@@ -26,7 +26,7 @@ import ghidra.program.model.listing.Program;
  */
 public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
-	private static final String NAME = "Demangler Microsoft";
+	public static final String NAME = "Demangler Microsoft";
 	private static final String DESCRIPTION =
 		"After a function is created, this analyzer will attempt to demangle " +
 			"the name and apply datatypes to parameters.";
@@ -67,6 +67,9 @@ public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	public void optionsChanged(Options options, Program program) {
 		applyFunctionSignature =
 			options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature);
+
+		applyCallingConvention =
+			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
 	}
 
 	@Override

@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
+import generic.theme.GThemeDefaults;
 import ghidra.feature.fid.db.FidFile;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VerticalLayout;
@@ -89,7 +90,7 @@ public class ActiveFidConfigureDialog extends DialogComponentProvider {
 	private Component buildCheckBoxPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setOpaque(true);
-		panel.setBackground(Color.WHITE);
+		panel.setBackground(GThemeDefaults.Colors.BACKGROUND);
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		for (FidFile fidFile : fidFiles) {
 			GCheckBox checkbox = new GCheckBox(fidFile.getName(), fidFile.isActive());

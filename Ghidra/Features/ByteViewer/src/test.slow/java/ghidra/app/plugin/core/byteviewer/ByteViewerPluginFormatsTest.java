@@ -27,7 +27,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -274,7 +274,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
 			currentComponent.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(),
@@ -292,7 +292,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -342,7 +342,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
 		}
 	}
 
@@ -391,7 +391,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
 		}
 	}
 
@@ -417,7 +417,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -436,7 +436,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			intComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 		// color should indicate the edit
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) intComp.getCurrentField()).getForeground());
 	}
 
@@ -463,7 +463,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -821,7 +821,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
 		assertTrue(action.isEnabled());
 
-		runSwing(() -> action.actionPerformed(new ActionContext()), false);
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()), false);
 		waitForSwing();
 		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
 		return d;

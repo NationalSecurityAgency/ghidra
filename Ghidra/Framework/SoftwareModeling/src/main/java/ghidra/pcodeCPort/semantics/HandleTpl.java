@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,13 @@
  */
 package ghidra.pcodeCPort.semantics;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.pcodeCPort.space.spacetype;
-import ghidra.pcodeCPort.translate.Translate;
-
-import java.io.PrintStream;
-import java.util.List;
-
-import org.jdom.Element;
+import ghidra.program.model.pcode.Encoder;
 
 public class HandleTpl {
 
@@ -114,33 +109,6 @@ public class HandleTpl {
 		// Build handle to thing being pointed at by -vn-
 	}
 
-	public void fix(FixedHandle hand, ParserWalker walker) {
-		if (ptrspace.getType() == ConstTpl.const_type.real) {
-			// The export is unstarred, but this doesn't mean the varnode
-			// being exported isn't dynamic
-			space.fillinSpace(hand, walker);
-			hand.size = (int) size.fix(walker);
-			ptroffset.fillinOffset(hand, walker);
-		}
-		else {
-			hand.space = space.fixSpace(walker);
-			hand.size = (int) size.fix(walker);
-			hand.offset_offset = ptroffset.fix(walker);
-			hand.offset_space = ptrspace.fixSpace(walker);
-			if (hand.offset_space.getType() == spacetype.IPTR_CONSTANT) {
-				// Handle could have been dynamic but wasn't
-				hand.offset_space = null;
-				hand.offset_offset <<= hand.space.getScale();
-				hand.offset_offset &= hand.space.getMask();
-			}
-			else {
-				hand.offset_size = (int) ptrsize.fix(walker);
-				hand.temp_space = temp_space.fixSpace(walker);
-				hand.temp_offset = temp_offset.fix(walker);
-			}
-		}
-	}
-
 	public void changeHandleIndex(VectorSTL<Integer> handmap) {
 		space.changeHandleIndex(handmap);
 		size.changeHandleIndex(handmap);
@@ -151,27 +119,16 @@ public class HandleTpl {
 		temp_offset.changeHandleIndex(handmap);
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<handle_tpl>");
-		space.saveXml(s);
-		size.saveXml(s);
-		ptrspace.saveXml(s);
-		ptroffset.saveXml(s);
-		ptrsize.saveXml(s);
-		temp_space.saveXml(s);
-		temp_offset.saveXml(s);
-		s.append("</handle_tpl>\n");
-	}
-
-	public void restoreXml(Element el, Translate trans) {
-		List<?> list = el.getChildren();
-		space.restoreXml((Element) list.get(0), trans);
-		size.restoreXml((Element) list.get(1), trans);
-		ptrspace.restoreXml((Element) list.get(2), trans);
-		ptroffset.restoreXml((Element) list.get(3), trans);
-		ptrsize.restoreXml((Element) list.get(4), trans);
-		temp_space.restoreXml((Element) list.get(5), trans);
-		temp_offset.restoreXml((Element) list.get(6), trans);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_HANDLE_TPL);
+		space.encode(encoder);
+		size.encode(encoder);
+		ptrspace.encode(encoder);
+		ptroffset.encode(encoder);
+		ptrsize.encode(encoder);
+		temp_space.encode(encoder);
+		temp_offset.encode(encoder);
+		encoder.closeElement(ELEM_HANDLE_TPL);
 	}
 
 	public void dispose() {

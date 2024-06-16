@@ -17,10 +17,9 @@ package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.debug.register.RegisterTypeInfo;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.TargetRegisterContainer;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
 import ghidra.program.model.lang.*;
 
 public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
@@ -33,9 +32,6 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 	protected final Map<String, Register> filtLanguageRegs = new LinkedHashMap<>();
 	protected final Map<String, TargetRegister> targetRegs = new HashMap<>();
 
-	protected final RegisterTypeInfo instrCtrTypeInfo;
-	protected final RegisterTypeInfo stackPtrTypeInfo;
-
 	public DefaultDebuggerRegisterMapper(CompilerSpec cSpec,
 			TargetRegisterContainer targetRegContainer, boolean caseSensitive) {
 		this.language = cSpec.getLanguage();
@@ -43,24 +39,33 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		//this.targetRegContainer = targetRegContainer;
 		this.caseSensitive = caseSensitive;
 
-		this.instrCtrTypeInfo = new RegisterTypeInfo(PointerDataType.dataType,
-			PointerDataType.dataType.getDefaultSettings(), language.getDefaultSpace());
-		this.stackPtrTypeInfo = new RegisterTypeInfo(PointerDataType.dataType,
-			PointerDataType.dataType.getDefaultSettings(), cSpec.getStackSpace());
-
 		collectFilteredLanguageRegs();
 	}
 
-	protected boolean testTraceRegister(Register lReg) {
+	protected boolean includeTraceRegister(Register lReg) {
 		return lReg.isBaseRegister();
 	}
 
 	protected synchronized void collectFilteredLanguageRegs() {
 		for (Register lReg : language.getRegisters()) {
-			if (!testTraceRegister(lReg)) {
+			if (!includeTraceRegister(lReg)) {
 				continue;
 			}
-			filtLanguageRegs.put(normalizeName(lReg.getName()), lReg);
+			putLanguageRegister(filtLanguageRegs, lReg);
+		}
+	}
+
+	protected synchronized void putLanguageRegister(Map<String, Register> map, Register lReg) {
+		map.put(normalizeName(lReg.getName()), lReg);
+		for (String alias : lReg.getAliases()) {
+			map.put(normalizeName(alias), lReg);
+		}
+	}
+
+	protected synchronized void removeLanguageRegister(Map<String, Register> map, Register lReg) {
+		map.remove(normalizeName(lReg.getName()));
+		for (String alias : lReg.getAliases()) {
+			map.remove(normalizeName(alias));
 		}
 	}
 
@@ -70,7 +75,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		if (lReg == null) {
 			return null;
 		}
-		languageRegs.put(name, lReg);
+		putLanguageRegister(languageRegs, lReg);
 		return lReg;
 	}
 
@@ -81,7 +86,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 			return null;
 		}
 		targetRegs.put(name, tReg);
-		languageRegs.put(name, lReg);
+		putLanguageRegister(languageRegs, lReg);
 		return lReg;
 	}
 
@@ -92,7 +97,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 			return null;
 		}
 		targetRegs.remove(name);
-		languageRegs.remove(name);
+		removeLanguageRegister(languageRegs, lReg);
 		return lReg;
 	}
 
@@ -115,23 +120,22 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 
 	@Override
 	public synchronized TargetRegister traceToTarget(Register lReg) {
-		return targetRegs.get(normalizeName(lReg.getName()));
+		TargetRegister tReg = targetRegs.get(normalizeName(lReg.getName()));
+		if (tReg != null) {
+			return tReg;
+		}
+		for (String alias : lReg.getAliases()) {
+			tReg = targetRegs.get(normalizeName(alias));
+			if (tReg != null) {
+				return tReg;
+			}
+		}
+		return null;
 	}
 
 	@Override
 	public synchronized Register targetToTrace(TargetRegister tReg) {
 		return languageRegs.get(normalizeName(tReg.getIndex()));
-	}
-
-	@Override
-	public RegisterTypeInfo getDefaultTypeInfo(Register register) {
-		if (register == language.getProgramCounter()) {
-			return instrCtrTypeInfo;
-		}
-		if (register == cspec.getStackPointer()) {
-			return stackPtrTypeInfo;
-		}
-		return null;
 	}
 
 	@Override

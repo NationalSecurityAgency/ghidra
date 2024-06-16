@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +97,7 @@ public class MoveMemoryRangeContents extends GhidraScript {
 		monitor.setMessage("Clearing old symbols...");
 		SymbolIterator symIter = program.getSymbolTable().getSymbolIterator(destStart, true);
 		while (symIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol sym = symIter.next();
 			if (sym.getAddress().compareTo(destEnd) > 0) {
 				break;
@@ -118,7 +117,7 @@ public class MoveMemoryRangeContents extends GhidraScript {
 		Address srcAddr = srcStart;
 		Address destAddr = destStart;
 		while (true) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int cnt = program.getMemory().getBytes(srcAddr, bytes, 0, Math.min(len, bytes.length));
 			currentProgram.getMemory().setBytes(destAddr, bytes, 0, cnt);
 			len -= cnt;

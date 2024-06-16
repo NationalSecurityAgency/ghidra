@@ -16,10 +16,12 @@
 /// \file flow.hh
 /// \brief Utilities for following control-flow in p-code generated from machine instructions
 
-#ifndef __CPUI_FLOW__
-#define __CPUI_FLOW__
+#ifndef __FLOW_HH__
+#define __FLOW_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief A class for generating the control-flow structure for a single function
 ///
@@ -125,7 +127,7 @@ private:
   bool checkForFlowModification(FuncCallSpecs &fspecs);
   void queryCall(FuncCallSpecs &fspecs);		///< Try to recover the Funcdata object corresponding to a given call
   bool setupCallSpecs(PcodeOp *op,FuncCallSpecs *fc);	///< Set up the FuncCallSpecs object for a new call site
-  bool setupCallindSpecs(PcodeOp *op,bool tryoverride,FuncCallSpecs *fc);
+  bool setupCallindSpecs(PcodeOp *op,FuncCallSpecs *fc);
   void xrefInlinedBranch(PcodeOp *op);			///< Check for control-flow in a new injected p-code op
   void doInjection(InjectPayload *payload,InjectContext &icontext,PcodeOp *op,FuncCallSpecs *fc);
   void injectUserOp(PcodeOp *op);			///< Perform \e injection for a given user-defined p-code op
@@ -133,8 +135,9 @@ private:
   bool injectSubFunction(FuncCallSpecs *fc);		///< Perform \e injection replacing the CALL at the given call site
   void checkContainedCall(void);
   void checkMultistageJumptables(void);
+  void recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
-  void truncateIndirectJump(PcodeOp *op,int4 failuremode);  	///< Treat indirect jump as indirect call that never returns
+  void truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode);  ///< Treat indirect jump as CALLIND/RETURN
   static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
 public:
   FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q);	///< Constructor
@@ -164,4 +167,5 @@ public:
   bool doesJumpRecord(void) const { return ((flags & record_jumploads)!=0); }	///< Should jump table structure be recorded
 };
 
+} // End namespace ghidra
 #endif

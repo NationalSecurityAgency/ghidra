@@ -22,10 +22,12 @@ import java.util.*;
 
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.*;
 import agent.dbgeng.model.iface2.*;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.util.PathUtils;
@@ -118,8 +120,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 					return DbgModelTargetStackFrame.class;
 				case "Breakpoints":
 					return DbgModelTargetBreakpointSpec.class;
-				//case "Registers":
-				//	return DbgModelTargetRegisterBank.class;
+				// case "Registers":
+				// return DbgModelTargetRegisterBank.class;
 				case "FloatingPoint":
 				case "Kernel":
 				case "SIMD":
@@ -137,17 +139,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		String lkey = key;
 		String pname = parent.getName();
 
-		/*
-		if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD) || lkey.contains(")")) {
-			mixins.add(DbgModelTargetMethod.class);
-			// NB: We're passing the parent's mixin model to the method on the assumption
-			//  the init methods will need to know that the method's children have various
-			//  properties.
-			lkey = pname;
-			pname = "";
-		}
-		*/
-
 		if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD)) {
 			mixins.add(DbgModelTargetMethod.class);
 		}
@@ -162,30 +153,28 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 	protected static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
-	// NOTE: The Cleanable stuff is the replacement for overriding Object.finalize(), which
+	// NOTE: The Cleanable stuff is the replacement for overriding
+	// Object.finalize(), which
 	// is now deprecated.
 	protected final ProxyState state;
 	protected final Cleanable cleanable;
 
 	private boolean breakpointEnabled;
-	private final ListenerSet<TargetBreakpointAction> breakpointActions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
-			};
-		};
 
-	// Extending DefaultTargetObject may spare you from listeners, elements, and attributes
-	//protected final ListenerSet<TargetObjectListener> listeners =
-	//	new ListenerSet<>(TargetObjectListener.class);
+	private final ListenerSet<TargetBreakpointAction> breakpointActions =
+		new ListenerSet<>(TargetBreakpointAction.class, false);
+
+	// Extending DefaultTargetObject may spare you from listeners, elements, and
+	// attributes
+	// protected final ListenerSet<TargetObjectListener> listeners =
+	// new ListenerSet<>(TargetObjectListener.class);
 
 	// any other fields you need to support your impl
 
 	public DelegateDbgModel2TargetObject(DbgModel2Impl model, DbgModelTargetObject parent,
 			String key, ModelObject modelObject, List<Class<? extends TargetObject>> mixins) {
 		super(model, mixins, model, parent.getProxy(), key, getHintForObject(modelObject));
-		//System.err.println(this);
+		// System.err.println(this);
 		this.state = new ProxyState(model, modelObject);
 		this.cleanable = CLEANER.register(this, state);
 
@@ -263,7 +252,17 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			}
 		}
 		if (proxy instanceof TargetExecutionStateful) {
-			setExecutionState(exec, "Refreshed");
+			if (proxy instanceof DbgModelTargetSession) {
+				if (state != DbgState.EXIT) {
+					setExecutionState(exec, "Refreshed");
+				}
+			}
+			else {
+				TargetExecutionState previous = this.getExecutionState();
+				if (!previous.equals(TargetExecutionState.INACTIVE)) {
+					setExecutionState(exec, "Refreshed");
+				}
+			}
 		}
 	}
 
@@ -275,7 +274,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			proxy instanceof DbgModelTargetStackFrame || //
 			proxy instanceof DbgModelTargetStack || //
 			proxy instanceof DbgModelTargetTTD) {
-			//listeners.fire.invalidateCacheRequested(proxy);
+			// listeners.fire.invalidateCacheRequested(proxy);
 			return;
 		}
 	}
@@ -284,31 +283,47 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		if (PathUtils.isLink(parent.getPath(), proxy.getName(), proxy.getPath())) {
 			return;
 		}
+		DbgManagerImpl manager = getModel().getManager();
+		boolean kernelMode = manager.isKernelMode();
 		if (proxy instanceof DbgModelTargetSession) {
 			DbgModelTargetSession targetSession = (DbgModelTargetSession) proxy;
 			targetSession.getSession(false);
 		}
 		if (proxy instanceof DbgModelTargetProcess) {
 			DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) proxy;
-			targetProcess.getProcess(false);
+			DbgProcess process = targetProcess.getProcess(false);
+			if (kernelMode) {
+				Long offset = process.getOffset();
+				if (offset == null) {
+					return;
+				}
+			}
 		}
 		if (proxy instanceof DbgModelTargetThread) {
 			DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
-			targetThread.getThread(false);
+			DbgThread thread = targetThread.getThread(false);
+			if (kernelMode) {
+				Long offset = thread.getOffset();
+				if (offset == null) {
+					return;
+				}
+			}
 		}
+
 		if (getModel().isSuppressDescent()) {
 			return;
 		}
+
 		if (proxy instanceof DbgModelTargetSession || //
 			proxy instanceof DbgModelTargetProcess || //
 			proxy instanceof DbgModelTargetThread) {
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 			return;
 		}
 		if (proxy instanceof DbgModelTargetRegisterContainer || //
-			proxy.getName().equals("Stack") ||
-			proxy.getName().equals("Debug")) {
-			requestAttributes(false);
+			proxy instanceof DbgModelTargetRegisterBank || //
+			proxy.getName().equals("Stack") || proxy.getName().equals("Debug")) {
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 			return;
 		}
 		if (proxy instanceof DbgModelTargetProcessContainer || //
@@ -316,7 +331,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			proxy instanceof DbgModelTargetModuleContainer || //
 			proxy instanceof DbgModelTargetBreakpointContainer || //
 			proxy instanceof DbgModelTargetStack) {
-			requestElements(false);
+			requestElements(RefreshBehavior.REFRESH_NEVER);
 			return;
 		}
 	}
@@ -351,8 +366,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
-			DbgModelTargetAccessConditioned accessConditioned =
-				(DbgModelTargetAccessConditioned) proxy;
 		}
 	}
 
@@ -401,16 +414,23 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 		if (proxy instanceof TargetThread) {
 			List<DelegateDbgModel2TargetObject> delegates = new ArrayList<>();
-			TargetObject stack =
-				(TargetObject) getCachedAttribute("Stack");
-			DbgModelTargetStack frames =
-				(DbgModelTargetStack) stack.getCachedAttribute("Frames");
-			delegates.add((DelegateDbgModel2TargetObject) frames.getDelegate());
+			TargetObject stack = (TargetObject) getCachedAttribute("Stack");
+			if (stack != null) {
+				DbgModelTargetStack frames =
+					(DbgModelTargetStack) stack.getCachedAttribute("Frames");
+				delegates.add((DelegateDbgModel2TargetObject) frames.getDelegate());
+			}
 			DbgModelTargetRegisterContainer container =
 				(DbgModelTargetRegisterContainer) getCachedAttribute("Registers");
+			if (container == null) {
+				return;
+			}
 			delegates.add((DelegateDbgModel2TargetObject) container.getDelegate());
 			DbgModelTargetRegisterBank bank =
 				(DbgModelTargetRegisterBank) container.getCachedAttribute("User");
+			if (bank == null) {
+				return;
+			}
 			delegates.add((DelegateDbgModel2TargetObject) bank.getDelegate());
 			for (DelegateDbgModel2TargetObject delegate : delegates) {
 				delegate.threadStateChangedSpecific(state, reason);
@@ -418,20 +438,20 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 		if (proxy instanceof TargetRegisterContainer) {
 			if (!getModel().isSuppressDescent()) {
-				requestElements(false);
+				requestElements(RefreshBehavior.REFRESH_NEVER);
 			}
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 		}
 		if (proxy instanceof TargetRegisterBank) {
 			TargetRegisterBank bank = (TargetRegisterBank) proxy;
-			//requestElements(false);
-			requestAttributes(false).thenAccept(__ -> {
+			// requestElements(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				bank.readRegistersNamed(getCachedAttributes().keySet());
 			});
 		}
 		if (proxy instanceof TargetStack) {
-			requestAttributes(false);
-			requestElements(false).thenAccept(__ -> {
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
+			requestElements(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				for (TargetObject obj : getCachedElements().values()) {
 					if (obj instanceof TargetStackFrame) {
 						DbgModelTargetObject frame = (DbgModelTargetObject) obj;
@@ -443,7 +463,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			});
 		}
 		if (proxy instanceof TargetStackFrame) {
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 		}
 	}
 }

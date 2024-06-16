@@ -16,17 +16,19 @@
 package ghidra.framework.protocol.ghidra;
 
 import java.io.IOException;
+import java.net.URL;
 
 import generic.timer.GhidraSwinglessTimer;
 import ghidra.framework.client.RepositoryAdapter;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.remote.RepositoryHandle;
+import ghidra.framework.store.LockException;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import utilities.util.FileUtilities;
 
-public class TransientProjectData extends ProjectFileManager {
+public class TransientProjectData extends DefaultProjectData {
 
 	private TransientProjectManager dataMgr;
 	final RepositoryInfo repositoryInfo;
@@ -38,7 +40,8 @@ public class TransientProjectData extends ProjectFileManager {
 	private GhidraSwinglessTimer cleanupTimer;
 
 	TransientProjectData(TransientProjectManager dataMgr, ProjectLocator tmpProjectLocation,
-			RepositoryInfo repositoryInfo, RepositoryAdapter repository) throws IOException {
+			RepositoryInfo repositoryInfo, RepositoryAdapter repository)
+			throws IOException, LockException {
 		// Resulting data is read-only in GUI mode, read-write in Headless mode
 		// Allowing more control will cause issues for caching of transient project data -
 		// although we could use two caches one for each mode
@@ -144,23 +147,30 @@ public class TransientProjectData extends ProjectFileManager {
 			}
 			stopCleanupTimer();
 			disposed = true;
-		}
 
-		Msg.debug(this, "Removing transient project (" + repositoryInfo.toShortString() + "): " +
-			getProjectLocator().getProjectDir());
+			String msgTail = " transient project (" + repositoryInfo.toShortString() + "): " +
+				getProjectLocator().getProjectDir() + ", URL: " + repositoryInfo.getURL();
+			if (instanceUseCount != 0) {
+				Msg.error(this, "Premature removal of active" + msgTail);
+			}
+			else {
+				Msg.debug(this, "Removing idle" + msgTail);
+			}
+		}
 
 		dataMgr.cleanupProjectData(repositoryInfo, this);
 
 		super.dispose(); // disconnects repository
 
-		// TODO: There could still be open files if they have not been properly released/closed !!
+		// Remove temporary project storage
+		// NOTE: This could be affected by project files which still remain open
 		ProjectLocator locator = getProjectLocator();
 		FileUtilities.deleteDir(locator.getProjectDir());
 		locator.getMarkerFile().delete();
 	}
 
 	@Override
-	public void dispose() {
+	public void close() {
 		// prevent normal disposal - rely on finalizer and shutdown hook
 		synchronized (cleanupTimer) {
 			if (instanceUseCount == 0) {
@@ -176,13 +186,18 @@ public class TransientProjectData extends ProjectFileManager {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
-		try {
-			forcedDispose();
-		}
-		catch (Throwable t) {
-			// ignore errors during finalize
-		}
-		super.finalize();
+	protected void dispose() {
+		// rely on forcedDispose to invoke super.dispose()
 	}
+
+	@Override
+	public URL getSharedProjectURL() {
+		return repositoryInfo.getURL();
+	}
+
+	@Override
+	public URL getLocalProjectURL() {
+		return null;
+	}
+
 }

@@ -15,6 +15,9 @@
  */
 package ghidra.dbg.attributes;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 /**
  * A bitfield-modified data type
  * 
@@ -46,6 +49,15 @@ public interface TargetBitfieldDataType extends TargetDataType {
 		@Override
 		public int getBitLength() {
 			return bitLength;
+		}
+
+		@Override
+		public JsonElement toJson() {
+			JsonObject object = new JsonObject();
+			object.add("fieldType", fieldType.toJson());
+			object.addProperty("leastBitPosition", leastBitPosition);
+			object.addProperty("bitLength", bitLength);
+			return object;
 		}
 	}
 

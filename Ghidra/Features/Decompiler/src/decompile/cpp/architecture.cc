@@ -24,51 +24,60 @@
 #include <cmath>
 #endif
 
+namespace ghidra {
+
+#ifdef CPUI_STATISTICS
+using std::sqrt;
+#endif
+
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
-const uint4 ArchitectureCapability::majorversion = 4;
-const uint4 ArchitectureCapability::minorversion = 1;
+const uint4 ArchitectureCapability::majorversion = 6;
+const uint4 ArchitectureCapability::minorversion = 0;
 
-AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",30);
-AttributeId ATTRIB_ENABLE = AttributeId("enable",31);
-AttributeId ATTRIB_GROUP = AttributeId("group",32);
-AttributeId ATTRIB_GROWTH = AttributeId("growth",33);
-AttributeId ATTRIB_LOADERSYMBOLS = AttributeId("loadersymbols",34);
-AttributeId ATTRIB_PARENT = AttributeId("parent",35);
-AttributeId ATTRIB_REGISTER = AttributeId("register",36);
-AttributeId ATTRIB_REVERSEJUSTIFY = AttributeId("reversejustify",37);
-AttributeId ATTRIB_SIGNEXT = AttributeId("signext",38);
-AttributeId ATTRIB_STYLE = AttributeId("style",39);
+AttributeId ATTRIB_ADDRESS = AttributeId("address",148);
+AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
+AttributeId ATTRIB_ENABLE = AttributeId("enable",104);
+AttributeId ATTRIB_GROUP = AttributeId("group",105);
+AttributeId ATTRIB_GROWTH = AttributeId("growth",106);
+AttributeId ATTRIB_KEY = AttributeId("key",107);
+AttributeId ATTRIB_LOADERSYMBOLS = AttributeId("loadersymbols",108);
+AttributeId ATTRIB_PARENT = AttributeId("parent",109);
+AttributeId ATTRIB_REGISTER = AttributeId("register",110);
+AttributeId ATTRIB_REVERSEJUSTIFY = AttributeId("reversejustify",111);
+AttributeId ATTRIB_SIGNEXT = AttributeId("signext",112);
+AttributeId ATTRIB_STYLE = AttributeId("style",113);
 
-ElementId ELEM_ADDRESS_SHIFT_AMOUNT = ElementId("address_shift_amount",17);
-ElementId ELEM_AGGRESSIVETRIM = ElementId("aggressivetrim",18);
-ElementId ELEM_COMPILER_SPEC = ElementId("compiler_spec",19);
-ElementId ELEM_DATA_SPACE = ElementId("data_space",20);
-ElementId ELEM_DEFAULT_MEMORY_BLOCKS = ElementId("default_memory_blocks",21);
-ElementId ELEM_DEFAULT_PROTO = ElementId("default_proto",22);
-ElementId ELEM_DEFAULT_SYMBOLS = ElementId("default_symbols",23);
-ElementId ELEM_EVAL_CALLED_PROTOTYPE = ElementId("eval_called_prototype",24);
-ElementId ELEM_EVAL_CURRENT_PROTOTYPE = ElementId("eval_current_prototype",25);
-ElementId ELEM_EXPERIMENTAL_RULES = ElementId("experimental_rules",26);
-ElementId ELEM_FLOWOVERRIDELIST = ElementId("flowoverridelist",27);
-ElementId ELEM_FUNCPTR = ElementId("funcptr",28);
-ElementId ELEM_GLOBAL = ElementId("global",29);
-ElementId ELEM_INCIDENTALCOPY = ElementId("incidentalcopy",30);
-ElementId ELEM_INFERPTRBOUNDS = ElementId("inferptrbounds",31);
-ElementId ELEM_MODELALIAS = ElementId("modelalias",32);
-ElementId ELEM_NOHIGHPTR = ElementId("nohighptr",33);
-ElementId ELEM_PROCESSOR_SPEC = ElementId("processor_spec",34);
-ElementId ELEM_PROGRAMCOUNTER = ElementId("programcounter",35);
-ElementId ELEM_PROPERTIES = ElementId("properties",36);
-ElementId ELEM_READONLY = ElementId("readonly",37);
-ElementId ELEM_REGISTER_DATA = ElementId("register_data",38);
-ElementId ELEM_RULE = ElementId("rule",39);
-ElementId ELEM_SAVE_STATE = ElementId("save_state",40);
-ElementId ELEM_SEGMENTED_ADDRESS = ElementId("segmented_address",41);
-ElementId ELEM_SPACEBASE = ElementId("spacebase",42);
-ElementId ELEM_SPECEXTENSIONS = ElementId("specextensions",43);
-ElementId ELEM_STACKPOINTER = ElementId("stackpointer",44);
-ElementId ELEM_VOLATILE = ElementId("volatile",45);
+ElementId ELEM_ADDRESS_SHIFT_AMOUNT = ElementId("address_shift_amount",130);
+ElementId ELEM_AGGRESSIVETRIM = ElementId("aggressivetrim",131);
+ElementId ELEM_COMPILER_SPEC = ElementId("compiler_spec",132);
+ElementId ELEM_DATA_SPACE = ElementId("data_space",133);
+ElementId ELEM_DEFAULT_MEMORY_BLOCKS = ElementId("default_memory_blocks",134);
+ElementId ELEM_DEFAULT_PROTO = ElementId("default_proto",135);
+ElementId ELEM_DEFAULT_SYMBOLS = ElementId("default_symbols",136);
+ElementId ELEM_EVAL_CALLED_PROTOTYPE = ElementId("eval_called_prototype",137);
+ElementId ELEM_EVAL_CURRENT_PROTOTYPE = ElementId("eval_current_prototype",138);
+ElementId ELEM_EXPERIMENTAL_RULES = ElementId("experimental_rules",139);
+ElementId ELEM_FLOWOVERRIDELIST = ElementId("flowoverridelist",140);
+ElementId ELEM_FUNCPTR = ElementId("funcptr",141);
+ElementId ELEM_GLOBAL = ElementId("global",142);
+ElementId ELEM_INCIDENTALCOPY = ElementId("incidentalcopy",143);
+ElementId ELEM_INFERPTRBOUNDS = ElementId("inferptrbounds",144);
+ElementId ELEM_MODELALIAS = ElementId("modelalias",145);
+ElementId ELEM_NOHIGHPTR = ElementId("nohighptr",146);
+ElementId ELEM_PROCESSOR_SPEC = ElementId("processor_spec",147);
+ElementId ELEM_PROGRAMCOUNTER = ElementId("programcounter",148);
+ElementId ELEM_PROPERTIES = ElementId("properties",149);
+ElementId ELEM_PROPERTY = ElementId("property",150);
+ElementId ELEM_READONLY = ElementId("readonly",151);
+ElementId ELEM_REGISTER_DATA = ElementId("register_data",152);
+ElementId ELEM_RULE = ElementId("rule",153);
+ElementId ELEM_SAVE_STATE = ElementId("save_state",154);
+ElementId ELEM_SEGMENTED_ADDRESS = ElementId("segmented_address",155);
+ElementId ELEM_SPACEBASE = ElementId("spacebase",156);
+ElementId ELEM_SPECEXTENSIONS = ElementId("specextensions",157);
+ElementId ELEM_STACKPOINTER = ElementId("stackpointer",158);
+ElementId ELEM_VOLATILE = ElementId("volatile",159);
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)
@@ -219,9 +228,9 @@ Architecture::~Architecture(void)
 
 /// The Architecture maintains the set of prototype models that can
 /// be applied for this particular executable. Retrieve one by name.
-/// The model must exist or an exception is thrown.
+/// If the model doesn't exist, null is returned.
 /// \param nm is the name
-/// \return the matching model
+/// \return the matching model or null
 ProtoModel *Architecture::getModel(const string &nm) const
 
 {
@@ -229,7 +238,7 @@ ProtoModel *Architecture::getModel(const string &nm) const
 
   iter = protoModels.find(nm);
   if (iter==protoModels.end())
-    throw LowlevelError("Prototype model does not exist: "+nm);
+    return (ProtoModel *)0;
   return (*iter).second;
 }
 
@@ -310,11 +319,14 @@ int4 Architecture::getMinimumLanedRegisterSize(void) const
 
 /// The default model is used whenever an explicit model is not known
 /// or can't be determined.
-/// \param nm is the name of the model to set
-void Architecture::setDefaultModel(const string &nm)
+/// \param model is the ProtoModel object to make the default
+void Architecture::setDefaultModel(ProtoModel *model)
 
 {
-  defaultfp = getModel(nm);
+  if (defaultfp != (ProtoModel *)0)
+    defaultfp->setPrintInDecl(true);
+  model->setPrintInDecl(false);
+  defaultfp = model;
 }
 
 /// Throw out the syntax tree, (unlocked) symbols, comments, and other derived information
@@ -409,13 +421,13 @@ void Architecture::setPrintLanguage(const string &nm)
   PrintLanguageCapability *capa = PrintLanguageCapability::findCapability(nm);
   if (capa == (PrintLanguageCapability *)0)
     throw LowlevelError("Unknown print language: "+nm);
-  bool printxml = print->emitsXml(); // Copy settings for current print language
+  bool printMarkup = print->emitsMarkup(); // Copy settings for current print language
   ostream *t = print->getOutputStream();
   print = capa->buildLanguage(this);
   print->setOutputStream(t);	// Restore settings from previous language
   print->initializeFromArchitecture();
-  if (printxml)
-    print->setXML(true);
+  if (printMarkup)
+    print->setMarkup(true);
   printlist.push_back(print);
   print->adjustTypeOperators();
   return;
@@ -446,8 +458,8 @@ void Architecture::decodeFlowOverride(Decoder &decoder)
     uint4 subId = decoder.openElement();
     if (subId != ELEM_FLOW) break;
     string flowType = decoder.readString(ATTRIB_TYPE);
-    Address funcaddr = Address::decode(decoder,this);
-    Address overaddr = Address::decode(decoder,this);
+    Address funcaddr = Address::decode(decoder);
+    Address overaddr = Address::decode(decoder);
     Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
     if (fd != (Funcdata *)0)
       fd->getOverride().insertFlowOverride(overaddr,Override::stringToType(flowType));
@@ -482,7 +494,7 @@ void Architecture::restoreXml(DocumentStorage &store)
   const Element *el = store.getTag(ELEM_SAVE_STATE.getName());
   if (el == (const Element *)0)
     throw LowlevelError("Could not find save_state tag");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
   uint4 elemId = decoder.openElement(ELEM_SAVE_STATE);
   loadersymbols_parsed = false;
   for(;;) {
@@ -500,11 +512,11 @@ void Architecture::restoreXml(DocumentStorage &store)
     else if (subId == ELEM_DB)
       symboltab->decode(decoder);
     else if (subId == ELEM_CONTEXT_POINTS)
-      context->decode(decoder,this);
+      context->decode(decoder);
     else if (subId == ELEM_COMMENTDB)
-      commentdb->decode(decoder,this);
+      commentdb->decode(decoder);
     else if (subId == ELEM_STRINGMANAGE)
-      stringManager->decode(decoder,this);
+      stringManager->decode(decoder);
     else if (subId == ELEM_CONSTANTPOOL)
       cpool->decode(decoder,*types);
     else if (subId == ELEM_OPTIONSLIST)
@@ -532,22 +544,25 @@ void Architecture::nameFunction(const Address &addr,string &name) const
   name = defname.str();
 }
 
-/// This process sets up a "register relative" space for this architecture
-/// If the name is "stack", this space takes on the role of an "official" stack space
-/// Should only be called once during initialization
+/// \brief Create a new address space associated with a pointer register
+///
+/// This process sets up a \e register \e relative"space for this architecture.
+/// If indicated, this space takes on the role of the \e formal stack space.
+/// Should only be called once during initialization.
 /// \param basespace is the address space underlying the stack
 /// \param nm is the name of the new space
 /// \param ptrdata is the register location acting as a pointer into the new space
 /// \param truncSize is the (possibly truncated) size of the register that fits the space
 /// \param isreversejustified is \b true if small variables are justified opposite of endianness
 /// \param stackGrowth is \b true if a stack implemented in this space grows in the negative direction
+/// \param isFormal is the indicator for the \b formal stack space
 void Architecture::addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
-				int4 truncSize,bool isreversejustified,bool stackGrowth)
+				int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal)
 
 {
   int4 ind = numSpaces();
   
-  SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1);
+  SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1,isFormal);
   if (isreversejustified)
     setReverseJustified(spc);
   insertSpace(spc);
@@ -575,15 +590,6 @@ void Architecture::buildAction(DocumentStorage &store)
   allacts.resetDefaults();
 }
 
-/// This builds the database which holds the status registers setings and other
-/// information that can affect disassembly depending on context.
-/// \param store may hold configuration information
-void Architecture::buildContext(DocumentStorage &store)
-
-{
-  context = new ContextInternal();
-}
-
 /// Create the database object, which currently doesn't not depend on any configuration
 /// data.  Then create the root (global) scope and attach it to the database.
 /// \param store is the storage for any configuration data
@@ -595,72 +601,6 @@ Scope *Architecture::buildDatabase(DocumentStorage &store)
   Scope *globscope = new ScopeInternal(0,"",this);
   symboltab->attachScope(globscope,(Scope *)0);
   return globscope;
-}
-
-/// This builds the TypeFactory object specific to this architecture and
-/// prepopulates it with the \e core types. Core types may be pulled
-/// from the configuration information, or default core types are used.
-/// \param store contains possible configuration information
-void Architecture::buildTypegrp(DocumentStorage &store)
-
-{
-  const Element *el = store.getTag("coretypes");
-  types = new TypeFactory(this); // Initialize the object
-  if (el != (const Element *)0) {
-    XmlDecode decoder(el);
-    types->decodeCoreTypes(decoder);
-  }
-  else {
-    // Put in the core types
-    types->setCoreType("void",1,TYPE_VOID,false);
-    types->setCoreType("bool",1,TYPE_BOOL,false);
-    types->setCoreType("uint1",1,TYPE_UINT,false);
-    types->setCoreType("uint2",2,TYPE_UINT,false);
-    types->setCoreType("uint4",4,TYPE_UINT,false);
-    types->setCoreType("uint8",8,TYPE_UINT,false);
-    types->setCoreType("int1",1,TYPE_INT,false);
-    types->setCoreType("int2",2,TYPE_INT,false);
-    types->setCoreType("int4",4,TYPE_INT,false);
-    types->setCoreType("int8",8,TYPE_INT,false);
-    types->setCoreType("float4",4,TYPE_FLOAT,false);
-    types->setCoreType("float8",8,TYPE_FLOAT,false);
-    types->setCoreType("float10",10,TYPE_FLOAT,false);
-    types->setCoreType("float16",16,TYPE_FLOAT,false);
-    types->setCoreType("xunknown1",1,TYPE_UNKNOWN,false);
-    types->setCoreType("xunknown2",2,TYPE_UNKNOWN,false);
-    types->setCoreType("xunknown4",4,TYPE_UNKNOWN,false);
-    types->setCoreType("xunknown8",8,TYPE_UNKNOWN,false);
-    types->setCoreType("code",1,TYPE_CODE,false);
-    types->setCoreType("char",1,TYPE_INT,true);
-    types->setCoreType("wchar2",2,TYPE_INT,true);
-    types->setCoreType("wchar4",4,TYPE_INT,true);
-    types->cacheCoreTypes();
-  }
-}
-
-/// Build the container that holds comments for executable in this Architecture.
-/// \param store may hold configuration information
-void Architecture::buildCommentDB(DocumentStorage &store)
-
-{
-  commentdb = new CommentDatabaseInternal();
-}
-
-/// Build container that holds decoded strings
-/// \param store may hold configuration information
-void Architecture::buildStringManager(DocumentStorage &store)
-
-{
-  stringManager = new StringManagerUnicode(this,2048);
-}
-
-/// Some processor models (Java byte-code) need a database of constants.
-/// The database is always built, but may remain empty.
-/// \param store may hold configuration information
-void Architecture::buildConstantPool(DocumentStorage &store)
-
-{
-  cpool = new ConstantPoolInternal();
 }
 
 /// This registers the OpBehavior objects for all known p-code OpCodes.
@@ -812,7 +752,7 @@ ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
   res->decode(decoder);
   
-  ProtoModel *other = protoModels[res->getName()];
+  ProtoModel *other = getModel(res->getName());
   if (other != (ProtoModel *)0) {
     string errMsg = "Duplicate ProtoModel name: " + res->getName();
     delete res;
@@ -831,7 +771,7 @@ void Architecture::decodeProtoEval(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement();
   string modelName = decoder.readString(ATTRIB_NAME);
-  ProtoModel *res = protoModels[ modelName ];
+  ProtoModel *res = getModel(modelName);
   if (res == (ProtoModel *)0)
     throw LowlevelError("Unknown prototype model name: "+modelName);
 
@@ -859,7 +799,8 @@ void Architecture::decodeDefaultProto(Decoder &decoder)
   while(decoder.peekElement() != 0) {
     if (defaultfp != (ProtoModel *)0)
       throw LowlevelError("More than one default prototype model");
-    defaultfp = decodeProto(decoder);
+    ProtoModel *model = decodeProto(decoder);
+    setDefaultModel(model);
   }
   decoder.closeElement(elemId);
 }
@@ -929,7 +870,7 @@ void Architecture::decodeReadOnly(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_READONLY);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,this);
+    range.decode(decoder);
     symboltab->setPropertyRange(Varnode::readonly,range);
   }
   decoder.closeElement(elemId);
@@ -945,7 +886,7 @@ void Architecture::decodeVolatile(Decoder &decoder)
   userops.decodeVolatile(decoder,this);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,this); // Tag itself is range
+    range.decode(decoder); // Tag itself is range
     symboltab->setPropertyRange(Varnode::volatil,range);
   }
   decoder.closeElement(elemId);
@@ -962,7 +903,7 @@ void Architecture::decodeReturnAddress(Decoder &decoder)
   if (subId != 0) {
     if (defaultReturnAddr.space != (AddrSpace *)0)
       throw LowlevelError("Multiple <returnaddress> tags in .cspec");
-    defaultReturnAddr.decode(decoder,this);
+    defaultReturnAddr.decode(decoder);
   }
   decoder.closeElement(elemId);
 }
@@ -976,7 +917,7 @@ void Architecture::decodeIncidentalCopy(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_INCIDENTALCOPY);
   while(decoder.peekElement() != 0) {
     VarnodeData vdata;
-    vdata.decode(decoder,this);
+    vdata.decode(decoder);
     Range range( vdata.space, vdata.offset, vdata.offset+vdata.size-1);
     symboltab->setPropertyRange(Varnode::incidental_copy,range);
   }
@@ -994,7 +935,7 @@ void Architecture::decodeLaneSizes(Decoder &decoder)
 
   uint4 elemId = decoder.openElement(ELEM_REGISTER_DATA);
   while(decoder.peekElement() != 0) {
-    if (lanedRegister.decode(decoder, this)) {
+    if (lanedRegister.decode(decoder)) {
       int4 sizeIndex = lanedRegister.getWholeSize();
       while (maskList.size() <= sizeIndex)
 	maskList.push_back(0);
@@ -1016,10 +957,10 @@ void Architecture::decodeStackPointer(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_STACKPOINTER);
 
-  string spaceName;
   string registerName;
   bool stackGrowth = true;		// Default stack growth is in negative direction
   bool isreversejustify = false;
+  AddrSpace *basespace = (AddrSpace *)0;
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
@@ -1028,14 +969,13 @@ void Architecture::decodeStackPointer(Decoder &decoder)
     else if (attribId == ATTRIB_GROWTH)
       stackGrowth = decoder.readString() == "negative";
     else if (attribId == ATTRIB_SPACE)
-      spaceName = decoder.readString();
+      basespace = decoder.readSpace();
     else if (attribId == ATTRIB_REGISTER)
       registerName = decoder.readString();
   }
 
-  AddrSpace *basespace = getSpaceByName(spaceName);
   if (basespace == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+spaceName);
+    throw LowlevelError(ELEM_STACKPOINTER.getName() + " element missing \"space\" attribute");
 
   VarnodeData point = translate->getRegister(registerName);
   decoder.closeElement(elemId);
@@ -1046,7 +986,7 @@ void Architecture::decodeStackPointer(Decoder &decoder)
     truncSize = basespace->getAddrSize();
   }
 
-  addSpacebase(basespace,"stack",point,truncSize,isreversejustify,stackGrowth); // Create the "official" stackpointer
+  addSpacebase(basespace,"stack",point,truncSize,isreversejustify,stackGrowth,true); // Create the "official" stackpointer
 }
 
 /// Manually alter the dead-code delay for a specific address space,
@@ -1056,10 +996,7 @@ void Architecture::decodeDeadcodeDelay(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_DEADCODEDELAY);
-  string spaceName = decoder.readString(ATTRIB_SPACE);
-  AddrSpace *spc = getSpaceByName(spaceName);
-  if (spc == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+spaceName);
+  AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
   int4 delay = decoder.readSignedInteger(ATTRIB_DELAY);
   if (delay >= 0)
     setDeadcodeDelay(spc,delay);
@@ -1075,7 +1012,7 @@ void Architecture::decodeInferPtrBounds(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_INFERPTRBOUNDS);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,this);
+    range.decode(decoder);
     setInferPtrBounds(range);
   }
   decoder.closeElement(elemId);
@@ -1113,13 +1050,10 @@ void Architecture::decodeSpacebase(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_SPACEBASE);
   string nameString = decoder.readString(ATTRIB_NAME);
   string registerName = decoder.readString(ATTRIB_REGISTER);
-  string spaceName = decoder.readString(ATTRIB_SPACE);
+  AddrSpace *basespace = decoder.readSpace(ATTRIB_SPACE);
   decoder.closeElement(elemId);
   const VarnodeData &point(translate->getRegister(registerName));
-  AddrSpace *basespace = getSpaceByName(spaceName);
-  if (basespace == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+spaceName);
-  addSpacebase(basespace,nameString,point,point.size,false,false);
+  addSpacebase(basespace,nameString,point,point.size,false,false,false);
 }
 
 /// Configure memory based on a \<nohighptr> element. Mark specific address ranges
@@ -1131,7 +1065,7 @@ void Architecture::decodeNoHighPtr(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_NOHIGHPTR);
   while(decoder.peekElement() != 0) { // Iterate over every range tag in the list
     Range range;
-    range.decode(decoder,this);
+    range.decode(decoder);
     addNoHighPtr(range);
   }
   decoder.closeElement(elemId);
@@ -1151,7 +1085,7 @@ void Architecture::decodePreferSplit(Decoder &decoder)
   while(decoder.peekElement() != 0) {
     splitrecords.emplace_back();
     PreferSplitRecord &record( splitrecords.back() );
-    record.storage.decode( decoder, this );
+    record.storage.decode( decoder );
     record.splitoffset = record.storage.size/2;
   }
   decoder.closeElement(elemId);
@@ -1194,6 +1128,20 @@ void Architecture::createModelAlias(const string &aliasName,const string &parent
   protoModels[aliasName] = new ProtoModel(aliasName,*model);
 }
 
+/// A new UnknownProtoModel, which clones its behavior from the default model, is created and associated with the
+/// unrecognized name.  Subsequent queries of the name return this new model.
+/// \param modelName is the unrecognized name
+/// \return the new \e unknown prototype model associated with the name
+ProtoModel *Architecture::createUnknownModel(const string &modelName)
+
+{
+  UnknownProtoModel *model = new UnknownProtoModel(modelName,defaultfp);
+  protoModels[modelName] = model;
+  if (modelName == "unknown")		// "unknown" is a reserved/internal name
+    model->setPrintInDecl(false);	// don't print it in declarations
+  return model;
+}
+
 /// This looks for the \<processor_spec> tag and and sets configuration
 /// parameters based on it.
 /// \param store is the document store holding the tag
@@ -1203,7 +1151,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
   const Element *el = store.getTag("processor_spec");
   if (el == (const Element *)0)
     throw LowlevelError("No processor configuration tag found");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
   
   uint4 elemId = decoder.openElement(ELEM_PROCESSOR_SPEC);
   for(;;) {
@@ -1218,7 +1166,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (subId == ELEM_INCIDENTALCOPY)
       decodeIncidentalCopy(decoder);
     else if (subId == ELEM_CONTEXT_DATA)
-      context->decodeFromSpec(decoder,this);
+      context->decodeFromSpec(decoder);
     else if (subId == ELEM_JUMPASSIST)
       userops.decodeJumpAssist(decoder, this);
     else if (subId == ELEM_SEGMENTOP)
@@ -1228,11 +1176,8 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     }
     else if (subId == ELEM_DATA_SPACE) {
       uint4 elemId = decoder.openElement();
-      string spaceName = decoder.readString(ATTRIB_SPACE);
+      AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
       decoder.closeElement(elemId);
-      AddrSpace *spc = getSpaceByName(spaceName);
-      if (spc == (AddrSpace *)0)
-        throw LowlevelError("Undefined space: "+spaceName);
       setDefaultDataSpace(spc->getIndex());
     }
     else if (subId == ELEM_INFERPTRBOUNDS) {
@@ -1244,6 +1189,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     }
     else if (subId == ELEM_DEFAULT_SYMBOLS) {
       decoder.openElement();
+      store.registerTag(decoder.getCurrentXmlElement());
       decoder.closeElementSkipping(subId);
     }
     else if (subId == ELEM_DEFAULT_MEMORY_BLOCKS) {
@@ -1273,7 +1219,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   const Element *el = store.getTag("compiler_spec");
   if (el == (const Element *)0)
     throw LowlevelError("No compiler configuration tag found");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
 
   uint4 elemId = decoder.openElement(ELEM_COMPILER_SPEC);
   for(;;) {
@@ -1306,7 +1252,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
     else if (subId == ELEM_READONLY)
       decodeReadOnly(decoder);
     else if (subId == ELEM_CONTEXT_DATA)
-      context->decodeFromSpec(decoder,this);
+      context->decodeFromSpec(decoder);
     else if (subId == ELEM_RESOLVEPROTOTYPE)
       decodeProto(decoder);
     else if (subId == ELEM_EVAL_CALLED_PROTOTYPE)
@@ -1337,7 +1283,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
 
   el = store.getTag("specextensions");		// Look for any user-defined configuration document
   if (el != (const Element *)0) {
-    XmlDecode decoderExt(el);
+    XmlDecode decoderExt(this,el);
     elemId = decoderExt.openElement(ELEM_SPECEXTENSIONS);
     for(;;) {
       uint4 subId = decoderExt.peekElement();
@@ -1365,8 +1311,8 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   addOtherSpace();
       
   if (defaultfp == (ProtoModel *)0) {
-    if (protoModels.size() == 1)
-      defaultfp = (*protoModels.begin()).second;
+    if (protoModels.size() > 0)
+      setDefaultModel((*protoModels.begin()).second);
     else
       throw LowlevelError("No default prototype specified");
   }
@@ -1388,7 +1334,7 @@ void Architecture::parseExtraRules(DocumentStorage &store)
 {
   const Element *expertag = store.getTag("experimental_rules");
   if (expertag != (const Element *)0) {
-    XmlDecode decoder(expertag);
+    XmlDecode decoder(this,expertag);
     uint4 elemId = decoder.openElement(ELEM_EXPERIMENTAL_RULES);
     while(decoder.peekElement() != 0)
       decodeDynamicRule( decoder );
@@ -1434,8 +1380,10 @@ void Architecture::init(DocumentStorage &store)
   buildDatabase(store);
 
   restoreFromSpec(store);
+  buildCoreTypes(store);
   print->initializeFromArchitecture();
   symboltab->adjustCaches();	// In case the specs created additional address spaces
+  buildSymbols(store);
   postSpecFile();		// Let subclasses do things after translate is ready
 
   buildInstructions(store); // Must be called after translate is built
@@ -1454,7 +1402,12 @@ void Architecture::resetDefaultsInternal(void)
   infer_pointers = true;
   analyze_for_loops = true;
   readonlypropagate = false;
-  alias_block_level = 2;	// Block structs and arrays by default
+  nan_ignore_all = false;
+  nan_ignore_compare = true;	// Ignore only NaN operations associated with floating-point comparisons by default
+  alias_block_level = 2;	// Block structs and arrays by default, but not more primitive data-types
+  split_datatype_config = OptionSplitDatatypes::option_struct | OptionSplitDatatypes::option_array
+      | OptionSplitDatatypes::option_pointer;
+  max_jumptable_size = 1024;
 }
 
 /// Reset options that can be modified by the OptionDatabase. This includes
@@ -1590,3 +1543,5 @@ void Statistics::printResults(ostream &s)
 }
 
 #endif
+
+} // End namespace ghidra

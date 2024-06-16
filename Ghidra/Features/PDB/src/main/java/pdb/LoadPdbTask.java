@@ -21,13 +21,14 @@ import java.lang.reflect.InvocationTargetException;
 
 import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
+import ghidra.app.plugin.core.disassembler.EntryPointAnalyzer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.pdb.pdbapplicator.*;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
@@ -84,7 +85,7 @@ class LoadPdbTask extends Task {
 					else if (!parseWithNewParser(log, wrappedMonitor)) {
 						return false;
 					}
-					analyzeSymbols(currentMonitor, log);
+					scheduleAdditionalAnalysis();
 				}
 				catch (IOException e) {
 					log.appendMsg("PDB IO Error: " + e.getMessage());
@@ -94,8 +95,8 @@ class LoadPdbTask extends Task {
 		};
 
 		try {
-			AutoAnalysisManager.getAnalysisManager(program).scheduleWorker(worker, null, true,
-				wrappedMonitor);
+			AutoAnalysisManager.getAnalysisManager(program)
+					.scheduleWorker(worker, null, true, wrappedMonitor);
 		}
 		catch (InterruptedException | CancelledException e) {
 			// ignore
@@ -133,7 +134,7 @@ class LoadPdbTask extends Task {
 	}
 
 	private boolean parseWithNewParser(MessageLog log, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws CancelledException {
 
 		PdbReaderOptions pdbReaderOptions = new PdbReaderOptions(); // use defaults
 
@@ -141,43 +142,47 @@ class LoadPdbTask extends Task {
 
 		pdbApplicatorOptions.setProcessingControl(control);
 
-		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(
-			pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
-			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFile.getAbsolutePath(), pdb);
-			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, monitor, log);
-
-			return true;
-		}
-		catch (ghidra.app.util.bin.format.pdb2.pdbreader.PdbException e) {
-			log.appendMsg("PDB Error: " + e.getMessage());
-		}
-		return false;
+		return PdbUniversalAnalyzer.doAnalysis(program, pdbFile, pdbReaderOptions,
+			pdbApplicatorOptions, log, monitor);
 	}
 
-	private void analyzeSymbols(TaskMonitor monitor, MessageLog log) {
+	// We need to kick off any byte analyzers (like getting import symbols), as they typically
+	// won't get kicked off by our loading of the PDB.
+	private void scheduleAdditionalAnalysis() {
 
-		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
-		String analyzerName = demanglerAnalyzer.getName();
-
+		AddressSetView addrs = program.getMemory();
+		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 		Options analysisProperties = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		String defaultValueAsString = analysisProperties.getValueAsString(analyzerName);
-		boolean doDemangle = true;
-		if (defaultValueAsString != null) {
-			doDemangle = Boolean.parseBoolean(defaultValueAsString);
+
+		if (!useMsDiaParser && control == PdbApplicatorControl.ALL) {
+			// one-byte functions could have been laid down
+			scheduleEntryPointAnalyzer(manager, analysisProperties, addrs);
+		}
+		if (useMsDiaParser || control != PdbApplicatorControl.DATA_TYPES_ONLY) {
+			// mangled symbols could have been laid down
+			scheduleDemanglerAnalyzer(manager, analysisProperties, addrs);
 		}
 
-		if (doDemangle) {
-			AddressSetView addrs = program.getMemory();
-			monitor.initialize(addrs.getNumAddresses());
-			try {
-				demanglerAnalyzer.added(program, addrs, monitor, log);
-			}
-			catch (CancelledException e) {
-				// ignore cancel
-			}
-		}
 	}
+
+	private void scheduleEntryPointAnalyzer(AutoAnalysisManager manager, Options analysisProperties,
+			AddressSetView addrs) {
+		// Only schedule analyzer if enabled
+		if (!analysisProperties.getBoolean(EntryPointAnalyzer.NAME, false)) {
+			return;
+		}
+		EntryPointAnalyzer entryPointAnalyzer = new EntryPointAnalyzer();
+		manager.scheduleOneTimeAnalysis(entryPointAnalyzer, addrs);
+	}
+
+	private void scheduleDemanglerAnalyzer(AutoAnalysisManager manager, Options analysisProperties,
+			AddressSetView addrs) {
+		// Only schedule analyzer if enabled
+		if (!analysisProperties.getBoolean(MicrosoftDemanglerAnalyzer.NAME, false)) {
+			return;
+		}
+		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
+		manager.scheduleOneTimeAnalysis(demanglerAnalyzer, addrs);
+	}
+
 }

@@ -18,6 +18,7 @@ package ghidra.test;
 import java.awt.Dialog;
 import java.awt.Window;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -35,8 +36,7 @@ import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
-import ghidra.app.script.GhidraScript;
-import ghidra.app.script.JavaScriptProvider;
+import ghidra.app.script.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.base.project.GhidraProject;
 import ghidra.framework.Application;
@@ -48,6 +48,7 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.project.DefaultProjectManager;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.*;
@@ -188,12 +189,12 @@ public class TestEnv {
 		closeAllProgramsFor(tool);
 
 		// don't want to prompt for saving
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			tool.setConfigChanged(false);
 
 		});
-		AbstractGenericTest.runSwing(() -> tool.close(), false);
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.runSwing(() -> tool.close(), false);
+		AbstractGuiTest.waitForSwing();
 
 		tool = null;
 	}
@@ -230,7 +231,7 @@ public class TestEnv {
 		}
 
 		extraTools.remove(toolToClose);
-		AbstractGenericTest.executeOnSwingWithoutBlocking(() -> {
+		AbstractGuiTest.executeOnSwingWithoutBlocking(() -> {
 			if (ignoreChanges) {
 				toolToClose.setConfigChanged(false);
 			}
@@ -243,18 +244,16 @@ public class TestEnv {
 			return;
 		}
 
-		AbstractGenericTest.runSwing(() -> frontEndTool.close());
+		AbstractGuiTest.runSwing(() -> frontEndTool.close());
 		frontEndTool = null;
 		removeFrontEndFromSystem();
 	}
 
 	private void dipsoseTestTools() {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
 
-			Iterator<PluginTool> it = extraTools.iterator();
-			while (it.hasNext()) {
-				PluginTool pt = it.next();
+			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
 			}
 			extraTools.clear();
@@ -278,7 +277,7 @@ public class TestEnv {
 	}
 
 	public void saveRestoreToolState() {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			Element element = lazyTool().saveDataStateToXml(true);
 			lazyTool().restoreDataStateFromXml(element);
 		});
@@ -412,7 +411,7 @@ public class TestEnv {
 		ToolChest toolChest = project.getLocalToolChest();
 		ToolTemplate template = getToolTemplate(AbstractGenericTest.DEFAULT_TEST_TOOL_NAME);
 		template.setName(AbstractGenericTest.DEFAULT_TOOL_NAME);
-		AbstractGenericTest.runSwing(() -> toolChest.replaceToolTemplate(template));
+		AbstractGuiTest.runSwing(() -> toolChest.replaceToolTemplate(template));
 	}
 
 	private void initializeSimpleTool() {
@@ -421,7 +420,7 @@ public class TestEnv {
 			throw new AssertException("Tool already exists--you are doing something wrong!");
 		}
 
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 
 			Project project = gp.getProject();
 			tool = new TestTool(project);
@@ -451,7 +450,7 @@ public class TestEnv {
 			return frontEndTool;
 		}
 
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			frontEndTool = new TestFrontEndTool(gp.getProjectManager());
 			frontEndTool.setActiveProject(getProject());
 
@@ -516,7 +515,7 @@ public class TestEnv {
 
 	protected PluginTool launchDefaultToolByName(String toolName) {
 
-		return AbstractGenericTest.runSwing(() -> {
+		return AbstractGuiTest.runSwing(() -> {
 
 			ToolTemplate toolTemplate = getToolTemplate(toolName);
 			if (toolTemplate == null) {
@@ -539,7 +538,7 @@ public class TestEnv {
 
 	private static ToolTemplate getToolTemplate(String toolName) {
 
-		return AbstractGenericTest.runSwing(() -> {
+		return AbstractGuiTest.runSwing(() -> {
 			ToolTemplate toolTemplate =
 				ToolUtils.readToolTemplate("defaultTools/" + toolName + ToolUtils.TOOL_EXTENSION);
 			if (toolTemplate == null) {
@@ -564,7 +563,7 @@ public class TestEnv {
 		try {
 			script = scriptProvider.getScriptInstance(resourceFile, writer);
 		}
-		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+		catch (GhidraScriptLoadException e) {
 			Msg.error(TestEnv.class, "Problem creating script", e);
 
 		}
@@ -619,7 +618,7 @@ public class TestEnv {
 	public PluginTool restartTool() {
 		closeTool();
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 
 		tool = null;
 		initializeSimpleTool();
@@ -633,7 +632,7 @@ public class TestEnv {
 	 */
 	public PluginTool launchAnotherDefaultTool() {
 		PluginTool newTool = createDefaultTool();
-		AbstractGenericTest.runSwing(() -> newTool.setToolName(newTool.getToolName() + toolID++));
+		AbstractGuiTest.runSwing(() -> newTool.setToolName(newTool.getToolName() + toolID++));
 		extraTools.add(newTool);
 		return newTool;
 
@@ -800,15 +799,15 @@ public class TestEnv {
 	}
 
 	/**
-	 * Open a read-only test program from the test data directory.
-	 * This program must be released prior to disposing this test environment.
+	 * Open a read-only test program from the test data directory. The returned program must be 
+	 * {@link #release(Program) released} prior to disposing this test environment.
+	 * <br>
 	 * NOTE: Some tests rely on this method returning null when file does
 	 * not yet exist within the resource area (e.g., test binaries for P-Code Tests)
 	 *
 	 * @param programName name of program database within the test data directory.
 	 * @return program or null if program file not found
 	 */
-
 	public ProgramDB getProgram(String programName) {
 		ProgramDB p = programManager.getProgram(programName);
 		return p;
@@ -832,7 +831,7 @@ public class TestEnv {
 			throw new AssertException("Tool already exists--you are doing something wrong!");
 		}
 
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			tool = launchDefaultTool();
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.openProgram(program.getDomainFile());
@@ -843,7 +842,7 @@ public class TestEnv {
 				"Unable to launch the default tool: " + ToolServices.DEFAULT_TOOLNAME);
 		}
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 
 		removeAllConsumersExceptTool(program, tool);
 
@@ -875,26 +874,15 @@ public class TestEnv {
 	 * @param domainFile The domain file used to launch the tool; may be null
 	 * @return the tool that is launched
 	 */
-	public PluginTool launchTool(final String toolName, final DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, DomainFile domainFile) {
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 
-		AbstractGenericTest.runSwing(() -> {
-			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
-			AbstractDockingTest.setErrorGUIEnabled(false); // disable the error GUI while launching the tool
-			FrontEndTool frontEndToolInstance = getFrontEndTool();
-
-			Project project = frontEndToolInstance.getProject();
-			ToolServices toolServices = project.getToolServices();
-			PluginTool newTool = toolServices.launchTool(toolName, null);
-			if (newTool == null) {
-				// couldn't find the tool in the workspace...check the test area
-				newTool = launchDefaultToolByName(toolName);
-			}
-
+		AbstractGuiTest.runSwing(() -> {
+			PluginTool newTool = doLaunchTool(toolName);
 			ref.set(newTool);
-
-			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
-			newTool.acceptDomainFiles(new DomainFile[] { domainFile });
+			if (newTool != null && domainFile != null) {
+				newTool.acceptDomainFiles(new DomainFile[] { domainFile });
+			}
 		});
 
 		PluginTool launchedTool = ref.get();
@@ -905,6 +893,52 @@ public class TestEnv {
 		// this will make sure that our tool is closed during disposal
 		extraTools.add(launchedTool);
 		return launchedTool;
+	}
+
+	/**
+	 * Launches a tool of the given name using the given Ghidra URL.
+	 * <p>
+	 * Note: the tool returned will have auto save disabled by default.
+	 *
+	 * @param toolName the name of the tool to launch
+	 * @param ghidraUrl The Ghidra URL to be opened in tool (see {@link GhidraURL})
+	 * @return the tool that is launched
+	 */
+	public PluginTool launchToolWithURL(String toolName, URL ghidraUrl) {
+		AtomicReference<PluginTool> ref = new AtomicReference<>();
+
+		AbstractGuiTest.runSwing(() -> {
+			PluginTool newTool = doLaunchTool(toolName);
+			ref.set(newTool);
+			if (newTool != null) {
+				newTool.accept(ghidraUrl);
+			}
+		});
+
+		PluginTool launchedTool = ref.get();
+		if (launchedTool == null) {
+			throw new NullPointerException("Unable to launch the tool: " + toolName);
+		}
+
+		// this will make sure that our tool is closed during disposal
+		extraTools.add(launchedTool);
+		return launchedTool;
+	}
+
+	private PluginTool doLaunchTool(String toolName) {
+		boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
+		AbstractDockingTest.setErrorGUIEnabled(false); // disable the error GUI while launching the tool
+		FrontEndTool frontEndToolInstance = getFrontEndTool();
+
+		Project project = frontEndToolInstance.getProject();
+		ToolServices toolServices = project.getToolServices();
+		PluginTool newTool = toolServices.launchTool(toolName, null);
+		if (newTool == null) {
+			// couldn't find the tool in the workspace...check the test area
+			newTool = launchDefaultToolByName(toolName);
+		}
+		AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
+		return newTool;
 	}
 
 	/**
@@ -920,7 +954,7 @@ public class TestEnv {
 
 	protected void setAutoSaveEnabled(final FrontEndTool frontEndToolInstance,
 			final boolean enabled) {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			Options options = frontEndToolInstance.getOptions(ToolConstants.TOOL_OPTIONS);
 			options.setBoolean(FrontEndTool.AUTOMATICALLY_SAVE_TOOLS, enabled);
 		});
@@ -971,9 +1005,8 @@ public class TestEnv {
 	private void cleanupAutoAnalysisManagers(PluginTool t) {
 
 		@SuppressWarnings("unchecked")
-		Map<Program, AutoAnalysisManager> map =
-			(Map<Program, AutoAnalysisManager>) TestUtils.getInstanceField("managerMap",
-				AutoAnalysisManager.class);
+		Map<Program, AutoAnalysisManager> map = (Map<Program, AutoAnalysisManager>) TestUtils
+				.getInstanceField("managerMap", AutoAnalysisManager.class);
 		Collection<AutoAnalysisManager> managers = map.values();
 		for (AutoAnalysisManager manager : managers) {
 			@SuppressWarnings("unchecked")
@@ -982,9 +1015,7 @@ public class TestEnv {
 
 			Collection<WeakSet<PluginTool>> values = toolMap.values();
 			for (WeakSet<PluginTool> toolSet : values) {
-				Iterator<PluginTool> iterator = toolSet.iterator();
-				while (iterator.hasNext()) {
-					PluginTool aaTool = iterator.next();
+				for (PluginTool aaTool : toolSet) {
 					manager.removeTool(aaTool);
 				}
 			}
@@ -1049,7 +1080,7 @@ public class TestEnv {
 		Project project = gp.getProject();
 		String projectName = project.getName();
 		try {
-			AbstractGenericTest.runSwing(() -> gp.close());
+			AbstractGuiTest.runSwing(() -> gp.close());
 		}
 		catch (Throwable t) {
 			Msg.error(TestEnv.class, "Problem disposing the test project", t);
@@ -1067,8 +1098,8 @@ public class TestEnv {
 	}
 
 	private void deleteTestProject(String projectName) {
-		boolean deletedProject = AbstractGhidraHeadlessIntegrationTest.deleteProject(
-			AbstractGTest.getTestDirectoryPath(), projectName);
+		boolean deletedProject = AbstractGhidraHeadlessIntegrationTest
+				.deleteProject(AbstractGTest.getTestDirectoryPath(), projectName);
 
 		if (!deletedProject) {
 			Msg.error(TestEnv.class, "dispose() - Open programs after disposing project: ");
@@ -1095,9 +1126,8 @@ public class TestEnv {
 		// Note: background tool tasks are disposed by the tool
 
 		@SuppressWarnings("unchecked")
-		Map<Task, TaskMonitor> tasks =
-			(Map<Task, TaskMonitor>) TestUtils.getInstanceField("runningTasks",
-				TaskUtilities.class);
+		Map<Task, TaskMonitor> tasks = (Map<Task, TaskMonitor>) TestUtils
+				.getInstanceField("runningTasks", TaskUtilities.class);
 		for (TaskMonitor tm : tasks.values()) {
 			tm.cancel();
 		}
@@ -1110,7 +1140,7 @@ public class TestEnv {
 
 	private void printOpenModalDialogs() {
 		boolean hasModal = false;
-		Set<Window> windows = AbstractGenericTest.getAllWindows();
+		Set<Window> windows = AbstractGuiTest.getAllWindows();
 		for (Window window : windows) {
 			if (window instanceof Dialog) {
 				if (((Dialog) window).isModal() && window.isShowing()) {
@@ -1132,7 +1162,7 @@ public class TestEnv {
 	}
 
 	private void disposeTestTools() {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			try {
 				dipsoseTestTools();
 			}
@@ -1147,7 +1177,7 @@ public class TestEnv {
 	// the deprecation is OK--we are a framework method and we know we can use it
 	@SuppressWarnings("deprecation")
 	private void privateWaitForSwingRunnables() {
-		AbstractGenericTest.privateWaitForPostedSwingRunnables_SwingSafe();
+		AbstractGuiTest.privatewaitForSwing_SwingSafe();
 	}
 
 	private void disposeAllSwingUpdateManagers() {
@@ -1157,9 +1187,8 @@ public class TestEnv {
 		// the managers will dispose the managers.
 		//
 		@SuppressWarnings("unchecked")
-		WeakSet<SwingUpdateManager> s =
-			(WeakSet<SwingUpdateManager>) TestUtils.getInstanceField("instances",
-				SwingUpdateManager.class);
+		WeakSet<SwingUpdateManager> s = (WeakSet<SwingUpdateManager>) TestUtils
+				.getInstanceField("instances", SwingUpdateManager.class);
 
 		/* Debug for undisposed SwingUpdateManagers
 			Msg.out("complete update manager list: ");
@@ -1171,7 +1200,7 @@ public class TestEnv {
 			Msg.out(StringUtils.join(list, ",\n"));
 		*/
 
-		AbstractGenericTest.runSwing(() -> s.clear());
+		AbstractGuiTest.runSwing(() -> s.clear());
 	}
 
 	private void markAllProgramsAsUnchanged() {

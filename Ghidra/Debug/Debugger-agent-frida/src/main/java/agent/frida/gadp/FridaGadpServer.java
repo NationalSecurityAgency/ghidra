@@ -23,10 +23,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import agent.frida.gadp.impl.FridaGadpServerImpl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
 public interface FridaGadpServer extends AutoCloseable {
+	public static final String USAGE =
+		"""
+				This is the GADP server for Frida.  Usage:
+
+				    gadp-agent-frida [-H HOST/ADDR] [-p PORT]
+
+				Options:
+				  --host/-H          The address of the interface on which to listen. Default is
+				                     localhost
+				  --port/-p          The TCP port on which to listen for GADP. Default is 12345
+				""";
 
 	/**
 	 * The entry point for the Frida server in stand-alone mode
@@ -73,7 +85,8 @@ public interface FridaGadpServer extends AutoCloseable {
 			try (FridaGadpServer server = newInstance(bindTo)) {
 				//TODO: fix/test the debugConnect case when args are passed
 				server.startFrida(fridaArgs.toArray(new String[] {})).exceptionally(e -> {
-					Msg.error(this, "Error starting Frida/GADP", e);
+					e = AsyncUtils.unwrapThrowable(e);
+					Msg.error(this, "Error starting Frida/GADP: " + e);
 					System.exit(-1);
 					return null;
 				});
@@ -131,16 +144,7 @@ public interface FridaGadpServer extends AutoCloseable {
 		}
 
 		protected void printUsage() {
-			System.out.println("This is the GADP server for Frida.  Usage:");
-			System.out.println();
-			System.out.println("     [-H HOST/ADDR] [-p PORT] [-i ID] [-t TRANSPORT] [-r REMOTE]");
-			System.out.println();
-			System.out.println("Options:");
-			System.out.println(
-				"  --host/-H          The address of the interface on which to listen.");
-			System.out.println("                     Default is localhost");
-			System.out.println(
-				"  --port/-p          The TCP port on which to listen for GADP. Default is 12345");
+			System.out.println(USAGE);
 		}
 	}
 

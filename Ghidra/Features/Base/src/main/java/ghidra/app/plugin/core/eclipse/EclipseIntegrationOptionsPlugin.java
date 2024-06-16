@@ -19,7 +19,7 @@ import java.io.File;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -38,7 +38,7 @@ import ghidra.util.HelpLocation;
 	description = "Options Eclipse Integration"
 )
 //@formatter:on
-public class EclipseIntegrationOptionsPlugin extends Plugin implements FrontEndOnly {
+public class EclipseIntegrationOptionsPlugin extends Plugin implements ApplicationLevelOnlyPlugin {
 
 	public static final String PLUGIN_OPTIONS_NAME = "Eclipse Integration";
 

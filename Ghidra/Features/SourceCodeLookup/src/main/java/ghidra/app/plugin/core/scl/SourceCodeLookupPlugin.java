@@ -45,7 +45,7 @@ import ghidra.util.Msg;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Source Code Lookup Plugin",
 	description = "Plugin to send requests to the development IDE to lookup symbols in source files.",
 	servicesRequired = { EclipseIntegrationService.class },
@@ -61,7 +61,7 @@ public class SourceCodeLookupPlugin extends ProgramPlugin {
 	private DockingAction lookupSourceCodeAction;
 
 	public SourceCodeLookupPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override

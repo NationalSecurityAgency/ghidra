@@ -23,18 +23,29 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-release/runtime/quick/quick_method_frame_info.h#53
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-fi-release/runtime/quick/quick_method_frame_info.h#54
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/quick/quick_method_frame_info.h#54
- * https://android.googlesource.com/platform/art/+/marshmallow-release/runtime/quick/quick_method_frame_info.h#54
- * https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/nougat-mr1-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/quick/quick_method_frame_info.h#57
- * https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/quick/quick_method_frame_info.h#57
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-release/runtime/quick/quick_method_frame_info.h#53">lollipop-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-fi-release/runtime/quick/quick_method_frame_info.h#54">lollipop-mr1-fi-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/quick/quick_method_frame_info.h#54">lollipop-wear-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/marshmallow-release/runtime/quick/quick_method_frame_info.h#54">marshmallow-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/quick/quick_method_frame_info.h#57">nougat-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/nougat-mr1-release/runtime/quick/quick_method_frame_info.h#57">nougat-mr1-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/quick/quick_method_frame_info.h#57">oreo-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-dr3-release/runtime/quick/quick_method_frame_info.h#57">oreo-dr3-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/quick/quick_method_frame_info.h#57">oreo-m2-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/quick/quick_method_frame_info.h#57">pie-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/quick/quick_method_frame_info.h#57">android10-release/runtime/quick/quick_method_frame_info.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/quick/quick_method_frame_info.h#57">android11-release/runtime/quick/quick_method_frame_info.h</a>
  */
 public class QuickMethodFrameInfo implements StructConverter {
 

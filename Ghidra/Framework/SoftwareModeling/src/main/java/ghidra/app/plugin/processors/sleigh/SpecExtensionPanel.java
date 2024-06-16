@@ -32,12 +32,14 @@ import org.xml.sax.SAXException;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.database.SpecExtension.DocInfo;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.XmlEncode;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -53,7 +55,7 @@ public class SpecExtensionPanel extends JPanel {
 	private boolean unappliedChanges;
 	private SpecExtension specExtension;
 	private List<CompilerElement> tableElements;
-	private ExtensionTableModel tableModel;
+	private SpecExtensionTableModel tableModel;
 	private GTable extensionTable;
 	private JButton exportButton;
 	private JButton removeButton;
@@ -161,7 +163,7 @@ public class SpecExtensionPanel extends JPanel {
 		}
 	}
 
-	private class ExtensionTableModel extends AbstractGTableModel<CompilerElement> {
+	private class SpecExtensionTableModel extends AbstractGTableModel<CompilerElement> {
 		private final String[] columnNames = { "Extension Type", "Name", "Status" };
 
 		@Override
@@ -231,7 +233,7 @@ public class SpecExtensionPanel extends JPanel {
 			CompilerElement compilerElement = tableModel.getRowObject(row);
 
 			if (compilerElement.status == Status.EXTENSION_ERROR) {
-				setBackground(Color.pink);
+				setBackground(Palette.PINK);
 			}
 
 			return this;
@@ -381,7 +383,7 @@ public class SpecExtensionPanel extends JPanel {
 
 	private void createPanel() {
 		setLayout(new BorderLayout(10, 10));
-		tableModel = new ExtensionTableModel();
+		tableModel = new SpecExtensionTableModel();
 		extensionTable = new CompilerElementTable(tableModel);
 
 		JScrollPane sp = new JScrollPane(extensionTable);
@@ -399,7 +401,10 @@ public class SpecExtensionPanel extends JPanel {
 	private static File getStartingDir() {
 		String lastDirectoryPath = Preferences.getProperty(LAST_EXPORT_DIRECTORY);
 		if (lastDirectoryPath != null) {
-			return new File(lastDirectoryPath);
+			File dir = new File(lastDirectoryPath);
+			if (dir.isDirectory()) {
+				return dir;
+			}
 		}
 
 		return new File(System.getProperty("user.home"));
@@ -432,7 +437,7 @@ public class SpecExtensionPanel extends JPanel {
 		// return them to that spot if they use the dialog again.
 		Preferences.setProperty(LAST_EXPORT_DIRECTORY,
 			fileChooser.getCurrentDirectory().getAbsolutePath());
-
+		fileChooser.dispose();
 		return selectedFile;
 	}
 
@@ -541,44 +546,44 @@ public class SpecExtensionPanel extends JPanel {
 		}
 	}
 
-	private String getXmlString(CompilerElement element) {
+	private String getXmlString(CompilerElement element) throws IOException {
 		CompilerSpec compilerSpec = program.getCompilerSpec();
 		PcodeInjectLibrary injectLibrary = compilerSpec.getPcodeInjectLibrary();
 		InjectPayload payload;
 		PrototypeModel model;
-		String resultString = null;
+		String resultString;
 		if (element.status == Status.CORE) {
-			StringBuilder buffer = new StringBuilder();
+			XmlEncode encoder = new XmlEncode();
 			switch (element.type) {
 				case CALL_FIXUP:
 					payload = injectLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE, element.name);
 					if (payload != null) {
-						payload.saveXml(buffer);
+						payload.encode(encoder);
 					}
 					break;
 				case CALLOTHER_FIXUP:
 					payload =
 						injectLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, element.name);
 					if (payload != null) {
-						payload.saveXml(buffer);
+						payload.encode(encoder);
 					}
 					break;
 				case PROTOTYPE_MODEL:
 				case MERGE_MODEL:
 					model = compilerSpec.getCallingConvention(element.name);
 					if (model != null) {
-						model.saveXml(buffer, injectLibrary);
+						model.encode(encoder, injectLibrary);
 					}
 					break;
 			}
-			resultString = buffer.toString();
-			if (resultString.length() == 0) {
-				resultString = null;
-			}
+			resultString = encoder.toString();
 		}
 		else {
 			resultString =
 				SpecExtension.getCompilerSpecExtension(program, element.type, element.name);
+		}
+		if (resultString == null || resultString.length() == 0) {
+			throw new IOException("Unable to  build document for " + element.name);
 		}
 		return resultString;
 	}
@@ -603,24 +608,16 @@ public class SpecExtensionPanel extends JPanel {
 				return;
 			}
 		}
-		String exportString = getXmlString(compilerElement);
-		String errMessage = null;
-		if (exportString == null) {
-			errMessage = "Unable to  build document for " + compilerElement.name;
+		FileWriter writer = null;
+		try {
+			String exportString = getXmlString(compilerElement);
+			writer = new FileWriter(outputFile);
+			writer.write(exportString);
+			writer.close();
 		}
-		else {
-			FileWriter writer = null;
-			try {
-				writer = new FileWriter(outputFile);
-				writer.write(exportString);
-				writer.close();
-			}
-			catch (IOException ex) {
-				errMessage = "Failed to write to file: " + ex.getMessage();
-			}
-		}
-		if (errMessage != null) {
-			Msg.showError(this, this, "Export Failure", errMessage);
+		catch (IOException ex) {
+			Msg.showError(this, this, "Export Failure",
+				"Failed to write to file: " + ex.getMessage());
 		}
 	}
 

@@ -20,6 +20,12 @@
     <range space="mem" first="0x40" last="0xfff"/>
   </volatile>
   
+  <context_data>
+    <tracked_set space="code">
+      <set name="R1" val="0"/>
+    </tracked_set>
+  </context_data>
+  
   <default_symbols>
 
 
@@ -1476,6 +1482,8 @@
   <default_memory_blocks>
     <memory_block name="iospace" start_address="mem:0x00" length="0x1000" initialized="false"/>
     <memory_block name="eeprom" start_address="mem:0x1000" length="0x1000" initialized="false"/>
+    <memory_block name="sram" start_address="mem:0x2000" length="0x4000" initialized="false"/>
+    <memory_block name="codebyte" start_address="codebyte:0x0" length="0x40000" byte_mapped_address="code:0x0"/>
   </default_memory_blocks>
 
 

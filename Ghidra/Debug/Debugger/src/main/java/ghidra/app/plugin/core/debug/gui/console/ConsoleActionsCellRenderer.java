@@ -52,6 +52,10 @@ public class ConsoleActionsCellRenderer extends AbstractGhidraColumnRenderer<Act
 	static void populateBox(JPanel box, List<JButton> buttonCache, ActionList value,
 			Consumer<JButton> extraConfig) {
 		box.removeAll();
+		if (value == null) {
+			// IDK how this is happening.... An empty row or something?
+			return;
+		}
 		ensureCacheSize(buttonCache, value.size(), extraConfig);
 		int i = 0;
 		for (BoundAction a : value) {
@@ -80,6 +84,7 @@ public class ConsoleActionsCellRenderer extends AbstractGhidraColumnRenderer<Act
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data); // A bit of a waste, but sets the background
 		box.setBackground(getBackground());
+		box.setBorder(getBorder());
 
 		ActionList value = (ActionList) data.getValue();
 		populateBox(box, buttonCache, value, button -> {

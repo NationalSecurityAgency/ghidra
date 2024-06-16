@@ -18,7 +18,6 @@ package ghidra.app.cmd.function;
 import java.util.*;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
@@ -31,12 +30,11 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.state.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Command for analyzing the Stack; the command is run in the background.
  */
-public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
+public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand<Program> {
 	private AddressSet entryPoints = new AddressSet();
 	private boolean forceProcessing = false;
 	private boolean dontCreateNewVariables = false;
@@ -65,13 +63,8 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		this(new AddressSet(entry, entry), forceProcessing);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		int count = 0;
 		monitor.initialize(entryPoints.getNumAddresses());
@@ -129,7 +122,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		ArrayList<Function> funcList = new ArrayList<Function>(); // list of functions needing stack frames created
 		stack.push(f);
 		while (!stack.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = stack.pop();
 			// if the purge for the function is unknown, it has not been looked at yet.
 			//  we need to add it to the list to analyze its stack frame.
@@ -139,7 +132,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 				AddressIterator iter =
 					program.getReferenceManager().getReferenceSourceIterator(func.getBody(), true);
 				while (iter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Address fromAddr = iter.next();
 					Reference refs[] =
 						program.getReferenceManager().getFlowReferencesFrom(fromAddr);
@@ -174,7 +167,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		int default_stackshift = defaultModel.getStackshift();
 
 		while (!funcList.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = funcList.remove(0);
 			monitor.setMessage("Stack " + func.getName());
 
@@ -335,14 +328,11 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 			for (SequenceNumber seq : results.getReturnAddresses()) {
 				ContextState returnState = results.getContextStates(seq).next();
 				Varnode varnode =
-					returnState.get(results.getStackPointerVarnode(),
-						TaskMonitorAdapter.DUMMY_MONITOR);
-				Varnode zero =
-					new Varnode(addrFactory.getConstantSpace().getAddress(0),
-						stackReg.getMinimumByteSize());
-				varnode =
-					replaceInputVarnodes(varnode, results.getStackPointerVarnode(), zero, 4,
-						monitor);
+					returnState.get(results.getStackPointerVarnode(), TaskMonitor.DUMMY);
+				Varnode zero = new Varnode(addrFactory.getConstantSpace().getAddress(0),
+					stackReg.getMinimumByteSize());
+				varnode = replaceInputVarnodes(varnode, results.getStackPointerVarnode(), zero, 4,
+					monitor);
 				if (varnode == null) {
 					continue;
 				}
@@ -364,7 +354,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		}
 		VarnodeOperation vop = (VarnodeOperation) vn;
 		return ResultsState.simplify(vop.getPCodeOp(), vop.getInputValues(), addrFactory,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 	}
 
 	/**
@@ -385,7 +375,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		VarnodeOperation vop = (VarnodeOperation) exp;
 		Varnode[] inputValues = vop.getInputValues();
 		for (int i = 0; i < inputValues.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (vn.equals(inputValues[i])) {
 				inputValues[i] = value;
 			}

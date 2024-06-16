@@ -17,6 +17,11 @@
 #include "printlanguage.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
+const string PrintLanguage::OPEN_PAREN = "(";
+const string PrintLanguage::CLOSE_PAREN = ")";
+
 vector<PrintLanguageCapability *> PrintLanguageCapability::thelist;
 
 /// This retrieves the capability with its \b isdefault field set or
@@ -138,7 +143,7 @@ void PrintLanguage::pushOp(const OpToken *tok,const PcodeOp *op)
     emitOp(revpol.back());
     paren = parentheses(tok);
     if (paren)
-      id = emit->openParen('(');
+      id = emit->openParen(OPEN_PAREN);
     else
       id = emit->openGroup();
   }
@@ -170,7 +175,7 @@ void PrintLanguage::pushAtom(const Atom &atom)
       if (revpol.back().visited == revpol.back().tok->stage) {
 	emitOp(revpol.back());
 	if (revpol.back().paren)
-	  emit->closeParen(')',revpol.back().id);
+	  emit->closeParen(CLOSE_PAREN,revpol.back().id);
 	else
 	  emit->closeGroup(revpol.back().id);
 	revpol.pop_back();
@@ -218,7 +223,7 @@ void PrintLanguage::pushVnExplicit(const Varnode *vn,const PcodeOp *op)
     return;
   }
   if (vn->isConstant()) {
-    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vn,op);
+    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vartoken,vn,op);
     return;
   }
   pushSymbolDetail(vn,op,true);
@@ -327,32 +332,32 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
   case OpToken::binary:
     if (entry.visited!=1) return;
     emit->spaces(entry.tok->spacing,entry.tok->bump); // Spacing around operator
-    emit->tagOp(entry.tok->print,EmitXml::no_color,entry.op);
+    emit->tagOp(entry.tok->print1,EmitMarkup::no_color,entry.op);
     emit->spaces(entry.tok->spacing,entry.tok->bump);
     break;
   case OpToken::unary_prefix:
     if (entry.visited!=0) return;
-    emit->tagOp(entry.tok->print,EmitXml::no_color,entry.op);
+    emit->tagOp(entry.tok->print1,EmitMarkup::no_color,entry.op);
     emit->spaces(entry.tok->spacing,entry.tok->bump);
     break;
   case OpToken::postsurround:
     if (entry.visited==0) return;
     if (entry.visited==1) {	// Front surround token 
       emit->spaces(entry.tok->spacing,entry.tok->bump);
-      entry.id2 = emit->openParen(entry.tok->print[0]);
+      entry.id2 = emit->openParen(entry.tok->print1);
       emit->spaces(0,entry.tok->bump);
     }
     else {			// Back surround token
-      emit->closeParen(entry.tok->print[1],entry.id2);
+      emit->closeParen(entry.tok->print2,entry.id2);
     }
     break;
   case OpToken::presurround:
     if (entry.visited==2) return;
     if (entry.visited==0) {	// Front surround token 
-      entry.id2 = emit->openParen(entry.tok->print[0]);
+      entry.id2 = emit->openParen(entry.tok->print1);
     }
     else {			// Back surround token
-      emit->closeParen(entry.tok->print[1],entry.id2);
+      emit->closeParen(entry.tok->print2,entry.id2);
       emit->spaces(entry.tok->spacing,entry.tok->bump);
     }
     break;
@@ -372,24 +377,25 @@ void PrintLanguage::emitAtom(const Atom &atom)
 {
   switch(atom.type) {
   case syntax:
-    emit->print(atom.name.c_str(),atom.highlight);
+    emit->print(atom.name,atom.highlight);
     break;
   case vartoken:
-    emit->tagVariable(atom.name.c_str(),atom.highlight,
-		      atom.ptr_second.vn,atom.op);
+    emit->tagVariable(atom.name,atom.highlight,atom.ptr_second.vn,atom.op);
     break;
   case functoken:
-    emit->tagFuncName(atom.name.c_str(),atom.highlight,
-		      atom.ptr_second.fd,atom.op);
+    emit->tagFuncName(atom.name,atom.highlight,atom.ptr_second.fd,atom.op);
     break;
   case optoken:
-    emit->tagOp(atom.name.c_str(),atom.highlight,atom.op);
+    emit->tagOp(atom.name,atom.highlight,atom.op);
     break;
   case typetoken:
-    emit->tagType(atom.name.c_str(),atom.highlight,atom.ptr_second.ct);
+    emit->tagType(atom.name,atom.highlight,atom.ptr_second.ct);
     break;
   case fieldtoken:
-    emit->tagField(atom.name.c_str(),atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
+    emit->tagField(atom.name,atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
+    break;
+  case casetoken:
+    emit->tagCaseLabel(atom.name, atom.highlight, atom.op, atom.ptr_second.intValue);
     break;
   case blanktoken:
     break;			// Print nothing
@@ -592,7 +598,7 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
   int4 id = emit->startComment();
   // The comment delimeters should not be printed as
   // comment tags, so that they won't get filled
-  emit->tagComment(commentstart.c_str(),EmitXml::comment_color,
+  emit->tagComment(commentstart,EmitMarkup::comment_color,
 		    spc,off);
   int4 pos = 0;
   while(pos < text.size()) {
@@ -611,6 +617,19 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
       emit->tagLine();
     else if (tok=='\r') {
     }
+    else if (tok=='{' && pos < text.size() && text[pos] == '@') {
+      // Comment annotation
+      int4 count = 1;
+      while(pos < text.size()) {
+	tok = text[pos];
+	count += 1;
+	pos += 1;
+	if (tok == '}') break;	// Search for brace ending the annotation
+      }
+      // Treat annotation as one token
+      string annote = text.substr(pos-count,count);
+      emit->tagComment(annote,EmitMarkup::comment_color,spc,off);
+    }
     else {
       int4 count = 1;
       while(pos < text.size()) {
@@ -620,24 +639,21 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
 	pos += 1;
       }
       string sub = text.substr(pos-count,count);
-      emit->tagComment(sub.c_str(),EmitXml::comment_color,
-			spc,off);
+      emit->tagComment(sub,EmitMarkup::comment_color,spc,off);
     }
   }
   if (commentend.size() != 0)
-    emit->tagComment(commentend.c_str(),EmitXml::comment_color,
-		      spc,off);
+    emit->tagComment(commentend,EmitMarkup::comment_color,spc,off);
   emit->stopComment(id);
   comm->setEmitted(true);
 }
 
-/// Tell the emitter whether to emit just the raw tokens or if
-/// output is in XML format with additional mark-up on the raw tokens.
-/// \param val is \b true for XML mark-up
-void PrintLanguage::setXML(bool val)
+/// Select packed or unpacked (XML) output, if the emitter supports it.
+/// \param val is \b true for packed or \b false for unpacked
+void PrintLanguage::setPackedOutput(bool val)
 
 {
-  ((EmitPrettyPrint *)emit)->setXML(val);
+  emit->setPackedOutput(val);
 }
 
 /// Emitting formal code structuring can be turned off, causing all control-flow
@@ -693,6 +709,19 @@ void PrintLanguage::setIntegerFormat(const string &nm)
     throw LowlevelError("Unknown integer format option: "+nm);
   mods &= ~((uint4)(force_hex|force_dec)); // Turn off any pre-existing force
   mods |= mod;			// Set any new force
+}
+
+/// This is used if a value is extracted from a structured data-type, but the natural name is not available.
+/// An artificial name is generated given just the offset into the data-type and the size in bytes.
+/// \param off is the byte offset into the data-type
+/// \param size is the number of bytes in the extracted value
+/// \return a string describing the artificial field
+string PrintLanguage::unnamedField(int4 off,int4 size)
+
+{
+  ostringstream s;
+  s << '_' << dec << off << '_' << size << '_';
+  return s.str();
 }
 
 /// Count '0' and '9' digits base 10. Count '0' and 'f' digits base 16.
@@ -787,3 +816,5 @@ void PrintLanguage::formatBinary(ostream &s,uintb val)
     mask >>= 1;
   }
 }
+
+} // End namespace ghidra
