@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  
+  <language processor="i960"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.2"
+            slafile="i960.sla"
+            processorspec="i960.pspec"
+            id="i960:LE:32:default">
+    <description>i960 80960</description>
+    <compiler name="default" spec="i960.cspec" id="default"/>
+  </language>
+  <language processor="i960"
+            endian="big"
+            instructionEndian="little"
+            size="32"
+            variant="lebe"
+            version="1.2"
+            slafile="i960.sla"
+            processorspec="i960.pspec"
+            id="i960:LEBE:32:lebe">
+    <description>i960 80960 LE instruction and BE data</description>
+    <compiler name="default" spec="i960.cspec" id="default"/>
+  </language>
+  
+</language_definitions>
