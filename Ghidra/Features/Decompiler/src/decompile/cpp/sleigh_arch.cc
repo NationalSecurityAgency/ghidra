@@ -621,7 +621,7 @@ void SleighArchitecture::shutdown(void)
   for(map<int4,Sleigh *>::const_iterator iter=translators.begin();iter!=translators.end();++iter)
     delete (*iter).second;
   translators.clear();
-  // description.clear();  // static vector is destroyed by the normal exit handler
+  description.clear();  // static vector is destroyed by the normal exit handler
 }
 
 } // End namespace ghidra
