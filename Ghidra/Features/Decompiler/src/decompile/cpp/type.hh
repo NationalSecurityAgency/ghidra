@@ -28,10 +28,10 @@ extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
 extern AttributeId ATTRIB_CHAR;		///< Marshaling attribute "char"
 extern AttributeId ATTRIB_CORE;		///< Marshaling attribute "core"
 extern AttributeId ATTRIB_ENUM;		///< Marshaling attribute "enum"
-extern AttributeId ATTRIB_ENUMSIGNED;	///< Marshaling attribute "enumsigned"
-extern AttributeId ATTRIB_ENUMSIZE;	///< Marshaling attribute "enumsize"
-extern AttributeId ATTRIB_INTSIZE;	///< Marshaling attribute "intsize"
-extern AttributeId ATTRIB_LONGSIZE;	///< Marshaling attribute "longsize"
+//extern AttributeId ATTRIB_ENUMSIGNED;	///< Marshaling attribute "enumsigned" deprecated
+//extern AttributeId ATTRIB_ENUMSIZE;	///< Marshaling attribute "enumsize" deprecated
+//extern AttributeId ATTRIB_INTSIZE;	///< Marshaling attribute "intsize"  deprecated
+//extern AttributeId ATTRIB_LONGSIZE;	///< Marshaling attribute "longsize" deprecated
 extern AttributeId ATTRIB_OPAQUESTRING;	///< Marshaling attribute "opaquestring"
 extern AttributeId ATTRIB_SIGNED;	///< Marshaling attribute "signed"
 extern AttributeId ATTRIB_STRUCTALIGN;	///< Marshaling attribute "structalign"
@@ -40,7 +40,7 @@ extern AttributeId ATTRIB_VARLENGTH;	///< Marshaling attribute "varlength"
 
 //extern ElementId ELEM_ABSOLUTE_MAX_ALIGNMENT;	///< Marshaling element \<absolute_max_alignment>
 //extern ElementId ELEM_BITFIELD_PACKING;		///< Marshaling element \<bitfield_packing>
-//extern ElementId ELEM_CHAR_SIZE;		///< Marshaling element \<char_size>
+extern ElementId ELEM_CHAR_SIZE;		///< Marshaling element \<char_size>
 //extern ElementId ELEM_CHAR_TYPE;		///< Marshaling element \<char_type>
 extern ElementId ELEM_CORETYPES;		///< Marshaling element \<coretypes>
 extern ElementId ELEM_DATA_ORGANIZATION;	///< Marshaling element \<data_organization>
@@ -66,7 +66,7 @@ extern ElementId ELEM_TYPE;			///< Marshaling element \<type>
 extern ElementId ELEM_TYPEGRP;			///< Marshaling element \<typegrp>
 extern ElementId ELEM_TYPEREF;			///< Marshaling element \<typeref>
 //extern ElementId ELEM_USE_MS_CONVENTION;	///< Marshaling element \<use_MS_convention>
-//extern ElementId ELEM_WCHAR_SIZE;		///< Marshaling element \<wchar_size>
+extern ElementId ELEM_WCHAR_SIZE;		///< Marshaling element \<wchar_size>
 //extern ElementId ELEM_ZERO_LENGTH_BOUNDARY;	///< Marshaling element \<zero_length_boundary>
 
 /// Print a hex dump of a data buffer to stream
@@ -555,6 +555,7 @@ class TypePartialStruct : public Datatype {
 public:
   TypePartialStruct(const TypePartialStruct &op);	///< Construct from another TypePartialStruct
   TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
+  int4 getOffset(void) const { return offset; }		///< Get the byte offset into the containing data-type
   Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
@@ -580,6 +581,7 @@ protected:
 public:
   TypePartialUnion(const TypePartialUnion &op);			///< Construct from another TypePartialUnion
   TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
+  int4 getOffset(void) const { return offset; }			///< Get the byte offset into the containing data-type
   TypeUnion *getParentUnion(void) const { return container; }	///< Get the union which \b this is part of
   virtual void printRaw(ostream &s) const;
   virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
@@ -697,8 +699,10 @@ public:
 
 /// \brief Container class for all Datatype objects in an Architecture
 class TypeFactory {
-  int4 sizeOfInt;		///< Size of the core "int" datatype
-  int4 sizeOfLong;		///< Size of the core "long" datatype
+  int4 sizeOfInt;		///< Size of the core "int" data-type
+  int4 sizeOfLong;		///< Size of the core "long" data-type
+  int4 sizeOfChar;		///< Size of the core "char" data-type
+  int4 sizeOfWChar;		///< Size of the core "wchar_t" data-type
   int4 sizeOfPointer;		///< Size of pointers (into default data address space)
   int4 sizeOfAltPointer;	///< Size of alternate pointers used by architecture (if not 0)
   int4 enumsize;		///< Size of an enumerated type
@@ -710,6 +714,7 @@ class TypeFactory {
   Datatype *typecache10;	///< Specially cached 10-byte float type
   Datatype *typecache16;	///< Specially cached 16-byte float type
   Datatype *type_nochar;	///< Same dimensions as char but acts and displays as an INT
+  Datatype *charcache[5];	///< Cached character data-types
   Datatype *findNoName(Datatype &ct);	///< Find data-type (in this container) by function
   void insert(Datatype *newtype);	///< Insert pointer into the cross-reference sets
   Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
@@ -740,6 +745,8 @@ public:
   int4 getPrimitiveAlignSize(uint4 size) const;	///< Get the aligned size of a primitive data-type
   int4 getSizeOfInt(void) const { return sizeOfInt; }	///< Get the size of the default "int"
   int4 getSizeOfLong(void) const { return sizeOfLong; }	///< Get the size of the default "long"
+  int4 getSizeOfChar(void) const { return sizeOfChar; }	///< Get the size of the default "char"
+  int4 getSizeOfWChar(void) const { return sizeOfWChar; }	///< Get the size of the default "wchar_t"
   int4 getSizeOfPointer(void) const { return sizeOfPointer; }	///< Get the size of pointers
   int4 getSizeOfAltPointer(void) const { return sizeOfAltPointer; }	///< Get size of alternate pointers (or 0)
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
@@ -759,6 +766,7 @@ public:
   Datatype *getBaseNoChar(int4 s,type_metatype m);		///< Get atomic type excluding "char"
   Datatype *getBase(int4 s,type_metatype m);			///< Get atomic type
   Datatype *getBase(int4 s,type_metatype m,const string &n);	///< Get named atomic type
+  Datatype *getTypeChar(int4 s);				///< Get a character data-type by size
   TypeCode *getTypeCode(void);					///< Get an "anonymous" function data-type
   TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type

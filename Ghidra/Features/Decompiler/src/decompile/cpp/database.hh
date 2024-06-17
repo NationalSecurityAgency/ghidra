@@ -213,7 +213,8 @@ public:
     no_category = -1,		///< Symbol is not in a special category
     function_parameter = 0,	///< The Symbol is a parameter to a function
     equate = 1,			///< The Symbol holds \e equate information about a constant
-    union_facet = 2		///< Symbol holding read or write facing union field information
+    union_facet = 2,		///< Symbol holding read or write facing union field information
+    fake_input = 3		///< Temporary placeholder for an input symbol prior to formalizing parameters
   };
 
   Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
@@ -735,7 +736,7 @@ public:
   ///
   /// \param sym is the given Symbol
   /// \param cat is the \e category to set for the Symbol
-  /// \param ind is the index position to set (within the category)
+  /// \param ind is, for the function_parameter category, the index position to set, and is unused for other categories
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind)=0;
 
   virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,

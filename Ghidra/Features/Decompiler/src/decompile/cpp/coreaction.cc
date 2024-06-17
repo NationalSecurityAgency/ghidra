@@ -17,6 +17,7 @@
 #include "condexe.hh"
 #include "double.hh"
 #include "subflow.hh"
+#include "constseq.hh"
 
 namespace ghidra {
 
@@ -2277,28 +2278,17 @@ int4 ActionRestructureVarnode::apply(Funcdata &data)
   return 0;
 }
 
-int4 ActionRestructureHigh::apply(Funcdata &data)
+int4 ActionMappedLocalSync::apply(Funcdata &data)
 
 {
-  if (!data.isHighOn()) return 0;
   ScopeLocal *l1 = data.getScopeLocal();
 
-#ifdef OPACTION_DEBUG
-  if ((flags&rule_debug)!=0)
-    l1->turnOnDebug();
-#endif
-
-  l1->restructureHigh();
   if (data.syncVarnodesWithSymbols(l1,true,true))
     count += 1;
 
-#ifdef OPACTION_DEBUG
-  if ((flags&rule_debug)==0) return 0;
-  l1->turnOffDebug();
-  ostringstream s;
-  data.getScopeLocal()->printEntries(s);
-  data.getArch()->printDebug(s.str());
-#endif
+  if (l1->hasOverlapProbems())
+    data.warningHeader("Could not reconcile some variable overlaps");
+
   return 0;
 }
 
@@ -2645,7 +2635,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
 
 {
   Datatype *ct;
-  Varnode *vn,*vnout;
+  Varnode *vn,*vnout,*vnin;
   PcodeOp *newop;
 
   ct = op->getOpcode()->getInputCast(op,slot,castStrategy); // Input type expected by this operation
@@ -2657,13 +2647,20 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     return 0;
   }
 
-  vn = op->getIn(slot);
+  vnin = vn = op->getIn(slot);
   // Check to make sure we don't have a double cast
   if (vn->isWritten() && (vn->getDef()->code() == CPUI_CAST)) {
-    if (vn->isImplied() && (vn->loneDescend() == op)) {
-      vn->updateType(ct,false,false);
-      if (vn->getType()==ct)
+    if (vn->isImplied()) {
+      if (vn->loneDescend() == op) {
+	vn->updateType(ct,false,false);
+	if (vn->getType()==ct)
+	  return 1;
+      }
+      vnin = vn->getDef()->getIn(0);	// Cast directly from input of previous cast
+      if (ct == vnin->getType()) {	// If the earlier data-type is what the input expects
+	data.opSetInput(op, vnin, slot);	// Just use the earlier Varnode
 	return 1;
+      }
     }
   }
   else if (vn->isConstant()) {
@@ -2682,14 +2679,14 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     return 1;
   }
   newop = data.newOp(1,op->getAddr());
-  vnout = data.newUniqueOut(vn->getSize(),newop);
+  vnout = data.newUniqueOut(vnin->getSize(),newop);
   vnout->updateType(ct,false,false);
   vnout->setImplied();
 #ifdef CPUI_STATISTICS
   data.getArch()->stats->countCast();
 #endif
   data.opSetOpcode(newop,CPUI_CAST);
-  data.opSetInput(newop,vn,0);
+  data.opSetInput(newop,vnin,0);
   data.opSetInput(op,vnout,slot);
   data.opInsertBefore(newop,op); // Cast comes AFTER operation
   if (ct->needsResolution()) {
@@ -2924,6 +2921,7 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
       linkSpacebaseSymbol(curvn, data, namerec);
   }
 
+  TypeFactory *typeFactory = data.getArch()->types;
   for(int4 i=0;i<manage->numSpaces();++i) { // Build a list of nameable highs
     spc = manage->getSpace(i);
     if (spc == (AddrSpace *)0) continue;
@@ -2948,6 +2946,8 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
 	  if (vn->getSize() == sym->getType()->getSize())
 	    sym->getScope()->overrideSizeLockType(sym,high->getType());
 	}
+	if (vn->isAddrTied() && !sym->getScope()->isGlobal())
+	  high->finalizeDatatype(typeFactory);
       }
     }
   }
@@ -4562,10 +4562,7 @@ int4 ActionInputPrototype::apply(Funcdata &data)
   ParamActive active(false);
   Varnode *vn;
 
-  // Clear any unlocked local variables because these are
-  // getting cleared anyway in the restructure and may be
-  // using symbol names that we want
-  data.getScopeLocal()->clearUnlockedCategory(-1);
+  data.getScopeLocal()->clearCategory(Symbol::fake_input);
   data.getFuncProto().clearUnlockedInput();
   if (!data.getFuncProto().isInputLocked()) {
     VarnodeDefSet::const_iterator iter,enditer;
@@ -5329,7 +5326,7 @@ void ActionDatabase::buildDefaultGroups(void)
 			    "deadcode", "typerecovery", "stackptrflow",
 			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
 			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
-			    "fixateglobals", "fixateproto",
+			    "fixateglobals", "fixateproto", "constsequence",
 			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
 			    "unreachable", "subvar", "floatprecision",
 			    "conditionalexe", "" };
@@ -5585,6 +5582,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actfullloop->addAction( new ActionActiveReturn("protorecovery") );
   }
   act->addAction( actfullloop );
+  act->addAction( new ActionMappedLocalSync("localrecovery") );
   act->addAction( new ActionStartCleanUp("cleanup") );
   {
     actcleanup = new ActionPool(Action::rule_repeatapply,"cleanup");
@@ -5599,6 +5597,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RuleSplitCopy("splitcopy") );
     actcleanup->addRule( new RuleSplitLoad("splitpointer") );
     actcleanup->addRule( new RuleSplitStore("splitpointer") );
+    actcleanup->addRule( new RuleStringSequence("constsequence"));
   }
   act->addAction( actcleanup );
 
@@ -5620,7 +5619,6 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( new ActionCopyMarker("merge") );
   act->addAction( new ActionOutputPrototype("localrecovery") );
   act->addAction( new ActionInputPrototype("fixateproto") );
-  act->addAction( new ActionRestructureHigh("localrecovery") );
   act->addAction( new ActionMapGlobals("fixateglobals") );
   act->addAction( new ActionDynamicSymbols("dynamic") );
   act->addAction( new ActionNameVars("merge") );

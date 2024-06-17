@@ -330,8 +330,7 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
       break;
     case CPUI_CALLOTHER:
     {
-      InjectedUserOp *userop = dynamic_cast<InjectedUserOp *>(glb->userops.getOp(op->getIn(0)->getOffset()));
-      if (userop != (InjectedUserOp *)0)
+      if (glb->userops.getOp(op->getIn(0)->getOffset())->getType() == UserPcodeOp::injected)
 	injectlist.push_back(op);
       break;
     }
