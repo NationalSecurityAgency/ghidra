@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -211,10 +211,24 @@ public:
 /// and then rewrites the data-flow in terms of the lower precision, eliminating the
 /// precision conversions.
 class SubfloatFlow : public TransformManager {
+  /// \brief Internal state for walking floating-point data-flow and computing precision
+  class State {
+  public:
+    PcodeOp *op;		///< Operation being traversed
+    int4 slot;			///< Input edge being traversed
+    int4 maxPrecision;		///< Maximum precision traversed through inputs so far
+    State(PcodeOp *o) {
+      op = o; slot = 0; maxPrecision = 0; }	///< Constructor
+    /// \brief Accumulate precision coming in from an input Varnode to \b this node
+    void incorporateInputSize(int4 sz) { maxPrecision = (maxPrecision < sz) ? sz : maxPrecision; }
+  };
   int4 precision;		///< Number of bytes of precision in the logical flow
   int4 terminatorCount;		///< Number of terminating nodes reachable via the root
   const FloatFormat *format;	///< The floating-point format of the logical value
   vector<TransformVar *> worklist;	///< Current list of placeholders that still need to be traced
+  map<PcodeOp *,int4> maxPrecisionMap;	///< Maximum precision flowing into a particular floating-point op
+  int4 maxPrecision(Varnode *vn);	///< Calculate maximum floating-point precision reaching a given Varnode
+  bool exceedsPrecision(PcodeOp *op);	///< Determine if the given op exceeds our \b precision
   TransformVar *setReplacement(Varnode *vn);
   bool traceForward(TransformVar *rvn);
   bool traceBackward(TransformVar *rvn);
@@ -249,9 +263,12 @@ class LaneDivide : public TransformManager {
   void buildBinaryOp(OpCode opc,PcodeOp *op,TransformVar *in0Vars,TransformVar *in1Vars,TransformVar *outVars,int4 numLanes);
   bool buildPiece(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildMultiequal(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildIndirect(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes);
   bool buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildRightShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildLeftShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildZext(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool processNextWork(void);		///< Process the next Varnode on the work list
