@@ -842,7 +842,8 @@ public class MachoProgramBuilder {
 			Section threadStartsSection =
 				machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.THREAD_STARTS);
 
-			if (chainStartsSection != null) {
+			if (chainStartsSection != null && chainStartsSection.getAddress() != 0 &&
+				chainStartsSection.getSize() != 0) {
 				reader.setPointerIndex(chainStartsSection.getOffset());
 				DyldChainedStartsOffsets chainedStartsOffsets =
 					new DyldChainedStartsOffsets(reader);
@@ -852,7 +853,8 @@ public class MachoProgramBuilder {
 						imagebase.getOffset(), symbolTable, log, monitor));
 				}
 			}
-			else if (threadStartsSection != null) {
+			else if (threadStartsSection != null && threadStartsSection.getAddress() != 0 &&
+				threadStartsSection.getSize() != 0) {
 				Address threadSectionStart = space.getAddress(threadStartsSection.getAddress());
 				Address threadSectionEnd =
 					threadSectionStart.add(threadStartsSection.getSize() - 1);
