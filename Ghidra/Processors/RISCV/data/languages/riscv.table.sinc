@@ -41,11 +41,6 @@ rs1W: zero is r1519 & zero & op1519=0 { export 0:$(WXLEN); }
 rs2W: r2024 is r2024 { local tmp:$(WXLEN) = r2024:$(WXLEN); export tmp; }
 rs2W: zero is r2024 & zero & op2024=0 { export 0:$(WXLEN); }
 
-#TODO  dest may be bad, might need an assign macro
-rdW: r0711 is r0711 { local tmp:$(WXLEN) = r0711:$(WXLEN); export tmp; }
-rdW: zero is r0711 & zero & op0711=0 { export 0:$(WXLEN); }
-
-
 
 #TODO  does this need to be in an if/endif
 @if ADDRSIZE == "64"
