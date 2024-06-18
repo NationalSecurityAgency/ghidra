@@ -13,4 +13,8 @@ data/languages/6x09_exg_tfr.sinc||GHIDRA||||END|
 data/languages/6x09_pull.sinc||GHIDRA||||END|
 data/languages/6x09_push.sinc||GHIDRA||||END|
 data/languages/H6309.slaspec||GHIDRA||||END|
+data/languages/HD6303.cspec||GHIDRA||||END|
+data/languages/HD6303.ldefs||GHIDRA||||END|
+data/languages/HD6303.pspec||GHIDRA||||END|
+data/languages/HD6303.slaspec||GHIDRA||||END|
 data/manuals/6809.idx||GHIDRA||||END|
