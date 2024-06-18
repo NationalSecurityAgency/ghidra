@@ -85,9 +85,9 @@ data64_compiler_map = {
 
 x86_compiler_map = {
     'GNU/Linux': 'gcc',
-    'Windows': 'Visual Studio',
+    'Windows': 'windows',
     # This may seem wrong, but Ghidra cspecs really describe the ABI
-    'Cygwin': 'Visual Studio',
+    'Cygwin': 'windows',
 }
 
 compiler_map = {

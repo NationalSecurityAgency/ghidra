@@ -3,6 +3,7 @@
 ##MODULE IP: Apache License 2.0 with LLVM Exceptions
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+data/debugger-launchers/local-lldb.bat||GHIDRA||||END|
 src/llvm-project/lldb/bindings/java/java-typemaps.swig||Apache License 2.0 with LLVM Exceptions||||END|
 src/llvm-project/lldb/bindings/java/java.swig||Apache License 2.0 with LLVM Exceptions||||END|
 src/main/py/LICENSE||GHIDRA||||END|
