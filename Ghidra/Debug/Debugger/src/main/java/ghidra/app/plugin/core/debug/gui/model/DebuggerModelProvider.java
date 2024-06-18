@@ -45,12 +45,13 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.CloneWindowAction;
 import ghidra.app.plugin.core.debug.gui.MultiProviderSaveBehavior.SaveableProvider;
 import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ObjectRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.RootNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
+import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
@@ -232,6 +233,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	protected DebuggerListingService listingService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -430,8 +433,49 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		mainPanel.revalidate();
 	}
 
-	protected class ObjectsTreeListener implements Adapters.FocusListener,
+	protected void activatePath(TraceObjectKeyPath path) {
+		if (current.getTrace() == null) {
+			return;
+		}
+		try {
+			traceManager.activate(current.pathNonCanonical(path));
+		}
+		catch (IllegalArgumentException e) {
+			plugin.getTool().setStatusInfo(e.getMessage(), true);
+		}
+	}
+
+	protected class MyMixin implements ObjectDefaultActionsMixin {
+		@Override
+		public DebuggerCoordinates getCurrent() {
+			return current;
+		}
+
+		@Override
+		public PluginTool getTool() {
+			return plugin.getTool();
+		}
+
+		@Override
+		public void activatePath(TraceObjectKeyPath path) {
+			DebuggerModelProvider.this.activatePath(path);
+		}
+	}
+
+	protected class ObjectsTreeListener extends MyMixin implements Adapters.FocusListener,
 			Adapters.TreeExpansionListener, Adapters.MouseListener, Adapters.KeyListener {
+
+		private void activateObjectSelectedInTree() {
+			List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
+			if (sel.size() != 1) {
+				// TODO: Multiple paths? PathMatcher can do it, just have to parse
+				// Just leave whatever was there.
+				return;
+			}
+			TraceObjectValue value = sel.get(0).getValue();
+			performDefaultAction(value);
+		}
+
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -500,18 +544,21 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		}
 	}
 
-	protected class ElementsTableListener
+	protected class ElementsTableListener extends MyMixin
 			implements Adapters.FocusListener, CellActivationListener {
 		@Override
 		public void cellActivated(JTable table) {
-			ValueRow row = elementsTablePanel.getSelectedItem();
-			if (row == null) {
+			if (performElementCellDefaultAction(table)) {
 				return;
 			}
-			if (!(row instanceof ObjectRow objectRow)) {
+			ValueRow sel = elementsTablePanel.getSelectedItem();
+			if (performValueRowDefaultAction(sel)) {
 				return;
 			}
-			activatePath(objectRow.getTraceObject().getCanonicalPath());
+			if (sel == null) {
+				return;
+			}
+			setPath(sel.currentObject().getCanonicalPath(), table, EventOrigin.USER_GENERATED);
 		}
 
 		@Override
@@ -566,19 +613,18 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		}
 	}
 
-	protected class AttributesTableListener
+	protected class AttributesTableListener extends MyMixin
 			implements Adapters.FocusListener, CellActivationListener {
 		@Override
 		public void cellActivated(JTable table) {
-			PathRow row = attributesTablePanel.getSelectedItem();
-			if (row == null) {
+			PathRow sel = attributesTablePanel.getSelectedItem();
+			if (performPathRowDefaultAction(sel)) {
 				return;
 			}
-			Object value = row.getValue();
-			if (!(value instanceof TraceObject object)) {
+			if (sel == null || !(sel.getValue() instanceof TraceObject obj)) {
 				return;
 			}
-			activatePath(object.getCanonicalPath());
+			setPath(obj.getCanonicalPath(), table, EventOrigin.USER_GENERATED);
 		}
 
 		@Override
@@ -742,19 +788,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				});
 				return;
 			}
-		}
-	}
-
-	private void activateObjectSelectedInTree() {
-		List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
-		if (sel.size() != 1) {
-			// TODO: Multiple paths? PathMatcher can do it, just have to parse
-			// Just leave whatever was there.
-			return;
-		}
-		TraceObjectValue value = sel.get(0).getValue();
-		if (value != null && value.getValue() instanceof TraceObject child) {
-			activatePath(child.getCanonicalPath());
 		}
 	}
 
@@ -966,26 +999,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	public void traceClosed(Trace trace) {
 		if (current.getTrace() == trace) {
 			coordinatesActivated(DebuggerCoordinates.NOWHERE);
-		}
-	}
-
-	protected void activatePath(TraceObjectKeyPath path) {
-		Trace trace = current.getTrace();
-		if (trace != null) {
-			TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
-			if (object != null) {
-				traceManager.activateObject(object);
-				return;
-			}
-			object = trace.getObjectManager()
-					.getObjectsByPath(Lifespan.at(current.getSnap()), path)
-					.findFirst()
-					.orElse(null);
-			if (object != null) {
-				traceManager.activateObject(object);
-				return;
-			}
-			plugin.getTool().setStatusInfo("No such object at path " + path, true);
 		}
 	}
 

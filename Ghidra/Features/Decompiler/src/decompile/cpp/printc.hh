@@ -48,7 +48,8 @@ struct PartialSymbolEntry {
   const OpToken *token;		///< Operator used to drill-down to the field
   const TypeField *field;	///< The component object describing the field
   const Datatype *parent;	///< The parent data-type owning the field
-  string fieldname;		///< The name of the field
+  int8 offset;			///< Array index or unlabeled offset (if field is null)
+  int4 size;			///< (if > 0) Size of the unlabeled entry
   EmitMarkup::syntax_highlight hilite;	///< Highlight information for the field token
 };
 

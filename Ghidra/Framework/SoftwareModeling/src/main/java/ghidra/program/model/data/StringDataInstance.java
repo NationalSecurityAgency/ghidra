@@ -20,6 +20,7 @@ import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
 import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
+import java.lang.Character.UnicodeScript;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.*;
@@ -212,24 +213,37 @@ public class StringDataInstance {
 	public static String makeStringLabel(String prefixStr, String str,
 			DataTypeDisplayOptions options) {
 		boolean needsUnderscore = false;
+		Set<UnicodeScript> foundScripts = EnumSet.noneOf(UnicodeScript.class);
 		StringBuilder buffer = new StringBuilder();
 		for (int i = 0, strLength = str.length(); i < strLength &&
 			buffer.length() < options.getLabelStringLength();) {
 			int codePoint = str.codePointAt(i);
 			if (StringUtilities.isDisplayable(codePoint) && (codePoint != ' ')) {
 				if (needsUnderscore) {
-					buffer.append('_');
+					if (!buffer.isEmpty()) {
+						buffer.append('_');
+					}
 					needsUnderscore = false;
 				}
 				buffer.appendCodePoint(codePoint);
 			}
 			else {
+				foundScripts.add(UnicodeScript.of(codePoint));
 				needsUnderscore = true;
 				// discard character
 			}
 			i += Character.charCount(codePoint);
 		}
-		return prefixStr + buffer.toString();
+		foundScripts.removeAll(Set.of(UnicodeScript.LATIN, UnicodeScript.COMMON));
+		String scriptSummary = "";
+		if (!foundScripts.isEmpty()) {
+			List<String> scriptNames = new ArrayList<>();
+			foundScripts.forEach(script -> scriptNames.add(script.name()));
+			Collections.sort(scriptNames);
+			scriptSummary = String.join("_", scriptNames) + "#";
+		}
+
+		return prefixStr + scriptSummary + buffer.toString();
 	}
 
 	//-----------------------------------------------------------------------------
@@ -324,7 +338,7 @@ public class StringDataInstance {
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = getTranslatedValue(settings, buf);
 		this.renderSetting = RENDER.getEnumValue(settings);
-		this.endianSetting = ENDIAN.getEndianess(settings, null);
+		this.endianSetting = ENDIAN.getEndianness(settings, null);
 
 		this.length = length;
 	}
@@ -948,7 +962,8 @@ public class StringDataInstance {
 			return abbrevPrefixStr;
 		}
 
-		String str = getStringValue();
+		String str =
+			showTranslation && translatedValue != null ? translatedValue : getStringValue();
 		if (str == null) {
 			return defaultStr;
 		}

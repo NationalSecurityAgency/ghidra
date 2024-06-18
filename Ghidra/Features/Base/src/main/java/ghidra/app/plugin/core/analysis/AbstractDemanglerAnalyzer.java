@@ -93,21 +93,18 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			set = set.subtract(EXTERNAL_SET);
 		}
 
-		String baseMonitorMessage = monitor.getMessage();
-		int memorySymbolCount =
-			demangleSymbols(program, set, 0, baseMonitorMessage, options, log, monitor);
+		int memorySymbolCount = demangleSymbols(program, set, 0, options, log, monitor);
 		if (demangleExternals) {
 			// process external symbols last
-			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, baseMonitorMessage, options,
-				log, monitor);
+			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, options, log, monitor);
 		}
 
 		return true;
 	}
 
 	private int demangleSymbols(Program program, AddressSetView set, int initialCount,
-			String baseMonitorMessage, DemanglerOptions options, MessageLog log,
-			TaskMonitor monitor) throws CancelledException {
+			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
+			throws CancelledException {
 
 		int count = initialCount;
 		SymbolTable symbolTable = program.getSymbolTable();
@@ -118,7 +115,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			monitor.checkCancelled();
 
 			if (++count % 100 == 0) {
-				monitor.setMessage(baseMonitorMessage + " - " + count + " symbols");
+				monitor.setMessage(getName() + " - " + count + " symbols");
 			}
 
 			Symbol symbol = it.next();

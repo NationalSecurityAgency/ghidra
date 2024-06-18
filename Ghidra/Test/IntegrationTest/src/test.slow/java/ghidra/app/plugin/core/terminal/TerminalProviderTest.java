@@ -70,13 +70,14 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			PtySession session = pty.getChild().session(new String[] { "/usr/bin/bash" }, env);
 
 			PtyParent parent = pty.getParent();
+			PtyChild child = pty.getChild();
 			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
 						System.err.println("resized: " + cols + "x" + rows);
-						parent.setWindowSize(cols, rows);
+						child.setWindowSize(cols, rows);
 					}
 				});
 				session.waitExited();
@@ -101,13 +102,14 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				pty.getChild().session(new String[] { "C:\\Windows\\system32\\cmd.exe" }, env);
 
 			PtyParent parent = pty.getParent();
+			PtyChild child = pty.getChild();
 			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
 						System.err.println("resized: " + cols + "x" + rows);
-						parent.setWindowSize(cols, rows);
+						child.setWindowSize(cols, rows);
 					}
 				});
 				session.waitExited();
@@ -477,6 +479,23 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			OkDialog dialog = waitForInfoDialog();
 			assertEquals("String not found", dialog.getMessage());
 			dialog.close();
+		}
+	}
+
+	@Test
+	@SuppressWarnings("resource")
+	public void testGetFullText() throws Exception {
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+
+		try (DefaultTerminal term = (DefaultTerminal) terminalService
+				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				})) {
+			term.setFixedSize(80, 25);
+			term.injectDisplayOutput(TEST_CONTENTS);
+
+			assertEquals("""
+					term Term
+					noterm""", term.getFullText().trim());
 		}
 	}
 

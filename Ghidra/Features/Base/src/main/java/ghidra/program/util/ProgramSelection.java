@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 import ghidra.program.model.address.*;
 
@@ -114,9 +115,11 @@ public class ProgramSelection implements AddressSetView {
 		return interiorSelection;
 	}
 
-	/**
-	 * Return whether this ProgramSelection is equal to obj.
-	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(interiorSelection, addressSet);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
@@ -135,113 +138,61 @@ public class ProgramSelection implements AddressSetView {
 		return addressSet.hasSameAddresses(ps.addressSet);
 	}
 
-	/**
-	 * Test if the address exists within this set.
-	 * <P>
-	 * @param addr address to test.
-	 * @return true if addr exists in the set, false otherwise.
-	 */
 	@Override
 	public boolean contains(Address addr) {
 		return addressSet.contains(addr);
 	}
 
-	/**
-	 * Test if the given address range is in the set.
-	 * <P>
-	 * @param start the first address in the range.
-	 * @param end the last address in the range.
-	 * @return true if entire range is contained within the set,
-	 *         false otherwise.
-	 */
 	@Override
 	public boolean contains(Address start, Address end) {
 		return addressSet.contains(start, end);
 	}
 
-	/**
-	 * Test if the given address set is a subset of this set.
-	 * <P>
-	 * @param rangeSet the set to test.
-	 * @return true if the entire set is contained within this set,
-	 *         false otherwise.
-	 */
 	@Override
 	public boolean contains(AddressSetView rangeSet) {
 		return addressSet.contains(rangeSet);
 	}
 
-	/**
-	 * Determine if this program selection intersects with the specified address set.
-	 *
-	 * @param addrSet address set to check intersection with.
-	 */
 	@Override
 	public boolean intersects(AddressSetView addrSet) {
 		return addressSet != null && addressSet.intersects(addrSet);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#intersect(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet intersect(AddressSetView view) {
 		return addressSet.intersect(view);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#intersectRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public AddressSet intersectRange(Address start, Address end) {
 		return addressSet.intersectRange(start, end);
 	}
 
-	/**
-	 * Returns true if this set is empty.
-	 */
 	@Override
 	public boolean isEmpty() {
 		return addressSet.isEmpty();
 	}
 
-	/**
-	 * Return the minimum address for this set.
-	 */
 	@Override
 	public Address getMinAddress() {
 		return addressSet.getMinAddress();
 	}
 
-	/**
-	 * Return the maximum address for this set.
-	 */
 	@Override
 	public Address getMaxAddress() {
 		return addressSet.getMaxAddress();
 	}
 
-	/**
-	 * Return the number of address ranges in this set.
-	 */
 	@Override
 	public int getNumAddressRanges() {
 		return addressSet.getNumAddressRanges();
 	}
 
-	/**
-	 * Returns an iterator over the address ranges in this address set.
-	 * @param atStart if true, the iterator is positioned at the minimum address.
-	 * if false, the iterator is positioned at the maximum address.
-	 */
 	@Override
 	public AddressRangeIterator getAddressRanges(boolean atStart) {
 		return addressSet.getAddressRanges(atStart);
 	}
 
-	/**
-	 * Returns an iterator over the address ranges in this address set.
-	 */
 	@Override
 	public AddressRangeIterator getAddressRanges() {
 		return addressSet.getAddressRanges();
@@ -252,25 +203,16 @@ public class ProgramSelection implements AddressSetView {
 		return getAddressRanges();
 	}
 
-	/**
-	 * Returns the number of addresses in this set.
-	 */
 	@Override
 	public long getNumAddresses() {
 		return addressSet.getNumAddresses();
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getAddresses(boolean)
-	 */
 	@Override
 	public AddressIterator getAddresses(boolean forward) {
 		return addressSet.getAddresses(forward);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#getAddresses(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public AddressIterator getAddresses(Address start, boolean forward) {
 		return addressSet.getAddresses(start, forward);
@@ -290,41 +232,26 @@ public class ProgramSelection implements AddressSetView {
 		return addressSet.hasSameAddresses(asv);
 	}
 
-	/**
-	 * @see AddressSetView#intersects(Address, Address)
-	 */
 	@Override
 	public boolean intersects(Address start, Address end) {
 		return addressSet.intersects(start, end);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#union(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet union(AddressSetView view) {
 		return addressSet.union(view);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#xor(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet xor(AddressSetView view) {
 		return addressSet.xor(view);
 	}
 
-	/**
-	 * @see ghidra.program.model.address.AddressSetView#subtract(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public AddressSet subtract(AddressSetView view) {
 		return addressSet.subtract(view);
 	}
 
-	/* (non Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		if (interiorSelection != null) {
@@ -367,5 +294,4 @@ public class ProgramSelection implements AddressSetView {
 	public Address findFirstAddressInCommon(AddressSetView set) {
 		return addressSet.findFirstAddressInCommon(set);
 	}
-
 }

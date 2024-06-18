@@ -407,6 +407,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		watchFilterPanel = new GhidraTableFilterPanel<>(watchTable, watchTableModel);
 		mainPanel.add(watchFilterPanel, BorderLayout.SOUTH);
 
+		String namePrefix = "Watches";
+		watchTable.setAccessibleNamePrefix(namePrefix);
+		watchFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		watchTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;
@@ -479,7 +483,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			return;
 		}
 		if (address.isMemoryAddress()) {
-			listingService.goTo(address, true);
+			ProgramLocation loc = new ProgramLocation(current.getView(), address);
+			listingService.goTo(loc, true);
 			return;
 		}
 	}

@@ -212,7 +212,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		// ZVeryLast group
 		addLocalAction(new FindReferencesToDataTypeAction(plugin)); // DataType
-		addLocalAction(new FindReferencesToFieldAction(plugin)); // DataType
+		addLocalAction(new FindReferencesToFieldByNameOrOffsetAction(plugin)); // DataType
 		addLocalAction(new FindBaseDataTypeAction(plugin)); // DataType
 		addLocalAction(new DisplayTypeAsGraphAction(plugin));
 
@@ -221,12 +221,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(previousAction);
 		nextAction = new NextPreviousDataTypeAction(this, plugin.getName(), true);
 		addLocalAction(nextAction);
-		filterArraysAction = getFilterArraysAction();
-		addLocalAction(filterArraysAction);
-		filterPointersAction = getFilterPointersAction();
-		addLocalAction(filterPointersAction);
-		conflictHandlerModesAction = getConflictHandlerModesAction();
-		addLocalAction(conflictHandlerModesAction);
+		addLocalAction(getFilterArraysAction());
+		addLocalAction(getFilterPointersAction());
+		addLocalAction(getConflictHandlerModesAction());
 
 		// toolbar menu
 		addLocalAction(new OpenArchiveAction(plugin));
@@ -318,6 +315,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private ToggleDockingAction getFilterPointersAction() {
 		if (filterPointersAction == null) {
 			filterPointersAction = new FilterPointersAction(plugin);
+			archiveGTree.enablePointerFilter(filterPointersAction.isSelected());
 		}
 
 		return filterPointersAction;
@@ -326,6 +324,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private ToggleDockingAction getFilterArraysAction() {
 		if (filterArraysAction == null) {
 			filterArraysAction = new FilterArraysAction(plugin);
+			archiveGTree.enableArrayFilter(filterArraysAction.isSelected());
 		}
 
 		return filterArraysAction;

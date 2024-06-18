@@ -20,7 +20,7 @@ package ghidra.program.model.data;
  * <p>
  * NOTE: The use of bitfields within all unions assumes a default packing where bit allocation 
  * always starts with byte-0 of the union.  Bit allocation order is dictated by data organization
- * endianess (byte-0 msb allocated first for big-endian, while byte-0 lsb allocated first for little-endian).
+ * endianness (byte-0 msb allocated first for big-endian, while byte-0 lsb allocated first for little-endian).
  */
 public interface Union extends Composite {
 

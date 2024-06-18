@@ -22,31 +22,29 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.help.UnsupportedOperationException;
-
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.analysis.TransientProgramProperties;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeConflictHandler;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
+import ghidra.app.util.bin.format.dwarf.DWARFDataTypeConflictHandler;
+import ghidra.app.util.bin.format.dwarf.DWARFProgram;
 import ghidra.app.util.bin.format.golang.*;
 import ghidra.app.util.bin.format.golang.rtti.types.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.PeLoader;
-import ghidra.framework.store.LockException;
+import ghidra.app.util.opinion.*;
+import ghidra.framework.Platform;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
-import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
+import ghidra.program.model.lang.Endian;
+import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -78,7 +76,13 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * 		</ul>
  * </ul>
  */
-public class GoRttiMapper extends DataTypeMapper {
+public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContext {
+	public static final GoVer SUPPORTED_MIN_VER = new GoVer(1, 15);
+	public static final GoVer SUPPORTED_MAX_VER = new GoVer(1, 22);
+
+	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
+	private static final List<String> SECTION_PREFIXES =
+		List.of("." /* ELF */, "__" /* macho sections */);
 
 	private static final String FAILED_FLAG = "FAILED TO FIND GOLANG BINARY";
 
@@ -163,20 +167,24 @@ public class GoRttiMapper extends DataTypeMapper {
 			return null;
 		}
 
-		GoVer goVer = buildInfo.getVerEnum();
-		if (goVer == GoVer.UNKNOWN) {
+		GoVer goVer = buildInfo.getGoVer();
+		if (goVer.isInvalid()) {
 			throw new BootstrapInfoException(
-				"Unsupported Golang version, version info: '%s'".formatted(buildInfo.getVersion()));
+				"Invalid Golang version string [%s]".formatted(buildInfo.getVersion()));
+		}
+		if (!goVer.inRange(SUPPORTED_MIN_VER, SUPPORTED_MAX_VER)) {
+			Msg.error(GoRttiMapper.class, "Untested golang version [%s]".formatted(goVer));
 		}
 
 		ResourceFile gdtFile =
 			findGolangBootstrapGDT(goVer, buildInfo.getPointerSize(), getGolangOSString(program));
 		if (gdtFile == null) {
-			Msg.error(GoRttiMapper.class, "Missing golang gdt archive for " + goVer);
+			Msg.error(GoRttiMapper.class,
+				"Missing golang gdt archive for golang version [%s]".formatted(goVer));
 		}
 
-		return new GoRttiMapper(program, buildInfo.getPointerSize(), buildInfo.getEndian(),
-			buildInfo.getVerEnum(), gdtFile);
+		return new GoRttiMapper(program, buildInfo.getPointerSize(), buildInfo.getEndian(), goVer,
+			gdtFile);
 	}
 
 	/**
@@ -210,9 +218,13 @@ public class GoRttiMapper extends DataTypeMapper {
 		else if (PeLoader.PE_NAME.equals(loaderName)) {
 			return "win";
 		}
-		else {
-			return null;
+		else if (MachoLoader.MACH_O_NAME.equals(loaderName)) {
+			LanguageID languageID = program.getLanguageCompilerSpecPair().getLanguageID();
+			if ("AARCH64:LE:64:AppleSilicon".equals(languageID.getIdAsString())) {
+				return Platform.MAC_ARM_64.getDirectoryName(); // mac_arm_64
+			}
 		}
+		return null;
 	}
 
 	/**
@@ -252,6 +264,54 @@ public class GoRttiMapper extends DataTypeMapper {
 			program.getCompilerSpec().getCompilerSpecDescription().getCompilerSpecName());
 	}
 
+	public static boolean hasGolangSections(List<String> sectionNames) {
+		for (String sectionName : sectionNames) {
+			if (sectionName.contains("gopclntab") ||
+				sectionName.contains(GoBuildInfo.MACHO_SECTION_NAME) ||
+				sectionName.contains(GoBuildInfo.SECTION_NAME)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns a matching symbol from the specified program, using golang specific logic.
+	 * 
+	 * @param program {@link Program}
+	 * @param symbolName name of golang symbol
+	 * @return {@link Symbol}, or null if not found
+	 */
+	public static Symbol getGoSymbol(Program program, String symbolName) {
+		for (String prefix : SYMBOL_SEARCH_PREFIXES) {
+			List<Symbol> symbols = program.getSymbolTable().getSymbols(prefix + symbolName, null);
+			if (symbols.size() == 1) {
+				return symbols.get(0);
+			}
+		}
+		return null;
+	}
+
+	public static MemoryBlock getGoSection(Program program, String sectionName) {
+		for (String prefix : SECTION_PREFIXES) {
+			MemoryBlock memBlock = program.getMemory().getBlock(prefix + sectionName);
+			if (memBlock != null) {
+				return memBlock;
+			}
+		}
+		return null;
+	}
+
+	public static MemoryBlock getFirstGoSection(Program program, String... blockNames) {
+		for (String blockToSearch : blockNames) {
+			MemoryBlock memBlock = getGoSection(program, blockToSearch);
+			if (memBlock != null) {
+				return memBlock;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Return the address of the golang zerobase symbol, or an artificial substitute.
 	 * <p>
@@ -261,7 +321,7 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link Address} of the runtime.zerobase, or artificial substitute
 	 */
 	public static Address getZerobaseAddress(Program prog) {
-		Symbol zerobaseSym = SymbolUtilities.getUniqueSymbol(prog, "runtime.zerobase");
+		Symbol zerobaseSym = getGoSymbol(prog, "runtime.zerobase");
 		Address zerobaseAddr =
 			zerobaseSym != null ? zerobaseSym.getAddress() : getArtificalZerobaseAddress(prog);
 		if (zerobaseAddr == null) {
@@ -272,12 +332,21 @@ public class GoRttiMapper extends DataTypeMapper {
 		return zerobaseAddr;
 	}
 
+	public static List<GoVer> getAllSupportedVersions() {
+		List<GoVer> result = new ArrayList<>();
+		for (int minor = SUPPORTED_MIN_VER.getMinor(); minor <= SUPPORTED_MAX_VER
+				.getMinor(); minor++) {
+			// TODO: a bit of a hack only supporting 1.x version number instances
+			result.add(new GoVer(1, minor));
+		}
+		return result;
+	}
+
 	public final static String ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME =
 		"ARTIFICIAL.runtime.zerobase";
 
 	private static Address getArtificalZerobaseAddress(Program program) {
-		Symbol zerobaseSym =
-			SymbolUtilities.getUniqueSymbol(program, ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME);
+		Symbol zerobaseSym = getGoSymbol(program, ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME);
 		return zerobaseSym != null ? zerobaseSym.getAddress() : null;
 	}
 
@@ -360,7 +429,7 @@ public class GoRttiMapper extends DataTypeMapper {
 		this.stringDT = getTypeOrDefault("string", Structure.class, null);
 
 		try {
-			registerStructures(GOLANG_STRUCTMAPPED_CLASSES);
+			registerStructures(GOLANG_STRUCTMAPPED_CLASSES, this);
 		}
 		catch (IOException e) {
 			if (archiveGDT == null) {
@@ -377,6 +446,20 @@ public class GoRttiMapper extends DataTypeMapper {
 				e);
 		}
 	}
+
+	@Override
+	public <T extends DataType> T getType(String name, Class<T> clazz) {
+		T result = super.getType(name, clazz);
+		if (result == null && GoPcHeader.GO_STRUCTURE_NAME.equals(name) &&
+			Structure.class.isAssignableFrom(clazz)) {
+			// create an artificial runtime.pcHeader structure for <=1.15 to enable GoModuledata
+			// to have references to a GoPcHeader 
+			result = clazz.cast(GoPcHeader.createArtificialGoPcHeaderStructure(GOLANG_CP,
+				program.getDataTypeManager()));
+		}
+		return result;
+	}
+
 
 	/**
 	 * Returns the golang version
@@ -407,10 +490,12 @@ public class GoRttiMapper extends DataTypeMapper {
 		GoModuledata firstModule = findFirstModuledata(monitor);
 		if (firstModule != null) {
 			GoPcHeader pcHeader = firstModule.getPcHeader();
-			this.minLC = pcHeader.getMinLC();
-			if (pcHeader.getPtrSize() != ptrSize) {
-				throw new IOException(
-					"Mismatched ptrSize: %d vs %d".formatted(pcHeader.getPtrSize(), ptrSize));
+			if (pcHeader != null) {
+				this.minLC = pcHeader.getMinLC();
+				if (pcHeader.getPtrSize() != ptrSize) {
+					throw new IOException(
+						"Mismatched ptrSize: %d vs %d".formatted(pcHeader.getPtrSize(), ptrSize));
+				}
 			}
 			addModule(firstModule);
 		}
@@ -479,7 +564,7 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link GoModuledata}
 	 */
 	public GoModuledata getFirstModule() {
-		return modules.get(0);
+		return !modules.isEmpty() ? modules.get(0) : null;
 	}
 
 	/**
@@ -756,8 +841,7 @@ public class GoRttiMapper extends DataTypeMapper {
 		// to avoid traces of the original program name as a deleted source archive link in the
 		// gdt data base.  This method only leaves the target gdt filename + ".step1" in the db.
 		File tmpGDTFile = new File(gdtFile.getParentFile(), gdtFile.getName() + ".step1.gdt");
-		FileDataTypeManager tmpFdtm = createFileArchive(tmpGDTFile, program.getLanguage(),
-			program.getCompilerSpec().getCompilerSpecID(), monitor);
+		FileDataTypeManager tmpFdtm = FileDataTypeManager.createFileArchive(tmpGDTFile);
 		int tx = -1;
 		try {
 			tx = tmpFdtm.startTransaction("Import");
@@ -802,8 +886,7 @@ public class GoRttiMapper extends DataTypeMapper {
 
 		tmpFdtm.save();
 
-		FileDataTypeManager fdtm = createFileArchive(gdtFile, program.getLanguage(),
-			program.getCompilerSpec().getCompilerSpecID(), monitor);
+		FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
 		tx = -1;
 		try {
 			tx = fdtm.startTransaction("Import");
@@ -826,19 +909,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		fdtm.close();
 
 		tmpGDTFile.delete();
-	}
-
-	private FileDataTypeManager createFileArchive(File gdtFile, Language lang,
-			CompilerSpecID compilerId, TaskMonitor monitor) throws IOException {
-		try {
-			FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
-			fdtm.setProgramArchitecture(lang, compilerId, LanguageUpdateOption.CLEAR, monitor);
-			return fdtm;
-		}
-		catch (IOException | CancelledException | LockException | UnsupportedOperationException
-				| IncompatibleLanguageException e) {
-			throw new IOException("Failed to create file data type manager: " + gdtFile, e);
-		}
 	}
 
 	private DataType structMappingInfoToDataType(StructureMappingInfo<?> smi) {
@@ -1346,22 +1416,22 @@ public class GoRttiMapper extends DataTypeMapper {
 
 	private GoModuledata findFirstModuledata(TaskMonitor monitor) throws IOException {
 		GoModuledata result = GoModuledata.getFirstModuledata(this);
-		if (result == null) {
-			monitor.setMessage("Searching for Golang pclntab");
-			monitor.initialize(0);
-			Address pclntabAddress = GoPcHeader.getPclntabAddress(program);
-			if (pclntabAddress == null) {
-				pclntabAddress =
-					GoPcHeader.findPclntabAddress(this, getPclntabSearchRange(), monitor);
-			}
-			if (pclntabAddress != null) {
-				monitor.setMessage("Searching for Golang firstmoduledata");
-				monitor.initialize(0);
-				GoPcHeader pclntab = readStructure(GoPcHeader.class, pclntabAddress);
-				result = GoModuledata.findFirstModule(this, pclntabAddress, pclntab,
-					getModuledataSearchRange(), monitor);
-			}
+		Address pcHeaderAddress =
+			result != null ? result.getPcHeaderAddress() : GoPcHeader.getPcHeaderAddress(program);
+		if (pcHeaderAddress == null) {
+			monitor.initialize(0, "Searching for Golang pclntab");
+			pcHeaderAddress =
+				GoPcHeader.findPcHeaderAddress(this, getPclntabSearchRange(), monitor);
 		}
+		if (result == null && pcHeaderAddress != null) {
+			// find the moduledata struct by searching for a pointer to the pclntab/pcHeader,
+			// which should be the first field in the moduledata struct.
+			monitor.initialize(0, "Searching for Golang firstmoduledata");
+			GoPcHeader pcHeader = readStructure(GoPcHeader.class, pcHeaderAddress);
+			result = GoModuledata.findFirstModule(this, pcHeaderAddress, pcHeader,
+				getModuledataSearchRange(), monitor);
+		}
+
 		if (result != null && !result.isValid()) {
 			throw new IOException("Invalid Golang moduledata at %s"
 					.formatted(result.getStructureContext().getStructureAddress()));
@@ -1370,14 +1440,14 @@ public class GoRttiMapper extends DataTypeMapper {
 	}
 
 	private AddressRange getPclntabSearchRange() {
-		MemoryBlock memBlock = getFirstMemoryBlock(program, ".noptrdata", ".rdata");
+		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "rdata");
 		return memBlock != null
 				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
 	}
 
 	private AddressRange getModuledataSearchRange() {
-		MemoryBlock memBlock = getFirstMemoryBlock(program, ".noptrdata", ".data");
+		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "data");
 		return memBlock != null
 				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
@@ -1389,15 +1459,11 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link AddressSetView} of range that is valid to find string structs in
 	 */
 	public AddressSetView getStringStructRange() {
-		MemoryBlock datamb = program.getMemory().getBlock(".data");
-		MemoryBlock rodatamb = getFirstMemoryBlock(program, ".rodata", ".rdata");
-
-		if (datamb == null || rodatamb == null) {
-			return new AddressSet();
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getDataRange());
+			result.add(moduledata.getRoDataRange());
 		}
-
-		AddressSet result = new AddressSet(datamb.getStart(), datamb.getEnd());
-		result.add(rodatamb.getStart(), rodatamb.getEnd());
 		return result;
 	}
 
@@ -1407,21 +1473,29 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @return {@link AddressSetView} of range that is valid for string char[] data
 	 */
 	public AddressSetView getStringDataRange() {
-		MemoryBlock rodatamb = getFirstMemoryBlock(program, ".rodata", ".rdata");
-		return rodatamb != null
-				? new AddressSet(rodatamb.getStart(), rodatamb.getEnd())
-				: new AddressSet();
+		// TODO: initialized []byte("stringchars") slices can have data in noptrdata section
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getRoDataRange());
+		}
+		return result;
 	}
 
-	private static MemoryBlock getFirstMemoryBlock(Program program, String... blockNames) {
-		Memory memory = program.getMemory();
-		for (String blockToSearch : blockNames) {
-			MemoryBlock memBlock = memory.getBlock(blockToSearch);
-			if (memBlock != null) {
-				return memBlock;
-			}
+	public AddressSetView getTextAddresses() {
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getTextRange());
 		}
-		return null;
+		return result;
+	}
+
+
+	public Symbol getGoSymbol(String symbolName) {
+		return getGoSymbol(program, symbolName);
+	}
+
+	public MemoryBlock getGoSection(String sectionName) {
+		return getGoSection(program, sectionName);
 	}
 
 	//--------------------------------------------------------------------------------------------
@@ -1495,4 +1569,25 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 
 	}
+
+	@Override
+	public boolean isFieldPresent(String presentWhen) {
+		presentWhen = presentWhen.strip();
+		if (presentWhen.isEmpty()) {
+			return true;
+		}
+		String[] verNums = presentWhen.split("[+-]", -1); // "1.2-1.5" or "1.2+" or "-1.2"
+		if (verNums.length != 2) {
+			throw new IllegalArgumentException(
+				"Invalid 'presentWhen' value [%s]".formatted(presentWhen));
+		}
+		GoVer startVer = verNums[0].isBlank() ? new GoVer(1, 0) : GoVer.parse(verNums[0]);
+		GoVer endVer = verNums[1].isBlank() ? new GoVer(99, 99) : GoVer.parse(verNums[1]);
+		if (startVer.isInvalid() || endVer.isInvalid()) {
+			throw new IllegalArgumentException(
+				"Invalid 'presentWhen' value [%s]".formatted(presentWhen));
+		}
+		return startVer.compareTo(goVersion) <= 0 && goVersion.compareTo(endVer) <= 0;
+	}
+
 }

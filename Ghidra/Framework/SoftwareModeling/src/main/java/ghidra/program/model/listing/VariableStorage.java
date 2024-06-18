@@ -927,7 +927,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		}
 		if (oldReg != null && !(oldReg instanceof UnknownRegister)) {
 			Register newReg = translator.getNewRegister(oldReg);
-			if (newReg != null) { // assume reg endianess unchanged
+			if (newReg != null) { // assume reg endianness unchanged
 				// NOTE: could produce bad results if not careful with mapping
 				int origByteShift = (int) offset - oldReg.getOffset();
 				offset = newReg.getOffset() + origByteShift;

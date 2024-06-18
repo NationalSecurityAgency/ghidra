@@ -200,7 +200,7 @@ public class SymbolTableCommand extends LoadCommand {
 				Data d = DataUtilities.createData(program, nlistAddr, dt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
-				if (stringTableAddr != null) {
+				if (stringTableAddr != null && nlist.getStringTableIndex() != 0) {
 					Address strAddr = stringTableAddr.add(nlist.getStringTableIndex());
 					DataUtilities.createData(program, strAddr, STRING, -1,
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);

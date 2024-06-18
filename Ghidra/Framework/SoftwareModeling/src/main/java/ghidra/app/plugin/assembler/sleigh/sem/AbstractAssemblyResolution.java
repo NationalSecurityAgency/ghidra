@@ -39,8 +39,10 @@ public abstract class AbstractAssemblyResolution implements AssemblyResolution {
 	/**
 	 * Construct a resolution
 	 * 
+	 * @param factory the factory
 	 * @param description a textual description used as part of {@link #toString()}
 	 * @param children for record keeping, any children used in constructing this resolution
+	 * @param right the right sibling
 	 */
 	protected AbstractAssemblyResolution(AbstractAssemblyResolutionFactory<?, ?> factory,
 			String description, List<? extends AssemblyResolution> children,
@@ -149,6 +151,7 @@ public abstract class AbstractAssemblyResolution implements AssemblyResolution {
 	/**
 	 * Get this same resolution, but with the given right sibling
 	 * 
+	 * @param right the right sibling
 	 * @return the resolution
 	 */
 	public abstract AssemblyResolution withRight(AssemblyResolution right);

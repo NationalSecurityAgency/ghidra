@@ -409,6 +409,22 @@
           <attribute name="storage"/>
         </optional>
       </element>
+      <element name="join_dual_class">
+        <optional>
+          <attribute name="reversejustify">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
+          <attribute name="storage"/>
+        </optional>
+        <optional>
+          <attribute name="a"/>
+        </optional>
+        <optional>
+          <attribute name="b"/>
+        </optional>
+      </element>
     </choice>
     <zeroOrMore>
       <element name="consume_extra">
@@ -528,6 +544,14 @@
         </element>
       </optional>
 
+      <optional>
+        <element name="internal_storage">
+          <oneOrMore>
+            <ref name="varnode_tags_type"/>
+          </oneOrMore>
+        </element>
+      </optional>
+      
       <optional>
         <element name="localrange">
           <ref name="rangelist_type"/>

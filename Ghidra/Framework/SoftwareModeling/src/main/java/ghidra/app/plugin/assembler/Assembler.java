@@ -25,4 +25,5 @@ import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
  * language.
  */
 public interface Assembler extends GenericAssembler<AssemblyResolvedPatterns> {
+
 }

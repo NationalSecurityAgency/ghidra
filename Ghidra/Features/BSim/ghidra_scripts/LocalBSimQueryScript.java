@@ -23,10 +23,10 @@ import org.apache.commons.collections4.IteratorUtils;
 
 import generic.lsh.vector.*;
 import ghidra.app.decompiler.DecompileException;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.app.tablechooser.*;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.client.Configuration;
 import ghidra.features.bsim.query.description.FunctionDescription;
@@ -341,7 +341,7 @@ public class LocalBSimQueryScript extends GhidraScript {
 	class CompareMatchesExecutor implements TableChooserExecutor {
 
 		private FunctionComparisonService compareService;
-		private FunctionComparisonProvider comparisonProvider;
+		private MatchedFunctionComparisonModel model;
 
 		public CompareMatchesExecutor() {
 			compareService = state.getTool().getService(FunctionComparisonService.class);
@@ -355,14 +355,11 @@ public class LocalBSimQueryScript extends GhidraScript {
 		@Override
 		public boolean execute(AddressableRowObject rowObject) {
 			LocalBSimMatch match = (LocalBSimMatch) rowObject;
-			if (comparisonProvider == null) {
-				comparisonProvider =
-					compareService.compareFunctions(match.getSourceFunc(), match.getTargetFunc());
+			if (model == null) {
+				model = new MatchedFunctionComparisonModel();
+				compareService.createCustomComparison(model, null);
 			}
-			else {
-				compareService.compareFunctions(match.getSourceFunc(), match.getTargetFunc(),
-					comparisonProvider);
-			}
+			model.addMatch(match.getSourceFunc(), match.getTargetFunc());
 			return false;
 		}
 	}

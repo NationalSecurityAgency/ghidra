@@ -155,7 +155,9 @@ public class FilterWidget extends JPanel {
 		editor = createEditor(filterType, null);
 		contentPanel = new JPanel(new BorderLayout());
 		contentPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-		contentPanel.add(editor.getComponent());
+		JComponent editorComponent = editor.getComponent();
+		editorComponent.getAccessibleContext().setAccessibleName("Filter Value");
+		contentPanel.add(editorComponent);
 		return contentPanel;
 	}
 

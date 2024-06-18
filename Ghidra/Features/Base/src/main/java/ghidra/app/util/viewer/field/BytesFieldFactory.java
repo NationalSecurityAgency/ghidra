@@ -24,6 +24,8 @@ package ghidra.app.util.viewer.field;
 import java.awt.Color;
 import java.math.BigInteger;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
@@ -35,8 +37,6 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
@@ -168,45 +168,25 @@ public class BytesFieldFactory extends FieldFactory {
 
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
-		Object obj = proxy.getObject();
-		if (!enabled || !(obj instanceof CodeUnit)) {
+		if (!enabled || !(proxy.getObject() instanceof CodeUnit cu)) {
 			return null;
 		}
-
-		CodeUnit cu = (CodeUnit) obj;
-		int length;
 
 		// Instructions: use prototype length so we display all bytes for length-override case
-		if (cu instanceof Instruction) {
-			// Consider all parsed bytes even if the overlap the next instruction due to the
-			// use of an instruction length-override.
-			length = ((Instruction) cu).getParsedLength();
-		}
-		else {
-			length = Math.min(cu.getLength(), 100);
-		}
+		// Consider all parsed bytes even if the overlap the next instruction due to the
+		// use of an instruction length-override.
+		final int arrLength =
+			cu instanceof Instruction ins ? ins.getParsedLength() : Math.min(cu.getLength(), 100);
 
-		byte[] bytes = new byte[length];
-		Memory memory = cu.getProgram().getMemory();
-		try {
-			length = memory.getBytes(cu.getAddress(), bytes);
-		}
-		catch (MemoryAccessException e) {
-			return null;
-		}
+		byte[] bytes = new byte[arrLength];
+		final int length = cu.getBytes(bytes, 0);
 
 		if (length == 0) {
 			return null;
 		}
 
-		if ((cu instanceof Instruction) && reverseInstByteOrdering && !memory.isBigEndian()) {
-			int i = 0;
-			int j = length - 1;
-			while (j > i) {
-				byte b = bytes[i];
-				bytes[i++] = bytes[j];
-				bytes[j--] = b;
-			}
+		if ((cu instanceof Instruction) && reverseInstByteOrdering && !cu.isBigEndian()) {
+			ArrayUtils.reverse(bytes);
 		}
 
 		int groupLength = length / byteGroupSize;

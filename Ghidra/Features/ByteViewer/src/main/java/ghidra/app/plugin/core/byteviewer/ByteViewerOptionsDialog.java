@@ -87,6 +87,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 				addressInputField.setAddress(getAlignmentAddress());
 				panel.add(addressInputField);
 				addressInputField.addChangeListener(this);
+				addressInputField.setAccessibleName("Alignment Address");
 			}
 		}
 
@@ -97,6 +98,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		bytesPerLineField.setValue(BigInteger.valueOf(provider.getBytesPerLine()));
 		panel.add(bytesPerLineField);
 		bytesPerLineField.addChangeListener(this);
+		bytesPerLineField.getAccessibleContext().setAccessibleName("Bytes Per Line");
 
 		panel.add(new GLabel("Group size (Hex View Only):"));
 		groupSizeField = new FixedBitSizeValueField(8, false, true);
@@ -105,6 +107,7 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		groupSizeField.setValue(BigInteger.valueOf(provider.getGroupSize()));
 		panel.add(groupSizeField);
 		groupSizeField.addChangeListener(this);
+		groupSizeField.getAccessibleContext().setAccessibleName("Group Size");
 
 		return panel;
 	}

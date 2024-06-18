@@ -32,8 +32,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 import docking.*;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GIcon;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
@@ -44,10 +47,12 @@ import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.util.*;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.*;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
@@ -59,6 +64,8 @@ import help.HelpService;
 
 public class VTMatchTableProvider extends ComponentProviderAdapter
 		implements FilterDialogModel<VTMatch>, VTControllerListener {
+
+	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
 
 	private static final String TITLE = "Version Tracking Matches";
 	private static final String TABLE_SELECTION_STATE = "TABLE_SELECTION_STATE";
@@ -98,7 +105,6 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		setIcon(VersionTrackingPluginPackage.ICON);
 		setDefaultWindowPosition(WindowPosition.TOP);
 		createActions();
-
 		component = createComponent();
 
 		setVisible(true);
@@ -129,6 +135,40 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		addLocalAction(new CreateSelectionAction(controller));
 		tableSelectionStateAction = new MatchTableSelectionAction(this);
 		addLocalAction(tableSelectionStateAction);
+
+		new ActionBuilder("Compare Functions", getName()).popupMenuPath("Compare Functions")
+				.popupMenuGroup("Selection")
+				.popupMenuIcon(COMPARISON_ICON)
+				.keyBinding("shift c")
+				.sharedKeyBinding()
+				.description("Compares the Function(s) with its remote match")
+				.helpLocation(
+					new HelpLocation("VersionTrackingPlugin", "Match_Table_Compare_Functions"))
+				.withContext(VTMatchContext.class)
+				.enabledWhen(this::isValidFunctionComparison)
+				.onAction(this::compareFunctions)
+				.buildAndInstallLocal(this);
+	}
+
+	private boolean isValidFunctionComparison(VTMatchContext context) {
+		List<VTMatch> functionMatches = context.getFunctionMatches();
+		return !functionMatches.isEmpty();
+	}
+
+	private void compareFunctions(VTMatchContext c) {
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
+		List<VTMatch> matches = c.getFunctionMatches();
+
+		for (VTMatch match : matches) {
+			MatchInfo matchInfo = controller.getMatchInfo(match);
+
+			Function sourceFunction = matchInfo.getSourceFunction();
+			Function destinationFunction = matchInfo.getDestinationFunction();
+			model.addMatch(sourceFunction, destinationFunction);
+		}
+
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		service.createCustomComparison(model, null);
 	}
 
 	// callback method from the MatchTableSelectionAction
@@ -219,13 +259,13 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		matchesTable = createMatchesTable();
 		JPanel matchesTablePanel = new JPanel(new BorderLayout());
-
 		JPanel filterAreaPanel = createFilterArea();
 		matchesTablePanel.add(tablePanel, BorderLayout.CENTER);
 		matchesTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
-
 		JPanel parentPanel = new JPanel(new BorderLayout());
 		parentPanel.add(matchesTablePanel);
+
+		matchesTable.setAccessibleNamePrefix("Matches");
 
 		return parentPanel;
 	}
@@ -602,12 +642,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 	@Override
 	public void optionsChanged(Options options) {
-		// implemented as ControllerListener.  Don't care about options changed right now.
+		// implemented as ControllerListener. Don't care about options changed right
+		// now.
 	}
 
 	@Override
 	public void markupItemSelected(VTMarkupItem markupItem) {
-		// Do nothing since the matches table doesn't need to respond to the mark-up that is selected.
+		// Do nothing since the matches table doesn't need to respond to the mark-up
+		// that is selected.
 	}
 
 	private void initializeOptions() {
@@ -704,7 +746,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				"should become ignored by applying a match.");
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.registerOptionsEditor(new ApplyMarkupPropertyEditor(controller));
+				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));
@@ -829,8 +871,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Forces a refilter, even though filtering operations may be disabled. The reload
-	 * is necessary since the model contents may have changed
+	 * Forces a refilter, even though filtering operations may be disabled. The
+	 * reload is necessary since the model contents may have changed
 	 */
 	@Override
 	public void forceRefilter() {
@@ -892,20 +934,22 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * A class meant to override the default table selection behavior <b>in special situations</b>.
+	 * A class meant to override the default table selection behavior <b>in special
+	 * situations</b>.
 	 * <p>
-	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be filtered out
-	 * of the table.  The default SelectionManager does not restore the selection for that item,
-	 * as it knows that the item is gone.
+	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be
+	 * filtered out of the table. The default SelectionManager does not restore the
+	 * selection for that item, as it knows that the item is gone.
 	 * <p>
-	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be moved due to a
-	 * sort operation after the edit.
+	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be
+	 * moved due to a sort operation after the edit.
 	 * <p>
-	 * <u>Desired Behavior:</u> Have the selection restored to the previous location, even if the
-	 * item is moved or removed.
+	 * <u>Desired Behavior:</u> Have the selection restored to the previous
+	 * location, even if the item is moved or removed.
 	 * <p>
-	 * Creating this object will cancel the default behavior.  Calling <tt>restoreSelection</tt>
-	 * will set the new selection, depending upon the conditions described above.
+	 * Creating this object will cancel the default behavior. Calling
+	 * <tt>restoreSelection</tt> will set the new selection, depending upon the
+	 * conditions described above.
 	 */
 	private class SelectionOverrideMemento {
 		private final int row;
@@ -947,13 +991,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			ListSelectionModel selectionModel = matchesTable.getSelectionModel();
 			int rowToSelect = row;
 			if (row > matchesTableModel.getRowCount()) {
-				// The model has shrunk.  Not sure what the best action is?
+				// The model has shrunk. Not sure what the best action is?
 				tryToSelectMatch(selectionModel);// this only works if we are tracking by match and not index
 				return;
 			}
 
 			// At this point the selection model may still believe that its selection is the
-			// value we are setting.  Calling clearSelection() will kick the model.  Without the
+			// value we are setting. Calling clearSelection() will kick the model. Without
+			// the
 			// kick, the setSelectionInterval() call we make may ultimately have no effect.
 			selectionModel.clearSelection();
 
@@ -990,8 +1035,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Override the built-in SelectionManager so that we can respond to the current table
-	 * selection mode.
+	 * Override the built-in SelectionManager so that we can respond to the current
+	 * table selection mode.
 	 */
 	private class VTMatchTableSelectionManager extends RowObjectSelectionManager<VTMatch> {
 		VTMatchTableSelectionManager(JTable table, AbstractSortedTableModel<VTMatch> tableModel) {

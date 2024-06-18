@@ -345,7 +345,7 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x57", model.getLengthAsString());
 
-		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
+		DockingActionIf action = getAction(plugin, "Show Numbers In Hex");
 		setToggleActionSelected((ToggleDockingActionIf) action, new DefaultActionContext(), false);
 
 		assertEquals(false, model.isShowingNumbersInHex());

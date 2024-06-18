@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,10 +34,28 @@ public class DataTypeNamingUtil {
 	 * functionDefinition.  Generated name will start with {@code _func}.
 	 * @param functionDefinition function definition whose name should be set
 	 * @return name applied to functionDefinition
-	 * @throws IllegalArgumentException if generated name contains unsupported characters
 	 */
 	public static String setMangledAnonymousFunctionName(
-			FunctionDefinitionDataType functionDefinition) throws IllegalArgumentException {
+			FunctionDefinitionDataType functionDefinition) {
+		String name = generateMangledSignature(functionDefinition);
+		try {
+			functionDefinition.setName(name);
+		}
+		catch (InvalidNameException e) {
+			// Note that we created the name using generateMangledSignature(functionDefinition).
+			//  An invalid name is a programming error on our part.
+			throw new AssertionError(e);
+		}
+		return name;
+	}
+
+	/**
+	 * Generate a simple mangled function signature.  Generated string will start with
+	 * {@code _func}.
+	 * @param functionDefinition function definition is used for generating the name
+	 * @return generated name
+	 */
+	public static String generateMangledSignature(FunctionDefinitionDataType functionDefinition) {
 
 		DataType returnType = functionDefinition.getReturnType();
 		ParameterDefinition[] parameters = functionDefinition.getArguments();
@@ -64,11 +82,9 @@ public class DataTypeNamingUtil {
 		}
 
 		String name = sb.toString();
-		try {
-			functionDefinition.setName(name);
-		}
-		catch (InvalidNameException e) {
-			throw new IllegalArgumentException(e);
+		if (!DataUtilities.isValidDataTypeName(name)) {
+			// Note that we created the name.  An invalid name is a programming error on our part.
+			throw new AssertionError("Unexpected bad name: " + name);
 		}
 		return name;
 	}

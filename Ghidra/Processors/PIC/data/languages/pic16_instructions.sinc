@@ -10,7 +10,8 @@ define token instr16(16)
 	op12 =  (2,13)
 	op11 =	(3,13)
 	op9 =	(5,13)
-	op7 =   (7,13)
+	op8 = 	(6,13)
+	op7 = 	(7,13)
 	op6 =	(8,13)
 	op5 =	(9,13)
 	op4 =	(10,13)
@@ -26,6 +27,7 @@ define token instr16(16)
 	fsrk =	(6,6)
 	fregCore = (0,3)
 	k5 = 	(0,4)
+	k6 = 	(0,5)
 	k7 = 	(0,6)
 	k8 =	(0,7)
 	sk9 =   (0,8) signed
@@ -257,7 +259,11 @@ imm8: "#"k8	is k8										{ export *[const]:1 k8; }
 imm7: "#"k7	is k7										{ export *[const]:1 k7; }
 
 # Immediate Data (Literal operation)
+imm6: "#"k6	is k6										{ export *[const]:1 k6; }
+
+# Immediate Data (Literal operation)
 imm5: "#"k5	is k5										{ export *[const]:1 k5; }
+
 @endif
 
 # Bit identifier
@@ -751,7 +757,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :LSLF srcREG, D				is op6=0x35 & srcREG & D & destREG					{
 	#  --11 0101 dfff ffff
-	$(C) = (srcREG & 80) != 0;
+	$(C) = (srcREG & 0x80) != 0;
 	val:1 = srcREG << 1;
 	setResultFlags(val);
 	destREG = val;
@@ -785,6 +791,11 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :MOVLB imm5			is op9=0x1 & imm5 {
 	BSR = imm5;
+}
+
+# Alternate variant in certain pic16f variants
+:MOVLB imm6			is op8=0x5 & imm6 {
+	BSR = imm6;
 }
 
 :MOVLP imm7				is op7=0x63 & imm7 {

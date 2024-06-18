@@ -24,8 +24,9 @@ import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.protocol.ghidra.TransientProjectData;
 import ghidra.framework.store.FileSystem;
+import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.FolderNotEmptyException;
-import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.framework.store.local.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -60,7 +61,7 @@ class GhidraFolderData {
 
 	// folderList and fileList are only be used if visited is true
 	private Set<String> folderList = new TreeSet<>();
-	private Set<String> fileList = new TreeSet<>();
+
 	private boolean visited; // true if full refresh was performed
 
 	private Map<String, GhidraFileData> fileDataCache = new HashMap<>();
@@ -172,7 +173,7 @@ class GhidraFolderData {
 
 	/**
 	 * Get folder data for specified absolute or relative folderPath
-	 * @param folderPath
+	 * @param folderPath absolute or relative folder path
 	 * @param lazy if true folder will not be searched for if not already discovered - in
 	 * this case null will be returned
 	 * @return folder data or null if not found or lazy=true and not yet discovered
@@ -236,9 +237,10 @@ class GhidraFolderData {
 			}
 			updateExistenceState();
 			checkInUse();
-			boolean sendEvent = true;
+
 			String oldName = name;
 			String parentPath = parent.getPathname();
+
 			if (folderExists) {
 				fileSystem.renameFolder(parentPath, name, newName);
 			}
@@ -247,8 +249,8 @@ class GhidraFolderData {
 					versionedFileSystem.renameFolder(parentPath, name, newName);
 				}
 				catch (IOException e) {
-					sendEvent = false;
 					if (folderExists) {
+						// revert local folder name
 						fileSystem.renameFolder(parentPath, newName, name);
 					}
 					throw e;
@@ -260,18 +262,14 @@ class GhidraFolderData {
 			name = newName;
 			parent.folderDataCache.put(newName, this);
 
-			fileDataCache.clear();
-			folderDataCache.clear();
-
 			GhidraFolder newFolder = getDomainFolder();
 
 			if (parent.visited) {
 				parent.folderList.remove(oldName);
 				parent.folderList.add(newName);
-				if (sendEvent) {
-					listener.domainFolderRenamed(newFolder, oldName);
-				}
+				listener.domainFolderRenamed(newFolder, oldName);
 			}
+
 			return newFolder;
 		}
 	}
@@ -322,7 +320,7 @@ class GhidraFolderData {
 	boolean isEmpty() {
 		try {
 			refresh(false, false, null); // visited will be true upon return
-			return folderList.isEmpty() && fileList.isEmpty();
+			return folderList.isEmpty() && fileDataCache.isEmpty();
 		}
 		catch (IOException e) {
 			// TODO: what should we return if folder not found or error occurs?
@@ -343,7 +341,7 @@ class GhidraFolderData {
 			Msg.error(this, "Folder refresh failed: " + e.getMessage());
 			return new ArrayList<>();
 		}
-		return new ArrayList<>(fileList);
+		return new ArrayList<>(fileDataCache.keySet());
 	}
 
 	/**
@@ -375,12 +373,6 @@ class GhidraFolderData {
 				!newFileName.equals(fileData.getName())) {
 				throw new AssertException();
 			}
-			if (visited) {
-				fileList.remove(oldFileName);
-			}
-			if (visited) {
-				fileList.add(newFileName);
-			}
 			fileDataCache.put(newFileName, fileData);
 			if (visited) {
 				listener.domainFileRenamed(getDomainFile(newFileName), oldFileName);
@@ -403,12 +395,6 @@ class GhidraFolderData {
 			if (fileData == null || newParent != fileData.getParent() ||
 				!newFileName.equals(fileData.getName())) {
 				throw new AssertException();
-			}
-			if (visited) {
-				fileList.remove(oldFileName);
-			}
-			if (newParent.visited) {
-				newParent.fileList.add(newFileName);
 			}
 			newParent.fileDataCache.put(newFileName, fileData);
 		}
@@ -436,7 +422,6 @@ class GhidraFolderData {
 					fileData.dispose();
 					fileDataCache.remove(fileName);
 					if (visited) {
-						fileList.remove(fileName);
 						listener.domainFileRemoved(getDomainFolder(), fileName, fileID);
 					}
 				}
@@ -445,20 +430,12 @@ class GhidraFolderData {
 			if (visited) {
 				try {
 					fileData = addFileData(fileName);
+					if (fileData != null) {
+						listener.domainFileAdded(fileData.getDomainFile());
+					}
 				}
 				catch (IOException e) {
 					// ignore
-				}
-				if (fileData == null) {
-					if (fileList.remove(fileName)) {
-						listener.domainFileRemoved(getDomainFolder(), fileName, null);
-					}
-				}
-				else if (fileList.add(fileName)) {
-					listener.domainFileAdded(fileData.getDomainFile());
-				}
-				else {
-					listener.domainFileStatusChanged(fileData.getDomainFile(), false);
 				}
 			}
 		}
@@ -532,7 +509,6 @@ class GhidraFolderData {
 	void dispose() {
 		visited = false;
 		folderList.clear();
-		fileList.clear();
 		for (GhidraFolderData folderData : folderDataCache.values()) {
 			folderData.dispose();
 		}
@@ -636,17 +612,45 @@ class GhidraFolderData {
 		}
 	}
 
+	private <T extends FolderItem> Map<String, T> itemMapOf(T[] items) {
+		Map<String, T> map = new HashMap<>();
+		int badItemCount = 0;
+		int nullNameCount = 0;
+		for (T item : items) {
+			if (item == null || item instanceof UnknownFolderItem) {
+				++badItemCount;
+				continue;
+			}
+			String itemName = item.getName();
+			if (itemName == null) {
+				++nullNameCount;
+				continue;
+			}
+			map.put(itemName, item);
+		}
+		if (badItemCount != 0) {
+			Msg.error(this,
+				"Project folder contains " + badItemCount + " bad items: " + getPathname());
+		}
+		if (nullNameCount != 0) {
+			Msg.error(this,
+				"Project folder contains " + nullNameCount + " null items: " + getPathname());
+		}
+		return map;
+	}
+
 	private void refreshFiles(TaskMonitor monitor) throws IOException {
 
 		String path = getPathname();
 
-		boolean hadError = false;
+		Map<String, LocalFolderItem> localItemMap = Map.of();
+		Map<String, FolderItem> versionedItemMap = Map.of();
 
 		HashSet<String> newSet = new HashSet<>();
 		if (folderExists) {
 			try {
-				String[] items = fileSystem.getItemNames(path);
-				newSet.addAll(Arrays.asList(items));
+				localItemMap = itemMapOf(fileSystem.getItems(path));
+				newSet.addAll(localItemMap.keySet());
 			}
 			catch (IOException e) {
 				if (parent != null) {
@@ -657,8 +661,8 @@ class GhidraFolderData {
 		}
 		if (versionedFolderExists) {
 			try {
-				String[] items = versionedFileSystem.getItemNames(path);
-				newSet.addAll(Arrays.asList(items));
+				versionedItemMap = itemMapOf(versionedFileSystem.getItems(path));
+				newSet.addAll(versionedItemMap.keySet());
 			}
 			catch (Exception e) {
 				Msg.error(this, "versioned folder refresh failed: " + e.getMessage());
@@ -667,7 +671,7 @@ class GhidraFolderData {
 		}
 
 		HashSet<String> oldSet = new HashSet<>();
-		for (String file : fileList) {
+		for (String file : fileDataCache.keySet()) {
 			oldSet.add(file);
 		}
 		HashSet<String> oldSetClone = new HashSet<>(oldSet);
@@ -679,23 +683,15 @@ class GhidraFolderData {
 		}
 
 		// refresh existing
-		for (String fileName : fileList.toArray(new String[fileList.size()])) {
-			GhidraFileData fileData = fileDataCache.get(fileName);
-			if (fileData != null) {
-				try {
-					fileData.statusChanged();
-				}
-				catch (IOException e) {
-					if (!(e instanceof FileNotFoundException)) {
-						if (hadError) {
-							throw e;
-						}
-						hadError = true; // tolerate single file error and remove file reference
-						Msg.error(this,
-							"Domain File error on " + fileData.getPathname() + ": " + e.toString());
-					}
-					fileRemoved(fileName);
-				}
+		for (GhidraFileData fileData : fileDataCache.values()) {
+			String fileName = fileData.getName();
+			LocalFolderItem localFolderItem = localItemMap.get(fileName);
+			FolderItem versionedFolderItem = versionedItemMap.get(fileName);
+			if (localFolderItem == null && versionedFolderItem == null) {
+				fileRemoved(fileName);
+			}
+			else {
+				fileData.refresh(localItemMap.get(fileName), versionedItemMap.get(fileName));
 			}
 		}
 
@@ -705,12 +701,12 @@ class GhidraFolderData {
 			if (monitor != null && monitor.isCancelled()) {
 				break;
 			}
-			GhidraFileData fileData = addFileData(fileName);
-			if (fileData != null) {
-				fileList.add(fileName);
-				if (visited) {
-					listener.domainFileAdded(fileData.getDomainFile());
-				}
+			LocalFolderItem localFolderItem = localItemMap.get(fileName);
+			FolderItem versionedFolderItem = versionedItemMap.get(fileName);
+
+			GhidraFileData fileData = addFileData(fileName, localFolderItem, versionedFolderItem);
+			if (visited) {
+				listener.domainFileAdded(fileData.getDomainFile());
 			}
 		}
 	}
@@ -722,7 +718,6 @@ class GhidraFolderData {
 			fileID = fileData.getFileID();
 			fileData.dispose();
 		}
-		fileList.remove(filename);
 		if (visited) {
 			listener.domainFileRemoved(getDomainFolder(), filename, fileID);
 		}
@@ -860,7 +855,7 @@ class GhidraFolderData {
 				return true;
 			}
 			if (visited) {
-				return fileList.contains(fileName);
+				return false;
 			}
 			return addFileData(fileName) != null;
 		}
@@ -885,6 +880,15 @@ class GhidraFolderData {
 				// ignore
 			}
 		}
+		return fileData;
+	}
+
+	private GhidraFileData addFileData(String fileName, LocalFolderItem folderItem,
+			FolderItem versionedFolderItem) {
+		GhidraFileData fileData =
+			new GhidraFileData(this, fileName, folderItem, versionedFolderItem);
+		fileDataCache.put(fileName, fileData);
+		projectData.updateFileIndex(fileData);
 		return fileData;
 	}
 
@@ -1101,7 +1105,7 @@ class GhidraFolderData {
 				if (fileSystem.getFolderNames(path).length != 0) {
 					return;
 				}
-				if (fileSystem.getItemNames(path).length != 0) {
+				if (fileSystem.getItemNames(path, false).length != 0) {
 					return;
 				}
 				delete();
@@ -1134,7 +1138,6 @@ class GhidraFolderData {
 				throw new IllegalArgumentException("newParent must differ from current parent");
 			}
 			checkInUse();
-			boolean sendEvent = true;
 
 			updateExistenceState();
 			try {
@@ -1152,8 +1155,8 @@ class GhidraFolderData {
 							newParent.getPathname());
 					}
 					catch (IOException e) {
-						sendEvent = false;
 						if (folderExists) {
+							// revert local folder move
 							fileSystem.moveFolder(newParent.getPathname(), name,
 								parent.getPathname());
 						}
@@ -1168,9 +1171,6 @@ class GhidraFolderData {
 				}
 				parent.folderDataCache.remove(name);
 
-				fileDataCache.clear();
-				folderDataCache.clear();
-
 				if (newParent.visited) {
 					newParent.folderList.add(name);
 				}
@@ -1179,7 +1179,7 @@ class GhidraFolderData {
 				parent = newParent;
 				GhidraFolder newFolder = getDomainFolder();
 
-				if (sendEvent && (parent.visited || newParent.visited)) {
+				if (parent.visited || newParent.visited) {
 					listener.domainFolderMoved(newFolder, oldParent);
 				}
 

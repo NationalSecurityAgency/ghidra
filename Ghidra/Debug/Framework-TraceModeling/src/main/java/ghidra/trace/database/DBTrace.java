@@ -26,6 +26,7 @@ import db.DBHandle;
 import db.Transaction;
 import generic.depends.DependentService;
 import generic.depends.err.ServiceConstructionException;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.Options;
 import ghidra.lifecycle.Internal;
@@ -64,7 +65,8 @@ import ghidra.trace.util.*;
 import ghidra.trace.util.CopyOnWrite.WeakHashCowSet;
 import ghidra.trace.util.CopyOnWrite.WeakValueHashCowMap;
 import ghidra.util.*;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedDomainObjectAdapter;
+import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -154,7 +156,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	public DBTrace(String name, CompilerSpec baseCompilerSpec, Object consumer)
 			throws IOException, LanguageNotFoundException {
-		super(new DBHandle(), DBOpenMode.CREATE, TaskMonitor.DUMMY, name, DB_TIME_INTERVAL,
+		super(new DBHandle(), OpenMode.CREATE, TaskMonitor.DUMMY, name, DB_TIME_INTERVAL,
 			DB_BUFFER_SIZE, consumer);
 
 		this.storeFactory = new DBCachedObjectStoreFactory(this);
@@ -167,7 +169,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			space -> getAddressSet(space));
 
 		try (Transaction tx = this.openTransaction("Create")) {
-			initOptions(DBOpenMode.CREATE);
+			initOptions(OpenMode.CREATE);
 			init();
 		}
 		catch (VersionException | CancelledException e) {
@@ -189,7 +191,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		return new AddressSet(space.getMinAddress(), space.getMaxAddress());
 	}
 
-	public DBTrace(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor, Object consumer)
+	public DBTrace(DBHandle dbh, OpenMode openMode, TaskMonitor monitor, Object consumer)
 			throws CancelledException, VersionException, IOException, LanguageNotFoundException {
 		super(dbh, openMode, monitor, "Untitled", DB_TIME_INTERVAL, DB_BUFFER_SIZE, consumer);
 		this.storeFactory = new DBCachedObjectStoreFactory(this);
@@ -209,9 +211,9 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		programView = createProgramView(0);
 	}
 
-	protected void initOptions(DBOpenMode openMode) throws IOException, CancelledException {
+	protected void initOptions(OpenMode openMode) throws IOException, CancelledException {
 		Options traceInfo = getOptions(TRACE_INFO);
-		if (openMode == DBOpenMode.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			traceInfo.setString(NAME, name);
 			traceInfo.setDate(DATE_CREATED, new Date());
 			traceInfo.setString(BASE_LANGUAGE, baseLanguage.getLanguageID().getIdAsString());
@@ -659,9 +661,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.sourceArchiveChanged(sourceArchiveID.getValue());
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceEvents.SOURCE_TYPE_ARCHIVE_CHANGED, null,
-				sourceArchiveID));
+		setChanged(new TraceChangeRecord<>(TraceEvents.SOURCE_TYPE_ARCHIVE_CHANGED, null,
+			sourceArchiveID));
 	}
 
 	public void sourceArchiveAdded(UniversalID sourceArchiveID) {
@@ -684,8 +685,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.dataTypeAdded(addedID);
 		}
-		setChanged(
-			new TraceChangeRecord<>(TraceEvents.DATA_TYPE_ADDED, null, addedID, addedType));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_ADDED, null, addedID, addedType));
 	}
 
 	public void dataTypeReplaced(long replacedID, DataTypePath replacedPath, DataTypePath newPath) {
@@ -700,16 +700,16 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(movedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_MOVED, null, movedID, oldPath,
-			newPath));
+		setChanged(
+			new TraceChangeRecord<>(TraceEvents.DATA_TYPE_MOVED, null, movedID, oldPath, newPath));
 	}
 
 	public void dataTypeNameChanged(long renamedID, String oldName, String newName) {
 		if (recordChanges) {
 			traceChangeSet.dataTypeChanged(renamedID);
 		}
-		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_RENAMED, null, renamedID,
-			oldName, newName));
+		setChanged(new TraceChangeRecord<>(TraceEvents.DATA_TYPE_RENAMED, null, renamedID, oldName,
+			newName));
 	}
 
 	public void dataTypeDeleted(long deletedID, DataTypePath deletedPath) {

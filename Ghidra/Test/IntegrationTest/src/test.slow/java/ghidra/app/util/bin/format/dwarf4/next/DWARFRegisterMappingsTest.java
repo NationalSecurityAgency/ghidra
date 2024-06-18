@@ -29,6 +29,8 @@ import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
 import ghidra.GhidraTestApplicationLayout;
+import ghidra.app.util.bin.format.dwarf.DWARFRegisterMappings;
+import ghidra.app.util.bin.format.dwarf.DWARFRegisterMappingsManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;

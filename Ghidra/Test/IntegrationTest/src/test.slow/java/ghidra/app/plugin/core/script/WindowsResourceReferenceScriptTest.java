@@ -145,7 +145,7 @@ public class WindowsResourceReferenceScriptTest extends AbstractGhidraHeadedInte
 			addr(0x01001f3b, pgm), addr(0x0100398f, pgm), addr(0x01003ade, pgm),
 			addr(0x01003aec, pgm), addr(0x01003ad0, pgm), addr(0x010039c5, pgm),
 			addr(0x01003d45, pgm), addr(0x0100385b, pgm), addr(0x01003d36, pgm),
-			addr(0x01003920, pgm), addr(0x0100390e, pgm) };
+			addr(0x01003920, pgm), addr(0x0100390e, pgm), addr(0x01003932, pgm) };
 
 		return winmineTestAddrs;
 	}

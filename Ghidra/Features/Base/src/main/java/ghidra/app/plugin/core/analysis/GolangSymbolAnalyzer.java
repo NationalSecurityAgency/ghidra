@@ -65,7 +65,7 @@ import utilities.util.FileUtilities;
  */
 public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
-	private final static String NAME = "Golang Symbol";
+	private final static String NAME = "Golang Symbols";
 	private final static String DESCRIPTION = """
 			Analyze Golang binaries for RTTI and function symbols.
 			'Apply Data Archives' and 'Shared Return Calls' analyzers should be disabled \
@@ -177,15 +177,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void markupWellknownSymbols() throws IOException {
-		Program program = goBinary.getProgram();
-
-		Symbol g0 = SymbolUtilities.getUniqueSymbol(program, "runtime.g0");
+		Symbol g0 = goBinary.getGoSymbol("runtime.g0");
 		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
 		if (g0 != null && gStruct != null) {
 			markupSession.markupAddressIfUndefined(g0.getAddress(), gStruct);
 		}
 
-		Symbol m0 = SymbolUtilities.getUniqueSymbol(program, "runtime.m0");
+		Symbol m0 = goBinary.getGoSymbol("runtime.m0");
 		Structure mStruct = goBinary.getGhidraDataType("runtime.m", Structure.class);
 		if (m0 != null && mStruct != null) {
 			markupSession.markupAddressIfUndefined(m0.getAddress(), mStruct);
@@ -317,31 +315,25 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Program program = goBinary.getProgram();
 		GoRegisterInfo regInfo = goBinary.getRegInfo();
 		DataType voidPtr = program.getDataTypeManager().getPointer(VoidDataType.dataType);
-		DataType uintDT = goBinary.getTypeOrDefault("uint", DataType.class,
-			AbstractIntegerDataType.getUnsignedDataType(goBinary.getPtrSize(), null));
 
 		GoFuncData duffzeroFuncdata = goBinary.getFunctionByName("runtime.duffzero");
 		Function duffzeroFunc = duffzeroFuncdata != null
 				? program.getFunctionManager().getFunctionAt(duffzeroFuncdata.getFuncAddress())
 				: null;
-		if (duffzeroFunc != null &&
-			goBinary.hasCallingConvention(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME)) {
+		List<Variable> duffzeroParams = regInfo.getDuffzeroParams(program);
+		if (duffzeroFunc != null && !duffzeroParams.isEmpty()) {
+			// NOTE: some go archs don't create duffzero functions.  See
+			// cmd/compile/internal/ssa/config.go and look for flag noDuffDevice in each arch.
 			try {
-				// NOTE: some duffzero funcs need a zero value supplied to them via a register set
-				// by the caller.  (depending on the arch)  The duffzero calling convention defined 
-				// by the callspec should take care of this by defining that register as the second 
-				// storage location. Otherwise, the callspec will only have a single storage 
-				// location defined.
-				boolean needZeroValueParam = regInfo.getZeroRegister() == null;
-				List<Variable> params = new ArrayList<>();
-				params.add(new ParameterImpl("dest", voidPtr, program));
-				if (needZeroValueParam) {
-					params.add(new ParameterImpl("zeroValue", uintDT, program));
-				}
 
-				duffzeroFunc.updateFunction(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME,
-					new ReturnParameterImpl(VoidDataType.dataType, program), params,
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+				// NOTE: even though we are specifying custom storage for the arguments, the
+				// calling convention name is still important as it tells the decompiler which
+				// registers are unaffected vs killed-by-call
+
+				ReturnParameterImpl voidRet = new ReturnParameterImpl(VoidDataType.dataType,
+					VariableStorage.VOID_STORAGE, program);
+				duffzeroFunc.updateFunction(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME, voidRet,
+					duffzeroParams, FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
 
 				markupSession.appendComment(duffzeroFunc, null,
 					"Golang special function: duffzero");
@@ -416,13 +408,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Program program = goBinary.getProgram();
 		GoRegisterInfo goRegInfo = goBinary.getRegInfo();
 
-		MemoryBlock txtMemblock = program.getMemory().getBlock(".text");
-		if (txtMemblock != null && goRegInfo.getZeroRegister() != null &&
-			!goRegInfo.isZeroRegisterIsBuiltin()) {
+		if (goRegInfo.getZeroRegister() != null && !goRegInfo.isZeroRegisterIsBuiltin()) {
 			try {
-				program.getProgramContext()
-						.setValue(goRegInfo.getZeroRegister(), txtMemblock.getStart(),
-							txtMemblock.getEnd(), BigInteger.ZERO);
+				for (AddressRange textRange : goBinary.getTextAddresses().getAddressRanges()) {
+					program.getProgramContext()
+							.setValue(goRegInfo.getZeroRegister(), textRange.getMinAddress(),
+								textRange.getMaxAddress(), BigInteger.ZERO);
+				}
 			}
 			catch (ContextChangeException e) {
 				Msg.error(this, "Unexpected Error", e);
@@ -432,7 +424,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int alignment = goBinary.getPtrSize();
 		long sizeNeeded = 0;
 
-		Symbol zerobase = SymbolUtilities.getUniqueSymbol(program, "runtime.zerobase");
+		Symbol zerobase = goBinary.getGoSymbol("runtime.zerobase");
 		long zerobaseSymbol = sizeNeeded;
 		sizeNeeded += zerobase == null
 				? NumericUtilities.getUnsignedAlignedValue(1 /* sizeof(byte) */, alignment)
@@ -464,14 +456,16 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			markupSession.labelAddress(gAddr, "CURRENT_G");
 
 			Register currentGoroutineReg = goRegInfo.getCurrentGoroutineRegister();
-			if (currentGoroutineReg != null && txtMemblock != null) {
+			if (currentGoroutineReg != null) {
 				// currentGoroutineReg is set in a platform's arch-golang.register.info in 
 				// the <current_goroutine> element for arch's that have a dedicated processor
 				// register that points at G
 				try {
-					program.getProgramContext()
-							.setValue(currentGoroutineReg, txtMemblock.getStart(),
-								txtMemblock.getEnd(), gAddr.getOffsetAsBigInteger());
+					for (AddressRange textRange : goBinary.getTextAddresses().getAddressRanges()) {
+						program.getProgramContext()
+								.setValue(currentGoroutineReg, textRange.getMinAddress(),
+									textRange.getMaxAddress(), gAddr.getOffsetAsBigInteger());
+					}
 				}
 				catch (ContextChangeException e) {
 					Msg.error(this, "Unexpected Error", e);
@@ -525,6 +519,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			String duffComment = program.getListing()
 					.getCodeUnitAt(duffFunc.getEntryPoint())
 					.getComment(CodeUnit.PLATE_COMMENT);
+
 			monitor.setMessage("Fixing alternate duffzero/duffcopy entry points");
 			for (FunctionIterator funcIt =
 				program.getFunctionManager().getFunctions(funcBody, true); funcIt.hasNext();) {
@@ -536,9 +531,11 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					func.setName(duffFunc.getName() + "_" + func.getEntryPoint(),
 						SourceType.ANALYSIS);
 					func.setParentNamespace(funcNS);
+					FunctionUpdateType fut = duffFunc.hasCustomVariableStorage()
+							? FunctionUpdateType.CUSTOM_STORAGE
+							: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
 					func.updateFunction(ccName, duffFunc.getReturn(),
-						Arrays.asList(duffFunc.getParameters()),
-						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+						Arrays.asList(duffFunc.getParameters()), fut, true, SourceType.ANALYSIS);
 					if (duffComment != null && !duffComment.isBlank()) {
 						new SetCommentCmd(func.getEntryPoint(), CodeUnit.PLATE_COMMENT, duffComment)
 								.applyTo(program);
@@ -582,6 +579,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int callingFunctionCount;
 
 		public PropagateRttiBackgroundCommand(GoRttiMapper goBinary) {
+			super("Golang RTTI Propagation (deferred)", true, true, false);
 			this.goBinary = goBinary;
 		}
 
@@ -654,18 +652,15 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 						FunctionDefinitionDataType signature =
 							new FunctionDefinitionDataType(callsite.calledFunc, true);
 						signature.setReturnType(newReturnType);
-						try {
-							HighFunctionDBUtil.writeOverride(callsite.callingFunc,
-								callsite.ref.getFromAddress(), signature);
-						}
-						catch (InvalidInputException e) {
-							Msg.error(this, "Failed to override call", e);
-						}
+						HighFunctionDBUtil.writeOverride(callsite.callingFunc,
+							callsite.ref.getFromAddress(), signature);
 						fixedCallsiteCount++;
 					}
 				}
-				catch (IOException e) {
-					Msg.error(this, "Failed to override call", e);
+				catch (IOException | InvalidInputException e) {
+					markupSession.logWarningAt(callsite.ref.getFromAddress(),
+						"Failed to override with RTTI: " + e.getMessage());
+					unfixedCallsiteCount++;
 				}
 			}
 		}

@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramContext;
@@ -40,15 +41,15 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextManager;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceRegisterContextManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace>
-		implements TraceRegisterContextManager,
-		DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
+		extends AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace> implements
+		TraceRegisterContextManager, DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
 	public static final String NAME = "RegisterContext";
 
 	@DBAnnotatedObjectInfo(version = 0)
@@ -87,7 +88,7 @@ public class DBTraceRegisterContextManager
 
 	protected final Map<Language, ProgramContext> defaultContexts = new HashMap<>();
 
-	public DBTraceRegisterContextManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceRegisterContextManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTracePlatformManager languageManager)
 			throws VersionException, IOException {

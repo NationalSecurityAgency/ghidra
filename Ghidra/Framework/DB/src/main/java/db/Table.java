@@ -583,7 +583,7 @@ public class Table {
 	 * @return record count
 	 */
 	public int getRecordCount() {
-		return tableRecord.getRecordCount();
+		return (tableRecord == null ? 0 : tableRecord.getRecordCount());
 	}
 
 	/**

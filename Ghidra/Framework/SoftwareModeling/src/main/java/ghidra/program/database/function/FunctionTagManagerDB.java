@@ -22,6 +22,7 @@ import org.apache.commons.collections4.map.LazyMap;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.*;
@@ -61,7 +62,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @throws IOException if there is a problem accessing the database.
 	 * @throws CancelledException if the program loading is cancelled
 	 */
-	FunctionTagManagerDB(DBHandle handle, int openMode, Lock lock, TaskMonitor monitor)
+	FunctionTagManagerDB(DBHandle handle, OpenMode openMode, Lock lock, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		this.lock = lock;
 
@@ -365,7 +366,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 *
 	 */
 	private void invalidateFunctions() {
-		FunctionManagerDB functionManager = (FunctionManagerDB) program.getFunctionManager();
+		FunctionManagerDB functionManager = program.getFunctionManager();
 		functionManager.functionTagsChanged();
 	}
 

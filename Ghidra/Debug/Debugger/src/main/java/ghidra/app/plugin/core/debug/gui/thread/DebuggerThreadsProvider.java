@@ -28,7 +28,8 @@ import docking.WindowPosition;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerEmulationService;
+import ghidra.app.services.DebuggerTargetService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.model.DomainObjectEvent;
@@ -97,8 +98,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 	@AutoServiceConsumed
 	DebuggerTargetService targetService;
-	// @AutoServiceConsumed // via method 
-	private DebuggerTraceManagerService traceManager;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -106,7 +105,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 	private JPanel mainPanel;
 
-	DebuggerTraceTabPanel traceTabs;
 	JPopupMenu traceTabPopupMenu;
 	DebuggerThreadsPanel panel;
 	DebuggerLegacyThreadsPanel legacyPanel;
@@ -134,12 +132,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	@AutoServiceConsumed
-	public void setTraceManager(DebuggerTraceManagerService traceManager) {
-		this.traceManager = traceManager;
-		contextChanged();
-	}
-
-	@AutoServiceConsumed
 	public void setEmulationService(DebuggerEmulationService emulationService) {
 		contextChanged();
 	}
@@ -152,7 +144,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 		current = coordinates;
 
-		traceTabs.coordinatesActivated(coordinates);
 		if (Trace.isLegacy(coordinates.getTrace())) {
 			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			legacyPanel.coordinatesActivated(coordinates);
@@ -191,10 +182,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		myActionContext = legacyPanel.getActionContext();
 	}
 
-	void traceTabsContextChanged() {
-		myActionContext = traceTabs.getActionContext();
-	}
-
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (myActionContext == null) {
@@ -211,10 +198,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		panel = new DebuggerThreadsPanel(this);
 		legacyPanel = new DebuggerLegacyThreadsPanel(plugin, this);
 		mainPanel.add(panel);
-
-		traceTabs = new DebuggerTraceTabPanel(this);
-
-		mainPanel.add(traceTabs, BorderLayout.NORTH);
 	}
 
 	protected void createActions() {

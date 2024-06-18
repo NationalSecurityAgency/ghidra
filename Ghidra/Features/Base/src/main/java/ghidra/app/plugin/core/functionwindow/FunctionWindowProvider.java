@@ -18,21 +18,24 @@ package ghidra.app.plugin.core.functionwindow;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
 import docking.ActionContext;
 import docking.DefaultActionContext;
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import generic.theme.GIcon;
+import ghidra.app.context.FunctionSupplierContext;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 
 /**
  * Provider that displays all functions in the selected program
@@ -40,6 +43,7 @@ import ghidra.util.table.*;
 public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 	public static final Icon ICON = new GIcon("icon.plugin.functionwindow.provider");
+	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
 
 	private FunctionWindowPlugin plugin;
 	private GhidraTable functionTable;
@@ -48,6 +52,8 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 	private GhidraTableFilterPanel<FunctionRowObject> tableFilterPanel;
 	private GhidraThreadedTablePanel<FunctionRowObject> threadedTablePanel;
+
+	private DockingAction compareAction;
 
 	/**
 	 * Constructor
@@ -63,6 +69,41 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		tool = plugin.getTool();
 		mainPanel = createWorkPanel();
 		tool.addComponentProvider(this, false);
+		createActions();
+	}
+
+	private void createActions() {
+		addLocalAction(new SelectionNavigationAction(plugin.getName(), getTable()));
+		addLocalAction(new MakeProgramSelectionAction(plugin, getTable()));
+	}
+
+	void createCompareAction() {
+		compareAction = new ActionBuilder("Compare Functions", plugin.getName())
+				.description("Create Function Comparison")
+				.helpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"))
+				.toolBarIcon(COMPARISON_ICON)
+				.toolBarGroup("Comparison")
+				.enabledWhen(c -> functionTable.getSelectedRowCount() > 1)
+				.onAction(c -> compareSelectedFunctions())
+				.buildAndInstallLocal(this);
+	}
+
+	void removeCompareAction() {
+		tool.removeLocalAction(this, compareAction);
+	}
+
+	private void compareSelectedFunctions() {
+		Set<Function> functions = new HashSet<>();
+		int[] selectedRows = functionTable.getSelectedRows();
+
+		List<FunctionRowObject> functionRowObjects = functionModel.getRowObjects(selectedRows);
+		for (FunctionRowObject functionRowObject : functionRowObjects) {
+			Function rowFunction = functionRowObject.getFunction();
+			functions.add(rowFunction);
+		}
+
+		FunctionComparisonService service = getTool().getService(FunctionComparisonService.class);
+		service.createComparison(functions);
 	}
 
 	@Override
@@ -77,7 +118,7 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new DefaultActionContext(this, functionTable);
+		return new FunctionWindowActionContext();
 	}
 
 	@Override
@@ -118,8 +159,6 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		threadedTablePanel = new GhidraThreadedTablePanel<>(functionModel, 1000);
 
 		functionTable = threadedTablePanel.getTable();
-		functionTable.setName("FunctionTable");
-
 		functionTable.installNavigation(tool);
 		functionTable.setAutoLookupColumn(FunctionTableModel.NAME_COL);
 		functionTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
@@ -148,14 +187,14 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(functionTable, functionModel);
 
+		String namePrefix = "Functions";
+		functionTable.setAccessibleNamePrefix(namePrefix);
+		tableFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		JPanel container = new JPanel(new BorderLayout());
 		container.add(threadedTablePanel, BorderLayout.CENTER);
 		container.add(tableFilterPanel, BorderLayout.SOUTH);
 		return container;
-	}
-
-	ProgramSelection selectFunctions() {
-		return functionTable.getProgramSelection();
 	}
 
 	private void setFunctionTableRenderer() {
@@ -233,5 +272,33 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 	@Override
 	public boolean isTransient() {
 		return false;
+	}
+
+	private class FunctionWindowActionContext extends DefaultActionContext
+			implements FunctionSupplierContext {
+
+		FunctionWindowActionContext() {
+			super(FunctionWindowProvider.this, functionTable);
+		}
+
+		@Override
+		public boolean hasFunctions() {
+			return functionTable.getSelectedRowCount() > 0;
+		}
+
+		@Override
+		public Set<Function> getFunctions() {
+			Set<Function> functions = new HashSet<>();
+			int[] selectedRows = functionTable.getSelectedRows();
+			if (selectedRows.length == 0) {
+				return Collections.emptySet();
+			}
+			List<FunctionRowObject> functionRowObjects = functionModel.getRowObjects(selectedRows);
+			for (FunctionRowObject functionRowObject : functionRowObjects) {
+				Function rowFunction = functionRowObject.getFunction();
+				functions.add(rowFunction);
+			}
+			return functions;
+		}
 	}
 }

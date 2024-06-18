@@ -34,7 +34,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.ComparatorMath;
 import ghidra.util.Msg;
 
@@ -163,11 +162,17 @@ public enum DebuggerStaticMappingUtils {
 		private Address min = null;
 		private Address max = null;
 
+		public void consider(Address min, Address max) {
+			this.min = this.min == null ? min : ComparatorMath.cmin(this.min, min);
+			this.max = this.max == null ? max : ComparatorMath.cmax(this.max, max);
+		}
+
 		public void consider(AddressRange range) {
-			min = min == null ? range.getMinAddress()
-					: ComparatorMath.cmin(min, range.getMinAddress());
-			max = max == null ? range.getMaxAddress()
-					: ComparatorMath.cmax(max, range.getMaxAddress());
+			consider(range.getMinAddress(), range.getMaxAddress());
+		}
+
+		public void consider(Address address) {
+			consider(address, address);
 		}
 
 		public Address getMin() {
@@ -180,6 +185,10 @@ public enum DebuggerStaticMappingUtils {
 
 		public long getLength() {
 			return max.subtract(min) + 1;
+		}
+
+		public AddressRange getRange() {
+			return new AddressRangeImpl(getMin(), getMax());
 		}
 	}
 
@@ -315,12 +324,8 @@ public enum DebuggerStaticMappingUtils {
 		if (mappingService == null) {
 			return null;
 		}
-		TraceThread curThread = coordinates.getThread();
-		if (curThread == null) {
-			return null;
-		}
-		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
-			curThread, Lifespan.at(coordinates.getSnap()), pc);
+		TraceLocation dloc = new DefaultTraceLocation(coordinates.getTrace(),
+			null, Lifespan.at(coordinates.getSnap()), pc);
 		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;

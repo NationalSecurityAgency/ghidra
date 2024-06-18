@@ -29,6 +29,8 @@ import javax.swing.event.ChangeListener;
 import docking.*;
 import docking.action.*;
 import docking.dnd.GClipboard;
+import docking.dnd.StringTransferable;
+import docking.tool.ToolConstants;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
@@ -37,12 +39,15 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.services.ClipboardService;
 import ghidra.app.util.ClipboardType;
+import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.task.*;
 
 //@formatter:off
@@ -55,10 +60,12 @@ import ghidra.util.task.*;
 	servicesProvided = { ClipboardService.class }
 )
 //@formatter:on
-public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, ClipboardService {
+public class ClipboardPlugin extends ProgramPlugin
+		implements ClipboardOwner, ClipboardService, OptionsChangeListener {
 
 	public static final String GROUP_NAME = "Clipboard";
 	public static final String TOOLBAR_GROUP_NAME = "ZClipboard";
+	private static final String REMOVE_QUOTES_OPTION = "Copy Strings Without Quotes";
 
 	//The provider that owns the clipboard content
 	private ClipboardContentProviderService clipboardOwnerProvider;
@@ -76,9 +83,28 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 	};
 
 	private boolean isClipboardOwner;
+	private boolean removeQuotes;
 
 	public ClipboardPlugin(PluginTool tool) {
 		super(tool);
+		initOptions();
+	}
+
+	private void initOptions() {
+		ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
+		options.registerOption(REMOVE_QUOTES_OPTION, false, null,
+			"If true, copying strings to the clipboard will remove outer quotes");
+
+		removeQuotes = options.getBoolean(REMOVE_QUOTES_OPTION, false);
+		options.addOptionsChangeListener(this);
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		if (optionName.equals(REMOVE_QUOTES_OPTION)) {
+			removeQuotes = options.getBoolean(REMOVE_QUOTES_OPTION, false);
+		}
 	}
 
 	@Override
@@ -246,6 +272,10 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 				monitor.setMessage("Setting Clipboard Contents");
 				Clipboard systemClipboard = getSystemClipboard();
 				Transferable transferable = clipboardService.copy(monitor);
+				if (removeQuotes && transferable instanceof StringTransferable stringTransferable) {
+					stringTransferable.removeOuterQuotesAndStandardStringPrefix();
+				}
+
 				if (transferable == null) {
 					return;
 				}

@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -42,8 +42,8 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 	ToyDBTraceBuilder b;
 
-	DBTraceProgramView view;
-	DBTraceProgramViewListing listing; // TODO: Do I want to expose the internal types?
+	DBTraceVariableSnapProgramView view;
+	DBTraceProgramViewListing listing;
 	DBTraceMemoryManager memory;
 	DBTraceCodeManager code;
 
@@ -877,5 +877,23 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		}
 		assertEquals(i4005, listing.getDefinedCodeUnitBefore(b.addr(0x4006)));
 		assertEquals(d4000, listing.getDefinedCodeUnitBefore(b.addr(0x4005)));
+	}
+
+	@Test
+	public void testGetCodeUnitsInTwoViews() throws Throwable {
+		try (Transaction tx = b.startTransaction()) {
+			memory.putBytes(0, b.addr(0x00400000), b.buf(1, 2, 3, 4, 5, 6, 7, 8));
+			memory.putBytes(1, b.addr(0x00400000), b.buf(8, 7, 6, 5, 4, 3, 2, 1));
+		}
+
+		view.setSnap(1);
+		DBTraceProgramView view0 = b.trace.getFixedProgramView(0);
+		DBTraceProgramViewListing listing0 = view0.getListing();
+
+		CodeUnit cu0 = listing0.getCodeUnitAt(b.addr(0x00400000));
+		CodeUnit cu1 = listing.getCodeUnitAt(b.addr(0x00400000));
+
+		assertArrayEquals(b.arr(1), cu0.getBytes());
+		assertArrayEquals(b.arr(8), cu1.getBytes());
 	}
 }

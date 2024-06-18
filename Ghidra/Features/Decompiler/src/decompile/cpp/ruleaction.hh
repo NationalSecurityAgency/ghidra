@@ -51,6 +51,7 @@ class AddTreeState {
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to (in address units) or 0 for open ended pointer
   int4 baseSlot;		///< Slot of the ADD tree base that is holding the pointer
+  uint4 biggestNonMultCoeff;	///< Biggest coefficient that is not a multiple
   uint8 ptrmask;		///< Mask for modulo calculations in ptr space
   uint8 offset;			///< Number of bytes we dig into the base data-type
   uint8 correct;		///< Number of bytes being double counted
@@ -65,7 +66,6 @@ class AddTreeState {
   bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
   bool valid;			///< Set to \b true if the whole expression can be transformed
   bool isDegenerate;		///< Set to \b true if pointer to unitsize or smaller
-  uint4 findArrayHint(void) const;	///< Look for evidence of an array in a sub-component
   bool hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const;
   bool checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
   bool checkTerm(Varnode *vn,uint8 treeCoeff);			///< Accumulate details of given term and continue tree traversal
@@ -1264,7 +1264,7 @@ public:
 };
 
 class RuleDivOpt : public Rule {
-  static uintb calcDivisor(uintb n,uint8 y,int4 xsize);		///< Calculate the divisor
+  static uintb calcDivisor(uintb n,uint8 *y,int4 xsize);		///< Calculate the divisor
   static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
   static bool checkFormOverlap(PcodeOp *op);	///< If form rooted at given PcodeOp is superseded by an overlapping form
 public:
@@ -1275,7 +1275,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static Varnode *findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &extopc);
+  static Varnode *findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &extopc);
 };
 
 class RuleSignDiv2 : public Rule {

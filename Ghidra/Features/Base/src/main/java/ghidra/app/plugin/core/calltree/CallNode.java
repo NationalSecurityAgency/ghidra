@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.tree.TreePath;
 
@@ -35,15 +34,14 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class CallNode extends GTreeSlowLoadingNode {
 
-	private boolean allowDuplicates;
-	protected AtomicInteger filterDepth;
+	protected CallTreeOptions callTreeOptions;
 	private int depth = -1;
 
 	/** Used to signal that this node has been marked for replacement */
 	protected boolean invalid = false;
 
-	public CallNode(AtomicInteger filterDepth) {
-		this.filterDepth = filterDepth;
+	public CallNode(CallTreeOptions callTreeOptions) {
+		this.callTreeOptions = Objects.requireNonNull(callTreeOptions);
 	}
 
 	/**
@@ -92,30 +90,26 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		return set;
 	}
 
-	/**
-	 * True allows this node to contains children with the same name
-	 * 
-	 * @param allowDuplicates true to allow duplicate nodes
-	 */
-	protected void setAllowsDuplicates(boolean allowDuplicates) {
-		this.allowDuplicates = allowDuplicates;
-	}
-
-	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction,
-			CallNode node) {
+	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction, CallNode node) {
 
 		Function function = node.getRemoteFunction();
+		if (function != null && function.isThunk()) {
+			if (!callTreeOptions.allowsThunks()) {
+				return;
+			}
+		}
+
 		List<GTreeNode> nodes = nodesByFunction.get(function);
 		if (nodes.contains(node)) {
 			return; // never add equal() nodes
 		}
 
-		if (allowDuplicates) {
+		if (callTreeOptions.allowsDuplicates()) {
 			nodes.add(node); // ok to add multiple nodes for this function with different addresses
 		}
 
 		if (nodes.isEmpty()) {
-			nodes.add(node); // no duplicates allow; only add if this is the only node
+			nodes.add(node); // no duplicates allowed; only add if this is the only node
 			return;
 		}
 
@@ -130,7 +124,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 
 	@Override
 	public int loadAll(TaskMonitor monitor) throws CancelledException {
-		if (depth() > filterDepth.get()) {
+		if (depth() > callTreeOptions.getRecurseDepth()) {
 			return 1;
 		}
 		return super.loadAll(monitor);

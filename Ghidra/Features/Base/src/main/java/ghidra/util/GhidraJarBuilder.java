@@ -26,7 +26,6 @@ import generic.jar.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.*;
-import ghidra.util.classfinder.ClassFinder;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -328,7 +327,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		Collections.sort(moduleList);
 
 		for (ApplicationModule module : moduleList) {
-			File srcDir = new File(module.getModuleDir(), "src");
+			File srcDir = new File(module.getModuleDir(), "lib");
 			File srcZipFileForModule = new File(srcDir, module.getName() + "-src.zip");
 			if (srcZipFileForModule.exists()) {
 				writeModuleSrcZipToOverallSrcZip(zip, srcZipFileForModule);
@@ -338,11 +337,16 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				wroteToZip |= writeZipRecursively(zip, srcDir.getAbsolutePath(), srcDir);
 			}
 		}
-		if (wroteToZip) {
+		if (!wroteToZip) {
 			System.out
 					.println("Can't create source zip!  Has source been downloaded and installed?");
-			// zip.close reports error if nothing has been written to it
+		}
+		try {
+			// zip.close may report error if nothing has been written to it
 			zip.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -617,7 +621,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			if (clazz == null) {
 				System.out.println("Couldn't load " + path);
 			}
-			else if (ClassFinder.isClassOfInterest(clazz)) {
+			else if (ClassSearcher.isClassOfInterest(clazz)) {
 				extensionPointClasses.add(clazz.getName());
 			}
 		}

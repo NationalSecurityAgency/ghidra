@@ -55,7 +55,7 @@ public class DyldCacheExtractLoader extends MachoLoader {
 
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-			DyldCacheExtractProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
+			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -97,12 +97,7 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	}
 
 	@Override
-	protected boolean isLoadLocalLibraries(List<Option> options) {
-		return false;
-	}
-
-	@Override
-	protected boolean isLoadSystemLibraries(List<Option> options) {
+	protected boolean isLoadLibraries(List<Option> options) {
 		return false;
 	}
 

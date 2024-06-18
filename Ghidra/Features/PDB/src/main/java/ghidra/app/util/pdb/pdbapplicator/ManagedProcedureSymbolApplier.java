@@ -47,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
  * Applier for {@link AbstractManagedProcedureMsSymbol} symbols.
  */
 public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
-		implements BlockNestingSymbolApplier {
+		implements BlockNestingSymbolApplier, DisassembleableAddressSymbolApplier {
 
 	private int symbolBlockNestingLevel;
 	private Address currentBlockAddress;
@@ -77,6 +77,11 @@ public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
 	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
 		getValidatedSymbol(iter, true);
 		processSymbol(iter);
+	}
+
+	@Override
+	public Address getAddressForDisassembly() {
+		return applicator.getAddress(symbol);
 	}
 
 	// TODO.  Investigate more.  This is not working for at least one CLI dll in that we are
@@ -109,12 +114,6 @@ public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
 		if (function == null) {
 			return;
 		}
-
-		// Collecting all addresses from all functions to do one large bulk disassembly of the
-		//  complete AddressSet of function addresses.  We could consider removing this logic
-		//  of collecting them all for bulk diassembly and do individual disassembly at the
-		//  same deferred point in time.
-		applicator.scheduleDisassembly(address);
 
 		boolean succeededSetFunctionSignature = setFunctionDefinition(function, address, symbol);
 

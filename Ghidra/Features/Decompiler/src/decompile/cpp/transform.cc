@@ -268,6 +268,19 @@ bool TransformOp::attemptInsertion(Funcdata *fd)
   return true;		// Already inserted
 }
 
+/// Prepare to build the transformed INDIRECT PcodeOp based on settings from the given INDIRECT.
+/// \param indOp is the given INDIRECT
+void TransformOp::inheritIndirect(PcodeOp *indOp)
+
+{
+  if (indOp->isIndirectCreation()) {
+    if (indOp->getIn(0)->isIndirectZero())
+      special |= TransformOp::indirect_creation;
+    else
+      special |= TransformOp::indirect_creation_possible_out;
+  }
+}
+
 void LanedRegister::LanedIterator::normalize(void)
 
 {

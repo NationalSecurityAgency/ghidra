@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -32,7 +33,8 @@ import ghidra.trace.model.guest.*;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -141,7 +143,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		}
 	};
 
-	public DBTracePlatformManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTracePlatformManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, CompilerSpec baseCompilerSpec, DBTrace trace)
 			throws VersionException, IOException {
 		this.dbh = dbh;

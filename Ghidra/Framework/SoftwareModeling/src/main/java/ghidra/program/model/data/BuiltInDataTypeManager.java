@@ -67,6 +67,7 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	private BuiltInDataTypeManager() {
 		super(BUILT_IN_DATA_TYPES_NAME);
 		initialize();
+		setImmutable();
 	}
 
 	@Override

@@ -225,4 +225,9 @@ public interface CodeViewerService {
 	 * @param listener the listener to be notified;
 	 */
 	public void removeListingDisplayListener(AddressSetDisplayListener listener);
+
+	/**
+	 * Request that the main connected Listing view gets focus
+	 */
+	public void requestFocus();
 }

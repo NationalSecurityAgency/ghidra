@@ -184,8 +184,8 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		int numRows = table.getRowCount();
 		selectRow(table, numRows - 2);
 
-		performAction("Editor: Duplicate Multiple of Component", "DataTypeManagerPlugin",
-			structureEditor, false);
+		performAction("Duplicate Multiple of Component", "DataTypeManagerPlugin", structureEditor,
+			false);
 		waitForSwing();
 
 		captureDialog();
@@ -209,7 +209,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		int numRows = table.getRowCount();
 		selectRow(table, numRows - 2);
 
-		performAction("Editor: Create Array", "DataTypeManagerPlugin", structureEditor, false);
+		performAction("Create Array", "DataTypeManagerPlugin", structureEditor, false);
 		waitForSwing();
 
 		captureDialog();
@@ -267,7 +267,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		JTable table = editorPanel.getTable();
 		selectRow(table, 4); // select byte:3 bitfield
 
-		performAction("Editor: Edit Bitfield", "DataTypeManagerPlugin", structureEditor, false);
+		performAction("Edit Bitfield", "DataTypeManagerPlugin", structureEditor, false);
 		waitForSwing();
 
 		captureDialog();

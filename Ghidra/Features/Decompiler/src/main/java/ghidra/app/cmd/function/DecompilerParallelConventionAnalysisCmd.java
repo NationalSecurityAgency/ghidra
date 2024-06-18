@@ -59,7 +59,12 @@ public class DecompilerParallelConventionAnalysisCmd extends BackgroundCommand<P
 		newInterface.setOptions(opts);
 
 		if (!newInterface.openProgram(program)) {
-			throw new IOException("Unable to create decompiler for program: " + program);
+			String msg = "Unable to create decompiler for program: " + program;
+			String lastMessage = newInterface.getLastMessage();
+			if (lastMessage != null) {
+				msg += "\n" + lastMessage;
+			}
+			throw new IOException(msg);
 		}
 
 		return newInterface;

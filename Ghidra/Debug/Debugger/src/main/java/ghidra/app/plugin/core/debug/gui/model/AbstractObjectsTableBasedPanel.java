@@ -26,26 +26,25 @@ import javax.swing.event.ListSelectionListener;
 
 import docking.ComponentProvider;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.services.DebuggerListingService;
+import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectInterface;
+import ghidra.trace.model.target.*;
 
 public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterface>
-		extends ObjectsTablePanel implements ListSelectionListener, CellActivationListener {
+		extends ObjectsTablePanel
+		implements ListSelectionListener, CellActivationListener, ObjectDefaultActionsMixin {
 
 	private final ComponentProvider provider;
 	private final Class<U> objType;
 
+	@AutoServiceConsumed
+	protected DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	protected DebuggerListingService listingService;
 	@SuppressWarnings("unused")
@@ -120,23 +119,32 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 
 	@Override
 	public void cellActivated(JTable table) {
-		if (listingService == null) {
+		if (performElementCellDefaultAction(table)) {
 			return;
 		}
-		int row = table.getSelectedRow();
-		int col = table.getSelectedColumn();
-		Object value = table.getValueAt(row, col);
-		if (!(value instanceof ValueProperty<?> property)) {
+		performValueRowDefaultAction(getSelectedItem());
+	}
+
+	@Override
+	public DebuggerCoordinates getCurrent() {
+		return current;
+	}
+
+	@Override
+	public PluginTool getTool() {
+		return plugin.getTool();
+	}
+
+	@Override
+	public void activatePath(TraceObjectKeyPath path) {
+		if (current.getTrace() == null) {
 			return;
 		}
-		Object propVal = property.getValue();
-		if (propVal instanceof Address address) {
-			listingService.goTo(address, true);
+		try {
+			traceManager.activate(current.pathNonCanonical(path));
 		}
-		else if (propVal instanceof AddressRange range) {
-			listingService.setCurrentSelection(
-				new ProgramSelection(range.getMinAddress(), range.getMaxAddress()));
-			listingService.goTo(range.getMinAddress(), true);
+		catch (IllegalArgumentException e) {
+			plugin.getTool().setStatusInfo(e.getMessage(), true);
 		}
 	}
 }

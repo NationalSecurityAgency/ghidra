@@ -261,11 +261,6 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public void invalidate() {
-		view.invalidate();
-	}
-
-	@Override
 	public Register getRegister(String name) {
 		return view.getRegister(name);
 	}
@@ -685,7 +680,7 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public TraceProgramView getViewRegisters(TraceThread thread, boolean createIfAbsent) {
-		return view.getViewRegisters(thread, createIfAbsent);
+	public TraceProgramView getViewRegisters(TraceThread t, boolean createIfAbsent) {
+		return view.getViewRegisters(t, createIfAbsent);
 	}
 }

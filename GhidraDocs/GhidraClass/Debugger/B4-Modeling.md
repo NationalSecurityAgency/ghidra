@@ -95,12 +95,12 @@ A user would place a breakpoint at either the call site or the call target, have
 
 ### Modeling by Sleigh Semantics
 
-The advantage to Java callbacks is that things are relatively intuitive to do, but the temptation, which we intentionally demonstrate here, is to make everything concrete.
+The advantage to Java callbacks is that things are relatively intuitive to do, but the temptation, which we intentionally demonstrated above, is to make everything concrete.
 You may notice the library uses a type parameter `T`, which specifies the type of all variables in the emulator's state.
 Leaving it as `T` indicates the library is compatible with any type.
-For a concrete emulator, `T = byte[]`, and so there is no loss in making things concrete, and then converting back to `T` using the arithmetic object.
+For a concrete emulator, `T := byte[]`, and so there is no loss in making things concrete, and then converting back to `T` using the `arithmetic` object.
 However, if the emulator has been augmented, as we will discuss below, the model may become confused, because values computed by a careless userop will appear to the model a literal constant.
-To avoid this, you should keep everything a T and use the arithmetic object to perform any arithmetic operations.
+To avoid this, you should keep everything a T and use the `arithmetic` object to perform any arithmetic operations.
 Alternatively, you can implement the userop using pre-compiled Sleigh code:
 
 ```java {.numberLines}
@@ -165,9 +165,9 @@ We could just use them directly in the source, but this demonstrates the ability
 We then lazily compile each userop upon its first invocation.
 These are technically still Java callbacks, but our implementation delegates to the executor, giving it the compiled p-code program.
 
-The advantage here is that the code will properly use the underlying arithmetic appropriately.
+The advantage here is that the p-code will use the underlying arithmetic appropriately.
 However, for some models, that may actually not be desired.
-Some symbolic models might just like to see a literal call to `strlen()`.
+Some symbolic models might just like to see an abstract call to `strlen()`.
 
 ### Modeling by Structured Sleigh
 
@@ -276,7 +276,7 @@ The emulation *is not* implicitly associated with the program!
 You must copy the program image into its state, and you should choose a different location for the injection.
 Refer to the example scripts in Ghidra's `SystemEmulation` module.
 
-If you would like to (temporarily) override the GUI with a custom userop library, you can by overriding the GUI's emulator factory:
+If you would like to (temporarily) override the GUI with a custom userop library, you can by setting the GUI's emulator factory:
 
 ```java {.numberLines}
 public class InstallCustomLibraryScript extends GhidraScript implements FlatDebuggerAPI {
@@ -517,7 +517,7 @@ The composition of states with the same addressing model is common enough that G
 The relevant interface is `PcodeExecutorStatePiece`, which is the one we actually implement, by extending from `AbstractLongOffsetPcodeExecutorStatePiece`.
 
 **NOTE**: If you do not desire a concrete address model, then you should implement `PcodeExecutorState<Expr>` directly.
-A "state" is also "state piece" whose address model is the same as its value model, so states can still be composed.
+A "state" is also a "state piece" whose address model is the same as its value model, so states can still be composed.
 On one hand, the abstractly-addressed state provides a component that is readily used in both static and dynamic analysis; whereas, the concretely-addressed piece is suited only for dynamic analysis.
 On the other hand, you may have some difficulty correlating concrete and abstract pieces during dynamic analysis when aliasing and indirection is involved.
 
@@ -548,10 +548,14 @@ public static class ExprSpace {
 		map.put(offset, val);
 	}
 
+	protected Expr whenNull(long offset, int size) {
+		return new VarExpr(space, offset, size);
+	}
+
 	public Expr get(long offset, int size) {
 		// TODO: Handle overlaps / offcut gets and sets
 		Expr expr = map.get(offset);
-		return expr != null ? expr : new VarExpr(space, offset, size);
+		return expr != null ? expr : whenNull(offset, size);
 	}
 }
 
@@ -634,6 +638,7 @@ Notably, we have neglected the possibility that writes overlap or that reads are
 This may not seem like a huge problem, but it is actually quite common, esp., since x86 registers are structured.
 A write to `RAX` followed by a read from `EAX` will immediately demonstrate this issue.
 Nevertheless, we leave those details as an exercise.
+We factor `whenNull` so that it can be overridden later.
 
 The remaining parts are mostly boilerplate.
 We implement the "state piece" interface by creating another abstract class.
@@ -760,7 +765,7 @@ public class ModelingScript extends GhidraScript {
 ```
 
 **NOTE**: When accessed as a paired state, all sets will affect both pieces.
-If you use the arithmetic to generate them, remember that it will use `fromConst` on both arithmetics to generate the pair, so you may be setting the right side to a `LitExpr`.
+If you use the arithmetic to generate them, remember that it will use `fromConst` on both sub-arithmetics to generate the pair, so you may be setting the right side to a `LitExpr`.
 To modify just one side of the pair, cast the state to `PairedPcodeExecutorState`, and then use `getLeft()`, and `getRight()` to retrieve the separate pieces.
 
 ## Use in Static Analysis
@@ -820,7 +825,7 @@ public static class ExprTraceSpace extends ExprSpace {
 public static class ExprTracePcodeExecutorStatePiece
 		extends AbstractExprPcodeExecutorStatePiece<ExprTraceSpace>
 		implements TracePcodeExecutorStatePiece<byte[], Expr> {
-	public static final String NAME = "Taint";
+	public static final String NAME = "Expr";
 
 	protected final PcodeTraceDataAccess data;
 	protected final PcodeTracePropertyAccess<String> property;
@@ -865,6 +870,14 @@ public static class ExprTracePcodeExecutorStatePiece
 		}
 	}
 }
+
+public static class ExprTracePcodeExecutorState
+		extends PairedTracePcodeExecutorState<byte[], Expr> {
+	public ExprTracePcodeExecutorState(TracePcodeExecutorStatePiece<byte[], byte[]> concrete) {
+		super(new PairedTracePcodeExecutorStatePiece<>(concrete,
+			new ExprTracePcodeExecutorStatePiece(concrete.getData())));
+	}
+}
 ```
 
 Because we do not need any additional logic for target integration, we do not need to extend the state pieces any further.
@@ -873,6 +886,77 @@ We have left the serialization as an exercise, though.
 Last, we implement the full parts factory and use it to construct and install a full `Expr`-augmented emulator factory:
 
 ```java {.numberLines}
+public enum BytesExprDebuggerEmulatorPartsFactory
+	implements AuxDebuggerEmulatorPartsFactory<Expr> {
+	INSTANCE;
+
+	@Override
+	public PcodeArithmetic<Expr> getArithmetic(Language language) {
+		return ExprPcodeArithmetic.forLanguage(language);
+	}
+
+	@Override
+	public PcodeUseropLibrary<Pair<byte[], Expr>> createSharedUseropLibrary(
+			AuxPcodeEmulator<Expr> emulator) {
+		return PcodeUseropLibrary.nil();
+	}
+
+	@Override
+	public PcodeUseropLibrary<Pair<byte[], Expr>> createLocalUseropStub(
+			AuxPcodeEmulator<Expr> emulator) {
+		return PcodeUseropLibrary.nil();
+	}
+
+	@Override
+	public PcodeUseropLibrary<Pair<byte[], Expr>> createLocalUseropLibrary(
+			AuxPcodeEmulator<Expr> emulator, PcodeThread<Pair<byte[], Expr>> thread) {
+		return PcodeUseropLibrary.nil();
+	}
+
+	@Override
+	public PcodeExecutorState<Pair<byte[], Expr>> createSharedState(
+			AuxPcodeEmulator<Expr> emulator, BytesPcodeExecutorStatePiece concrete) {
+		return new BytesExprPcodeExecutorState(concrete);
+	}
+
+	@Override
+	public PcodeExecutorState<Pair<byte[], Expr>> createLocalState(
+			AuxPcodeEmulator<Expr> emulator, PcodeThread<Pair<byte[], Expr>> thread,
+			BytesPcodeExecutorStatePiece concrete) {
+		return new BytesExprPcodeExecutorState(concrete);
+	}
+
+	@Override
+	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createTraceSharedState(
+			AuxTracePcodeEmulator<ModelingScript.Expr> emulator,
+			BytesTracePcodeExecutorStatePiece concrete) {
+		return new ExprTracePcodeExecutorState(concrete);
+	}
+
+	@Override
+	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createTraceLocalState(
+			AuxTracePcodeEmulator<ModelingScript.Expr> emulator,
+			PcodeThread<Pair<byte[], ModelingScript.Expr>> thread,
+			BytesTracePcodeExecutorStatePiece concrete) {
+		return new ExprTracePcodeExecutorState(concrete);
+	}
+
+	@Override
+	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createDebuggerSharedState(
+			AuxDebuggerPcodeEmulator<ModelingScript.Expr> emulator,
+			RWTargetMemoryPcodeExecutorStatePiece concrete) {
+		return new ExprTracePcodeExecutorState(concrete);
+	}
+
+	@Override
+	public TracePcodeExecutorState<Pair<byte[], ModelingScript.Expr>> createDebuggerLocalState(
+			AuxDebuggerPcodeEmulator<ModelingScript.Expr> emulator,
+			PcodeThread<Pair<byte[], ModelingScript.Expr>> thread,
+			RWTargetRegistersPcodeExecutorStatePiece concrete) {
+		return new ExprTracePcodeExecutorState(concrete);
+	}
+}
+
 public static class BytesExprDebuggerPcodeEmulator extends AuxDebuggerPcodeEmulator<Expr> {
 	public BytesExprDebuggerPcodeEmulator(PcodeDebuggerAccess access) {
 		super(access);
@@ -885,7 +969,7 @@ public static class BytesExprDebuggerPcodeEmulator extends AuxDebuggerPcodeEmula
 }
 
 public static class BytesExprDebuggerPcodeEmulatorFactory
-		implements DebuggerPcodeEmulatorFactory {
+		extends AbstractDebuggerPcodeEmulatorFactory {
 
 	@Override
 	public String getTitle() {

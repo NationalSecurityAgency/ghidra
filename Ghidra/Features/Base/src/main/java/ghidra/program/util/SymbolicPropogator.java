@@ -1744,7 +1744,9 @@ public class SymbolicPropogator {
 		con.refAddr = con.callAddr;
 		con.inputlist = inputs;
 		con.output = new ArrayList<Varnode>();
-		con.output.add(out);
+		if (out != null) {
+			con.output.add(out);
+		}
 		try {
 			return payload.getPcode(prog, con);
 		}

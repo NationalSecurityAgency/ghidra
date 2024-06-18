@@ -34,7 +34,7 @@ public class SelectionAction extends SymbolTreeContextAction {
 	public SelectionAction(Plugin plugin) {
 		super("Make Selection", plugin.getName());
 		this.plugin = plugin;
-		setPopupMenuData(new MenuData(new String[] { "Make Selection" }, "0Middle"));
+		setPopupMenuData(new MenuData(new String[] { "Make Selection" }, MIDDLE_MENU_GROUP));
 	}
 
 	@Override

@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import db.*;
+import db.DBHandle;
+import db.Transaction;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ManagerDB;
@@ -48,7 +50,7 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	 * Constructor
 	 * @param handle open database  handle
 	 * @param addrMap the address map
-	 * @param openMode the program open mode (see {@link DBConstants})
+	 * @param openMode the program open mode
 	 * @param errHandler the database io error handler
 	 * @param lock the program synchronization lock
 	 * @param monitor the progress monitor
@@ -56,11 +58,11 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database IO error occurs.
 	 */
-	public ProgramDataTypeManager(DBHandle handle, AddressMap addrMap, int openMode,
+	public ProgramDataTypeManager(DBHandle handle, AddressMap addrMap, OpenMode openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
 		super(handle, addrMap, openMode, null, errHandler, lock, monitor);
-		upgrade = (openMode == DBConstants.UPGRADE);
+		upgrade = (openMode == OpenMode.UPGRADE);
 	}
 
 	/**
@@ -119,9 +121,9 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			doSourceArchiveUpdates(monitor);
 			migrateOldFlexArrayComponentsIfRequired(monitor);
 		}
@@ -171,6 +173,15 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 		super.dataTypeChanged(dt, isAutoChange);
 		if (!isCreatingDataType()) {
 			program.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_CHANGED, isAutoChange, null,
+				dt);
+		}
+	}
+
+	@Override
+	public void dataTypeSettingsChanged(DataType dt) {
+		super.dataTypeSettingsChanged(dt);
+		if (!isCreatingDataType()) {
+			program.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_SETTING_CHANGED, false, null,
 				dt);
 		}
 	}

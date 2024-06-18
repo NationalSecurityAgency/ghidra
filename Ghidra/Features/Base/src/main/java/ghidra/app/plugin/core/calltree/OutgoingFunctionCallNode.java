@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +19,15 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class OutgoingFunctionCallNode extends OutgoingCallNode {
 
 	OutgoingFunctionCallNode(Program program, Function function, Address sourceAddress,
-			boolean filterDuplicates, AtomicInteger filterDepth) {
-		super(program, function, sourceAddress, CallTreePlugin.FUNCTION_ICON, filterDuplicates,
-			filterDepth);
+			CallTreeOptions callTreeOptions) {
+		super(program, function, sourceAddress, CallTreePlugin.FUNCTION_ICON, callTreeOptions);
 	}
 
 	@Override
 	CallNode recreate() {
-		return new OutgoingFunctionCallNode(program, function, getSourceAddress(),
-			filterDuplicates, filterDepth);
+		return new OutgoingFunctionCallNode(program, function, getSourceAddress(), callTreeOptions);
 	}
 }

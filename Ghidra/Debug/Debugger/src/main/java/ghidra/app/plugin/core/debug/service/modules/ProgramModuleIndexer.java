@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import ghidra.app.plugin.core.debug.utils.DomainFolderChangeAdapter;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -33,7 +32,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.trace.model.modules.TraceModule;
 
 // TODO: Consider making this a front-end plugin?
-public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
+public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	public static final String MODULE_PATHS_PROPERTY = "Module Paths";
 	private static final Gson JSON = new Gson();
 
@@ -289,11 +288,6 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 	}
 
 	@Override
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		refreshIndex(file);
-	}
-
-	@Override
 	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
 		if (disposed) {
 			return;
@@ -416,7 +410,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 				continue;
 			}
 			try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(df)) {
-				if (programs.contains(peek.object)) {
+				if (peek.object != null && programs.contains(peek.object)) {
 					result.add(e);
 				}
 			}

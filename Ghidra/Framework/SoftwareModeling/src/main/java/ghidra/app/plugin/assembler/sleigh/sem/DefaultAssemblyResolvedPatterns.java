@@ -62,10 +62,6 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 	protected final Set<AssemblyResolvedBackfill> backfills;
 	protected final Set<AssemblyResolvedPatterns> forbids;
 
-	/**
-	 * @see AssemblyResolution#resolved(AssemblyPatternBlock, AssemblyPatternBlock, String,
-	 *      Constructor, List, AssemblyResolution)
-	 */
 	protected DefaultAssemblyResolvedPatterns(AbstractAssemblyResolutionFactory<?, ?> factory,
 			String description, Constructor cons, List<? extends AssemblyResolution> children,
 			AssemblyResolution right, AssemblyPatternBlock ins, AssemblyPatternBlock ctx,

@@ -49,6 +49,7 @@ ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",170);
 ElementId ELEM_RETPARAM = ElementId("retparam",171);
 ElementId ELEM_RETURNSYM = ElementId("returnsym",172);
 ElementId ELEM_UNAFFECTED = ElementId("unaffected",173);
+ElementId ELEM_INTERNAL_STORAGE = ElementId("internal_storage",286);
 
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///
@@ -67,6 +68,24 @@ const ParamEntry *ParamEntry::findEntryByStorage(const list<ParamEntry> &entryLi
     }
   }
   return (const ParamEntry *)0;
+}
+
+/// Check previous ParamEntry, if it exists, and compare storage class.
+/// If it is different, this is the first, and its flag gets set.
+/// \param curList is the list of previous ParamEntry
+void ParamEntry::resolveFirst(list<ParamEntry> &curList)
+
+{
+  list<ParamEntry>::const_iterator iter = curList.end();
+  --iter;
+  if (iter == curList.begin()) {
+    flags |= first_storage;
+    return;
+  }
+  --iter;
+  if (type != (*iter).type) {
+    flags |= first_storage;
+  }
 }
 
 /// If the ParamEntry is initialized with a \e join address, cache the join record and
@@ -536,6 +555,7 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
   }
   if (grouped)
     flags |= is_grouped;
+  resolveFirst(curList);
   resolveJoin(curList);
   resolveOverlap(curList);
 }
@@ -583,11 +603,44 @@ ParamListStandard::~ParamListStandard(void)
   }
 }
 
+/// The entry must have a unique group.
+/// If no matching entry is found, the \b end iterator is returned.
+/// \param type is the storage class
+/// \return the first matching iterator
+list<ParamEntry>::const_iterator ParamListStandard::getFirstIter(type_class type) const
+
+{
+  list<ParamEntry>::const_iterator iter;
+  for(iter=entry.begin();iter!=entry.end();++iter) {
+    const ParamEntry &curEntry( *iter );
+    if (curEntry.getType() == type && curEntry.getAllGroups().size() == 1)
+      return iter;
+  }
+  return iter;
+}
+
+/// If the stack entry is not present, null is returned
+/// \return the stack entry or null
+const ParamEntry *ParamListStandard::getStackEntry(void) const
+
+{
+  list<ParamEntry>::const_iterator iter = entry.end();
+  if (iter != entry.begin()) {
+    --iter;		// Stack entry necessarily must be the last entry
+    const ParamEntry &curEntry( *iter );
+    if (!curEntry.isExclusion() && curEntry.getSpace()->getType() == IPTR_SPACEBASE) {
+      return &(*iter);
+    }
+  }
+  return (const ParamEntry *)0;
+}
+
 /// Find the (first) entry containing the given memory range
 /// \param loc is the starting address of the range
 /// \param size is the number of bytes in the range
+/// \param just is \b true if the search enforces a justified match
 /// \return the pointer to the matching ParamEntry or null if no match exists
-const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size) const
+const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size,bool just) const
 
 {
   int4 index = loc.getSpace()->getIndex();
@@ -602,7 +655,7 @@ const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size) con
     const ParamEntry *testEntry = (*res.first).getParamEntry();
     ++res.first;
     if (testEntry->getMinSize() > size) continue;
-    if (testEntry->justifiedContain(loc,size)==0)	// Make sure the range is properly justified in entry
+    if (!just || testEntry->justifiedContain(loc,size)==0)	// Make sure the range is properly justified in entry
       return testEntry;
   }
   return (const ParamEntry *)0;
@@ -779,7 +832,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
-    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize());
+    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize(),true);
     // Note: if a trial is "definitely not used" but there is a matching entry,
     // we still include it in the map
     if (entrySlot == (const ParamEntry *)0)
@@ -1241,9 +1294,9 @@ void ParamListStandard::fillinMap(ParamActive *active) const
 bool ParamListStandard::checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const
 
 {
-  const ParamEntry *entryHi = findEntry(hiaddr,hisize);
+  const ParamEntry *entryHi = findEntry(hiaddr,hisize,true);
   if (entryHi == (const ParamEntry *)0) return false;
-  const ParamEntry *entryLo = findEntry(loaddr,losize);
+  const ParamEntry *entryLo = findEntry(loaddr,losize,true);
   if (entryLo == (const ParamEntry *)0) return false;
   if (entryHi->getGroup() == entryLo->getGroup()) {
     if (entryHi->isExclusion()||entryLo->isExclusion()) return false;
@@ -1270,9 +1323,9 @@ bool ParamListStandard::checkSplit(const Address &loc,int4 size,int4 splitpoint)
 {
   Address loc2 = loc + splitpoint;
   int4 size2 = size - splitpoint;
-  const ParamEntry *entryNum = findEntry(loc,splitpoint);
+  const ParamEntry *entryNum = findEntry(loc,splitpoint,true);
   if (entryNum == (const ParamEntry *)0) return false;
-  entryNum = findEntry(loc2,size2);
+  entryNum = findEntry(loc2,size2,true);
   if (entryNum == (const ParamEntry *)0) return false;
   return true;
 }
@@ -1280,13 +1333,13 @@ bool ParamListStandard::checkSplit(const Address &loc,int4 size,int4 splitpoint)
 bool ParamListStandard::possibleParam(const Address &loc,int4 size) const
 
 {
-  return ((const ParamEntry *)0 != findEntry(loc,size));
+  return ((const ParamEntry *)0 != findEntry(loc,size,true));
 }
 
 bool ParamListStandard::possibleParamWithSlot(const Address &loc,int4 size,int4 &slot,int4 &slotsize) const
 
 {
-  const ParamEntry *entryNum = findEntry(loc,size);
+  const ParamEntry *entryNum = findEntry(loc,size,true);
   if (entryNum == (const ParamEntry *)0) return false;
   slot = entryNum->getSlot(loc,0);
   if (entryNum->isExclusion()) {
@@ -1473,7 +1526,7 @@ void ParamListRegister::fillinMap(ParamActive *active) const
   // Mark anything active as used
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
-    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize());
+    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize(),true);
     if (entrySlot == (const ParamEntry *)0)	// There may be no matching entry (if the model was recovered late)
       paramtrial.markNoUse();
     else {
@@ -1535,10 +1588,31 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
   }
 }
 
-void ParamListStandardOut::fillinMap(ParamActive *active) const
+void ParamListStandardOut::initialize(void)
 
 {
-  if (active->getNumTrials() == 0) return; // No trials to check
+  useFillinFallback = true;
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).canAffectFillinOutput()) {
+      useFillinFallback = false;
+      break;
+    }
+  }
+}
+
+/// \brief Find the return value storage using the older \e fallback method
+///
+/// Given the active set of trial locations that might hold (pieces of) the return value, calculate
+/// the best matching ParamEntry from \b this ParamList and mark all the trials that are contained
+/// in the ParamEntry as \e used.  If \b firstOnly is \b true, the ParamList is assumed to contain
+/// partial storage locations that might get used for return values split storage.  In this case,
+/// only the first ParamEntry in a storage class is allowed to match.
+/// \param active is the set of active trials
+/// \param firstOnly is \b true if only the first entry in a storage class can match
+void ParamListStandardOut::fillinMapFallback(ParamActive *active,bool firstOnly) const
+
+{
   const ParamEntry *bestentry = (const ParamEntry *)0;
   int4 bestcover = 0;
   type_class bestclass = TYPECLASS_PTR;
@@ -1547,6 +1621,9 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   list<ParamEntry>::const_iterator iter;
   for(iter=entry.begin();iter!=entry.end();++iter) {
     const ParamEntry *curentry = &(*iter);
+    if (firstOnly && !curentry->isFirstInClass() && curentry->isExclusion() && curentry->getAllGroups().size() == 1) {
+      continue;	// This is not the first entry in the storage class
+    }
     bool putativematch = false;
     for(int4 j=0;j<active->getNumTrials();++j) { // Evaluate all trials in terms of current ParamEntry
       ParamTrial &paramtrial(active->getTrial(j));
@@ -1616,6 +1693,50 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   }
 }
 
+void ParamListStandardOut::fillinMap(ParamActive *active) const
+
+{
+  if (active->getNumTrials() == 0) return; // No trials to check
+  if (useFillinFallback) {
+    fillinMapFallback(active,false);
+    return;
+  }
+  for(int4 i=0;i<active->getNumTrials();++i) {
+    ParamTrial &trial(active->getTrial(i));
+    trial.setEntry((const ParamEntry *)0, 0);
+    if (!trial.isActive()) continue;
+    const ParamEntry *entry = findEntry(trial.getAddress(),trial.getSize(),false);
+    if (entry == (const ParamEntry *)0) {
+      trial.markNoUse();
+      continue;
+    }
+    int4 res = entry->justifiedContain(trial.getAddress(),trial.getSize());
+    if ((trial.isRemFormed() || trial.isIndCreateFormed()) && !entry->isFirstInClass()) {
+      trial.markNoUse();
+      continue;
+    }
+    trial.setEntry(entry,res);
+  }
+  active->sortTrials();
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).fillinOutputMap(active)) {
+      for(int4 i=0;i<active->getNumTrials();++i) {
+	ParamTrial &trial(active->getTrial(i));
+	if (trial.isActive()) {
+	  trial.markUsed();
+	}
+	else {
+	  trial.markNoUse();
+	  trial.setEntry((const ParamEntry *)0,0);
+	}
+      }
+      return;
+    }
+  }
+  fillinMapFallback(active, true);
+}
+
 bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
 
 {
@@ -1625,6 +1746,13 @@ bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
       return true;
   }
   return false;
+}
+
+void ParamListStandardOut::decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)
+
+{
+  ParamListStandard::decode(decoder,effectlist,normalstack);
+  initialize();
 }
 
 ParamList *ParamListStandardOut::clone(void) const
@@ -2197,6 +2325,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
+  internalstorage = op2.internalstorage;
 
   injectUponEntry = op2.injectUponEntry;
   injectUponReturn = op2.injectUponReturn;
@@ -2388,6 +2517,7 @@ void ProtoModel::decode(Decoder &decoder)
   injectUponEntry = -1;
   injectUponReturn = -1;
   likelytrash.clear();
+  internalstorage.clear();
   uint4 elemId = decoder.openElement(ELEM_PROTOTYPE);
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -2485,6 +2615,14 @@ void ProtoModel::decode(Decoder &decoder)
       }
       decoder.closeElement(subId);
     }
+    else if (subId == ELEM_INTERNAL_STORAGE) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
+	internalstorage.emplace_back();
+	internalstorage.back().decode(decoder);
+      }
+      decoder.closeElement(subId);
+    }
     else if (subId == ELEM_PCODE) {
       int4 injectId = glb->pcodeinjectlib->decodeInject("Protomodel : "+name, name,
 							InjectPayload::CALLMECHANISM_TYPE,decoder);
@@ -2504,6 +2642,7 @@ void ProtoModel::decode(Decoder &decoder)
   }
   sort(effectlist.begin(),effectlist.end(),EffectRecord::compareByAddress);
   sort(likelytrash.begin(),likelytrash.end());
+  sort(internalstorage.begin(),internalstorage.end());
   if (!sawlocalrange)
     defaultLocalRange();
   if (!sawparamrange)
@@ -2613,19 +2752,20 @@ void ProtoModelMerged::intersectEffects(const vector<EffectRecord> &efflist)
   effectlist.swap(newlist);
 }
 
-/// The \e likely-trash locations are intersected. Anything in \b this that is not also in the
-/// given \e likely-trash list is removed.
-/// \param trashlist is the given \e likely-trash list
-void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist)
+/// The intersection of two containers of register Varnodes is calculated, and the result is
+/// placed in the first container, replacing the original contents.  The containers must already be sorted.
+/// \param regList1 is the first container
+/// \param regList2 is the second container
+void ProtoModelMerged::intersectRegisters(vector<VarnodeData> &regList1,const vector<VarnodeData> &regList2)
 
 {
   vector<VarnodeData> newlist;
 
   int4 i=0;
   int4 j=0;
-  while((i<likelytrash.size())&&(j<trashlist.size())) {
-    const VarnodeData &trs1( likelytrash[i] );
-    const VarnodeData &trs2( trashlist[j] );
+  while((i<regList1.size())&&(j<regList2.size())) {
+    const VarnodeData &trs1( regList1[i] );
+    const VarnodeData &trs2( regList2[j] );
 
     if (trs1 < trs2)
       i += 1;
@@ -2637,7 +2777,7 @@ void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist
       j += 1;
     }
   }
-  likelytrash = newlist;
+  regList1.swap(newlist);
 }
 
 /// \param model is the new prototype model to add to the merge
@@ -2668,7 +2808,8 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
     if ((injectUponEntry != model->injectUponEntry)||(injectUponReturn != model->injectUponReturn))
       throw LowlevelError("Cannot merge prototype models with different inject ids");
     intersectEffects(model->effectlist);
-    intersectLikelyTrash(model->likelytrash);
+    intersectRegisters(likelytrash,model->likelytrash);
+    intersectRegisters(internalstorage,model->internalstorage);
     // Take the union of the localrange and paramrange
     set<Range>::const_iterator iter;
     for(iter=model->localrange.begin();iter!=model->localrange.end();++iter)
@@ -3615,6 +3756,8 @@ void FuncProto::setModel(ProtoModel *m)
       flags |= has_thisptr;
     if (m->isConstructor())
       flags |= is_constructor;
+    if (m->isAutoKillByCall())
+      flags |= auto_killbycall;
     model = m;
   }
   else {
@@ -4389,6 +4532,19 @@ void FuncProto::printRaw(const string &funcname,ostream &s) const
   s << ") extrapop=" << dec << extrapop;
 }
 
+/// This assumes the storage location has already been determined to be contained
+/// in standard return value location.
+/// \return \b true if the location should be considered killed by call
+bool FuncProto::isAutoKillByCall(void) const
+
+{
+  if ((flags & auto_killbycall)!=0)
+    return true;		// The ProtoModel always does killbycall
+  if (isOutputLocked())
+    return true;		// A locked output location is killbycall by definition
+  return false;
+}
+
 /// \brief Encode \b this to a stream as a \<prototype> element.
 ///
 /// Save everything under the control of this prototype, which
@@ -4828,38 +4984,37 @@ int4 FuncCallSpecs::transferLockedInputParam(ProtoParameter *param)
   return 0;
 }
 
-/// Return the p-code op whose output Varnode corresponds to the given parameter (return value)
+/// \brief Return any outputs of \b this CALL that contain or are contained by the given return value parameter
 ///
-/// The Varnode may be attached to the base CALL or CALLIND, but it also may be
-/// attached to an INDIRECT preceding the CALL. The output Varnode may not exactly match
-/// the dimensions of the given parameter. We return non-null if either:
+/// The output Varnodes may be attached to the base CALL or CALLIND, but also may be
+/// attached to an INDIRECT preceding the CALL. The output Varnodes may not exactly match
+/// the dimensions of the given parameter. We pass back a Varnode if either:
 ///    - The parameter contains the Varnode   (the easier case)  OR if
 ///    - The Varnode properly contains the parameter
 /// \param param is the given paramter (return value)
+/// \param newoutput will hold any overlapping output Varnodes
 /// \return the matching PcodeOp or NULL
-PcodeOp *FuncCallSpecs::transferLockedOutputParam(ProtoParameter *param)
+void FuncCallSpecs::transferLockedOutputParam(ProtoParameter *param,vector<Varnode *> &newoutput)
 
 {
   Varnode *vn = op->getOut();
   if (vn != (Varnode *)0) {
-    if (param->getAddress().justifiedContain(param->getSize(),vn->getAddr(),vn->getSize(),false)==0)
-      return op;
-    if (vn->getAddr().justifiedContain(vn->getSize(),param->getAddress(),param->getSize(),false)==0)
-      return op;
-    return (PcodeOp *)0;
+    if (param->getAddress().justifiedContain(param->getSize(),vn->getAddr(),vn->getSize(),false)>=0)
+      newoutput.push_back(vn);
+    else if (vn->getAddr().justifiedContain(vn->getSize(),param->getAddress(),param->getSize(),false)>=0)
+      newoutput.push_back(vn);
   }
   PcodeOp *indop = op->previousOp();
   while((indop!=(PcodeOp *)0)&&(indop->code()==CPUI_INDIRECT)) {
     if (indop->isIndirectCreation()) {
       vn = indop->getOut();
-      if (param->getAddress().justifiedContain(param->getSize(),vn->getAddr(),vn->getSize(),false)==0)
-	return indop;
-      if (vn->getAddr().justifiedContain(vn->getSize(),param->getAddress(),param->getSize(),false)==0)
-	return indop;
+      if (param->getAddress().justifiedContain(param->getSize(),vn->getAddr(),vn->getSize(),false)>=0)
+	newoutput.push_back(vn);
+      else if (vn->getAddr().justifiedContain(vn->getSize(),param->getAddress(),param->getSize(),false)>=0)
+	newoutput.push_back(vn);
     }
     indop = indop->previousOp();
   }
-  return (PcodeOp *)0;
 }
 
 /// \brief List and/or create a Varnode for each input parameter of matching a source prototype
@@ -4901,19 +5056,14 @@ bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput,const FuncPr
 /// \param newoutput will hold the passed back Varnode
 /// \param source is the source prototype
 /// \return \b true if the passed back value is accurate
-bool FuncCallSpecs::transferLockedOutput(Varnode *&newoutput,const FuncProto &source)
+bool FuncCallSpecs::transferLockedOutput(vector<Varnode *> &newoutput,const FuncProto &source)
 
 {
   ProtoParameter *param = source.getOutput();
   if (param->getType()->getMetatype() == TYPE_VOID) {
-    newoutput = (Varnode *)0;
     return true;
   }
-  PcodeOp *outop = transferLockedOutputParam(param);
-  if (outop == (PcodeOp *)0)
-    newoutput = (Varnode *)0;
-  else
-    newoutput = outop->getOut();
+  transferLockedOutputParam(param,newoutput);
   return true;
 }
 
@@ -4970,103 +5120,136 @@ void FuncCallSpecs::commitNewInputs(Funcdata &data,vector<Varnode *> &newinput)
 
 /// \brief Update output Varnode to \b this CALL to reflect the formal return value
 ///
-/// The current return value must be locked and is presumably out of date
-/// with the current CALL output. Unless the return value is \e void, the
-/// output Varnode must exist and must be provided.
-/// The Varnode is updated to reflect the return value,
-/// which may involve truncating or extending. Any active trials are updated,
-/// and the new Varnode is set as the CALL output.
+/// The current return value must be locked and is presumably out of date with the current CALL output.
+/// Unless the return value is \e void, the output Varnode must exist and must be provided.
+/// The Varnode is created/updated to reflect the return value and is set as the CALL output.
+/// Any other intersecting outputs are updated to be either truncations or extensions of this.
+/// Any active trials are updated,
 /// \param data is the calling function
-/// \param newout is the provided old output Varnode (or NULL)
-void FuncCallSpecs::commitNewOutputs(Funcdata &data,Varnode *newout)
+/// \param newout is the list of intersecting outputs
+void FuncCallSpecs::commitNewOutputs(Funcdata &data,vector<Varnode *> &newoutput)
 
 {
   if (!isOutputLocked()) return;
   activeoutput.clear();
 
-  if (newout != (Varnode *)0) {
+  if (!newoutput.empty()) {
     ProtoParameter *param = getOutput();
     // We could conceivably truncate the output to the correct size to match the parameter
     activeoutput.registerTrial(param->getAddress(),param->getSize());
-    PcodeOp *indop = newout->getDef();
-    if (newout->getSize() == 1 && param->getType()->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
+    if (param->getSize() == 1 && param->getType()->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
       data.opMarkCalculatedBool(op);
-    if (newout->getSize() == param->getSize()) {
-      if (indop != op) {
-	data.opUnsetOutput(indop);
-	data.opUnlink(indop);	// We know this is an indirect creation which is no longer used
+    Varnode *exactMatch = (Varnode *)0;
+    for(int4 i=0;i<newoutput.size();++i) {
+      if (newoutput[i]->getSize() == param->getSize()) {
+	exactMatch = newoutput[i];
+	break;
+      }
+    }
+    Varnode *realOut;
+    PcodeOp *indOp;
+    if (exactMatch != (Varnode *)0) {
+      // If we have a Varnode that exactly matches param, make sure it is the output of the CALL
+      indOp = exactMatch->getDef();
+      if (op != indOp) {
 	// If we reach here, we know -op- must have no output
-	data.opSetOutput(op,newout);
+	data.opSetOutput(op,exactMatch);
+	data.opUnlink(indOp);	// We know this is an indirect creation which is no longer used
       }
+      realOut = exactMatch;
     }
-    else if (newout->getSize() < param->getSize()) {
-      // We know newout is properly justified within param
-      if (indop != op) {
-	data.opUninsert(indop);
-	data.opSetOpcode(indop,CPUI_SUBPIECE);
-      }
-      else {
-	indop = data.newOp(2,op->getAddr());
-	data.opSetOpcode(indop,CPUI_SUBPIECE);
-	data.opSetOutput(indop,newout);	// Move -newout- from -op- to -indop-
-      }
-      Varnode *realout = data.newVarnodeOut(param->getSize(),param->getAddress(),op);
-      data.opSetInput(indop,realout,0);
-      data.opSetInput(indop,data.newConstant(4,0),1);
-      data.opInsertAfter(indop,op);
+    else {
+      // Otherwise, we create a Varnode matching param
+      data.opUnsetOutput(op);
+      realOut = data.newVarnodeOut(param->getSize(),param->getAddress(),op);
     }
-    else {			// param->getSize() < newout->getSize()
-      // We know param is justified contained in newout
-      VarnodeData vardata;
-      // Test whether the new prototype naturally extends its output
-      OpCode opc = assumedOutputExtension(param->getAddress(),param->getSize(),vardata);
-      Address hiaddr = newout->getAddr();
-      if (opc != CPUI_COPY) {
-	// If -newout- looks like a natural extension of the true output type, create the extension op
-	if (opc == CPUI_PIECE) {	// Extend based on the datatype
-	  if (param->getType()->getMetatype() == TYPE_INT)
-	    opc = CPUI_INT_SEXT;
-	  else
-	    opc = CPUI_INT_ZEXT;
-	}
-	if (indop != op) {
-	  data.opUninsert(indop);
-	  data.opRemoveInput(indop,1);
-	  data.opSetOpcode(indop,opc);
-	  Varnode *outvn = data.newVarnodeOut(param->getSize(),param->getAddress(),op);
-	  data.opSetInput(indop,outvn,0);
-	  data.opInsertAfter(indop,op);
+
+    for(int4 i=0;i<newoutput.size();++i) {
+      Varnode *oldOut = newoutput[i];
+      if (oldOut == exactMatch) continue;
+      indOp = oldOut->getDef();
+      if (indOp == op)
+	indOp = (PcodeOp *)0;
+      if (oldOut->getSize() < param->getSize()) {
+	if (indOp != (PcodeOp *)0) {
+	  data.opUninsert(indOp);
+	  data.opSetOpcode(indOp,CPUI_SUBPIECE);
 	}
 	else {
-	  PcodeOp *extop = data.newOp(1,op->getAddr());
-	  data.opSetOpcode(extop,opc);
-	  data.opSetOutput(extop,newout);	// Move newout from -op- to -extop-
-	  Varnode *outvn = data.newVarnodeOut(param->getSize(),param->getAddress(),op);
-	  data.opSetInput(extop,outvn,0);
-	  data.opInsertAfter(extop,op);
+	  indOp = data.newOp(2,op->getAddr());
+	  data.opSetOpcode(indOp,CPUI_SUBPIECE);
+	  data.opSetOutput(indOp,oldOut);	// Move oldOut from op to indOp
 	}
+	int4 overlap = oldOut->overlap(realOut->getAddr(),realOut->getSize());
+	data.opSetInput(indOp,realOut,0);
+	data.opSetInput(indOp,data.newConstant(4,(uintb)overlap),1);
+	data.opInsertAfter(indOp,op);
       }
-      else {	// If all else fails, concatenate in extra byte from something "indirectly created" by -op-
-	int4 hisz = newout->getSize() - param->getSize();
-	if (!newout->getAddr().getSpace()->isBigEndian())
-	  hiaddr = hiaddr + param->getSize();
-	PcodeOp *newindop = data.newIndirectCreation(op,hiaddr,hisz,true);
-	if (indop != op) {
-	  data.opUninsert(indop);
-	  data.opSetOpcode(indop,CPUI_PIECE);
-	  Varnode *outvn = data.newVarnodeOut(param->getSize(),param->getAddress(),op);
-	  data.opSetInput(indop,newindop->getOut(),0);
-	  data.opSetInput(indop,outvn,1);
-	  data.opInsertAfter(indop,op);
+      else if (param->getSize() < oldOut->getSize()) {
+	int4 overlap = oldOut->getAddr().justifiedContain(oldOut->getSize(), param->getAddress(), param->getSize(), false);
+	VarnodeData vardata;
+	// Test whether the new prototype naturally extends its output
+	OpCode opc = assumedOutputExtension(param->getAddress(),param->getSize(),vardata);
+	if (opc != CPUI_COPY && overlap == 0) {
+	  // If oldOut looks like a natural extension of the true output type, create the extension op
+	  if (opc == CPUI_PIECE) {	// Extend based on the data-type
+	    if (param->getType()->getMetatype() == TYPE_INT)
+	      opc = CPUI_INT_SEXT;
+	    else
+	      opc = CPUI_INT_ZEXT;
+	  }
+	  if (indOp != (PcodeOp *)0) {
+	    data.opUninsert(indOp);
+	    data.opRemoveInput(indOp,1);
+	    data.opSetOpcode(indOp,opc);
+	    data.opSetInput(indOp,realOut,0);
+	    data.opInsertAfter(indOp,op);
+	  }
+	  else {
+	    PcodeOp *extop = data.newOp(1,op->getAddr());
+	    data.opSetOpcode(extop,opc);
+	    data.opSetOutput(extop,oldOut);	// Move newout from -op- to -extop-
+	    data.opSetInput(extop,realOut,0);
+	    data.opInsertAfter(extop,op);
+	  }
 	}
-	else {
-	  PcodeOp *concatop = data.newOp(2,op->getAddr());
-	  data.opSetOpcode(concatop,CPUI_PIECE);
-	  data.opSetOutput(concatop,newout); // Move newout from -op- to -concatop-
-	  Varnode *outvn = data.newVarnodeOut(param->getSize(),param->getAddress(),op);
-	  data.opSetInput(concatop,newindop->getOut(),0);
-	  data.opSetInput(concatop,outvn,1);
-	  data.opInsertAfter(concatop,op);
+	else {	// If all else fails, concatenate in extra byte from something "indirectly created" by -op-
+	  if (indOp != (PcodeOp *)0) {
+	    data.opUnlink(indOp);
+	  }
+	  int4 mostSigSize = oldOut->getSize() - overlap - realOut->getSize();
+	  PcodeOp *lastOp = op;
+	  if (overlap != 0) {		// We need to append less significant bytes to realOut for this oldOut
+	    Address loAddr = oldOut->getAddr();
+	    if (loAddr.isBigEndian())
+	      loAddr = loAddr + (oldOut->getSize() - overlap);
+	    PcodeOp *newIndOp = data.newIndirectCreation(op,loAddr,overlap,true);
+	    PcodeOp *concatOp = data.newOp(2,op->getAddr());
+	    data.opSetOpcode(concatOp,CPUI_PIECE);
+	    data.opSetInput(concatOp,realOut,0); // Most significant part
+	    data.opSetInput(concatOp,newIndOp->getOut(),1); // Least sig
+	    data.opInsertAfter(concatOp,op);
+	    if (mostSigSize != 0) {
+	      if (loAddr.isBigEndian())
+		data.newVarnodeOut(overlap+realOut->getSize(),realOut->getAddr(),concatOp);
+	      else
+		data.newVarnodeOut(overlap+realOut->getSize(),loAddr,concatOp);
+	    }
+	    lastOp = concatOp;
+	  }
+	  if (mostSigSize != 0) {	// We need to append more significant bytes to realOut for this oldOut
+	    Address hiAddr = oldOut->getAddr();
+	    if (!hiAddr.isBigEndian())
+	      hiAddr = hiAddr + (realOut->getSize() + overlap);
+	    PcodeOp *newIndOp = data.newIndirectCreation(op,hiAddr,mostSigSize,true);
+	    PcodeOp *concatOp = data.newOp(2,op->getAddr());
+	    data.opSetOpcode(concatOp,CPUI_PIECE);
+	    data.opSetInput(concatOp,newIndOp->getOut(),0);
+	    data.opSetInput(concatOp,lastOp->getOut(),1);
+	    data.opInsertAfter(concatOp,lastOp);
+	    lastOp = concatOp;
+	  }
+	  data.opSetOutput(lastOp,oldOut);	// We have completed the redefinition of this oldOut
 	}
       }
     }
@@ -5151,7 +5334,8 @@ void FuncCallSpecs::doInputJoin(int4 slot1,bool ishislot)
 /// \param newinput will hold the new list of input Varnodes for the CALL
 /// \param newoutput will hold the new output Varnode or NULL
 /// \return \b true if \b this can be fully converted
-bool FuncCallSpecs::lateRestriction(const FuncProto &restrictedProto,vector<Varnode *> &newinput,Varnode *&newoutput)
+bool FuncCallSpecs::lateRestriction(const FuncProto &restrictedProto,vector<Varnode *> &newinput,
+				    vector<Varnode *> &newoutput)
 
 {
   if (!hasModel()) {
@@ -5201,7 +5385,7 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   // Try our best to merge existing prototype
   // with the one we have just been handed
   vector<Varnode *> newinput;
-  Varnode *newoutput;
+  vector<Varnode *> newoutput;
   FuncProto &newproto( newfd->getFuncProto() );
   if ((!newproto.isNoReturn())&&(!newproto.isInline())) {
     if (isOverride())	// If we are overridden at the call-site
@@ -5231,7 +5415,7 @@ void FuncCallSpecs::forceSet(Funcdata &data,const FuncProto &fp)
 
 {
   vector<Varnode *> newinput;
-  Varnode *newoutput;
+  vector<Varnode *> newoutput;
 
   // Copy the recovered prototype into the override manager so that
   // future restarts don't have to rediscover it

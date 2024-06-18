@@ -23,7 +23,8 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
+import ghidra.app.util.bin.format.golang.GoRegisterInfo.RegType;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
@@ -32,12 +33,13 @@ import ghidra.util.xml.XmlUtilities;
  * XML config file format:
  * <pre>
  * 	&lt;golang>
- * 		&lt;register_info versions="V1_17,V1_18">
+ * 		&lt;register_info versions="V1_17,V1_18,1.20,1.21"> // or "all"
  * 			&lt;int_registers list="RAX,RBX,RCX,RDI,RSI,R8,R9,R10,R11"/>
  * 			&lt;float_registers list="XMM0,XMM1,XMM2,XMM3,XMM4,XMM5,XMM6,XMM7,XMM8,XMM9,XMM10,XMM11,XMM12,XMM13,XMM14"/>
  * 			&lt;stack initialoffset="8" maxalign="8"/>
  * 			&lt;current_goroutine register="R14"/>
  * 			&lt;zero_register register="XMM15" builtin="true|false"/>
+ * 			&lt;duffzero dest="RDI" zero_arg="XMM0" zero_type="float|int"/>
  * 		&lt;/register_info>
  * 		&lt;register_info versions="V1_2">
  * 			...
@@ -65,21 +67,35 @@ public class GoRegisterInfoManager {
 	 * returned that forces all parameters to be stack allocated.
 	 * 
 	 * @param lang {@link Language}
-	 * @param goVersion {@link GoVer} enum
+	 * @param goVer {@link GoVer}
 	 * @return {@link GoRegisterInfo}, never null
 	 */
-	public synchronized GoRegisterInfo getRegisterInfoForLang(Language lang, GoVer goVersion) {
+	public synchronized GoRegisterInfo getRegisterInfoForLang(Language lang, GoVer goVer) {
 		Map<GoVer, GoRegisterInfo> perVersionRegInfos =
 			cache.computeIfAbsent(lang.getLanguageID(), (key) -> loadRegisterInfo(lang));
-		GoRegisterInfo registerInfo = perVersionRegInfos.get(goVersion);
+
+		GoRegisterInfo registerInfo = getMatchingRegisterInfo(perVersionRegInfos, goVer);
 		if (registerInfo == null) {
 			registerInfo = getDefault(lang);
-			perVersionRegInfos.put(goVersion, registerInfo);
+			perVersionRegInfos.put(goVer, registerInfo);
 			int goSize = lang.getInstructionAlignment();
-			Msg.warn(this, "Missing Golang register info for: " + lang.getLanguageID() +
-				", defaulting to abi0, size=" + goSize);
+			Msg.warn(this, "Missing Golang register info for: %s, defaulting to abi0, size=%d"
+					.formatted(lang.getLanguageID(), goSize));
 		}
 		return registerInfo;
+	}
+
+	private GoRegisterInfo getMatchingRegisterInfo(Map<GoVer, GoRegisterInfo> mappedRegInfo, GoVer goVer) {
+		GoRegisterInfo result = mappedRegInfo.get(goVer);
+		if ( result == null ) {
+			result = mappedRegInfo.entrySet()
+					.stream()
+					.filter(e -> e.getKey().isWildcard())
+					.map(Map.Entry::getValue)
+					.findFirst()
+					.orElse(null);
+		}
+		return result;
 	}
 
 	private Map<GoVer, GoRegisterInfo> loadRegisterInfo(Language lang) {
@@ -136,8 +152,9 @@ public class GoRegisterInfoManager {
 		Element stackElem = regInfoElem.getChild("stack");
 		Element goRoutineElem = regInfoElem.getChild("current_goroutine");
 		Element zeroRegElem = regInfoElem.getChild("zero_register");
+		Element duffZeroElem = regInfoElem.getChild("duffzero");
 		if (intRegsElem == null || floatRegsElem == null || stackElem == null ||
-			goRoutineElem == null || zeroRegElem == null) {
+			goRoutineElem == null || zeroRegElem == null || duffZeroElem == null) {
 			throw new IOException("Bad format");
 		}
 
@@ -154,10 +171,14 @@ public class GoRegisterInfoManager {
 		Register zeroReg = parseRegStr(zeroRegElem.getAttributeValue("register"), lang);
 		boolean zeroRegIsBuiltin =
 			XmlUtilities.parseOptionalBooleanAttr(zeroRegElem, "builtin", false);
+		
+		Register duffzeroDest = parseRegStr(duffZeroElem.getAttributeValue("dest"), lang);
+		Register duffzeroZero = parseRegStr(duffZeroElem.getAttributeValue("zero_arg"), lang);
+		RegType duffzeroZeroType = parseRegTypeStr(duffZeroElem.getAttributeValue("zero_type"));
 
-		GoRegisterInfo registerInfo =
-			new GoRegisterInfo(intRegs, floatRegs, stackInitialOffset, maxAlign,
-				currentGoRoutineReg, zeroReg, zeroRegIsBuiltin);
+		GoRegisterInfo registerInfo = new GoRegisterInfo(intRegs, floatRegs, stackInitialOffset,
+			maxAlign, currentGoRoutineReg, zeroReg, zeroRegIsBuiltin, duffzeroDest, duffzeroZero,
+			duffzeroZeroType);
 		Map<GoVer, GoRegisterInfo> result = new HashMap<>();
 		for (GoVer goVer : validGoVersions) {
 			result.put(goVer, registerInfo);
@@ -167,7 +188,8 @@ public class GoRegisterInfoManager {
 
 	private GoRegisterInfo getDefault(Language lang) {
 		int goSize = lang.getInstructionAlignment();
-		return new GoRegisterInfo(List.of(), List.of(), goSize, goSize, null, null, false);
+		return new GoRegisterInfo(List.of(), List.of(), goSize, goSize, null, null, false, null,
+			null, RegType.INT);
 	}
 
 	private List<Register> parseRegListStr(String s, Language lang) throws IOException {
@@ -196,26 +218,33 @@ public class GoRegisterInfoManager {
 		return register;
 	}
 
+	private RegType parseRegTypeStr(String s) {
+		return switch (Objects.requireNonNullElse(s, "int").toLowerCase()) {
+			default -> RegType.INT;
+			case "float" -> RegType.FLOAT;
+		};
+
+	}
+
 	private Set<GoVer> parseValidGoVersionsStr(String s) throws IOException {
 		if (s.trim().equalsIgnoreCase("all")) {
-			EnumSet<GoVer> allVers = EnumSet.allOf(GoVer.class);
-			allVers.remove(GoVer.UNKNOWN);
-			return allVers;
+			return Set.of(GoVer.ANY);
 		}
 
-		EnumSet<GoVer> result = EnumSet.noneOf(GoVer.class);
+		Set<GoVer> result = new HashSet<>();
 		for (String verStr : s.split(",")) {
 			verStr = verStr.trim();
 			if (verStr.isEmpty()) {
 				continue;
 			}
-			try {
-				GoVer ver = GoVer.valueOf(verStr);
-				result.add(ver);
+			if (verStr.startsWith("V")) {
+				verStr = verStr.substring(1).replace('_', '.'); // convert "V1_1" -> "1.1"
 			}
-			catch (IllegalArgumentException e) {
+			GoVer ver = GoVer.parse(verStr);
+			if (ver.isInvalid()) {
 				throw new IOException("Unknown go version: " + verStr);
 			}
+			result.add(ver);
 		}
 		return result;
 	}

@@ -16,7 +16,6 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +66,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private int refRepeatableCommentStyle;
 
 	private EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
-	private PropertyEditor extraCommmentsEditor = new EolExtraCommentsPropertyEditor();
 
 	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid duplication
 	// of data within auto-comment.  We don't bother adding a listener to kick the model since this
@@ -126,7 +124,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private void setupAutoCommentOptions(Options fieldOptions, HelpLocation hl) {
 		fieldOptions.registerOption(EXTRA_COMMENT_KEY, OptionType.CUSTOM_TYPE,
 			new EolExtraCommentsOption(), hl, "The group of auto comment options",
-			extraCommmentsEditor);
+			() -> new EolExtraCommentsPropertyEditor());
 		CustomOption customOption = fieldOptions.getCustomOption(EXTRA_COMMENT_KEY, null);
 
 		if (!(customOption instanceof EolExtraCommentsOption)) {
@@ -294,11 +292,10 @@ public class EolCommentFieldFactory extends FieldFactory {
 			elementList.addAll(elements);
 		}
 
-		FieldElement[] fieldElements = elementList.toArray(new FieldElement[elementList.size()]);
-		if (fieldElements.length == 0) {
+		if (elementList.isEmpty()) {
 			return null;
 		}
-		return ListingTextField.createMultilineTextField(this, proxy, fieldElements, x, width,
+		return ListingTextField.createMultilineTextField(this, proxy, elementList, x, width,
 			maxDisplayLines, hlProvider);
 	}
 

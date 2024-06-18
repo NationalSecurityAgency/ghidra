@@ -35,8 +35,8 @@ import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.table.RowObjectTableModel;
 import generic.lsh.vector.LSHVectorFactory;
 import generic.theme.GIcon;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.services.*;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.features.bsim.gui.BSimSearchPlugin;
 import ghidra.features.bsim.gui.filters.BSimFilterType;
 import ghidra.features.bsim.gui.filters.Md5BSimFilterType;
@@ -272,22 +272,24 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 			Msg.error(this, "Function Comparison Service not found!");
 			return;
 		}
-		FunctionComparisonProvider comparisonProvider = service.createFunctionComparisonProvider();
-		comparisonProvider.removeAddFunctionsAction();
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
 		List<BSimMatchResult> selectedRowObjects = matchesTable.getSelectedRowObjects();
 		Set<Program> openedPrograms = new HashSet<>();
 		for (BSimMatchResult row : selectedRowObjects) {
 			try {
 				Function originalFunction = getOriginalFunction(row);
 				Function matchFunction = getMatchFunction(row, openedPrograms);
-				comparisonProvider.getModel().compareFunctions(originalFunction, matchFunction);
+				model.addMatch(originalFunction, matchFunction);
 			}
 			catch (FunctionComparisonException e) {
 				Msg.showError(this, null, "Unable to Compare Functions",
 					"Compare Functions: " + e.getMessage());
 			}
 		}
-		comparisonProvider.setCloseListener(() -> {
+		if (model.isEmpty()) {
+			return;
+		}
+		service.createCustomComparison(model, () -> {
 			for (Program remote : openedPrograms) {
 				remote.release(BSimSearchResultsProvider.this);
 			}

@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.DBTrace;
@@ -49,7 +50,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	protected final DBCachedObjectIndex<Address, DBTraceStaticMapping> mappingsByAddress;
 	protected final Collection<DBTraceStaticMapping> view;
 
-	public DBTraceStaticMappingManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceStaticMappingManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws VersionException, IOException {
 		this.dbh = dbh;
@@ -118,8 +119,9 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	@Override
 	public DBTraceStaticMapping findContaining(Address address, long snap) {
-		for (DBTraceStaticMapping mapping : mappingsByAddress.head(address,
-			true).descending().values()) {
+		for (DBTraceStaticMapping mapping : mappingsByAddress.head(address, true)
+				.descending()
+				.values()) {
 			if (!mapping.getLifespan().contains(snap)) {
 				continue;
 			}
@@ -134,8 +136,9 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	@Override
 	public DBTraceStaticMapping findAnyConflicting(AddressRange range, Lifespan lifespan,
 			URL toProgramURL, String toAddress) {
-		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(),
-			true).descending().values()) {
+		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(), true)
+				.descending()
+				.values()) {
 			if (!mapping.conflictsWith(range, lifespan, toProgramURL, toAddress)) {
 				continue;
 			}
@@ -154,8 +157,9 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 	public Collection<? extends DBTraceStaticMapping> findAllOverlapping(AddressRange range,
 			Lifespan lifespan) {
 		Set<DBTraceStaticMapping> result = new HashSet<>();
-		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(),
-			true).descending().values()) {
+		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(), true)
+				.descending()
+				.values()) {
 			if (!mapping.getLifespan().intersects(lifespan)) {
 				continue;
 			}

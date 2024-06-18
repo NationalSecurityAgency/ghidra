@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghidratrace"
-version = "10.4"
+version = "11.1"
 authors = [
   { name="Ghidra Development Team" },
 ]

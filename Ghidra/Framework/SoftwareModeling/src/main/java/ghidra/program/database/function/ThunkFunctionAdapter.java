@@ -18,6 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -35,21 +36,21 @@ abstract class ThunkFunctionAdapter {
 
 	protected AddressMap addrMap;
 
-	static ThunkFunctionAdapter getAdapter(DBHandle handle, int openMode, AddressMap map,
+	static ThunkFunctionAdapter getAdapter(DBHandle handle, OpenMode openMode, AddressMap map,
 			TaskMonitor monitor) throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new ThunkFunctionAdapterV0(handle, map, true);
 		}
 		try {
 			return new ThunkFunctionAdapterV0(handle, map, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			ThunkFunctionAdapter adapter = findReadOnlyAdapter(handle, map);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, map, monitor);
 			}
 			return adapter;

@@ -48,8 +48,7 @@ import ghidra.app.plugin.core.memory.MemoryMapPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.framework.model.ToolServices;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.mgr.OptionsManager;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -194,12 +193,11 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		debug("d");
 
 		// now repeat the above test with changing some values before writing out
-		invokeInstanceMethod("putObject", defaultKeyBindings,
-			new Class[] { String.class, Object.class },
-			new Object[] { "TestAction1 (Owner1)", KeyStroke.getKeyStroke(65, 0) });
-		invokeInstanceMethod("putObject", defaultKeyBindings,
-			new Class[] { String.class, Object.class },
-			new Object[] { "TestAction2 (Owner 2)", KeyStroke.getKeyStroke(66, 0) });
+		defaultKeyBindings.putObject("TestAction1 (Owner1)",
+			new ActionTrigger(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0)));
+
+		defaultKeyBindings.putObject("TestAction2 (Owner 2)",
+			new ActionTrigger(KeyStroke.getKeyStroke(KeyEvent.VK_B, 0)));
 
 		debug("e");
 
@@ -366,8 +364,9 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setKeyBindingsUpDialog(tool);
 		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		KeyStroke optionBinding = options.getKeyStroke(action.getFullName(), null);
-		assertEquals(appliedBinding, optionBinding);
+		ActionTrigger actionTrigger = options.getActionTrigger(action.getFullName(), null);
+		KeyStroke optionKeyStroke = actionTrigger.getKeyStroke();
+		assertEquals(appliedBinding, optionKeyStroke);
 
 		closeAllWindows();
 	}
@@ -429,7 +428,8 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		// setup our test variables
 		panel = (KeyBindingsPanel) getEditorPanel(keyBindingsNode, optionsDialog);
 		table = findComponent(panel, JTable.class);
-		keyField = (JTextField) getInstanceField("ksField", panel);
+		Object actionBindingPanel = getInstanceField("actionBindingPanel", panel);
+		keyField = (JTextField) getInstanceField("keyEntryField", actionBindingPanel);
 		model = table.getModel();
 
 		debug("ff");
@@ -518,8 +518,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		String owner = action.getOwnerDescription();
 
 		for (int i = 0; i < model.getRowCount(); i++) {
-			if (actionName.equals(model.getValueAt(i, 0)) &&
-				owner.equals(model.getValueAt(i, 2))) {
+			if (actionName.equals(model.getValueAt(i, 0)) && owner.equals(model.getValueAt(i, 2))) {
 				final int idx = i;
 				runSwing(() -> {
 					table.setRowSelectionInterval(idx, idx);
@@ -627,7 +626,12 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		for (String name : propertyNames) {
 
 			boolean match = panelKeyStrokeMap.containsKey(name);
-			KeyStroke optionsKs = oldOptions.getKeyStroke(name, null);
+			ActionTrigger actionTrigger = oldOptions.getActionTrigger(name, null);
+			KeyStroke optionsKs = null;
+			if (actionTrigger != null) {
+				optionsKs = actionTrigger.getKeyStroke();
+			}
+
 			KeyStroke panelKs = panelKeyStrokeMap.get(name);
 
 			// if the value is null, then it would not have been placed into the options map 

@@ -27,8 +27,7 @@ import generic.jar.ResourceFile;
 import ghidra.GhidraClassLoader;
 import ghidra.framework.Application;
 import ghidra.util.Disposable;
-import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.classfinder.ExtensionPoint;
+import ghidra.util.classfinder.*;
 
 /**
  * A dialog that shows useful runtime information
@@ -188,13 +187,32 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 	 * loaded.
 	 */
 	private void addExtensionPoints() {
-		Map<String, String> map = ClassSearcher.getClasses(ExtensionPoint.class)
+		JTabbedPane epTabbedPane = new JTabbedPane();
+		tabbedPane.add("Extension Points", epTabbedPane);
+
+		// Discovered Potential Extension Points
+		Map<String, String> map = ClassSearcher.getExtensionPointInfo()
 				.stream()
-				.collect(Collectors.toMap(e -> e.getName(),
-					e -> ClassSearcher.getExtensionPointName(e.getName())));
-		String name = "Extension Points";
-		tabbedPane.add(new MapTablePanel<String, String>(name, map, "Name", "Extension Point", 400,
-			true, plugin), name);
+				.collect(Collectors.toMap(ClassFileInfo::name, ClassFileInfo::path));
+		String name = "Extension Point Info (%d)".formatted(map.size());
+		epTabbedPane.add(
+			new MapTablePanel<String, String>(name, map, "Name", "Path", 400, true, plugin), name);
+		
+		// Loaded Extension Points
+		map = ClassSearcher.getLoaded()
+				.stream()
+				.collect(Collectors.toMap(ClassFileInfo::name, ClassFileInfo::suffix));
+		name = "Loaded (%d)".formatted(map.size());
+		epTabbedPane.add(
+			new MapTablePanel<String, String>(name, map, "Name", "Type", 400, true, plugin), name);
+		
+		// False Positive Extension Points
+		map = ClassSearcher.getFalsePositives()
+				.stream()
+				.collect(Collectors.toMap(ClassFileInfo::name, ClassFileInfo::suffix));
+		name = "False Positives (%d)".formatted(map.size());
+		epTabbedPane.add(
+			new MapTablePanel<String, String>(name, map, "Name", "Type", 400, true, plugin), name);
 	}
 
 	/**

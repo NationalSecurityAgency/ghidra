@@ -103,7 +103,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		panel = new JPanel(new BorderLayout(5, 5));
 
 		bundleStatusTable = new GTable(bundleStatusTableModel);
-		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
 		bundleStatusTable.setSelectionBackground(new GColor("color.bg.table.selection.bundle"));
 		bundleStatusTable.setSelectionForeground(new GColor("color.fg.table.selection.bundle"));
 		bundleStatusTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -118,14 +117,17 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		// to allow custom cell renderers
 		bundleStatusTable.setAutoCreateColumnsFromModel(false);
-
 		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusTableModel);
-
 		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
 
 		panel.add(filterPanel, BorderLayout.SOUTH);
 		panel.add(scrollPane, BorderLayout.CENTER);
 		panel.setPreferredSize(new Dimension(800, 400));
+
+		String namePrefix = "Bundle Manager";
+		bundleStatusTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 	}
 
 	private void addBundlesAction(String actionName, String description, Icon icon,
@@ -217,7 +219,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 
 		// then activate them all
-		new TaskLauncher(new EnableAndActivateBundlesTask("activating", statuses, true),
+		new TaskLauncher(new EnableAndActivateBundlesTask("Activating Bundles", statuses, true),
 			getComponent(), 1000);
 	}
 
@@ -241,7 +243,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		if (selectedModelRows == null || selectedModelRows.length == 0) {
 			return;
 		}
-		new TaskLauncher(new RemoveBundlesTask("removing bundles", getSelectedStatuses()),
+		new TaskLauncher(new RemoveBundlesTask("Removing Bundles", getSelectedStatuses()),
 			getComponent(), 1000);
 	}
 
@@ -279,7 +281,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList());
 			Collection<GhidraBundle> bundles = bundleHost.add(resourceFiles, true, false);
 
-			TaskLauncher.launchNonModal("Activating new bundles", (monitor) -> {
+			TaskLauncher.launchModal("Activating New Bundles", (monitor) -> {
 				try {
 					bundleHost.activateAll(bundles, monitor,
 						getTool().getService(ConsoleService.class).getStdErr());
@@ -301,12 +303,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doEnableBundles() {
-		new TaskLauncher(new EnableAndActivateBundlesTask("enabling", getSelectedStatuses(), false),
+		new TaskLauncher(
+			new EnableAndActivateBundlesTask("Enabling Bundles", getSelectedStatuses(), false),
 			getComponent(), 1000);
 	}
 
 	protected void doDisableBundles() {
-		new TaskLauncher(new DeactivateAndDisableBundlesTask("disabling", getSelectedStatuses()),
+		new TaskLauncher(
+			new DeactivateAndDisableBundlesTask("Disabling Bundles", getSelectedStatuses()),
 			getComponent(), 1000);
 	}
 
@@ -315,7 +319,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		notifyTableRowChanged(status);
 		new TaskLauncher(
 			new ActivateDeactivateBundleTask(
-				(activate ? "Activating" : "Deactivating ") + " bundle...", status, activate),
+				(activate ? "Activating" : "Deactivating ") + " Bundle", status, activate),
 			null, 1000);
 	}
 
@@ -371,7 +375,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		private final List<BundleStatus> statuses;
 
 		private RemoveBundlesTask(String title, List<BundleStatus> statuses) {
-			super(title);
+			super(title, true, false, true);
 			this.deactivateBundlesTask =
 				new DeactivateAndDisableBundlesTask("deactivating", statuses);
 			this.statuses = statuses;
@@ -413,7 +417,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		 */
 		private EnableAndActivateBundlesTask(String title, List<BundleStatus> statuses,
 				boolean inStages) {
-			super(title, true, true, false);
+			super(title, true, true, true);
 			this.statuses = statuses;
 			this.inStages = inStages;
 		}
@@ -471,7 +475,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		final List<BundleStatus> statuses;
 
 		private DeactivateAndDisableBundlesTask(String title, List<BundleStatus> statuses) {
-			super(title, true, true, false);
+			super(title, true, true, true);
 			this.statuses = statuses;
 		}
 
@@ -509,7 +513,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		private final boolean activate;
 
 		private ActivateDeactivateBundleTask(String title, BundleStatus status, boolean activate) {
-			super(title);
+			super(title, true, false, true);
 			this.status = status;
 			this.activate = activate;
 		}

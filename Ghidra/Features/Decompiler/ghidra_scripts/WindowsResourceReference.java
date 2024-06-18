@@ -31,11 +31,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import docking.options.OptionsService;
 import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.script.GhidraScript;
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
@@ -55,7 +53,7 @@ public class WindowsResourceReference extends GhidraScript {
 	ArrayList<ArrayList<PcodeOp>> defUseLists = new ArrayList<>();
 
 	protected AddressSetPropertyMap alreadyDoneAddressSetPropertyMap;
-	
+
 	// set of functions that decompilation failed on
 	protected AddressSet badDecompFunctions = new AddressSet();
 
@@ -369,7 +367,7 @@ public class WindowsResourceReference extends GhidraScript {
 		if (f == null) {
 			return;
 		}
-		
+
 		// check if decompilation of this function failed previously
 		if (badDecompFunctions.contains(f.getEntryPoint())) {
 			return;
@@ -462,13 +460,10 @@ public class WindowsResourceReference extends GhidraScript {
 	private void addResourceReferences(HashMap<Address, Long> constLocs, String resourceName,
 			boolean printScriptMsgs, boolean createBookmarks) throws CancelledException {
 		Set<Address> keys;
-		Iterator<Address> locIter;
 		keys = constLocs.keySet();
-		locIter = keys.iterator();
-		while (locIter.hasNext()) {
+		for (Address loc : keys) {
 			monitor.checkCancelled();
 
-			Address loc = locIter.next();
 			Instruction instr = currentProgram.getListing().getInstructionAt(loc);
 			long rsrcID = constLocs.get(loc);
 			Address rsrcAddr = findResource(resourceName + "_" + Long.toHexString(rsrcID), 0);
@@ -488,9 +483,9 @@ public class WindowsResourceReference extends GhidraScript {
 
 				instr.addMnemonicReference(rsrcAddr, RefType.DATA, SourceType.ANALYSIS);
 				if (createBookmarks) {
-					currentProgram.getBookmarkManager().setBookmark(instr.getMinAddress(),
-						BookmarkType.ANALYSIS, "WindowsResourceReference",
-						"Added Resource Reference");
+					currentProgram.getBookmarkManager()
+							.setBookmark(instr.getMinAddress(), BookmarkType.ANALYSIS,
+								"WindowsResourceReference", "Added Resource Reference");
 				}
 				if (printScriptMsgs) {
 					println("        " + instr.getMinAddress().toString() + " : Found " + rsrcName +
@@ -513,15 +508,13 @@ public class WindowsResourceReference extends GhidraScript {
 	private void addResourceTableReferences(HashMap<Address, Long> constLocs, String tableName,
 			boolean printScriptMsgs, boolean createBookmarks) throws CancelledException {
 		Set<Address> keys;
-		Iterator<Address> locIter;
 		//Get the set of address locations which call the resource function
 		keys = constLocs.keySet();
-		locIter = keys.iterator();
+
 		//Iterate though the set of address locations
-		while (locIter.hasNext()) {
+		for (Address loc : keys) {
 			monitor.checkCancelled();
 
-			Address loc = locIter.next();
 			Instruction instr = currentProgram.getListing().getInstructionAt(loc);
 			Long rsrcID = constLocs.get(loc);
 			Address rsrcAddr = null;
@@ -532,9 +525,9 @@ public class WindowsResourceReference extends GhidraScript {
 			if (rsrcAddr != null) {
 				instr.addMnemonicReference(rsrcAddr, RefType.DATA, SourceType.ANALYSIS);
 				if (createBookmarks) {
-					currentProgram.getBookmarkManager().setBookmark(instr.getMinAddress(),
-						BookmarkType.ANALYSIS, "WindowsResourceReference",
-						"Added Resource Table Reference");
+					currentProgram.getBookmarkManager()
+							.setBookmark(instr.getMinAddress(), BookmarkType.ANALYSIS,
+								"WindowsResourceReference", "Added Resource Table Reference");
 				}
 				if (printScriptMsgs) {
 					println("        " + instr.getMinAddress().toString() + " : Found " +
@@ -622,9 +615,7 @@ public class WindowsResourceReference extends GhidraScript {
 		if (defUseList == null || defUseList.size() <= 0) {
 			return value;
 		}
-		Iterator<PcodeOp> iterator = defUseList.iterator();
-		while (iterator.hasNext()) {
-			PcodeOp pcodeOp = iterator.next();
+		for (PcodeOp pcodeOp : defUseList) {
 			int opcode = pcodeOp.getOpcode();
 			switch (opcode) {
 				case PcodeOp.INT_AND:
@@ -703,10 +694,10 @@ public class WindowsResourceReference extends GhidraScript {
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 				return;
 			case PcodeOp.MULTIEQUAL:
-				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
-				@SuppressWarnings("unchecked")
-				ArrayList<PcodeOp> splitUseList = (ArrayList<PcodeOp>) defUseList.clone();
-				followToParam(constUse, splitUseList, highFunction, def.getInput(1), doneSet);
+				for (int i = 0; i < def.getNumInputs(); i++) {
+					ArrayList<PcodeOp> splitUseList = new ArrayList<>(defUseList);
+					followToParam(constUse, splitUseList, highFunction, def.getInput(i), doneSet);
+				}
 				return;
 			case PcodeOp.CAST:
 				// Cast will expose more Pcode, and could be attached to the same address!
@@ -716,7 +707,8 @@ public class WindowsResourceReference extends GhidraScript {
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 				return;
 			case PcodeOp.INDIRECT:
-				if (def.getOutput().getAddress().equals(def.getInput(0).getAddress())) {
+				Varnode output = def.getOutput();
+				if (output.getAddress().equals(def.getInput(0).getAddress())) {
 					followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 					return;
 				}
@@ -763,18 +755,11 @@ public class WindowsResourceReference extends GhidraScript {
 	private Address lastDecompiledFuncAddr = null;
 
 	private DecompInterface setUpDecompiler(Program program) {
+
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(state.getTool(), program);
+
 		DecompInterface decompiler = new DecompInterface();
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		PluginTool tool = state.getTool();
-		if (tool != null) {
-			OptionsService service = tool.getService(OptionsService.class);
-			if (service != null) {
-				ToolOptions opt = service.getOptions("Decompiler");
-				options.grabFromToolAndProgram(null, opt, program);
-			}
-		}
 		decompiler.setOptions(options);
 
 		decompiler.toggleCCode(true);

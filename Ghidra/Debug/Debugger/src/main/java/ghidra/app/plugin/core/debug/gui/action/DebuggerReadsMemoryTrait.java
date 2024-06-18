@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -28,22 +29,25 @@ import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractRefreshSelectedMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
+import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.model.address.*;
-import ghidra.trace.model.*;
+import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class DebuggerReadsMemoryTrait {
@@ -69,22 +73,21 @@ public abstract class DebuggerReadsMemoryTrait {
 				selection = visible;
 			}
 			final AddressSetView sel = selection;
-			Trace trace = current.getTrace();
 			Target target = current.getTarget();
-			tool.executeBackgroundCommand(new BackgroundCommand(NAME, true, true, false) {
+
+			TargetActionTask.executeTask(tool, new Task(NAME, true, true, false) {
 				@Override
-				public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+				public void run(TaskMonitor monitor) throws CancelledException {
 					target.invalidateMemoryCaches();
 					try {
-						target.readMemory(sel, monitor);
-						memoryWasRead(sel);
+						target.readMemoryAsync(sel, monitor).get();
 					}
-					catch (CancelledException e) {
-						return false;
+					catch (InterruptedException | ExecutionException e) {
+						throw new RuntimeException("Failed to read memory", e);
 					}
-					return true;
+					memoryWasRead(sel);
 				}
-			}, trace);
+			});
 		}
 
 		@Override

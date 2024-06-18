@@ -385,6 +385,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 			initializeDisplay();
 
+			String viewName = "Disassembled View";
+			contentList.setName(viewName);
+			contentList.getAccessibleContext().setAccessibleName(viewName);
+
 			// we need to do some custom rendering
 			contentList.setCellRenderer(new GListCellRenderer<DisassembledAddressInfo>() {
 

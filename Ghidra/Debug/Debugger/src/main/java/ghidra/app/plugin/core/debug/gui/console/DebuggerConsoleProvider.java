@@ -400,9 +400,9 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
-		description = "The maximum number of entries in the console log (0 or less for unlimited)",
-		help = @HelpInfo(anchor = "buffer_limit"))
+			name = DebuggerResources.OPTION_NAME_LOG_BUFFER_LIMIT,
+			description = "The maximum number of entries in the console log (0 or less for unlimited)",
+			help = @HelpInfo(anchor = "buffer_limit"))
 	private int logBufferLimit = DebuggerResources.DEFAULT_LOG_BUFFER_LIMIT;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
@@ -457,6 +457,10 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		logFilterPanel = new GhidraTableFilterPanel<>(logTable, logTableModel);
 		mainPanel.add(logFilterPanel, BorderLayout.NORTH);
 
+		String namePrefix = "Debug Console";
+		logTable.setAccessibleNamePrefix(namePrefix);
+		logFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		logTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -505,9 +509,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	}
 
 	protected void createActions() {
-		actionClear = ClearAction.builder(plugin)
-				.onAction(this::activatedClear)
-				.buildAndInstallLocal(this);
+		actionClear =
+			ClearAction.builder(plugin).onAction(this::activatedClear).buildAndInstallLocal(this);
 		actionSelectNone = SelectNoneAction.builder(plugin)
 				.popupWhen(ctx -> ctx.getSourceComponent() == logTable)
 				.onAction(this::activatedSelectNone)
@@ -665,16 +668,14 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	}
 
 	protected ActionList computeToolbarActions(ActionContext context) {
-		return streamActions(context)
-				.filter(a -> a.getToolBarData() != null)
+		return streamActions(context).filter(a -> a.getToolBarData() != null)
 				.map(a -> new BoundAction(a, context))
 				.collect(Collectors.toCollection(ActionList::new));
 	}
 
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
-		return streamActions(context)
-				.filter(a -> a.isAddToPopup(context))
+		return streamActions(context).filter(a -> a.isAddToPopup(context))
 				.collect(Collectors.toList());
 	}
 

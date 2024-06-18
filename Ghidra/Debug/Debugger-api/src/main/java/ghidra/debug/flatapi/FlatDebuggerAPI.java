@@ -16,44 +16,42 @@
 package ghidra.debug.flatapi;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import docking.ActionContext;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
-import ghidra.dbg.AnnotatedDebuggerAttributeListener;
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.target.TargetSteppable.TargetStepKind;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer.*;
-import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
+import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
+import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceLocation;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.MathUtilities;
@@ -464,6 +462,8 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Go to the given dynamic address in the dynamic listing
 	 * 
+	 * @param address the destination address
+	 * @return true if successful, false otherwise
 	 * @see #goToDynamic(ProgramLocation)
 	 */
 	default boolean goToDynamic(Address address) {
@@ -473,6 +473,8 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Go to the given dynamic address in the dynamic listing
 	 * 
+	 * @param addrString the destination address, as a string
+	 * @return true if successful, false otherwise
 	 * @see #goToDynamic(ProgramLocation)
 	 */
 	default boolean goToDynamic(String addrString) {
@@ -617,6 +619,7 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Does the same as {@link #emulateLaunch(Program, Address)}, for the current program
 	 * 
+	 * @param address the initial program counter
 	 * @return the resulting trace
 	 * @throws IOException if the trace cannot be created
 	 */
@@ -797,29 +800,31 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
+	 * The the target service
+	 * 
+	 * @return the service
+	 */
+	default DebuggerTargetService getTargetService() {
+		return requireService(DebuggerTargetService.class);
+	}
+
+	/**
 	 * Copy memory from target to trace, if applicable and not already cached
 	 * 
 	 * @param trace the trace to update
 	 * @param snap the snap the snap, to determine whether target bytes are applicable
 	 * @param start the starting address
 	 * @param length the number of bytes to make fresh
-	 * @throws InterruptedException if the operation is interrupted
-	 * @throws ExecutionException if an error occurs
-	 * @throws TimeoutException if the operation times out
+	 * @param monitor a monitor for progress
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	default void refreshMemoryIfLive(Trace trace, long snap, Address start, int length,
-			TaskMonitor monitor) throws InterruptedException, ExecutionException, TimeoutException {
-		TraceRecorder recorder = getModelService().getRecorder(trace);
-		if (recorder == null) {
+			TaskMonitor monitor) throws CancelledException {
+		Target target = getTargetService().getTarget(trace);
+		if (target == null || target.getSnap() != snap) {
 			return;
 		}
-		if (recorder.getSnap() != snap) {
-			return;
-		}
-		waitOn(recorder.readMemoryBlocks(new AddressSet(safeRange(start, length)), monitor));
-		waitOn(recorder.getTarget().getModel().flushEvents());
-		waitOn(recorder.flushTransactions());
-		trace.flushEvents();
+		target.readMemory(new AddressSet(safeRange(start, length)), monitor);
 	}
 
 	/**
@@ -831,16 +836,11 @@ public interface FlatDebuggerAPI {
 	 * @param buffer the destination buffer
 	 * @param monitor a monitor for live read progress
 	 * @return the number of bytes read
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	default int readMemory(Trace trace, long snap, Address start, byte[] buffer,
-			TaskMonitor monitor) {
-		try {
-			refreshMemoryIfLive(trace, snap, start, buffer.length, monitor);
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return 0;
-		}
-
+			TaskMonitor monitor) throws CancelledException {
+		refreshMemoryIfLive(trace, snap, start, buffer.length, monitor);
 		return trace.getMemoryManager().getViewBytes(snap, start, ByteBuffer.wrap(buffer));
 	}
 
@@ -853,9 +853,10 @@ public interface FlatDebuggerAPI {
 	 * @param length the desired number of bytes
 	 * @param monitor a monitor for live read progress
 	 * @return the array of bytes read, can be shorter than desired
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	default byte[] readMemory(Trace trace, long snap, Address start, int length,
-			TaskMonitor monitor) {
+			TaskMonitor monitor) throws CancelledException {
 		byte[] arr = new byte[length];
 		int actual = readMemory(trace, snap, start, arr, monitor);
 		if (actual == length) {
@@ -870,9 +871,12 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * @param start the starting address
 	 * @param buffer the destination buffer
+	 * @param monitor a monitor for live read progress
 	 * @return the number of bytes read
+	 * @throws CancelledException if the operation was cancelled
 	 */
-	default int readMemory(Address start, byte[] buffer, TaskMonitor monitor) {
+	default int readMemory(Address start, byte[] buffer, TaskMonitor monitor)
+			throws CancelledException {
 		TraceProgramView view = requireCurrentView();
 		return readMemory(view.getTrace(), view.getSnap(), start, buffer, monitor);
 	}
@@ -882,9 +886,12 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * @param start the starting address
 	 * @param length the desired number of bytes
+	 * @param monitor a monitor for live read progress
 	 * @return the array of bytes read, can be shorter than desired
+	 * @throws CancelledException if the operation was cancelled
 	 */
-	default byte[] readMemory(Address start, int length, TaskMonitor monitor) {
+	default byte[] readMemory(Address start, int length, TaskMonitor monitor)
+			throws CancelledException {
 		TraceProgramView view = requireCurrentView();
 		return readMemory(view.getTrace(), view.getSnap(), start, length, monitor);
 	}
@@ -895,9 +902,10 @@ public interface FlatDebuggerAPI {
 	 * <p>
 	 * <b>NOTE:</b> This searches the trace only. It will not interrogate the live target. There are
 	 * two mechanisms for searching a live target's full memory: 1) Capture the full memory (or the
-	 * subset to search) -- using, e.g., {@link #refreshMemoryIfLive(Trace, long, Address, int)} --
-	 * then search the trace. 2) If possible, invoke the target debugger's search functions --
-	 * using, e.g., {@link #executeCapture(String)}.
+	 * subset to search) -- using, e.g.,
+	 * {@link #refreshMemoryIfLive(Trace, long, Address, int, TaskMonitor)} -- then search the
+	 * trace. 2) If possible, invoke the target debugger's search functions -- using, e.g.,
+	 * {@link #executeCapture(String)}.
 	 * 
 	 * <p>
 	 * This delegates to
@@ -938,6 +946,16 @@ public interface FlatDebuggerAPI {
 
 	/**
 	 * @see #searchMemory(Trace, long, AddressRange, ByteBuffer, ByteBuffer, boolean, TaskMonitor)
+	 * 
+	 * @param trace the trace to search
+	 * @param snap the snapshot of the trace to search
+	 * @param range the range within to search
+	 * @param data the bytes to search for
+	 * @param mask a mask on the bits to search, or null to match exactly.
+	 * @param forward true to start at the min address going forward, false to start at the max
+	 *            address going backward
+	 * @param monitor a monitor for search progress
+	 * @return the minimum address of the matched bytes, or null if not found
 	 */
 	default Address searchMemory(Trace trace, long snap, AddressRange range, byte[] data,
 			byte[] mask, boolean forward, TaskMonitor monitor) {
@@ -953,27 +971,17 @@ public interface FlatDebuggerAPI {
 	 * @param frame the frame level, 0 being the innermost
 	 * @param snap the snap, to determine whether target values are applicable
 	 * @param registers the registers to make fresh
-	 * @throws InterruptedException if the operation is interrupted
-	 * @throws ExecutionException if an error occurs
-	 * @throws TimeoutException if the operation times out
 	 */
 	default void refreshRegistersIfLive(TracePlatform platform, TraceThread thread, int frame,
-			long snap, Collection<Register> registers)
-			throws InterruptedException, ExecutionException, TimeoutException {
+			long snap, Collection<Register> registers) {
 		Trace trace = thread.getTrace();
-		TraceRecorder recorder = getModelService().getRecorder(trace);
-		if (recorder == null) {
+
+		Target target = getTargetService().getTarget(trace);
+		if (target == null || target.getSnap() != snap) {
 			return;
 		}
-		if (recorder.getSnap() != snap) {
-			return;
-		}
-		Set<Register> asSet =
-			registers instanceof Set<?> ? (Set<Register>) registers : Set.copyOf(registers);
-		waitOn(recorder.captureThreadRegisters(platform, thread, frame, asSet));
-		waitOn(recorder.getTarget().getModel().flushEvents());
-		waitOn(recorder.flushTransactions());
-		trace.flushEvents();
+		Set<Register> asSet = registers instanceof Set<Register> s ? s : Set.copyOf(registers);
+		target.readRegisters(platform, thread, frame, asSet);
 	}
 
 	/**
@@ -988,12 +996,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default List<RegisterValue> readRegisters(TracePlatform platform, TraceThread thread, int frame,
 			long snap, Collection<Register> registers) {
-		try {
-			refreshRegistersIfLive(platform, thread, frame, snap, registers);
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return null;
-		}
+		refreshRegistersIfLive(platform, thread, frame, snap, registers);
 		TraceMemorySpace regs =
 			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frame, false);
 		if (regs == null) {
@@ -1005,8 +1008,13 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Read a register
 	 * 
-	 * @see #readRegisters(TraceThread, int, long, Collection)
+	 * @param platform the platform whose language defines the registers
+	 * @param thread the trace thread
+	 * @param frame the source frame level, 0 being the innermost
+	 * @param snap the source snap
+	 * @param register the source register
 	 * @return the register's value, or null on error
+	 * @see #readRegisters(TracePlatform, TraceThread, int, long, Collection)
 	 */
 	default RegisterValue readRegister(TracePlatform platform, TraceThread thread, int frame,
 			long snap, Register register) {
@@ -1017,7 +1025,9 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Read several registers from the current context, refreshing from the target if needed
 	 * 
-	 * @see #readRegisters(TraceThread, int, long, Collection)
+	 * @param registers the source registers
+	 * @return the list of register values, or null on error
+	 * @see #readRegisters(TracePlatform, TraceThread, int, long, Collection)
 	 */
 	default List<RegisterValue> readRegisters(Collection<Register> registers) {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
@@ -1070,8 +1080,10 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Read several registers from the current context, refreshing from the target if needed
 	 * 
-	 * @see #readRegisters(TraceThread, int, long, Collection)
+	 * @param names the source register names
+	 * @return the list of register values, or null on error
 	 * @throws IllegalArgumentException if any name is invalid
+	 * @see #readRegisters(TracePlatform, TraceThread, int, long, Collection)
 	 */
 	default List<RegisterValue> readRegistersNamed(Collection<String> names) {
 		return readRegisters(validateRegisterNames(requireCurrentTrace().getBaseLanguage(), names));
@@ -1111,8 +1123,10 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Read a register from the current context, refreshing from the target if needed
 	 * 
-	 * @see #readRegister(Register)
+	 * @param name the register name
+	 * @return the value, or null on error
 	 * @throws IllegalArgumentException if the name is invalid
+	 * @see #readRegister(Register)
 	 */
 	default RegisterValue readRegister(String name) {
 		TracePlatform platform = requireCurrentPlatform();
@@ -1225,6 +1239,7 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Create a state editor for the given context, adhering to its current control mode
 	 * 
+	 * @param coordinates the context
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(DebuggerCoordinates coordinates) {
@@ -1384,8 +1399,14 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Patch a register of the given context, according to its current control mode
 	 * 
-	 * @see #writeRegister(TraceThread, int, long, RegisterValue)
+	 * @param thread the thread
+	 * @param frame the frame
+	 * @param snap the snap
+	 * @param name the register name
+	 * @param value the value
+	 * @return true if successful, false otherwise
 	 * @throws IllegalArgumentException if the register name is invalid
+	 * @see #writeRegister(TraceThread, int, long, RegisterValue)
 	 */
 	default boolean writeRegister(TraceThread thread, int frame, long snap, String name,
 			BigInteger value) {
@@ -1400,7 +1421,6 @@ public interface FlatDebuggerAPI {
 	 * If you intend to apply several patches, consider using {@link #createStateEditor()} and
 	 * {@link #writeRegister(StateEditor, RegisterValue)}.
 	 * 
-	 * @param mode specifies in what way to apply the patch
 	 * @param rv the register value
 	 * @return true if successful, false otherwise
 	 */
@@ -1411,348 +1431,95 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Patch a register of the current thread, according to the current control mode
 	 * 
-	 * @see #writeRegister(RegisterValue)
+	 * @param name the register name
+	 * @param value the value
+	 * @return true if successful, false otherwise
 	 * @throws IllegalArgumentException if the register name is invalid
+	 * @see #writeRegister(RegisterValue)
 	 */
 	default boolean writeRegister(String name, BigInteger value) {
 		return writeRegister(new RegisterValue(
 			validateRegisterName(requireCurrentTrace().getBaseLanguage(), name), value));
 	}
 
-	/**
-	 * Get the current target
-	 * 
-	 * <p>
-	 * If the current trace is not live, this returns null.
-	 * 
-	 * @return the target, or null
-	 */
-	default Target getCurrentTarget() {
-		return getTraceManager().getCurrent().getTarget();
+	default ActionContext createContext(TraceObject object) {
+		TraceObjectValue value = object.getCanonicalParents(Lifespan.ALL).findAny().orElseThrow();
+		return new DebuggerObjectActionContext(List.of(value), null, null);
 	}
 
-	/**
-	 * Get the model (target) service
-	 * 
-	 * @return the service
-	 */
-	default DebuggerModelService getModelService() {
-		return requireService(DebuggerModelService.class);
-	}
-
-	/**
-	 * Get offers for launching the given program
-	 * 
-	 * @param program the program
-	 * @return the offers
-	 */
-	@Deprecated
-	default List<DebuggerProgramLaunchOffer> getLaunchOffers(Program program) {
-		return getModelService().getProgramLaunchOffers(program).collect(Collectors.toList());
-	}
-
-	/**
-	 * Get offers for launching the current program
-	 * 
-	 * @return the offers
-	 */
-	default List<DebuggerProgramLaunchOffer> getLaunchOffers() {
-		return getLaunchOffers(requireCurrentProgram());
-	}
-
-	/**
-	 * Get the best launch offer for a program, throwing an exception if there is no offer
-	 * 
-	 * @param program the program
-	 * @return the offer
-	 * @throws NoSuchElementException if there is no offer
-	 */
-	default DebuggerProgramLaunchOffer requireLaunchOffer(Program program) {
-		Optional<DebuggerProgramLaunchOffer> offer =
-			getModelService().getProgramLaunchOffers(program).findFirst();
-		if (offer.isEmpty()) {
-			throw new NoSuchElementException("No offers to launch " + program);
+	default ActionContext createContext(TraceThread thread) {
+		if (thread instanceof TraceObjectThread objThread) {
+			return createContext(objThread.getObject());
 		}
-		return offer.get();
+		return new DebuggerSingleObjectPathActionContext(
+			TraceObjectKeyPath.parse(thread.getPath()));
 	}
 
-	/**
-	 * Launch the given offer, overriding its command line
-	 * 
-	 * <p>
-	 * <b>NOTE:</b> Most offers take a command line, but not all do. If this is used for an offer
-	 * that does not, it's behavior is undefined.
-	 * 
-	 * <p>
-	 * Launches are not always successful, and may in fact fail frequently, usually because of
-	 * configuration errors or missing components on the target platform. This may leave stale
-	 * connections and/or target debuggers, processes, etc., in strange states. Furthermore, even if
-	 * launching the target is successful, starting the recorder may not succeed, typically because
-	 * Ghidra cannot identify and map the target platform to a Sleigh language. This method makes no
-	 * attempt at cleaning up partial pieces. Instead it returns those pieces in the launch result.
-	 * If the result includes a recorder, the launch was successful. If not, the script can decide
-	 * what to do with the other pieces. That choice depends on what is expected of the user. Can
-	 * the user reasonable be expected to intervene and complete the launch manually? How many
-	 * targets does the script intend to launch? How big is the mess if left partially completed?
-	 * 
-	 * @param offer the offer (this includes the program given when asking for offers)
-	 * @param commandLine the command-line override. If this doesn't refer to the same program as
-	 *            the offer, there may be unexpected results
-	 * @param monitor the monitor for the launch stages
-	 * @return the result, possibly partial
-	 */
-	default LaunchResult launch(DebuggerProgramLaunchOffer offer, String commandLine,
-			TaskMonitor monitor) {
-		try {
-			return waitOn(offer.launchProgram(monitor, PromptMode.NEVER, new LaunchConfigurator() {
-				@Override
-				public Map<String, ?> configureLauncher(TargetLauncher launcher,
-						Map<String, ?> arguments, RelPrompt relPrompt) {
-					Map<String, Object> adjusted = new HashMap<>(arguments);
-					adjusted.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, commandLine);
-					return adjusted;
-				}
-			}));
+	default ActionContext createContext(Trace trace) {
+		DebuggerCoordinates coords = getTraceManager().getCurrentFor(trace);
+		if (coords == null) {
+			return new DebuggerSingleObjectPathActionContext(TraceObjectKeyPath.of());
 		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			// TODO: This is not ideal, since it's likely partially completed
-			return LaunchResult.totalFailure(e);
+		if (coords.getObject() != null) {
+			return createContext(coords.getObject());
 		}
+		if (coords.getPath() != null) {
+			return new DebuggerSingleObjectPathActionContext(coords.getPath());
+		}
+		return new DebuggerSingleObjectPathActionContext(TraceObjectKeyPath.of());
 	}
 
-	/**
-	 * Launch the given offer with the default/saved arguments
-	 * 
-	 * @see #launch(DebuggerProgramLaunchOffer, String, TaskMonitor)
-	 */
-	default LaunchResult launch(DebuggerProgramLaunchOffer offer, TaskMonitor monitor) {
-		try {
-			return waitOn(offer.launchProgram(monitor, PromptMode.NEVER));
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			// TODO: This is not ideal, since it's likely partially completed
-			return LaunchResult.totalFailure(e);
-		}
+	default ActionEntry findAction(Target target, ActionName action, ActionContext context) {
+		return target.collectActions(action, context)
+				.values()
+				.stream()
+				.filter(e -> !e.requiresPrompt())
+				.sorted(Comparator.comparing(e -> -e.specificity()))
+				.findFirst()
+				.orElseThrow();
 	}
 
-	/**
-	 * Launch the given program, overriding its command line
-	 * 
-	 * <p>
-	 * This takes the best offer for the given program. The command line should invoke the given
-	 * program. If it does not, there may be unexpected results.
-	 * 
-	 * @see #launch(DebuggerProgramLaunchOffer, String, TaskMonitor)
-	 */
-	default LaunchResult launch(Program program, String commandLine, TaskMonitor monitor)
-			throws InterruptedException, ExecutionException, TimeoutException {
-		return launch(requireLaunchOffer(program), commandLine, monitor);
+	default Object doAction(Target target, ActionName name, ActionContext context) {
+		ActionEntry action = findAction(target, name, context);
+		return action.get(false);
 	}
 
-	/**
-	 * Launch the given program with the default/saved arguments
-	 * 
-	 * <p>
-	 * This takes the best offer for the given program.
-	 * 
-	 * @see #launch(DebuggerProgramLaunchOffer, String, TaskMonitor)
-	 */
-	default LaunchResult launch(Program program, TaskMonitor monitor)
-			throws InterruptedException, ExecutionException, TimeoutException {
-		return launch(requireLaunchOffer(program), monitor);
-	}
-
-	/**
-	 * Launch the current program, overriding its command line
-	 * 
-	 * @see #launch(Program, String, TaskMonitor)
-	 */
-	default LaunchResult launch(String commandLine, TaskMonitor monitor)
-			throws InterruptedException, ExecutionException, TimeoutException {
-		return launch(requireCurrentProgram(), commandLine, monitor);
-	}
-
-	/**
-	 * Launch the current program with the default/saved arguments
-	 * 
-	 * @see #launch(Program, TaskMonitor)
-	 */
-	default LaunchResult launch(TaskMonitor monitor)
-			throws InterruptedException, ExecutionException, TimeoutException {
-		return launch(requireCurrentProgram(), monitor);
-	}
-
-	/**
-	 * Get the target for a given trace
-	 * 
-	 * <p>
-	 * WARNING: This method will likely change or be removed in the future.
-	 * 
-	 * @param trace the trace
-	 * @return the target, or null if not alive
-	 */
-	default TargetObject getTarget(Trace trace) {
-		TraceRecorder recorder = getModelService().getRecorder(trace);
-		if (recorder == null) {
-			return null;
-		}
-		return recorder.getTarget();
-	}
-
-	/**
-	 * Get the target thread for a given trace thread
-	 * 
-	 * <p>
-	 * WARNING: This method will likely change or be removed in the future.
-	 * 
-	 * @param thread the trace thread
-	 * @return the target thread, or null if not alive
-	 */
-	default TargetThread getTargetThread(TraceThread thread) {
-		TraceRecorder recorder = getModelService().getRecorder(thread.getTrace());
-		if (recorder == null) {
-			return null;
-		}
-		return recorder.getTargetThread(thread);
-	}
-
-	/**
-	 * Get the user focus for a given trace
-	 * 
-	 * <p>
-	 * WARNING: This method will likely change or be removed in the future.
-	 * 
-	 * @param trace the trace
-	 * @return the target, or null if not alive
-	 */
-	default TargetObject getTargetFocus(Trace trace) {
-		TraceRecorder recorder = getModelService().getRecorder(trace);
-		if (recorder == null) {
-			return null;
-		}
-		TargetObject focus = recorder.getFocus();
-		return focus != null ? focus : recorder.getTarget();
-	}
-
-	/**
-	 * Find the most suitable object related to the given object implementing the given interface
-	 * 
-	 * <p>
-	 * WARNING: This method will likely change or be removed in the future.
-	 * 
-	 * @param <T> the interface type
-	 * @param seed the seed object
-	 * @param iface the interface class
-	 * @return the related interface, or null
-	 * @throws ClassCastException if the model violated its schema wrt. the requested interface
-	 */
-	@SuppressWarnings("unchecked")
-	default <T extends TargetObject> T findInterface(TargetObject seed, Class<T> iface) {
-		DebuggerObjectModel model = seed.getModel();
-		List<String> found = model
-				.getRootSchema()
-				.searchForSuitable(iface, seed.getPath());
-		if (found == null) {
-			return null;
-		}
-		try {
-			Object value = waitOn(model.fetchModelValue(found));
-			return (T) value;
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return null;
-		}
-	}
-
-	/**
-	 * Find the most suitable object related to the given thread implementing the given interface
-	 * 
-	 * @param <T> the interface type
-	 * @param thread the thread
-	 * @param iface the interface class
-	 * @return the related interface, or null
-	 * @throws ClassCastException if the model violated its schema wrt. the requested interface
-	 */
-	default <T extends TargetObject> T findInterface(TraceThread thread, Class<T> iface) {
-		TargetThread targetThread = getTargetThread(thread);
-		if (targetThread == null) {
-			return null;
-		}
-		return findInterface(targetThread, iface);
-	}
-
-	/**
-	 * Find the most suitable object related to the given trace's focus implementing the given
-	 * interface
-	 * 
-	 * @param <T> the interface type
-	 * @param thread the thread
-	 * @param iface the interface class
-	 * @return the related interface, or null
-	 * @throws ClassCastException if the model violated its schema wrt. the requested interface
-	 */
-	default <T extends TargetObject> T findInterface(Trace trace, Class<T> iface) {
-		TargetObject focus = getTargetFocus(trace);
-		if (focus == null) {
-			return null;
-		}
-		return findInterface(focus, iface);
-	}
-
-	/**
-	 * Find the interface related to the current thread or trace
-	 * 
-	 * <p>
-	 * This first attempts to find the most suitable object related to the current trace thread. If
-	 * that fails, or if there is no current thread, it tries to find the one related to the current
-	 * trace (or its focus). If there is no current trace, this throws an exception.
-	 * 
-	 * @param <T> the interface type
-	 * @param iface the interface class
-	 * @return the related interface, or null
-	 * @throws IllegalStateException if there is no current trace
-	 */
-	default <T extends TargetObject> T findInterface(Class<T> iface) {
-		TraceThread thread = getCurrentThread();
-		T t = thread == null ? null : findInterface(thread, iface);
-		if (t != null) {
-			return t;
-		}
-		return findInterface(requireCurrentTrace(), iface);
-	}
-
-	/**
-	 * Step the given target object
-	 * 
-	 * @param steppable the steppable target object
-	 * @param kind the kind of step to take
-	 * @return true if successful, false otherwise
-	 */
-	default boolean step(TargetSteppable steppable, TargetStepKind kind) {
-		if (steppable == null) {
-			return false;
-		}
-		try {
-			waitOn(steppable.step(kind));
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Step the given thread on target according to the given kind
-	 * 
-	 * @param thread the trace thread
-	 * @param kind the kind of step to take
-	 * @return true if successful, false otherwise
-	 */
-	default boolean step(TraceThread thread, TargetStepKind kind) {
+	default boolean doThreadAction(TraceThread thread, ActionName name) {
 		if (thread == null) {
 			return false;
 		}
-		return step(findInterface(thread, TargetSteppable.class), kind);
+		Target target = getTargetService().getTarget(thread.getTrace());
+		try {
+			doAction(target, name, createContext(thread));
+			return true;
+		}
+		catch (Exception e) {
+			return false;
+		}
+	}
+
+	default boolean doTraceAction(Trace trace, ActionName name) {
+		if (trace == null) {
+			return false;
+		}
+		Target target = getTargetService().getTarget(trace);
+		try {
+			doAction(target, name, createContext(trace));
+			return true;
+		}
+		catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Step the given thread, stepping into subroutines
+	 * 
+	 * @param thread the thread to step
+	 * @return true if successful, false otherwise
+	 */
+	default boolean stepInto(TraceThread thread) {
+		return doThreadAction(thread, ActionName.STEP_INTO);
 	}
 
 	/**
@@ -1761,7 +1528,17 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean stepInto() {
-		return step(findInterface(TargetSteppable.class), TargetStepKind.INTO);
+		return stepInto(getCurrentThread());
+	}
+
+	/**
+	 * Step the given thread, stepping over subroutines
+	 * 
+	 * @param thread the thread to step
+	 * @return true if successful, false otherwise
+	 */
+	default boolean stepOver(TraceThread thread) {
+		return doThreadAction(thread, ActionName.STEP_OVER);
 	}
 
 	/**
@@ -1770,7 +1547,17 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean stepOver() {
-		return step(findInterface(TargetSteppable.class), TargetStepKind.OVER);
+		return stepOver(getCurrentThread());
+	}
+
+	/**
+	 * Step the given thread, until it returns from the current subroutine
+	 * 
+	 * @param thread the thread to step
+	 * @return true if successful, false otherwise
+	 */
+	default boolean stepOut(TraceThread thread) {
+		return doThreadAction(thread, ActionName.STEP_OUT);
 	}
 
 	/**
@@ -1779,26 +1566,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean stepOut() {
-		return step(findInterface(TargetSteppable.class), TargetStepKind.FINISH);
-	}
-
-	/**
-	 * Resume execution of the given target object
-	 * 
-	 * @param resumable the resumable target object
-	 * @return true if successful, false otherwise
-	 */
-	default boolean resume(TargetResumable resumable) {
-		if (resumable == null) {
-			return false;
-		}
-		try {
-			waitOn(resumable.resume());
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return false;
-		}
-		return true;
+		return stepOut(getCurrentThread());
 	}
 
 	/**
@@ -1811,7 +1579,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean resume(TraceThread thread) {
-		return resume(findInterface(thread, TargetResumable.class));
+		return doThreadAction(thread, ActionName.RESUME);
 	}
 
 	/**
@@ -1824,7 +1592,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean resume(Trace trace) {
-		return resume(findInterface(trace, TargetResumable.class));
+		return doTraceAction(trace, ActionName.RESUME);
 	}
 
 	/**
@@ -1833,32 +1601,10 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean resume() {
-		TraceThread thread = getCurrentThread();
-		TargetResumable resumable =
-			thread == null ? null : findInterface(thread, TargetResumable.class);
-		if (resumable == null) {
-			resumable = findInterface(requireCurrentTrace(), TargetResumable.class);
+		if (resume(getCurrentThread())) {
+			return true;
 		}
-		return resume(resumable);
-	}
-
-	/**
-	 * Interrupt execution of the given target object
-	 * 
-	 * @param interruptible the interruptible target object
-	 * @return true if successful, false otherwise
-	 */
-	default boolean interrupt(TargetInterruptible interruptible) {
-		if (interruptible == null) {
-			return false;
-		}
-		try {
-			waitOn(interruptible.interrupt());
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return false;
-		}
-		return true;
+		return resume(getCurrentTrace());
 	}
 
 	/**
@@ -1867,10 +1613,11 @@ public interface FlatDebuggerAPI {
 	 * <p>
 	 * This is commonly called "pause" or "break," as well, but not "stop."
 	 * 
+	 * @param thread the thread to interrupt (may interrupt the whole target)
 	 * @return true if successful, false otherwise
 	 */
 	default boolean interrupt(TraceThread thread) {
-		return interrupt(findInterface(thread, TargetInterruptible.class));
+		return doThreadAction(thread, ActionName.INTERRUPT);
 	}
 
 	/**
@@ -1879,10 +1626,11 @@ public interface FlatDebuggerAPI {
 	 * <p>
 	 * This is commonly called "pause" or "break," as well, but not "stop."
 	 * 
+	 * @param trace the trace whose target to interrupt
 	 * @return true if successful, false otherwise
 	 */
 	default boolean interrupt(Trace trace) {
-		return interrupt(findInterface(trace, TargetInterruptible.class));
+		return doTraceAction(trace, ActionName.INTERRUPT);
 	}
 
 	/**
@@ -1891,26 +1639,10 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean interrupt() {
-		return interrupt(findInterface(TargetInterruptible.class));
-	}
-
-	/**
-	 * Terminate execution of the given target object
-	 * 
-	 * @param interruptible the interruptible target object
-	 * @return true if successful, false otherwise
-	 */
-	default boolean kill(TargetKillable killable) {
-		if (killable == null) {
-			return false;
+		if (interrupt(getCurrentThread())) {
+			return true;
 		}
-		try {
-			waitOn(killable.kill());
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return false;
-		}
-		return true;
+		return interrupt(getCurrentTrace());
 	}
 
 	/**
@@ -1919,10 +1651,11 @@ public interface FlatDebuggerAPI {
 	 * <p>
 	 * This is commonly called "stop" as well.
 	 * 
+	 * @param thread the thread to kill (may kill the whole target)
 	 * @return true if successful, false otherwise
 	 */
 	default boolean kill(TraceThread thread) {
-		return kill(findInterface(thread, TargetKillable.class));
+		return doThreadAction(thread, ActionName.KILL);
 	}
 
 	/**
@@ -1931,10 +1664,11 @@ public interface FlatDebuggerAPI {
 	 * <p>
 	 * This is commonly called "stop" as well.
 	 * 
+	 * @param trace the trace whose target to kill
 	 * @return true if successful, false otherwise
 	 */
 	default boolean kill(Trace trace) {
-		return kill(findInterface(trace, TargetKillable.class));
+		return doTraceAction(trace, ActionName.KILL);
 	}
 
 	/**
@@ -1943,27 +1677,10 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful, false otherwise
 	 */
 	default boolean kill() {
-		return kill(findInterface(TargetKillable.class));
-	}
-
-	/**
-	 * Get the current state of the given target
-	 * 
-	 * <p>
-	 * Any invalidated object is considered {@link TargetExecutionState#TERMINATED}. Otherwise, it's
-	 * at least considered {@link TargetExecutionState#ALIVE}. A more specific state may be
-	 * determined by searching the model for the conventionally-related object implementing
-	 * {@link TargetObjectStateful}. This method applies this convention.
-	 * 
-	 * @param target the target object
-	 * @return the target object's execution state
-	 */
-	default TargetExecutionState getExecutionState(TargetObject target) {
-		if (!target.isValid()) {
-			return TargetExecutionState.TERMINATED;
+		if (kill(getCurrentThread())) {
+			return true;
 		}
-		TargetExecutionStateful stateful = findInterface(target, TargetExecutionStateful.class);
-		return stateful == null ? TargetExecutionState.ALIVE : stateful.getExecutionState();
+		return kill(getCurrentTrace());
 	}
 
 	/**
@@ -1976,14 +1693,20 @@ public interface FlatDebuggerAPI {
 	 * consider the current snap. It only considers a live target in the present.
 	 * 
 	 * @param trace the trace
-	 * @return the trace's target's execution state
+	 * @return the trace's execution state
 	 */
 	default TargetExecutionState getExecutionState(Trace trace) {
-		TargetObject target = getTarget(trace);
+		Target target = getTargetService().getTarget(trace);
 		if (target == null) {
 			return TargetExecutionState.TERMINATED;
 		}
-		return getExecutionState(target);
+		// Use resume action's enablement as a proxy for state
+		// This should work for recorder or rmi targets
+		ActionEntry action = findAction(target, ActionName.RESUME, createContext(trace));
+		if (action == null) {
+			return TargetExecutionState.ALIVE;
+		}
+		return action.isEnabled() ? TargetExecutionState.STOPPED : TargetExecutionState.RUNNING;
 	}
 
 	/**
@@ -2000,14 +1723,14 @@ public interface FlatDebuggerAPI {
 	 * snap.
 	 * 
 	 * @param thread
-	 * @return
+	 * @return the thread's execution state
 	 */
 	default TargetExecutionState getExecutionState(TraceThread thread) {
-		TargetObject target = getTargetThread(thread);
-		if (target == null) {
+		DebuggerCoordinates coords = getTraceManager().getCurrentFor(thread.getTrace());
+		if (!coords.isAlive()) {
 			return TargetExecutionState.TERMINATED;
 		}
-		return getExecutionState(target);
+		return coords.getTarget().getThreadExecutionState(thread);
 	}
 
 	/**
@@ -2050,56 +1773,10 @@ public interface FlatDebuggerAPI {
 	 * <b>NOTE:</b> To be the "current" target thread, the target must be recorded, and its trace
 	 * thread must be the current thread.
 	 * 
-	 * @return
+	 * @return true if alive
 	 */
 	default boolean isThreadAlive() {
 		return isThreadAlive(requireThread(getCurrentThread()));
-	}
-
-	/**
-	 * Waits for the given target to exit the {@link TargetExecutionState#RUNNING} state
-	 * 
-	 * <p>
-	 * <b>NOTE:</b> There may be subtleties depending on the target debugger. For the most part, if
-	 * the connection is handling a single target, things will work as expected. However, if there
-	 * are multiple targets on one connection, it is possible for the given target to break, but for
-	 * the target debugger to remain unresponsive to commands. This would happen, e.g., if a second
-	 * target on the same connection is still running.
-	 * 
-	 * @param target the target
-	 * @param timeout the maximum amount of time to wait
-	 * @param unit the units for time
-	 * @throws TimeoutException if the timeout expires
-	 */
-	default void waitForBreak(TargetObject target, long timeout, TimeUnit unit)
-			throws TimeoutException {
-		TargetExecutionStateful stateful = findInterface(target, TargetExecutionStateful.class);
-		if (stateful == null) {
-			throw new IllegalArgumentException("Given target is not stateful");
-		}
-		var listener = new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
-			CompletableFuture<Void> future = new CompletableFuture<>();
-
-			@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
-			private void stateChanged(TargetObject parent, TargetExecutionState state) {
-				if (parent == stateful && !state.isRunning()) {
-					future.complete(null);
-				}
-			}
-		};
-		target.getModel().addModelListener(listener);
-		try {
-			if (!stateful.getExecutionState().isRunning()) {
-				return;
-			}
-			listener.future.get(timeout, unit);
-		}
-		catch (ExecutionException | InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-		finally {
-			target.getModel().removeModelListener(listener);
-		}
 	}
 
 	/**
@@ -2109,18 +1786,38 @@ public interface FlatDebuggerAPI {
 	 * If the trace has no target, this method returns immediately, i.e., it assumes the target has
 	 * terminated.
 	 * 
-	 * @see #waitForBreak(TargetObject, long, TimeUnit)
 	 * @param trace the trace
 	 * @param timeout the maximum amount of time to wait
 	 * @param unit the units for time
 	 * @throws TimeoutException if the timeout expires
 	 */
 	default void waitForBreak(Trace trace, long timeout, TimeUnit unit) throws TimeoutException {
-		TargetObject target = getTarget(trace);
-		if (target == null || !target.isValid()) {
+		if (!getExecutionState(trace).isRunning()) {
 			return;
 		}
-		waitForBreak(target, timeout, unit);
+		var listener = new DomainObjectListener() {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+
+			@Override
+			public void domainObjectChanged(DomainObjectChangedEvent ev) {
+				if (!getExecutionState(trace).isRunning()) {
+					future.complete(null);
+				}
+			}
+		};
+		trace.addListener(listener);
+		try {
+			if (!getExecutionState(trace).isRunning()) {
+				return;
+			}
+			listener.future.get(timeout, unit);
+		}
+		catch (ExecutionException | InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		finally {
+			trace.removeListener(listener);
+		}
 	}
 
 	/**
@@ -2128,38 +1825,12 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * @see #waitForBreak(Trace, long, TimeUnit)
 	 * @param timeout the maximum
-	 * @param unit
-	 * @param timeout the maximum amount of time to wait
 	 * @param unit the units for time
 	 * @throws TimeoutException if the timeout expires
 	 * @throws IllegalStateException if there is no current trace
 	 */
 	default void waitForBreak(long timeout, TimeUnit unit) throws TimeoutException {
 		waitForBreak(requireCurrentTrace(), timeout, unit);
-	}
-
-	/**
-	 * Execute a command in a connection's interpreter, capturing the output
-	 * 
-	 * <p>
-	 * This executes a raw command in the given interpreter. The command could have arbitrary
-	 * effects, so it may be necessary to wait for those effects to be handled by the tool's
-	 * services and plugins before proceeding.
-	 * 
-	 * @param interpreter the interpreter
-	 * @param command the command
-	 * @return the output, or null if there is no interpreter
-	 */
-	default String executeCapture(TargetInterpreter interpreter, String command) {
-		if (interpreter == null) {
-			return null;
-		}
-		try {
-			return waitOn(interpreter.executeCapture(command));
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return null;
-		}
 	}
 
 	/**
@@ -2170,7 +1841,8 @@ public interface FlatDebuggerAPI {
 	 * @return the output, or null if there is no live interpreter
 	 */
 	default String executeCapture(Trace trace, String command) {
-		return executeCapture(findInterface(trace, TargetInterpreter.class), command);
+		Target target = getTargetService().getTarget(trace);
+		return target.execute(command, true);
 	}
 
 	/**
@@ -2185,31 +1857,6 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Execute a command in a connection's interpreter
-	 * 
-	 * <p>
-	 * This executes a raw command in the given interpreter. The command could have arbitrary
-	 * effects, so it may be necessary to wait for those effects to be handled by the tool's
-	 * services and plugins before proceeding.
-	 * 
-	 * @param interpreter the interpreter
-	 * @param command the command
-	 * @return true if successful
-	 */
-	default boolean execute(TargetInterpreter interpreter, String command) {
-		if (interpreter == null) {
-			return false;
-		}
-		try {
-			waitOn(interpreter.executeCapture(command));
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * Execute a command on the live debugger for the given trace
 	 * 
 	 * @param trace the trace
@@ -2217,7 +1864,14 @@ public interface FlatDebuggerAPI {
 	 * @return true if successful
 	 */
 	default boolean execute(Trace trace, String command) {
-		return execute(findInterface(trace, TargetInterpreter.class), command);
+		Target target = getTargetService().getTarget(trace);
+		try {
+			target.execute(command, false);
+			return true;
+		}
+		catch (Exception e) {
+			return false;
+		}
 	}
 
 	/**
@@ -2398,7 +2052,7 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Get the breakpoints in the given trace, indexed by (dynamic) address
 	 * 
-	 * @param program the program
+	 * @param trace the trace
 	 * @return the address-breakpoint-set map
 	 */
 	default NavigableMap<Address, Set<LogicalBreakpoint>> getBreakpoints(Trace trace) {
@@ -2454,6 +2108,8 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * Use this via a try-with-resources block containing the operations causing changes.
+	 * 
+	 * @return a closable object for a try-with-resources block
 	 */
 	default ExpectingBreakpointChanges expectBreakpointChanges() {
 		return new ExpectingBreakpointChanges(this, getBreakpointService());
@@ -2656,117 +2312,25 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Get the value at the given path for the given model
-	 * 
-	 * @param model the model
-	 * @param path the path
-	 * @return the avlue, or null if the trace is not live or if the path does not exist
-	 */
-	default Object getModelValue(DebuggerObjectModel model, String path) {
-		try {
-			return waitOn(model.fetchModelValue(PathUtils.parse(path)));
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return null;
-		}
-	}
-
-	/**
-	 * Get the value at the given path for the current trace's model
-	 * 
-	 * @param path the path
-	 * @return the value, or null if the trace is not live or if the path does not exist
-	 */
-	default Object getModelValue(String path) {
-		TraceRecorder recorder = getModelService().getRecorder(getCurrentTrace());
-		if (recorder == null) {
-			return null;
-		}
-		return getModelValue(recorder.getTarget().getModel(), path);
-	}
-
-	/**
-	 * Refresh the given objects children (elements and attributes)
-	 * 
-	 * @param object the object
-	 * @return the set of children, excluding primitive-valued attributes
-	 */
-	default Set<TargetObject> refreshObjectChildren(TargetObject object) {
-		try {
-			// Refresh both children and memory/register values
-			waitOn(object.invalidateCaches());
-			waitOn(object.resync());
-		}
-		catch (InterruptedException | ExecutionException | TimeoutException e) {
-			return null;
-		}
-		Set<TargetObject> result = new LinkedHashSet<>();
-		result.addAll(object.getCachedElements().values());
-		for (Object v : object.getCachedAttributes().values()) {
-			if (v instanceof TargetObject) {
-				result.add((TargetObject) v);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Refresh the given object and its children, recursively
-	 * 
-	 * <p>
-	 * The objects are traversed in depth-first pre-order. Links are traversed, even if the object
-	 * is not part of the specified subtree, but an object is skipped if it has already been
-	 * visited.
-	 * 
-	 * @param object the seed object
-	 * @return true if the traversal completed successfully
-	 */
-	default boolean refreshSubtree(TargetObject object) {
-		var util = new Object() {
-			Set<TargetObject> visited = new HashSet<>();
-
-			boolean visit(TargetObject object) {
-				if (!visited.add(object)) {
-					return true;
-				}
-				for (TargetObject child : refreshObjectChildren(object)) {
-					if (!visit(child)) {
-						return false;
-					}
-				}
-				return true;
-			}
-		};
-		return util.visit(object);
-	}
-
-	/**
 	 * Flush each stage of the asynchronous processing pipelines from end to end
 	 * 
 	 * <p>
-	 * This method includes as many components as its author knows to flush. If the given trace is
-	 * alive, flushing starts with the connection's event queue, followed by the recorder's event
-	 * and transaction queues. Next, it flushes the trace's event queue. Then, it waits for various
-	 * services' changes to settle, in dependency order. Currently, that is the static mapping
-	 * service followed by the logical breakpoint service. Note that some stages use timeouts. It's
-	 * also possible the target had not generated all the expected events by the time this method
-	 * began flushing its queue. Thus, callers should still check that some expected condition is
-	 * met and possibly repeat the flush before proceeding.
+	 * This method includes as many components as its author knows to flush. It flushes the trace's
+	 * event queue. Then, it waits for various services' changes to settle, in dependency order.
+	 * Currently, that is the static mapping service followed by the logical breakpoint service.
+	 * Note that some stages use timeouts. It's also possible the target had not generated all the
+	 * expected events by the time this method began flushing its queue. Thus, callers should still
+	 * check that some expected condition is met and possibly repeat the flush before proceeding.
 	 * 
 	 * <p>
-	 * There are additional dependents, e.g., the breakpoint listing plugin; however, scripts should
-	 * not depend on them, so we do not wait on them.
+	 * There are additional dependents in the GUI; however, scripts should not depend on them, so we
+	 * do not wait on them.
 	 * 
 	 * @param trace the trace whose events need to be completely processed before continuing.
-	 * @return
+	 * @return true if all stages were flushed, false if there were errors
 	 */
 	default boolean flushAsyncPipelines(Trace trace) {
 		try {
-			TraceRecorder recorder = getModelService().getRecorder(trace);
-			if (recorder != null) {
-				waitOn(recorder.getTarget().getModel().flushEvents());
-				waitOn(recorder.flushTransactions());
-			}
 			trace.flushEvents();
 			waitOn(getMappingService().changesSettled());
 			waitOn(getBreakpointService().changesSettled());
@@ -2779,5 +2343,4 @@ public interface FlatDebuggerAPI {
 	}
 
 	// TODO: Interaction with the target process itself, e.g., via stdio.
-	// The DebugModel API does not currently support this.
 }

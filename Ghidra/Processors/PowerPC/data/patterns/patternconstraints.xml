@@ -2,4 +2,7 @@
   <language id="PowerPC:BE:*:*">
     <patternfile>PPC_BE_patterns.xml</patternfile>
   </language>
+  <language id="PowerPC:LE:*:*">
+    <patternfile>PPC_LE_patterns.xml</patternfile>
+  </language>
 </patternconstraints>

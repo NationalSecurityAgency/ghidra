@@ -27,12 +27,10 @@ import ghidra.base.help.GhidraHelpService;
 import ghidra.framework.Application;
 import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.framework.client.RepositoryAdapter;
-import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProjectManager;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 import ghidra.util.extensions.ExtensionUtils;
@@ -90,6 +88,9 @@ public class GhidraRun implements GhidraLaunchable {
 			SystemUtilities.runSwingLater(() -> {
 				String projectPath = processArguments(args);
 				openProject(projectPath);
+				
+				log.info("Ghidra startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() +
+					" ms)");
 			});
 		};
 

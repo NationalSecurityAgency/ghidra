@@ -973,7 +973,7 @@ bool ConsistencyChecker::checkVarnodeTruncation(Constructor *ct,int4 slot,
 ///
 /// Run through all Varnodes looking for offset templates marked as ConstTpl::v_offset_plus,
 /// which indicates they were constructed using truncation notation. These truncation expressions
-/// are checked for validity and adjusted depending on the endianess of the address space.
+/// are checked for validity and adjusted depending on the endianness of the address space.
 /// \param ct is the Constructor
 /// \param cttpl is the given p-code section
 /// \param isbigendian is set to \b true if the SLEIGH specification is big endian
@@ -2589,7 +2589,7 @@ void SleighCompile::setEndian(int4 end)
 
 {
   setBigEndian( (end == 1) );
-  predefinedSymbols();		// Set up symbols now that we know endianess
+  predefinedSymbols();		// Set up symbols now that we know endianness
 }
 
 /// \brief Definition a set of Varnodes
@@ -3706,6 +3706,7 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 /// \param enforceLocalKeyWord is \b true to force all local variable definitions to use the \b local keyword
 /// \param largeTemporaryWarning is \b true for individual warnings about temporary varnodes that are too large
 /// \param caseSensitiveRegisterNames is \b true if register names are allowed to be case sensitive
+/// \param debugOutput is \b true if the output file is written using the debug (XML) form of the .sla format
 void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 				  bool lenientConflict, bool allCollisionWarning,
 				  bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,

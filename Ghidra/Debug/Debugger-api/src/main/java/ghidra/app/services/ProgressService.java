@@ -17,6 +17,7 @@ package ghidra.app.services;
 
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -117,6 +118,7 @@ public interface ProgressService {
 	default CompletableFuture<Void> execute(Task task) {
 		return CompletableFuture.supplyAsync(() -> {
 			try (CloseableTaskMonitor monitor = publishTask()) {
+				monitor.setCancelEnabled(task.canCancel());
 				try {
 					task.run(monitor);
 				}
@@ -130,5 +132,28 @@ public interface ProgressService {
 				return null;
 			}
 		});
+	}
+
+	/**
+	 * Similar to {@link #execute(Task)}, but for asynchronous methods
+	 * 
+	 * @param <T> the type of future result
+	 * @param canCancel true if the task can be cancelled
+	 * @param hasProgress true if the task displays progress
+	 * @param isModal true if the task is modal (ignored)
+	 * @param futureSupplier the task which returns a future, given the task monitor
+	 * @return the future returned by the supplier
+	 */
+	default <T> CompletableFuture<T> execute(boolean canCancel, boolean hasProgress,
+			boolean isModal, Function<TaskMonitor, CompletableFuture<T>> futureSupplier) {
+		CloseableTaskMonitor monitor = publishTask();
+		monitor.setCancelEnabled(canCancel);
+		CompletableFuture<T> future = futureSupplier.apply(monitor);
+		future.handle((t, ex) -> {
+			monitor.close();
+			return null;
+		});
+		monitor.addCancelledListener(() -> future.cancel(true));
+		return future;
 	}
 }

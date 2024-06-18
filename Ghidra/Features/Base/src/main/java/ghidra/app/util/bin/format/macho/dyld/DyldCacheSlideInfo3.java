@@ -89,9 +89,9 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 	}
 
 	@Override
-	public List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
-			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>();
+	public List<DyldFixup> getSlideFixups(BinaryReader reader, int pointerSize, MessageLog log,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		List<DyldFixup> fixups = new ArrayList<>();
 
 		monitor.initialize(pageStartsCount, "Getting DYLD Cache V3 slide fixups...");
 		for (int index = 0; index < pageStartsCount; index++) {
@@ -112,21 +112,20 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 	}
 
 	/**
-	 * Walks the pointer chain at the given reader offset to find necessary 
-	 * {@link DyldCacheSlideFixup}s
+	 * Walks the pointer chain at the given reader offset to find necessary {@link DyldFixup}s
 	 * 
 	 * @param segmentOffset The segment offset
 	 * @param pageOffset The page offset
 	 * @param reader A reader positioned at the start of the segment to fix
 	 * @param monitor A cancellable monitor
-	 * @return A {@link List} of {@link DyldCacheSlideFixup}s
+	 * @return A {@link List} of {@link DyldFixup}s
 	 * @throws IOException If an IO-related error occurred
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	private List<DyldCacheSlideFixup> processPointerChain(long segmentOffset, long pageOffset,
+	private List<DyldFixup> processPointerChain(long segmentOffset, long pageOffset,
 			BinaryReader reader, TaskMonitor monitor) throws IOException, CancelledException {
 
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>(1024);
+		List<DyldFixup> fixups = new ArrayList<>(1024);
 
 		for (long delta = -1; delta != 0; pageOffset += delta * 8) {
 			monitor.checkCancelled();
@@ -151,7 +150,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 				chainValue = (top8Bits << 13) | bottom43Bits /* + slide */;
 			}
 
-			fixups.add(new DyldCacheSlideFixup(dataOffset, chainValue, 8));
+			fixups.add(new DyldFixup(dataOffset, chainValue, 8, null, null));
 		}
 
 		return fixups;

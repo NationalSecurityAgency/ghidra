@@ -86,8 +86,8 @@ public class DataTypeSettingsDialog extends AbstractSettingsDialog {
 			nameBuf.append("Default ");
 		}
 		String name = dataType.getDisplayName();
-		// default array settings defer to base type
 		if (dtc == null) {
+			// default array settings defer to base type
 			name = getSettingsBaseType(dataType).getDisplayName();
 		}
 		nameBuf.append(name);
@@ -147,6 +147,7 @@ public class DataTypeSettingsDialog extends AbstractSettingsDialog {
 		return null;
 	}
 
+	@Override
 	protected void applySettings() {
 		DataTypeManager dtm = dataType.getDataTypeManager();
 		int txId = dtm.startTransaction(getTitle());

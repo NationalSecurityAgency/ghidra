@@ -51,9 +51,8 @@ public class MDMangGhidra extends MDMang {
 		return dataTypeResult;
 	}
 
-	@Override
-	public MDParsableItem demangle(String mangledArg, boolean demangleOnlyKnownPatterns)
-			throws MDException {
+	public MDParsableItem demangle(String mangledArg, boolean errorOnRemainingChars,
+			boolean demangleOnlyKnownPatterns) throws MDException {
 		// TODO: Could possibly just ignore "demangleOnlyKnownpatterns"
 		if (demangleOnlyKnownPatterns) {
 			if (!(mangledArg.startsWith("?") || mangledArg.startsWith(".") ||
@@ -64,6 +63,13 @@ public class MDMangGhidra extends MDMang {
 			}
 		}
 
+		return demangle(mangledArg, errorOnRemainingChars);
+	}
+
+	@Override
+	public MDParsableItem demangle(String mangledArg, boolean errorOnRemainingChars)
+			throws MDException {
+
 		this.mangledSource = mangledArg;
 
 		MDParsableItem returnedItem = super.demangle(mangledArg, true);
@@ -72,6 +78,20 @@ public class MDMangGhidra extends MDMang {
 
 		objectResult = processItem();
 		return returnedItem;
+	}
+
+	@Override
+	public MDDataType demangleType(String mangledArg, boolean errorOnRemainingChars)
+			throws MDException {
+
+		this.mangledSource = mangledArg;
+
+		MDDataType returnedType = super.demangleType(mangledArg, errorOnRemainingChars);
+
+		this.demangledSource = returnedType.toString();
+
+		dataTypeResult = processDataType(null, returnedType);
+		return returnedType;
 	}
 
 	public DemangledType processNamespace(MDQualifiedName qualifiedName) {
@@ -108,24 +128,24 @@ public class MDMangGhidra extends MDMang {
 		if (item instanceof MDObjectReserved) {
 			objectResult = processObjectReserved((MDObjectReserved) item);
 		}
-		else if (item instanceof MDObjectCodeView) {
-			objectResult = processObjectCPP((MDObjectCPP) item);
-			objectResult.setSpecialPrefix(((MDObjectCodeView) item).getPrefix());
+		else if (item instanceof MDObjectCodeView codeView) {
+			objectResult = processObjectCPP(codeView);
+			objectResult.setSpecialPrefix(codeView.getPrefix());
 		}
-		else if (item instanceof MDObjectCPP) { // Base class of MDObjectBracket/MDObjectCodeView.
-			objectResult = processObjectCPP((MDObjectCPP) item);
+		else if (item instanceof MDObjectCPP objCpp) { // Base class of MDObjectBracket/MDObjectCodeView.
+			objectResult = processObjectCPP(objCpp);
 		}
-		else if (item instanceof MDObjectC) {
-			objectResult = processObjectC((MDObjectC) item);
+		else if (item instanceof MDObjectC objC) {
+			objectResult = processObjectC(objC);
 		}
-		else if (item instanceof MDDataType) {
+		else if (item instanceof MDDataType dataType) {
 			// TODO: how do we fix this? DemangledDataType extends DemangledType, but not
 			// DemangleObject...
-			dataTypeResult = processDataType(null, (MDDataType) item);
+			dataTypeResult = processDataType(null, dataType);
 			// object = getDemangledDataType();
 		}
-		else if (item instanceof MDTemplateNameAndArguments) {
-			objectResult = processTemplate((MDTemplateNameAndArguments) item);
+		else if (item instanceof MDTemplateNameAndArguments templateNameAndArgs) {
+			objectResult = processTemplate(templateNameAndArgs);
 		}
 		return objectResult;
 	}

@@ -67,6 +67,8 @@ class ImageBaseDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new MiddleLayout());
 		textField = new JTextField(20);
 		textField.setText(currentAddr.toString());
+		textField.getAccessibleContext().setAccessibleName("Image Base Address");
+
 		textField.selectAll();
 		textField.addActionListener(e -> {
 			if (addr != null) {

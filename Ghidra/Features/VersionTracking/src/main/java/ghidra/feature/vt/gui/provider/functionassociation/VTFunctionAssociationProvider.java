@@ -16,6 +16,7 @@
 package ghidra.feature.vt.gui.provider.functionassociation;
 
 import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.*;
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -38,8 +39,6 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
-import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.feature.vt.api.db.DeletedMatch;
 import ghidra.feature.vt.api.impl.VTEvent;
@@ -49,6 +48,8 @@ import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.duallisting.VTListingNavigator;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.util.MatchInfo;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
@@ -220,7 +221,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();
 			if (dualListingPanel != null) {
-				ListingPanel leftPanel = dualListingPanel.getLeftPanel();
+				ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
 				return leftPanel.getHeaderActions(getName());
 			}
 		}
@@ -261,7 +262,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			}
 			// Is the action being taken on a toolbar button while the dual listing is visible?
 			else if (isToolbarButtonAction && isShowingDualListing) {
-				listingPanel = dualListingPanel.getFocusedListingPanel();
+				listingPanel = dualListingPanel.getActiveListingPanel();
 			}
 			// If the dual listing is showing and this is a toolbar action or the action is 
 			// on one of the listings in the ListingCodeComparisonPanel
@@ -367,10 +368,9 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		statusPanel.add(statusLabel, BorderLayout.CENTER);
 		dualTablePanel.add(statusPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel =
-			new FunctionComparisonPanel(this, tool, (Function) null, (Function) null);
+		functionComparisonPanel = new FunctionComparisonPanel(tool, getName());
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.TITLE);
+		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 
 		comparisonSplitPane =
@@ -446,7 +446,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			new VTFunctionAssociationTableModel(tool, controller, sourceProgram, true);
 		sourceThreadedTablePanel = new GhidraThreadedTablePanel<>(sourceFunctionsModel, 1000);
 		sourceFunctionsTable = sourceThreadedTablePanel.getTable();
-		sourceFunctionsTable.setName("SourceFunctionTable");
 		sourceFunctionsTable
 				.setPreferenceKey("VTFunctionAssociationTableModel - Source Function Table");
 		sourceFunctionsTable.installNavigation(tool);
@@ -474,7 +473,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 		sourceTableFilterPanel =
 			new GhidraTableFilterPanel<>(sourceFunctionsTable, sourceFunctionsModel);
-
 		JPanel sourceFunctionPanel = new JPanel(new BorderLayout());
 		String sourceString =
 			(sourceProgram != null) ? sourceProgram.getDomainFile().toString() : NO_SESSION;
@@ -484,6 +482,11 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		sourceFunctionPanel.add(sourceSessionLabel, BorderLayout.NORTH);
 		sourceFunctionPanel.add(sourceThreadedTablePanel, BorderLayout.CENTER);
 		sourceFunctionPanel.add(sourceTableFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Source Functions";
+		sourceFunctionsTable.setAccessibleNamePrefix(namePrefix);
+		sourceTableFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return sourceFunctionPanel;
 	}
 
@@ -495,7 +498,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationThreadedTablePanel =
 			new GhidraThreadedTablePanel<>(destinationFunctionsModel, 1000);
 		destinationFunctionsTable = destinationThreadedTablePanel.getTable();
-		destinationFunctionsTable.setName("DestinationFunctionTable");
 		destinationFunctionsTable.setPreferenceKey(
 			"VTFunctionAssociationTableModel - " + "Destination Function Table");
 		destinationFunctionsTable.installNavigation(tool);
@@ -526,7 +528,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 		destinationTableFilterPanel =
 			new GhidraTableFilterPanel<>(destinationFunctionsTable, destinationFunctionsModel);
-
 		JPanel destinationFunctionPanel = new JPanel(new BorderLayout());
 		String destinationString =
 			(destinationProgram != null) ? destinationProgram.getDomainFile().toString()
@@ -537,6 +538,11 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationFunctionPanel.add(destinationSessionLabel, BorderLayout.NORTH);
 		destinationFunctionPanel.add(destinationThreadedTablePanel, BorderLayout.CENTER);
 		destinationFunctionPanel.add(destinationTableFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Destination Functions";
+		destinationFunctionsTable.setAccessibleNamePrefix(namePrefix);
+		destinationTableFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return destinationFunctionPanel;
 	}
 

@@ -22,24 +22,28 @@ import ghidra.app.util.bin.format.golang.GoVer;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.util.BigEndianDataConverter;
+import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * A low-level structure embedded in golang binaries that contains useful bootstrapping
  * information.
  * <p>
+ * Introduced in golang 1.16
  * 
  */
-@StructureMapping(structureName = "runtime.pcHeader")
+@StructureMapping(structureName = GoPcHeader.GO_STRUCTURE_NAME)
 public class GoPcHeader {
+	public static final String GO_STRUCTURE_NAME = "runtime.pcHeader";
 	private static final String RUNTIME_PCLNTAB_SYMBOLNAME = "runtime.pclntab";
-	public static final String GOPCLNTAB_SECTION_NAME = ".gopclntab";
+	public static final String GOPCLNTAB_SECTION_NAME = "gopclntab";
 	public static final int GO_1_2_MAGIC = 0xfffffffb;
 	public static final int GO_1_16_MAGIC = 0xfffffffa;
 	public static final int GO_1_18_MAGIC = 0xfffffff0;
@@ -50,29 +54,27 @@ public class GoPcHeader {
 	 * @param program {@link Program}
 	 * @return {@link Address} of go pclntab, or null if not present
 	 */
-	public static Address getPclntabAddress(Program program) {
-		MemoryBlock pclntabBlock = program.getMemory().getBlock(GOPCLNTAB_SECTION_NAME);
+	public static Address getPcHeaderAddress(Program program) {
+		MemoryBlock pclntabBlock = GoRttiMapper.getGoSection(program, GOPCLNTAB_SECTION_NAME);
 		if (pclntabBlock != null) {
 			return pclntabBlock.getStart();
 		}
 		// PE binaries have a symbol instead of a named section
-		Symbol pclntabSymbol = SymbolUtilities.getUniqueSymbol(program, RUNTIME_PCLNTAB_SYMBOLNAME);
-		return pclntabSymbol != null
-				? pclntabSymbol.getAddress()
-				: null;
+		Symbol pclntabSymbol = GoRttiMapper.getGoSymbol(program, RUNTIME_PCLNTAB_SYMBOLNAME);
+		return pclntabSymbol != null ? pclntabSymbol.getAddress() : null;
 	}
 
 	/**
-	 * Returns true if the specified program has an easily found pclntab
+	 * Returns true if the specified program has an easily found pclntab w/pcHeader
 	 * 
 	 * @param program {@link Program}
 	 * @return boolean true if program has a pclntab, false otherwise
 	 */
-	public static boolean hasPclntab(Program program) {
-		Address addr = getPclntabAddress(program);
+	public static boolean hasPcHeader(Program program) {
+		Address addr = getPcHeaderAddress(program);
 		if (addr != null) {
 			try (ByteProvider provider = new MemoryByteProvider(program.getMemory(), addr)) {
-				return isPclntab(provider);
+				return isPcHeader(provider);
 			}
 			catch (IOException e) {
 				// fall thru
@@ -82,43 +84,43 @@ public class GoPcHeader {
 	}
 
 	/**
-	 * Searches (possibly slowly) for a pclntab structure in the specified memory range, which
-	 * is typically necessary in stripped PE binaries.
+	 * Searches (possibly slowly) for a pclntab/pcHeader structure in the specified memory range,
+	 * which is typically necessary in stripped PE binaries.
 	 * 
 	 * @param programContext {@link GoRttiMapper} 
 	 * @param range memory range to search (typically .rdata or .noptrdata sections)
 	 * @param monitor {@link TaskMonitor} that will let the user cancel
-	 * @return {@link Address} of the found pclntab structure, or null if not found
+	 * @return {@link Address} of the found pcHeader structure, or null if not found
 	 * @throws IOException if error reading
 	 */
-	public static Address findPclntabAddress(GoRttiMapper programContext, AddressRange range,
+	public static Address findPcHeaderAddress(GoRttiMapper programContext, AddressRange range,
 			TaskMonitor monitor) throws IOException {
 		if (range == null) {
 			return null;
 		}
 		// search for magic signature + padding + wildcard_minLc + ptrSize
-		byte[] searchBytes = new byte[/*4 + 2 + 1 + 1*/] {
+		byte[] searchBytes = new byte[] { // 4 + 2 + 1 + 1
 			(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, // magic signature
 			0, 0,	// padding
 			0,	// unknown minLc, masked
 			(byte) programContext.getPtrSize()	// ptrSize
 		};
-		byte[] searchMask = new byte[] {
+		byte[] searchMask = new byte[] { // also 4 + 2 + 1 + 1
 			(byte) 0xf0, (byte) 0xff, (byte) 0xff, (byte) 0xf0, // magic, first byte nibble and last byte nibble is wildcard to handle either endian matching
 			(byte) 0xff, (byte) 0xff,	// padding 
 			0,	// unknown minLc - wildcarded
 			(byte) 0xff // ptrSize 
 		};
 		Memory memory = programContext.getProgram().getMemory();
-		Address pclntabAddr =
-			memory.findBytes(range.getMinAddress(), range.getMaxAddress(), searchBytes, searchMask,
-				true, monitor);
-		if (pclntabAddr == null) {
+		Address pcHeaderAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
+			searchBytes, searchMask, true, monitor);
+		if (pcHeaderAddr == null) {
 			return null;
 		}
-		MemoryByteProvider bp =
-			new MemoryByteProvider(memory, pclntabAddr, range.getMaxAddress());
-		return isPclntab(bp) ? pclntabAddr : null;
+		try (MemoryByteProvider bp =
+			new MemoryByteProvider(memory, pcHeaderAddr, range.getMaxAddress())) {
+			return isPcHeader(bp) ? pcHeaderAddr : null;
+		}
 	}
 
 	/**
@@ -128,17 +130,33 @@ public class GoPcHeader {
 	 * @return boolean true if the byte provider has the magic signature of a pclntab
 	 * @throws IOException if error reading
 	 */
-	public static boolean isPclntab(ByteProvider provider) throws IOException {
+	public static boolean isPcHeader(ByteProvider provider) throws IOException {
 		byte[] header = provider.readBytes(0, 8);
 		// logic from pclntab.go parsePclnTab()
-		if (provider.length() < 16 ||
-			header[4] != 0 || header[5] != 0 || // pad bytes == 0
+		if (provider.length() < 16 || header[4] != 0 || header[5] != 0 || // pad bytes == 0
 			(header[6] != 1 && header[6] != 2 && header[6] != 4) || // minLc == 1,2,4
 			(header[7] != 4 && header[7] != 8) // ptrSize == 4,8
 		) {
 			return false;
 		}
 		return readMagic(provider) != null;
+	}
+
+	public static Structure createArtificialGoPcHeaderStructure(CategoryPath cp,
+			DataTypeManager dtm) {
+		// this manually creates a minimal struct that matches the header of a <=1.15 pclntab
+		// section
+		StructureDataType struct = new StructureDataType(cp, GO_STRUCTURE_NAME, 0, dtm);
+		struct.setDescription(
+			"Artificial structure created by Ghidra to represent the header of the pclntable");
+		struct.setPackingEnabled(true);
+		struct.add(AbstractIntegerDataType.getUnsignedDataType(4, null), "magic", null);
+		struct.add(AbstractIntegerDataType.getUnsignedDataType(1, null), "pad1", null);
+		struct.add(AbstractIntegerDataType.getUnsignedDataType(1, null), "pad2", null);
+		struct.add(AbstractIntegerDataType.getUnsignedDataType(1, null), "minLC", null);
+		struct.add(AbstractIntegerDataType.getUnsignedDataType(1, null), "ptrSize", null);
+
+		return struct;
 	}
 
 	@ContextField
@@ -157,27 +175,27 @@ public class GoPcHeader {
 	@FieldMapping
 	private byte ptrSize;
 
-	@FieldMapping(optional = true) // present >= 1.18
+	@FieldMapping(presentWhen = "1.18+")
 	@MarkupReference
 	private long textStart;	// should be same as offset of ".text"
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.16+")
 	@MarkupReference("getFuncnameAddress")
 	private long funcnameOffset;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.16+")
 	@MarkupReference("getCuAddress")
 	private long cuOffset;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.16+")
 	@MarkupReference("getFiletabAddress")
 	private long filetabOffset;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.16+")
 	@MarkupReference("getPctabAddress")
 	private long pctabOffset;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.16+")
 	@MarkupReference("getPclnAddress")
 	private long pclnOffset;
 
@@ -188,7 +206,7 @@ public class GoPcHeader {
 			case GO_1_2_MAGIC -> GoVer.V1_2;
 			case GO_1_16_MAGIC -> GoVer.V1_16;
 			case GO_1_18_MAGIC -> GoVer.V1_18;
-			default -> GoVer.UNKNOWN;
+			default -> GoVer.INVALID;
 		};
 		return ver;
 	}
@@ -215,7 +233,9 @@ public class GoPcHeader {
 	 * @return address of func name slice
 	 */
 	public Address getFuncnameAddress() {
-		return programContext.getDataAddress(context.getStructureStart() + funcnameOffset);
+		return funcnameOffset != 0
+				? programContext.getDataAddress(context.getStructureStart() + funcnameOffset)
+				: null;
 	}
 
 	/**
@@ -223,7 +243,9 @@ public class GoPcHeader {
 	 * @return address of the cu tab slice
 	 */
 	public Address getCuAddress() {
-		return programContext.getDataAddress(context.getStructureStart() + cuOffset);
+		return cuOffset != 0
+				? programContext.getDataAddress(context.getStructureStart() + cuOffset)
+				: null;
 	}
 
 	/**
@@ -231,7 +253,9 @@ public class GoPcHeader {
 	 * @return address of the filetab slice
 	 */
 	public Address getFiletabAddress() {
-		return programContext.getDataAddress(context.getStructureStart() + filetabOffset);
+		return filetabOffset != 0
+				? programContext.getDataAddress(context.getStructureStart() + filetabOffset)
+				: null;
 	}
 
 	/**
@@ -239,7 +263,9 @@ public class GoPcHeader {
 	 * @return address of the pctab slice
 	 */
 	public Address getPctabAddress() {
-		return programContext.getDataAddress(context.getStructureStart() + pctabOffset);
+		return pctabOffset != 0
+				? programContext.getDataAddress(context.getStructureStart() + pctabOffset)
+				: null;
 	}
 
 	/**
@@ -247,7 +273,9 @@ public class GoPcHeader {
 	 * @return address of the pcln slice
 	 */
 	public Address getPclnAddress() {
-		return programContext.getDataAddress(context.getStructureStart() + pclnOffset);
+		return pclnOffset != 0
+				? programContext.getDataAddress(context.getStructureStart() + pclnOffset)
+				: null;
 	}
 
 	/**
@@ -274,8 +302,9 @@ public class GoPcHeader {
 	}
 
 	private static GoVerEndian readMagic(ByteProvider provider) throws IOException {
-		int leMagic = new BinaryReader(provider, true /* little endian */).readInt(0);
-		int beMagic = new BinaryReader(provider, false /* big endian */).readInt(0);
+		BinaryReader reader = new BinaryReader(provider, true);
+		int leMagic = reader.readInt(LittleEndianDataConverter.INSTANCE, 0);
+		int beMagic = reader.readInt(BigEndianDataConverter.INSTANCE, 0);
 
 		if (leMagic == GO_1_2_MAGIC || beMagic == GO_1_2_MAGIC) {
 			return new GoVerEndian(GoVer.V1_2, leMagic == GO_1_2_MAGIC);

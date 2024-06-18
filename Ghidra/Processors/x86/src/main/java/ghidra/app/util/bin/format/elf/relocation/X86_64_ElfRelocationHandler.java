@@ -69,8 +69,8 @@ public class X86_64_ElfRelocationHandler extends
 
 		switch (type) {
 			case R_X86_64_COPY:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 			case R_X86_64_64:
 				value = symbolValue + addend;
@@ -135,6 +135,7 @@ public class X86_64_ElfRelocationHandler extends
 				catch (NotFoundException e) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 						e.getMessage(), elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				break;
 			case R_X86_64_32:  // this one complains for unsigned overflow
@@ -176,6 +177,7 @@ public class X86_64_ElfRelocationHandler extends
 				catch (NotFoundException e) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 						e.getMessage(), elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				break;
 
@@ -239,7 +241,7 @@ public class X86_64_ElfRelocationHandler extends
 				if (symbolGotAddress == null) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 						"GOT allocation failure", elfRelocationContext.getLog());
-					break;
+					return RelocationResult.FAILURE;
 				}
 				value = symbolGotAddress.getOffset() + addend - offset;
 				memory.setInt(relocationAddress, (int) value);
@@ -251,7 +253,7 @@ public class X86_64_ElfRelocationHandler extends
 				if (symbolGotAddress == null) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 						"GOT allocation failure", elfRelocationContext.getLog());
-					break;
+					return RelocationResult.FAILURE;
 				}
 				value = symbolGotAddress.getOffset() + addend - offset;
 				memory.setLong(relocationAddress, value);

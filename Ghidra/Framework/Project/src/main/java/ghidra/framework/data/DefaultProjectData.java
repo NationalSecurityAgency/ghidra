@@ -686,11 +686,19 @@ public class DefaultProjectData implements ProjectData {
 	}
 
 	public void releaseDomainFiles(Object consumer) {
-		for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
-			try {
+		List<DomainObjectAdapter> matchingObjs = new ArrayList<>();
+		synchronized (this) {
+			for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
 				if (domainObj.getConsumerList().contains(consumer)) {
-					domainObj.release(consumer);
+					matchingObjs.add(domainObj);
 				}
+			}
+		}
+
+		// release consumers outside of synch block
+		for (DomainObjectAdapter domainObj : matchingObjs) {
+			try {
+				domainObj.release(consumer);
 			}
 			catch (IllegalArgumentException e) {
 				// ignore
@@ -703,7 +711,7 @@ public class DefaultProjectData implements ProjectData {
 	 * @param list the list to receive the changed domain files
 	 */
 	@Override
-	public void findOpenFiles(List<DomainFile> list) {
+	public synchronized void findOpenFiles(List<DomainFile> list) {
 		for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
 			list.add(domainObj.getDomainFile());
 		}
@@ -907,15 +915,17 @@ public class DefaultProjectData implements ProjectData {
 	private void findCheckedOutFiles(String folderPath, List<DomainFile> checkoutList,
 			TaskMonitor monitor) throws IOException, CancelledException {
 
-		for (String name : fileSystem.getItemNames(folderPath)) {
+		DomainFolder folder = getFolder(folderPath);
+		if (folder == null) {
+			return;
+		}
+
+		GhidraFolderData folderData = getRootFolderData().getFolderPathData(folderPath, false);
+		for (String name : folderData.getFileNames()) {
 			monitor.checkCancelled();
-			LocalFolderItem item = fileSystem.getItem(folderPath, name);
-			if (item.getCheckoutId() != FolderItem.DEFAULT_CHECKOUT_ID) {
-				GhidraFolderData folderData =
-					getRootFolderData().getFolderPathData(folderPath, false);
-				if (folderData != null) {
-					checkoutList.add(new GhidraFile(folderData.getDomainFolder(), name));
-				}
+			GhidraFileData fileData = folderData.getFileData(name, false);
+			if (fileData != null && fileData.isCheckedOut()) {
+				checkoutList.add(new GhidraFile(folderData.getDomainFolder(), name));
 			}
 		}
 

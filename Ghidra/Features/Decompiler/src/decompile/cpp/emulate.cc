@@ -413,6 +413,8 @@ void EmulatePcodeCache::executeBranch(void)
       fallthruOp();
     else if ((current_op < 0)||(current_op >= opcache.size()))
       throw LowlevelError("Bad intra-instruction branch");
+    else
+      establishOp();
   }
   else
     setExecuteAddress(destaddr);

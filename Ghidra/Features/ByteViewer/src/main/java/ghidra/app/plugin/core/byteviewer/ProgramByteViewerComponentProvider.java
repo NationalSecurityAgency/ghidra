@@ -366,13 +366,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public boolean isVisible() {
 		return tool.isVisible(this);
 	}
-
-	@Override
-	public void requestFocus() {
-		panel.getCurrentComponent().requestFocus();
-		tool.toFront(this);
-	}
-
+	
 //==================================================================================================
 // End Navigatable interface methods */
 //==================================================================================================

@@ -45,6 +45,7 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
@@ -178,7 +179,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @return result of command applyTo method
 	 * @throws RollbackException thrown if thrown by command applyTo method
 	 */
-	public static boolean applyCmd(Program program, Command cmd) throws RollbackException {
+	public static boolean applyCmd(Program program, Command<Program> cmd) throws RollbackException {
 		int txId = program.startTransaction(cmd.getName());
 		boolean commit = true;
 		try {
@@ -430,6 +431,13 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		return null;
 	}
 
+	public AddressSet toAddressSet(Program p, String from, String to) {
+		AddressFactory af = p.getAddressFactory();
+		Address a1 = af.getAddress(from);
+		Address a2 = af.getAddress(to);
+		return af.getAddressSet(a1, a2);
+	}
+
 	public AddressSet toAddressSet(List<Address> addrs) {
 		AddressSet set = new AddressSet();
 		for (Address addr : addrs) {
@@ -494,6 +502,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		ProgramSelection selection = new ProgramSelection(addresses);
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, p));
 		waitForSwing();
+	}
+
+	public void clearSelection(PluginTool tool, Program p) {
+		AddressSet set = new AddressSet();
+		makeSelection(tool, p, set);
 	}
 
 	/**
@@ -608,29 +621,27 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
 
-		List<Class<?>> extentions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
-		Set<Class<?>> set = new HashSet<>(extentions);
-		Iterator<Class<?>> iterator = set.iterator();
-		while (iterator.hasNext()) {
-			Class<?> c = iterator.next();
-			if (service.isAssignableFrom(c)) {
-				iterator.remove();
-				T instance = tool.getService(service);
-				serviceManager.removeService(service, instance);
-			}
+		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
+			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
+				ClassSearcher.class);
+		HashMap<ClassFileInfo, Class<?>> loadedCache =
+			(HashMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
+		String suffix = ClassSearcher.getExtensionPointSuffix(service.getSimpleName());
+
+		if (suffix != null) {
+			Set<ClassFileInfo> serviceSet = extensionPointSuffixToInfoMap.get(suffix);
+			assertNotNull(serviceSet);
+			serviceSet.clear();
+			ClassFileInfo info = new ClassFileInfo("", replacement.getClass().getName(), suffix);
+			serviceSet.add(info);
+			loadedCache.put(info, replacement.getClass());
 		}
 
 		T instance = tool.getService(service);
 		if (instance != null) {
 			serviceManager.removeService(service, instance);
 		}
-
-		set.add(replacement.getClass());
 		serviceManager.addService(service, replacement);
-
-		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
-		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 
 //==================================================================================================

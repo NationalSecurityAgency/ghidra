@@ -290,7 +290,9 @@ public:
     return (loc.getOffset() == val);
   }
 
-  int4 isConstantExtended(uintb &val) const; ///< Is \b this an (extended) constant
+  bool isConstantExtended(uint8 *val) const; ///< Is \b this an (extended) constant
+  bool isEventualConstant(int4 maxBinary,int4 maxLoad) const;	///< Will \b this Varnode ultimately collapse to a constant
+
   /// Return \b true if this Varnode is linked into the SSA tree
   bool isHeritageKnown(void) const { return ((flags&(Varnode::insert|Varnode::constant|Varnode::annotation))!=0); }
   bool isTypeLock(void) const { return ((flags&Varnode::typelock)!=0); } ///< Does \b this have a locked Datatype?

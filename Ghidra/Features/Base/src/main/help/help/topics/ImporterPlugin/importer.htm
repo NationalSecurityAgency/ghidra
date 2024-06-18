@@ -311,18 +311,8 @@
           <P>The project folder that will get searched for existing library programs.  If left
           empty, the folder that the main program is being imported to will be searched.</P>
         </BLOCKQUOTE>
-
-        <H4>Load Local Libraries From Disk</H4>
-
-        <BLOCKQUOTE>
-          <P>Searches the executable's directory to recursively resolve the external libraries used 
-          by the executable. The entire library dependency tree will be traversed in a depth-first 
-          manner and a program will be created for each found library (if it doesn't exist already).
-          The <A href="help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A>
-          in these programs will be resolved.<BR>
-        </BLOCKQUOTE>
         
-        <H4>Load System Libraries From Disk</H4>
+        <H4>Load Libraries From Disk</H4>
 
         <BLOCKQUOTE>
           <P>Searches a user-defined path list to recursively resolve the external libraries used 
@@ -696,8 +686,12 @@
       <H2><A name="Library_Paths"></A>Library Search Path</H2>
 
       <BLOCKQUOTE>
-        <P>The Library Search Path dialog is used to specify the directories that Ghidra should use
-        to resolve external libraries (e.g.; *.dll, *.so) while importing.</P>
+        <P>The Library Search Path dialog is used to specify the directories, container files,
+        and/or FSRLs that Ghidra should use to resolve external libraries (e.g.; *.dll, *.so) while
+        importing. A "." can be added to specify the the program's import location.  FSRLs can be
+        added via the
+        <A href="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html#FSB_Add_Library_Search_Path">File System Browser context menu</A>.
+        </P>
       </BLOCKQUOTE>
 
       <P align="center"><IMG alt="" src="images/SearchPathsDialog.png"></P>
@@ -734,7 +728,8 @@
           <OL>
             <LI>Click the <IMG alt="" src="images/Plus.png"> button</LI>
 
-            <LI>Select a directory from the file chooser</LI>
+            <LI>Select a directory or container file from the file chooser, or the program's
+            import location if "." is not present in the list already</LI>
 
             <LI>Click the "Select Directory" button</LI>
           </OL>
@@ -802,7 +797,7 @@
 
           <LI><B>Size</B> - the size in bits of the processor address space</LI>
 
-          <LI><B>Endian</B> - the endianess of the processor</LI>
+          <LI><B>Endian</B> - the endianness of the processor</LI>
 
           <LI><B>Compile</B> - the compiler specification used to build the program</LI>
         </UL>

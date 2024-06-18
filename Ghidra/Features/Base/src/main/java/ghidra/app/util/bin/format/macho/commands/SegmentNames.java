@@ -54,4 +54,6 @@ public final class SegmentNames {
 
 	public final static String SEG_TEXT_EXEC = "__TEXT_EXEC";
 	public final static String SEG_PRELINK_TEXT = "__PRELINK_TEXT";
+	public final static String SEG_BRANCH_STUBS = "__BRANCH_STUBS";
+	public final static String SEG_BRANCH_GOTS = "__BRANCH_GOTS";
 }

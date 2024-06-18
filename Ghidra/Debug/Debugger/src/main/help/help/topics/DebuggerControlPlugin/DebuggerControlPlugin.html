@@ -31,32 +31,32 @@
     are:</P>
 
     <UL>
-      <LI><IMG alt="" src="images/record.png"> <B>Control Target w/Edits Disabled:</B> The default,
-      this presents actions for controlling the live target but rejects all machine-state edits.
-      Breakpoint commands are directed to the live target. When active, the UI automatically
-      follows the latest snapshot recorded. If the target is terminated, the mode is automatically
+      <LI><IMG alt="" src="icon.debugger.control.mode.ro.target"> <B>Control Target w/Edits
+      Disabled:</B> The default, this presents actions for controlling the live target but rejects
+      all machine-state edits. Breakpoint commands are directed to the live target. When active,
+      the UI automatically follows the latest snapshot recorded, and navigating back in time is not
+      permitted. If the target is terminated and the trace remains open, the mode is automatically
       switched to <B>Control Trace</B>.</LI>
 
-      <LI><IMG alt="" src="images/write-target.png"> <B>Control Target:</B> This presents actions
-      for controlling the live target and directs edits to the live target. Breakpoint commands are
-      directed to the live target. To accept edits, the UI must be "live and at the present." If
-      the trace has no associated target, i.e., it is dead; or if the current view is in the past
-      or includes any steps of emulation, i.e., it is not at the present; then edits are rejected.
-      When active, the UI automatically follows the latest snapshot recorded. If the target is
-      terminated, the mode is automatically switched to <B>Control Emulator</B>.</LI>
+      <LI><IMG alt="" src="icon.debugger.control.mode.rw.target"> <B>Control Target:</B> This
+      presents actions for controlling the live target and directs edits to the live target.
+      Breakpoint commands are directed to the live target. When active, the UI automatically
+      follows the latest snapshot recorded, an navigating back in time is not permitted. If the
+      target is terminated and the trace remains open, the mode is automatically switched to
+      <B>Control Emulator</B>.</LI>
 
-      <LI><IMG alt="" src="images/video-x-generic16.png"> <B>Control Trace w/Edits Disabled:</B>
-      This presents actions for navigating trace snapshots but rejects all machine-state edits.
-      Breakpoint commands are directed to the emulator.</LI>
+      <LI><IMG alt="" src="icon.debugger.control.mode.ro.trace"> <B>Control Trace w/Edits
+      Disabled:</B> This presents actions for navigating trace snapshots but rejects all
+      machine-state edits. Breakpoint commands are directed to the emulator.</LI>
 
-      <LI><IMG alt="" src="images/write-trace.png"> <B>Control Trace:</B> This presents actions for
-      navigating trace snapshots. It directs all edits to the trace database. Edits are generally
-      always accepted, and they are applied directly to the trace. Breakpoint commands are directed
-      to the emulator.</LI>
+      <LI><IMG alt="" src="icon.debugger.control.mode.rw.trace"> <B>Control Trace:</B> This
+      presents actions for navigating trace snapshots. It directs all edits to the trace database.
+      Edits are generally always accepted, and they are applied directly to the trace. Breakpoint
+      commands are directed to the emulator.</LI>
 
-      <LI><IMG alt="" src="images/write-emulator.png"> <B>Control Emulator:</B> This presents
-      actions for controlling the integrated emulator. Breakpoint commands are directed to the
-      emulator. This can be used for interpolating and extrapolating execution from the current
+      <LI><IMG alt="" src="icon.debugger.control.mode.rw.emulator"> <B>Control Emulator:</B> This
+      presents actions for controlling the integrated emulator. Breakpoint commands are directed to
+      the emulator. This can be used for interpolating and extrapolating execution from the current
       snapshot, without affecting the live target. It directs edits to the integrated emulator by
       generating patch steps and appending them to the emulation schedule. See the <A href=
       "help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html#goto_time">Go To Time</A> action.
@@ -71,67 +71,67 @@
     only when the current trace has an associated live target. Commands are directed to the focused
     object or a suitable substitute.</P>
 
-    <H3><A name="target_resume"></A><IMG alt="" src="images/resume.png"> Resume</H3>
+    <H3><A name="target_resume"></A><IMG alt="" src="icon.debugger.resume"> Resume</H3>
 
     <P>Allow the current target to resume execution. Other debuggers may call this "continue" or
-    "go." If successful, the target enters the "running" state until/if it is interrupted or
+    "go." If successful, the target enters the "running" state until it is interrupted or
     terminated. This is available when the target is currently stopped.</P>
 
-    <H3><A name="target_interrupt"></A><IMG alt="" src="images/interrupt.png"> Interrupt</H3>
+    <H3><A name="target_interrupt"></A><IMG alt="" src="icon.debugger.interrupt"> Interrupt</H3>
 
     <P>Interrupt the current target's execution. Other debuggers may call this "break," "suspend,"
     or "stop." If successful, the target enters the "stopped" state. This is available when the
     target is currently running.</P>
 
-    <H3><A name="target_kill"></A><IMG alt="" src="images/kill.png"> Kill</H3>
+    <H3><A name="target_kill"></A><IMG alt="" src="icon.debugger.kill"> Kill</H3>
 
-    <P>Kill the current target. Other debuggers may call this "terminate" or "stop." By default,
-    this will consequently close the current trace. If successful, the target enters the
-    "terminated" state. This is always available for a live target.</P>
+    <P>Kill the current target. Other debuggers may call this "terminate" or "stop." This may
+    consequently close the current trace. If successful, the target enters the "terminated" state.
+    This is always available for a live target.</P>
 
-    <H3><A name="target_disconnect"></A><IMG alt="" src="images/disconnect.png"> Disconnect</H3>
+    <H3><A name="target_disconnect"></A><IMG alt="" src="icon.debugger.disconnect"> Disconnect</H3>
 
     <P>Disconnect from the current target's debugger. This usually causes the connected debugger to
-    terminate and likely kill its targets. By default, this will consequently close the trace for
-    all affected targets. This is always available for a live target.</P>
+    terminate and likely kill its targets. This may consequently close the current trace (and
+    perhaps others). This is always available for a live target.</P>
 
-    <H3><A name="target_step_into"></A><IMG alt="" src="images/stepinto.png"> Step Into</H3>
+    <H3><A name="target_step_into"></A><IMG alt="" src="icon.debugger.step.into"> Step Into</H3>
 
     <P>Step the current target to the next instruction. This is available when the target is
     currently stopped. If successful the target may briefly enter the "running" state.</P>
 
-    <H3><A name="target_step_over"></A><IMG alt="" src="images/stepover.png"> Step Over</H3>
+    <H3><A name="target_step_over"></A><IMG alt="" src="icon.debugger.step.over"> Step Over</H3>
 
     <P>Step the current target to the next instruction in the current subroutine. This is available
     when the target is currently stopped. If successful the target may briefly enter the "running"
     state.</P>
 
-    <H3><A name="target_step_out"></A><IMG alt="" src="images/stepout.png"> Step Out</H3>
+    <H3><A name="target_step_out"></A><IMG alt="" src="icon.debugger.step.finish"> Step Out</H3>
 
     <P>Allow the current target to finish the current subroutine, pausing after. This is available
     when the target is currently stopped. If successful the target may briefly enter the "running"
     state.</P>
 
-    <H3><A name="target_step_last"></A><IMG alt="" src="images/steplast.png"> Step Repeat Last /
-    Extended</H3>
+    <H3><A name="target_step_last"></A><A name="target_step_ext"></A><IMG alt="" src=
+    "icon.debugger.step.last"> Step Extended (Repeat Last)</H3>
 
-    <P>Perform a target-defined step, often the last (possibly custom or extended) step. This is
-    available when the target is currently stopped. If successful the target may briefly enter the
-    "running" state.</P>
+    <P>Perform a target-defined step, perhaps the last (possibly custom) step. This is available
+    when the target is currently stopped. If successful the target may briefly enter the "running"
+    state.</P>
 
     <H2>Trace Navigation Actions</H2>
 
     <P>These actions are visible when a <B>Control Trace</B> mode is selected. They are available
     when there is an active trace.</P>
 
-    <H3><A name="trace_snap_backward"></A><IMG alt="" src="images/2leftarrow.png" width="16">
+    <H3><A name="trace_snap_backward"></A><IMG alt="" src="icon.debugger.snap.backward" width="16">
     Snapshot Backward</H3>
 
     <P>This activates the previous snapshot. All windows displaying machine state will show that
     recorded in the activated snapshot. This is available only when there exists a snapshot
     previous to the current.</P>
 
-    <H3><A name="trace_snap_forward"></A><IMG alt="" src="images/2rightarrow.png" width="16">
+    <H3><A name="trace_snap_forward"></A><IMG alt="" src="icon.debugger.snap.forward" width="16">
     Snapshot Forward</H3>
 
     <P>This activates the next snapshot. All windows displaying machine state will show that
@@ -144,7 +144,7 @@
     available when there is an active trace. Commands are directed to the integrated emulator for
     the current trace.</P>
 
-    <H3><A name="emu_resume"></A><IMG alt="" src="images/resume.png"> Resume</H3>
+    <H3><A name="emu_resume"></A><IMG alt="" src="icon.debugger.resume"> Resume</H3>
 
     <P>Allow the emulator to resume execution. This is available when no other integrated emulator
     is running. A monitor dialog is presented during execution, but the GUI remains responsive.
@@ -154,14 +154,14 @@
     system calls are not yet supported. It could also start executing from unmapped memory or enter
     an infinite loop. If it seems to carry on too long, interrupt it and examine.</P>
 
-    <H3><A name="emu_interrupt"></A><IMG alt="" src="images/interrupt.png"> Interrupt</H3>
+    <H3><A name="emu_interrupt"></A><IMG alt="" src="icon.debugger.interrupt"> Interrupt</H3>
 
     <P>Interrupt the currently-running emulator. This is available when any integrated emulator is
     running. In most cases, this is the emulator for the current trace, but it may not be.
     Canceling the dialog for an emulation task will also interrupt the emulator. Upon interruption,
     the emulation schedule is noted and the snapshot displayed in the GUI.</P>
 
-    <H3><A name="emu_step_back"></A><IMG alt="" src="images/stepback.png"> Step Back</H3>
+    <H3><A name="emu_step_back"></A><IMG alt="" src="icon.debugger.step.back"> Step Back</H3>
 
     <P>Steps the emulator to the previous instruction, by flow. This is available when the current
     snapshot includes emulated steps. This operates by repeating the current emulation schedule
@@ -169,7 +169,7 @@
     not common, if emulation to the current snapshot took a good bit of time, then stepping
     backward will likely take about the same amount of time.</P>
 
-    <H3><A name="emu_step_into"></A><IMG alt="" src="images/stepinto.png"> Step Into</H3>
+    <H3><A name="emu_step_into"></A><IMG alt="" src="icon.debugger.step.into"> Step Into</H3>
 
     <P>Steps the emulator to the next instruction, by flow. This is available when there is an
     active thread. At worst, this operates by repeating the current emulation schedule with one
@@ -177,7 +177,7 @@
     current snapshot and advance it a single step. Note that "Step Over" is not currently supported
     by the emulator.</P>
 
-    <H3><A name="emu_skip_over"></A><IMG alt="" src="images/skipover.png"> Skip Over</H3>
+    <H3><A name="emu_skip_over"></A><IMG alt="" src="icon.debugger.skip.over"> Skip Over</H3>
 
     <P>Skips the emulator over the current instruction, ignoring flow. This is available when there
     is an active thread. At worst, this operates by repeating the current emulation schedule with

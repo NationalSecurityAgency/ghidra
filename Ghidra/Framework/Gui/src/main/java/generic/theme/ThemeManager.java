@@ -19,8 +19,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.Icon;
-import javax.swing.LookAndFeel;
+import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 
 import generic.theme.builtin.*;
@@ -667,6 +666,29 @@ public abstract class ThemeManager {
 			int newSize = Math.max(MIN_FONT_SIZE, currentSize += amount);
 			setFont(fontValue.getId(), directFont.deriveFont((float) newSize));
 		}
+	}
 
+	/**
+	 * Sets application's blinking cursor state. This will affect all JTextFields, JTextAreas, 
+	 * JTextPanes via {@link UIDefaults}. Custom components can also respect this setting by
+	 * either adding a {@link ThemeListener} or overriding {@link JComponent#updateUI()}
+	 * <P> NOTE: This method is a bit odd here as it doesn't really apply to a theme. But it
+	 * requires manipulation of the look and feel which is managed by the theme. If other 
+	 * application level properties  come along and also require changing the UIDefaults, 
+	 * perhaps a more general solution might be to add a way for clients to register a callback
+	 * so that they get a chance to change the UIDefaults map as the look and feel is loaded.
+	 * @param b true for blinking text cursors, false for non-blinking text cursors
+	 */
+	protected void setBlinkingCursors(boolean b) {
+		// do nothing
+	}
+
+	/**
+	 * Returns true if the application should allow blinking cursors, false otherwise. Custom
+	 * components can use this method to determine if they should have a blinking cursor or not.
+	 * @return true if the application should allow blinking cursors, false otherwise.
+	 */
+	protected boolean isBlinkingCursors() {
+		return true;
 	}
 }

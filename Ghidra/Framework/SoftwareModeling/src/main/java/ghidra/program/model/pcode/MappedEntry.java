@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractFloatDataType;
+import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
@@ -87,59 +88,44 @@ public class MappedEntry extends SymbolEntry {
 	}
 
 	@Override
-	public boolean isReadOnly() {
+	public int getMutability() {
 		Address addr = storage.getMinAddress();
+		return getMutabilityOfAddress(addr, symbol.getProgram());
+	}
+
+	/**
+	 * Get the underlying mutability setting of an Address based on the Program
+	 * configuration and the MemoryBlock.  Ignore any overrides of Data at the address. 
+	 * @param addr is the Address
+	 * @param program is the Program containing the Address
+	 * @return the mutability
+	 */
+	public static int getMutabilityOfAddress(Address addr, Program program) {
 		if (addr == null) {
-			return false;
+			return MutabilitySettingsDefinition.NORMAL;
 		}
-		boolean readonly = false;
-		Program program = symbol.getProgram();
+		if (program.getLanguage().isVolatile(addr)) {
+			return MutabilitySettingsDefinition.VOLATILE;
+		}
 		MemoryBlock block = program.getMemory().getBlock(addr);
 		if (block != null) {
-			readonly = !block.isWrite();
+			if (block.isVolatile()) {
+				return MutabilitySettingsDefinition.VOLATILE;
+			}
 			// if the block says read-only, check the refs to the variable
-			// if the block says read-only, check the refs to the variable
-			if (readonly) {
+			if (!block.isWrite()) {
 				ReferenceIterator refIter = program.getReferenceManager().getReferencesTo(addr);
 				int count = 0;
-//				boolean foundRead = false;
 				while (refIter.hasNext() && count < 100) {
 					Reference ref = refIter.next();
 					if (ref.getReferenceType().isWrite()) {
-						readonly = false;
-						break;
-					}
-					if (ref.getReferenceType().isRead()) {
-//						foundRead = true;
+						return MutabilitySettingsDefinition.NORMAL;
 					}
 					count++;
 				}
-				// TODO: Don't do override if no read reference found
-				//
-				// if we only have indirect refs to it, don't assume readonly!
-				//if (!foundRead && readonly && count > 1) {
-				//	readonly = false;
-				//}
-				// they must be reading it multiple times for some reason
-				// if (readonly && count > 1) {
-				// 	readonly = false;
-				// }
+				return MutabilitySettingsDefinition.CONSTANT;
 			}
 		}
-		return readonly;
-	}
-
-	@Override
-	public boolean isVolatile() {
-		Address addr = storage.getMinAddress();
-		if (addr == null) {
-			return false;
-		}
-		Program program = symbol.getProgram();
-		if (program.getLanguage().isVolatile(addr)) {
-			return true;
-		}
-		MemoryBlock block = program.getMemory().getBlock(addr);
-		return (block != null && block.isVolatile());
+		return MutabilitySettingsDefinition.NORMAL;
 	}
 }

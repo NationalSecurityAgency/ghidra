@@ -34,6 +34,7 @@ import javax.swing.tree.*;
 
 import org.junit.Assert;
 
+import ghidra.framework.ApplicationConfiguration;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
@@ -48,6 +49,18 @@ import utility.function.ExceptionalCallback;
  * should use AbstractGenericTest instead
  */
 public class AbstractGuiTest extends AbstractGenericTest {
+
+	@Override
+	protected ApplicationConfiguration createApplicationConfiguration() {
+		// A simple way to signal that Gui tests are not headless
+		return new ApplicationConfiguration() {
+			@Override
+			public boolean isHeadless() {
+				return false;
+			}
+		};
+	}
+
 	/**
 	 * Gets all windows in the system (including Frames).
 	 *

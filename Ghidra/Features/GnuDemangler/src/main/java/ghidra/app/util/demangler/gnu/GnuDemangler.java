@@ -18,6 +18,8 @@ package ghidra.app.util.demangler.gnu;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import generic.jar.ResourceFile;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.opinion.ElfLoader;
@@ -106,8 +108,12 @@ public class GnuDemangler implements Demangler {
 		try {
 
 			GnuDemanglerNativeProcess process = getNativeProcess(options);
-			String demangled = process.demangle(mangled).trim();
-			if (mangled.equals(demangled) || demangled.length() == 0) {
+			String demangled = process.demangle(mangled);
+			if (demangled == null) {
+				throw new DemangledException(false);
+			}
+			demangled = demangled.trim();
+			if (demangled.length() == 0 ||  mangled.equals(demangled)) {
 				throw new DemangledException(true);
 			}
 
@@ -196,6 +202,12 @@ public class GnuDemangler implements Demangler {
 
 		// This is the current list of known demangler start patterns.  Add to this list if we
 		// find any other known GNU start patterns.
+		if (mangled.startsWith(GLOBAL_PREFIX)) {
+			int index = mangled.indexOf("_Z");
+			if (index > 0) {
+				return false;
+			}
+		}
 		if (mangled.startsWith("_Z")) {
 			return false;
 		}

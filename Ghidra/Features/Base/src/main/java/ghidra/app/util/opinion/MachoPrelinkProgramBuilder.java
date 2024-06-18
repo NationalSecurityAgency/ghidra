@@ -88,6 +88,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		for (MachoInfo info : machoInfoList) {
 			info.processMemoryBlocks();
 			info.markupHeaders();
+			info.markupLoadCommandData();
 			info.addToProgramTree();
 			monitor.incrementProgress(1);
 		}
@@ -217,7 +218,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * Processes memory blocks for this Mach-O.
 		 * 
 		 * @throws Exception If there was a problem processing memory blocks for this Mach-O.
-		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
+		 * @see MachoProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
 		public void processMemoryBlocks() throws Exception {
 			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, true, false);
@@ -227,7 +228,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * Marks up the Mach-O headers.
 		 * 
 		 * @throws Exception If there was a problem marking up the Mach-O's headers.
-		 * @see MachoPrelinkProgramBuilder#markupHeaders(MachHeader, Address)
+		 * @see MachoProgramBuilder#markupHeaders(MachHeader, Address)
 		 */
 		public void markupHeaders() throws Exception {
 			MachoPrelinkProgramBuilder.this.markupHeaders(header, headerAddr);
@@ -235,6 +236,16 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 			if (!name.isEmpty()) {
 				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, name);
 			}
+		}
+
+		/**
+		 * Marks up the Mach-O load command data.
+		 * 
+		 * @throws Exception If there was a problem marking up the Mach-O's load command data.
+		 * @see MachoProgramBuilder#markupLoadCommandData(MachHeader, String)
+		 */
+		public void markupLoadCommandData() throws Exception {
+			MachoPrelinkProgramBuilder.this.markupLoadCommandData(header, name);
 		}
 
 		/**

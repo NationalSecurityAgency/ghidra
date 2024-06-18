@@ -21,6 +21,7 @@ import java.util.List;
 
 import db.*;
 import ghidra.feature.vt.api.main.VTMatchInfo;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 

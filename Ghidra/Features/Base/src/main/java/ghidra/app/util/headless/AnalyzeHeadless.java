@@ -22,13 +22,14 @@ import java.net.URL;
 import java.util.*;
 
 import generic.stl.Pair;
-import ghidra.GhidraApplicationLayout;
-import ghidra.GhidraLaunchable;
+import ghidra.*;
+import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.opinion.Loader;
 import ghidra.framework.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.Handler;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -117,6 +118,10 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		}
 		HeadlessOptions options = analyzer.getOptions();
 		parseOptions(options, args, optionStartIndex, ghidraURL, filesToImport);
+
+		Msg.info(AnalyzeHeadless.class,
+			"Headless startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() + " ms)");
+		ClassSearcher.logStatistics();
 
 		// Do the headless processing
 		try {
@@ -336,6 +341,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 			else if ("-okToDelete".equalsIgnoreCase(args[argi])) {
 				options.setOkToDelete(true);
+			}
+			else if (checkArgument("-librarySearchPaths", args, argi)) {
+				LibrarySearchPathManager.setLibraryPaths(args[++argi].split(";"));
 			}
 			else {
 				throw new InvalidInputException("Bad argument: " + arg);

@@ -80,17 +80,36 @@
         <pentry minsize="1" maxsize="500" align="8">
           <addr offset="8" space="stack"/>
         </pentry>
+        <rule>
+          <datatype name="any" maxsize="16"/>
+          <join_dual_class/>		<!-- Bind from registers if possible-->
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <goto_stack/>
+        </rule>
       </input>
       <output>
-        <pentry minsize="4" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="8" metatype="float">
           <register name="XMM0_Qa"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="XMM1_Qa"/>
         </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="RAX"/>
         </pentry>
-        <pentry minsize="9" maxsize="16">
-          <addr space="join" piece1="RDX" piece2="RAX"/>
+        <pentry minsize="1" maxsize="8">
+          <register name="RDX"/>
         </pentry>
+        <rule>
+          <datatype name="any" maxsize="16"/>
+          <join_dual_class/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <hidden_return/>
+        </rule>
       </output>
       <killedbycall>
         <register name="RAX"/>

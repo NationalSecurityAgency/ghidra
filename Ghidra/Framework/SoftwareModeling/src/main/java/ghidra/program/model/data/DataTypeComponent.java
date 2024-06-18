@@ -77,10 +77,10 @@ public interface DataTypeComponent {
 	public int getEndOffset();
 
 	/**
-	 * Get the length of this component.  Zero-length components will report a length of 0
-	 * and may overlap other components at the same offset.  Similarly, multiple adjacent
+	 * Get the length of this component in 8-bit bytes.  Zero-length components will report a length
+	 * of 0 and may overlap other components at the same offset.  Similarly, multiple adjacent
 	 * bit-field components may appear to overlap at the byte-level.
-	 * @return the length of this component
+	 * @return the length of this component in 8-bit bytes
 	 */
 	public int getLength();
 

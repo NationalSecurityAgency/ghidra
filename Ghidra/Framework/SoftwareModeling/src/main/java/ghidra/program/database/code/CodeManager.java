@@ -20,6 +20,7 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -86,7 +87,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @throws IOException if a database io error occurs
 	 * @throws CancelledException if the user cancels the upgrade operation
 	 */
-	public CodeManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public CodeManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
 		dbHandle = handle;
@@ -115,10 +116,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @throws IOException if a database io error occurs
 	 * @throws CancelledException if the user cancels the upgrade operation
 	 */
-	private void checkOldFallThroughMaps(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void checkOldFallThroughMaps(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 
-		if (openMode != DBConstants.UPDATE) {
+		if (openMode != OpenMode.UPDATE) {
 			return;
 		}
 		LongPropertyMapDB oldFallThroughs =
@@ -139,10 +140,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 			ReferenceManager refMgr = program.getReferenceManager();
 
-			LongPropertyMapDB oldFallFroms = new LongPropertyMapDB(dbHandle, DBConstants.UPGRADE,
-				this, null, addrMap, "FallFroms", monitor);
+			LongPropertyMapDB oldFallFroms = new LongPropertyMapDB(dbHandle, OpenMode.UPGRADE, this,
+				null, addrMap, "FallFroms", monitor);
 
-			LongPropertyMapDB oldFallThroughs = new LongPropertyMapDB(dbHandle, DBConstants.UPGRADE,
+			LongPropertyMapDB oldFallThroughs = new LongPropertyMapDB(dbHandle, OpenMode.UPGRADE,
 				this, null, addrMap, "FallThroughs", monitor);
 
 			int cnt = oldFallThroughs.getSize();
@@ -183,7 +184,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 	}
 
-	private void initializeAdapters(int openMode, TaskMonitor monitor)
+	private void initializeAdapters(OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		VersionException versionExc = null;
 		try {
@@ -232,9 +233,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			upgradeOldFallThroughMaps(monitor);
 		}
 	}

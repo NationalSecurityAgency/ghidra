@@ -88,6 +88,7 @@ public class SearchListTest extends AbstractDockingTest {
 	@Test
 	public void testSelect() {
 		JTextField textField = searchList.getTextField();
+		triggerActionKey(textField, 0, KeyEvent.VK_DOWN);
 
 		assertNull(lastChoiceValue);
 		assertNull(lastChoiceCategory);

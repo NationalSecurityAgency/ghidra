@@ -127,14 +127,19 @@ public class DefaultSearchListModel<T> extends AbstractListModel<SearchListEntry
 	private List<SearchListEntry<T>> getFilteredEntries(BiPredicate<T, String> filter) {
 		List<SearchListEntry<T>> entries = new ArrayList<>();
 
-		for (String category : dataMap.keySet()) {
+		Iterator<String> it = dataMap.keySet().iterator();
+		while (it.hasNext()) {
+			String category = it.next();
 			List<T> list = getFilteredItems(category, filter);
 			for (T value : list) {
 				boolean isFirst = list.get(0) == value;
-				boolean isLast = list.get(list.size() - 1) == value;
-				entries.add(new SearchListEntry<T>(value, category, isFirst, isLast));
+				boolean isLastInCateogry = list.get(list.size() - 1) == value;
+				boolean isLastCategory = !it.hasNext();
+				boolean showSeparator = isLastInCateogry && !isLastCategory;
+				entries.add(new SearchListEntry<T>(value, category, isFirst, showSeparator));
 			}
 		}
+
 		return entries;
 	}
 

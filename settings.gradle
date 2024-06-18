@@ -37,11 +37,9 @@ includeProject('JsonDoclet', 'GhidraBuild/BuildFiles', true)
 includeProject('LaunchSupport', 'GhidraBuild', true)
 includeProject('Skeleton', 'GhidraBuild', true)
 includeProject('BuildFiles', 'GhidraBuild', true)
-includeProject('GhidraTest', '.', true)
 includeProject('decompile', 'Ghidra/Features/Decompiler/src', true)
 includeProject('RuntimeScripts', 'Ghidra', true)
 includeProject('IDAPro', 'GhidraBuild', true)
-includeProject('NativeSupport', 'GhidraBuild', true)
 includeProject('GhidraDocs', '.', true)
 includeProjects('GhidraBuild/EclipsePlugins/GhidraDev') // requires Eclipse PDE
 includeProjects('GhidraBuild/EclipsePlugins/GhidraSleighEditor') // requires Eclipse DSL

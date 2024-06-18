@@ -19,7 +19,7 @@ import traceback
 
 import gdb
 
-from . import commands
+from . import commands, util
 
 
 class GhidraHookPrefix(gdb.Command):
@@ -48,8 +48,8 @@ class HookState(object):
     def end_batch(self):
         if self.batch is None:
             return
-        commands.STATE.client.end_batch()
         self.batch = None
+        commands.STATE.client.end_batch()
 
     def check_skip_continue(self):
         skip = self.skip_continue
@@ -89,10 +89,10 @@ class InferiorState(object):
                 commands.put_frames()
                 self.visited.add(thread)
             frame = gdb.selected_frame()
-            hashable_frame = (thread, frame.level())
+            hashable_frame = (thread, util.get_level(frame))
             if first or hashable_frame not in self.visited:
                 commands.putreg(
-                    frame, frame.architecture().registers('general'))
+                    frame, util.get_register_descs(frame.architecture(), 'general'))
                 commands.putmem("$pc", "1", from_tty=False)
                 commands.putmem("$sp", "1", from_tty=False)
                 self.visited.add(hashable_frame)
@@ -117,8 +117,8 @@ class InferiorState(object):
         inf = gdb.selected_inferior()
         ipath = commands.INFERIOR_PATTERN.format(infnum=inf.num)
         infobj = commands.STATE.trace.proxy_object_path(ipath)
-        infobj.set_value('_exit_code', exit_code)
-        infobj.set_value('_state', 'TERMINATED')
+        infobj.set_value('Exit Code', exit_code)
+        infobj.set_value('State', 'TERMINATED')
 
 
 class BrkState(object):
@@ -234,7 +234,7 @@ def on_frame_selected():
     t = gdb.selected_thread()
     f = gdb.selected_frame()
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Frame {}.{}.{} selected".format(inf.num, t.num, f.level())):
+    with trace.open_tx("Frame {}.{}.{} selected".format(inf.num, t.num, util.get_level(f))):
         INF_STATES[inf.num].record()
         commands.activate()
 
@@ -274,7 +274,7 @@ def on_register_changed(event):
     # For now, just record the lot
     HOOK_STATE.ensure_batch()
     with trace.open_tx("Register {} changed".format(event.regnum)):
-        commands.putreg(event.frame, event.frame.architecture().registers())
+        commands.putreg(event.frame, util.get_register_descs(event.frame.architecture()))
 
 
 @log_errors
@@ -541,16 +541,18 @@ def install_hooks():
         HOOK_STATE.mem_catchpoint.enabled = True
     else:
         breaks_before = set(gdb.breakpoints())
-        gdb.execute("""
-            catch syscall group:memory
-            commands
-            silent
-            hooks-ghidra event-memory
-            cont
-            end
-            """)
-        HOOK_STATE.mem_catchpoint = (
-            set(gdb.breakpoints()) - breaks_before).pop()
+        try:
+            gdb.execute("""
+                catch syscall group:memory
+                commands
+                silent
+                hooks-ghidra event-memory
+                cont
+                end
+                """)
+            HOOK_STATE.mem_catchpoint = (set(gdb.breakpoints()) - breaks_before).pop()
+        except Exception as e:
+            print(f"Error setting memory catchpoint: {e}")
 
     gdb.events.cont.connect(on_cont)
     gdb.events.stop.connect(on_stop)

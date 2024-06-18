@@ -560,7 +560,7 @@ void Sleigh::initialize(DocumentStorage &store)
     if (el == (const Element *)0)
       throw LowlevelError("Could not find sleigh tag");
     sla::FormatDecode decoder(this);
-    ifstream s(el->getContent());
+    ifstream s(el->getContent(), std::ios_base::binary);
     if (!s)
       throw LowlevelError("Could not open .sla file: " + el->getContent());
     decoder.ingestStream(s);

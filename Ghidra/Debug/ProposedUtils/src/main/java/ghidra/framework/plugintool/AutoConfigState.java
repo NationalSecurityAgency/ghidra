@@ -15,10 +15,13 @@
  */
 package ghidra.framework.plugintool;
 
+import java.io.File;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.*;
 import java.math.BigInteger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import ghidra.framework.options.SaveState;
@@ -273,6 +276,88 @@ public interface AutoConfigState {
 		}
 	}
 
+	static class FileConfigFieldCodec implements ConfigFieldCodec<File> {
+		public static final FileConfigFieldCodec INSTANCE = new FileConfigFieldCodec();
+
+		@Override
+		public File read(SaveState state, String name, File current) {
+			return state.getFile(name, current);
+		}
+
+		@Override
+		public void write(SaveState state, String name, File value) {
+			state.putFile(name, value);
+		}
+	}
+
+	static class PathConfigFieldCodec implements ConfigFieldCodec<Path> {
+		public static final PathConfigFieldCodec INSTANCE = new PathConfigFieldCodec();
+
+		@Override
+		public Path read(SaveState state, String name, Path current) {
+			return Paths.get(state.getString(name, current == null ? null : current.toString()));
+		}
+
+		@Override
+		public void write(SaveState state, String name, Path value) {
+			state.putString(name, value == null ? null : value.toString());
+		}
+	}
+
+	record PathIsDir(Path path) {
+		public static PathIsDir fromString(String string) {
+			return new PathIsDir(Paths.get(string));
+		}
+
+		@Override
+		public String toString() {
+			return path.toString();
+		}
+	}
+
+	static class PathIsDirConfigFieldCodec implements ConfigFieldCodec<PathIsDir> {
+		public static final PathIsDirConfigFieldCodec INSTANCE = new PathIsDirConfigFieldCodec();
+
+		@Override
+		public PathIsDir read(SaveState state, String name, PathIsDir current) {
+			Path path = PathConfigFieldCodec.INSTANCE.read(state, name,
+				current == null ? null : current.path);
+			return path == null ? null : new PathIsDir(path);
+		}
+
+		@Override
+		public void write(SaveState state, String name, PathIsDir value) {
+			PathConfigFieldCodec.INSTANCE.write(state, name, value == null ? null : value.path);
+		}
+	}
+
+	record PathIsFile(Path path) {
+		public static PathIsFile fromString(String string) {
+			return new PathIsFile(Paths.get(string));
+		}
+
+		@Override
+		public String toString() {
+			return path.toString();
+		}
+	}
+
+	static class PathIsFileConfigFieldCodec implements ConfigFieldCodec<PathIsFile> {
+		public static final PathIsFileConfigFieldCodec INSTANCE = new PathIsFileConfigFieldCodec();
+
+		@Override
+		public PathIsFile read(SaveState state, String name, PathIsFile current) {
+			Path path = PathConfigFieldCodec.INSTANCE.read(state, name,
+				current == null ? null : current.path);
+			return path == null ? null : new PathIsFile(path);
+		}
+
+		@Override
+		public void write(SaveState state, String name, PathIsFile value) {
+			PathConfigFieldCodec.INSTANCE.write(state, name, value == null ? null : value.path);
+		}
+	}
+
 	static class EnumConfigFieldCodec implements ConfigFieldCodec<Enum<?>> {
 		public static final EnumConfigFieldCodec INSTANCE = new EnumConfigFieldCodec();
 
@@ -318,6 +403,10 @@ public interface AutoConfigState {
 			addCodec(String[].class, StringArrayConfigFieldCodec.INSTANCE);
 
 			addCodec(BigInteger.class, BigIntegerConfigFieldCodec.INSTANCE);
+			addCodec(File.class, FileConfigFieldCodec.INSTANCE);
+			addCodec(Path.class, PathConfigFieldCodec.INSTANCE);
+			addCodec(PathIsDir.class, PathIsDirConfigFieldCodec.INSTANCE);
+			addCodec(PathIsFile.class, PathIsFileConfigFieldCodec.INSTANCE);
 		}
 
 		private static <T> void addCodec(Class<T> cls, ConfigFieldCodec<T> codec) {

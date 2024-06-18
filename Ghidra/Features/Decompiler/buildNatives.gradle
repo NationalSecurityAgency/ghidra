@@ -43,6 +43,7 @@ model {
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
 			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -85,6 +86,7 @@ model {
 		                include "emulateutil.cc"
 		                include "flow.cc"
 		                include "userop.cc"
+		                include "multiprecision.cc"
 		                include "funcdata.cc"
 		                include "funcdata_block.cc"
 		                include "funcdata_varnode.cc"
@@ -149,6 +151,7 @@ model {
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
 			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -190,24 +193,18 @@ model {
 					}
 				} // end cpp
 				
-				if (isCurrentWindows()) {
-					c {
-						source {
-							srcDir "src/decompile/zlib"
-							include "*.c"
-						}
+				c {
+					source {
+						srcDir "src/decompile/zlib"
+						include "*.c"
 					}
 				}
 			} // end sources (sleigh)
 			
 			binaries {
 				all{ b ->
-					if (b.toolChain in Gcc || b.toolChain in Clang) {
-						b.linker.args "-lz"
-					}
-					else {
-						b.cppCompiler.define "LOCAL_ZLIB"
-					}
+					b.cppCompiler.define "LOCAL_ZLIB"
+					b.cCompiler.define "NO_GZIP"
 				}
 			} // end binaries.all (sleigh)
 		} // end sleigh
@@ -250,9 +247,7 @@ model {
 				b.cCompiler.args "/Oy"			// Omit frame pointer
 				b.cCompiler.define "_CRT_SECURE_NO_DEPRECATE"
 				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
-				b.cCompiler.define "WIN64"
 				b.cCompiler.define "ZLIB_WINAPI"
-				b.cCompiler.define "NO_GZIP"
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"

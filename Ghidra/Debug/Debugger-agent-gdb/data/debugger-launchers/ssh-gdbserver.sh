@@ -18,27 +18,21 @@
 #@title gdb + gdbserver via ssh
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and <tt>gdbserver</tt> via <tt>ssh</tt></h3>
-#@desc   <p>This will start <tt>gdb</tt> on the local system and then use it to connect and launch
-#@desc   the target in <tt>gdbserver</tt> on the remote system via <tt>ssh</tt>. The actual command
-#@desc   used is, e.g:</p>
-#@desc   <pre>target remote | ssh user@host gdbserver - /path/to/image</pre>
-#@desc   <p>It may be worth testing this manually to ensure everything is configured correctly. An
-#@desc   SSH server and <tt>gdbserver</tt> must already be installed and operational on the remote
-#@desc   system. GDB must be installed on your local system, it must be compatible with the
-#@desc   <tt>gdbserver</tt> on the remote system, and it must embed the Python 3 interpreter. You
-#@desc   will also need <tt>protobuf</tt> installed for Python 3 on the local system. There are no
-#@desc   Python requirements for the remote system.</p>
+#@desc   <p>
+#@desc     This will start <tt>gdb</tt> on the local system and then use it to connect and launch the target in <tt>gdbserver</tt> on the remote system via <tt>ssh</tt>.
+#@desc     For setup instructions, press <b>F1</b>.
+#@desc   </p>
 #@desc </body></html>
 #@menu-group remote
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
+#@help TraceRmiLauncherServicePlugin#gdb_gdbserver_ssh
 #@arg :str "Image" "The target binary executable image on the remote system"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
-#@env OPT_GDBSERVER_PATH:str="gdbserver" "Path to gdbserver (remote)" "The path to gdbserver on the remote system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDBSERVER_PATH:str="gdbserver" "gdbserver command (remote)" "The path to gdbserver on the remote system. Omit the full path to resolve using the system PATH."
 #@env OPT_EXTRA_GDBSERVER_ARGS:str="" "Extra gdbserver arguments" "Extra arguments to pass to gdbserver. Use with care."
-#@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then

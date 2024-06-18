@@ -13,14 +13,9 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Breakpoints in the Listings</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerBreakpointMarkerPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerBreakpointMarkerPlugin.png">
+    </DIV>
 
     <P>For a description of how breakpoints are managed logically in Ghidra, please read about the
     <A href="help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html">Breakpoints</A>
@@ -37,14 +32,9 @@
 
     <H2>In the Function Graph</H2>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerFunctionGraphBreakpointMargin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerFunctionGraphBreakpointMargin.png">
+    </DIV>
 
     <P>When active in the Debugger, the <A href=
     "help/topics/FunctionGraphPlugin/Function_Graph.html">Function Graph</A> will display
@@ -55,14 +45,9 @@
 
     <H2>In the Decompiler</H2>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerDecompilerBreakpointMargin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerDecompilerBreakpointMargin.png">
+    </DIV>
 
     <P>When active in the Debugger, the <A href=
     "help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A> will display breakpoints in
@@ -86,8 +71,8 @@
     other address-based contexts, but not all of those contexts include visual breakpoint
     indicators.</P>
 
-    <H3><A name="toggle_breakpoint"></A><IMG alt="" src="images/breakpoint-mixed.png"> Toggle
-    Breakpoint (K)</H3>
+    <H3><A name="toggle_breakpoint"></A><IMG alt="" src="icon.debugger.breakpoint.marker.mixed">
+    Toggle Breakpoint (K)</H3>
 
     <P>This action is always available, and it is suitable for almost all cases. If there is a
     breakpoint at the cursor, this simply toggles its state. If there is no breakpoint at the
@@ -99,7 +84,7 @@
     actions to force specific commands. <B>NOTE:</B> The default parameters are not guaranteed to
     be accepted by the connected debugger.</P>
 
-    <H3><A name="set_breakpoint"></A><IMG alt="" src="images/breakpoint-enable.png"> Set
+    <H3><A name="set_breakpoint"></A><IMG alt="" src="icon.debugger.breakpoint.set"> Set
     Breakpoint</H3>
 
     <P>This menu is available on the dynamic listing when the target supports at least one
@@ -107,18 +92,12 @@
     breakpoint actions for each reasonable combination of kinds supported by the target. In the
     static listing, all reasonable combinations are available, regardless of target support;
     however, only those kinds supported by the target will be included in the resulting command.
-    <B>NOTE:</B> Breakpoints in the static listing can only be mapped to targets which are recorded
-    into a trace. Selecting one of the actions will display a prompt allowing adjustments to the
-    parameters before issuing the command.</P>
+    Selecting one of the actions will display a prompt allowing adjustments to the parameters
+    before issuing the command.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerPlaceBreakpointDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerPlaceBreakpointDialog.png">
+    </DIV>
 
     <UL>
       <LI>Address - the address of the breakpoint. It defaults to the address of the instruction or
@@ -136,19 +115,19 @@
       static location, if applicable.</LI>
     </UL>
 
-    <H3><A name="enable_breakpoint"></A><IMG alt="" src="images/breakpoint-enable.png"> Enable
+    <H3><A name="enable_breakpoint"></A><IMG alt="" src="icon.debugger.breakpoint.enable"> Enable
     Breakpoint</H3>
 
     <P>This action is available when there is at least one disabled breakpoint at the cursor. It
     enables those logical breakpoints.</P>
 
-    <H3><A name="disable_breakpoint"></A><IMG alt="" src="images/breakpoint-disable.png"> Disable
-    Breakpoint</H3>
+    <H3><A name="disable_breakpoint"></A><IMG alt="" src="icon.debugger.breakpoint.disable">
+    Disable Breakpoint</H3>
 
     <P>This action is available when there is at least one enabled breakpoint at the cursor. It
     disables those logical breakpoints.</P>
 
-    <H3><A name="clear_breakpoint"></A><IMG alt="" src="images/breakpoint-clear.png"> Clear
+    <H3><A name="clear_breakpoint"></A><IMG alt="" src="icon.debugger.breakpoint.clear"> Clear
     (Delete) Breakpoint</H3>
 
     <P>This action is available when there is at least one breakpoint (in any state) at the cursor.

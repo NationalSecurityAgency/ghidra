@@ -31,6 +31,7 @@ import ghidra.pty.PtyChild;
 import ghidra.pty.local.LocalWindowsNativeProcessPtySession;
 import ghidra.pty.windows.jna.ConsoleApiNative;
 import ghidra.pty.windows.jna.ConsoleApiNative.STARTUPINFOEX;
+import ghidra.pty.windows.jna.JobApiNative;
 
 public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 
@@ -83,6 +84,11 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 		 * TODO: How to control local echo?
 		 */
 
+		HANDLE hJob = JobApiNative.INSTANCE.CreateJobObjectW(null, null);
+		if (hJob == null) {
+			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
+		}
+
 		STARTUPINFOEX si = prepareStartupInfo();
 		PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
@@ -102,13 +108,22 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
 		}
 
+		if (!JobApiNative.INSTANCE.AssignProcessToJobObject(hJob, pi.hProcess).booleanValue()) {
+			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());
+		}
+
 		return new LocalWindowsNativeProcessPtySession(pi.dwProcessId.intValue(),
-			pi.dwThreadId.intValue(),
-			new Handle(pi.hProcess), new Handle(pi.hThread), "ConPTY");
+			pi.dwThreadId.intValue(), new Handle(pi.hProcess), new Handle(pi.hThread), "ConPTY",
+			new Handle(hJob));
 	}
 
 	@Override
 	public String nullSession(Collection<TermMode> mode) throws IOException {
 		throw new UnsupportedOperationException("ConPTY does not have a name");
+	}
+
+	@Override
+	public void setWindowSize(short cols, short rows) {
+		pseudoConsoleHandle.resize(rows, cols);
 	}
 }

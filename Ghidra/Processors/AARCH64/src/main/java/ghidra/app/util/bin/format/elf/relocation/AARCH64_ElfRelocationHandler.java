@@ -359,8 +359,8 @@ public class AARCH64_ElfRelocationHandler
 
 			case R_AARCH64_P32_COPY:
 			case R_AARCH64_COPY: {
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 			}
 

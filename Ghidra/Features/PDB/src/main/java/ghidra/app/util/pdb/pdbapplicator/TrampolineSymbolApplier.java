@@ -27,7 +27,8 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link TrampolineMsSymbol} symbols.
  */
-public class TrampolineSymbolApplier extends MsSymbolApplier implements DirectSymbolApplier {
+public class TrampolineSymbolApplier extends MsSymbolApplier
+		implements DirectSymbolApplier, DisassembleableAddressSymbolApplier {
 //public class TrampolineSymbolApplier extends MsSymbolApplier
 //		implements DeferrableFunctionSymbolApplier { // Question of whether we need to do work later
 
@@ -84,8 +85,11 @@ public class TrampolineSymbolApplier extends MsSymbolApplier implements DirectSy
 		if (target != null && thunk != null) {
 			thunk.setThunkedFunction(target);
 		}
-		applicator.scheduleDisassembly(address);
-		// TODO: should we schedule at targetAddress too?
+	}
+
+	@Override
+	public Address getAddressForDisassembly() {
+		return applicator.getAddress(symbol);
 	}
 
 	private TrampolineMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {

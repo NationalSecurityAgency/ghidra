@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.CodeUnit;
@@ -39,7 +40,8 @@ import ghidra.trace.model.*;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -106,7 +108,7 @@ public class DBTraceCommentAdapter
 	/**
 	 * Construct the adapter
 	 */
-	public DBTraceCommentAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceCommentAdapter(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
 		super("Comments", dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -140,8 +142,8 @@ public class DBTraceCommentAdapter
 		}
 		String oldValue = null;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery.intersecting(
-				new AddressRangeImpl(address, address), lifespan)).values()) {
+			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery
+					.intersecting(new AddressRangeImpl(address, address), lifespan)).values()) {
 				if (entry.type == commentType) {
 					if (entry.getLifespan().contains(lifespan.lmin())) {
 						oldValue = entry.comment;
@@ -157,8 +159,7 @@ public class DBTraceCommentAdapter
 		trace.setChanged(new TraceChangeRecord<TraceAddressSnapRange, String>(
 			TraceEvents.byCommentType(commentType),
 			DBTraceSpaceKey.create(address.getAddressSpace(), null, 0),
-			new ImmutableTraceAddressSnapRange(address, lifespan),
-			oldValue, comment));
+			new ImmutableTraceAddressSnapRange(address, lifespan), oldValue, comment));
 	}
 
 	/**
@@ -191,8 +192,8 @@ public class DBTraceCommentAdapter
 	 */
 	public String getComment(long snap, Address address, int commentType) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			for (DBTraceCommentEntry entry : reduce(
-				TraceAddressSnapRangeQuery.at(address, snap)).values()) {
+			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery.at(address, snap))
+					.values()) {
 				if (entry.type != commentType) {
 					continue;
 				}

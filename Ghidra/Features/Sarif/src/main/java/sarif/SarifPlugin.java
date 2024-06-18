@@ -17,9 +17,7 @@ package sarif;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.swing.Icon;
 
@@ -30,18 +28,11 @@ import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.MiscellaneousPluginPackage;
-import ghidra.app.events.ProgramActivatedPluginEvent;
-import ghidra.app.events.ProgramClosedPluginEvent;
-import ghidra.app.events.ProgramOpenedPluginEvent;
-import ghidra.app.events.ProgramVisibilityChangePluginEvent;
+import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.options.*;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -59,7 +50,7 @@ import sarif.io.SarifIO;
 	packageName = MiscellaneousPluginPackage.NAME,
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Sarif Plugin.",
-	description = "From sarif parsing to DL modelling"
+	description = "SARIF parsing and visualization plugin."
 )
 //@formatter:on
 
@@ -75,7 +66,7 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 
 	public SarifPlugin(PluginTool tool) {
 		super(tool);
-		this.sarifControllers = new HashMap<Program, SarifController>();
+		this.sarifControllers = new HashMap<>();
 		this.io = new SarifGsonIO();
 	}
 
@@ -84,13 +75,15 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 		createActions();
 		initializeOptions();
 	}
-	
+
 	public void readFile(File file) {
 		if (file != null) {
 			try {
 				showSarif(file.getName(), io.readSarif(file));
-			} catch (JsonSyntaxException | IOException e) {
-				Msg.showError(this, tool.getActiveWindow(), "File parse error", "Invalid Sarif File");
+			}
+			catch (JsonSyntaxException | IOException e) {
+				Msg.showError(this, tool.getActiveWindow(), "File parse error",
+					"Invalid Sarif File");
 			}
 		}
 	}
@@ -135,7 +128,6 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 		}
 	}
 
-
 	/**
 	 * Ultimately both selections end up calling this to actually show something on
 	 * the Ghidra gui
@@ -154,7 +146,7 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 			if (currentController != null) {
 				currentController.showTable(logName, sarif);
 				return;
-			} 			
+			}
 		}
 		Msg.showError(this, tool.getActiveWindow(), "File parse error", "No current program");
 	}
@@ -166,12 +158,13 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 		}
 		this.setSelection(selection);
 	}
-	
+
 	private void createActions() {
 		//@formatter:off
 		new ActionBuilder("Read", getName())
 			.menuPath("Sarif", "Read File")
 			.menuGroup("sarif", "1")
+			.helpLocation(new HelpLocation("Sarif", "Using_SARIF_Files"))
 			.enabledWhen(ctx -> getCurrentProgram() != null)
 			.onAction(e -> {
 				GhidraFileChooser chooser = new GhidraFileChooser(tool.getActiveWindow());
@@ -180,7 +173,7 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 			.buildAndInstall(tool);
 		//@formatter:on
 	}
-	
+
 	private void initializeOptions() {
 		ToolOptions options = tool.getOptions(ToolConstants.GRAPH_OPTIONS);
 		options.addOptionsChangeListener(this);
@@ -199,22 +192,21 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 		Options sarifOptions = options.getOptions(NAME);
 		loadOptions(sarifOptions);
 	}
-	
+
 	public void registerOptions(Options options, HelpLocation help) {
 
 		options.setOptionsHelpLocation(help);
 
 		options.registerOption("Display Artifacts", displayArtifacts(), help,
-				"Display artifacts by default");
+			"Display artifacts by default");
 
 		options.registerOption("Display Graphs", displayGraphs(), help,
-				"Display graphs by default");
+			"Display graphs by default");
 
 		options.registerOption("Max Graph Size", getGraphSize(), help,
-				"Maximum number of nodes per graph");
+			"Maximum number of nodes per graph");
 
-		options.registerOption("Append Graphs", appendToGraph(), help,
-				"Append to existing graph");
+		options.registerOption("Append Graphs", appendToGraph(), help, "Append to existing graph");
 
 	}
 
@@ -228,21 +220,25 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 	}
 
 	private boolean displayGraphsByDefault = false;
+
 	public boolean displayGraphs() {
 		return displayGraphsByDefault;
 	}
 
 	private boolean displayArtifactsByDefault = false;
+
 	public boolean displayArtifacts() {
 		return displayArtifactsByDefault;
 	}
 
 	private int maxGraphSize = 1000;
+
 	public int getGraphSize() {
 		return maxGraphSize;
 	}
 
 	private boolean appendToCurrentGraph = false;
+
 	public boolean appendToGraph() {
 		return appendToCurrentGraph;
 	}

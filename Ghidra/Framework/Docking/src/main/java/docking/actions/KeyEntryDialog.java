@@ -145,6 +145,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	 */
 	public void setKeyStroke(KeyStroke ks) {
 		keyEntryField.setKeyStroke(ks);
+		updateCollisionPane(ks);
 	}
 
 	@Override
@@ -169,7 +170,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return;
 		}
 
-		action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
+		action.setUnvalidatedKeyBindingData(newKs == null ? null : new KeyBindingData(newKs));
 
 		close();
 	}
@@ -192,8 +193,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 			return;
 		}
 
-		String ksName = KeyBindingUtils.parseKeyStroke(ks);
-		String text = keyBindings.getActionsForKeyStrokeText(ksName);
+		String text = keyBindings.getActionsForKeyStrokeText(ks);
 		try {
 			doc.insertString(0, text, textAttrs);
 			collisionPane.setCaretPosition(0);

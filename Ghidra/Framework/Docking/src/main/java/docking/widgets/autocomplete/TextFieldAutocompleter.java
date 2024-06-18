@@ -156,6 +156,7 @@ public class TextFieldAutocompleter<T> {
 		list.setCellRenderer(buildListCellRenderer());
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.addMouseListener(listener);
+		list.addListSelectionListener(listener);
 
 		content.add(scrollPane);
 
@@ -563,7 +564,7 @@ public class TextFieldAutocompleter<T> {
 	 * @param ev the event
 	 * @return true, if no listener cancelled the event
 	 */
-	protected boolean fireAutocompletionListeners(AutocompletionEvent<T> ev) {
+	protected boolean fireCompletionActivated(AutocompletionEvent<T> ev) {
 		for (AutocompletionListener<T> l : autocompletionListeners) {
 			if (ev.isConsumed()) {
 				break;
@@ -580,7 +581,7 @@ public class TextFieldAutocompleter<T> {
 		}
 
 		AutocompletionEvent<T> ev = new AutocompletionEvent<>(sel, focus);
-		if (!fireAutocompletionListeners(ev)) {
+		if (!fireCompletionActivated(ev)) {
 			return;
 		}
 		try {
@@ -590,6 +591,25 @@ public class TextFieldAutocompleter<T> {
 		catch (BadLocationException e) {
 			throw new AssertionError("INTERNAL: Should not be here", e);
 		}
+	}
+
+	protected boolean fireCompletionSelected(AutocompletionEvent<T> ev) {
+		for (AutocompletionListener<T> l : autocompletionListeners) {
+			if (ev.isConsumed()) {
+				break;
+			}
+			l.completionSelected(ev);
+		}
+		return !ev.isCancelled();
+	}
+
+	private void completionSelected(T sel) {
+		if (focus == null) {
+			return;
+		}
+
+		AutocompletionEvent<T> ev = new AutocompletionEvent<>(sel, focus);
+		fireCompletionSelected(ev);
 	}
 
 	/**
@@ -887,8 +907,8 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * A listener to handle all the callbacks
 	 */
-	protected class MyListener
-			implements FocusListener, KeyListener, DocumentListener, MouseListener, CaretListener {
+	protected class MyListener implements FocusListener, KeyListener, DocumentListener,
+			MouseListener, CaretListener, ListSelectionListener {
 
 		@Override
 		public void keyTyped(KeyEvent e) {
@@ -1030,6 +1050,14 @@ public class TextFieldAutocompleter<T> {
 		@Override
 		public void mouseExited(MouseEvent e) {
 			// Nothing
+		}
+
+		@Override
+		public void valueChanged(ListSelectionEvent e) {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+			completionSelected(list.getSelectedValue());
 		}
 	}
 

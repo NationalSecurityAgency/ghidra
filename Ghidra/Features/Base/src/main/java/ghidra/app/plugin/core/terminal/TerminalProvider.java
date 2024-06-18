@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.terminal;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -32,6 +33,7 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
+import docking.widgets.EventTrigger;
 import docking.widgets.OkDialog;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GColor;
@@ -40,6 +42,8 @@ import ghidra.app.plugin.core.terminal.TerminalPanel.FindOptions;
 import ghidra.app.plugin.core.terminal.vt.VtOutput;
 import ghidra.app.services.ClipboardService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 
 /**
@@ -153,6 +157,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	}
 
 	protected final TerminalPlugin plugin;
+	protected final Plugin helpPlugin;
 
 	protected final TerminalPanel panel;
 	protected final FindDialog findDialog = new FindDialog();
@@ -160,13 +165,15 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	protected DockingAction actionFind;
 	protected DockingAction actionFindNext;
 	protected DockingAction actionFindPrevious;
+	protected DockingAction actionSelectAll;
 	protected DockingAction actionTerminate;
 
 	private boolean terminated = false;
 
-	public TerminalProvider(TerminalPlugin plugin, Charset charset) {
+	public TerminalProvider(TerminalPlugin plugin, Charset charset, Plugin helpPlugin) {
 		super(plugin.getTool(), "Terminal", plugin.getName());
 		this.plugin = plugin;
+		this.helpPlugin = helpPlugin;
 		this.panel = new TerminalPanel(charset, this);
 		this.panel.addTerminalListener(new TerminalListener() {
 			@Override
@@ -177,6 +184,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 		createActions();
 		setWindowMenuGroup("Terminals");
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
+		setHelpLocation(new HelpLocation(helpPlugin.getName(), "plugin"));
 
 		// Avoid change in dimension when "terminated" border is applied
 		panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -225,6 +233,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_F,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "find"))
 				.onAction(this::activatedFind)
 				.buildAndInstallLocal(this);
 		actionFindNext = new ActionBuilder("Find Next", plugin.getName())
@@ -232,6 +241,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_H,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_next"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindNext)
 				.buildAndInstallLocal(this);
@@ -240,8 +250,17 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_G,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "find_previous"))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindPrevious)
+				.buildAndInstallLocal(this);
+		actionSelectAll = new ActionBuilder("Select All", plugin.getName())
+				.menuPath("Select All")
+				.menuGroup("Select")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_A,
+					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "select_all"))
+				.onAction(this::activatedSelectAll)
 				.buildAndInstallLocal(this);
 	}
 
@@ -290,6 +309,24 @@ public class TerminalProvider extends ComponentProviderAdapter {
 
 	protected void activatedFindPrevious(ActionContext ctx) {
 		doFind(false);
+	}
+
+	protected void activatedSelectAll(ActionContext ctx) {
+		FieldSelection sel = new FieldSelection();
+		BigInteger numIndexes = panel.model.getNumIndexes();
+		if (numIndexes.equals(BigInteger.ZERO)) {
+			return;
+		}
+		BigInteger lastIndex = numIndexes.subtract(BigInteger.ONE);
+		TerminalLayout layout = panel.model.getLayout(lastIndex);
+		int lastCol = layout.line.length();
+		sel.addRange(
+			new FieldLocation(BigInteger.ZERO, 0, 0, 0),
+			new FieldLocation(lastIndex, 0, 0, lastCol));
+		if (panel.getFieldPanel().getSelection().equals(sel)) {
+			sel.clear();
+		}
+		panel.getFieldPanel().setSelection(sel, EventTrigger.GUI_ACTION);
 	}
 
 	/**
@@ -365,6 +402,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			terminated = true;
 			removeLocalAction(actionTerminate);
 			panel.terminalListeners.clear();
+			panel.setOutputCallback(buf -> {
+			});
+			panel.getFieldPanel().setCursorOn(false);
 			setTitle("[Terminal]");
 			setSubTitle("Terminated");
 			if (!isVisible()) {
@@ -389,6 +429,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 					.menuIcon(new GIcon("icon.plugin.terminal.terminate"))
 					.menuPath("Terminate")
 					.menuGroup("Terminate")
+					.helpLocation(new HelpLocation(helpPlugin.getName(), "terminate"))
 					.enabledWhen(ctx -> true)
 					.onAction(ctx -> action.run())
 					.buildAndInstallLocal(this);

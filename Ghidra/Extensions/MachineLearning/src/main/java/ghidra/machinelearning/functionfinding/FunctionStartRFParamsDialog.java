@@ -15,6 +15,8 @@
  */
 package ghidra.machinelearning.functionfinding;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.BorderLayout;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -483,10 +485,11 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	}
 
 	private void searchOtherProgram(RandomForestRowObject modelRow) {
-		DataTreeDialog dtd = new DataTreeDialog(null, "Select Program", DataTreeDialog.OPEN, f -> {
-			Class<?> c = f.getDomainObjectClass();
-			return Program.class.isAssignableFrom(c);
-		});
+		DataTreeDialog dtd =
+			new DataTreeDialog(null, "Select Program", OPEN, f -> {
+				Class<?> c = f.getDomainObjectClass();
+				return Program.class.isAssignableFrom(c);
+			});
 		dtd.show();
 		DomainFile dFile = dtd.getDomainFile();
 		if (dFile == null) {

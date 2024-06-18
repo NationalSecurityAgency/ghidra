@@ -90,8 +90,8 @@ public interface AssemblyResolvedPatterns extends AssemblyResolution {
 	/**
 	 * Decode a portion of the instruction block
 	 * 
-	 * @param start the first byte to decode
-	 * @param len the number of bytes to decode
+	 * @param byteStart the first byte to decode
+	 * @param size the number of bytes to decode
 	 * @return the read masked value
 	 * @see AssemblyPatternBlock#readBytes(int, int)
 	 */
@@ -126,7 +126,8 @@ public interface AssemblyResolvedPatterns extends AssemblyResolution {
 	 * Check if this and another resolution have equal encodings
 	 * 
 	 * <p>
-	 * This is like {@link #equals(Object)}, but it ignores backfill records and forbidden patterns.
+	 * This is like {@link Object#equals(Object)}, but it ignores backfill records and forbidden 
+	 * patterns.
 	 * 
 	 * @param that the other resolution
 	 * @return true if both have equal encodings
@@ -145,7 +146,7 @@ public interface AssemblyResolvedPatterns extends AssemblyResolution {
 	/**
 	 * Create a copy of this resolution with a new description
 	 * 
-	 * @param desc the new description
+	 * @param description the new description
 	 * @return the copy
 	 */
 	AssemblyResolvedPatterns withDescription(String description);
@@ -177,7 +178,7 @@ public interface AssemblyResolvedPatterns extends AssemblyResolution {
 	 * This combines corresponding pattern blocks (assuming they agree), collects backfill records,
 	 * and collects forbidden patterns.
 	 * 
-	 * @param that the other resolution
+	 * @param pat the other resolution
 	 * @return the result if successful, or null
 	 */
 	AssemblyResolvedPatterns combine(AssemblyResolvedPatterns pat);
@@ -312,7 +313,7 @@ public interface AssemblyResolvedPatterns extends AssemblyResolution {
 	 * <b>NOTE:</b> This drops all backfill and forbidden pattern records, since this method is
 	 * typically used to read token fields rather than passed around for resolution.
 	 * 
-	 * @param amt the number of bytes to remove from the left
+	 * @param shamt the number of bytes to remove from the left
 	 * @return the result
 	 */
 	AssemblyResolvedPatterns truncate(int shamt);

@@ -1,0 +1,19 @@
+<dwarf>
+  <!-- from gdb/sparc-tdep.h -->
+  <register_mappings>
+    <register_mapping dwarf="0" ghidra="g0" auto_count="8"/> <!-- g0..g7 -->
+    <register_mapping dwarf="8" ghidra="o0" auto_count="6"/> <!-- o0..o5 -->
+    <register_mapping dwarf="14" ghidra="sp" stackpointer="true"/>
+    <register_mapping dwarf="15" ghidra="o7"/>
+    <register_mapping dwarf="16" ghidra="l0" auto_count="8"/> <!-- l0..l7 -->
+    <register_mapping dwarf="24" ghidra="i0" auto_count="6"/> <!-- i0..i5 -->
+    <register_mapping dwarf="30" ghidra="fp" stackpointer="true"/>
+    <register_mapping dwarf="31" ghidra="i7"/>
+    <register_mapping dwarf="32" ghidra="fs0" auto_count="32"/> <!-- fs0..fs31 -->
+    <register_mapping dwarf="64" ghidra="Y"/>
+    <register_mapping dwarf="68" ghidra="PC"/>
+    <register_mapping dwarf="69" ghidra="nPC"/>
+    <register_mapping dwarf="70" ghidra="fsr"/>
+  </register_mappings>
+  <call_frame_cfa value="0"/>
+</dwarf>

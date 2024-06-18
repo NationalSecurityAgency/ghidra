@@ -1,19 +1,22 @@
 <patternlist>  
   <patternpairs totalbits="32" postbits="16">  <!-- AARCH64 -->
     <prepatterns>
-      <data>0xc0 0x03 0x5f 0xd6                  </data> <!-- ret -->
-      <data>0xff 0x0f 0x5f 0xd6                  </data> <!-- retab -->
-      <data> ........ ........ ........ 000101.. </data> <!-- b <xxx>  shared jump call -->
-      <data> 0x20 0x00 0x20 0xd4                 </data> <!-- brk #1 -->
+      <data>0xc0 0x03 0x5f 0xd6                  </data>     <!-- ret -->
+      <data>0xc0 0x03 0x5f 0xd6  0x1f 0x20 0x03 0xd5 </data> <!-- ret; nop -->
+      <data>0xc0 0x03 0x5f 0xd6  0x1f 0x20 0x03 0xd5  0x1f 0x20 0x03 0xd5 </data> <!-- ret; nop; nop -->
+      <data>0xff 0x0f 0x5f 0xd6                  </data>     <!-- retab -->
+      <data> ........ ........ ........ 000101.. </data>     <!-- b <xxx>  shared jump call -->
+      <data> 0x20 0x00 0x20 0xd4                 </data>     <!-- brk #1 -->
     </prepatterns>
     
     <postpatterns>
-      <data> 0xfd 0x7b 0xbf 0xa9 </data> <!--  stp x29, x30, [sp, #-0x10]!  -->
-      <data> 0xfe .0001111 0x1. 0xf8 </data> <!--  stp x30, [sp, #-0x..0]!  -->
-      <data> 111..... .1....11 10...... 0xa9 </data> <!-- stp x, x, [sp, -0x.0]! -->
-      <data> 11101..1 001..011 1011.... 0x6d </data> <!-- stp d, d, [sp, -0x.0]! -->
-      <data> 0xff ..000011 000..... 0xd1 </data> <!-- sub sp, sp, #... -->
-      <data> 0x7f 0x23 0x03 0xd5 </data> <!--  pacibsp  -->
+      <data> 0xfd 0x7b 0xbf 0xa9 </data>             <!--  stp x29, x30, [sp, #-0x10]!  -->
+      <data> 0xfe .0001111 0x1. 0xf8 </data>         <!--  stp x30, [sp, #-0x..0]!  -->
+      <data> 111..... .1....11 10...... 0xa9 </data> <!--  stp x, x, [sp, -0x.0]! -->
+      <data> 11101..1 001..011 1011.... 0x6d </data> <!--  stp d, d, [sp, -0x.0]! -->
+      <data> 0xff ..000011 000..... 0xd1 </data>     <!--  sub sp, sp, #... -->
+      <data> 0x7f 0x23 0x03 0xd5 </data>             <!--  pacibsp  -->
+      <data> .1011111 0x24 0x03 0xd5  </data>        <!--  bti c|jc -->
       <codeboundary/>
       <possiblefuncstart/>
     </postpatterns>
@@ -52,17 +55,39 @@
   </pattern>
   
   <pattern> <!-- AARCH64 Thunk -->
-      <data> ...10000 ........ ........ 1..10000 
-             00010001 ........ 01...... 0xf9 
-             0x10 ......10 00...... 0x91 
-             0x20 0x02 0x1f 0xd6   </data>
-      <!-- adrp x16, #...
-           ldr  x17, xxxx
-           add  x16, x16
-           br   x17
-       -->
+      <data> 
+		     ...10000 ........ ........ 1..10000 <!-- adrp x16, #... -->
+             00010001 ........ 01...... 0xf9     <!-- ldr  x17, xxxx -->
+             0x10 ......10 00...... 0x91         <!-- add  x16, x16 -->
+             0x20 0x02 0x1f 0xd6                 <!--  br   x17 -->
+      </data>
+      <codeboundary />  <!-- definitely code -->
       <funcstart validcode="function" thunk="true"/>
   </pattern>
   
-</patternlist>
+  <pattern> <!-- AARCH64 Thunk -->
+      <data> 
+		     .1011111 0x24 0x03 0xd5             <!-- bti c|cj -->
+		     ...10000 ........ ........ 1..10000 <!-- adrp x16, #... -->
+             00010001 ........ 01...... 0xf9     <!-- ldr  x17, xxxx -->
+             0x10 ......10 00...... 0x91         <!-- add  x16, x16 -->
+             0x20 0x02 0x1f 0xd6                 <!--  br   x17 -->
+      </data>
+      <codeboundary />  <!-- definitely code -->
+      <funcstart validcode="function" thunk="true"/>
+  </pattern>
+  
+  <pattern> <!-- AARCH64 Thunk -->
+      <data> 
+		     .1011111 0x24 0x03 0xd5             <!-- bti c|cj -->
+		     0xf0 0x7b 0xbf 0xa9                 <!-- stp x16,x30,[sp,#-0x10] -->
+		     ...10000 ........ ........ 1..10000 <!-- adrp x16, #... -->
+             00010001 ........ 01...... 0xf9     <!-- ldr  x17, xxxx -->
+             0x10 ......10 00...... 0x91         <!-- add  x16, x16 -->
+             0x20 0x02 0x1f 0xd6                 <!--  br   x17 -->
+      </data>
+      <codeboundary />  <!-- definitely code -->
+      <funcstart validcode="function" thunk="true"/>
+  </pattern>
 
+</patternlist>

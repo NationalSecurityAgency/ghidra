@@ -70,6 +70,12 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		ToolTipManager.sharedInstance().registerComponent(this);
+
+		// This panel takes focus since it is a custom widget. Focusable components need to
+		// have their accessible name set.
+		String viewName = "Memory View";
+		setName(viewName);
+		getAccessibleContext().setAccessibleName(viewName);
 	}
 
 	@Override

@@ -23,7 +23,7 @@ import ghidra.framework.options.SaveState;
 
 class ProgramTextOptions {
 
-	final static String OPTION_WIDTH = "Width";
+	final static String OPTION_FIELD_WIDTHS = "Field Widths";
 	final static String OPTION_WIDTH_ADDR = " Address ";
 	final static String OPTION_WIDTH_BYTES = " Bytes ";
 	final static String OPTION_WIDTH_PREMNEMONIC = " PreMnemonic ";
@@ -34,7 +34,7 @@ class ProgramTextOptions {
 	final static String OPTION_WIDTH_REF = " References ";
 	final static String OPTION_WIDTH_DATA_FIELD = " Data Field Name ";
 
-	final static String OPTION_SHOW = "Show";
+	final static String OPTION_INCLUDED_TYPES = "Included Types";
 	final static String OPTION_SHOW_COMMENTS = " Comments ";
 	final static String OPTION_SHOW_PROPERTIES = " Properties ";
 	final static String OPTION_SHOW_STRUCTURES = " Structures ";
@@ -45,7 +45,7 @@ class ProgramTextOptions {
 	final static String OPTION_SHOW_FUNCTIONS = " Functions ";
 	final static String OPTION_SHOW_BLOCK_NAMES = " Block Names ";
 
-	final static String OPTION_ADV = "Advanced";
+	final static String OPTION_PREFIXES = "Special Prefixes";
 	final static String OPTION_ADV_LABEL_SUFFIX = " Label Suffix ";
 	final static String OPTION_ADV_COMMENT_SUFFIX = " Comment Prefix ";
 
@@ -106,28 +106,38 @@ class ProgramTextOptions {
 
 	List<Option> getOptions() {//TODO add right into list
 		Option[] options = new Option[] {
-			new Option(OPTION_WIDTH, OPTION_WIDTH_LABEL, Integer.valueOf(labelWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_ADDR, Integer.valueOf(addrWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_BYTES, Integer.valueOf(bytesWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_PREMNEMONIC, Integer.valueOf(preMnemonicWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_MNEMONIC, Integer.valueOf(mnemonicWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_OPERAND, Integer.valueOf(operandWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_EOL, Integer.valueOf(eolWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_REF, Integer.valueOf(refWidth)),
-			new Option(OPTION_WIDTH, OPTION_WIDTH_DATA_FIELD, Integer.valueOf(dataFieldNameWidth)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_COMMENTS, Boolean.valueOf(showComments)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_PROPERTIES,
+				Boolean.valueOf(showProperties)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_STRUCTURES,
+				Boolean.valueOf(showStructures)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_UNDEFINED,
+				Boolean.valueOf(showUndefinedData)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_REF_HEADER,
+				Boolean.valueOf(showReferenceHeaders)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_BACK_REFS,
+				Boolean.valueOf(showBackReferences)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_FORWARD_REFS,
+				Boolean.valueOf(showForwardReferences)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_FUNCTIONS,
+				Boolean.valueOf(showFunctions)),
+			new Option(OPTION_INCLUDED_TYPES, OPTION_SHOW_BLOCK_NAMES,
+				Boolean.valueOf(showBlockNameInOperands)),
 
-			new Option(OPTION_SHOW, OPTION_SHOW_COMMENTS, Boolean.valueOf(showComments)),
-			new Option(OPTION_SHOW, OPTION_SHOW_PROPERTIES, Boolean.valueOf(showProperties)),
-			new Option(OPTION_SHOW, OPTION_SHOW_STRUCTURES, Boolean.valueOf(showStructures)),
-			new Option(OPTION_SHOW, OPTION_SHOW_UNDEFINED, Boolean.valueOf(showUndefinedData)),
-			new Option(OPTION_SHOW, OPTION_SHOW_REF_HEADER, Boolean.valueOf(showReferenceHeaders)),
-			new Option(OPTION_SHOW, OPTION_SHOW_BACK_REFS, Boolean.valueOf(showBackReferences)),
-			new Option(OPTION_SHOW, OPTION_SHOW_FORWARD_REFS, Boolean.valueOf(showForwardReferences)),
-			new Option(OPTION_SHOW, OPTION_SHOW_FUNCTIONS, Boolean.valueOf(showFunctions)),
-			new Option(OPTION_SHOW, OPTION_SHOW_BLOCK_NAMES, Boolean.valueOf(showBlockNameInOperands)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_LABEL, Integer.valueOf(labelWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_ADDR, Integer.valueOf(addrWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_BYTES, Integer.valueOf(bytesWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_PREMNEMONIC,
+				Integer.valueOf(preMnemonicWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_MNEMONIC, Integer.valueOf(mnemonicWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_OPERAND, Integer.valueOf(operandWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_EOL, Integer.valueOf(eolWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_REF, Integer.valueOf(refWidth)),
+			new Option(OPTION_FIELD_WIDTHS, OPTION_WIDTH_DATA_FIELD,
+				Integer.valueOf(dataFieldNameWidth)),
 
-			new Option(OPTION_ADV, OPTION_ADV_LABEL_SUFFIX, labelSuffix),
-			new Option(OPTION_ADV, OPTION_ADV_COMMENT_SUFFIX, commentPrefix), };
+			new Option(OPTION_PREFIXES, OPTION_ADV_LABEL_SUFFIX, labelSuffix),
+			new Option(OPTION_PREFIXES, OPTION_ADV_COMMENT_SUFFIX, commentPrefix), };
 		List<Option> optionsList = new ArrayList<Option>();
 		Collections.addAll(optionsList, options);
 		return optionsList;
@@ -139,7 +149,7 @@ class ProgramTextOptions {
 			String groupName = option.getGroup();
 			String optionName = option.getName();
 			try {
-				if (groupName.equals(OPTION_WIDTH)) {
+				if (groupName.equals(OPTION_FIELD_WIDTHS)) {
 					int value = ((Integer) option.getValue()).intValue();
 
 					if (optionName.equals(OPTION_WIDTH_LABEL)) {
@@ -173,7 +183,7 @@ class ProgramTextOptions {
 						wasOptionHandled = false;
 					}
 				}
-				else if (groupName.equals(OPTION_SHOW)) {
+				else if (groupName.equals(OPTION_INCLUDED_TYPES)) {
 					boolean value = ((Boolean) option.getValue()).booleanValue();
 
 					if (optionName.equals(OPTION_SHOW_COMMENTS)) {
@@ -207,7 +217,7 @@ class ProgramTextOptions {
 						wasOptionHandled = false;
 					}
 				}
-				else if (groupName.equals(OPTION_ADV)) {
+				else if (groupName.equals(OPTION_PREFIXES)) {
 					String value = (String) option.getValue();
 
 					if (optionName.equals(OPTION_ADV_COMMENT_SUFFIX)) {
@@ -392,7 +402,7 @@ class ProgramTextOptions {
 	}
 
 	boolean isShowFunctionLabel() {
-		return false;//TODO:
+		return false;
 	}
 
 	boolean isShowBlockName() {

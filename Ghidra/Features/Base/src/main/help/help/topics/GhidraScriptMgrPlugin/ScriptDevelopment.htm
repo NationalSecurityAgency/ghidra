@@ -128,9 +128,16 @@
 
         <BLOCKQUOTE>
           <P>The tag indicates the top-level menu path. Path levels are delimited using the "."
-          character.</P>
+          character. A mnemonic can be defined by adding an ampersand ("&") in front of the mnemonic 
+          key. Ampersands can be escaped by adding another ampersand ("&&"). </P>
 
-          <P>For example, <TT>"@menupath File.Run.My Script"</TT>.</P>
+          <P>For example:</P>
+          <BLOCKQUOTE>
+            <P><TT>@menupath File.Run.My Script<BR>
+             @menupath File.Run.My &Script<BR>
+             @menupath File.Run.Me && My &Script<BR>
+            </TT></P>
+          </BLOCKQUOTE>
         </BLOCKQUOTE>
 
         <P><CODE><B>@toolbar</B></CODE></P>

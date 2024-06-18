@@ -34,7 +34,6 @@ import docking.action.ToggleDockingAction;
 import docking.options.editor.OptionsDialog;
 import docking.options.editor.OptionsPanel;
 import docking.widgets.tree.GTree;
-import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.feature.vt.api.correlator.program.ExactMatchInstructionsProgramCorrelatorFactory;
 import ghidra.feature.vt.api.correlator.program.SymbolNameProgramCorrelatorFactory;
 import ghidra.feature.vt.api.main.*;
@@ -53,6 +52,7 @@ import ghidra.feature.vt.gui.provider.onetomany.VTMatchSourceTableProvider;
 import ghidra.feature.vt.gui.task.*;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.wizard.*;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
@@ -106,9 +106,18 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	@After
 	@Override
 	public void tearDown() {
-		sourceProgram = null;
-		destinationProgram = null;
-		session = null;
+		if (sourceProgram != null) {
+			vtTestEnv.release(sourceProgram);
+			sourceProgram = null;
+		}
+		if (destinationProgram != null) {
+			vtTestEnv.release(destinationProgram);
+			destinationProgram = null;
+		}
+		if (session != null) {
+			session.release(vtTestEnv);
+			session = null;
+		}
 		controller = null;
 		correlator = null;
 		vtTestEnv.dispose();
@@ -910,11 +919,11 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		// Set the Source
 		chooseProjectFile(dialogComponent, "SOURCE_BUTTON",
-			new String[] { "git_DevTestProject", "WallaceSrc" });
+			new String[] { "ghidra_DevTestProject", "WallaceSrc" });
 
 		// Set the Destination
 		chooseProjectFile(dialogComponent, "DESTINATION_BUTTON",
-			new String[] { "git_DevTestProject", "WallaceVersion2" });
+			new String[] { "ghidra_DevTestProject", "WallaceVersion2" });
 		waitForSwing();
 	}
 

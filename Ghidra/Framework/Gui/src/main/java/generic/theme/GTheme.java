@@ -229,7 +229,7 @@ public class GTheme extends GThemeValueMap {
 	 * a theme file and optionally a set of icon files.
 	 * @param file the file to read.
 	 * @return the theme that was read from the file
-	 * @throws IOException if an error occcured trying to read a theme from the file.
+	 * @throws IOException if an error occurred trying to read a theme from the file.
 	 */
 	public static GTheme loadTheme(File file) throws IOException {
 		ThemeReader reader = new ThemeReader(file);

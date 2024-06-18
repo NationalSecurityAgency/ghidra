@@ -44,8 +44,16 @@ public class MDQualifier extends MDParsableItem {
 		return (nameNested != null);
 	}
 
+	public boolean isAnon() {
+		return (nameAnonymous != null);
+	}
+
 	public MDNestedName getNested() {
 		return nameNested;
+	}
+
+	public String getAnonymousName() {
+		return nameAnonymous.getName();
 	}
 
 	@Override
@@ -99,7 +107,7 @@ public class MDQualifier extends MDParsableItem {
 					nameAnonymous.parse();
 					dmang.parseInfoPop();
 					break;
-				case 'I': // Believe this is interface namespace 
+				case 'I': // Believe this is interface namespace
 					// 20140522: See note for 'A' anonymous namespace; for 'I' there is no
 					// evidence to include the 'I' in the fragment (investigation seems to have
 					// it removed).
@@ -180,7 +188,19 @@ public class MDQualifier extends MDParsableItem {
 					dmang.parseInfoPop();
 					break;
 				default: // special name
-					throw new MDException("SpecialName not expected in qualification list");
+					if (!dmang.isLlvmProcessingMode()) {
+						throw new MDException("SpecialName not expected in qualification list");
+					}
+					// Working around LLVM non-compliance with MSFT mangling standard (See
+					//  MDNestedName too).  LLVM does not follow the double question mark ("??")
+					// convention, but is only using one "?" (which we got above).  Maybe this
+					// is not a nested object, but it has attributes of a nested object other than
+					// not adhering to what MSFT does.  There is no test we can do such as checking
+					// for lower-case letter because an embedded object name could start with
+					// one of the capital letters that have meaning in the above switch cases.
+					nameNested = new MDNestedName(dmang);
+					nameNested.parse();
+					break;
 			}
 		}
 		else {

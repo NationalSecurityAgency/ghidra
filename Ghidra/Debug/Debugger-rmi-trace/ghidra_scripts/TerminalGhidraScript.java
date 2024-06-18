@@ -37,14 +37,16 @@ public class TerminalGhidraScript extends GhidraScript {
 		return state.getTool().getService(TerminalService.class);
 	}
 
-	protected void displayInTerminal(PtyParent parent, Runnable waiter) throws PluginException {
+	protected void displayInTerminal(Pty pty, Runnable waiter) throws PluginException {
 		TerminalService terminalService = ensureTerminalService();
+		PtyParent parent = pty.getParent();
+		PtyChild child = pty.getChild();
 		try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
 			parent.getInputStream(), parent.getOutputStream())) {
 			term.addTerminalListener(new TerminalListener() {
 				@Override
 				public void resized(short cols, short rows) {
-					parent.setWindowSize(cols, rows);
+					child.setWindowSize(cols, rows);
 				}
 			});
 			waiter.run();
@@ -55,7 +57,7 @@ public class TerminalGhidraScript extends GhidraScript {
 		Map<String, String> env = new HashMap<>(System.getenv());
 		env.put("TERM", "xterm-256color");
 		pty.getChild().nullSession();
-		displayInTerminal(pty.getParent(), () -> {
+		displayInTerminal(pty, () -> {
 			while (true) {
 				try {
 					Thread.sleep(100000);

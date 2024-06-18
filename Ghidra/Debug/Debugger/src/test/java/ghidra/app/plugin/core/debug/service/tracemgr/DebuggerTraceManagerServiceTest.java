@@ -141,6 +141,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertEquals(thread, traceManager.getCurrentThread());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 
@@ -177,6 +178,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertEquals(5, traceManager.getCurrentSnap());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 
@@ -207,6 +209,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertEquals(5, traceManager.getCurrentFrame());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 
@@ -251,6 +254,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(objThread0, traceManager.getCurrentObject());
 		assertEquals(thread, traceManager.getCurrentThread());
 
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		traceManager.activateTrace(null);
 		waitForSwing();
 

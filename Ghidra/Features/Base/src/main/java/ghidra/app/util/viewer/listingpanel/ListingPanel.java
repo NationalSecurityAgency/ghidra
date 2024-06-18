@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
@@ -68,7 +67,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	private ListingModel listingModel;
 	private FieldHeader headerPanel;
-	private ButtonPressedListener[] buttonListeners = new ButtonPressedListener[0];
+	private List<ButtonPressedListener> buttonListeners = new ArrayList<>();
 	private List<ChangeListener> indexMapChangeListeners = new ArrayList<>();
 
 	private ListingHoverProvider listingHoverHandler;
@@ -122,6 +121,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				validate();
 			}
 		});
+
+		String viewName = "Assembly Listing View";
+		fieldPanel.setName(viewName);
+		fieldPanel.getAccessibleContext().setAccessibleName(viewName);
 	}
 
 	/**
@@ -307,6 +310,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	private void buildPanels() {
+		boolean fieldPanelHasFocus = fieldPanel.hasFocus();
+
 		removeAll();
 		add(buildLeftComponent(), BorderLayout.WEST);
 		add(buildCenterComponent(), BorderLayout.CENTER);
@@ -316,6 +321,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		}
 		revalidate();
 		repaint();
+
+		if (fieldPanelHasFocus) {
+			fieldPanel.requestFocusInWindow();
+		}
 	}
 
 	private JComponent buildOverviewComponent() {
@@ -438,9 +447,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @param listener the ButtonPressedListener to add.
 	 */
 	public void addButtonPressedListener(ButtonPressedListener listener) {
-		List<ButtonPressedListener> list = new ArrayList<>(Arrays.asList(buttonListeners));
-		list.add(listener);
-		buttonListeners = list.toArray(new ButtonPressedListener[list.size()]);
+		buttonListeners.add(listener);
 	}
 
 	/**
@@ -449,9 +456,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @param listener the ButtonPressedListener to remove.
 	 */
 	public void removeButtonPressedListener(ButtonPressedListener listener) {
-		List<ButtonPressedListener> list = new ArrayList<>(Arrays.asList(buttonListeners));
-		list.remove(listener);
-		buttonListeners = list.toArray(new ButtonPressedListener[list.size()]);
+		buttonListeners.remove(listener);
 	}
 
 	/**
@@ -559,7 +564,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		layoutModel.dispose();
 		layoutModel = createLayoutModel(null);
 		layoutModel.dispose();
-		buttonListeners = null;
+		buttonListeners.clear();
 
 		fieldPanel.dispose();
 	}
@@ -1214,5 +1219,17 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	public void removeDisplayListener(AddressSetDisplayListener listener) {
 		displayListeners.remove(listener);
+	}
+
+	@Override
+	public synchronized void addFocusListener(FocusListener l) {
+		// we are not focusable, defer to contained field panel
+		fieldPanel.addFocusListener(l);
+	}
+
+	@Override
+	public synchronized void removeFocusListener(FocusListener l) {
+		// we are not focusable, defer to contained field panel
+		fieldPanel.removeFocusListener(l);
 	}
 }

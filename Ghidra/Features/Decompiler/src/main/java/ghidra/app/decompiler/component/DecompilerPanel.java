@@ -126,6 +126,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		fieldPanel.addFieldLocationListener(this);
 		fieldPanel.addLayoutListener(this);
 
+		fieldPanel.setName("Decompiler View");
+		fieldPanel.getAccessibleContext().setAccessibleName("Decompiler View");
+
 		fieldPanel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
@@ -1209,6 +1212,18 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	public void removeMarginProvider(DecompilerMarginProvider provider) {
 		marginProviders.remove(provider);
 		buildPanels();
+	}
+
+	@Override
+	public synchronized void addFocusListener(FocusListener l) {
+		// we are not focusable, defer to contained field panel
+		fieldPanel.addFocusListener(l);
+	}
+
+	@Override
+	public synchronized void removeFocusListener(FocusListener l) {
+		// we are not focusable, defer to contained field panel
+		fieldPanel.removeFocusListener(l);
 	}
 
 	private void buildPanels() {

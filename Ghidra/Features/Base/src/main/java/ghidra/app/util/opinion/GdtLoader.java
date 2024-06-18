@@ -20,12 +20,12 @@ import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.framework.store.db.PackedDatabase;
@@ -55,8 +55,8 @@ public class GdtLoader implements Loader {
 	@Override
 	public LoadResults<? extends DomainObject> load(ByteProvider provider, String filename,
 			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
-			CancelledException, VersionException {
+			MessageLog messageLog, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException, VersionException {
 
 		DataTypeArchive dtArchive =
 			loadPackedProgramDatabase(provider, filename, consumer, monitor);
@@ -78,15 +78,15 @@ public class GdtLoader implements Loader {
 			boolean success = false;
 			DBHandle dbh = null;
 			try {
-				if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-					packedDatabase.getContentType())) {
+				if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+						.equals(packedDatabase.getContentType())) {
 					throw new IOException("File imported is not a Program: " + programName);
 				}
 
 				monitor.setMessage("Restoring " + provider.getName());
 
 				dbh = packedDatabase.open(monitor);
-				dtArchive = new DataTypeArchiveDB(dbh, DBConstants.UPGRADE, monitor, consumer);
+				dtArchive = new DataTypeArchiveDB(dbh, OpenMode.UPGRADE, monitor, consumer);
 				success = true;
 			}
 			finally {
@@ -116,7 +116,8 @@ public class GdtLoader implements Loader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null && options.size() > 0) {
 			return "GDTLoader takes no options";
 		}

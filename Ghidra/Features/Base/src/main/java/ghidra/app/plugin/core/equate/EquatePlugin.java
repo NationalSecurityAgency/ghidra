@@ -29,7 +29,6 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.bean.SetEquateDialog;
 import ghidra.app.util.bean.SetEquateDialog.SelectionType;
 import ghidra.app.util.datatype.ApplyEnumDialog;
-import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.CompoundBackgroundCommand;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -182,7 +181,7 @@ public class EquatePlugin extends Plugin {
 			iter = listing.getCodeUnits(context.getProgram().getMemory(), true);
 		}
 
-		BackgroundCommand cmd = new CreateEquateCmd(scalar, iter, dialog.getEquateName(),
+		CreateEquateCmd cmd = new CreateEquateCmd(scalar, iter, dialog.getEquateName(),
 			dialog.getOverwriteExisting(), context);
 		tool.executeBackgroundCommand(cmd, context.getProgram());
 
@@ -297,8 +296,8 @@ public class EquatePlugin extends Plugin {
 
 		// Set up a background task that we'll populate with all the rename tasks we need
 		// to perform.
-		CompoundBackgroundCommand bckCmd =
-			new CompoundBackgroundCommand("Rename Equates in Selection", false, true);
+		CompoundBackgroundCommand<Program> bckCmd =
+			new CompoundBackgroundCommand<>("Rename Equates in Selection", false, true);
 
 		// Now loop over all the code units and search for matching scalars...
 		while (iter.hasNext()) {
@@ -312,7 +311,7 @@ public class EquatePlugin extends Plugin {
 	}
 
 	private void renameEquateForCodeUnit(ListingActionContext context, Enum enoom, Equate equate,
-			String newName, String oldName, CompoundBackgroundCommand bgCmd, CodeUnit cu) {
+			String newName, String oldName, CompoundBackgroundCommand<Program> bgCmd, CodeUnit cu) {
 
 		if (cu instanceof Instruction) {
 
@@ -348,8 +347,8 @@ public class EquatePlugin extends Plugin {
 			CodeUnitIterator iter) {
 
 		// Create a background task to process all the remove tasks.
-		CompoundBackgroundCommand bckCmd =
-			new CompoundBackgroundCommand("Remove Equates in Selection", false, true);
+		CompoundBackgroundCommand<Program> bckCmd =
+			new CompoundBackgroundCommand<>("Remove Equates in Selection", false, true);
 
 		// Now iterate over all code units in the iterator.
 		while (iter.hasNext()) {
@@ -362,7 +361,7 @@ public class EquatePlugin extends Plugin {
 	}
 
 	private void removeEquateForCodeUnit(ListingActionContext context, Equate equate,
-			CompoundBackgroundCommand bckCmd, CodeUnit cu) {
+			CompoundBackgroundCommand<Program> bckCmd, CodeUnit cu) {
 		// A code unit can be either an instruction or data; we need to handle each
 		// separately.
 		if (cu instanceof Instruction) {

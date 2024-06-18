@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -62,20 +63,20 @@ abstract class SourceArchiveAdapter {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static SourceArchiveAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+	static SourceArchiveAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new SourceArchiveAdapterV0(handle, tablePrefix, true);
 		}
 		try {
 			return new SourceArchiveAdapterV0(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			SourceArchiveAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;

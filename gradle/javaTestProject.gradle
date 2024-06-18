@@ -95,17 +95,17 @@ task pcodeTest (type: Test) { t ->
 }
 
 rootProject.unitTestReport {
-	reportOn this.project.test
+	testResults.from(this.project.test)
 }
 rootProject.integrationTestReport {
-	reportOn this.project.integrationTest
+	testResults.from(this.project.integrationTest)
 }
 rootProject.pcodeTestReport {
-	reportOn this.project.pcodeTest
+	testResults.from(this.project.pcodeTest)
 }
 rootProject.combinedTestReport { 
-	reportOn this.project.test
-	reportOn this.project.integrationTest
+	testResults.from(this.project.test)
+	testResults.from(this.project.integrationTest)
 }
 
 

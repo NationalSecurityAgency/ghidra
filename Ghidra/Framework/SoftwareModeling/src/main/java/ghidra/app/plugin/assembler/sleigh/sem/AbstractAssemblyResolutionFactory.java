@@ -19,8 +19,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import ghidra.app.plugin.assembler.sleigh.expr.*;
-import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory.AbstractAssemblyResolvedBackfillBuilder;
-import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory.AbstractAssemblyResolvedPatternsBuilder;
 import ghidra.app.plugin.processors.sleigh.Constructor;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
@@ -142,7 +140,7 @@ public abstract class AbstractAssemblyResolutionFactory< //
 	/**
 	 * Construct an immutable single-entry result set consisting of the one given resolution
 	 * 
-	 * @param rp the single resolution entry
+	 * @param one the single resolution entry
 	 * @return the new resolution set
 	 */
 	protected AssemblyResolutionResults singleton(AssemblyResolution one) {
@@ -185,7 +183,7 @@ public abstract class AbstractAssemblyResolutionFactory< //
 	 * a special case, if {@code bits == 0}, the goal is considered fully-defined (as if
 	 * {@code bits == 64}).
 	 * 
-	 * @see #solveOrBackfill(PatternExpression, MaskedLong, AssemblyResolvedPatterns, String)
+	 * @see #solveOrBackfill(PatternExpression, MaskedLong, Map, AssemblyResolvedPatterns, String)
 	 */
 	protected AssemblyResolution solveOrBackfill(PatternExpression exp, long goal, int bits,
 			Map<String, Long> vals, AssemblyResolvedPatterns cur, String description) {

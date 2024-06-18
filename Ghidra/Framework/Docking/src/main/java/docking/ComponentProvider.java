@@ -115,6 +115,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private String inceptionInformation;
 
 	private String registeredFontId;
+	private Component defaultFocusComponent;
 
 	private ThemeListener themeListener = this::themeChanged;
 
@@ -180,7 +181,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		if (isVisible()) {
-			// if we are visible, then we don't need to update as the system updates all 
+			// if we are visible, then we don't need to update as the system updates all
 			// visible components
 			return;
 		}
@@ -225,21 +226,37 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return instanceID;
 	}
 
-	// Default implementation
-	public void requestFocus() {
-
-		JComponent component = getComponent();
-		if (component == null) {
-			return; // this shouldn't happen; this implies we have been disposed
-		}
-
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, component)) {
+	public final void requestFocus() {
+		if (!isVisible()) {
 			return;
 		}
 
-		component.requestFocus();
+		if (defaultFocusComponent != null) {
+			DockingWindowManager.requestFocus(defaultFocusComponent);
+			return;
+		}
+
+		JComponent component = getComponent();
+		Container parent = component == null ? null : component.getParent();
+		if (parent == null) {
+			return;	// we are either disposed or not added to the tool yet
+		}
+
+		Container focusCycleRoot = parent.getFocusCycleRootAncestor();
+		if (focusCycleRoot == null) {
+			return;
+		}
+
+		// Only request focus if next component in focus traversal belongs to this provider
+		FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+		Component firstComponent = policy.getComponentAfter(focusCycleRoot, parent);
+		if (firstComponent != null && SwingUtilities.isDescendingFrom(firstComponent, parent)) {
+			DockingWindowManager.requestFocus(firstComponent);
+		}
+	}
+
+	protected void setDefaultFocusComponent(Component component) {
+		this.defaultFocusComponent = component;
 	}
 
 	/**
@@ -368,7 +385,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return true if this provider is showing.
 	 */
 	public boolean isVisible() {
-		return dockingTool.isVisible(this);
+		return dockingTool != null && dockingTool.isVisible(this);
 	}
 
 	/**
@@ -830,7 +847,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * will adjust the font for the registered font id if it has been registered using
 	 * {@link #registeredFontId}. Subclasses can override this method to a more comprehensive
 	 * adjustment to multiple fonts if necessary.
-	 * @param bigger if true, the font should be made bigger, otherwise the font should be made 
+	 * @param bigger if true, the font should be made bigger, otherwise the font should be made
 	 * smaller
 	 */
 	public void adjustFontSize(boolean bigger) {

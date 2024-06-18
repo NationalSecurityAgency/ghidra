@@ -57,9 +57,9 @@ field and the range of bits within the token making up the field. The
 size of a field does <span class="emphasis"><em>not</em></span> need to be a multiple of
 8. The range is inclusive where the least significant bit in the token
 is labeled 0. When defining tokens that are bigger than 1 byte, the
-global endianess setting (See <a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1. Endianess Definition">Section 4.1, “Endianess Definition”</a>)
+global endianness setting (See <a class="xref" href="sleigh_definitions.html#sleigh_endianness_definition" title="4.1. Endianness Definition">Section 4.1, “Endianness Definition”</a>)
 will affect this labeling. Although it is rarely required, it is possible to override
-the global endianess setting for a specific token by appending either the qualifier
+the global endianness setting for a specific token by appending either the qualifier
 <span class="bold"><strong>endian=little</strong></span> or <span class="bold"><strong>endian=big</strong></span>
 immediately after the token name and size. For instance:
 </p>

@@ -15,16 +15,7 @@
  */
 package ghidra.feature.vt.gui.duallisting;
 
-import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
-import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.api.markuptype.VTMarkupType;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.task.ApplyMarkupAtDestinationAddressTask;
-import ghidra.program.model.address.Address;
-import ghidra.program.util.ProgramLocation;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -33,12 +24,21 @@ import java.awt.dnd.*;
 import java.util.ArrayList;
 
 import docking.dnd.*;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.api.markuptype.VTMarkupType;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.task.ApplyMarkupAtDestinationAddressTask;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
+import ghidra.util.datastruct.Duo;
 
 public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 
-	private final int SOURCE = 0; // left side
-	private final int DESTINATION = 1; // right side
-	private ListingPanel[] listingPanels = new ListingPanel[2];
+	private Duo<ListingPanel> listingPanels;
 
 	private VTController controller;
 	ListingCodeComparisonPanel dualListingPanel;
@@ -52,11 +52,13 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 	private DropTgtAdapter dropTargetAdapter;
 	private DataFlavor[] acceptableFlavors; // data flavors that are valid.
 
-	public VTDualListingDragNDropHandler(VTController controller, ListingCodeComparisonPanel dualListingPanel) {
+	public VTDualListingDragNDropHandler(VTController controller,
+			ListingCodeComparisonPanel dualListingPanel) {
 		this.controller = controller;
 		this.dualListingPanel = dualListingPanel;
-		listingPanels[SOURCE] = dualListingPanel.getLeftPanel();
-		listingPanels[DESTINATION] = dualListingPanel.getRightPanel();
+		ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
+		ListingPanel rightPanel = dualListingPanel.getListingPanel(RIGHT);
+		listingPanels = new Duo<>(leftPanel, rightPanel);
 		setUpDragDrop();
 	}
 
@@ -68,7 +70,7 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 		dragSource = DragSource.getDefaultDragSource();
 		dragGestureAdapter = new DragGestureAdapter(this);
 		dragSourceAdapter = new DragSrcAdapter(this);
-		dragSource.createDefaultDragGestureRecognizer(listingPanels[SOURCE].getFieldPanel(),
+		dragSource.createDefaultDragGestureRecognizer(listingPanels.get(LEFT).getFieldPanel(),
 			dragAction, dragGestureAdapter);
 	}
 
@@ -79,9 +81,8 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 		// set up the destination fieldPanel as a drop target that accepts mark-up items.
 		dropTargetAdapter =
 			new DropTgtAdapter(this, DnDConstants.ACTION_COPY_OR_MOVE, acceptableFlavors);
-		dropTarget =
-			new DropTarget(listingPanels[DESTINATION].getFieldPanel(),
-				DnDConstants.ACTION_COPY_OR_MOVE, dropTargetAdapter, true);
+		dropTarget = new DropTarget(listingPanels.get(RIGHT).getFieldPanel(),
+			DnDConstants.ACTION_COPY_OR_MOVE, dropTargetAdapter, true);
 		dropTarget.setActive(true);
 	}
 
@@ -101,14 +102,14 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 
 	@Override
 	public boolean isStartDragOk(DragGestureEvent e) {
-		if (!listingPanels[SOURCE].isStartDragOk()) {
+		if (!listingPanels.get(LEFT).isStartDragOk()) {
 			return false;
 		}
 		Point p = e.getDragOrigin();
-		ProgramLocation programLocation = listingPanels[SOURCE].getProgramLocation(p);
+		ProgramLocation programLocation = listingPanels.get(LEFT).getProgramLocation(p);
 		VTMarkupItem markupItem =
 			controller.getCurrentMarkupForLocation(programLocation,
-				dualListingPanel.getLeftProgram());
+				dualListingPanel.getProgram(LEFT));
 		if (markupItem == null) {
 			return false;
 		}
@@ -123,34 +124,18 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 	}
 
 	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		// nothing to do
-	}
-
-	@Override
 	public Transferable getTransferable(Point p) {
-		if (!listingPanels[SOURCE].contains(p)) {
+		if (!listingPanels.get(LEFT).contains(p)) {
 			return null;
 		}
 
-		ProgramLocation programLocation = listingPanels[SOURCE].getProgramLocation(p);
-		VTMarkupItem markupItem =
-			controller.getCurrentMarkupForLocation(programLocation,
-				dualListingPanel.getLeftProgram());
+		ProgramLocation programLocation = listingPanels.get(LEFT).getProgramLocation(p);
+		VTMarkupItem markupItem = controller.getCurrentMarkupForLocation(programLocation,
+			dualListingPanel.getProgram(LEFT));
 		if (markupItem == null) {
 			return null;
 		}
 		return new VTMarkupItemTransferable(markupItem);
-	}
-
-	@Override
-	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		// nothing to do
-	}
-
-	@Override
-	public void undoDragUnderFeedback() {
-		// nothing to do
 	}
 
 	@Override
@@ -163,10 +148,10 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 		VTMarkupItem markupItem = (VTMarkupItem) obj;
 		VTMarkupType markupType = markupItem.getMarkupType();
 		Point p = event.getLocation();
-		ProgramLocation loc = listingPanels[DESTINATION].getProgramLocation(p);
+		ProgramLocation loc = listingPanels.get(RIGHT).getProgramLocation(p);
 
 		Address newDestinationAddress =
-			markupType.getAddress(loc, dualListingPanel.getRightProgram());
+			markupType.getAddress(loc, dualListingPanel.getProgram(RIGHT));
 		if (newDestinationAddress == null) {
 			Msg.showInfo(getClass(), dualListingPanel, "Invalid Drop Location",
 				markupType.getDisplayName() + " was not dropped at a valid location.");
@@ -175,30 +160,19 @@ public class VTDualListingDragNDropHandler implements Draggable, Droppable {
 		if ((markupItem.getStatus() == VTMarkupItemStatus.SAME) &&
 			(SystemUtilities.isEqual(markupItem.getDestinationAddress(), newDestinationAddress))) {
 			// Dropped at expected address and already the same there.
-			Msg.showInfo(getClass(), dualListingPanel, "Already The Same",
-				markupType.getDisplayName() +
-					" was dropped at its expected\ndestination where the value is already the same.");
+			Msg.showInfo(getClass(), dualListingPanel, "Already The Same", markupType
+					.getDisplayName() +
+				" was dropped at its expected\ndestination where the value is already the same.");
 			return;
 		}
 
 		ArrayList<VTMarkupItem> arrayList = new ArrayList<VTMarkupItem>();
 		arrayList.add(markupItem);
 
-		// Use the following if you only want to set the address.
-//		SetMarkupItemDestinationAddressTask task =
-//			new SetMarkupItemDestinationAddressTask(controller.getSession(), arrayList,
-//				newDestinationAddress);
-
 		// Use the following if you want to set the address and apply the markup item using the default action.
-		ApplyMarkupAtDestinationAddressTask task =
-			new ApplyMarkupAtDestinationAddressTask(controller.getSession(), arrayList,
-				newDestinationAddress, controller.getOptions());
+		ApplyMarkupAtDestinationAddressTask task = new ApplyMarkupAtDestinationAddressTask(
+			controller.getSession(), arrayList, newDestinationAddress, controller.getOptions());
 
 		controller.runVTTask(task);
-	}
-
-	@Override
-	public void move() {
-		// nothing to do
 	}
 }

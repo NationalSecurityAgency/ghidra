@@ -35,10 +35,8 @@ sourceSets {
 // this dependency block is needed for this code to compile in our eclipse environment. It is not needed
 // for the gradle build
 dependencies {
-
 	implementation project(':BSim')
 }
-libsDirName='ziplayout'
 
 task copyGenericTask(type: Copy) {
 	from project(':Generic').file('src/main/java')

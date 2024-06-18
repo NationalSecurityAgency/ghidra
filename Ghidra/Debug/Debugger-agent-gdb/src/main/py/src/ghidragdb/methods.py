@@ -17,10 +17,9 @@ from concurrent.futures import Future, Executor
 from contextlib import contextmanager
 import re
 
+import gdb
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
-
-import gdb
 
 from . import commands, hooks, util
 
@@ -28,17 +27,17 @@ from . import commands, hooks, util
 @contextmanager
 def no_pagination():
     before = gdb.parameter('pagination')
-    gdb.set_parameter('pagination', False)
+    util.set_bool_param('pagination', False)
     yield
-    gdb.set_parameter('pagination', before)
+    util.set_bool_param('pagination', before)
 
 
 @contextmanager
 def no_confirm():
     before = gdb.parameter('confirm')
-    gdb.set_parameter('confirm', False)
+    util.set_bool_param('confirm', False)
     yield
-    gdb.set_parameter('confirm', before)
+    util.set_bool_param('confirm', before)
 
 
 class GdbExecutor(Executor):
@@ -75,7 +74,7 @@ THREADS_PATTERN = extre(INFERIOR_PATTERN, '\.Threads')
 THREAD_PATTERN = extre(THREADS_PATTERN, '\[(?P<tnum>\\d*)\]')
 STACK_PATTERN = extre(THREAD_PATTERN, '\.Stack')
 FRAME_PATTERN = extre(STACK_PATTERN, '\[(?P<level>\\d*)\]')
-REGS_PATTERN = extre(FRAME_PATTERN, '.Registers')
+REGS_PATTERN = extre(FRAME_PATTERN, '\.Registers')
 MEMORY_PATTERN = extre(INFERIOR_PATTERN, '\.Memory')
 MODULES_PATTERN = extre(INFERIOR_PATTERN, '\.Modules')
 MODULE_PATTERN = extre(MODULES_PATTERN, '\[(?P<modname>.*)\]')
@@ -175,7 +174,7 @@ def find_frame_by_level(thread, level):
     f = gdb.selected_frame()
 
     # Navigate up or down, because I can't just get by level
-    down = level - f.level()
+    down = level - util.get_level(f)
     while down > 0:
         f = f.older()
         if f is None:
@@ -188,7 +187,6 @@ def find_frame_by_level(thread, level):
             raise KeyError(
                 f"Inferiors[{thread.inferior.num}].Threads[{thread.num}].Stack[{level}] does not exist")
         down += 1
-    assert f.level() == level
     return f
 
 
@@ -215,7 +213,7 @@ def find_frame_by_regs_obj(object):
 
 # Because there's no method to get a register by name....
 def find_reg_by_name(f, name):
-    for reg in f.architecture().registers():
+    for reg in util.get_register_descs(f.architecture()):
         # TODO: gdb appears to be case sensitive, but until we encounter a
         # situation where case matters, we'll be insensitive
         if reg.name.lower() == name.lower():
@@ -427,10 +425,10 @@ def connect(inferior: sch.Schema('Inferior'), spec: str):
     gdb.execute(f'target {spec}')
 
 
-@REGISTRY.method(action='attach', display='Attach by Available')
-def attach_obj(inferior: sch.Schema('Inferior'), target: sch.Schema('Attachable')):
+@REGISTRY.method(action='attach', display='Attach')
+def attach_obj(target: sch.Schema('Attachable')):
     """Attach the inferior to the given target."""
-    switch_inferior(find_inf_by_obj(inferior))
+    #switch_inferior(find_inf_by_obj(inferior))
     pid = find_availpid_by_obj(target)
     gdb.execute(f'attach {pid}')
 
@@ -645,7 +643,7 @@ def break_access_expression(expression: str):
 
 
 @REGISTRY.method(action='break_ext', display='Catch Event')
-def break_event(spec: str):
+def break_event(inferior: sch.Schema('Inferior'), spec: str):
     """Set a catchpoint (catch)."""
     gdb.execute(f'catch {spec}')
 
@@ -690,8 +688,8 @@ def read_mem(inferior: sch.Schema('Inferior'), range: AddressRange):
             gdb.execute(
                 f'ghidra trace putmem 0x{offset_start:x} {range.length()}')
         except:
-            commands.putmem_state(
-                offset_start, offset_start+range.length() - 1, 'error')
+            gdb.execute(
+                f'ghidra trace putmem-state 0x{offset_start:x} {range.length()} error')
 
 
 @REGISTRY.method

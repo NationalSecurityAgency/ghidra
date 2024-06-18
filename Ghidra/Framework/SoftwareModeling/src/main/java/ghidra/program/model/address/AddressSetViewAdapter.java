@@ -33,6 +33,13 @@ public class AddressSetViewAdapter implements AddressSetView {
 		this.set = set;
 	}
 
+	/**
+	 * Construct an empty AddressSetViewAdapter.
+	 */
+	public AddressSetViewAdapter() {
+		this.set = new AddressSet();
+	}
+
 	@Override
 	public boolean contains(Address addr) {
 		return set.contains(addr);
@@ -171,6 +178,16 @@ public class AddressSetViewAdapter implements AddressSetView {
 	@Override
 	public Address findFirstAddressInCommon(AddressSetView otherSet) {
 		return set.findFirstAddressInCommon(otherSet);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return set.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return set.hashCode();
 	}
 
 	@Override

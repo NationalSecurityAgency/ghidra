@@ -40,8 +40,7 @@ import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.filter.FilterTextField;
-import docking.widgets.table.GDynamicColumnTableModel;
-import docking.widgets.table.RowObjectTableModel;
+import docking.widgets.table.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -78,7 +77,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected ConsoleService console;
 
 	protected Program program;
-	protected DraggableScriptTable scriptTable;
+	protected GTable scriptTable;
 	protected JTextPane consoleTextPane;
 	protected GhidraScriptEditorComponentProvider editor;
 	protected JTextArea editorTextArea;
@@ -122,11 +121,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		ConsoleComponentProvider consoleProvider =
 			waitForComponentProvider(ConsoleComponentProvider.class);
 		consoleTextPane =
-			(JTextPane) findComponentByName(consoleProvider.getComponent(), "CONSOLE");
+			(JTextPane) findComponentByName(consoleProvider.getComponent(), "Console Text Pane");
 		assertNotNull(consoleTextPane);
 
-		scriptTable =
-			(DraggableScriptTable) findComponentByName(provider.getComponent(), "SCRIPT_TABLE");
+		scriptTable = (GTable) findComponentByName(provider.getComponent(), "Scripts Table");
 		assertNotNull(scriptTable);
 
 		clearConsole();
@@ -211,11 +209,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void selectCategory(String category) {
-
-		GTree categoryTree = (GTree) findComponentByName(provider.getComponent(), "CATEGORY_TREE");
+		GTree categoryTree = provider.getTree();
 		waitForTree(categoryTree);
-		JTree jTree = (JTree) invokeInstanceMethod("getJTree", categoryTree);
-		assertNotNull(jTree);
 		GTreeNode child = categoryTree.getModelRoot().getChild(category);
 		categoryTree.setSelectedNode(child);
 		waitForTree(categoryTree);

@@ -1,0 +1,44 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!-- Switch statement nested in an if that also tests the switch variable -->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa83ff637e0769c7e8030000c3
+83ff147727488d0d3800000089fa4863
+04914801c83effe0b806000000c3b80a
+000000c38d04fd00000000c38d47f3c3
+4863c7c1ff1f4869c06766666648c1f8
+2129f8c3daffffffecffffffd4ffffff
+e0ffffffe8ffffffd4ffffffe0ffffff
+e0ffffffe0ffffffe8ffffffecffffff
+e8ffffffe8ffffffe8ffffffe8ffffff
+e8ffffffe8ffffffe8ffffffe8ffffff
+d4ffffffecffffff04000000
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="testval"/>
+</binaryimage>
+<script>
+  <com>lo fu testval</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="If/Switch #1" min="1" max="1">default:
+                                                 return param_1 \+ -0xd;</stringmatch>
+<stringmatch name="If/Switch #2" min="1" max="1">if \(99 &lt; param_1\) \{
+						 return param_1 \* 1000;</stringmatch>
+<stringmatch name="If/Switch #3" min="1" max="1">case 0:
+						 return 10;</stringmatch>
+<stringmatch name="If/Switch #4" min="1" max="1">case 1:
+						 case 10:
+						 case 0x14:
+						 return param_1 / 5;</stringmatch>
+<stringmatch name="If/Switch #5" min="1" max="1">case 2:
+						 case 5:
+						 case 0x13:
+						 return 6;</stringmatch>
+<stringmatch name="If/Switch #6" min="1" max="1">case 3:
+						 case 6:
+						 case 7:
+						 case 8:
+						 return param_1 \* 8;</stringmatch>
+</decompilertest>

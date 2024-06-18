@@ -353,9 +353,14 @@ public class ClippingTextField implements TextField {
 
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
+
 		int column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn);
 		if (column < 0) {
-			return new DefaultRowColLocation(0, textElement.length());
+			column = textElement.getCharacterIndexForDataLocation(dataRow, dataColumn - 3);
+			if (column < 0) {
+				return new DefaultRowColLocation(0, textElement.length());
+			}
+			return new RowColLocation(0, textElement.length());
 		}
 		return new RowColLocation(0, column);
 	}

@@ -202,17 +202,19 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public void setPreferredRootNamespaceCategoryPath(String categoryPath);
 
 	/**
-	 * Gets the path to the program's executable file.
-	 * For example, <code>C:\Temp\test.exe</code>.
+	 * Gets the path to the program's executable file. For example, {@code /home/user/foo.exe}.
 	 * This will allow plugins to execute the program.
-	 *
+	 * <p>
+	 * NOTE: The format of the path is not guaranteed to follow any standard naming conventions.
+	 * If used for anything other than display purpose, callers of this method should take extra
+	 * steps to ensure the path is in a form suitable for their needs.
+	 * 
 	 * @return String  path to program's exe file
 	 */
 	public String getExecutablePath();
 
 	/**
-	 * Sets the path to the program's executable file.
-	 * For example, <code>C:\Temp\test.exe</code>.
+	 * Sets the path to the program's executable file. For example, {@code /home/user/foo.exe}.
 	 *
 	 * @param path  the path to the program's exe
 	 */
@@ -355,12 +357,6 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * no matching addresses were found or if the address is improperly formatted.
 	 */
 	public Address[] parseAddress(String addrStr, boolean caseSensitive);
-
-	/**
-	 * Invalidates any caching in a program.
-	 * NOTE: Over-using this method can adversely affect system performance.
-	 */
-	public void invalidate();
 
 	/**
 	 * Create a new overlay space based upon the given base AddressSpace
