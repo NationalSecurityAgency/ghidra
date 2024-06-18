@@ -89,6 +89,7 @@ public class MDMangDeveloperGenericizeMangledNamesScript extends GhidraScript {
 		values.setValidator((valueMap, status) -> {
 			return validateInputFile(valueMap, status) && validateOutputFile(valueMap, status);
 		});
+		setReusePreviousChoices(false); // false for second pass... want our default output
 		values = askValues(TITLE, null, values);
 		inputFile = values.getFile(INPUT_PROMPT); // might have changed
 		inputFileName = inputFile.getAbsolutePath(); // might have changed
