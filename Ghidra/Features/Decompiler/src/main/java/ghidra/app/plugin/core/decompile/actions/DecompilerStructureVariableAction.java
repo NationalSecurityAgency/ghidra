@@ -61,7 +61,7 @@ public class DecompilerStructureVariableAction extends CreateStructureVariableAc
 			HighVariable var = tokenAtCursor.getHighVariable();
 			if (var != null && !(var instanceof HighConstant)) {
 				dt = var.getDataType();
-				isThisParam = DecompilerUtils.testForAutoParameterThis(var, function);
+				isThisParam = DecompilerUtils.isThisParameter(var, function);
 			}
 
 			if (dt == null || dt.getLength() > maxPointerSize) {

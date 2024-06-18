@@ -120,7 +120,7 @@ public class FillOutStructureCmd extends BackgroundCommand<Program> {
 			pointerDT = program.getDataTypeManager()
 					.addDataType(pointerDT, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-			boolean isThisParam = DecompilerUtils.testForAutoParameterThis(var, function);
+			boolean isThisParam = DecompilerUtils.isThisParameter(var, function);
 			if (!isThisParam) {
 				commitVariable(var, pointerDT, isThisParam);
 			}
