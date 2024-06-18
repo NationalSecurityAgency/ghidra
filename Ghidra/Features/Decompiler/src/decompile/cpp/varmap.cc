@@ -536,6 +536,9 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
 	fd->warningHeader("Variable defined which should be unmapped: "+sym->getName());
       return;
     }
+    else if (sym->getCategory() == Symbol::fake_input) {
+      return;	// Inputs in the stack space should not be unmapped
+    }
     removeSymbol(sym);
     overlap = findOverlap(addr,sz);
   }
@@ -1270,6 +1273,7 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   // into the above gather/restructure process, but for now
   // we just define fake symbols so that mark_unaliased will work
   clearUnlockedCategory(Symbol::function_parameter);
+  clearCategory(Symbol::fake_input);
   fakeInputSymbols();
 
   state.sortAlias();
