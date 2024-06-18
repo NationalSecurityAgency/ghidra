@@ -26,9 +26,6 @@ public class ContextCache {
 	private int context_size = 0;
 	private Register contextBaseRegister = null;
 
-	private BigInteger lastContextValue;
-	private int[] lastContextWords;
-
 	public ContextCache() {
 	}
 
@@ -57,10 +54,7 @@ public class ContextCache {
 		}
 	}
 
-	private synchronized int[] getWords(BigInteger value) {
-		if (value.equals(lastContextValue)) {
-			return lastContextWords;
-		}
+	private int[] getWords(BigInteger value) {
 
 		int[] words = new int[context_size];
 		byte[] bytes = value.toByteArray();
@@ -73,8 +67,6 @@ public class ContextCache {
 			}
 			words[i] = word;
 		}
-		lastContextValue = value;
-		lastContextWords = words;
 		return words;
 	}
 
