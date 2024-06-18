@@ -20,6 +20,7 @@ import static ghidra.pcode.utils.SlaFormat.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,7 +89,7 @@ public class SleighLanguage implements Language {
 	/**
 	 * Cached instruction prototypes
 	 */
-	private LinkedHashMap<Integer, SleighInstructionPrototype> instructProtoMap;
+	private ConcurrentHashMap<Integer, SleighInstructionPrototype> instructProtoMap;
 	private DecisionNode root = null;
 	/**
 	 * table of AddressSpaces
@@ -148,7 +149,7 @@ public class SleighLanguage implements Language {
 		buildVolatileSymbolAddresses();
 		xrefRegisters();
 
-		instructProtoMap = new LinkedHashMap<>();
+		instructProtoMap = new ConcurrentHashMap<>();
 
 		initParallelHelper();
 	}
@@ -378,16 +379,14 @@ public class SleighLanguage implements Language {
 				newProto.cacheInfo(buf, context, true);
 			}
 
-			synchronized (instructProtoMap) {
-				res = instructProtoMap.get(hashcode);
-				if (res == null) { // We have a prototype we have never seen
-					// before, build it fully
-					instructProtoMap.put(hashcode, newProto);
-					res = newProto;
-				}
-				if (inDelaySlot && res.hasDelaySlots()) {
-					throw new NestedDelaySlotException();
-				}
+			res = instructProtoMap.get(hashcode);
+			if (res == null) { // We have a prototype we have never seen
+				// before, build it fully
+				instructProtoMap.put(hashcode, newProto);
+				res = newProto;
+			}
+			if (inDelaySlot && res.hasDelaySlots()) {
+				throw new NestedDelaySlotException();
 			}
 		}
 		catch (MemoryAccessException e) {
