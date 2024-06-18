@@ -93,8 +93,14 @@ class InferiorState(object):
             if first or hashable_frame not in self.visited:
                 commands.putreg(
                     frame, util.get_register_descs(frame.architecture(), 'general'))
-                commands.putmem("$pc", "1", from_tty=False)
-                commands.putmem("$sp", "1", from_tty=False)
+                try:
+                    commands.putmem("$pc", "1", from_tty=False)
+                except MemoryError as e:
+                    print(f"Couldn't record page with PC: {e}")
+                try:
+                    commands.putmem("$sp", "1", from_tty=False)
+                except MemoryError as e:
+                    print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
         if first or self.regions or self.threads or self.modules:
             # Sections, memory syscalls, or stack allocations
