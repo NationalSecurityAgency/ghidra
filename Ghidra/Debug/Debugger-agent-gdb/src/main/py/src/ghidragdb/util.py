@@ -28,6 +28,8 @@ def _compute_gdb_ver():
     top = blurb.split('\n')[0]
     full = top.split(' ')[-1]
     major, minor = full.split('.')[:2]
+    if '-' in minor:
+        minor = minor[:minor.find('-')]
     return GdbVersion(full, int(major), int(minor))
 
 
