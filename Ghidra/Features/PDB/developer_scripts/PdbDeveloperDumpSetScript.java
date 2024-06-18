@@ -31,7 +31,7 @@ import ghidra.util.exception.CancelledException;
 
 public class PdbDeveloperDumpSetScript extends GhidraScript {
 
-	private record IOEntry(String input, String output) {};
+	private record IOEntry(String input, String output) {}
 
 	@Override
 	protected void run() throws Exception {
