@@ -96,7 +96,7 @@ class InferiorState(object):
                 try:
                     commands.putmem("$pc", "1", from_tty=False)
                 except MemoryError as e:
-                     print(f"Couldn't record page with PC: {e}")
+                    print(f"Couldn't record page with PC: {e}")
                 try:
                     commands.putmem("$sp", "1", from_tty=False)
                 except MemoryError as e:
