@@ -601,7 +601,7 @@ void AliasChecker::gatherInternal(void) const
 
   gatherAdditiveBase(spacebase,addBase);
   for(vector<AddBase>::iterator iter=addBase.begin();iter!=addBase.end();++iter) {
-    uintb offset = gatherOffset((*iter).base);
+    uintb offset = gatherOffset((*iter).base, &calculatedOffsets);
     offset = AddrSpace::addressToByte(offset,space->getWordSize()); // Convert to byte offset
     alias.push_back(offset);
     if (direction == 1) {
@@ -631,6 +631,7 @@ void AliasChecker::gather(const Funcdata *f,AddrSpace *spc,bool defer)
   calculated = false;		// Defer calculation
   addBase.clear();
   alias.clear();
+  calculatedOffsets.clear();
   direction = space->stackGrowsNegative() ? 1 : -1;		// direction == 1 for normal negative stack growth
   deriveBoundaries(fd->getFuncProto());
   if (!defer)
@@ -748,7 +749,7 @@ void AliasChecker::gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase)
 /// the syntax tree rooted at \b vn, backwards, only through additive operations.
 /// \param vn is the given Varnode to gather off of
 /// \return the resulting sub-sum
-uintb AliasChecker::gatherOffset(Varnode *vn)
+uintb AliasChecker::gatherOffset(Varnode *vn, unordered_map<uint4, uintb> *offsets)
 
 {
   uintb retval;
@@ -757,35 +758,42 @@ uintb AliasChecker::gatherOffset(Varnode *vn)
   if (vn->isConstant()) return vn->getOffset();
   PcodeOp *def = vn->getDef();
   if (def == (PcodeOp *)0) return 0;
+
+  unordered_map<uint4, uintb>::const_iterator iter = offsets->find(vn->getCreateIndex());
+  if (iter != offsets->end()) {
+    return iter->second;
+  }
   switch(def->code()) {
   case CPUI_COPY:
-    retval = gatherOffset(def->getIn(0));
+    retval = gatherOffset(def->getIn(0), offsets);
     break;
   case CPUI_PTRSUB:
   case CPUI_INT_ADD:
-    retval = gatherOffset(def->getIn(0));
-    retval += gatherOffset(def->getIn(1));
+    retval = gatherOffset(def->getIn(0), offsets);
+    retval += gatherOffset(def->getIn(1), offsets);
     break;
   case CPUI_INT_SUB:
-    retval = gatherOffset(def->getIn(0));
-    retval -= gatherOffset(def->getIn(1));
+    retval = gatherOffset(def->getIn(0), offsets);
+    retval -= gatherOffset(def->getIn(1), offsets);
     break;
   case CPUI_PTRADD:
     othervn = def->getIn(2);
-    retval = gatherOffset(def->getIn(0));
+    retval = gatherOffset(def->getIn(0), offsets);
     // We need to treat PTRADD exactly as if it were encoded as an ADD and MULT
     // Because a plain MULT truncates the ADD tree
     // We only follow getIn(1) if the PTRADD multiply is by 1
     if (othervn->isConstant() && (othervn->getOffset()==1))
-      retval = retval + gatherOffset(def->getIn(1));
+      retval = retval + gatherOffset(def->getIn(1), offsets);
     break;
   case CPUI_SEGMENTOP:
-    retval = gatherOffset(def->getIn(2));
+    retval = gatherOffset(def->getIn(2), offsets);
     break;
   default:
     retval = 0;
   }
-  return retval & calc_mask(vn->getSize());
+  retval &= calc_mask(vn->getSize());
+  offsets->insert({vn->getCreateIndex(), retval});
+  return retval;
 }
 
 /// \param spc is the address space being analyzed
