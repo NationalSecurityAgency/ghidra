@@ -145,6 +145,9 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 		if (highSymbol == null) {
 			return false;
 		}
+		if (highSymbol instanceof EquateSymbol) {
+			return false;
+		}
 		return !highSymbol.isGlobal();
 	}
 
