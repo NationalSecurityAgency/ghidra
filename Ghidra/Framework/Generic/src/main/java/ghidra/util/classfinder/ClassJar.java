@@ -36,7 +36,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
-class ClassJar implements ClassLocation {
+class ClassJar extends ClassLocation {
 
 	/** 
 	 * Pattern for matching jar files in a module lib dir
@@ -51,19 +51,17 @@ class ClassJar implements ClassLocation {
 	private static final String PATCH_DIR_PATH_FORWARD_SLASHED = getPatchDirPath();
 	private static final Set<String> USER_PLUGIN_PATHS = loadUserPluginPaths();
 
-	private Set<ClassFileInfo> classes = new HashSet<>();
 	private String path;
 
-	ClassJar(String path, TaskMonitor monitor) throws CancelledException {
+	ClassJar(String path, List<ClassFileInfo> dest, TaskMonitor monitor) {
+		super(dest);
 		this.path = path;
-		loadUserPluginPaths();
-
-		scanJar(monitor);
+		start(monitor);
 	}
 
 	@Override
-	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) {
-		list.addAll(classes);
+	protected void scan(TaskMonitor monitor) throws CancelledException {
+		scanJar(monitor);
 	}
 
 	private void scanJar(TaskMonitor monitor) throws CancelledException {
@@ -171,7 +169,7 @@ class ClassJar implements ClassLocation {
 		if (!name.endsWith(CLASS_EXT)) {
 			return;
 		}
-		name = name.substring(0, name.indexOf(CLASS_EXT));
+		name = name.substring(0, name.lastIndexOf(CLASS_EXT));
 		name = name.replace('/', '.');
 
 		String epName = ClassSearcher.getExtensionPointSuffix(name);
@@ -197,14 +195,14 @@ class ClassJar implements ClassLocation {
 	}
 
 	private static Set<String> loadUserPluginPaths() {
-		Set<String> result = new HashSet<>();
 		String[] paths = Preferences.getPluginPaths();
+		Set<String> result = new HashSet<>(paths.length);
 		for (String pathName : paths) {
 			// note: lower case because our client uses lower case for paths
 			String forwardSlashed = pathName.replaceAll("\\\\", "/").toLowerCase();
 			result.add(forwardSlashed);
 		}
-		return Collections.unmodifiableSet(result);
+		return result;
 	}
 
 }

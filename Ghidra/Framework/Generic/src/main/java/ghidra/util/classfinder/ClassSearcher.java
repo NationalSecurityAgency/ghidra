@@ -23,6 +23,7 @@ import java.nio.file.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,7 +78,7 @@ public class ClassSearcher {
 		Boolean.getBoolean(GhidraClassLoader.ENABLE_RESTRICTED_EXTENSIONS_PROPERTY);
 
 	private static List<Class<?>> FILTER_CLASSES = Arrays.asList(ExtensionPoint.class);
-	private static Pattern extensionPointSuffixPattern;
+	private static AtomicReference<Pattern> extensionPointSuffixPattern = new AtomicReference<>();
 	private static Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap;
 	private static Map<ClassFileInfo, Class<?>> loadedCache = new HashMap<>();
 	private static Set<ClassFileInfo> falsePositiveCache = new HashSet<>();
@@ -129,7 +130,7 @@ public class ClassSearcher {
 		hasSearched = true;
 		isSearching = false;
 
-		Swing.runNow(() -> fireClassListChanged());
+		Swing.runNow(ClassSearcher::fireClassListChanged);
 
 		String finishedMessage =
 			"Class search complete (" + ChronoUnit.MILLIS.between(start, Instant.now()) + " ms)";
@@ -347,8 +348,15 @@ public class ClassSearcher {
 	 *   {@link #search(TaskMonitor)} has not been called yet
 	 */
 	public static String getExtensionPointSuffix(String className) {
-		if (extensionPointSuffixPattern == null) {
-			extensionPointSuffixPattern = loadExtensionPointSuffixes();
+		Pattern pattern = extensionPointSuffixPattern.get();
+		if (pattern == null) {
+			synchronized (extensionPointSuffixPattern) {
+				pattern = extensionPointSuffixPattern.get();
+				if (pattern == null) {
+					pattern = loadExtensionPointSuffixes();
+					extensionPointSuffixPattern.set(pattern);
+				}
+			}
 		}
 		if (className.contains("$") || className.endsWith("Test")) {
 			return null;
@@ -357,7 +365,7 @@ public class ClassSearcher {
 		if (packageIndex > 0) {
 			className = className.substring(packageIndex + 1);
 		}
-		Matcher m = extensionPointSuffixPattern.matcher(className);
+		Matcher m = pattern.matcher(className);
 		return m.find() && m.groupCount() == 1 ? m.group(1) : null;
 	}
 
@@ -410,38 +418,7 @@ public class ClassSearcher {
 			throws CancelledException {
 		log.info("Searching for classes...");
 
-		List<ClassDir> classDirs = new ArrayList<>();
-		List<ClassJar> classJars = new ArrayList<>();
-
-		for (String searchPath : gatherSearchPaths()) {
-			String lcSearchPath = searchPath.toLowerCase();
-			File searchFile = new File(searchPath);
-			if ((lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) &&
-				searchFile.exists()) {
-
-				if (ClassJar.ignoreJar(searchPath)) {
-					log.trace("Ignoring jar file: {}", searchPath);
-					continue;
-				}
-
-				log.trace("Searching jar file: {}", searchPath);
-				classJars.add(new ClassJar(searchPath, monitor));
-			}
-			else if (searchFile.isDirectory()) {
-				log.trace("Searching classpath directory: {}", searchPath);
-				classDirs.add(new ClassDir(searchPath, monitor));
-			}
-		}
-
-		List<ClassFileInfo> classList = new ArrayList<>();
-		for (ClassDir dir : classDirs) {
-			monitor.checkCancelled();
-			dir.getClasses(classList, monitor);
-		}
-		for (ClassJar jar : classJars) {
-			monitor.checkCancelled();
-			jar.getClasses(classList, monitor);
-		}
+		List<ClassFileInfo> classList = gatherClasses(monitor);
 
 		// We can't load more than one class with the same name, so de-duplicate them
 		Map<String, ClassFileInfo> uniqueClassMap = new HashMap<>();
@@ -482,7 +459,7 @@ public class ClassSearcher {
 		});
 	}
 
-	private static List<String> gatherSearchPaths() {
+	private static List<ClassFileInfo> gatherClasses(TaskMonitor monitor) throws CancelledException {
 
 		//
 		// By default all classes are found on the standard classpath.  In the default mode, there
@@ -490,37 +467,72 @@ public class ClassSearcher {
 		// users can enable Extension classpath restriction.  In this mode, any Extension module's 
 		// jar files will *not* be on the standard classpath, but instead will be on CP_EXT.
 		//
-		List<String> rawPaths = new ArrayList<>();
-		getPropertyPaths(GhidraClassLoader.CP, rawPaths);
-		getPropertyPaths(GhidraClassLoader.CP_EXT, rawPaths);
-		return canonicalizePaths(rawPaths);
+		ArrayList<ClassLocation> locations = new ArrayList<>();
+		List<ClassFileInfo> classes = new ArrayList<>();
+		getPropertyPaths(GhidraClassLoader.CP, locations, classes, monitor);
+		getPropertyPaths(GhidraClassLoader.CP_EXT, locations, classes, monitor);
+
+		for (ClassLocation location : locations) {
+			monitor.checkCancelled();
+			location.join(monitor);
+		}
+		return classes;
 	}
 
-	private static void getPropertyPaths(String property, List<String> results) {
+	private static void join(Thread td, TaskMonitor monitor) throws CancelledException {
+		while (true) {
+			try {
+				td.join();
+				break;
+			}
+			catch (InterruptedException e) {
+			}
+			monitor.checkCancelled();
+		}
+	}
+
+	private static void getPropertyPaths(String property, List<ClassLocation> locations, List<ClassFileInfo> classes, TaskMonitor monitor) {
 		String paths = System.getProperty(property);
 		log.trace("Paths in {}: {}", property, paths);
-		if (StringUtils.isBlank(paths)) {
+		if (paths == null || paths.isBlank()) {
 			return;
 		}
 
-		StringTokenizer st = new StringTokenizer(paths, File.pathSeparator);
-		while (st.hasMoreTokens()) {
-			results.add(st.nextToken());
+		int length = paths.length();
+		for (int pos = 0; pos < length;) {
+			int end = paths.indexOf(File.pathSeparatorChar, pos);
+			String path = paths.substring(pos, end != -1 ? end : paths.length());
+			ClassLocation location = toLocation(path, classes, monitor);
+			if (location != null) {
+				locations.add(location);
+			}
+			if (end == -1) {
+				return;
+			}
+			pos = end+1;
 		}
 	}
 
-	private static List<String> canonicalizePaths(Collection<String> paths) {
+	private static ClassLocation toLocation(String path, List<ClassFileInfo> classes, TaskMonitor monitor) {
+		String searchPath = normalize(path);
+		String lcSearchPath = searchPath.toLowerCase();
+		File searchFile = new File(searchPath);
+		if ((lcSearchPath.endsWith(".jar") || lcSearchPath.endsWith(".zip")) &&
+			searchFile.exists()) {
 
-		//@formatter:off
-		List<String> canonical = paths.stream()
-			 .map(path -> {
-				 String normalized = normalize(path);
-				 return normalized;
-			 })
-			 .collect(Collectors.toList());
-		//@formatter:on
+			if (ClassJar.ignoreJar(searchPath)) {
+				log.trace("Ignoring jar file: {}", searchPath);
+				return null;
+			}
 
-		return canonical;
+			log.trace("Searching jar file: {}", searchPath);
+			return new ClassJar(searchPath, classes, monitor);
+		}
+		if (searchFile.isDirectory()) {
+			log.trace("Searching classpath directory: {}", searchPath);
+			return new ClassDir(searchPath, classes, monitor);
+		}
+		return null;
 	}
 
 	private static String normalize(String path) {

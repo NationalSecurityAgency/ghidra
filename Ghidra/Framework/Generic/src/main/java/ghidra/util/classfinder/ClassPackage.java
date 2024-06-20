@@ -23,7 +23,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-class ClassPackage implements ClassLocation {
+class ClassPackage extends ClassLocation {
 
 	private static final FileFilter CLASS_FILTER =
 		pathname -> pathname.getName().endsWith(CLASS_EXT);
@@ -32,22 +32,29 @@ class ClassPackage implements ClassLocation {
 	private File rootDir;
 	private File packageDir;
 	private String packageName;
-	private Set<ClassFileInfo> classes = new HashSet<>();
 
-	ClassPackage(File rootDir, String packageName, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCancelled();
+	ClassPackage(File rootDir, String packageName, List<ClassFileInfo> dest, TaskMonitor monitor) {
+		super(dest);
 		this.rootDir = rootDir;
 		this.packageName = packageName;
 		this.packageDir = getPackageDir(rootDir, packageName);
-		scanClasses();
-		scanSubPackages(monitor);
+		start(monitor);
 	}
 
-	private void scanClasses() {
+	@Override
+	protected void scan(TaskMonitor monitor) throws CancelledException {
+		scanClasses(monitor);
+		scanSubPackages(monitor);
+		for (ClassPackage child : children) {
+			child.join(monitor);
+		}
+	}
 
+	private void scanClasses(TaskMonitor monitor) throws CancelledException {
 		String path = rootDir.getAbsolutePath();
 		Set<String> allClassNames = getAllClassNames();
 		for (String className : allClassNames) {
+			monitor.checkCancelled();
 			String epName = ClassSearcher.getExtensionPointSuffix(className);
 			if (epName != null) {
 				classes.add(new ClassFileInfo(path, className, epName));
@@ -80,26 +87,14 @@ class ClassPackage implements ClassLocation {
 			}
 
 			monitor.setMessage("Scanning package: " + pkg);
-			children.add(new ClassPackage(rootDir, pkg, monitor));
+			ClassPackage child = new ClassPackage(rootDir, pkg, dest, monitor);
+			children.add(child);
+			child.start(monitor);
 		}
 	}
 
 	private File getPackageDir(File lRootDir, String lPackageName) {
 		return new File(lRootDir, lPackageName.replace('.', File.separatorChar));
-	}
-
-	@Override
-	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor)
-			throws CancelledException {
-
-		list.addAll(classes);
-
-		Iterator<ClassPackage> it = children.iterator();
-		while (it.hasNext()) {
-			monitor.checkCancelled();
-			ClassPackage subPkg = it.next();
-			subPkg.getClasses(list, monitor);
-		}
 	}
 
 	private Set<String> getAllClassNames() {

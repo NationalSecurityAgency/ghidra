@@ -16,6 +16,8 @@
 package ghidra.util.classfinder;
 
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -23,9 +25,43 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a place from which {@link Class}s can be obtained
  */
-interface ClassLocation {
+abstract class ClassLocation {
 
 	public static final String CLASS_EXT = ".class";
+	private Thread td;
+	protected Set<ClassFileInfo> classes = new HashSet<>();
+	protected List<ClassFileInfo> dest;
+	
+	protected ClassLocation(List<ClassFileInfo> dest) {
+		this.dest = dest;
+	}
+	
+	protected void start(TaskMonitor monitor) {
+		td = Thread.ofVirtual().start(() -> scanInBackground(monitor));
+	}
+	
+	private void scanInBackground(TaskMonitor monitor) {
+		try {
+			scan(monitor);
+			synchronized (dest) {
+				dest.addAll(classes);
+			}
+		}
+		catch (CancelledException e) {
+		}
+	}
+	
+	protected abstract void scan(TaskMonitor monitor) throws CancelledException;
 
-	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) throws CancelledException;
+	final void join(TaskMonitor monitor) throws CancelledException {
+		while (true) {
+			try {
+				td.join();
+				break;
+			}
+			catch (InterruptedException e) {
+			}
+			monitor.checkCancelled();
+		}
+	}
 }

@@ -21,20 +21,24 @@ import java.util.List;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-class ClassDir {
+class ClassDir extends ClassLocation {
 
 	private String dirPath;
 	private File dir;
 	private ClassPackage classPackage;
 
-	ClassDir(String dirPath, TaskMonitor monitor) throws CancelledException {
+	ClassDir(String dirPath, List<ClassFileInfo> dest, TaskMonitor monitor) {
+		super(dest);
 		this.dirPath = dirPath;
 		this.dir = new File(dirPath);
-		classPackage = new ClassPackage(dir, "", monitor);
+		this.classPackage = new ClassPackage(dir, "", dest, monitor);
+		start(monitor);
 	}
 
-	void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) throws CancelledException {
-		classPackage.getClasses(list, monitor);
+	@Override
+	protected void scan(TaskMonitor monitor) throws CancelledException {
+		classPackage.start(monitor);
+		classPackage.join(monitor);
 	}
 
 	String getDirPath() {
