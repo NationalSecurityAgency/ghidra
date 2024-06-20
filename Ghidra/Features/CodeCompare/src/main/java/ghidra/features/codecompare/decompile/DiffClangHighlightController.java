@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import generic.theme.GColor;
 import ghidra.app.decompiler.ClangSyntaxToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
@@ -120,7 +119,7 @@ public class DiffClangHighlightController extends LocationClangHighlightControll
 			List<ClangToken> tokens = addPrimaryHighlightToTokensForParenthesis(
 				(ClangSyntaxToken) tok, defaultParenColor);
 			reHighlightDiffs(tokens);
-			addBraceHighlight((ClangSyntaxToken) tok, defaultParenColor);
+			addPrimaryHighlightToTokensForBrace((ClangSyntaxToken) tok, defaultParenColor);
 		}
 
 		TokenBin tokenBin = null;

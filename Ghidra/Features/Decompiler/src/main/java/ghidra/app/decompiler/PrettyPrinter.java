@@ -37,7 +37,7 @@ public class PrettyPrinter {
 
 	private Function function;
 	private ClangTokenGroup tokgroup;
-	private ArrayList<ClangLine> lines = new ArrayList<>();
+	private List<ClangLine> lines = new ArrayList<>();
 	private NameTransformer transformer;
 
 	/**
@@ -58,7 +58,7 @@ public class PrettyPrinter {
 
 	private void padEmptyLines() {
 		for (ClangLine line : lines) {
-			ArrayList<ClangToken> tokenList = line.getAllTokens();
+			List<ClangToken> tokenList = line.getAllTokens();
 			if (tokenList.size() == 0) {
 				ClangToken spacer = ClangToken.buildSpacer(null, line.getIndent(), INDENT_STRING);
 				spacer.setLineParent(line);
@@ -72,11 +72,11 @@ public class PrettyPrinter {
 	}
 
 	/**
-	 * Returns an array list of the C language lines contained in the
+	 * Returns a list of the C language lines contained in the
 	 * C language token group.
-	 * @return an array list of the C language lines
+	 * @return a list of the C language lines
 	 */
-	public ArrayList<ClangLine> getLines() {
+	public List<ClangLine> getLines() {
 		return lines;
 	}
 
@@ -86,8 +86,7 @@ public class PrettyPrinter {
 	 * @return a string of readable C code
 	 */
 	public DecompiledFunction print() {
-		StringBuffer buff = new StringBuffer();
-
+		StringBuilder buff = new StringBuilder();
 		for (ClangLine line : lines) {
 			buff.append(line.getIndentString());
 			List<ClangToken> tokens = line.getAllTokens();

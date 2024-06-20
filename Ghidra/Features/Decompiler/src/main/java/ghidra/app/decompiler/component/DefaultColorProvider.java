@@ -17,33 +17,33 @@ package ghidra.app.decompiler.component;
 
 import java.awt.Color;
 
-import generic.json.Json;
-import ghidra.app.decompiler.CTokenHighlightMatcher;
 import ghidra.app.decompiler.ClangToken;
 
 /**
- * Matcher used for secondary highlights in the Decompiler.
+ * A color provider that returns a specific color.
  */
-class NameTokenMatcher implements CTokenHighlightMatcher {
+public class DefaultColorProvider implements ColorProvider {
 
-	private ColorProvider colorProvider;
-	private String name;
+	private Color color;
+	private String prefix;
 
-	NameTokenMatcher(String name, ColorProvider colorProvider) {
-		this.name = name;
-		this.colorProvider = colorProvider;
+	/**
+	 * Constructor
+	 * @param prefix a descriptive prefix used in the {@link #toString()} method
+	 * @param color the color
+	 */
+	DefaultColorProvider(String prefix, Color color) {
+		this.prefix = prefix;
+		this.color = color;
 	}
 
 	@Override
-	public Color getTokenHighlight(ClangToken token) {
-		if (name.equals(token.getText())) {
-			return colorProvider.getColor(token);
-		}
-		return null;
+	public Color getColor(ClangToken token) {
+		return color;
 	}
 
 	@Override
 	public String toString() {
-		return Json.toString(this);
+		return prefix + ' ' + color;
 	}
 }

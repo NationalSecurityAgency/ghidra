@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class ClangLine {
 	private int indent_level;
-	private ArrayList<ClangToken> tokens;
+	private List<ClangToken> tokens;
 	private int lineNumber;
 
 	public ClangLine(int lineNumber, int indent) {
@@ -35,7 +35,7 @@ public class ClangLine {
 	}
 
 	public String getIndentString() {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < indent_level; i++) {
 			buffer.append(PrettyPrinter.INDENT_STRING);
 		}
@@ -51,7 +51,7 @@ public class ClangLine {
 		tok.setLineParent(this);
 	}
 
-	public ArrayList<ClangToken> getAllTokens() {
+	public List<ClangToken> getAllTokens() {
 		return tokens;
 	}
 
@@ -95,7 +95,6 @@ public class ClangLine {
 			if (isCallout) {
 				buffy.append(end);
 			}
-
 		}
 
 		return buffy.toString();

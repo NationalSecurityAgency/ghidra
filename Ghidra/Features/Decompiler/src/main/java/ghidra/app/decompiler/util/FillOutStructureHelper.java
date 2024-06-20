@@ -132,7 +132,7 @@ public class FillOutStructureHelper {
 		}
 
 		if (structDT == null) {
-			if (createClassIfNeeded && DecompilerUtils.testForAutoParameterThis(var, function)) {
+			if (createClassIfNeeded && DecompilerUtils.isThisParameter(var, function)) {
 				structDT = createUniqueClassNamespaceAndStructure(var, (int) size, function);
 			}
 			else {
