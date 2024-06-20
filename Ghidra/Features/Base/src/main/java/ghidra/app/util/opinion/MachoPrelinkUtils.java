@@ -244,22 +244,25 @@ public class MachoPrelinkUtils {
 	 * @param offset The offset within the provider to check.
 	 * @return True A valid {@link LoadSpec} for the Mach-O at the given provider's offset, or null 
 	 *   if it is not a Mach-O or a valid {@link LoadSpec} could not be found.
-	 * @throws IOException if there was an IO-related problem.
 	 */
-	private static LoadSpec getMachoLoadSpec(ByteProvider provider, long offset)
-			throws IOException {
-		Collection<LoadSpec> loadSpecs = new MachoLoader().findSupportedLoadSpecs(
-			new ByteProviderWrapper(provider, offset, provider.length() - offset));
+	private static LoadSpec getMachoLoadSpec(ByteProvider provider, long offset) {
+		try {
+			Collection<LoadSpec> loadSpecs = new MachoLoader().findSupportedLoadSpecs(
+				new ByteProviderWrapper(provider, offset, provider.length() - offset));
 
-		// Getting a LoadSpec back means it's a Mach-O we can load.  We also need to make sure
-		// the LoadSpec has a language/compiler spec defined to know we support the processor the
-		// loader detected.
-		if (!loadSpecs.isEmpty()) {
-			LoadSpec loadSpec = loadSpecs.iterator().next();
-			if (loadSpec.getLanguageCompilerSpec() != null) {
-				return loadSpec;
+			// Getting a LoadSpec back means it's a Mach-O we can load.  We also need to make sure
+			// the LoadSpec has a language/compiler spec defined to know we support the processor the
+			// loader detected.
+			if (!loadSpecs.isEmpty()) {
+				LoadSpec loadSpec = loadSpecs.iterator().next();
+				if (loadSpec.getLanguageCompilerSpec() != null) {
+					return loadSpec;
+				}
 			}
+			return null;
 		}
-		return null;
+		catch (IOException e) {
+			return null;
+		}
 	}
 }
