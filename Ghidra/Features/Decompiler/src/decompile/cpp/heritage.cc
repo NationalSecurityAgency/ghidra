@@ -1466,6 +1466,7 @@ void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode 
     // We do not guard the call if the effect is "unaffected" or "reload"
     if ((effecttype == EffectRecord::unknown_effect)||(effecttype == EffectRecord::return_address)) {
       indop = fd->newIndirectOp(fc->getOp(),addr,size,0);
+      indop->setStopTypePropagation();
       indop->getIn(0)->setActiveHeritage();
       indop->getOut()->setActiveHeritage();
       write.push_back(indop->getOut());
@@ -1476,6 +1477,7 @@ void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode 
     }
     else if (effecttype == EffectRecord::killedbycall) {
       indop = fd->newIndirectCreation(fc->getOp(),addr,size,possibleoutput);
+      indop->setStopTypePropagation();
       indop->getOut()->setActiveHeritage();
       write.push_back(indop->getOut());
     }
