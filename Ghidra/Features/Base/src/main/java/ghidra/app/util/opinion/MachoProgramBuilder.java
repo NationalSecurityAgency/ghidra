@@ -412,7 +412,9 @@ public class MachoProgramBuilder {
 				}
 			}
 			if (segmentFragment == null) {
-				log.appendMsg("Could not find/fixup segment in Program Tree: " + segmentName);
+				if (segment.getVMsize() != 0 || segment.getFileSize() != 0) {
+					log.appendMsg("Could not find/fixup segment in Program Tree: " + segmentName);
+				}
 				continue;
 			}
 			ProgramModule segmentModule = rootModule.createModule(segmentName + suffix);
@@ -830,8 +832,10 @@ public class MachoProgramBuilder {
 		List<DyldChainedFixupsCommand> loadCommands =
 			machoHeader.getLoadCommands(DyldChainedFixupsCommand.class);
 		if (!loadCommands.isEmpty()) {
+			BinaryReader memReader = new BinaryReader(new MemoryByteProvider(memory, imagebase),
+				!memory.isBigEndian());
 			for (DyldChainedFixupsCommand loadCommand : loadCommands) {
-				fixups.addAll(loadCommand.getChainedFixups(reader, imagebase.getOffset(),
+				fixups.addAll(loadCommand.getChainedFixups(memReader, imagebase.getOffset(),
 					symbolTable, log, monitor));
 			}
 		}
