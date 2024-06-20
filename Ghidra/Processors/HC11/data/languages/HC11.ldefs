@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="HC-11"
+            endian="big"
+            size="16"
+            variant="default"
+            version="2.0"
+            slafile="HC11.sla"
+            processorspec="HC11.pspec"
+            id="HC-11:BE:16:default">
+    <description>HC11 Microcontroller Family</description>
+    <compiler name="default" spec="HC11.cspec" id="default"/>
+    <external_name tool="gnu" name="m68hc11"/>
+  </language>
+</language_definitions>
