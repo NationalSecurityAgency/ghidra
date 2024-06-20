@@ -59,6 +59,9 @@ Release
 .vs/
 .editorconfig/
 
+# Ignore Visual Studio Code files
+.vscode/
+
 # Ignore UNIX backup files
 *~
 *.swp
