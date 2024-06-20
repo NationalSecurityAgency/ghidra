@@ -3897,14 +3897,14 @@ macro setCC_NZCV(condMask)
 
 macro set_NZCV(value, condMask)
 {
-    setNG:1 = (condMask & 0x8) == 0x8;
-	NG = ((setNG==0) * NG) | ((setNG==1) * (((value >> 3) & 1) ==1));
+	setNG:1 = (condMask & 0x8) == 0x8;
+	NG = ((setNG==0) * NG) | ((setNG==1) * (((value >> 3) & 1) == 1));
 	setZR:1 = (condMask & 0x4) == 0x4;
-	ZR = ((setZR==0) * NG) | ((setZR==1) * (((value >> 2) & 1) ==1));
+	ZR = ((setZR==0) * ZR) | ((setZR==1) * (((value >> 2) & 1) == 1));
 	setCY:1 = (condMask & 0x2) == 0x2;
-	CY = ((setCY==0) * NG) | ((setCY==1) * (((value >> 1) & 1) == 1));
+	CY = ((setCY==0) * CY) | ((setCY==1) * (((value >> 1) & 1) == 1));
 	setOV:1 = (condMask & 0x1) == 0x1;
-	OV = ((setOV==0) * NG) | ((setOV==1) * (((value >> 0) & 1) == 1));
+	OV = ((setOV==0) * OV) | ((setOV==1) * (((value >> 0) & 1) == 1));
 }
 
 # Macro to access simd lanes
