@@ -1,0 +1,84 @@
+#####################################################
+#####	     		Variables		#####
+#####################################################
+
+@if defined(V830)
+attach variables [ _R0004 _R0509 _R1115 _R2731 _R1620]
+[ 
+  r0  r1  r2  sp  gp  tp  r6  r7  r8  r9 
+  r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 
+  r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 
+  mp  lp 
+];
+
+attach variables [ SR0004 SR1115 ]
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    PIR    TKCW   _     _     
+  _      _      _      _      _      _      DPC    DPSW   _     _     
+  _      _      _      _      _      _      _      _      _     _     
+  DBWR   HCCW
+];
+
+@elif defined(V810)
+attach variables [ _R0004 _R0509 _R1115 _R2731 _R1620]
+[ 
+  r0  r1  r2  sp  gp  tp  r6  r7  r8  r9 
+  r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 
+  r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 
+  r30  lp 
+];
+
+attach variables [ SR0004 SR1115 ]
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    PIR    TKCW   _     _     
+  _      _      _      _      _      _      _      _      _     _     
+  _      _      _      _      CHCW   ADTRE  _      _      _     _     
+  DBWR   HCCW
+];
+@endif
+
+# attach variables [op0_1720] [r0 r2 gp r6 r8 r10 r12 r14 r16 r18 r20 r22 r24 r26 r28 mp];
+# attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 r29 lp];
+
+
+attach names [fcond2730]
+["f" "un" "eq" "ueq" "olt" "ult" "ole" "ule" "sd" "ngle" "seq" "ngl" "lt" "nge" "le" "ngt"];
+
+@if defined(V830)
+@define I3    "PSW[19,1]"
+@define I2    "PSW[18,1]"
+@define I1    "PSW[17,1]"
+@define I0    "PSW[16,1]"
+@define NP  	"PSW[15,1]"
+@define EP  	"PSW[14,1]"
+@define ID  	"PSW[12,1]"
+@define DP    "PSW[11,1]"
+@define SAT 	"PSW[10,1]"
+@define CY  	"PSW[3,1]"
+@define OV  	"PSW[2,1]"
+@define S   	"PSW[1,1]"
+@define Z   	"PSW[0,1]"
+
+@elif defined(V810)
+@define I3    "PSW[19,1]"
+@define I2    "PSW[18,1]"
+@define I1    "PSW[17,1]"
+@define I0    "PSW[16,1]"
+@define NP  	"PSW[15,1]"
+@define EP  	"PSW[14,1]"
+@define AE  	"PSW[13,1]"
+@define ID  	"PSW[12,1]"
+@define FRO 	"PSW[9,1]"
+@define FIV 	"PSW[8,1]"
+@define FZD 	"PSW[7,1]"
+@define FOV 	"PSW[6,1]"
+@define FUD 	"PSW[5,1]"
+@define FPR 	"PSW[4,1]"
+@define CY  	"PSW[3,1]"
+@define OV  	"PSW[2,1]"
+@define S   	"PSW[1,1]"
+@define Z   	"PSW[0,1]"
+@endif
+
+@define EICC  	"ECR[0,16]"
+@define FECC  	"ECR[16,16]"
