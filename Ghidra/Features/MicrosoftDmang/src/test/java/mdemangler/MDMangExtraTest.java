@@ -80,4 +80,18 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals("k::j::i", qualifications.get(2).toString());
 	}
 
+	// Need to test the demangleType() method to make sure it does the retry with LLVM mode
+	@Test
+	public void testDemangleTypeWithRetry() throws Exception {
+		// Test string taken from MDMangBaseTest
+		String mangled = ".?AW4name0@?name1@name2@@YAX_N@Z@";
+		String truth = "enum `void __cdecl name2::name1(bool)'::name0";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		MDParsableItem item = demangler.demangleType(mangled, true); // note demangleType()
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+	}
+
 }
