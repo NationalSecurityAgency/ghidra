@@ -14,7 +14,6 @@
     <compiler name="default" spec="pic16.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="pic16cxx"/>
   </language>
-  <!-- TODO: Need PIC-16F manual and index -->
   <language processor="PIC-16"
             endian="little"
             size="16"
