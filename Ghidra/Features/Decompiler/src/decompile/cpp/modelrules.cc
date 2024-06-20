@@ -619,7 +619,7 @@ uint4 ConvertToPointer::assignAddress(Datatype *dt,const PrototypePieces &proto,
   AddrSpace *spc = space;
   if (spc == (AddrSpace*)0)
     spc = tlist.getArch()->getDefaultDataSpace();
-  int4 pointersize = spc->getAddrSize();
+  int4 pointersize = proto.model->getPointerSize(spc);
   int4 wordsize = spc->getWordSize();
   // Convert the data-type to a pointer
   Datatype *pointertp = tlist.getTypePointer(pointersize,dt,wordsize);

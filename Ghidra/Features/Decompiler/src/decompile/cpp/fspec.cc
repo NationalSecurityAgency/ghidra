@@ -34,6 +34,7 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
+AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",150);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
@@ -769,17 +770,21 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
 {
   vector<int4> status(numgroup,0);
 
-  if (res.size() == 2) {	// Check for hidden parameters defined by the output list
-    Datatype *dt = res.back().type;
+  bool hiddenparam = res.size() == 2;
+  ParameterPieces* hiddenpiece = hiddenparam ? &res.back() : (ParameterPieces*)0;
+  
+  if (hiddenparam && proto.model->getRightToLeft()) {	// Check for hidden parameters defined by the output list
+//  if (res.size() == 2) {	// Check for hidden parameters defined by the output list
+    Datatype* dt = hiddenpiece->type;
     type_class store;
-    if ((res.back().flags & ParameterPieces::hiddenretparm) != 0)
+    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0)
       store = TYPECLASS_HIDDENRET;
     else
       store = metatype2typeclass(dt->getMetatype());
     // Reserve first param for hidden return pointer
-    if (assignAddressFallback(store,dt,false,status,res.back()) == AssignAction::fail)
-      throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
-    res.back().flags |= ParameterPieces::hiddenretparm;
+    if (assignAddressFallback(store,dt,false,status,*hiddenpiece) == AssignAction::fail)
+      throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
+    hiddenpiece->flags |= ParameterPieces::hiddenretparm;
   }
   for(int4 i=0;i<proto.intypes.size();++i) {
     res.emplace_back();
@@ -787,6 +792,19 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
     uint4 responseCode = assignAddress(dt,proto,i,typefactory,status,res.back());
     if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
+  }
+
+  if (hiddenparam && !proto.model->getRightToLeft()) {	// Check for hidden parameters defined by the output list
+    Datatype* dt = hiddenpiece->type;
+    type_class store;
+    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0)
+      store = TYPECLASS_HIDDENRET;
+    else
+      store = metatype2typeclass(dt->getMetatype());
+    // Reserve first param for hidden return pointer
+    if (assignAddressFallback(store, dt, false, status, *hiddenpiece) == AssignAction::fail)
+      throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
+    hiddenpiece->flags |= ParameterPieces::hiddenretparm;
   }
 }
 
@@ -1566,7 +1584,8 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
-    int4 pointersize = spc->getAddrSize();
+    //int4 pointersize = spc->getAddrSize();
+    int4 pointersize = proto.model->getPointerSize(spc);
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto.outtype, wordsize);
     if (responseCode == AssignAction::hiddenret_specialreg_void) {
@@ -2337,6 +2356,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
   if (name == "__thiscall")
     hasThis = true;
   compatModel = &op2;
+  isRightToLeft = op2.isRightToLeft;
 }
 
 ProtoModel::~ProtoModel(void)
@@ -2394,7 +2414,29 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
   else {
     output->assignMap(proto,*glb->types,res);
   }
+
+  vector<Datatype*> typelist = proto.intypes;
+
+  // Deal with left-to-right (PASCAL convention) parameter ordering
+  if (!isRightToLeft) {
+    // swap around the datatypes to map variable storage high-to-low
+    for (int i = 0; i < typelist.size() / 2; i++) {
+      std::swap(typelist[typelist.size() - 1 - i], typelist[i]);
+    }
+  }
+
   input->assignMap(proto,*glb->types,res);
+
+  // Deal with left-to-right (PASCAL convention) parameter ordering
+  if (!isRightToLeft) {
+    int inputOffset = (res.size() - typelist.size());
+    for (int i = 0; i < typelist.size() / 2; i++) {
+      // swap back the datatype order
+      std::swap(typelist[typelist.size() - 1 - i], typelist[i]);
+      // swap back the resulting storage to be ordered correctly
+      std::swap(res[res.size()-1 - i], res[inputOffset+i]);
+    }
+  }
 
   if (hasThis && res.size() > 1) {
     int4 thisIndex = 1;
@@ -2409,6 +2451,31 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
     }
     res[thisIndex].flags |= ParameterPieces::isthis;
   }
+}
+
+/// \brief Does \param str end with \param end
+template<typename TString>
+inline bool ends_with(const TString& str, const TString& end) {
+  if (end.size() > str.size()) return false;
+  return std::equal(end.rbegin(), end.rend(), str.rbegin());
+}
+
+/// \brief Used to return the size of a pointer for this model prototype.
+/// @param space is the default AddrSpace
+/// @return size of pointer
+int ProtoModel::getPointerSize(const AddrSpace* space) const
+
+{
+//  if (space == (const AddrSpace*)0)
+  //  return -1;
+  int4 pointerSize = (space == (const AddrSpace*)0) ? -1 : space->getAddrSize();
+  if (ends_with<string>(name, "16near")) {
+    pointerSize = 2;
+  }
+  else if (ends_with<string>(name, "16far")) {
+    pointerSize = 4;
+  }
+  return pointerSize;
 }
 
 /// \brief Look up an effect from the given EffectRecord list
@@ -2512,6 +2579,7 @@ void ProtoModel::decode(Decoder &decoder)
   extrapop = -300;
   hasThis = false;
   isConstruct = false;
+  isRightToLeft = false;
   isPrinted = true;
   effectlist.clear();
   injectUponEntry = -1;
@@ -2538,6 +2606,9 @@ void ProtoModel::decode(Decoder &decoder)
     }
     else if (attribId == ATTRIB_CONSTRUCTOR) {
       isConstruct = decoder.readBool();
+    }
+    else if (attribId == ATTRIB_ISRIGHTTOLEFT) {
+      isRightToLeft = decoder.readBool();
     }
     else
       throw LowlevelError("Unknown prototype attribute");
