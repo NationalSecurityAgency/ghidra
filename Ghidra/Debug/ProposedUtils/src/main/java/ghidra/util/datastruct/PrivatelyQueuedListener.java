@@ -32,16 +32,18 @@ public class PrivatelyQueuedListener<P> {
 	private ListenerErrorHandler errorHandler =
 		DataStructureErrorHandlerFactory.createListenerErrorHandler();
 
-protected class ListenerHandler implements InvocationHandler {
-    private static final Method OBJECT_HASHCODE = initObjectHashCode();
+	protected class ListenerHandler implements InvocationHandler {
+		private static final Method OBJECT_HASHCODE = initObjectHashCode();
 
-    private static Method initObjectHashCode() {
-        try {
-            return Object.class.getMethod("hashCode");
-        } catch (NoSuchMethodException | SecurityException e) {
-            throw new AssertionError(e);
-        }
-    }	
+		private static Method initObjectHashCode() {
+			try {
+				return Object.class.getMethod("hashCode");
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				throw new AssertionError(e);
+			}
+		}
+
 		protected final Class<P> iface;
 
 		public ListenerHandler(Class<P> iface) {
