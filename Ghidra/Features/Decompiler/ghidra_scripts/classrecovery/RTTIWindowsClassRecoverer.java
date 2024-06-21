@@ -18,8 +18,6 @@ package classrecovery;
 
 import java.util.*;
 
-import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.util.FillOutStructureHelper;
 import ghidra.app.decompiler.util.FillOutStructureHelper.OffsetPcodeOpPair;
 import ghidra.app.util.opinion.PeLoader;
@@ -1480,10 +1478,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 
-		DecompileOptions decompileOptions =
-			DecompilerUtils.getDecompileOptions(serviceProvider, program);
-		FillOutStructureHelper fillStructHelper =
-			new FillOutStructureHelper(program, decompileOptions, monitor);
+		FillOutStructureHelper fillStructHelper = new FillOutStructureHelper(program, monitor);
 
 		for (Function constructor : constructorList) {
 
@@ -1568,7 +1563,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			monitor.checkCancelled();
 
-			fillStructHelper.processStructure(highVariable, function, true, false);
+			fillStructHelper.processStructure(highVariable, function, true, false, null);
 			List<OffsetPcodeOpPair> stores = fillStructHelper.getStorePcodeOps();
 			stores = removePcodeOpsNotInFunction(function, stores);
 
@@ -2484,7 +2479,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					baseClassDescriptorAddress.toString());
 				continue;
 			}
-			
+
 			// Continue if the class has mult inh but base class is not on the parent list
 			if (!recoveredClass.getParentList().contains(baseClass)) {
 				continue;
