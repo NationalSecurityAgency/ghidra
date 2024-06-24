@@ -22,7 +22,6 @@ import ghidra.program.database.register.InMemoryRangeMapAdapter;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -249,7 +248,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	public void remove(Address start, Address end, Register register)
 			throws ContextChangeException {
 		if (start.getAddressSpace() != end.getAddressSpace()) {
-			throw new AssertException("start and end address must be in the same address space");
+			throw new IllegalArgumentException(
+				"start and end address must refer to the same address space instance");
 		}
 		RegisterValueStore values = registerValueMap.get(register.getBaseRegister());
 		if (values != null) {
@@ -260,7 +260,7 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 
 //	public void removeDefault(Address start, Address end, Register register) {
 //		if (start.getAddressSpace() != end.getAddressSpace()) {
-//			throw new AssertException("start and end address must be in the same address space");
+//			throw new IllegalArgumentException("start and end address must refer to the same address space instance");
 //		}
 //		invalidateCache();
 //		RegisterValueStore values = defaultRegisterValueMap.get(register.getBaseRegister());
@@ -273,7 +273,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	public void setValue(Register register, Address start, Address end, BigInteger value)
 			throws ContextChangeException {
 		if (start.getAddressSpace() != end.getAddressSpace()) {
-			throw new AssertException("start and end address must be in the same address space");
+			throw new IllegalArgumentException(
+				"start and end address must refer to the same address space instance");
 		}
 		if (value == null) {
 			remove(start, end, register);
@@ -285,7 +286,8 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	@Override
 	public void setDefaultValue(RegisterValue registerValue, Address start, Address end) {
 		if (start.getAddressSpace() != end.getAddressSpace()) {
-			throw new AssertException("start and end address must be in the same address space");
+			throw new IllegalArgumentException(
+				"start and end address must refer to the same address space instance");
 		}
 		Register baseRegister = registerValue.getRegister().getBaseRegister();
 		RegisterValueStore store = defaultRegisterValueMap.get(baseRegister);

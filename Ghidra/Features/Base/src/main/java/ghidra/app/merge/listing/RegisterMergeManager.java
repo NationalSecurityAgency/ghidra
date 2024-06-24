@@ -15,6 +15,14 @@
  */
 package ghidra.app.merge.listing;
 
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.ProgramMultiUserMergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
@@ -26,14 +34,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * <code>RegisterMergeManager</code> handles the merge for a single named register.
@@ -167,9 +167,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		if (conflictSet != null) {
 			return; //This method only needs to be called once.
 		}
-		RegisterConflicts rc =
-			new RegisterConflicts(registerName, originalContext, latestContext, myContext,
-				resultContext);
+		RegisterConflicts rc = new RegisterConflicts(registerName, originalContext, latestContext,
+			myContext, resultContext);
 		Memory resultMem = resultPgm.getMemory();
 		AddressSetView myDiffs =
 			rc.getRegisterDifferences(registerName, originalContext, myContext, mySet, monitor);
@@ -177,47 +176,88 @@ class RegisterMergeManager implements ListingMergeConstants {
 		conflictSet = new AddressSet();
 		rvrs = rc.getConflicts(setToCheck, monitor);
 		if (rvrs.length > 0) {
-			for (int j = 0; j < rvrs.length; j++) {
-				conflictSet.add(rvrs[j]);
+			for (AddressRange rvr : rvrs) {
+				conflictSet.add(rvr);
 			}
 		}
 		autoSet = setToCheck.subtract(conflictSet);
 	}
 
+	private Address getCompatibleAddress(AddressFactory addrFactory, Address otherAddr) {
+		AddressSpace space = otherAddr.getAddressSpace();
+		AddressSpace s = addrFactory.getAddressSpace(space.getName());
+		if (!space.equals(s)) {
+			throw new IllegalArgumentException("Invalid address for target program: " + otherAddr);
+		}
+		return s.getAddress(otherAddr.getOffset());
+	}
+
+	private void setValue(Program p, Register register, Address start, Address end,
+			BigInteger value) {
+
+		// Since all program must have the same set of AddressSpaces, we can assume that addresses
+		// from one program will be valid within another.  However, in order to comply with 
+		// address space instance restrictions we must ensure that addresses used for applying
+		// register context correspond to the target program.
+
+		ProgramContext ctx = p.getProgramContext();
+		AddressFactory addrFactory = p.getAddressFactory();
+
+		try {
+			ctx.setValue(register, getCompatibleAddress(addrFactory, start),
+				getCompatibleAddress(addrFactory, end), value);
+		}
+		catch (ContextChangeException e) {
+			// ignore since processor context-register is not handled by this merge manager
+		}
+	}
+
+	private void removeValue(Program p, Register register, Address start, Address end) {
+
+		// Since all program must have the same set of AddressSpaces, we can assume that addresses
+		// from one program will be valid within another.  However, in order to comply with 
+		// address space instance restrictions we must ensure that addresses used for applying
+		// register context correspond to the target program.
+
+		ProgramContext ctx = p.getProgramContext();
+		AddressFactory addrFactory = p.getAddressFactory();
+
+		try {
+			ctx.remove(getCompatibleAddress(addrFactory, start),
+				getCompatibleAddress(addrFactory, end), register);
+		}
+		catch (ContextChangeException e) {
+			// ignore since processor context-register is not handled by this merge manager
+		}
+	}
+
 	/**
 	 * Merges all the register values for the named register being managed by this merge manager.
 	 * @param monitor the monitor that provides feedback to the user.
-	 * @throws ProgramConflictException
 	 * @throws CancelledException if the user cancels
 	 */
 	public void merge(TaskMonitor monitor) throws CancelledException {
-		monitor.setMessage("Auto-merging " + registerName +
-			" Register Values and determining conflicts.");
+		monitor.setMessage(
+			"Auto-merging " + registerName + " Register Values and determining conflicts.");
 
 		determineConflicts(monitor);
 
 		// Auto merge any program context changes from my program where the
 		// resulting program has the mem addresses but the latest doesn't.
 		AddressRangeIterator arIter = autoSet.getAddressRanges();
-		try {
-			while (arIter.hasNext() && !monitor.isCancelled()) {
-				AddressRange range = arIter.next();
-				Address rangeMin = range.getMinAddress();
-				Address rangeMax = range.getMaxAddress();
-				resultContext.remove(rangeMin, rangeMax, resultReg);
-				AddressRangeIterator it =
-					myContext.getRegisterValueAddressRanges(resultReg, rangeMin, rangeMax);
-				while (it.hasNext()) {
-					AddressRange valueRange = it.next();
-					BigInteger value =
-						myContext.getValue(resultReg, valueRange.getMinAddress(), false);
-					resultContext.setValue(resultReg, valueRange.getMinAddress(),
-						valueRange.getMaxAddress(), value);
-				}
+		while (arIter.hasNext() && !monitor.isCancelled()) {
+			AddressRange range = arIter.next();
+			Address rangeMin = range.getMinAddress();
+			Address rangeMax = range.getMaxAddress();
+			removeValue(resultPgm, resultReg, rangeMin, rangeMax);
+			AddressRangeIterator it =
+				myContext.getRegisterValueAddressRanges(resultReg, rangeMin, rangeMax);
+			while (it.hasNext()) {
+				AddressRange valueRange = it.next();
+				BigInteger value = myContext.getValue(resultReg, valueRange.getMinAddress(), false);
+				setValue(resultPgm, resultReg, valueRange.getMinAddress(),
+					valueRange.getMaxAddress(), value);
 			}
-		}
-		catch (ContextChangeException e) {
-			// ignore since processor context-register is not handled by this merge manager
 		}
 
 		int totalConflicts = rvrs.length;
@@ -294,12 +334,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 	 */
 	private void merge(Address minAddress, Address maxAddress, Register resultRegister,
 			BigInteger myValue) {
-		try {
-			resultContext.setValue(resultRegister, minAddress, maxAddress, myValue);
-		}
-		catch (ContextChangeException e) {
-			// ignore since this merge manager does not handle the processor context register
-		}
+		setValue(resultPgm, resultRegister, minAddress, maxAddress, myValue);
 	}
 
 	/**
@@ -316,7 +351,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 	}
 
 	private void showMergePanel(final Address minAddress, final Address maxAddress,
-			final BigInteger latestValue, final BigInteger myValue, final BigInteger originalValue) {
+			final BigInteger latestValue, final BigInteger myValue,
+			final BigInteger originalValue) {
 		this.min = minAddress;
 		this.max = maxAddress;
 		try {
@@ -339,9 +375,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
 				public void run() {
-					VerticalChoicesPanel panel =
-						getConflictsPanel(minAddress, maxAddress, latestValue, myValue,
-							originalValue, changeListener);
+					VerticalChoicesPanel panel = getConflictsPanel(minAddress, maxAddress,
+						latestValue, myValue, originalValue, changeListener);
 					listingMergePanel.setBottomComponent(panel);
 				}
 			});
@@ -377,12 +412,11 @@ class RegisterMergeManager implements ListingMergeConstants {
 			conflictPanel.clear();
 		}
 		conflictPanel.setTitle("\"" + registerName + "\" Register Value");
-		String text =
-			"Register: " + ConflictUtility.getEmphasizeString(registerName) +
-				ConflictUtility.spaces(4) + "Address Range: " +
-				ConflictUtility.getAddressString(minAddress) + " - " +
-				ConflictUtility.getAddressString(maxAddress) +
-				"<br>Select the desired register value for the address range.";
+		String text = "Register: " + ConflictUtility.getEmphasizeString(registerName) +
+			ConflictUtility.spaces(4) + "Address Range: " +
+			ConflictUtility.getAddressString(minAddress) + " - " +
+			ConflictUtility.getAddressString(maxAddress) +
+			"<br>Select the desired register value for the address range.";
 		conflictPanel.setHeader(text);
 		conflictPanel.setRowHeader(getRegisterInfo(-1, null));
 		conflictPanel.addRadioButtonRow(getRegisterInfo(MergeConstants.LATEST, latestValue),
@@ -431,7 +465,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		Register conflictResultReg;
 
 		RegisterConflicts(String registerName, ProgramContext originalContext,
-				ProgramContext latestContext, ProgramContext myContext, ProgramContext resultContext) {
+				ProgramContext latestContext, ProgramContext myContext,
+				ProgramContext resultContext) {
 			this.conflictRegisterName = registerName;
 			this.conflictOriginalContext = originalContext;
 			this.conflictLatestContext = latestContext;
@@ -496,13 +531,11 @@ class RegisterMergeManager implements ListingMergeConstants {
 
 			ArrayList<AddressRange> conflicts = new ArrayList<AddressRange>();
 
-			AddressSet tempLatestChanges =
-				getRegisterDifferences(conflictRegisterName, conflictOriginalContext,
-					conflictLatestContext, addressSet, monitor);
+			AddressSet tempLatestChanges = getRegisterDifferences(conflictRegisterName,
+				conflictOriginalContext, conflictLatestContext, addressSet, monitor);
 
-			AddressSet tempMyChanges =
-				getRegisterDifferences(conflictRegisterName, conflictOriginalContext,
-					conflictMyContext, addressSet, monitor);
+			AddressSet tempMyChanges = getRegisterDifferences(conflictRegisterName,
+				conflictOriginalContext, conflictMyContext, addressSet, monitor);
 
 			AddressSet bothChanged = tempMyChanges.intersect(tempLatestChanges);
 
@@ -513,19 +546,16 @@ class RegisterMergeManager implements ListingMergeConstants {
 				Address rangeMin = range.getMinAddress();
 				Address rangeMax = range.getMaxAddress();
 
-				AddressRangeIterator it1 =
-					conflictLatestContext.getRegisterValueAddressRanges(conflictLatestReg,
-						rangeMin, rangeMax);
-				AddressRangeIterator it2 =
-					conflictMyContext.getRegisterValueAddressRanges(conflictMyReg, rangeMin,
-						rangeMax);
+				AddressRangeIterator it1 = conflictLatestContext
+						.getRegisterValueAddressRanges(conflictLatestReg, rangeMin, rangeMax);
+				AddressRangeIterator it2 = conflictMyContext
+						.getRegisterValueAddressRanges(conflictMyReg, rangeMin, rangeMax);
 				AddressRangeIterator it = new CombinedAddressRangeIterator(it1, it2);
 
 				while (it.hasNext()) {
 					AddressRange addrRange = it.next();
-					BigInteger lastestValue =
-						conflictLatestContext.getValue(conflictLatestReg,
-							addrRange.getMinAddress(), false);
+					BigInteger lastestValue = conflictLatestContext.getValue(conflictLatestReg,
+						addrRange.getMinAddress(), false);
 					BigInteger myValue =
 						conflictMyContext.getValue(conflictMyReg, addrRange.getMinAddress(), false);
 					boolean sameValue =

@@ -202,6 +202,7 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 		builder.createMemory(".data", "0x1008000", 0x600);
 		builder.createMemory(".datau", "0x1008600", 0x1344);
 		builder.createMemory(".rsrc", "0x100a000", 0x5400);
+		builder.createOverlayMemory("TextOverlay", "0x01001630", 0x200);
 
 		// for FunctionMergeManager2Test
 		//
