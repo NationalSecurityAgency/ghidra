@@ -465,12 +465,6 @@ public class FakeSharedProject {
 
 	void refresh() {
 		DefaultProjectData projectData = getProjectData();
-		try {
-			projectData.refresh(true);
-		}
-		catch (IOException e) {
-			// shouldn't happen
-			throw new AssertionFailedError("Unable to refresh project " + this);
-		}
+		projectData.refresh(true);
 	}
 }

@@ -742,7 +742,7 @@ public class DefaultProjectData implements ProjectData {
 	}
 
 	@Override
-	public void refresh(boolean force) throws IOException {
+	public void refresh(boolean force) {
 		try {
 			rootFolderData.refresh(true, true, projectDisposalMonitor);
 		}
