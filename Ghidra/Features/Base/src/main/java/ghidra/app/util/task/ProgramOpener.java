@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.progmgr.ProgramLocator;
 import ghidra.app.util.dialog.CheckoutDialog;
-import ghidra.framework.client.ClientUtil;
-import ghidra.framework.client.RepositoryAdapter;
+import ghidra.framework.client.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.protocol.ghidra.GhidraURLQuery;
@@ -93,33 +92,28 @@ public class ProgramOpener {
 	 */
 	public Program openProgram(ProgramLocator locator, TaskMonitor monitor) {
 		if (locator.isURL()) {
-			try {
-				return openURL(locator, monitor);
-			}
-			catch (CancelledException e) {
-				return null;
-			}
-			catch (IOException e) {
-				Msg.showError(this, null, "Program Open Failed",
-					"Failed to open Ghidra URL: " + locator.getURL(), e);
-			}
+			return openURL(locator, monitor);
 		}
 		return openProgram(locator, locator.getDomainFile(), monitor);
 	}
 
-	private Program openURL(ProgramLocator locator, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	private Program openURL(ProgramLocator locator, TaskMonitor monitor) {
 		URL ghidraUrl = locator.getURL();
 
 		AtomicReference<Program> openedProgram = new AtomicReference<>();
-		GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter() {
-			@Override
-			public void processResult(DomainFile domainFile, URL url, TaskMonitor m) {
-				Program p = openProgram(locator, domainFile, m);  // may return null
-				openedProgram.set(p);
-			}
-		}, monitor);
-
+		try {
+			GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter() {
+				@Override
+				public void processResult(DomainFile domainFile, URL url, TaskMonitor m) {
+					Program p = openProgram(locator, domainFile, m);  // may return null
+					openedProgram.set(p);
+				}
+			}, monitor);
+		}
+		catch (IOException | CancelledException e) {
+			// IOException reported to user by GhidraURLResultHandlerAdapter
+			return null;
+		}
 		return openedProgram.get();
 	}
 

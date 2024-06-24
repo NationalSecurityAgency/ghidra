@@ -17,14 +17,12 @@ package ghidra.framework.main.projectdata.actions;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 
 import javax.swing.Icon;
 
 import docking.action.*;
-import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.ProjectData;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.*;
@@ -53,13 +51,7 @@ public class ProjectDataRefreshAction extends FrontendProjectTreeAction {
 		TaskLauncher.launch(new Task("Refresh folders and files", false, false, true) {
 			@Override
 			public void run(TaskMonitor monitor) {
-				try {
-					projectData.refresh(false);
-				}
-				catch (IOException e) {
-					ClientUtil.handleException(projectData.getRepository(), e,
-						"Refresh Project Data", false, comp);
-				}
+				projectData.refresh(false);
 			}
 		});
 	}
