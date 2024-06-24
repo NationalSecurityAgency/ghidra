@@ -21,7 +21,7 @@ public enum ArchiveType {
 	FILE,
 	PROJECT,
 	PROGRAM,
-	TEST;
+	TEMPORARY;
 	//@formatter:on
 
 	public boolean isBuiltIn() {

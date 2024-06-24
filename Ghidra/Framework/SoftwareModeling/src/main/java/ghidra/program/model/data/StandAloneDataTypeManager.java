@@ -923,7 +923,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 	@Override
 	public ArchiveType getType() {
-		return ArchiveType.TEST;
+		return ArchiveType.TEMPORARY;
 	}
 
 	/**
