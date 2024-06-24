@@ -15,16 +15,19 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
-
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import generic.stl.Pair;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.*;
 
 public class ContextCache {
 	private int context_size = 0;
 	private Register contextBaseRegister = null;
 
+	Pair <BigInteger, int []> lastValue = null;
+	
 	public ContextCache() {
 	}
 
@@ -55,7 +58,13 @@ public class ContextCache {
 
 	private int[] getWords(BigInteger value) {
 
+		Pair <BigInteger, int []> lastValueTmp = lastValue;
+		if (lastValueTmp != null && value.equals(lastValueTmp.first)) {
+			return lastValueTmp.second;
+		}
+		
 		int[] words = new int[context_size];
+
 		byte[] bytes = value.toByteArray();
 		int byteIndexDiff = context_size * 4 - bytes.length;
 		for (int i = 0; i < context_size; i++) {
@@ -66,6 +75,10 @@ public class ContextCache {
 			}
 			words[i] = word;
 		}
+		
+		lastValueTmp = new Pair<BigInteger, int[]>(value, words);
+		lastValue = lastValueTmp;
+		
 		return words;
 	}
 

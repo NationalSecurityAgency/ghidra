@@ -51,7 +51,6 @@ public class HighFunction extends PcodeSyntaxTree {
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
 	private Address entryPoint;
-	private AddressSpace entryAddrSpace;
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
@@ -67,7 +66,6 @@ public class HighFunction extends PcodeSyntaxTree {
 		this.compilerSpec = compilerSpec;
 		AddressSpace stackSpace = function.getProgram().getAddressFactory().getStackSpace();
 		entryPoint = function.getEntryPoint();
-		entryAddrSpace = entryPoint.getAddressSpace();
 		localSymbols = new LocalSymbolMap(this, stackSpace);
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
@@ -304,7 +302,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private void decodeJumpTableList(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_JUMPTABLELIST);
 		while (decoder.peekElement() != 0) {
-			JumpTable table = new JumpTable(entryAddrSpace);
+			JumpTable table = new JumpTable(entryPoint.getAddressSpace());
 			table.decode(decoder);
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {
