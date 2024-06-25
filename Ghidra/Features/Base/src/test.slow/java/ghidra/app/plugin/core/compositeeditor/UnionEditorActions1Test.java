@@ -779,15 +779,18 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 
 	@Test
 	public void testApplyNameChange() throws Exception {
+
+		DataType viewCopy = complexUnion.clone(null);
+
 		init(complexUnion, pgmTestCat, false);
 
 		model.setName("FooBarUnion");
-		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(complexUnion.isEquivalent(model.viewComposite));
+		assertTrue(viewCopy.isEquivalent(complexUnion));
+
 		assertEquals("FooBarUnion", model.getCompositeName());
 		assertEquals("complexUnion", complexUnion.getName());
-		assertTrue(viewCopy.isEquivalent(model.viewComposite));
+
 		invoke(applyAction);
 		assertTrue(viewCopy.isEquivalent(complexUnion));
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));

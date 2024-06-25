@@ -200,8 +200,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	@Test
 	public void testCloseEditorProviderAndSave() throws Exception {
 		Window dialog;
+		DataType oldDt = complexUnion.clone(null);
+
 		init(complexUnion, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the union.
 		Swing.runLater(() -> {
@@ -236,8 +237,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	@Test
 	public void testCloseEditorAndNoSave() throws Exception {
 		Window dialog;
+		DataType oldDt = complexUnion.clone(null);
+
 		init(complexUnion, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the union.
 		Swing.runLater(() -> {

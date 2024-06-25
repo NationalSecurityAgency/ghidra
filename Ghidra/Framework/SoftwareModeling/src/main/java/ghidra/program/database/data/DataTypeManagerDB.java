@@ -1243,15 +1243,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
 					resolvedDataType = resolveBuiltIn(dataType);
 				}
-				else if (sourceArchive == null || dataType.getUniversalID() == null || 
-						sourceArchive.getArchiveType() == ArchiveType.TEMPORARY) {
+				else if (sourceArchive == null || dataType.getUniversalID() == null) {
 					// if the dataType has no source or it has no ID (datatypes with no ID are
 					// always local i.e. pointers)
 					resolvedDataType = resolveDataTypeNoSource(dataType);
 				}
 				else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
-					sourceArchive.getArchiveType() == ArchiveType.PROGRAM) {
-					// dataTypes from a different program don't carry over their identity.
+					(sourceArchive.getArchiveType() == ArchiveType.PROGRAM ||
+						sourceArchive.getArchiveType() == ArchiveType.TEMPORARY)) {
+					// dataTypes from a program or temporary archive don't carry over their identity
 					resolvedDataType = resolveDataTypeNoSource(dataType);
 				}
 				else {

@@ -372,6 +372,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		return (dtc != null) ? dtc.getLength() : -1;
 	}
 
+	protected DataType getDataType(Composite c, int index) {
+		DataTypeComponent dtc = c.getComponent(index);
+		return (dtc != null) ? dtc.getDataType() : null;
+	}
+
 	protected DataType getDataType(int index) {
 		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getDataType() : null;

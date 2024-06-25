@@ -502,8 +502,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	@Test
 	public void testCloseEditorProviderAndSave() throws Exception {
 		Window dialog;
+		DataType oldDt = complexStructure.clone(null);
+
 		init(complexStructure, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the structure
 		runSwingLater(() -> {
@@ -538,8 +539,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	@Test
 	public void testCloseEditorAndNoSave() throws Exception {
 
+		DataType oldDt = complexStructure.clone(null);
+
 		init(complexStructure, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the structure
 		runSwing(() -> {
