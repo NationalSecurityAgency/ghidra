@@ -14992,6 +14992,19 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	// Note the suffix seems like an already or partially demangled name.  Note that name0
+	// seems like a plain tag (no closing '@'), there is a regular namespace delimiter "::",
+	// the suffix "3@" is almost like a backreference tag with the '@' closing the full
+	// qualified name... except... we've seen numbers that are beyond the backref range as
+	// here, but also have seen numbers like 18.
+	@Ignore
+	public void testMangledTypeWithNamespaceSuffix() throws Exception {
+		mangled = ".?AT<unnamed-tag>@name0::3@";
+		msTruth = "";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
 	//=====================
 
 	@Test

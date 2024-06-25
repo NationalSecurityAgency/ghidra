@@ -162,22 +162,10 @@ public class MDMang {
 	 * @throws MDException upon parsing error
 	 */
 	public MDDataType demangleType(boolean errorOnRemainingChars) throws MDException {
-		if (mangled == null) {
-			throw new MDException("MDMang: Mangled string is null.");
-		}
 		initState();
-		pushContext();
-		if (peek() != '.') {
-			throw new MDException("MDMang: Mangled string is not that of a type.");
-		}
-		increment();
-		MDDataType mdDataType = MDDataTypeParser.parseDataType(this, false);
+		MDDataType mdDataType = MDDataTypeParser.determineAndParseDataType(this, false);
 		item = mdDataType;
-		if (mdDataType != null) {
-			mdDataType.parse();
-		}
 		int numCharsRemaining = getNumCharsRemaining();
-		popContext();
 		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
 			throw new MDException(
 				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
