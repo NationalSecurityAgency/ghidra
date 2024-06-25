@@ -26,7 +26,7 @@ dependencies {
 
     api "com.oracle.labs.olcut:olcut-config-protobuf:5.2.0" //{exclude group: "com.google.protobuf", module: "protobuf-java"}
     api ("com.oracle.labs.olcut:olcut-core:5.2.0") {exclude group: "org.jline"}
-    api "com.google.protobuf:protobuf-java:3.17.3"   //only needed for running junits
+    api "com.google.protobuf:protobuf-java:3.25.1"   //only needed for running junits
     api "org.tribuo:tribuo-classification-core:4.2.0"
     api "org.tribuo:tribuo-classification-tree:4.2.0"
     api "org.tribuo:tribuo-common-tree:4.2.0"
