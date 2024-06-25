@@ -381,7 +381,10 @@ class RegisterDesc(namedtuple('BaseRegisterDesc', ['name'])):
 
 def get_register_descs(arch, group='all'):
     if hasattr(arch, "registers"):
-        return arch.registers(group)
+        try:
+            return arch.registers(group)
+        except ValueError: # No such group, or version too old
+            return arch.registers()
     else:
         descs = []
         regset = gdb.execute(
