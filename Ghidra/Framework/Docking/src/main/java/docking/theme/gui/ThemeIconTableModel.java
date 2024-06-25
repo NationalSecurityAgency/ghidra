@@ -216,7 +216,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private class ThemeIconRenderer extends AbstractGColumnRenderer<ResolvedIcon> {
 
 		public ThemeIconRenderer() {
-			setFont(Gui.getFont("font.monospaced"));
+			setBaseFontId("font.monospaced");
 		}
 
 		@Override

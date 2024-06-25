@@ -19,19 +19,25 @@ import docking.widgets.CursorPosition;
 import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.support.FieldLocation;
 
-public class FieldBasedSearchLocation extends SearchLocation {
+public class DecompilerSearchLocation extends SearchLocation {
 
 	private final FieldLocation fieldLocation;
+	private String textLine;
 
-	public FieldBasedSearchLocation(FieldLocation fieldLocation, int startIndexInclusive,
-			int endIndexInclusive, String searchText, boolean forwardDirection) {
+	public DecompilerSearchLocation(FieldLocation fieldLocation, int startIndexInclusive,
+			int endIndexInclusive, String searchText, boolean forwardDirection, String textLine) {
 
 		super(startIndexInclusive, endIndexInclusive, searchText, forwardDirection);
 		this.fieldLocation = fieldLocation;
+		this.textLine = textLine;
 	}
 
 	public FieldLocation getFieldLocation() {
 		return fieldLocation;
+	}
+
+	public String getTextLine() {
+		return textLine;
 	}
 
 	@Override

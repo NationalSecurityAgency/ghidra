@@ -42,7 +42,7 @@ import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.decompiler.component.margin.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
-import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
+import ghidra.app.plugin.core.decompile.actions.DecompilerSearchLocation;
 import ghidra.app.util.viewer.util.ScrollpaneAlignedHorizontalLayout;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
@@ -988,32 +988,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			location.getIndex().intValue(), location.col);
 	}
 
-//==================================================================================================
-// Search Methods
-//==================================================================================================
-
-	public SearchLocation searchText(String text, FieldLocation startLocation,
-			boolean forwardDirection) {
-		return layoutController.findNextTokenForSearch(text, startLocation, forwardDirection);
-	}
-
-	public SearchLocation searchTextRegex(String text, FieldLocation startLocation,
-			boolean forwardDirection) {
-		return layoutController.findNextTokenForSearchRegex(text, startLocation, forwardDirection);
-	}
-
 	public void setSearchResults(SearchLocation searchLocation) {
 		currentSearchLocation = searchLocation;
 		repaint();
 	}
 
-	public FieldBasedSearchLocation getSearchResults() {
-		return (FieldBasedSearchLocation) currentSearchLocation;
+	public DecompilerSearchLocation getSearchResults() {
+		return (DecompilerSearchLocation) currentSearchLocation;
 	}
-
-//==================================================================================================
-// End Search Methods
-//==================================================================================================
 
 	public Color getCurrentVariableHighlightColor() {
 		return currentVariableHighlightColor;
@@ -1279,7 +1261,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			int highlightLine = cField.getLineNumber();
 
 			FieldLocation searchCursorLocation =
-				((FieldBasedSearchLocation) currentSearchLocation).getFieldLocation();
+				((DecompilerSearchLocation) currentSearchLocation).getFieldLocation();
 			int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
 			if (highlightLine != searchLineNumber) {
 				// only highlight the match on the actual line
