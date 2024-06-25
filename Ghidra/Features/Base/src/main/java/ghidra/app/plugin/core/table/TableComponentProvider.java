@@ -45,6 +45,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
+import utility.function.Callback;
+import utility.function.Dummy;
 
 public class TableComponentProvider<T> extends ComponentProviderAdapter
 		implements TableModelListener, NavigatableRemovalListener {
@@ -60,11 +62,13 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private String programName;
 	private String windowSubMenu;
 	private List<ComponentProviderActivationListener> activationListenerList = new ArrayList<>();
+	private Callback closedCallback = Dummy.callback();
 
 	private Navigatable navigatable;
 	private SelectionNavigationAction selectionNavigationAction;
 	private DockingAction selectAction;
 	private DockingAction removeItemsAction;
+	private DockingAction externalGotoAction;
 
 	private Function<MouseEvent, ActionContext> contextProvider = null;
 
@@ -170,7 +174,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectionNavigationAction
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
-		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
+		externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				gotoExternalAddress(getSelectedExternalAddress());
@@ -203,9 +207,21 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			new MenuData(new String[] { "GoTo External Location" }, icon, null));
 		externalGotoAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Navigation"));
 
-		plugin.getTool().addLocalAction(this, selectAction);
-		plugin.getTool().addLocalAction(this, selectionNavigationAction);
-		plugin.getTool().addLocalAction(this, externalGotoAction);
+		tool.addLocalAction(this, selectAction);
+		tool.addLocalAction(this, selectionNavigationAction);
+		tool.addLocalAction(this, externalGotoAction);
+	}
+
+	public void removeAllActions() {
+		tool.removeLocalAction(this, externalGotoAction);
+		tool.removeLocalAction(this, selectAction);
+		tool.removeLocalAction(this, selectionNavigationAction);
+
+		// this action is conditionally added
+		if (removeItemsAction != null) {
+			tool.removeAction(removeItemsAction);
+			removeItemsAction = null;
+		}
 	}
 
 	public void installRemoveItemsAction() {
@@ -295,6 +311,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		this.closedCallback.call();
+
 		if (navigatable != null) {
 			navigatable.removeNavigatableListener(this);
 		}
@@ -418,5 +436,13 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	 */
 	public void setActionContextProvider(Function<MouseEvent, ActionContext> contextProvider) {
 		this.contextProvider = contextProvider;
+	}
+
+	/**
+	 * Sets a listener to know when this provider is closed.
+	 * @param c the callback
+	 */
+	public void setClosedCallback(Callback c) {
+		this.closedCallback = Dummy.ifNull(c);
 	}
 }

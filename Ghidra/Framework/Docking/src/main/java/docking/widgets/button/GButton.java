@@ -21,7 +21,7 @@ import javax.swing.JButton;
 import resources.ResourceManager;
 
 /**
- * A drop-in replacement for {@link JButton} that correctly installs a disable icon.
+ * A drop-in replacement for {@link JButton} that correctly installs a disabled icon.
  */
 public class GButton extends JButton {
 
