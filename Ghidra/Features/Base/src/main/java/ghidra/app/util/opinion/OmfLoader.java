@@ -27,9 +27,9 @@ import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.bin.format.omf.OmfFixupRecord.Subrecord;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -47,7 +47,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	public final static long IMAGE_BASE = 0x2000; // Base offset to start loading segments
 	public final static long MAX_UNINITIALIZED_FILL = 0x2000;	// Maximum zero bytes added to pad initialized segments
 
-	private ArrayList<OmfSymbol> externsyms = new ArrayList<>();
+	private List<OmfSymbol> externsyms = new ArrayList<>();
 
 	/**
 	 * OMF usually stores a string describing the compiler that produced it in a
@@ -137,16 +137,39 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		// We don't use the file bytes to create block because the bytes are manipulated before
 		// forming the block.  Creating the FileBytes anyway in case later we want access to all
 		// the original bytes.
-		MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 		try {
 			processSegmentHeaders(reader, header, program, monitor, log);
 			processPublicSymbols(header, program, monitor, log);
 			processExternalSymbols(header, program, monitor, log);
 			processRelocations(header, program, monitor, log);
+			markupRecords(program, fileBytes, header, log, monitor);
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
+		}
+	}
+
+	private void markupRecords(Program program, FileBytes fileBytes, OmfFileHeader fileHeader,
+			MessageLog log, TaskMonitor monitor) {
+		monitor.setMessage("Marking up records...");
+		int size =
+			fileHeader.getRecords().stream().mapToInt(r -> r.getRecordLength() + 3).sum();
+		try {
+			Address recordSpaceAddr = AddressSpace.OTHER_SPACE.getAddress(0);
+			MemoryBlock headerBlock = MemoryBlockUtils.createInitializedBlock(program, true,
+				"RECORDS", recordSpaceAddr, fileBytes, 0, size, "", "", false,
+				false, false, log);
+			Address start = headerBlock.getStart();
+
+			for (OmfRecord record : fileHeader.getRecords()) {
+				DataUtilities.createData(program, start.add(record.getRecordOffset()),
+					record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg("Failed to markup records");
 		}
 	}
 
@@ -181,7 +204,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			MessageLog log) {
 		Language language = program.getLanguage();
 		OmfFixupRecord.Subrecord[] targetThreads = new Subrecord[4];
-		ArrayList<OmfGroupRecord> groups = header.getGroups();
+		List<OmfGroupRecord> groups = header.getGroups();
 		long targetAddr;		// Address of item being referred to
 		Address locAddress;		// Location of data to be patched
 		DataConverter converter = DataConverter.getInstance(!header.isLittleEndian());
@@ -364,7 +387,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 
 		final Language language = program.getLanguage();
 
-		ArrayList<OmfSegmentHeader> segments = header.getSegments();
+		List<OmfSegmentHeader> segments = header.getSegments();
 		for (OmfSegmentHeader segment : segments) {
 			if (monitor.isCancelled()) {
 				break;
@@ -432,9 +455,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			MessageLog log) {
 		SymbolTable symbolTable = program.getSymbolTable();
 
-		ArrayList<OmfSymbolRecord> symbols = header.getPublicSymbols();
-		ArrayList<OmfSegmentHeader> segments = header.getSegments();
-		ArrayList<OmfGroupRecord> groups = header.getGroups();
+		List<OmfSymbolRecord> symbols = header.getPublicSymbols();
+		List<OmfSegmentHeader> segments = header.getSegments();
+		List<OmfGroupRecord> groups = header.getGroups();
 		Language language = program.getLanguage();
 
 		monitor.setMessage("Creating Public Symbols");
@@ -536,7 +559,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	private void processExternalSymbols(OmfFileHeader header, Program program, TaskMonitor monitor,
 			MessageLog log) {
 
-		ArrayList<OmfExternalSymbol> symbolrecs = header.getExternalSymbols();
+		List<OmfExternalSymbol> symbolrecs = header.getExternalSymbols();
 		if (symbolrecs.size() == 0) {
 			return;
 		}

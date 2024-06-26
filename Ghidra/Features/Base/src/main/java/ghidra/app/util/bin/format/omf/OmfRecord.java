@@ -20,8 +20,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
-public abstract class OmfRecord {
+public abstract class OmfRecord implements StructConverter {
 	public final static byte RHEADR = (byte) 0x6E; // Obsolete
 	public final static byte REGINT = (byte) 0x70; // Obsolete
 	public final static byte REDATA = (byte) 0x72; // Obsolete
@@ -67,6 +70,8 @@ public abstract class OmfRecord {
 	public final static byte VENDEXT = (byte) 0xCE;
 	public final static byte START = (byte) 0xF0;
 	public final static byte END = (byte) 0xF1;
+
+	protected static final String CATEGORY_PATH = "/OMF";
 
 	protected byte recordType;
 	protected int recordLength;
@@ -120,22 +125,26 @@ public abstract class OmfRecord {
 		return (reader.readNextByte() & 0xff);
 	}
 
-	public static int readInt2Or4(BinaryReader reader, boolean isBig) throws IOException {
-		if (isBig)
-			return reader.readNextInt();
-		return (reader.readNextShort() & 0xffff);
+	public static Omf2or4 readInt2Or4(BinaryReader reader, boolean isBig) throws IOException {
+		if (isBig) {
+			return new Omf2or4(4, reader.readNextInt());
+		}
+		return new Omf2or4(2, reader.readNextUnsignedShort());
 	}
 
-	public static int readIndex(BinaryReader reader) throws IOException {
+	public static OmfIndex readIndex(BinaryReader reader) throws IOException {
+		int length;
 		int indexWord;
 		byte firstByte = reader.readNextByte();
 		if ((firstByte & 0x80) != 0) {
 			indexWord = (firstByte & 0x7f) * 0x100 + (reader.readNextByte() & 0xff);
+			length = 2;
 		}
 		else {
 			indexWord = firstByte;
+			length = 1;
 		}
-		return indexWord;
+		return new OmfIndex(length, indexWord);
 	}
 
 	public static OmfRecord readRecord(BinaryReader reader) throws IOException, OmfException {
@@ -215,9 +224,9 @@ public abstract class OmfRecord {
 	 * @return the read OMF string
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public static String readString(BinaryReader reader) throws IOException {
+	public static OmfString readString(BinaryReader reader) throws IOException {
 		int count = reader.readNextByte() & 0xff;
-		return reader.readNextAsciiString(count);
+		return new OmfString(count, reader.readNextAsciiString(count));
 	}
 
 	/**
@@ -248,5 +257,17 @@ public abstract class OmfRecord {
 	public String toString() {
 		return String.format("name: %s, type: 0x%x, offset: 0x%x, length: 0x%x",
 			getRecordName(recordType & (byte) 0xfe), recordType, recordOffset, recordLength);
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		struct.add(BYTE, "type", null);
+		struct.add(WORD, "length", null);
+		struct.add(new ArrayDataType(BYTE, getRecordLength() - 1, 1), "contents", null);
+		struct.add(BYTE, "checksum", null);
+
+		struct.setCategoryPath(new CategoryPath(CATEGORY_PATH));
+		return struct;
 	}
 }

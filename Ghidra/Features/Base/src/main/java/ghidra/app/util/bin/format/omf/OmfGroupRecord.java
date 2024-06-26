@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.Address;
@@ -24,7 +25,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 
 public class OmfGroupRecord extends OmfRecord {
-	private int groupNameIndex;
+	private OmfIndex groupNameIndex;
 	private String groupName;
 	private long vma = -1;		// Assigned (by linker) starting address of the whole group
 	private GroupSubrecord[] group;
@@ -72,7 +73,7 @@ public class OmfGroupRecord extends OmfRecord {
 	}
 
 	public int getSegmentIndex(int i) {
-		return group[i].segmentIndex;
+		return group[i].segmentIndex.value();
 	}
 
 	public Address getAddress(Language language) {
@@ -80,19 +81,19 @@ public class OmfGroupRecord extends OmfRecord {
 		return addrSpace.getAddress(vma);
 	}
 
-	public void resolveNames(ArrayList<String> nameList) throws OmfException {
-		if (groupNameIndex <= 0) {
+	public void resolveNames(List<String> nameList) throws OmfException {
+		if (groupNameIndex.value() <= 0) {
 			throw new OmfException("Cannot have unused group name");
 		}
-		if (groupNameIndex > nameList.size()) {
+		if (groupNameIndex.value() > nameList.size()) {
 			throw new OmfException("Group name index out of bounds");
 		}
-		groupName = nameList.get(groupNameIndex - 1);
+		groupName = nameList.get(groupNameIndex.value() - 1);
 	}
 
 	public static class GroupSubrecord {
 		private byte componentType;
-		private int segmentIndex;
+		private OmfIndex segmentIndex;
 
 		public static GroupSubrecord read(BinaryReader reader) throws IOException {
 			GroupSubrecord subrec = new GroupSubrecord();

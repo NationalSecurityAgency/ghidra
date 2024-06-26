@@ -27,7 +27,7 @@ public class OmfEnumeratedData extends OmfData {
 		readRecordHeader(reader);
 		long start = reader.getPointerIndex();
 		segmentIndex = OmfRecord.readIndex(reader);
-		dataOffset = OmfRecord.readInt2Or4(reader, hasBigFields()) & 0xffffffffL;
+		dataOffset = OmfRecord.readInt2Or4(reader, hasBigFields());
 		streamOffset = reader.getPointerIndex();
 		streamLength = getRecordLength() - 1 - (int) (streamOffset - start);
 		reader.setPointerIndex(streamOffset + streamLength); // Skip over the data when reading header

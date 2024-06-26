@@ -20,11 +20,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfExternalSymbol extends OmfRecord {
 
 	private boolean isStatic;
 	protected List<OmfSymbol> symbols = new ArrayList<>();
+	
+	private record Reference(OmfString name, OmfIndex type) {}
+
+	private List<Reference> refs = new ArrayList<>();
 
 	protected OmfExternalSymbol(boolean isStatic) {
 		this.isStatic = isStatic;
@@ -36,9 +42,10 @@ public class OmfExternalSymbol extends OmfRecord {
 
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			String name = OmfRecord.readString(reader);
-			int type = OmfRecord.readIndex(reader);
-			symbols.add(new OmfSymbol(name, type, 0, 0, 0));
+			OmfString name = OmfRecord.readString(reader);
+			OmfIndex type = OmfRecord.readIndex(reader);
+			refs.add(new Reference(name, type));
+			symbols.add(new OmfSymbol(name.str(), type.value(), 0, 0, 0));
 		}
 
 		readCheckSumByte(reader);
@@ -50,5 +57,20 @@ public class OmfExternalSymbol extends OmfRecord {
 
 	public boolean isStatic() {
 		return isStatic;
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		struct.add(BYTE, "type", null);
+		struct.add(WORD, "length", null);
+		for (Reference ref : refs) {
+			struct.add(ref.name.toDataType(), "name", null);
+			struct.add(ref.type.toDataType(), "type", null);
+		}
+		struct.add(BYTE, "checksum", null);
+
+		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		return struct;
 	}
 }

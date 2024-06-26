@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfCommentRecord extends OmfRecord {
 	// Language translator comment
@@ -34,7 +36,7 @@ public class OmfCommentRecord extends OmfRecord {
 
 	private byte commentType;
 	private byte commentClass;
-	private String value;
+	private OmfString value;
 
 	public OmfCommentRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
@@ -46,7 +48,7 @@ public class OmfCommentRecord extends OmfRecord {
 			case COMMENT_CLASS_DEFAULT_LIBRARY:
 				byte[] bytes = reader.readNextByteArray(getRecordLength() -
 					3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
-				value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
+				value = new OmfString(bytes.length, new String(bytes, StandardCharsets.US_ASCII)); // assuming ASCII
 				break;
 			case COMMENT_CLASS_LIBMOD:
 				value = readString(reader);
@@ -67,6 +69,24 @@ public class OmfCommentRecord extends OmfRecord {
 	}
 
 	public String getValue() {
-		return value;
+		return value.str();
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		int strlen = getRecordLength() - 3;
+
+		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		struct.add(BYTE, "type", null);
+		struct.add(WORD, "length", "");
+		struct.add(BYTE, "comment_type", null);
+		struct.add(BYTE, "comment_class", null);
+		if (strlen > 0) {
+			struct.add(new StringDataType(), strlen, "str", null);
+		}
+		struct.add(BYTE, "checksum", null);
+
+		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		return struct;
 	}
 }

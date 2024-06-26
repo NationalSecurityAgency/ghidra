@@ -17,24 +17,25 @@ package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.OmfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfSegmentHeader extends OmfRecord {
 	private byte segAttr;		// first byte of Segment Attributes
 	private int frameNumber;
 	private int offset;
-	private long segmentLength;
-	private int segmentNameIndex;
-	private int classNameIndex;
-	private int overlayNameIndex;
+	private Omf2or4 segmentLength;
+	private OmfIndex segmentNameIndex;
+	private OmfIndex classNameIndex;
+	private OmfIndex overlayNameIndex;
 	private String segmentName;
 	private String className;
 	private String overlayName;
@@ -48,10 +49,10 @@ public class OmfSegmentHeader extends OmfRecord {
 	OmfSegmentHeader(int num, int datatype) {
 		// generate a special Borland header
 		segAttr = (byte) 0xa9;
-		segmentLength = 0;
-		segmentNameIndex = 0;
-		classNameIndex = 0;
-		overlayNameIndex = 0;
+		segmentLength = new Omf2or4(2,0);
+		segmentNameIndex = new OmfIndex(1, 0);
+		classNameIndex = new OmfIndex(1, 0);
+		overlayNameIndex = new OmfIndex(1, 0);
 		overlayName = "";
 		if (datatype == 1) {
 			segmentName = "EXTRATEXT_";
@@ -90,7 +91,7 @@ public class OmfSegmentHeader extends OmfRecord {
 			offset = reader.readNextByte() & 0xff;
 			vma = (long) frameNumber + offset;
 		}
-		segmentLength = OmfRecord.readInt2Or4(reader, hasBigFields) & 0xffffffffL;
+		segmentLength = OmfRecord.readInt2Or4(reader, hasBigFields);
 		segmentNameIndex = OmfRecord.readIndex(reader);
 		classNameIndex = OmfRecord.readIndex(reader);
 		overlayNameIndex = OmfRecord.readIndex(reader);
@@ -98,10 +99,10 @@ public class OmfSegmentHeader extends OmfRecord {
 		int B = (segAttr >> 1) & 1;
 		if (B == 1) {		// Ignore the segmentLength field
 			if (getRecordType() == OmfRecord.SEGDEF) {
-				segmentLength = 0x10000L;		// Exactly 64K segment
+				segmentLength = new Omf2or4(segmentLength.length(), 0x10000L); // Exactly 64K segment
 			}
 			else {
-				segmentLength = 0x100000000L;	// Exactly 4G segment
+				segmentLength = new Omf2or4(segmentLength.length(), 0x100000000L); // Exactly 4G segment
 			}
 		}
 	}
@@ -189,7 +190,7 @@ public class OmfSegmentHeader extends OmfRecord {
 	 * @return the length of the segment in bytes
 	 */
 	public long getSegmentLength() {
-		return segmentLength;
+		return segmentLength.value();
 	}
 
 	/**
@@ -277,7 +278,7 @@ public class OmfSegmentHeader extends OmfRecord {
 				throw new OmfException("Unsupported alignment type");
 		}
 		vma = firstValidAddress;
-		firstValidAddress = vma + segmentLength;
+		firstValidAddress = vma + segmentLength.value();
 		return firstValidAddress;
 	}
 
@@ -288,33 +289,33 @@ public class OmfSegmentHeader extends OmfRecord {
 	 * @param nameList is the array of names associated with the file
 	 * @throws OmfException for improper name indices
 	 */
-	protected void resolveNames(ArrayList<String> nameList) throws OmfException {
-		if (segmentNameIndex == 0) {
+	protected void resolveNames(List<String> nameList) throws OmfException {
+		if (segmentNameIndex.value() == 0) {
 			segmentName = "";			// Name is unused
 		}
 		else {
-			if (segmentNameIndex > nameList.size()) {
+			if (segmentNameIndex.value() > nameList.size()) {
 				throw new OmfException("Segment name index out of bounds");
 			}
-			segmentName = nameList.get(segmentNameIndex - 1);
+			segmentName = nameList.get(segmentNameIndex.value() - 1);
 		}
-		if (classNameIndex == 0) {
+		if (classNameIndex.value() == 0) {
 			className = "";
 		}
 		else {
-			if (classNameIndex > nameList.size()) {
+			if (classNameIndex.value() > nameList.size()) {
 				throw new OmfException("Class name index out of bounds");
 			}
-			className = nameList.get(classNameIndex - 1);
+			className = nameList.get(classNameIndex.value() - 1);
 		}
-		if (overlayNameIndex == 0) {
+		if (overlayNameIndex.value() == 0) {
 			overlayName = "";
 		}
 		else {
-			if (overlayNameIndex > nameList.size()) {
+			if (overlayNameIndex.value() > nameList.size()) {
 				throw new OmfException("Overlay name index out of bounds");
 			}
-			overlayName = nameList.get(overlayNameIndex - 1);
+			overlayName = nameList.get(overlayNameIndex.value() - 1);
 		}
 
 		// Once we know the class name, we can make some educated guesses about read/write/exec permissions
@@ -347,8 +348,8 @@ public class OmfSegmentHeader extends OmfRecord {
 	 */
 	protected void appendEnumeratedData(OmfEnumeratedData rec) {
 		long blockend = rec.getDataOffset() + rec.getLength();
-		if (blockend > segmentLength) {
-			segmentLength = blockend;
+		if (blockend > segmentLength.value()) {
+			segmentLength = new Omf2or4(segmentLength.length(), blockend);
 		}
 		dataBlocks.add(rec);
 	}
@@ -380,7 +381,7 @@ public class OmfSegmentHeader extends OmfRecord {
 			this.log = log;
 			pointer = 0;
 			dataUpNext = 0;
-			if (pointer < segmentLength) {
+			if (pointer < segmentLength.value()) {
 				establishNextBuffer();
 			}
 		}
@@ -423,7 +424,7 @@ public class OmfSegmentHeader extends OmfRecord {
 				}
 			}
 			// We may have filler after the last block
-			long size = segmentLength - pointer;
+			long size = segmentLength.value() - pointer;
 			if (size > OmfLoader.MAX_UNINITIALIZED_FILL) {
 				throw new IOException("Large hole at the end of OMF segment: " + segmentName);
 			}
@@ -436,7 +437,7 @@ public class OmfSegmentHeader extends OmfRecord {
 
 		@Override
 		public int read() throws IOException {
-			if (pointer < segmentLength) {
+			if (pointer < segmentLength.value()) {
 				if (bufferpointer < buffer.length) {
 					pointer++;
 					return buffer[bufferpointer++] & 0xff;
@@ -453,5 +454,26 @@ public class OmfSegmentHeader extends OmfRecord {
 			return -1;
 		}
 
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		struct.add(BYTE, "type", null);
+		struct.add(WORD, "length", null);
+		struct.add(BYTE, "segment_attr", null);
+		int A = (segAttr >> 5) & 7;
+		if (A == 0) {
+			struct.add(WORD, "frame_number", null);
+			struct.add(BYTE, "offset", null);
+		}
+		struct.add(segmentLength.toDataType(), "segment_length", null);
+		struct.add(segmentNameIndex.toDataType(), "segment_name_index", null);
+		struct.add(classNameIndex.toDataType(), "class_name_index", null);
+		struct.add(overlayNameIndex.toDataType(), "overlay_name_index", null);
+		struct.add(BYTE, "checksum", null);
+
+		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		return struct;
 	}
 }
