@@ -247,9 +247,9 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	@Override
 	public void remove(Address start, Address end, Register register)
 			throws ContextChangeException {
-		if (start.getAddressSpace() != end.getAddressSpace()) {
+		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
 			throw new IllegalArgumentException(
-				"start and end address must refer to the same address space instance");
+				"start and end address must be within the same address space");
 		}
 		RegisterValueStore values = registerValueMap.get(register.getBaseRegister());
 		if (values != null) {
@@ -259,8 +259,9 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	}
 
 //	public void removeDefault(Address start, Address end, Register register) {
-//		if (start.getAddressSpace() != end.getAddressSpace()) {
-//			throw new IllegalArgumentException("start and end address must refer to the same address space instance");
+//		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
+//			throw new IllegalArgumentException(
+//				"start and end address must be within the same address space");
 //		}
 //		invalidateCache();
 //		RegisterValueStore values = defaultRegisterValueMap.get(register.getBaseRegister());
@@ -272,9 +273,9 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	@Override
 	public void setValue(Register register, Address start, Address end, BigInteger value)
 			throws ContextChangeException {
-		if (start.getAddressSpace() != end.getAddressSpace()) {
+		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
 			throw new IllegalArgumentException(
-				"start and end address must refer to the same address space instance");
+				"start and end address must be within the same address space");
 		}
 		if (value == null) {
 			remove(start, end, register);
@@ -285,9 +286,9 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 
 	@Override
 	public void setDefaultValue(RegisterValue registerValue, Address start, Address end) {
-		if (start.getAddressSpace() != end.getAddressSpace()) {
+		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
 			throw new IllegalArgumentException(
-				"start and end address must refer to the same address space instance");
+				"start and end address must be within the same address space");
 		}
 		Register baseRegister = registerValue.getRegister().getBaseRegister();
 		RegisterValueStore store = defaultRegisterValueMap.get(baseRegister);

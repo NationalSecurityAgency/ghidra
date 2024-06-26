@@ -32,6 +32,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -98,6 +99,17 @@ class RegisterMergeManager implements ListingMergeConstants {
 	 * @param latestChanges the address set of changes between original and latest versioned program.  
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
+	/**
+	 * Creates a RegisterMergeManager.
+	 * @param registerName
+	 * @param mergeManager
+	 * @param resultPgm the program to be updated with the result of the merge.
+	 * @param originalPgm the program that was checked out.
+	 * @param latestPgm the latest checked-in version of the program.
+	 * @param myPgm the program requesting to be checked in.
+	 * @param latestChanges the address set of changes between original and latest versioned program.  
+	 * @param myChanges the address set of changes between original and my modified program.
+	 */
 	RegisterMergeManager(String registerName, ProgramMultiUserMergeManager mergeManager,
 			Program resultPgm, Program originalPgm, Program latestPgm, Program myPgm,
 			ProgramChangeSet latestChanges, ProgramChangeSet myChanges) {
@@ -123,10 +135,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#apply()
-	 */
-	public void apply() {
+	void apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
 		// If the "Use For All" check box is selected 
@@ -138,25 +147,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		merge(min, max, resultReg);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#cancel()
-	 */
-	public void cancel() {
+	void cancel() {
 		conflictOption = CANCELED;
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#getDescription()
-	 */
-	public String getDescription() {
-		return "Merge Register";
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#getName()
-	 */
-	public String getName() {
-		return "Register Merger";
 	}
 
 	/**
@@ -183,54 +175,6 @@ class RegisterMergeManager implements ListingMergeConstants {
 		autoSet = setToCheck.subtract(conflictSet);
 	}
 
-	private Address getCompatibleAddress(AddressFactory addrFactory, Address otherAddr) {
-		AddressSpace space = otherAddr.getAddressSpace();
-		AddressSpace s = addrFactory.getAddressSpace(space.getName());
-		if (!space.equals(s)) {
-			throw new IllegalArgumentException("Invalid address for target program: " + otherAddr);
-		}
-		return s.getAddress(otherAddr.getOffset());
-	}
-
-	private void setValue(Program p, Register register, Address start, Address end,
-			BigInteger value) {
-
-		// Since all program must have the same set of AddressSpaces, we can assume that addresses
-		// from one program will be valid within another.  However, in order to comply with 
-		// address space instance restrictions we must ensure that addresses used for applying
-		// register context correspond to the target program.
-
-		ProgramContext ctx = p.getProgramContext();
-		AddressFactory addrFactory = p.getAddressFactory();
-
-		try {
-			ctx.setValue(register, getCompatibleAddress(addrFactory, start),
-				getCompatibleAddress(addrFactory, end), value);
-		}
-		catch (ContextChangeException e) {
-			// ignore since processor context-register is not handled by this merge manager
-		}
-	}
-
-	private void removeValue(Program p, Register register, Address start, Address end) {
-
-		// Since all program must have the same set of AddressSpaces, we can assume that addresses
-		// from one program will be valid within another.  However, in order to comply with 
-		// address space instance restrictions we must ensure that addresses used for applying
-		// register context correspond to the target program.
-
-		ProgramContext ctx = p.getProgramContext();
-		AddressFactory addrFactory = p.getAddressFactory();
-
-		try {
-			ctx.remove(getCompatibleAddress(addrFactory, start),
-				getCompatibleAddress(addrFactory, end), register);
-		}
-		catch (ContextChangeException e) {
-			// ignore since processor context-register is not handled by this merge manager
-		}
-	}
-
 	/**
 	 * Merges all the register values for the named register being managed by this merge manager.
 	 * @param monitor the monitor that provides feedback to the user.
@@ -246,17 +190,24 @@ class RegisterMergeManager implements ListingMergeConstants {
 		// resulting program has the mem addresses but the latest doesn't.
 		AddressRangeIterator arIter = autoSet.getAddressRanges();
 		while (arIter.hasNext() && !monitor.isCancelled()) {
-			AddressRange range = arIter.next();
-			Address rangeMin = range.getMinAddress();
-			Address rangeMax = range.getMaxAddress();
-			removeValue(resultPgm, resultReg, rangeMin, rangeMax);
-			AddressRangeIterator it =
-				myContext.getRegisterValueAddressRanges(resultReg, rangeMin, rangeMax);
-			while (it.hasNext()) {
-				AddressRange valueRange = it.next();
-				BigInteger value = myContext.getValue(resultReg, valueRange.getMinAddress(), false);
-				setValue(resultPgm, resultReg, valueRange.getMinAddress(),
-					valueRange.getMaxAddress(), value);
+			try {
+				AddressRange range = arIter.next();
+				Address rangeMin = range.getMinAddress();
+				Address rangeMax = range.getMaxAddress();
+				resultContext.remove(rangeMin, rangeMax, resultReg);
+				AddressRangeIterator it =
+					myContext.getRegisterValueAddressRanges(resultReg, rangeMin, rangeMax);
+				while (it.hasNext()) {
+					AddressRange valueRange = it.next();
+					BigInteger value =
+						myContext.getValue(resultReg, valueRange.getMinAddress(), false);
+					resultContext.setValue(resultReg, valueRange.getMinAddress(),
+						valueRange.getMaxAddress(), value);
+				}
+			}
+			catch (ContextChangeException e) {
+				// processor context-register is not handled here and should not occur
+				throw new AssertException(e);
 			}
 		}
 
@@ -334,7 +285,13 @@ class RegisterMergeManager implements ListingMergeConstants {
 	 */
 	private void merge(Address minAddress, Address maxAddress, Register resultRegister,
 			BigInteger myValue) {
-		setValue(resultPgm, resultRegister, minAddress, maxAddress, myValue);
+		try {
+			resultContext.setValue(resultRegister, minAddress, maxAddress, myValue);
+		}
+		catch (ContextChangeException e) {
+			// processor context-register is not handled here and should not occur
+			throw new AssertException(e);
+		}
 	}
 
 	/**
