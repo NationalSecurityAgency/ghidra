@@ -28,9 +28,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
 public class eBPFHelperDataTypes implements Closeable {
-	
+
 	private static final String EBPF_DATATYPE_MGR_PROPERTY_KEY = "eBPFDataTypes";
-	
+
 	/**
 	 * Ordered list of BPF helper functions.  Array index corresponds to helper ID.
 	 * A null may be substituted for a missing/unknown function definition. 
@@ -39,6 +39,7 @@ public class eBPFHelperDataTypes implements Closeable {
 	 *   https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h
 	 *   https://man7.org/linux/man-pages/man7/bpf-helpers.7.html
 	 */
+	//@formatter:off
 	private static final String[] bpfHelperSignatures = new String[] {
 		// Helper IDs: 0..9
 		"void bpf_unspec()",
@@ -301,21 +302,22 @@ public class eBPFHelperDataTypes implements Closeable {
 		"void *bpf_cgrp_storage_get(struct bpf_map *map, struct cgroup *cgroup, void *value, u64 flags)",
 		"long bpf_cgrp_storage_delete(struct bpf_map *map, struct cgroup *cgroup)" 
 	};
-	
+	//@formatter:on
+
 	private DataTypeManager dtm;
 	private FunctionDefinition[] helperFunctionDefs;
-	
+
 	private eBPFHelperDataTypes(DataTypeManager dtm, FunctionDefinition[] helperFunctionDefs) {
 		this.dtm = dtm;
 		this.helperFunctionDefs = helperFunctionDefs;
 	}
-	
+
 	@Override
 	public void close() throws IOException {
-		helperFunctionDefs = null; 
+		helperFunctionDefs = null;
 		dtm.close();
 	}
-	
+
 	/**
 	 * Get eBPF helper function definition for the specified ID.
 	 * 
@@ -328,7 +330,7 @@ public class eBPFHelperDataTypes implements Closeable {
 		}
 		return null;
 	}
-	
+
 	/*******************
 	 * Static Methods
 	 *******************/
@@ -346,26 +348,28 @@ public class eBPFHelperDataTypes implements Closeable {
 	 */
 	static synchronized eBPFHelperDataTypes get(Program program, MessageLog log) {
 
-		boolean previouslyParsed = TransientProgramProperties.hasProperty(program, 
-			EBPF_DATATYPE_MGR_PROPERTY_KEY);
-		eBPFHelperDataTypes instance = TransientProgramProperties.getProperty(program, 
-			EBPF_DATATYPE_MGR_PROPERTY_KEY, SCOPE.ANALYSIS_SESSION, eBPFHelperDataTypes.class, 
+		boolean previouslyParsed =
+			TransientProgramProperties.hasProperty(program, EBPF_DATATYPE_MGR_PROPERTY_KEY);
+		eBPFHelperDataTypes instance = TransientProgramProperties.getProperty(program,
+			EBPF_DATATYPE_MGR_PROPERTY_KEY, SCOPE.ANALYSIS_SESSION, eBPFHelperDataTypes.class,
 			() -> parseHelpFunctionDefs(program));
 		if (instance == null && !previouslyParsed) {
 			log.appendMsg("Failed to parse eBPF helper function definitions (see log for details)");
 		}
 		return instance;
 	}
-	
+
 	private static eBPFHelperDataTypes parseHelpFunctionDefs(Program program) {
 
-		FunctionDefinition[] helperFunctionDefs = new FunctionDefinition[bpfHelperSignatures.length];
-		
+		FunctionDefinition[] helperFunctionDefs =
+			new FunctionDefinition[bpfHelperSignatures.length];
+
 		DataType be16;
 		DataType be32;
-		
+
 		boolean success = false;
-		DataTypeManager dtm = new StandAloneDataTypeManager("BPF", DataOrganizationImpl.getDefaultOrganization());
+		DataTypeManager dtm =
+			new StandAloneDataTypeManager("BPF", DataOrganizationImpl.getDefaultOrganization());
 		int txId = dtm.startTransaction("Parse Types");
 		try {
 
@@ -379,25 +383,27 @@ public class eBPFHelperDataTypes implements Closeable {
 			dtm.addDataType(new TypedefDataType("__wsum", IntegerDataType.dataType), null);
 			dtm.addDataType(new TypedefDataType("__sum16", ShortDataType.dataType), null);
 			dtm.addDataType(new TypedefDataType("size_t", UnsignedLongDataType.dataType), null);
-			
+
 			// Define big-endian typedefs - limited support within little-endian program
-			be16 = dtm.addDataType(new TypedefDataType("__be16", UnsignedShortDataType.dataType), null);
-			be32 = dtm.addDataType(new TypedefDataType("__be32", UnsignedIntegerDataType.dataType), null);
+			be16 = dtm.addDataType(new TypedefDataType("__be16", UnsignedShortDataType.dataType),
+				null);
+			be32 = dtm.addDataType(new TypedefDataType("__be32", UnsignedIntegerDataType.dataType),
+				null);
 
 			CParser parser = new CParser(dtm, true, null);
 			try {
 				int id = 0;
 				for (String def : bpfHelperSignatures) {
-					helperFunctionDefs[id++] = def != null ? 
-							(FunctionDefinition) parser.parse(def + ";") : null;	
+					helperFunctionDefs[id++] =
+						def != null ? (FunctionDefinition) parser.parse(def + ";") : null;
 				}
 			}
 			catch (ParseException e) {
-				Msg.error(eBPFHelperDataTypes.class, "eBPF datatype parse error: " + 
+				Msg.error(eBPFHelperDataTypes.class, "eBPF datatype parse error: " +
 					e.getMessage() + "\n\n" + parser.getParseMessages());
 				return null;
 			}
-			
+
 			success = true;
 		}
 		finally {
@@ -406,7 +412,7 @@ public class eBPFHelperDataTypes implements Closeable {
 				dtm.close();
 			}
 		}
-		
+
 		// Add big-endian datatypes to program and set default setting.
 		// This is done since endian settings do not carry through resolve
 		program.withTransaction("Add BPF big-endian typedefs", () -> {
@@ -414,10 +420,10 @@ public class eBPFHelperDataTypes implements Closeable {
 			setBigEndianFormat(programDtm.addDataType(be16, null));
 			setBigEndianFormat(programDtm.addDataType(be32, null));
 		});
-		
+
 		return new eBPFHelperDataTypes(dtm, helperFunctionDefs);
 	}
-	
+
 	private static void setBigEndianFormat(DataType beDt) {
 		Settings defaultSettings = beDt.getDefaultSettings();
 		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, true);
