@@ -16,39 +16,38 @@
 package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class OmfNamesRecord extends OmfRecord {
-	private List<OmfString> names = new ArrayList<>();
+public class OmfString implements StructConverter {
 
-	public OmfNamesRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		while (reader.getPointerIndex() < max) {
-			names.add(OmfRecord.readString(reader));
-		}
-		readCheckSumByte(reader);
+	private int length;
+	private String str;
+
+	public OmfString(int length, String str) {
+		this.length = length;
+		this.str = str;
 	}
 
-	public void appendNames(List<String> namelist) {
-		namelist.addAll(names.stream().map(name -> name.str()).toList());
+	public int length() {
+		return length;
+	}
+
+	public String str() {
+		return str;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
-		struct.add(BYTE, "type", null);
-		struct.add(WORD, "length", null);
-		for (OmfString name : names) {
-			struct.add(name.toDataType(), -1, "name", null);
+		if (length == 0) {
+			return BYTE;
 		}
-		struct.add(BYTE, "checksum", null);
 
+		StructureDataType struct = new StructureDataType("OmfString", 0);
+		struct.add(BYTE, "length", "");
+		struct.add(new StringDataType(), length, "str", null);
 		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
 		return struct;
 	}

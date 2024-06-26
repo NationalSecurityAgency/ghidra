@@ -27,8 +27,8 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			String name = OmfRecord.readString(reader);
-			int typeIndex = OmfRecord.readIndex(reader);
+			OmfString name = OmfRecord.readString(reader);
+			OmfIndex typeIndex = OmfRecord.readIndex(reader);
 			byte dataType = reader.readNextByte();
 			int byteLength = 0;
 			if (dataType == 0x61) {		// FAR data, reads numElements and elSize
@@ -40,7 +40,7 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 				// Values 1 thru 5f plus 61, read the byte length
 				byteLength = readCommunalLength(reader);
 			}
-			symbols.add(new OmfSymbol(name, typeIndex, 0, dataType, byteLength));
+			symbols.add(new OmfSymbol(name.str(), typeIndex.value(), 0, dataType, byteLength));
 		}
 		readCheckSumByte(reader);
 	}

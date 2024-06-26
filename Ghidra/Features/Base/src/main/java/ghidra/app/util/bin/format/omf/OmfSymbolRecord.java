@@ -20,13 +20,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfSymbolRecord extends OmfRecord {
-	private int baseGroupIndex;
-	private int baseSegmentIndex;
+	private OmfIndex baseGroupIndex;
+	private OmfIndex baseSegmentIndex;
 	private int baseFrame;
 	private boolean isStatic;
 	private OmfSymbol[] symbol;
+	private List<Reference> refs = new ArrayList<>();
+
+	private record Reference(OmfString name, Omf2or4 offset, OmfIndex type) {}
 
 	public OmfSymbolRecord(BinaryReader reader, boolean isStatic) throws IOException {
 		this.isStatic = isStatic;
@@ -35,17 +40,18 @@ public class OmfSymbolRecord extends OmfRecord {
 		boolean hasBigFields = hasBigFields();
 		baseGroupIndex = OmfRecord.readIndex(reader);
 		baseSegmentIndex = OmfRecord.readIndex(reader);
-		if (baseSegmentIndex == 0) {
-			baseFrame = reader.readNextShort() & 0xffff;
+		if (baseSegmentIndex.value() == 0) {
+			baseFrame = reader.readNextUnsignedShort();
 		}
 
 		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
 		while (reader.getPointerIndex() < max) {
-			String name = OmfRecord.readString(reader);
-			long offset = OmfRecord.readInt2Or4(reader, hasBigFields) & 0xffffffffL;
-			int type = OmfRecord.readIndex(reader);
-			OmfSymbol subrec = new OmfSymbol(name, type, offset, 0, 0);
+			OmfString name = OmfRecord.readString(reader);
+			Omf2or4 offset = OmfRecord.readInt2Or4(reader, hasBigFields);
+			OmfIndex type = OmfRecord.readIndex(reader);
+			OmfSymbol subrec = new OmfSymbol(name.str(), type.value(), offset.value(), 0, 0);
 			symbollist.add(subrec);
+			refs.add(new Reference(name, offset, type));
 		}
 		readCheckSumByte(reader);
 		symbol = new OmfSymbol[symbollist.size()];
@@ -57,11 +63,11 @@ public class OmfSymbolRecord extends OmfRecord {
 	}
 
 	public int getGroupIndex() {
-		return baseGroupIndex;
+		return baseGroupIndex.value();
 	}
 
 	public int getSegmentIndex() {
-		return baseSegmentIndex;
+		return baseSegmentIndex.value();
 	}
 
 	public int numSymbols() {
@@ -74,6 +80,31 @@ public class OmfSymbolRecord extends OmfRecord {
 
 	public List<OmfSymbol> getSymbols() {
 		return List.of(symbol);
+	}
+
+	public int getBaseFrame() {
+		return baseFrame;
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		struct.add(BYTE, "type", null);
+		struct.add(WORD, "length", null);
+		struct.add(baseGroupIndex.toDataType(), "base_group_index", null);
+		struct.add(baseSegmentIndex.toDataType(), "base_segment_index", null);
+		if (baseSegmentIndex.value() == 0) {
+			struct.add(WORD, "base_frame", null);
+		}
+		for (Reference ref : refs) {
+			struct.add(ref.name.toDataType(), "name", null);
+			struct.add(ref.offset.toDataType(), "offset", null);
+			struct.add(ref.type.toDataType(), "type", null);
+		}
+		struct.add(BYTE, "checksum", null);
+
+		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		return struct;
 	}
 
 }

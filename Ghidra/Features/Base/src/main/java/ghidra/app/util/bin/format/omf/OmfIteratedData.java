@@ -78,7 +78,7 @@ public class OmfIteratedData extends OmfData {
 	 * Contain the definition of one part of a datablock with possible recursion
 	 */
 	public static class DataBlock {
-		private int repeatCount;
+		private Omf2or4 repeatCount;
 		private int blockCount;
 		private byte[] simpleBlock = null;
 		private DataBlock[] nestedBlock = null;
@@ -86,7 +86,7 @@ public class OmfIteratedData extends OmfData {
 		public static DataBlock read(BinaryReader reader, boolean hasBigFields) throws IOException {
 			DataBlock subblock = new DataBlock();
 			subblock.repeatCount = OmfRecord.readInt2Or4(reader, hasBigFields);
-			subblock.blockCount = reader.readNextShort() & 0xffff;
+			subblock.blockCount = reader.readNextUnsignedShort();
 			if (subblock.blockCount == 0) {
 				int size = reader.readNextByte() & 0xff;
 				subblock.simpleBlock = new byte[size];
@@ -110,7 +110,7 @@ public class OmfIteratedData extends OmfData {
 		 * @return The position after the block
 		 */
 		public int fillBuffer(byte[] buffer, int pos) {
-			for (int i = 0; i < repeatCount; ++i) {
+			for (int i = 0; i < (int) repeatCount.value(); ++i) {
 				if (simpleBlock != null) {
 					for (byte element : simpleBlock) {
 						buffer[pos] = element;
@@ -139,7 +139,7 @@ public class OmfIteratedData extends OmfData {
 					length += block.getLength();
 				}
 			}
-			return length * repeatCount;
+			return length * (int) repeatCount.value();
 		}
 
 		/**

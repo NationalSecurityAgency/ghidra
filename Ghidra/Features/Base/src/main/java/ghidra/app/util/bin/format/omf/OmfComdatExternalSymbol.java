@@ -32,9 +32,9 @@ public class OmfComdatExternalSymbol extends OmfExternalSymbol {
 
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			int nameIndex = OmfRecord.readIndex(reader);
-			int type = OmfRecord.readIndex(reader);
-			externalLookups.add(new ExternalLookup(nameIndex, type));
+			OmfIndex nameIndex = OmfRecord.readIndex(reader);
+			OmfIndex type = OmfRecord.readIndex(reader);
+			externalLookups.add(new ExternalLookup(nameIndex.value(), type.value()));
 		}
 
 		readCheckSumByte(reader);

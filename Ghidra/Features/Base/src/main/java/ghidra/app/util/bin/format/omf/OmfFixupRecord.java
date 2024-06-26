@@ -67,10 +67,10 @@ public class OmfFixupRecord extends OmfRecord {
 		private byte first;
 		private byte hiFixup;
 		private byte fixData;
-		private int index;
-		private int frameDatum;
-		private int targetDatum;
-		private int targetDisplacement;
+		private OmfIndex index;
+		private OmfIndex frameDatum;
+		private OmfIndex targetDatum;
+		private Omf2or4 targetDisplacement;
 
 		/**
 		 * Read the next subrecord from the input reader
@@ -85,7 +85,7 @@ public class OmfFixupRecord extends OmfRecord {
 			int method;
 			final var rec = new Subrecord();
 			rec.first = reader.readNextByte();
-			rec.index = -1;
+			rec.index = new OmfIndex(1, -1);
 			if (rec.isThreadSubrecord()) {
 				method = rec.getThreadMethod();
 				if (method < 4) {
@@ -93,8 +93,8 @@ public class OmfFixupRecord extends OmfRecord {
 				}
 				return rec;
 			}
-			rec.targetDisplacement = 0;
-			rec.targetDatum = 0;
+			rec.targetDisplacement = new Omf2or4(2, 0);
+			rec.targetDatum = new OmfIndex(1, 0);
 			rec.hiFixup = reader.readNextByte();
 			rec.fixData = reader.readNextByte();
 			method = rec.getFrameMethod();
@@ -135,7 +135,7 @@ public class OmfFixupRecord extends OmfRecord {
 		 * @return Get the index for explicit thread or frame
 		 */
 		public int getIndex() {
-			return index;
+			return index.value();
 		}
 
 		/**
@@ -170,11 +170,11 @@ public class OmfFixupRecord extends OmfRecord {
 		}
 
 		public int getTargetDatum() {
-			return targetDatum;
+			return targetDatum.value();
 		}
 
 		public int getTargetDisplacement() {
-			return targetDisplacement;
+			return (int) targetDisplacement.value();
 		}
 
 		public int getLocationType() {

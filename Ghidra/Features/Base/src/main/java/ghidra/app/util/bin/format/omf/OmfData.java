@@ -23,21 +23,21 @@ import ghidra.app.util.bin.BinaryReader;
  * Object representing data loaded directly into the final image.
  */
 public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
-	protected int segmentIndex;
-	protected long dataOffset;
+	protected OmfIndex segmentIndex;
+	protected Omf2or4 dataOffset;
 
 	/**
 	 * @return get the segments index for this datablock
 	 */
 	public int getSegmentIndex() {
-		return segmentIndex;
+		return segmentIndex.value();
 	}
 
 	/**
 	 * @return the starting offset, within the loaded image, of this data
 	 */
 	public long getDataOffset() {
-		return dataOffset;
+		return dataOffset.value();
 	}
 
 	/**
@@ -47,7 +47,7 @@ public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
 	 */
 	@Override
 	public int compareTo(OmfData o) {
-		return Long.compare(dataOffset, o.dataOffset);
+		return Long.compare(dataOffset.value(), o.dataOffset.value());
 	}
 
 	/**
