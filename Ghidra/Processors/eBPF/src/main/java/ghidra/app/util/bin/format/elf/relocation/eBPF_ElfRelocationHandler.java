@@ -54,6 +54,12 @@ public class eBPF_ElfRelocationHandler
 		}
 
 		int symbolIndex = relocation.getSymbolIndex();
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+				
 		long new_value = 0;
 		int byteLength = 8;
 

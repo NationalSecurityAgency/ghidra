@@ -58,6 +58,28 @@ public class SPARC_ElfRelocationHandler
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_SPARC_RELATIVE:
+				newValue = (int) elfRelocationContext.getElfHeader().getImageBase() + (int) addend;
+				memory.setInt(relocationAddress, newValue);
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_SPARC_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
 
 		switch (type) {
 			case R_SPARC_DISP32:
@@ -87,18 +109,10 @@ public class SPARC_ElfRelocationHandler
 				newValue = (int) symbolValue;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case R_SPARC_RELATIVE:
-				newValue = (int) elfRelocationContext.getElfHeader().getImageBase() + (int) addend;
-				memory.setInt(relocationAddress, newValue);
-				break;
 			case R_SPARC_UA32:
 				newValue = (int) symbolValue + (int) addend;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case R_SPARC_COPY:
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
