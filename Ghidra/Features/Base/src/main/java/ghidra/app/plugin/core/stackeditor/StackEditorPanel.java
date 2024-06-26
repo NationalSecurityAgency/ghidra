@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import java.awt.Component;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -36,6 +38,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 	private JTextField paramSizeField;
 	private JTextField paramOffsetField;
 	private JTextField returnAddrOffsetField;
+	private List<Component> focusList;
 
 	public StackEditorPanel(Program program, StackEditorModel model, StackEditorProvider provider) {
 		super(model, provider);
@@ -61,10 +64,21 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		return Integer.decode(returnAddrOffsetField.getText()).intValue();
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorPanel#createInfoPanel()
-	 */
+	@Override
+	protected List<Component> getFocusComponents() {
+		if (focusList == null) {
+			//@formatter:off
+			focusList = List.of(				
+				table,
+				searchPanel.getTextField(),				
+				localSizeField,
+				paramSizeField		
+			);
+			//@formatter:on
+		}
+		return focusList;
+	}
+
 	@Override
 	protected JPanel createInfoPanel() {
 
@@ -83,11 +97,10 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		JPanel returnAddrOffsetPanel =
 			createNamedTextPanel(returnAddrOffsetField, "Return Address Offset");
 
-		JPanel[] hPanels =
-			new JPanel[] {
-				createHorizontalPanel(new JPanel[] { frameSizePanel, returnAddrOffsetPanel,
-					localSizePanel }),
-				createHorizontalPanel(new JPanel[] { paramOffsetPanel, paramSizePanel }) };
+		JPanel[] hPanels = new JPanel[] {
+			createHorizontalPanel(
+				new JPanel[] { frameSizePanel, returnAddrOffsetPanel, localSizePanel }),
+			createHorizontalPanel(new JPanel[] { paramOffsetPanel, paramSizePanel }) };
 		JPanel outerPanel = createVerticalPanel(hPanels);
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -98,6 +111,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		frameSizeField = new JTextField(20);
 		frameSizeField.setName("Frame Size");
 		frameSizeField.setEditable(false);
+		frameSizeField.setEnabled(false);
 	}
 
 	private void setupLocalSize() {
@@ -195,12 +209,14 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		paramOffsetField = new JTextField(20);
 		paramOffsetField.setName("Parameter Offset");
 		paramOffsetField.setEditable(false);
+		paramOffsetField.setEnabled(false);
 	}
 
 	private void setupReturnAddrOffset() {
 		returnAddrOffsetField = new JTextField(20);
 		returnAddrOffsetField.setName("Return Address Offset");
 		returnAddrOffsetField.setEditable(false);
+		returnAddrOffsetField.setEnabled(false);
 	}
 
 	/* (non-Javadoc)

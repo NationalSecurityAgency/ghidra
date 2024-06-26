@@ -16,6 +16,7 @@
 package help;
 
 import docking.DefaultHelpService;
+import ghidra.util.Msg;
 
 /**
  * Creates the HelpManager for the application. This is just a glorified global variable for
@@ -28,7 +29,7 @@ public class Help {
 	/**
 	 * Get the help service
 	 *
-	 * @return  null if the call to setMainHelpSetURL() failed
+	 * @return a non-null help service
 	 */
 	public static HelpService getHelpService() {
 		return helpService;
@@ -36,6 +37,10 @@ public class Help {
 
 	// allows help services to install themselves
 	public static void installHelpService(HelpService service) {
+		if (service == null) {
+			Msg.debug(Help.class, "Attempted to install null help service");
+			return;
+		}
 		helpService = service;
 	}
 
