@@ -18,19 +18,19 @@ package ghidra.app.plugin.core.format;
 import java.math.BigInteger;
 
 /**
- * Converts byte values to Integer represented as an 4-byte/8-digit hex number.
+ * Converts byte values to Short represented as an 2-byte/4-digit hex number.
  */
-public class HexIntegerFormatModel extends HexValueFormatModel {
+public class HexShortFormatModel extends HexValueFormatModel {
 
-	public HexIntegerFormatModel() {
-		super("Hex Integer", 4);
+	public HexShortFormatModel() {
+		super("Hex Short", 2);
 	}
 
 	@Override
 	public String getDataRepresentation(ByteBlock block, BigInteger index)
 			throws ByteBlockAccessException {
-		int i = block.getInt(index);
-		String str = Integer.toHexString(i);
+		short s = block.getShort(index);
+		String str = Integer.toHexString(s & 0xFFFF);
 		return pad(str);
 	}
 }

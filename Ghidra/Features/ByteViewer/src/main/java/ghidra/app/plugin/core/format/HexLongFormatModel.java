@@ -18,19 +18,19 @@ package ghidra.app.plugin.core.format;
 import java.math.BigInteger;
 
 /**
- * Converts byte values to Integer represented as an 4-byte/8-digit hex number.
+ * Converts byte values to Long represented as an 8-byte/16--digit hex number.
  */
-public class HexIntegerFormatModel extends HexValueFormatModel {
+public class HexLongFormatModel extends HexValueFormatModel {
 
-	public HexIntegerFormatModel() {
-		super("Hex Integer", 4);
+	public HexLongFormatModel() {
+		super("Hex Long", 8);
 	}
 
 	@Override
 	public String getDataRepresentation(ByteBlock block, BigInteger index)
 			throws ByteBlockAccessException {
-		int i = block.getInt(index);
-		String str = Integer.toHexString(i);
+		long l = block.getLong(index);
+		String str = Long.toHexString(l);
 		return pad(str);
 	}
 }
