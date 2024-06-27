@@ -735,6 +735,14 @@ public abstract class CompositeEditorPanel extends JPanel
 	 * @param status non-html message string to be displayed.
 	 */
 	public void setStatus(String status) {
+
+		if (status == null) {
+			// Setting the text to null causes the label's preferred height to drop to 0, causing 
+			// the UI to change size, depending on whether there was an existing status or not.  
+			// Using the empty string prevents the UI layout from changing as the status changes.
+			status = " ";
+		}
+
 		if (statusLabel != null) {
 			statusLabel.setText(status);
 			updateStatusToolTip();
@@ -1474,11 +1482,17 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	/**
 	 * A simple traversal policy that allows this editor panel to control the order that components
-	 * get focused when pressing Tab and Ctrl-Tab.  
+	 * get focused when pressing Tab and Shift-Tab.
 	 * <P>
 	 * Note: We typically do not use traversal policies in the application.  We do so here due to 
 	 * the complicated nature of this widget.  It seemed easier to specify the policy than to 
 	 * change the order of the widgets in the UI to get the expected traversal order.
+	 * <P>
+	 * Note: This widget is a bit unusual in that not all focusable components are traversable using
+	 * Tab and Shift-Tab.  Specifically, the radio button groups will only have one entry in the 
+	 * list of traversal components.  Once one of the radio buttons is focused, the up and down 
+	 * arrow keys can be used to navigate the radio buttons.  With this traversal policy, pressing 
+	 * Tab when on these buttons will move to the next traversal component.
 	 * <P>
 	 * @see #getFocusComponents()
 	 */
