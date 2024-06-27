@@ -27,12 +27,12 @@ import ghidra.util.task.TaskMonitor;
 /**
  * PDB C13 Cross-Scope Exports information.
  */
-public class C13CrossScopeExports extends C13Section {
+public class CrossScopeExportsC13Section extends C13Section {
 
-	private List<CrossScopeExport> crossScopeExports = new ArrayList<>();
+	private List<C13CrossScopeExport> crossScopeExports = new ArrayList<>();
 
 	/**
-	 * Parse and return a {@link C13CrossScopeExports}.
+	 * Parse and return a {@link CrossScopeExportsC13Section}.
 	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize
 	 * @param ignore flag indicating whether the record should be ignored
 	 * @param monitor {@link TaskMonitor} used for checking cancellation
@@ -40,26 +40,31 @@ public class C13CrossScopeExports extends C13Section {
 	 * @throws PdbException Upon not enough data left to parse
 	 * @throws CancelledException Upon user cancellation
 	 */
-	static C13CrossScopeExports parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
+	static CrossScopeExportsC13Section parse(PdbByteReader reader, boolean ignore,
+			TaskMonitor monitor)
 			throws PdbException, CancelledException {
-		return new C13CrossScopeExports(reader, ignore, monitor);
+		return new CrossScopeExportsC13Section(reader, ignore, monitor);
 	}
 
-	protected C13CrossScopeExports(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
+	private CrossScopeExportsC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
 			throws CancelledException, PdbException {
 		super(ignore);
-		while (reader.numRemaining() >= CrossScopeExport.getBaseRecordSize()) {
+		while (reader.numRemaining() >= C13CrossScopeExport.getBaseRecordSize()) {
 			monitor.checkCancelled();
-			CrossScopeExport crossExport = new CrossScopeExport(reader);
+			C13CrossScopeExport crossExport = new C13CrossScopeExport(reader);
 			crossScopeExports.add(crossExport);
 		}
 		if (reader.hasMore()) {
-			Msg.debug(C13CrossScopeExports.class,
+			Msg.debug(CrossScopeExportsC13Section.class,
 				String.format("Num Extra C13CrossScopeExports bytes: %d", reader.numRemaining()));
 		}
 	}
 
-	List<CrossScopeExport> getCrossScopeExports() {
+	/**
+	 * Returns the cross-scope exports
+	 * @return the corss-scope exports
+	 */
+	public List<C13CrossScopeExport> getCrossScopeExports() {
 		return crossScopeExports;
 	}
 
@@ -69,47 +74,13 @@ public class C13CrossScopeExports extends C13Section {
 			crossScopeExports.size());
 	}
 
-	/**
-	 * Dumps this class to a Writer
-	 * @param writer {@link Writer} to which to dump the information
-	 * @throws IOException Upon IOException writing to the {@link Writer}
-	 * @throws CancelledException upon user cancellation
-	 */
 	@Override
-	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
-		writer.write("C13CrossScopeExports----------------------------------------\n");
-		for (CrossScopeExport crossScopeExport : crossScopeExports) {
+	protected void dumpInternal(Writer writer, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		for (C13CrossScopeExport crossScopeExport : crossScopeExports) {
 			monitor.checkCancelled();
 			writer.write(crossScopeExport.toString());
 			writer.write('\n');
-		}
-		writer.write("End C13CrossScopeExports------------------------------------\n");
-	}
-
-	static class CrossScopeExport {
-		private long localId; // unsigned 32-bit
-		private long globalId; // unsigned 32-bit
-
-		private static int getBaseRecordSize() {
-			return 8;
-		}
-
-		CrossScopeExport(PdbByteReader reader) throws PdbException {
-			localId = reader.parseUnsignedIntVal();
-			globalId = reader.parseUnsignedIntVal();
-		}
-
-		long getLocalId() {
-			return localId;
-		}
-
-		long getGlobalId() {
-			return globalId;
-		}
-
-		@Override
-		public String toString() {
-			return String.format("0x%08x, 0x%08x", localId, globalId);
 		}
 	}
 

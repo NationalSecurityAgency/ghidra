@@ -15,21 +15,19 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import java.io.IOException;
-import java.io.Writer;
-
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * C13IlLines information.  This is C13 IL Lines, where "IL" meaning is uncertain... could mean
- * Incremental Link.  MSFT defers parsing to C13Lines, so it is the same format, which we have
- * given to a common parent, {@link AbstractC13Lines}.
+ * C13Lines information.  As best as we know, only one of C11Lines or C13Lines (We have actually
+ * created a C13Section class at a higher level, and making C13Lines be the specific lines
+ * information for "type" 0xf2 (and maybe 0xf4) can be found after the symbol information in
+ * module debug streams.
  */
-public class C13IlLines extends AbstractC13Lines {
+public class LinesC13Section extends AbstractLinesC13Section {
 
 	/**
-	 * Parse and return a {@link C13IlLines}.
+	 * Parse and return a {@link LinesC13Section}.
 	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize
 	 * @param ignore flag indicating whether the record should be ignored
 	 * @param monitor {@link TaskMonitor} used for checking cancellation
@@ -37,26 +35,14 @@ public class C13IlLines extends AbstractC13Lines {
 	 * @throws PdbException Upon not enough data left to parse
 	 * @throws CancelledException Upon user cancellation
 	 */
-	static C13IlLines parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
+	static LinesC13Section parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
 			throws PdbException, CancelledException {
-		return new C13IlLines(reader, ignore, monitor);
+		return new LinesC13Section(reader, ignore, monitor);
 	}
 
-	protected C13IlLines(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
+	private LinesC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		super(reader, ignore, monitor);
 	}
 
-	/**
-	 * Dumps this class to a Writer
-	 * @param writer {@link Writer} to which to dump the information
-	 * @throws IOException Upon IOException writing to the {@link Writer}
-	 * @throws CancelledException upon user cancellation
-	 */
-	@Override
-	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
-		writer.write("C13IlLines--------------------------------------------------\n");
-		dumpInternal(writer, monitor);
-		writer.write("End C13IlLines----------------------------------------------\n");
-	}
 }

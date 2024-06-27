@@ -18,18 +18,19 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Class for C13Type SYMBOLS.
+ * Class for C13Type COFF_SYMBOL_RVA.
  * <p>
  * This temporary class implementation currently extends {@link AbstractUnimplementedC13Section},
  * but this should be changed to {@link C13Section} when the format is understood and the
  * implementation is made concrete.
  */
-class C13Symbols extends AbstractUnimplementedC13Section {
-	static C13Symbols parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
-		return new C13Symbols(reader, ignore, monitor);
+class CoffSymbolRvaC13Section extends AbstractUnimplementedC13Section {
+	static CoffSymbolRvaC13Section parse(PdbByteReader reader, boolean ignore,
+			TaskMonitor monitor) {
+		return new CoffSymbolRvaC13Section(reader, ignore, monitor);
 	}
 
-	protected C13Symbols(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
+	private CoffSymbolRvaC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
 		super(reader, ignore, monitor);
 	}
 }
