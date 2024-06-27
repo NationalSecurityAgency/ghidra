@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.Omf2or4;
+import ghidra.app.util.bin.format.omf.OmfUtils;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfIteratedData extends OmfData {
 
@@ -29,8 +33,8 @@ public class OmfIteratedData extends OmfData {
 		readRecordHeader(reader);
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		boolean hasBigFields = hasBigFields();
-		segmentIndex = OmfRecord.readIndex(reader);
-		dataOffset = OmfRecord.readInt2Or4(reader, hasBigFields);
+		segmentIndex = OmfUtils.readIndex(reader);
+		dataOffset = OmfUtils.readInt2Or4(reader, hasBigFields);
 		ArrayList<DataBlock> blocklist = new ArrayList<DataBlock>();
 		while (reader.getPointerIndex() < max) {
 			DataBlock block = DataBlock.read(reader, hasBigFields);
@@ -85,7 +89,7 @@ public class OmfIteratedData extends OmfData {
 
 		public static DataBlock read(BinaryReader reader, boolean hasBigFields) throws IOException {
 			DataBlock subblock = new DataBlock();
-			subblock.repeatCount = OmfRecord.readInt2Or4(reader, hasBigFields);
+			subblock.repeatCount = OmfUtils.readInt2Or4(reader, hasBigFields);
 			subblock.blockCount = reader.readNextUnsignedShort();
 			if (subblock.blockCount == 0) {
 				int size = reader.readNextByte() & 0xff;
@@ -162,5 +166,10 @@ public class OmfIteratedData extends OmfData {
 			}
 			return true;
 		}
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
 	}
 }

@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -38,17 +39,17 @@ public class OmfSymbolRecord extends OmfRecord {
 		readRecordHeader(reader);
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		boolean hasBigFields = hasBigFields();
-		baseGroupIndex = OmfRecord.readIndex(reader);
-		baseSegmentIndex = OmfRecord.readIndex(reader);
+		baseGroupIndex = OmfUtils.readIndex(reader);
+		baseSegmentIndex = OmfUtils.readIndex(reader);
 		if (baseSegmentIndex.value() == 0) {
 			baseFrame = reader.readNextUnsignedShort();
 		}
 
 		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
 		while (reader.getPointerIndex() < max) {
-			OmfString name = OmfRecord.readString(reader);
-			Omf2or4 offset = OmfRecord.readInt2Or4(reader, hasBigFields);
-			OmfIndex type = OmfRecord.readIndex(reader);
+			OmfString name = OmfUtils.readString(reader);
+			Omf2or4 offset = OmfUtils.readInt2Or4(reader, hasBigFields);
+			OmfIndex type = OmfUtils.readIndex(reader);
 			OmfSymbol subrec = new OmfSymbol(name.str(), type.value(), offset.value(), 0, 0);
 			symbollist.add(subrec);
 			refs.add(new Reference(name, offset, type));
@@ -88,7 +89,7 @@ public class OmfSymbolRecord extends OmfRecord {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		StructureDataType struct = new StructureDataType(OmfRecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		struct.add(baseGroupIndex.toDataType(), "base_group_index", null);
@@ -103,7 +104,7 @@ public class OmfSymbolRecord extends OmfRecord {
 		}
 		struct.add(BYTE, "checksum", null);
 
-		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
 	}
 

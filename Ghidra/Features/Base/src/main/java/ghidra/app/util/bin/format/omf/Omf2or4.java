@@ -21,20 +21,35 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * An OMF value that is either 2 or 4 bytes
+ */
 public class Omf2or4 implements StructConverter {
 
 	private int length;
 	private long value;
 
+	/**
+	 * Creates a new {@link Omf2or4}
+	 * 
+	 * @param length 2 or 4
+	 * @param value The 2 or 4 byte value
+	 */
 	public Omf2or4(int length, long value) {
 		this.length = length;
 		this.value = value;
 	}
 
+	/**
+	 * {@return the length of the value (2 or 4)}
+	 */
 	public int length() {
 		return length;
 	}
 
+	/**
+	 * {@return the value}
+	 */
 	public long value() {
 		return value;
 	}

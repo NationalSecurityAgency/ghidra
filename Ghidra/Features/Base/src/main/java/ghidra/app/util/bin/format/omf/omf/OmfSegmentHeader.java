@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.OmfLoader;
 import ghidra.program.model.address.Address;
@@ -91,14 +92,14 @@ public class OmfSegmentHeader extends OmfRecord {
 			offset = reader.readNextByte() & 0xff;
 			vma = (long) frameNumber + offset;
 		}
-		segmentLength = OmfRecord.readInt2Or4(reader, hasBigFields);
-		segmentNameIndex = OmfRecord.readIndex(reader);
-		classNameIndex = OmfRecord.readIndex(reader);
-		overlayNameIndex = OmfRecord.readIndex(reader);
+		segmentLength = OmfUtils.readInt2Or4(reader, hasBigFields);
+		segmentNameIndex = OmfUtils.readIndex(reader);
+		classNameIndex = OmfUtils.readIndex(reader);
+		overlayNameIndex = OmfUtils.readIndex(reader);
 		readCheckSumByte(reader);
 		int B = (segAttr >> 1) & 1;
 		if (B == 1) {		// Ignore the segmentLength field
-			if (getRecordType() == OmfRecord.SEGDEF) {
+			if (getRecordType() == OmfRecordTypes.SEGDEF) {
 				segmentLength = new Omf2or4(segmentLength.length(), 0x10000L); // Exactly 64K segment
 			}
 			else {
@@ -458,7 +459,7 @@ public class OmfSegmentHeader extends OmfRecord {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		StructureDataType struct = new StructureDataType(OmfRecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		struct.add(BYTE, "segment_attr", null);
@@ -473,7 +474,7 @@ public class OmfSegmentHeader extends OmfRecord {
 		struct.add(overlayNameIndex.toDataType(), "overlay_name_index", null);
 		struct.add(BYTE, "checksum", null);
 
-		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
 	}
 }

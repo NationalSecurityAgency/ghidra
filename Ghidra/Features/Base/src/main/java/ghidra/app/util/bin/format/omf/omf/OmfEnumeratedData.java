@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.OmfUtils;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfEnumeratedData extends OmfData {
 	private long streamOffset;		// Position in stream where data starts
@@ -26,8 +29,8 @@ public class OmfEnumeratedData extends OmfData {
 	public OmfEnumeratedData(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		long start = reader.getPointerIndex();
-		segmentIndex = OmfRecord.readIndex(reader);
-		dataOffset = OmfRecord.readInt2Or4(reader, hasBigFields());
+		segmentIndex = OmfUtils.readIndex(reader);
+		dataOffset = OmfUtils.readInt2Or4(reader, hasBigFields());
 		streamOffset = reader.getPointerIndex();
 		streamLength = getRecordLength() - 1 - (int) (streamOffset - start);
 		reader.setPointerIndex(streamOffset + streamLength); // Skip over the data when reading header
@@ -49,5 +52,10 @@ public class OmfEnumeratedData extends OmfData {
 	@Override
 	public boolean isAllZeroes() {
 		return false;
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
 	}
 }

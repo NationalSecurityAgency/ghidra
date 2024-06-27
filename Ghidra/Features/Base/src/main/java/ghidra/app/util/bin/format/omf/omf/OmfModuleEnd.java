@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.OmfRecord;
+import ghidra.app.util.bin.format.omf.OmfUtils;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfModuleEnd extends OmfRecord {
 	//private byte moduleType;
@@ -46,4 +50,9 @@ public class OmfModuleEnd extends OmfRecord {
 		return ((moduleType & 0x40) != 0);
 	}
 */
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
+	}
 }

@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.OmfIndex;
+import ghidra.app.util.bin.format.omf.OmfUtils;
 
 public class OmfComdatExternalSymbol extends OmfExternalSymbol {
 	
@@ -32,8 +34,8 @@ public class OmfComdatExternalSymbol extends OmfExternalSymbol {
 
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			OmfIndex nameIndex = OmfRecord.readIndex(reader);
-			OmfIndex type = OmfRecord.readIndex(reader);
+			OmfIndex nameIndex = OmfUtils.readIndex(reader);
+			OmfIndex type = OmfUtils.readIndex(reader);
 			externalLookups.add(new ExternalLookup(nameIndex.value(), type.value()));
 		}
 

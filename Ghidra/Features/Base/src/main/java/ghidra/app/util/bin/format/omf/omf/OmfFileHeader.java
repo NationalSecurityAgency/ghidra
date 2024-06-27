@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -45,7 +46,7 @@ public class OmfFileHeader extends OmfRecord {
 
 	public OmfFileHeader(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
-		objectName = readString(reader);   // This is usually the source code filename
+		objectName = OmfUtils.readString(reader);   // This is usually the source code filename
 		readCheckSumByte(reader);
 		isLittleEndian = reader.isLittleEndian();
 	}
@@ -269,14 +270,14 @@ public class OmfFileHeader extends OmfRecord {
 	 */
 	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor, boolean fastscan)
 			throws IOException, OmfException {
-		OmfRecord record = OmfRecord.readRecord(reader);
+		OmfRecord record = OmfRecordFactory.readRecord(reader);
 		if (!(record instanceof OmfFileHeader)) {
 			throw new OmfException("Object file does not start with proper header");
 		}
 		OmfFileHeader header = (OmfFileHeader) record;
 
 		while (true) {
-			record = OmfRecord.readRecord(reader);
+			record = OmfRecordFactory.readRecord(reader);
 
 			if (monitor.isCancelled()) {
 				break;
@@ -323,7 +324,7 @@ public class OmfFileHeader extends OmfRecord {
 	 */
 	public static OmfFileHeader parse(BinaryReader reader, TaskMonitor monitor, MessageLog log)
 			throws IOException, OmfException {
-		OmfRecord record = OmfRecord.readRecord(reader);
+		OmfRecord record = OmfRecordFactory.readRecord(reader);
 		if (!(record instanceof OmfFileHeader header)) {
 			throw new OmfException("Object file does not start with proper header");
 		}
@@ -331,7 +332,7 @@ public class OmfFileHeader extends OmfRecord {
 		OmfData lastDataBlock = null;
 
 		while (true) {
-			record = OmfRecord.readRecord(reader);
+			record = OmfRecordFactory.readRecord(reader);
 			header.records.add(record);
 
 			if (monitor.isCancelled()) {
@@ -392,7 +393,7 @@ public class OmfFileHeader extends OmfRecord {
 			}
 			else if (record instanceof OmfUnsupportedRecord) {
 				// TODO: Should we always set lastDataBlock to null?
-				if (record.getRecordType() == COMDAT) {
+				if (record.getRecordType() == OmfRecordTypes.COMDAT) {
 					lastDataBlock = null;
 				}
 				logRecord("Unsupported OMF record", record, log);
@@ -477,16 +478,14 @@ public class OmfFileHeader extends OmfRecord {
 	 * @throws IOException for problems reading bytes
 	 */
 	public static boolean checkMagicNumber(BinaryReader reader) throws IOException {
-		byte first = reader.readNextByte();
-		if ((first & 0xfc) != 0x80) {
+		int type = reader.readNextUnsignedByte();
+		type &= 0xfffffffe; // mask off the least significant bit (16/32 bit flag)
+		if (type != OmfRecordTypes.THEADR && type != OmfRecordTypes.LHEADR) {
 			return false;
 		}
-		int len = reader.readNextShort() & 0xffff;
-		int stringlen = reader.readNextByte() & 0xff;
-		if (len != stringlen + 2) {
-			return false;
-		}
-		return true;
+		int len = reader.readNextUnsignedShort();
+		int stringlen = reader.readNextUnsignedByte();
+		return len == stringlen + 2;
 	}
 
 	/**
@@ -504,13 +503,13 @@ public class OmfFileHeader extends OmfRecord {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		StructureDataType struct = new StructureDataType(OmfRecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		struct.add(objectName.toDataType(), "name", null);
 		struct.add(BYTE, "checksum", null);
 
-		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
 	}
 }

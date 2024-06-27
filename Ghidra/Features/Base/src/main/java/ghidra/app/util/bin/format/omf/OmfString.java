@@ -21,20 +21,35 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * An variable length OMF string
+ */
 public class OmfString implements StructConverter {
 
 	private int length;
 	private String str;
 
+	/**
+	 * Creates a new {@link OmfString}
+	 * 
+	 * @param length The length of the string
+	 * @param str The string
+	 */
 	public OmfString(int length, String str) {
 		this.length = length;
 		this.str = str;
 	}
 
+	/**
+	 * {@return the length of the string}
+	 */
 	public int length() {
 		return length;
 	}
 
+	/**
+	 * {@return the string}
+	 */
 	public String str() {
 		return str;
 	}
@@ -48,7 +63,7 @@ public class OmfString implements StructConverter {
 		StructureDataType struct = new StructureDataType("OmfString", 0);
 		struct.add(BYTE, "length", "");
 		struct.add(new StringDataType(), length, "str", null);
-		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
 	}
 }

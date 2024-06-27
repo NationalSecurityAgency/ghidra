@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.*;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 public class OmfFixupRecord extends OmfRecord {
 	private final Subrecord[] subrecs;
@@ -27,7 +30,7 @@ public class OmfFixupRecord extends OmfRecord {
 	/**
 	 * Read a Fixup record from the input reader
 	 * @param reader The actual reader
-	 * @throws IOException
+	 * @throws IOException if there was an IO-related error
 	 */
 	public OmfFixupRecord(BinaryReader reader) throws IOException {
 		ArrayList<Subrecord> subreclist = new ArrayList<Subrecord>();
@@ -63,6 +66,7 @@ public class OmfFixupRecord extends OmfRecord {
 		return subrecs;
 	}
 
+	@SuppressWarnings("unused")
 	public static class Subrecord {
 		private byte first;
 		private byte hiFixup;
@@ -78,7 +82,7 @@ public class OmfFixupRecord extends OmfRecord {
 		 * @param reader The input file
 		 * @param hasBigFields Is this 16 or 32 bit values
 		 * @return The read subrecord
-		 * @throws IOException
+		 * @throws IOException if there was an IO-related error
 		 */
 		public static Subrecord readSubrecord(BinaryReader reader, boolean hasBigFields)
 				throws IOException {
@@ -89,7 +93,7 @@ public class OmfFixupRecord extends OmfRecord {
 			if (rec.isThreadSubrecord()) {
 				method = rec.getThreadMethod();
 				if (method < 4) {
-					rec.index = readIndex(reader);
+					rec.index = OmfUtils.readIndex(reader);
 				}
 				return rec;
 			}
@@ -99,13 +103,13 @@ public class OmfFixupRecord extends OmfRecord {
 			rec.fixData = reader.readNextByte();
 			method = rec.getFrameMethod();
 			if (!rec.isFrameThread() && method < 3) { // F=0  (explicit frame method (and datum))
-				rec.frameDatum = readIndex(reader);
+				rec.frameDatum = OmfUtils.readIndex(reader);
 			}
 			if (!rec.isTargetThread()) { // T=0  (explicit target)
-				rec.targetDatum = readIndex(reader);
+				rec.targetDatum = OmfUtils.readIndex(reader);
 			}
 			if ((rec.fixData & 0x04) == 0) { // P=0
-				rec.targetDisplacement = readInt2Or4(reader, hasBigFields);
+				rec.targetDisplacement = OmfUtils.readInt2Or4(reader, hasBigFields);
 			}
 			return rec;
 		}
@@ -188,6 +192,11 @@ public class OmfFixupRecord extends OmfRecord {
 		public boolean isSegmentRelative() {
 			return (first & 0x40) != 0;
 		}
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
 	}
 
 }

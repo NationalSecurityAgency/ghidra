@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.*;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
+@SuppressWarnings("unused")
 public class OmfLibraryRecord extends OmfRecord {
 	private int pageSize;		// All archive members must start on a page boundary of this size
 	private long dictionaryOffset;
@@ -117,5 +121,10 @@ public class OmfLibraryRecord extends OmfRecord {
 			type = reader.peekNextByte();
 		}
 		return res;
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
 	}
 }

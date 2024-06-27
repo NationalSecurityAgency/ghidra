@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.*;
 
 public class OmfComdefRecord extends OmfExternalSymbol {
 
@@ -27,8 +28,8 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			OmfString name = OmfRecord.readString(reader);
-			OmfIndex typeIndex = OmfRecord.readIndex(reader);
+			OmfString name = OmfUtils.readString(reader);
+			OmfIndex typeIndex = OmfUtils.readIndex(reader);
 			byte dataType = reader.readNextByte();
 			int byteLength = 0;
 			if (dataType == 0x61) {		// FAR data, reads numElements and elSize

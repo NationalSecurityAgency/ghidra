@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.util.Set;
 
 import ghidra.program.model.address.Address;
 
+@SuppressWarnings("unused")
 public class OmfSymbol {
 	private String symbolName;
 	private int typeIndex;

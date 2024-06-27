@@ -21,20 +21,35 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * An OMF index that is either 1 or 2 bytes
+ */
 public class OmfIndex implements StructConverter {
 
 	private int length;
 	private int value;
 
+	/**
+	 * Creates a new {@link OmfIndex}
+	 * 
+	 * @param length 1 or 2
+	 * @param value The 1 or 2 byte index value
+	 */
 	public OmfIndex(int length, int value) {
 		this.length = length;
 		this.value = value;
 	}
 
+	/**
+	 * {@return the length of the index (1 or 2)}
+	 */
 	public int length() {
 		return length;
 	}
 
+	/**
+	 * {@return the index value}
+	 */
 	public int value() {
 		return value;
 	}

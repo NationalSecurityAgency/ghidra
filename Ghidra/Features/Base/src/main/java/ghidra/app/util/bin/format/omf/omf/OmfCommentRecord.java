@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf;
+package ghidra.app.util.bin.format.omf.omf;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -51,7 +52,7 @@ public class OmfCommentRecord extends OmfRecord {
 				value = new OmfString(bytes.length, new String(bytes, StandardCharsets.US_ASCII)); // assuming ASCII
 				break;
 			case COMMENT_CLASS_LIBMOD:
-				value = readString(reader);
+				value = OmfUtils.readString(reader);
 				break;
 			default:
 				reader.setPointerIndex(reader.getPointerIndex() + getRecordLength() - 3);
@@ -76,7 +77,7 @@ public class OmfCommentRecord extends OmfRecord {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		int strlen = getRecordLength() - 3;
 
-		StructureDataType struct = new StructureDataType(getRecordName(getRecordType()), 0);
+		StructureDataType struct = new StructureDataType(OmfRecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", "");
 		struct.add(BYTE, "comment_type", null);
@@ -86,7 +87,7 @@ public class OmfCommentRecord extends OmfRecord {
 		}
 		struct.add(BYTE, "checksum", null);
 
-		struct.setCategoryPath(new CategoryPath(OmfRecord.CATEGORY_PATH));
+		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
 	}
 }

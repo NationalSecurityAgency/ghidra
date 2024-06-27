@@ -21,8 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.omf.OmfFileHeader;
-import ghidra.app.util.bin.format.omf.OmfLibraryRecord;
+import ghidra.app.util.bin.format.omf.omf.OmfFileHeader;
+import ghidra.app.util.bin.format.omf.omf.OmfLibraryRecord;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;

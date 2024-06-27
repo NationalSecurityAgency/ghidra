@@ -19,8 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.omf.OmfFileHeader;
-import ghidra.app.util.bin.format.omf.OmfLibraryRecord;
+import ghidra.app.util.bin.format.omf.omf.OmfFileHeader;
+import ghidra.app.util.bin.format.omf.omf.OmfLibraryRecord;
 import ghidra.app.util.opinion.OmfLoader;
 import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.FileSystemService;
