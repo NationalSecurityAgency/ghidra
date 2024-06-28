@@ -15,6 +15,7 @@
 ##
 # Examples of basic Python
 # @category: Examples.Python
+# @runtime Jython
 
 # Python data types
 my_int = 32

@@ -47,9 +47,9 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	private boolean cancelled;
 
 	SaveDialog(Component parent, String title, GhidraScriptComponentProvider componentProvider,
-			ResourceFile scriptFile, HelpLocation help) {
+			ResourceFile scriptFile, GhidraScriptProvider scriptProvider, HelpLocation help) {
 		this(parent, title, componentProvider, componentProvider.getWritableScriptDirectories(),
-			scriptFile, help);
+			scriptFile, scriptProvider, help);
 	}
 
 	/**
@@ -60,15 +60,16 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	 * @param componentProvider the provider
 	 * @param scriptDirs list of directories to give as options when saving
 	 * @param scriptFile the default save location
+	 * @param scriptProvider the {@link GhidraScriptProvider}
 	 * @param help contextual help, e.g. for rename or save
 	 */
 	public SaveDialog(Component parent, String title,
 			GhidraScriptComponentProvider componentProvider, List<ResourceFile> scriptDirs,
-			ResourceFile scriptFile, HelpLocation help) {
+			ResourceFile scriptFile, GhidraScriptProvider scriptProvider, HelpLocation help) {
 		super(title, true, true, true, false);
 
 		this.componentProvider = componentProvider;
-		this.provider = GhidraScriptUtil.getProvider(scriptFile);
+		this.provider = scriptProvider;
 		this.scriptFile = scriptFile;
 		this.paths = new ArrayList<>(scriptDirs);
 

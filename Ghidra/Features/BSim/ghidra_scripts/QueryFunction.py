@@ -15,6 +15,7 @@
 ##
 # Example of performing a BSim query on a single function
 # @category BSim.python  
+# @runtime Jython
 
 import ghidra.features.bsim.query.BSimClientFactory as BSimClientFactory
 import ghidra.features.bsim.query.GenSignatures as GenSignatures

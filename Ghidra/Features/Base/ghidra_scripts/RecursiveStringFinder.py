@@ -15,6 +15,7 @@
 ##
 #Given a function, find all strings used within all called funtions.
 # @category: Strings
+# @runtime Jython
 
 # Handles only functions, not subroutines, as of now.  Hopefully this will change later
 
