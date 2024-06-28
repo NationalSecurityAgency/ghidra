@@ -89,4 +89,10 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 	public String getHelpTopic() {
 		return "DataTypeEditors";
 	}
+
+	public void selectField(String fieldName) {
+		if (fieldName != null) {
+			editorPanel.selectField(fieldName);
+		}
+	}
 }

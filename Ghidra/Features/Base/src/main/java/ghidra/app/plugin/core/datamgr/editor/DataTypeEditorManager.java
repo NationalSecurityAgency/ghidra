@@ -97,17 +97,8 @@ public class DataTypeEditorManager implements EditorListener {
 	 */
 	public void edit(DataType dataType) {
 
-		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
-		if (dataTypeManager == null) {
-			throw new IllegalArgumentException(
-				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
-		}
-
-		EditorProvider editor = getEditor(dataType);
+		EditorProvider editor = reuseExistingEditor(dataType);
 		if (editor != null) {
-			ComponentProvider componentProvider = editor.getComponentProvider();
-			plugin.getTool().showComponentProvider(componentProvider, true);
-			componentProvider.toFront();
 			return;
 		}
 
@@ -124,11 +115,56 @@ public class DataTypeEditorManager implements EditorListener {
 		else if (dataType instanceof FunctionDefinition) {
 			editFunctionSignature((FunctionDefinition) dataType);
 		}
-		if (editor == null) {
+
+		if (editor != null) {
+			editor.addEditorListener(this);
+			editorList.add(editor);
+		}
+	}
+
+	/**
+	 * Displays a data type editor for editing the given Structure. If the structure is is already 
+	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
+	 * displayed.
+	 * @param structure the structure.
+	 * @param fieldName the optional name of the field to select in the editor.
+	 */
+	public void edit(Structure structure, String fieldName) {
+
+		StructureEditorProvider editor = (StructureEditorProvider) getEditor(structure);
+		if (editor != null) {
+			reuseExistingEditor(structure);
+			editor.selectField(fieldName);
 			return;
 		}
+
+		editor = new StructureEditorProvider(plugin, structure,
+			showStructureNumbersInHex());
+		editor.selectField(fieldName);
 		editor.addEditorListener(this);
 		editorList.add(editor);
+	}
+
+	private EditorProvider reuseExistingEditor(DataType dataType) {
+		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
+		if (dataTypeManager == null) {
+			throw new IllegalArgumentException(
+				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
+		}
+
+		CategoryPath categoryPath = dataType.getCategoryPath();
+		if (categoryPath == null) {
+			throw new IllegalArgumentException(
+				"DataType " + dataType.getName() + " has no category path!");
+		}
+
+		EditorProvider editor = getEditor(dataType);
+		if (editor != null) {
+			ComponentProvider componentProvider = editor.getComponentProvider();
+			plugin.getTool().showComponentProvider(componentProvider, true);
+			componentProvider.toFront();
+		}
+		return editor;
 	}
 
 	private void installEditorActions() {
