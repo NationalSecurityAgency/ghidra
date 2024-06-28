@@ -15,6 +15,7 @@
 ##
 # Example of how to perform an overview query in a script
 # @category BSim.python
+# @runtime Jython
 
 import ghidra.features.bsim.query.facade.SFOverviewInfo as SFOverviewInfo
 import ghidra.features.bsim.query.facade.SimilarFunctionQueryService as SimilarFunctionQueryService

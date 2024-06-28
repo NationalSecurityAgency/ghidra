@@ -22,6 +22,7 @@
 # use only. Please run the Java version in a production environment.
 
 #@category Examples.Python
+#@runtime Jython
 
 from ghidra.framework.model import DomainFile
 from ghidra.framework.model import DomainFolder
