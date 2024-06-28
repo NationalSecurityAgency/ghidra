@@ -20,8 +20,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -216,6 +215,47 @@ public abstract class CompositeEditorPanel extends JPanel
 				tcm.getColumn(column).setCellEditor(cellEditor);
 			}
 		}
+	}
+
+	/**
+	 * Select the field by the given name in this panel's table.
+	 * 
+	 * @param fieldName the field name
+	 */
+	public void selectField(String fieldName) {
+
+		if (!model.isLoaded()) {
+			return; // disposed; not sure if this can happen
+		}
+
+		// Find the given field by name in the current editor, which, if edited, may not match the
+		// original data type.  If the user has renamed the field, but not saved the editor, then
+		// we may not find the field.
+		int row = findRowForFieldName(fieldName);
+		if (row == -1) {
+			return;
+		}
+
+		table.getSelectionModel().setSelectionInterval(row, row);
+	}
+
+	private int findRowForFieldName(String fieldName) {
+		int n = model.getRowCount();
+		for (int row = 0; row < n; row++) {
+
+			DataTypeComponent dtc = model.getComponent(row);
+			if (dtc != null) {
+				String dtcFieldName = dtc.getFieldName();
+				if (Objects.equals(fieldName, dtcFieldName)) {
+					return row;
+				}
+				String defaultName = dtc.getDefaultFieldName();
+				if (Objects.equals(fieldName, defaultName)) {
+					return row;
+				}
+			}
+		}
+		return -1;
 	}
 
 	protected void cancelCellEditing() {
@@ -1416,5 +1456,4 @@ public abstract class CompositeEditorPanel extends JPanel
 			KeyBindingUtils.clearKeyBinding(this, keyStroke);
 		}
 	}
-
 }
