@@ -24,7 +24,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 public class OmfFixupRecord extends OmfRecord {
-	private final Subrecord[] subrecs;
+	private Subrecord[] subrecs;
 	private OmfData lastData = null;
 
 	/**
@@ -33,16 +33,18 @@ public class OmfFixupRecord extends OmfRecord {
 	 * @throws IOException if there was an IO-related error
 	 */
 	public OmfFixupRecord(BinaryReader reader) throws IOException {
-		ArrayList<Subrecord> subreclist = new ArrayList<Subrecord>();
+		super(reader);
+	}
 
-		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		while (reader.getPointerIndex() < max) {
-			subreclist.add(Subrecord.readSubrecord(reader, hasBigFields()));
+	@Override
+	public void parseData() throws IOException, OmfException {
+		ArrayList<Subrecord> subreclist = new ArrayList<>();
+		long max = dataReader.getPointerIndex() + getRecordLength() - 1;
+		while (dataReader.getPointerIndex() < max) {
+			subreclist.add(Subrecord.readSubrecord(dataReader, hasBigFields()));
 		}
 		subrecs = new Subrecord[subreclist.size()];
 		subreclist.toArray(subrecs);
-		readCheckSumByte(reader);
 	}
 
 	/**

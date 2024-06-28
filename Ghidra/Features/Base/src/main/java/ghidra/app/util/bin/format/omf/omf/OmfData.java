@@ -27,6 +27,10 @@ public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
 	protected OmfIndex segmentIndex;
 	protected Omf2or4 dataOffset;
 
+	public OmfData(BinaryReader reader) throws IOException {
+		super(reader);
+	}
+
 	/**
 	 * @return get the segments index for this datablock
 	 */

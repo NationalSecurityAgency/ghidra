@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.omf.OmfIndex;
-import ghidra.app.util.bin.format.omf.OmfUtils;
+import ghidra.app.util.bin.format.omf.*;
 
 public class OmfComdatExternalSymbol extends OmfExternalSymbol {
 	
@@ -29,17 +28,17 @@ public class OmfComdatExternalSymbol extends OmfExternalSymbol {
 	protected List<ExternalLookup> externalLookups = new ArrayList<>();
 
 	public OmfComdatExternalSymbol(BinaryReader reader) throws IOException {
-		super(false);
-		readRecordHeader(reader);
+		super(reader, false);
 
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		while (reader.getPointerIndex() < max) {
-			OmfIndex nameIndex = OmfUtils.readIndex(reader);
-			OmfIndex type = OmfUtils.readIndex(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		while (dataReader.getPointerIndex() < dataEnd) {
+			OmfIndex nameIndex = OmfUtils.readIndex(dataReader);
+			OmfIndex type = OmfUtils.readIndex(dataReader);
 			externalLookups.add(new ExternalLookup(nameIndex.value(), type.value()));
 		}
-
-		readCheckSumByte(reader);
 	}
 
 	public void loadNames(List<String> nameList) {

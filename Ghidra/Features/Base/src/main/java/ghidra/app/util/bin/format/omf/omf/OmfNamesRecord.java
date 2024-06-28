@@ -28,12 +28,14 @@ public class OmfNamesRecord extends OmfRecord {
 	private List<OmfString> names = new ArrayList<>();
 
 	public OmfNamesRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		while (reader.getPointerIndex() < max) {
-			names.add(OmfUtils.readString(reader));
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		while (dataReader.getPointerIndex() < dataEnd) {
+			names.add(OmfUtils.readString(dataReader));
 		}
-		readCheckSumByte(reader);
 	}
 
 	public void appendNames(List<String> namelist) {

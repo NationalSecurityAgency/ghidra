@@ -40,25 +40,27 @@ public class OmfCommentRecord extends OmfRecord {
 	private OmfString value;
 
 	public OmfCommentRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		commentType = reader.readNextByte();
-		commentClass = reader.readNextByte();
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		commentType = dataReader.readNextByte();
+		commentClass = dataReader.readNextByte();
 
 		switch (commentClass) {
 			case COMMENT_CLASS_TRANSLATOR:
 			case COMMENT_CLASS_DEFAULT_LIBRARY:
-				byte[] bytes = reader.readNextByteArray(getRecordLength() -
+				byte[] bytes = dataReader.readNextByteArray(getRecordLength() -
 					3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
 				value = new OmfString(bytes.length, new String(bytes, StandardCharsets.US_ASCII)); // assuming ASCII
 				break;
 			case COMMENT_CLASS_LIBMOD:
-				value = OmfUtils.readString(reader);
+				value = OmfUtils.readString(dataReader);
 				break;
 			default:
-				reader.setPointerIndex(reader.getPointerIndex() + getRecordLength() - 3);
 				break;
 		}
-		readCheckSumByte(reader);
 	}
 
 	public byte getCommentType() {

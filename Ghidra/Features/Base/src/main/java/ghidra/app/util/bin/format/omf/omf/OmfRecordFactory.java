@@ -18,15 +18,30 @@ package ghidra.app.util.bin.format.omf.omf;
 import static ghidra.app.util.bin.format.omf.omf.OmfRecordTypes.*;
 
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
 
-public class OmfRecordFactory {
+/**
+ * A class for reading/creating Relocatable OMF records
+ */
+public class OmfRecordFactory extends AbstractOmfRecordFactory {
 
-	public static OmfRecord readRecord(BinaryReader reader) throws IOException, OmfException {
+	/**
+	 * Creates a new {@link OmfRecordFactory}
+	 * 
+	 * @param provider The {@link ByteProvider} that contains the records
+	 */
+	public OmfRecordFactory(ByteProvider provider) {
+		super(new BinaryReader(provider, true));
+	}
+
+	@Override
+	public OmfRecord readNextRecord() throws IOException, OmfException {
 		int type = Byte.toUnsignedInt(reader.peekNextByte());
-		return switch (type & 0xfffffffe) { // mask off the least significant bit (16/32 bit flag)
+		OmfRecord record = switch (type & 0xfffffffe) { // mask off the least significant bit (16/32 bit flag)
 			case THEADR:
 			case LHEADR:
 				yield new OmfFileHeader(reader);
@@ -91,5 +106,18 @@ public class OmfRecordFactory {
 			default:
 				yield new OmfUnknownRecord(reader);
 		};
+
+		record.parseData();
+		return record;
+	}
+
+	@Override
+	public List<Integer> getStartRecordTypes() {
+		return List.of(THEADR, LHEADR);
+	}
+
+	@Override
+	public int getEndRecordType() {
+		return MODEND;
 	}
 }

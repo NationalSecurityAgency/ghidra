@@ -42,6 +42,9 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A {@link Loader} for Relocatable Object Module (OMF) files
+ */
 public class OmfLoader extends AbstractProgramWrapperLoader {
 	public final static String OMF_NAME = "Relocatable Object Module Format (OMF)";
 	public final static long MIN_BYTE_LENGTH = 11;
@@ -59,25 +62,14 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	 * @return the "secondary constraint"
 	 */
 	private String mapTranslator(String record) {
-		if (record == null) {
-			return null;
-		}
-		if (record.startsWith("Borland")) {
-			return "borlandcpp";
-		}
-		if (record.startsWith("Delphi")) {
-			return "borlanddelphi";
-		}
-		if (record.startsWith("CodeGear")) {
-			return "codegearcpp";
-		}
-		if (record.equals("MS C")) {
-			return "windows";
-		}
-		if (record.startsWith("Watcom")) {
-			return "watcom";
-		}
-		return null;
+		return switch (record) {
+			case String s when s.startsWith("Borland") -> "boarlandcpp";
+			case String s when s.startsWith("Delphi") -> "borlanddelphi";
+			case String s when s.startsWith("CodeGear") -> "codegearcpp";
+			case String s when s.equals("MS C") -> "windows";
+			case String s when s.startsWith("Watcom") -> "watcom";
+			default -> null;
+		};
 	}
 
 	@Override
@@ -88,12 +80,12 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			return loadSpecs;
 		}
 
-		BinaryReader reader = OmfFileHeader.createReader(provider);
-		if (OmfFileHeader.checkMagicNumber(reader)) {
-			reader.setPointerIndex(0);
+		AbstractOmfRecordFactory factory = new OmfRecordFactory(provider);
+		if (OmfFileHeader.checkMagicNumber(factory.getReader())) {
+			factory.reset();
 			OmfFileHeader scan;
 			try {
-				scan = OmfFileHeader.scan(reader, TaskMonitor.DUMMY, true);
+				scan = OmfFileHeader.scan(factory, TaskMonitor.DUMMY, true);
 			}
 			catch (OmfException e) {
 				throw new IOException("Bad header format: " + e.getMessage());
@@ -121,9 +113,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			throws IOException, CancelledException {
 
 		OmfFileHeader header = null;
-		BinaryReader reader = OmfFileHeader.createReader(provider);
+		AbstractOmfRecordFactory factory = new OmfRecordFactory(provider);
 		try {
-			header = OmfFileHeader.parse(reader, monitor, log);
+			header = OmfFileHeader.parse(factory, monitor, log);
 			header.resolveNames();
 			header.sortSegmentDataBlocks();
 			OmfFileHeader.doLinking(IMAGE_BASE, header.getSegments(), header.getGroups());
@@ -141,7 +133,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
 		try {
-			processSegmentHeaders(reader, header, program, monitor, log);
+			processSegmentHeaders(factory.getReader(), header, program, monitor, log);
 			processPublicSymbols(header, program, monitor, log);
 			processExternalSymbols(header, program, monitor, log);
 			processRelocations(header, program, monitor, log);

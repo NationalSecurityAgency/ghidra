@@ -35,26 +35,28 @@ public class OmfSymbolRecord extends OmfRecord {
 	private record Reference(OmfString name, Omf2or4 offset, OmfIndex type) {}
 
 	public OmfSymbolRecord(BinaryReader reader, boolean isStatic) throws IOException {
+		super(reader);
 		this.isStatic = isStatic;
-		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
+	}
+
+	@Override
+	public void parseData() throws IOException {
 		boolean hasBigFields = hasBigFields();
-		baseGroupIndex = OmfUtils.readIndex(reader);
-		baseSegmentIndex = OmfUtils.readIndex(reader);
+		baseGroupIndex = OmfUtils.readIndex(dataReader);
+		baseSegmentIndex = OmfUtils.readIndex(dataReader);
 		if (baseSegmentIndex.value() == 0) {
-			baseFrame = reader.readNextUnsignedShort();
+			baseFrame = dataReader.readNextUnsignedShort();
 		}
 
 		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
-		while (reader.getPointerIndex() < max) {
-			OmfString name = OmfUtils.readString(reader);
-			Omf2or4 offset = OmfUtils.readInt2Or4(reader, hasBigFields);
-			OmfIndex type = OmfUtils.readIndex(reader);
+		while (dataReader.getPointerIndex() < dataEnd) {
+			OmfString name = OmfUtils.readString(dataReader);
+			Omf2or4 offset = OmfUtils.readInt2Or4(dataReader, hasBigFields);
+			OmfIndex type = OmfUtils.readIndex(dataReader);
 			OmfSymbol subrec = new OmfSymbol(name.str(), type.value(), offset.value(), 0, 0);
 			symbollist.add(subrec);
 			refs.add(new Reference(name, offset, type));
 		}
-		readCheckSumByte(reader);
 		symbol = new OmfSymbol[symbollist.size()];
 		symbollist.toArray(symbol);
 	}
@@ -107,5 +109,4 @@ public class OmfSymbolRecord extends OmfRecord {
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
 	}
-
 }

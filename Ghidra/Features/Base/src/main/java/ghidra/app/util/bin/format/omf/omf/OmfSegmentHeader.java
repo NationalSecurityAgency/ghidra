@@ -83,20 +83,23 @@ public class OmfSegmentHeader extends OmfRecord {
 	}
 
 	public OmfSegmentHeader(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
 		boolean hasBigFields = hasBigFields();
-		segAttr = reader.readNextByte();
+		segAttr = dataReader.readNextByte();
 		int A = (segAttr >> 5) & 7;
 		if (A == 0) {
-			frameNumber = reader.readNextShort() & 0xffff;
-			offset = reader.readNextByte() & 0xff;
+			frameNumber = dataReader.readNextShort() & 0xffff;
+			offset = dataReader.readNextByte() & 0xff;
 			vma = (long) frameNumber + offset;
 		}
-		segmentLength = OmfUtils.readInt2Or4(reader, hasBigFields);
-		segmentNameIndex = OmfUtils.readIndex(reader);
-		classNameIndex = OmfUtils.readIndex(reader);
-		overlayNameIndex = OmfUtils.readIndex(reader);
-		readCheckSumByte(reader);
+		segmentLength = OmfUtils.readInt2Or4(dataReader, hasBigFields);
+		segmentNameIndex = OmfUtils.readIndex(dataReader);
+		classNameIndex = OmfUtils.readIndex(dataReader);
+		overlayNameIndex = OmfUtils.readIndex(dataReader);
 		int B = (segAttr >> 1) & 1;
 		if (B == 1) {		// Ignore the segmentLength field
 			if (getRecordType() == OmfRecordTypes.SEGDEF) {
@@ -393,10 +396,10 @@ public class OmfSegmentHeader extends OmfRecord {
 		 */
 		private void establishNextBuffer() throws IOException {
 			while (dataUpNext < dataBlocks.size()) {
-				OmfData data = dataBlocks.get(dataUpNext);
-				if (pointer < data.getDataOffset()) {
+				OmfData omfData = dataBlocks.get(dataUpNext);
+				if (pointer < omfData.getDataOffset()) {
 					// We have some fill to produce before the next section
-					long size = data.getDataOffset() - pointer;
+					long size = omfData.getDataOffset() - pointer;
 					if (size > OmfLoader.MAX_UNINITIALIZED_FILL) {
 						throw new IOException(
 							"Unfilled hole in OMF data blocks for segment: " + segmentName);
@@ -408,8 +411,8 @@ public class OmfSegmentHeader extends OmfRecord {
 					bufferpointer = 0;
 					return;
 				}
-				else if (pointer == data.getDataOffset()) {
-					buffer = data.getByteArray(reader);
+				else if (pointer == omfData.getDataOffset()) {
+					buffer = omfData.getByteArray(reader);
 					bufferpointer = 0;
 					dataUpNext++;
 					if (buffer.length == 0) {
@@ -421,7 +424,7 @@ public class OmfSegmentHeader extends OmfRecord {
 					dataUpNext++;
 					throw new IOException(String.format(
 						"Segment %s:%s has bad data offset (0x%x) in data block %d...skipping.",
-						segmentName, className, data.getDataOffset(), dataUpNext - 1));
+						segmentName, className, omfData.getDataOffset(), dataUpNext - 1));
 				}
 			}
 			// We may have filler after the last block

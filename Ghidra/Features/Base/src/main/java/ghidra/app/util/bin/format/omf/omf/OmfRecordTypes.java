@@ -17,6 +17,11 @@ package ghidra.app.util.bin.format.omf.omf;
 
 import ghidra.app.util.bin.format.omf.OmfUtils;
 
+/**
+ * Relocatable OMF record types
+ * 
+ * @see <a href="http://www.azillionmonkeys.com/qed/Omfg.pdf">OMF: Relocatable Object Module Format</a> 
+ */
 public class OmfRecordTypes {
 
 	public final static int RHEADR = 0x6E; // Obsolete
@@ -62,6 +67,7 @@ public class OmfRecordTypes {
 	public final static int LLNAMES = 0xCA;
 	public final static int VERNUM = 0xCC;
 	public final static int VENDEXT = 0xCE;
+
 	public final static int START = 0xF0;
 	public final static int END = 0xF1;
 

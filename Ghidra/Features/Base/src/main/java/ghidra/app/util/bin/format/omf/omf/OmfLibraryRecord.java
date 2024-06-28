@@ -19,13 +19,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.omf.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.app.util.bin.format.omf.AbstractOmfRecordFactory;
+import ghidra.app.util.bin.format.omf.OmfException;
 import ghidra.util.task.TaskMonitor;
 
 @SuppressWarnings("unused")
-public class OmfLibraryRecord extends OmfRecord {
+public class OmfLibraryRecord {
+	private int recordType;
+	private int recordLength;
 	private int pageSize;		// All archive members must start on a page boundary of this size
 	private long dictionaryOffset;
 	private int dictionarySize;
@@ -40,13 +41,14 @@ public class OmfLibraryRecord extends OmfRecord {
 		public String machineName;
 	}
 
-	public OmfLibraryRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
+	public OmfLibraryRecord(BinaryReader reader) throws IOException, OmfException {
+		recordType = reader.readNextUnsignedByte();
+		recordLength = reader.readNextUnsignedShort();
 		pageSize = recordLength + 3;
 		dictionaryOffset = reader.readNextInt() & 0xffffffff;
 		dictionarySize = reader.readNextShort() & 0xffff;
 		flags = reader.readNextByte();
-		// No checksum byte  (just padding)
+		// No checksum byte
 	}
 
 	public int getPageSize() {
@@ -88,9 +90,10 @@ public class OmfLibraryRecord extends OmfRecord {
 		return true;
 	}
 
-	public static OmfLibraryRecord parse(BinaryReader reader, TaskMonitor monitor)
-			throws IOException {
+	public static OmfLibraryRecord parse(AbstractOmfRecordFactory factory, TaskMonitor monitor)
+			throws IOException, OmfException {
 		OmfLibraryRecord res = null;
+		BinaryReader reader = factory.getReader();
 		byte type = reader.peekNextByte();
 		if (type != (byte) 0xF0) {
 			throw new IOException("Not an OMF Library record");
@@ -104,7 +107,7 @@ public class OmfLibraryRecord extends OmfRecord {
 			curheader.payloadOffset = reader.getPointerIndex();
 			OmfFileHeader fileheader;
 			try {
-				fileheader = OmfFileHeader.scan(reader, monitor, false);
+				fileheader = OmfFileHeader.scan(factory, monitor, false);
 			}
 			catch (OmfException e) {
 				throw new IOException("Could not parse individual object file within archive");
@@ -121,10 +124,5 @@ public class OmfLibraryRecord extends OmfRecord {
 			type = reader.peekNextByte();
 		}
 		return res;
-	}
-
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
 	}
 }

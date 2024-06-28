@@ -22,28 +22,28 @@ import ghidra.app.util.bin.format.omf.*;
 
 public class OmfComdefRecord extends OmfExternalSymbol {
 
-	public OmfComdefRecord(BinaryReader reader, boolean isStatic) throws IOException, OmfException {
-		super(isStatic);
-		readRecordHeader(reader);
+	public OmfComdefRecord(BinaryReader reader, boolean isStatic) throws IOException {
+		super(reader, isStatic);
+	}
 
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		while (reader.getPointerIndex() < max) {
-			OmfString name = OmfUtils.readString(reader);
-			OmfIndex typeIndex = OmfUtils.readIndex(reader);
-			byte dataType = reader.readNextByte();
+	@Override
+	public void parseData() throws IOException, OmfException {
+		while (dataReader.getPointerIndex() < dataEnd) {
+			OmfString name = OmfUtils.readString(dataReader);
+			OmfIndex typeIndex = OmfUtils.readIndex(dataReader);
+			byte dataType = dataReader.readNextByte();
 			int byteLength = 0;
 			if (dataType == 0x61) {		// FAR data, reads numElements and elSize
-				int numElements = readCommunalLength(reader);
-				int elSize = readCommunalLength(reader);
+				int numElements = readCommunalLength(dataReader);
+				int elSize = readCommunalLength(dataReader);
 				byteLength = numElements * elSize;
 			}
 			else {
 				// Values 1 thru 5f plus 61, read the byte length
-				byteLength = readCommunalLength(reader);
+				byteLength = readCommunalLength(dataReader);
 			}
 			symbols.add(new OmfSymbol(name.str(), typeIndex.value(), 0, dataType, byteLength));
 		}
-		readCheckSumByte(reader);
 	}
 
 	private static int readCommunalLength(BinaryReader reader) throws OmfException, IOException {

@@ -34,15 +34,17 @@ public class OmfGroupRecord extends OmfRecord {
 	private GroupSubrecord[] group;
 
 	public OmfGroupRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		groupNameIndex = OmfUtils.readIndex(reader);
-		ArrayList<GroupSubrecord> grouplist = new ArrayList<GroupSubrecord>();
-		while (reader.getPointerIndex() < max) {
-			GroupSubrecord subrec = GroupSubrecord.read(reader);
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		groupNameIndex = OmfUtils.readIndex(dataReader);
+		ArrayList<GroupSubrecord> grouplist = new ArrayList<>();
+		while (dataReader.getPointerIndex() < dataEnd) {
+			GroupSubrecord subrec = GroupSubrecord.read(dataReader);
 			grouplist.add(subrec);
 		}
-		readCheckSumByte(reader);
 		group = new GroupSubrecord[grouplist.size()];
 		grouplist.toArray(group);
 	}

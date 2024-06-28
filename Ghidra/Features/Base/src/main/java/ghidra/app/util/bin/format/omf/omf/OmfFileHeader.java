@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
@@ -45,10 +44,13 @@ public class OmfFileHeader extends OmfRecord {
 	private boolean format16bit;
 
 	public OmfFileHeader(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		objectName = OmfUtils.readString(reader);   // This is usually the source code filename
-		readCheckSumByte(reader);
+		super(reader);
 		isLittleEndian = reader.isLittleEndian();
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		objectName = OmfUtils.readString(dataReader);   // This is usually the source code filename
 	}
 
 	/**
@@ -261,23 +263,23 @@ public class OmfFileHeader extends OmfRecord {
 
 	/**
 	 * Scan the object file, for the main header and comment records. Other records are parsed but not saved
-	 * @param reader is the byte stream
+	 * @param factory the {@link AbstractOmfRecordFactory}
 	 * @param monitor is checked for cancellation
 	 * @param fastscan is true if we only want to scan the header until first seghead,
 	 * @return the header record
 	 * @throws IOException for problems reading program data
 	 * @throws OmfException for malformed records
 	 */
-	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor, boolean fastscan)
-			throws IOException, OmfException {
-		OmfRecord record = OmfRecordFactory.readRecord(reader);
+	public static OmfFileHeader scan(AbstractOmfRecordFactory factory, TaskMonitor monitor,
+			boolean fastscan) throws IOException, OmfException {
+		OmfRecord record = factory.readNextRecord();
 		if (!(record instanceof OmfFileHeader)) {
 			throw new OmfException("Object file does not start with proper header");
 		}
 		OmfFileHeader header = (OmfFileHeader) record;
 
 		while (true) {
-			record = OmfRecordFactory.readRecord(reader);
+			record = factory.readNextRecord();
 
 			if (monitor.isCancelled()) {
 				break;
@@ -315,16 +317,16 @@ public class OmfFileHeader extends OmfRecord {
 	/**
 	 * Parse the entire object file
 	 * 
-	 * @param reader is the byte stream
+	 * @param factory the {@link AbstractOmfRecordFactory}
 	 * @param monitor is checked for cancel button
 	 * @param log the log
 	 * @return the header record as root of object
 	 * @throws IOException for problems reading data
 	 * @throws OmfException for malformed records
 	 */
-	public static OmfFileHeader parse(BinaryReader reader, TaskMonitor monitor, MessageLog log)
+	public static OmfFileHeader parse(AbstractOmfRecordFactory factory, TaskMonitor monitor, MessageLog log)
 			throws IOException, OmfException {
-		OmfRecord record = OmfRecordFactory.readRecord(reader);
+		OmfRecord record = factory.readNextRecord();
 		if (!(record instanceof OmfFileHeader header)) {
 			throw new OmfException("Object file does not start with proper header");
 		}
@@ -332,7 +334,10 @@ public class OmfFileHeader extends OmfRecord {
 		OmfData lastDataBlock = null;
 
 		while (true) {
-			record = OmfRecordFactory.readRecord(reader);
+			record = factory.readNextRecord();
+			if (!record.validCheckSum()) {
+				throw new OmfException("Invalid checksum!");
+			}
 			header.records.add(record);
 
 			if (monitor.isCancelled()) {
@@ -486,15 +491,6 @@ public class OmfFileHeader extends OmfRecord {
 		int len = reader.readNextUnsignedShort();
 		int stringlen = reader.readNextUnsignedByte();
 		return len == stringlen + 2;
-	}
-
-	/**
-	 * Create a reader for a specific OMF file
-	 * @param provider is the underlying ByteProvider
-	 * @return the new reader
-	 */
-	public static BinaryReader createReader(ByteProvider provider) {
-		return new BinaryReader(provider, true/* Always little endian */);
 	}
 
 	private static void logRecord(String description, OmfRecord record, MessageLog log) {

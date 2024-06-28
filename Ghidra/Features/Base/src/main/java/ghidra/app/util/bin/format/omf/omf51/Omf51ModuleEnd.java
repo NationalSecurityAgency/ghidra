@@ -13,58 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.omf.omf;
+package ghidra.app.util.bin.format.omf.omf51;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class OmfExternalSymbol extends OmfRecord {
+public class Omf51ModuleEnd extends OmfRecord {
 
-	private boolean isStatic;
-	protected List<OmfSymbol> symbols = new ArrayList<>();
-	
-	private record Reference(OmfString name, OmfIndex type) {}
+	private OmfString moduleName;
+	private byte regMsk;
 
-	private List<Reference> refs = new ArrayList<>();
-
-	public OmfExternalSymbol(BinaryReader reader, boolean isStatic) throws IOException {
+	/**
+	 * Creates a new {@link Omf51ModuleEnd} record
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @throws IOException if an IO-related error occurred
+	 */
+	public Omf51ModuleEnd(BinaryReader reader) throws IOException {
 		super(reader);
-		this.isStatic = isStatic;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
-		while (dataReader.getPointerIndex() < dataEnd) {
-			OmfString name = OmfUtils.readString(dataReader);
-			OmfIndex type = OmfUtils.readIndex(dataReader);
-			refs.add(new Reference(name, type));
-			symbols.add(new OmfSymbol(name.str(), type.value(), 0, 0, 0));
-		}
+		moduleName = OmfUtils.readString(dataReader);
+		dataReader.readNextByte();
+		dataReader.readNextByte();
+		regMsk = dataReader.readNextByte();
+		dataReader.readNextByte();
 	}
 
-	public List<OmfSymbol> getSymbols() {
-		return symbols;
-	}
-
-	public boolean isStatic() {
-		return isStatic;
+	/**
+	 * {@return the register mask}
+	 */
+	public byte getRegisterMask() {
+		return regMsk;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(OmfRecordTypes.getName(recordType), 0);
+		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		for (Reference ref : refs) {
-			struct.add(ref.name.toDataType(), "name", null);
-			struct.add(ref.type.toDataType(), "type", null);
-		}
+		struct.add(moduleName.toDataType(), "name", null);
+		struct.add(WORD, "padding", null);
+		struct.add(BYTE, "REG MSK", null);
+		struct.add(BYTE, "padding", null);
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));

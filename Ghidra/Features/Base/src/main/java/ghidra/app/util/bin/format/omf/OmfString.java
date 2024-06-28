@@ -55,6 +55,11 @@ public class OmfString implements StructConverter {
 	}
 
 	@Override
+	public String toString() {
+		return str;
+	}
+
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		if (length == 0) {
 			return BYTE;

@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.omf.Omf2or4;
-import ghidra.app.util.bin.format.omf.OmfUtils;
+import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -30,17 +29,19 @@ public class OmfIteratedData extends OmfData {
 	private DataBlock[] datablock;
 
 	public OmfIteratedData(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
 		boolean hasBigFields = hasBigFields();
-		segmentIndex = OmfUtils.readIndex(reader);
-		dataOffset = OmfUtils.readInt2Or4(reader, hasBigFields);
-		ArrayList<DataBlock> blocklist = new ArrayList<DataBlock>();
-		while (reader.getPointerIndex() < max) {
-			DataBlock block = DataBlock.read(reader, hasBigFields);
+		segmentIndex = OmfUtils.readIndex(dataReader);
+		dataOffset = OmfUtils.readInt2Or4(dataReader, hasBigFields);
+		ArrayList<DataBlock> blocklist = new ArrayList<>();
+		while (dataReader.getPointerIndex() < dataEnd) {
+			DataBlock block = DataBlock.read(dataReader, hasBigFields);
 			blocklist.add(block);
 		}
-		readCheckSumByte(reader);
 		datablock = new DataBlock[blocklist.size()];
 		blocklist.toArray(datablock);
 	}

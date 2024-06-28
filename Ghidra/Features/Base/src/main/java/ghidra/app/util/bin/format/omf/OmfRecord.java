@@ -29,31 +29,48 @@ public abstract class OmfRecord implements StructConverter {
 
 	protected int recordType;
 	protected int recordLength;
+	protected byte[] data;
 	protected byte checkSum;
 
 	protected long recordOffset;
+	protected BinaryReader dataReader;
+	protected long dataEnd;
 
 	/**
-	 * Reads the record header (type and length fields)
+	 * 
+	 */
+	public OmfRecord() {
+		// nothing to do
+	}
+
+	/**
+	 * Creates a new {@link OmfRecord}
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
-	 * @throws IOException if an IO-related problem occurred
+	 * @throws IOException if there was an IO-related error
 	 */
-	public void readRecordHeader(BinaryReader reader) throws IOException {
-		recordOffset = reader.getPointerIndex();
-		recordType = reader.readNextUnsignedByte();
-		recordLength = reader.readNextUnsignedShort();
+	public OmfRecord(BinaryReader reader) throws IOException {
+		this.recordOffset = reader.getPointerIndex();
+		
+		this.recordType = reader.readNextUnsignedByte();
+		this.recordLength = reader.readNextUnsignedShort();
+		this.data = reader.readNextByteArray(recordLength - 1);
+		this.checkSum = reader.readNextByte();
+
+		this.dataReader = reader.clone(recordOffset + 3);
+		this.dataEnd = recordOffset + 3 + recordLength - 1;
 	}
 
 	/**
-	 * Reads the record checksum
+	 * Parses this {@link OmfRecord}'s type-spefic data
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the record checksum
-	 * @throws IOException if an IO-related problem occurred
+	 * @throws IOException if there was an IO-related error
+	 * @throws OmfException if there was a problem with the OMF specification
 	 */
-	public void readCheckSumByte(BinaryReader reader) throws IOException {
-		checkSum = reader.readNextByte();
-	}
+	public abstract void parseData() throws IOException, OmfException;
+
+	@Override
+	public abstract DataType toDataType() throws DuplicateNameException, IOException;
 
 	/**
 	 * {@return the record type}
@@ -76,36 +93,42 @@ public abstract class OmfRecord implements StructConverter {
 		return recordOffset;
 	}
 
+	public byte getRecordChecksum() {
+		return checkSum;
+	}
+
+	public byte[] getData() {
+		return data;
+	}
+
 	/**
 	 * Computes the record's checksum
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of record
 	 * @return The record's checksum
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public byte calcCheckSum(BinaryReader reader) throws IOException {
-		byte res = reader.readNextByte();
-		res += reader.readNextByte();
-		res += reader.readNextByte();		// Sum the record header bytes
-		for (int i = 0; i < recordLength; ++i) {
-			res += reader.readNextByte();
+	public byte calcCheckSum() throws IOException {
+		byte sum = (byte) recordType;
+		sum += (byte) recordLength + (byte) (recordLength >> 8);
+		for (byte b : data) {
+			sum += b;
 		}
-		return res;
+		sum += checkSum;
+		return sum;
 	}
 
 	/**
 	 * Validates the record's checksum
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the record
 	 * @return True if the checksum is valid; otherwise, false
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public boolean validCheckSum(BinaryReader reader) throws IOException {
+	public boolean validCheckSum() throws IOException {
 		if (checkSum == 0) {
 			// Some compilers just set this to zero
 			return true;
 		}
-		return (calcCheckSum(reader) == 0);
+		return (calcCheckSum() == 0);
 	}
 
 	/**
@@ -114,9 +137,6 @@ public abstract class OmfRecord implements StructConverter {
 	public boolean hasBigFields() {
 		return ((recordType & 1) != 0);
 	}
-
-	@Override
-	public abstract DataType toDataType() throws DuplicateNameException, IOException;
 
 	@Override
 	public String toString() {

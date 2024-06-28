@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.omf;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
@@ -104,5 +106,30 @@ public class OmfUtils {
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
+	}
+
+	/**
+	 * Reads all the {@link OmfRecord records} associated with the given 
+	 * {@link AbstractOmfRecordFactory}
+	 * 
+	 * @param factory The {@link AbstractOmfRecordFactory}
+	 * @return A {@link List} of read {@link OmfRecord records}
+	 * @throws IOException if there was an IO-related error
+	 * @throws OmfException if there was a problem with the OMF specification
+	 */
+	public static List<OmfRecord> readRecords(AbstractOmfRecordFactory factory)
+			throws OmfException, IOException {
+		List<OmfRecord> records = new ArrayList<>();
+		factory.reset();
+
+		while (true) {
+			OmfRecord rec = factory.readNextRecord();
+			records.add(rec);
+			if (rec.getRecordType() == factory.getEndRecordType()) {
+				break;
+			}
+		}
+		
+		return records;
 	}
 }

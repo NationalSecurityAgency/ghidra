@@ -18,38 +18,20 @@ package ghidra.app.util.bin.format.omf.omf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.omf.OmfRecord;
-import ghidra.app.util.bin.format.omf.OmfUtils;
+import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 public class OmfModuleEnd extends OmfRecord {
-	//private byte moduleType;
-	//private OmfFixupRecord.FixupTarget startAddress;
 
 	public OmfModuleEnd(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		/* The record type is not handled so simply skip the information 
-		moduleType = reader.readNextByte();
-		if (hasStartAddress()) {
-			endData = reader.readNextByte();
-			frameDatum = readInt1Or2(reader, hasBigFields());
-			targetDatum = readInt1Or2(reader, hasBigFields());
-			targetDisplacement readInt2Or4(reader, hasBigFields());
-		}
-		readCheckSumByte(reader);
-		*/
-		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
-	}
-/*
-	public boolean isMainProgramModule() {
-		return ((moduleType & 0x80) != 0);
+		super(reader);
 	}
 
-	public boolean hasStartAddress() {
-		return ((moduleType & 0x40) != 0);
+	@Override
+	public void parseData() throws IOException, OmfException {
+		// No record-specific data to read
 	}
-*/
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {

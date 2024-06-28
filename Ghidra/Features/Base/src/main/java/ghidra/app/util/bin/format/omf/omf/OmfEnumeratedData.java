@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.omf.omf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.OmfException;
 import ghidra.app.util.bin.format.omf.OmfUtils;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
@@ -27,14 +28,16 @@ public class OmfEnumeratedData extends OmfData {
 	private int streamLength;		// Number of bytes of data
 
 	public OmfEnumeratedData(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		long start = reader.getPointerIndex();
-		segmentIndex = OmfUtils.readIndex(reader);
-		dataOffset = OmfUtils.readInt2Or4(reader, hasBigFields());
-		streamOffset = reader.getPointerIndex();
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		long start = dataReader.getPointerIndex();
+		segmentIndex = OmfUtils.readIndex(dataReader);
+		dataOffset = OmfUtils.readInt2Or4(dataReader, hasBigFields());
+		streamOffset = dataReader.getPointerIndex();
 		streamLength = getRecordLength() - 1 - (int) (streamOffset - start);
-		reader.setPointerIndex(streamOffset + streamLength); // Skip over the data when reading header
-		readCheckSumByte(reader);
 	}
 
 	@Override

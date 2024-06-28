@@ -34,8 +34,12 @@ public class OmfUnknownRecord extends OmfRecord {
 	 * @throws IOException If an IO-related error occurred
 	 */
 	public OmfUnknownRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		// No record-specific data to read
 	}
 
 	@Override
