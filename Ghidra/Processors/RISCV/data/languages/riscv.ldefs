@@ -66,7 +66,7 @@
             slafile="riscv.lp64d.sla"
             processorspec="RV64GC.pspec"
             id="RISCV:LE:64:default">
-    <description>RISC-V 32 little default</description>
+    <description>RISC-V 64 little default</description>
     <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
     <external_name tool="gnu" name="riscv:rv64"/>
