@@ -1,0 +1,63 @@
+# WCH / QingKe XW Extension
+
+clbuimm: uimm is cop1212 & cop1011 & cop0506 [ uimm = (cop1212 << 0) | (cop1011 << 3) | (cop0506 << 1); ] { local tmp:$(XLEN) = uimm; export tmp; }
+clhuimm: uimm is cop1012 & cop0506 [ uimm = (cop1012 << 3) | (cop0506 << 1); ] { local tmp:$(XLEN) = uimm; export tmp; }
+clbuspimm: uimm is cop0710 [ uimm = (cop0710 << 0); ] { local tmp:$(XLEN) = uimm; export tmp; }
+clhuspimm: uimm is cop0810 & cop0707 [ uimm = (cop0810 << 1) | (cop0707 << 4); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+
+# c.lbu Ct,Ck(Cs)
+:c.lbu cr0204s,clbuimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x1 & clbuimm
+{
+	local ea:$(XLEN) = clbuimm + cr0709s;
+	cr0204s = zext(*[ram]:1 ea);
+}
+
+# c.sb Ct,Ck(Cs)
+:c.sb cr0204s,clbuimm(cr0709s) is cr0709s & cr0204s & cop0001=0x0 & cop1315=0x5 & clbuimm
+{
+	local ea:$(XLEN) = clbuimm + cr0709s;
+	*[ram]:1 ea = cr0204s:1;
+}
+
+# c.lhu Ct,Ck(Cs)
+:c.lhu cr0204s,clhuimm(cr0709s) is cr0709s & cr0204s & cop0001=0x2 & cop1315=0x1 & clhuimm
+{
+	local ea:$(XLEN) = clhuimm + cr0709s;
+	cr0204s = zext(*[ram]:2 ea);
+}
+
+# c.sh Ct,Ck(Cs)
+:c.sh cr0204s,clhuimm(cr0709s) is cr0709s & cr0204s & cop0001=0x2 & cop1315=0x5 & clhuimm
+{
+	local ea:$(XLEN) = clhuimm + cr0709s;
+	*[ram]:2 ea = cr0204s:2;
+}
+
+# c.lbusp Ct,Cm(Cc)
+:c.lbusp cr0204s,clbuspimm(sp) is cr0204s & sp & cop0001=0x0 & cop0506=0x0 & cop1112=0x0 & cop1315=0x4 & clbuspimm
+{
+	local ea:$(XLEN) = clbuspimm + sp;
+	cr0204s = zext(*[ram]:1 ea);
+}
+
+# c.sbsp Ct,Cm(Cc)
+:c.sbsp cr0204s,clbuspimm(sp) is cr0204s & sp & cop0001=0x0 & cop0506=0x2 & cop1112=0x0 & cop1315=0x4 & clbuspimm
+{
+	local ea:$(XLEN) = clbuspimm + sp;
+	*[ram]:1 ea = cr0204s:1;
+}
+
+# c.lhusp Ct,Cm(Cc)
+:c.lhusp cr0204s,clhuspimm(sp) is cr0204s & sp & cop0001=0x0 & cop0506=0x1 & cop1112=0x0 & cop1315=0x4 & clhuspimm
+{
+	local ea:$(XLEN) = clhuspimm + sp;
+	cr0204s = zext(*[ram]:2 ea);
+}
+
+# c.shsp Ct,Cm(Cc)
+:c.shsp cr0204s,clhuspimm(sp) is cr0204s & sp & cop0001=0x0 & cop0506=0x3 & cop1112=0x0 & cop1315=0x4 & clhuspimm
+{
+	local ea:$(XLEN) = clhuspimm + sp;
+	*[ram]:2 ea = cr0204s:2;
+}
