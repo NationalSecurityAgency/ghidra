@@ -22,29 +22,56 @@ import javax.tools.Diagnostic.Kind;
 
 import ghidra.util.database.annot.*;
 
+/**
+ * Validates {@link DBAnnotatedObject}-related annotations on a given type element.
+ * 
+ * This class ensures that annotations such as {@link DBAnnotatedField}, {@link DBAnnotatedColumn},
+ * and {@link DBAnnotatedObjectInfo} are applied correctly and consistently on the fields and columns
+ * of a class.
+ */
 public class DBAnnotatedObjectValidator {
 	private final ValidationContext ctx;
 	private final TypeElement type;
 	private final Map<String, DBAnnotatedFieldValidator> fieldsByName = new LinkedHashMap<>();
 	private final Map<String, DBAnnotatedColumnValidator> columnsByName = new LinkedHashMap<>();
 
+	/**
+	 * Constructs a new validator for the given type element within the specified validation context
+	 * 
+	 * @param ctx the validation context
+	 * @param type the type element to be validated
+	 */
 	public DBAnnotatedObjectValidator(ValidationContext ctx, TypeElement type) {
 		this.ctx = ctx;
 		this.type = type;
 	}
 
+	/**
+	 * Adds a field annotated with {@link DBAnnotatedField} to be validator.
+	 * 
+	 * @param field the field element annotated with {@link DBAnnotatedField}
+	 */
 	public void addAnnotatedField(VariableElement field) {
 		DBAnnotatedField annotation = field.getAnnotation(DBAnnotatedField.class);
 		assert annotation != null;
 		fieldsByName.put(annotation.column(), new DBAnnotatedFieldValidator(ctx, field));
 	}
 
+	/**
+	 * Adds a column annotated with {@link DBAnnotatedColumn} to the validator.
+	 * 
+	 * @param column the field element annotated with {@link DBAnnotatedColumn}
+	 */
 	public void addAnnotatedColumn(VariableElement column) {
 		DBAnnotatedColumn annotation = column.getAnnotation(DBAnnotatedColumn.class);
 		assert annotation != null;
 		columnsByName.put(annotation.value(), new DBAnnotatedColumnValidator(ctx, column));
 	}
 
+	/**
+	 * Validates the annotated fields, columns, and the type element itself.
+	 * This method checks for various annotation constraints and consistency rules.
+	 */
 	public void validate() {
 		DBAnnotatedObjectInfo annotation = type.getAnnotation(DBAnnotatedObjectInfo.class);
 		if (annotation != null && type.getKind() != ElementKind.CLASS) {
@@ -81,18 +108,27 @@ public class DBAnnotatedObjectValidator {
 		checkMissing();
 	}
 
+	/**
+	 * Validates all fields annotated with {@link DBAnnotatedField}.
+	 */
 	protected void validateFields() {
 		for (DBAnnotatedFieldValidator fv : fieldsByName.values()) {
 			fv.validate();
 		}
 	}
 
+	/**
+	 * Validates all columns annotated with {@link DBAnnotatedColumn}.
+	 */
 	protected void validateColumns() {
 		for (DBAnnotatedColumnValidator cv : columnsByName.values()) {
 			cv.validate();
 		}
 	}
 
+	/**
+	 * Checks for missing corresponding annotations between fields and columns.
+	 */
 	protected void checkMissing() {
 		Set<String> names = new LinkedHashSet<>();
 		names.addAll(fieldsByName.keySet());
@@ -121,6 +157,12 @@ public class DBAnnotatedObjectValidator {
 
 	}
 
+	/**
+	 * Checks that the access specifiers of the field and column are compatible.
+	 * @param field the field element
+	 * @param column the column element
+	 * @param name the name of the column
+	 */
 	protected void checkAccess(VariableElement field, VariableElement column, String name) {
 		AccessSpec fieldSpec = AccessSpec.get(field.getModifiers());
 		AccessSpec columnSpec = AccessSpec.get(column.getModifiers());

@@ -20,24 +20,41 @@ import java.lang.annotation.Annotation;
 import javax.lang.model.element.*;
 import javax.tools.Diagnostic.Kind;
 
+/**
+ * AbstractDBAnnotationValidator is an abstract class that provides a base for
+ * validating annotations related to database operations in Ghidra.
+ * Performs validation checks on annotated fields and their enclosing types.
+ */
 public class AbstractDBAnnotationValidator {
 	protected final ValidationContext ctx;
 
+	/**
+	 * Constructs a new AbstractDBAnnotationValidator with the specified validation
+	 * context.
+	 * 
+	 * @param ctx the validation context
+	 */
 	public AbstractDBAnnotationValidator(ValidationContext ctx) {
 		this.ctx = ctx;
 	}
 
+	/**
+	 * Checks the enclosing type of the annotated field.
+	 * 
+	 * @param annotType the type of the annotation being validated
+	 * @param field the field being validated
+	 * @param type the enclosing type of the field
+	 */
 	protected void checkEnclosingType(Class<? extends Annotation> annotType, VariableElement field,
 			TypeElement type) {
 		if (type.getKind() != ElementKind.CLASS) {
 			ctx.messager.printMessage(Kind.ERROR, String.format(
-				"@%s can only be applied to fields in a class", annotType.getSimpleName()), field);
-		}
-		else if (!ctx.isSubclass(type, ctx.DB_ANNOTATED_OBJECT_ELEM)) {
+					"@%s can only be applied to fields in a class", annotType.getSimpleName()), field);
+		} else if (!ctx.isSubclass(type, ctx.DB_ANNOTATED_OBJECT_ELEM)) {
 			ctx.messager.printMessage(Kind.ERROR,
-				String.format("@%s can only be applied within a subclass of %s",
-					annotType.getSimpleName(), ctx.DB_ANNOTATED_OBJECT_ELEM),
-				field);
+					String.format("@%s can only be applied within a subclass of %s",
+							annotType.getSimpleName(), ctx.DB_ANNOTATED_OBJECT_ELEM),
+					field);
 		}
 	}
 }
