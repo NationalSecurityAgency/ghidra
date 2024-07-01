@@ -899,4 +899,10 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		super.close();
 		objectManager.waitWbWorkers();
 	}
+
+	@Override
+	protected void domainObjectRestored() {
+		super.domainObjectRestored();
+		dataTypeManager.notifyRestored();
+	}
 }

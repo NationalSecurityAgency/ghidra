@@ -487,20 +487,21 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+	public void dataTypeManagerRestored() {
 		DataTypeManager originalDTM = model.getOriginalDataTypeManager();
 		if (originalDTM == null) {
 			// editor unloaded
 			return;
 		}
 		boolean reload = true;
-		String objectType = "domain object";
-		if (domainObject instanceof Program) {
-			objectType = "program";
+		String objectType;
+		if (originalDTM instanceof ProgramBasedDataTypeManager) {
+			objectType = "Program";
 		}
-		else if (domainObject instanceof DataTypeArchive) {
-			objectType = "data type archive";
+		else {
+			objectType = "Archive";
 		}
+		String archiveName = originalDTM.getName();
 		DataType dt = originalDTM.getDataType(model.getCompositeID());
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
@@ -512,10 +513,9 @@ public abstract class CompositeEditorPanel extends JPanel
 		Composite originalDt = model.getOriginalComposite();
 		if (originalDt == null) {
 			provider.show();
-			String info =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may no longer exist outside the editor.";
-			Msg.showWarn(this, this, "Program Restored", info);
+			String info = "The " + objectType + " \"" + archiveName + "\" has been restored.\n" +
+				"\"" + model.getCompositeName() + "\" may no longer exist outside the editor.";
+			Msg.showWarn(this, this, objectType + " Restored", info);
 			return;
 		}
 		else if (originalDt.isDeleted()) {
@@ -528,8 +528,8 @@ public abstract class CompositeEditorPanel extends JPanel
 			// The user has modified the structure so prompt for whether or
 			// not to reload the structure.
 			String question =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may have changed outside the editor.\n" +
+				"The " + objectType + " \"" + archiveName + "\" has been restored.\n" + "\"" +
+					model.getCompositeName() + "\" may have changed outside the editor.\n" +
 					"Discard edits & reload the " + model.getTypeName() + "?";
 			String title = "Reload " + model.getTypeName() + " Editor?";
 			int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);

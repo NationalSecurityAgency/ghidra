@@ -1264,7 +1264,8 @@ class StructureEditorModel extends CompEditorModel {
 	private DataType createDataTypeInOriginalDTM(StructureDataType structureDataType) {
 		boolean commit = false;
 		DataTypeManager originalDTM = getOriginalDataTypeManager();
-		int transactionID = originalDTM.startTransaction("Creating " + structureDataType.getName());
+		int transactionID =
+			originalDTM.startTransaction("Create structure " + structureDataType.getName());
 		try {
 			DataType addedDataType =
 				originalDTM.addDataType(structureDataType, DataTypeConflictHandler.DEFAULT_HANDLER);

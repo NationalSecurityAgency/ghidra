@@ -354,34 +354,6 @@ public class DataTypeEditorManager implements EditorListener {
 		return false;
 	}
 
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		// Create a copy of the list since restore may remove an editor from the original list.
-		ArrayList<EditorProvider> list = new ArrayList<>(editorList);
-		// notify the editors
-		for (EditorProvider editor : list) {
-			DataTypeManager dataTypeManager = editor.getDataTypeManager();
-			DataTypeManager programDataTypeManager = domainObject.getDataTypeManager();
-			if (dataTypeManager == programDataTypeManager) {
-				/*
-				
-				 It is not clear why this check was added.  It seem reasonable to always let the
-				 editor know about the event.  With this code enabled, editors with new, unsaved
-				 types will be closed.
-				
-					DataTypePath dtPath = editor.getDtPath();
-					CategoryPath categoryPath = dtPath.getCategoryPath();
-					String name = dtPath.getDataTypeName();
-					DataType dataType = programDataTypeManager.getDataType(categoryPath, name);
-					if (dataType == null || dataType.isDeleted()) {
-						dismissEditor(editor);
-						continue;
-					}
-				*/
-				editor.domainObjectRestored(domainObject);
-			}
-		}
-	}
-
 	/**
 	 * If the specified data type is being edited for the indicated category, this gets that editor.
 	 * @param dataType the data type

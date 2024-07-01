@@ -230,7 +230,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		try {
 			dbHandle = new DBHandle();
 			readOnlyMode = false;
-			int id = startTransaction("");
+			long txId = dbHandle.startTransaction();
 			try {
 				init(OpenMode.CREATE, TaskMonitor.DUMMY);
 			}
@@ -238,7 +238,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				throw new AssertException(e); // unexpected
 			}
 			finally {
-				endTransaction(id, true);
+				dbHandle.endTransaction(txId, true);
 			}
 		}
 		catch (IOException e) {
@@ -319,7 +319,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void initPackedDatabase(ResourceFile packedDBfile, OpenMode openMode,
 			TaskMonitor monitor) throws CancelledException, IOException {
-		try (Transaction tx = openTransaction("")) {
+		long txId = dbHandle.startTransaction();
+		try {
 			init(openMode, monitor);
 
 			if (openMode != OpenMode.CREATE && hasDataOrganizationChange(true)) {
@@ -342,6 +343,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				// Unable to handle required upgrade
 				throw new IOException(e);
 			}
+		}
+		finally {
+			dbHandle.endTransaction(txId, true);
 		}
 	}
 
@@ -949,6 +953,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	protected final boolean isTransactionActive() {
 		return dbHandle.isTransactionActive();
+	}
+
+	/**
+	 * This method should be invoked following an undo/redo or a transaction rollback situation.
+	 * This will notify {@link DataTypeManagerChangeListenerHandler} and its listeners that this 
+	 * manager has just been restored (e.g., undo/redo/rollback).
+	 */
+	public void notifyRestored() {
+		defaultListener.restored(this);
 	}
 
 	abstract protected String getDomainFileID();

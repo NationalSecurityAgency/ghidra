@@ -23,7 +23,8 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataTypePath;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
@@ -144,12 +145,6 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return actionMgr.getAllActions();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		refreshName();
-		editorPanel.domainObjectRestored(domainObject);
-	}
-
 	private void refreshName() {
 		StackFrameDataType origDt = (StackFrameDataType) stackModel.getOriginalComposite();
 		StackFrameDataType viewDt = stackModel.getViewComposite();
@@ -187,11 +182,9 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 			DomainObjectChangeRecord rec = event.getChangeRecord(i);
 			EventType eventType = rec.getEventType();
 			if (eventType == DomainObjectEvent.RESTORED) {
-				Object source = event.getSource();
-				if (source instanceof Program) {
-					Program restoredProgram = (Program) source;
-					domainObjectRestored(restoredProgram);
-				}
+				refreshName();
+				// NOTE: editorPanel should be notified of restored datatype manager via the 
+				// CompositeViewerModel's DataTypeManagerChangeListener restored method
 				return;
 			}
 			if (eventType instanceof ProgramEvent type) {

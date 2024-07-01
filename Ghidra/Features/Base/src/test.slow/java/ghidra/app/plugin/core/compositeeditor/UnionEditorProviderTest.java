@@ -83,11 +83,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	// Test Undo / Redo of program.
 	@Test
 	public void testModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			init(complexUnion, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Change the union.
 			Swing.runLater(() -> {
@@ -138,47 +136,39 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
 	// Test Undo / Redo of program.
 	@Test
 	public void testUnModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		try {
-			init(complexUnion, pgmTestCat, false);
-			program.addListener(restoreListener);
+		init(complexUnion, pgmTestCat, false);
 
-			// Change the union.
-			Swing.runLater(() -> {
-				delete(4, 5);
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
+		// Change the union.
+		Swing.runLater(() -> {
+			delete(4, 5);
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		});
 
-			waitForTasks();
-			assertFalse(complexUnion.isEquivalent(model.viewComposite));
+		waitForTasks();
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
-			// Apply the changes
-			invoke(applyAction);
-			assertTrue(complexUnion.isEquivalent(model.viewComposite));
+		// Apply the changes
+		invoke(applyAction);
+		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 
-			// Undo the apply
-			undo(program);
-			assertTrue(complexUnion.isEquivalent(model.viewComposite));
+		// Undo the apply
+		undo(program);
+		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 
-			// Redo the apply
-			redo(program);
-			assertTrue(complexUnion.isEquivalent(model.viewComposite));
-		}
-		finally {
-			program.removeListener(restoreListener);
-		}
+		// Redo the apply
+		redo(program);
+		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 	}
 
 	@Test

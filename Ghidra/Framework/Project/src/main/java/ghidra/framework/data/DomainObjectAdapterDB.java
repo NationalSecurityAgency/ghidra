@@ -476,11 +476,19 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	@Override
 	public void invalidate() {
 		clearCache(false);
-		super.invalidate();
+		super.invalidate(); // fires RESTORED event
 	}
 
 	protected void clearCache(boolean all) {
 		options.clearCache();
+	}
+
+	/**
+	 * Indicates that this domain object has been restored to a completely different state due
+	 * to a transaction undo/redo/rollback or a database merge operation.
+	 */
+	protected void domainObjectRestored() {
+		invalidate();
 	}
 
 	@Override

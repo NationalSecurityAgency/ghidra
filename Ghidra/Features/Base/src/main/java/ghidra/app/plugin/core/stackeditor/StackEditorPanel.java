@@ -22,7 +22,8 @@ import javax.swing.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.compositeeditor.CompositeEditorPanel;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.UsrException;
 
@@ -83,11 +84,10 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		JPanel returnAddrOffsetPanel =
 			createNamedTextPanel(returnAddrOffsetField, "Return Address Offset");
 
-		JPanel[] hPanels =
-			new JPanel[] {
-				createHorizontalPanel(new JPanel[] { frameSizePanel, returnAddrOffsetPanel,
-					localSizePanel }),
-				createHorizontalPanel(new JPanel[] { paramOffsetPanel, paramSizePanel }) };
+		JPanel[] hPanels = new JPanel[] {
+			createHorizontalPanel(
+				new JPanel[] { frameSizePanel, returnAddrOffsetPanel, localSizePanel }),
+			createHorizontalPanel(new JPanel[] { paramOffsetPanel, paramSizePanel }) };
 		JPanel outerPanel = createVerticalPanel(hPanels);
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -257,15 +257,9 @@ public class StackEditorPanel extends CompositeEditorPanel {
 	}
 
 	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+	public void dataTypeManagerRestored() {
 		boolean reload = true;
-		String objectType = "domain object";
-		if (domainObject instanceof Program) {
-			objectType = "program";
-		}
-		else if (domainObject instanceof DataTypeArchive) {
-			objectType = "data type archive";
-		}
+		String objectType = "program";
 		DataTypeManager dtm = ((StackEditorModel) model).getOriginalDataTypeManager();
 		Composite originalDt = ((StackEditorModel) model).getOriginalComposite();
 		if (originalDt instanceof StackFrameDataType) {
@@ -290,8 +284,8 @@ public class StackEditorPanel extends CompositeEditorPanel {
 			// The user has modified the structure so prompt for whether or
 			// not to reload the structure.
 			String question =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may have changed outside the editor.\n" +
+				"The " + objectType + " \"" + dtm.getName() + "\" has been restored.\n" + "\"" +
+					model.getCompositeName() + "\" may have changed outside the editor.\n" +
 					"Discard edits & reload the " + name + " Editor?";
 			String title = "Reload " + name + " Editor?";
 			int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);

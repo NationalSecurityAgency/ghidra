@@ -290,7 +290,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 				DataTypeManagerDomainObject domainObject = (DataTypeManagerDomainObject) source;
 				provider.domainObjectRestored(domainObject);
 				dataTypePropertyManager.domainObjectRestored(domainObject);
-				editorManager.domainObjectRestored(domainObject);
+				// NOTE: each editor that cares about a restored DataTypeManager must establish
+				// a DataTypeManagerChangeListener and will be notified via the restored method.
 			}
 		}
 		else if (event.contains(DomainObjectEvent.RENAMED)) {

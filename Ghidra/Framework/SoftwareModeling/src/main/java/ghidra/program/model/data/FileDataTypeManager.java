@@ -155,8 +155,8 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * match another existing archive database.
 	 * @param saveFile the file to save
 	 * @param newUniversalId the new id to use
-	 * @throws DuplicateFileException 
-	 * @throws IOException 
+	 * @throws DuplicateFileException if save file already exists
+	 * @throws IOException if IO error occurs
 	 */
 	public void saveAs(File saveFile, UniversalID newUniversalId)
 			throws DuplicateFileException, IOException {
@@ -173,11 +173,16 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		catch (CancelledException e) {
 			// Cancel can't happen because we are using a dummy monitor
 		}
+		finally {
+			clearUndo();
+		}
 	}
 
 	/**
 	 * Saves the data type manager to the given file
 	 * @param saveFile the file to save
+	 * @throws DuplicateFileException if save file already exists
+	 * @throws IOException if IO error occurs
 	 */
 	public void saveAs(File saveFile) throws DuplicateFileException, IOException {
 		ResourceFile resourceSaveFile = new ResourceFile(saveFile);
@@ -191,10 +196,14 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		catch (CancelledException e) {
 			// Cancel can't happen because we are using a dummy monitor
 		}
+		finally {
+			clearUndo();
+		}
 	}
 
 	/**
 	 * Save the category to source file.
+	 * @throws IOException if IO error occurs
 	 */
 	public void save() throws IOException {
 
@@ -207,6 +216,9 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		}
 		catch (CancelledException e) {
 			// Cancel can't happen because we are using a dummy monitor
+		}
+		finally {
+			clearUndo();
 		}
 	}
 

@@ -78,7 +78,8 @@ public class CreatePointerAction extends DockingAction {
 
 	private DataType createNewDataType(Component parentComponent, DataType dataType,
 			CategoryPath categoryPath, DataTypeManager dataTypeManager) {
-		int transactionID = dataTypeManager.startTransaction("Create Typedef");
+		int transactionID =
+			dataTypeManager.startTransaction("Create Pointer " + dataType.getName());
 		try {
 			return dataTypeManager.addDataType(dataType, plugin.getConflictHandler());
 		}

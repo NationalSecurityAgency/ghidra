@@ -36,6 +36,7 @@ import docking.widgets.textfield.GValidatedTextField.ValidationMessageListener;
 import generic.theme.Gui;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
@@ -120,30 +121,40 @@ class EnumEditorPanel extends JPanel {
 		});
 	}
 
-	void domainObjectRestored(DataTypeManagerDomainObject domainObject, EnumDataType enuum) {
+	void domainObjectRestored(EnumDataType enuum, boolean exists) {
 
 		stopCellEditing();
-		this.originalEnumDT = enuum;
-		this.editedEnumDT = (EnumDataType) enuum.copy(enuum.getDataTypeManager());
-		DataTypeManager objectDataTypeManager = domainObject.getDataTypeManager();
-		DataTypeManager providerDataTypeManager = provider.getDataTypeManager();
-		if (objectDataTypeManager != providerDataTypeManager) {
-			return; // The editor isn't associated with the restored domain object.
-		}
 
+		DataTypeManager enumDtMgr = enuum.getDataTypeManager();
 		String objectType = "domain object";
-		if (domainObject instanceof Program) {
+		if (enumDtMgr instanceof ProgramBasedDataTypeManager) {
 			objectType = "program";
 		}
-		else if (domainObject instanceof DataTypeArchive) {
+		else {
 			objectType = "data type archive";
 		}
+		String archiveName = enumDtMgr.getName();
+		this.originalEnumDT = enuum;
 
-		if (tableModel.hasChanges()) {
+		if (!exists) {
+			if (OptionDialog.showOptionNoCancelDialog(this, "Close Enum Editor?",
+				"The " + objectType + " \"" + archiveName + "\" has been restored.\n" + "\"" +
+					enuum.getDisplayName() + "\" may no longer exist outside the editor.\n" +
+					"Do you want to close editor?",
+				"Close", "Continue Edit",
+				OptionDialog.WARNING_MESSAGE) == OptionDialog.OPTION_ONE) {
+				provider.dispose();
+			}
+			else {
+				provider.stateChanged(null);
+			}
+			return;
+		}
+
+		if (exists && tableModel.hasChanges()) {
 			if (OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, "Reload Enum Editor?",
-				"The " + objectType + " \"" + objectDataTypeManager.getName() +
-					"\" has been restored.\n" + "\"" + tableModel.getEnum().getDisplayName() +
-					"\" may have changed outside this editor.\n" +
+				"The " + objectType + " \"" + archiveName + "\" has been restored.\n" + "\"" +
+					enuum.getDisplayName() + "\" may have changed outside this editor.\n" +
 					"Do you want to discard edits and reload the Enum?") == OptionDialog.OPTION_TWO) {
 
 				// 'No'; do not discard
@@ -153,6 +164,7 @@ class EnumEditorPanel extends JPanel {
 		}
 
 		// reload the enum
+		this.editedEnumDT = (EnumDataType) enuum.copy(enuum.getDataTypeManager());
 		setFieldInfo(editedEnumDT);
 		tableModel.setEnum(editedEnumDT, false);
 	}

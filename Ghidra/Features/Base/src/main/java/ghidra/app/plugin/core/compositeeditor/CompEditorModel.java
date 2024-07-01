@@ -92,14 +92,24 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			throw new IllegalStateException(
 				"Can't apply edits without a data type or data type manager.");
 		}
-		int transactionID = originalDTM.startTransaction("Edit " + getCompositeName());
+		boolean originalDtExists = originalDTM.contains(originalDt);
+		boolean renamed = false;
+		if (originalDtExists) {
+			String origName = originalDt.getName();
+			String editName = getCompositeName();
+			renamed = !origName.equals(editName);
+		}
+		String action = originalDtExists ? "Edit" : "Create";
+		if (renamed) {
+			action += "/Rename";
+		}
+		String type = (originalDt instanceof Union) ? " Union " : " Structure ";
+		int transactionID = originalDTM.startTransaction(action + type + getCompositeName());
 		try {
-			if (originalDTM.contains(originalDt)) {
-
+			if (originalDtExists) {
 				// Update the original structure.
-				String origName = originalDt.getName();
-				String editName = getCompositeName();
-				if (!origName.equals(editName)) {
+				if (renamed) {
+					String editName = getCompositeName();
 					try {
 						originalDt.setName(editName);
 					}
