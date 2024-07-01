@@ -174,6 +174,9 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @return the bytes read
 	 */
 	public byte[] read(long offset, int size, Reason reason) {
+		if (size == 0) {
+			return new byte[0];
+		}
 		ULongSpanSet uninitialized = bytes.getUninitialized(offset, offset + size - 1);
 		if (uninitialized.isEmpty()) {
 			return readBytes(offset, size, reason);

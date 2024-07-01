@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/compiler_spec.rxg -->
+
+<compiler_spec>
+   <data_organization>
+    <char_type signed="true" />
+    <char_size value="1" />
+    <short_size value="2" />
+    <pointer_size value="4"/>
+    <integer_size value = "4"/>
+    <float_size value="4" />
+    <long_size value="4" />
+    <double_size value="8" />
+  </data_organization>
+  <global>
+    <range space="global"/>
+    <range space="table"/>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="SP" space="ram"/>
+  <default_proto>
+    <prototype name="__wasm" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="500" align="16">
+          <addr offset="0x20000000" space="register"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="500" align="16">
+          <addr offset="0x30000000" space="register"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="register" offset="0x10000000" size="0x10000000"/>
+        <varnode space="register" offset="0x50000000" size="0x10000000"/>
+        <register name="SP"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <callotherfixup targetop="funcEntryCallOther">
+    <pcode dynamic="true">
+      <input name="in_offset" />
+      <input name="locals_offset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="popCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="pushCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="callPrologueCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="callEpilogueCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+</compiler_spec>
