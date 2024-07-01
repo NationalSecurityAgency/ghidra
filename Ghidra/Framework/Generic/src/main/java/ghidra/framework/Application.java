@@ -474,13 +474,13 @@ public class Application {
 				exactFilename);
 		}
 
-		// Allow win_x86_32 to be used for win_x86_64 as fallback
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = getModuleFile(module, "build/os/" + Platform.WIN_X86_32.getDirectoryName(),
+		// Allow win_x86_64 to be used for win_arm_64 as fallback (requires Windows emulation)
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = getModuleFile(module, "build/os/" + Platform.WIN_X86_64.getDirectoryName(),
 				exactFilename);
 		}
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = getModuleFile(module, "os/" + Platform.WIN_X86_32.getDirectoryName(),
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = getModuleFile(module, "os/" + Platform.WIN_X86_64.getDirectoryName(),
 				exactFilename);
 		}
 
@@ -520,12 +520,12 @@ public class Application {
 			file = findModuleFile("os/" + Platform.CURRENT_PLATFORM.getDirectoryName(), path);
 		}
 
-		// Allow win_x86_32 to be used for win_x86_64 as fallback
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = findModuleFile("build/os/" + Platform.WIN_X86_32.getDirectoryName(), path);
+		// Allow win_x86_64 to be used for win_arm_64 as fallback (requires Windows emulation)
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = findModuleFile("build/os/" + Platform.WIN_X86_64.getDirectoryName(), path);
 		}
-		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
-			file = findModuleFile("os/" + Platform.WIN_X86_32.getDirectoryName(), path);
+		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_ARM_64) {
+			file = findModuleFile("os/" + Platform.WIN_X86_64.getDirectoryName(), path);
 		}
 
 		// Allow mac_x86_64 to be used for mac_arm_64 as fallback (requires macOS Rosetta 2)
