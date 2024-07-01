@@ -18,14 +18,20 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A default/unknown C13Section class that we have created for completeness (default switch).
+ * Class for C13Type MERGED_ASSEMBLY_INPUT.
+ * <p>
+ * This temporary class implementation currently extends {@link AbstractUnimplementedC13Section},
+ * but this should be changed to {@link C13Section} when the format is understood and the
+ * implementation is made concrete.
  */
-class UnknownC13Section extends AbstractUnimplementedC13Section {
-	static UnknownC13Section parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
-		return new UnknownC13Section(reader, ignore, monitor);
+class MergedAssemblyInputC13Section extends AbstractUnimplementedC13Section {
+	static MergedAssemblyInputC13Section parse(PdbByteReader reader, boolean ignore,
+			TaskMonitor monitor) {
+		return new MergedAssemblyInputC13Section(reader, ignore, monitor);
 	}
 
-	private UnknownC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
+	private MergedAssemblyInputC13Section(PdbByteReader reader, boolean ignore,
+			TaskMonitor monitor) {
 		super(reader, ignore, monitor);
 	}
 }

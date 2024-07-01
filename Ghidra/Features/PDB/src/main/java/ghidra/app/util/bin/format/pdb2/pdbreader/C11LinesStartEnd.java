@@ -15,21 +15,31 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import ghidra.util.task.TaskMonitor;
-
 /**
- * Class for C13Type FRAMEDATA.
- * <p>
- * This temporary class implementation currently extends {@link AbstractUnimplementedC13Section},
- * but this should be changed to {@link C13Section} when the format is understood and the
- * implementation is made concrete.
+ * An individual PDB C11 Line Start/End record (think these are offsets in a segment)
  */
-class C13FrameData extends AbstractUnimplementedC13Section {
-	static C13FrameData parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
-		return new C13FrameData(reader, ignore, monitor);
+public class C11LinesStartEnd {
+	private long start; // unsigned long
+	private long end; // unsigned long
+
+	public void parse(PdbByteReader reader) throws PdbException {
+		start = reader.parseUnsignedIntVal();
+		end = reader.parseUnsignedIntVal();
 	}
 
-	protected C13FrameData(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
-		super(reader, ignore, monitor);
+	/**
+	 * Returns the start line value
+	 * @return the start value
+	 */
+	public long getStart() {
+		return start;
+	}
+
+	/**
+	 * Returns the end line value
+	 * @return the end value
+	 */
+	public long getEnd() {
+		return end;
 	}
 }

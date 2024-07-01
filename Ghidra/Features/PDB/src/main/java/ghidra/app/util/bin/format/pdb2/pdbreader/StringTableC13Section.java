@@ -24,12 +24,12 @@ import ghidra.util.task.TaskMonitor;
  * but this should be changed to {@link C13Section} when the format is understood and the
  * implementation is made concrete.
  */
-class C13StringTable extends AbstractUnimplementedC13Section {
-	static C13StringTable parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
-		return new C13StringTable(reader, ignore, monitor);
+class StringTableC13Section extends AbstractUnimplementedC13Section {
+	static StringTableC13Section parse(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
+		return new StringTableC13Section(reader, ignore, monitor);
 	}
 
-	protected C13StringTable(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
+	private StringTableC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
 		super(reader, ignore, monitor);
 	}
 }
