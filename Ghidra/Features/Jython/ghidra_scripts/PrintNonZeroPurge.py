@@ -14,6 +14,7 @@
 #  limitations under the License.
 ##
 # Prints out all the functions in the program that have a non-zero stack purge size
+# @runtime Jython
 
 for func in currentProgram.getFunctionManager().getFunctions(currentProgram.evaluateAddress("0"), 1):
   if func.getStackPurgeSize() != 0:

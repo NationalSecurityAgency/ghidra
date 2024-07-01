@@ -19,6 +19,7 @@
 # use only. Please run the Java version in a production environment.
 
 #@category Examples.Python
+#@runtime Jython
 
 from ghidra.app.util.datatype import DataTypeSelectionDialog
 from ghidra.framework.plugintool import PluginTool

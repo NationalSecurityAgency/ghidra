@@ -15,71 +15,17 @@
  */
 package ghidra.jython;
 
-import java.io.*;
-import java.util.regex.Pattern;
+import java.io.PrintWriter;
 
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
+import ghidra.util.classfinder.ExtensionPointProperties;
 
-public class JythonScriptProvider extends GhidraScriptProvider {
-
-	private static final Pattern BLOCK_COMMENT = Pattern.compile("'''");
-
-	@Override
-	public void createNewScript(ResourceFile newScript, String category) throws IOException {
-		PrintWriter writer = new PrintWriter(new FileWriter(newScript.getFile(false)));
-		writeHeader(writer, category);
-		writer.println("");
-		writeBody(writer);
-		writer.println("");
-		writer.close();
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * In Jython this is a triple single quote sequence, "'''".
-	 * 
-	 * @return the Pattern for Jython block comment openings
-	 */
-	@Override
-	public Pattern getBlockCommentStart() {
-		return BLOCK_COMMENT;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * <p>
-	 * In Jython this is a triple single quote sequence, "'''".
-	 * 
-	 * @return the Pattern for Jython block comment openings
-	 */
-	@Override
-	public Pattern getBlockCommentEnd() {
-		return BLOCK_COMMENT;
-	}
-
-	@Override
-	public String getCommentCharacter() {
-		return "#";
-	}
-
-	@Override
-	protected String getCertifyHeaderStart() {
-		return "## ###";
-	}
-
-	@Override
-	protected String getCertificationBodyPrefix() {
-		return "#";
-	}
-
-	@Override
-	protected String getCertifyHeaderEnd() {
-		return "##";
-	}
+/**
+ * A {@link GhidraScriptProvider} used to run Jython scripts
+ */
+@ExtensionPointProperties(priority = 1000) // Enforce high priority so Jython is the default Python provider
+public class JythonScriptProvider extends AbstractPythonScriptProvider {
 
 	@Override
 	public String getDescription() {
@@ -87,8 +33,8 @@ public class JythonScriptProvider extends GhidraScriptProvider {
 	}
 
 	@Override
-	public String getExtension() {
-		return ".py";
+	public String getRuntimeEnvironmentName() {
+		return "Jython";
 	}
 
 	@Override
@@ -105,4 +51,5 @@ public class JythonScriptProvider extends GhidraScriptProvider {
 			throw new GhidraScriptLoadException(e);
 		}
 	}
+
 }

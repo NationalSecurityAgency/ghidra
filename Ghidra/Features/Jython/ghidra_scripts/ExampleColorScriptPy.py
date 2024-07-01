@@ -19,6 +19,7 @@
 # use only. Please run the Java version in a production environment.
 
 #@category Examples.Python
+#@runtime Jython
 
 from ghidra.app.plugin.core.colorizer import ColorizingService
 from ghidra.app.script import GhidraScript

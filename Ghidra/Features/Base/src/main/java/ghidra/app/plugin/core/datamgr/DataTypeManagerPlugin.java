@@ -492,18 +492,12 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void edit(DataType dt) {
-		DataTypeManager dataTypeManager = dt.getDataTypeManager();
-		if (dataTypeManager == null) {
-			throw new IllegalArgumentException(
-				"DataType " + dt.getPathName() + " has no DataTypeManager!  Make sure the " +
-					"given DataType has been resolved by a DataTypeManager");
-		}
-		CategoryPath categoryPath = dt.getCategoryPath();
-		if (categoryPath == null) {
-			throw new IllegalArgumentException(
-				"DataType " + dt.getName() + " has no category path!");
-		}
 		editorManager.edit(dt);
+	}
+
+	@Override
+	public void edit(Structure dt, String fieldName) {
+		editorManager.edit(dt, fieldName);
 	}
 
 	@Override

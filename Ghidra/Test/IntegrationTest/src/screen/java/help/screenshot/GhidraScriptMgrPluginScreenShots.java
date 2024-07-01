@@ -82,7 +82,7 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 			scriptDirs.add(new ResourceFile("/User/home/ghidra_scripts"));
 
 			SaveDialog dialog = new SaveDialog(tool.getToolFrame(), "Save Script", provider,
-				scriptDirs, scriptFile, helpLocation);
+				scriptDirs, scriptFile, new JavaScriptProvider(), helpLocation);
 
 			tool.showDialog(dialog);
 		}, false);
@@ -208,7 +208,7 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 			scriptDirs.add(new ResourceFile("/User/home/ghidra_scripts"));
 
 			SaveDialog dialog = new SaveDialog(tool.getToolFrame(), "Rename Script", provider,
-				scriptDirs, scriptFile, helpLocation);
+				scriptDirs, scriptFile, new JavaScriptProvider(), helpLocation);
 
 			tool.showDialog(dialog);
 		}, false);

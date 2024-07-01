@@ -46,12 +46,13 @@ public class ScriptInfo {
 	static final String AT_KEYBINDING = "@keybinding";
 	static final String AT_MENUPATH = "@menupath";
 	static final String AT_TOOLBAR = "@toolbar";
+	static final String AT_RUNTIME = "@runtime";
 
 	// omit from METADATA to avoid pre-populating in new scripts
 	private static final String AT_IMPORTPACKAGE = "@importpackage";
 
 	public static final String[] METADATA =
-		{ AT_AUTHOR, AT_CATEGORY, AT_KEYBINDING, AT_MENUPATH, AT_TOOLBAR, };
+		{ AT_AUTHOR, AT_CATEGORY, AT_KEYBINDING, AT_MENUPATH, AT_TOOLBAR, AT_RUNTIME };
 
 	private GhidraScriptProvider provider;
 	private ResourceFile sourceFile;
@@ -68,6 +69,7 @@ public class ScriptInfo {
 	private String toolbar;
 	private ImageIcon toolbarImage;
 	private String importpackage;
+	private String runtime;
 
 	/**
 	 * Constructs a new script.
@@ -94,6 +96,7 @@ public class ScriptInfo {
 		toolbarImage = null;
 		importpackage = null;
 		keybindingErrorMessage = null;
+		runtime = null;
 	}
 
 	/**
@@ -130,6 +133,26 @@ public class ScriptInfo {
 	}
 
 	/**
+	 * Returns the name of the required runtime environment
+	 * @return the name of the required runtime environment
+	 * @see GhidraScriptProvider#getRuntimeEnvironmentName()
+	 */
+	public String getRuntimeEnvironmentName() {
+		parseHeader();
+		return runtime;
+	}
+
+	/**
+	 * Returns the {@link GhidraScriptProvider} currently associated with the script
+	 * @return The {@link GhidraScriptProvider} currently associated with the script
+	 */
+	public GhidraScriptProvider getProvider() {
+		parseHeader();
+		provider = GhidraScriptUtil.getProvider(sourceFile);
+		return provider;
+	}
+
+	/**
 	 * Returns true if the script has compile errors.
 	 * @return true if the script has compile errors
 	 */
@@ -161,6 +184,16 @@ public class ScriptInfo {
 	 */
 	public void setDuplicate(boolean isDuplicate) {
 		this.isDuplicate = isDuplicate;
+	}
+
+	/**
+	 * Returns true if this script has an {@link UnsupportedScriptProvider}. This will typically
+	 * happen when a script defines a wrong {@link ScriptInfo#AT_RUNTIME} tag.
+	 * 
+	 * @return True if this script has an {@link UnsupportedScriptProvider}; otherwise, false
+	 */
+	public boolean hasUnsupportedProvider() {
+		return provider instanceof UnsupportedScriptProvider;
 	}
 
 	/**
@@ -328,6 +361,9 @@ public class ScriptInfo {
 			}
 			else if (line.startsWith(AT_IMPORTPACKAGE)) {
 				importpackage = getTagValue(AT_IMPORTPACKAGE, line);
+			}
+			else if (line.startsWith(AT_RUNTIME)) {
+				runtime = getTagValue(AT_RUNTIME, line);
 			}
 		}
 		catch (Exception e) {
@@ -514,6 +550,7 @@ public class ScriptInfo {
 		String htmlCategory = bold("Category:") + space + escapeHTML(toString(category));
 		String htmlKeyBinding = bold("Key Binding:") + space + getKeybindingToolTip();
 		String htmlMenuPath = bold("Menu Path:") + space + escapeHTML(toString(menupath));
+		String htmlRuntime = bold("Runtime Environment:") + space + escapeHTML(toString(runtime));
 
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("<h3>").append(space).append(escapeHTML(getName())).append("</h3>");
@@ -528,6 +565,8 @@ public class ScriptInfo {
 		buffer.append(space).append(htmlKeyBinding);
 		buffer.append(HTML_NEW_LINE);
 		buffer.append(space).append(htmlMenuPath);
+		buffer.append(HTML_NEW_LINE);
+		buffer.append(space).append(htmlRuntime);
 		buffer.append(HTML_NEW_LINE);
 		buffer.append(HTML_NEW_LINE);
 		return wrapAsHTML(buffer.toString());
@@ -560,7 +599,7 @@ public class ScriptInfo {
 	 * @return true if the script either has compiler errors, or is a duplicate
 	 */
 	public boolean hasErrors() {
-		return isCompileErrors() || isDuplicate();
+		return isCompileErrors() || isDuplicate() || hasUnsupportedProvider();
 	}
 
 	/**
@@ -573,6 +612,10 @@ public class ScriptInfo {
 
 		if (isDuplicate()) {
 			return "Script is a duplicate of another script";
+		}
+
+		if (hasUnsupportedProvider()) {
+			return "Script's @runtime tag specifies an unsupported runtime environment";
 		}
 
 		return null;

@@ -34,6 +34,11 @@ public enum Platform {
 	 * Identifies a Windows x86 64-bit OS.
 	 */
 	WIN_X86_64(OperatingSystem.WINDOWS, Architecture.X86_64, "win_x86_64", ".dll", ".exe"),
+	
+	/**
+	 * Identifies a Windows ARM 64-bit OS.
+	 */
+	WIN_ARM_64(OperatingSystem.WINDOWS, Architecture.ARM_64, "win_arm_64", ".dll", ".exe"),
 
 	/**
 	 * Identifies a Linux x86 32-bit OS.
