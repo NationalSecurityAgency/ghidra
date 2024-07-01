@@ -1109,8 +1109,9 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	public static Set<DockingActionIf> getActionsByOwnerAndName(Tool tool, String owner,
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
-		return ownerActions.stream().filter(action -> action.getName().equals(name)).collect(
-			Collectors.toSet());
+		return ownerActions.stream()
+				.filter(action -> action.getName().equals(name))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -1381,17 +1382,33 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 * component with the specified name.
 	 *
 	 * @param provider the provider of the component to search
-	 * @param componentName the name of the desired component
+	 * @param name the name of the desired component
 	 *
 	 * @return the component, or null if not found
 	 */
-	public static Component findComponentByName(DialogComponentProvider provider,
-			String componentName) {
-		return findComponentByName(provider.getComponent(), componentName, false);
+	public static Component findComponentByName(DialogComponentProvider provider, String name) {
+		return findComponentByName(provider.getComponent(), name, false);
 	}
 
 	public static JButton findButtonByText(DialogComponentProvider provider, String text) {
 		return findButtonByText(provider.getComponent(), text);
+	}
+
+	/**
+	 * Searches the component and subcomponents of the indicated provider and returns the
+	 * component with the specified name.
+	 *
+	 * @param provider the provider of the component to search
+	 * @param name the name of the desired component
+	 *
+	 * @return the component, or null if not found
+	 */
+	public static AbstractButton findButtonByName(DialogComponentProvider provider, String name) {
+		Component c = findComponentByName(provider, name);
+		if (!(c instanceof AbstractButton button)) {
+			return null;
+		}
+		return button;
 	}
 
 	public static JButton findButtonByIcon(DialogComponentProvider provider, Icon icon) {
