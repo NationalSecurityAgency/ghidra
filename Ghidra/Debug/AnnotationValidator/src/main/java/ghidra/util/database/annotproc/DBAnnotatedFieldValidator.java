@@ -25,7 +25,7 @@ import ghidra.util.database.annot.DBAnnotatedField;
 
 /**
  * The {@code DBAnnotatedFieldValidator} class validates fields annotated with
- * {@code @DBAnnotatedField} to ensure they meet the criteria required for database fields
+ * {@link DBAnnotatedField} to ensure they meet the criteria required for database fields
  * in Ghidra. It extends the {@code AbstractDBAnnotationValidator} to provide additional
  * validation logic specific to database field annotations.
  */
@@ -71,7 +71,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Associates a primitive type and its boxed type with the specified codec type in the map.
+	 * Associate a primitive type and its boxed type with the specified codec type in the map.
 	 * 
 	 * @param map the map linking java types to their corresponding codec types
 	 * @param kind the primitive type kind
@@ -87,7 +87,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Associates a specified class type with the specified codec type in the map.
+	 * Associate a specified class type with the specified codec type in the map.
 	 * 
 	 * @param map the map linking Java types to their corresponding codec types
 	 * @param cls the class type
@@ -100,7 +100,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Associates a primitive array type with the specified codec type inthe map.
+	 * Associate a primitive array type with the specified codec type inthe map.
 	 * 
 	 * @param map the map linking Java types to their corresponding codec types
 	 * @param kind the primitive type kind
@@ -115,7 +115,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Validates the annotated field to ensure it meets the requirements for database fields.
+	 * Validate the annotated field to ensure it meets the requirements for database fields.
 	 * It performs the following checks:
 	 * <ul>
 	 * 	<li>The field must not be declared as {@code final}.</li>
@@ -157,7 +157,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Returns the codec type element specified in the {@code @DBAnnotatedField} annotation
+	 * Returns the codec type element specified in the {@link DBAnnotatedField} annotation
 	 * for the field, or the default codec type if none is specified.
 	 * 
 	 * @return the codec type element for the field
@@ -178,7 +178,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Checks the codec types associated with the field to ensure they meet the necessary requirements.
+	 * Check the codec types associated with the field to ensure they meet the necessary requirements.
 	 * 
 	 * @param objectType the type of the enclosing object
 	 */

@@ -31,7 +31,7 @@ public class DBAnnotatedColumnValidator extends AbstractDBAnnotationValidator {
 	final VariableElement column;
 
 	/**
-	 * Constructs a new {@code DBAnnotatedColumnValidator} with the specified validation context and the column element.
+	 * Construct a new {@code DBAnnotatedColumnValidator} with the specified validation context and the column element.
 	 * @param ctx
 	 * @param column
 	 */
@@ -41,7 +41,7 @@ public class DBAnnotatedColumnValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Validates the annotated column field to ensure it meets the requirements for database columns.
+	 * Validate the annotated column field to ensure it meets the requirements for database columns.
 	 * It performs the following checks:
 	 * <ul>
 	 * <li>The field must be of the type specified by {@code ctx.DB_OBJECT_COLUMN_ELEM}.</li>

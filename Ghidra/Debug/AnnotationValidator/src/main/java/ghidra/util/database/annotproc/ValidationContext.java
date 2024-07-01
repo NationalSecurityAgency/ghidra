@@ -39,7 +39,7 @@ public class ValidationContext {
 	final TypeElement ENUM_ELEM;
 
 	/**
-	 * Constructs a Validation Context with the specified processing environment/
+	 * Construct a Validation Context with the specified processing environment/
 	 *
 	 * @param env the processing environment
 	 */
@@ -49,17 +49,18 @@ public class ValidationContext {
 		messager = env.getMessager();
 
 		LIST_ELEM = elementUtils.getTypeElement(List.class.getCanonicalName());
-		DB_ANNOTATED_OBJECT_ELEM = elementUtils.getTypeElement("ghidra.util.database.DBAnnotatedObject");
+		DB_ANNOTATED_OBJECT_ELEM =
+			elementUtils.getTypeElement("ghidra.util.database.DBAnnotatedObject");
 		DB_OBJECT_COLUMN_ELEM = elementUtils.getTypeElement("ghidra.util.database.DBObjectColumn");
 		DB_FIELD_CODEC_ELEM = elementUtils.getTypeElement(
-				"ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec");
+			"ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec");
 		DEFAULT_CODEC_ELEM = elementUtils.getTypeElement(
-				DBAnnotatedField.class.getCanonicalName() + ".DefaultCodec");
+			DBAnnotatedField.class.getCanonicalName() + ".DefaultCodec");
 		ENUM_ELEM = elementUtils.getTypeElement(Enum.class.getCanonicalName());
 	}
 
 	/**
-	 * Checks if t1 is a subclass of t2.
+	 * Check if t1 is a subclass of t2.
 	 * 
 	 * @param t1 the potential subclass
 	 * @param t2 the potential superclass
@@ -70,7 +71,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Checks if the field has the specified type.
+	 * Check if the field has the specified type.
 	 * 
 	 * @param field the field element
 	 * @param type  the type element
@@ -81,7 +82,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Checks if the field has the specified type.
+	 * Check if the field has the specified type.
 	 * 
 	 * @param field the field element
 	 * @param type  the type mirror
@@ -94,7 +95,8 @@ public class ValidationContext {
 			if (typeUtils.isSameType(fieldType, unboxed)) {
 				return true;
 			}
-		} catch (IllegalArgumentException e) {
+		}
+		catch (IllegalArgumentException e) {
 			// Eh, I guess it's not unboxable
 		}
 
@@ -114,7 +116,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Checks if t1 is capturable by t2.
+	 * Check if t1 is capturable by t2.
 	 * 
 	 * @param t1 is the type to check
 	 * @param t2 the capture target type
@@ -137,7 +139,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Checks if the type is an enum type.
+	 * Check if the type is an enum type.
 	 * 
 	 * @param t the type mirror to check
 	 * @return true if the type is an enum type, false otherwise
@@ -151,7 +153,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Finds the supertype of a set of declared types that matches the specified
+	 * Find the supertype of a set of declared types that matches the specified
 	 * super type.
 	 * 
 	 * @param types     the set of declared types
@@ -178,7 +180,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Finds the supertype of a declared type that matches the specified super type
+	 * Find the supertype of a declared type that matches the specified super type
 	 * element.
 	 * 
 	 * @param type      the declared type
@@ -190,7 +192,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Finds the supertype of a type element that matches the specified super type
+	 * Find the supertype of a type element that matches the specified super type
 	 * element.
 	 * 
 	 * @param elem      the type element
@@ -202,7 +204,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Converts the type arguments of the super type element to a map.
+	 * Convert the type arguments of the super type element to a map.
 	 * 
 	 * @param superElem the super type element
 	 * @param superType the declared super type
@@ -231,7 +233,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Gets the type arguments of a type element as a map.
+	 * Get the type arguments of a type element as a map.
 	 * 
 	 * @param elem      the type element
 	 * @param superElem the super type element
@@ -242,7 +244,7 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Formats the given type mirror as a string.
+	 * Format the given type mirror as a string.
 	 * 
 	 * @param type the type mirror to format
 	 * @return the formatted type mirror as a string
@@ -255,8 +257,7 @@ public class ValidationContext {
 }
 
 /**
- * Visitor class for formatting {@link TypeMirror} instances into a readable
- * string
+ * Class for formatting {@link TypeMirror} instances into a readable string
  */
 class FormatVisitor implements TypeVisitor<Void, Void> {
 	StringBuffer buf = new StringBuffer();

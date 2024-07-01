@@ -30,7 +30,7 @@ import ghidra.util.database.annot.*;
  * A compile-time annotation processor for {@link DBAnnotatedObject}-related annotations.
  * 
  * This processor performs compile-time validation checks on annotations related to 
- * {@code DBAnnotatedObject}.
+ * {@link DBAnnotatedObject}.
  * 
  * Currently just performs compile-time checks. It does not generate any code, but perhaps one day,
  * it will.
@@ -43,7 +43,7 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	private ValidationContext ctx;
 
 	/**
-	 * Initializes the processor with the given preprocessing environment.
+	 * Initialize the processor with the given preprocessing environment.
 	 * 
 	 * @param env the processing environment
 	 */
@@ -55,7 +55,7 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	}
 
 	/**
-	 * Processes the specified annotations for the current round of processing..
+	 * Process the specified annotations for the current round of processing..
 	 * 
 	 * @param annotations the set of annotations to process
 	 * @param roundEnv the environment for information about the current and prior round
@@ -92,7 +92,7 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	}
 
 	/**
-	 * Provides completion suggestion for the specified element, annotation, and member.
+	 * Provide completion suggestion for the specified element, annotation, and member.
 	 * 
 	 * @param element the element being annotated
 	 * @param annotation the annotation being processed

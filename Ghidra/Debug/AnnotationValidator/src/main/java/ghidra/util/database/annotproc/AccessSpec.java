@@ -28,16 +28,12 @@ public enum AccessSpec {
 
 	private final int level;
 
-	/**
-	 * Constructs an {@code AccessSpec} with the specified access level.
-	 * @param level
-	 */
 	private AccessSpec(int level) {
 		this.level = level;
 	}
 
 	/**
-	 * Checks if the second permits the same or more access than the first
+	 * Check if the second permits the same or more access than the first
 	 * 
 	 * @param first the first
 	 * @param second the second

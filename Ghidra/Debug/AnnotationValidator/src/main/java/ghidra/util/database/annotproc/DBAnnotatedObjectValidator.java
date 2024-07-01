@@ -36,7 +36,7 @@ public class DBAnnotatedObjectValidator {
 	private final Map<String, DBAnnotatedColumnValidator> columnsByName = new LinkedHashMap<>();
 
 	/**
-	 * Constructs a new validator for the given type element within the specified validation context
+	 * Construct a new validator for the given type element within the specified validation context
 	 * 
 	 * @param ctx the validation context
 	 * @param type the type element to be validated
@@ -47,7 +47,7 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Adds a field annotated with {@link DBAnnotatedField} to be validator.
+	 * Add a field annotated with {@link DBAnnotatedField} to be validator.
 	 * 
 	 * @param field the field element annotated with {@link DBAnnotatedField}
 	 */
@@ -58,7 +58,7 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Adds a column annotated with {@link DBAnnotatedColumn} to the validator.
+	 * Add a column annotated with {@link DBAnnotatedColumn} to the validator.
 	 * 
 	 * @param column the field element annotated with {@link DBAnnotatedColumn}
 	 */
@@ -69,8 +69,8 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Validates the annotated fields, columns, and the type element itself.
-	 * This method checks for various annotation constraints and consistency rules.
+	 * Validate the annotated fields, columns, and the type element itself.
+	 * Checks for various annotation constraints and consistency rules.
 	 */
 	public void validate() {
 		DBAnnotatedObjectInfo annotation = type.getAnnotation(DBAnnotatedObjectInfo.class);
@@ -109,7 +109,7 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Validates all fields annotated with {@link DBAnnotatedField}.
+	 * Validate all fields annotated with {@link DBAnnotatedField}.
 	 */
 	protected void validateFields() {
 		for (DBAnnotatedFieldValidator fv : fieldsByName.values()) {
@@ -118,7 +118,7 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Validates all columns annotated with {@link DBAnnotatedColumn}.
+	 * Validate all columns annotated with {@link DBAnnotatedColumn}.
 	 */
 	protected void validateColumns() {
 		for (DBAnnotatedColumnValidator cv : columnsByName.values()) {
@@ -127,7 +127,7 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Checks for missing corresponding annotations between fields and columns.
+	 * Check for missing corresponding annotations between fields and columns.
 	 */
 	protected void checkMissing() {
 		Set<String> names = new LinkedHashSet<>();
@@ -158,7 +158,7 @@ public class DBAnnotatedObjectValidator {
 	}
 
 	/**
-	 * Checks that the access specifiers of the field and column are compatible.
+	 * Check that the access specifiers of the field and column are compatible.
 	 * @param field the field element
 	 * @param column the column element
 	 * @param name the name of the column
