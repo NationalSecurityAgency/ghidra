@@ -53,6 +53,11 @@ public class eBPF_ElfRelocationHandler
 			return RelocationResult.SKIPPED;
 		}
 
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+
 		long new_value;
 		int byteLength;
 
@@ -67,7 +72,7 @@ public class eBPF_ElfRelocationHandler
 			}
 			case R_BPF_64_32: {
 				byteLength = 8;
-				
+
 				// if we have, e.g, non-static function, it will be marked in the relocation table
 				// and indexed in the symbol table and it's easy to calculate the pc-relative offset
 				long instr_next = relocationAddress.add(0x8).getAddressableWordOffset();

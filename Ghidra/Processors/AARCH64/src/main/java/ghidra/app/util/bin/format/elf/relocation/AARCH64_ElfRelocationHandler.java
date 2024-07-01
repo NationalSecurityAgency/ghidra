@@ -50,20 +50,45 @@ public class AARCH64_ElfRelocationHandler
 			ElfRelocation relocation, AARCH64_ElfRelocationType type, Address relocationAddress,
 			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
-
+		
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 		boolean isBigEndianInstructions =
 			program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();
 
 		long addend = relocation.getAddend(); // will be 0 for REL case
-
 		long offset = relocationAddress.getOffset();
+		
 		int symbolIndex = relocation.getSymbolIndex();
 		boolean is64bit = true;
 		boolean overflowCheck = true; // *_NC type relocations specify "no overflow check"
 		long newValue = 0;
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+			case R_AARCH64_P32_RELATIVE:
+				is64bit = false;
+			case R_AARCH64_RELATIVE:
+				if (elfRelocationContext.extractAddend()) {
+					addend = getValue(memory, relocationAddress, is64bit);
+				}
+				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
+				byteLength = setValue(memory, relocationAddress, newValue, is64bit);
+				return new RelocationResult(Status.APPLIED, byteLength);
+			case R_AARCH64_P32_COPY:
+			case R_AARCH64_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
 
 		switch (type) {
 			// .xword: (S+A)
@@ -324,19 +349,18 @@ public class AARCH64_ElfRelocationHandler
 				// GOT/PLT symbolValue corresponds to PLT entry for which we need to
 				// create and external function location. Don't bother changing
 				// GOT entry bytes if it refers to .plt block
-				Address symAddress = elfRelocationContext.getSymbolAddress(sym);
-				MemoryBlock block = memory.getBlock(symAddress);
+
+				MemoryBlock block = memory.getBlock(symbolAddr);
 				// TODO: jump slots are always in GOT - not sure why PLT check is done
 				boolean isPltSym = block != null && block.getName().startsWith(".plt");
 				boolean isExternalSym =
 					block != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName());
 				if (!isPltSym) {
-					byteLength =
-						setValue(memory, relocationAddress, symAddress.getOffset(), is64bit);
+					byteLength = setValue(memory, relocationAddress, symbolValue, is64bit);
 				}
 				if ((isPltSym || isExternalSym) && !StringUtils.isBlank(symbolName)) {
 					Function extFunction = elfRelocationContext.getLoadHelper()
-							.createExternalFunctionLinkage(symbolName, symAddress, null);
+							.createExternalFunctionLinkage(symbolName, symbolAddr, null);
 					if (extFunction == null) {
 						markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 							"Failed to create external function", elfRelocationContext.getLog());
@@ -344,24 +368,6 @@ public class AARCH64_ElfRelocationHandler
 					}
 				}
 				break;
-			}
-
-			case R_AARCH64_P32_RELATIVE:
-				is64bit = false;
-			case R_AARCH64_RELATIVE: {
-				if (elfRelocationContext.extractAddend()) {
-					addend = getValue(memory, relocationAddress, is64bit);
-				}
-				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
-				byteLength = setValue(memory, relocationAddress, newValue, is64bit);
-				break;
-			}
-
-			case R_AARCH64_P32_COPY:
-			case R_AARCH64_COPY: {
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
 			}
 
 			default: {

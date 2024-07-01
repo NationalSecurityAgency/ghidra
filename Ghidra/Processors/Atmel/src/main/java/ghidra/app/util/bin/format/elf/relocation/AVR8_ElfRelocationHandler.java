@@ -43,27 +43,42 @@ public class AVR8_ElfRelocationHandler
 			ElfRelocation relocation, AVR8_ElfRelocationType type, Address relocationAddress,
 			ElfSymbol elfSymbol, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
+		
+		switch (type) {
+			case R_AVR_DIFF8:
+			case R_AVR_DIFF16:
+			case R_AVR_DIFF32:
+				// nothing to do
+				return RelocationResult.SKIPPED;
+			default:
+				break;
+		}
 
 		// WARNING: symbolValue is not in bytes.
 		// It is an addressable word offset within the symbols address space
 
 		Program program = elfRelocationContext.getProgram();
+
+		int symbolIndex = relocation.getSymbolIndex();
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+		
 		Memory memory = program.getMemory();
 
 		long addend = relocation.getAddend(); // will be 0 for REL case
 
 		// WARNING: offset is in bytes be careful, word address potentially with byte indexes
 		long offset = relocationAddress.getOffset();
-
-		int symbolIndex = relocation.getSymbolIndex();
+				
 		int oldValue = memory.getShort(relocationAddress);
 
 		int newValue = 0;
 		int byteLength = 2; // most relocations affect 2-bytes (change if different)
 
 		switch (type) {
-			case R_AVR_NONE:
-				return RelocationResult.SKIPPED;
 
 			case R_AVR_32:
 				newValue = (((int) symbolValue + (int) addend) & 0xffffffff);
@@ -298,12 +313,6 @@ public class AVR8_ElfRelocationHandler
 				newValue = (oldValue & 0xff30) | (newValue & 0xF) | ((newValue & 0x30) << 2);
 
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
-				break;
-
-			case R_AVR_DIFF8:
-			case R_AVR_DIFF16:
-			case R_AVR_DIFF32:
-				// nothing to do
 				break;
 
 			case R_AVR_LDS_STS_16:

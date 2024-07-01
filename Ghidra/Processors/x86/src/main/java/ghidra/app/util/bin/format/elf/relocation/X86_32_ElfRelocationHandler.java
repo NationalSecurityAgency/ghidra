@@ -62,6 +62,65 @@ public class X86_32_ElfRelocationHandler
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 		int value;
 
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+			case R_386_RELATIVE:
+				long base = program.getImageBase().getOffset();
+				if (elfRelocationContext.getElfHeader().isPreLinked()) {
+					// adjust prelinked value that is already in memory
+					value = memory.getInt(relocationAddress) +
+						(int) elfRelocationContext.getImageBaseWordAdjustmentOffset();
+				}
+				else {
+					value = (int) (base + addend);
+				}
+				memory.setInt(relocationAddress, value);
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			case R_386_IRELATIVE:
+				// NOTE: We don't support this since the code actually uses a function to 
+				// compute the relocation value (i.e., indirect)
+				markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+					"Indirect computed relocation not supported", elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+
+			case R_386_GOTPC:
+				// similar to R_386_PC32 but uses .got address instead of symbol address
+				try {
+					long dotgot = elfRelocationContext.getGOTValue();
+					value = (int) (dotgot + addend - offset);
+					memory.setInt(relocationAddress, value);
+				}
+				catch (NotFoundException e) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						e.getMessage(), elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			case R_386_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+				
+			// Thread Local Symbol relocations (unimplemented concept)
+			case R_386_TLS_DTPMOD32:
+			case R_386_TLS_DTPOFF32:
+			case R_386_TLS_TPOFF32:
+			case R_386_TLS_TPOFF:
+				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
+					"Thread Local Symbol relocation not supported", elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+				
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+				
 		switch (type) {
 			case R_386_32:
 				value = (int) (symbolValue + addend);
@@ -94,54 +153,6 @@ public class X86_32_ElfRelocationHandler
 				try {
 					long dotgot = elfRelocationContext.getGOTValue();
 					value = (int) symbolValue + (int) addend - (int) dotgot;
-					memory.setInt(relocationAddress, value);
-				}
-				catch (NotFoundException e) {
-					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
-						e.getMessage(), elfRelocationContext.getLog());
-					return RelocationResult.FAILURE;
-				}
-				break;
-			case R_386_COPY:
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-			// Thread Local Symbol relocations (unimplemented concept)
-			case R_386_TLS_DTPMOD32:
-			case R_386_TLS_DTPOFF32:
-			case R_386_TLS_TPOFF32:
-			case R_386_TLS_TPOFF:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Thread Local Symbol relocation not supported", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-
-			// cases which do not use symbol value
-
-			case R_386_RELATIVE:
-				long base = program.getImageBase().getOffset();
-				if (elfRelocationContext.getElfHeader().isPreLinked()) {
-					// adjust prelinked value that is already in memory
-					value = memory.getInt(relocationAddress) +
-						(int) elfRelocationContext.getImageBaseWordAdjustmentOffset();
-				}
-				else {
-					value = (int) (base + addend);
-				}
-				memory.setInt(relocationAddress, value);
-				break;
-
-			case R_386_IRELATIVE:
-				// NOTE: We don't support this since the code actually uses a function to 
-				// compute the relocation value (i.e., indirect)
-				markAsError(program, relocationAddress, type, symbolName, symbolIndex,
-					"Indirect computed relocation not supported", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-
-			case R_386_GOTPC:
-				// similar to R_386_PC32 but uses .got address instead of symbol address
-				try {
-					long dotgot = elfRelocationContext.getGOTValue();
-					value = (int) (dotgot + addend - offset);
 					memory.setInt(relocationAddress, value);
 				}
 				catch (NotFoundException e) {
