@@ -2495,4 +2495,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 		((ProgramCompilerSpec) compilerSpec).registerProgramOptions();
 	}
+
+	@Override
+	protected void domainObjectRestored() {
+		super.domainObjectRestored();
+		getDataTypeManager().notifyRestored();
+	}
 }

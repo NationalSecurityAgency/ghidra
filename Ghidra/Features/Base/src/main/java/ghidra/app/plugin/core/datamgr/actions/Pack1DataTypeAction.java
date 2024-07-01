@@ -79,7 +79,7 @@ public class Pack1DataTypeAction extends DockingAction {
 		boolean commit = false;
 		try {
 			// start a transaction
-			transactionID = dataTypeManager.startTransaction("pack of " + dataType.getName());
+			transactionID = dataTypeManager.startTransaction("Pack(1) " + dataType.getName());
 			packDataType(dataType);
 			commit = true;
 		}

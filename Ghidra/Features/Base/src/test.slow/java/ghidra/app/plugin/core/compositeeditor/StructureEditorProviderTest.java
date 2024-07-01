@@ -108,11 +108,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	// Test Undo / Redo of program.
 	@Test
 	public void testModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			init(complexStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Change the structure
 			runSwingLater(() -> {
@@ -165,7 +163,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
@@ -173,7 +170,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	// This should close the edit session.
 	@Test
 	public void testProgramRestoreRemovesEditedDt() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			Structure s1 = new StructureDataType("s1", 0);
@@ -197,7 +193,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			final Structure myS1Structure = s1Struct;
 
 			init(myS1Structure, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Change the structure.
 			runSwingLater(() -> {
@@ -232,7 +227,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
@@ -240,7 +234,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	// program so it goes away. This should close the edit session.
 	@Test
 	public void testProgramRestoreRemovesEditedDtComp() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			Structure s1 = new StructureDataType("s1", 0);
@@ -268,7 +261,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			assertTrue(s2.isEquivalent(myS2Structure));
 
 			init(myS2Structure, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Change the structure.
 			runSwing(() -> {
@@ -303,7 +295,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
@@ -311,14 +302,12 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	// so it goes away. The editor stays since the structure existed previously, but editor reloads.
 	@Test
 	public void testProgramRestoreRemovesEditedComponentDtYes() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			Structure myStruct = new StructureDataType("myStruct", 0);
 			myStruct.add(new WordDataType());
 
 			init(emptyStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Add the data type so that we can undo its add.
 			boolean commit = true;
@@ -371,7 +360,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
@@ -379,14 +367,12 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	// so it goes away. The editor stays since the structure existed previously, but doesn't reload.
 	@Test
 	public void testProgramRestoreRemovesEditedComponentDtNo() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			Structure myStruct = new StructureDataType("myStruct", 0);
 			myStruct.add(new WordDataType());
 
 			init(emptyStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Add the data type so that we can undo its add.
 			boolean commit = true;
@@ -438,45 +424,37 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
 	// Test Undo / Redo of program.
 	@Test
 	public void testUnModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		try {
-			init(complexStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
+		init(complexStructure, pgmTestCat, false);
 
-			// Change the structure
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new DefaultActionContext());
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
-			waitForSwing();
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
-			// Apply the changes
-			invoke(applyAction);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
-			// Undo the apply
-			undo(program);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
-			// Redo the apply
-			redo(program);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
-		}
-		finally {
-			program.removeListener(restoreListener);
-		}
+		// Change the structure
+		runSwingLater(() -> {
+			getTable().requestFocus();
+			setSelection(new int[] { 4, 5 });
+			deleteAction.actionPerformed(new DefaultActionContext());
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		});
+		waitForSwing();
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
+		// Apply the changes
+		invoke(applyAction);
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
+		// Undo the apply
+		undo(program);
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
+		// Redo the apply
+		redo(program);
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 	}
 
 	@Test

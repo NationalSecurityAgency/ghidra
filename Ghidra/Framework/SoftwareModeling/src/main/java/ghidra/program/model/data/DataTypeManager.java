@@ -27,6 +27,8 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.ExceptionalCallback;
+import utility.function.ExceptionalSupplier;
 
 /**
  * Interface for Managing data types.
@@ -383,6 +385,72 @@ public interface DataTypeManager {
 	 * @param commit true if changes are committed, false if changes in transaction are revoked
 	 */
 	public void endTransaction(int transactionID, boolean commit);
+
+	/**
+	 * Performs the given callback inside of a transaction.  Use this method in place of the more
+	 * verbose try/catch/finally semantics.
+	 * <p>
+	 * <pre>
+	 * program.withTransaction("My Description", () -> {
+	 * 	// ... Do something
+	 * });
+	 * </pre>
+	 * 
+	 * <p>
+	 * Note: the transaction created by this method will always be committed when the call is 
+	 * finished.  If you need the ability to abort transactions, then you need to use the other 
+	 * methods on this interface.
+	 * 
+	 * @param description brief description of transaction
+	 * @param callback the callback that will be called inside of a transaction
+	 * @throws E any exception that may be thrown in the given callback
+	 */
+	public default <E extends Exception> void withTransaction(String description,
+			ExceptionalCallback<E> callback) throws E {
+		int id = startTransaction(description);
+		try {
+			callback.call();
+		}
+		finally {
+			endTransaction(id, true);
+		}
+	}
+
+	/**
+	 * Calls the given supplier inside of a transaction.  Use this method in place of the more
+	 * verbose try/catch/finally semantics.
+	 * <p>
+	 * <pre>
+	 * program.withTransaction("My Description", () -> {
+	 * 	// ... Do something
+	 * 	return result;
+	 * });
+	 * </pre>
+	 * <p>
+	 * If you do not need to supply a result, then use 
+	 * {@link #withTransaction(String, ExceptionalCallback)} instead.
+	 * 
+	 * @param <E> the exception that may be thrown from this method 
+	 * @param <T> the type of result returned by the supplier
+	 * @param description brief description of transaction
+	 * @param supplier the supplier that will be called inside of a transaction
+	 * @return the result returned by the supplier
+	 * @throws E any exception that may be thrown in the given callback
+	 */
+	public default <E extends Exception, T> T withTransaction(String description,
+			ExceptionalSupplier<T, E> supplier) throws E {
+		T t = null;
+		boolean success = false;
+		int id = startTransaction(description);
+		try {
+			t = supplier.get();
+			success = true;
+		}
+		finally {
+			endTransaction(id, success);
+		}
+		return t;
+	}
 
 	/**
 	 * Force all pending notification events to be flushed

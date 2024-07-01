@@ -29,7 +29,6 @@ import ghidra.util.Msg;
 
 public class PackDataTypeAction extends DockingAction {
 
-
 	public PackDataTypeAction(DataTypeManagerPlugin plugin) {
 		super("Pack Data Type", plugin.getName());
 		setPopupMenuData(new MenuData(new String[] { "Pack (default)" }, "Edit"));
@@ -100,20 +99,20 @@ public class PackDataTypeAction extends DockingAction {
 	private void alignDataType(DataType dataType, DataOrganization dataOrganization) {
 		DataTypeManager dataTypeManager = dataType.getDataTypeManager();
 		if (dataTypeManager == null) {
-			Msg.error(this, "Can't align data type " + dataType.getName() +
-				" without a data type manager.");
+			Msg.error(this,
+				"Can't align data type " + dataType.getName() + " without a data type manager.");
 			return;
 		}
 		if (!(dataType instanceof Structure)) {
-			Msg.error(this, "Can't align data type " + dataType.getName() +
-				". It's not a structure.");
+			Msg.error(this,
+				"Can't align data type " + dataType.getName() + ". It's not a structure.");
 			return;
 		}
 		int transactionID = -1;
 		boolean commit = false;
 		try {
 			// start a transaction
-			transactionID = dataTypeManager.startTransaction("align " + dataType.getName());
+			transactionID = dataTypeManager.startTransaction("Pack " + dataType.getName());
 			((Structure) dataType).setPackingEnabled(true);
 			commit = true;
 		}

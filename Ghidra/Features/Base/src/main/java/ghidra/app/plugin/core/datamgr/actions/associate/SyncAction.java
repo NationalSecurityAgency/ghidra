@@ -131,7 +131,8 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 			monitor.setMessage("Finding out-of-sync types");
 			List<DataTypeSyncInfo> outOfSynchDataTypes = synchronizer.findOutOfSynchDataTypes();
 
-			removeAndUpdateOutOfSyncInTimeOnlyDataTypes(synchronizer, synchronizer.findOutOfSynchDataTypes());
+			removeAndUpdateOutOfSyncInTimeOnlyDataTypes(synchronizer,
+				synchronizer.findOutOfSynchDataTypes());
 			if (outOfSynchDataTypes.isEmpty()) {
 				showNoDataTypesToSyncMessage();
 				return;
@@ -194,20 +195,20 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 	protected void processSelectedDataTypes(DataTypeSynchronizer synchronizer,
 			List<DataTypeSyncInfo> selectedList, List<DataTypeSyncInfo> outOfSynchDataTypes,
 			TaskMonitor monitor) throws CancelledException {
-		
+
 		synchronizer.performBulkOperation(getName(), selectedList, info -> {
 			monitor.checkCancelled();
 			monitor.setMessage("Syncing " + info.getName());
 			applyOperation(info);
 			outOfSynchDataTypes.remove(info);
 			monitor.incrementProgress(1);
-			
+
 		}, outOfSyncList -> {
 			// dataTypeChanged can cause other related data types to become updated
 			// and their times will appear out of sync. So clean up any that actually
 			// are the same.
 			removeAndUpdateOutOfSyncInTimeOnlyDataTypes(synchronizer, outOfSyncList);
-			
+
 		}, requiresArchiveOpenForEditing());
 	}
 
@@ -326,7 +327,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 	private void autoUpdateDataTypesThatHaveNoRealChanges(DataTypeSynchronizer synchronizer,
 			List<DataTypeSyncInfo> outOfSynchInTimeOnlyList, boolean markArchiveSynchronized) {
 
-		int transactionID = dtm.startTransaction("Auto-sync data types");
+		int transactionID = dtm.startTransaction("Sync data types");
 		try {
 			for (DataTypeSyncInfo dataTypeSyncInfo : outOfSynchInTimeOnlyList) {
 				dataTypeSyncInfo.syncTimes();

@@ -40,7 +40,6 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.plugin.core.stackeditor.StackEditorModel;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
-import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
@@ -486,20 +485,6 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 
 	protected void endTransaction(final boolean saveChanges) {
 		program.endTransaction(txId, saveChanges);
-	}
-
-	protected class RestoreListener implements DomainObjectListener {
-		@Override
-		public void domainObjectChanged(DomainObjectChangedEvent event) {
-			if (event.contains(DomainObjectEvent.RESTORED)) {
-				Object source = event.getSource();
-				if (source instanceof DataTypeManagerDomainObject) {
-					DataTypeManagerDomainObject restoredDomainObject =
-						(DataTypeManagerDomainObject) source;
-					provider.domainObjectRestored(restoredDomainObject);
-				}
-			}
-		}
 	}
 
 	protected class StatusListener extends CompositeEditorModelAdapter {

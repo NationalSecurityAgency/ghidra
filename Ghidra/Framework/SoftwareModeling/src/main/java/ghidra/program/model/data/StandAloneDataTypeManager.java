@@ -17,14 +17,14 @@ package ghidra.program.model.data;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
 import com.google.common.collect.ImmutableList;
 
 import db.*;
+import db.buffers.BufferMgr;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
 import ghidra.framework.data.OpenMode;
@@ -53,9 +53,16 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	private static final String LANGUAGE_ID = "Language ID";
 	private static final String COMPILER_SPEC_ID = "Compiler Spec ID";
 
+	private static final int NUM_UNDOS = 50;
+
+	private LinkedList<String> undoList = new LinkedList<>();
+	private LinkedList<String> redoList = new LinkedList<>();
+
 	private int transactionCount;
 	private Long transaction;
 	private boolean commitTransaction;
+	private String transactionName;
+
 	private boolean isImmutable;
 
 	private LanguageTranslator languageUpgradeTranslator;
@@ -147,6 +154,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	public StandAloneDataTypeManager(String rootName) throws RuntimeIOException {
 		super(DataOrganizationImpl.getDefaultOrganization());
 		this.name = rootName;
+		initTransactionState();
 	}
 
 	/**
@@ -160,6 +168,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			throws RuntimeIOException {
 		super(dataOrganzation);
 		this.name = rootName;
+		initTransactionState();
 	}
 
 	/**
@@ -181,11 +190,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	protected StandAloneDataTypeManager(ResourceFile packedDbfile, OpenMode openMode,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		super(packedDbfile, openMode, monitor);
+		initTransactionState();
 	}
 
 	/**
 	 * Constructor for a data-type manager using a specified DBHandle.
-	 * <p>
+	 * <br>
 	 * <B>NOTE:</B> {@link #logWarning()} should be invoked immediately after 
 	 * instantiating a {@link StandAloneDataTypeManager} for an existing database after 
 	 * {@link #getName()} and {@link #getPath()} can be invoked safely.  In addition, it 
@@ -207,6 +217,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		if (openMode != OpenMode.CREATE && hasDataOrganizationChange(true)) {
 			handleDataOrganizationChange(openMode, monitor);
 		}
+		initTransactionState();
 	}
 
 	/**
@@ -824,6 +835,10 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		defaultListener.categoryRenamed(this, CategoryPath.ROOT, CategoryPath.ROOT);
 	}
 
+	protected void initTransactionState() {
+		dbHandle.setMaxUndos(NUM_UNDOS);
+	}
+
 	@Override
 	public Transaction openTransaction(String description) throws IllegalStateException {
 		return new Transaction() {
@@ -850,6 +865,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		}
 		if (transaction == null) {
 			transaction = dbHandle.startTransaction();
+			transactionName = description;
 			commitTransaction = true;
 		}
 		transactionCount++;
@@ -857,30 +873,156 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	@Override
-	public void flushEvents() {
-		// do nothing
+	public void endTransaction(int transactionID, boolean commit) {
+		boolean restored = false;
+		synchronized (this) {
+			if (transaction == null) {
+				throw new IllegalStateException("No Transaction Open");
+			}
+			if (transaction.intValue() != transactionID) {
+				throw new IllegalArgumentException(
+					"Transaction id does not match current transaction");
+			}
+			if (!commit) {
+				commitTransaction = false;
+			}
+			if (--transactionCount == 0) {
+				try {
+					if (dbHandle.endTransaction(transaction.longValue(), commitTransaction)) {
+						redoList.clear();
+						undoList.addLast(transactionName);
+						if (undoList.size() > NUM_UNDOS) {
+							undoList.removeFirst();
+						}
+					}
+					else if (!commitTransaction) {
+						restored = true;
+					}
+					transaction = null;
+				}
+				catch (IOException e) {
+					dbError(e);
+				}
+			}
+		}
+		if (restored) {
+			notifyRestored();
+		}
 	}
 
-	@Override
-	public synchronized void endTransaction(int transactionID, boolean commit) {
-		if (transaction == null) {
-			throw new IllegalStateException("No Transaction Open");
-		}
-		if (transaction.intValue() != transactionID) {
-			throw new IllegalArgumentException("Transaction id does not match current transaction");
-		}
-		if (!commit) {
-			commitTransaction = false;
-		}
-		if (--transactionCount == 0) {
+	public void undo() {
+		synchronized (this) {
+			if (!canUndo()) {
+				return;
+			}
 			try {
-				dbHandle.endTransaction(transaction.longValue(), commitTransaction);
-				transaction = null;
+				dbHandle.undo();
+				redoList.addLast(undoList.removeLast());
 			}
 			catch (IOException e) {
 				dbError(e);
 			}
 		}
+		invalidateCache();
+		notifyRestored();
+	}
+
+	public void redo() {
+		synchronized (this) {
+			if (!canRedo()) {
+				return;
+			}
+			try {
+				dbHandle.redo();
+				undoList.addLast(redoList.removeLast());
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+		}
+		invalidateCache();
+		notifyRestored();
+	}
+
+	/**
+	 * Clear undo/redo stack.
+	 * <br>
+	 * NOTE: It is important that this always be invoked following any save operation that 
+	 * compacts the checkpoints within the database {@link BufferMgr}.
+	 */
+	protected synchronized void clearUndo() {
+		undoList.clear();
+		redoList.clear();
+	}
+
+	/**
+	 * Determine if there is a transaction previously undone (see {@link #undo()}) that can be 
+	 * redone (see {@link #redo()}).
+	 * 
+	 * @return true if there is a transaction previously undone that can be redone, else false
+	 */
+	public synchronized boolean canRedo() {
+		return transaction == null && !redoList.isEmpty();
+	}
+
+	/**
+	 * Determine if there is a previous transaction that can be reverted/undone (see {@link #undo()}).
+	 * 
+	 * @return true if there is a previous transaction that can be reverted/undone, else false.
+	 */
+	public synchronized boolean canUndo() {
+		return transaction == null && !undoList.isEmpty();
+	}
+
+	/**
+	 * Get the transaction name that is available for {@link #redo()} (see {@link #canRedo()}).
+	 * @return transaction name that is available for {@link #redo()} or empty String.
+	 */
+	public synchronized String getRedoName() {
+		if (canRedo()) {
+			return redoList.getLast();
+		}
+		return "";
+	}
+
+	/**
+	 * Get the transaction name that is available for {@link #undo()} (see {@link #canUndo()}).
+	 * @return transaction name that is available for {@link #undo()} or empty String.
+	 */
+	public synchronized String getUndoName() {
+		if (canUndo()) {
+			return undoList.getLast();
+		}
+		return "";
+	}
+
+	/**
+	 * Get all transaction names that are available within the {@link #undo()} stack.
+	 * 
+	 * @return all transaction names that are available within the {@link #undo()} stack.
+	 */
+	public synchronized List<String> getAllUndoNames() {
+		if (canUndo()) {
+			return new ArrayList<>(undoList);
+		}
+		return List.of();
+	}
+
+	/**
+	 * Get all transaction names that are available within the {@link #redo()} stack.
+	 * 
+	 * @return all transaction names that are available within the {@link #redo()} stack.
+	 */
+	public synchronized List<String> getAllRedoNames() {
+		if (canRedo()) {
+			return new ArrayList<>(redoList);
+		}
+		return List.of();
+	}
+
+	@Override
+	public void flushEvents() {
+		// do nothing
 	}
 
 	@Override
@@ -894,7 +1036,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
+		clearUndo();
 		if (!dbHandle.isClosed()) {
 			dbHandle.close();
 		}

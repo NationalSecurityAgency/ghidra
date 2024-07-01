@@ -261,9 +261,8 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return editorModel.hasChanges();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		editorPanel.domainObjectRestored(domainObject);
+	public void dataTypeManagerRestored() {
+		editorPanel.dataTypeManagerRestored();
 	}
 
 	@Override

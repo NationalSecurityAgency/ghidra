@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -22,7 +23,8 @@ import db.*;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.data.OpenMode;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainFolder;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
@@ -516,12 +518,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	}
 
 	@Override
-	public void invalidate() {
-		clearCache(false);
-		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
-	}
-
-	@Override
 	public boolean isChangeable() {
 		return changeable;
 	}
@@ -533,6 +529,27 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 	void setChangeSet(DataTypeArchiveDBChangeSet changeSet) {
 		this.changeSet = changeSet;
+	}
+
+	@Override
+	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
+		try {
+			super.save(comment, monitor);
+		}
+		finally {
+			dataTypeManager.clearUndo();
+		}
+	}
+
+	@Override
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		try {
+			super.saveToPackedFile(outputFile, monitor);
+		}
+		finally {
+			dataTypeManager.clearUndo();
+		}
 	}
 
 	@Override
@@ -567,5 +584,11 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	@Override
 	public void updateID() {
 		dataTypeManager.updateID();
+	}
+
+	@Override
+	protected void domainObjectRestored() {
+		super.domainObjectRestored();
+		dataTypeManager.notifyRestored();
 	}
 }

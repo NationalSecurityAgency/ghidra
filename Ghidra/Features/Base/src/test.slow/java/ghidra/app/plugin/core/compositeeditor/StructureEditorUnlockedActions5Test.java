@@ -31,8 +31,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
 
-public class StructureEditorUnlockedActions5Test
-		extends AbstractStructureEditorTest {
+public class StructureEditorUnlockedActions5Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testApplyDuplicateName() throws Exception {
@@ -614,14 +613,14 @@ public class StructureEditorUnlockedActions5Test
 		undo(program, false);
 		program.flushEvents();
 		waitForSwing();
-		runSwing(() -> provider.domainObjectRestored(program), true);
+		runSwing(() -> provider.dataTypeManagerRestored(), true);
 		waitForSwing();
 
 		assertEquals("myStruct", model.getCompositeName());
 		redo(program, false);
 		program.flushEvents();
 		waitForSwing();
-		runSwing(() -> provider.domainObjectRestored(program), true);
+		runSwing(() -> provider.dataTypeManagerRestored(), true);
 		waitForSwing();
 		assertEquals("myStruct2", model.getCompositeName());
 
