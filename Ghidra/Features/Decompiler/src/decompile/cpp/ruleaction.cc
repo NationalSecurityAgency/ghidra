@@ -9503,6 +9503,8 @@ Varnode *RuleIgnoreNan::testForComparison(Varnode *floatVar,PcodeOp *op,int4 slo
       data.opRemoveInput(op, 1);
       data.opSetInput(op, vn, 0);
       count += 1;
+      // NaN flow has been removed - don't descend further
+      return (Varnode *)0;
     }
     return op->getOut();
   }
