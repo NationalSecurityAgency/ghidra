@@ -1643,5 +1643,16 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class RuleOrCompare : public Rule {
+public:
+  RuleOrCompare(const string &g) : Rule( g, 0, "ruleorcompare") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleOrCompare(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 } // End namespace ghidra
 #endif
