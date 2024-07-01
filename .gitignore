@@ -91,6 +91,3 @@ gradlew.*
 *.log
 core.*
 !core.png
-
-# Build
-ghidra_11.2_DEV/*
