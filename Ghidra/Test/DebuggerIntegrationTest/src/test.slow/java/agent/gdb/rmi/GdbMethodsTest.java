@@ -116,7 +116,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				waitStopped();
 
 				conn.execute("""
-						break main
+						break *main
 						hbreak *main+10
 						watch -l *((char*)(&main+20))
 						rwatch -l *((char(*)[8])(&main+30))
@@ -138,7 +138,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// NB. starti avoid use of temporary main breakpoint
 				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
 					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"main");
+					"*main");
 				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
 					Set.of(TraceBreakpointKind.HW_EXECUTE),
 					"*main+10");
@@ -172,7 +172,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				TraceObject locations = Objects.requireNonNull(tb.obj("Inferiors[1].Breakpoints"));
 				conn.execute("""
-						break main
+						break *main
 						hbreak *main+10
 						watch -l *((char*)(&main+20))
 						rwatch -l *((char(*)[8])(&main+30))
@@ -193,7 +193,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// NB. starti avoid use of temporary main breakpoint
 				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
 					Set.of(TraceBreakpointKind.SW_EXECUTE),
-					"main");
+					"*main");
 				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
 					Set.of(TraceBreakpointKind.HW_EXECUTE),
 					"*main+10");
@@ -935,7 +935,8 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
-				breakSwExecuteExpression.invoke(Map.of("expression", "main"));
+				// Use *main instead of main, because some gdb will instead do <main+8>
+				breakSwExecuteExpression.invoke(Map.of("expression", "*main"));
 
 				String out = conn.executeCapture("info break");
 				assertThat(out, containsString("<main>"));
@@ -982,7 +983,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
-				breakHwExecuteExpression.invoke(Map.of("expression", "main"));
+				breakHwExecuteExpression.invoke(Map.of("expression", "*main"));
 
 				String out = conn.executeCapture("info break");
 				assertThat(out, containsString("<main>"));
