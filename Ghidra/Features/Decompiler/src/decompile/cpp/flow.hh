@@ -151,6 +151,7 @@ public:
   void generateOps(void);			///< Generate raw control-flow from the function's base address
   void generateBlocks(void);			///< Generate basic blocks from the raw control-flow
   bool testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr);
+  bool testAlreadyInlined(Funcdata *inlinefd, PcodeOp *op);
   bool checkEZModel(void) const;		///< Check if \b this flow matches the EX in-lining model
   void injectPcode(void);			///< Perform substitution on any op that requires \e injection
   void forwardRecursion(const FlowInfo &op2);	///< Pull in-lining recursion information from another flow
