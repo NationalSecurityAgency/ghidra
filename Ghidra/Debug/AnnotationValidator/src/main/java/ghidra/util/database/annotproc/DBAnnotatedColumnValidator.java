@@ -23,8 +23,11 @@ import javax.tools.Diagnostic.Kind;
 import ghidra.util.database.annot.DBAnnotatedColumn;
 
 /**
- * The {@code DBAnnotatedColumnValidator} class validates fields annotated with
- * {@code @DBAnnotatedColumn} to ensure they comply with the expected criteria for database columns in Ghidra.
+ * A class for validating fields annotated with {@link DBAnnotatedColumn}
+ * <p>
+ * 	To ensure fields annotated with {@link DBAnnotatedColumn}
+ *  comply with the expected criteria for database columns in Ghidra.
+ * </p>
  */
 
 public class DBAnnotatedColumnValidator extends AbstractDBAnnotationValidator {
@@ -41,14 +44,17 @@ public class DBAnnotatedColumnValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Validate the annotated column field to ensure it meets the requirements for database columns.
-	 * It performs the following checks:
-	 * <ul>
-	 * <li>The field must be of the type specified by {@code ctx.DB_OBJECT_COLUMN_ELEM}.</li>
-	 * <li>The field must not be declared as {@code final}.</li>
-	 * <li>The field must be declared as {@code static}.</li>
-	 * <li>The enclosing type of the field must meet the criteria defined in {@code checkEnclosingType}.</li>
-	 * </ul>
+	 * Validate the annotated column field.
+	 * 
+	 * <p>
+	 * 	It performs the following checks to ensure it meets the requirements for database columns:
+	 * 	<ul>
+	 * 	<li>The field must be of the type specified by {@code ctx.DB_OBJECT_COLUMN_ELEM}.</li>
+	 * 	<li>The field must not be declared as {@code final}.</li>
+	 * 	<li>The field must be declared as {@code static}.</li>
+	 * 	<li>The enclosing type of the field must meet the criteria defined in {@code checkEnclosingType}.</li>
+	 * 	</ul>
+	 * </p>
 	 */
 	public void validate() {
 		if (!ctx.hasType(column, ctx.DB_OBJECT_COLUMN_ELEM)) {

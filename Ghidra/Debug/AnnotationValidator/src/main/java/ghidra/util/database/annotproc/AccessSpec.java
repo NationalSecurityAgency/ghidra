@@ -20,7 +20,7 @@ import java.util.Set;
 import javax.lang.model.element.Modifier;
 
 /**
- * The {@code AccessSpec} enum represents different levels of access specifiers
+ * An enum to represent different levels of access specifiers
  * (private, package-private, protected, public) with corresponding access levels
  */
 public enum AccessSpec {

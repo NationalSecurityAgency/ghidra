@@ -29,11 +29,12 @@ import ghidra.util.database.annot.*;
 /**
  * A compile-time annotation processor for {@link DBAnnotatedObject}-related annotations.
  * 
- * This processor performs compile-time validation checks on annotations related to 
- * {@link DBAnnotatedObject}.
- * 
- * Currently just performs compile-time checks. It does not generate any code, but perhaps one day,
- * it will.
+ * <p>
+ * 	This processor performs compile-time validation checks on annotations related to 
+ * 	{@link DBAnnotatedObject}.
+ * 	Currently just performs compile-time checks. It does not generate any code, but perhaps one day,
+ * 	it will.
+ * </p>
  */
 //@AutoService(Processor.class) // TODO: Evaluate Google's auto-service as a dependency
 public class DBAnnotatedObjectProcessor extends AbstractProcessor {
@@ -108,7 +109,7 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	}
 
 	/**
-	 * Returns the latest supported source version.
+	 * Return the latest supported source version.
 	 *
 	 * @return the latest supported source version
 	 */
@@ -118,7 +119,7 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	}
 
 	/**
-	 * Returns the set of supported annotation types.
+	 * Return the set of supported annotation types.
 	 *
 	 * @return the set of supported annotation types
 	 */

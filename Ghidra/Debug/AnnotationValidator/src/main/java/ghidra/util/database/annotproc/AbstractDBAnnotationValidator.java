@@ -22,7 +22,9 @@ import javax.tools.Diagnostic.Kind;
 
 /**
  * An abstract class for validating annotations on {@link DBAnnotatedObject}.
- * Performs validation checks on annotated fields and their enclosing types.
+ * <p>
+ * 	Performs validation checks on annotated fields and their enclosing types.
+ * </p>
  */
 public class AbstractDBAnnotationValidator {
 	protected final ValidationContext ctx;

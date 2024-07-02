@@ -24,10 +24,12 @@ import javax.tools.Diagnostic.Kind;
 import ghidra.util.database.annot.DBAnnotatedField;
 
 /**
- * The {@code DBAnnotatedFieldValidator} class validates fields annotated with
- * {@link DBAnnotatedField} to ensure they meet the criteria required for database fields
- * in Ghidra. It extends the {@code AbstractDBAnnotationValidator} to provide additional
- * validation logic specific to database field annotations.
+ * A class for validating fields annotated with {@link DBAnnotatedField}
+ * <p>
+ * 	To ensure fields annotated with {@link DBAnnotatedField} meet the criteria required for database fields
+ * 	in Ghidra. It extends the {@code AbstractDBAnnotationValidator} to provide additional
+ * 	validation logic specific to database field annotations.
+ * </p>
  */
 public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	final VariableElement field;
@@ -46,7 +48,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	final TypeElement ENUM_CODEC_ELEM;
 
 	/**
-	 * Constructs a new {@code DBAnnotatedFieldValidator} with the specified validation context and field element.
+	 * Construct a new {@code DBAnnotatedFieldValidator} with the specified validation context and field element.
 	 * @param ctx
 	 * @param field
 	 */
@@ -116,13 +118,15 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 
 	/**
 	 * Validate the annotated field to ensure it meets the requirements for database fields.
-	 * It performs the following checks:
-	 * <ul>
+	 * <p>
+	 * 	It performs the following checks:
+	 * 	<ul>
 	 * 	<li>The field must not be declared as {@code final}.</li>
 	 *	<li>The field must not be declared as {@code static}.</li>
 	 *	<li>The enclosing type of the field must meet the criteria defined in {@code checkEnclosingType}.</li>
 	 *	<li>The codec types for the field must be appropriate.</li>
-	 * </ul>
+	 * 	</ul>
+	 * </p>
 	 */
 	public void validate() {
 		Set<Modifier> mods = field.getModifiers();
@@ -144,7 +148,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Returns the default codec type element for the specified Java type.
+	 * Return the default codec type element for the specified Java type.
 	 * 
 	 * @param javaType the Java type for which the default codec is needed
 	 * @return the default codec type element, or {@code null} if no default codec is found
@@ -157,7 +161,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Returns the codec type element specified in the {@link DBAnnotatedField} annotation
+	 * Return the codec type element specified in the {@link DBAnnotatedField} annotation
 	 * for the field, or the default codec type if none is specified.
 	 * 
 	 * @return the codec type element for the field

@@ -23,11 +23,12 @@ import javax.tools.Diagnostic.Kind;
 import ghidra.util.database.annot.*;
 
 /**
- * Validates {@link DBAnnotatedObject}-related annotations on a given type element.
- * 
- * This class ensures that annotations such as {@link DBAnnotatedField}, {@link DBAnnotatedColumn},
- * and {@link DBAnnotatedObjectInfo} are applied correctly and consistently on the fields and columns
- * of a class.
+ * Validate {@link DBAnnotatedObject}-related annotations on a given type element.
+ * <p>
+ * 	This class ensures that annotations such as {@link DBAnnotatedField}, {@link DBAnnotatedColumn},
+ * 	and {@link DBAnnotatedObjectInfo} are applied correctly and consistently on the fields and columns
+ * 	of a class.
+ * </p>
  */
 public class DBAnnotatedObjectValidator {
 	private final ValidationContext ctx;
