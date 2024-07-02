@@ -1,0 +1,31 @@
+define endian=little;
+
+@define XLEN 4
+@define XLEN2 8
+@define FLEN 8
+
+@define MXLEN_1 31
+@define MXLEN_2 30
+
+@define ADDRSIZE "32"
+@define FPSIZE "64"
+
+@include "riscv.reg.sinc"
+@include "riscv.table.sinc"
+@include "riscv.instr.sinc"
+
+# define version specific tags for each of the currently stable THead extensions
+#  ELF binaries including these extensions should have matching tags visible with
+#  readelf -A
+@define xtheadba1p0 1
+@define xtheadbb1p0 1
+@define xtheadbs1p0 1
+@define xtheadcmo1p0 1
+@define xtheadcondmov1p0 1
+@define xtheadfmemidx1p0 1
+@define xtheadmac1p0 1
+@define xtheadmemidx1p0 1
+@define xtheadmempair1p0 1
+@define xtheadsync1p0 1
+
+@include "riscv.xthead.sinc"

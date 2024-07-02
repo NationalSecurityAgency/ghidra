@@ -41,12 +41,6 @@ rs1W: zero is r1519 & zero & op1519=0 { export 0:$(WXLEN); }
 rs2W: r2024 is r2024 { local tmp:$(WXLEN) = r2024:$(WXLEN); export tmp; }
 rs2W: zero is r2024 & zero & op2024=0 { export 0:$(WXLEN); }
 
-#TODO  dest may be bad, might need an assign macro
-rdW: r0711 is r0711 { local tmp:$(WXLEN) = r0711:$(WXLEN); export tmp; }
-rdW: zero is r0711 & zero & op0711=0 { export 0:$(WXLEN); }
-
-
-
 #TODO  does this need to be in an if/endif
 @if ADDRSIZE == "64"
 rs1L: r1519 is r1519 { local tmp:8 = r1519:8; export tmp; }
@@ -78,18 +72,21 @@ rdL: zero is r0711 & zero & op0711=0 { export 0:8; }
 
 frd:  fr0711 is fr0711 { export fr0711; }
 frs1: fr1519 is fr1519 { export fr1519; }
+@if FPSIZE == "128"
 frs2: fr2024 is fr2024 { export fr2024; }
 frs3: fr2731 is fr2731 { export fr2731; }
+frdS:  fr0711 is fr0711 { local tmp = fr0711:$(SFLEN); export tmp; }
+frdD:  fr0711 is fr0711 { local tmp = fr0711:$(DFLEN); export tmp; }
+@endif
 
 #TODO  dest may be bad, might need an assign macro
-#frdS:  fr0711 is fr0711 { local tmp = fr0711:$(SFLEN); export tmp; }
+
 frs1S: fr1519 is fr1519 { local tmp = fr1519:$(SFLEN); export tmp; }
 frs2S: fr2024 is fr2024 { local tmp = fr2024:$(SFLEN); export tmp; }
 frs3S: fr2731 is fr2731 { local tmp = fr2731:$(SFLEN); export tmp; }
 
 @if ((FPSIZE == "64") || (FPSIZE == "128"))
 #TODO  dest may be bad, might need an assign macro
-#frdD:  fr0711 is fr0711 { local tmp = fr0711:$(DFLEN); export tmp; }
 frs1D: fr1519 is fr1519 { local tmp = fr1519:$(DFLEN); export tmp; }
 frs2D: fr2024 is fr2024 { local tmp = fr2024:$(DFLEN); export tmp; }
 frs3D: fr2731 is fr2731 { local tmp = fr2731:$(DFLEN); export tmp; }
@@ -97,7 +94,7 @@ frs3D: fr2731 is fr2731 { local tmp = fr2731:$(DFLEN); export tmp; }
 
 macro fassignS(dest, src) {
 @if FPSIZE == "32"
-	dest = src;
+	dest = zext(src);
 @else
 	dest = zext(src);
 @endif
@@ -172,10 +169,8 @@ aqrl: ".rl"   is op2526=1 { export 1:$(XLEN); }
 aqrl: ".aq"   is op2526=2 { export 2:$(XLEN); }
 aqrl: ".aqrl" is op2526=3 { export 3:$(XLEN); }
 
-
-
-crs1: cr0711 is cr0711 { export cr0711; }
-crs1: zero is cr0711 & zero & cop0711=0 { export 0:$(XLEN); }
+#crs1: cr0711 is cr0711 { export cr0711; }
+#crs1: zero is cr0711 & zero & cop0711=0 { export 0:$(XLEN); }
 
 crd: cd0711 is cd0711 { export cd0711; }
 crd: zero is zero & cop0711=0 { export 0:$(XLEN); }
@@ -183,16 +178,10 @@ crd: zero is zero & cop0711=0 { export 0:$(XLEN); }
 crs2: cr0206 is cr0206 { export cr0206; }
 crs2: zero is cr0206 & zero & cop0206=0 { export 0:$(XLEN); }
 
-cfrs1: cfr0711 is cfr0711 { export cfr0711; }
-
 cfrd: cfr0711 is cfr0711 { export cfr0711; }
-
-cfrs2: cfr0206 is cfr0206 { export cfr0206; }
 
 #ATTN  Not doing tables for the RVC registers since there is no
 #      zero register to worry about
-
-
 
 cimmI: imm is scop1212 & cop0206 [ imm = (scop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = imm; export tmp; }
 
@@ -204,10 +193,11 @@ cbimm: reloc is scop1212 & cop1011 & cop0506 & cop0304 & cop0202 [ reloc = inst_
 cjimm: reloc is scop1212 & cop1111 & cop0910 & cop0808 & cop0707 & cop0606 & cop0305 & cop0202 [ reloc = inst_start + ((scop1212 << 11) | (cop1111 << 4) | (cop0910 << 8) | (cop0808 << 10) | (cop0707 << 6) | (cop0606 << 7) | (cop0305 << 1) | (cop0202 << 5)); ] { export *[ram]:$(XLEN) reloc; }
 
 
-nzuimm5: is cop0606=1 | cop0505=1 | cop0404=1 | cop0303 = 1 | cop0202=1 {}
+
 nzuimm6: is cop1212=1 | cop0606=1 | cop0505=1 | cop0404=1 | cop0303 = 1 | cop0202=1 {}
 
 @if ADDRSIZE == "32"
+nzuimm5: is cop0606=1 | cop0505=1 | cop0404=1 | cop0303 = 1 | cop0202=1 {}
 c6imm: uimm is cop1212=0 & cop0206 & nzuimm5 [ uimm = (cop0206 + 0); ] { local tmp:$(XLEN) = uimm; export tmp; }
 @elif ADDRSIZE == "64"
 c6imm: uimm is cop1212 & cop0206 & nzuimm6 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm; export tmp; }
@@ -366,15 +356,13 @@ vs3: v0711 is v0711 { export v0711; }
 vd:  v0711 is v0711 { export v0711; }
 
 simm5: sop1519 is sop1519 { local tmp:$(XLEN) = sop1519; export tmp; }
-# zimm: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
+uimm5: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
 
 nf: op2931 is op2931 { local tmp:$(XLEN) = op2931; export tmp; }
 
 vtypei: op2030 is op2030 { local tmp:$(XLEN) = op2030; export tmp; }
 
-
 bs: op3031 is op3031 { local tmp:$(XLEN) = op3031; export tmp; }
-rcon: op2023 is op2023 { local tmp:$(XLEN) = op2023; export tmp; }
 
 # imm=0 for baseline operation, nonzero values are reserved
 shamtw: 0 is op2024=0 { local tmp:$(XLEN) = 0; export tmp; }

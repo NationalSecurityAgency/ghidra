@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+data/languages/Readme_isa_extensions.md||GHIDRA||||END|
 data/languages/RV32G.pspec||GHIDRA||||END|
 data/languages/RV32GC.pspec||GHIDRA||||END|
 data/languages/RV32I.pspec||GHIDRA||||END|
@@ -12,9 +13,11 @@ data/languages/RV64IC.pspec||GHIDRA||||END|
 data/languages/riscv.csr.sinc||GHIDRA||||END|
 data/languages/riscv.custom.sinc||GHIDRA||||END|
 data/languages/riscv.ilp32d.slaspec||GHIDRA||||END|
+data/languages/riscv.ilp32d_thead.slaspec||GHIDRA||||END|
 data/languages/riscv.instr.sinc||GHIDRA||||END|
 data/languages/riscv.ldefs||GHIDRA||||END|
 data/languages/riscv.lp64d.slaspec||GHIDRA||||END|
+data/languages/riscv.lp64d_thead.slaspec||GHIDRA||||END|
 data/languages/riscv.opinion||GHIDRA||||END|
 data/languages/riscv.priv.sinc||GHIDRA||||END|
 data/languages/riscv.reg.sinc||GHIDRA||||END|
@@ -39,7 +42,20 @@ data/languages/riscv.rv64q.sinc||GHIDRA||||END|
 data/languages/riscv.rvc.sinc||GHIDRA||||END|
 data/languages/riscv.rvv.sinc||GHIDRA||||END|
 data/languages/riscv.table.sinc||GHIDRA||||END|
+data/languages/riscv.xthead.sinc||GHIDRA||||END|
+data/languages/riscv.zcb.sinc||GHIDRA||||END|
 data/languages/riscv.zi.sinc||GHIDRA||||END|
+data/languages/riscv.zbkx.sinc||GHIDRA||||END|
+data/languages/riscv.zfh.sinc||GHIDRA||||END|
+data/languages/riscv.zknd.sinc||GHIDRA||||END|
+data/languages/riscv.zkne.sinc||GHIDRA||||END|
+data/languages/riscv.zknh.sinc||GHIDRA||||END|
+data/languages/riscv.zksed.sinc||GHIDRA||||END|
+data/languages/riscv.zksh.sinc||GHIDRA||||END|
+data/languages/riscv.zvbb.sinc||GHIDRA||||END|
+data/languages/riscv.zvbc.sinc||GHIDRA||||END|
+data/languages/riscv.zvkng.sinc||GHIDRA||||END|
+data/languages/riscv.zvksg.sinc||GHIDRA||||END|
 data/languages/riscv32-fp.cspec||GHIDRA||||END|
 data/languages/riscv32.cspec||GHIDRA||||END|
 data/languages/riscv32.dwarf||GHIDRA||||END|

@@ -13,3 +13,5 @@ define endian=little;
 @include "riscv.reg.sinc"
 @include "riscv.table.sinc"
 @include "riscv.instr.sinc"
+# include placeholders for *some* custom instructions
+@include "riscv.custom.sinc"
