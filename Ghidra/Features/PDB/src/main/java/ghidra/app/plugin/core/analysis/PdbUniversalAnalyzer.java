@@ -205,8 +205,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
 
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb, program,
-				program.getDataTypeManager(), program.getImageBase(), pdbApplicatorOptions, log);
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+					program.getImageBase(), pdbApplicatorOptions, monitor, log);
 			applicator.applyDataTypesAndMainSymbolsAnalysis();
 
 			AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
@@ -360,7 +361,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 				pdb.deserialize();
 				DefaultPdbApplicator applicator =
 					new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
-						program.getImageBase(), pdbApplicatorOptions, log);
+						program.getImageBase(), pdbApplicatorOptions, monitor, log);
 				applicator.applyFunctionInternalsAnalysis();
 				return true;
 			}

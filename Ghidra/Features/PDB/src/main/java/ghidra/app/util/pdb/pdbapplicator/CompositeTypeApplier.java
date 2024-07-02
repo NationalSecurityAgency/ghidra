@@ -136,8 +136,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	//==============================================================================================
 	private void applyBasic(ComboType combo, AbstractCompositeMsType type,
-			FieldListTypeApplier.FieldLists lists)
-			throws CancelledException, PdbException {
+			FieldListTypeApplier.FieldLists lists) throws CancelledException, PdbException {
 		Composite composite = combo.dt();
 		CppCompositeType classType = combo.ct();
 		boolean isClass = (type instanceof AbstractClassMsType);
@@ -156,8 +155,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	//==============================================================================================
 	private void applyCpp(ComboType combo, AbstractCompositeMsType type,
-			FieldListTypeApplier.FieldLists lists)
-			throws PdbException, CancelledException {
+			FieldListTypeApplier.FieldLists lists) throws PdbException, CancelledException {
 		Composite composite = combo.dt();
 		CppCompositeType classType = combo.ct();
 		clearComponents(composite);
@@ -243,8 +241,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	private void applyDirectBaseClass(AbstractBaseClassMsType base, CppCompositeType myClassType,
-			Access defaultAccess)
-			throws PdbException {
+			Access defaultAccess) throws PdbException {
 		CppCompositeType underlyingClassType =
 			getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingClassType == null) {
@@ -258,25 +255,23 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	private void applyDirectVirtualBaseClass(AbstractVirtualBaseClassMsType base,
 			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
-		CppCompositeType underlyingCt =
-			getUnderlyingClassType(base.getBaseClassRecordNumber());
+		CppCompositeType underlyingCt = getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingCt == null) {
 			return;
 		}
-		DataType vbtptr = getVirtualBaseTablePointerDataType(
-			base.getVirtualBasePointerRecordNumber());
+		DataType vbtptr =
+			getVirtualBaseTablePointerDataType(base.getVirtualBasePointerRecordNumber());
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
 		myClassType.addDirectVirtualBaseClass(underlyingCt,
-			ClassFieldAttributes.convert(atts, defaultAccess),
-			basePointerOffset, vbtptr, offsetFromVbt);
+			ClassFieldAttributes.convert(atts, defaultAccess), basePointerOffset, vbtptr,
+			offsetFromVbt);
 	}
 
 	private void applyIndirectVirtualBaseClass(AbstractIndirectVirtualBaseClassMsType base,
 			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
-		CppCompositeType underlyingCt =
-			getUnderlyingClassType(base.getBaseClassRecordNumber());
+		CppCompositeType underlyingCt = getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingCt == null) {
 			return;
 		}
@@ -286,8 +281,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
 		myClassType.addIndirectVirtualBaseClass(underlyingCt,
-			ClassFieldAttributes.convert(atts, defaultAccess),
-			basePointerOffset, vbtptr, offsetFromVbt);
+			ClassFieldAttributes.convert(atts, defaultAccess), basePointerOffset, vbtptr,
+			offsetFromVbt);
 	}
 
 	private CppCompositeType getUnderlyingClassType(RecordNumber recordNumber) {
@@ -324,8 +319,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	private void addMembers(Composite composite, CppCompositeType myClassType,
 			List<AbstractMemberMsType> msMembers, AbstractCompositeMsType type,
-			List<DefaultPdbUniversalMember> myMembers)
-			throws CancelledException, PdbException {
+			List<DefaultPdbUniversalMember> myMembers) throws CancelledException, PdbException {
 		ClassFieldAttributes.Access defaultAccess =
 			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
 					: ClassFieldAttributes.Access.PUBLIC;
@@ -344,8 +338,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	// Does not use applier... goes straight to vftptr type
 	private void addVftPtrs(Composite composite, CppCompositeType myClassType,
 			List<AbstractVirtualFunctionTablePointerMsType> msVftPtrs, AbstractCompositeMsType type,
-			List<DefaultPdbUniversalMember> myMembers)
-			throws CancelledException, PdbException {
+			List<DefaultPdbUniversalMember> myMembers) throws CancelledException, PdbException {
 		for (AbstractVirtualFunctionTablePointerMsType vftPtr : msVftPtrs) {
 			applicator.checkCancelled();
 			RecordNumber recordNumber = vftPtr.getPointerTypeRecordNumber();
@@ -487,8 +480,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return done;
 	}
 
-	private DefaultPdbUniversalMember getNonStaticMember(Composite container,
-			Access defaultAccess, AbstractMemberMsType memberMsType, int ordinal)
+	private DefaultPdbUniversalMember getNonStaticMember(Composite container, Access defaultAccess,
+			AbstractMemberMsType memberMsType, int ordinal)
 			throws CancelledException, PdbException {
 
 		MsTypeApplier applier = applicator.getTypeApplier(memberMsType);
@@ -524,9 +517,9 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			fieldApplier instanceof ArrayTypeApplier arrayApplier &&
 			arrayApplier.isFlexibleArray(fieldType));
 
-		DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(memberName, fieldDataType,
-			isZeroLengthArray, offset,
-			ClassFieldAttributes.convert(memberAttributes, defaultAccess), memberComment);
+		DefaultPdbUniversalMember member =
+			new DefaultPdbUniversalMember(memberName, fieldDataType, isZeroLengthArray, offset,
+				ClassFieldAttributes.convert(memberAttributes, defaultAccess), memberComment);
 		return member;
 	}
 
