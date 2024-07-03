@@ -392,19 +392,6 @@ project.PLATFORMS.each { platform ->
 		// Make sure that we don't try to copy the same file with the same path into the
 		// zip (this can happen!)
 		duplicatesStrategy 'exclude'
-		
-		/////////////////////////////////
-		// Gradle Wrapper
-		/////////////////////////////////
-		from (ROOT_PROJECT_DIR) {
-			if (isLinux(platform.name) || isMac(platform.name)) {
-				include "gradlew"
-			}
-			if (isWindows(platform.name)) {
-				include "gradlew.bat"
-			}
-			into "support/gradle"
-		}	
 	}
 }
 

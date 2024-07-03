@@ -39,6 +39,10 @@ rootProject.PLATFORMS.each { platform ->
 			t.from ("${p.projectDir}/Linux/server") {
 				into "server"
 			}
+			t.from ("${rootProject.projectDir}") {
+				include "gradlew"
+				into "support/gradle"
+			}
 			t.from (p.file("Linux/ghidraRun")) 
 		}
 
@@ -49,8 +53,12 @@ rootProject.PLATFORMS.each { platform ->
 			t.from ("${p.projectDir}/Windows/server") {
 				into "server"
 			}
+			t.from ("${rootProject.projectDir}") {
+				include "gradlew.bat"
+				into "support/gradle"
+			}
 			t.from (p.file("Windows/ghidraRun.bat"))
-		}		
+		}
 	}
 }
 
