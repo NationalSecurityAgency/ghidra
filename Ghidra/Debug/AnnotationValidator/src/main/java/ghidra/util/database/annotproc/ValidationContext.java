@@ -38,6 +38,11 @@ public class ValidationContext {
 	final TypeElement DEFAULT_CODEC_ELEM;
 	final TypeElement ENUM_ELEM;
 
+	/**
+	 * Construct a Validation Context with the specified processing environment/
+	 *
+	 * @param env the processing environment
+	 */
 	public ValidationContext(ProcessingEnvironment env) {
 		typeUtils = env.getTypeUtils();
 		elementUtils = env.getElementUtils();
@@ -54,14 +59,35 @@ public class ValidationContext {
 		ENUM_ELEM = elementUtils.getTypeElement(Enum.class.getCanonicalName());
 	}
 
+	/**
+	 * Check if t1 is a subclass of t2.
+	 * 
+	 * @param t1 the potential subclass
+	 * @param t2 the potential superclass
+	 * @return true if t1 is a subclass of t2, false otherwise
+	 */
 	public boolean isSubclass(TypeElement t1, TypeElement t2) {
 		return typeUtils.isSubtype(typeUtils.erasure(t1.asType()), typeUtils.erasure(t2.asType()));
 	}
 
+	/**
+	 * Check if the field has the specified type.
+	 * 
+	 * @param field the field element
+	 * @param type the type element
+	 * @return true if the field has the specified type, false otherwise
+	 */
 	public boolean hasType(VariableElement field, TypeElement type) {
 		return hasType(field, type.asType());
 	}
 
+	/**
+	 * Check if the field has the specified type.
+	 * 
+	 * @param field the field element
+	 * @param type the type mirror
+	 * @return true if the field has the specified type, false otherwise
+	 */
 	public boolean hasType(VariableElement field, TypeMirror type) {
 		TypeMirror fieldType = field.asType();
 		try {
@@ -86,9 +112,16 @@ public class ValidationContext {
 		}
 
 		return typeUtils.isAssignable(fieldType, type);
-//		return typeUtils.isSameType(fieldType, type);
+		// return typeUtils.isSameType(fieldType, type);
 	}
 
+	/**
+	 * Check if t1 is capturable by t2.
+	 * 
+	 * @param t1 is the type to check
+	 * @param t2 the capture target type
+	 * @return true if t1 is capturable by t2, false otherwise
+	 */
 	public boolean isCapturable(TypeMirror t1, TypeMirror t2) {
 		// TODO: This only works for typevar at top level...
 		// TODO: Need to figure out how to check for capture and check
@@ -105,6 +138,12 @@ public class ValidationContext {
 		return typeUtils.isSubtype(t1, t2);
 	}
 
+	/**
+	 * Check if the type is an enum type.
+	 * 
+	 * @param t the type mirror to check
+	 * @return true if the type is an enum type, false otherwise
+	 */
 	public boolean isEnumType(TypeMirror t) {
 		if (t.getKind() != TypeKind.DECLARED) {
 			return false;
@@ -113,6 +152,13 @@ public class ValidationContext {
 		return typeUtils.isSubtype(t, enumType);
 	}
 
+	/**
+	 * Find the supertype of a set of declared types that matches the specified super type.
+	 * 
+	 * @param types the set of declared types
+	 * @param superType the super type element to match
+	 * @return the matching declared type, or null if no match is found
+	 */
 	protected DeclaredType findSupertype(Set<DeclaredType> types, TypeElement superType) {
 		Set<DeclaredType> next;
 		while (!types.isEmpty()) {
@@ -132,14 +178,35 @@ public class ValidationContext {
 		return null;
 	}
 
+	/**
+	 * Find the supertype of a declared type that matches the specified super type element.
+	 * 
+	 * @param type the declared type
+	 * @param superElem the super type element to match
+	 * @return the matching declared type, or null if no match is found
+	 */
 	public DeclaredType findSupertype(DeclaredType type, TypeElement superElem) {
 		return findSupertype(Set.of(type), superElem);
 	}
 
+	/**
+	 * Find the supertype of a type element that matches the specified super type element.
+	 * 
+	 * @param elem the type element
+	 * @param superElem the super type element to match
+	 * @return the matching declared type, or null if no match is found
+	 */
 	public DeclaredType findSupertype(TypeElement elem, TypeElement superElem) {
 		return findSupertype((DeclaredType) elem.asType(), superElem);
 	}
 
+	/**
+	 * Convert the type arguments of the super type element to a map.
+	 * 
+	 * @param superElem the super type element
+	 * @param superType the declared super type
+	 * @return a map of type argument names to their corresponding type mirrors
+	 */
 	protected Map<String, TypeMirror> toArgsMap(TypeElement superElem, DeclaredType superType) {
 		List<? extends TypeParameterElement> typeParameters = superElem.getTypeParameters();
 		List<? extends TypeMirror> typeArguments = superType.getTypeArguments();
@@ -151,14 +218,34 @@ public class ValidationContext {
 		return result;
 	}
 
+	/**
+	 * Get the type arguments of a declared type as a map.
+	 * 
+	 * @param type the declared type
+	 * @param superElem the super type element
+	 * @return a map of type argument names to their corresponding type mirrors
+	 */
 	public Map<String, TypeMirror> getArguments(DeclaredType type, TypeElement superElem) {
 		return toArgsMap(superElem, findSupertype(type, superElem));
 	}
 
+	/**
+	 * Get the type arguments of a type element as a map.
+	 * 
+	 * @param elem the type element
+	 * @param superElem the super type element
+	 * @return a map of type argument names to their corresponding type mirrors
+	 */
 	public Map<String, TypeMirror> getArguments(TypeElement elem, TypeElement superElem) {
 		return toArgsMap(superElem, findSupertype(elem, superElem));
 	}
 
+	/**
+	 * Format the given type mirror as a string.
+	 * 
+	 * @param type the type mirror to format
+	 * @return the formatted type mirror as a string
+	 */
 	public String format(TypeMirror type) {
 		FormatVisitor vis = new FormatVisitor();
 		type.accept(vis, null);
@@ -166,9 +253,20 @@ public class ValidationContext {
 	}
 }
 
+/**
+ * Class for formatting {@link TypeMirror} instances into a readable string
+ */
 class FormatVisitor implements TypeVisitor<Void, Void> {
 	StringBuffer buf = new StringBuffer();
 
+	/**
+	 * Visit method for {@link TypeMirror}. Delegates to specific visit methods based on the type
+	 * kind.
+	 * 
+	 * @param t the type mirror to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visit(TypeMirror t, Void p) {
 		switch (t.getKind()) {
@@ -207,18 +305,39 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 		}
 	}
 
+	/**
+	 * Visit method for {@link PrimitiveType}.
+	 * 
+	 * @param t the primitive type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitPrimitive(PrimitiveType t, Void p) {
 		buf.append(t.toString());
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link NullType}.
+	 * 
+	 * @param t the null type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitNull(NullType t, Void p) {
 		buf.append(t.toString());
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link ArrayType}.
+	 * 
+	 * @param t the array type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitArray(ArrayType t, Void p) {
 		visit(t.getComponentType());
@@ -226,6 +345,13 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link DeclaredType}.
+	 * 
+	 * @param t the declared type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitDeclared(DeclaredType t, Void p) {
 		buf.append(t.asElement().toString());
@@ -242,12 +368,26 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link ErrorType}.
+	 * 
+	 * @param t the error type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitError(ErrorType t, Void p) {
 		buf.append(t.toString());
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link TypeVariable}.
+	 * 
+	 * @param t the type variable to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitTypeVariable(TypeVariable t, Void p) {
 		buf.append(t.toString());
@@ -264,6 +404,13 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link WildcardType}.
+	 * 
+	 * @param t the wildcard type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitWildcard(WildcardType t, Void p) {
 		buf.append("?");
@@ -280,24 +427,52 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link ExecutableType}.
+	 * 
+	 * @param t the executable type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitExecutable(ExecutableType t, Void p) {
 		buf.append(t.toString());
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link NoType}.
+	 * 
+	 * @param t the no-type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitNoType(NoType t, Void p) {
 		buf.append(t.toString());
 		return null;
 	}
 
+	/**
+	 * Visit method for unknown {@link TypeMirror} instances.
+	 * 
+	 * @param t the unknown type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitUnknown(TypeMirror t, Void p) {
 		buf.append(t.toString());
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link UnionType}.
+	 * 
+	 * @param t the union type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitUnion(UnionType t, Void p) {
 		Iterator<? extends TypeMirror> it = t.getAlternatives().iterator();
@@ -311,6 +486,13 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 		return null;
 	}
 
+	/**
+	 * Visit method for {@link IntersectionType}.
+	 * 
+	 * @param t the intersection type to visit
+	 * @param p unused parameter (can be {@code null})
+	 * @return {@code null}
+	 */
 	@Override
 	public Void visitIntersection(IntersectionType t, Void p) {
 		Iterator<? extends TypeMirror> it = t.getBounds().iterator();
