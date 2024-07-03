@@ -20,8 +20,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.Msf;
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.datatype.microsoft.GUID;
@@ -467,6 +466,35 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 */
 	public TaskMonitor getMonitor() {
 		return msf.getMonitor();
+	}
+
+	/**
+	 * Developer mechanism to locate stream and offset within that stream that is associated with
+	 * the given absolute file offset
+	 * @param fileOffset the absolute file offset that we are trying to locate
+	 * @return the stream and offset or {@code null} if not located
+	 */
+	public StreamAndOffset getStreamOffsetForAbsoluteFileOffset(long fileOffset) {
+		if (msf instanceof AbstractMsf myMsf) {
+			return myMsf.getStreamOffsetForAbsoluteFileOffset(fileOffset);
+		}
+		return null;
+	}
+
+	/**
+	 * Developer mechanism to get a {@code PdbByteReader} for the particular stream, offset, and
+	 * length.
+	 * @param streamNumber the stream number
+	 * @param offset the offset in the stream
+	 * @param length the number of bytes to include from the stream
+	 * @return the reader
+	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon issue getting the stream for the PDB
+	 */
+	public PdbByteReader getDeveloperBytes(int streamNumber, int offset, int length)
+			throws CancelledException, IOException {
+		PdbByteReader reader = getReaderForStreamNumber(streamNumber, offset, length);
+		return reader;
 	}
 
 	/**
