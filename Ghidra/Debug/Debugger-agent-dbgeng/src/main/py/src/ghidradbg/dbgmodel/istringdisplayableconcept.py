@@ -15,36 +15,23 @@
 ##
 from ctypes import *
 
-from comtypes import COMError
+from comtypes import BSTR, COMError
 from comtypes.gen import DbgMod
 from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
 
-from . import imodelobject as mo
 
+class StringDisplayableConcept(object):
+    def __init__(self, concept):
+        self._concept = concept
+        concept.AddRef()
 
-class ModelIterator(object):
-    def __init__(self, iter):
-        self._iter = iter
-        iter.AddRef()
+    # StringDisplayableConcept
 
-    # ModelIterator
-
-    def GetNext(self, dimensions):
-        object = POINTER(DbgMod.IModelObject)()
-        indexer = POINTER(DbgMod.IModelObject)()
-        metadata = POINTER(DbgMod.IKeyStore)()
+    def ToDisplayString(self, context):
         try:
-            self._iter.GetNext(byref(object), dimensions,
-                               byref(indexer), byref(metadata))
+            val = BSTR()
+            self._concept.ToDisplayString(context._obj, None, byref(val))
         except COMError as ce:
             return None
-        index = mo.ModelObject(indexer)
-        ival = index.GetIntrinsicValue()
-        if ival is None:
-            return (0, mo.ModelObject(object))
-        return (ival.value, mo.ModelObject(object))
-
-    def Reset(self):
-        hr = self._keys.Reset()
-        exception.check_err(hr)
+        return val.value
