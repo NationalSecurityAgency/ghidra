@@ -15,10 +15,13 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * C11Lines information.  As best as we know, only one of C11Lines or C13Lines can be found after
@@ -250,41 +253,38 @@ public class C11Lines {
 
 	@Override
 	public String toString() {
-		try {
-			return dump();
-		}
-		catch (CancelledException e) {
-			return "";
-		}
+		return String.format("%s: numFiles = %d, numSegs = %d", getClass().getSimpleName(), cFile,
+			cSeg);
 	}
 
 	/**
-	 * Dumps this class.  This package-protected method is for debugging only.
-	 * @return the {@link String} output.
+	 * Dumps this class to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @param monitor the task monitor
 	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon issue writing to writer
 	 */
-	String dump() throws CancelledException {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Lines-------------------------------------------------------\n");
-		builder.append("cFile: " + cFile + " cSeg: " + cSeg + "\n");
+	void dump(Writer writer, TaskMonitor monitor) throws CancelledException, IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		writer.write("cFile: " + cFile + " cSeg: " + cSeg + "\n");
 		for (int i = 0; i < cFile; i++) {
 			pdb.checkCancelled();
-			builder.append("baseSrcFile[" + i + "]: " + baseSrcFile.get(i) + "\n");
+			writer.write("baseSrcFile[" + i + "]: " + baseSrcFile.get(i) + "\n");
 		}
 		for (int i = 0; i < cSeg; i++) {
 			pdb.checkCancelled();
-			builder.append(i + ": start:" + startEnd.get(i).getStart() + " end: " +
+			writer.write(i + ": start:" + startEnd.get(i).getStart() + " end: " +
 				startEnd.get(i).getEnd() + " seg: " + seg.get(i) + "\n");
 		}
 		for (int i = 0; i < cFile; i++) {
 			pdb.checkCancelled();
-			builder.append(
+			writer.write(
 				"  file[" + i + "]: cSeg: " + ccSegs.get(i) + " name: " + names.get(i) + "\n");
 			List<Integer> myBaseSrcLn = baseSrcLines.get(i);
 			List<C11LinesStartEnd> myStartEnds = startEnds.get(i);
 			for (int j = 0; j < ccSegs.get(i); j++) {
 				C11LinesStartEnd se = myStartEnds.get(j);
-				builder.append("  " + j + ": baseSrcLn: " + myBaseSrcLn.get(j) + " start: " +
+				writer.write("  " + j + ": baseSrcLn: " + myBaseSrcLn.get(j) + " start: " +
 					se.getStart() + " end: " + se.getEnd() + "\n");
 			}
 			List<Integer> segNums = segmentNumbers.get(i);
@@ -294,15 +294,14 @@ public class C11Lines {
 				pdb.checkCancelled();
 				List<Long> segOffsets = fileSegOffsets.get(j);
 				List<Integer> segLineNums = fileSegLineNums.get(j);
-				builder.append("  seg[" + j + "]: Seg: " + segNums.get(j) + " cPair: " +
+				writer.write("  seg[" + j + "]: Seg: " + segNums.get(j) + " cPair: " +
 					segOffsets.size() + "\n");
 				for (int k = 0; k < segOffsets.size(); k++) {
-					builder.append("  " + segLineNums.get(k) + ":" + segOffsets.get(k) + "\n");
+					writer.write("  " + segLineNums.get(k) + ":" + segOffsets.get(k) + "\n");
 				}
 			}
 		}
-		builder.append("End Lines---------------------------------------------------\n");
-		return builder.toString();
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 }

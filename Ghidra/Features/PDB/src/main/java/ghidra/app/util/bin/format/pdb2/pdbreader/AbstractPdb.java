@@ -627,8 +627,9 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 *  debugging only.
 	 * @param writer {@link Writer}.
 	 * @throws IOException on issue writing to the {@link Writer}.
+	 * @throws CancelledException upon user cancellation
 	 */
-	public abstract void dumpDirectory(Writer writer) throws IOException;
+	public abstract void dumpDirectory(Writer writer) throws IOException, CancelledException;
 
 	//==============================================================================================
 	// Internal Data Methods
@@ -658,19 +659,17 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Dumps the Version Signature and Age.  This package-protected method is for debugging only
-	 * @return {@link String} of pretty output
+	 * Dumps the Version Signature and Age to Writer.  This package-protected method is for
+	 * debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	protected String dumpVersionSignatureAge() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("DirectoryHeader---------------------------------------------");
-		builder.append("\nversionNumber: ");
-		builder.append(versionNumber);
-		builder.append("\nsignature: ");
-		builder.append(Integer.toHexString(signature));
-		builder.append("\nage: ");
-		builder.append(pdbAge);
-		return builder.toString();
+	protected void dumpVersionSignatureAge(Writer writer) throws IOException {
+		writer.write("DirectoryHeader---------------------------------------------");
+		writer.write("\nversionNumber: " + versionNumber);
+		writer.write("\nsignature: " + Integer.toHexString(signature));
+		writer.write("\nage: " + pdbAge);
+		writer.write("End DirectoryHeader-----------------------------------------");
 	}
 
 	/**
@@ -709,27 +708,25 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Dumps the Parameters to a {@link String}.  This package-protected method is for
-	 *  debugging only
-	 * @return {@link String} of pretty output
+	 * Dumps the Parameters to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @param monitor the task monitor
+	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected String dumpParameters() {
-		StringBuilder builder = new StringBuilder();
-		builder.append(nameTable.dump());
-		builder.append("\nParameters--------------------------------------------------\n");
+	protected void dumpParameters(Writer writer, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		nameTable.dump(writer, monitor);
+		writer.write("\nParameters--------------------------------------------------\n");
 		for (int i = 0; i < parameters.size(); i++) {
-			builder.append(String.format("parameter[%d]: 0x%08x %d\n", i, parameters.get(i),
+			writer.write(String.format("parameter[%d]: 0x%08x %d\n", i, parameters.get(i),
 				parameters.get(i)));
 		}
-		builder.append("Booleans----------------------------------------------------");
-		builder.append("\nminimalDebugInfo: ");
-		builder.append(minimalDebugInfo);
-		builder.append("\nnoTypeMerge: ");
-		builder.append(noTypeMerge);
-		builder.append("\nhasIdStream: ");
-		builder.append(hasIdStream);
-		builder.append("\n");
-		return builder.toString();
+		writer.write("Booleans----------------------------------------------------");
+		writer.write("\nminimalDebugInfo: " + minimalDebugInfo);
+		writer.write("\nnoTypeMerge: " + noTypeMerge);
+		writer.write("\nhasIdStream: " + hasIdStream);
+		writer.write("\n");
 	}
 
 	/**

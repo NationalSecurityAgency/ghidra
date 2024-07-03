@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.IOException;
+import java.io.Writer;
+
 /**
  * This class is the version of {@link ModuleInformation} for Microsoft v5.00 PDB.
  */
@@ -43,8 +46,8 @@ public class ModuleInformation500 extends ModuleInformation {
 	}
 
 	@Override
-	protected String dumpAdditionals() {
-		return "";
+	protected void dumpAdditionals(Writer writer) throws IOException {
+		// do nothing
 	}
 
 }
