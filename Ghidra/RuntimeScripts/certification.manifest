@@ -1,5 +1,7 @@
 ##VERSION: 2.0
+##MODULE IP: Apache License 2.0
 ##MODULE IP: Copyright Distribution Permitted
+##MODULE IP: Public Domain
 Common/server/jaas.conf||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
@@ -7,6 +9,8 @@ Common/support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|
 Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
 Common/support/debug.log4j.xml||GHIDRA||||END|
+Common/support/gradle/gradle-wrapper.jar||Apache License 2.0||||END|
+Common/support/gradle/gradle-wrapper.properties||Apache License 2.0||||END|
 Common/support/launch.properties||GHIDRA||||END|
 Linux/ghidraRun||GHIDRA||||END|
 Linux/server/ghidraSvr||GHIDRA||||END|
