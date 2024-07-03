@@ -20,11 +20,13 @@ import java.lang.annotation.Annotation;
 import javax.lang.model.element.*;
 import javax.tools.Diagnostic.Kind;
 
+import ghidra.util.database.DBAnnotatedObject;
+
 /**
  * An abstract class for validating annotations on {@link DBAnnotatedObject}.
+ * 
  * <p>
- * 	Performs validation checks on annotated fields and their enclosing types.
- * </p>
+ * Performs validation checks on annotated fields and their enclosing types.
  */
 public class AbstractDBAnnotationValidator {
 	protected final ValidationContext ctx;

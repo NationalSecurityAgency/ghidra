@@ -25,11 +25,11 @@ import ghidra.util.database.annot.DBAnnotatedField;
 
 /**
  * A class for validating fields annotated with {@link DBAnnotatedField}
+ * 
  * <p>
- * 	To ensure fields annotated with {@link DBAnnotatedField} meet the criteria required for database fields
- * 	in Ghidra. It extends the {@code AbstractDBAnnotationValidator} to provide additional
- * 	validation logic specific to database field annotations.
- * </p>
+ * To ensure fields annotated with {@link DBAnnotatedField} meet the criteria required for database
+ * fields in Ghidra. It extends the {@code AbstractDBAnnotationValidator} to provide additional
+ * validation logic specific to database field annotations.
  */
 public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	final VariableElement field;
@@ -48,9 +48,11 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	final TypeElement ENUM_CODEC_ELEM;
 
 	/**
-	 * Construct a new {@code DBAnnotatedFieldValidator} with the specified validation context and field element.
-	 * @param ctx
-	 * @param field
+	 * Construct a new {@code DBAnnotatedFieldValidator} with the specified validation context and
+	 * field element.
+	 * 
+	 * @param ctx the validation context
+	 * @param field the field to validate
 	 */
 	public DBAnnotatedFieldValidator(ValidationContext ctx, VariableElement field) {
 		super(ctx);
@@ -118,15 +120,16 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 
 	/**
 	 * Validate the annotated field to ensure it meets the requirements for database fields.
+	 * 
 	 * <p>
-	 * 	It performs the following checks:
-	 * 	<ul>
-	 * 	<li>The field must not be declared as {@code final}.</li>
-	 *	<li>The field must not be declared as {@code static}.</li>
-	 *	<li>The enclosing type of the field must meet the criteria defined in {@code checkEnclosingType}.</li>
-	 *	<li>The codec types for the field must be appropriate.</li>
-	 * 	</ul>
-	 * </p>
+	 * It performs the following checks:
+	 * <ul>
+	 * <li>The field must not be declared as {@code final}.</li>
+	 * <li>The field must not be declared as {@code static}.</li>
+	 * <li>The enclosing type of the field must meet the criteria defined in
+	 * {@code checkEnclosingType}.</li>
+	 * <li>The codec types for the field must be appropriate.</li>
+	 * </ul>
 	 */
 	public void validate() {
 		Set<Modifier> mods = field.getModifiers();
@@ -161,8 +164,8 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Return the codec type element specified in the {@link DBAnnotatedField} annotation
-	 * for the field, or the default codec type if none is specified.
+	 * Return the codec type element specified in the {@link DBAnnotatedField} annotation for the
+	 * field, or the default codec type if none is specified.
 	 * 
 	 * @return the codec type element for the field
 	 */
@@ -182,7 +185,8 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	}
 
 	/**
-	 * Check the codec types associated with the field to ensure they meet the necessary requirements.
+	 * Check the codec types associated with the field to ensure they meet the necessary
+	 * requirements.
 	 * 
 	 * @param objectType the type of the enclosing object
 	 */

@@ -30,11 +30,9 @@ import ghidra.util.database.annot.*;
  * A compile-time annotation processor for {@link DBAnnotatedObject}-related annotations.
  * 
  * <p>
- * 	This processor performs compile-time validation checks on annotations related to 
- * 	{@link DBAnnotatedObject}.
- * 	Currently just performs compile-time checks. It does not generate any code, but perhaps one day,
- * 	it will.
- * </p>
+ * This processor performs compile-time validation checks on annotations related to
+ * {@link DBAnnotatedObject}. Currently just performs compile-time checks. It does not generate any
+ * code, but perhaps one day, it will.
  */
 //@AutoService(Processor.class) // TODO: Evaluate Google's auto-service as a dependency
 public class DBAnnotatedObjectProcessor extends AbstractProcessor {
@@ -60,7 +58,8 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	 * 
 	 * @param annotations the set of annotations to process
 	 * @param roundEnv the environment for information about the current and prior round
-	 * @return {@code true} if the annotations are claimed by this processor, {@code false} otherwise
+	 * @return {@code true} if the annotations are claimed by this processor, {@code false}
+	 *         otherwise
 	 */
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -104,7 +103,6 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	@Override
 	public Iterable<? extends Completion> getCompletions(Element element,
 			AnnotationMirror annotation, ExecutableElement member, String userText) {
-		// TODO Auto-generated method stub
 		return super.getCompletions(element, annotation, member, userText);
 	}
 
@@ -125,7 +123,8 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 	 */
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
-		return SUPPORTED_ANNOTATIONS.stream().map(Class::getCanonicalName).collect(
-			Collectors.toSet());
+		return SUPPORTED_ANNOTATIONS.stream()
+				.map(Class::getCanonicalName)
+				.collect(Collectors.toSet());
 	}
 }

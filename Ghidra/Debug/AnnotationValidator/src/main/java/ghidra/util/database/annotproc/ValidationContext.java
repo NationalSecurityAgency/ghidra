@@ -74,7 +74,7 @@ public class ValidationContext {
 	 * Check if the field has the specified type.
 	 * 
 	 * @param field the field element
-	 * @param type  the type element
+	 * @param type the type element
 	 * @return true if the field has the specified type, false otherwise
 	 */
 	public boolean hasType(VariableElement field, TypeElement type) {
@@ -85,7 +85,7 @@ public class ValidationContext {
 	 * Check if the field has the specified type.
 	 * 
 	 * @param field the field element
-	 * @param type  the type mirror
+	 * @param type the type mirror
 	 * @return true if the field has the specified type, false otherwise
 	 */
 	public boolean hasType(VariableElement field, TypeMirror type) {
@@ -153,10 +153,9 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Find the supertype of a set of declared types that matches the specified
-	 * super type.
+	 * Find the supertype of a set of declared types that matches the specified super type.
 	 * 
-	 * @param types     the set of declared types
+	 * @param types the set of declared types
 	 * @param superType the super type element to match
 	 * @return the matching declared type, or null if no match is found
 	 */
@@ -180,10 +179,9 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Find the supertype of a declared type that matches the specified super type
-	 * element.
+	 * Find the supertype of a declared type that matches the specified super type element.
 	 * 
-	 * @param type      the declared type
+	 * @param type the declared type
 	 * @param superElem the super type element to match
 	 * @return the matching declared type, or null if no match is found
 	 */
@@ -192,10 +190,9 @@ public class ValidationContext {
 	}
 
 	/**
-	 * Find the supertype of a type element that matches the specified super type
-	 * element.
+	 * Find the supertype of a type element that matches the specified super type element.
 	 * 
-	 * @param elem      the type element
+	 * @param elem the type element
 	 * @param superElem the super type element to match
 	 * @return the matching declared type, or null if no match is found
 	 */
@@ -224,7 +221,7 @@ public class ValidationContext {
 	/**
 	 * Get the type arguments of a declared type as a map.
 	 * 
-	 * @param type      the declared type
+	 * @param type the declared type
 	 * @param superElem the super type element
 	 * @return a map of type argument names to their corresponding type mirrors
 	 */
@@ -235,7 +232,7 @@ public class ValidationContext {
 	/**
 	 * Get the type arguments of a type element as a map.
 	 * 
-	 * @param elem      the type element
+	 * @param elem the type element
 	 * @param superElem the super type element
 	 * @return a map of type argument names to their corresponding type mirrors
 	 */
@@ -263,8 +260,8 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 	StringBuffer buf = new StringBuffer();
 
 	/**
-	 * Visit method for {@link TypeMirror}. Delegates to specific visit methods
-	 * based on the type kind.
+	 * Visit method for {@link TypeMirror}. Delegates to specific visit methods based on the type
+	 * kind.
 	 * 
 	 * @param t the type mirror to visit
 	 * @param p unused parameter (can be {@code null})
@@ -408,7 +405,7 @@ class FormatVisitor implements TypeVisitor<Void, Void> {
 	}
 
 	/**
-	 * Visit method for {@link WindcardType}.
+	 * Visit method for {@link WildcardType}.
 	 * 
 	 * @param t the wildcard type to visit
 	 * @param p unused parameter (can be {@code null})

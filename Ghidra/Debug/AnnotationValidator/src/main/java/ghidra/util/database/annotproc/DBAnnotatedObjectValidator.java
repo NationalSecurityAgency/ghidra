@@ -20,15 +20,16 @@ import java.util.*;
 import javax.lang.model.element.*;
 import javax.tools.Diagnostic.Kind;
 
+import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.annot.*;
 
 /**
  * Validate {@link DBAnnotatedObject}-related annotations on a given type element.
+ * 
  * <p>
- * 	This class ensures that annotations such as {@link DBAnnotatedField}, {@link DBAnnotatedColumn},
- * 	and {@link DBAnnotatedObjectInfo} are applied correctly and consistently on the fields and columns
- * 	of a class.
- * </p>
+ * This class ensures that annotations such as {@link DBAnnotatedField}, {@link DBAnnotatedColumn},
+ * and {@link DBAnnotatedObjectInfo} are applied correctly and consistently on the fields and
+ * columns of a class.
  */
 public class DBAnnotatedObjectValidator {
 	private final ValidationContext ctx;
@@ -71,6 +72,8 @@ public class DBAnnotatedObjectValidator {
 
 	/**
 	 * Validate the annotated fields, columns, and the type element itself.
+	 * 
+	 * <p>
 	 * Checks for various annotation constraints and consistency rules.
 	 */
 	public void validate() {
@@ -160,6 +163,7 @@ public class DBAnnotatedObjectValidator {
 
 	/**
 	 * Check that the access specifiers of the field and column are compatible.
+	 * 
 	 * @param field the field element
 	 * @param column the column element
 	 * @param name the name of the column
