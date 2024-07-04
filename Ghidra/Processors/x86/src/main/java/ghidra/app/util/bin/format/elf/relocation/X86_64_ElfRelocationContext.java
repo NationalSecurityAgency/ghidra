@@ -260,6 +260,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocat
 				"NOTE: This block is artificial and allows ELF Relocations to work correctly",
 				"Elf Loader", true, false, false, loadHelper.getLog());
 
+			if (block == null) {
+				return;
+			}
 			// Mark block as an artificial fabrication
 			block.setArtificial(true);
 
