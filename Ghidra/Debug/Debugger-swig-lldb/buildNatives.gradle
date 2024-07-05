@@ -44,11 +44,12 @@ task generateSwig {
 		    		"-outdir", "$outdir_java/SWIG", "-o", "$outdir_cpp/LLDBWrapJava.cpp" 
 				args "$srcdir/java.swig"
 			}
-		} else if (llvmRequired) {
-            throw new GradleException("Debugger-swig-lldb:generateSwig requires LLVM_HOME to be defined")
 		} else {
-			println "Debugger-swig-lldb:generateSwig skipped - LLVM_HOME not defined"
-		}
+            //throw new GradleException("Debugger-swig-lldb:generateSwig requires LLVM_HOME to be defined")
+			println "OPTIONAL dependency Debugger-swig-lldb:generateSwig skipped - LLVM_HOME not defined"
+			println "NOTE: The JNI/swig interface for recorder-style lldb debugging is being deprecated."
+			println "      Please try the new traceRMI python-based versions of the debugger."
+		} 
 	}
 }
 
