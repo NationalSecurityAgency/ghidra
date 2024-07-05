@@ -64,8 +64,11 @@ class ProcessState(object):
         if description is not None:
             commands.STATE.trace.snapshot(description)
         if first:
+            if util.is_kernel():
+                commands.create_generic("Sessions")
             commands.put_processes()
             commands.put_environment()
+            commands.put_threads()
         if self.threads:
             commands.put_threads()
             self.threads = False
@@ -98,6 +101,7 @@ class ProcessState(object):
         commands.put_threads(running=True)
 
     def record_exited(self, exit_code, description=None):
+        # print("RECORD_EXITED")
         if description is not None:
             commands.STATE.trace.snapshot(description)
         proc = util.selected_process()

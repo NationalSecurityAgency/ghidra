@@ -204,14 +204,18 @@ class DefaultMemoryMapper(object):
         self.defaultSpace = defaultSpace
 
     def map(self, proc: int, offset: int):
-        space = self.defaultSpace
+        if proc == 0:
+            space = self.defaultSpace
+        else:
+            space = f'{self.defaultSpace}{proc}'
         return self.defaultSpace, Address(space, offset)
 
     def map_back(self, proc: int, address: Address) -> int:
-        if address.space == self.defaultSpace:
+        if address.space == self.defaultSpace and proc == 0:
             return address.offset
-        raise ValueError(
-            f"Address {address} is not in process {proc.GetProcessID()}")
+        if address.space == f'{self.defaultSpace}{proc}':
+            return address.offset
+        raise ValueError(f"Address {address} is not in process {proc}")
 
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
