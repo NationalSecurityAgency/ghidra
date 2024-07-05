@@ -36,10 +36,6 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		super();
 	}
 
-	/**
-	 * This method just tries to parse a bunch o'
-	 * data types just checking for stack traces.
-	 */
 	@Test
 	public void testSimple() throws Exception {
 		CParser parser = new CParser();
@@ -68,10 +64,6 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(comp.getDataType().getName(),"char");
 	}
 
-	/**
-	 * This method just tries to parse a bunch o'
-	 * data types just checking for stack traces.
-	 */
 	@Test
 	public void testLongLong() throws Exception {
 		CParser parser;
@@ -94,6 +86,27 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertTrue(pdt32 instanceof TypeDef);
 		assertTrue(pdt32.getName().equals("uint64_t"));
 		assertEquals(8, pdt32.getLength());
+	}
+	
+	@Test
+	public void testTypedef() throws Exception {
+		CParser parser;
+
+		parser = new CParser();
+		DataType tdDt = parser.parse("typedef struct foo * foo;");
+
+		assertTrue(tdDt != null);
+		assertTrue(tdDt instanceof TypeDef);
+		System.out.println(tdDt.getPathName());
+		System.out.println(((TypeDef)tdDt).getDataType().getPathName());
+		assertEquals("foo", tdDt.getName());
+		assertEquals("foo.conflict *", ((TypeDef)tdDt).getDataType().getName());
+		assertEquals(4, tdDt.getLength());
+
+		DataType dt = parser.getDataTypeManager().getDataType("/foo");
+		assertTrue(dt != null);
+		assertTrue(dt instanceof TypeDef);
+
 	}
 	
 	@Test
