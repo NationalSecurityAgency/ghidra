@@ -18,6 +18,11 @@
  * NOTE: Supported Python3 command is established by root project build.gradle
  */
 
+// Enable the Python Nature in the Eclipse project
+eclipse.project {
+	natures 'org.python.pydev.pythonNature'
+}
+
 ext.findPyDep = { name ->
     File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
     File inRepo = file("${BIN_REPO}/${getGhidraRelativePath(project)}/${name}")
