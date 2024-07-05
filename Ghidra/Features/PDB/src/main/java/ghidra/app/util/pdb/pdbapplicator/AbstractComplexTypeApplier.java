@@ -51,10 +51,11 @@ public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 		//  often had a member that also lambda that was marked with the exact same namespace/name
 		//  as the containing structure.  We found that the mangled names had more accurate and
 		//  distinguished lambda numbers.
-		String mangledName = type.getMangledName();
-		if (mangledName != null) {
-			symbolPath = getSymbolPathFromMangledTypeName(mangledName);
-		}
+// Temporarily comment out main work of GP-4595 due to namespace/class issues (20240705) TODO: fix
+//		String mangledName = type.getMangledName();
+//		if (mangledName != null) {
+//			symbolPath = getSymbolPathFromMangledTypeName(mangledName);
+//		}
 		if (symbolPath == null) {
 			String fullPathName = type.getName();
 			symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));
