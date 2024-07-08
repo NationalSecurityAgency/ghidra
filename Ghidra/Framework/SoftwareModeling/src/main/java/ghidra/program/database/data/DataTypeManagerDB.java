@@ -1459,6 +1459,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * <br>
 	 * NOTE: The original datatype name will be returned unchanged for pointers and arrays since 
 	 * they cannot be renamed.
+	 * <br>
+	 * NOTE: Otherwise, if category does not exist the non-conflict name will be returned.
 	 * 
 	 * @param path the category path of the category where the new data type live in
 	 *             the data type manager.
@@ -1466,16 +1468,39 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @return the unused conflict name
 	 */
 	public String getUnusedConflictName(CategoryPath path, DataType dt) {
-		String name = dt.getName();
 		if ((dt instanceof Array) || (dt instanceof Pointer) || (dt instanceof BuiltInDataType)) {
 			// name not used - anything will do
-			return name;
+			return dt.getName();
 		}
+		return getUnusedConflictName(getCategory(path), dt);
+	}
 
+	/**
+	 * This method gets a ".conflict" name that is not currently used by any data
+	 * types in the indicated category within this data type manager.  If the baseName without
+	 * conflict suffix is not used that name will be returned.
+	 * <br>
+	 * NOTE: The original datatype name will be returned unchanged for pointers and arrays since 
+	 * they cannot be renamed.
+	 * <br>
+	 * NOTE: Otherwise, if category does not exist the non-conflict name will be returned.
+	 * 
+	 * @param cat the existing category to check.
+	 * @param dt datatype who name is used to establish non-conflict base name
+	 * @return the unused conflict name
+	 */
+	private String getUnusedConflictName(Category cat, DataType dt) {
+		if ((dt instanceof Array) || (dt instanceof Pointer) || (dt instanceof BuiltInDataType)) {
+			// name not used - anything will do
+			return dt.getName();
+		}
 		String baseName = DataTypeUtilities.getNameWithoutConflict(dt);
+		if (cat == null) {
+			return baseName;
+		}
 		String testName = baseName;
 		int count = 0;
-		while (getDataType(path, testName) != null) {
+		while (cat.getDataType(testName) != null) {
 			testName = baseName + DataType.CONFLICT_SUFFIX;
 			if (count > 0) {
 				testName += Integer.toString(count);
@@ -3129,6 +3154,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (isAutoNamed) {
 			flags = (short) TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME;
 			cat = getCategory(dataType.getCategoryPath()); // force category
+		}
+		else if (cat.getDataType(name) != null) {
+			// force use of conflict name if needed
+			name = getUnusedConflictName(cat, typedef);
 		}
 		DBRecord record = typedefAdapter.createRecord(getID(dataType), name, flags, cat.getID(),
 			sourceArchiveIdValue, universalIdValue, typedef.getLastChangeTime());
