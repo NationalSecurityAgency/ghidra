@@ -178,7 +178,7 @@ public class X86_64_ElfRelocationHandler extends
 				}
 				catch (NotFoundException e) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
-						e.getMessage(), elfRelocationContext.getLog());
+						"GOT allocation failure", elfRelocationContext.getLog());
 					return RelocationResult.FAILURE;
 				}
 				break;
@@ -292,6 +292,32 @@ public class X86_64_ElfRelocationHandler extends
 				}
 				value = symbolGotAddress.getOffset() + addend - offset;
 				memory.setLong(relocationAddress, value);
+				break;
+
+			case R_X86_64_GOT64:  // 64 bit GOT entry offset (UNVERIFIED)
+				symbolGotAddress = elfRelocationContext.getGotEntryAddress(sym);
+				if (symbolGotAddress == null) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"GOT allocation failure", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				value = symbolGotAddress.getOffset() + addend;
+				memory.setLong(relocationAddress, value);
+				break;
+
+			case R_X86_64_PLTOFF64: // 64 bit GOT relative offset to PLT entry (UNVERIFIED)
+				long dotgot;
+				try {
+					dotgot = elfRelocationContext.getGOTValue();
+				}
+				catch (NotFoundException e) {
+					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
+						"GOT allocation failure", elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
+				}
+				value = symbolValue - dotgot + addend;
+				memory.setLong(relocationAddress, value);
+				break;
 
 //			case ElfRelocationConstants.R_X86_64_TLSGD:
 //			case ElfRelocationConstants.R_X86_64_TLSLD:
