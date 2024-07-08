@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.*;
+
 /**
  * Linker Unwind Information that seems to be used in some XData types within {@link DebugData}.
  */
@@ -61,24 +63,31 @@ public class LinkerUnwindInfo {
 
 	@Override
 	public String toString() {
-		return dump();
+		StringWriter writer = new StringWriter();
+		try {
+			dump(writer);
+			return writer.toString();
+		}
+		catch (IOException e) {
+			return "Issue in " + getClass().getSimpleName() + " toString(): " + e.getMessage();
+		}
 	}
 
 	/**
-	 * Dumps this class.  This package-protected method is for debugging only.
-	 * @return the {@link String} output.
+	 * Dumps this class to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("LinkerUnwindInfo--------------------------------------------\n");
-		dumpInternal(builder);
-		builder.append("End LinkerUnwindInfo----------------------------------------\n");
-		return builder.toString();
+	void dump(Writer writer) throws IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		dumpInternal(writer);
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
-	protected void dumpInternal(StringBuilder builder) {
-		builder.append(String.format("version: 0X%04X\n", version));
-		builder.append(String.format("flags: 0X%04X\n", flags));
-		builder.append(String.format("dataLength: 0X%08X\n", dataLength));
+	protected void dumpInternal(Writer writer) throws IOException {
+		writer.write(String.format("version: 0X%04X\n", version));
+		writer.write(String.format("flags: 0X%04X\n", flags));
+		writer.write(String.format("dataLength: 0X%08X\n", dataLength));
 	}
+
 }

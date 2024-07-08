@@ -345,7 +345,7 @@ public class Module {
 		writer.write("C11Lines----------------------------------------------------\n");
 		C11Lines c11lines = getLineInformation();
 		if (c11lines != null) {
-			writer.write(c11lines.dump());
+			c11lines.dump(writer, pdb.getMonitor());
 		}
 		writer.write("End C11Lines------------------------------------------------\n");
 	}
