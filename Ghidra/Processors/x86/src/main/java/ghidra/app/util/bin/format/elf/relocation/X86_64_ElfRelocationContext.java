@@ -141,6 +141,13 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocat
 
 	private Address allocateGot() {
 
+		if (allocatedGotAddress != null) {
+			if (allocatedGotAddress == Address.NO_ADDRESS) {
+				return null;
+			}
+			return allocatedGotAddress;
+		}
+
 		allocatedGotAddress = Address.NO_ADDRESS;
 		nextAllocatedGotEntryAddress = Address.NO_ADDRESS;
 
@@ -193,7 +200,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocat
 	 */
 	private Address getNextAllocatedGotEntryAddress() {
 		if (nextAllocatedGotEntryAddress == null) {
-			allocateGot();
+			if (allocateGot() == null) {
+				return Address.NO_ADDRESS; // failed to allocate got
+			}
 		}
 
 		Address addr = nextAllocatedGotEntryAddress;
