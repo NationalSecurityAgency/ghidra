@@ -22,6 +22,35 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.1.2 Change History (July 2024)</H1>
+<blockquote><p><u><B>New Features</B></u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Ghidra native components (Decompiler, GNU Demangler, etc.) now run properly on Windows ARM using x86 emulation.  Building natively for Windows ARM is not yet supported (Gradle limitation). (GP-4738)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Data Types</I>. Corrected resolution of typedefs whose name matches the underlying type name. (GP-4751, Issue #6493)</li>
+    <li><I>Processors</I>. Made minor semantic changes to the X86 processor specification for several AVX instructions as well as changes to UDF undefined instructions. (GP-4724)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Data Types</I>. Fixed Structure bug where DB may not be updated properly with length change induced by certain operations (e.g., <span class="gcode">insertBitFieldAt</span>). (GP-4756)</li>
+    <li><I>Data Types</I>. Fixed formatting of float value <span class="gcode">-0.0</span> within assembly Listing view. (GP-4759, Issue #6677)</li>
+    <li><I>Debugger</I>. Added <span class="gcode">.bat</span> launchers for GDB and LLDB on Windows. (GP-4677)</li>
+    <li><I>Debugger</I>. Fixed GDB <span class="gcode">show version</span> parse error. (GP-4698, Issue #6646)</li>
+    <li><I>Debugger</I>. Fixed an issue with handling of memory read errors in GDB TraceRMI connector. (GP-4701, Issue #6647)</li>
+    <li><I>Debugger</I>. Fixed GDB endianness calculation. (GP-4704, Issue #6656)</li>
+    <li><I>Debugger:GDB</I>. Provided fall-back to refresh all registers when <span class="gcode">general</span> is not recognized by GDB as a register group. (GP-4710, Issue #6635)</li>
+    <li><I>Importer:ELF</I>. Fixed ELF X86-64 GOT allocation bug which could cause exception during import.  Also added unverified ELF relocation support for <span class="gcode">R_X86_64_GOT64</span> and <span class="gcode">R_X86_64_PLTOFF64</span>. (GP-4758, Issue #6691)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an issue with importing Mach-O binaries that have an empty <span class="gcode">__chain_starts</span> section. (GP-4695)</li>
+    <li><I>Importer:Mach-O</I>. Fixed a regression in the MachoLoader that prevented some KDK binaries from being loaded. (GP-4699)</li>
+    <li><I>Multi-User:Merge</I>. Fixed assertion error which occured for multi-user merge of register context within overlay memory blocks. (GP-4508, Issue #6403)</li>
+    <li><I>Processors</I>. Fixed AARCH64 Windows stack alignment. (GP-4752, Issue #6680)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.1.1 Change History (June 2024)</H1>
 <blockquote><p><u><B>Bugs</B></u></p>
 <ul>
