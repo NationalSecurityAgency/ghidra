@@ -28,6 +28,8 @@ def _compute_gdb_ver():
     top = blurb.split('\n')[0]
     full = top.split(' ')[-1]
     major, minor = full.split('.')[:2]
+    if '-' in minor:
+        minor = minor[:minor.find('-')]
     return GdbVersion(full, int(major), int(minor))
 
 
@@ -379,7 +381,10 @@ class RegisterDesc(namedtuple('BaseRegisterDesc', ['name'])):
 
 def get_register_descs(arch, group='all'):
     if hasattr(arch, "registers"):
-        return arch.registers(group)
+        try:
+            return arch.registers(group)
+        except ValueError: # No such group, or version too old
+            return arch.registers()
     else:
         descs = []
         regset = gdb.execute(

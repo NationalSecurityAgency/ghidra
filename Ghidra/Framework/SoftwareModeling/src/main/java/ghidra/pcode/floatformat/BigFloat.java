@@ -1042,6 +1042,9 @@ public class BigFloat implements Comparable<BigFloat> {
 		if (isInfinite()) {
 			return sign < 0 ? NEGATIVE_INFINITY : POSITIVE_INFINITY;
 		}
+		if (isZero()) {
+			return sign < 0 ? "-0.0" : "0.0";
+		}
 		return null;
 	}
 

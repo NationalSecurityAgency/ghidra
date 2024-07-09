@@ -4362,9 +4362,9 @@ define pcodeop skinit;
 @endif
 
 define pcodeop invalidInstructionException;
-:UD0  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xff; rm32 & Reg32 ...           { invalidInstructionException(); goto inst_start; }
-:UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { invalidInstructionException(); goto inst_start; }
-:UD2              is vexMode=0 & byte=0xf; byte=0xb                               { invalidInstructionException(); goto inst_start; }
+:UD0  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xff; rm32 & Reg32 ...           { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
+:UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
+:UD2              is vexMode=0 & byte=0xf; byte=0xb                               { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
 
 define pcodeop verr;
 define pcodeop verw;
