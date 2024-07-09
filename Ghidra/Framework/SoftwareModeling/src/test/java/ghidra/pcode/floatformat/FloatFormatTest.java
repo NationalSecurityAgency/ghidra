@@ -1480,7 +1480,11 @@ public class FloatFormatTest extends AbstractGenericTest {
 	@Test
 	public void testValueOfBigInteger() {
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
-		assertEquals("0.0", ff.toDecimalString(ff.getBigFloat(BigInteger.ZERO)));
+
+		assertFalse(ff.getBigZero(true).equals(ff.getBigZero(false)));
+
+		assertEquals("-0.0", ff.toDecimalString(ff.getBigZero(true)));
+		assertEquals("0.0", ff.toDecimalString(ff.getBigZero(false)));
 		assertEquals("1.0", ff.toDecimalString(ff.getBigFloat(BigInteger.ONE)));
 		assertEquals("2.0", ff.toDecimalString(ff.getBigFloat(BigInteger.TWO)));
 		assertEquals("-1.0", ff.toDecimalString(ff.getBigFloat(BigInteger.ONE.negate())));
