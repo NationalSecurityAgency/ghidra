@@ -2472,21 +2472,23 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	private boolean updateComposite(int currentNumComponents, int currentLength,
 			int currentAlignment, boolean setLastChangeTime) {
 		boolean compositeChanged = false;
-		if (currentNumComponents >= 0 && currentNumComponents != record
-				.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL)) {
+		if (currentNumComponents >= 0 &&
+			(currentNumComponents != numComponents || currentNumComponents != record
+					.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL))) {
 			numComponents = currentNumComponents;
 			record.setIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL, numComponents);
 			setLastChangeTime = true;
 			compositeChanged = true;
 		}
-		if (currentLength >= 0 &&
-			currentLength != record.getIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL)) {
+		if (currentLength >= 0 && (currentLength != structLength ||
+			currentLength != record.getIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL))) {
 			structLength = currentLength;
 			record.setIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL, structLength);
 			compositeChanged = true;
 		}
 		if (currentAlignment >= 0 &&
-			currentAlignment != record.getIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL)) {
+			(currentAlignment != structAlignment || currentAlignment != record
+					.getIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL))) {
 			structAlignment = currentAlignment;
 			record.setIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL, structAlignment);
 			compositeChanged = true;
