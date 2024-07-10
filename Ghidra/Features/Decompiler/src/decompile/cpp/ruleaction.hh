@@ -1550,6 +1550,7 @@ public:
 
 class RuleIgnoreNan : public Rule {
   static bool checkBackForCompare(Varnode *floatVar,Varnode *root);
+  static bool isAnotherNan(Varnode *vn);
   static Varnode *testForComparison(Varnode *floatVar,PcodeOp *op,int4 slot,OpCode matchCode,int4 &count,Funcdata &data);
 public:
   RuleIgnoreNan(const string &g) : Rule( g, 0, "ignorenan") {}	///< Constructor
