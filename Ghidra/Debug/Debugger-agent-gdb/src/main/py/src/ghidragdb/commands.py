@@ -595,6 +595,7 @@ def putreg(frame, reg_descs):
     cobj.insert()
     mapper = STATE.trace.register_mapper
     values = []
+    # NB: This command will fail if the process is running
     endian = arch.get_endian()
     for desc in reg_descs:
         v = frame.read_register(desc.name)
@@ -616,7 +617,7 @@ def ghidra_trace_putreg(group='all', *, is_mi, **kwargs):
     """
 
     STATE.require_tx()
-    frame = gdb.selected_frame()
+    frame = util.selected_frame()
     with STATE.client.batch() as b:
         return putreg(frame, util.get_register_descs(frame.architecture(), group))
 
@@ -631,7 +632,7 @@ def ghidra_trace_delreg(group='all', *, is_mi, **kwargs):
 
     STATE.require_tx()
     inf = gdb.selected_inferior()
-    frame = gdb.selected_frame()
+    frame = util.selected_frame()
     space = 'Inferiors[{}].Threads[{}].Stack[{}].Registers'.format(
         inf.num, gdb.selected_thread().num, util.get_level(frame)
     )
@@ -957,9 +958,10 @@ def activate(path=None):
         if t is None:
             path = INFERIOR_PATTERN.format(infnum=inf.num)
         else:
-            frame = gdb.selected_frame()
-            path = FRAME_PATTERN.format(
-                infnum=inf.num, tnum=t.num, level=util.get_level(frame))
+            frame = util.selected_frame()
+            if frame is not None:
+                path = FRAME_PATTERN.format(
+                    infnum=inf.num, tnum=t.num, level=util.get_level(frame))
     trace.proxy_object_path(path).activate()
 
 
@@ -1329,7 +1331,7 @@ def convert_tid(t):
 
 @contextmanager
 def restore_frame():
-    f = gdb.selected_frame()
+    f = util.selected_frame()
     yield
     f.select()
 
@@ -1400,8 +1402,12 @@ def put_frames():
     t = gdb.selected_thread()
     if t is None:
         return
+    # NB: This command will fail if the process is running
     bt = gdb.execute('bt', to_string=True).strip().split('\n')
-    f = newest_frame(gdb.selected_frame())
+    f = util.selected_frame()
+    if f is None:
+        return
+    f = newest_frame(f)
     keys = []
     level = 0
     while f is not None:

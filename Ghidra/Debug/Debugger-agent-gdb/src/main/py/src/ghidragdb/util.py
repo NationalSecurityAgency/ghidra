@@ -429,3 +429,10 @@ def get_register_descs(arch, group='all'):
                 tokens = line.strip().split()
                 descs.append(RegisterDesc(tokens[0]))
         return descs
+    
+def selected_frame():
+    try:
+        return gdb.selected_frame()
+    except Exception as e:
+        print("No selected frame")
+        return None
