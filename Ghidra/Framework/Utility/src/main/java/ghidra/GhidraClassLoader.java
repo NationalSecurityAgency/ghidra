@@ -18,6 +18,8 @@ package ghidra;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import ghidra.util.Msg;
 
@@ -50,6 +52,11 @@ public class GhidraClassLoader extends URLClassLoader {
 	public static final String CP_EXT = "java.class.path.ext";
 
 	/**
+	 * Used to prevent duplicate URL's from being added to the classpath
+	 */
+	private Set<URL> alreadyAdded = new HashSet<>();
+
+	/**
 	 * This one-argument constructor is required for the JVM to successfully use this class loader
 	 * via the java.system.class.loader system property.
 	 * 
@@ -61,6 +68,9 @@ public class GhidraClassLoader extends URLClassLoader {
 
 	@Override
 	public void addURL(URL url) {
+		if (!alreadyAdded.add(url)) {
+			return;
+		}
 		super.addURL(url);
 		try {
 			System.setProperty(CP,
