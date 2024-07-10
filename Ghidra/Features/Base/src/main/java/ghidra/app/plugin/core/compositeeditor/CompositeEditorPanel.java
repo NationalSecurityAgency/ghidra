@@ -20,8 +20,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -72,8 +71,6 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
 
-	protected static final HelpService helpManager = Help.getHelpService();
-
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
 	protected GTable table;
@@ -92,26 +89,46 @@ public abstract class CompositeEditorPanel extends JPanel
 	private DataFlavor[] acceptableFlavors; // data flavors that are valid.
 	protected int lastDndAction = DnDConstants.ACTION_NONE;
 
+	protected SearchControlPanel searchPanel;
+
 	public CompositeEditorPanel(CompositeEditorModel model, CompositeEditorProvider provider) {
 		super(new BorderLayout());
-		JPanel lowerPanel = new JPanel(new VerticalLayout(5));
 		this.provider = provider;
 		this.model = model;
+
 		createTable();
+
+		JPanel lowerPanel = new JPanel(new VerticalLayout(5));
 		JPanel bitViewerPanel = createBitViewerPanel();
 		if (bitViewerPanel != null) {
 			lowerPanel.add(bitViewerPanel);
 		}
+
 		JPanel infoPanel = createInfoPanel();
 		if (infoPanel != null) {
 			adjustCompositeInfo();
 			lowerPanel.add(infoPanel);
 		}
+
 		lowerPanel.add(createStatusPanel());
 		add(lowerPanel, BorderLayout.SOUTH);
 		model.addCompositeEditorModelListener(this);
 		setUpDragDrop();
+
+		// These 2 methods allow us to specify the order of component navigation when Tab and 
+		// Shift-Tab are pressed
+		setFocusTraversalPolicy(new CompFocusTraversalPolicy());
+		setFocusTraversalPolicyProvider(true);
 	}
+
+	/**
+	 * Returns a list of focus traversal components.  This list will be used to navigate forward
+	 * and backward when the Tab and Shift-Tab keys are pressed.  The components will be traversed
+	 * in the order they are contained in the list.
+	 * 
+	 * @return the list
+	 */
+	protected abstract List<Component> getFocusComponents();
 
 	protected Composite getOriginalComposite() {
 		return model.getOriginalComposite();
@@ -216,6 +233,47 @@ public abstract class CompositeEditorPanel extends JPanel
 				tcm.getColumn(column).setCellEditor(cellEditor);
 			}
 		}
+	}
+
+	/**
+	 * Select the field by the given name in this panel's table.
+	 * 
+	 * @param fieldName the field name
+	 */
+	public void selectField(String fieldName) {
+
+		if (!model.isLoaded()) {
+			return; // disposed; not sure if this can happen
+		}
+
+		// Find the given field by name in the current editor, which, if edited, may not match the
+		// original data type.  If the user has renamed the field, but not saved the editor, then
+		// we may not find the field.
+		int row = findRowForFieldName(fieldName);
+		if (row == -1) {
+			return;
+		}
+
+		table.getSelectionModel().setSelectionInterval(row, row);
+	}
+
+	private int findRowForFieldName(String fieldName) {
+		int n = model.getRowCount();
+		for (int row = 0; row < n; row++) {
+
+			DataTypeComponent dtc = model.getComponent(row);
+			if (dtc != null) {
+				String dtcFieldName = dtc.getFieldName();
+				if (Objects.equals(fieldName, dtcFieldName)) {
+					return row;
+				}
+				String defaultName = dtc.getDefaultFieldName();
+				if (Objects.equals(fieldName, defaultName)) {
+					return row;
+				}
+			}
+		}
+		return -1;
 	}
 
 	protected void cancelCellEditing() {
@@ -487,20 +545,21 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+	public void dataTypeManagerRestored() {
 		DataTypeManager originalDTM = model.getOriginalDataTypeManager();
 		if (originalDTM == null) {
 			// editor unloaded
 			return;
 		}
 		boolean reload = true;
-		String objectType = "domain object";
-		if (domainObject instanceof Program) {
-			objectType = "program";
+		String objectType;
+		if (originalDTM instanceof ProgramBasedDataTypeManager) {
+			objectType = "Program";
 		}
-		else if (domainObject instanceof DataTypeArchive) {
-			objectType = "data type archive";
+		else {
+			objectType = "Archive";
 		}
+		String archiveName = originalDTM.getName();
 		DataType dt = originalDTM.getDataType(model.getCompositeID());
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
@@ -512,10 +571,9 @@ public abstract class CompositeEditorPanel extends JPanel
 		Composite originalDt = model.getOriginalComposite();
 		if (originalDt == null) {
 			provider.show();
-			String info =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may no longer exist outside the editor.";
-			Msg.showWarn(this, this, "Program Restored", info);
+			String info = "The " + objectType + " \"" + archiveName + "\" has been restored.\n" +
+				"\"" + model.getCompositeName() + "\" may no longer exist outside the editor.";
+			Msg.showWarn(this, this, objectType + " Restored", info);
 			return;
 		}
 		else if (originalDt.isDeleted()) {
@@ -528,8 +586,8 @@ public abstract class CompositeEditorPanel extends JPanel
 			// The user has modified the structure so prompt for whether or
 			// not to reload the structure.
 			String question =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may have changed outside the editor.\n" +
+				"The " + objectType + " \"" + archiveName + "\" has been restored.\n" + "\"" +
+					model.getCompositeName() + "\" may have changed outside the editor.\n" +
 					"Discard edits & reload the " + model.getTypeName() + "?";
 			String title = "Reload " + model.getTypeName() + " Editor?";
 			int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);
@@ -600,12 +658,11 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.setPreferredScrollableViewportSize(new Dimension(model.getWidth(), 250));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		tablePanel.add(sp, BorderLayout.CENTER);
-		SearchControlPanel searchPanel = new SearchControlPanel(this);
+		searchPanel = new SearchControlPanel(this);
 
-		if (helpManager != null) {
-			helpManager.registerHelp(searchPanel,
-				new HelpLocation("DataTypeEditors", "Searching_In_Editor"));
-		}
+		HelpService help = Help.getHelpService();
+		help.registerHelp(searchPanel, new HelpLocation("DataTypeEditors", "Searching_In_Editor"));
+
 		tablePanel.add(searchPanel, BorderLayout.SOUTH);
 
 		add(tablePanel, BorderLayout.CENTER);
@@ -678,6 +735,14 @@ public abstract class CompositeEditorPanel extends JPanel
 	 * @param status non-html message string to be displayed.
 	 */
 	public void setStatus(String status) {
+
+		if (status == null) {
+			// Setting the text to null causes the label's preferred height to drop to 0, causing 
+			// the UI to change size, depending on whether there was an existing status or not.  
+			// Using the empty string prevents the UI layout from changing as the status changes.
+			status = " ";
+		}
+
 		if (statusLabel != null) {
 			statusLabel.setText(status);
 			updateStatusToolTip();
@@ -717,10 +782,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
 		panel.add(textField);
-		if (helpManager != null) {
-			helpManager.registerHelp(textField,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + name));
-		}
+
+		provider.registerHelp(textField, name);
 		return panel;
 	}
 
@@ -1417,4 +1480,145 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
+	/**
+	 * A simple traversal policy that allows this editor panel to control the order that components
+	 * get focused when pressing Tab and Shift-Tab.
+	 * <P>
+	 * Note: We typically do not use traversal policies in the application.  We do so here due to 
+	 * the complicated nature of this widget.  It seemed easier to specify the policy than to 
+	 * change the order of the widgets in the UI to get the expected traversal order.
+	 * <P>
+	 * Note: This widget is a bit unusual in that not all focusable components are traversable using
+	 * Tab and Shift-Tab.  Specifically, the radio button groups will only have one entry in the 
+	 * list of traversal components.  Once one of the radio buttons is focused, the up and down 
+	 * arrow keys can be used to navigate the radio buttons.  With this traversal policy, pressing 
+	 * Tab when on these buttons will move to the next traversal component.
+	 * <P>
+	 * @see #getFocusComponents()
+	 */
+	private class CompFocusTraversalPolicy extends FocusTraversalPolicy {
+
+		@Override
+		public Component getComponentAfter(Container aContainer, Component aComponent) {
+
+			List<Component> list = getFocusComponents();
+			return getNext(aComponent, list);
+		}
+
+		private Component getNext(Component component, List<Component> list) {
+			int currentIndex = list.indexOf(component);
+			if (currentIndex < 0) {
+				// The given component is not in the list of traversal components.  This can happen
+				// when some widget in the panel has focus but is not part of the focus traversal.
+				// Assume the component is part of a group of components that can be traversed.  Get
+				// the next component after this group.
+				return getNextGroupComponent(component, list);
+			}
+
+			int nextIndex = currentIndex + 1;
+			if (nextIndex == list.size()) {
+				nextIndex = 0; // wrap
+			}
+
+			Component next = list.get(nextIndex);
+			if (!next.isFocusable() || !next.isEnabled()) {
+				return getNext(next, list);
+			}
+			return next;
+		}
+
+		/**
+		 * Find a sibling of the given component and get the component after the sibling.  We can do
+		 * this since we have guilty knowledge that the few focusable components not in the 
+		 * traversal list have siblings that are.  In that case, all siblings represent the focused
+		 * group.  This will move to the next component after that group.
+		 * 
+		 * @param component the component used to find the next component
+		 * @param list the list of traversal components
+		 * @return the next component
+		 */
+		private Component getNextGroupComponent(Component component, List<Component> list) {
+			Component sibling = findSibling(component, list);
+			if (sibling == null) {
+				return list.get(0);
+			}
+			return getNext(sibling, list);
+		}
+
+		// see the description for getNextGroupComponent()
+		private Component getPreviousGroupComponent(Component component, List<Component> list) {
+			Component sibling = findSibling(component, list);
+			if (sibling == null) {
+				return list.get(0);
+			}
+			return getPrevious(sibling, list);
+		}
+
+		/**
+		 * Finds the first sibling of the given component in the given list.  
+		 * 
+		 * @param component the component that is not in the list, but has a sibling in the list
+		 * @param list the list of focus traversal components
+		 * @return the sibling or null
+		 */
+		private Component findSibling(Component component, List<Component> list) {
+
+			Container parent = component.getParent();
+			Component[] siblings = parent.getComponents();
+			for (Component sibling : siblings) {
+				if (list.contains(sibling)) {
+					return sibling;
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public Component getComponentBefore(Container aContainer, Component aComponent) {
+
+			List<Component> list = getFocusComponents();
+			return getPrevious(aComponent, list);
+		}
+
+		private Component getPrevious(Component aComponent, List<Component> list) {
+			int currentIndex = list.indexOf(aComponent);
+			if (currentIndex < 0) {
+				// The given component is not in the list of traversal components.  This can happen
+				// when some widget in the panel has focus but is not part of the focus traversal.
+				// Assume the component is part of a group of components that can be traversed.  Get
+				// the previous component before this group.
+				return getPreviousGroupComponent(aComponent, list);
+			}
+
+			int previousIndex = currentIndex - 1;
+			if (previousIndex == -1) {
+				previousIndex = list.size() - 1; // wrap
+			}
+
+			Component previous = list.get(previousIndex);
+			if (!previous.isFocusable() || !previous.isEnabled()) {
+				return getPrevious(previous, list);
+			}
+			return previous;
+		}
+
+		@Override
+		public Component getFirstComponent(Container aContainer) {
+			List<Component> list = getFocusComponents();
+			return list.get(0);
+		}
+
+		@Override
+		public Component getLastComponent(Container aContainer) {
+			List<Component> list = getFocusComponents();
+			return list.get(list.size() - 1);
+		}
+
+		@Override
+		public Component getDefaultComponent(Container aContainer) {
+			List<Component> list = getFocusComponents();
+			return list.get(0);
+		}
+
+	}
 }

@@ -28,6 +28,8 @@ def _compute_gdb_ver():
     top = blurb.split('\n')[0]
     full = top.split(' ')[-1]
     major, minor = full.split('.')[:2]
+    if '-' in minor:
+        minor = minor[:minor.find('-')]
     return GdbVersion(full, int(major), int(minor))
 
 
@@ -342,6 +344,41 @@ def _choose_breakpoint_location_info_reader():
 BREAKPOINT_LOCATION_INFO_READER = _choose_breakpoint_location_info_reader()
 
 
+class MemCatchpointSetterV8(object):
+    def install_catchpoint(self):
+        return object()
+
+
+class MemCatchpointSetterV11(object):
+    def install_catchpoint(self):
+        breaks_before = set(gdb.breakpoints())
+        try:
+            gdb.execute("""
+                catch syscall group:memory
+                commands
+                silent
+                hooks-ghidra event-memory
+                cont
+                end
+                """)            
+            return (set(gdb.breakpoints()) - breaks_before).pop()
+        except Exception as e:
+            print(f"Error setting memory catchpoint: {e}")
+            return object()
+
+
+def _choose_mem_catchpoint_setter():
+    if GDB_VERSION.major >= 11:
+        return MemCatchpointSetterV11()
+    if GDB_VERSION.major >= 8:
+        return MemCatchpointSetterV8()
+    else:
+        raise gdb.GdbError(
+            "GDB version not recognized by ghidragdb: " + GDB_VERSION.full)
+
+
+MEM_CATCHPOINT_SETTER = _choose_mem_catchpoint_setter()
+
 def set_bool_param_by_api(name, value):
     gdb.set_parameter(name, value)
 
@@ -379,7 +416,10 @@ class RegisterDesc(namedtuple('BaseRegisterDesc', ['name'])):
 
 def get_register_descs(arch, group='all'):
     if hasattr(arch, "registers"):
-        return arch.registers(group)
+        try:
+            return arch.registers(group)
+        except ValueError: # No such group, or version too old
+            return arch.registers()
     else:
         descs = []
         regset = gdb.execute(

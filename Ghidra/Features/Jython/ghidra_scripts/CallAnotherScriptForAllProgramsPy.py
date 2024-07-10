@@ -21,6 +21,7 @@
 # NOTE: Script will only process unversioned and checked-out files.
 
 #@category Examples.Python
+#@runtime Jython
 
 from ghidra.app.script import GhidraState
 from ghidra.framework.model import *

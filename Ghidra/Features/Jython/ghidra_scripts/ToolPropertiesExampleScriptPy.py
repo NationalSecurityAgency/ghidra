@@ -18,7 +18,8 @@
 # DISCLAIMER: This is a recreation of a Java Ghidra script for example
 # use only. Please run the Java version in a production environment.
 
-#@category    Examples.Python
+#@category Examples.Python
+#@runtime Jython
 
 from ghidra.framework.options import Options
 from ghidra.framework.plugintool import PluginTool

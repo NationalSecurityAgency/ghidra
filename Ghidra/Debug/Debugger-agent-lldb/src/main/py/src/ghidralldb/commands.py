@@ -23,7 +23,10 @@ import socket
 import sys
 import time
 
-import psutil
+try:
+    import psutil
+except ImportError:
+    print(f"Unable to import 'psutil' - check that it has been installed")
 
 from ghidratrace import sch
 from ghidratrace.client import Client, Address, AddressRange, TraceObject

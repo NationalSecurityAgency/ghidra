@@ -82,11 +82,6 @@ Release
 *.iml
 .idea
 
-# Ignore gradle wrapper files
-gradle/wrapper
-gradlew
-gradlew.*
-
 # Ignore logs and core dumps
 *.log
 core.*

@@ -21,6 +21,7 @@ import docking.widgets.table.*;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.label.RenameLabelCmd;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
@@ -80,6 +81,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 		descriptor.addHiddenColumn(new PinnedTableColumn());
 		descriptor.addHiddenColumn(new UserTableColumn());
 		descriptor.addHiddenColumn(new OriginalNameColumn());
+		descriptor.addHiddenColumn(new SimplifiedNameColumn());
 
 		return descriptor;
 	}
@@ -648,7 +650,7 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 
 	}
 
-	private class OriginalNameColumn
+	class OriginalNameColumn
 			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
 
 		@Override
@@ -684,7 +686,35 @@ public abstract class AbstractSymbolTableModel extends AddressBasedTableModel<Sy
 			}
 			return null;
 		}
+	}
 
+	private class SimplifiedNameColumn
+			extends AbstractProgramBasedDynamicTableColumn<SymbolRowObject, String> {
+
+		private TemplateSimplifier simplifier = new TemplateSimplifier();
+
+		@Override
+		public String getColumnName() {
+			return "Simplified Name";
+		}
+
+		@Override
+		public String getColumnDescription() {
+			return "The symbol name with less complicated template arguments";
+		}
+
+		@Override
+		public String getValue(SymbolRowObject rowObject, Settings settings, Program p,
+				ServiceProvider svcProvider) throws IllegalArgumentException {
+
+			Symbol symbol = rowObject.getSymbol();
+			if (symbol == null || symbol.isDeleted()) {
+				return null;
+			}
+
+			String name = symbol.getName();
+			return simplifier.simplify(name);
+		}
 	}
 
 }

@@ -93,34 +93,28 @@ public class ProgramOpener {
 	 */
 	public Program openProgram(ProgramLocator locator, TaskMonitor monitor) {
 		if (locator.isURL()) {
-			try {
-				return openURL(locator, monitor);
-			}
-			catch (CancelledException e) {
-				return null;
-			}
-			catch (IOException e) {
-				Msg.showError(this, null, "Program Open Failed",
-					"Failed to open Ghidra URL: " + locator.getURL());
-			}
-			return null;
+			return openURL(locator, monitor);
 		}
 		return openProgram(locator, locator.getDomainFile(), monitor);
 	}
 
-	private Program openURL(ProgramLocator locator, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	private Program openURL(ProgramLocator locator, TaskMonitor monitor) {
 		URL ghidraUrl = locator.getURL();
 
 		AtomicReference<Program> openedProgram = new AtomicReference<>();
-		GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter() {
-			@Override
-			public void processResult(DomainFile domainFile, URL url, TaskMonitor m) {
-				Program p = openProgram(locator, domainFile, m);  // may return null
-				openedProgram.set(p);
-			}
-		}, monitor);
-
+		try {
+			GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter() {
+				@Override
+				public void processResult(DomainFile domainFile, URL url, TaskMonitor m) {
+					Program p = openProgram(locator, domainFile, m);  // may return null
+					openedProgram.set(p);
+				}
+			}, monitor);
+		}
+		catch (IOException | CancelledException e) {
+			// IOException reported to user by GhidraURLResultHandlerAdapter
+			return null;
+		}
 		return openedProgram.get();
 	}
 

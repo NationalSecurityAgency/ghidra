@@ -959,6 +959,16 @@ abstract class CompositeViewerModel extends AbstractTableModel
 		// Don't care.
 	}
 
+	@Override
+	public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+		// don't care
+	}
+
+	@Override
+	public void restored(DataTypeManager dataTypeManager) {
+		provider.dataTypeManagerRestored();
+	}
+
 //=================================================================================================
 // Helper methods for CategoryChangeListener methods.
 //=================================================================================================
@@ -1354,8 +1364,4 @@ abstract class CompositeViewerModel extends AbstractTableModel
 		return viewComposite.isPackingEnabled();
 	}
 
-	@Override
-	public void programArchitectureChanged(DataTypeManager dataTypeManager) {
-		// don't care
-	}
 }

@@ -15,6 +15,7 @@
 ##
 # Example of being imported by a Ghidra Python script/module
 # @category: Examples.Python
+# @runtime Jython
 
 # The following line will fail if this module is imported from external_module_caller.py,
 # because only the script that gets directly launched by Ghidra inherits fields and methods

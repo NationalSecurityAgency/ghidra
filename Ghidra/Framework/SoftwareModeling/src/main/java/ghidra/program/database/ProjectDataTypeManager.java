@@ -16,8 +16,7 @@
 package ghidra.program.database;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
@@ -197,6 +196,11 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
+	protected void initTransactionState() {
+		// do nothing - rely on DataTypeArchiveDB
+	}
+
+	@Override
 	public Transaction openTransaction(String description) throws IllegalStateException {
 		return dataTypeArchive.openTransaction(description);
 	}
@@ -208,14 +212,75 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
-	public void flushEvents() {
-		dataTypeArchive.flushEvents();
+	public void endTransaction(int transactionID, boolean commit) {
+		dataTypeArchive.endTransaction(transactionID, commit);
+	}
+
+	@Override
+	public void undo() {
+		try {
+			dataTypeArchive.undo();
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+	}
+
+	@Override
+	public void redo() {
+		try {
+			dataTypeArchive.redo();
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
 	}
 
 	@SuppressWarnings("sync-override")
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
-		dataTypeArchive.endTransaction(transactionID, commit);
+	public void clearUndo() {
+		dataTypeArchive.clearUndo();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public boolean canRedo() {
+		return dataTypeArchive.canRedo();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public boolean canUndo() {
+		return dataTypeArchive.canUndo();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public String getRedoName() {
+		return dataTypeArchive.getRedoName();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public String getUndoName() {
+		return dataTypeArchive.getUndoName();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public List<String> getAllUndoNames() {
+		return dataTypeArchive.getAllUndoNames();
+	}
+
+	@SuppressWarnings("sync-override")
+	@Override
+	public List<String> getAllRedoNames() {
+		return dataTypeArchive.getAllRedoNames();
+	}
+
+	@Override
+	public void flushEvents() {
+		dataTypeArchive.flushEvents();
 	}
 
 	@Override

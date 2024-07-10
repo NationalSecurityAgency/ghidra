@@ -22,8 +22,6 @@ import java.util.stream.Collectors;
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.util.FillOutStructureHelper;
 import ghidra.app.decompiler.util.FillOutStructureHelper.OffsetPcodeOpPair;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReference;
@@ -1135,10 +1133,7 @@ public class RecoveredClassHelper {
 		highVariables
 				.addAll(getVariableThatStoresVftablePointer(highFunction, firstVftableReference));
 
-		DecompileOptions decompileOptions =
-			DecompilerUtils.getDecompileOptions(serviceProvider, program);
-		FillOutStructureHelper fillStructHelper =
-			new FillOutStructureHelper(program, decompileOptions, monitor);
+		FillOutStructureHelper fillStructHelper = new FillOutStructureHelper(program, monitor);
 
 		Address vftableAddress = null;
 		for (HighVariable highVariable : highVariables) {
@@ -1146,7 +1141,8 @@ public class RecoveredClassHelper {
 			monitor.checkCancelled();
 
 			Structure structure =
-				fillStructHelper.processStructure(highVariable, function, true, false);
+				fillStructHelper.processStructure(highVariable, function, true, false,
+					decompilerUtils.getDecompilerInterface());
 
 			NoisyStructureBuilder componentMap = fillStructHelper.getComponentMap();
 
@@ -1202,13 +1198,12 @@ public class RecoveredClassHelper {
 
 				Address address = getTargetAddressFromPcodeOp(pcodeOp);
 				if (address.equals(vftableReference)) {
-
-					Varnode[] inputs = pcodeOp.getInputs();
-					for (Varnode input : inputs) {
-						monitor.checkCancelled();
-						if (input.getHigh() != null) {
-							highVars.add(input.getHigh());
-						}
+					Varnode input = pcodeOp.getInput(1);
+					if (input.getDef() != null && input.getDef().getOpcode() == PcodeOp.CAST) {
+						input = input.getDef().getInput(0);
+					}
+					if (input.getHigh() != null) {
+						highVars.add(input.getHigh());
 					}
 				}
 			}
@@ -5855,16 +5850,13 @@ public class RecoveredClassHelper {
 		highVariables
 				.addAll(getVariableThatStoresVftablePointer(highFunction, firstVftableReference));
 
-		DecompileOptions decompileOptions =
-			DecompilerUtils.getDecompileOptions(serviceProvider, program);
-		FillOutStructureHelper fillStructHelper =
-			new FillOutStructureHelper(program, decompileOptions, monitor);
+		FillOutStructureHelper fillStructHelper = new FillOutStructureHelper(program, monitor);
 
 		for (HighVariable highVariable : highVariables) {
 
 			monitor.checkCancelled();
 
-			fillStructHelper.processStructure(highVariable, function, true, false);
+			fillStructHelper.processStructure(highVariable, function, true, false, null);
 			List<OffsetPcodeOpPair> stores = fillStructHelper.getStorePcodeOps();
 			stores = removePcodeOpsNotInFunction(function, stores);
 

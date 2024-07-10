@@ -215,7 +215,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				++numComponents;
 				structLength += structureGrowth;
 
-				if (validatePackAndNotify) {
+				if (validatePackAndNotify) { // else caller responsible for record updates
 					if (isPackingEnabled()) {
 						repack(false, false); // may not recognize length change
 					}
@@ -1684,6 +1684,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	private void doReplaceWithNonPacked(Structure struct, DataType[] resolvedDts)
 			throws IOException {
+		
+		// caller responsible for record updates
+		
 		// assumes components is clear and that alignment characteristics have been set.
 		if (struct.isNotYetDefined()) {
 			return;
@@ -1728,7 +1731,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	private void doCopy(Structure struct, DataTypeComponent[] definedComponents,
 			DataType[] resolvedDts) throws IOException {
 
-		// simple replication of struct
+		// simple replication of struct - caller must perform record updates
 		structLength = struct.isZeroLength() ? 0 : struct.getLength();
 		numComponents = struct.getNumComponents();
 		structAlignment = struct.getAlignment();
@@ -2469,18 +2472,23 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	private boolean updateComposite(int currentNumComponents, int currentLength,
 			int currentAlignment, boolean setLastChangeTime) {
 		boolean compositeChanged = false;
-		if (currentNumComponents >= 0 && numComponents != currentNumComponents) {
+		if (currentNumComponents >= 0 &&
+			(currentNumComponents != numComponents || currentNumComponents != record
+					.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL))) {
 			numComponents = currentNumComponents;
 			record.setIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL, numComponents);
 			setLastChangeTime = true;
 			compositeChanged = true;
 		}
-		if (currentLength >= 0 && structLength != currentLength) {
+		if (currentLength >= 0 && (currentLength != structLength ||
+			currentLength != record.getIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL))) {
 			structLength = currentLength;
 			record.setIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL, structLength);
 			compositeChanged = true;
 		}
-		if (currentAlignment >= 0 && structAlignment != currentAlignment) {
+		if (currentAlignment >= 0 &&
+			(currentAlignment != structAlignment || currentAlignment != record
+					.getIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL))) {
 			structAlignment = currentAlignment;
 			record.setIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL, structAlignment);
 			compositeChanged = true;

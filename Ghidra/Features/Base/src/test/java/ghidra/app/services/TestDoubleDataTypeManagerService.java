@@ -100,6 +100,11 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public void edit(Structure structure, String fieldName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void closeArchive(DataTypeManager dtm) {
 		throw new UnsupportedOperationException();
 	}

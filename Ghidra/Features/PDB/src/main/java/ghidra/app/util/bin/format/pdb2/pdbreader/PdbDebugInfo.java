@@ -516,7 +516,7 @@ public abstract class PdbDebugInfo {
 	protected void dumpModuleInformation(Writer writer) throws IOException, CancelledException {
 		for (ModuleInformation information : moduleInformationList) {
 			pdb.checkCancelled();
-			writer.write(information.dump());
+			information.dump(writer);
 			writer.write("\n");
 		}
 	}
@@ -531,7 +531,7 @@ public abstract class PdbDebugInfo {
 	protected void dumpSectionContributions(Writer writer) throws IOException, CancelledException {
 		for (SectionContribution contribution : sectionContributionList) {
 			pdb.checkCancelled();
-			writer.write(contribution.dump());
+			contribution.dump(writer);
 			writer.write("\n");
 		}
 	}
@@ -546,7 +546,7 @@ public abstract class PdbDebugInfo {
 	protected void dumpSegmentMap(Writer writer) throws IOException, CancelledException {
 		for (SegmentMapDescription description : segmentMapList) {
 			pdb.checkCancelled();
-			writer.write(description.dump());
+			description.dump(writer);
 			writer.write("\n");
 		}
 	}

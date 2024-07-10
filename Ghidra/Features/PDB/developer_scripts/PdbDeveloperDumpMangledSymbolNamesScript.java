@@ -25,7 +25,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup;
 import ghidra.features.base.values.GhidraValuesMap;
-import ghidra.util.*;
+import ghidra.util.MessageType;
+import ghidra.util.StatusListener;
 import ghidra.util.exception.CancelledException;
 
 public class PdbDeveloperDumpMangledSymbolNamesScript extends GhidraScript {
@@ -88,6 +89,7 @@ public class PdbDeveloperDumpMangledSymbolNamesScript extends GhidraScript {
 		values.setValidator((valueMap, status) -> {
 			return validatePdb(valueMap, status) && validateOutput(valueMap, status);
 		});
+		setReusePreviousChoices(false); // false for second pass... want our default output
 		values = askValues(TITLE, null, values);
 		pdbFile = values.getFile(PDB_PROMPT); // might have changed
 		pdbFileName = pdbFile.getAbsolutePath(); // might have changed
@@ -95,14 +97,14 @@ public class PdbDeveloperDumpMangledSymbolNamesScript extends GhidraScript {
 
 		if (dumpFile.exists()) {
 			if (!askYesNo("Confirm Overwrite", "Overwrite file: " + dumpFile.getName())) {
-				Msg.info(this, "Operation canceled");
+				println("Operation canceled");
 				return;
 			}
 		}
 
 		String message = "Processing PDB Dump of: " + pdbFileName;
 		monitor.setMessage(message);
-		Msg.info(this, message);
+		println(message);
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile, new PdbReaderOptions(), monitor)) {
 			pdb.deserialize();
 			FileWriter fileWriter = new FileWriter(dumpFile);
@@ -111,12 +113,12 @@ public class PdbDeveloperDumpMangledSymbolNamesScript extends GhidraScript {
 			bufferedWriter.close();
 		}
 		catch (IOException ioe) {
-			Msg.info(this, ioe.getMessage());
+			println(ioe.getMessage());
 			popup(ioe.getMessage());
 		}
 		message = "Results located in: " + dumpFile.getAbsoluteFile();
 		monitor.setMessage(message);
-		Msg.info(this, message);
+		println(message);
 	}
 
 	private void dumpMangledSymbolNames(AbstractPdb pdb, Writer myWriter)

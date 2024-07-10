@@ -2586,10 +2586,10 @@ define pcodeop clzero;
 
 :CMC			is vexMode=0 & byte=0xf5						{ CF = CF==0; }
 
-:CMOV^cc Reg16,rm16 is vexMode=0 & opsize=0 & byte=0xf; row=4 & cc; rm16 & Reg16 ...    { if (!cc) goto inst_next; Reg16 = rm16; }
-:CMOV^cc Reg32,rm32 is vexMode=0 & opsize=1 & byte=0xf; row=4 & cc; rm32 & Reg32 ... & check_Reg32_dest ...   { build check_Reg32_dest; if (!cc) goto inst_next; Reg32 = rm32;}
+:CMOV^cc Reg16,rm16 is vexMode=0 & opsize=0 & byte=0xf; row=4 & cc; rm16 & Reg16 ...    { local tmp = rm16; if (!cc) goto inst_next; Reg16 = tmp; }
+:CMOV^cc Reg32,rm32 is vexMode=0 & opsize=1 & byte=0xf; row=4 & cc; rm32 & Reg32 ... & check_Reg32_dest ...   { local tmp = rm32; build check_Reg32_dest; if (!cc) goto inst_next; Reg32 = tmp; }
 @ifdef IA64
-:CMOV^cc Reg64,rm64 is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; row=4 & cc; rm64 & Reg64 ...    { if (!cc) goto inst_next; Reg64 = rm64; }
+:CMOV^cc Reg64,rm64 is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; row=4 & cc; rm64 & Reg64 ...    { local tmp = rm64; if (!cc) goto inst_next; Reg64 = tmp; }
 @endif
 
 :CMP AL,imm8        is vexMode=0 & byte=0x3c; AL & imm8                                 { subflags(   AL,imm8 ); local tmp =    AL -   imm8; resultflags(tmp); }
@@ -4362,9 +4362,9 @@ define pcodeop skinit;
 @endif
 
 define pcodeop invalidInstructionException;
-:UD0  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xff; rm32 & Reg32 ...           { invalidInstructionException(); goto inst_start; }
-:UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { invalidInstructionException(); goto inst_start; }
-:UD2              is vexMode=0 & byte=0xf; byte=0xb                               { invalidInstructionException(); goto inst_start; }
+:UD0  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xff; rm32 & Reg32 ...           { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
+:UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
+:UD2              is vexMode=0 & byte=0xf; byte=0xb                               { local target:$(SIZE) = invalidInstructionException(); goto [target]; }
 
 define pcodeop verr;
 define pcodeop verw;

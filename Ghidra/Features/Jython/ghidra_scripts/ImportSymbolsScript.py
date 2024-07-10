@@ -24,6 +24,7 @@
 # Omitting the address space or memory region specifier from the address will result in the function or label being created in the default address space.
 # @author unkown; edited by matedealer <git@matedealer.de>
 # @category Data
+# @runtime Jython
 #
 
 from ghidra.program.model.symbol.SourceType import *

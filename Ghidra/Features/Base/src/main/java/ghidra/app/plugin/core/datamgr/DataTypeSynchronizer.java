@@ -99,7 +99,7 @@ public class DataTypeSynchronizer {
 	}
 
 	private static void update(DataTypeManager refDTM, DataType sourceDT) {
-		int transactionID = refDTM.startTransaction("Update Datatype");
+		int transactionID = refDTM.startTransaction("Update Datatype " + sourceDT.getName());
 		try {
 			updateAssumingTransactionsOpen(refDTM, sourceDT);
 		}
@@ -184,8 +184,7 @@ public class DataTypeSynchronizer {
 	}
 
 	public void markSynchronized() {
-		int transactionID =
-			dataTypeManager.startTransaction("Clear dirty flag for data type manager.");
+		int transactionID = dataTypeManager.startTransaction("Clear Dirty Flag");
 		try {
 			sourceArchive.setDirtyFlag(false);
 			sourceArchive.setLastSyncTime(sourceDTM.getLastChangeTimeForMyManager());
@@ -457,8 +456,8 @@ public class DataTypeSynchronizer {
 			return;
 		}
 
-		int transactionID = dataTypeManager
-				.startTransaction("re-sync '" + sourceArchive.getName() + "' data types");
+		int transactionID =
+			dataTypeManager.startTransaction("Sync '" + sourceArchive.getName() + "' data types");
 		try {
 			reSyncOutOfSyncInTimeOnlyDataTypes();
 			fixSyncForDifferingDataTypes();
@@ -525,7 +524,7 @@ public class DataTypeSynchronizer {
 
 	private void autoUpdateDataTypesThatHaveNoRealChanges(
 			List<DataTypeSyncInfo> outOfSynchInTimeOnlyList, boolean markArchiveSynchronized) {
-		int transactionID = dataTypeManager.startTransaction("auto sync datatypes");
+		int transactionID = dataTypeManager.startTransaction("Sync datatypes");
 		try {
 			for (DataTypeSyncInfo dataTypeSyncInfo : outOfSynchInTimeOnlyList) {
 				dataTypeSyncInfo.syncTimes();
@@ -539,16 +538,16 @@ public class DataTypeSynchronizer {
 		}
 	}
 
-	public void performBulkOperation(String actionName, List<DataTypeSyncInfo> selectedList, 
+	public void performBulkOperation(String actionName, List<DataTypeSyncInfo> selectedList,
 			ExceptionalConsumer<DataTypeSyncInfo, CancelledException> infoApplier,
-			Consumer<List<DataTypeSyncInfo>> handleOutOfSync, 
-			boolean sourceRequiresTransaction) throws CancelledException {
+			Consumer<List<DataTypeSyncInfo>> handleOutOfSync, boolean sourceRequiresTransaction)
+			throws CancelledException {
 		if (sourceDTM == null) {
 			throw new RuntimeException("Source archive required");
 		}
-	
-		int sourceTransactionId = sourceRequiresTransaction ? 
-				sourceDTM.startTransaction(actionName) : 0;
+
+		int sourceTransactionId =
+			sourceRequiresTransaction ? sourceDTM.startTransaction(actionName) : 0;
 		int transactionID = dataTypeManager.startTransaction(actionName);
 		try {
 			for (DataTypeSyncInfo info : selectedList) {

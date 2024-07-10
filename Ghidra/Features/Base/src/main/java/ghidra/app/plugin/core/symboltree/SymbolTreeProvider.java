@@ -65,7 +65,6 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	protected SymbolTreePlugin plugin;
 	protected SymbolGTree tree;
-	protected JPanel mainPanel;
 	protected JComponent component;
 
 	protected GoToToggleAction goToToggleAction;
@@ -131,9 +130,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	protected JPanel createMainPanel(JComponent contentComponent) {
 		JPanel panel = new JPanel(new BorderLayout());
-
 		panel.add(contentComponent, BorderLayout.CENTER);
-
 		return panel;
 	}
 
@@ -149,8 +146,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		// unimportant and the tree is never collapsed at this level.
 		tree.setRootVisible(false);
 
-		mainPanel = createMainPanel(tree);
-		return mainPanel;
+		return createMainPanel(tree);
 	}
 
 	private SymbolGTree createTree(SymbolTreeRootNode rootNode) {
@@ -296,7 +292,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	@Override
 	public JComponent getComponent() {
-		return mainPanel;
+		return component;
 	}
 
 	@Override
@@ -388,10 +384,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	}
 
 	protected void rebuildTree() {
-		mainPanel.remove(tree);
+		component.remove(tree);
 		tree = createTree(createRootNode());
-		mainPanel.add(tree);
-		component.validate();
+		component.add(tree, BorderLayout.CENTER);
+		component.repaint();
 	}
 
 	void programClosed(Program closedProgram) {
@@ -577,7 +573,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		treeStateMap.clear();
 		tree = null;
 
-		mainPanel.removeAll();
+		component.removeAll();
 
 		if (program != null) {
 			program.removeListener(domainObjectListener);

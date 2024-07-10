@@ -238,6 +238,26 @@ public abstract class AbstractMsf implements Msf {
 		}
 	}
 
+	/**
+	 * Developer mechanism to locate stream and offset within the stream that contains the
+	 * absolute file offset
+	 * @param fileOffset the absolute file offset that we are trying to locate
+	 * @return the offset in the stream of the file offset or {@code null} if not in the stream
+	 */
+	public StreamAndOffset getStreamOffsetForAbsoluteFileOffset(long fileOffset) {
+		if (fileOffset < 0L || fileOffset > (long) numPages * pageSize) {
+			return null;
+		}
+		for (int number = 0; number < streamTable.getNumStreams(); number++) {
+			MsfStream s = getStream(number);
+			Integer offset = s.getStreamOffsetForAbsoluteFileOffset(fileOffset);
+			if (offset != null) {
+				return new StreamAndOffset(number, offset);
+			}
+		}
+		return null;
+	}
+
 	//==============================================================================================
 	// Class Internals
 	//==============================================================================================

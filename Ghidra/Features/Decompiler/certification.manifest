@@ -64,6 +64,7 @@ src/decompile/datatests/retstruct.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/stackreturn.xml||GHIDRA||||END|
+src/decompile/datatests/stackstring.xml||GHIDRA||||END|
 src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
 src/decompile/datatests/switchhide.xml||GHIDRA||||END|
 src/decompile/datatests/switchind.xml||GHIDRA||||END|

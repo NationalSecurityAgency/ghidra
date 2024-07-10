@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.*;
+
 /**
  * Debug header for various, yet-to-be-determined debug structures.  {@link RvaVaDebugHeader}, an
  * extension of this class, is used for PData and XData within {@link DebugData}.
@@ -62,25 +64,31 @@ public class DebugHeader {
 
 	@Override
 	public String toString() {
-		return dump();
+		StringWriter writer = new StringWriter();
+		try {
+			dump(writer);
+			return writer.toString();
+		}
+		catch (IOException e) {
+			return "Issue in " + getClass().getSimpleName() + " toString(): " + e.getMessage();
+		}
 	}
 
 	/**
-	 * Dumps this class.  This package-protected method is for debugging only.
-	 * @return the {@link String} output.
+	 * Dumps this class to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("DebugHeader-------------------------------------------------\n");
-		dumpInternal(builder);
-		builder.append("End DebugHeader---------------------------------------------\n");
-		return builder.toString();
+	void dump(Writer writer) throws IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		dumpInternal(writer);
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
-	protected void dumpInternal(StringBuilder builder) {
-		builder.append(String.format("headerVersion: 0X%08X\n", headerVersion));
-		builder.append(String.format("headerLength: 0X%08X\n", headerLength));
-		builder.append(String.format("dataLength: 0X%08X\n", dataLength));
+	protected void dumpInternal(Writer writer) throws IOException {
+		writer.write(String.format("headerVersion: 0X%08X\n", headerVersion));
+		writer.write(String.format("headerLength: 0X%08X\n", headerLength));
+		writer.write(String.format("dataLength: 0X%08X\n", dataLength));
 	}
 
 }

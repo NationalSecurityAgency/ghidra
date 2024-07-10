@@ -33,6 +33,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import help.Help;
+import help.HelpService;
 
 /**
  * Editor provider for a Composite Data Type.
@@ -259,9 +261,8 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return editorModel.hasChanges();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		editorPanel.domainObjectRestored(domainObject);
+	public void dataTypeManagerRestored() {
+		editorPanel.dataTypeManagerRestored();
 	}
 
 	@Override
@@ -330,6 +331,11 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	@Override
 	public boolean isTransient() {
 		return true;
+	}
+
+	protected void registerHelp(Object object, String anchor) {
+		HelpService help = Help.getHelpService();
+		help.registerHelp(object, new HelpLocation(getHelpTopic(), getHelpName() + "_" + anchor));
 	}
 
 }

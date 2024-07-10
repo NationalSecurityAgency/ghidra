@@ -224,6 +224,8 @@ public:
   void spacebase(void);				///< Mark registers that map to a virtual address space
   Varnode *newSpacebasePtr(AddrSpace *id);	///< Construct a new \e spacebase register for a given address space
   Varnode *findSpacebaseInput(AddrSpace *id) const;
+  Varnode *constructSpacebaseInput(AddrSpace *id);
+  Varnode *constructConstSpacebase(AddrSpace *id);
   void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
 
   int4 getHeritagePass(void) const { return heritage.getPass(); }	///< Get overall count of heritage passes
@@ -428,6 +430,7 @@ public:
   bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
   bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
+  Varnode *getInternalString(const uint1 *buf,int4 size,Datatype *ptrType,PcodeOp *readOp);
 
   // op routines
   PcodeOp *newOp(int4 inputs,const Address &pc);		/// Allocate a new PcodeOp with Address

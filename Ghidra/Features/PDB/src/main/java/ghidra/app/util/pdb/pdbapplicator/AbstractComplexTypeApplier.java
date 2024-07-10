@@ -20,6 +20,9 @@ import ghidra.app.util.SymbolPathParser;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
+import ghidra.util.Msg;
+import mdemangler.*;
+import mdemangler.datatype.MDDataType;
 
 /**
  * Applier for {@link AbstractComplexMsType} types.
@@ -42,8 +45,22 @@ public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 	 * @see #getFixedSymbolPath(AbstractComplexMsType type)
 	 */
 	SymbolPath getSymbolPath(AbstractComplexMsType type) {
-		String fullPathName = type.getName();
-		return new SymbolPath(SymbolPathParser.parse(fullPathName));
+		SymbolPath symbolPath = null;
+		// We added logic to check the mangled name first because we found some LLVM "lambda"
+		//  symbols where the regular name was a generic "<lambda_0>" with a namespace, but this
+		//  often had a member that also lambda that was marked with the exact same namespace/name
+		//  as the containing structure.  We found that the mangled names had more accurate and
+		//  distinguished lambda numbers.
+// Temporarily comment out main work of GP-4595 due to namespace/class issues (20240705) TODO: fix
+//		String mangledName = type.getMangledName();
+//		if (mangledName != null) {
+//			symbolPath = getSymbolPathFromMangledTypeName(mangledName);
+//		}
+		if (symbolPath == null) {
+			String fullPathName = type.getName();
+			symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));
+		}
+		return symbolPath;
 	}
 
 	/**
@@ -73,6 +90,30 @@ public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 		RecordNumber mappedNumber = applicator.getMappedRecordNumber(type.getRecordNumber());
 		Integer num = mappedNumber.getNumber();
 		return PdbNamespaceUtils.convertToGhidraPathName(path, num);
+	}
+
+	private SymbolPath getSymbolPathFromMangledTypeName(String mangledString) {
+		MDMang demangler = new MDMangGhidra();
+		try {
+			MDDataType mdDataType = demangler.demangleType(mangledString, true);
+			// 20240626:  Ultimately, it might be better to retrieve the Demangled-type to pass
+			// to the DemangledObject.createNamespace() method to convert to a true Ghidra
+			// Namespace that are flagged as functions (not capable at this time) or types or
+			// raw namespace nodes.  Note, however, that the  Demangler is still weak in this
+			// area as there are codes that we still not know how to interpret.
+			return MDMangUtils.getSymbolPath(mdDataType);
+			// Could consider the following simplification method instead
+			// return MDMangUtils.getSimpleSymbolPath(mdDataType);
+		}
+		catch (MDException e) {
+			// Couldn't demangle.
+			// Message might cause too much noise (we have a fallback, above, to use the regular
+			// name, but this could cause an error... see the notes above about why a mangled
+			// name is checked first).
+			Msg.info(this,
+				"PDB issue dmangling type name: " + e.getMessage() + " for : " + mangledString);
+		}
+		return null;
 	}
 
 }

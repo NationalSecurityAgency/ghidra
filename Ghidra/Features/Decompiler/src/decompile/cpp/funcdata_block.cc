@@ -573,12 +573,12 @@ JumpTable::RecoveryMode Funcdata::earlyJumpTableFail(PcodeOp *op)
 	OpCode opc = op->code();
 	if (opc == CPUI_CALLOTHER) {
 	  int4 id = (int4)op->getIn(0)->getOffset();
-	  UserPcodeOp *userOp = glb->userops.getOp(id);
-	  if (dynamic_cast<InjectedUserOp *>(userOp) != (InjectedUserOp *)0)
+	  uint4 userOpType = glb->userops.getOp(id)->getType();
+	  if (userOpType == UserPcodeOp::injected)
 	    return JumpTable::success;	// Don't try to back track through injection
-	  if (dynamic_cast<JumpAssistOp *>(userOp) != (JumpAssistOp *)0)
+	  if (userOpType == UserPcodeOp::jumpassist)
 	    return JumpTable::success;
-	  if (dynamic_cast<SegmentOp *>(userOp) != (SegmentOp *)0)
+	  if (userOpType == UserPcodeOp::segment)
 	    return JumpTable::success;
 	  if (outhit)
 	    return JumpTable::fail_callother;	// Address formed via uninjected CALLOTHER, analysis will fail

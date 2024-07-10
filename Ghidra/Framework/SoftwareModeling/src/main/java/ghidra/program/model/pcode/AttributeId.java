@@ -115,10 +115,10 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_CHAR = new AttributeId("char", 49);
 	public static final AttributeId ATTRIB_CORE = new AttributeId("core", 50);
 	public static final AttributeId ATTRIB_ENUM = new AttributeId("enum", 51);
-	public static final AttributeId ATTRIB_ENUMSIGNED = new AttributeId("enumsigned", 52);
-	public static final AttributeId ATTRIB_ENUMSIZE = new AttributeId("enumsize", 53);
-	public static final AttributeId ATTRIB_INTSIZE = new AttributeId("intsize", 54);
-	public static final AttributeId ATTRIB_LONGSIZE = new AttributeId("longsize", 55);
+//	public static final AttributeId ATTRIB_ENUMSIGNED = new AttributeId("enumsigned", 52);  // deprecated
+//	public static final AttributeId ATTRIB_ENUMSIZE = new AttributeId("enumsize", 53);  // deprecated
+//	public static final AttributeId ATTRIB_INTSIZE = new AttributeId("intsize", 54);  // deprecated
+//	public static final AttributeId ATTRIB_LONGSIZE = new AttributeId("longsize", 55);  // deprecated
 	public static final AttributeId ATTRIB_OPAQUESTRING = new AttributeId("opaquestring", 56);
 	public static final AttributeId ATTRIB_SIGNED = new AttributeId("signed", 57);
 	public static final AttributeId ATTRIB_STRUCTALIGN = new AttributeId("structalign", 58);

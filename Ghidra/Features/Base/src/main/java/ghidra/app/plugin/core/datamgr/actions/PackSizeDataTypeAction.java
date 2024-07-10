@@ -84,7 +84,7 @@ public class PackSizeDataTypeAction extends DockingAction {
 		try {
 			// start a transaction
 			transactionID =
-				dataTypeManager.startTransaction("pack(" + packSize + ") of " + dataType.getName());
+				dataTypeManager.startTransaction("Pack(" + packSize + ") " + dataType.getName());
 			packDataType(dataType, packSize);
 			commit = true;
 		}

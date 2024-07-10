@@ -912,9 +912,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	ByteField getField(BigInteger index, int fieldNum) {
 		if (indexMap != null) {
-			int fieldOffset = indexMap.getFieldOffset(index, fieldNum, fieldFactories);
 			if (fieldNum < fieldFactories.length) {
-				return (ByteField) fieldFactories[fieldOffset].getField(index);
+				return (ByteField) fieldFactories[fieldNum].getField(index);
 			}
 		}
 		return null;

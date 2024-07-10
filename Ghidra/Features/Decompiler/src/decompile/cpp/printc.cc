@@ -675,15 +675,7 @@ void PrintC::opCallother(const PcodeOp *op)
 {
   UserPcodeOp *userop = glb->userops.getOp(op->getIn(0)->getOffset());
   uint4 display = userop->getDisplay();
-  if (display == UserPcodeOp::annotation_assignment) {
-    pushOp(&assignment,op);
-    pushVn(op->getIn(2),op,mods);
-    pushVn(op->getIn(1),op,mods);
-  }
-  else if (display == UserPcodeOp::no_operator) {
-    pushVn(op->getIn(1),op,mods);
-  }
-  else {	// Emit using functional syntax
+  if (display == 0) {	// Emit using functional syntax
     string nm = op->getOpcode()->getOperatorName(op);
     pushOp(&function_call,op);
     pushAtom(Atom(nm,optoken,EmitMarkup::funcname_color,op));
@@ -697,6 +689,28 @@ void PrintC::opCallother(const PcodeOp *op)
     }
     else
       pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));	// Push empty token for void
+  }
+  else if (display == UserPcodeOp::annotation_assignment) {
+    pushOp(&assignment,op);
+    pushVn(op->getIn(2),op,mods);
+    pushVn(op->getIn(1),op,mods);
+  }
+  else if (display == UserPcodeOp::no_operator) {
+    pushVn(op->getIn(1),op,mods);
+  }
+  else if (display == UserPcodeOp::display_string) {
+    const Varnode *vn = op->getOut();
+    Datatype *ct = vn->getType();
+    ostringstream str;
+    if (ct->getMetatype() == TYPE_PTR) {
+      ct = ((TypePointer *)ct)->getPtrTo();
+      if (!printCharacterConstant(str,op->getIn(1)->getAddr(),ct))
+	str << "\"badstring\"";
+    }
+    else
+      str << "\"badstring\"";
+
+    pushAtom(Atom(str.str(),vartoken,EmitMarkup::const_color,op,vn));
   }
 }
 

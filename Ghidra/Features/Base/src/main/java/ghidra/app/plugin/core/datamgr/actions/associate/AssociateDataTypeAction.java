@@ -282,7 +282,8 @@ public class AssociateDataTypeAction extends DockingAction {
 			}
 
 			boolean noErrors = false;
-			int tx = dtm.startTransaction("Create Category");
+			String path = archive.getName() + categoryPath;
+			int tx = dtm.startTransaction("Create " + path);
 			try {
 				category = dtm.createCategory(categoryPath);
 				noErrors = true;

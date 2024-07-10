@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.io.IOException;
 import java.io.Writer;
 
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -40,13 +41,11 @@ abstract class AbstractUnimplementedC13Section extends C13Section {
 	}
 
 	@Override
-	void dump(Writer writer, TaskMonitor monitor) throws IOException {
-		String n = getClass().getSimpleName();
-		int len = n.length();
-		writer.write(n + dashes.substring(len));
+	protected void dumpInternal(Writer writer, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		writer.write("***NOT IMPLEMENTED***  Bytes follow...\n");
 		writer.write(myReader.dump());
 		writer.write("\n");
-		writer.write("End " + n + dashes.substring(len + 4));
 	}
+
 }

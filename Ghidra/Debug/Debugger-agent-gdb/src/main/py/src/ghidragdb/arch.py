@@ -85,9 +85,9 @@ data64_compiler_map = {
 
 x86_compiler_map = {
     'GNU/Linux': 'gcc',
-    'Windows': 'Visual Studio',
+    'Windows': 'windows',
     # This may seem wrong, but Ghidra cspecs really describe the ABI
-    'Cygwin': 'Visual Studio',
+    'Cygwin': 'windows',
 }
 
 compiler_map = {
@@ -104,7 +104,7 @@ def get_arch():
 
 def get_endian():
     parm = gdb.parameter('endian')
-    if parm != 'auto':
+    if not parm in ['', 'auto', 'default']:
         return parm
     # Once again, we have to hack using the human-readable 'show'
     show = gdb.execute('show endian', to_string=True)
@@ -132,7 +132,7 @@ def get_osabi():
 def compute_ghidra_language():
     # First, check if the parameter is set
     lang = gdb.parameter('ghidra-language')
-    if lang != 'auto':
+    if not lang in ['', 'auto', 'default']:
         return lang
 
     # Get the list of possible languages for the arch. We'll need to sift
@@ -157,7 +157,7 @@ def compute_ghidra_language():
 def compute_ghidra_compiler(lang):
     # First, check if the parameter is set
     comp = gdb.parameter('ghidra-compiler')
-    if comp != 'auto':
+    if not comp in ['', 'auto', 'default']:
         return comp
 
     # Check if the selected lang has specific compiler recommendations

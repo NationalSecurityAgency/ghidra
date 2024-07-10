@@ -56,7 +56,7 @@ public class DataTypeCleaner implements Closeable {
 		this.targetDtm = targetDtm;
 		this.retainExistingComposites = retainExistingComposites;
 		this.cleanerDtm = new StandAloneDataTypeManager("CleanerDTM");
-		txId = cleanerDtm.startTransaction("CleanerTx");
+		txId = cleanerDtm.startTransaction("Clean Datatypes");
 
 		ProgramArchitecture arch = targetDtm.getProgramArchitecture();
 		if (arch != null) {

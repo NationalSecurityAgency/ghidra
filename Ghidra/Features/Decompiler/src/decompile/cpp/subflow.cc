@@ -2846,7 +2846,11 @@ TransformVar *LaneDivide::setReplacement(Varnode *vn,int4 numLanes,int4 skipLane
 //  if (vn->isFree())
 //    return (TransformVar *)0;
 
-  if (vn->isTypeLock() && vn->getType()->getMetatype() != TYPE_PARTIALSTRUCT) {
+  if (vn->isTypeLock()) {
+    type_metatype meta = vn->getType()->getMetatype();
+    if (meta > TYPE_ARRAY)
+      return (TransformVar *)0;		// Don't split a primitive type
+    if (meta == TYPE_STRUCT || meta == TYPE_UNION)
       return (TransformVar *)0;
   }
 

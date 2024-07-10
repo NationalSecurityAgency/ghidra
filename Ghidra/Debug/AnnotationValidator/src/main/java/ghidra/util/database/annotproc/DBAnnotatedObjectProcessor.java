@@ -29,8 +29,10 @@ import ghidra.util.database.annot.*;
 /**
  * A compile-time annotation processor for {@link DBAnnotatedObject}-related annotations.
  * 
- * Currently just performs compile-time checks. It does not generate any code, but perhaps one day,
- * it will.
+ * <p>
+ * This processor performs compile-time validation checks on annotations related to
+ * {@link DBAnnotatedObject}. Currently just performs compile-time checks. It does not generate any
+ * code, but perhaps one day, it will.
  */
 //@AutoService(Processor.class) // TODO: Evaluate Google's auto-service as a dependency
 public class DBAnnotatedObjectProcessor extends AbstractProcessor {
@@ -39,6 +41,11 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 
 	private ValidationContext ctx;
 
+	/**
+	 * Initialize the processor with the given preprocessing environment.
+	 * 
+	 * @param env the processing environment
+	 */
 	@Override
 	public synchronized void init(ProcessingEnvironment env) {
 		//System.err.println("HERE4");
@@ -46,6 +53,14 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 		ctx = new ValidationContext(env);
 	}
 
+	/**
+	 * Process the specified annotations for the current round of processing..
+	 * 
+	 * @param annotations the set of annotations to process
+	 * @param roundEnv the environment for information about the current and prior round
+	 * @return {@code true} if the annotations are claimed by this processor, {@code false}
+	 *         otherwise
+	 */
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		Map<TypeElement, DBAnnotatedObjectValidator> types = new LinkedHashMap<>();
@@ -76,21 +91,40 @@ public class DBAnnotatedObjectProcessor extends AbstractProcessor {
 		return true;
 	}
 
+	/**
+	 * Provide completion suggestion for the specified element, annotation, and member.
+	 * 
+	 * @param element the element being annotated
+	 * @param annotation the annotation being processed
+	 * @param member the annotation member being completed
+	 * @param userText the text entered by the user
+	 * @return an iterable of completions.
+	 */
 	@Override
 	public Iterable<? extends Completion> getCompletions(Element element,
 			AnnotationMirror annotation, ExecutableElement member, String userText) {
-		// TODO Auto-generated method stub
 		return super.getCompletions(element, annotation, member, userText);
 	}
 
+	/**
+	 * Return the latest supported source version.
+	 *
+	 * @return the latest supported source version
+	 */
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
 		return SourceVersion.latestSupported();
 	}
 
+	/**
+	 * Return the set of supported annotation types.
+	 *
+	 * @return the set of supported annotation types
+	 */
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
-		return SUPPORTED_ANNOTATIONS.stream().map(Class::getCanonicalName).collect(
-			Collectors.toSet());
+		return SUPPORTED_ANNOTATIONS.stream()
+				.map(Class::getCanonicalName)
+				.collect(Collectors.toSet());
 	}
 }

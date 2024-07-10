@@ -412,7 +412,9 @@ public class MachoProgramBuilder {
 				}
 			}
 			if (segmentFragment == null) {
-				log.appendMsg("Could not find/fixup segment in Program Tree: " + segmentName);
+				if (segment.getVMsize() != 0 || segment.getFileSize() != 0) {
+					log.appendMsg("Could not find/fixup segment in Program Tree: " + segmentName);
+				}
 				continue;
 			}
 			ProgramModule segmentModule = rootModule.createModule(segmentName + suffix);
@@ -830,8 +832,10 @@ public class MachoProgramBuilder {
 		List<DyldChainedFixupsCommand> loadCommands =
 			machoHeader.getLoadCommands(DyldChainedFixupsCommand.class);
 		if (!loadCommands.isEmpty()) {
+			BinaryReader memReader = new BinaryReader(new MemoryByteProvider(memory, imagebase),
+				!memory.isBigEndian());
 			for (DyldChainedFixupsCommand loadCommand : loadCommands) {
-				fixups.addAll(loadCommand.getChainedFixups(reader, imagebase.getOffset(),
+				fixups.addAll(loadCommand.getChainedFixups(memReader, imagebase.getOffset(),
 					symbolTable, log, monitor));
 			}
 		}
@@ -842,7 +846,8 @@ public class MachoProgramBuilder {
 			Section threadStartsSection =
 				machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.THREAD_STARTS);
 
-			if (chainStartsSection != null) {
+			if (chainStartsSection != null && chainStartsSection.getAddress() != 0 &&
+				chainStartsSection.getSize() != 0) {
 				reader.setPointerIndex(chainStartsSection.getOffset());
 				DyldChainedStartsOffsets chainedStartsOffsets =
 					new DyldChainedStartsOffsets(reader);
@@ -852,7 +857,8 @@ public class MachoProgramBuilder {
 						imagebase.getOffset(), symbolTable, log, monitor));
 				}
 			}
-			else if (threadStartsSection != null) {
+			else if (threadStartsSection != null && threadStartsSection.getAddress() != 0 &&
+				threadStartsSection.getSize() != 0) {
 				Address threadSectionStart = space.getAddress(threadStartsSection.getAddress());
 				Address threadSectionEnd =
 					threadSectionStart.add(threadStartsSection.getSize() - 1);

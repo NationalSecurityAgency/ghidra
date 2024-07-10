@@ -30,10 +30,10 @@ AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",48);
 AttributeId ATTRIB_CHAR = AttributeId("char",49);
 AttributeId ATTRIB_CORE = AttributeId("core",50);
 AttributeId ATTRIB_ENUM = AttributeId("enum",51);
-AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);
-AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);
-AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);
-AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);
+//AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);  // deprecated
+//AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);  // deprecated
+//AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);  // deprecated
+//AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);  // deprecated
 AttributeId ATTRIB_OPAQUESTRING = AttributeId("opaquestring",56);
 AttributeId ATTRIB_SIGNED = AttributeId("signed",57);
 AttributeId ATTRIB_STRUCTALIGN = AttributeId("structalign",58);
@@ -42,7 +42,7 @@ AttributeId ATTRIB_VARLENGTH = AttributeId("varlength",60);
 
 //ElementId ELEM_ABSOLUTE_MAX_ALIGNMENT = ElementId("absolute_max_alignment", 37);
 //ElementId ELEM_BITFIELD_PACKING = ElementId("bitfield_packing", 38);
-//ElementId ELEM_CHAR_SIZE = ElementId("char_size", 39);
+ElementId ELEM_CHAR_SIZE = ElementId("char_size", 39);
 //ElementId ELEM_CHAR_TYPE = ElementId("char_type", 40);
 ElementId ELEM_CORETYPES = ElementId("coretypes",41);
 ElementId ELEM_DATA_ORGANIZATION = ElementId("data_organization", 42);
@@ -68,7 +68,7 @@ ElementId ELEM_TYPE = ElementId("type",60);
 ElementId ELEM_TYPEGRP = ElementId("typegrp",62);
 ElementId ELEM_TYPEREF = ElementId("typeref",63);
 //ElementId ELEM_USE_MS_CONVENTION = ElementId("use_MS_convention", 64);
-//ElementId ELEM_WCHAR_SIZE = ElementId("wchar_size", 65);
+ElementId ELEM_WCHAR_SIZE = ElementId("wchar_size", 65);
 //ElementId ELEM_ZERO_LENGTH_BOUNDARY = ElementId("zero_length_boundary", 66);
 
 // Some default routines for displaying data
@@ -211,8 +211,8 @@ Datatype *Datatype::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *
 int4 Datatype::compare(const Datatype &op,int4 level) const
 
 {
-  if (size != op.size) return (op.size - size);
   if (submeta != op.submeta) return (submeta < op.submeta) ? -1 : 1;
+  if (size != op.size) return (op.size - size);
   return 0;
 }
 
@@ -2898,6 +2898,8 @@ TypeFactory::TypeFactory(Architecture *g)
   glb = g;
   sizeOfInt = 0;
   sizeOfLong = 0;
+  sizeOfChar = 0;
+  sizeOfWChar = 0;
   sizeOfPointer = 0;
   sizeOfAltPointer = 0;
   enumsize = 0;
@@ -2916,6 +2918,8 @@ void TypeFactory::clearCache(void)
   typecache10 = (Datatype *)0;
   typecache16 = (Datatype *)0;
   type_nochar = (Datatype *)0;
+  for(i=0;i<5;++i)
+    charcache[i] = (Datatype *)0;
 }
 
 /// Set up default values for size of "int", structure alignment, and enums
@@ -2935,6 +2939,10 @@ void TypeFactory::setupSizes(void)
   if (sizeOfLong == 0) {
     sizeOfLong = (sizeOfInt == 4) ? 8 : sizeOfInt;
   }
+  if (sizeOfChar == 0)
+    sizeOfChar = 1;
+  if (sizeOfWChar == 0)
+    sizeOfWChar = 2;
   if (sizeOfPointer == 0)
     sizeOfPointer = glb->getDefaultDataSpace()->getAddrSize();
   SegmentOp *segOp = glb->getSegmentOp(glb->getDefaultDataSpace());
@@ -3003,11 +3011,15 @@ void TypeFactory::cacheCoreTypes(void)
       // fallthru
     case TYPE_UINT:
       if (ct->isEnumType()) break; // Conceivably an enumeration
-      if (ct->isASCII()) { 	// Char is preferred over other int types
-	typecache[ct->getSize()][ct->getMetatype()-TYPE_FLOAT] = ct;
+      if (ct->isCharPrint()) {
+	if (ct->getSize() < 5)
+	  charcache[ct->getSize()] = ct;
+	if (ct->isASCII()) { 	// Char is preferred over other int types
+	  typecache[ct->getSize()][ct->getMetatype()-TYPE_FLOAT] = ct;
+	}
+	// Other character types (UTF16,UTF32) are not preferred
 	break;
       }
-      if (ct->isCharPrint()) break; // Other character types (UTF16,UTF32) are not preferred
       // fallthru
     case TYPE_VOID:
     case TYPE_UNKNOWN:
@@ -3519,6 +3531,20 @@ Datatype *TypeFactory::getBase(int4 s,type_metatype m,const string &n)
   return findAdd(tmp);
 }
 
+/// If a \e core character data-type of the given size exists, it is returned.
+/// Otherwise an exception is thrown
+/// \param s is the size in bytes of the desired character data-type
+Datatype *TypeFactory::getTypeChar(int4 s)
+
+{
+  if (s < 5) {
+    Datatype *res = charcache[s];
+    if (res != (Datatype *)0)
+      return res;
+  }
+  throw LowlevelError("Request for unsupported character data-type");
+}
+
 /// Retrieve or create the core "code" Datatype object
 /// This has no prototype attached to it and is appropriate for anonymous function pointers.
 /// \return the TypeCode object
@@ -3983,10 +4009,6 @@ void TypeFactory::encode(Encoder &encoder) const
 
   dependentOrder(deporder);	// Put types in correct order
   encoder.openElement(ELEM_TYPEGRP);
-  encoder.writeSignedInteger(ATTRIB_INTSIZE, sizeOfInt);
-  encoder.writeSignedInteger(ATTRIB_LONGSIZE, sizeOfLong);
-  encoder.writeSignedInteger(ATTRIB_ENUMSIZE, enumsize);
-  encoder.writeBool(ATTRIB_ENUMSIGNED, (enumtype==TYPE_INT));
   for(iter=deporder.begin();iter!=deporder.end();++iter) {
     if ((*iter)->getName().size()==0) continue;	// Don't save anonymous types
     if ((*iter)->isCoreType()) { // If this would be saved as a coretype
@@ -4305,15 +4327,7 @@ void TypeFactory::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_TYPEGRP);
-  string metastring;
 
-  sizeOfInt = decoder.readSignedInteger(ATTRIB_INTSIZE);
-  sizeOfLong = decoder.readSignedInteger(ATTRIB_LONGSIZE);
-  enumsize = decoder.readSignedInteger(ATTRIB_ENUMSIZE);
-  if (decoder.readBool(ATTRIB_ENUMSIGNED))
-    enumtype = TYPE_INT;
-  else
-    enumtype = TYPE_UINT;
   while(decoder.peekElement() != 0)
     decodeTypeNoRef(decoder,false);
   decoder.closeElement(elemId);
@@ -4354,6 +4368,12 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
     }
     else if (subId == ELEM_POINTER_SIZE) {
       sizeOfPointer = decoder.readSignedInteger(ATTRIB_VALUE);
+    }
+    else if (subId == ELEM_CHAR_SIZE) {
+      sizeOfChar = decoder.readSignedInteger(ATTRIB_VALUE);
+    }
+    else if (subId == ELEM_WCHAR_SIZE) {
+      sizeOfWChar = decoder.readSignedInteger(ATTRIB_VALUE);
     }
     else if (subId == ELEM_SIZE_ALIGNMENT_MAP) {
       decodeAlignmentMap(decoder);

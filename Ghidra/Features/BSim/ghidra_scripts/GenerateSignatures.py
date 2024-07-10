@@ -15,6 +15,7 @@
 ##
 #Generate signatures for every function in the current program and write them to an XML file in a user-specified directory
 #@category BSim.python
+#@runtime Jython
 
 import java.lang.System as System
 import java.io.File as File

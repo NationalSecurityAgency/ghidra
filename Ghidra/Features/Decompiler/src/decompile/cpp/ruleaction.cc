@@ -7060,7 +7060,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
 
   vector<PieceNode> stack;
   for(;;) {
-    PieceNode::gatherPieces(stack, outvn, op, baseOffset);
+    PieceNode::gatherPieces(stack, outvn, op, baseOffset, baseOffset);
     if (!findReplaceZext(stack, ct, data))	// Check for INT_ZEXT leaves that need to be converted to PIECEs
       break;
     stack.clear();	// If we found some, regenerate the tree

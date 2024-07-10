@@ -25,7 +25,7 @@ class UnknownC13Section extends AbstractUnimplementedC13Section {
 		return new UnknownC13Section(reader, ignore, monitor);
 	}
 
-	protected UnknownC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
+	private UnknownC13Section(PdbByteReader reader, boolean ignore, TaskMonitor monitor) {
 		super(reader, ignore, monitor);
 	}
 }

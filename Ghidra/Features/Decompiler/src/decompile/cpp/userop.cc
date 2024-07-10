@@ -27,10 +27,59 @@ ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",127);
 ElementId ELEM_JUMPASSIST = ElementId("jumpassist",128);
 ElementId ELEM_SEGMENTOP = ElementId("segmentop",129);
 
+const uint4 UserPcodeOp::BUILTIN_STRINGDATA = 0x10000000;
+const uint4 UserPcodeOp::BUILTIN_VOLATILE_READ = 0x10000001;
+const uint4 UserPcodeOp::BUILTIN_VOLATILE_WRITE = 0x10000002;
+const uint4 UserPcodeOp::BUILTIN_MEMCPY = 0x10000003;
+const uint4 UserPcodeOp::BUILTIN_STRNCPY = 0x10000004;
+const uint4 UserPcodeOp::BUILTIN_WCSNCPY = 0x10000005;
+
 int4 UserPcodeOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
 {
   throw LowlevelError("Unexpected annotation input for CALLOTHER " + name);
+}
+
+/// \brief Constructor given specific input/output data-types
+///
+/// An optional output data-type for the CALLOTHER can be specified and up to 4 input data-types
+/// associated with the first 4 inputs to the CALLOTHER (after the userop id in slot 0).
+/// \param nm is the name to associate with the user-op
+/// \param g is the Architecture owning the new user-op
+/// \param ind is the id associated with the user-op
+/// \param out is the data-type to associate with the CALLOTHER output (may be null)
+/// \param in0 is the first input data-type (may be null)
+/// \param in1 is the second input data-type (may be null)
+/// \param in2 is the third input data-type (may be null)
+/// \param in3 is the fourth input data-type (may be null)
+DatatypeUserOp::DatatypeUserOp(const string &nm,Architecture *g,int4 ind,Datatype *out,
+			       Datatype *in0,Datatype *in1,Datatype *in2,Datatype *in3)
+  : UserPcodeOp(nm,g,datatype,ind)
+{
+  outType = out;
+  if (in0 != (Datatype *)0)
+    inTypes.push_back(in0);
+  if (in1 != (Datatype *)0)
+    inTypes.push_back(in1);
+  if (in2 != (Datatype *)0)
+    inTypes.push_back(in2);
+  if (in3 != (Datatype *)0)
+    inTypes.push_back(in3);
+}
+
+Datatype *DatatypeUserOp::getOutputLocal(const PcodeOp *op) const
+
+{
+  return outType;
+}
+
+Datatype *DatatypeUserOp::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  slot -= 1;
+  if (slot >= 0 && slot < inTypes.size())
+    return inTypes[slot];
+  return (Datatype *)0;
 }
 
 void InjectedUserOp::decode(Decoder &decoder)
@@ -76,6 +125,21 @@ string VolatileReadOp::getOperatorName(const PcodeOp *op) const
   return appendSize(name,op->getOut()->getSize());
 }
 
+Datatype *VolatileReadOp::getOutputLocal(const PcodeOp *op) const
+
+{
+  if (!op->doesSpecialPropagation())
+    return (Datatype *)0;
+  const Address &addr ( op->getIn(1)->getAddr() ); // Address of volatile memory
+  int4 size = op->getOut()->getSize(); // Size of memory being written
+  uint4 vflags = 0;
+  SymbolEntry *entry = glb->symboltab->getGlobalScope()->queryProperties(addr,size,op->getAddr(),vflags);
+  if (entry != (SymbolEntry *)0) {
+    return entry->getSizedType(addr,size);
+  }
+  return (Datatype *)0;
+}
+
 int4 VolatileReadOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
 {
@@ -92,17 +156,32 @@ string VolatileWriteOp::getOperatorName(const PcodeOp *op) const
   return appendSize(name,op->getIn(2)->getSize());
 }
 
+Datatype *VolatileWriteOp::getInputLocal(const PcodeOp *op,int4 slot) const
+
+{
+  if (!op->doesSpecialPropagation() || slot != 2)
+    return (Datatype *)0;
+  const Address &addr ( op->getIn(1)->getAddr() ); // Address of volatile memory
+  int4 size = op->getIn(2)->getSize(); // Size of memory being written
+  uint4 vflags = 0;
+  SymbolEntry *entry = glb->symboltab->getGlobalScope()->queryProperties(addr,size,op->getAddr(),vflags);
+  if (entry != (SymbolEntry *)0) {
+    return entry->getSizedType(addr,size);
+  }
+  return (Datatype *)0;
+}
+
 int4 VolatileWriteOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
 {
   return op->getIn(2)->getSize(); // Get size from the 3rd parameter of write function
 }
 
-/// \param g is the owning Architecture for this instance of the segment operation
 /// \param nm is the low-level name of the segment operation
+/// \param g is the owning Architecture for this instance of the segment operation
 /// \param ind is the constant id identifying the specific CALLOTHER variant
-SegmentOp::SegmentOp(Architecture *g,const string &nm,int4 ind)
-  : TermPatternOp(g,nm,ind)
+SegmentOp::SegmentOp(const string &nm,Architecture *g,int4 ind)
+  : TermPatternOp(nm,g,segment,ind)
 {
   constresolve.space = (AddrSpace *)0;
 }
@@ -212,7 +291,7 @@ void SegmentOp::decode(Decoder &decoder)
 
 /// \param g is the Architecture owning this set of jump assist scripts
 JumpAssistOp::JumpAssistOp(Architecture *g)
-  : UserPcodeOp(g,"",0)
+  : UserPcodeOp("",g,jumpassist,0)
 {
   index2case = -1;
   index2addr = -1;
@@ -273,11 +352,22 @@ void JumpAssistOp::decode(Decoder &decoder)
   useropindex = base->getIndex();	// Get the index from the core userop
 }
 
+InternalStringOp::InternalStringOp(Architecture *g)
+  : UserPcodeOp("stringdata",g,string_data,BUILTIN_STRINGDATA)
+{
+  flags |= display_string;
+}
+
+Datatype *InternalStringOp::getOutputLocal(const PcodeOp *op) const
+
+{
+  return op->getOut()->getType();
+}
+
 UserOpManage::UserOpManage(void)
 
 {
-  vol_read = (VolatileReadOp *)0;
-  vol_write = (VolatileWriteOp *)0;
+  glb = (Architecture *)0;
 }
 
 UserOpManage::~UserOpManage(void)
@@ -290,37 +380,38 @@ UserOpManage::~UserOpManage(void)
     if (userop != (UserPcodeOp *)0)
       delete userop;
   }
+  map<uint4,UserPcodeOp *>::iterator oiter;
+  for(oiter=builtinmap.begin();oiter!=builtinmap.end();++oiter) {
+    delete (*oiter).second;
+  }
 }
 
 /// Every user defined p-code op is initially assigned an UnspecializedPcodeOp description,
 /// which may get overridden later.
-/// \param glb is the Architecture from which to draw user defined operations
-void UserOpManage::initialize(Architecture *glb)
+/// \param g is the Architecture from which to draw user defined operations
+void UserOpManage::initialize(Architecture *g)
 
 {
+  glb = g;
   vector<string> basicops;
   glb->translate->getUserOpNames(basicops);
   for(uint4 i=0;i<basicops.size();++i) {
     if (basicops[i].size()==0) continue;
-    UserPcodeOp *userop = new UnspecializedPcodeOp(glb,basicops[i],i);
+    UserPcodeOp *userop = new UnspecializedPcodeOp(basicops[i],glb,i);
     registerOp(userop);
   }
 }
 
-/// Establish defaults for necessary operators not already defined.
-/// Currently this forces volatile read/write operations to exist.
-/// \param glb is the owning Architecture
-void UserOpManage::setDefaults(Architecture *glb)
-
-{
-  if (vol_read == (VolatileReadOp *)0) {
-    VolatileReadOp *volread = new VolatileReadOp(glb,"read_volatile",useroplist.size(), false);
-    registerOp(volread);
-  }
-  if (vol_write == (VolatileWriteOp *)0) {
-    VolatileWriteOp *volwrite = new VolatileWriteOp(glb,"write_volatile",useroplist.size(), false);
-    registerOp(volwrite);
-  }
+/// Retrieve a user-op description object by index
+/// \param i is the index
+/// \return the indicated user-op description
+UserPcodeOp *UserOpManage::getOp(uint4 i) const {
+  if (i<useroplist.size())
+    return useroplist[i];
+  map<uint4,UserPcodeOp *>::const_iterator iter = builtinmap.find(i);
+  if (iter == builtinmap.end())
+    return (UserPcodeOp *)0;
+  return ((*iter).second);
 }
 
 /// \param nm is the low-level operation name
@@ -332,6 +423,64 @@ UserPcodeOp *UserOpManage::getOp(const string &nm) const
   iter = useropmap.find(nm);
   if (iter == useropmap.end()) return (UserPcodeOp *)0;
   return (*iter).second;
+}
+
+/// Retrieve a built-in user-op given its id.  If user-op record does not already exist,
+/// instantiate a default form of the record.
+/// \param i is the index associated
+/// \return the matching user-op record
+UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
+
+{
+  map<uint4,UserPcodeOp *>::const_iterator iter = builtinmap.find(i);
+  if (iter != builtinmap.end())
+    return (*iter).second;
+  UserPcodeOp *res;
+  switch(i) {
+    case UserPcodeOp::BUILTIN_STRINGDATA:
+      res = new InternalStringOp(glb);
+      break;
+    case UserPcodeOp::BUILTIN_VOLATILE_READ:
+      res = new VolatileReadOp("read_volatile",glb,false);
+      break;
+    case UserPcodeOp::BUILTIN_VOLATILE_WRITE:
+      res = new VolatileWriteOp("write_volatile",glb,false);
+      break;
+    case UserPcodeOp::BUILTIN_MEMCPY:
+    {
+      int4 ptrSize = glb->types->getSizeOfPointer();
+      int4 wordSize = glb->getDefaultDataSpace()->getWordSize();
+      Datatype *vType = glb->types->getTypeVoid();
+      Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
+      Datatype *intType = glb->types->getBase(4,TYPE_INT);
+      res = new DatatypeUserOp("builtin_memcpy",glb,UserPcodeOp::BUILTIN_MEMCPY,ptrType,ptrType,ptrType,intType);
+      break;
+    }
+    case UserPcodeOp::BUILTIN_STRNCPY:		// Copy "char" elements
+    {
+      int4 ptrSize = glb->types->getSizeOfPointer();
+      int4 wordSize = glb->getDefaultDataSpace()->getWordSize();
+      Datatype *cType = glb->types->getTypeChar(glb->types->getSizeOfChar());
+      Datatype *ptrType = glb->types->getTypePointer(ptrSize,cType,wordSize);
+      Datatype *intType = glb->types->getBase(4,TYPE_INT);
+      res = new DatatypeUserOp("builtin_strncpy",glb,UserPcodeOp::BUILTIN_STRNCPY,ptrType,ptrType,ptrType,intType);
+      break;
+    }
+    case UserPcodeOp::BUILTIN_WCSNCPY:		// Copy "wchar_t" elements
+    {
+      int4 ptrSize = glb->types->getSizeOfPointer();
+      int4 wordSize = glb->getDefaultDataSpace()->getWordSize();
+      Datatype *cType = glb->types->getTypeChar(glb->types->getSizeOfWChar());
+      Datatype *ptrType = glb->types->getTypePointer(ptrSize,cType,wordSize);
+      Datatype *intType = glb->types->getBase(4,TYPE_INT);
+      res = new DatatypeUserOp("builtin_wcsncpy",glb,UserPcodeOp::BUILTIN_WCSNCPY,ptrType,ptrType,ptrType,intType);
+      break;
+    }
+    default:
+      throw LowlevelError("Bad built-in userop id");
+  }
+  builtinmap[i] = res;
+  return res;
 }
 
 /// Add the description to the mapping by index and the mapping by name. Make same basic
@@ -375,19 +524,6 @@ void UserOpManage::registerOp(UserPcodeOp *op)
     segmentop[index] = s_op;
     return;
   }
-  VolatileReadOp *tmpVolRead = dynamic_cast<VolatileReadOp *>(op);
-  if (tmpVolRead != (VolatileReadOp *)0) {
-    if (vol_read != (VolatileReadOp *)0)
-      throw LowlevelError("Multiple volatile reads registered");
-    vol_read = tmpVolRead;
-    return;
-  }
-  VolatileWriteOp *tmpVolWrite = dynamic_cast<VolatileWriteOp *>(op);
-  if (tmpVolWrite != (VolatileWriteOp *)0) {
-    if (vol_write != (VolatileWriteOp *)0)
-      throw LowlevelError("Multiple volatile writes registered");
-    vol_write = tmpVolWrite;
-  }
 }
 
 /// Create a SegmentOp description object based on the element and
@@ -398,7 +534,7 @@ void UserOpManage::decodeSegmentOp(Decoder &decoder,Architecture *glb)
 
 {
   SegmentOp *s_op;
-  s_op = new SegmentOp(glb,"",useroplist.size());
+  s_op = new SegmentOp("",glb,useroplist.size());
   try {
     s_op->decode(decoder);
     registerOp(s_op);
@@ -435,20 +571,15 @@ void UserOpManage::decodeVolatile(Decoder &decoder,Architecture *glb)
   }
   if (readOpName.size() == 0 || writeOpName.size() == 0)
     throw LowlevelError("Missing inputop/outputop attributes in <volatile> element");
-  VolatileReadOp *vr_op = new VolatileReadOp(glb,readOpName,useroplist.size(),functionalDisplay);
-  try {
-    registerOp(vr_op);
-  } catch(LowlevelError &err) {
-    delete vr_op;
-    throw err;
-  }
-  VolatileWriteOp *vw_op = new VolatileWriteOp(glb,writeOpName,useroplist.size(),functionalDisplay);
-  try {
-    registerOp(vw_op);
-  } catch(LowlevelError &err) {
-    delete vw_op;
-    throw err;
-  }
+  map<uint4,UserPcodeOp *>::const_iterator iter;
+  if (builtinmap.find(UserPcodeOp::BUILTIN_VOLATILE_READ) != builtinmap.end())
+    throw LowlevelError("read_volatile user-op registered more than once");
+  if (builtinmap.find(UserPcodeOp::BUILTIN_VOLATILE_WRITE) != builtinmap.end())
+    throw LowlevelError("write_volatile user-op registered more than once");
+  VolatileReadOp *vr_op = new VolatileReadOp(readOpName,glb,functionalDisplay);
+  builtinmap[UserPcodeOp::BUILTIN_VOLATILE_READ] = vr_op;
+  VolatileWriteOp *vw_op = new VolatileWriteOp(writeOpName,glb,functionalDisplay);
+  builtinmap[UserPcodeOp::BUILTIN_VOLATILE_WRITE] = vw_op;
 }
 
 /// Create an InjectedUserOp description object based on the element
@@ -458,7 +589,7 @@ void UserOpManage::decodeVolatile(Decoder &decoder,Architecture *glb)
 void UserOpManage::decodeCallOtherFixup(Decoder &decoder,Architecture *glb)
 
 {
-  InjectedUserOp *op = new InjectedUserOp(glb,"",0,0);
+  InjectedUserOp *op = new InjectedUserOp("",glb,0,0);
   try {
     op->decode(decoder);
     registerOp(op);
@@ -505,7 +636,7 @@ void UserOpManage::manualCallOtherFixup(const string &useropname,const string &o
     throw LowlevelError("Cannot fixup userop: "+useropname);
 
   int4 injectid = glb->pcodeinjectlib->manualCallOtherFixup(useropname,outname,inname,snippet);
-  InjectedUserOp *op = new InjectedUserOp(glb,useropname,userop->getIndex(),injectid);
+  InjectedUserOp *op = new InjectedUserOp(useropname,glb,userop->getIndex(),injectid);
   try {
     registerOp(op);
   } catch(LowlevelError &err) {

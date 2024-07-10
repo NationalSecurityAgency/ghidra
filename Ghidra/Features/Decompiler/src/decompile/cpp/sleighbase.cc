@@ -272,7 +272,7 @@ AddrSpace *SleighBase::decodeSlaSpace(Decoder &decoder,const Translate *trans)
     else if (attribId == sla::ATTRIB_SIZE)
       addressSize = decoder.readSignedInteger();
     else if (attribId == sla::ATTRIB_WORDSIZE)
-      wordsize = decoder.readUnsignedInteger();
+      wordsize = decoder.readSignedInteger();
     else if (attribId == sla::ATTRIB_BIGENDIAN) {
       bigEnd = decoder.readBool();
     }

@@ -62,15 +62,11 @@ public class PowerPC64_ElfRelocationHandler
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
-
+		
 		// NOTE: Based upon glibc source it appears that PowerPC only uses RELA relocations
 		long addend = relocation.getAddend();
-
 		long offset = relocationAddress.getOffset();
 		int symbolIndex = relocation.getSymbolIndex();
-		int oldValue = memory.getInt(relocationAddress);
-		int newValue = 0;
-		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		// IMPORTANT NOTE:
 		//   Handling of Object modules (*.o) is currently problematic since relocations
@@ -102,12 +98,40 @@ public class PowerPC64_ElfRelocationHandler
 				break;
 			default:
 		}
-
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
 		switch (type) {
+
+			case R_PPC64_RELATIVE:
+				long value64 = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
+				memory.setLong(relocationAddress, value64);
+				return new RelocationResult(Status.APPLIED, 8);
+				
+			case R_PPC64_TOC:
+				memory.setLong(relocationAddress, toc);
+				return new RelocationResult(Status.APPLIED, 8);
+				
 			case R_PPC64_COPY:
 				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
 					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
+			
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}	
+
+		int oldValue = memory.getInt(relocationAddress);
+		int newValue = 0;
+		
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+
+		switch (type) {
+			
 			case R_PPC64_ADDR32:
 				newValue = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, newValue);
@@ -179,11 +203,6 @@ public class PowerPC64_ElfRelocationHandler
 				newValue = (oldValue & ~PPC64_LOW24) | newValue;
 				memory.setInt(relocationAddress, newValue);
 				break;
-			case R_PPC64_RELATIVE:
-				long value64 = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
-				memory.setLong(relocationAddress, value64);
-				byteLength = 8;
-				break;
 			case R_PPC64_REL32:
 				newValue = (int) (symbolValue + addend - offset);
 				memory.setInt(relocationAddress, newValue);
@@ -230,7 +249,7 @@ public class PowerPC64_ElfRelocationHandler
 			case R_PPC64_UADDR64:
 			case R_PPC64_ADDR64:
 			case R_PPC64_GLOB_DAT:
-				value64 = symbolValue + addend;
+				long value64 = symbolValue + addend;
 				memory.setLong(relocationAddress, value64);
 				byteLength = 8;
 				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
@@ -238,10 +257,6 @@ public class PowerPC64_ElfRelocationHandler
 						addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);
 				}
-				break;
-			case R_PPC64_TOC:
-				memory.setLong(relocationAddress, toc);
-				byteLength = 8;
 				break;
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,

@@ -48,13 +48,6 @@ public interface EditorProvider {
 	public DataTypeManager getDataTypeManager();
 
 	/**
-	 * Notification that the data type manager domain object (program or data type archive) was
-	 * restored.
-	 * @param domainObject the program or data type archive that was restored.
-	 */
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject);
-
-	/**
 	 * Return whether this editor is editing the data type with the given path.
 	 * @param dtPath path of a data type
 	 * @return true if the data type for the pathname is being edited

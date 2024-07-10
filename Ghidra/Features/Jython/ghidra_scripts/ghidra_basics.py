@@ -15,6 +15,7 @@
 ##
 # Examples of basic Ghidra scripting in Python
 # @category: Examples.Python
+# @runtime Jython
 
 # Get info about the current program
 print

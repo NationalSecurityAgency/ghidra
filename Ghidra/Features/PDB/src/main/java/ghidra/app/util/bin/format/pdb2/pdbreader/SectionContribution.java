@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.*;
+
 /**
  * This class represents Section Contribution component of a PDB file.  This class is only
  *  suitable for reading; not for writing or modifying a PDB.
@@ -62,7 +64,14 @@ public abstract class SectionContribution {
 
 	@Override
 	public String toString() {
-		return dump();
+		StringWriter writer = new StringWriter();
+		try {
+			dump(writer);
+			return writer.toString();
+		}
+		catch (IOException e) {
+			return "Issue in " + getClass().getSimpleName() + " toString(): " + e.getMessage();
+		}
 	}
 
 	//==============================================================================================
@@ -77,23 +86,23 @@ public abstract class SectionContribution {
 
 	/**
 	 * Dumps the SectionContribution.  This method is for debugging only
-	 * @return {@link String} of pretty output
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	abstract String dumpInternals();
+	abstract void dumpInternals(Writer writer) throws IOException;
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
 	 * Dumps the Section Contribution.  This method is for debugging only
-	 * @return {@link String} of pretty output
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("SectionContribution-----------------------------------------\n");
-		builder.append(dumpInternals());
-		builder.append("\nEnd SectionContribution-------------------------------------\n");
-		return builder.toString();
+	void dump(Writer writer) throws IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		dumpInternals(writer);
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 }

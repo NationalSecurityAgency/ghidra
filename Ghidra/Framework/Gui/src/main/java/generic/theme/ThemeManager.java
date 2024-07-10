@@ -679,8 +679,8 @@ public abstract class ThemeManager {
 	 * so that they get a chance to change the UIDefaults map as the look and feel is loaded.
 	 * @param b true for blinking text cursors, false for non-blinking text cursors
 	 */
-	public void setBlinkingCursors(boolean b) {
-		throw new UnsupportedOperationException();
+	protected void setBlinkingCursors(boolean b) {
+		// do nothing
 	}
 
 	/**
@@ -688,7 +688,7 @@ public abstract class ThemeManager {
 	 * components can use this method to determine if they should have a blinking cursor or not.
 	 * @return true if the application should allow blinking cursors, false otherwise.
 	 */
-	public boolean isBlinkingCursors() {
+	protected boolean isBlinkingCursors() {
 		return true;
 	}
 }

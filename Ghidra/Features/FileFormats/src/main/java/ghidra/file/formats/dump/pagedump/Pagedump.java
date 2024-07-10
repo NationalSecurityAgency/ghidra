@@ -198,7 +198,7 @@ public class Pagedump extends DumpFile {
 			pdb.deserialize();
 			DefaultPdbApplicator applicator =
 				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
-					program.getImageBase(), applicatorOptions, (MessageLog) null);
+					program.getImageBase(), applicatorOptions, monitor, (MessageLog) null);
 			applicator.applyNoAnalysisState();
 		}
 		catch (PdbException | IOException | CancelledException e) {

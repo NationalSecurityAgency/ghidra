@@ -22,14 +22,43 @@ import javax.tools.Diagnostic.Kind;
 
 import ghidra.util.database.annot.DBAnnotatedColumn;
 
+/**
+ * A class for validating fields annotated with {@link DBAnnotatedColumn}.
+ * 
+ * <p>
+ * To ensure fields annotated with {@link DBAnnotatedColumn} comply with the expected criteria for
+ * database columns in Ghidra.
+ * </p>
+ */
+
 public class DBAnnotatedColumnValidator extends AbstractDBAnnotationValidator {
 	final VariableElement column;
 
+	/**
+	 * Construct a new {@code DBAnnotatedColumnValidator} with the specified validation context and
+	 * the column element.
+	 * 
+	 * @param ctx the validation context
+	 * @param column the field representing the column
+	 */
 	public DBAnnotatedColumnValidator(ValidationContext ctx, VariableElement column) {
 		super(ctx);
 		this.column = column;
 	}
 
+	/**
+	 * Validate the annotated column field.
+	 * 
+	 * <p>
+	 * It performs the following checks to ensure it meets the requirements for database columns:
+	 * <ul>
+	 * <li>The field must be of the type specified by {@code ctx.DB_OBJECT_COLUMN_ELEM}.</li>
+	 * <li>The field must not be declared as {@code final}.</li>
+	 * <li>The field must be declared as {@code static}.</li>
+	 * <li>The enclosing type of the field must meet the criteria defined in
+	 * {@code checkEnclosingType}.</li>
+	 * </ul>
+	 */
 	public void validate() {
 		if (!ctx.hasType(column, ctx.DB_OBJECT_COLUMN_ELEM)) {
 			ctx.messager.printMessage(Kind.ERROR,

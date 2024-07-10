@@ -15,8 +15,7 @@
  */
 package ghidra.app.decompiler;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * An iterator over ClangToken objects.  The iterator walks a tree of ClangNode objects based on
@@ -126,7 +125,7 @@ public class TokenIterator implements Iterator<ClangToken> {
 	 * @param forward is true for a forward iterator, false for a backward iterator
 	 */
 	public TokenIterator(ClangToken token, boolean forward) {
-		ArrayList<ClangTokenGroup> groupList = new ArrayList<>();
+		List<ClangTokenGroup> groupList = new ArrayList<>();
 		ClangNode node = token.Parent();
 		while (node != null) {
 			groupList.add((ClangTokenGroup) node);
@@ -154,7 +153,7 @@ public class TokenIterator implements Iterator<ClangToken> {
 	 * @param forward is true for a forward iterator, false for a backward iterator
 	 */
 	public TokenIterator(ClangTokenGroup group, boolean forward) {
-		ArrayList<ClangTokenGroup> groupList = new ArrayList<>();
+		List<ClangTokenGroup> groupList = new ArrayList<>();
 		ClangNode node = group;
 		while (node instanceof ClangTokenGroup) {
 			ClangTokenGroup curGroup = (ClangTokenGroup) node;

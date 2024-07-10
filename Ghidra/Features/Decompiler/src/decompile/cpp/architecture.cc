@@ -1321,7 +1321,6 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   if (miter == protoModels.end()) { // If __thiscall doesn't exist we clone it off of the default
     createModelAlias("__thiscall",defaultfp->getName());
   }
-  userops.setDefaults(this);
   initializeSegments();
   PreferSplitManager::initialize(splitrecords);
   types->setupSizes();		// If no data_organization was registered, set up default values
