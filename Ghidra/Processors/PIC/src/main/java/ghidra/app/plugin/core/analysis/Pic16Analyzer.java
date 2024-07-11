@@ -53,9 +53,7 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 	
 	@Override
 	public boolean canAnalyze(Program p) {
-		boolean cananalyze = super.canAnalyze(p);
-		
-		if (!cananalyze) {
+		if (!super.canAnalyze(p)) {
 			return false;
 		}
 		Language lang = p.getLanguage();

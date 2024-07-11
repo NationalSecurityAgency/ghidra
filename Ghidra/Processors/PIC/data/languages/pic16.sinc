@@ -77,7 +77,6 @@ define register offset=0x0007 size=1 [ IRP RP ];
 #
 @if PROCESSOR == "PIC_16"
 define DATA offset=0x0000 size=1 [
-#PIC16 FRM		INDF	TMR0	PCL		STATUS	FSR		PORTA	PORTB	PORTC	PORTD	PORTE	PCLATH	INTCON	PIR1	PIR2	TMR1L	TMR1H
 				INDF	_       PCL		STATUS  FSR		_       _       _       _       _       PCLATH  INTCON	_		_       _       _
 ];
 @elif PROCESSOR == "PIC_16F"
