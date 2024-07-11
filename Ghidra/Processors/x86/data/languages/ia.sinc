@@ -4073,13 +4073,13 @@ define pcodeop smm_restore_state;
 :SBB  AX,imm16     is vexMode=0 & opsize=0 & byte=0x1d; AX & imm16						{ subCarryFlags( AX, imm16 ); resultflags(AX); }
 :SBB  EAX,imm32    is vexMode=0 & opsize=1 & byte=0x1d; EAX & check_EAX_dest & imm32	{ subCarryFlags( EAX, imm32 ); build check_EAX_dest; resultflags(EAX); }
 @ifdef IA64
-:SBB  RAX,imm32    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x1d; RAX & imm32						{ subCarryFlags( RAX, imm32 ); resultflags(RAX); }
+:SBB  RAX,simm32    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x1d; RAX & simm32						{ subCarryFlags( RAX, simm32 ); resultflags(RAX); }
 @endif
 :SBB  Rmr8,imm8     is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=3; imm8								{ subCarryFlags( Rmr8, imm8 ); resultflags(Rmr8); }
 :SBB  Rmr16,imm16       is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=3; imm16							{ subCarryFlags( Rmr16, imm16 ); resultflags(Rmr16); }
 :SBB  Rmr32,imm32       is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=3; imm32	{ subCarryFlags( Rmr32, imm32 ); build check_Rmr32_dest; resultflags(Rmr32); }
 @ifdef IA64
-:SBB  Rmr64,imm32       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x81; mod=3 & Rmr64 & reg_opcode=3; imm32							{ subCarryFlags( Rmr64, imm32 ); resultflags(Rmr64); }
+:SBB  Rmr64,simm32       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x81; mod=3 & Rmr64 & reg_opcode=3; simm32							{ subCarryFlags( Rmr64, simm32 ); resultflags(Rmr64); }
 @endif
 
 :SBB  Rmr16,simm8_16       is vexMode=0 & opsize=0 & byte=0x83; mod=3 & Rmr16 & reg_opcode=3; simm8_16						{ subCarryFlags( Rmr16, simm8_16 ); resultflags(Rmr16); }
