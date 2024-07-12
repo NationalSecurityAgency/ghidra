@@ -5049,13 +5049,13 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # MFCR D[c], const16 (RLC)
 :mfcr Rd2831,const1227Z is PCPMode=0 & ( op0007=0x4d & op0811=0x0 ; Rd2831 ) & const1227Z
 {
-	Rd2831 = *[register]:4 const1227Z;
+	Rd2831 = *[ram]:4 const1227Z;
 }
 
 @if defined(TRICORE_V2)
 :mffr Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x1d1
 {
-	Rd2831 = *[register]:4 Rd0811;
+	Rd2831 = *[ram]:4 Rd0811;
 }
 @endif
 
@@ -6371,13 +6371,13 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # MTCR const16, D[a] (RLC)
 :mtcr const1227Z,Rd0811 is PCPMode=0 & ( Rd0811 & op0007=0xcd ; op2831=0x0 ) & const1227Z
 {
-	*[register]:4 const1227Z = Rd0811;
+	*[ram]:4 const1227Z = Rd0811;
 }
 
 @if defined(TRICORE_V2)
 :mtfr Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; op1631=0x1c1
 {
-	*[register]:4 Rd1215 = Rd0811;
+	*[ram]:4 Rd1215 = Rd0811;
 }
 @endif
 
