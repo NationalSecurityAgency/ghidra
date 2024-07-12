@@ -156,4 +156,16 @@ void GhidraTranslate::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+void GhidraTranslate::renormalizeJoinAddress(Address &addr,int4 size) {
+  glb->renormalizeJoinAddress(addr,size);
+}
+
+JoinRecord* GhidraTranslate::findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize) {
+  return glb->findAddJoin(pieces,logicalsize);
+}
+
+JoinRecord* GhidraTranslate::findJoin(uintb offset) const {
+  return glb->findJoin(offset);
+}
+
 } // End namespace ghidra
