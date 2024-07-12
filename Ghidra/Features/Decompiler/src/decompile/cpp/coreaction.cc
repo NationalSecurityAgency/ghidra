@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2723,7 +2723,7 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
-	if (!op->getIn(0)->getHighTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset())) {
+	if (!op->getIn(0)->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset(),0,1)) {
 	  if (op->getIn(1)->getOffset() == 0) {
 	    data.opRemoveInput(op, 1);
 	    data.opSetOpcode(op, CPUI_COPY);
@@ -5232,6 +5232,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
   if (localcount >= 7) {       // This constant arrived at empirically
     if (localcount == 7) {
       data.warningHeader("Type propagation algorithm not settling");
+      data.setTypeRecoveryExceeded();
       localcount += 1;
     }
     return 0;

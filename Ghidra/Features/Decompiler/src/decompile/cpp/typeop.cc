@@ -411,15 +411,15 @@ Datatype *TypeOpLoad::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,
   Datatype *newtype;
   if (inslot == -1) {	 // Propagating output to input (value to ptr)
     AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
-    newtype = tlst->getTypePointerNoDepth(outvn->getTempType()->getSize(),alttype,spc->getWordSize());
+    newtype = tlst->getTypePointerNoDepth(outvn->getSize(),alttype,spc->getWordSize());
   }
   else if (alttype->getMetatype()==TYPE_PTR) {
     newtype = ((TypePointer *)alttype)->getPtrTo();
-    if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength()) // Size must be appropriate
-	newtype = outvn->getTempType();
+    if (newtype->getSize() != outvn->getSize() || newtype->isVariableLength()) // Size must be appropriate
+	newtype = (Datatype *)0;
   }
   else
-    newtype = outvn->getTempType(); // Don't propagate anything
+    newtype = (Datatype *)0; // Don't propagate anything
   return newtype;
 }
 
@@ -486,15 +486,15 @@ Datatype *TypeOpStore::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn
   Datatype *newtype;
   if (inslot==2) {		// Propagating value to ptr
     AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
-    newtype = tlst->getTypePointerNoDepth(outvn->getTempType()->getSize(),alttype,spc->getWordSize());
+    newtype = tlst->getTypePointerNoDepth(outvn->getSize(),alttype,spc->getWordSize());
   }
   else if (alttype->getMetatype()==TYPE_PTR) {
     newtype = ((TypePointer *)alttype)->getPtrTo();
-    if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength())
-	newtype = outvn->getTempType();
+    if (newtype->getSize() != outvn->getSize() || newtype->isVariableLength())
+	newtype = (Datatype *)0;
   }
   else
-    newtype = outvn->getTempType(); // Don't propagate anything
+    newtype = (Datatype *)0; // Don't propagate anything
   return newtype;
 }
 
@@ -1106,7 +1106,7 @@ Datatype *TypeOpIntAdd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   if (outvn->isConstant() && (alttype->getMetatype() != TYPE_PTR))
     newtype = alttype;
   else if (inslot == -1)		// Propagating output to input
-    newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
+    newtype = (Datatype *)0;	// Don't propagate pointer types this direction
   else
     newtype = propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
@@ -1130,7 +1130,7 @@ Datatype *TypeOpIntAdd::propagateAddIn2Out(Datatype *alttype,TypeFactory *typegr
   TypePointer *pointer = (TypePointer *)alttype;
   uintb offset;
   int4 command = propagateAddPointer(offset,op,inslot,pointer->getPtrTo()->getAlignSize());
-  if (command == 2) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
+  if (command == 2) return (Datatype *)0; // Doesn't look like a good pointer add
   TypePointer *parent = (TypePointer *)0;
   int8 parentOff;
   if (command != 3) {
@@ -1155,7 +1155,7 @@ Datatype *TypeOpIntAdd::propagateAddIn2Out(Datatype *alttype,TypeFactory *typegr
   if (pointer == (TypePointer *)0) {
     if (command == 0)
       return alttype;
-    return  op->getOut()->getTempType();
+    return (Datatype *)0;
   }
   if (op->getIn(inslot)->isSpacebase()) {
     if (pointer->getPtrTo()->getMetatype() == TYPE_SPACEBASE)
@@ -2112,7 +2112,7 @@ Datatype *TypeOpPtradd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   if (metain != TYPE_PTR) return (Datatype *)0;
   Datatype *newtype;
   if (inslot == -1)		// Propagating output to input
-    newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
+    newtype = (Datatype *)0;	// Don't propagate pointer types this direction
   else
     newtype = TypeOpIntAdd::propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
@@ -2192,7 +2192,7 @@ Datatype *TypeOpPtrsub::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   if (metain != TYPE_PTR) return (Datatype *)0;
   Datatype *newtype;
   if (inslot == -1)		// Propagating output to input
-    newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
+    newtype = (Datatype *)0;	// Don't propagate pointer types this direction
   else
     newtype = TypeOpIntAdd::propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
