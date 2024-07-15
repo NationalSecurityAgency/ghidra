@@ -5652,6 +5652,7 @@ void AddTreeState::clear(void)
   multiple.clear();
   coeff.clear();
   nonmult.clear();
+  multiequalsToInspect.clear();
   correct = 0;
   offset = 0;
   valid = true;
@@ -5870,6 +5871,8 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
     }
     if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
       return checkMultTerm(vn, def, treeCoeff);
+    if (treeCoeff == 1 && def->code() == CPUI_MULTIEQUAL)
+      multiequalsToInspect.push_back(vn);
   }
   else if (vn->isFree()) {
     valid = false;
@@ -5913,6 +5916,120 @@ bool AddTreeState::spanAddTree(PcodeOp *op,uint8 treeCoeff)
   if (two_is_non)
     nonmult.push_back(op->getIn(1));
   return false;		// At least one of the sides contains multiples
+}
+
+// \brief Modify surrounding expressions in an attempt to recover the multiple
+// 
+// For situations like this:
+// int sliding_offset = 0;  // or any constant divisible by element_size
+// // or int sliding_offset = something * element_size;
+// do {
+//   ... *(pointer_to_element + sliding_offset + optional_member_offset) ...
+//   sliding_offset += element_size;
+//   // or
+//   sliding_offset -= element_size;
+// } while (true);
+// , where element_size is the size of element pointed to by pointer_to_element
+// 
+// It modifies expressions which set or write the sliding_offset variable
+// by dividing their constant by element_size, and applying * element_size
+// (multiplication by element_size) to all places where the sliding_offset is used instead.
+// This makes RulePtrArith more likely to recognize that the CPUI_INT_ADD expression
+// is actually a CPUI_PTRADD.
+// \return \b true if successful, \b false otherwise
+bool AddTreeState::inspectMultiequals(void) {
+  vector<Varnode *>::iterator iter;
+  for (iter = multiequalsToInspect.begin(); iter != multiequalsToInspect.end(); ++iter) {
+    Varnode *vn = *iter;
+    if (!vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (op->code() != CPUI_MULTIEQUAL) continue;
+    if (op->numInput() != 2) continue;
+    Varnode *in1 = op->getIn(0);
+    if (!in1->isWritten() || in1->loneDescend() != op) continue;
+    PcodeOp *op1 = in1->getDef();
+    int4 op1Size = 0;
+    intb op1Val = 0;
+    int op1ReplacementSlot = 0;
+    if (op1->code() == CPUI_INT_MULT) {
+      Varnode *multTerm = op1->getIn(0);
+      if (multTerm->isFree()) continue;
+      Varnode *multConst = op1->getIn(1);
+      if (!multConst->isConstant()) continue;
+      uintb multval = multConst->getOffset() & ptrmask;
+      intb multsval = sign_extend(multval, in1->getSize() * 8 - 1);
+      intb multrem = multsval % size;
+      if (multrem != 0 || multsval == 0) continue;
+      op1Val = multsval;
+      op1ReplacementSlot = 1;
+      op1Size = multConst->getSize();
+    } else if (op1->code() == CPUI_COPY) {
+      Varnode *assignmentConst = op1->getIn(0);
+      if (!assignmentConst->isConstant() || op1->numInput() != 1) continue;
+      uintb assignval = assignmentConst->getOffset() & ptrmask;
+      intb assignsval = sign_extend(assignval, in1->getSize() * 8 - 1);
+      intb assignrem = assignsval % size;
+      if (assignrem != 0) continue;
+      op1Val = assignsval;
+      op1ReplacementSlot = 0;
+      op1Size = assignmentConst->getSize();
+    } else {
+      continue;
+    }
+    Varnode *in2 = op->getIn(1);
+    if (!in2->isWritten() || in2->loneDescend() != op) continue;
+    PcodeOp *op2 = in2->getDef();
+    if (op2->code() != CPUI_INT_ADD) continue;
+    Varnode *addTerm = op2->getIn(0);
+    if (addTerm != vn) continue;
+    Varnode *addConst = op2->getIn(1);
+    if (!addConst->isConstant()) continue;
+    uintb addval = addConst->getOffset() & ptrmask;
+    intb addsval = sign_extend(addval, in2->getSize() * 8 - 1);
+    intb addrem = addsval % size;
+    if (addrem != 0 || addsval == 0) continue;
+    intb op1multiplier = op1Val / size;
+    if (op1multiplier < 0) op1multiplier = -op1multiplier;
+    intb addmultiplier = addsval / size;
+    if (addmultiplier < 0) addmultiplier = -addmultiplier;
+    intb multiplier;
+    if (op1multiplier != 0 && addmultiplier != 0) {
+      while (addmultiplier != op1multiplier) {  // greatest common divisor: euclid's algorithm
+	if (addmultiplier > op1multiplier) {
+	  addmultiplier -= op1multiplier;
+	} else {
+	  op1multiplier -= addmultiplier;
+	}
+      }
+      multiplier = addmultiplier;
+    } else if (op1multiplier != 0) {
+      multiplier = op1multiplier;
+    } else if (addmultiplier != 0) {
+      multiplier = addmultiplier;
+    } else {
+      continue;
+    }
+    multiple.push_back(vn);
+    coeff.push_back(multiplier * size);
+    Varnode *newConstForOp1 = data.newConstant(op1Size, (op1Val / (size * multiplier)) & ptrmask);
+    data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+    Varnode *newConstForAdd = data.newConstant(addConst->getSize(), (addsval / (size * multiplier)) & ptrmask);
+    data.opSetInput(op2, newConstForAdd, 1);
+    list<PcodeOp *>::const_iterator descendListIter;
+    vector<PcodeOp *> descendants;
+    for (descendListIter = vn->beginDescend(); descendListIter != vn->endDescend(); ++descendListIter) {
+      descendants.push_back(*descendListIter);
+    }
+    vector<PcodeOp *>::const_iterator descendIter;
+    for (descendIter = descendants.begin(); descendIter != descendants.end(); ++descendIter) {
+      PcodeOp *desc = *descendIter;
+      if (desc == op1 || desc == op2 || desc->code() == CPUI_INDIRECT) continue;
+      PcodeOp *newMultOp = data.newOpBefore(desc, CPUI_INT_MULT, vn, data.newConstant(addConst->getSize(), (multiplier * size) & ptrmask));
+      data.opSetInput(desc, newMultOp->getOut(), desc->getSlot(vn));
+    }
+    return true;
+  }
+  return false;
 }
 
 /// Make final calcultions to determine if a pointer to a sub data-type of the base
@@ -6095,6 +6212,12 @@ bool AddTreeState::apply(void)
     return buildDegenerate();
   spanAddTree(baseOp,1);
   if (!valid) return false;		// Were there any show stoppers
+  if (multiple.empty() && !multiequalsToInspect.empty() && size != 0) {
+    if (inspectMultiequals()) {
+      clear();
+      spanAddTree(baseOp,1);
+    }
+  }
   if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
     clear();
     preventDistribution = true;
