@@ -17,15 +17,16 @@ package ghidra.plugins.fsbrowser;
 
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
+import java.util.Date;
 import java.util.List;
 
 import docking.widgets.tree.GTreeNode;
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.GFile;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributeType;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * GTreeNode that represents a file on a filesystem.
@@ -35,9 +36,16 @@ public class FSBFileNode extends FSBNode {
 	protected GFile file;
 	protected boolean isEncrypted;
 	protected boolean hasPassword;
+	protected String symlinkDest;
+	protected long lastModified;
 
 	FSBFileNode(GFile file) {
 		this.file = file;
+	}
+
+	@Override
+	public void init(TaskMonitor monitor) {
+		updateFileProps(monitor);
 	}
 
 	@Override
@@ -46,8 +54,33 @@ public class FSBFileNode extends FSBNode {
 	}
 
 	@Override
+	public GFile getGFile() {
+		return file;
+	}
+
+	@Override
 	public boolean isLeaf() {
 		return true;
+	}
+
+	@Override
+	public String getToolTip() {
+		if (symlinkDest != null) {
+			// unicode \u2192 is a -> right arrow
+			return "%s \u2192 %s".formatted(getName(), symlinkDest);
+		}
+
+		long flen = file.getLength();
+		String flenStr = flen >= 0 ? " - " + FileUtilities.formatLength(flen) : "";
+		String lastModStr =
+			lastModified > 0 ? " - " + FSUtilities.formatFSTimestamp(new Date(lastModified)) : "";
+		String pwInfo = isEncrypted && !hasPassword ? " (missing password)" : "";
+
+		return getName() + flenStr + lastModStr + pwInfo;
+	}
+
+	public boolean isSymlink() {
+		return symlinkDest != null;
 	}
 
 	@Override
@@ -55,11 +88,24 @@ public class FSBFileNode extends FSBNode {
 		return file.hashCode();
 	}
 
-	@Override
-	protected void updateFileAttributes(TaskMonitor monitor) {
+	private void updateFileProps(TaskMonitor monitor) {
 		FileAttributes fattrs = file.getFilesystem().getFileAttributes(file, monitor);
 		isEncrypted = fattrs.get(IS_ENCRYPTED_ATTR, Boolean.class, false);
 		hasPassword = fattrs.get(HAS_GOOD_PASSWORD_ATTR, Boolean.class, false);
+		symlinkDest = fattrs.get(SYMLINK_DEST_ATTR, String.class, null);
+		Date lastModDate = fattrs.get(MODIFIED_DATE_ATTR, Date.class, null);
+		lastModified = lastModDate != null ? lastModDate.getTime() : 0;
+	}
+
+	@Override
+	public void refreshNode(TaskMonitor monitor) throws CancelledException {
+		boolean wasMissingPassword = hasMissingPassword();
+
+		updateFileProps(monitor);
+
+		if (wasMissingPassword != hasMissingPassword()) {
+			getFSBRootNode().setCryptoStatusUpdated(true);
+		}
 	}
 
 	@Override
@@ -93,19 +139,9 @@ public class FSBFileNode extends FSBNode {
 		return isEncrypted && !hasPassword;
 	}
 
-	/**
-	 * Returns true if this node's password status has changed, calling for a complete refresh
-	 * of the status of all files in the file system.
-	 *  
-	 * @param monitor {@link TaskMonitor}
-	 * @return boolean true if this nodes password status has changed
-	 */
-	public boolean needsFileAttributesUpdate(TaskMonitor monitor) {
-		if (hasMissingPassword()) {
-			updateFileAttributes(monitor);
-			return hasPassword; // if true then the attribute has changed and everything should be refreshed
-		}
-		return false;
+	@Override
+	public FSRL getLoadableFSRL() {
+		return getFSRL();
 	}
 
 }

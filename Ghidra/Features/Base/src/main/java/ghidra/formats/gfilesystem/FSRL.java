@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
-import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.model.listing.Program;
 import ghidra.util.SystemUtilities;
 
@@ -64,6 +63,7 @@ import ghidra.util.SystemUtilities;
  */
 public class FSRL {
 	public static final String PARAM_MD5 = "MD5";
+	public static final String FSRL_OPTION_NAME = "FSRL";
 
 	/**
 	 * Returns the {@link FSRL} stored in a {@link Program}'s properties, or null if not present
@@ -73,8 +73,7 @@ public class FSRL {
 	 * @return {@link FSRL} from program's properties, or null if not present or invalid
 	 */
 	public static FSRL fromProgram(Program program) {
-		String fsrlStr = program.getOptions(Program.PROGRAM_INFO)
-				.getString(ProgramMappingService.PROGRAM_SOURCE_FSRL, null);
+		String fsrlStr = program.getOptions(Program.PROGRAM_INFO).getString(FSRL_OPTION_NAME, null);
 		if (fsrlStr != null) {
 			try {
 				return FSRL.fromString(fsrlStr);
@@ -84,6 +83,16 @@ public class FSRL {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Writes a FSRL value to a {@link Program}'s properties.
+	 * 
+	 * @param program {@link Program}
+	 * @param fsrl {@link FSRL} to write
+	 */
+	public static void writeToProgramInfo(Program program, FSRL fsrl) {
+		program.getOptions(Program.PROGRAM_INFO).setString(FSRL_OPTION_NAME, fsrl.toString());
 	}
 
 	/**

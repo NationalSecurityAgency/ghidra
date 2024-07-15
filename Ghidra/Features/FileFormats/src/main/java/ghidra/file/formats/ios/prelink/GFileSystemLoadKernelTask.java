@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.plugins.fsbrowser.tasks;
+package ghidra.file.formats.ios.prelink;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,10 +21,9 @@ import java.util.List;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.ProjectDataUtils;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.plugin.importer.ProgramMappingService;
+import ghidra.plugin.importer.ProjectIndexService;
 import ghidra.program.model.lang.LanguageService;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
@@ -115,21 +114,20 @@ public class GFileSystemLoadKernelTask extends Task {
 		}
 		monitor.setMessage("Opening " + file.getName());
 
-		Program program = ProgramMappingService.findMatchingProgramOpenIfNeeded(file.getFSRL(),
-			this, programManager, ProgramManager.OPEN_VISIBLE);
-		if (program != null) {
-			program.release(this);
+		ProjectIndexService projectIndex = ProjectIndexService.getInstance();
+		DomainFile existingDF = projectIndex.findFirstByFSRL(file.getFSRL());
+		if ( existingDF != null && programManager != null ) {
+			programManager.openProgram(existingDF);
 			return;
 		}
 
 		//File cacheFile = FileSystemService.getInstance().getFile(file.getFSRL(), monitor);
 
-		if (file.getFilesystem() instanceof GFileSystemProgramProvider) {
+		Program program = null;
+		if (file.getFilesystem() instanceof GFileSystemProgramProvider programProviderFS) {
 			LanguageService languageService = DefaultLanguageService.getLanguageService();
 
-			GFileSystemProgramProvider fileSystem =
-				(GFileSystemProgramProvider) file.getFilesystem();
-			program = fileSystem.getProgram(file, languageService, monitor, this);
+			program = programProviderFS.getProgram(file, languageService, monitor, this);
 		}
 
 		if (program != null) {
@@ -144,7 +142,6 @@ public class GFileSystemLoadKernelTask extends Task {
 				folder.createFile(fileName, program, monitor);
 
 				programManager.openProgram(program);
-				ProgramMappingService.createAssociation(file.getFSRL(), program);
 			}
 			finally {
 				program.release(this);
