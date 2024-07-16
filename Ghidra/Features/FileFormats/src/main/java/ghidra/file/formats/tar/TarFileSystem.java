@@ -109,7 +109,7 @@ public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		TarMetadata tmd = fsIndex.getMetadata(file);
 		if (tmd == null) {
-			return null;
+			return FileAttributes.EMPTY;
 		}
 		TarArchiveEntry blob = tmd.tarArchiveEntry;
 		return FileAttributes.of(

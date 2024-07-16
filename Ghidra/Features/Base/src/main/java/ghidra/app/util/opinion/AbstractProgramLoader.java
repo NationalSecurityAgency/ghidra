@@ -28,7 +28,6 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.*;
 import ghidra.framework.store.LockException;
-import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
@@ -367,8 +366,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			if (fsrl.getMD5() == null) {
 				fsrl = fsrl.withMD5(md5);
 			}
-			prog.getOptions(Program.PROGRAM_INFO)
-				.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+			FSRL.writeToProgramInfo(prog, fsrl);
 		}
 		prog.setExecutableMD5(md5);
 		String sha256 = computeBinarySHA256(provider);

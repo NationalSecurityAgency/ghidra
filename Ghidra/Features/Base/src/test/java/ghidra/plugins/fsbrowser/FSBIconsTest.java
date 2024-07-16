@@ -17,9 +17,12 @@ package ghidra.plugins.fsbrowser;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,12 +30,14 @@ import org.junit.Test;
 import docking.test.AbstractDockingTest;
 import generic.theme.GIcon;
 import resources.MultiIcon;
+import resources.ResourceManager;
 
-public class FileIconServiceTest extends AbstractDockingTest {
+public class FSBIconsTest extends AbstractDockingTest {
+
+	FSBIcons fis = FSBIcons.getInstance();
 
 	@Test
 	public void testGetIcon() {
-		FileIconService fis = FileIconService.getInstance();
 		Icon icon = fis.getIcon("blah.txt", null);
 		Assert.assertNotNull(icon);
 		assertTrue(icon instanceof GIcon);
@@ -42,8 +47,7 @@ public class FileIconServiceTest extends AbstractDockingTest {
 
 	@Test
 	public void testGetOverlayIcon() {
-		FileIconService fis = FileIconService.getInstance();
-		Icon icon = fis.getIcon("blah.txt", List.of(FileIconService.FILESYSTEM_OVERLAY_ICON));
+		Icon icon = fis.getIcon("blah.txt", List.of(FSBIcons.FILESYSTEM_OVERLAY_ICON));
 		Assert.assertNotNull(icon);
 		assertTrue(icon instanceof MultiIcon);
 		MultiIcon multiIcon = (MultiIcon) icon;
@@ -54,7 +58,6 @@ public class FileIconServiceTest extends AbstractDockingTest {
 
 	@Test
 	public void testGetSubstringIcon() {
-		FileIconService fis = FileIconService.getInstance();
 		Icon icon = fis.getIcon("blah.release.abcx.123", null);
 		Assert.assertNotNull(icon);
 		assertTrue(icon instanceof GIcon);
@@ -64,8 +67,27 @@ public class FileIconServiceTest extends AbstractDockingTest {
 
 	@Test
 	public void testNoMatch() {
-		FileIconService fis = FileIconService.getInstance();
 		Icon icon = fis.getIcon("aaaaaaaa.bbbbbbbb.cccccccc", null);
-		assertEquals(FileIconService.DEFAULT_ICON, icon);
+		assertEquals(FSBIcons.DEFAULT_ICON, icon);
+	}
+
+	@Test
+	public void testImageManagerLoadedIconResources()
+			throws IllegalArgumentException, IllegalAccessException {
+
+		ImageIcon defaultIcon = ResourceManager.getDefaultIcon();
+
+		Set<String> failedIcons = new HashSet<>();
+		for (Field field : FSBIcons.class.getDeclaredFields()) {
+			if (Modifier.isStatic(field.getModifiers()) &&
+				field.getType().equals(ImageIcon.class)) {
+				Object fieldValue = field.get(null);
+				if (fieldValue == null || fieldValue == defaultIcon) {
+					failedIcons.add(field.getName());
+				}
+			}
+		}
+		Assert.assertTrue("Some icons failed to load or misconfigured: " + failedIcons.toString(),
+			failedIcons.isEmpty());
 	}
 }

@@ -301,7 +301,6 @@ public class ImporterPlugin extends Plugin
 		if (addToProgramAction != null) {
 			addToProgramAction.setEnabled(false);
 		}
-		ProgramMappingService.clear();
 	}
 
 	@Override
@@ -315,8 +314,6 @@ public class ImporterPlugin extends Plugin
 		if (addToProgramAction != null) {
 			addToProgramAction.setEnabled(false);
 		}
-
-		ProgramMappingService.clear();
 	}
 
 	private void setupImportAction() {

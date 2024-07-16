@@ -21,3 +21,4 @@ ChecksumAlgorithm
 OverviewColorService
 DWARFFunctionFixup
 ElfInfoProducer
+FSBFileHandler

@@ -31,53 +31,49 @@ public interface GFile {
 	 * The {@link GFileSystem} that owns this file.
 	 * @return {@link GFileSystem} that owns this file.
 	 */
-	public GFileSystem getFilesystem();
+	GFileSystem getFilesystem();
 
 	/**
 	 * The {@link FSRL} of this file.
 	 *
 	 * @return {@link FSRL} of this file.
 	 */
-	public FSRL getFSRL();
+	FSRL getFSRL();
 
 	/**
 	 * The parent directory of this file.
 	 *
 	 * @return parent {@link GFile} directory of this file.
 	 */
-	public GFile getParentFile();
+	GFile getParentFile();
 
 	/**
 	 * The path and filename of this file, relative to its owning filesystem.
 	 *
 	 * @return path and filename of this file, relative to its owning filesystem.
 	 */
-	public String getPath();
+	String getPath();
 
 	/**
 	 * The name of this file.
 	 *
 	 * @return name of this file.
 	 */
-	public String getName();
+	String getName();
 
 	/**
 	 * Returns true if this is a directory.
 	 * <p>
 	 * @return boolean true if this file is a directory, false otherwise.
 	 */
-	public boolean isDirectory();
+	boolean isDirectory();
 
 	/**
 	 * Returns the length of this file, or -1 if not known.
 	 *
 	 * @return number of bytes in this file.
 	 */
-	public long getLength();
-
-	default public long getLastModified() {
-		return -1;
-	}
+	long getLength();
 
 	/**
 	 * Returns a listing of files in this sub-directory.
@@ -85,7 +81,7 @@ public interface GFile {
 	 * @return {@link List} of {@link GFile} instances.
 	 * @throws IOException if not a directory or error when accessing files.
 	 */
-	default public List<GFile> getListing() throws IOException {
+	default List<GFile> getListing() throws IOException {
 		return getFilesystem().getListing(this);
 	}
 

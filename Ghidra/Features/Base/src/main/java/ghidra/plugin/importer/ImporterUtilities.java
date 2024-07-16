@@ -151,8 +151,8 @@ public class ImporterUtilities {
 
 			if (!isFSContainer) {
 				// normal file; do a single-file import
-				importSingleFile(fullFsrl, destinationFolder, suggestedPath, tool, programManager,
-					monitor);
+				showImportSingleFileDialog(fullFsrl, destinationFolder, suggestedPath, tool,
+					programManager, monitor);
 				return;
 			}
 
@@ -213,8 +213,8 @@ public class ImporterUtilities {
 		}
 
 		if (choice == 1) {
-			importSingleFile(fullFsrl, destinationFolder, suggestedPath, tool, programManager,
-				monitor);
+			showImportSingleFileDialog(fullFsrl, destinationFolder, suggestedPath, tool,
+				programManager, monitor);
 		}
 		else if (choice == 2) {
 			BatchImportDialog.showAndImport(tool, null, Arrays.asList(fullFsrl), destinationFolder,
@@ -276,8 +276,9 @@ public class ImporterUtilities {
 	 * 			to the destination filename
 	 * @param tool the parent UI component
 	 * @param programManager optional {@link ProgramManager} instance to open the imported file in
+	 * @param monitor {@link TaskMonitor}
 	 */
-	private static void importSingleFile(FSRL fsrl, DomainFolder destinationFolder,
+	public static void showImportSingleFileDialog(FSRL fsrl, DomainFolder destinationFolder,
 			String suggestedPath, PluginTool tool, ProgramManager programManager,
 			TaskMonitor monitor) {
 
@@ -420,8 +421,6 @@ public class ImporterUtilities {
 			monitor.checkCancelled();
 
 			if (loaded.getDomainObject() instanceof Program program) {
-				ProgramMappingService.createAssociation(fsrl, program);
-
 				if (programManager != null) {
 					int openState = firstProgram
 							? ProgramManager.OPEN_CURRENT
