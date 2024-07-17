@@ -534,10 +534,10 @@ public abstract class DemangledObject implements Demangled {
 			//        templates so that any class with the same number of template parameters and
 			//        same name is the same class--would that reflect reality?
 			namespaceName = ensureNameLength(namespaceName);
-//			if (namespaceName.contains("anon")) {
-//				long unixTime = System.currentTimeMillis() / 1000L;
-//				namespaceName = namespaceName + "_" + unixTime;
-//			}
+			if (namespaceName.contains("anon")) {
+				long unixTime = System.currentTimeMillis() / 1000L;
+				namespaceName = namespaceName + "_" + unixTime;
+			}
 
 			try {
 				namespace =
