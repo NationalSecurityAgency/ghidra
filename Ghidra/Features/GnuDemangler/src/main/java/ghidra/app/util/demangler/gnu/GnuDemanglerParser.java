@@ -871,7 +871,7 @@ public class GnuDemanglerParser {
 						String fullText = lambdaName.getFullText();
 						dt.setName(fullText);
 						int offset = fullText.indexOf('(');
-						// to to the end of the lambda, which is its length, minus our position
+						// to the end of the lambda, which is its length, minus our position
 						// inside the lambda
 						int remaining = fullText.length() - offset;
 						i = i + remaining; // end of lambda's closing '}'

@@ -223,7 +223,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * Iterate over the entries as ordered by the index
 	 * 
 	 * <p>
-	 * Each entry is a key-value value where the "key" is the value of the indexed field, and the
+	 * Each entry is a key-value entry where the "key" is the value of the indexed field, and the
 	 * "value" is the object.
 	 * 
 	 * @return the iterator
@@ -426,7 +426,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @param key the key
 	 * @see #descending()
 	 * @see #sub(Object, boolean, Object, boolean)
-	 * @return the the value of the previous key, or null
+	 * @return the value of the previous key, or null
 	 */
 	public T lowerValue(K key) {
 		return firstOf(head(key, false).descending().values());

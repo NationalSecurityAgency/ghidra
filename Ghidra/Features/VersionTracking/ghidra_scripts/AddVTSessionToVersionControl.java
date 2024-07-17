@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //Script that enables user to add an existing Version Tracking Session to version control. This
-//is meant to to be used when project is a shared project and when running in headless mode 
+//is meant to be used when project is a shared project and when running in headless mode 
 //since it is simple add a VTSession to version control from the project manager when running in
 //GUI mode.
 //@category Version Tracking

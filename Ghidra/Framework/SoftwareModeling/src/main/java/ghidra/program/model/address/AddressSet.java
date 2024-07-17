@@ -1301,7 +1301,7 @@ public class AddressSet implements AddressSetView {
 			Address end = addressRange.getMaxAddress();
 			AddressIterator it = getAddresses(start, true);
 			if (!it.hasNext()) {
-				break; // end of this this set reached, so not possible match.
+				break; // end of this set reached, so not possible match.
 			}
 			Address addr = it.next();
 			if (addr.compareTo(end) <= 0) {

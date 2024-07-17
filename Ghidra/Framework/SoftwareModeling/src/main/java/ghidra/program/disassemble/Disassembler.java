@@ -952,7 +952,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 					language.parse(instrMemBuffer, disassemblerContext, false);
 
 				// if fall-through already exists in another block - check for conflict 
-				// and terminate terminate block
+				// and terminate block
 				if (!block.isEmpty() && instructionSet != null &&
 					instructionSet.containsBlockAt(addr)) {
 					existingBlockStartInstr = instructionSet.getInstructionAt(addr);

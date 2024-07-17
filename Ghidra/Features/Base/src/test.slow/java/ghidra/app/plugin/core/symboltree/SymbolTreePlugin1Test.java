@@ -753,7 +753,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// This tests a particular edge case where adding a function inside of a class would cause
-		// the tree to throw an exception to to an improper child node lookup.  This test was
+		// the tree to throw an exception to an improper child node lookup.  This test was
 		// triggering the exception before the fix.
 		//
 		showSymbolTree();

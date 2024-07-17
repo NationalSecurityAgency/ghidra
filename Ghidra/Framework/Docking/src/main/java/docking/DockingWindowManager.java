@@ -512,7 +512,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	/**
 	 * Adds a new component (vial the provider) to be managed by this docking window manager. The
-	 * component will be initially shown or hidden based on the the "show" parameter.
+	 * component will be initially shown or hidden based on the "show" parameter.
 	 *
 	 * @param provider the component provider.
 	 * @param show indicates whether or not the component should be initially shown.

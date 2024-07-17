@@ -864,7 +864,7 @@ public final class NumericUtilities {
 	/**
 	 * Determine if the provided Number is an integer type -- Byte, Short, Integer, or Long.
 	 *
-	 * @param number the object to check for for integer-type
+	 * @param number the object to check for integer-type
 	 * @return true if the provided number is an integer-type, false otherwise
 	 */
 	public static boolean isIntegerType(Number number) {
@@ -885,7 +885,7 @@ public final class NumericUtilities {
 	/**
 	 * Determine if the provided Number is a floating-point type -- Float or Double.
 	 *
-	 * @param number the object to check for for floating-point-type
+	 * @param number the object to check for floating-point-type
 	 * @return true if the provided number is a floating-point-type, false otherwise
 	 */
 	public static boolean isFloatingPointType(Number number) {

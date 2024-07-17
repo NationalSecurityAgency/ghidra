@@ -350,7 +350,7 @@ public class BytesFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Computes how many bytes the the given column position represents. Normally this is just the
+	 * Computes how many bytes the given column position represents. Normally this is just the
 	 * column position / 2 (since each byte consists of two chars).  There is a special case when
 	 * the col position is just past the last char of the token.  In this case, we want to return
 	 * the number of bytes in a token - 1;

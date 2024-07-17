@@ -62,7 +62,7 @@ public abstract class AbstractVirtualBaseClassMsType extends AbstractMsType impl
 	}
 
 	/**
-	 * Returns the offset of the base base pointer within the class.
+	 * Returns the offset of the base pointer within the class.
 	 * @return the offset;
 	 */
 	public BigInteger getBasePointerOffset() {

@@ -94,7 +94,7 @@ public class MultiphaseDataTypeResolver {
 			monitor.checkCancelled();
 			DataType dataType = applicator.getDataType(recordToProcess);
 			// Resolve and re-store most types.  Normally we wouldn't want to resolve
-			// pointer types, but here it is preferred while we have the types in hand the the
+			// pointer types, but here it is preferred while we have the types in hand the
 			// PDB would have a type record if it wasn't used somewhere here or as the referred-to
 			// type of a typedef.
 			if (!(dataType instanceof BitFieldDataType)) {
@@ -120,7 +120,7 @@ public class MultiphaseDataTypeResolver {
 	void scheduleTodo(RecordNumber recordNumber) {
 		MsTypeApplier applier = applicator.getTypeApplier(recordNumber);
 		if (!(applier instanceof MsDataTypeApplier dataTypeApplier)) {
-			// Return without scheduling... only want to schedule that that have a legitimate
+			// Return without scheduling... only want to schedule those that have a legitimate
 			//  data type to store
 			return;
 		}
@@ -188,7 +188,7 @@ public class MultiphaseDataTypeResolver {
 		}
 
 		/**
-		 * Indicates if number number exists on stack
+		 * Indicates if number exists on stack
 		 * @param recordNumber the record number to check
 		 * @return {@code true} if exists
 		 */
@@ -227,7 +227,7 @@ public class MultiphaseDataTypeResolver {
 
 		/**
 		 * Peek at top node
-		 * @return the node's record number or {@code null} if if no nodes left
+		 * @return the node's record number or {@code null} if no nodes left
 		 */
 		RecordNumber peek() {
 			RecordNode node = getTop();
@@ -239,7 +239,7 @@ public class MultiphaseDataTypeResolver {
 
 		/**
 		 * Pop top node
-		 * @return the popped node's record number or {@code null} if if no nodes left
+		 * @return the popped node's record number or {@code null} if no nodes left
 		 */
 		RecordNumber pop() {
 			RecordNode node = getTop();

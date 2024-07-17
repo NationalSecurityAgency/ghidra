@@ -77,7 +77,7 @@ public class AddressSetMapping {
 	 */
 	private void setCurrentRange(int index) {
 		// optimized for sequential access, so first just check if the index is one more
-		// than the the current range of indexes, if so just move to the next range.
+		// than the current range of indexes, if so just move to the next range.
 		if (index == currentRangeEnd + 1) {
 			currentRangeIndex++;
 			currentRange = ranges.get(currentRangeIndex);
@@ -98,7 +98,7 @@ public class AddressSetMapping {
 	}
 
 	/**
-	 * Check if the given index in in the "current range".
+	 * Check if the given index in the "current range".
 	 * @param index the index to check
 	 */
 	private boolean indexInCurrentRange(int index) {

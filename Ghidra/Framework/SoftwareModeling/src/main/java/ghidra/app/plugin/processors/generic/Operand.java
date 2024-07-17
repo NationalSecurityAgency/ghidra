@@ -83,7 +83,7 @@ public class Operand implements Serializable {
 
 	/**
 	 * Returns previously computed handle for this operand.  Should not
-	 * be called before the full version of getHandle, where Position and and
+	 * be called before the full version of getHandle, where Position and
 	 * offset are specified.
 	 * @return Handle
 	 */

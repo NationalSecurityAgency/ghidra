@@ -166,7 +166,7 @@ public abstract class PluginsConfiguration {
 	 * packages and then adding <b>all</b> plugins in that package.  This has the effect of pulling
 	 * in more plugin classes than were originally specified in the tool xml.
 	 *
-	 * @param classNames the list of classNames from from the old XML file
+	 * @param classNames the list of classNames from the old XML file
 	 * @return the adjusted set of plugin class names
 	 */
 	public Set<String> getPluginNamesByCurrentPackage(List<String> classNames) {

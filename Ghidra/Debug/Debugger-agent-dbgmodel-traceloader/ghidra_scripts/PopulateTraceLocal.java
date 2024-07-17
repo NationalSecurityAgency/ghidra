@@ -83,7 +83,7 @@ import ghidra.util.Msg;
  * <li>Observations of registers behave exactly the same as observations for memory, by leveraging
  * Ghidra's "register space." The only difference is that those observations must be recorded with
  * respect to a given thread. Each thread is effectively allocated its own copy of the register
- * space. Most the the API components require you to obtain a special "register space" for a given
+ * space. Most of the API components require you to obtain a special "register space" for a given
  * thread before recording observations of or applying annotations to that thread.</li>
  * </ul>
  * 

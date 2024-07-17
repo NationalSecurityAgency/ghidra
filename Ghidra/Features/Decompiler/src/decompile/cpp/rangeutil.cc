@@ -200,7 +200,7 @@ CircleRange::CircleRange(bool val)
 
 /// A size specifies the number of bytes (*8 to get number of bits) in the mask.
 /// The stride is assumed to be 1.
-/// \param val is is the single value
+/// \param val is the single value
 /// \param size is the size of the mask in bytes
 CircleRange::CircleRange(uintb val,int4 size)
 
@@ -228,7 +228,7 @@ void CircleRange::setRange(uintb lft,uintb rgt,int4 size,int4 stp)
 
 /// A size specifies the number of bytes (*8 to get number of bits) in the mask.
 /// The stride is assumed to be 1.
-/// \param val is is the single value
+/// \param val is the single value
 /// \param size is the size of the mask in bytes
 void CircleRange::setRange(uintb val,int4 size)
 

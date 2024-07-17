@@ -25,7 +25,7 @@ import ghidra.util.ColorUtils;
 /**
  * Class for blending two {@link ListingBackgroundColorModel}s.  If neither model has a color
  * different from its default, then the primary's color is returned.  If only one model
- * has a color different from its default, that that color is returned.  If they both have
+ * has a color different from its default, that color is returned.  If they both have
  * colors different, the color returned is a blend of the two colors.
  */
 

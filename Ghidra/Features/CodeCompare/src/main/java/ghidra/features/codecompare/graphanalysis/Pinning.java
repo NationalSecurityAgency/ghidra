@@ -692,7 +692,7 @@ public class Pinning {
 	}
 
 	/**
-	 * Determine if a token should be be filtered from match display.
+	 * Determine if a token should be filtered from match display.
 	 * Some tokens like "," and " " may be attached to matchable operations but can
 	 * clutter the display if they are highlighted for a match.
 	 * @param token is the specific token to check

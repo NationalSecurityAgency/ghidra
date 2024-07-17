@@ -18324,7 +18324,7 @@ is b_31=0 & Q=1 & b_2429=0b111110 & b_2223=0b11 & b_1021=0b100000011110 & Rd_FPR
 # SMACRO ARG1 ARG2 =$2comp@1
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@1
 # AUNIT --inst x2e207800/mask=xfffffc00 --status fail --comment "nointsat"
-# Vector variant when when size = 00 , Q = 0 aa=0 esize=1 suf=VPR64.8B
+# Vector variant when size = 00 , Q = 0 aa=0 esize=1 suf=VPR64.8B
 
 :sqneg Rd_VPR64.8B, Rn_VPR64.8B
 is b_31=0 & Q=0 & b_2429=0b101110 & b_2223=0b00 & b_1021=0b100000011110 & Rd_VPR64.8B & Rn_VPR64.8B & Zd
@@ -18346,7 +18346,7 @@ is b_31=0 & Q=0 & b_2429=0b101110 & b_2223=0b00 & b_1021=0b100000011110 & Rd_VPR
 # SMACRO ARG1 ARG2 =$2comp@1
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@1
 # AUNIT --inst x6e207800/mask=xfffffc00 --status fail --comment "nointsat"
-# Vector variant when when size = 00 , Q = 1 aa=0 esize=1 suf=VPR128.16B
+# Vector variant when size = 00 , Q = 1 aa=0 esize=1 suf=VPR128.16B
 
 :sqneg Rd_VPR128.16B, Rn_VPR128.16B
 is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b00 & b_1021=0b100000011110 & Rd_VPR128.16B & Rn_VPR128.16B & Zd
@@ -18376,7 +18376,7 @@ is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b00 & b_1021=0b100000011110 & Rd_VPR
 # SMACRO ARG1 ARG2 =$2comp@2
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@2
 # AUNIT --inst x2e607800/mask=xfffffc00 --status pass --comment "nointsat"
-# Vector variant when when size = 01 , Q = 0 aa=0 esize=2 suf=VPR64.4H
+# Vector variant when size = 01 , Q = 0 aa=0 esize=2 suf=VPR64.4H
 
 :sqneg Rd_VPR64.4H, Rn_VPR64.4H
 is b_31=0 & Q=0 & b_2429=0b101110 & b_2223=0b01 & b_1021=0b100000011110 & Rd_VPR64.4H & Rn_VPR64.4H & Zd
@@ -18394,7 +18394,7 @@ is b_31=0 & Q=0 & b_2429=0b101110 & b_2223=0b01 & b_1021=0b100000011110 & Rd_VPR
 # SMACRO ARG1 ARG2 =$2comp@2
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@2
 # AUNIT --inst x6e607800/mask=xfffffc00 --status pass --comment "nointsat"
-# Vector variant when when size = 01 , Q = 1 aa=0 esize=2 suf=VPR128.8H
+# Vector variant when size = 01 , Q = 1 aa=0 esize=2 suf=VPR128.8H
 
 :sqneg Rd_VPR128.8H, Rn_VPR128.8H
 is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b01 & b_1021=0b100000011110 & Rd_VPR128.8H & Rn_VPR128.8H & Zd
@@ -18416,7 +18416,7 @@ is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b01 & b_1021=0b100000011110 & Rd_VPR
 # SMACRO ARG1 ARG2 =$2comp@4
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@4
 # AUNIT --inst x2ea07800/mask=xfffffc00 --status pass --comment "nointsat"
-# Vector variant when when size = 10 , Q = 0 aa=0 esize=4 suf=VPR64.2S
+# Vector variant when size = 10 , Q = 0 aa=0 esize=4 suf=VPR64.2S
 
 :sqneg Rd_VPR64.2S, Rn_VPR64.2S
 is b_31=0 & Q=0 & b_2429=0b101110 & b_2223=0b10 & b_1021=0b100000011110 & Rd_VPR64.2S & Rn_VPR64.2S & Zd
@@ -18432,7 +18432,7 @@ is b_31=0 & Q=0 & b_2429=0b101110 & b_2223=0b10 & b_1021=0b100000011110 & Rd_VPR
 # SMACRO ARG1 ARG2 =$2comp@4
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@4
 # AUNIT --inst x6ea07800/mask=xfffffc00 --status pass --comment "nointsat"
-# Vector variant when when size = 10 , Q = 1 aa=0 esize=4 suf=VPR128.4S
+# Vector variant when size = 10 , Q = 1 aa=0 esize=4 suf=VPR128.4S
 
 :sqneg Rd_VPR128.4S, Rn_VPR128.4S
 is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b10 & b_1021=0b100000011110 & Rd_VPR128.4S & Rn_VPR128.4S & Zd
@@ -18450,7 +18450,7 @@ is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b10 & b_1021=0b100000011110 & Rd_VPR
 # SMACRO ARG1 ARG2 =$2comp@8
 # SMACRO(pseudo) ARG1 ARG2 =NEON_sqneg/1@8
 # AUNIT --inst x6ee07800/mask=xfffffc00 --status pass --comment "nointsat"
-# Vector variant when when size = 11 , Q = 1 aa=0 esize=8 suf=VPR128.2D
+# Vector variant when size = 11 , Q = 1 aa=0 esize=8 suf=VPR128.2D
 
 :sqneg Rd_VPR128.2D, Rn_VPR128.2D
 is b_31=0 & Q=1 & b_2429=0b101110 & b_2223=0b11 & b_1021=0b100000011110 & Rd_VPR128.2D & Rn_VPR128.2D & Zd

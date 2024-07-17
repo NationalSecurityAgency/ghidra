@@ -138,7 +138,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		if (navigatable != null) {
 			// Only allow global actions if we are derived from the connect/primary navigatable.  
-			// This allows the the primary navigatable to process key events without the user having
+			// This allows the primary navigatable to process key events without the user having
 			// to focus first focus the primary navigatable.
 			table.setActionsEnabled(navigatable.isConnected());
 			navigatable.addNavigatableListener(this);

@@ -164,7 +164,7 @@ public class MessageDigestFidHasher implements FidHasher {
 									specificCount += 1;	// Count the fact that value is used in hash
 								}
 							}
-							// Mix scalar value to get more bit diversity, add in in a commutative way
+							// Mix scalar value to get more bit diversity, add in a commutative way
 							specificUpdate = specificUpdate + ((int) val + 1234567) * 67999;
 							fullUpdate += 0xfeeddead;				// Scalar value is never used in full hash, indicate scalar was present
 						}

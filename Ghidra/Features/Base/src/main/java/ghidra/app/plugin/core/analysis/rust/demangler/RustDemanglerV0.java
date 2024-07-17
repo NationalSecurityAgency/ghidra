@@ -890,7 +890,7 @@ class RustType implements SymbolNode {
 }
 
 /**
- * Parses and represents a a rust symbol const node
+ * Parses and represents a rust symbol const node
  */
 class RustConst implements SymbolNode {
 	String name;

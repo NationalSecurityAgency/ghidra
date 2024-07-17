@@ -28,7 +28,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * {@link GraphDisplayListener} that handle events back and from from program graphs.
+ * {@link GraphDisplayListener} that handle events back and from program graphs.
  */
 public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayListener {
 

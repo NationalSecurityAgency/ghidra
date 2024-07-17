@@ -361,7 +361,7 @@ public:
 ///
 /// When a variable has TypePointerRel as its data-type, PTRSUB acts relative to the \e parent
 /// data-type.  We print a specific token to indicate this relative shift is happening.
-/// \param op is is the PTRSUB op
+/// \param op is the PTRSUB op
 inline void PrintC::pushTypePointerRel(const PcodeOp *op)
 
 {

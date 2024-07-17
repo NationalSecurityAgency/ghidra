@@ -80,7 +80,7 @@ import help.Help;
 import help.HelpService;
 
 /**
- * Tool that serves as the the Ghidra Project Window. Only those plugins that
+ * Tool that serves as the Ghidra Project Window. Only those plugins that
  * implement the FrontEndable interface may be <i>directly</i> added to this
  * tool by the user. Other plugins that are not marked as FrontEndable may get
  * pulled in because the FrontEndable plugins depend on them. These plugins are

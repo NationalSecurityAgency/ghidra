@@ -41,12 +41,12 @@ public interface DataTypeManager {
 	public static long DEFAULT_DATATYPE_ID = 0;
 
 	/**
-	 * ID if data type type is not known in this data type manager.
+	 * ID if data type is not known in this data type manager.
 	 */
 	public static long NULL_DATATYPE_ID = -1;
 
 	/**
-	 * ID if data type type is BAD.
+	 * ID if data type is BAD.
 	 */
 	public static long BAD_DATATYPE_ID = -2;
 

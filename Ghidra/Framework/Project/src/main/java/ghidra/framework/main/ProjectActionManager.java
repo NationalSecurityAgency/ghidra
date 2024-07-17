@@ -563,7 +563,7 @@ class ProjectActionManager {
 		}
 
 		try {
-			activeProject.addProjectView(view, true); // listener will trigger data panel panel display
+			activeProject.addProjectView(view, true); // listener will trigger data panel display
 		}
 		catch (IOException e) {
 			ProjectManager projectManager = tool.getProjectManager();

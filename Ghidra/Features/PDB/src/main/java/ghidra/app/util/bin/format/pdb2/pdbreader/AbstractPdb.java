@@ -29,7 +29,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents the the Windows PDB file.  This class is only suitable for reading; not
+ * This class represents the Windows PDB file.  This class is only suitable for reading; not
  *  for writing or modifying a PDB.
  *  <P>
  *  We have intended to implement according to the Microsoft PDB API (source); see the API for

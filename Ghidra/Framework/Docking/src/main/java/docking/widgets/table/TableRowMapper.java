@@ -29,7 +29,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * for table models that have row types that are easily converted to other more generic types.
  * <p>
  * This interface is an ExtensionPoint so that once created, they will be ingested automatically
- * by Ghidra.  Once discovered, these mappers will be used to provide dynamic columns to to 
+ * by Ghidra.  Once discovered, these mappers will be used to provide dynamic columns to 
  * tables with row types that match <code>ROW_TYPE</code>.
  *
  * @param <ROW_TYPE> The row type of a given table model

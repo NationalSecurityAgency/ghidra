@@ -39,7 +39,7 @@ public class FunctionStartFuncAnalyzer extends FunctionStartAnalyzer {
 			throws CancelledException {
 
 		// check that the check function later property has been set at the functions start
-		//    before passing the cut down address set to the real search algorithm to to the correct action
+		//    before passing the cut down address set to the real search algorithm to the correct action
 		AddressSet potentialPreMatches =
 			getOrCreatePotentialMatchPropertyMap(program).getAddressSet();
 		set = set.intersect(potentialPreMatches);

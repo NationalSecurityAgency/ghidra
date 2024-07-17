@@ -128,7 +128,7 @@ public class GValuesMap {
 	 * AbstractValue types as this map.
 	 * @param otherMap The GValuesMap to copy values from
 	 * @throws IllegalArgumentException if the given map does not have exactly the same set of
-	 * names and types as this this map
+	 * names and types as this map
 	 */
 	@SuppressWarnings("unchecked")
 	public void copyValues(GValuesMap otherMap) {

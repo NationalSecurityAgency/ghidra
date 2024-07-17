@@ -1498,12 +1498,12 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	public void updateMemoryAddSpaceBlock(AddressSpace space) {
-		// Spaces not not time-bound. No visibility check.
+		// Spaces not time-bound. No visibility check.
 		memory.updateAddSpaceBlock(space);
 	}
 
 	public void updateMemoryDeleteSpaceBlock(AddressSpace space) {
-		// Spaces not not time-bound. No visibility check.
+		// Spaces not time-bound. No visibility check.
 		memory.updateDeleteSpaceBlock(space);
 	}
 

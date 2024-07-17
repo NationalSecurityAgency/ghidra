@@ -701,7 +701,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 		}
 
 		// NOTE: Parameter level merging gets really complex when the presence of auto-params are inconsistent
-		// between between two functions treat as a signature difference when this occurs
+		// between two functions treat as a signature difference when this occurs
 
 		for (int i = 0; i < f1Parms.length; i++) {
 			if (f1Parms[i].isAutoParameter() != f2Parms[i].isAutoParameter() ||

@@ -865,7 +865,7 @@ public class PcodeEmitContextTest extends AbstractGhidraHeadlessIntegrationTest 
 		refManager.setPrimary(callotherOverrideRef1, true);
 		program.endTransaction(id, true);
 
-		//nothing should change without requesting overrides overrides
+		//nothing should change without requesting overrides
 		assertTrue(equalPcodeOpArrays(unmodified, userTwo.getPcode()));
 		assertTrue(equalPcodeOpArrays(unmodified, userTwo.getPcode(false)));
 

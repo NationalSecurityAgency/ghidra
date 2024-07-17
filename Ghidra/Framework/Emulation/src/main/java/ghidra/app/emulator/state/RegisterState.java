@@ -35,7 +35,7 @@ public interface RegisterState {
 	 * Check if the register is initialized
 	 * 
 	 * @param key the register name
-	 * @return a list (used an an optional) containing at most the one initialization state. True if
+	 * @return a list (used an optional) containing at most the one initialization state. True if
 	 *         initialized, false if not. Empty if unspecified.
 	 */
 	public List<Boolean> isInitialized(String key);

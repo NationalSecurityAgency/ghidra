@@ -52,7 +52,7 @@ public interface PtyFactory {
 	 * 
 	 * @param cols the initial width in characters, or 0 to let the system decide both dimensions
 	 * @param rows the initial height in characters, or 0 to let the system decide both dimensions
-	 * @return new new Pty
+	 * @return new Pty
 	 * @throws IOException for an I/O error, including cancellation
 	 */
 	Pty openpty(short cols, short rows) throws IOException;
@@ -61,7 +61,7 @@ public interface PtyFactory {
 	 * Open a new pseudo-terminal of the default size ({@value #DEFAULT_COLS} x
 	 * {@value #DEFAULT_ROWS})
 	 * 
-	 * @return new new Pty
+	 * @return new Pty
 	 * @throws IOException for an I/O error, including cancellation
 	 */
 	default Pty openpty() throws IOException {
@@ -73,7 +73,7 @@ public interface PtyFactory {
 	 * 
 	 * @param cols the initial width in characters, or 0 to let the system decide both dimensions
 	 * @param rows the initial height in characters, or 0 to let the system decide both dimensions
-	 * @return new new Pty
+	 * @return new Pty
 	 * @throws IOException for an I/O error, including cancellation
 	 */
 	default Pty openpty(int cols, int rows) throws IOException {

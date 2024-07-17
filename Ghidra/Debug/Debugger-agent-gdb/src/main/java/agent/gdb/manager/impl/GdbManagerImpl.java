@@ -969,7 +969,7 @@ public class GdbManagerImpl implements GdbManager {
 			return;
 		}
 		/**
-		 * NOTE: I've forgotten why, but the the state update needs to happen between handle and
+		 * NOTE: I've forgotten why, but the state update needs to happen between handle and
 		 * finish.
 		 */
 		boolean cmdFinished = false;

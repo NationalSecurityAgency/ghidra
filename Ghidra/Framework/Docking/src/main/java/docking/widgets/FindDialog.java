@@ -189,7 +189,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		//
 		// At this point, we wrapped our search and did *not* find a match.  This can only
 		// happen if there is no matching text anywhere in the document, as after wrapping
-		// will will again find the previous match, if it exists.
+		// will again find the previous match, if it exists.
 		//
 		notifyUser("Not found");
 	}

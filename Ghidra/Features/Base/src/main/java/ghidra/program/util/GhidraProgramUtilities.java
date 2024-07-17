@@ -26,7 +26,7 @@ public class GhidraProgramUtilities {
 
 	/**
 	 * Returns the current program for the given tool or null if no program is open.
-	 * @param tool the tool get get the current program for
+	 * @param tool the tool to get the current program for
 	 * @return the current program for the given tool or null if no program is open
 	 */
 	public static Program getCurrentProgram(PluginTool tool) {

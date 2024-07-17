@@ -38,7 +38,7 @@ import ghidra.program.util.ProgramLocation;
 
 /**
   *  Generates a text label that lists the function tags for each {@link Function}. The
-  *  label will will appear as part of the FUNCTION group in the field map.
+  *  label will appear as part of the FUNCTION group in the field map.
   */
 public class FunctionTagFieldFactory extends FieldFactory {
 

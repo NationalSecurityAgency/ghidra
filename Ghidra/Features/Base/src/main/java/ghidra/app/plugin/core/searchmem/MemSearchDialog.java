@@ -60,7 +60,7 @@ class MemSearchDialog extends ReusableDialogComponentProvider {
 		SearchData.createInvalidInputSearchData(ENTER_TEXT_MESSAGE);
 
 	// The fields that use this value take in user input.  If the user input large, it affects
-	// the minimum and preferred size of the the fields.  This, in turn, affects how this dialog
+	// the minimum and preferred size of the fields.  This, in turn, affects how this dialog
 	// gets packed when the Advanced button is toggled.   Without using a size restriction, this
 	// dialog's contents may move as the dialog is re-packed.
 	private static final int INPUT_FIELD_MIN_SIZE_WIDTH = 140;

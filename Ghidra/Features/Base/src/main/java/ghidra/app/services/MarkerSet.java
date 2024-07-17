@@ -45,7 +45,7 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 	public void add(AddressRange range);
 
 	/**
-	 * Sets the AddressSetCollection to be used for this this marker set.
+	 * Sets the AddressSetCollection to be used for this marker set.
 	 *  
 	 * <p><strong>Warning!</strong> 
 	 * Using this method will cause this MarkerSet to directly use the given AddressSetCollection.

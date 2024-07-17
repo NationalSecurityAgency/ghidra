@@ -713,22 +713,22 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	 */
 
 	/*
-	 * No test for 'askYesNo()" because it does not use either the the last-selected value or
+	 * No test for 'askYesNo()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProjectFolder()" because it does not use either the the last-selected value
+	 * No test for 'askProjectFolder()" because it does not use either the last-selected value
 	 * or a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProgram()" because it does not use either the the last-selected value or
+	 * No test for 'askProgram()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askDomainFile()" because it does not use either the the last-selected value or
+	 * No test for 'askDomainFile()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 

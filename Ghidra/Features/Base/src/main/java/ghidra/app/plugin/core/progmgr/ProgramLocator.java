@@ -56,7 +56,7 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Creates a {@link DomainFile} based based ProgramLocator for the current version of a Program.
+	 * Creates a {@link DomainFile} based ProgramLocator for the current version of a Program.
 	 * @param domainFile the DomainFile for a program
 	 */
 	public ProgramLocator(DomainFile domainFile) {
@@ -64,7 +64,7 @@ public class ProgramLocator {
 	}
 
 	/**
-	 * Creates a {@link DomainFile} based based ProgramLocator for a specific Program version.
+	 * Creates a {@link DomainFile} based ProgramLocator for a specific Program version.
 	 * @param domainFile the DomainFile for a program
 	 * @param version the specific version of the program
 	 */

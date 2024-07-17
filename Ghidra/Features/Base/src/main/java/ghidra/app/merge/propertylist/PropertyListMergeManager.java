@@ -68,7 +68,7 @@ public class PropertyListMergeManager implements MergeResolver {
 	 * @param myProgram source of changes to apply to the result
 	 * program
 	 * @param originalProgram program that was originally checked out
-	 * @param latestProgram program that that is the latest version; the
+	 * @param latestProgram program that is the latest version; the
 	 * resultProgram and latestProgram start out the same
 	 */
 	public PropertyListMergeManager(ProgramMultiUserMergeManager mergeManager,

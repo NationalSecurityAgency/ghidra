@@ -25,7 +25,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents the the Multi-Stream Format File used for Windows PDB files.
+ * This class represents the Multi-Stream Format File used for Windows PDB files.
  *  We have intended to implement to the Microsoft PDB API (source); see the API for truth.
  *  <P>
  *  Derived classes represents the real formats.  The file format represents a kind of
@@ -77,7 +77,7 @@ import ghidra.util.task.TaskMonitor;
  * The file directory is stored in stream 0, which has its information persisted in
  *  the header as described above.  However, for the newest format, the page (pointed
  *  to in the header) for the directory stream has an extra level of indirection.  The
- *  page contains page numbers, whose pages contain contain page numbers for the
+ *  page contains page numbers, whose pages contain page numbers for the
  *  directory stream.  Note that the page numbers listed on any of these pages have
  *  the following format on disk:
  * <PRE>
@@ -271,7 +271,7 @@ public abstract class AbstractMsf implements Msf {
 	}
 
 	/**
-	 * Returns the the mask used for masking off the upper bits of a value use to get the
+	 * Returns the mask used for masking off the upper bits of a value use to get the
 	 *  mod-page-size of the value (pageSizes must be power of two for this to work)
 	 * @return the mask
 	 */

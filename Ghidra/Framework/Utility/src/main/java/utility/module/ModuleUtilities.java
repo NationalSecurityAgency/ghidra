@@ -165,7 +165,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches for modules in a given collection of module root directories.
 	 *
-	 * @param appRootDirs The collection of application root directories associated with the the given
+	 * @param appRootDirs The collection of application root directories associated with the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
 	 * @return The discovered modules as a map (mapping module name to module for convenience).
@@ -180,7 +180,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches for modules in a given collection of module root directories.
 	 *
-	 * @param appRootDirs The collection of application root directories associated with the the given
+	 * @param appRootDirs The collection of application root directories associated with the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
 	 * @param moduleFilter a predicate used to filter modules; a given module will not be included

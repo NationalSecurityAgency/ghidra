@@ -68,7 +68,7 @@ public interface LocationTrackingSpecFactory extends ExtensionPoint {
 	List<LocationTrackingSpec> getSuggested(PluginTool tool);
 
 	/**
-	 * Attempt to parse the given configuration name as as specification
+	 * Attempt to parse the given configuration name as specification
 	 * 
 	 * @param name the configuration name, usually including a prefix unique to each factory
 	 * @return the specification, or null if this factory cannot parse it

@@ -438,13 +438,13 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public boolean isMemorySpace();
 
 	/**
-	 * Returns true if this space represents represents a Loaded Memory
+	 * Returns true if this space represents a Loaded Memory
 	 * region (e.g., processor RAM).
 	 */
 	public boolean isLoadedMemorySpace();
 
 	/**
-	 * Returns true if this space represents represents a Non-Loaded storage region
+	 * Returns true if this space represents a Non-Loaded storage region
 	 * for retaining non-loaded file data (e.g., OTHER)
 	 */
 	public boolean isNonLoadedMemorySpace();

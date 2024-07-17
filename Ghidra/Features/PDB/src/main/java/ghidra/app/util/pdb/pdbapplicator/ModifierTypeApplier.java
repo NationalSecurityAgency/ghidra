@@ -57,7 +57,7 @@ public class ModifierTypeApplier extends MsDataTypeApplier {
 
 		// If ghidra has modified types in the future, we will likely not perform a pass-through
 		//  of the underlying type.  We might actually need to do a fixup or be able to pass the
-		//  cycle-break information to a pointer or handle cycle-break information information
+		//  cycle-break information to a pointer or handle cycle-break information
 		//  in this modifier type.  Lots of things to consider.  Would we want to create a typedef
 		//  for modifier type as a short-gap solution??? Not sure.
 

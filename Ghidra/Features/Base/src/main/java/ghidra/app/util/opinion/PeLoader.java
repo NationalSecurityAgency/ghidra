@@ -834,7 +834,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	private Address getILEntryPoint(OptionalHeader optionalHeader) {
 		// Check to see if this binary has a COMDescriptorDataDirectory in it. If so,
 		// it might be a .NET binary, and if it is and only has a managed code entry point
-		// the value at entry is actually a table index and and row index that we parse in
+		// the value at entry is actually a table index and row index that we parse in
 		// the ImageCor20Header class. Use that to create the entry label instead later.
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();

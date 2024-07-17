@@ -304,7 +304,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 	}
 
 	/**
-	 * Checks if datatype is really out of sync or only is is marked as out of sync but really
+	 * Checks if datatype is really out of sync or only is marked as out of sync but really
 	 * is not changed.  If datatypes are really in sync, updates the time marks to indicate that
 	 * they are in sync;
 	 * @param outOfSynchDataTypes list of all datatypes that are marked as "out of sync".

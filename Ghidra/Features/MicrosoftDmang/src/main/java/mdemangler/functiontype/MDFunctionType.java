@@ -143,7 +143,7 @@ public class MDFunctionType extends MDType {
 		if (based != null) {
 			based.append(conventionBuilder);
 		}
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(conventionBuilder);
 		dmang.insertString(builder, conventionBuilder.toString());
 		//This logic moved to MdSpecialName, so that we can get a qualified name with the

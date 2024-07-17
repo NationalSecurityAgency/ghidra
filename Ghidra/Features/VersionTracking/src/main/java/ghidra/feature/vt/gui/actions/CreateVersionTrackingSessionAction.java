@@ -49,7 +49,7 @@ public class CreateVersionTrackingSessionAction extends DockingAction {
 			int result =
 				OptionDialog.showYesNoDialog(controller.getTool().getToolFrame(),
 					"Create New Session",
-					"This will close the the current session.  Do you want to continue?");
+					"This will close the current session.  Do you want to continue?");
 
 			if (result != OptionDialog.YES_OPTION) {
 				return;

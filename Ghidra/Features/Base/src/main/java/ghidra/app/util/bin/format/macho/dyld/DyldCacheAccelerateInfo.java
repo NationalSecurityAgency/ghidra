@@ -167,7 +167,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 
 	private void parseImageInfoExtra(Program program, Address accelerateInfoAddr, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
-		monitor.setMessage("Parsing DYLD image image info extras...");
+		monitor.setMessage("Parsing DYLD image info extras...");
 		monitor.initialize(imageExtrasCount);
 		reader.setPointerIndex(imagesExtrasOffset);
 		try {

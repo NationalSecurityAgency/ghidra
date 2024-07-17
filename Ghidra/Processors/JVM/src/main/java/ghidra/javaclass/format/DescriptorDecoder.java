@@ -198,7 +198,7 @@ public class DescriptorDecoder {
 
 		}
 
-		//now add the the name of the return type
+		//now add the name of the return type
 		String returnType =
 			methodDescriptor.substring(closeParenIndex + 1, methodDescriptor.length());
 		typeNames.add(getTypeNameFromDescriptor(returnType, fullyQualifiedName, replaceSlash));
@@ -469,7 +469,7 @@ public class DescriptorDecoder {
 	}
 
 	/**
-	 * Given an invocation type and an element in the constant pool, follows references in the the constant
+	 * Given an invocation type and an element in the constant pool, follows references in the constant
 	 * pool and returns the appropriate method descriptor.
 	 * @param offset
 	 * @param constantPool

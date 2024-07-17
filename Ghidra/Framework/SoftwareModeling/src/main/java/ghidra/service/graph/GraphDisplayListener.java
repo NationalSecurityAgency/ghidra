@@ -40,7 +40,7 @@ public interface GraphDisplayListener {
 	 * instance of this GraphDisplayListener
 	 *
 	 * @param graphDisplay the new {@link GraphDisplay} the new listener will support
-	 * @return A new instance of a GraphDisplayListener that is the same type as as the instance
+	 * @return A new instance of a GraphDisplayListener that is the same type as the instance
 	 * on which it is called
 	 */
 	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay);

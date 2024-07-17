@@ -26,7 +26,7 @@ class ParentChildDBAdapterNoTable extends ParentChildAdapter {
 	/**
 	 * Gets a pre-table version of the adapter for the Parent Child database table.
 	 * @param handle handle to the database which doesn't contain the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	ParentChildDBAdapterNoTable(DBHandle handle) {

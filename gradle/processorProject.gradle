@@ -24,7 +24,7 @@
 
 /*****************************************************************************************
  *
- *  Create a configuration so the a dependency can be declared on the the software modeling
+ *  Create a configuration so the a dependency can be declared on the software modeling
  *  project which is where the sleigh compiler java code lives.  This will be used to
  *  form the classpath of the sleighCompile task that follows.
  *

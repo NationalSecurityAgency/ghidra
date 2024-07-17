@@ -36,7 +36,7 @@ import ghidra.util.exception.DuplicateNameException;
  * The RuntimeInvisibleParameterAnnotations attribute is similar to the
  * RuntimeVisibleParameterAnnotations attribute, except that the annotations
  * represented by a RuntimeInvisibleParameterAnnotations attribute must not
- * be made available for return by reflective APIs, unless the the Java virtual
+ * be made available for return by reflective APIs, unless the Java virtual
  * machine has specifically been instructed to retain these annotations via some
  * implementation-specific mechanism such as a command line flag. In the absence
  * of such instructions, the Java virtual machine ignores this attribute.

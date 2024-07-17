@@ -30,7 +30,7 @@ import ghidra.util.ColorUtils;
 
 /**
  * Fields for the ByteViewer.  This class extends the SimpleTextField to include
- * a fieldOffset which corresponds to the column of the the fieldFactory that
+ * a fieldOffset which corresponds to the column of the fieldFactory that
  * generated it.
  */
 public class ByteField extends SimpleTextField {

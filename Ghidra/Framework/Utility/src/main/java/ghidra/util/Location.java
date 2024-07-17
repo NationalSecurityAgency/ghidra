@@ -38,7 +38,7 @@ public interface Location {
 
 	/**
 	 * Will attempt to navigate to the location as appropriate.  For example, it may use the goto service
-	 * to navigate the code browser to a progam and and address.  Or it could launch a browser and
+	 * to navigate the code browser to a progam and address.  Or it could launch a browser and
 	 * display a web page.
 	 * @param provider a service provider that this location can use to find a service to help with
 	 * navigation.

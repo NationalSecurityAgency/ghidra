@@ -65,7 +65,7 @@ public class MDArrayBasicType extends MDModifierType {
 			((MDFunctionType) refType).setFromModifier();
 		}
 		dt.insert(builder);
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(builder);
 		dmang.appendString(builder, arrayBuilder.toString());
 	}

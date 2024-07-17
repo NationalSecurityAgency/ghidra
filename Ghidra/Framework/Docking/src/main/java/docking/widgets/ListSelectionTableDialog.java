@@ -131,7 +131,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 	}
 
 	/**
-	 * Calling this method does does not work correctly when used with 
+	 * Calling this method does not work correctly when used with 
 	 * {@link #show(Component)} or {@link #showSelectMultiple(Component)}.   To use this method, you
 	 * must show the dialog by calling: 
 	 * <pre>

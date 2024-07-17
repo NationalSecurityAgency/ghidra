@@ -228,7 +228,7 @@ public interface MemBuffer {
 	 * Returns a stream that supplies the bytes of this buffer, starting at offset 0.
 	 * <p>
 	 * Note: the default implementation will produce invalid results if the underlying
-	 * MemBuffer instance is is mutated to point to different memory.
+	 * MemBuffer instance is mutated to point to different memory.
 	 * 
 	 * @return an InputStream that returns the bytes of this mem buffer
 	 */
@@ -240,7 +240,7 @@ public interface MemBuffer {
 	 * Returns a stream that supplies the bytes of this buffer, starting at the specified offset.
 	 * <p>
 	 * Note: the default implementation will produce invalid results if the underlying
-	 * MemBuffer instance is is mutated to point to different memory.
+	 * MemBuffer instance is mutated to point to different memory.
 	 * 
 	 * @param initialPosition location in membuffer where the stream should start
 	 * @param length number of bytes to limit the stream to 

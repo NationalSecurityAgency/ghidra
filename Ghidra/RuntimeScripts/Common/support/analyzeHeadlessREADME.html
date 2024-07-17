@@ -364,7 +364,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     path to a script log file is not set, script logs are written to <typewriter>script.log</typewriter> 
     in the user directory, by default.
     <br><br>
-    Note: Only the built-in scripting print methods will print to the the
+    Note: Only the built-in scripting print methods will print to the
     script log file (<typewriter>print</typewriter>,
     <typewriter>println</typewriter>, <typewriter>printf</typewriter>,
     <typewriter>printerr</typewriter>).
@@ -805,7 +805,7 @@ analyzeHeadless /Users/user/ghidra/Projects Project1/folderOne -scriptPath /usr/
     
     <br><br>
     
-    <LI>Import and run scripts that take their own own arguments.</LI>
+    <LI>Import and run scripts that take their own arguments.</LI>
     <PRE>analyzeHeadless /Users/user/ghidra/projects MyProject -import hello.exe -preScript Script.java arg1 arg2 arg3 -preScript AnotherScript.java "arg1 with spaces" arg2 </PRE>
     
     <br><br>
@@ -894,7 +894,7 @@ the following methods can be run in both modes:
 <i>Further details for each specific <typewriter>askXxx()</typewriter> method can be found in the 
 method&apos;s JavaDoc.</i>
 <br><br>
-When running headlessly, the <typewriter>askXxx()</typewriter> methods allow users to to &quot;pre-set&quot; 
+When running headlessly, the <typewriter>askXxx()</typewriter> methods allow users to &quot;pre-set&quot; 
 or &quot;pass in&quot; one or more values for use in scripts. Use the appropriate method to pass in
 values of certain types (i.e., file, directory, int, long).
 <br><br>
