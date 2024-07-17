@@ -69,7 +69,7 @@ repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
 **NOTE:** If an Internet connection is available and you did not install Gradle, the following 
 `gradle` commands may be replaced with `./gradle(.bat)`.
 ```
-gradle -I gradle/support/fetchDependencies.gradle init
+gradle -I gradle/support/fetchDependencies.gradle
 ```
 
 ##### Create development build: 
