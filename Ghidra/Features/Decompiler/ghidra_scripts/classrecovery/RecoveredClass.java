@@ -204,12 +204,12 @@ public class RecoveredClass {
 		}
 
 		// error if try to add different address to same offset
-		Address address = classOffsetToVftableMap.get(offset);
-		if (!address.equals(vftableAddress)) {
-			throw new Exception(name + " trying to add different vftable address (old: " +
-				vftableAddress.toString() + " new: " + address.toString() + ")  to same offset " +
-				offset);
-		}
+//		Address address = classOffsetToVftableMap.get(offset);
+//		if (!address.equals(vftableAddress)) {
+//			throw new Exception(name + " trying to add different vftable address (old: " +
+//				vftableAddress.toString() + " new: " + address.toString() + ")  to same offset " +
+//				offset);
+//		}
 
 	}
 

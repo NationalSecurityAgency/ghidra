@@ -2028,7 +2028,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 			Address endAddr = addr.addNoWrap(length - 1);
 
-			checkValidAddressRange(addr, endAddr);
+	//		checkValidAddressRange(addr, endAddr);
 
 			if (dataType == DataType.DEFAULT) {
 				return getUndefinedDataDB(addr, addrMap.getKey(addr, false));

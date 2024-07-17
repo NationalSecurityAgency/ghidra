@@ -296,10 +296,10 @@ public abstract class AbstractCreateDataTypeModel {
 	 * address. The message in the exception indicates why the model isn't valid.
 	 */
 	private void doValidate() throws InvalidDataTypeException {
-		if (!isWindows()) {
-			throw new InvalidDataTypeException(
-				getName() + " data type model is only valid for Visual Studio windows PE.");
-		}
+//		if (!isWindows()) {
+//			throw new InvalidDataTypeException(
+//				getName() + " data type model is only valid for Visual Studio windows PE.");
+//		}
 		if (!isValidAddress()) {
 			throw new InvalidDataTypeException(
 				getName() + " data type isn't at a valid address " + getAddress() + ".");

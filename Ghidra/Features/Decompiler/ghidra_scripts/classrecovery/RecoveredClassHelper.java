@@ -137,6 +137,9 @@ public class RecoveredClassHelper {
 	protected final boolean createBookmarks;
 	protected final boolean useShortTemplates;
 	protected final boolean nameVfunctions;
+	
+	private Set<Function> allVfunctionsSet = new HashSet<Function>();
+
 
 	public RecoveredClassHelper(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
@@ -479,14 +482,14 @@ public class RecoveredClassHelper {
 	public Set<Function> getAllVfunctions(List<Address> vftableAddresses)
 			throws CancelledException {
 
-		Set<Function> allVfunctionsSet = new HashSet<Function>();
-
 		if (vftableAddresses.isEmpty()) {
 			return allVfunctionsSet;
 		}
-		for (Address vftableAddress : vftableAddresses) {
-			monitor.checkCancelled();
-			allVfunctionsSet.addAll(getVfunctions(vftableAddress));
+		if (allVfunctionsSet.isEmpty()) {
+			for (Address vftableAddress : vftableAddresses) {
+				monitor.checkCancelled();
+				allVfunctionsSet.addAll(getVfunctions(vftableAddress));
+			}
 		}
 
 		return allVfunctionsSet;
