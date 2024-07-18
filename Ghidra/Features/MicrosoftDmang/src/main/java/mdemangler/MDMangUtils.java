@@ -169,7 +169,17 @@ public class MDMangUtils {
 			return anon;
 		}
 		Long num = Long.valueOf(str, 16);
-		return String.format("anon_%08X", num);
+		return String.format("_anon_%08X", num);
+	}
+
+	/**
+	 * Given a number in string format as input, creates the standardized local namespace
+	 *  node string of the format {@code __l2} where {@code 2} is an an example number.
+	 * @param localNumber the input string
+	 * @return the standardized local namespace component
+	 */
+	public static String createStandardLocalNamespaceNode(String localNumber) {
+		return String.format("__l%s", localNumber);
 	}
 
 	// @formatter:off
@@ -250,7 +260,7 @@ public class MDMangUtils {
 	 * @param symbolPath the symbol path to standardize
 	 * @return the standardized symbol path
 	 */
-	public static SymbolPath standarizeSymbolPath(SymbolPath symbolPath) {
+	public static SymbolPath standarizeSymbolPathTicks(SymbolPath symbolPath) {
 		List<String> parts = symbolPath.asList();
 		for (int i = 0; i < parts.size(); i++) {
 			String part = parts.get(i);
@@ -283,7 +293,7 @@ public class MDMangUtils {
 	 * @param symbolPath the symbol path to standardize
 	 * @return the standardized symbol path
 	 */
-	public static SymbolPath standarizeSymbolPathAlt(SymbolPath symbolPath) {
+	public static SymbolPath standarizeSymbolPathUnderscores(SymbolPath symbolPath) {
 		List<String> parts = symbolPath.asList();
 		for (int i = 0; i < parts.size(); i++) {
 			String part = parts.get(i);

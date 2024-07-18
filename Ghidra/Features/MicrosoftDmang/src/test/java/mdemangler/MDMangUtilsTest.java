@@ -108,33 +108,33 @@ public class MDMangUtilsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testStandarizeSymbolPath() throws Exception {
+	public void testStandarizeSymbolPathTicks() throws Exception {
 		SymbolPath sp = new SymbolPath(Arrays.asList("name0", "__l1", "name2"));
-		SymbolPath result = MDMangUtils.standarizeSymbolPath(sp);
+		SymbolPath result = MDMangUtils.standarizeSymbolPathTicks(sp);
 		String expected = "name0::`1'::name2";
 		assertEquals(expected, result.toString());
 	}
 
 	@Test
-	public void testStandarizeSymbolPathWithEmbedded() throws Exception {
+	public void testStandarizeSymbolPathWithEmbeddedTicks() throws Exception {
 		SymbolPath sp = new SymbolPath(Arrays.asList("name0", "__l1", "name2(name3::__l4::name5)"));
-		SymbolPath result = MDMangUtils.standarizeSymbolPath(sp);
+		SymbolPath result = MDMangUtils.standarizeSymbolPathTicks(sp);
 		String expected = "name0::`1'::name2(name3::`4'::name5)";
 		assertEquals(expected, result.toString());
 	}
 
 	@Test
-	public void testStandarizeSymbolPathAlt() throws Exception {
+	public void testStandarizeSymbolPathUnderscores() throws Exception {
 		SymbolPath sp = new SymbolPath(Arrays.asList("name0", "`1'", "name2"));
-		SymbolPath result = MDMangUtils.standarizeSymbolPathAlt(sp);
+		SymbolPath result = MDMangUtils.standarizeSymbolPathUnderscores(sp);
 		String expected = "name0::__l1::name2";
 		assertEquals(expected, result.toString());
 	}
 
 	@Test
-	public void testStandarizeSymbolPathWithEmbeddedAlt() throws Exception {
+	public void testStandarizeSymbolPathWithEmbeddedUnderscores() throws Exception {
 		SymbolPath sp = new SymbolPath(Arrays.asList("name0", "`1'", "name2(name3::`4'::name5)"));
-		SymbolPath result = MDMangUtils.standarizeSymbolPathAlt(sp);
+		SymbolPath result = MDMangUtils.standarizeSymbolPathUnderscores(sp);
 		String expected = "name0::__l1::name2(name3::__l4::name5)";
 		assertEquals(expected, result.toString());
 	}

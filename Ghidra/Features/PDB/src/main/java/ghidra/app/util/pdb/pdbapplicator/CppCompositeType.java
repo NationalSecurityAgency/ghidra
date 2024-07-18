@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
@@ -48,6 +49,7 @@ public class CppCompositeType {
 	private String className; // String for now.
 	private String mangledName;
 	private int size;
+	private SymbolPath symbolPath;
 	private Composite composite;
 	private CategoryPath categoryPath;
 
@@ -78,7 +80,8 @@ public class CppCompositeType {
 	private Map<Integer, PlaceholderVirtualBaseTable> placeholderVirtualBaseTables;
 
 	//----------------------------------------------------------------------------------------------
-	public CppCompositeType(Composite composite, String mangledName) {
+	public CppCompositeType(SymbolPath symbolPath, Composite composite, String mangledName) {
+		Objects.requireNonNull(symbolPath, "symbolPath may not be null");
 		Objects.requireNonNull(composite, "composite may not be null");
 		syntacticBaseClasses = new ArrayList<>();
 		layoutBaseClasses = new ArrayList<>();
@@ -90,46 +93,49 @@ public class CppCompositeType {
 
 		isFinal = false;
 		type = Type.UNKNOWN;
+		this.symbolPath = symbolPath;
 		this.composite = composite;
 		placeholderVirtualBaseTables = new HashMap<>();
 		categoryPath = new CategoryPath(composite.getCategoryPath(), composite.getName());
 		this.mangledName = mangledName;
 	}
 
-	public static CppClassType createCppClassType(Composite composite, String mangledName) {
-		return new CppClassType(composite, mangledName);
+	public static CppClassType createCppClassType(SymbolPath symbolPath, Composite composite,
+			String mangledName) {
+		return new CppClassType(symbolPath, composite, mangledName);
 	}
 
-	public static CppClassType createCppClassType(Composite composite, String name,
-			String mangledName, int size) {
-		CppClassType cppType = new CppClassType(composite, mangledName);
+	public static CppClassType createCppClassType(SymbolPath symbolPath, Composite composite,
+			String name, String mangledName, int size) {
+		CppClassType cppType = new CppClassType(symbolPath, composite, mangledName);
 		cppType.setName(name);
 		cppType.setSize(size);
 		return cppType;
 	}
 
-	public static CppStructType createCppStructType(Composite composite, String mangledName) {
-		return new CppStructType(composite, mangledName);
+	public static CppStructType createCppStructType(SymbolPath symbolPath, Composite composite,
+			String mangledName) {
+		return new CppStructType(symbolPath, composite, mangledName);
 	}
 
-	public static CppStructType createCppStructType(Composite composite, String name,
-			String mangledName, int size) {
-		CppStructType cppType = new CppStructType(composite, mangledName);
+	public static CppStructType createCppStructType(SymbolPath symbolPath, Composite composite,
+			String name, String mangledName, int size) {
+		CppStructType cppType = new CppStructType(symbolPath, composite, mangledName);
 		cppType.setName(name);
 		cppType.setSize(size);
 		return cppType;
 	}
 
 	private static class CppClassType extends CppCompositeType {
-		private CppClassType(Composite composite, String mangledName) {
-			super(composite, mangledName);
+		private CppClassType(SymbolPath symbolPath, Composite composite, String mangledName) {
+			super(symbolPath, composite, mangledName);
 			setClass();
 		}
 	}
 
 	private static class CppStructType extends CppCompositeType {
-		private CppStructType(Composite composite, String mangledName) {
-			super(composite, mangledName);
+		private CppStructType(SymbolPath symbolPath, Composite composite, String mangledName) {
+			super(symbolPath, composite, mangledName);
 			setStruct();
 		}
 	}
@@ -184,6 +190,10 @@ public class CppCompositeType {
 
 	private List<LayoutBaseClass> getLayoutBaseClasses() {
 		return layoutBaseClasses;
+	}
+
+	SymbolPath getSymbolPath() {
+		return symbolPath;
 	}
 
 	Composite getComposite() {

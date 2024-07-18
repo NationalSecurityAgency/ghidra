@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,19 +82,19 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			myApplicator.predefineClass(fixedSymbolPath);
 			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), size,
 				myApplicator.getDataTypeManager());
-			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType = new CppCompositeType(fixedSymbolPath, myComposite, mangledName);
 			myClassType.setClass();
 		}
 		else if (compositeMsType instanceof AbstractStructureMsType) {
 			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), size,
 				myApplicator.getDataTypeManager());
-			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType = new CppCompositeType(fixedSymbolPath, myComposite, mangledName);
 			myClassType.setStruct();
 		}
 		else if (compositeMsType instanceof AbstractUnionMsType) {
 			myComposite = new UnionDataType(categoryPath, fixedSymbolPath.getName(),
 				myApplicator.getDataTypeManager());
-			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType = new CppCompositeType(fixedSymbolPath, myComposite, mangledName);
 			myClassType.setUnion();
 		}
 		else { // InterfaceMsType
@@ -142,6 +142,16 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		boolean isClass = (type instanceof AbstractClassMsType);
 		int size = getSizeInt(type);
 		clearComponents(composite);
+		if (!lists.methods().isEmpty()) {
+			// See applyCpp where we store sp in CppCompositeType so we don't have to determine
+			//  this again (including possible demangling)... need a place to store this or
+			//  make sure our CppCompositeType (or its replacement) can be the union solution as
+			//  well.  Note that the namespace convention of making a Class namespace is what
+			//  allows the "this" pointer to be a pointer to the appropriate container type (even
+			//  though this is a "union").
+			SymbolPath sp = getFixedSymbolPath(type);
+			applicator.predefineClass(sp);
+		}
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
 		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
@@ -159,6 +169,10 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		Composite composite = combo.dt();
 		CppCompositeType classType = combo.ct();
 		clearComponents(composite);
+		if (!lists.bases().isEmpty() || !lists.methods().isEmpty()) {
+			SymbolPath sp = classType.getSymbolPath();
+			applicator.predefineClass(sp);
+		}
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
 		addClassTypeBaseClasses(composite, classType, lists.bases(), type);
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
