@@ -5615,12 +5615,12 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 @ifdef IA64
 :CVTSD2SI     Reg64, m64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2D; Reg64 ... & m64
 {
-  Reg64 = round(m64);
+  Reg64 = trunc(round(m64));
 }
 
 :CVTSD2SI     Reg64, XmmReg2 is vexMode=0 & opsize=2 & $(PRE_F2) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg64 & XmmReg2
 {
-  Reg64 = round(XmmReg2[0,64]);
+  Reg64 = trunc(round(XmmReg2[0,64]));
 }
 @endif
 
@@ -5670,12 +5670,12 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 
 :CVTSS2SI     Reg32, m32    is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; Reg32 ... & m32
 {
-  Reg32 = round(m32);
+  Reg32 = trunc(round(m32));
 }
 
 :CVTSS2SI     Reg32, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x2D; xmmmod=3 & Reg32 & XmmReg2
 {
-  Reg32 = round(XmmReg2[0,32]);
+  Reg32 = trunc(round(XmmReg2[0,32]));
 }
 
 @ifdef IA64
