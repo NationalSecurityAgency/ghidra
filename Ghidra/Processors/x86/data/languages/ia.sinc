@@ -6364,7 +6364,7 @@ define pcodeop packssdw;
 #otherwise ubyte = sword
 macro sswub(sword, ubyte) {
     ubyte = (sword s> 0xff:2) * 0xff:1;
-    ubyte = ubyte + (sword s> 0:2) * (sword s< 0xff:2) * sword:1;
+    ubyte = ubyte + (sword s> 0:2) * (sword s<= 0xff:2) * sword:1;
 }
 
 :PACKUSWB      mmxreg, m64      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x67; mmxreg ... & m64
