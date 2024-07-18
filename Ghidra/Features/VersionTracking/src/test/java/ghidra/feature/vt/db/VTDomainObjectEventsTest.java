@@ -119,6 +119,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 		assertEquals(VTEvent.MATCH_ADDED, events.get(0).getEventType());
 	}
 
+	@SuppressWarnings("removal") // ignore the warning until removeMatch() is removed
 	@Test
 	public void testEventsForRemovingLastMatchForAssociation() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
@@ -135,6 +136,22 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	}
 
 	@Test
+	public void testEventsForDeletingLastMatchForAssociation() {
+		VTMatchSet manualMatchSet = db.getManualMatchSet();
+		clearEvents();
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatch match = manualMatchSet.addMatch(matchInfo);
+		clearEvents();
+
+		manualMatchSet.deleteMatch(match);
+
+		assertEventCount(2);
+		assertEquals(VTEvent.ASSOCIATION_REMOVED, events.get(0).getEventType());
+		assertEquals(VTEvent.MATCH_DELETED, events.get(1).getEventType());
+	}
+
+	@SuppressWarnings("removal") // ignore the warning until removeMatch() is removed
+	@Test
 	public void testEventsForRemovingNonLastMatchForAssociation() {
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
 		clearEvents();
@@ -143,6 +160,21 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 		clearEvents();
 
 		manualMatchSet.removeMatch(match);
+
+		assertEventCount(2);
+		assertEquals(VTEvent.ASSOCIATION_REMOVED, events.get(0).getEventType());
+		assertEquals(VTEvent.MATCH_DELETED, events.get(1).getEventType());
+	}
+
+	@Test
+	public void testEventsForDeletingNonLastMatchForAssociation() {
+		VTMatchSet manualMatchSet = db.getManualMatchSet();
+		clearEvents();
+		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
+		VTMatch match = manualMatchSet.addMatch(matchInfo);
+		clearEvents();
+
+		manualMatchSet.deleteMatch(match);
 
 		assertEventCount(2);
 		assertEquals(VTEvent.ASSOCIATION_REMOVED, events.get(0).getEventType());

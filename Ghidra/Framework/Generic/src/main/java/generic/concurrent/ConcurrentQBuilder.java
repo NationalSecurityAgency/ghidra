@@ -193,6 +193,12 @@ public class ConcurrentQBuilder<I, R> {
 		return this;
 	}
 
+	/**
+	 * Builds the final {@link ConcurrentQ}.
+	 * 
+	 * @param callback the callback for processing each job
+	 * @return the new queue
+	 */
 	public ConcurrentQ<I, R> build(QCallback<I, R> callback) {
 
 		ConcurrentQ<I, R> concurrentQ = new ConcurrentQ<>(callback, getQueue(), getThreadPool(),

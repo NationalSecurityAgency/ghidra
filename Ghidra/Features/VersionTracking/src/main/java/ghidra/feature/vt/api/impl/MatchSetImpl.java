@@ -15,12 +15,10 @@
  */
 package ghidra.feature.vt.api.impl;
 
-import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
-import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
+import java.util.*;
+
 import ghidra.feature.vt.api.main.*;
 import ghidra.program.model.address.Address;
-
-import java.util.*;
 
 public class MatchSetImpl implements VTMatchSet {
 	private ProgramCorrelatorInfoFake correlatorInfo;
@@ -77,11 +75,8 @@ public class MatchSetImpl implements VTMatchSet {
 	}
 
 	@Override
-	public boolean hasRemovableMatches() {
-		VTProgramCorrelatorInfo info = getProgramCorrelatorInfo();
-		String correlatorClassName = info.getCorrelatorClassName();
-		return correlatorClassName.equals(ManualMatchProgramCorrelator.class.getName()) ||
-			correlatorClassName.equals(ImpliedMatchProgramCorrelator.class.getName());
+	public void deleteMatch(VTMatch match) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
