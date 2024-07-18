@@ -17,7 +17,7 @@ package ghidra.util;
 
 /**
  * Ghidra synchronization lock. This class allows creation of named locks for
- * synchroniing modification of multiple tables in the Ghidra database.
+ * synchronizing modification of multiple tables in the Ghidra database.
  */
 public class Lock {
 	private Thread owner;

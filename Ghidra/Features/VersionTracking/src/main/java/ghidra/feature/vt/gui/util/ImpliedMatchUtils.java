@@ -115,7 +115,7 @@ public class ImpliedMatchUtils {
 		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
 		for (VTMatch vtMatch : matches) {
 			if (vtMatch.getMatchSet() == impliedMatchSet) {
-				impliedMatchSet.removeMatch(vtMatch);
+				impliedMatchSet.deleteMatch(vtMatch);
 			}
 		}
 	}
@@ -123,8 +123,7 @@ public class ImpliedMatchUtils {
 	/**
 	 * Method for finding version tracking implied matches given an accepted matched
 	 * function. Each referenced data and function that exist in equivalent sections
-	 * of the matched source and destination functions will added to the current
-	 * version tracking session as an implied match.
+	 * of the matched source and destination functions will be returned in the given set.
 	 *
 	 * @param sourceFunction The matched function from the source program
 	 * @param destinationFunction The matched function from the destination program

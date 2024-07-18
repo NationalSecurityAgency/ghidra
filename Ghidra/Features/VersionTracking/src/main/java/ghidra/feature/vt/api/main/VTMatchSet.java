@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.feature.vt.api.main;
 
+import java.util.Collection;
+
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
 import ghidra.program.model.address.Address;
-
-import java.util.Collection;
 
 /**
  * Interface for all the matches generated from a single program correlator run.
@@ -57,14 +56,14 @@ public interface VTMatchSet {
 
 	/**
 	 * Returns the number of matches contained in this match set.
-	 * @return
+	 * @return the number of matches contained in this match set.
 	 */
 	public int getMatchCount();
 
 	/**
 	 * Returns a unique id for this match set.  The ids are one-up numbers indicating the order this
 	 * match set was generated in relation to other match sets in the VTSession. 
-	 * @return
+	 * @return the id
 	 */
 	public int getID();
 
@@ -72,7 +71,7 @@ public interface VTMatchSet {
 	 * Returns a collection of all matches for the given association.
 	 * @param association the association for which to search for matches.
 	 * @return a collection of all matches for the given association.
-	 * @see #getMatches(Address, Address, VTAssociationType)
+	 * @see #getMatches(Address, Address)
 	 */
 	public Collection<VTMatch> getMatches(VTAssociation association);
 
@@ -90,16 +89,51 @@ public interface VTMatchSet {
 	public Collection<VTMatch> getMatches(Address sourceAddress, Address destinationAddress);
 
 	/**
-	 * Removes a match from this match set. Note that this operation is only supported for built-in
-	 * match sets "Manual Matches" and "Implied Matches".
+	 * Deletes the given match from this match set.  
+	 * <P>
+	 * Note: deleting an <B>ACCEPTED</B> match removes potentially useful corroborating evidence 
+	 * from future correlation. Before deleting a match, consider instead filtering matches out of
+	 * the UI that you are finished applying.  
+	 * <P>
+	 * If this is the last match that shares the match's association, then the association will also
+	 * be removed, along with any markup items in the database.  <B>Any applied markup item data 
+	 * will not be changed.</B>  
+	 * 
+	 * @param match the match
+	 */
+	public void deleteMatch(VTMatch match);
+
+	/**
+	 * Removes a match from this match set.
+	 * <P>
+	 * If this is the last match that shares the match's association, then the match will only be
+	 * removed if the association is not accepted.   In that case, no remove will take place and 
+	 * this method will return false. 
+	 * <P>
+	 * Note:  This method is deprecated.  It unfortunately shares a very similar name with its 
+	 * replacement, {@link #deleteMatch(VTMatch)}.   The replacement method will delete the match 
+	 * and the related association and markup items in the database, if the match is the last match
+	 * to use that association.  This deprecated method does not remove the remaining association or
+	 * markup items.   Historically, this method has been called after clearing the given match and
+	 * its markup. Once this method has been deleted, clients will be responsible for managing the
+	 * markup item state before calling {@link #deleteMatch(VTMatch)}.
+	 * 
 	 * @param match the match to remove.
 	 * @return true if the match was removed.
+	 * @throws IllegalArgumentException if a non-database match is passed to this method
+	 * @see #deleteMatch(VTMatch)
+	 * @deprecated use {@link #deleteMatch(VTMatch)} 
 	 */
+	@Deprecated(since = "11.2", forRemoval = true)
 	public boolean removeMatch(VTMatch match);
 
 	/**
-	 * Returns true if this match set supports removing matches.
-	 * @return true if this match set supports removing matches.
+	 * Returns true 
+	 * @return true
+	 * @deprecated this method now always returns true
 	 */
-	public boolean hasRemovableMatches();
+	@Deprecated(since = "11.2", forRemoval = true)
+	public default boolean hasRemovableMatches() {
+		return true;
+	}
 }
