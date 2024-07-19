@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.checksums.MyTestMemory;
+import ghidra.app.util.SymbolPath;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressIterator;
 import ghidra.program.model.data.*;
@@ -476,14 +477,16 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 	private static CppCompositeType createStruct32(String name, int size) {
 		Composite composite = new StructureDataType(CategoryPath.ROOT, name, 0, dtm32);
+		SymbolPath symbolPath = new SymbolPath(name);
 		String mangledName = createMangledName(name, CppCompositeType.Type.STRUCT);
-		return CppCompositeType.createCppStructType(composite, name, mangledName, size);
+		return CppCompositeType.createCppStructType(symbolPath, composite, name, mangledName, size);
 	}
 
 	private static CppCompositeType createStruct64(String name, int size) {
 		Composite composite = new StructureDataType(CategoryPath.ROOT, name, 0, dtm64);
+		SymbolPath symbolPath = new SymbolPath(name);
 		String mangledName = createMangledName(name, CppCompositeType.Type.STRUCT);
-		return CppCompositeType.createCppStructType(composite, name, mangledName, 0);
+		return CppCompositeType.createCppStructType(symbolPath, composite, name, mangledName, 0);
 	}
 
 	private static String createMangledName(String className, CppCompositeType.Type type) {

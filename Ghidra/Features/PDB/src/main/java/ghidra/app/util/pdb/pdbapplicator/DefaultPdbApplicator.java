@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,6 +49,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
 import ghidra.util.task.TaskMonitor;
+import mdemangler.MDMangUtils;
 
 /**
  * The main engine for applying an AbstractPdb to Ghidra, whether a Program or DataTypeManager.
@@ -2249,42 +2250,23 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	@SuppressWarnings("unused") // For method not being called. In process of removing this version
-	boolean createSymbolOld(Address address, String symbolPathString, boolean forcePrimary) {
-
-//		storeLabelByAddress(address, symbolPathString);
-
-		try {
-			Namespace namespace = program.getGlobalNamespace();
-			if (symbolPathString.startsWith(THUNK_NAME_PREFIX)) {
-				symbolPathString = symbolPathString.substring(THUNK_NAME_PREFIX.length(),
-					symbolPathString.length());
-			}
-			SymbolPath symbolPath = new SymbolPath(symbolPathString);
-			symbolPath = symbolPath.replaceInvalidChars();
-			String name = symbolPath.getName();
-			String namespacePath = symbolPath.getParentPath();
-			if (namespacePath != null) {
-				namespace = NamespaceUtils.createNamespaceHierarchy(namespacePath, namespace,
-					program, address, SourceType.IMPORTED);
-			}
-
-			Symbol s = SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, address,
-				namespace, name, SourceType.IMPORTED);
-			if (s != null && forcePrimary) {
-				// PDB contains both mangled, namespace names, and global names
-				// If mangled name does not remain primary it will not get demamgled
-				// and we may not get signature information applied
-				SetLabelPrimaryCmd cmd =
-					new SetLabelPrimaryCmd(address, s.getName(), s.getParentNamespace());
-				cmd.applyTo(program);
-			}
+	boolean addToPlateUnique(Address address, String comment) {
+		if (StringUtils.isBlank(comment)) {
+			return false;
+		}
+		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		if (plate == null) {
+			plate = "";
+		}
+		else if (plate.contains(comment)) {
 			return true;
 		}
-		catch (InvalidInputException e) {
-			log.appendMsg("PDB Warning: Unable to create symbol: " + e.getMessage());
+		else if (!comment.endsWith("\n")) {
+			comment += '\n';
 		}
-		return false;
+		plate = comment + plate; // putting new comment at top of existing plate
+		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
+		return true;
 	}
 
 	//==============================================================================================
@@ -2292,48 +2274,59 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return createSymbol(address, symbolPathString, isNewFunctionSignature, null);
 	}
 
+	Symbol createSymbol(Address address, SymbolPath symbolPath, boolean isNewFunctionSignature) {
+		symbolPath = MDMangUtils.standarizeSymbolPathUnderscores(symbolPath);
+		symbolPath = symbolPath.replaceInvalidChars();
+		return createSymbolInternal(address, symbolPath, isNewFunctionSignature, null);
+	}
+
 	Symbol createSymbol(Address address, String symbolPathString, boolean isNewFunctionSignature,
 			String plateAddition) {
+		SymbolPath symbolPath = getCleanSymbolPath(symbolPathString);
+		return createSymbolInternal(address, symbolPath, isNewFunctionSignature, plateAddition);
+	}
 
-		SymbolPath newSymbolPath = getCleanSymbolPath(symbolPathString);
+	private Symbol createSymbolInternal(Address address, SymbolPath symbolPath,
+			boolean isNewFunctionSignature,
+			String plateAddition) {
 
 		Symbol existingSymbol = program.getSymbolTable().getPrimarySymbol(address);
 		if (existingSymbol == null || isNewFunctionSignature) {
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 		if (existingSymbol.getSymbolType() == SymbolType.FUNCTION &&
 			existingSymbol.getSource() == SourceType.DEFAULT) {
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		Function existingFunction = program.getListing().getFunctionAt(address);
 		if (existingFunction != null) { // Maybe I should care if there is a data type there too.
 			if (existingFunction.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
 				// Existing is USER or IMPORTED
-				return createSymbol(address, newSymbolPath, false, plateAddition);
+				return doCreateSymbol(address, symbolPath, false, plateAddition);
 			}
 		}
 
 		if (!existingSymbol.getParentNamespace().equals(program.getGlobalNamespace())) {
 			// existing symbol has a non-global namespace
-			return createSymbol(address, newSymbolPath, false, plateAddition);
+			return doCreateSymbol(address, symbolPath, false, plateAddition);
 		}
 
-		if (newSymbolPath.getParent() != null) {
+		if (symbolPath.getParent() != null) {
 			// new symbol has non-global namespace
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
 		// Both existing and new symbols are in global namespace at this point
-		if (isMangled(symbolPathString) && !isMangled(existingSymbol.getName())) {
+		if (isMangled(symbolPath.getName()) && !isMangled(existingSymbol.getName())) {
 			// new symbol is mangled, but don't override existing one if it is mangled
-			return createSymbol(address, newSymbolPath, true, plateAddition);
+			return doCreateSymbol(address, symbolPath, true, plateAddition);
 		}
 
-		return createSymbol(address, newSymbolPath, false, plateAddition);
+		return doCreateSymbol(address, symbolPath, false, plateAddition);
 	}
 
-	private Symbol createSymbol(Address address, SymbolPath symbolPath, boolean makePrimary,
+	private Symbol doCreateSymbol(Address address, SymbolPath symbolPath, boolean makePrimary,
 			String plateAddition) {
 		Symbol symbol = null;
 		try {
@@ -2360,25 +2353,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		addToPlateUnique(address, plateAddition);
 
 		return symbol;
-	}
-
-	public boolean addToPlateUnique(Address address, String comment) {
-		if (StringUtils.isBlank(comment)) {
-			return false;
-		}
-		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
-		if (plate == null) {
-			plate = "";
-		}
-		else if (plate.contains(comment)) {
-			return true;
-		}
-		else if (!comment.endsWith("\n")) {
-			comment += '\n';
-		}
-		plate = comment + plate; // putting new comment at top of existing plate
-		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
-		return true;
 	}
 
 	private static boolean isMangled(String name) {
