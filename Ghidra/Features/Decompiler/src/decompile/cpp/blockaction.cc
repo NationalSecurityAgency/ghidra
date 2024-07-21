@@ -2191,6 +2191,127 @@ int4 ActionBlockStructure::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Revert irreducible statement condensing (ISC) compiler optimizations that may occur as a result of cross jumping.
+///
+/// Duplicate compiler merged statements.
+/// \param data Function to manipulate during decompilation
+int4 ActionRevertISC::apply(Funcdata &data)
+
+{
+  BlockGraph &graph(data.getStructure());
+
+  const vector<FlowBlock *> &blockList(graph.getList());
+  if (blockList.empty()) return 0;
+
+  // In the SAILR whitepaper, they detect cases in the graph that contain a goto edge
+  // connecting one node to another node that has multiple predecessors.
+  // The near-equivalent case in the Ghidra structured flow graph is an If Block that has
+  // an explicit edge to a copy of a return node with multiple predecessors.
+
+  vector<BlockGraph *> vec;
+  vec.push_back(&graph);
+  int4 pos = 0;
+
+  vector<int4> splitedge;
+  vector<BlockBasic *> retnode;
+  
+  // Traverse BlockGraph as an ordered tree.
+  while(pos < vec.size()) {
+    BlockGraph *curbl = vec[pos];
+    pos += 1;
+
+    // Check for an If-condition with an outgoing edge
+    if (curbl->getType() == FlowBlock::t_if) {
+      int4 sizeOut = curbl->sizeOut();
+      for (int4 idx=0;idx<sizeOut;++idx) {
+        FlowBlock *outbl = curbl->getOut(idx);
+
+        // Copy Block has an If-Condition edge
+        if (outbl->getType() == FlowBlock::t_copy) {
+          BlockCopy *asCopy = (BlockCopy *) outbl;
+          // We expect the following explicit edges:
+          // If -> Copy
+          // True -> Orig
+          // False -> Orig
+          
+          // Get Original Block
+          BlockBasic *orig = (BlockBasic *) asCopy->subBlock(0);
+          int origSizeIn = orig->sizeIn();
+          if (origSizeIn < 2) {
+            continue;
+          }
+          // Original Block has multiple incoming edges (true, false)
+
+          int origSizeOut = orig->sizeOut();
+          if (origSizeOut > 0) {
+            continue;
+          }
+          // Do not split blocks that have an outgoing flow
+
+          // TODO:
+          // - Check if the Original block has a RETURN
+          
+          if (!orig->isSplittable()) {
+            continue;
+          }
+
+          int4 splitcount = 0;
+          // Track the block to be duplicated or 'split'.
+          // We record the later edges first so that edge removal
+          // doesn't change the remaining edges.
+          for (int4 i=origSizeIn-1;i>=0;--i) {
+            splitedge.push_back(i);
+            retnode.push_back(orig);
+            splitcount += 1;
+          }
+
+          // We only want to split until there is one incoming edge left
+          if (origSizeIn == splitcount) {
+            splitedge.pop_back();
+            retnode.pop_back();
+          }
+        }
+      }
+    }
+
+    // Recurse into child blocks
+    FlowBlock::block_type bt;
+    int4 sz = curbl->getSize();
+    for(int4 i=0;i<sz;++i) {
+      FlowBlock *childbl = curbl->getBlock(i);
+
+      bt = childbl->getType();
+      // BlockCopy and BlockBasic are leaf nodes that we don't recurse into
+      if ((bt == FlowBlock::t_copy)||(bt == FlowBlock::t_basic))
+        continue;
+
+      // Add next block to visit
+      vec.push_back((BlockGraph *)childbl);
+    }
+
+  }
+
+  // Duplicate merged nodes
+  for(int4 i=0;i<splitedge.size();++i) {
+    data.nodeSplit(retnode[i],splitedge[i]);
+    count += 1;
+
+    // After nodeSplit() calls structureReset(), sblocks will be cleared so we need
+    // to reapply ActionBlockStructure::apply()
+    data.installSwitchDefaults();
+    graph.buildCopy(data.getBasicBlocks());
+    CollapseStructure collapse(graph);
+    collapse.collapseAll();
+    count += collapse.getChangeCount();
+
+    if (data.hasNoStructBlocks()) {
+      data.getArch()->printMessage("FuncData has no structured blocks!");
+    }
+  }
+
+  return 0;
+}
+
 int4 ActionFinalStructure::apply(Funcdata &data)
 
 {
@@ -2249,24 +2370,7 @@ void ActionReturnSplit::gatherReturnGotos(FlowBlock *parent,vector<FlowBlock *> 
 bool ActionReturnSplit::isSplittable(BlockBasic *b)
 
 {
-  list<PcodeOp *>::const_iterator iter;
-  PcodeOp *op;
-
-  for(iter=b->beginOp();iter!=b->endOp();++iter) {
-    op = *iter;
-    OpCode opc = op->code();
-    if (opc == CPUI_MULTIEQUAL) continue;
-    if ((opc == CPUI_COPY)||(opc == CPUI_RETURN)) {
-      for(int4 i=0;i<op->numInput();++i) {
-	if (op->getIn(i)->isConstant()) continue;
-	if (op->getIn(i)->isAnnotation()) continue;
-	if (op->getIn(i)->isFree()) return false;
-      }
-      continue;
-    }
-    return false;
-  }
-  return true;
+  return b->isSplittable();
 }
 
 int4 ActionReturnSplit::apply(Funcdata &data)
