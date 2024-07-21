@@ -3245,7 +3245,8 @@ is size.ldstr=1 & b_2729=7 & v=0 & b_2425=0 & b_23=0 & b_2222=1 & b_2121=1 & b_1
 :ldrsb Rt_GPR32, addrIndexed
 is size.ldstr=0 & b_2729=7 & v=0 & b_2425=1 & b_2223=3 & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:1 addrIndexed);
+	local tmp:4 = sext(*:1 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.174 LDRSB (immediate) page C6-1572 line 93336 MATCH x38800400/mask=xffa00c00
@@ -3269,7 +3270,8 @@ is size.ldstr=0 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=0 & UnscPriv & a
 :ldrsb Rt_GPR32, addrIndexed
 is size.ldstr=0 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=0 & b_1010=1 & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:1 addrIndexed);
+	local tmp:4 = sext(*:1 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.174 LDRSB (immediate) page C6-1572 line 93336 MATCH x39800000/mask=xff800000
@@ -3313,7 +3315,8 @@ is size.ldstr=0 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & b_1010=1 & a
 :ldrsb Rt_GPR32, addrIndexed
 is size.ldstr=0 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=1 & b_1011=2 & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:1 addrIndexed);
+	local tmp:4 = sext(*:1 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.175 LDRSB (register) page C6-1576 line 93573 MATCH x38a00800/mask=xffa00c00
@@ -3333,7 +3336,8 @@ is size.ldstr=0 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=1 & b_1011=2 & a
 :ldrsh Rt_GPR32, addrUIMM
 is size.ldstr=1 & b_2729=7 & v=0 & b_2425=1 & b_2223=3 & addrUIMM & Rn_GPR64xsp & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:2 addrUIMM);
+	local tmp:4 = sext(*:2 addrUIMM);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.176 LDRSH (immediate) page C6-1578 line 93714 MATCH x78800400/mask=xffa00c00
@@ -3346,7 +3350,8 @@ is size.ldstr=1 & b_2729=7 & v=0 & b_2425=1 & b_2223=3 & addrUIMM & Rn_GPR64xsp 
 :ld^UnscPriv^"rsh" Rt_GPR32, addrIndexed
 is size.ldstr=1 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=0 & UnscPriv & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:2 addrIndexed);
+	local tmp:4 = sext(*:2 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.176 LDRSH (immediate) page C6-1578 line 93714 MATCH x78800400/mask=xffa00c00
@@ -3357,7 +3362,8 @@ is size.ldstr=1 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=0 & UnscPriv & a
 :ldrsh Rt_GPR32, addrIndexed
 is size.ldstr=1 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=0 & b_1010=1 & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:2 addrIndexed);
+	local tmp:4 = sext(*:2 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.176 LDRSH (immediate) page C6-1578 line 93714 MATCH x79800000/mask=xff800000
@@ -3401,7 +3407,8 @@ is size.ldstr=1 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & b_1010=1 & a
 :ldrsh Rt_GPR32, addrIndexed
 is size.ldstr=1 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=1 & b_1011=2 & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = sext(*:2 addrIndexed);
+	local tmp:4 = sext(*:2 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.177 LDRSH (register) page C6-1582 line 93951 MATCH x78a00800/mask=xffa00c00
