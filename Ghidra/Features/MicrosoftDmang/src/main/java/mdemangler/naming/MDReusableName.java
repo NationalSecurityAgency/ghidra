@@ -15,6 +15,7 @@
  */
 package mdemangler.naming;
 
+import ghidra.util.Msg;
 import mdemangler.*;
 import mdemangler.template.MDTemplateNameAndArguments;
 
