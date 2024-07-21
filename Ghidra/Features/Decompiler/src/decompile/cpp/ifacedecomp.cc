@@ -1844,7 +1844,7 @@ void IfcProtooverride::execute(istream &s)
   s >> ws;
   Address callpoint(parse_machaddr(s,discard,*dcp->conf->types));
   int4 i;
-  for(i=0;dcp->fd->numCalls();++i)
+  for(i=0;i<dcp->fd->numCalls();++i)
     if (dcp->fd->getCallSpecs(i)->getOp()->getAddr() == callpoint) break;
   if (i == dcp->fd->numCalls())
     throw IfaceExecutionError("No call is made at this address");
