@@ -2833,7 +2833,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :ldar Rt_GPR32, addrReg
 is size.ldstr=2 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_1620=0b11111 & b_15=1 & b_1014=0b11111 & addrReg & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = *addrReg;
+	Rt_GPR64 = zext(*:4 addrReg);
 }
 
 # C6.2.146 LDARB page C6-1516 line 89986 MATCH x08c08000/mask=xffe08000
