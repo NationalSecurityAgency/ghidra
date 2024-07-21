@@ -7,13 +7,12 @@
 }
 
 # c.addi d,Co 00000001 0000e003 SIMPLE (0, 0)
-# There may be other nop forms here if (cop0711=0) or (cop1212=0 & cop0206=0)
-:c.addi crd,cimmI is crd & cimmI & cop0001=0x1 & cop1315=0x0
+:c.addi nzcrd,cimmI is nzcrd & cimmI & cop0001=0x1 & cop1315=0x0
 {
-	crd = crd + cimmI;
+	nzcrd = nzcrd + cimmI;
 }
 
-:c.nop is cop0001=0x1 & cop1315=0x0 & cop0711=0 & cop1212=0 & cop0206=0
+:c.nop is cop0001=0x1 & cop1315=0x0 & cop0711=0
 {
 	local NOP:1 = 0;
 	NOP = NOP;
@@ -33,10 +32,10 @@
 
 @if (ADDRSIZE == "64") || (ADDRSIZE == "128")
 # c.addiw d,Co 00002001 0000e003 SIMPLE (64, 0) 
-:c.addiw crd,cimmI is crd & cimmI & cop0001=0x1 & cop1315=0x1
+:c.addiw nzcrd,cimmI is nzcrd & cimmI & cop0001=0x1 & cop1315=0x1
 {
-	local tmp:$(XLEN) = crd + cimmI;
-	crd = sext(tmp:$(WXLEN));
+	local tmp:$(XLEN) = nzcrd + cimmI;
+	nzcrd = sext(tmp:$(WXLEN));
 }
 @endif
 
@@ -174,9 +173,9 @@
 }
 
 # c.jr d 00008002 0000f07f BRANCH (0, 0) 
-:c.jr crd is crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0
+:c.jr nzcrd is nzcrd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0 & cop0711!=1
 {
-	goto [crd];
+	goto [nzcrd];
 }
 
 # ret  00008082 0000ffff BRANCH|ALIAS (0, 0)
@@ -204,18 +203,18 @@
 
 @if (ADDRSIZE == "64") || (ADDRSIZE == "128")
 # c.ldsp d,Cn(Cc) 00006002 0000e003 QWORD|DREF (64, 8) 
-:c.ldsp crd,cldspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x3 & cldspimm
+:c.ldsp nzcrd,cldspimm(sp) is nzcrd & sp & cop0001=0x2 & cop1315=0x3 & cldspimm
 {
 	local ea:$(XLEN) = cldspimm + sp;
-	assignD(crd, *[ram]:$(DXLEN) ea);
+	assignD(nzcrd, *[ram]:$(DXLEN) ea);
 }
 @endif
 
 @if ADDRSIZE == "128"
-:c.lqsp crd,clqspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x1 & clqspimm
+:c.lqsp nzcrd,clqspimm(sp) is nzcrd & sp & cop0001=0x2 & cop1315=0x1 & clqspimm
 {
 	local ea:$(XLEN) = clqspimm + sp;
-	crd = *[ram]:$(QXLEN) ea;
+	nzcrd = *[ram]:$(QXLEN) ea;
 }
 @endif
 
@@ -239,10 +238,10 @@
 }
 
 # c.lwsp d,Cm(Cc) 00004002 0000e003 SIMPLE (0, 0) 
-:c.lwsp crd,clwspimm(sp) is crd & sp & cop0001=0x2 & cop1315=0x2 & clwspimm
+:c.lwsp nzcrd,clwspimm(sp) is nzcrd & sp & cop0001=0x2 & cop1315=0x2 & clwspimm
 {
 	local ea:$(XLEN) = clwspimm + sp;
-	assignW(crd, *[ram]:4 ea);
+	assignW(nzcrd, *[ram]:4 ea);
 }
 
 # c.mv d,CV 00008002 0000f003 SIMPLE (0, 0) 
