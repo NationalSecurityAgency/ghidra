@@ -31,7 +31,7 @@
   
   <global>
     <range space="code"/>
-    <range space="mem"/>
+    <range space="mem" first="40" last="0xffff"/>
     <range space="codebyte"/>
   </global>
   
