@@ -325,36 +325,15 @@ string FileManage::buildPath(const vector<string> &pathels,int level)
   return s.str();
 }
 
-bool FileManage::testDevelopmentPath(const vector<string> &pathels,int level,string &root)
-
-{ // Given pathels[level] is "Ghidra", determine if this is a Ghidra development layout
-  if (level + 2 >= pathels.size()) return false;
-  string parent = pathels[level + 1];
-  if (parent.size() < 11) return false;
-  string piecestr = parent.substr(0,7);
-  if (piecestr != "ghidra.") return false;
-  piecestr = parent.substr(parent.size() - 4);
-  if (piecestr != ".git") return false;
-  root = buildPath(pathels,level+2);
-  vector<string> testpaths1;
-  vector<string> testpaths2;
-  scanDirectoryRecursive(testpaths1,"ghidra.git",root,1);
-  if (testpaths1.size() != 1) return false;
-  scanDirectoryRecursive(testpaths2,"Ghidra",testpaths1[0],1);
-  return (testpaths2.size() == 1);
-}
-
-bool FileManage::testInstallPath(const vector<string> &pathels,int level,string &root)
+bool FileManage::testGhidraPath(const vector<string> &pathels,int level,string &root)
 
 {
   if (level + 1 >= pathels.size()) return false;
   root = buildPath(pathels,level+1);
+  string ghidraPath = buildPath(pathels,level);
   vector<string> testpaths1;
-  vector<string> testpaths2;
-  scanDirectoryRecursive(testpaths1,"server",root,1);
-  if (testpaths1.size() != 1) return false;
-  scanDirectoryRecursive(testpaths2,"server.conf",testpaths1[0],1);
-  return (testpaths2.size() == 1);
+  scanDirectoryRecursive(testpaths1,"Processors",ghidraPath,1);
+  return (testpaths1.size() == 1);
 }
 
 string FileManage::discoverGhidraRoot(const char *argv0)
@@ -368,6 +347,7 @@ string FileManage::discoverGhidraRoot(const char *argv0)
 
   for(;;) {
     int sizebefore = cur.size();
+    if (sizebefore == 0) break;
     splitPath(cur,cur,base);
     if (cur.size() == sizebefore) break;
     if (base == ".")
@@ -394,9 +374,7 @@ string FileManage::discoverGhidraRoot(const char *argv0)
   for(int i=0;i<pathels.size();++i) {
     if (pathels[i] != "Ghidra") continue;
     string root;
-    if (testDevelopmentPath(pathels,i,root))
-      return root;
-    if (testInstallPath(pathels,i,root))
+    if (testGhidraPath(pathels,i,root))
       return root;
   }
   return "";
