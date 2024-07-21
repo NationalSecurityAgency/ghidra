@@ -63,7 +63,7 @@ public class MDQualifier extends MDParsableItem {
 			name.insert(builder);
 		}
 		else if (nameAnonymous != null) {
-			dmang.insertString(builder, ANONYMOUS_NAMESPACE);
+			dmang.insertString(builder, ANONYMOUS_NAMESPACE + nameAnonymous.fragment.getName());
 		}
 		else if (nameInterface != null) {
 			nameInterface.insert(builder);
