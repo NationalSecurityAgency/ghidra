@@ -967,6 +967,7 @@ usimm8_64: val is imm8 & imm8_7=1 [ val = 0xffffffffffffff00 | imm8; ] { export 
 
 # RIP/EIP relative address - NOTE: export of size 0 is intentional so it may be adjusted
 pcRelSimm32: addr	is simm32 [ addr=inst_next+simm32; ] { export addr; }
+pcRelSimm32_32: addr	is simm32 [ addr=(inst_next+simm32) & 0xffffffff; ] { export addr; }
 
 # 16-bit addressing modes   (the offset portion)
 addr16: [BX + SI]		is mod=0 & r_m=0 & BX & SI		{ local tmp=BX+SI; export tmp; }
@@ -1014,9 +1015,8 @@ addr32: [Base + imm32]					is mod=2 & r_m=4; index=4 & Base; imm32      { local 
 addr32: [Base + Index*ss]				is mod=2 & r_m=4; Index & Base & ss; imm32=0 { local tmp=Base+Index*ss; export tmp; }
 addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0    { export Base; }
 @ifdef IA64
-addr32: [pcRelSimm32]					is bit64=1 & mod=0 & r_m=4; index=4 & base=5; pcRelSimm32 { export *[const]:4 pcRelSimm32; }
 
-Addr32_64: [pcRelSimm32]				is mod=0 & r_m=5; pcRelSimm32                { export *[const]:8 pcRelSimm32; }
+Addr32_64: [pcRelSimm32_32]				is mod=0 & r_m=5; pcRelSimm32_32                { export *[const]:8 pcRelSimm32_32; }
 Addr32_64: [imm32]						is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
 Addr32_64: addr32						is addr32									 { tmp:8 = sext(addr32); export tmp; }
 
