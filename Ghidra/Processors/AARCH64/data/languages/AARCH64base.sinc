@@ -3258,7 +3258,8 @@ is size.ldstr=0 & b_2729=7 & v=0 & b_2425=1 & b_2223=3 & addrIndexed & Rt_GPR32 
 :ld^UnscPriv^"rsb" Rt_GPR32, addrIndexed
 is size.ldstr=0 & b_2729=7 & v=0 & b_2425=0 & b_2223=3 & b_2121=0 & UnscPriv & addrIndexed & Rt_GPR32 & Rt_GPR64
 {
-	Rt_GPR64 = zext(*:1 addrIndexed);
+	local tmp:4 = sext(*:1 addrIndexed);
+	Rt_GPR64 = zext(tmp);
 }
 
 # C6.2.174 LDRSB (immediate) page C6-1572 line 93336 MATCH x38800400/mask=xffa00c00
