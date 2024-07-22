@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,6 @@ public class RttiUtil {
 		Namespace classNamespace = typeDescriptorModel.getDescriptorAsNamespace();
 
 		SymbolTable symbolTable = program.getSymbolTable();
-
 
 		// See if the symbol already exists for the RTTI data.
 		Symbol matchingSymbol = symbolTable.getSymbol(rttiSuffix, rttiAddress, classNamespace);
@@ -170,8 +169,9 @@ public class RttiUtil {
 				}
 			}
 
-			// any references after the first one ends the table
-			if (tableSize > 0 && referenceManager.hasReferencesTo(currentVfPointerAddress)) {
+			// any non-computed source type references after the first one ends the table
+			if (tableSize > 0 &&
+				referenceIndicatesEndOfTable(referenceManager, currentVfPointerAddress)) {
 				break;
 			}
 
@@ -188,6 +188,43 @@ public class RttiUtil {
 			currentVfPointerAddress = currentVfPointerAddress.add(defaultPointerSize);
 		}
 		return tableSize;
+	}
+
+	/**
+	 * Method to determine if there certain types of references to the given address that would
+	 * indicate the end of a vftable
+	 * @param address the address of a possible pointer in a vftable
+	 * @return true if there are references to the given address and any of the references are
+	 * types that would indicate the given pointer should not be in the vftable preceding it. In 
+	 * general most references would fall into this category such as ones created by user, importer,
+	 * disassembler. Returns false if no references or if the only references are ones not 
+	 * indicative of the end of a vftable. 
+	 */
+	private static boolean referenceIndicatesEndOfTable(ReferenceManager referenceManager,
+			Address address) {
+
+		boolean hasReferencesTo = referenceManager.hasReferencesTo(address);
+		if (!hasReferencesTo) {
+			return false;
+		}
+		ReferenceIterator referenceIter = referenceManager.getReferencesTo(address);
+		while (referenceIter.hasNext()) {
+			Reference ref = referenceIter.next();
+
+			// if source type is any besides analysis then it is the kind of reference to stop
+			// the vftable
+			if (ref.getSource() != SourceType.ANALYSIS) {
+				return true;
+			}
+			// if it is analysis source type but reference is data that is not read this indicates
+			// it is not the kind of reference that should end a vftable
+			// For example something could be getting this address to figure out the address pointed
+			// to so that that address can be referenced. 
+			if (ref.getReferenceType().isData() && !ref.getReferenceType().isRead()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -2662,8 +2662,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				if (numAddressRanges == 1) {
 					fixupContiguousDeletingDestructorSymbols(function);
 					processedFunctions.add(function);
+					continue;
 				}
-				else if (numAddressRanges == 2) {
+				if (numAddressRanges == 2) {
 					// else fixup split dd function 
 					Function scalarDeletingDestructor = createSplitDeletingDestructorFunction(body);
 					if (scalarDeletingDestructor == null) {
@@ -2674,7 +2675,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					fixupSplitDeletingDestructorSymbols(function, scalarDeletingDestructor);
 					processedFunctions.add(function);
 				}
-				// else if > 2 do nothing - not sure how to handle or even if they exist
+				// if > 2 do nothing - not sure how to handle or even if they exist
 			}
 		}
 	}
