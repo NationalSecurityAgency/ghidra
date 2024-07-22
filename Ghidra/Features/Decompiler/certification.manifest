@@ -21,6 +21,7 @@ src/decompile/datatests/deindirect.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect2.xml||GHIDRA||||END|
 src/decompile/datatests/displayformat.xml||GHIDRA||||END|
 src/decompile/datatests/divopt.xml||GHIDRA||||END|
+src/decompile/datatests/doublemove.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
 src/decompile/datatests/elseif.xml||GHIDRA||||END|
 src/decompile/datatests/floatprint.xml||GHIDRA||||END|
