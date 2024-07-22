@@ -619,9 +619,9 @@ define pcodeop SHA1HashUpdateParity;
 	local op1 = Qd;
 	local op2 = Qn;
 	local op3 = Qm;
-	local op2lo:8 = op2(0);
-	local op1hi:8 = op1(8);
-	op2 = zext(op2lo << 64) | zext(op1hi);
+	local op2LowerHalf = zext(op2[0,64]) << 64;
+	local op1UpperHalf = zext(op1[64,64]);
+	op2 = op2LowerHalf | op1UpperHalf;
 	Qd = op1 ^ op2 ^ op3;
 }
 
