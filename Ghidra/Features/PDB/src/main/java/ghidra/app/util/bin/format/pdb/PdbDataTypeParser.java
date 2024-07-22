@@ -184,6 +184,17 @@ class PdbDataTypeParser {
 
 		String dataTypeName = datatype;
 
+		// Handle potential malformed datatypes where some datatype is implied
+		// *
+		// **
+		// [16]
+		if (dataTypeName.startsWith("*") || dataTypeName.startsWith("[")) {
+			// prepend undefined since intent is some datatype
+			Msg.warn(this, "dataTypeName \"" + dataTypeName + 
+				"\" references a pointer or array without a declared datatype; assuming undefined");
+			dataTypeName = "undefined" + dataTypeName;
+		}
+
 		// Example type representations:
 		// char *[2][3]     pointer(array(array(char,3),2))
 		// char *[2][3] *   pointer(array(array(pointer(char),3),2))
