@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1153,13 +1153,18 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		@Override
 		public boolean isSubFilterOf(Filter<VTMatch> otherFilter) {
-			if (columnFilter == null) {
-				return false;
+
+			Class<?> clazz = getClass();
+			Class<?> otherClazz = otherFilter.getClass();
+			if (!clazz.equals(otherClazz)) {
+				return false; // must be the same class
 			}
-			if (otherFilter instanceof VTColumnFilter otherColumnFilter) {
-				return columnFilter.isSubFilterOf(otherColumnFilter.columnFilter);
+
+			VTColumnFilter otherColumnFilter = (VTColumnFilter) otherFilter;
+			if (columnFilter == null && otherColumnFilter.columnFilter == null) {
+				return true;
 			}
-			return false;
+			return columnFilter.isSubFilterOf(otherColumnFilter.columnFilter);
 		}
 
 	}
