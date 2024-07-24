@@ -4,22 +4,22 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.feature.vt.api.correlator.address;
+package ghidra.program.util;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.AddressCorrelation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -31,7 +31,7 @@ public class LinearFunctionAddressCorrelation implements AddressCorrelation {
 	private final Function sourceFunction;
 	private final Function destinationFunction;
 
-	LinearFunctionAddressCorrelation(Function sourceFunction, Function destinationFunction) {
+	public LinearFunctionAddressCorrelation(Function sourceFunction, Function destinationFunction) {
 		this.sourceFunction = sourceFunction;
 		this.destinationFunction = destinationFunction;
 	}
@@ -42,8 +42,8 @@ public class LinearFunctionAddressCorrelation implements AddressCorrelation {
 	}
 
 	@Override
-	public AddressRange getCorrelatedDestinationRange(Address sourceAddress, TaskMonitor monitor)
-			throws CancelledException {
+	public AddressCorrelationRange getCorrelatedDestinationRange(Address sourceAddress,
+			TaskMonitor monitor) throws CancelledException {
 		initialize(monitor);
 		AddressRange toRange = cachedForwardAddressMap.get(sourceAddress);
 		if (toRange == null) {
@@ -51,7 +51,7 @@ public class LinearFunctionAddressCorrelation implements AddressCorrelation {
 			Address destinationAddress = getDestinationAddress(percentOffset);
 			toRange = new AddressRangeImpl(destinationAddress, destinationAddress);
 		}
-		return toRange;
+		return new AddressCorrelationRange(toRange, getName());
 	}
 
 	private void initialize(TaskMonitor monitor) {
@@ -66,9 +66,7 @@ public class LinearFunctionAddressCorrelation implements AddressCorrelation {
 
 		long accumulatedLength = 0;
 
-		Iterator<AddressRange> iterator = srcBody.iterator();
-		while (iterator.hasNext()) {
-			AddressRange range = iterator.next();
+		for (AddressRange range : srcBody) {
 			if (range.getMaxAddress().compareTo(address) < 0) {
 				accumulatedLength += range.getLength();
 			}
@@ -125,5 +123,5 @@ public class LinearFunctionAddressCorrelation implements AddressCorrelation {
 		}
 		cachedForwardAddressMap.putAll(map);
 	}
-	
+
 }
