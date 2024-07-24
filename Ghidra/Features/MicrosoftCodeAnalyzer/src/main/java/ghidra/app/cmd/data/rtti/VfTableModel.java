@@ -24,6 +24,7 @@ import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -129,7 +130,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 
 		if (program != lastProgram || lastElementCount == NO_LAST_COUNT) {
 			setIsDataTypeAlreadyBasedOnCount(true);
-
+			
 			lastProgram = program;
 			lastDataType = null;
 			lastElementCount = elementCount;
@@ -141,6 +142,8 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 				// Create an array of pointers and return it.
 				ArrayDataType arrayDataType = new ArrayDataType(pointerDt, lastElementCount,
 					pointerDt.getLength(), dataTypeManager);
+				
+				getProgram().getListing().clearCodeUnits(getAddress(), getAddress().add((lastElementCount - 1) * getAddress().getPointerSize()), true);
 
 				lastDataType = MSDataTypeUtils.getMatchingDataType(program, arrayDataType);
 			}
@@ -195,5 +198,15 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	 */
 	private Address getMetaAddress() {
 		return getAddress().subtract(getProgram().getDefaultPointerSize());
+	}
+	
+	private Address deref(Address addr) throws Exception {
+		switch(addr.getPointerSize()) {
+		case 4:
+			return addr.getNewAddress(getProgram().getMemory().getInt(addr));
+		case 8:
+		default:
+			return addr.getNewAddress(getProgram().getMemory().getLong(addr));
+		}
 	}
 }

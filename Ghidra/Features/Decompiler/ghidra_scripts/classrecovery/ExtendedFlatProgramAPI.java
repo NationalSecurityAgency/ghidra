@@ -512,14 +512,14 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 				continue;
 			}
 
-			AddressSetView functionBody = newFunction.getBody();
-			while (!functionBody.contains(address)) {
-				newFunction = createFunctionBefore(address, filler);
-				if (newFunction == null) {
-					continue;
-				}
-				functionBody = newFunction.getBody();
-			}
+//			AddressSetView functionBody = newFunction.getBody();
+//			while (!functionBody.contains(address)) {
+//				newFunction = createFunctionBefore(address, filler);
+//				if (newFunction == null) {
+//					continue;
+//				}
+//				functionBody = newFunction.getBody();
+//			}
 		}
 	}
 
