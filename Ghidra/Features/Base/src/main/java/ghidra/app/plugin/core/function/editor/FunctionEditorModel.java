@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import ghidra.app.util.cparser.C.ParseException;
 import ghidra.app.util.parser.FunctionSignatureParser;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.listing.VariableUtilities.VariableConflictHandler;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.program.model.symbol.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 
@@ -36,45 +36,33 @@ public class FunctionEditorModel {
 		HTMLUtilities.escapeHTML("<TAB> or <RETURN> to commit edits, <ESC> to abort");
 	static final String NONE_CHOICE = "-NONE-";
 
-	private String name;
+	private FunctionData functionData;
+	private FunctionDataView originalFunctionData;
+
+	private String signatureFieldText;
+
 	private ModelChangeListener listener;
-	private boolean hasVarArgs;
-	private ParamInfo returnInfo;
-	private List<ParamInfo> parameters = new ArrayList<>();
-	private int autoParamCount = 0;
+
+	private Function function;
+	private Program program;
+
+	private List<ParamInfo> selectedParams = new ArrayList<>();
+
+	private boolean isInParsingMode;
+
+	private DataTypeManagerService dataTypeManagerService;
+
 	private String statusText = "";
 	private boolean isValid = true;
-	private boolean signatureTransformed = false;
-	private boolean isInLine;
-	private boolean isNoReturn;
-	private String callingConventionName;
-	private Function function;
-	private FunctionManager functionManager;
-	private String callFixupName;
-	private int[] selectedFunctionRows = new int[0];
-	private Program program;
-	private boolean allowCustomStorage;
-	private boolean isInParsingMode;
-	private String signatureFieldText;
-	private DataTypeManagerService dataTypeManagerService;
-	private boolean modelChanged = false;
+	private boolean isSignatureTransformed = false;
+	private boolean hasSignificantParameterChanges = false;
 
 	public FunctionEditorModel(DataTypeManagerService service, Function function) {
 		this.dataTypeManagerService = service;
 		this.function = function;
 		this.program = function.getProgram();
-		this.name = function.getName();
-		this.functionManager = program.getFunctionManager();
-		allowCustomStorage = function.hasCustomVariableStorage();
-		hasVarArgs = function.hasVarArgs();
-		isInLine = function.isInline();
-		isNoReturn = function.hasNoReturn();
-		callingConventionName = function.getCallingConventionName();
-		callFixupName = function.getCallFixup();
-		if (callFixupName == null) {
-			callFixupName = NONE_CHOICE;
-		}
-		initializeParametersAndReturn();
+		functionData = new FunctionData(function);
+		this.originalFunctionData = new FunctionDataView(functionData);
 		validate();
 	}
 
@@ -82,59 +70,21 @@ public class FunctionEditorModel {
 		this.listener = listener;
 	}
 
+	boolean hasChanges() {
+		return !functionData.equals(originalFunctionData);
+	}
+
+	boolean hasSignificantParameterChanges() {
+		return hasSignificantParameterChanges;
+	}
+
 	// Returns the current calling convention or the default calling convention if current unknown
-	private PrototypeModel getEffectiveCallingConvention() {
-		PrototypeModel effectiveCallingConvention =
-			functionManager.getCallingConvention(callingConventionName);
-		if (effectiveCallingConvention == null) {
-			effectiveCallingConvention = functionManager.getDefaultCallingConvention();
-		}
-		return effectiveCallingConvention;
-	}
-
-	private void initializeParametersAndReturn() {
-
-		returnInfo = new ParamInfo(this, function.getReturn());
-
-		// check for void storage correction
-		if (VoidDataType.isVoidDataType(returnInfo.getDataType()) &&
-			returnInfo.getStorage() != VariableStorage.VOID_STORAGE) {
-			returnInfo.setStorage(VariableStorage.VOID_STORAGE);
-			modelChanged = true;
-		}
-
-		autoParamCount = 0;
-		Parameter[] params = function.getParameters();
-		for (Parameter parameter : params) {
-			if (parameter.isAutoParameter()) {
-				++autoParamCount;
-			}
-			parameters.add(new ParamInfo(this, parameter));
-		}
-
-		fixupOrdinals();
-	}
-
-	private boolean hasModifiedParametersOrReturn() {
-		if (returnInfo.isModified()) {
-			return true;
-		}
-		if ((function.getParameterCount() -
-			function.getAutoParameterCount()) != (parameters.size() - autoParamCount)) {
-			return true;
-		}
-		for (ParamInfo info : parameters) {
-			if (!info.isAutoParameter() && info.isModified()) {
-				return true;
-			}
-		}
-		return false;
-	}
 
 	List<String> getCallingConventionNames() {
 		Collection<String> names =
 			function.getProgram().getFunctionManager().getCallingConventionNames();
 		List<String> list = new ArrayList<>(names);
+		String callingConventionName = getCallingConventionName();
 		if (callingConventionName != null && !names.contains(callingConventionName)) {
 			list.add(callingConventionName);
 			Collections.sort(list);
@@ -146,34 +96,6 @@ public class FunctionEditorModel {
 
 	String[] getCallFixupNames() {
 		return program.getCompilerSpec().getPcodeInjectLibrary().getCallFixupNames();
-	}
-
-	void setName(String name) {
-		if (this.name.equals(name)) {
-			return;
-		}
-		this.name = name.trim();
-		notifyDataChanged();
-	}
-
-	public void setCallingConventionName(String callingConventionName) {
-		this.callingConventionName = callingConventionName;
-		removeExplicitThisParameter();
-		updateParameterAndReturnStorage();
-		notifyDataChanged();
-	}
-
-	String getCallingConventionName() {
-		return callingConventionName;
-	}
-
-	void setHasVarArgs(boolean b) {
-		hasVarArgs = b;
-		notifyDataChanged();
-	}
-
-	String getName() {
-		return name;
 	}
 
 	void dispose() {
@@ -191,11 +113,6 @@ public class FunctionEditorModel {
 	}
 
 	private void notifyDataChanged() {
-		notifyDataChanged(true);
-	}
-
-	private void notifyDataChanged(boolean functionDataChanged) {
-		this.modelChanged |= functionDataChanged;
 		validate();
 		if (listener != null) {
 			Swing.runLater(() -> listener.dataChanged());
@@ -204,23 +121,27 @@ public class FunctionEditorModel {
 
 	private void validate() {
 		statusText = "";
-		if (signatureTransformed) {
-			statusText = "Signature transformed due to auto-params and/or forced-indirect storage";
-			signatureTransformed = false; // one-shot message
+		if (isSignatureTransformed) {
+			statusText =
+				"Signature transformed due to auto-params and/or forced-indirect storage change";
+			isSignatureTransformed = false; // one-shot message
 		}
 		isValid =
 			hasValidName() && hasValidReturnType() && hasValidReturnStorage() && hasValidParams();
+		hasSignificantParameterChanges = false;
 		if (isValid) {
+			hasSignificantParameterChanges = functionData.hasParameterChanges(originalFunctionData);
 			checkUnassignedStorage();
 		}
 	}
 
 	private boolean hasValidReturnStorage() {
 
-		if (!allowCustomStorage) {
+		if (!functionData.canCustomizeStorage()) {
 			return true;
 		}
 
+		ParamInfo returnInfo = functionData.getReturnInfo();
 		VariableStorage returnStorage = returnInfo.getStorage();
 		DataType returnType = returnInfo.getDataType();
 
@@ -243,23 +164,19 @@ public class FunctionEditorModel {
 				returnDataTypeSize + "-bytes)";
 			return false;
 		}
-		else if (storageSize > returnDataTypeSize && storageSize <= 8 && returnDataTypeSize <= 8 &&
-			Undefined.isUndefined(returnInfo.getDataType())) {
-			// grow undefined type size if needed
-			returnInfo.setFormalDataType(Undefined.getUndefinedDataType(storageSize));
-		}
 		return true;
 	}
 
 	private void checkUnassignedStorage() {
 
+		ParamInfo returnInfo = functionData.getReturnInfo();
 		VariableStorage returnStorage = returnInfo.getStorage();
 		DataType returnType = returnInfo.getFormalDataType();
 
 		boolean hasUnassignedStorage = returnStorage != null && returnStorage.isUnassignedStorage();
 
 		if (!hasUnassignedStorage) {
-			for (ParamInfo param : parameters) {
+			for (ParamInfo param : functionData.getParameters()) {
 				if (param.getStorage().isUnassignedStorage()) {
 					hasUnassignedStorage = true;
 					break;
@@ -270,9 +187,9 @@ public class FunctionEditorModel {
 		if (hasUnassignedStorage) {
 			statusText = "Warning: Return Storage and/or Parameter Storage is Unassigned";
 		}
-		else if (!allowCustomStorage &&
-			Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConventionName)) {
-			if (!(VoidDataType.isVoidDataType(returnType) && parameters.isEmpty())) {
+		else if (!functionData.canCustomizeStorage() && Function.UNKNOWN_CALLING_CONVENTION_STRING
+				.equals(functionData.getCallingConventionName())) {
+			if (!(VoidDataType.isVoidDataType(returnType) && !functionData.hasParameters())) {
 				statusText =
 					"Warning: No calling convention specified. Ghidra may automatically assign one later.";
 			}
@@ -281,21 +198,82 @@ public class FunctionEditorModel {
 	}
 
 	private boolean hasValidParams() {
-		for (ParamInfo param : parameters) {
+		for (ParamInfo param : functionData.getParameters()) {
 			if (!(isValidParamType(param) && isValidParamName(param) && isValidStorage(param))) {
 				return false;
 			}
 		}
-		return checkForConflictingParameters();
+		return hasNonConflictingStorage();
 	}
 
-	private boolean checkForConflictingParameters() {
-		// VARDO conflicting parameters
+	private void clearStorageConflicts() {
+		for (ParamInfo p : functionData.getParameters()) {
+			p.setHasStorageConflict(false);
+		}
+	}
+
+	private void setStorageConflict(int ordinal) {
+		for (ParamInfo p : functionData.getParameters()) {
+			if (p.getOrdinal() == ordinal) {
+				p.setHasStorageConflict(true);
+			}
+		}
+	}
+
+	private boolean hasNonConflictingStorage() {
+		clearStorageConflicts();
+		if (!functionData.canCustomizeStorage()) {
+			return true;
+		}
+		ArrayList<Parameter> params = new ArrayList<>();
+		for (ParamInfo paramInfo : functionData.getParameters()) {
+			params.add(paramInfo.getParameter(SourceType.USER_DEFINED));
+		}
+		for (Parameter p : params) {
+			if (identifyStorageConflicts(p, params)) {
+				statusText = "One or more parameter storage conflicts exist";
+				return false;
+			}
+		}
 		return true;
 	}
 
+	/**
+	 * Scan the list of function parameters for those whose storage conflicts with the specified
+	 * parameter.
+	 * @param p parameter whose storage should be examined for conflict with others
+	 * @param params list of function parameters to search
+	 * @return true if storage conflict detected, else false
+	 */
+	private boolean identifyStorageConflicts(Parameter p, ArrayList<Parameter> params) {
+		try {
+			VariableUtilities.checkVariableConflict(params, p, p.getVariableStorage(),
+				conflicts -> handleConflicts(conflicts));
+		}
+		catch (VariableSizeException e) {
+			// This exception occurs when any parameter storage conflict is detected/
+			// Mark the tested parameter as being in conflict.
+			setStorageConflict(p.getOrdinal());
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Mark all storage conflicts identified by 
+	 * {@link VariableUtilities#checkVariableConflict(List, Variable, VariableStorage, VariableConflictHandler)}
+	 * @param conflicts parameters whose storage conflicts
+	 * @return return false to indicate conflicts have not been resolved and additional checks
+	 * should be disconctinued.
+	 * @see VariableConflictHandler
+	 */
+	private boolean handleConflicts(List<Variable> conflicts) {
+		conflicts.forEach(var -> setStorageConflict(((Parameter) var).getOrdinal()));
+		return false;
+	}
+
 	private boolean isValidStorage(ParamInfo param) {
-		if (!allowCustomStorage) {
+		if (!functionData.canCustomizeStorage()) {
 			return true;
 		}
 
@@ -321,18 +299,19 @@ public class FunctionEditorModel {
 				paramSize + "-bytes) assigned to parameter " + (param.getOrdinal() + 1);
 			return false;
 		}
-		else if (paramSize == 0) {
-			// assume 0-sized structure which we need to allow
-		}
-		else if (storageSize > paramSize && storageSize <= 8 && paramSize <= 8 &&
-			Undefined.isUndefined(param.getDataType())) {
-			// grow undefined type size if needed
-			param.setFormalDataType(Undefined.getUndefinedDataType(storageSize));
-		}
+//		else if (paramSize == 0) {
+//			// assume 0-sized structure which we need to allow
+//		}
+//		else if (storageSize > paramSize && storageSize <= 8 && paramSize <= 8 &&
+//			Undefined.isUndefined(param.getDataType())) {
+//			// grow undefined type size if needed
+//			param.setFormalDataType(Undefined.getUndefinedDataType(storageSize));
+//		}
 		return true;
 	}
 
 	boolean hasValidName() {
+		String name = functionData.getName();
 		if (name.length() == 0) {
 			statusText = "Missing function name";
 			return false;
@@ -346,7 +325,7 @@ public class FunctionEditorModel {
 	}
 
 	private boolean hasValidReturnType() {
-		DataType returnType = returnInfo.getDataType();
+		DataType returnType = functionData.getReturnInfo().getDataType();
 		if (VoidDataType.isVoidDataType(returnType)) {
 			return true;
 		}
@@ -365,7 +344,7 @@ public class FunctionEditorModel {
 				"Invalid name for parameter " + (param.getOrdinal() + 1) + ": " + paramName;
 			return false;
 		}
-		for (ParamInfo info : parameters) {
+		for (ParamInfo info : functionData.getParameters()) {
 			if (info != param && info.getName().equals(paramName)) {
 				statusText = "Duplicate parameter name: " + paramName;
 				return false;
@@ -393,86 +372,11 @@ public class FunctionEditorModel {
 		return isValid;
 	}
 
-	String getFunctionSignatureTextFromModel() {
-		StringBuilder buf = new StringBuilder();
-		buf.append(returnInfo.getFormalDataType().getName()).append(" ");
-		buf.append(getNameString());
-		buf.append(" (");
-		int skipCount = autoParamCount;
-		int ordinal = 0;
-		for (ParamInfo param : parameters) {
-			if (skipCount > 0) {
-				--skipCount;
-				continue;
-			}
-			if (ordinal++ != 0) {
-				buf.append(", ");
-			}
-			buf.append(param.getFormalDataType().getName());
-
-			buf.append(" ");
-
-			buf.append(getParamNameString(param));
-
-		}
-		if (hasVarArgs()) {
-			if (!parameters.isEmpty()) {
-				buf.append(", ");
-			}
-			buf.append(FunctionSignature.VAR_ARGS_DISPLAY_STRING);
-		}
-		else if (parameters.size() == 0) {
-			buf.append(FunctionSignature.VOID_PARAM_DISPLAY_STRING);
-		}
-		buf.append(')');
-		return buf.toString();
-	}
-
-	String getNameString() {
-		return name.length() == 0 ? "?" : name;
-	}
-
-	private String getParamNameString(ParamInfo param) {
-		return param.getName();
-	}
-
-	boolean hasVarArgs() {
-		return hasVarArgs;
-	}
-
-	DataType getReturnType() {
-		return returnInfo.getDataType();
-	}
-
-	DataType getFormalReturnType() {
-		return returnInfo.getFormalDataType();
-	}
-
-	public boolean setFormalReturnType(DataType formalReturnType) {
-		return setParameterFormalDataType(returnInfo, formalReturnType);
-	}
-
 	String getStatusText() {
 		if (isInParsingMode) {
 			return PARSING_MODE_STATUS_TEXT;
 		}
 		return statusText;
-	}
-
-	void setIsInLine(boolean isInLine) {
-		if (isInLine == this.isInLine) {
-			return;
-		}
-		this.isInLine = isInLine;
-		if (isInLine) {
-			callFixupName = NONE_CHOICE;
-		}
-		notifyDataChanged();
-	}
-
-	void setNoReturn(boolean isNoReturn) {
-		this.isNoReturn = isNoReturn;
-		notifyDataChanged();
 	}
 
 	boolean isInlineAllowed() {
@@ -489,202 +393,154 @@ public class FunctionEditorModel {
 		return function.isThunk() ? function.getThunkedFunction(true) : function;
 	}
 
+	String getFunctionSignatureTextFromModel() {
+		return functionData.getFunctionSignatureText();
+	}
+
+	String getNameString() {
+		return functionData.getNameString();
+	}
+
+	String getName() {
+		return functionData.getName();
+	}
+
+	void setName(String name) {
+		if (getName().equals(name)) {
+			return;
+		}
+		functionData.setName(name.trim());
+		notifyDataChanged();
+	}
+
+	String getCallingConventionName() {
+		return functionData.getCallingConventionName();
+	}
+
+	public void setCallingConventionName(String callingConventionName) {
+		if (Objects.equals(getCallingConventionName(), callingConventionName)) {
+			return;
+		}
+		functionData.setCallingConventionName(callingConventionName);
+		notifyDataChanged();
+	}
+
+	boolean hasVarArgs() {
+		return functionData.hasVarArgs();
+	}
+
+	void setHasVarArgs(boolean b) {
+		if (b == hasVarArgs()) {
+			return;
+		}
+		functionData.setVarArgs(b);
+		notifyDataChanged();
+	}
+
+	DataType getReturnType() {
+		return functionData.getReturnInfo().getDataType();
+	}
+
+	DataType getFormalReturnType() {
+		return functionData.getReturnInfo().getFormalDataType();
+	}
+
+	public boolean setFormalReturnType(DataType formalReturnType) {
+		return setParameterFormalDataType(functionData.getReturnInfo(), formalReturnType);
+	}
+
 	boolean isInLine() {
-		return isInLine;
+		return functionData.isInline();
+	}
+
+	void setIsInLine(boolean isInLine) {
+		if (isInLine == functionData.isInline()) {
+			return;
+		}
+		functionData.setInline(isInLine);
+		if (isInLine && functionData.hasCallFixup()) {
+			functionData.clearCallFixup();
+		}
+		notifyDataChanged();
 	}
 
 	boolean isNoReturn() {
-		return isNoReturn;
+		return functionData.hasNoReturn();
 	}
 
-	String getCallFixupName() {
-		return callFixupName;
-	}
-
-	void setCallFixupName(String callFixupName) {
-		if (callFixupName.equals(this.callFixupName)) {
+	void setNoReturn(boolean hasNoReturn) {
+		if (hasNoReturn == functionData.hasNoReturn()) {
 			return;
 		}
-		this.callFixupName = callFixupName;
-		if (!callFixupName.equals(NONE_CHOICE)) {
-			isInLine = false;
+		functionData.setHasNoReturn(hasNoReturn);
+		notifyDataChanged();
+	}
+
+	String getCallFixupChoice() {
+		String fixupName = functionData.getCallFixupName();
+		return fixupName == null ? NONE_CHOICE : fixupName;
+	}
+
+	void setCallFixupChoice(String callFixupName) {
+		if (callFixupName.equals(getCallFixupChoice())) {
+			return;
+		}
+		if (NONE_CHOICE.equals(callFixupName)) {
+			callFixupName = null;
+		}
+		functionData.setCallFixupName(callFixupName);
+		if (isInLine() && functionData.hasCallFixup()) {
+			functionData.setInline(false);
 		}
 		notifyDataChanged();
 	}
 
-	public void setSelectedParameterRow(int[] selectedRows) {
-		selectedFunctionRows = selectedRows;
+	public void setSelectedParameterRows(int[] selectedRows) {
+		selectedParams.clear();
+		List<ParamInfo> parameters = functionData.getParameters();
+		for (int i : selectedRows) {
+			ParamInfo p;
+			if (i == 0) {
+				p = functionData.getReturnInfo();
+			}
+			else {
+				p = parameters.get(i - 1);
+			}
+			selectedParams.add(p);
+		}
+		Collections.sort(selectedParams);
 		notifyDataChanged();
 	}
 
-	private void setSelectedRow(int row) {
-		selectedFunctionRows = new int[] { row };
+	private ParamInfo getSelectedParam() {
+		return selectedParams.iterator().next();
 	}
 
-	private void adjustSelectionForRowRemoved(int row) {
-		// adjust selectedParamRows
-		if (selectedFunctionRows.length == 0) {
-			return;
-		}
-		List<Integer> rows = new ArrayList<>();
-		for (int i : selectedFunctionRows) {
-			if (i < row) {
-				rows.add(i);
-			}
-			if (i > row) {
-				rows.add(i - 1);
-			}
-		}
-		selectedFunctionRows = new int[rows.size()];
-		int index = 0;
-		for (int i : rows) {
-			selectedFunctionRows[index++] = i;
-		}
-	}
-
-	private void adjustSelectionForRowAdded(int row) {
-		// adjust selectedParamRows
-		if (selectedFunctionRows.length == 0) {
-			return;
-		}
-		List<Integer> rows = new ArrayList<>();
-		for (int i : selectedFunctionRows) {
-			if (i < row) {
-				rows.add(i);
-			}
-			if (i >= row) {
-				rows.add(i + 1);
-			}
-		}
-		selectedFunctionRows = new int[rows.size()];
-		int index = 0;
-		for (int i : rows) {
-			selectedFunctionRows[index++] = i;
-		}
+	private void setSelectedParam(ParamInfo p) {
+		selectedParams.clear();
+		selectedParams.add(p);
 	}
 
 	int[] getSelectedParameterRows() {
-		return selectedFunctionRows;
+		List<Integer> list = new ArrayList<>();
+		for (ParamInfo p : selectedParams) {
+			list.add(p.getOrdinal() + 1);
+		}
+		Collections.sort(list);
+		int[] selectedRows = new int[list.size()];
+		for (int i = 0; i < selectedRows.length; i++) {
+			selectedRows[i] = list.get(i);
+		}
+		return selectedRows;
 	}
 
 	void addParameter() {
 		if (listener != null) {
 			listener.tableRowsChanged();
 		}
-		ParamInfo param = new ParamInfo(this, null, DataType.DEFAULT,
-			VariableStorage.UNASSIGNED_STORAGE, parameters.size());
-		parameters.add(param);
-		fixupOrdinals();
-		updateParameterAndReturnStorage();
-		setSelectedRow(parameters.size());
+		ParamInfo p = functionData.addNewParameter();
+		setSelectedParam(p);
 		notifyDataChanged();
-	}
-
-	/**
-	 * Switch to custom storage and perform required transformations
-	 */
-	private void switchToCustomStorage() {
-		try {
-			VariableStorage returnStorage = returnInfo.getStorage();
-			if (returnStorage.isForcedIndirect()) {
-				DataType returnType = returnInfo.getDataType();
-				if (returnStorage.isVoidStorage()) {
-					returnType = VoidDataType.dataType;
-				}
-				returnInfo.setFormalDataType(returnType);
-				returnInfo.setStorage(returnStorage.clone(program));
-				signatureTransformed = true;
-			}
-			autoParamCount = 0;
-			int paramCnt = parameters.size();
-			for (int i = 0; i < paramCnt; i++) {
-				ParamInfo paramInfo = parameters.get(i);
-				DataType dt = paramInfo.getDataType();
-				VariableStorage storage = paramInfo.getStorage();
-				signatureTransformed |= storage.isAutoStorage();
-				paramInfo.setFormalDataType(dt);
-				paramInfo.setStorage(storage.clone(program));
-			}
-		}
-		catch (InvalidInputException e) {
-			throw new AssertException(e); // unexpected
-		}
-	}
-
-	private void updateParameterAndReturnStorage() {
-		if (allowCustomStorage) {
-			return;
-		}
-		PrototypeModel effectiveCallingConvention = getEffectiveCallingConvention();
-
-		if (effectiveCallingConvention == null) {
-			for (ParamInfo info : parameters) {
-				info.setStorage(VariableStorage.UNASSIGNED_STORAGE);
-			}
-			return;
-		}
-
-		DataType[] dataTypes = new DataType[parameters.size() - autoParamCount + 1];
-		dataTypes[0] = returnInfo.getFormalDataType();
-
-		int index = 1;
-		for (int i = autoParamCount; i < parameters.size(); i++) {
-			dataTypes[index++] = parameters.get(i).getFormalDataType();
-		}
-
-		VariableStorage[] paramStorage =
-			effectiveCallingConvention.getStorageLocations(program, dataTypes, true);
-
-		returnInfo.setStorage(paramStorage[0]);
-
-		List<ParamInfo> oldParams = parameters;
-		int oldAutoCount = autoParamCount;
-
-		parameters = new ArrayList<>();
-		autoParamCount = 0;
-
-		int ordinal = 0;
-		for (int i = 1; i < paramStorage.length; i++) {
-			VariableStorage storage = paramStorage[i];
-			ParamInfo info;
-			if (storage.isAutoStorage()) {
-				DataType dt = VariableUtilities.getAutoDataType(function,
-					returnInfo.getFormalDataType(), storage);
-				try {
-					if (autoParamCount < oldAutoCount) {
-						if (oldParams.get(autoParamCount)
-								.getStorage()
-								.getAutoParameterType() != storage.getAutoParameterType()) {
-							adjustSelectionForRowRemoved(i);
-						}
-					}
-					else {
-						adjustSelectionForRowAdded(i);
-					}
-					info = new ParamInfo(this,
-						new AutoParameterImpl(dt, ++autoParamCount, storage, function));
-				}
-				catch (InvalidInputException e) {
-					throw new AssertException(e); // unexpected
-				}
-			}
-			else {
-				info = oldParams.get(oldAutoCount + ordinal);
-				info.setStorage(storage);
-				++ordinal;
-			}
-			parameters.add(info);
-		}
-		for (int i = oldAutoCount; i > autoParamCount; i--) {
-			adjustSelectionForRowRemoved(i);
-		}
-		fixupOrdinals();
-	}
-
-	private void fixupOrdinals() {
-		for (int i = 0; i < parameters.size(); i++) {
-			parameters.get(i).setOrdinal(i);
-		}
 	}
 
 	public void removeParameters() {
@@ -694,20 +550,19 @@ public class FunctionEditorModel {
 		if (listener != null) {
 			listener.tableRowsChanged();
 		}
-		Arrays.sort(selectedFunctionRows);
-		for (int i = selectedFunctionRows.length - 1; i >= 0; i--) {
-			int index = selectedFunctionRows[i];
-			parameters.remove(index - 1);
+		int ordinal = selectedParams.get(0).getOrdinal();
+		functionData.removeParameters(selectedParams);
+		selectedParams.clear();
+		ParamInfo selectParam = null;
+		for (ParamInfo p : functionData.getParameters()) {
+			selectParam = p;
+			if (ordinal == p.getOrdinal()) {
+				break;
+			}
 		}
-		if (parameters.isEmpty()) {
-			selectedFunctionRows = new int[0];
+		if (selectParam != null) {
+			setSelectedParam(selectParam);
 		}
-		else {
-			int selectRow = Math.min(selectedFunctionRows[0], parameters.size());
-			selectedFunctionRows = new int[] { selectRow };
-		}
-		fixupOrdinals();
-		updateParameterAndReturnStorage();
 		notifyDataChanged();
 	}
 
@@ -718,12 +573,8 @@ public class FunctionEditorModel {
 		if (listener != null) {
 			listener.tableRowsChanged();
 		}
-		int paramIndex = selectedFunctionRows[0] - 1;  // first row is return value 
-		ParamInfo param = parameters.remove(paramIndex);
-		parameters.add(paramIndex - 1, param);
-		fixupOrdinals();
-		setSelectedRow(selectedFunctionRows[0] - 1);	// move selection up one row
-		updateParameterAndReturnStorage();
+		ParamInfo p = getSelectedParam();
+		functionData.moveParameterUp(p.getOrdinal());
 		notifyDataChanged();
 	}
 
@@ -734,25 +585,22 @@ public class FunctionEditorModel {
 		if (listener != null) {
 			listener.tableRowsChanged();
 		}
-		int paramIndex = selectedFunctionRows[0] - 1;
-		ParamInfo param = parameters.remove(paramIndex);
-		parameters.add(paramIndex + 1, param);
-		fixupOrdinals();
-		setSelectedRow(selectedFunctionRows[0] + 1);
-		updateParameterAndReturnStorage();
+		ParamInfo p = getSelectedParam();
+		functionData.moveParameterDown(p.getOrdinal());
 		notifyDataChanged();
 	}
 
+	// TODO: Exposing this method is inappropriate
 	public List<ParamInfo> getParameters() {
-		return parameters;
+		return functionData.getParameters();
 	}
 
 	boolean canRemoveParameters() {
-		if (selectedFunctionRows.length == 0) {
+		if (selectedParams.size() == 0) {
 			return false;
 		}
-		for (int row : selectedFunctionRows) {
-			if (row <= autoParamCount) {
+		for (ParamInfo p : selectedParams) {
+			if (p.isAutoParameter() || p.isReturnParameter()) {
 				return false;
 			}
 		}
@@ -760,25 +608,31 @@ public class FunctionEditorModel {
 	}
 
 	boolean canMoveParameterUp() {
-		// remember first row (return type) and auto-params cannot be moved.
-		int minRowToMoveUp = 2 + autoParamCount;
-		if (parameters.size() > 0 && parameters.get(0).getName().equals("this")) {
-			minRowToMoveUp++;
+		if (selectedParams.size() != 1) {
+			return false;
 		}
-		return selectedFunctionRows.length == 1 && selectedFunctionRows[0] >= minRowToMoveUp;
+		ParamInfo p = selectedParams.iterator().next();
+		if (p.getOrdinal() <= getAutoParamCount()) {
+			return false;
+		}
+		return true;
 	}
 
 	boolean canMoveParameterDown() {
-		if (selectedFunctionRows.length != 1) {
+		if (selectedParams.size() != 1) {
 			return false;
 		}
-		// remember first row (return type) and auto-params cannot be moved.
-		int minRowToMoveDown = 1 + autoParamCount;
-		if (parameters.size() > 0 && parameters.get(0).getName().equals("this")) {
-			minRowToMoveDown++;
+		ParamInfo p = selectedParams.iterator().next();
+		if (p.getOrdinal() < getAutoParamCount() || p.getOrdinal() >= (getParamCount() - 1)) {
+			return false;
 		}
-		int selectedRow = selectedFunctionRows[0];
-		return selectedRow >= minRowToMoveDown && selectedRow < parameters.size();
+		if (canUseCustomStorage() && functionData.hasParameters()) {
+			List<ParamInfo> parameters = getParameters();
+			if ("this".equals(parameters.get(0).getName())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	void setParameterName(ParamInfo param, String newName) {
@@ -801,7 +655,8 @@ public class FunctionEditorModel {
 		}
 
 		param.setFormalDataType(formalDataType.clone(program.getDataTypeManager()));
-		if (allowCustomStorage) {
+
+		if (canUseCustomStorage()) {
 			if (isReturn && VoidDataType.isVoidDataType(formalDataType)) {
 				param.setStorage(VariableStorage.VOID_STORAGE);
 			}
@@ -818,7 +673,7 @@ public class FunctionEditorModel {
 			}
 		}
 		else {
-			updateParameterAndReturnStorage();
+			functionData.updateParameterAndReturnStorage();
 		}
 		notifyDataChanged();
 		return true;
@@ -851,7 +706,7 @@ public class FunctionEditorModel {
 	}
 
 	VariableStorage getReturnStorage() {
-		return returnInfo.getStorage();
+		return functionData.getReturnInfo().getStorage();
 	}
 
 	Function getFunction() {
@@ -862,60 +717,23 @@ public class FunctionEditorModel {
 		if (storage == null) {
 			storage = VariableStorage.UNASSIGNED_STORAGE;
 		}
-		returnInfo.setStorage(storage);
+		if (storage.equals(getReturnStorage())) {
+			return;
+		}
+		functionData.getReturnInfo().setStorage(storage);
 		notifyDataChanged();
 	}
 
+	// TODO: Exposing this method is inappropriate
 	public void setParameterStorage(ParamInfo param, VariableStorage storage) {
+		if (storage == null) {
+			storage = VariableStorage.UNASSIGNED_STORAGE;
+		}
+		if (storage.equals(param.getStorage())) {
+			return;
+		}
 		param.setStorage(storage);
 		notifyDataChanged();
-	}
-
-	private int findExplicitThisParameter() {
-		for (int i = 0; i < parameters.size(); i++) {
-			ParamInfo p = parameters.get(i);
-			if (!p.isAutoParameter() && Function.THIS_PARAM_NAME.equals(p.getName()) &&
-				(p.getDataType() instanceof Pointer)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private void removeExplicitThisParameter() {
-		if (!allowCustomStorage &&
-			CompilerSpec.CALLING_CONVENTION_thiscall.equals(callingConventionName)) {
-			int thisIndex = findExplicitThisParameter();
-			if (thisIndex >= 0) {
-				parameters.remove(thisIndex); // remove explicit 'this' parameter
-				adjustSelectionForRowRemoved(thisIndex);
-			}
-		}
-	}
-
-	private int findExplicitReturnStoragePtrParameter() {
-		for (int i = 0; i < parameters.size(); i++) {
-			ParamInfo p = parameters.get(i);
-			if (!p.isAutoParameter() && Function.RETURN_PTR_PARAM_NAME.equals(p.getName()) &&
-				(p.getDataType() instanceof Pointer)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private DataType removeExplicitReturnStoragePtrParameter() {
-		int index = findExplicitReturnStoragePtrParameter();
-		if (index >= 0) {
-			// remove explicit '__return_storage_ptr__' parameter - should always be a pointer
-			ParamInfo returnStoragePtrParameter = parameters.remove(index);
-			DataType dt = returnStoragePtrParameter.getDataType();
-			adjustSelectionForRowRemoved(index);
-			if (dt instanceof Pointer ptr) {
-				return ptr.getDataType();
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -923,106 +741,126 @@ public class FunctionEditorModel {
 	 * @param b enablement state
 	 */
 	public void setUseCustomizeStorage(boolean b) {
-		if (b == allowCustomStorage) {
+		if (b == canUseCustomStorage()) {
 			return;
 		}
-		allowCustomStorage = b;
-		if (!allowCustomStorage) {
-			removeExplicitThisParameter();
-			DataType returnDt = removeExplicitReturnStoragePtrParameter();
-			if (returnDt != null) {
-				returnInfo.setFormalDataType(returnDt);
-				returnInfo.setStorage(VariableStorage.UNASSIGNED_STORAGE);
-			}
-			updateParameterAndReturnStorage();
-		}
-		else {
-			switchToCustomStorage();
-		}
+		functionData.setUseCustomStorage(b);
+		isSignatureTransformed = !functionData.getFunctionSignatureText()
+				.equals(originalFunctionData.getFunctionSignatureText());
 		notifyDataChanged();
 	}
 
-	public boolean canCustomizeStorage() {
-		return allowCustomStorage;
+	public boolean canUseCustomStorage() {
+		return functionData.canCustomizeStorage();
 	}
 
 	boolean apply() {
-		if (!modelChanged) {
-			return true;
-		}
+		return apply(true);
+	}
+
+	boolean apply(boolean commitFullParamDetails) {
 		int id = program.startTransaction("Edit Function");
 		try {
-			return applyFunctionData();
+			if (applyFunctionData(commitFullParamDetails)) {
+				setModelUnchanged();
+				return true;
+			}
+			return false;
 		}
 		finally {
 			program.endTransaction(id, true);
 		}
 	}
 
-	private boolean applyFunctionData() {
+	private boolean applyFunctionData(boolean commitFullParamDetails) {
 
 		try {
 
+			String name = functionData.getName();
 			if (!name.equals(function.getName())) {
 				function.setName(name, SourceType.USER_DEFINED);
 			}
 
-			boolean paramsOrReturnModified = hasModifiedParametersOrReturn();
-			if (!paramsOrReturnModified) {
+			boolean isInline = functionData.isInline();
+			if (function.isInline() != isInline) {
+				function.setInline(isInline);
+			}
 
-				// change param names without impacting signature source
-				for (ParamInfo paramInfo : parameters) {
-					if (!paramInfo.isAutoParameter() && paramInfo.isNameModified()) {
-						Parameter param = paramInfo.getOriginalParameter();
+			boolean hasNoReturn = functionData.hasNoReturn();
+			if (function.hasNoReturn() != hasNoReturn) {
+				function.setNoReturn(hasNoReturn);
+			}
+
+			String fixupName = functionData.getCallFixupName();
+			if (!SystemUtilities.isEqual(fixupName, function.getCallFixup())) {
+				function.setCallFixup(fixupName);
+			}
+
+			boolean hasVarArgs = hasVarArgs();
+			if (function.hasVarArgs() != hasVarArgs) {
+				function.setVarArgs(hasVarArgs);
+			}
+
+			String callingConventionName = functionData.getCallingConventionName();
+			boolean isCallingConventionChanged =
+				!Objects.equals(callingConventionName, originalFunctionData.callingConventionName);
+
+			boolean useCustomStorage = functionData.canCustomizeStorage();
+
+			if (!commitFullParamDetails) {
+
+				// Partial commit without return/parameter details - no need for source type change
+
+				if (useCustomStorage != function.hasCustomVariableStorage()) {
+					function.setCustomVariableStorage(useCustomStorage);
+				}
+
+				if (isCallingConventionChanged) {
+					function.setCallingConvention(callingConventionName);
+				}
+
+				if (!hasSignificantParameterChanges &&
+					functionData.hasParameterNamesChanged(originalFunctionData)) {
+
+					for (ParamInfo paramInfo : functionData.getParameters()) {
+						Parameter param = function.getParameter(paramInfo.getOrdinal());
 						if (param != null) {
 							if (param.getSymbol().isDeleted()) {
 								// concurrent removal of param - must do full update
-								paramsOrReturnModified = true;
 								break;
 							}
 							param.setName(paramInfo.getName(), SourceType.USER_DEFINED);
 						}
 					}
 				}
+
+				return true;
 			}
 
-			if (paramsOrReturnModified) {
-				List<Parameter> params = new ArrayList<>();
-				for (ParamInfo paramInfo : parameters) {
-					if (paramInfo.isAutoParameter()) {
-						continue;
-					}
-					params.add(paramInfo.getParameter(allowCustomStorage));
-				}
+			SourceType sigSource =
+				hasSignificantParameterChanges ? SourceType.USER_DEFINED : SourceType.ANALYSIS;
 
-				// TODO: How should we handle conflicts with locals?
-				function.updateFunction(callingConventionName,
-					returnInfo.getParameter(allowCustomStorage), params,
-					allowCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-							: FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
-					true, SourceType.USER_DEFINED);
+			SymbolTable symbolTable = program.getSymbolTable();
+
+			List<Parameter> params = new ArrayList<>();
+			for (ParamInfo paramInfo : functionData.getParameters()) {
+				if (paramInfo.isAutoParameter()) {
+					continue;
+				}
+				SourceType source = SourceType.USER_DEFINED;
+				Symbol var = symbolTable.getLocalVariableSymbol(paramInfo.getName(), function);
+				if (var instanceof Parameter) {
+					source = var.getSource();
+				}
+				params.add(paramInfo.getParameter(source));
 			}
-			else {
-				boolean changed = false;
-				if (allowCustomStorage != function.hasCustomVariableStorage()) {
-					function.setCustomVariableStorage(allowCustomStorage);
-					changed = true;
-				}
-				if (!function.getCallingConventionName().equals(callingConventionName)) {
-					try {
-						function.setCallingConvention(callingConventionName);
-					}
-					catch (InvalidInputException e) {
-						// user had to choose from list, so can't happen
-						throw new AssertException("Unexpected exception", e);
-					}
-				}
-				if (changed && function.getSignatureSource() == SourceType.DEFAULT &&
-					parameters.size() == 0 &&
-					!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConventionName)) {
-					function.setSignatureSource(SourceType.USER_DEFINED);
-				}
-			}
+
+			// TODO: How should we handle conflicts with locals?
+			function.updateFunction(callingConventionName,
+				functionData.getReturnInfo().getParameter(SourceType.DEFAULT), params,
+				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
+						: FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
+				true, sigSource);
 		}
 		catch (DuplicateNameException e) {
 			Msg.showError(this, null, "Function Edit Error", e.getMessage());
@@ -1033,32 +871,15 @@ public class FunctionEditorModel {
 			return false;
 		}
 
-		if (function.isInline() != isInLine) {
-			function.setInline(isInLine);
-		}
-
-		if (function.hasVarArgs() != hasVarArgs) {
-			function.setVarArgs(hasVarArgs);
-		}
-
-		if (function.hasNoReturn() != isNoReturn) {
-			function.setNoReturn(isNoReturn);
-		}
-
-		String fixupName = callFixupName.equals(NONE_CHOICE) ? null : callFixupName;
-		if (!SystemUtilities.isEqual(fixupName, function.getCallFixup())) {
-			function.setCallFixup(fixupName);
-		}
-
 		return true;
 	}
 
 	private FunctionSignature getFunctionSignature() {
-		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(name);
-		funDt.setReturnType(returnInfo.getFormalDataType());
+		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(getName());
+		funDt.setReturnType(getFormalReturnType());
 		List<ParameterDefinition> params = new ArrayList<>();
 
-		for (ParamInfo paramInfo : parameters) {
+		for (ParamInfo paramInfo : getParameters()) {
 			if (paramInfo.isAutoParameter()) {
 				continue;
 			}
@@ -1067,7 +888,7 @@ public class FunctionEditorModel {
 			params.add(new ParameterDefinitionImpl(paramName, paramDt, null));
 		}
 		funDt.setArguments(params.toArray(new ParameterDefinition[params.size()]));
-		funDt.setVarArgs(hasVarArgs);
+		funDt.setVarArgs(hasVarArgs());
 		return funDt;
 	}
 
@@ -1080,7 +901,11 @@ public class FunctionEditorModel {
 	}
 
 	int getAutoParamCount() {
-		return autoParamCount;
+		return functionData.getAutoParamCount();
+	}
+
+	int getParamCount() {
+		return functionData.getParamCount();
 	}
 
 	private boolean isSameSize(DataType dt1, DataType dt2) {
@@ -1092,38 +917,40 @@ public class FunctionEditorModel {
 
 	public void setFunctionData(FunctionDefinitionDataType functionDefinition) {
 
-		name = functionDefinition.getName();
+		setName(functionDefinition.getName());
 
 		setCallingConventionName(functionDefinition.getCallingConventionName());
 
 		DataType returnDt = functionDefinition.getReturnType();
-		returnInfo.setFormalDataType(returnDt);
+		setFormalReturnType(returnDt);
 
-		List<ParamInfo> oldParams = parameters;
-		parameters = new ArrayList<>();
-		autoParamCount = 0;
-		selectedFunctionRows = new int[0];
+		List<ParamInfo> oldParams = new ArrayList<>(getParameters());
 
+		functionData.removeAllParameters();
+
+		List<ParamInfo> parameters = functionData.getParameters();
 		for (ParameterDefinition paramDefinition : functionDefinition.getArguments()) {
-			parameters.add(new ParamInfo(this, paramDefinition));
+			parameters.add(new ParamInfo(functionData, paramDefinition));
 		}
-		hasVarArgs = functionDefinition.hasVarArgs();
 
-		fixupOrdinals();
+		setHasVarArgs(functionDefinition.hasVarArgs());
 
-		if (allowCustomStorage) {
+		functionData.fixupOrdinals();
+
+		if (canUseCustomStorage()) {
 			if (VoidDataType.isVoidDataType(returnDt)) {
-				returnInfo.setStorage(VariableStorage.VOID_STORAGE);
+				setReturnStorage(VariableStorage.VOID_STORAGE);
 			}
-			else if (!isSameSize(returnInfo.getFormalDataType(),
-				functionDefinition.getReturnType())) {
-				returnInfo.setStorage(VariableStorage.UNASSIGNED_STORAGE);
+			else if (!isSameSize(getFormalReturnType(), functionDefinition.getReturnType())) {
+				setReturnStorage(VariableStorage.UNASSIGNED_STORAGE);
 			}
 			reconcileCustomStorage(oldParams, parameters);
 		}
-		else {
-			updateParameterAndReturnStorage();
-		}
+
+		selectedParams.clear();
+
+		functionData.updateParameterAndReturnStorage();
+
 		notifyDataChanged();
 	}
 
@@ -1178,8 +1005,7 @@ public class FunctionEditorModel {
 			signatureFieldText.equals(getFunctionSignatureTextFromModel());
 		if (isInParsingMode == signatureTextFieldInSync) {
 			isInParsingMode = !isInParsingMode;
-			notifyDataChanged(false);
-//			notifyParsingModeChanged();
+			notifyDataChanged();
 		}
 	}
 
@@ -1187,7 +1013,7 @@ public class FunctionEditorModel {
 		setSignatureFieldText(getFunctionSignatureTextFromModel());
 	}
 
-	boolean hasChanges() {
+	boolean hasSignatureTextChanges() {
 		return !Objects.equals(getFunctionSignatureTextFromModel(), signatureFieldText);
 	}
 
@@ -1197,9 +1023,9 @@ public class FunctionEditorModel {
 		FunctionDefinitionDataType f = parser.parse(getFunctionSignature(), signatureFieldText);
 
 		// Preserve calling convention and noreturn flag from current model
-		f.setNoReturn(isNoReturn);
+		f.setNoReturn(functionData.hasNoReturn());
 		try {
-			f.setCallingConvention(callingConventionName);
+			f.setCallingConvention(getCallingConventionName());
 		}
 		catch (InvalidInputException e) {
 			// ignore
@@ -1210,17 +1036,21 @@ public class FunctionEditorModel {
 	}
 
 	int getFunctionNameStartPosition() {
-		return returnInfo.getFormalDataType().getName().length() + 1;
+		return getFormalReturnType().getName().length() + 1;
 	}
 
 	/**
-	 * Sets the change state of the model. Normally, the model sets the modelChanged variable to true
-	 * every time something is changed. This provides a way to for applications to make some initial changes
-	 * but make the dialog think that nothing has changed.
-	 * @param b the  new changeState for this model
+	 * Sets the change state of the model to unchanged. Normally, the model sets the modelChanged 
+	 * variable to true every time something is changed. This provides a way to for applications 
+	 * to make some initial changes but make the dialog think that nothing has changed.
 	 */
-	public void setModelChanged(boolean b) {
-		modelChanged = b;
+	public void setModelUnchanged() {
+		originalFunctionData = new FunctionDataView(functionData);
+		resetSignatureTextField();
+		validate();
+		if (listener != null) {
+			Swing.runLater(() -> listener.dataChanged());
+		}
 	}
 
 }

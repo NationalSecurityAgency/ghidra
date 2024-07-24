@@ -60,7 +60,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		int autoParamCnt = modelParamCnt - decompParamCnt;
 
 		// make sure decomp params account for injected auto params
-		boolean useCustom = (decompParamCnt < autoParamCnt);
+		boolean useCustom = (decompParamCnt < autoParamCnt) | model.canUseCustomStorage();
 
 		for (int i = 0; i < autoParamCnt && !useCustom; i++) {
 			if (i >= decompParamCnt) {
@@ -79,7 +79,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 			// remove original params which replicate auto params
 			for (int i = 0; i < autoParamCnt; i++) {
 				// be sure to select beyond auto-params.  First auto-param is on row 1
-				model.setSelectedParameterRow(new int[] { autoParamCnt + 1 });
+				model.setSelectedParameterRows(new int[] { autoParamCnt + 1 });
 				model.removeParameters();
 			}
 
@@ -167,14 +167,14 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		// If editing the decompiled function (i.e., not a subfunction) and function
 		// is not fully locked update the model to reflect the decompiled results
 		if (function.getEntryPoint().equals(hf.getFunction().getEntryPoint())) {
+
 			if (function.getSignatureSource() == SourceType.DEFAULT) {
-				model.setUseCustomizeStorage(false);
 				model.setFunctionData(buildSignature(hf));
 				verifyDynamicEditorModel(hf, model);
 			}
 			else if (function.getReturnType() == DataType.DEFAULT) {
 				model.setFormalReturnType(functionPrototype.getReturnType());
-				if (model.canCustomizeStorage()) {
+				if (model.canUseCustomStorage()) {
 					model.setReturnStorage(functionPrototype.getReturnStorage());
 				}
 			}
@@ -182,9 +182,9 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
 		// make the model think it is not changed, so if the user doesn't change anything, 
 		// we don't save the changes made above.
-		model.setModelChanged(false);
+		model.setModelUnchanged();
 
-		FunctionEditorDialog dialog = new FunctionEditorDialog(model);
+		FunctionEditorDialog dialog = new FunctionEditorDialog(model, true);
 		tool.showDialog(dialog, context.getComponentProvider());
 	}
 }
