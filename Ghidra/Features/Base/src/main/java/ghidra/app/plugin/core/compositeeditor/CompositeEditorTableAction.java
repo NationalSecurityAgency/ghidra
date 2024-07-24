@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 
 import docking.action.*;
-import docking.widgets.table.GTable;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -88,21 +87,8 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 	}
 
 	protected void requestTableFocus() {
-		if (provider == null) {
-			return; // must have been disposed
-		}
-
-		JTable table = ((CompositeEditorPanel) provider.getComponent()).getTable();
-		if (!table.isEditing()) {
-			table.requestFocus();
-			return;
-		}
-
-		if (table instanceof GTable gTable) {
-			gTable.requestTableEditorFocus();
-		}
-		else {
-			table.getEditorComponent().requestFocus();
+		if (provider != null) {
+			provider.requestTableFocus();
 		}
 	}
 
