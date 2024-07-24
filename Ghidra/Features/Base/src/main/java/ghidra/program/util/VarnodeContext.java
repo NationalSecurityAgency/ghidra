@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1756,8 +1756,12 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 			}
 		}
 		try {
-			// Borrow JOIN type space for suspect constants
-			// Hack for current storage allows suspect constants to fit in a byte
+			// Use JOIN type space for suspect constants, it is used by the decompiler, so can
+			// be repurposed for this algorithm.
+			// Hack for current storage allows suspect constants to fit in a byte. The current
+			// algorithm is sensitive to the space ID value and must be less than 0x7f.  Only types that are
+			// between 0-16 will work correctly because of how the spaceID is calculated based on the space type.
+			// The spaceID is computed using the type.
 			AddressSpace suspectConstspc = new GenericAddressSpace(VarnodeContext.SUSPECT_CONST_NAME, 64,
 				AddressSpace.TYPE_JOIN, 0);
 			addAddressSpace(suspectConstspc);
