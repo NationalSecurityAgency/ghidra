@@ -26,7 +26,7 @@ project.ext.excludeFromParallelIntegrationTests = true
 
 dependencies {
 	api project(":Base")
-	runtimeOnly project(":CodeCompare")
+	api project(":CodeCompare")
 	
 
 	testImplementation project(path: ':CodeCompare', configuration: 'testArtifacts')
