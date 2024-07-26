@@ -362,6 +362,7 @@ public:
 class TypeOpIntSless : public TypeOpBinary {
 public:
   TypeOpIntSless(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
@@ -372,6 +373,7 @@ public:
 class TypeOpIntSlessEqual : public TypeOpBinary {
 public:
   TypeOpIntSlessEqual(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
@@ -556,6 +558,7 @@ public:
 class TypeOpIntSdiv : public TypeOpBinary {
 public:
   TypeOpIntSdiv(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSdiv(op); }
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
 };
@@ -572,6 +575,7 @@ public:
 class TypeOpIntSrem : public TypeOpBinary {
 public:
   TypeOpIntSrem(TypeFactory *t);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSrem(op); }
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
 };
@@ -608,6 +612,7 @@ public:
 class TypeOpFloatEqual : public TypeOpBinary {
 public:
   TypeOpFloatEqual(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatEqual(op); }
 };
   
@@ -615,6 +620,7 @@ public:
 class TypeOpFloatNotEqual : public TypeOpBinary {
 public:
   TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatNotEqual(op); }
 };
   
@@ -622,6 +628,7 @@ public:
 class TypeOpFloatLess : public TypeOpBinary {
 public:
   TypeOpFloatLess(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatLess(op); }
 };
   
@@ -629,6 +636,7 @@ public:
 class TypeOpFloatLessEqual : public TypeOpBinary {
 public:
   TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatLessEqual(op); }
 };
   
@@ -643,6 +651,7 @@ public:
 class TypeOpFloatAdd : public TypeOpBinary {
 public:
   TypeOpFloatAdd(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatAdd(op); }
 };
   
@@ -650,6 +659,7 @@ public:
 class TypeOpFloatDiv : public TypeOpBinary {
 public:
   TypeOpFloatDiv(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatDiv(op); }
 };
 
@@ -657,6 +667,7 @@ public:
 class TypeOpFloatMult : public TypeOpBinary {
 public:
   TypeOpFloatMult(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatMult(op); }
 };
   
@@ -664,6 +675,7 @@ public:
 class TypeOpFloatSub : public TypeOpBinary {
 public:
   TypeOpFloatSub(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatSub(op); }
 };
   
@@ -671,6 +683,7 @@ public:
 class TypeOpFloatNeg : public TypeOpUnary {
 public:
   TypeOpFloatNeg(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual void printRaw(ostream &s,const PcodeOp *op);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatNeg(op); }
 };
 
