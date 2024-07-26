@@ -21,8 +21,7 @@ import org.jdom.Element;
 
 import generic.cache.FixedSizeMRUCachingFactory;
 import generic.stl.Pair;
-import ghidra.feature.vt.api.correlator.address.ExactMatchAddressCorrelator;
-import ghidra.feature.vt.api.correlator.address.VTHashedFunctionAddressCorrelator;
+import ghidra.feature.vt.api.correlator.address.*;
 import ghidra.features.codecompare.correlator.CodeCompareAddressCorrelator;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Data;
@@ -74,10 +73,11 @@ public class AddressCorrelatorManager {
 		correlatorList.add(new CodeCompareAddressCorrelator());
 
 		// Note: at the time of writing this comment, the linear address correlator will not be
-		// executed.  The VTHashedFunctionAddressCorrelator handles correlation between programs
-		// with the same architecture and the CodeCompareAddressCorrelator handles correlation 
-		// between programs with different architectures.
-		// correlatorList.add(new LinearAddressCorrelator());
+		// executed for functions.  The VTHashedFunctionAddressCorrelator handles function 
+		// correlation between programs with the same architecture and the 
+		// CodeCompareAddressCorrelator handles function correlation between programs with different
+		// architectures.  This will still get called for data correlation.
+		correlatorList.add(new LinearAddressCorrelator());
 
 		correlatorList.addAll(initializeAddressCorrelators());
 

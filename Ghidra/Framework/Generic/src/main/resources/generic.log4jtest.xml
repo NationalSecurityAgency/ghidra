@@ -72,6 +72,7 @@
 		<logger name="ghidra.util.classfinder" level="DEBUG" />
 		<logger name="ghidra.util.extensions" />	
 		<logger name="ghidra.util.task" level="DEBUG" />	
+		<logger name="ghidra.sleigh.grammar" level="DEBUG" />			
 		<logger name="functioncalls" level="DEBUG" />	
 		<logger name="org.jungrapht.visualization" level="WARN" />
 		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" />

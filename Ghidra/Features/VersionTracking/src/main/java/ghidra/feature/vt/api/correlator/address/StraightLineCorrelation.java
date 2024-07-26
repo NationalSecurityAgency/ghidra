@@ -57,6 +57,9 @@ public class StraightLineCorrelation implements AddressCorrelation {
 			TaskMonitor monitor) throws CancelledException {
 		initialize(monitor);
 		AddressRange range = cachedForwardAddressMap.get(sourceAddress);
+		if (range == null) {
+			return null;
+		}
 		return new AddressCorrelationRange(range, getName());
 	}
 
