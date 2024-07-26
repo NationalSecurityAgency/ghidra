@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.*;
-import org.eclipse.jdt.debug.ui.launchConfigurations.JavaClasspathTab;
+import org.eclipse.debug.ui.sourcelookup.SourceLookupTab;
+import org.eclipse.jdt.debug.ui.launchConfigurations.JavaDependenciesTab;
 import org.eclipse.jdt.debug.ui.launchConfigurations.JavaMainTab;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -47,7 +48,8 @@ public class GhidraLaunchTabGroup extends AbstractLaunchConfigurationTabGroup {
 		List<ILaunchConfigurationTab> tabs = new ArrayList<>();
 		tabs.add(getJavaMainTab());
 		tabs.add(getUserDefinedArgumentsTab());
-		tabs.add(new JavaClasspathTab());
+		tabs.add(getJavaDependenciesTab());
+		tabs.add(getSourceLookupTab());
 		tabs.add(new EnvironmentTab());
 		tabs.add(getCommonTab());
 
@@ -165,6 +167,49 @@ public class GhidraLaunchTabGroup extends AbstractLaunchConfigurationTabGroup {
 			@Override
 			public String getName() {
 				return "Arguments";
+			}
+		};
+	}
+
+	/**
+	 * Gets the {@link JavaDependenciesTab} to use, with all Ghidra jars removed except Utility.jar.
+	 * 
+	 * @return The {@link JavaDependenciesTab} to use, with all Ghidra jars removed except 
+	 *   Utility.jar.
+	 */
+	private JavaDependenciesTab getJavaDependenciesTab() {
+		return new JavaDependenciesTab() {
+			@Override
+			public void initializeFrom(ILaunchConfiguration config) {
+				try {
+					ILaunchConfigurationWorkingCopy wc = config.getWorkingCopy();
+					GhidraLaunchUtils.setClasspath(wc);
+					super.initializeFrom(wc.doSave());
+				}
+				catch (CoreException e) {
+					EclipseMessageUtils.error("Failed to initialize the java dependencies tab.", e);
+				}
+			}
+		};
+	}
+
+	/**
+	 * Gets the {@link SourceLookupTab} to use, with all Ghidra jars added.
+	 * 
+	 * @return The {@link SourceLookupTab} to use, with all Ghidra jars added.
+	 */
+	private SourceLookupTab getSourceLookupTab() {
+		return new SourceLookupTab() {
+			@Override
+			public void initializeFrom(ILaunchConfiguration config) {
+				try {
+					ILaunchConfigurationWorkingCopy wc = config.getWorkingCopy();
+					GhidraLaunchUtils.setSource(wc);
+					super.initializeFrom(wc.doSave());
+				}
+				catch (CoreException e) {
+					EclipseMessageUtils.error("Failed to initialize the source lookup tab.", e);
+				}
 			}
 		};
 	}

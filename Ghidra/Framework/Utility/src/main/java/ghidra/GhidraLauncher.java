@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,11 +150,15 @@ public class GhidraLauncher {
 		List<String> classpathList = new ArrayList<>();
 		Map<String, GModule> modules = getOrderedModules(layout);
 
+		// First add any "bin" paths the module might have. These could come from external modules
+		// being developed and passed in via system property if we are in release mode, or they 
+		// could be generated for each Ghidra module by Eclipse if we are in development mode.
+		addModuleBinPaths(classpathList, modules);
+
 		if (SystemUtilities.isInDevelopmentMode()) {
 
-			// First add Eclipse's module "bin" paths.  If we didn't find any, assume Ghidra was 
+			// If we didn't find any "bin" paths and we are in development mode, assume Ghidra was 
 			// compiled with Gradle, and add the module jars Gradle built.
-			addModuleBinPaths(classpathList, modules);
 			boolean gradleDevMode = classpathList.isEmpty();
 			if (gradleDevMode) {
 				// Add the module jars Gradle built.
@@ -165,22 +169,16 @@ public class GhidraLauncher {
 			else { /* Eclipse dev mode */
 				// Support loading pre-built, jar-based, non-repo extensions in Eclipse dev mode
 				addExtensionJarPaths(classpathList, modules, layout);
-
-				// Eclipse launches the Utility module, so it's already on the classpath.  We don't
-				// want to add it a second time, so remove the one we discovered.
-				GModule utilityModule = modules.get("Utility");
-				if (utilityModule == null) {
-					throw new IOException("Failed to find the 'Utility' module!");
-				}
-				classpathList.removeIf(
-					e -> e.startsWith(utilityModule.getModuleRoot().getAbsolutePath()));
 			}
 
-			// In development mode, jars do not live in module directories. Instead, each jar lives
-			// in an external, non-repo location, which is listed in build/libraryDependencies.txt.
+			// In development mode, 3rd party library jars do not live in module directories. 
+			// Instead, each jar lives in an external, non-repo location, which is listed in 
+			// build/libraryDependencies.txt.
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
+
+			// Release mode is simple.  We expect all of Ghidra's modules to be in pre-build jars.
 			addPatchPaths(classpathList, layout.getPatchDir());
 			addModuleJarPaths(classpathList, modules);
 		}
@@ -194,8 +192,16 @@ public class GhidraLauncher {
 		// the standard classpath.)
 		setExtensionJarPaths(modules, layout, classpathList);
 
-		classpathList = orderClasspath(classpathList, modules);
-		return classpathList;
+		// Ghidra launches from the Utility module, so it's already on the classpath.  We don't
+		// want to add it a second time, so remove the one we discovered.
+		GModule utilityModule = modules.get("Utility");
+		if (utilityModule == null) {
+			throw new IOException("Failed to find the 'Utility' module!");
+		}
+		classpathList.removeIf(
+			e -> e.startsWith(utilityModule.getModuleRoot().getAbsolutePath()));
+
+		return orderClasspath(classpathList, modules);
 	}
 
 	/**
@@ -265,9 +271,9 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Add extension module lib jars to the given path list.  (This only needed in dev mode to find 
-	 * any pre-built extensions that have been installed, since  we already find extension module 
-	 * jars in production mode.)
+	 * Add extension module lib jars to the given path list.  (This is only needed in dev mode to 
+	 * find any pre-built extensions that have been installed, since  we already find extension 
+	 * module jars in production mode.)
 	 * 
 	 * @param pathList The list of paths to add to.
 	 * @param modules The modules to get the jars of.
