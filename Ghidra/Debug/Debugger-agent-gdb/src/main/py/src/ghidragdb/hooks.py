@@ -312,6 +312,8 @@ def check_for_continue(event):
             return True
         for brk in event.breakpoints:
             if hasattr(brk, 'commands'):
+                if brk.commands is None:
+                    return False
                 for cmd in brk.commands:
                     if cmd == 'c' or cmd.startswith('cont'):
                         HOOK_STATE.in_break_w_cont = True
