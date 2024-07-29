@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -756,14 +756,28 @@ public class SleighLanguage implements Language {
 			}
 			else if (elName.equals("default_symbols")) {
 				XmlElement subel = parser.start();
+				Address previousAddr = null;
+				int     previousSize = 1;
 				while (parser.peek().getName().equals("symbol")) {
 					XmlElement symbol = parser.start();
 					String labelName = symbol.getAttribute("name");
 					String addressString = symbol.getAttribute("address");
 					String typeString = symbol.getAttribute("type");
+					String comment = symbol.getAttribute("description");
 					ProcessorSymbolType type = ProcessorSymbolType.getType(typeString);
 					boolean isEntry = SpecXmlUtils.decodeBoolean(symbol.getAttribute("entry"));
-					Address startAddress = addressFactory.getAddress(addressString);
+					Address startAddress = null;
+					if (addressString.equalsIgnoreCase("next")) {
+						if (previousAddr == null) {
+							Msg.error(this, "use of addr=\"next\" tag with no previous address for " +
+						        labelName + " : " + description.getSpecFile());
+						} else {
+							startAddress = previousAddr.add(previousSize);
+						}
+					}
+					else {
+						startAddress = addressFactory.getAddress(addressString);
+					}
 					int rangeSize = SpecXmlUtils.decodeInt(symbol.getAttribute("size"));
 					Boolean isVolatile =
 						SpecXmlUtils.decodeNullableBoolean(symbol.getAttribute("volatile"));
@@ -774,7 +788,7 @@ public class SleighLanguage implements Language {
 					else {
 						AddressLabelInfo info;
 						try {
-							info = new AddressLabelInfo(startAddress, rangeSize, labelName, false,
+							info = new AddressLabelInfo(startAddress, rangeSize, labelName, comment, false,
 								isEntry, type, isVolatile);
 						}
 						catch (AddressOverflowException e) {
@@ -801,6 +815,8 @@ public class SleighLanguage implements Language {
 					}
 					// skip the end tag
 					parser.end(symbol);
+					previousAddr = startAddress;
+					previousSize = rangeSize;
 				}
 				parser.end(subel);
 			}
