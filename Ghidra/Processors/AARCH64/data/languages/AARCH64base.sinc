@@ -2690,7 +2690,7 @@ is b_3031=0b10 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls
 # size == 11 64-bit variant
 
 :ldapr aa_Xt, [Rn_GPR64xsp]
-is b_3031=0b11 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Xt
+is b_3031=0b11 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Xt & ls_data8
 {
 	aa_Xt = tmp_ldXn;
 }
