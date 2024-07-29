@@ -422,8 +422,12 @@ def get_register_descs(arch, group='all'):
             return arch.registers()
     else:
         descs = []
-        regset = gdb.execute(
-            f"info registers {group}", to_string=True).strip().split('\n')
+        try: 
+            regset = gdb.execute(
+                f"info registers {group}", to_string=True).strip().split('\n')
+        except Exception as e:
+            regset = gdb.execute(
+                f"info registers", to_string=True).strip().split('\n')
         for line in regset:
             if not line.startswith(" "):
                 tokens = line.strip().split()
