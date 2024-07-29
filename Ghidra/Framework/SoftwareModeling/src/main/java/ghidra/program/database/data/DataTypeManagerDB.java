@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -319,7 +319,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void initPackedDatabase(ResourceFile packedDBfile, OpenMode openMode,
 			TaskMonitor monitor) throws CancelledException, IOException {
-		long txId = dbHandle.startTransaction();
+		Long txId = dbHandle.startTransaction();
 		try {
 			init(openMode, monitor);
 
@@ -337,6 +337,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		catch (VersionException e) {
 			if (openMode == OpenMode.UPDATE && e.isUpgradable()) {
+				// Try again with UPGRADE mode
+				dbHandle.endTransaction(txId, true);
+				txId = null;
 				initPackedDatabase(packedDBfile, OpenMode.UPGRADE, monitor);
 			}
 			else {
@@ -345,7 +348,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 		}
 		finally {
-			dbHandle.endTransaction(txId, true);
+			if (txId != null) {
+				dbHandle.endTransaction(txId, true);
+			}
 		}
 	}
 
