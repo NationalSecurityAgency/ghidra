@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -375,13 +375,15 @@ public class SleighLanguage implements Language {
 				new SleighInstructionPrototype(this, buf, context, contextcache, inDelaySlot, null);
 			Integer hashcode = newProto.hashCode();
 
-			if (!instructProtoMap.containsKey(hashcode)) {
-				newProto.cacheInfo(buf, context, true);
-			}
-			res = instructProtoMap.putIfAbsent(hashcode, newProto);
-			// if there was no previous value, assume newProto inserted
+			// check proto map for already defined prototype
+			res = instructProtoMap.get(hashcode);
 			if (res == null) {
-				res = newProto;
+				newProto.cacheInfo(buf, context, true);
+				res = instructProtoMap.putIfAbsent(hashcode, newProto);
+				// if there was no previous value, assume newProto inserted
+				if (res == null) {
+					res = newProto;
+				}
 			}
 			
 			if (inDelaySlot && res.hasDelaySlots()) {
