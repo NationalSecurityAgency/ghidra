@@ -2993,24 +2993,30 @@ define pcodeop bcd_add;
 	build postStorePC;
 }
 
-:POPX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & tbl_bzero) ... & XDEST_B_AD ...  {
-	XDEST_B_AD = *:1 SP;
+:POPX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & tbl_bzero & postStorePC) ... & XDEST_B_AD ...  {
+	local tmp:1 = *:1 SP;
+	SP = SP + 0x2;
+	XDEST_B_AD = tmp;
 	build tbl_bzero;
-	SP = SP + 0x2;
 	#Status bits are not affected
+	build postStorePC;
 }
 
-:POPX.W	XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=0 & tbl_wzero) ... & XDEST_W_AD ... {
-	XDEST_W_AD = *:2 SP;
+:POPX.W	XDEST_W_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=0 & tbl_wzero & postStorePC) ... & XDEST_W_AD ... {
+	local tmp:2 = *:2 SP;
+	SP = SP + 0x2;
+	XDEST_W_AD = tmp;
 	build tbl_wzero;
-	SP = SP + 0x2;
 	#Status bits are not affected
+	build postStorePC;
 }
 
-:POPX.A	XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1) ... & XDEST_A_AD ... {
-	XDEST_A_AD = *:4 SP;
+:POPX.A	XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & postStorePC) ... & XDEST_A_AD ... {
+	local tmp:4 = *:4 SP;
 	SP = SP + 0x4;
-	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
+	tmp = zext(tmp[0,20]);
+	XDEST_A_AD = tmp;
+	build postStorePC;
 }
 
 :SBCX.B XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x7 & bow=1 & src16_8_4=0x3 & as=0x0 & tbl_bzero & postIncrementStore) ... & XDEST_B_AD ...  {
