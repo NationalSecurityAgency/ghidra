@@ -948,7 +948,7 @@ macro adda(dst, src) {
 }
 
 :MOVA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
-	DST20_0_4 = sext(Abs20s);
+	DST20_0_4 = sext(Abs20s) & 0xfffff;
 }
 
 :MOVA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & SRC20_8_4 & DST20_0_4 {
@@ -2057,7 +2057,7 @@ define pcodeop bcd_add;
 
 :MOVX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x4 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	DST20_0_4 = XRSRC_A_AS;
+	DST20_0_4 = XRSRC_A_AS & 0xfffff;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2981,7 +2981,7 @@ define pcodeop bcd_add;
 }
 
 :MOVX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
-	XDEST_A_AD = XSRC_A_AS;
+	XDEST_A_AD = XSRC_A_AS & 0xfffff;
 	build postIncrementStore;
 }
 
@@ -3215,7 +3215,7 @@ define pcodeop bcd_add;
 :PUSHX.A XRREG_A_AS 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x1 & postRegIncrement & XRREG_A_AS {
 	<top>
 	SP = SP - 0x4;
-	*:$(REG_SIZE) SP = XRREG_A_AS;
+	*:$(REG_SIZE) SP = XRREG_A_AS & 0xfffff;
 	#Status bits are not affected
 	build postRegIncrement;
 	if (CNT == 0) goto inst_next;
@@ -3420,7 +3420,7 @@ define pcodeop bcd_add;
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
 	# Operation...	
-	XRREG_A_AS_DEST2 = sext(XRREG_A_AS_DEST2:1);
+	XRREG_A_AS_DEST2 = sext(XRREG_A_AS_DEST2:1) & 0xfffff;
 	# Result Flags...
 	$(SIGN) = XRREG_A_AS_DEST2[19, 1] == 1;
 	$(ZERO) = (XRREG_A_AS_DEST2 == 0x0);			# Z Flag
@@ -3449,7 +3449,7 @@ define pcodeop bcd_add;
 
 :PUSHX.A XREG_A_AS 		is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS {
 	SP = SP - 0x4;
-	*:$(REG_SIZE) SP = XREG_A_AS;
+	*:$(REG_SIZE) SP = XREG_A_AS & 0xfffff;
 	build postRegIncrement;
 }	
 
@@ -3561,7 +3561,7 @@ define pcodeop bcd_add;
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
 	# Operation...	
-	XREG_A_AS_DEST2 = sext(XREG_A_AS_DEST2:1);
+	XREG_A_AS_DEST2 = sext(XREG_A_AS_DEST2:1) & 0xfffff;
 	# Result Flags...
 	$(SIGN) = XREG_A_AS_DEST2[19, 1] == 1;
 	$(ZERO) = (XREG_A_AS_DEST2 == 0x0);			# Z Flag
