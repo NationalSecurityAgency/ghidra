@@ -724,7 +724,7 @@ POPAR1:						is ctx_mreg=0x1 & POPAR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 POPAR0:						is  POPAR1 {build POPAR1;}
 POPAR0:						is ctx_mreg=0x0 & POPAR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
 	PC = *[RAM]:4 SP;
-	PC = sext(PC[0,20]);
+	PC = PC & 0xffffe;
 	SP = SP + 4;
 	build POPAR1;
 	goto [PC];
@@ -850,7 +850,7 @@ POPWR1:						is ctx_mreg=0x1 & POPWR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 
 POPWR0:						is  POPWR1 {build POPWR1;}
 POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
-	PC = zext(*[RAM]:2 SP);
+	PC = zext(*[RAM]:2 SP) & ~1;
 	SP = SP + 2;
 	build POPWR1;
 	goto [PC];
@@ -871,7 +871,7 @@ macro adda(dst, src) {
 :ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 & dest_0_4=0x0 {
 	tmpd:$(REG_SIZE) = inst_start + 2;
 	tmp:$(REG_SIZE) = src_8_4 + tmpd;
-	PC = sext(tmp[0,20]);
+	PC = tmp & 0xFFFFE;
 	
 	setaddflags(dest_0_4,src_8_4,tmpd);
 	goto [PC];
@@ -908,7 +908,7 @@ macro adda(dst, src) {
 	tmpd:$(REG_SIZE) = inst_start + 2;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd + tmps;
-	PC = sext(tmp[0,20]);
+	PC = tmp & 0xFFFFE;
 	
 	setaddflags(PC,tmps,tmpd);
 	goto [PC];
@@ -987,7 +987,7 @@ macro suba(dst, src) {
 :SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 & dest_0_4=0x0 {
 	tmpd:$(REG_SIZE) = inst_start + 2;
 	tmp:$(REG_SIZE) = tmpd - src_8_4;
-	PC = sext(tmp[0,20]);
+	PC = tmp & 0xffffe;
 	
 	setsubflags(dest_0_4,src_8_4,tmpd);
 	goto [PC];
@@ -1015,7 +1015,7 @@ macro suba(dst, src) {
 	tmpd:$(REG_SIZE) = inst_start + 2;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd - tmps;
-	PC = sext(tmp[0,20]);
+	PC = tmp & 0xffffe;
 	
 	setsubflags(PC,tmps,tmpd);
 	goto [PC];
@@ -1035,45 +1035,40 @@ macro suba(dst, src) {
 }
 
 :BRA "@"^src_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) src_8_4;
-	PC = sext(PC[0,20]);
+	PC = *[RAM]:$(REG_SIZE) src_8_4 & 0xffffe;
 	goto [PC];
 }
 
 :BRA "@"^src_8_4^"+" 				is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) src_8_4;
-	PC = sext(PC[0,20]);
+	PC = *[RAM]:$(REG_SIZE) src_8_4 & 0xffffe;
 	src_8_4 = src_8_4 + 4;
 	goto [PC];
 }
 
 :BRA "&"^Abs20						is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & dest_0_4=0x0; Abs20 [ctx_ctregdest=imm_8_4;] {
 	tmp:$(REG_SIZE) = zext(Abs20);
-	PC = *[RAM]:$(REG_SIZE) tmp;
-	PC = sext(PC[0,20]);
+	PC = *[RAM]:$(REG_SIZE) tmp & 0xffffe;
 	goto [PC];
 }
 
 :BRA imms_0_16^"("^src_8_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & src_8_4 & dest_0_4=0x0; imms_0_16 {
 	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2);
-	PC = *[RAM]:$(REG_SIZE) tmp;
-	PC = sext(PC[0,20]);
+	PC = *[RAM]:$(REG_SIZE) tmp & 0xffffe;
 	goto [PC];
 }
 
 :BRA "#"^Abs20add					is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & dest_0_4=0x0; Abs20add [ctx_ctregdest=imm_8_4;] {
-#	PC = Abs20add;
+#	PC = Abs20add & 0xffffe;
 	goto Abs20add;
 }
 
 :BRA src_8_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4 & dest_0_4=0x0 {
-	PC = src_8_4;
+	PC = src_8_4 & 0xffffe;
 	goto [PC];
 }
 
 :RETA "@"^src_8_4^"+"			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & src_8_4=0x1 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) src_8_4;
-	PC = sext(PC[0,20]);
+	PC = *[RAM]:$(REG_SIZE) src_8_4 & 0xffffe;
 	SP = SP + 4;
 	return [PC];
 }
@@ -1124,7 +1119,7 @@ macro suba(dst, src) {
 :CALLA dest_0_4							is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x4 & dest_0_4 {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
-	PC = dest_0_4;
+	PC = dest_0_4 & ~1;
 	call [PC];
 }
 
@@ -1133,7 +1128,7 @@ macro suba(dst, src) {
 	*:4 SP = inst_next;
 	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp;
-	PC = sext(PC[0,20]);
+	PC = PC & 0xffffe;
 	call [PC];
 }
 
@@ -1141,7 +1136,7 @@ macro suba(dst, src) {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
 	PC = *[RAM]:$(REG_SIZE) dest_0_4;
-	PC = sext(PC[0,20]);
+	PC = PC & 0xffffe;
 	call [PC];
 }
 
@@ -1149,7 +1144,7 @@ macro suba(dst, src) {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
 	PC = *[RAM]:$(REG_SIZE) dest_0_4;
-	PC = sext(PC[0,20]);
+	PC = PC & 0xffffe;
 	dest_0_4 = dest_0_4 + 4;
 	call [PC];
 }
@@ -1159,7 +1154,7 @@ macro suba(dst, src) {
 	*:4 SP = inst_next;
 	tmp:$(REG_SIZE) = zext(Abs20);
 	PC = *[RAM]:$(REG_SIZE) tmp;
-	PC = sext(PC[0,20]);
+	PC = PC & 0xffffe;
 	call [PC];
 }
 
@@ -1168,7 +1163,7 @@ macro suba(dst, src) {
 	*:4 SP = inst_next;
 	tmp:$(REG_SIZE) = inst_start + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp;
-	PC = sext(PC[0,20]);
+	PC = PC & 0xffffe;
 	call [PC];
 }
 

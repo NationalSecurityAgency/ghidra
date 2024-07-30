@@ -519,35 +519,19 @@ postIncrement:  			 is as=0x3 & ctx_haveext=0 & src16_8_4=1 & bow=0x1 & ctx_al=0
 postIncrement:               is as & src16_8_4 & bow
 {  }
 
-
 #
-# Zero Extends if the store is byte oriented, and a register is being stored to
-zeroExtend: is dest_Direct_lo & dest_Direct16_0_4
-{ dest_Direct16_0_4 = zext(dest_Direct_lo); }
-
+# Post processing when destination is the PC
 #
-# Post processing when destination is the PC - for byte operations
-#
-postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
-{ build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
-{ build zeroExtend; build postIncrement; PC = PC & 0xFFFFFE; goto [PC];} # Writes to PC are rounded to alignment
-postIncrementStore:              is postIncrement & ad=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
-{ build zeroExtend; build postIncrement; }
 
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend 
-{ build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend # MOV.B any,PC
-{ build zeroExtend; build postIncrement; PC = PC & 0xFE; goto [PC];} # Writes to PC are rounded to alignment
-postIncrementStore:              is postIncrement & ctx_haveext=0 & ad=0x0 & bow=0x1 & zeroExtend
-{ build zeroExtend; build postIncrement; }
+postStorePC:  			is ad=0x0 & as=0x3 & dest_Direct16_0_4=0x0 & src16_8_4=0x1
+{ PC = PC & ~1; return [PC]; }
+postStorePC:  			is ad=0x0 & dest_Direct16_0_4=0x0
+{ PC = PC & ~1; goto [PC];}
+postStorePC:			is epsilon
+{  }
 
-postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0
-{ build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0
-{ build postIncrement; PC = PC & 0xFFFE; goto [PC];} # Writes to PC are rounded to alignment
-postIncrementStore:              is postIncrement & ad & bow
-{ build postIncrement; }
+postIncrementStore: is postIncrement & postStorePC
+{ build postIncrement; build postStorePC; }
 
 #-----------------------------------------------
 #
@@ -764,7 +748,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	tmp:$(REG_SIZE) = zext(*:2 SP);
 	SR = zext(tmp[0,12]);
 	SP = SP + 0x2;
-	PC = zext(*:2 SP) | ((tmp & 0xF000) << 4);
+	PC = zext(*:2 SP) | ((tmp & 0xF000) << 4) & ~1;
 @endif	
 	SP = SP + 0x2;
 	return [PC];
@@ -822,7 +806,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #-----------------------
 # Branch
 :BR SRC_W_AS   is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4=0x0 & postIncrement) ... & SRC_W_AS ... {
-	PC = zext(SRC_W_AS) & 0xFFFFFFFE:$(REG_SIZE);
+	PC = zext(SRC_W_AS) & ~1;
 	build postIncrement; # needed before branch
 	goto [PC];
 	#Status bits are not affected
@@ -830,9 +814,8 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 
 # Branch to an immediate value
 :BR DirectAddr       is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4=0x0 & src_Direct16_8_4=0x0 & as=0x3); DirectAddr {
-	PC = &DirectAddr;
-    goto DirectAddr;
-    #Status bits are not affected
+	goto DirectAddr;
+	#Status bits are not affected
 }
 
 # No operation
