@@ -3240,7 +3240,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }	
 
-:RRAX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST {
+:RRAX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST {
 	<top>
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
@@ -3256,7 +3256,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RRAX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
+:RRAX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
 	<top>
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
@@ -3272,7 +3272,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RRAX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST {
+:RRAX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST {
 	<top>
 	$(CARRY) = XRREG_A_AS_DEST[0,1];
 	XRREG_A_AS_DEST = (XRREG_A_AS_DEST << 12 s>> 13) & 0xfffff;
@@ -3285,7 +3285,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RRCX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & ctx_zc & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST & repeat_carry {
+:RRCX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & ctx_zc & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST & repeat_carry {
 	<top>
 	# Operation Flags...
 	build repeat_carry;
@@ -3320,7 +3320,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RRCX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST & repeat_carry {
+:RRCX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST & repeat_carry {
 	<top>
 	build repeat_carry;
 	# Operation Flags...
@@ -3355,7 +3355,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RRCX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST & repeat_carry {
+:RRCX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST & repeat_carry {
 	<top>
 	build repeat_carry;
 	# Operation Flags...
