@@ -318,7 +318,7 @@ macro setsubflags(ans, in1, in2)
 {
 	tmp1:$(REG_SIZE) = zext(in1[0,20]);
 	tmp2:$(REG_SIZE) = zext(in2[0,20]);
-	$(CARRY) = tmp1 > tmp2;
+	$(CARRY) = tmp1 <= tmp2;
 	$(OVERFLOW) = ((in1 s< 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s>= 0) & (in2 s< 0) & (ans s>= 0));
 	$(SIGN) = (ans s< 0);
 	$(ZERO) = (ans == 0);
