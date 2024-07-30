@@ -273,7 +273,7 @@ REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & 
 REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s - 0x2, AMASK); export *:2 tmp;} # PUSH, CALL X(SP) - addressing includes SP decrement
 REG_W_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
 REG_W_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
-REG_W_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16, AMASK); export *:2 tmp; } # Symbolic
+REG_W_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 REG_W_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 REG_W_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 REG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
@@ -288,7 +288,7 @@ REG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & reg16_0_4=0 & as=0x0 & bow=0x0  {DST
 REG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:2 tmp;}
 REG_W_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
 REG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
-REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16, AMASK); export *:2 tmp; } # Symbolic
+REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 REG_W_AS_DEST: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 & AMASK ; indexExtWord16_0_16 {export *:2 inst_next; } # Immediate - Undocumented behaviour
 REG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 
@@ -299,7 +299,7 @@ REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & 
 REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s - 0x2, AMASK); export *:1 tmp;} # PUSH.B X(SP) - includes SP decrement
 REG_B_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
 REG_B_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-REG_B_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+REG_B_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
 REG_B_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 { export *[const]:1 indexExtWord16_0_16; } # Immediate
 REG_B_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 REG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
@@ -314,7 +314,7 @@ REG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & reg16_0_4=0 & as=0x0 & bow=0x1  {tmp
 REG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, reg_Indexed16_0_4, indexExtWord16_0_16s, AMASK); export *:1 tmp;}
 REG_B_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
 REG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
-REG_B_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16, AMASK); export *:1 tmp; } # Symbolic
+REG_B_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 REG_B_AS_DEST: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x1 & AMASK ; indexExtWord16_0_16 {export *:1 inst_next; } # Undocumented behaviour
 REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 
@@ -328,7 +328,7 @@ SRC_W_AS: SRC16_8_4 			 		 is SRC16_8_4 & src16_8_4=0 & as=0x0 & bow=0x0 {tmp:2 
 SRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {local tmp:$(REG_SIZE); computeIndexedAddr(tmp, src_Indexed16_8_4, indexExtWord16_0_16s, AMASK); export *:2 tmp;}
 SRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = src_InDirect16_8_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
 SRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = src_InDirect16_8_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
-SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16, AMASK); export *:2 tmp; } # Symbolic
+SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:2 tmp; } # Symbolic
 SRC_W_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 SRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 SRC_W_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
@@ -343,7 +343,7 @@ SRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & src16_8_4=0 & as=0x0 & bow=0x1  {tmp:$(R
 SRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, src_Indexed16_8_4, indexExtWord16_0_16s, AMASK); export *:1 tmp;}
 SRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
 SRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-SRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16, AMASK); export *:1 tmp; } # Symbolic
+SRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ] { local tmp:$(REG_SIZE); computeIndexedAddr(tmp, inst_start + 2, indexExtWord16_0_16s, AMASK); export *:1 tmp; } # Symbolic
 SRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16;} # Immediate
 SRC_B_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 SRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
