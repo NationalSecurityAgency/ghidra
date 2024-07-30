@@ -1106,34 +1106,34 @@ macro suba(dst, src) {
 #
 # Other 20 bit address instructions
 :CALLA DST20_0_4							is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x4 & DST20_0_4 {
+	PC = DST20_0_4 & ~1;
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
-	PC = DST20_0_4 & ~1;
 	call [PC];
 }
 
 :CALLA imms_0_16^"("^DST20_0_4^")"		is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x5 & DST20_0_4 ; imms_0_16 {
-	SP = SP - 0x4;
-	*:4 SP = inst_next;
 	tmp:$(REG_SIZE) = DST20_0_4 + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp;
 	PC = PC & 0xffffe;
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
 	call [PC];
 }
 
 :CALLA "@"^DST20_0_4						is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x6 & DST20_0_4 {
-	SP = SP - 0x4;
-	*:4 SP = inst_next;
 	PC = *[RAM]:$(REG_SIZE) DST20_0_4;
 	PC = PC & 0xffffe;
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
 	call [PC];
 }
 
 :CALLA "@"^DST20_0_4^"+"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x7 & DST20_0_4 {
-	SP = SP - 0x4;
-	*:4 SP = inst_next;
 	PC = *[RAM]:$(REG_SIZE) DST20_0_4;
 	PC = PC & 0xffffe;
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
 	DST20_0_4 = DST20_0_4 + 4;
 	call [PC];
 }
@@ -1148,11 +1148,11 @@ macro suba(dst, src) {
 }
 
 :CALLA imms_0_16^"(PC)"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x9 ; imms_0_16 {
-	SP = SP - 0x4;
-	*:4 SP = inst_next;
 	tmp:$(REG_SIZE) = inst_start + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp;
 	PC = PC & 0xffffe;
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
 	call [PC];
 }
 
