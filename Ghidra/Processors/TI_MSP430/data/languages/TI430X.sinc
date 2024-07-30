@@ -3206,10 +3206,11 @@ define pcodeop bcd_add;
 # Note: The manual says PUSHX doesn't use extension word. The manual is *WRONG*
 :PUSHX.B XRREG_B_AS 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x1 & postRegIncrement & XRREG_B_AS {
 	<top>
-	SP = SP - 0x2;
-	*:1 SP = XRREG_B_AS;
+	local tmp = SP - 0x2;
+	*:1 tmp = XRREG_B_AS;
 	#Status bits are not affected
 	build postRegIncrement;
+	SP = tmp;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
@@ -3217,10 +3218,11 @@ define pcodeop bcd_add;
 
 :PUSHX.W XRREG_W_AS 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x0 & postRegIncrement & XRREG_W_AS {
 	<top>
-	SP = SP - 0x2;
-	*:2 SP = XRREG_W_AS;
+	local tmp = SP - 0x2;
+	*:2 tmp = XRREG_W_AS;
 	#Status bits are not affected
 	build postRegIncrement;
+	SP = tmp;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
@@ -3228,10 +3230,11 @@ define pcodeop bcd_add;
 
 :PUSHX.A XRREG_A_AS 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x1 & postRegIncrement & XRREG_A_AS {
 	<top>
-	SP = SP - 0x4;
-	*:$(REG_SIZE) SP = XRREG_A_AS & 0xfffff;
+	local tmp = SP - 0x4;
+	*:4 tmp = XRREG_A_AS & 0xfffff;
 	#Status bits are not affected
 	build postRegIncrement;
+	SP = tmp;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
@@ -3448,23 +3451,26 @@ define pcodeop bcd_add;
 #############################
 # No Repeat
 :PUSHX.B XREG_B_AS 		is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS {
-	SP = SP - 0x2;
-	*:1 SP = XREG_B_AS;
+	local tmp = SP - 2;
+	*:1 tmp = XREG_B_AS;
 	#Status bits are not affected
 	build postRegIncrement;
+	SP = tmp;
 }	
 
 :PUSHX.W XREG_W_AS 		is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & XREG_W_AS {
-	SP = SP - 0x2;
-	*:2 SP = XREG_W_AS;
+	local tmp = SP - 2;
+	*:2 tmp = XREG_W_AS;
 	#Status bits are not affected
 	build postRegIncrement;
+	SP = tmp;
 }
 
 :PUSHX.A XREG_A_AS 		is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS {
-	SP = SP - 0x4;
-	*:$(REG_SIZE) SP = XREG_A_AS & 0xfffff;
+	local tmp_sp = SP - 4;
+	*:$(REG_SIZE) tmp_sp = XREG_A_AS & 0xfffff;
 	build postRegIncrement;
+	SP = tmp_sp;
 }	
 
 :RRAX.B XREG_B_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS_DEST {
