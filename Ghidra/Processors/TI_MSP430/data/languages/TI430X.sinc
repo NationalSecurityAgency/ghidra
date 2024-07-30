@@ -853,11 +853,12 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 }
 
 macro adda(dst, src) {
+	tmps:$(REG_SIZE) = src;
 	tmpd:$(REG_SIZE) = dst;
 	tmp:$(REG_SIZE) = src + dst;
 	dst = tmp & 0xfffff;
 	
-	setaddflags(dst,src,tmpd);
+	setaddflags(dst,tmps,tmpd);
 }
 
 :ADDA SRC20_8_4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & SRC20_8_4 & DST20_0_4 {
@@ -960,11 +961,12 @@ macro adda(dst, src) {
 }
 
 macro suba(dst, src) {
+	tmps:$(REG_SIZE) = src;
 	tmpd:$(REG_SIZE) = dst;
 	tmp:$(REG_SIZE) = dst - src;
 	dst = sext(tmp[0,20]);
 	
-	setsubflags(dst,src,tmpd);
+	setsubflags(dst,tmps,tmpd);
 }
 
 :SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & DST20_0_4 {
