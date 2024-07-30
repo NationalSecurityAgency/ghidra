@@ -698,8 +698,6 @@ POPAR4:						is ctx_mreg=0x4 & POPAR5 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 POPAR3:						is ctx_count=0 {}
 POPAR3:						is  POPAR4 {build POPAR4;}
 POPAR3:						is ctx_mreg=0x3 & POPAR4 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
-	R3 = *[RAM]:4 SP;
-	R3 = sext(R3[0,20]);
 	SP = SP + 4;
 	build POPAR4;
 }
@@ -715,8 +713,6 @@ POPAR2:						is ctx_mreg=0x2 & POPAR3 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 POPAR1:						is ctx_count=0 {}
 POPAR1:						is  POPAR2 {build POPAR2;}
 POPAR1:						is ctx_mreg=0x1 & POPAR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
-	SP = *[RAM]:4 SP;
-	SP = sext(SP[0,20]);
 	SP = SP + 4;
 	build POPAR2;
 }
@@ -827,7 +823,6 @@ POPWR4:						is ctx_mreg=0x4 & POPWR5 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 POPWR3:						is ctx_count=0 {}
 POPWR3:						is  POPWR4 {build POPWR4;}
 POPWR3:						is ctx_mreg=0x3 & POPWR4 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
-	R3 = zext(*[RAM]:2 SP);
 	SP = SP + 2;
 	build POPWR4;
 }
@@ -843,7 +838,6 @@ POPWR2:						is ctx_mreg=0x2 & POPWR3 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 POPWR1:						is ctx_count=0 {}
 POPWR1:						is  POPWR2 {build POPWR2;}
 POPWR1:						is ctx_mreg=0x1 & POPWR2 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
-	SP = zext(*[RAM]:2 SP);
 	SP = SP + 2;
 	build POPWR2;
 }
