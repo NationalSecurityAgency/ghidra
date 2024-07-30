@@ -1243,7 +1243,7 @@ macro suba(dst, src) {
 	DST20_0_4 = zext(tmpr s>> NUM2);
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
-	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(SIGN) = (DST20_0_4[15,1] != 0);
 	$(ZERO) = (DST20_0_4 == 0);
 }
 
@@ -1252,7 +1252,7 @@ macro suba(dst, src) {
 	DST20_0_4 = (DST20_0_4 << NUM2);
 	DST20_0_4 = zext(DST20_0_4:2);
 	$(CARRY) = (tmph != 0);
-	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(SIGN) = (DST20_0_4[15,1] != 0);
 	$(ZERO) = (DST20_0_4 == 0);
 }
 
