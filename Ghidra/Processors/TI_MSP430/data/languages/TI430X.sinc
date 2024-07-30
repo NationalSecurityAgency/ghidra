@@ -1309,14 +1309,6 @@ macro wzero(full, word)
 # double and single operand. The double operand ones come
 # first. A lot of the singles are covered under the address
 # extensions as they don't have the extension word.
-#
-# The manual talks about RRUX extended instructions.  However,
-# I've determined they don't really exist. First off, the base
-# RRU is not mentioned in the manual and is not in the toolchain.
-# The toolchain does take rrux instructions, but what I've figured
-# out is that for the W and A versions, it substitutes RRUM with 
-# the 'n' argument being 1. For the B version, it uses rra.b
-# followed by a bic.b instruction.
 #############################
 #
 # Double Operand
@@ -3311,6 +3303,23 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
+:RRUX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_zc=1 & ctx_al=1 & ctx_zc & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST & repeat_carry {
+	<top>
+	# Operation Flags...
+	# build repeat_carry;
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	$(CARRY) = (XRREG_B_AS_DEST & 0x1);
+	XRREG_B_AS_DEST = XRREG_B_AS_DEST >> 0x1;
+	# Result Flags...
+	$(SIGN) = (XRREG_B_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_B_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
 :RRCX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST & repeat_carry {
 	<top>
 	build repeat_carry;
@@ -3320,6 +3329,23 @@ define pcodeop bcd_add;
 	tmp:1 = $(CARRY);
 	$(CARRY) = XRREG_W_AS_DEST[0,1];
 	XRREG_W_AS_DEST = ((zext(tmp) << 0xF) | (XRREG_W_AS_DEST >> 0x1));
+	# Result Flags...
+	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_W_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRUX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_zc=1 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST & repeat_carry {
+	<top>
+	build repeat_carry;
+	# Operation Flags...
+	$(OVERFLOW) = 0;					# V Flag
+	# Operation...
+	$(CARRY) = XRREG_W_AS_DEST[0,1];
+	XRREG_W_AS_DEST = XRREG_W_AS_DEST >> 0x1;
 	# Result Flags...
 	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (XRREG_W_AS_DEST == 0x0);			# Z Flag
@@ -3341,6 +3367,23 @@ define pcodeop bcd_add;
 	XRREG_A_AS_DEST = sext(XRREG_A_AS_DEST[0,20]);
 	# Result Flags...
 	$(SIGN) = (XRREG_A_AS_DEST s< 0x0);			# S Flag
+	$(ZERO) = (XRREG_A_AS_DEST == 0x0);			# Z Flag
+	build postRegIncrement;
+	if (CNT == 0) goto inst_next;
+	CNT = CNT - 1;
+	goto <top>;
+}
+
+:RRUX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_zc=1 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST & repeat_carry {
+	<top>
+	build repeat_carry;
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
+	# Operation...
+	$(CARRY) = XRREG_A_AS_DEST[0,1];
+	XRREG_A_AS_DEST = (XRREG_A_AS_DEST >> 0x1) & 0x7FFFF;
+	# Result Flags...
+	$(SIGN) = XRREG_A_AS_DEST[19, 1] == 1;			# S Flag
 	$(ZERO) = (XRREG_A_AS_DEST == 0x0);			# Z Flag
 	build postRegIncrement;
 	if (CNT == 0) goto inst_next;
