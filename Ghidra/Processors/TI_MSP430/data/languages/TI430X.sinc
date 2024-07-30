@@ -2119,7 +2119,7 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RLAX.B	DST8_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & DST8_0_4 & reg_Direct16_0_4 {
+:RLAX.B	DST8_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & DST8_0_4 & reg_Direct16_0_4 & postStorePC {
 	<top>
 	# Operation Flags...
 	$(CARRY) = carry(DST8_0_4, DST8_0_4); 	 	# C Flag
@@ -2130,12 +2130,13 @@ define pcodeop bcd_add;
 	# Result Flags...
 	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
 	$(ZERO) = (DST8_0_4 == 0x0);			# Z Flag
+	build postStorePC;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
 }
 
-:RLAX.W	DST16_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=0 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & DST16_0_4 & reg_Direct16_0_4 {
+:RLAX.W	DST16_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=0 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & DST16_0_4 & reg_Direct16_0_4 & postStorePC {
 	<top>
 	# Operation Flags...
 	$(CARRY) = carry(DST16_0_4, DST16_0_4); 	 	# C Flag
@@ -2146,18 +2147,20 @@ define pcodeop bcd_add;
 	# Result Flags...
 	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
 	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	build postStorePC;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
 }
 
-:RLAX.A	DST20_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & src_Direct16_8_4=dest_Direct16_0_4 & ctx_al=0 & DST20_0_4 {
+:RLAX.A	DST20_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & src_Direct16_8_4=dest_Direct16_0_4 & ctx_al=0 & postStorePC & DST20_0_4 {
 	<top>
 	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmp:$(REG_SIZE) = DST20_0_4 + DST20_0_4;
 	DST20_0_4 = sext(tmp[0,20]);
 	
 	setaddflags(DST20_0_4,tmpd,tmpd);
+	build postStorePC;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
