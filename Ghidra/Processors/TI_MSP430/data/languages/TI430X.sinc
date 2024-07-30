@@ -3363,8 +3363,7 @@ define pcodeop bcd_add;
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = XRREG_A_AS_DEST[0,1];
-	XRREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XRREG_A_AS_DEST >> 0x1) & 0xEFFFF));
-	XRREG_A_AS_DEST = sext(XRREG_A_AS_DEST[0,20]);
+	XRREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XRREG_A_AS_DEST >> 0x1) & 0x7FFFF));
 	# Result Flags...
 	$(SIGN) = XRREG_A_AS_DEST[19, 1] == 1;
 	$(ZERO) = (XRREG_A_AS_DEST == 0x0);			# Z Flag
@@ -3538,8 +3537,7 @@ define pcodeop bcd_add;
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = XREG_A_AS_DEST[0,1];
-	XREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XREG_A_AS_DEST >> 0x1) & 0xEFFFF));
-	XREG_A_AS_DEST = sext(XREG_A_AS_DEST[0,20]);
+	XREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XREG_A_AS_DEST >> 0x1) & 0x7FFFF));
 	# Result Flags...
 	$(SIGN) = XREG_A_AS_DEST[19, 1] == 1;
 	$(ZERO) = (XREG_A_AS_DEST == 0x0);			# Z Flag
