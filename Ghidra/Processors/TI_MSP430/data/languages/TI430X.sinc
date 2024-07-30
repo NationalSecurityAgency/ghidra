@@ -921,9 +921,9 @@ macro adda(dst, src) {
 }
 
 :MOVA "@"^SRC20_8_4^"+", DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & SRC20_8_4 & DST20_0_4 {
-	DST20_0_4 = *[RAM]:$(REG_SIZE) SRC20_8_4 & ~1;
-	DST20_0_4 = sext(DST20_0_4[0,20]);
+	local tmp = *[RAM]:$(REG_SIZE) SRC20_8_4 & ~1;
 	SRC20_8_4 = SRC20_8_4 + 4;
+	DST20_0_4 = zext(tmp[0,20]);
 }
 
 :MOVA "&"^Abs20, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & DST20_0_4 ; Abs20 [ctx_ctregdest=imm_8_4;] {
@@ -1029,9 +1029,9 @@ macro suba(dst, src) {
 }
 
 :BRA "@"^SRC20_8_4^"+" 				is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & SRC20_8_4 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) SRC20_8_4 & 0xffffe;
+	local tmp = *[RAM]:$(REG_SIZE) SRC20_8_4 & 0xffffe;
 	SRC20_8_4 = SRC20_8_4 + 4;
-	goto [PC];
+	goto [tmp];
 }
 
 :BRA "&"^Abs20						is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & dest_0_4=0x0; Abs20 [ctx_ctregdest=imm_8_4;] {
@@ -2968,23 +2968,29 @@ define pcodeop bcd_add;
 	build postIncrementStore;
 }
 
-:MOVX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & bow=1 & tbl_bzero & postIncrementStore) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
-	XDEST_B_AD = XSRC_B_AS;
+:MOVX.B	XSRC_B_AS, XDEST_B_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & bow=1 & tbl_bzero & postIncrement & postStorePC) ... & XSRC_B_AS ... & XDEST_B_AD ...  {
+	local tmp:1 = XSRC_B_AS;
+	build postIncrement;
+	XDEST_B_AD = tmp;
 	build tbl_bzero;
 	#Status bits are not affected
-	build postIncrementStore;
+	build postStorePC;
 }
 
-:MOVX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & bow=0 & tbl_wzero & postIncrementStore) ... & XSRC_W_AS ... & XDEST_W_AD ... {
-	XDEST_W_AD = XSRC_W_AS;
+:MOVX.W	XSRC_W_AS, XDEST_W_AD			is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & bow=0 & tbl_wzero & postIncrement & postStorePC) ... & XSRC_W_AS ... & XDEST_W_AD ... {
+	local tmp:2 = XSRC_W_AS;
+	build postIncrement;
+	XDEST_W_AD = tmp;
 	build tbl_wzero;
 	#Status bits are not affected
-	build postIncrementStore;
+	build postStorePC;
 }
 
-:MOVX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
-	XDEST_A_AD = XSRC_A_AS & 0xfffff;
-	build postIncrementStore;
+:MOVX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x4 & bow=1 & postIncrement & postStorePC) ... & XSRC_A_AS ... & XDEST_A_AD ... {
+	local tmp:$(REG_SIZE) = XSRC_A_AS & 0xfffff;
+	build postIncrement;
+	XDEST_A_AD = tmp;
+	build postStorePC;
 }
 
 :POPX.B	XDEST_B_AD						is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & tbl_bzero) ... & XDEST_B_AD ...  {

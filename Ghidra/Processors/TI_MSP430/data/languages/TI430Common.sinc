@@ -886,22 +886,26 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 #	SRC Word
 #------------------
-:MOV^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
-	DEST_W_AD = SRC_W_AS;
+:MOV^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & tbl_wzero & postIncrement & postStorePC) ... & SRC_W_AS ... & DEST_W_AD ... {
+	local tmp:2 = SRC_W_AS;
+	build postIncrement;
+	DEST_W_AD = tmp;
 	build tbl_wzero;
 	#Status bits are not affected
-	build postIncrementStore;
+	build postStorePC;
 }
 
 
 #------------------
 #   SRC Byte
 #------------------
-:MOV^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	DEST_B_AD = SRC_B_AS;
+:MOV^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & tbl_bzero & postIncrement & postStorePC) ... & SRC_B_AS ... & DEST_B_AD ... {
+	local tmp:1 = SRC_B_AS;
+	build postIncrement;
+	DEST_B_AD = tmp;
 	build tbl_bzero;
 	#Status bits are not affected
-	build postIncrementStore;
+	build postStorePC;
 }
 
 
