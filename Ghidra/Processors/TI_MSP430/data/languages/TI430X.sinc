@@ -938,6 +938,12 @@ macro adda(dst, src) {
 	DST20_0_4 = sext(DST20_0_4[0,20]);
 }
 
+:MOVA imms_0_16^"(PC)", DST20_0_4		is ctx_haveext=0 & op16_12_4=0 & src_8_4=0 & insid=0x3 & SRC20_8_4 & DST20_0_4 ; imms_0_16 {
+	tmp:$(REG_SIZE) = inst_start + 2 + sext(imms_0_16:2);
+	DST20_0_4 = *[RAM]:$(REG_SIZE) tmp;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
+}
+
 :MOVA SRC20_8_4, "&"^Abs20				is ctx_haveext=0 & op16_12_4=0 & insid=0x6 & imm_0_4 & SRC20_8_4 ; Abs20 [ctx_ctregdest=imm_0_4;] {
 	tmp:$(REG_SIZE) = zext(Abs20) & ~1;
 	*[RAM]:$(REG_SIZE) tmp = SRC20_8_4 & 0xFFFFF;
@@ -1046,6 +1052,12 @@ macro suba(dst, src) {
 	goto [PC];
 }
 
+:BRA imms_0_16^"(PC)"		is ctx_haveext=0 & op16_12_4=0 & src_8_4=0 & insid=0x3 & SRC20_8_4 & dest_0_4=0x0; imms_0_16 {
+	tmp:$(REG_SIZE) = inst_start + 2 + sext(imms_0_16:2);
+	PC = *[RAM]:$(REG_SIZE) tmp & 0xffffe;
+	goto [PC];
+}
+
 :BRA "#"^Abs20add					is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & dest_0_4=0x0; Abs20add [ctx_ctregdest=imm_8_4;] {
 #	PC = Abs20add & 0xffffe;
 	goto Abs20add;
@@ -1114,6 +1126,15 @@ macro suba(dst, src) {
 
 :CALLA imms_0_16^"("^DST20_0_4^")"		is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x5 & DST20_0_4 ; imms_0_16 {
 	tmp:$(REG_SIZE) = DST20_0_4 + sext(imms_0_16:2);
+	PC = *[RAM]:$(REG_SIZE) tmp;
+	PC = PC & 0xffffe;
+	SP = SP - 0x4;
+	*:4 SP = inst_next;
+	call [PC];
+}
+
+:CALLA imms_0_16^"(PC)"		is ctx_haveext=0 & op16_8_8=0x13 & dest_0_4=0 & op16_4_4=0x5 & DST20_0_4 ; imms_0_16 {
+	tmp:$(REG_SIZE) = inst_start + 2 + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp;
 	PC = PC & 0xffffe;
 	SP = SP - 0x4;
