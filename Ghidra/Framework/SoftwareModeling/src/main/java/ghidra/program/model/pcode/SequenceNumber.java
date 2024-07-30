@@ -119,10 +119,10 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 		if (val != 0) {
 			return val;
 		}
-		if (uniq < sq.uniq) {
+		if (order < sq.order) {
 			return -1;
 		}
-		if (sq.uniq < uniq) {
+		if (sq.order < order) {
 			return 1;
 		}
 		return 0;
