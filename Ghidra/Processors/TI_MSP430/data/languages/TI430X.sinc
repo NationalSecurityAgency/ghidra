@@ -313,22 +313,25 @@ repeat_carry: is ctx_zc = 1 {$(CARRY) = 0;}
 
 macro setaddflags(ans, in1, in2)
 {
-	tmp1:$(REG_SIZE) = zext(in1[0,20]);
-	tmp2:$(REG_SIZE) = zext(in2[0,20]);
-	tmp1 = tmp1 + tmp2;
-	$(CARRY) = tmp1 > 0xFFFFF;
-	$(OVERFLOW) = ((in1 s>= 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s< 0) & (in2 s< 0) & (ans s>= 0));
-	$(SIGN) = (ans s< 0);
-	$(ZERO) = (ans == 0);
+	local src_neg:1 = in1[19,1] == 1;
+	local dst_neg:1 = in2[19,1] == 1;
+	local ans_neg:1 = ans[19,1] == 1;
+
+	$(CARRY) = in1[0,20] + in2[0,20] > 0xFFFFF;
+	$(OVERFLOW) = (!src_neg && !dst_neg && ans_neg) || (src_neg && dst_neg && !ans_neg);
+	$(SIGN) = ans_neg;
+	$(ZERO) = (ans[0,20] == 0);
 }
 
 macro setsubflags(ans, in1, in2)
 {
-	tmp1:$(REG_SIZE) = zext(in1[0,20]);
-	tmp2:$(REG_SIZE) = zext(in2[0,20]);
+	tmp1:$(REG_SIZE) = in1 << 12 s>> 12; # Rscr
+	tmp2:$(REG_SIZE) = in2 << 12 s>> 12; # Rdst
+	tmpans:$(REG_SIZE) = ans << 12 s>> 12;
+
 	$(CARRY) = tmp1 <= tmp2;
-	$(OVERFLOW) = ((in1 s< 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s>= 0) & (in2 s< 0) & (ans s>= 0));
-	$(SIGN) = (ans s< 0);
+	$(OVERFLOW) = ((tmp1 s< 0) && (tmp2 s>= 0) && (tmpans s< 0)) || ((tmp1 s>= 0) && (tmp2 s< 0) && (tmpans s>= 0));
+	$(SIGN) = tmpans s< 0;
 	$(ZERO) = (ans == 0);
 }
 
@@ -1081,14 +1084,14 @@ macro suba(dst, src) {
 :TSTA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xD & src_8_4=0x3 & DST20_0_4 {
 	$(CARRY) = 1;
 	$(OVERFLOW) = 0;
-	$(SIGN) = (DST20_0_4 s< 0);
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0);
 }
 
 :TSTA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4=0x0 & DST20_0_4 ; imm_0_16=0x0000 {
 	$(CARRY) = 1;
 	$(OVERFLOW) = 0;
-	$(SIGN) = (DST20_0_4 s< 0);
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0);
 }
 
@@ -1192,8 +1195,9 @@ macro suba(dst, src) {
 }
 
 :RRAM.A	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x14 & NUM2 & DST20_0_4 & rrn {
-	tmph:$(REG_SIZE) = (DST20_0_4 >> rrn) & 0x1;
-	DST20_0_4 = (DST20_0_4 s>> NUM2);
+	local tmp:$(REG_SIZE) = DST20_0_4 << 12 s>> 12; # Rscr
+	tmph:$(REG_SIZE) = (tmp >> rrn) & 0x1;
+	DST20_0_4 = (tmp s>> NUM2) & 0xfffff;
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
 	$(SIGN) = (DST20_0_4[19,1] != 0);
@@ -1489,7 +1493,7 @@ macro wzero(full, word)
 	DST20_0_4 = DST20_0_4 & XRSRC_A_AS;
 	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
 	build postIncrementStore;
@@ -1604,7 +1608,7 @@ macro wzero(full, word)
 	# Result Flags...
 	result = sext(result[0,20]);
 	$(CARRY) = (result != 0x0);			# C Flag
-	$(SIGN) = (result s< 0x0);			# S Flag
+	$(SIGN) = result[19, 1] == 1;
 	$(ZERO) = (result == 0x0);			# Z Flag
 	build postIncrement;
 	if (CNT == 0) goto inst_next;
@@ -1728,7 +1732,7 @@ define pcodeop bcd_add;
 	$(CARRY) = temp >= 0x99999;
 	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1781,7 +1785,7 @@ define pcodeop bcd_add;
 	DST20_0_4 = bcd_add(temp_src, temp_dest, temp_carry);
 	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	$(CARRY) = (temp_src + temp_dest + temp_carry) > 0x99999;
 	build postIncrementStore;
@@ -2020,7 +2024,7 @@ define pcodeop bcd_add;
 	DST20_0_4 = DST20_0_4 ^ -1;
 	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
 	build postIncrementStore;
@@ -2194,7 +2198,7 @@ define pcodeop bcd_add;
 	build repeat_carry;
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
-    $(CARRY) = (brw <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
+	$(CARRY) = (brw <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST8_0_4, brw);	
 	# Operation...
 	DST8_0_4 = DST8_0_4 - brw;
@@ -2247,7 +2251,7 @@ define pcodeop bcd_add;
 	build repeat_carry;
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
-    $(CARRY) = ((brw + XRSRC_B_AS) <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
+	$(CARRY) = ((brw + XRSRC_B_AS) <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS + brw);	
 	# Operation...
 	DST8_0_4 = DST8_0_4 - XRSRC_B_AS - brw;
@@ -2419,7 +2423,7 @@ define pcodeop bcd_add;
 	DST20_0_4 = DST20_0_4 ^ XRSRC_A_AS;
 	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(SIGN) = DST20_0_4[19, 1] == 1;
 	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
 	build postIncrementStore;
@@ -2576,7 +2580,7 @@ define pcodeop bcd_add;
 	XDEST_A_AD = XDEST_A_AD & XSRC_A_AS;
 	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
 	# Result Flags...
-	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(SIGN) = XDEST_A_AD[19, 1] == 1;
 	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
 	$(CARRY) = (XDEST_A_AD != 0x0);			# C Flag
 	build postIncrementStore;
@@ -2656,7 +2660,7 @@ define pcodeop bcd_add;
 	# Result Flags...
 	result = sext(result[0,20]);
 	$(CARRY) = (result != 0x0);			# C Flag
-	$(SIGN) = (result s< 0x0);			# S Flag
+	$(SIGN) = result[19, 1] == 1;
 	$(ZERO) = (result == 0x0);			# Z Flag
 	build postIncrement;
 }
@@ -2742,7 +2746,7 @@ define pcodeop bcd_add;
 	XDEST_A_AD = bcd_add(XDEST_A_AD);
 	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
 	# Result Flags...
-	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(SIGN) = XDEST_A_AD[19, 1] == 1;
 	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
 	build postIncrementStore;
 }
@@ -2778,7 +2782,7 @@ define pcodeop bcd_add;
 	XDEST_A_AD = bcd_add(XSRC_A_AS ,XDEST_A_AD);
 	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
 	# Result Flags...
-	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(SIGN) = XDEST_A_AD[19, 1] == 1;
 	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
 	build postIncrementStore;
 }
@@ -2956,7 +2960,7 @@ define pcodeop bcd_add;
 	XDEST_A_AD = XDEST_A_AD ^ -1;
 	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
 	# Result Flags...
-	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(SIGN) = XDEST_A_AD[19, 1] == 1;
 	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
 	$(CARRY) = (XDEST_A_AD != 0x0);			# C Flag
 	build postIncrementStore;
@@ -3171,7 +3175,7 @@ define pcodeop bcd_add;
 	XDEST_A_AD = XDEST_A_AD ^ XSRC_A_AS;
 	XDEST_A_AD = sext(XDEST_A_AD[0,20]);
 	# Result Flags...
-	$(SIGN) = (XDEST_A_AD s< 0x0);			# S Flag
+	$(SIGN) = XDEST_A_AD[19, 1] == 1;
 	$(ZERO) = (XDEST_A_AD == 0x0);			# Z Flag
 	$(CARRY) = (XDEST_A_AD != 0x0);			# C Flag
 	build postIncrementStore;
@@ -3254,7 +3258,7 @@ define pcodeop bcd_add;
 :RRAX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST {
 	<top>
 	$(CARRY) = XRREG_A_AS_DEST[0,1];
-	XRREG_A_AS_DEST = (XRREG_A_AS_DEST s>> 1);
+	XRREG_A_AS_DEST = (XRREG_A_AS_DEST << 12 s>> 13) & 0xfffff;
 	$(OVERFLOW) = 0;
 	$(SIGN) = (XRREG_A_AS_DEST[19,1] != 0);
 	$(ZERO) = (XRREG_A_AS_DEST == 0);
@@ -3345,7 +3349,7 @@ define pcodeop bcd_add;
 	XRREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XRREG_A_AS_DEST >> 0x1) & 0xEFFFF));
 	XRREG_A_AS_DEST = sext(XRREG_A_AS_DEST[0,20]);
 	# Result Flags...
-	$(SIGN) = (XRREG_A_AS_DEST s< 0x0);			# S Flag
+	$(SIGN) = XRREG_A_AS_DEST[19, 1] == 1;
 	$(ZERO) = (XRREG_A_AS_DEST == 0x0);			# Z Flag
 	build postRegIncrement;
 	if (CNT == 0) goto inst_next;
@@ -3418,7 +3422,7 @@ define pcodeop bcd_add;
 	# Operation...	
 	XRREG_A_AS_DEST2 = sext(XRREG_A_AS_DEST2:1);
 	# Result Flags...
-	$(SIGN) = (XRREG_A_AS_DEST2 s< 0x0);			# S Flag
+	$(SIGN) = XRREG_A_AS_DEST2[19, 1] == 1;
 	$(ZERO) = (XRREG_A_AS_DEST2 == 0x0);			# Z Flag
 	$(CARRY) = (XRREG_A_AS_DEST2 != 0x0);			# C Flag
 	build postRegIncrement;
@@ -3475,7 +3479,7 @@ define pcodeop bcd_add;
 
 :RRAX.A XREG_A_AS_DEST 	is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS_DEST {
 	$(CARRY) = XREG_A_AS_DEST[0,1];
-	XREG_A_AS_DEST = (XREG_A_AS_DEST s>> 1);
+	XREG_A_AS_DEST = (XREG_A_AS_DEST << 12 s>> 13) & 0xfffff;
 	$(OVERFLOW) = 0;
 	$(SIGN) = (XREG_A_AS_DEST[19,1] != 0);
 	$(ZERO) = (XREG_A_AS_DEST == 0);
@@ -3517,7 +3521,7 @@ define pcodeop bcd_add;
 	XREG_A_AS_DEST = ((zext(tmp) << 0x13) | ((XREG_A_AS_DEST >> 0x1) & 0xEFFFF));
 	XREG_A_AS_DEST = sext(XREG_A_AS_DEST[0,20]);
 	# Result Flags...
-	$(SIGN) = (XREG_A_AS_DEST s< 0x0);			# S Flag
+	$(SIGN) = XREG_A_AS_DEST[19, 1] == 1;
 	$(ZERO) = (XREG_A_AS_DEST == 0x0);			# Z Flag
 	build postRegIncrement;
 }
@@ -3559,7 +3563,7 @@ define pcodeop bcd_add;
 	# Operation...	
 	XREG_A_AS_DEST2 = sext(XREG_A_AS_DEST2:1);
 	# Result Flags...
-	$(SIGN) = (XREG_A_AS_DEST2 s< 0x0);			# S Flag
+	$(SIGN) = XREG_A_AS_DEST2[19, 1] == 1;
 	$(ZERO) = (XREG_A_AS_DEST2 == 0x0);			# Z Flag
 	$(CARRY) = (XREG_A_AS_DEST2 != 0x0);			# C Flag
 	build postRegIncrement;
