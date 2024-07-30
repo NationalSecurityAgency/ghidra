@@ -689,6 +689,19 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	build postRegIncrement;
 }
 
+@if REG_SIZE == "4"
+:SXT DST20_0_4 is ctx_haveext=0 & as=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) & DST20_0_4 {
+	# Operation...
+	DST20_0_4 = sext(DST20_0_4:1) & 0xfffff;
+	# Result Flags...
+	$(SIGN) = (DST20_0_4[19,1] == 0x1);		# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
+	$(OVERFLOW) = 0x0;				# V Flag
+	build postRegIncrement;
+}
+@endif
+
 
 ###################################################################################
 #
