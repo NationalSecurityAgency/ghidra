@@ -54,7 +54,7 @@ NUM2: val					is rrn [ val = rrn+1;] {export *[const]:1 val;}
 XREG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 XREG_B_AS: ImmS20Src^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Src; export *:1 tmp;}
 XREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_B_AS: Label20Src 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; Label20Src {export *:1 Label20Src; } # Symbolic
 XREG_B_AS: "#"^ImmS20Dst 		 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; ImmS20Dst {export *[const]:1 ImmS20Dst; } # Immediate
 XREG_B_AS: "&"^Imm20Dst 		 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; Imm20Dst {export *:1 Imm20Dst; } # Absolute
@@ -67,7 +67,7 @@ XREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	
 
 XRREG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 XRREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
 XRREG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Constant
 XRREG_B_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:1;}		# Constant
@@ -76,10 +76,10 @@ XRREG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# C
 XRREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
 
 XREG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
-XREG_W_AS: ImmS20Src^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; ImmS20Src {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Src; export *:2 tmp;}
-XREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-XREG_W_AS: Label20Src 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; Label20Src {export *:2 Label20Src; } # Symbolic
+XREG_W_AS: ImmS20Src^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; ImmS20Src {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Src & ~1; export *:2 tmp;}
+XREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect (@Rn):
+XREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
+XREG_W_AS: Label20Src 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; Label20Src {local tmp:$(REG_SIZE) = Label20Src & ~1; export *:2 tmp; } # Symbolic
 XREG_W_AS: "#"^ImmS20Dst 		 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; ImmS20Dst {export *[const]:2 ImmS20Dst; } # Immediate
 XREG_W_AS: "&"^Imm20Dst 		 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; Imm20Dst {export *:2 Imm20Dst; } # Absolute
 XREG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
@@ -90,8 +90,8 @@ XREG_W_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x0  { export 2:2;}		# Co
 XREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	    # Constant
 
 XRREG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
-XRREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect (@Rn):
+XRREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
 XRREG_W_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x0  { export 8:2;}		# Constant
 XRREG_W_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x0  { export 0:2;}		# Constant
@@ -100,12 +100,12 @@ XRREG_W_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x0  { export 2:2;}		# C
 XRREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	    # Constant
 
 XREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
-XREG_A_AS: ImmS20Src^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Src; export *:$(REG_SIZE) tmp;}
-XREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS: ImmS20Src^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Src & ~1; export *:$(REG_SIZE) tmp;}
+XREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_A_AS: Label20Src 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; Label20Src  {export *:$(REG_SIZE) Label20Src; } # Symbolic
 XREG_A_AS: "#"^ImmS20Dst 						 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; ImmS20Dst {export *[const]:$(REG_SIZE) ImmS20Dst; } # Immediate
-XREG_A_AS: "&"^Imm20Dst 						 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; Imm20Dst {export *:$(REG_SIZE) Imm20Dst; } # Absolute
+XREG_A_AS: "&"^Imm20Dst 						 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; Imm20Dst {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 XREG_A_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE);}		# Constant
 XREG_A_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE);}		# Constant
 XREG_A_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE);}		# Constant
@@ -114,8 +114,8 @@ XREG_A_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZ
 XREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant	
 
 XRREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
-XRREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XRREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_A_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE);}		# Constant
 XRREG_A_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE);}		# Constant
 XRREG_A_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE);}		# Constant
@@ -126,43 +126,43 @@ XRREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xfffffff
 XREG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 XREG_B_AS_DEST: ImmS20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Dst {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Dst; export *:1 tmp;}
 XREG_B_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_B_AS_DEST: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; Label20Dst {export *:1 Label20Dst; } # Symbolic
 XREG_B_AS_DEST: "&"^Imm20Dst 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; Imm20Dst {export *:1 Imm20Dst; } # Absolute
 
 XRREG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & reg_Direct16_0_4 & bow=0x1  { ztmp:1 = DST8_0_4; reg_Direct16_0_4=0; DST8_0_4 = ztmp; export DST8_0_4;} # Word/Register Direct (Rn):
 XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 
-XREG_W_AS_DEST: ImmS20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; ImmS20Dst {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Dst; export *:2 tmp;}
-XREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-XREG_W_AS_DEST: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; Label20Dst {export *:2 Label20Dst; } # Symbolic
-XREG_W_AS_DEST: "&"^Imm20Dst 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; Imm20Dst {export *:2 Imm20Dst; } # Absolute
+XREG_W_AS_DEST: ImmS20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; ImmS20Dst {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + ImmS20Dst) & AMASK; export *:2 tmp;}
+XREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect (@Rn):
+XREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
+XREG_W_AS_DEST: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; Label20Dst {local tmp:$(REG_SIZE) = Label20Dst & ~1; export *:2 tmp; } # Symbolic
+XREG_W_AS_DEST: "&"^Imm20Dst 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; Imm20Dst {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:2 tmp; } # Absolute
 
 XRREG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & as=0x0 & reg_Direct16_0_4 & bow=0x0  {ztmp:2 = DST16_0_4; reg_Direct16_0_4=0; DST16_0_4 = ztmp;export DST16_0_4;} # Word/Register Direct (Rn):
-XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect (@Rn):
+XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 
-XREG_A_AS_DEST: ImmS20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Dst {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Dst; export *:$(REG_SIZE) tmp;}
-XREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS_DEST: ImmS20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Dst {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Dst & ~1; export *:$(REG_SIZE) tmp;}
+XREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_A_AS_DEST: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; Label20Dst {export *:$(REG_SIZE) Label20Dst; } # Symbolic
 XREG_A_AS_DEST: "&"^Imm20Dst 					 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; Imm20Dst {export *:$(REG_SIZE) Imm20Dst; } # Absolute
 
 XRREG_A_AS_DEST: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
-XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 
-XREG_A_AS_DEST2: Imm20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; Imm20Dst {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + Imm20Dst; export *:$(REG_SIZE) tmp;}
-XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS_DEST2: Imm20Dst^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; Imm20Dst {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + Imm20Dst & ~1; export *:$(REG_SIZE) tmp;}
+XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_A_AS_DEST2: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; Label20Dst {export *:$(REG_SIZE) Label20Dst; } # Symbolic
-XREG_A_AS_DEST2: "&"^Imm20Dst 					 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; Imm20Dst {export *:$(REG_SIZE) Imm20Dst; } # Absolute
+XREG_A_AS_DEST2: "&"^Imm20Dst 					 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; Imm20Dst {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 
 XRREG_A_AS_DEST2: dest_0_4						 is dest_0_4 & as=0 & bow=0x0 {export dest_0_4;}
-XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 
 XSRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1 { export SRC8_8_4;} # Word/Register Direct (Rn):
 XSRC_B_AS: ImmS20Src^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = src_Indexed16_8_4 + ImmS20Src; export *:1 tmp;}
@@ -180,7 +180,7 @@ XSRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 	
 
 XRSRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1 { export SRC8_8_4;} # Word/Register Direct (Rn):
 XRSRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XRSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
 XRSRC_B_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:1; }		# Constant
 XRSRC_B_AS: "#0" 						 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:1; }		# Constant
@@ -191,11 +191,11 @@ XRSRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 
 
 XSRC_W_AS: SRC16_8_4 			 	 is SRC16_8_4 & as=0x0 & bow=0x0 {export SRC16_8_4;} # Word/Register Direct (Rn):
 XSRC_W_AS: ImmS20Src^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 ; ImmS20Src {tmp:$(REG_SIZE) = src_Indexed16_8_4 + ImmS20Src; export *:2 tmp;}
-XSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-XSRC_W_AS: Label20Src 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 ; Label20Src {export *:2 Label20Src; } # Symbolic
+XSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:2 tmp;} # Word/Register Indirect (@Rn):
+XSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
+XSRC_W_AS: Label20Src 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 ; Label20Src {local tmp:$(REG_SIZE) = Label20Src & ~1; export *:2 tmp; } # Symbolic
 XSRC_W_AS: "#"^ImmS20Src 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; ImmS20Src {export *[const]:2 ImmS20Src; } # Immediate
-XSRC_W_AS: "&"^Imm20Src 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 ; Imm20Src {export *:2 Imm20Src; } # Absolute
+XSRC_W_AS: "&"^Imm20Src 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 ; Imm20Src {local tmp:$(REG_SIZE) = Imm20Src & ~1; export *:2 tmp; } # Absolute
 XSRC_W_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
 XSRC_W_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Constant
 XSRC_W_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
@@ -204,8 +204,8 @@ XSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Co
 XSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
 
 XRSRC_W_AS: SRC16_8_4 			 	 is SRC16_8_4 & as=0x0 & bow=0x0 {export SRC16_8_4;} # Word/Register Direct (Rn):
-XRSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XRSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:2 tmp;} # Word/Register Indirect (@Rn):
+XRSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_W_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
 XRSRC_W_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Constant
 XRSRC_W_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
@@ -214,12 +214,12 @@ XRSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# C
 XRSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
 
 XSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
-XSRC_A_AS: ImmS20Src^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = src_Indexed16_8_4 + ImmS20Src; export *:$(REG_SIZE) tmp;}
-XSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_A_AS: ImmS20Src^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = src_Indexed16_8_4 + ImmS20Src & ~1; export *:$(REG_SIZE) tmp;}
+XSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XSRC_A_AS: Label20Src 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 ; Label20Src {export *:$(REG_SIZE) Label20Src; } # Symbolic
 XSRC_A_AS: "#"^ImmS20Src 	 				 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; ImmS20Src {export *[const]:$(REG_SIZE) ImmS20Src; } # Immediate
-XSRC_A_AS: "&"^Imm20Src 	 				 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; Imm20Src {export *:$(REG_SIZE) Imm20Src; } # Absolute
+XSRC_A_AS: "&"^Imm20Src 	 				 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; Imm20Src {local tmp:$(REG_SIZE) = Imm20Src & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 XSRC_A_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE); }		# Constant
 XSRC_A_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE); }		# Constant
 XSRC_A_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE); }		# Constant
@@ -228,8 +228,8 @@ XSRC_A_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE
 XSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant	
 
 XRSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
-XRSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XRSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
+XRSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_A_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE); }		# Constant
 XRSRC_A_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE); }		# Constant
 XRSRC_A_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE); }		# Constant
@@ -262,44 +262,44 @@ XDEST_B_AD: "&"^Imm20Dst   is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0
 XDEST_W_AD: DST16_0_4 		  		 is DST16_0_4 & ad=0x0 & bow=0x0
      {export DST16_0_4;} # Word/Register Direct (Rn):
 XDEST_W_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 ; ImmS20Dst
-     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst; export *:2 tmp;}
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:2 tmp;}
 XDEST_W_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; ImmS20Dst
-     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst; export *:2 tmp;}
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:2 tmp;}
 XDEST_W_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; ImmS20Dst
-     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst; export *:2 tmp;}
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:2 tmp;}
 XDEST_W_AD: Label20Dst 				  is dest=0x0 & ad=0x1 & bow=0x0 ; Label20Dst
-     {export *:2 Label20Dst; } # Symbolic
+     {local tmp:$(REG_SIZE) = Label20Dst & ~1; export *:2 tmp; } # Symbolic
 XDEST_W_AD: Label20DstExt 				  is dest=0x0 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; Label20DstExt
-     {export *:2 Label20DstExt; } # Symbolic
+     {local tmp:$(REG_SIZE) = Label20DstExt & ~1; export *:2 tmp; } # Symbolic
 XDEST_W_AD: Label20DstExt 				  is dest=0x0 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; Label20DstExt
-     {export *:2 Label20DstExt; } # Symbolic
+     {local tmp:$(REG_SIZE) = Label20DstExt & ~1; export *:2 tmp; } # Symbolic
 XDEST_W_AD: "&"^Imm20Dst 	  is dest=0x2 & ad=0x1 & bow=0x0 ; Imm20Dst
-     {export *:2 Imm20Dst; } # Absolute
+     {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:2 tmp; } # Absolute
 XDEST_W_AD: "&"^Imm20Dst   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; Imm20Dst
-     {export *:2 Imm20Dst; } # Absolute
+     {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:2 tmp; } # Absolute
 XDEST_W_AD: "&"^Imm20Dst   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; Imm20Dst
-     {export *:2 Imm20Dst; } # Absolute
+     {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:2 tmp; } # Absolute
 
 XDEST_A_AD: dest_0_4 		  		 is dest_0_4 & ad=0x0 & bow=0x1
      { export dest_0_4; }        # Word/Register Direct (Rn):
 XDEST_A_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 ; ImmS20Dst
-     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst; export *:$(REG_SIZE) tmp;}
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:$(REG_SIZE) tmp;}
 XDEST_A_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; ImmS20Dst
-     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst; export *:$(REG_SIZE) tmp;}
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:$(REG_SIZE) tmp;}
 XDEST_A_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; ImmS20Dst
-     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst; export *:$(REG_SIZE) tmp;}
+     {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:$(REG_SIZE) tmp;}
 XDEST_A_AD: Label20Dst 				  is dest=0x0 & ad=0x1 & bow=0x1 ; Label20Dst
-     {export *:$(REG_SIZE) Label20Dst; } # Symbolic
+     {local tmp:$(REG_SIZE) = Label20Dst & ~1; export *:$(REG_SIZE) tmp; } # Symbolic
 XDEST_A_AD: Label20DstExt			  is dest=0x0 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ;Label20DstExt
-     {export *:$(REG_SIZE) Label20DstExt; } # Symbolic
+     {local tmp:$(REG_SIZE) = Label20DstExt & ~1; export *:$(REG_SIZE) tmp; } # Symbolic
 XDEST_A_AD: Label20DstExt			  is dest=0x0 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; Label20DstExt
-     {export *:$(REG_SIZE) Label20DstExt; } # Symbolic
+     {local tmp:$(REG_SIZE) = Label20DstExt & ~1; export *:$(REG_SIZE) tmp; } # Symbolic
 XDEST_A_AD: "&"^Imm20Dst 			  is dest=0x2 & ad=0x1 & bow=0x1 ; Imm20Dst
-     {export *:$(REG_SIZE) Imm20Dst; } # Absolute
+     {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 XDEST_A_AD: "&"^Imm20Dst			  is dest=0x2 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; Imm20Dst
-     {export *:$(REG_SIZE) Imm20Dst; } # Absolute
+     {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 XDEST_A_AD: "&"^Imm20Dst			  is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; Imm20Dst
-     {export *:$(REG_SIZE) Imm20Dst; } # Absolute
+     {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 
 #Use repeat_carry with a build directive at the beginning of a RPT loop
 
@@ -928,35 +928,35 @@ macro adda(dst, src) {
 }
 
 :MOVA "@"^src_8_4, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & dest_0_4 {
-	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4;
+	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4 & ~1;
 	dest_0_4 = sext(dest_0_4[0,20]);
 }
 
 :MOVA "@"^src_8_4^"+", dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & dest_0_4 {
-	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4;
+	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4 & ~1;
 	dest_0_4 = sext(dest_0_4[0,20]);
 	src_8_4 = src_8_4 + 4;
 }
 
 :MOVA "&"^Abs20, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & dest_0_4 ; Abs20 [ctx_ctregdest=imm_8_4;] {
-	tmp:$(REG_SIZE) = zext(Abs20);
+	tmp:$(REG_SIZE) = zext(Abs20) & ~1;
 	dest_0_4 = *[RAM]:$(REG_SIZE) tmp;
 	dest_0_4 = sext(dest_0_4[0,20]);
 }
 
 :MOVA imms_0_16^"("^src_8_4^")", dest_0_4		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & src_8_4 & dest_0_4 ; imms_0_16 {
-	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2);
+	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2) & ~1;
 	dest_0_4 = *[RAM]:$(REG_SIZE) tmp;
 	dest_0_4 = sext(dest_0_4[0,20]);
 }
 
 :MOVA src_8_4, "&"^Abs20				is ctx_haveext=0 & op16_12_4=0 & insid=0x6 & imm_0_4 & src_8_4 ; Abs20 [ctx_ctregdest=imm_0_4;] {
-	tmp:$(REG_SIZE) = zext(Abs20);
+	tmp:$(REG_SIZE) = zext(Abs20) & ~1;
 	*[RAM]:$(REG_SIZE) tmp = src_8_4 & 0xFFFFF;
 }
 
 :MOVA src_8_4, imms_0_16^"("^dest_0_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x7 & src_8_4 & dest_0_4 ; imms_0_16 {
-	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2);
+	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2) & ~1;
 	*[RAM]:$(REG_SIZE) tmp = src_8_4 & 0xFFFFF;
 }
 
