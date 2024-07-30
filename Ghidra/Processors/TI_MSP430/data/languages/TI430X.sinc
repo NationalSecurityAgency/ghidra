@@ -847,12 +847,16 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	goto [PC];
 }
 
-:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 {
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = src_8_4 + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+macro adda(dst, src) {
+	tmpd:$(REG_SIZE) = dst;
+	tmp:$(REG_SIZE) = src + dst;
+	dst = tmp & 0xfffff;
 	
-	setaddflags(dest_0_4,src_8_4,tmpd);
+	setaddflags(dst,src,tmpd);
+}
+
+:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 {
+	adda(dest_0_4,src_8_4);
 }
 
 :ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 & dest_0_4=0x0 {
@@ -871,6 +875,15 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	dest_0_4 = sext(tmp[0,20]);
 	
 	setaddflags(dest_0_4,tmps,tmpd);
+}
+
+# `ADDA SR, <dst>`, verified with hardware but not in spec.
+:ADDA "#"^4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x2 & dest_0_4 {
+	adda(dest_0_4, 4:$(REG_SIZE));
+}
+
+:INCDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x3 & dest_0_4 {
+	adda(dest_0_4, 2:$(REG_SIZE));
 }
 
 :ADDA "#"^Abs20s, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
@@ -946,12 +959,20 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	dest_0_4 = src_8_4;
 }
 
-:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 {
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = dest_0_4 - src_8_4;
-	dest_0_4 = sext(tmp[0,20]);
+:CLRA dest_0_4						is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4=0x3 & dest_0_4 {
+	dest_0_4 = 0:$(REG_SIZE);
+}
+
+macro suba(dst, src) {
+	tmpd:$(REG_SIZE) = dst;
+	tmp:$(REG_SIZE) = dst - src;
+	dst = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,src_8_4,tmpd);
+	setsubflags(dst,src,tmpd);
+}
+
+:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 {
+	suba(dest_0_4, src_8_4);
 }
 
 :SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 & dest_0_4=0x0 {
@@ -1051,22 +1072,29 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 ################
 #
 # Special cases of SUBA/ADDA/CMPA/MOVA
+
+# `SUBA SR, <dst>`, verified with hardware but not in spec.
+:SUBA "#"^4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4=0x2 & dest_0_4 {
+	suba(dest_0_4, 4:$(REG_SIZE));
+}
+
+:DECDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4=0x3 & dest_0_4 {
+	suba(dest_0_4, 2:$(REG_SIZE));
+}
+
 :DECDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0002  {
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmps:$(REG_SIZE) = 2;
-	dest_0_4 = dest_0_4 - 2;
-	dest_0_4 = sext(dest_0_4[0,20]);
-	
-	setsubflags(dest_0_4,tmps,tmpd);
+	suba(dest_0_4, 2:$(REG_SIZE));
 }
 
 :INCDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0002  {
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmps:$(REG_SIZE) = 2;
-	dest_0_4 = dest_0_4 + 2;
-	dest_0_4 = sext(dest_0_4[0,20]);
-	
-	setaddflags(dest_0_4,tmps,tmpd);
+	adda(dest_0_4, 2:$(REG_SIZE));
+}
+
+:TSTA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xD & src_8_4=0x3 & dest_0_4 {
+	$(CARRY) = 1;
+	$(OVERFLOW) = 0;
+	$(SIGN) = (dest_0_4 s< 0);
+	$(ZERO) = (dest_0_4 == 0);
 }
 
 :TSTA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0000 {
