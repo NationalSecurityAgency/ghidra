@@ -467,6 +467,7 @@ tbl_wzero_singleop:		is epsilon {}
 #    does correct increment of source register
 #    Also catches when PC is being stored to and does the correct branching
 #
+postRegIncrement:   is as=0x3 & dest_0_4   & ctx_al=0x0 & reg_InDirect16_0_4	 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 4; }
 postRegIncrement:   is as=0x3 & dest_0_4   & bow=0x0 & reg_InDirect16_0_4                { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 2; }
 postRegIncrement:   is as=0x3 & dest_0_4=1 & bow=0x0 & reg_InDirect16_0_4 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0)               { } # PUSH.W SP, SP modification covered by PUSH
 postRegIncrement:   is as=0x3 & dest_0_4   & bow=0x1 & reg_InDirect16_0_4                 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 1; }
@@ -474,12 +475,14 @@ postRegIncrement:  	is as=0x3 & dest_0_4=1 & bow=0x1 & reg_InDirect16_0_4 { reg_
 postRegIncrement:  	is as=0x3 & dest_0_4=1 & bow=0x1 & reg_InDirect16_0_4 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0) { } # PUSH.B @SP+, SP modification covered by PUSH
 postRegIncrement:   is as=0x3 & dest_0_4=0 & bow=0x0 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
 postRegIncrement:   is as=0x3 & dest_0_4=0 & bow=0x1 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
+postRegIncrement:   is as=0x3 & (dest_0_4=2 | dest_0_4=3) & ctx_al=0x0 & (bow=0x1 | bow=0x0) { }
 postRegIncrement:   is as=0x3 & dest_0_4=2 & bow=0x1     { }
 postRegIncrement:   is as=0x3 & dest_0_4=3 & bow=0x1     { }
 postRegIncrement:   is as=0x3 & dest_0_4=2 & bow=0x0     { }
 postRegIncrement:   is as=0x3 & dest_0_4=3 & bow=0x0     { }
-postRegIncrement:   is as=0x0 & dest_0_4=0 & bow=0x0 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFFFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
-postRegIncrement:   is as=0x0 & dest_0_4=0 & bow=0x1 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & ctx_al=1 & bow=0x0 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFFFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & ctx_al=1 & bow=0x1 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & ctx_al=0 { PC = PC & 0xFFFFE; goto [PC]; }
 postRegIncrement:   is as     & bow                       { }
 
 # R2 and R3 are constant generators - post-increment not supported
