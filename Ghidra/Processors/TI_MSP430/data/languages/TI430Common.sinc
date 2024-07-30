@@ -833,17 +833,21 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 
 # Pop word from stack
 :POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_wzero & AMASK) ... & DEST_W_AD ... {
-	DEST_W_AD = *:2 (SP & AMASK);
+	local tmp:2 = *:2 (SP & AMASK);
 	build tbl_wzero;
 	SP = SP + 0x2;
+	build DEST_W_AD;
+	DEST_W_AD = tmp;
 	#Status bits are not affected
 }
 
 # Pop byte from stack
 :POP^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_bzero) ... & DEST_B_AD ... {
-	DEST_B_AD = *:1 SP;
+	local tmp:1 = *:1 SP;
 	build tbl_bzero;
 	SP = SP + 0x2;
+	build DEST_B_AD;
+	DEST_B_AD = tmp;
 	#Status bits are not affected
 }
 
