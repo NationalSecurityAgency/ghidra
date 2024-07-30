@@ -180,8 +180,8 @@ define token instr16(16)
 #
 #	Attach(s)
 #
-attach variables [ 	src_8_4
-					dest_0_4
+attach variables [ src_8_4 dest_0_4 ] [ PC SP SR _ R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [
 					reg_Direct16_0_4 
 					src_Direct16_8_4 
 					dest_Direct16_0_4
@@ -210,6 +210,13 @@ SRC16_8_4: src_Direct16_8_4		is src_Direct16_8_4 & reg_Direct16_8_4W {export reg
 DST16_0_4: dest_Direct16_0_4		is dest_Direct16_0_4 & reg_Direct16_0_4W {export reg_Direct16_0_4W;}
 SRC8_8_4: src_Direct16_8_4		is src_Direct16_8_4 & src_Direct_lo {export src_Direct_lo;}
 DST8_0_4: reg_Direct16_0_4		is reg_Direct16_0_4 & dest_Direct_lo {export dest_Direct_lo;}
+
+@if REG_SIZE == "4"
+SRC20_8_4: src_8_4			is src_8_4 { export src_8_4; }
+SRC20_8_4: PC				is src_8_4=0 & PC { PC = inst_next; export PC; }
+DST20_0_4: dest_0_4			is dest_0_4  { export dest_0_4; }
+DST20_0_4: PC				is dest_0_4=0 & PC { PC = inst_next; export PC; }
+@endif
 
 ####################################
 # Status Register (SR) Map

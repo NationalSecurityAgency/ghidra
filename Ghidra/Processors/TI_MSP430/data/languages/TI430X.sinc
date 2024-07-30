@@ -33,7 +33,6 @@
 :"RPT #"^val^" { "^instruction			is ctx_haveext=3 & instruction & ctx_num=0 & ctx_ctregdest [ctx_haveext=4; val = ctx_ctregdest+1;] { CNT = ctx_ctregdest;build instruction;}
 :"RPT "^ctx_repreg^" { "^instruction	is ctx_haveext=3 & instruction & ctx_num=1 & ctx_repreg [ctx_haveext=4;] { CNT = zext(ctx_repreg[0,4]); build instruction;}
 
-
 # 20bit address mode sub tables
 Abs20: val						is ctx_ctregdest & imm_0_16 [ val=(ctx_ctregdest << 16) | imm_0_16;] {export *[const]:3 val;}
 Abs20s: val						is ctx_ctregdests & imm_0_16 [ val=(ctx_ctregdests << 16) | imm_0_16;] {export *[const]:3 val;}
@@ -99,7 +98,7 @@ XRREG_W_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x0  { export 1:2;}		# C
 XRREG_W_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x0  { export 2:2;}		# Constant
 XRREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	    # Constant
 
-XREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
+XREG_A_AS: DST20_0_4						 is DST20_0_4 & as=0 & bow=0x1 {export DST20_0_4;}
 XREG_A_AS: ImmS20Src^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + ImmS20Src & ~1; export *:$(REG_SIZE) tmp;}
 XREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
 XREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
@@ -113,7 +112,7 @@ XREG_A_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZ
 XREG_A_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE);}		# Constant
 XREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant	
 
-XRREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
+XRREG_A_AS: DST20_0_4						 is DST20_0_4 & as=0 & bow=0x1 {export DST20_0_4;}
 XRREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
 XRREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_A_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE);}		# Constant
@@ -150,7 +149,7 @@ XREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow
 XREG_A_AS_DEST: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; Label20Dst {export *:$(REG_SIZE) Label20Dst; } # Symbolic
 XREG_A_AS_DEST: "&"^Imm20Dst 					 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; Imm20Dst {export *:$(REG_SIZE) Imm20Dst; } # Absolute
 
-XRREG_A_AS_DEST: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
+XRREG_A_AS_DEST: DST20_0_4						 is DST20_0_4 & as=0 & bow=0x1 {export DST20_0_4;}
 XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
 XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 
@@ -160,7 +159,7 @@ XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bo
 XREG_A_AS_DEST2: Label20Dst 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; Label20Dst {export *:$(REG_SIZE) Label20Dst; } # Symbolic
 XREG_A_AS_DEST2: "&"^Imm20Dst 					 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; Imm20Dst {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:$(REG_SIZE) tmp; } # Absolute
 
-XRREG_A_AS_DEST2: dest_0_4						 is dest_0_4 & as=0 & bow=0x0 {export dest_0_4;}
+XRREG_A_AS_DEST2: DST20_0_4						 is DST20_0_4 & as=0 & bow=0x0 {export DST20_0_4;}
 XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
 XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {local tmp:$(REG_SIZE) = reg_InDirect16_0_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 
@@ -213,7 +212,7 @@ XRSRC_W_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x0  { export 1:2; }		# C
 XRSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Constant
 XRSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
 
-XSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
+XSRC_A_AS: SRC20_8_4 			 		 is SRC20_8_4 & as=0x0 & bow=0x1 { export SRC20_8_4;} # Word/Register Direct (Rn):
 XSRC_A_AS: ImmS20Src^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; ImmS20Src {tmp:$(REG_SIZE) = src_Indexed16_8_4 + ImmS20Src & ~1; export *:$(REG_SIZE) tmp;}
 XSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
 XSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
@@ -227,7 +226,7 @@ XSRC_A_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE
 XSRC_A_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE); }		# Constant
 XSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant	
 
-XRSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
+XRSRC_A_AS: SRC20_8_4 			 		 is SRC20_8_4 & as=0x0 & bow=0x1 { export SRC20_8_4;} # Word/Register Direct (Rn):
 XRSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect (@Rn):
 XRSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {local tmp:$(REG_SIZE) = src_InDirect16_8_4 & ~1; export *:$(REG_SIZE) tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_A_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE); }		# Constant
@@ -280,8 +279,8 @@ XDEST_W_AD: "&"^Imm20Dst   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4
 XDEST_W_AD: "&"^Imm20Dst   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; Imm20Dst
      {local tmp:$(REG_SIZE) = Imm20Dst & ~1; export *:2 tmp; } # Absolute
 
-XDEST_A_AD: dest_0_4 		  		 is dest_0_4 & ad=0x0 & bow=0x1
-     { export dest_0_4; }        # Word/Register Direct (Rn):
+XDEST_A_AD: DST20_0_4 		  		 is DST20_0_4 & ad=0x0 & bow=0x1
+     { export DST20_0_4; }        # Word/Register Direct (Rn):
 XDEST_A_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 ; ImmS20Dst
      {tmp:$(REG_SIZE) = dest_Indexed16_0_4 + ImmS20Dst & ~1; export *:$(REG_SIZE) tmp;}
 XDEST_A_AD: ImmS20Dst^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; ImmS20Dst
@@ -858,48 +857,39 @@ macro adda(dst, src) {
 	setaddflags(dst,src,tmpd);
 }
 
-:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 {
-	adda(dest_0_4,src_8_4);
+:ADDA SRC20_8_4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & SRC20_8_4 & DST20_0_4 {
+	adda(DST20_0_4,SRC20_8_4);
 }
 
-:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & dest_0_4 & dest_0_4=0x0 {
-	tmpd:$(REG_SIZE) = inst_start + 2;
-	tmp:$(REG_SIZE) = src_8_4 + tmpd;
+:ADDA SRC20_8_4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & SRC20_8_4 & DST20_0_4 & dest_0_4=0x0 {
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = SRC20_8_4 + tmpd;
 	PC = tmp & 0xFFFFE;
 	
-	setaddflags(dest_0_4,src_8_4,tmpd);
+	setaddflags(DST20_0_4,SRC20_8_4,tmpd);
 	goto [PC];
 }
 
-:ADDA src_8_4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4 & src_8_4=0x0 & dest_0_4 {
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmps:$(REG_SIZE) = inst_start + 2;
-	tmp:$(REG_SIZE) = tmps + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
-	
-	setaddflags(dest_0_4,tmps,tmpd);
-}
-
 # `ADDA SR, <dst>`, verified with hardware but not in spec.
-:ADDA "#"^4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x2 & dest_0_4 {
-	adda(dest_0_4, 4:$(REG_SIZE));
+:ADDA "#"^4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x2 & DST20_0_4 {
+	adda(DST20_0_4, 4:$(REG_SIZE));
 }
 
-:INCDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x3 & dest_0_4 {
-	adda(dest_0_4, 2:$(REG_SIZE));
+:INCDA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x3 & DST20_0_4 {
+	adda(DST20_0_4, 2:$(REG_SIZE));
 }
 
-:ADDA "#"^Abs20s, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
-	tmpd:$(REG_SIZE) = dest_0_4;
+:ADDA "#"^Abs20s, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd + tmps;
-	dest_0_4 = sext(tmp[0,20]);
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,tmps,tmpd);
+	setaddflags(DST20_0_4,tmps,tmpd);
 }
 
-:ADDA "#"^Abs20s, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & dest_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
-	tmpd:$(REG_SIZE) = inst_start + 2;
+:ADDA "#"^Abs20s, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & DST20_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd + tmps;
 	PC = tmp & 0xFFFFE;
@@ -908,62 +898,62 @@ macro adda(dst, src) {
 	goto [PC];
 }
 
-:CMPA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xD & src_8_4 & dest_0_4 {
-	tmp:$(REG_SIZE) = dest_0_4 - src_8_4;
+:CMPA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xD & SRC20_8_4 & DST20_0_4 {
+	tmp:$(REG_SIZE) = DST20_0_4 - SRC20_8_4;
 	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
-	setsubflags(tmpd,src_8_4,dest_0_4);
+	setsubflags(tmpd,SRC20_8_4,DST20_0_4);
 }
 
-:CMPA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+:CMPA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
 	tmps:$(REG_SIZE) = sext(Abs20s);
-	tmp:$(REG_SIZE) = dest_0_4 - tmps;
+	tmp:$(REG_SIZE) = DST20_0_4 - tmps;
 	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
-	setsubflags(tmpd,tmps,dest_0_4);
+	setsubflags(tmpd,tmps,DST20_0_4);
 }
 
-:MOVA "@"^src_8_4, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & dest_0_4 {
-	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4 & ~1;
-	dest_0_4 = sext(dest_0_4[0,20]);
+:MOVA "@"^SRC20_8_4, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & SRC20_8_4 & DST20_0_4 {
+	DST20_0_4 = *[RAM]:$(REG_SIZE) SRC20_8_4 & ~1;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 }
 
-:MOVA "@"^src_8_4^"+", dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & dest_0_4 {
-	dest_0_4 = *[RAM]:$(REG_SIZE) src_8_4 & ~1;
-	dest_0_4 = sext(dest_0_4[0,20]);
-	src_8_4 = src_8_4 + 4;
+:MOVA "@"^SRC20_8_4^"+", DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & SRC20_8_4 & DST20_0_4 {
+	DST20_0_4 = *[RAM]:$(REG_SIZE) SRC20_8_4 & ~1;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
+	SRC20_8_4 = SRC20_8_4 + 4;
 }
 
-:MOVA "&"^Abs20, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & dest_0_4 ; Abs20 [ctx_ctregdest=imm_8_4;] {
+:MOVA "&"^Abs20, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x2 & imm_8_4 & DST20_0_4 ; Abs20 [ctx_ctregdest=imm_8_4;] {
 	tmp:$(REG_SIZE) = zext(Abs20) & ~1;
-	dest_0_4 = *[RAM]:$(REG_SIZE) tmp;
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = *[RAM]:$(REG_SIZE) tmp;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 }
 
-:MOVA imms_0_16^"("^src_8_4^")", dest_0_4		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & src_8_4 & dest_0_4 ; imms_0_16 {
-	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2) & ~1;
-	dest_0_4 = *[RAM]:$(REG_SIZE) tmp;
-	dest_0_4 = sext(dest_0_4[0,20]);
+:MOVA imms_0_16^"("^SRC20_8_4^")", DST20_0_4		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & SRC20_8_4 & DST20_0_4 ; imms_0_16 {
+	tmp:$(REG_SIZE) = SRC20_8_4 + sext(imms_0_16:2) & ~1;
+	DST20_0_4 = *[RAM]:$(REG_SIZE) tmp;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 }
 
-:MOVA src_8_4, "&"^Abs20				is ctx_haveext=0 & op16_12_4=0 & insid=0x6 & imm_0_4 & src_8_4 ; Abs20 [ctx_ctregdest=imm_0_4;] {
+:MOVA SRC20_8_4, "&"^Abs20				is ctx_haveext=0 & op16_12_4=0 & insid=0x6 & imm_0_4 & SRC20_8_4 ; Abs20 [ctx_ctregdest=imm_0_4;] {
 	tmp:$(REG_SIZE) = zext(Abs20) & ~1;
-	*[RAM]:$(REG_SIZE) tmp = src_8_4 & 0xFFFFF;
+	*[RAM]:$(REG_SIZE) tmp = SRC20_8_4 & 0xFFFFF;
 }
 
-:MOVA src_8_4, imms_0_16^"("^dest_0_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x7 & src_8_4 & dest_0_4 ; imms_0_16 {
-	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2) & ~1;
-	*[RAM]:$(REG_SIZE) tmp = src_8_4 & 0xFFFFF;
+:MOVA SRC20_8_4, imms_0_16^"("^DST20_0_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x7 & SRC20_8_4 & DST20_0_4 ; imms_0_16 {
+	tmp:$(REG_SIZE) = DST20_0_4 + sext(imms_0_16:2) & ~1;
+	*[RAM]:$(REG_SIZE) tmp = SRC20_8_4 & 0xFFFFF;
 }
 
-:MOVA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
-	dest_0_4 = sext(Abs20s);
+:MOVA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	DST20_0_4 = sext(Abs20s);
 }
 
-:MOVA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4 & dest_0_4 {
-	dest_0_4 = src_8_4;
+:MOVA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & SRC20_8_4 & DST20_0_4 {
+	DST20_0_4 = SRC20_8_4;
 }
 
-:CLRA dest_0_4						is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4=0x3 & dest_0_4 {
-	dest_0_4 = 0:$(REG_SIZE);
+:CLRA DST20_0_4						is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4=0x3 & DST20_0_4 {
+	DST20_0_4 = 0:$(REG_SIZE);
 }
 
 macro suba(dst, src) {
@@ -974,39 +964,39 @@ macro suba(dst, src) {
 	setsubflags(dst,src,tmpd);
 }
 
-:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 {
-	suba(dest_0_4, src_8_4);
+:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & DST20_0_4 {
+	suba(DST20_0_4, SRC20_8_4);
 }
 
-:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & dest_0_4 & dest_0_4=0x0 {
-	tmpd:$(REG_SIZE) = inst_start + 2;
-	tmp:$(REG_SIZE) = tmpd - src_8_4;
+:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & DST20_0_4 & dest_0_4=0x0 {
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = tmpd - SRC20_8_4;
 	PC = tmp & 0xffffe;
 	
-	setsubflags(dest_0_4,src_8_4,tmpd);
+	setsubflags(DST20_0_4,SRC20_8_4,tmpd);
 	goto [PC];
 }
 
-:SUBA src_8_4, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4 & src_8_4=0x0 & dest_0_4 {
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmps:$(REG_SIZE) = inst_start + 2;
-	tmp:$(REG_SIZE) = dest_0_4 - tmps;
-	dest_0_4 = sext(tmp[0,20]);
+:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & src_8_4=0x0 & DST20_0_4 {
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmps:$(REG_SIZE) = SRC20_8_4;
+	tmp:$(REG_SIZE) = DST20_0_4 - tmps;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,tmps,tmpd);
+	setsubflags(DST20_0_4,tmps,tmpd);
 }
 
-:SUBA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & dest_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
-	tmpd:$(REG_SIZE) = dest_0_4;
+:SUBA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = sext(Abs20s);
-	tmp:$(REG_SIZE) = dest_0_4 - tmps;
-	dest_0_4 = sext(tmp[0,20]);
+	tmp:$(REG_SIZE) = DST20_0_4 - tmps;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,tmps,tmpd);
+	setsubflags(DST20_0_4,tmps,tmpd);
 }
 
-:SUBA "#"^Abs20s, dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & dest_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
-	tmpd:$(REG_SIZE) = inst_start + 2;
+:SUBA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & DST20_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd - tmps;
 	PC = tmp & 0xffffe;
@@ -1025,17 +1015,17 @@ macro suba(dst, src) {
 # assembler extension regarding @rN being treated as 0(rN) and vice versa. That would effectively turn
 # this into a branch to following instruction. What I think may be happening is a compiler bug where in
 # some cases an immediate gets output even though the constant generator is used.
-:BRA "@"^src_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & src_8_4=0 & dest_0_4=0x0 {
+:BRA "@"^SRC20_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & SRC20_8_4 & src_8_4=0 & dest_0_4=0x0 {
 }
 
-:BRA "@"^src_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & src_8_4 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) src_8_4 & 0xffffe;
+:BRA "@"^SRC20_8_4 					is ctx_haveext=0 & op16_12_4=0 & insid=0x0 & SRC20_8_4 & dest_0_4=0x0 {
+	PC = *[RAM]:$(REG_SIZE) SRC20_8_4 & 0xffffe;
 	goto [PC];
 }
 
-:BRA "@"^src_8_4^"+" 				is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) src_8_4 & 0xffffe;
-	src_8_4 = src_8_4 + 4;
+:BRA "@"^SRC20_8_4^"+" 				is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & SRC20_8_4 & dest_0_4=0x0 {
+	PC = *[RAM]:$(REG_SIZE) SRC20_8_4 & 0xffffe;
+	SRC20_8_4 = SRC20_8_4 + 4;
 	goto [PC];
 }
 
@@ -1045,8 +1035,8 @@ macro suba(dst, src) {
 	goto [PC];
 }
 
-:BRA imms_0_16^"("^src_8_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & src_8_4 & dest_0_4=0x0; imms_0_16 {
-	tmp:$(REG_SIZE) = src_8_4 + sext(imms_0_16:2);
+:BRA imms_0_16^"("^SRC20_8_4^")"		is ctx_haveext=0 & op16_12_4=0 & insid=0x3 & SRC20_8_4 & dest_0_4=0x0; imms_0_16 {
+	tmp:$(REG_SIZE) = SRC20_8_4 + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp & 0xffffe;
 	goto [PC];
 }
@@ -1056,13 +1046,13 @@ macro suba(dst, src) {
 	goto Abs20add;
 }
 
-:BRA src_8_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4 & dest_0_4=0x0 {
-	PC = src_8_4 & 0xffffe;
+:BRA SRC20_8_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xC & SRC20_8_4 & dest_0_4=0x0 {
+	PC = SRC20_8_4 & 0xffffe;
 	goto [PC];
 }
 
-:RETA "@"^src_8_4^"+"			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & src_8_4 & src_8_4=0x1 & dest_0_4=0x0 {
-	PC = *[RAM]:$(REG_SIZE) src_8_4 & 0xffffe;
+:RETA "@"^SRC20_8_4^"+"			is ctx_haveext=0 & op16_12_4=0 & insid=0x1 & SRC20_8_4 & src_8_4=0x1 & dest_0_4=0x0 {
+	PC = *[RAM]:$(REG_SIZE) SRC20_8_4 & 0xffffe;
 	SP = SP + 4;
 	return [PC];
 }
@@ -1072,74 +1062,74 @@ macro suba(dst, src) {
 # Special cases of SUBA/ADDA/CMPA/MOVA
 
 # `SUBA SR, <dst>`, verified with hardware but not in spec.
-:SUBA "#"^4, dest_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4=0x2 & dest_0_4 {
-	suba(dest_0_4, 4:$(REG_SIZE));
+:SUBA "#"^4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4=0x2 & DST20_0_4 {
+	suba(DST20_0_4, 4:$(REG_SIZE));
 }
 
-:DECDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4=0x3 & dest_0_4 {
-	suba(dest_0_4, 2:$(REG_SIZE));
+:DECDA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xF & src_8_4=0x3 & DST20_0_4 {
+	suba(DST20_0_4, 2:$(REG_SIZE));
 }
 
-:DECDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0002  {
-	suba(dest_0_4, 2:$(REG_SIZE));
+:DECDA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4=0x0 & DST20_0_4 ; imm_0_16=0x0002  {
+	suba(DST20_0_4, 2:$(REG_SIZE));
 }
 
-:INCDA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0002  {
-	adda(dest_0_4, 2:$(REG_SIZE));
+:INCDA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4=0x0 & DST20_0_4 ; imm_0_16=0x0002  {
+	adda(DST20_0_4, 2:$(REG_SIZE));
 }
 
-:TSTA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xD & src_8_4=0x3 & dest_0_4 {
+:TSTA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xD & src_8_4=0x3 & DST20_0_4 {
 	$(CARRY) = 1;
 	$(OVERFLOW) = 0;
-	$(SIGN) = (dest_0_4 s< 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4 s< 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:TSTA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4=0x0 & dest_0_4 ; imm_0_16=0x0000 {
+:TSTA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x9 & imm_8_4=0x0 & DST20_0_4 ; imm_0_16=0x0000 {
 	$(CARRY) = 1;
 	$(OVERFLOW) = 0;
-	$(SIGN) = (dest_0_4 s< 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4 s< 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:CLRA dest_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4=0 & dest_0_4 ; imm_0_16=0  {
-	dest_0_4 = 0;
+:CLRA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0x8 & imm_8_4=0 & DST20_0_4 ; imm_0_16=0  {
+	DST20_0_4 = 0;
 }
 
 #
 ################
 #
 # Other 20 bit address instructions
-:CALLA dest_0_4							is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x4 & dest_0_4 {
+:CALLA DST20_0_4							is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x4 & DST20_0_4 {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
-	PC = dest_0_4 & ~1;
+	PC = DST20_0_4 & ~1;
 	call [PC];
 }
 
-:CALLA imms_0_16^"("^dest_0_4^")"		is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x5 & dest_0_4 ; imms_0_16 {
+:CALLA imms_0_16^"("^DST20_0_4^")"		is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x5 & DST20_0_4 ; imms_0_16 {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
-	tmp:$(REG_SIZE) = dest_0_4 + sext(imms_0_16:2);
+	tmp:$(REG_SIZE) = DST20_0_4 + sext(imms_0_16:2);
 	PC = *[RAM]:$(REG_SIZE) tmp;
 	PC = PC & 0xffffe;
 	call [PC];
 }
 
-:CALLA "@"^dest_0_4						is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x6 & dest_0_4 {
+:CALLA "@"^DST20_0_4						is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x6 & DST20_0_4 {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
-	PC = *[RAM]:$(REG_SIZE) dest_0_4;
+	PC = *[RAM]:$(REG_SIZE) DST20_0_4;
 	PC = PC & 0xffffe;
 	call [PC];
 }
 
-:CALLA "@"^dest_0_4^"+"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x7 & dest_0_4 {
+:CALLA "@"^DST20_0_4^"+"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x7 & DST20_0_4 {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
-	PC = *[RAM]:$(REG_SIZE) dest_0_4;
+	PC = *[RAM]:$(REG_SIZE) DST20_0_4;
 	PC = PC & 0xffffe;
-	dest_0_4 = dest_0_4 + 4;
+	DST20_0_4 = DST20_0_4 + 4;
 	call [PC];
 }
 
@@ -1189,85 +1179,85 @@ macro suba(dst, src) {
 	build POPWR0;
 }
 
-:RRCM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x04 & NUM2 & dest_0_4 & rrn {
-	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
+:RRCM.A	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x04 & NUM2 & DST20_0_4 & rrn {
+	tmph:$(REG_SIZE) = (DST20_0_4 >> rrn) & 0x1;
 	tmpc:$(REG_SIZE) = zext($(CARRY));
 	tmpc = tmpc << (20-NUM2);
-	dest_0_4 = (dest_0_4 >> NUM2) | (dest_0_4 << (20-rrn));
-	dest_0_4 = ((dest_0_4 & (~tmpc)) | tmpc) & 0xFFFFF;
+	DST20_0_4 = (DST20_0_4 >> NUM2) | (DST20_0_4 << (20-rrn));
+	DST20_0_4 = ((DST20_0_4 & (~tmpc)) | tmpc) & 0xFFFFF;
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
-	$(SIGN) = (dest_0_4[19,1] != 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RRAM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x14 & NUM2 & dest_0_4 & rrn {
-	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
-	dest_0_4 = (dest_0_4 s>> NUM2);
+:RRAM.A	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x14 & NUM2 & DST20_0_4 & rrn {
+	tmph:$(REG_SIZE) = (DST20_0_4 >> rrn) & 0x1;
+	DST20_0_4 = (DST20_0_4 s>> NUM2);
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
-	$(SIGN) = (dest_0_4[19,1] != 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RLAM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x24 & NUM2 & dest_0_4 {
-	tmph:$(REG_SIZE) = (dest_0_4 >> (20 - NUM2)) & 0x1;
-	dest_0_4 = (dest_0_4 << NUM2);
-	dest_0_4 = sext(dest_0_4[0,20]);
+:RLAM.A	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x24 & NUM2 & DST20_0_4 {
+	tmph:$(REG_SIZE) = (DST20_0_4 >> (20 - NUM2)) & 0x1;
+	DST20_0_4 = (DST20_0_4 << NUM2);
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	$(CARRY) = (tmph != 0);
-	$(SIGN) = (dest_0_4[19,1] != 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RRUM.A	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x34 & NUM2 & dest_0_4 & rrn {
-	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
-	dest_0_4 = (dest_0_4 >> NUM2) & 0xFFFFF;
+:RRUM.A	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x34 & NUM2 & DST20_0_4 & rrn {
+	tmph:$(REG_SIZE) = (DST20_0_4 >> rrn) & 0x1;
+	DST20_0_4 = (DST20_0_4 >> NUM2) & 0xFFFFF;
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
 	$(SIGN) = 0;
-	$(ZERO) = (dest_0_4 == 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RRCM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x05 & NUM2 & dest_0_4 & rrn {
-	tmpr:2 = dest_0_4:2;
+:RRCM.W	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x05 & NUM2 & DST20_0_4 & rrn {
+	tmpr:2 = DST20_0_4:2;
 	tmph:2 = (tmpr >> rrn) & 0x1;
 	tmpc:2 = zext($(CARRY));
 	tmpc = tmpc << (16-NUM2);
 	tmpr = (tmpr >> NUM2) | (tmpr << (16-rrn));
-	dest_0_4 = zext((tmpr & (~tmpc)) | tmpc);
+	DST20_0_4 = zext((tmpr & (~tmpc)) | tmpc);
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
-	$(SIGN) = (dest_0_4[15,1] != 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4[15,1] != 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RRAM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x15 & NUM2 & dest_0_4 & rrn {
-	tmpr:2 = dest_0_4:2;
-	tmph:$(REG_SIZE) = (dest_0_4 >> rrn) & 0x1;
-	dest_0_4 = zext(tmpr s>> NUM2);
+:RRAM.W	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x15 & NUM2 & DST20_0_4 & rrn {
+	tmpr:2 = DST20_0_4:2;
+	tmph:$(REG_SIZE) = (DST20_0_4 >> rrn) & 0x1;
+	DST20_0_4 = zext(tmpr s>> NUM2);
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
-	$(SIGN) = (dest_0_4[19,1] != 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RLAM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x25 & NUM2 & dest_0_4 {
-	tmph:$(REG_SIZE) = (dest_0_4 >> (16 - NUM2)) & 0x1;
-	dest_0_4 = (dest_0_4 << NUM2);
-	dest_0_4 = zext(dest_0_4:2);
+:RLAM.W	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x25 & NUM2 & DST20_0_4 {
+	tmph:$(REG_SIZE) = (DST20_0_4 >> (16 - NUM2)) & 0x1;
+	DST20_0_4 = (DST20_0_4 << NUM2);
+	DST20_0_4 = zext(DST20_0_4:2);
 	$(CARRY) = (tmph != 0);
-	$(SIGN) = (dest_0_4[19,1] != 0);
-	$(ZERO) = (dest_0_4 == 0);
+	$(SIGN) = (DST20_0_4[19,1] != 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
-:RRUM.W	NUM2, dest_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x35 & NUM2 & dest_0_4 & rrn {
-	tmpr:2 = dest_0_4:2;
+:RRUM.W	NUM2, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insidbig=0x35 & NUM2 & DST20_0_4 & rrn {
+	tmpr:2 = DST20_0_4:2;
 	tmph:2 = (tmpr >> rrn) & 0x1;
-	dest_0_4 = zext(tmpr >> NUM2);
+	DST20_0_4 = zext(tmpr >> NUM2);
 	$(CARRY) = (tmph != 0);
 	$(OVERFLOW) = 0;
 	$(SIGN) = 0;
-	$(ZERO) = (dest_0_4 == 0);
+	$(ZERO) = (DST20_0_4 == 0);
 }
 
 macro bzero(full, byte)
@@ -1342,15 +1332,15 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADCX.A dest_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 & repeat_carry {
+:ADCX.A DST20_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
-	tmpd:$(REG_SIZE) = dest_0_4;
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmpc:$(REG_SIZE) = zext($(CARRY));
-	tmp:$(REG_SIZE) = tmpc + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmp:$(REG_SIZE) = tmpc + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,tmpc,tmpd);
+	setaddflags(DST20_0_4,tmpc,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1391,13 +1381,13 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADDX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:ADDX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = XRSRC_A_AS + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = XRSRC_A_AS + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,XRSRC_A_AS,tmpd);
+	setaddflags(DST20_0_4,XRSRC_A_AS,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1442,15 +1432,15 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADDCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
+:ADDCX.A XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
-	tmpd:$(REG_SIZE) = dest_0_4;
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = XRSRC_A_AS + zext($(CARRY));
-	tmp:$(REG_SIZE) = tmps + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmp:$(REG_SIZE) = tmps + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,tmps,tmpd);
+	setaddflags(DST20_0_4,tmps,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1491,17 +1481,17 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ANDX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xF & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:ANDX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0xF & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
-	dest_0_4 = dest_0_4 & XRSRC_A_AS;
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = DST20_0_4 & XRSRC_A_AS;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
-	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
-	$(CARRY) = (dest_0_4 != 0x0);			# C Flag
+	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1530,10 +1520,10 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:BICX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xC & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:BICX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0xC & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	dest_0_4 = (~XRSRC_A_AS) & dest_0_4;
-	dest_0_4 = zext(dest_0_4[0,20]);
+	DST20_0_4 = (~XRSRC_A_AS) & DST20_0_4;
+	DST20_0_4 = zext(DST20_0_4[0,20]);
 	#Status bits are not affected
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1562,11 +1552,11 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:BISX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xD & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:BISX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0xD & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	dest_0_4 = XRSRC_A_AS | dest_0_4;
+	DST20_0_4 = XRSRC_A_AS | DST20_0_4;
 	#Status bits are not affected
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1605,12 +1595,12 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:BITX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xB & bow=1 & ctx_al=0 & postIncrement & XRSRC_A_AS & dest_0_4 {
+:BITX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0xB & bow=1 & ctx_al=0 & postIncrement & XRSRC_A_AS & DST20_0_4 {
 	<top>
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
-	result:$(REG_SIZE) = dest_0_4 & XRSRC_A_AS;
+	result:$(REG_SIZE) = DST20_0_4 & XRSRC_A_AS;
 	# Result Flags...
 	result = sext(result[0,20]);
 	$(CARRY) = (result != 0x0);			# C Flag
@@ -1644,9 +1634,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:CLRX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:CLRX.A	DST20_0_4						is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 {
 	<top>
-	dest_0_4 = 0;
+	DST20_0_4 = 0;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1685,11 +1675,11 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:CMPX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=0 & postIncrement & XRSRC_A_AS & dest_0_4 {
+:CMPX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=0 & postIncrement & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	tmp:$(REG_SIZE) = dest_0_4 - XRSRC_A_AS;
+	tmp:$(REG_SIZE) = DST20_0_4 - XRSRC_A_AS;
 	tmpd:$(REG_SIZE) = sext(tmp[0,20]);
-	setsubflags(tmpd,XRSRC_A_AS,dest_0_4);
+	setsubflags(tmpd,XRSRC_A_AS,DST20_0_4);
 	build postIncrement;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1730,16 +1720,16 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:DADCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 & repeat_carry {
+:DADCX.A DST20_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
-	local temp:4 = zext(dest_0_4);
-	dest_0_4 = bcd_add(temp, $(CARRY));
+	local temp:4 = zext(DST20_0_4);
+	DST20_0_4 = bcd_add(temp, $(CARRY));
 	$(CARRY) = temp >= 0x99999;
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
-	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1782,17 +1772,17 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:DADDX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
+:DADDX.A XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
 	local temp_src:4 = zext(XRSRC_A_AS);
-	local temp_dest:4 = zext(dest_0_4);
+	local temp_dest:4 = zext(DST20_0_4);
 	local temp_carry:4 = zext($(CARRY));
-	dest_0_4 = bcd_add(temp_src, temp_dest, temp_carry);
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = bcd_add(temp_src, temp_dest, temp_carry);
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
-	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
 	$(CARRY) = (temp_src + temp_dest + temp_carry) > 0x99999;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1834,13 +1824,13 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:DECX.A	dest_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:DECX.A	DST20_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = dest_0_4 - 1;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = DST20_0_4 - 1;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,1:$(REG_SIZE),tmpd);
+	setsubflags(DST20_0_4,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1881,13 +1871,13 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:DECDX.A dest_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:DECDX.A DST20_0_4				is ctx_haveext=4 & op16_12_4=0x8 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = dest_0_4 - 2;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = DST20_0_4 - 2;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,2:$(REG_SIZE),tmpd);
+	setsubflags(DST20_0_4,2:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1928,13 +1918,13 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:INCX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:INCX.A	DST20_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x1 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = 1 + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = 1 + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,1:$(REG_SIZE),tmpd);
+	setaddflags(DST20_0_4,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -1975,13 +1965,13 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:INCDX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:INCDX.A DST20_0_4						is ctx_haveext=4 & op16_12_4=0x5 & src16_8_4=0x3 & as=0x2 & bow=1 & ctx_al=0 & postIncrementStore & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = 2 + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = 2 + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,2:$(REG_SIZE),tmpd);
+	setaddflags(DST20_0_4,2:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2022,17 +2012,17 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:INVX.A	dest_0_4				is ctx_haveext=4 & op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=1 & ctx_al=0 & postIncrementStore &  dest_0_4 {
+:INVX.A	DST20_0_4				is ctx_haveext=4 & op16_12_4=0xE & src16_8_4=0x3 & as=0x3 & bow=1 & ctx_al=0 & postIncrementStore &  DST20_0_4 {
 	<top>
 	# Operation Flags...
-	$(OVERFLOW) = dest_0_4 s< 0x0;	# V Flag
+	$(OVERFLOW) = DST20_0_4 s< 0x0;	# V Flag
 	# Operation...
-	dest_0_4 = dest_0_4 ^ -1;
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = DST20_0_4 ^ -1;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
-	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
-	$(CARRY) = (dest_0_4 != 0x0);			# C Flag
+	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2061,9 +2051,9 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:MOVX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x4 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:MOVX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x4 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	dest_0_4 = XRSRC_A_AS;
+	DST20_0_4 = XRSRC_A_AS;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2092,11 +2082,11 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:POPX.A	dest_0_4							is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & ctx_al=0 & XRSRC_A_AS & dest_0_4 {
+:POPX.A	DST20_0_4							is ctx_haveext=4 & op16_12_4=0x4 & src16_8_4=0x1 & as=0x3 & bow=1 & ctx_al=0 & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	dest_0_4 = *:4 SP;
+	DST20_0_4 = *:4 SP;
 	SP = SP + 0x4;
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
@@ -2134,13 +2124,13 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RLAX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & src_Direct16_8_4=dest_Direct16_0_4 & ctx_al=0 & dest_0_4 {
+:RLAX.A	DST20_0_4						is ctx_haveext=4 & op16_12_4=0x5 & bow=1 & src_Direct16_8_4=dest_Direct16_0_4 & ctx_al=0 & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = dest_0_4 + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = DST20_0_4 + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,tmpd,tmpd);
+	setaddflags(DST20_0_4,tmpd,tmpd);
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
@@ -2184,15 +2174,15 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:RLCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
+:RLCX.A DST20_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_A_AS & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmps:$(REG_SIZE) = dest_0_4 + zext($(CARRY));
-	tmp:$(REG_SIZE) = tmps + dest_0_4;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmps:$(REG_SIZE) = DST20_0_4 + zext($(CARRY));
+	tmp:$(REG_SIZE) = tmps + DST20_0_4;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setaddflags(dest_0_4,tmps,tmpd);
+	setaddflags(DST20_0_4,tmps,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2237,15 +2227,15 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:SBCX.A dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & postIncrementStore & dest_0_4 & repeat_carry {
+:SBCX.A DST20_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
 	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = dest_0_4 - brw;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = DST20_0_4 - brw;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,brw,tmpd);
+	setsubflags(DST20_0_4,brw,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2290,16 +2280,16 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:SUBCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
+:SUBCX.A XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;
 	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
-	tmpd:$(REG_SIZE) = dest_0_4;
+	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = XRSRC_A_AS + brw;
-	tmp:$(REG_SIZE) = dest_0_4 - tmps;
-	dest_0_4 = sext(tmp[0,20]);
+	tmp:$(REG_SIZE) = DST20_0_4 - tmps;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,tmps,tmpd);
+	setsubflags(DST20_0_4,tmps,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2340,13 +2330,13 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:SUBX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x8 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:SUBX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0x8 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
-	tmpd:$(REG_SIZE) = dest_0_4;
-	tmp:$(REG_SIZE) = dest_0_4 - XRSRC_A_AS;
-	dest_0_4 = sext(tmp[0,20]);
+	tmpd:$(REG_SIZE) = DST20_0_4;
+	tmp:$(REG_SIZE) = DST20_0_4 - XRSRC_A_AS;
+	DST20_0_4 = sext(tmp[0,20]);
 	
-	setsubflags(dest_0_4,XRSRC_A_AS,tmpd);
+	setsubflags(DST20_0_4,XRSRC_A_AS,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2379,9 +2369,9 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:TSTX.A	dest_0_4						is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & dest_0_4 {
+:TSTX.A	DST20_0_4						is ctx_haveext=4 & op16_12_4=0x9 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & DST20_0_4 {
 	<top>
-	setsubflags(dest_0_4,0:$(REG_SIZE),dest_0_4);
+	setsubflags(DST20_0_4,0:$(REG_SIZE),DST20_0_4);
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
@@ -2421,17 +2411,17 @@ define pcodeop bcd_add;
 	goto <top>;
 }
 
-:XORX.A	XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xE & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:XORX.A	XRSRC_A_AS, DST20_0_4				is ctx_haveext=4 & op16_12_4=0xE & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & DST20_0_4 {
 	<top>
 	# Operation Flags...
-	$(OVERFLOW) = ((dest_0_4 s< 0x0) && (XRSRC_A_AS s< 0x0)) ;	# V Flag
+	$(OVERFLOW) = ((DST20_0_4 s< 0x0) && (XRSRC_A_AS s< 0x0)) ;	# V Flag
 	# Operation...
-	dest_0_4 = dest_0_4 ^ XRSRC_A_AS;
-	dest_0_4 = sext(dest_0_4[0,20]);
+	DST20_0_4 = DST20_0_4 ^ XRSRC_A_AS;
+	DST20_0_4 = sext(DST20_0_4[0,20]);
 	# Result Flags...
-	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
-	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
-	$(CARRY) = (dest_0_4 != 0x0);			# C Flag
+	$(SIGN) = (DST20_0_4 s< 0x0);			# S Flag
+	$(ZERO) = (DST20_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (DST20_0_4 != 0x0);			# C Flag
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
