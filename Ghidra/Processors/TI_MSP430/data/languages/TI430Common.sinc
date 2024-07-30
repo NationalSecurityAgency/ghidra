@@ -450,6 +450,11 @@ tbl_wzero:			is ad=0 & reg_Direct16_0_4 & reg_Direct16_0_4W {ztmp:2 = reg_Direct
 @endif
 tbl_wzero:			is epsilon {}
 
+@if REG_SIZE == "4"
+tbl_wzero_singleop:		is as=0 & reg_Direct16_0_4 & reg_Direct16_0_4W {ztmp:2 = reg_Direct16_0_4W; reg_Direct16_0_4 = 0; reg_Direct16_0_4W = ztmp; }
+@endif
+tbl_wzero_singleop:		is epsilon {}
+
 #
 # Post Processing
 #    does correct increment of source register
@@ -587,14 +592,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     000    | B/W |   As    |     register    | 
-:RRC^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:RRC^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0;	# V Flag is reset
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = REG_W_AS_DEST[0,1];
 	REG_W_AS_DEST = ((zext(tmp) << 0xF) | (REG_W_AS_DEST >> 0x1));
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_W_AS_DEST == 0x0);			# Z Flag
@@ -624,11 +629,11 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     001    |  0  |   As    |     register    | 
-:SWPB REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:SWPB REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	lowByte:1 = REG_W_AS_DEST[0,8];
 	highByte:1 = REG_W_AS_DEST[8,8];
 	REG_W_AS_DEST = (((zext(lowByte)) << 0x8) | zext(highByte));
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	#Status bits are not affected
 	build postRegIncrement;
 }
@@ -642,14 +647,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     010    | B/W |   As    |     register    | 
-:RRA^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:RRA^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
 	$(CARRY) = REG_W_AS_DEST[0,1];
 	MSB:2 = REG_W_AS_DEST >> 0xF;
 	REG_W_AS_DEST = ((MSB << 0xF) | (REG_W_AS_DEST >> 0x1));
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_W_AS_DEST == 0x0);			# Z Flag
@@ -679,13 +684,13 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     011    |  0  |   As    |     register    | 
-:SXT REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
+:SXT REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & tbl_wzero_singleop & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
 	# Operation...	
 	byteVal:1 = REG_W_AS_DEST[0,8];
 	REG_W_AS_DEST = sext(byteVal);
-	build tbl_wzero;
+	build tbl_wzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_W_AS_DEST == 0x0);			# Z Flag
