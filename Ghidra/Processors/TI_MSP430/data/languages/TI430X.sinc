@@ -3289,7 +3289,7 @@ define pcodeop bcd_add;
 	<top>
 	# Operation Flags...
 	build repeat_carry;
-	$(OVERFLOW) = ((XRREG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = (XRREG_B_AS_DEST & 0x1);
@@ -3324,7 +3324,7 @@ define pcodeop bcd_add;
 	<top>
 	build repeat_carry;
 	# Operation Flags...
-	$(OVERFLOW) = ((XRREG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = XRREG_W_AS_DEST[0,1];
@@ -3359,7 +3359,7 @@ define pcodeop bcd_add;
 	<top>
 	build repeat_carry;
 	# Operation Flags...
-	$(OVERFLOW) = ((XRREG_A_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = XRREG_A_AS_DEST[0,1];
@@ -3505,7 +3505,7 @@ define pcodeop bcd_add;
 
 :RRCX.B XREG_B_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS_DEST {
 	# Operation Flags...
-	$(OVERFLOW) = ((XREG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = (XREG_B_AS_DEST & 0x1);
@@ -3518,7 +3518,7 @@ define pcodeop bcd_add;
 
 :RRCX.W XREG_W_AS_DEST	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & XREG_W_AS_DEST {
 	# Operation Flags...
-	$(OVERFLOW) = ((XREG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = XREG_W_AS_DEST[0,1];
@@ -3531,7 +3531,7 @@ define pcodeop bcd_add;
 
 :RRCX.A XREG_A_AS_DEST 	is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_A_AS_DEST {
 	# Operation Flags...
-	$(OVERFLOW) = ((XREG_A_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = XREG_A_AS_DEST[0,1];
