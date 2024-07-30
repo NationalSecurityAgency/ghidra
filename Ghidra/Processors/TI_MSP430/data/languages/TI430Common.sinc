@@ -571,7 +571,7 @@ JCND: "MP"	is condition=0x7 {cndTst:1 = 0x1; export cndTst;}                    
 #-----------------------------------------------
 
 OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
-	{ export *:2 offset10;}
+	{ export *:$(REG_SIZE) offset10;}
 	
 	
 ###################################################################################
