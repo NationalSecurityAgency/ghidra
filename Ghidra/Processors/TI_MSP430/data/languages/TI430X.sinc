@@ -809,17 +809,9 @@ macro adda(dst, src) {
 	setaddflags(dst,tmps,tmpd);
 }
 
-:ADDA SRC20_8_4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & SRC20_8_4 & DST20_0_4 {
+:ADDA SRC20_8_4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & SRC20_8_4 & DST20_0_4 & postStorePC {
 	adda(DST20_0_4,SRC20_8_4);
-}
-
-:ADDA SRC20_8_4, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xE & SRC20_8_4 & DST20_0_4 & dest_0_4=0x0 {
-	tmpd:$(REG_SIZE) = DST20_0_4;
-	tmp:$(REG_SIZE) = SRC20_8_4 + tmpd;
-	PC = tmp & 0xFFFFE;
-	
-	setaddflags(DST20_0_4,SRC20_8_4,tmpd);
-	goto [PC];
+	build postStorePC;
 }
 
 # `ADDA SR, <dst>`, verified with hardware but not in spec.
@@ -827,27 +819,19 @@ macro adda(dst, src) {
 	adda(DST20_0_4, 4:$(REG_SIZE));
 }
 
-:INCDA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x3 & DST20_0_4 {
+:INCDA DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xE & src_8_4=0x3 & DST20_0_4 & postStorePC {
 	adda(DST20_0_4, 2:$(REG_SIZE));
+	build postStorePC;
 }
 
-:ADDA "#"^Abs20s, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+:ADDA "#"^Abs20s, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & DST20_0_4 & postStorePC ; Abs20s [ctx_ctregdest=imm_8_4;] {
 	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd + tmps;
 	DST20_0_4 = sext(tmp[0,20]);
 	
 	setaddflags(DST20_0_4,tmps,tmpd);
-}
-
-:ADDA "#"^Abs20s, DST20_0_4			is ctx_haveext=0 & op16_12_4=0 & insid=0xA & imm_8_4 & DST20_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
-	tmpd:$(REG_SIZE) = DST20_0_4;
-	tmps:$(REG_SIZE) = sext(Abs20s);
-	tmp:$(REG_SIZE) = tmpd + tmps;
-	PC = tmp & 0xFFFFE;
-	
-	setaddflags(PC,tmps,tmpd);
-	goto [PC];
+	build postStorePC;
 }
 
 :CMPA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xD & SRC20_8_4 & DST20_0_4 {
@@ -910,8 +894,9 @@ macro adda(dst, src) {
 	DST20_0_4 = SRC20_8_4;
 }
 
-:CLRA DST20_0_4						is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4=0x3 & DST20_0_4 {
+:CLRA DST20_0_4						is ctx_haveext=0 & op16_12_4=0 & insid=0xC & src_8_4=0x3 & DST20_0_4 & postStorePC {
 	DST20_0_4 = 0:$(REG_SIZE);
+	build postStorePC;
 }
 
 macro suba(dst, src) {
@@ -923,45 +908,19 @@ macro suba(dst, src) {
 	setsubflags(dst,tmps,tmpd);
 }
 
-:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & DST20_0_4 {
+:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & DST20_0_4 & postStorePC {
 	suba(DST20_0_4, SRC20_8_4);
+	build postStorePC;
 }
 
-:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & DST20_0_4 & dest_0_4=0x0 {
-	tmpd:$(REG_SIZE) = DST20_0_4;
-	tmp:$(REG_SIZE) = tmpd - SRC20_8_4;
-	PC = tmp & 0xffffe;
-	
-	setsubflags(DST20_0_4,SRC20_8_4,tmpd);
-	goto [PC];
-}
-
-:SUBA SRC20_8_4, DST20_0_4					is ctx_haveext=0 & op16_12_4=0 & insid=0xF & SRC20_8_4 & src_8_4=0x0 & DST20_0_4 {
-	tmpd:$(REG_SIZE) = DST20_0_4;
-	tmps:$(REG_SIZE) = SRC20_8_4;
-	tmp:$(REG_SIZE) = DST20_0_4 - tmps;
-	DST20_0_4 = sext(tmp[0,20]);
-	
-	setsubflags(DST20_0_4,tmps,tmpd);
-}
-
-:SUBA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & DST20_0_4 ; Abs20s [ctx_ctregdest=imm_8_4;] {
+:SUBA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & DST20_0_4 & postStorePC ; Abs20s [ctx_ctregdest=imm_8_4;] {
 	tmpd:$(REG_SIZE) = DST20_0_4;
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = DST20_0_4 - tmps;
 	DST20_0_4 = sext(tmp[0,20]);
 	
 	setsubflags(DST20_0_4,tmps,tmpd);
-}
-
-:SUBA "#"^Abs20s, DST20_0_4				is ctx_haveext=0 & op16_12_4=0 & insid=0xB & imm_8_4 & DST20_0_4 & dest_0_4=0x0; Abs20s [ctx_ctregdest=imm_8_4;] {
-	tmpd:$(REG_SIZE) = DST20_0_4;
-	tmps:$(REG_SIZE) = sext(Abs20s);
-	tmp:$(REG_SIZE) = tmpd - tmps;
-	PC = tmp & 0xffffe;
-	
-	setsubflags(PC,tmps,tmpd);
-	goto [PC];
+	build postStorePC;
 }
 
 ##################

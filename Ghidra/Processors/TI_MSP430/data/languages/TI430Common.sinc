@@ -537,6 +537,8 @@ postStorePC:  			is ad=0x0 & as=0x3 & dest_Direct16_0_4=0x0 & src16_8_4=0x1
 { PC = PC & ~1; return [PC]; }
 postStorePC:  			is ad=0x0 & dest_Direct16_0_4=0x0
 { PC = PC & ~1; goto [PC];}
+postStorePC:  			is op16_12_4=0 & dest_0_4=0x0
+{ PC = PC & ~1; goto [PC]; }
 postStorePC:			is epsilon
 {  }
 
