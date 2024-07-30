@@ -375,6 +375,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 			boolean canBeNoAddress) {
 		Collection<VTMarkupItem> appliableMarkupItems =
 			controller.getMatchInfo(testMatch).getAppliableMarkupItems(TaskMonitor.DUMMY); // Initialize the cache.
+
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address markupDestAddress = vtMarkupItem.getDestinationAddress();
 			boolean isNoAddress =

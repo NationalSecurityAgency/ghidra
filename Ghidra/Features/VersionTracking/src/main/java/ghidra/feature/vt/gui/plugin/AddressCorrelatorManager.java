@@ -27,6 +27,7 @@ import ghidra.framework.options.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.*;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
 public class AddressCorrelatorManager {
@@ -82,6 +83,16 @@ public class AddressCorrelatorManager {
 		correlatorList.addAll(initializeAddressCorrelators());
 
 		correlatorList.sort(CORRELATOR_COMPARATOR);
+
+		StringBuilder buffy = new StringBuilder();
+		for (AddressCorrelator ac : correlatorList) {
+			buffy.append(ac.getClass().getSimpleName())
+					.append("; priority: ")
+					.append(ac.getPriority())
+					.append('\n');
+		}
+
+		Msg.trace(this, "Finished assembling correlators.  Sorted list:\n" + buffy);
 	}
 
 	private List<AddressCorrelator> initializeAddressCorrelators() {
@@ -101,9 +112,13 @@ public class AddressCorrelatorManager {
 
 	private AddressCorrelation getFunctionCorrelator(Function source, Function destination) {
 
+		Msg.trace(this, "Source / Destination functions: " + source + "; " + destination);
+
 		for (AddressCorrelator correlator : correlatorList) {
+			Msg.trace(this, "\tchecking correlator: " + correlator.getClass().getSimpleName());
 			AddressCorrelation correlation = correlator.correlate(source, destination);
 			if (correlation != null) {
+				Msg.trace(this, "\t\tusing correlator: " + correlator);
 				return correlation;
 			}
 		}
