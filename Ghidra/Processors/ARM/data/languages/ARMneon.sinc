@@ -5452,14 +5452,10 @@ thv_vst1DdElement2: Dd^"["^thv_vst1Index^"]"	is Dd & thv_vst1Index & thv_c1011=2
 # VST2 (multiple 2-element structures)
 #
 
-vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=0) | (TMode=1 & thv_c0607=0))  & regInc
+vst2Dd: Dreg		is Dreg & Dreg2 & ((TMode=0 & c0607=0) | (TMode=1 & thv_c0607=0))  & regInc
 {
 	ptr1:4 = &Dreg;
-@if ENDIAN == "little"
-  	ptr2:4 = &Dreg + (regInc * 8);
-@else # ENDIAN == "big"
-  	ptr2:4 = &Dreg - (regInc * 8);
-@endif # ENDIAN = "big"
+	ptr2:4 = &Dreg2;
 	mult_dat8 = 8;
 <loop>
 	*:1 mult_addr = *[register]:1 ptr1;
@@ -5473,14 +5469,10 @@ vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=0) | (TMode=1 & thv_c0607=0))  & regIn
 	goto <loop>;
 <loop_end>
 }
-vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=1) | (TMode=1 & thv_c0607=1))  & regInc
+vst2Dd: Dreg		is Dreg & Dreg2 & ((TMode=0 & c0607=1) | (TMode=1 & thv_c0607=1))  & regInc
 {
 	ptr1:4 = &Dreg;
-@if ENDIAN == "little"
-  	ptr2:4 = &Dreg + (regInc * 8);
-@else # ENDIAN == "big"
-  	ptr2:4 = &Dreg - (regInc * 8);
-@endif # ENDIAN = "big"
+	ptr2:4 = &Dreg2;
 	mult_dat8 = 4;
 <loop>
 	*:2 mult_addr = *[register]:2 ptr1;
@@ -5494,14 +5486,10 @@ vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=1) | (TMode=1 & thv_c0607=1))  & regIn
 	goto <loop>;
 <loop_end>	
 }
-vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=2) | (TMode=1 & thv_c0607=2)) & regInc
+vst2Dd: Dreg		is Dreg & Dreg2 & ((TMode=0 & c0607=2) | (TMode=1 & thv_c0607=2)) & regInc
 {
 	ptr1:4 = &Dreg;
-@if ENDIAN == "little"
-  	ptr2:4 = &Dreg + (regInc * 8);
-@else # ENDIAN == "big"
-  	ptr2:4 = &Dreg - (regInc * 8);
-@endif # ENDIAN = "big"
+	ptr2:4 = &Dreg2;
 	mult_dat8 = 2;
 <loop>
 	*:4 mult_addr = *[register]:4 ptr1;
@@ -5516,8 +5504,8 @@ vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=2) | (TMode=1 & thv_c0607=2)) & regInc
 <loop_end>	
 }
 
-buildVst2DdListA:							is counter=0								{ }
-buildVst2DdListA: vst2Dd,buildVst2DdListA	is vst2Dd & buildVst2DdListA & esize0607	[ counter=counter-1; regNum=regNum+1; ] 
+buildVst2DdListA:							is counter=0								[ reg2Num=reg2Num-counter2; ] { }
+buildVst2DdListA: vst2Dd,buildVst2DdListA	is vst2Dd & buildVst2DdListA & esize0607	[ counter=counter-1; regNum=regNum+1; reg2Num=reg2Num+1; ]
 {
 	build vst2Dd;
 	build buildVst2DdListA;
