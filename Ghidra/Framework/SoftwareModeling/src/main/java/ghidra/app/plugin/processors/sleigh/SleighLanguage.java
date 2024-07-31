@@ -375,16 +375,12 @@ public class SleighLanguage implements Language {
 				new SleighInstructionPrototype(this, buf, context, contextcache, inDelaySlot, null);
 			Integer hashcode = newProto.hashCode();
 
-			// check proto map for already defined prototype
-			res = instructProtoMap.get(hashcode);
-			if (res == null) {
-				newProto.cacheInfo(buf, context, true);
-				res = instructProtoMap.putIfAbsent(hashcode, newProto);
-				// if there was no previous value, assume newProto inserted
-				if (res == null) {
-					res = newProto;
-				}
-			}
+			// get existing proto and use it
+			// if doesn't exist in map, cache info and store new proto
+			res = instructProtoMap.computeIfAbsent(hashcode, h -> {
+			    newProto.cacheInfo(buf, context, true);
+			    return newProto;
+			});
 			
 			if (inDelaySlot && res.hasDelaySlots()) {
 				throw new NestedDelaySlotException();
