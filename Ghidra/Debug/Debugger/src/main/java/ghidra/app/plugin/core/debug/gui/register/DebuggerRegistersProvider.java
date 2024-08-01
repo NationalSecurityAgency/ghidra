@@ -1021,8 +1021,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (regs == null && register.getAddressSpace().isRegisterSpace()) {
 			return false;
 		}
-		AddressRange range =
-			current.getPlatform().getConventionalRegisterRange(regs.getAddressSpace(), register);
+		AddressRange range = current.getPlatform()
+				.getConventionalRegisterRange(regs == null ? null : regs.getAddressSpace(),
+					register);
 		return viewKnown.contains(range.getMinAddress(), range.getMaxAddress());
 	}
 
