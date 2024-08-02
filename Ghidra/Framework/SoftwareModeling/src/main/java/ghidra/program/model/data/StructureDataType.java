@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -348,30 +348,44 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			return;
 		}
 
-		boolean bitFieldRemoved = false;
-
-		TreeSet<Integer> treeSet = null;
-		if (!isPackingEnabled()) {
-			// treeSet only used to track undefined filler removal
-			treeSet = new TreeSet<>(ordinals);
+		if (ordinals.size() == 1) {
+			ordinals.forEach(ordinal -> delete(ordinal));
+			return;
 		}
 
-		List<DataTypeComponentImpl> newComponents = new ArrayList<>();
+		TreeSet<Integer> sortedOrdinals = new TreeSet<>(ordinals);
+		int firstOrdinal = sortedOrdinals.first();
+		int lastOrdinal = sortedOrdinals.last();
+		if (firstOrdinal < 0 || lastOrdinal >= numComponents) {
+			throw new IndexOutOfBoundsException(ordinals.size() + " ordinals specified");
+		}
+
+		Integer nextOrdinal = firstOrdinal;
+
 		int ordinalAdjustment = 0;
 		int offsetAdjustment = 0;
 		int lastDefinedOrdinal = -1;
+
+		boolean isPacked = isPackingEnabled();
+
+		boolean bitFieldRemoved = false;
+
+		List<DataTypeComponentImpl> newComponents = new ArrayList<>(components.size());
+
 		for (DataTypeComponentImpl dtc : components) {
 			int ordinal = dtc.getOrdinal();
-			if (treeSet != null && lastDefinedOrdinal < (ordinal - 1)) {
+			if (!isPacked && nextOrdinal != null && nextOrdinal < ordinal) {
 				// Identify removed filler since last defined component
-				Set<Integer> removedFillerSet = treeSet.subSet(lastDefinedOrdinal + 1, ordinal);
+				SortedSet<Integer> removedFillerSet =
+					sortedOrdinals.subSet(lastDefinedOrdinal + 1, ordinal);
 				if (!removedFillerSet.isEmpty()) {
 					int undefinedRemoveCount = removedFillerSet.size();
 					ordinalAdjustment -= undefinedRemoveCount;
 					offsetAdjustment -= undefinedRemoveCount;
+					nextOrdinal = sortedOrdinals.higher(removedFillerSet.last());
 				}
 			}
-			if (ordinals.contains(ordinal)) {
+			if (nextOrdinal != null && nextOrdinal == ordinal) {
 				// defined component removed
 				if (dtc.isBitFieldComponent()) {
 					// defer reconciling bitfield space to repack
@@ -382,6 +396,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 				}
 				--ordinalAdjustment;
 				lastDefinedOrdinal = ordinal;
+				nextOrdinal = sortedOrdinals.higher(ordinal);
 			}
 			else {
 
@@ -392,9 +407,10 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 				lastDefinedOrdinal = ordinal;
 			}
 		}
-		if (treeSet != null) {
+		if (!isPacked) {
 			// Identify removed filler after last defined component
-			Set<Integer> removedFillerSet = treeSet.subSet(lastDefinedOrdinal + 1, numComponents);
+			Set<Integer> removedFillerSet =
+				sortedOrdinals.subSet(lastDefinedOrdinal + 1, numComponents);
 			if (!removedFillerSet.isEmpty()) {
 				int undefinedRemoveCount = removedFillerSet.size();
 				ordinalAdjustment -= undefinedRemoveCount;
@@ -405,7 +421,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		components = newComponents;
 		numComponents += ordinalAdjustment;
 
-		if (isPackingEnabled()) {
+		if (isPacked) {
 			repack(true);
 		}
 		else {
