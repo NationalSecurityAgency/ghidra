@@ -15,6 +15,7 @@
  */
 package ghidra.formats.gfilesystem;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
@@ -66,6 +67,11 @@ public abstract class AbstractFileSystem<METADATATYPE> implements GFileSystem {
 	}
 
 	@Override
+	public GFile getRootDir() {
+		return fsIndex.getRootDir();
+	}
+
+	@Override
 	public List<GFile> getListing(GFile directory) {
 		return fsIndex.getListing(directory);
 	}
@@ -73,6 +79,11 @@ public abstract class AbstractFileSystem<METADATATYPE> implements GFileSystem {
 	@Override
 	public int getFileCount() {
 		return fsIndex.getFileCount();
+	}
+
+	@Override
+	public GFile resolveSymlinks(GFile file) throws IOException {
+		return fsIndex.resolveSymlinks(file);
 	}
 
 }

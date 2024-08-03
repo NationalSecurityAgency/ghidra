@@ -18,7 +18,7 @@ package ghidra.formats.gfilesystem;
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.AccessMode;
 import java.util.*;
 
 import org.apache.commons.collections4.map.ReferenceMap;
@@ -29,6 +29,7 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactory;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryIgnore;
 import ghidra.formats.gfilesystem.fileinfo.*;
+import ghidra.framework.OperatingSystem;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -55,14 +56,17 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		return new LocalFileSystem(FSRLRoot.makeRoot(FSTYPE));
 	}
 
-	private final List<GFile> emptyDir = List.of();
 	private final FSRLRoot fsFSRL;
+	private final GFile rootDir;
 	private final FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private final ReferenceMap<FileFingerprintRec, String> fileFingerprintToMD5Map =
 		new ReferenceMap<>();
+	private final boolean needsListRoots =
+		OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS;
 
 	private LocalFileSystem(FSRLRoot fsrl) {
 		this.fsFSRL = fsrl;
+		this.rootDir = GFileImpl.fromFSRL(this, null, fsFSRL.withPath("/"), true, -1);
 	}
 
 	boolean isSameFS(FSRL fsrl) {
@@ -143,8 +147,9 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	@Override
 	public List<GFile> getListing(GFile directory) {
 		List<GFile> results = new ArrayList<>();
+		directory = Objects.requireNonNullElse(directory, rootDir);
 
-		if (directory == null) {
+		if (directory.equals(rootDir) && needsListRoots) {
 			for (File f : File.listRoots()) {
 				FSRL rootElemFSRL = fsFSRL.withPath(FSUtilities.normalizeNativePath(f.getName()));
 				results.add(GFileImpl.fromFSRL(this, null, rootElemFSRL, f.isDirectory(), -1));
@@ -152,17 +157,17 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		}
 		else {
 			File localDir = new File(directory.getPath());
-			if (!localDir.isDirectory() || Files.isSymbolicLink(localDir.toPath())) {
-				return emptyDir;
+			if (!localDir.isDirectory() || FSUtilities.isSymlink(localDir)) {
+				return List.of();
 			}
 
 			File[] files = localDir.listFiles();
 			if (files == null) {
-				return emptyDir;
+				return List.of();
 			}
 
 			for (File f : files) {
-				if (f.isFile() || f.isDirectory()) {
+				if (f.isFile() || f.isDirectory() || FSUtilities.isSymlink(f)) {
 					FSRL newFileFSRL = directory.getFSRL().appendPath(f.getName());
 					results.add(GFileImpl.fromFSRL(this, directory, newFileFSRL, f.isDirectory(),
 						f.length()));
@@ -186,41 +191,24 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	 * @return {@link FileAttributes} instance
 	 */
 	public FileAttributes getFileAttributes(File f) {
-		Path p = f.toPath();
-		FileType fileType = fileToFileType(p);
-		Path symLinkDest = null;
-		try {
-			symLinkDest = fileType == FileType.SYMBOLIC_LINK ? Files.readSymbolicLink(p) : null;
-		}
-		catch (IOException e) {
-			// ignore and continue with symLinkDest == null
-		}
+		FileType fileType = FSUtilities.getFileType(f);
+		String symLinkDest = fileType == FileType.SYMBOLIC_LINK ? FSUtilities.readSymlink(f) : null;
 		return FileAttributes.of(
 			FileAttribute.create(NAME_ATTR, f.getName()),
 			FileAttribute.create(FILE_TYPE_ATTR, fileType),
 			FileAttribute.create(SIZE_ATTR, f.length()),
 			FileAttribute.create(MODIFIED_DATE_ATTR, new Date(f.lastModified())),
-			symLinkDest != null
-					? FileAttribute.create(SYMLINK_DEST_ATTR, symLinkDest.toString())
-					: null);
-	}
-
-	private static FileType fileToFileType(Path p) {
-		if (Files.isSymbolicLink(p)) {
-			return FileType.SYMBOLIC_LINK;
-		}
-		if (Files.isDirectory(p)) {
-			return FileType.DIRECTORY;
-		}
-		if (Files.isRegularFile(p)) {
-			return FileType.FILE;
-		}
-		return FileType.UNKNOWN;
+			symLinkDest != null ? FileAttribute.create(SYMLINK_DEST_ATTR, symLinkDest) : null);
 	}
 
 	@Override
 	public FSRLRoot getFSRL() {
 		return fsFSRL;
+	}
+
+	@Override
+	public GFile getRootDir() {
+		return rootDir;
 	}
 
 	@Override
@@ -257,6 +245,18 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	ByteProvider getByteProvider(FSRL fsrl, TaskMonitor monitor) throws IOException {
 		File f = getLocalFile(fsrl);
 		return new FileByteProvider(f, fsrl, AccessMode.READ);
+	}
+
+	@Override
+	public GFile resolveSymlinks(GFile file) throws IOException {
+		File f = getLocalFile(file.getFSRL());
+		File canonicalFile = f.getCanonicalFile();
+		if (f.equals(canonicalFile)) {
+			return file;
+		}
+		return GFileImpl.fromPathString(this,
+			FSUtilities.normalizeNativePath(canonicalFile.getPath()), null,
+			canonicalFile.isDirectory(), canonicalFile.length());
 	}
 
 	@Override
@@ -327,13 +327,18 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 				// If not using a comparator, or if the requested path is a 
 				// root element (eg "/", or "c:\\"), don't do per-directory-path lookups.
 
-				// On windows, getCanonicalFile() will return a corrected path using the case of 
-				// the file element on the file system (eg. "c:/users" -> "c:/Users"), if the
-				// element exists.
-				return f.exists() ? f.getCanonicalFile() : null;
+				if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+					// On windows, getCanonicalFile() will return a corrected path using the case of 
+					// the file element on the file system (eg. "c:/users" -> "c:/Users"), if the
+					// element exists.
+					// We don't want to do this on unix-ish file systems as it will follow symlinks
+					f = f.getCanonicalFile();
+				}
+				return FSUtilities.isSymlink(f) || f.exists() ? f : null;
 			}
 
-			if (f.exists()) {
+			// Test the file's path using the name comparator
+			if (f.exists() && baseDir == null) {
 				// try to short-cut by comparing the entire path string 
 				File canonicalFile = f.getCanonicalFile();
 				if (nameComp.compare(path,

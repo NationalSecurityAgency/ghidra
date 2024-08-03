@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * TODO: Provide class-level documentation that describes what this file system does.
+ * Provide class-level documentation that describes what this file system does.
  */
 @FileSystemInfo(type = "fstypegoeshere", // ([a-z0-9]+ only)
 		description = "File system description goes here", factory = SkeletonFileSystem.MyFileSystemFactory.class)
@@ -62,7 +62,7 @@ public class SkeletonFileSystem implements GFileSystem {
 	public void mount(TaskMonitor monitor) {
 		monitor.setMessage("Opening " + SkeletonFileSystem.class.getSimpleName() + "...");
 
-		// TODO: Customize how things in the file system are stored.  The following should be 
+		// Customize how things in the file system are stored.  The following should be 
 		// treated as pseudo-code.
 		for (MyMetadata metadata : new MyMetadata[10]) {
 			if (monitor.isCancelled()) {
@@ -116,7 +116,7 @@ public class SkeletonFileSystem implements GFileSystem {
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		// TODO: Get an ByteProvider for a file.  The following is an example of how the metadata
+		// Get an ByteProvider for a file.  The following is an example of how the metadata
 		// might be used to get an sub-ByteProvider from a stored provider offset.
 		MyMetadata metadata = fsih.getMetadata(file);
 		return (metadata != null)
@@ -140,7 +140,7 @@ public class SkeletonFileSystem implements GFileSystem {
 		return result;
 	}
 
-	// TODO: Customize for the real file system.
+	// Customize for the real file system.
 	public static class MyFileSystemFactory
 			implements GFileSystemFactoryByteProvider<SkeletonFileSystem>,
 			GFileSystemProbeByteProvider {
@@ -159,14 +159,14 @@ public class SkeletonFileSystem implements GFileSystem {
 		public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
 				TaskMonitor monitor) throws IOException, CancelledException {
 
-			// TODO: Quickly and efficiently examine the bytes in 'byteProvider' to determine if 
+			// Quickly and efficiently examine the bytes in 'byteProvider' to determine if 
 			// it's a valid file system.  If it is, return true. 
 
 			return false;
 		}
 	}
 
-	// TODO: Customize with metadata from files in the real file system.  This is just a stub.
+	// Customize with metadata from files in the real file system.  This is just a stub.
 	// The elements of the file system will most likely be modeled by Java classes external to this
 	// file.
 	private static class MyMetadata {

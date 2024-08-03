@@ -46,8 +46,6 @@ public abstract class Filter<T> {
 
 	public abstract FilterEditingStatus getFilterStatus();
 
-	public abstract void clearFilter();
-
 	public abstract JComponent getComponent();
 
 	public void dispose() {

@@ -126,11 +126,6 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 	}
 
 	@Override
-	public void clearFilter() {
-		textField.setText(defaultValue);
-	}
-
-	@Override
 	public FilterEditingStatus getFilterStatus() {
 		return textField.getFilterStatus();
 	}

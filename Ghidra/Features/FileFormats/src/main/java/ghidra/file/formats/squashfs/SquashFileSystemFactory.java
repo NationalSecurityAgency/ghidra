@@ -35,8 +35,14 @@ public class SquashFileSystemFactory
 			throws IOException, CancelledException {
 
 		SquashFileSystem fs = new SquashFileSystem(targetFSRL, byteProvider, fsService);
-		fs.mount(monitor);
-		return fs;
+		try {
+			fs.mount(monitor);
+			return fs;
+		}
+		catch (IOException e) {
+			FSUtilities.uncheckedClose(fs, null);
+			throw e;
+		}
 	}
 
 	@Override

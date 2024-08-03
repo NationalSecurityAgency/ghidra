@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
-import ghidra.feature.vt.api.impl.MarkupItemStorage;
-import ghidra.feature.vt.api.impl.VTEvent;
+import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.framework.data.OpenMode;
@@ -138,33 +137,13 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		return createMarkupItemDB(markupItemStorage);
 	}
 
-	void removeMarkupItem(MarkupItemStorageDB appliedMarkupItemDB) {
+	// non-interface method; internal API use
+	public void removeStoredMarkupItems(List<MarkupItemImpl> impls) {
 
-		VTAssociationDB association = (VTAssociationDB) appliedMarkupItemDB.getAssociation();
-
-		validateAcceptedState(appliedMarkupItemDB, association);
-
-		try {
-			markupItemTableAdapter.removeMatchMarkupItemRecord(appliedMarkupItemDB.getKey());
-		}
-		catch (IOException e) {
-			session.dbError(e);
-		}
-	}
-
-	private void validateAcceptedState(MarkupItemStorageDB appliedItem,
-			VTAssociationDB association) {
-		//
-		// For any 'applied' markup item we assume that its association will be 'ACCEPTED'.  The
-		// exception to this rule is when we have markup items in the database, but that are not
-		// applied (like when we change the destination address without applying)
-		//
-		VTAssociationStatus associationStatus = association.getStatus();
-		VTMarkupItemStatus status = appliedItem.getStatus();
-		if (status.isUnappliable()) {
-			if (associationStatus != ACCEPTED) {
-				throw new AssertException("Cannot have an applied markup item with an " +
-					"association that is not ACCEPTED");
+		for (MarkupItemImpl impl : impls) {
+			MarkupItemStorage storage = impl.getStorage();
+			if (storage instanceof MarkupItemStorageDB storageDb) {
+				removeMarkupRecord(storageDb.getKey());
 			}
 		}
 	}
@@ -251,17 +230,31 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	}
 
 	void removeAssociation(VTAssociation association) {
-		VTAssociationDB existingAssociation = (VTAssociationDB) association;
-		long id = existingAssociation.getKey();
+
+		// Update the association status so that we update any blocked associations
+		VTAssociationDB associationDB = (VTAssociationDB) association;
+		VTAssociationStatus status = association.getStatus();
+		if (status == ACCEPTED) {
+			associationDB.setStatus(AVAILABLE);
+			associationDB.setInvalid();
+			unblockRelatedAssociations(associationDB);
+			for (AssociationHook hook : associationHooks) {
+				hook.associationCleared(associationDB);
+			}
+		}
+
+		VTAssociationDB associationDb = (VTAssociationDB) association;
+		long id = associationDb.getKey();
 		try {
+			associationDb.removeMarkupItems();
 			associationTableAdapter.removeAssociaiton(id);
-			session.setChanged(VTEvent.ASSOCIATION_REMOVED, existingAssociation, null);
+			session.setChanged(VTEvent.ASSOCIATION_REMOVED, associationDb, null);
 		}
 		catch (IOException e) {
 			session.dbError(e);
 		}
 		associationCache.delete(id);
-		existingAssociation.setInvalid();
+		associationDb.setInvalid();
 
 	}
 
@@ -507,7 +500,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			throws VTAssociationStatusException {
 		if (association.hasAppliedMarkupItems()) {
 			throw new VTAssociationStatusException(
-				"VTMarkupItemManager contains applied " + "markup items");
+				"VTMarkupItemManager contains applied markup items");
 		}
 	}
 
@@ -623,9 +616,9 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		associationHooks.remove(hook);
 	}
 
-	void removeMarkupRecord(DBRecord record) {
+	void removeMarkupRecord(long key) {
 		try {
-			markupItemTableAdapter.removeMatchMarkupItemRecord(record.getKey());
+			markupItemTableAdapter.removeMarkupItemRecord(key);
 		}
 		catch (IOException e) {
 			session.dbError(e);

@@ -30,7 +30,6 @@ import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.plugins.importer.batch.*;
 import ghidra.plugins.importer.batch.BatchGroup.BatchLoadConfig;
 import ghidra.program.model.listing.Program;
@@ -205,8 +204,6 @@ public class ImportBatchTask extends Task {
 						totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT
 								: ProgramManager.OPEN_VISIBLE);
 				}
-
-				ProgramMappingService.createAssociation(appInfo.getFSRL(), program);
 			}
 			totalObjsImported++;
 		}

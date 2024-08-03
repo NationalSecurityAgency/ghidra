@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,6 @@ public class AnalysisPriority {
 	 *   happen with a low priority.
 	 * 
 	 */
-	
 
 	/**
 	 * Defines a full format analysis as the first priority for automatic analysis.
@@ -78,7 +77,7 @@ public class AnalysisPriority {
 	 * instructions <code>AnalyzerType.INSTRUCTIONS</code>.  It is also useful for
 	 * those analyzers that depend on code, but want to analyze flow, such as non-returning
 	 * functions, that should happen before functions are widely laid down.  If
-	 * bad flow is not fixed at an early priority, switch stmt recovery, function
+	 * bad flow is not fixed at an early priority, switch statement recovery, function
 	 * boundaries, etc... may need to be redone and bad stuff cleaned up.
 	 */
 	public final static AnalysisPriority CODE_ANALYSIS = DISASSEMBLY.getNext("CODE");
@@ -114,8 +113,8 @@ public class AnalysisPriority {
 		DATA_ANALYSIS.getNext("FUNCTION ID");
 
 	/**
-	 * Defines data type propogation as the ninth priority for automatic analysis.
-	 * Data type propogation analysis should hapen as late as possible so that all basic code
+	 * Defines data type propagation as the ninth priority for automatic analysis.
+	 * Data type propagation analysis should happen as late as possible so that all basic code
 	 * recovery, reference analysis, etc... has taken place.
 	 */
 	public final static AnalysisPriority DATA_TYPE_PROPOGATION =
@@ -136,6 +135,7 @@ public class AnalysisPriority {
 
 	/**
 	 * Construct a new priority object.
+	 * @param name the name
 	 * @param priority priority to use
 	 */
 	public AnalysisPriority(String name, int priority) {
@@ -145,6 +145,7 @@ public class AnalysisPriority {
 
 	/**
 	 * Return the priority specified for this analysis priority.
+	 * @return the priority specified for this analysis priority.
 	 */
 	public int priority() {
 		return priority;
@@ -160,7 +161,7 @@ public class AnalysisPriority {
 	}
 
 	/**
-	 * Get a piority that is a little lower than this one.
+	 * Get a priority that is a little lower than this one.
 	 * 
 	 * @return a lower priority
 	 */
@@ -170,6 +171,7 @@ public class AnalysisPriority {
 
 	/**
 	 * Return first gross priority.
+	 * @param name the name
 	 * @return first gross priority
 	 */
 	public static AnalysisPriority getInitial(String name) {
@@ -178,6 +180,7 @@ public class AnalysisPriority {
 
 	/**
 	 * Get the next gross priority.
+	 * @param nextName the next name
 	 * @return return next gross priority
 	 */
 	public AnalysisPriority getNext(String nextName) {

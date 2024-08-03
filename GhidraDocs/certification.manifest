@@ -9,14 +9,14 @@
 ##MODULE IP: Public Domain
 ##MODULE IP: Tango Icons - Public Domain
 CheatSheet.html||GHIDRA||||END|
-GhidraClass/Advanced/Examples/Makefile||GHIDRA||||END|
-GhidraClass/Advanced/Examples/compilerVsDecompiler.s||GHIDRA||||END|
-GhidraClass/Advanced/Examples/inline.s||GHIDRA||||END|
-GhidraClass/Advanced/Examples/switch.s||GHIDRA||||END|
-GhidraClass/Advanced/GHIDRA_1.png||GHIDRA||||END|
-GhidraClass/Advanced/ghidraRight.png||GHIDRA||||END|
 GhidraClass/Advanced/improvingDisassemblyAndDecompilation.pdf||GHIDRA||||END|
-GhidraClass/Advanced/improvingDisassemblyAndDecompilation.tex||GHIDRA||||END|
+GhidraClass/Advanced/src/Examples/Makefile||GHIDRA||||END|
+GhidraClass/Advanced/src/Examples/compilerVsDecompiler.s||GHIDRA||||END|
+GhidraClass/Advanced/src/Examples/inline.s||GHIDRA||||END|
+GhidraClass/Advanced/src/Examples/switch.s||GHIDRA||||END|
+GhidraClass/Advanced/src/GHIDRA_1.png||GHIDRA||||END|
+GhidraClass/Advanced/src/ghidraRight.png||GHIDRA||||END|
+GhidraClass/Advanced/src/improvingDisassemblyAndDecompilation.tex||GHIDRA||||END|
 GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment.html||GHIDRA|||This file contains mostly Ghidra content, but also includes code that is available for distribution, without restrictions, from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/AdvancedDevelopment/Images/GhidraLogo64.png||GHIDRA||||END|

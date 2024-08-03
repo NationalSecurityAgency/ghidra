@@ -76,6 +76,38 @@
     <register name="MM5" group="MMX"/>
     <register name="MM6" group="MMX"/>
     <register name="MM7" group="MMX"/>
+    <register name="ZMM0" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM1" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM2" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM3" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM4" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM5" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM6" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM7" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM8" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM9" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM10" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM11" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM12" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM13" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM14" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM15" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM16" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM17" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM18" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM19" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM20" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM21" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM22" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM23" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM24" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM25" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM26" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM27" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM28" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM29" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM30" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="ZMM31" group="AVX" vector_lane_sizes="1,2,4,8"/>
     <register name="YMM0" group="AVX" vector_lane_sizes="1,2,4,8"/>
     <register name="YMM1" group="AVX" vector_lane_sizes="1,2,4,8"/>
     <register name="YMM2" group="AVX" vector_lane_sizes="1,2,4,8"/>
@@ -92,22 +124,54 @@
     <register name="YMM13" group="AVX" vector_lane_sizes="1,2,4,8"/>
     <register name="YMM14" group="AVX" vector_lane_sizes="1,2,4,8"/>
     <register name="YMM15" group="AVX" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM0" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM1" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM2" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM3" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM4" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM5" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM6" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM7" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM8" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM9" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM10" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM11" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM12" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM13" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM14" vector_lane_sizes="1,2,4,8"/>
-    <register name="XMM15" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM16" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM17" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM18" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM19" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM20" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM21" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM22" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM23" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM24" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM25" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM26" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM27" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM28" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM29" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM30" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="YMM31" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM0" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM1" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM2" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM3" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM4" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM5" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM6" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM7" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM8" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM9" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM10" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM11" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM12" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM13" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM14" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM15" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM16" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM17" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM18" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM19" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM20" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM21" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM22" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM23" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM24" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM25" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM26" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM27" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM28" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM29" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM30" group="AVX" vector_lane_sizes="1,2,4,8"/>
+    <register name="XMM31" group="AVX" vector_lane_sizes="1,2,4,8"/>
     <register name="CF" group="FLAGS"/>
     <register name="F1" group="FLAGS"/>
     <register name="PF" group="FLAGS"/>

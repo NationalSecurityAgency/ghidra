@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,13 +28,11 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.*;
 import ghidra.framework.store.LockException;
-import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.InvalidAddressException;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
@@ -367,8 +365,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			if (fsrl.getMD5() == null) {
 				fsrl = fsrl.withMD5(md5);
 			}
-			prog.getOptions(Program.PROGRAM_INFO)
-				.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+			FSRL.writeToProgramInfo(prog, fsrl);
 		}
 		prog.setExecutableMD5(md5);
 		String sha256 = computeBinarySHA256(provider);
@@ -489,7 +486,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			for (Register reg : lang.getRegisters()) {
 				Address addr = reg.getAddress();
 				if (addr.isMemoryAddress()) {
-					createSymbol(program, reg.getName(), addr, false, true, true);
+					createSymbol(program, reg.getName(), addr, null, false, true, true);
 				}
 			}
 			// optionally create default symbols defined by pspec
@@ -497,7 +494,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				boolean anchorSymbols = shouldAnchorSymbols(options);
 				List<AddressLabelInfo> labels = lang.getDefaultSymbols();
 				for (AddressLabelInfo info : labels) {
-					createSymbol(program, info.getLabel(), info.getAddress(), info.isEntry(),
+					createSymbol(program, info.getLabel(), info.getAddress(), info.getDescription(), info.isEntry(),
 						info.isPrimary(), anchorSymbols);
 				}
 			}
@@ -509,13 +506,16 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	private static void createSymbol(Program program, String labelname, Address address,
-			boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
+			String comment, boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
 		SymbolTable symTable = program.getSymbolTable();
 		Address addr = address;
 		Symbol s = symTable.getPrimarySymbol(addr);
 		try {
 			Namespace namespace = program.getGlobalNamespace();
 			s = symTable.createLabel(addr, labelname, namespace, SourceType.IMPORTED);
+			if (comment != null) {
+				program.getListing().setComment(address, CodeUnit.EOL_COMMENT, comment);
+			}
 			if (isEntry) {
 				symTable.addExternalEntryPoint(addr);
 			}

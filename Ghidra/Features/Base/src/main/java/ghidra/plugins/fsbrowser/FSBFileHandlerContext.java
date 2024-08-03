@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 package ghidra.plugins.fsbrowser;
-import docking.action.DockingAction;
-import ghidra.framework.plugintool.Plugin;
+
+import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.plugin.importer.ProjectIndexService;
 
 /**
- * {@link FileSystemBrowserPlugin}-specific action.
+ * Context given to a {@link FSBFileHandler} instance when being initialized.
+ * 
+ * @param plugin the FSB plugin 
+ * @param fsbComponent the FSB component
+ * @param fsService the fs service
+ * @param projectIndex the project index
  */
-public abstract class FSBAction extends DockingAction {
-
-	private final String menuText;
-
-	public FSBAction(String menuText, Plugin plugin) {
-		this(menuText, menuText, plugin);
-	}
-
-	public FSBAction(String name, String menuText, Plugin plugin) {
-		super("FSB " + name, plugin.getName());
-		this.menuText = menuText;
-	}
-
-	public String getMenuText() {
-		return menuText;
-	}
-}
+public record FSBFileHandlerContext(FileSystemBrowserPlugin plugin,
+		FSBComponentProvider fsbComponent, FileSystemService fsService,
+		ProjectIndexService projectIndex) {}

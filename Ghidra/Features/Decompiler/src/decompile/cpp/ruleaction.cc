@@ -9476,6 +9476,26 @@ bool RuleIgnoreNan::checkBackForCompare(Varnode *floatVar,Varnode *root)
   return false;
 }
 
+/// \brief Test if the given Varnode is produced by a NaN operation.
+///
+/// The Varnode can be the direct or negated output of a NaN.
+/// \param vn is the given Varnode
+/// \return \b true if the Varnode is the output of the NaN
+bool RuleIgnoreNan::isAnotherNan(Varnode *vn)
+
+{
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  OpCode opc = op->code();
+  if (opc == CPUI_BOOL_NEGATE) {
+    vn = op->getIn(0);
+    if (!vn->isWritten()) return false;
+    op = vn->getDef();
+    opc = op->code();
+  }
+  return (opc == CPUI_FLOAT_NAN);
+}
+
 /// \brief Test if a boolean expression incorporates a floating-point comparison, and remove the NaN data-flow if it does
 ///
 /// The given PcodeOp takes input from a NaN operation through a specific slot. We look for a floating-point comparison
@@ -9497,35 +9517,34 @@ Varnode *RuleIgnoreNan::testForComparison(Varnode *floatVar,PcodeOp *op,int4 slo
 
 {
   if (op->code() == matchCode) {
-    Varnode *vn = op->getIn(1-slot);
+    Varnode *vn = op->getIn(1 - slot);
     if (checkBackForCompare(floatVar,vn)) {
-      data.opSetOpcode(op, CPUI_COPY);
-      data.opRemoveInput(op, 1);
-      data.opSetInput(op, vn, 0);
+      data.opSetOpcode(op,CPUI_COPY);
+      data.opRemoveInput(op,1);
+      data.opSetInput(op,vn,0);
       count += 1;
     }
-    return op->getOut();
-  }
-  if (op->code() != CPUI_CBRANCH)
-    return (Varnode *)0;
-  BlockBasic *parent = op->getParent();
-  bool flowToFromCompare = false;
-  PcodeOp *lastOp;
-  int4 outDir = (matchCode == CPUI_BOOL_OR) ? 0 : 1;
-  if (op->isBooleanFlip())
-    outDir = 1 - outDir;
-  FlowBlock *outBranch = parent->getOut(outDir);
-  lastOp = outBranch->lastOp();
-  if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
-    FlowBlock *otherBranch = parent->getOut(1-outDir);
-    if (outBranch->getOut(0) == otherBranch || outBranch->getOut(1) == otherBranch) {
-      if (checkBackForCompare(floatVar, lastOp->getIn(1)))
-	flowToFromCompare = true;
+    else if (isAnotherNan(vn)) {
+      return op->getOut();
     }
   }
-  if (flowToFromCompare) {
-    data.opSetInput(op,data.newConstant(1, 0),1);	// Treat result of NaN as false
-    count += 1;
+  else if (op->code() == CPUI_CBRANCH) {
+    BlockBasic *parent = op->getParent();
+    PcodeOp *lastOp;
+    int4 outDir = (matchCode == CPUI_BOOL_OR) ? 0 : 1;
+    if (op->isBooleanFlip())
+      outDir = 1 - outDir;
+    FlowBlock *outBranch = parent->getOut(outDir);
+    lastOp = outBranch->lastOp();
+    if (lastOp != (PcodeOp*)0 && lastOp->code() == CPUI_CBRANCH) {
+      FlowBlock *otherBranch = parent->getOut(1 - outDir);
+      if (outBranch->getOut(0) == otherBranch || outBranch->getOut(1) == otherBranch) {
+	if (checkBackForCompare(floatVar,lastOp->getIn(1))) {
+	  data.opSetInput(op,data.newConstant(1,(matchCode == CPUI_BOOL_OR) ? 0 : 1),1);
+	  count += 1;
+	}
+      }
+    }
   }
   return (Varnode *)0;
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,7 +116,7 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uin
 	  return (ReplaceVarnode *)0;
       }
     }
-    
+
     if (vn->isInput()) {		// Must be careful with inputs
       // Inputs must come in from the right register/memory
       if (bitsize < 8) return (ReplaceVarnode *)0; // Dont create input flag
@@ -408,7 +408,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       hcount += 1;
       break;
     case CPUI_INT_ADD:
-      if ((rvn->mask & 1)==0) 
+      if ((rvn->mask & 1)==0)
 	return false;		// Cannot account for carry
       rop = createOpDown(CPUI_INT_ADD,2,op,rvn,slot);
       if (!createLink(rop,rvn->mask,-1,outvn)) return false;
@@ -779,7 +779,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   default:
     break;			// Everything else we abort
   }
-  
+
   return false;
 }
 
@@ -1749,7 +1749,7 @@ bool SplitFlow::doTrace(void)
 /// If \b pointer Varnode is written by an INT_ADD, PTRSUB, or PTRADD from a another pointer
 /// to a structure or array, update \b pointer Varnode, \b baseOffset, and \b ptrType to this.
 /// \return \b true if \b pointer was successfully updated
-bool SplitDatatype::RootPointer::backUpPointer(void)
+bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
 
 {
   if (!pointer->isWritten())
@@ -1767,8 +1767,10 @@ bool SplitDatatype::RootPointer::backUpPointer(void)
     return false;
   Datatype *parent = ((TypePointer *)ct)->getPtrTo();
   type_metatype meta = parent->getMetatype();
-  if (meta != TYPE_STRUCT && meta != TYPE_ARRAY)
-    return false;
+  if (meta != TYPE_STRUCT && meta != TYPE_ARRAY) {
+    if (opc != CPUI_PTRADD || parent != impliedBase)
+      return false;
+  }
   ptrType = (TypePointer *)ct;
   int4 off = (int4)cvn->getOffset();
   if (opc == CPUI_PTRADD)
@@ -1789,8 +1791,13 @@ bool SplitDatatype::RootPointer::backUpPointer(void)
 bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
 
 {
+  Datatype *impliedBase = (Datatype *)0;
   if (valueType->getMetatype() == TYPE_PARTIALSTRUCT)
     valueType = ((TypePartialStruct *)valueType)->getParent();
+  else if (valueType->getMetatype() == TYPE_ARRAY) {
+    valueType = ((TypeArray *)valueType)->getBase();
+    impliedBase = valueType;
+  }
   loadStore = op;
   baseOffset = 0;
   firstPointer = pointer = op->getIn(1);
@@ -1799,14 +1806,16 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
     return false;
   ptrType = (TypePointer *)ct;
   if (ptrType->getPtrTo() != valueType) {
-    if (!backUpPointer())
+    if (impliedBase != (Datatype *)0)
+      return false;
+    if (!backUpPointer(impliedBase))
       return false;
     if (ptrType->getPtrTo() != valueType)
       return false;
   }
-  for(int4 i=0;i<2;++i) {
+  for(int4 i=0;i<3;++i) {
     if (pointer->isAddrTied() || pointer->loneDescend() == (PcodeOp *)0) break;
-    if (!backUpPointer())
+    if (!backUpPointer(impliedBase))
       break;
   }
   return true;
@@ -1929,6 +1938,13 @@ bool SplitDatatype::testDatatypeCompatibility(Datatype *inBase,Datatype *outBase
     return false;
   if (!inConstant && inBase == outBase && inBase->getMetatype() == TYPE_STRUCT)
     return false;	// Don't split a whole structure unless it is getting initialized from a constant
+  if (isLoadStore && outCategory == 1 && inBase->getMetatype() == TYPE_ARRAY)
+    return false;	// Don't split array pointer writing into primitive
+  if (isLoadStore && inCategory == 1 && !inConstant && outBase->getMetatype() == TYPE_ARRAY)
+    return false;	// Don't split primitive into an array pointer, TODO: We could check if primitive is defined by PIECE
+  if (isLoadStore && inCategory == 0 && outCategory == 0 && !inConstant &&
+      inBase->getMetatype() == TYPE_ARRAY && outBase->getMetatype() == TYPE_ARRAY)
+    return false;	// Don't split copies between arrays
   bool inHole;
   bool outHole;
   int4 curOff = 0;
@@ -2322,6 +2338,7 @@ SplitDatatype::SplitDatatype(Funcdata &func)
   types = glb->types;
   splitStructures = (glb->split_datatype_config & OptionSplitDatatypes::option_struct) != 0;
   splitArrays = (glb->split_datatype_config & OptionSplitDatatypes::option_array) != 0;
+  isLoadStore = false;
 }
 
 /// Based on the input and output data-types, determine if and how the given COPY operation
@@ -2372,6 +2389,7 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
 bool SplitDatatype::splitLoad(PcodeOp *loadOp,Datatype *inType)
 
 {
+  isLoadStore = true;
   Varnode *outVn = loadOp->getOut();
   PcodeOp *copyOp = (PcodeOp *)0;
   if (!outVn->isAddrTied())
@@ -2423,6 +2441,7 @@ bool SplitDatatype::splitLoad(PcodeOp *loadOp,Datatype *inType)
 bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
 
 {
+  isLoadStore = true;
   Varnode *inVn = storeOp->getIn(2);
   PcodeOp *loadOp = (PcodeOp *)0;
   Datatype *inType = (Datatype *)0;
@@ -2538,10 +2557,17 @@ Datatype *SplitDatatype::getValueDatatype(PcodeOp *loadStore,int4 size,TypeFacto
     baseOffset = 0;
   }
   type_metatype metain = resType->getMetatype();
-  if (metain != TYPE_STRUCT && metain == TYPE_ARRAY)
-    return (Datatype *)0;
-  return tlst->getExactPiece(resType, baseOffset, size);
-}
+  if (resType->getAlignSize() < size) {
+    if (metain == TYPE_INT || metain == TYPE_UINT || metain == TYPE_BOOL || metain == TYPE_FLOAT || metain == TYPE_PTR) {
+      if ((size % resType->getAlignSize()) == 0) {
+	int4 numEl = size / resType->getAlignSize();
+	return tlst->getTypeArray(numEl, resType);
+      }
+    }
+  }
+  else if (metain == TYPE_STRUCT || metain == TYPE_ARRAY)
+    return tlst->getExactPiece(resType, baseOffset, size);
+  return (Datatype *)0;}
 
 /// \brief Create and return a placeholder associated with the given Varnode
 ///
@@ -2757,7 +2783,7 @@ bool SubfloatFlow::traceBackward(TransformVar *rvn)
   default:
     break;			// Everything else we abort
   }
-  
+
   return false;
 }
 

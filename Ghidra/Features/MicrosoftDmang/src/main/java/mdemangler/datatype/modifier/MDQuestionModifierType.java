@@ -26,6 +26,9 @@ import mdemangler.datatype.MDDataTypeParser;
  */
 public class MDQuestionModifierType extends MDModifierType {
 
+	// TODO: Decide on whether parsing this suffix belongs here... from PDB namespace investigation,
+	//  it is reasoned that this suffix identifies an anonymous namespace.  See comments in
+	//  MDMangUtils.createStandardAnonymousNamespaceNode(String anon) method.
 	private String suffix;
 
 	public MDQuestionModifierType(MDMang dmang) {

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 import docking.widgets.tree.GTreeNode;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.GFile;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -44,21 +45,18 @@ public class FSBDirNode extends FSBFileNode {
 	}
 
 	@Override
-	public void updateFileAttributes(TaskMonitor monitor) {
-		for (GTreeNode node : getChildren()) {
-			if (node instanceof FSBFileNode) {
-				((FSBFileNode) node).updateFileAttributes(monitor);
-			}
-			if (monitor.isCancelled()) {
-				break;
-			}
-		}
-		super.updateFileAttributes(monitor);
+	public void refreshNode(TaskMonitor monitor) throws CancelledException {
+		refreshChildren(monitor);
 	}
 
 	@Override
 	public boolean isLeaf() {
 		return false;
+	}
+
+	@Override
+	public FSRL getLoadableFSRL() {
+		return getFSBRootNode().getProgramProviderFSRL(getFSRL());
 	}
 
 }

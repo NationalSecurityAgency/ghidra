@@ -426,6 +426,22 @@ public class RecoveredClassHelper {
 				// of number of CALL instructions even if the call reg type
 				functionCallMap.put(instruction.getMinAddress(), calledFunction);
 			}
+			if(instruction.getFlowOverride().equals(FlowOverride.CALL_RETURN)) {
+				Reference reference = instruction.getPrimaryReference(0);
+				if (reference == null) {
+					continue;
+				}
+				Address functionAddress = reference.getFromAddress();
+				Function secondHalfOfFunction = extendedFlatAPI.getReferencedFunction(functionAddress);
+				if(secondHalfOfFunction != null){
+					Map<Address,Function> functionCallMap2 = getFunctionCallMap(secondHalfOfFunction,false);
+					for(Address addr : functionCallMap2.keySet()) {
+						monitor.checkCancelled();
+						functionCallMap.put(addr, functionCallMap2.get(addr));
+					}
+				}
+									
+			}
 		}
 		return functionCallMap;
 	}
@@ -946,9 +962,9 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to get a list of addresses that reference the given vftable address
+	 * Method to get a list of addresses that reference the given vftable address (only non-offcut ones)
 	 * @param vftableAddress the given vftable address
-	 * @return list of addresses that reference the given vftable address
+	 * @return list of non-offcut addresses that reference the given vftable address
 	 * @throws CancelledException if cancelled
 	 */
 	public List<Address> getReferencesToVftable(Address vftableAddress) throws CancelledException {
@@ -2239,42 +2255,63 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to determine if the given function calls a known constructor or inlined constructor
-	 * @param callingFunction the given calling function
+	 * @param Set of called functions
 	 * @return true if calling function calls a known constructor or inlined constructor, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
-	public boolean callsKnownConstructor(Function callingFunction) throws CancelledException {
+	public boolean callsKnownConstructor(Set<Function> calledFunctions) throws CancelledException {
 
-		InstructionIterator instructions = callingFunction.getProgram()
-				.getListing()
-				.getInstructions(callingFunction.getBody(), true);
-		while (instructions.hasNext()) {
+		for (Function calledFunction : calledFunctions) {
 			monitor.checkCancelled();
-			Instruction instruction = instructions.next();
-			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction =
-					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), true);
-				if (calledFunction == null) {
-					continue;
-				}
-				if (getAllConstructors().contains(calledFunction) ||
-					getAllInlinedConstructors().contains(calledFunction)) {
-					return true;
-				}
+			if (getAllConstructors().contains(calledFunction) || getAllInlinedConstructors().contains(calledFunction)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	
+
+	/**
+	 * Method to determine if the given function calls a known denstructor or inlined destructor 
+	 * @param Set of called functions
+	 * @return true if function calls a known constructor or inlined constructor, false otherwise
+	 * of its own or none
+	 * @throws CancelledException if cancelled
+	 */
+	public boolean callsKnownDestructor(Set<Function> calledFunctions) throws CancelledException {
+
+		for (Function calledFunction : calledFunctions) {
+			monitor.checkCancelled();
+
+			if (getAllDestructors().contains(calledFunction) || getAllInlinedDestructors().contains(calledFunction)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	private boolean callsOwnFunction(RecoveredClass recoveredClass, Set<Function> calledFunctions) throws CancelledException {
+		
+		for (Function calledFunction : calledFunctions) {
+			monitor.checkCancelled();
+		
+			if(recoveredClass.getConstructorOrDestructorFunctions().contains(calledFunction)) {
+				return true;
 			}
 		}
 		return false;
 	}
+	
+	
+	private Set<Function> getCalledFunctions(Function callingFunction) throws CancelledException {
 
-	/**
-	 * Method to determine if the given function calls a known constructor or inlined constructor
-	 * @param callingFunction the given calling function
-	 * @return true if function calls a known constructor or inlined constructor, false otherwise
-	 * @throws CancelledException if cancelled
-	 */
-	public boolean callsKnownDestructor(Function callingFunction) throws CancelledException {
-
+		
+		Set<Function> calledFunctions = new HashSet<Function>();
+		
 		InstructionIterator instructions = callingFunction.getProgram()
 				.getListing()
 				.getInstructions(callingFunction.getBody(), true);
@@ -2288,13 +2325,12 @@ public class RecoveredClassHelper {
 				if (calledFunction == null) {
 					continue;
 				}
-				if (getAllDestructors().contains(calledFunction) ||
-					getAllInlinedDestructors().contains(calledFunction)) {
-					return true;
-				}
+				
+				calledFunctions.add(calledFunction);
 			}
 		}
-		return false;
+				
+		return calledFunctions;
 	}
 
 	/**
@@ -2535,7 +2571,7 @@ public class RecoveredClassHelper {
 	 * @param recoveredClass the given class object
 	 * @return true if class has a vbase destructor, false if not
 	 */
-	private boolean hasVbaseDestructor(RecoveredClass recoveredClass) throws CancelledException {
+	private boolean hasValidVbaseDestructor(RecoveredClass recoveredClass) throws CancelledException {
 		Function vBaseDestructor = recoveredClass.getVBaseDestructor();
 
 		StringBuffer string = new StringBuffer();
@@ -5384,16 +5420,35 @@ public class RecoveredClassHelper {
 
 				// if inline, put on separate list and remove from indeterminate list
 				// process later
+				if(callsOwnConstructorOrDestructor(recoveredClass, indeterminateFunction)) {
+					recoveredClass.addIndeterminateInline(indeterminateFunction);
+					indeterminateIterator.remove();
+					continue;
+				}
+				
 				if (vftableReferenceList.size() > 1) {
 					if (!areVftablesInSameClass(vftableReferenceList)) {
 						recoveredClass.addIndeterminateInline(indeterminateFunction);
 						indeterminateIterator.remove();
 					}
-
-					continue;
 				}
 			}
 		}
+	}
+	
+	private boolean callsOwnConstructorOrDestructor(RecoveredClass recoveredClass, Function function) throws CancelledException {
+		
+		Set<Function> calledFunctions = getCalledFunctions(function);
+		
+		List<Function> constructorOrDestructorFunctions = recoveredClass.getConstructorOrDestructorFunctions();
+		for(Function cdFunction : constructorOrDestructorFunctions) {
+			monitor.checkCancelled();
+			
+			if(calledFunctions.contains(cdFunction)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -6075,9 +6130,16 @@ public class RecoveredClassHelper {
 				monitor.checkCancelled();
 				Function indeterminateFunction = indeterminateIterator.next();
 
-				// first try identifying useing known constructors and destructors
-				boolean callsKnownConstructor = callsKnownConstructor(indeterminateFunction);
-				boolean callsKnownDestructor = callsKnownDestructor(indeterminateFunction);
+				// weed out any that call own possible constructors and destructors
+				// as they will not be const/dest (possibly may be inlined one though
+				Set<Function> calledFunctions = getCalledFunctions(indeterminateFunction);
+				if(callsOwnFunction(recoveredClass, calledFunctions)) {
+					continue;
+				}
+				
+				// first try identifying using known constructors and destructors
+				boolean callsKnownConstructor = callsKnownConstructor(calledFunctions);
+				boolean callsKnownDestructor = callsKnownDestructor(calledFunctions);
 
 				boolean callsAtexit =
 					extendedFlatAPI.doesFunctionACallFunctionB(indeterminateFunction, atexit);
@@ -6102,6 +6164,7 @@ public class RecoveredClassHelper {
 				// Next try identifying constructors using decompiler return type
 				DataType decompilerReturnType =
 					decompilerUtils.getDecompilerReturnType(indeterminateFunction);
+				
 				if (decompilerReturnType != null) {
 
 					String returnDataName = decompilerReturnType.getDisplayName();
@@ -6149,7 +6212,7 @@ public class RecoveredClassHelper {
 					addConstructorToClass(recoveredClass, indeterminateFunction);
 					indeterminateIterator.remove();
 				}
-				else if (stores.size() == 1 && loads.size() > 0) {
+				else if (stores.size() == 1 && loads.size() >= 0) {
 					addDestructorToClass(recoveredClass, indeterminateFunction);
 					indeterminateIterator.remove();
 				}
@@ -7093,7 +7156,9 @@ public class RecoveredClassHelper {
 			if (vBaseDestructor == null) {
 				continue;
 			}
-			if (!hasVbaseDestructor(recoveredClass)) {
+			// test whether the identified vbase destructor is valid and if not
+			// just make it a normal destructor
+			if (!hasValidVbaseDestructor(recoveredClass)) {
 				addDestructorToClass(recoveredClass, vBaseDestructor);
 				recoveredClass.setVBaseDestructor(null);
 			}

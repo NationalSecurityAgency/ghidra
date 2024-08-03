@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public abstract class VtTask extends Task {
 	private boolean success = false;
 	private boolean cancelled = false;
 
-	private List<String> errors = new ArrayList<>();
+	private List<Throwable> errors = new ArrayList<>();
 
 	protected VtTask(String title, VTSession session) {
 		super(title, true, true, true, true);
@@ -124,29 +124,19 @@ public abstract class VtTask extends Task {
 		if (errors.isEmpty()) {
 			return;
 		}
+
 		String title = getErrorDialogTitle();
 		String message = getErrorDetails();
-		Msg.showError(this, null, title, message);
+		if (errors.size() == 1) {
+			Msg.showError(this, null, title, message, errors.get(0));
+			return;
+		}
 
+		Msg.showError(this, null, title, message);
 	}
 
 	protected String getErrorHeader() {
 		return "Errors encountered for task \"" + getTaskTitle() + "\":";
-	}
-
-	/**
-	 * Writes any error messages from the task to the log.
-	 */
-	public void logErrors() {
-		if (errors.isEmpty()) {
-			return;
-		}
-		StringBuilder buf = new StringBuilder(getErrorHeader());
-		buf.append("\n");
-		for (String error : errors) {
-			buf.append("\t").append(error).append("\n");
-		}
-		Msg.error(this, buf.toString());
 	}
 
 	private String getErrorDialogTitle() {
@@ -164,8 +154,14 @@ public abstract class VtTask extends Task {
 		StringBuilder buf = new StringBuilder("<html>" + getErrorHeader());
 		int errorCount = 0;
 		buf.append("<blockquote><br>");
-		for (String error : errors) {
-			buf.append(error).append("<br>");
+		for (Throwable t : errors) {
+
+			String message = t.getMessage();
+			if (message == null) {
+				message = "Unexpected Exception: " + t.toString();
+			}
+
+			buf.append(message).append("<br>");
 			if (++errorCount > MAX_ERRORS) {
 				buf.append("...and " + (errors.size() - errorCount) + " more!");
 				break;
@@ -180,15 +176,7 @@ public abstract class VtTask extends Task {
 		if (cause != null) {
 			t = cause;
 		}
-		String message = t.getMessage();
-		if (message == null) {
-			message = "Unexpected Exception: " + e.toString();
-		}
-		errors.add(message);
-	}
-
-	protected void reportError(String message) {
-		errors.add(message);
+		errors.add(t);
 	}
 
 	protected void addErrors(VtTask task) {

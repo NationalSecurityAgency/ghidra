@@ -19,7 +19,7 @@
 <h1>GhidraDev README</h1>
 <p>GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 </p>
-<p>The information provided in this document is effective as of GhidraDev 3.1.0 and is subject to
+<p>The information provided in this document is effective as of GhidraDev 4.0.0 and is subject to
 change with future releases.</p>
 
 <ul>
@@ -54,6 +54,25 @@ change with future releases.</p>
 </ul>
 
 <h2><a name="ChangeHistory"></a>Change History</h2>
+<p><u><b>4.0.0</b>:</u> 
+<ul>
+  <li>
+    GhidraDev has been upgraded to be compatible with Ghidra 11.2 and later. It is not backwards
+    compatible with versions of Ghidra prior to 11.2. Older versions of GhidraDev will report an 
+    error when trying to link against Ghidra 11.2 or later.
+  </li>
+  <li>
+    GhidraDev now requires Eclipse 2023-12 4.30 or later.
+  </li>
+  <li>
+    GhidraDev now requires JDK 21.
+  </li>
+  <li>
+    Fixed an issue that could result in a <i>GhidraHelpService</i> exception when launching
+    Ghidra. GhidraDev now properly enforces that Ghidra is only launched with <i>Utility.jar</i> on
+    the initial classpath.
+  </li>
+</ul>
 <p><u><b>3.1.0</b>:</u> 
 <ul>
   <li>
@@ -176,8 +195,8 @@ that specify other projects on their build paths.</p>
 
 <h2><a name="MinimumRequirements"></a>Minimum Requirements</h2>
 <ul>
-  <li>Eclipse 2021-12 4.22 or later</li>
-  <li>Ghidra 9.1 or later</li>
+  <li>Eclipse 2023-12 4.30 or later</li>
+  <li>Ghidra 11.2 or later</li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
 

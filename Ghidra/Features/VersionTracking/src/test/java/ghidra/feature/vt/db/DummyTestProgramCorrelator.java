@@ -27,6 +27,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 
+	private String name = "DummyTestProgramCorrelator";
 	private int matchCount = 1;
 
 	public DummyTestProgramCorrelator() {
@@ -84,8 +85,12 @@ public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 		}
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	@Override
 	public String getName() {
-		return "DummyTestProgramCorrelator";
+		return name;
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.Msg;
 import resources.Icons;
 
 /**
- * TODO: Provide class-level documentation that describes what this plugin does.
+ * Provide class-level documentation that describes what this plugin does.
  */
 //@formatter:off
 @PluginInfo(
@@ -56,11 +56,11 @@ public class SkeletonPlugin extends ProgramPlugin {
 	public SkeletonPlugin(PluginTool tool) {
 		super(tool);
 
-		// TODO: Customize provider (or remove if a provider is not desired)
+		// Customize provider (or remove if a provider is not desired)
 		String pluginName = getName();
 		provider = new MyProvider(this, pluginName);
 
-		// TODO: Customize help (or remove if help is not desired)
+		// Customize help (or remove if help is not desired)
 		String topicName = this.getClass().getPackage().getName();
 		String anchorName = "HelpAnchor";
 		provider.setHelpLocation(new HelpLocation(topicName, anchorName));
@@ -70,10 +70,10 @@ public class SkeletonPlugin extends ProgramPlugin {
 	public void init() {
 		super.init();
 
-		// TODO: Acquire services if necessary
+		// Acquire services if necessary
 	}
 
-	// TODO: If provider is desired, it is recommended to move it to its own file
+	// If provider is desired, it is recommended to move it to its own file
 	private static class MyProvider extends ComponentProvider {
 
 		private JPanel panel;
@@ -94,7 +94,7 @@ public class SkeletonPlugin extends ProgramPlugin {
 			setVisible(true);
 		}
 
-		// TODO: Customize actions
+		// Customize actions
 		private void createActions() {
 			action = new DockingAction("My Action", getName()) {
 				@Override

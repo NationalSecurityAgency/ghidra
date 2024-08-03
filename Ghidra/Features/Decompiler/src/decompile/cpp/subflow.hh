@@ -173,7 +173,7 @@ class SplitDatatype {
     Varnode *firstPointer;		///< Direct pointer input for LOAD or STORE
     Varnode *pointer;			///< The root pointer
     int4 baseOffset;			///< Offset of the LOAD or STORE relative to root pointer
-    bool backUpPointer(void);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
+    bool backUpPointer(Datatype *impliedBase);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
   public:
     bool find(PcodeOp *op,Datatype *valueType);	///< Locate root pointer for underlying LOAD or STORE
     void freePointerChain(Funcdata &data);	///< Remove unused pointer calculations
@@ -183,6 +183,7 @@ class SplitDatatype {
   vector<Component> dataTypePieces;	///< Sequence of all data-type pairs being copied
   bool splitStructures;			///< Whether or not structures should be split
   bool splitArrays;			///< Whether or not arrays should be split
+  bool isLoadStore;			///< True if trying to split LOAD or STORE
   Datatype *getComponent(Datatype *ct,int4 offset,bool &isHole);
   int4 categorizeDatatype(Datatype *ct);	///< Categorize if and how data-type should be split
   bool testDatatypeCompatibility(Datatype *inBase,Datatype *outBase,bool inConstant);

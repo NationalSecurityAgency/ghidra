@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,12 @@
  */
 package ghidra.feature.vt.api.markuptype;
 
+import java.util.List;
+
 import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.gui.util.*;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
+import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
@@ -25,8 +28,6 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.PlateFieldLocation;
 import ghidra.program.util.ProgramLocation;
-
-import java.util.List;
 
 public class PlateCommentMarkupType extends CommentMarkupType {
 
@@ -102,13 +103,15 @@ public class PlateCommentMarkupType extends CommentMarkupType {
 				options.setEnum(VTOptionDefines.PLATE_COMMENT, CommentChoices.APPEND_TO_EXISTING);
 				break;
 			case ADD_AS_PRIMARY:
-				throw new IllegalArgumentException(getDisplayName() +
-					" markup items cannot perform an Add As Primary action.");
+				throw new IllegalArgumentException(
+					getDisplayName() + " markup items cannot perform an Add As Primary action.");
 			case REPLACE_DEFAULT_ONLY:
 				throw new IllegalArgumentException(getDisplayName() +
 					" markup items cannot perform a Replace Default Only action.");
 			case REPLACE:
 				options.setEnum(VTOptionDefines.PLATE_COMMENT, CommentChoices.OVERWRITE_EXISTING);
+				break;
+			default:
 				break;
 		}
 		return options;
@@ -124,7 +127,7 @@ public class PlateCommentMarkupType extends CommentMarkupType {
 			if (vtMarkupItem.getSourceAddress().equals(association.getSourceAddress())) {
 				// Set Plate destination to destination function's entry point.
 				vtMarkupItem.setDefaultDestinationAddress(association.getDestinationAddress(),
-				VTMarkupItem.FUNCTION_ADDRESS_SOURCE);
+					VTMarkupItem.FUNCTION_ADDRESS_SOURCE);
 			}
 		}
 		return markupItems;
