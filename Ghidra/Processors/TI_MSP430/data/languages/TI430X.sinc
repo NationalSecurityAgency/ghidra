@@ -290,14 +290,15 @@ macro setsubflags(ans, in1, in2)
 PUSHAR0:					is ctx_count=0 {}
 PUSHAR0:					is ctx_mreg=0x0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
 	SP = SP - 4;
-	*[RAM]:4 SP = inst_start & 0xFFFFF;
+	*[RAM]:4 SP = inst_next;
 }
 
 PUSHAR1:					is ctx_count=0 {}
 PUSHAR1:					is PUSHAR0 {build PUSHAR0;}
 PUSHAR1:					is ctx_mreg=0x1 & PUSHAR0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	local tmp:4 = SP;
 	SP = SP - 4;
-	*[RAM]:4 SP = SP & 0xFFFF;
+	*[RAM]:4 SP = tmp & 0xFFFFE;
 	build PUSHAR0;
 }
 
@@ -415,14 +416,15 @@ PUSHAR15:					is ctx_mreg=0xF & PUSHAR14 [ctx_count=ctx_count-1; ctx_mreg=ctx_mr
 PUSHWR0:					is ctx_count=0 {}
 PUSHWR0:					is ctx_mreg=0x0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
 	SP = SP - 2;
-	*[RAM]:2 SP = inst_start & 0xFFFF;
+	*[RAM]:2 SP = inst_next & 0xFFFF;
 }
 
 PUSHWR1:					is ctx_count=0 {}
 PUSHWR1:					is PUSHWR0 {build PUSHWR0;}
 PUSHWR1:					is ctx_mreg=0x1 & PUSHWR0 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg-1;] {
+	local tmp:2 = SP:2;
 	SP = SP - 2;
-	*[RAM]:2 SP = SP:2;
+	*[RAM]:2 SP = tmp;
 	build PUSHWR0;
 }
 
