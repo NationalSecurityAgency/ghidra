@@ -187,4 +187,13 @@
         <range space="stack" first="0x0" last="0x8ae"/>   <!-- Stack bias of 7FF + 0xb0 window size -->
       </localrange>
     </prototype>
+  <callfixup name="get_pc_thunk">
+    <target name="__sparc_get_pc_thunk"/>
+    <pcode>
+      <body><![CDATA[
+      l7 = inst_start + l7;
+      ]]>
+      </body>
+    </pcode>
+  </callfixup>
 </compiler_spec>
