@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -216,7 +216,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 				continue;
 			}
 
-			if (hasImportedSignatureWithinNamespace(function) ||
+			if (hasNonDefaultSignatureWithinNamespace(function) ||
 				hasDefinedParameterTypes(function)) {
 				functionEntries.add(function.getEntryPoint());
 			}
@@ -225,8 +225,8 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 		return functionEntries;
 	}
 
-	private boolean hasImportedSignatureWithinNamespace(Function function) {
-		return function.getSignatureSource() == SourceType.IMPORTED &&
+	private boolean hasNonDefaultSignatureWithinNamespace(Function function) {
+		return function.getSignatureSource() != SourceType.DEFAULT &&
 			function.getParentNamespace().getID() != Namespace.GLOBAL_NAMESPACE_ID;
 	}
 
