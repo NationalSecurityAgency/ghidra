@@ -1176,11 +1176,7 @@
 {
     build lockx;
     build m8;
-    addflags( m8,Reg8 );
-    local tmp =  m8 +  Reg8;
-    Reg8 = m8;
-    m8 = tmp;
-    resultflags(tmp);
+    xadd(m8,Reg8);
     build unlock; 
 }
 
@@ -1188,11 +1184,7 @@
 {
     build lockx;
     build m16;
-    addflags(m16,Reg16);
-    local tmp = m16 + Reg16;
-    Reg16 = m16;
-    m16 = tmp;
-    resultflags(tmp);
+    xadd(m16,Reg16);
     build unlock; 
 }
 
@@ -1200,11 +1192,7 @@
 {
     build lockx;
     build m32;
-    addflags(m32,Reg32);
-    local tmp = m32 + Reg32;
-    Reg32 = m32;
-    m32 = tmp;
-    resultflags(tmp);
+    xadd(m32,Reg32);
     build unlock; 
 }
 
@@ -1213,11 +1201,7 @@
 {
     build lockx;
     build m64;
-    addflags(m64,Reg64);
-    local tmp = m64 + Reg64;
-    Reg64 = m64;
-    m64 = tmp;
-    resultflags(tmp);
+    xadd(m64,Reg64);
     build unlock; 
 }
 @endif
