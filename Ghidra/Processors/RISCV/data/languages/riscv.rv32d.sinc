@@ -56,7 +56,7 @@
 :fcvt.s.d frd,frs1D,FRM is frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x20 & op2024=0x1
 {
 	local tmp:4 = float2float(frs1D);
-	frd = zext(tmp);
+	fassignS(frd, tmp);
 }
 
 

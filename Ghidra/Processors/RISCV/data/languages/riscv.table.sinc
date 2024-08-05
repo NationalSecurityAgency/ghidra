@@ -81,11 +81,33 @@ frs1: fr1519 is fr1519 { export fr1519; }
 frs2: fr2024 is fr2024 { export fr2024; }
 frs3: fr2731 is fr2731 { export fr2731; }
 
-#TODO  dest may be bad, might need an assign macro
-#frdS:  fr0711 is fr0711 { local tmp = fr0711:$(SFLEN); export tmp; }
+@if (FPSIZE == "32")
 frs1S: fr1519 is fr1519 { local tmp = fr1519:$(SFLEN); export tmp; }
 frs2S: fr2024 is fr2024 { local tmp = fr2024:$(SFLEN); export tmp; }
 frs3S: fr2731 is fr2731 { local tmp = fr2731:$(SFLEN); export tmp; }
+@else
+frs1S: fr1519 is fr1519 { 
+	local tmp:$(SFLEN) = fr1519:$(SFLEN);
+	if (fr1519 s>> 32 == ~0) goto <FR1519NOTNAN>;
+	tmp = 0x7FC00000;
+	<FR1519NOTNAN>
+	export tmp;
+}
+frs2S: fr2024 is fr2024 {
+	local tmp:$(SFLEN) = fr2024:$(SFLEN);
+	if (fr2024 s>> 32 == ~0) goto <fr2024NOTNAN>;
+	tmp = 0x7FC00000;
+	<fr2024NOTNAN>
+	export tmp;
+}
+frs3S: fr2731 is fr2731 {
+	local tmp:$(SFLEN) = fr2731:$(SFLEN);
+	if (fr2731 s>> 32 == ~0) goto <fr2731NOTNAN>;
+	tmp = 0x7FC00000;
+	<fr2731NOTNAN>
+	export tmp;
+}
+@endif
 
 @if ((FPSIZE == "64") || (FPSIZE == "128"))
 #TODO  dest may be bad, might need an assign macro
