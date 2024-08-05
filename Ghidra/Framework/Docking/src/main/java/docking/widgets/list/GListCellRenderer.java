@@ -15,12 +15,15 @@
  */
 package docking.widgets.list;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.util.function.Function;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import docking.widgets.AbstractGCellRenderer;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
@@ -32,6 +35,8 @@ import generic.theme.GThemeDefaults.Colors.Palette;
  */
 public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListCellRenderer<E> {
 
+	private static final Color LIST_BACKGROUND_COLOR = new GColor("color.bg.list.row");
+
 	/**
 	 * Returns a new ListCellRenderer that maps the list's data instance to a string used in the cell.
 	 * <p>
@@ -41,7 +46,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * @param cellToTextMappingFunction a function that maps your custom type to a string value
 	 * @return new GListCellRenderer instance
 	 */
-	public static <E> GListCellRenderer<E> createDefaultCellTextRenderer(
+	public static <E> GListCellRenderer<E> createDefaultTextRenderer(
 			Function<E, String> cellToTextMappingFunction) {
 		return new GListCellRenderer<>() {
 			@Override
@@ -58,6 +63,26 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 
 		// lists don't need alternation for rows, as they don't use long columnar data
 		setShouldAlternateRowBackgroundColors(false);
+
+		// Base our borders on those used by the list.  ComboBoxes do not change the list borders in
+		// the Look and Feel.
+		noFocusBorder = getBorder("List.noFocusBorder");
+		focusBorder = getBorder("List.focusCellHighlightBorder");
+	}
+
+	private Border getBorder(String id) {
+		Border border = UIManager.getBorder(id);
+		if (border == null) {
+			// A reasonable default value picked based on examining the existing LaFs
+			border = BorderFactory.createEmptyBorder(2, 4, 2, 4);
+		}
+		return border;
+	}
+
+	// overridden to return the list-specific background color
+	@Override
+	protected Color getDefaultBackgroundColor() {
+		return LIST_BACKGROUND_COLOR;
 	}
 
 	/**
