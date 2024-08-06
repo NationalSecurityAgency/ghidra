@@ -732,3 +732,11 @@ PCodeTest({
     'language_id': 'Xtensa:BE:32:default',
     'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-elf/%(gcc_version)s',
 })
+
+PCodeTest({
+    'name': 'ARC700',
+    'build_all': 1,
+    'toolchain': 'ARC/arc700-elf',
+    'language_id': 'ARCompact:LE:32:default',
+    'ccflags': '-mcpu=arc700 -lgcc',
+})

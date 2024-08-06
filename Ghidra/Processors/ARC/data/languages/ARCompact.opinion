@@ -1,0 +1,5 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="93" processor="ARCompact" size="32" />
+    </constraint>
+</opinions>
