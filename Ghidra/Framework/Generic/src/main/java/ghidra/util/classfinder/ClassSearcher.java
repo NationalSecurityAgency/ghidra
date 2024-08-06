@@ -567,8 +567,8 @@ public class ClassSearcher {
 						extensionPointSuffixes.add(line);
 					}
 					catch (PatternSyntaxException e) {
-						Msg.error(ClassSearcher.class,
-							"Skipping invalid extension point suffix '%s' found in '%s'"
+						throw new AssertException(
+							"Error parsing extension point suffix '%s' found in '%s'"
 									.formatted(line, file));
 					}
 				}
