@@ -234,49 +234,41 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 		return actionOK;
 	}
 	
-	private Address buildDestinationAddress(AddressSpace addrSpace,
-			Address sourceAddress, long offset) {
+	private Address buildDestinationAddress(AddressSpace addrSpace, Address sourceAddress,
+			long offset) {
 		try {
-			if ((addrSpace instanceof SegmentedAddressSpace) &&
-					(sourceAddress instanceof SegmentedAddress)) {
-				return ((SegmentedAddressSpace) addrSpace).getAddress(
-					((SegmentedAddress) sourceAddress).getSegment(),
+			if ((addrSpace instanceof SegmentedAddressSpace segmentedSpace) &&
+				(sourceAddress instanceof SegmentedAddress segmentedAddr)) {
+				return segmentedSpace.getAddress(segmentedAddr.getSegment(),
 					(int) (offset & 0xFFFF));
 			}
-			
-			return addrSpace.getAddress(offset, true);			
+			return addrSpace.getAddress(offset, true);
 		}
-		catch (AddressOutOfBoundsException ei) {
+		catch (AddressOutOfBoundsException e) {
+			return null;
 		}
-
-		return null;
 	}
 
 	private boolean initMemoryAddress(AddressFactory addrFactory, long offset) {
-		// Use the context's address space. 
-		
+
+		// First try the context's address space
 		AddressSpace contextAddrSpace = context.getAddress().getAddressSpace();
-		Address address = buildDestinationAddress(contextAddrSpace,
-				context.getAddress(), offset);
+		Address address = buildDestinationAddress(contextAddrSpace, context.getAddress(), offset);
 		if (address != null) {
 			memAddr = address;
 			return true;
 		}
-		
-		// Try the default space.
-		
+
+		// Now try the default space
 		AddressSpace defaultSpace = addrFactory.getDefaultAddressSpace();
 		if (contextAddrSpace != defaultSpace) {
-			address = buildDestinationAddress(defaultSpace, context.getAddress(),
-					offset);
+			address = buildDestinationAddress(defaultSpace, context.getAddress(), offset);
 		}
 		if (address != null) {
 			memAddr = address;
 			return true;
 		}
-		
-		// Ignore.
-		
+
 		return false;
 	}
 
