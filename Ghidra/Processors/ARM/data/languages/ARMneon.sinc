@@ -4651,7 +4651,7 @@ define pcodeop FloatVectorNeg;
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
 
 buildVpushSdList: Sreg					is counter=0 & Sreg			[ regNum=regNum+1; ] { * mult_addr = Sreg; mult_addr = mult_addr + 4; }
-buildVpushSdList: Sreg,buildVpushSdList	is Sreg & buildVpushSdList	[ counter=counter-1; regNum=regNum+1; ] { * mult_addr = Sreg; mult_addr = mult_addr + 4; }
+buildVpushSdList: Sreg,buildVpushSdList	is Sreg & buildVpushSdList	[ counter=counter-1; regNum=regNum+1; ] { * mult_addr = Sreg; mult_addr = mult_addr + 4; build buildVpushSdList; }
 
 vpushSdList: "{"^buildVpushSdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVpushSdList [ regNum=(c1215<<1)+D22-1; counter=c0007-1; ] { sp = sp - c0007 * 4; mult_addr = sp; build buildVpushSdList; }
 vpushSdList: "{"^buildVpushSdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVpushSdList [ regNum=(thv_c1215<<1)+thv_D22-1; counter=thv_c0007-1; ] { sp = sp - thv_c0007 * 4; mult_addr = sp; build buildVpushSdList; }
