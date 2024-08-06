@@ -113,9 +113,6 @@ Ghidra team if you have a specific need.</p></blockquote>
 <p>To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem
 destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc)</p>
 
-<p>On MacOS, if you downloaded the distribution file with a browser, you should run 
-<i>xattr -d com.apple.quarantine ghidra_&lt;version&gt;_&lt;date&gt;.zip</i> before unzipping.</p>
-
 <h3><a name="InstallationNotes"></a>Installation Notes</h3>
 <ul>
   <li>
@@ -126,6 +123,22 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
     Windows, removing Ghidra is as simple as deleting the Ghidra installation directory.  On the
     down side, Ghidra will not automatically create a shortcut on the desktop or appear in
     application start menus.
+  </li>
+  <li>
+    When launching Ghidra for the first time on macOS, the macOS Gatekeeper feature may attempt
+    to quarantine the pre-built unsigned Ghidra native components. Two techniques can be used to 
+    prevent this from happening:
+    <ul>
+      <li>
+        Prior to extracting the Ghidra distribution file, running 
+        <i>xattr -d com.apple.quarantine ghidra_&lt;version&gt;_&lt;date&gt;.zip</i>
+        from a terminal.
+      </li>
+      <li>
+        Prior to first launch, following the instructions in the 
+        <a href="#Build">Building Native Components</a> section.
+      </li>
+    </ul>
   </li>
   <li>
     Administrative privilege may be required to extract Ghidra to certain filesystem destinations
@@ -334,7 +347,7 @@ public Ghidra release includes native binaries for the following platforms.
   <li>FreeBSD ARM 64-bit (no debugger support)</li>
 </ul>
 <p>For supported systems where native binaries have not been supplied, or those that are supplied
-fail to run properly, it may be neccessary to build the native Ghidra binaries.
+fail to run properly, it may be necessary to build the native Ghidra binaries.
 In order to build native binaries for your platform, you will need the following installed on your
 system:</p>
 <ul>
