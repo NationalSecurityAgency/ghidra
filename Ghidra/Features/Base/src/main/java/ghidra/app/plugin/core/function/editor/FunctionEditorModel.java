@@ -260,7 +260,7 @@ public class FunctionEditorModel {
 	}
 
 	/**
-	 * Mark all storage conflicts identified by 
+	 * Mark all storage conflicts identified by
 	 * {@link VariableUtilities#checkVariableConflict(List, Variable, VariableStorage, VariableConflictHandler)}
 	 * @param conflicts parameters whose storage conflicts
 	 * @return return false to indicate conflicts have not been resolved and additional checks
@@ -1040,8 +1040,8 @@ public class FunctionEditorModel {
 	}
 
 	/**
-	 * Sets the change state of the model to unchanged. Normally, the model sets the modelChanged 
-	 * variable to true every time something is changed. This provides a way to for applications 
+	 * Sets the change state of the model to unchanged. Normally, the model sets the modelChanged
+	 * variable to true every time something is changed. This provides a way to for applications
 	 * to make some initial changes but make the dialog think that nothing has changed.
 	 */
 	public void setModelUnchanged() {
