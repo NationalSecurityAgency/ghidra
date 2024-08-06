@@ -205,7 +205,7 @@ macro SetThumbMode(value) {
 #
 # simple branch, not inter-working
 macro BranchWritePC(addr) {
-   pc = addr;
+	pc = addr & (~0x1);
 }
 
 #
