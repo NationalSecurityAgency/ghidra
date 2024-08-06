@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 // Native build files are already applied in development mode (indicated by presence of the
 // Generic project).  Only need to apply them if we are in a distribution.
 if (findProject(':Generic') == null) {
@@ -22,20 +22,182 @@ if (findProject(':Generic') == null) {
 	apply from: "../../../GPL/nativeBuildProperties.gradle"
 }
 
+// Define the source files that are compiled and linked to become the decompiler.
+// The decompiler source is a bit weird in that all the cpp and headers all live in
+// the same directory with other files that are not used by the decompiler.
+// That is why we have to list every cpp file that makes up the decomplier.
+// NOTE: The bison/flex generated files are assumed to be up-to-date.
+//       The task `generateParsers` should be executed if needed.
+// builtBy lexSleigh
+
+def core_files = [
+	"address.cc",
+	"float.cc",
+	"marshal.cc",
+	"opcodes.cc",
+	"pcoderaw.cc",
+	"space.cc",
+	"translate.cc",
+	"xml.cc"
+]
+
+def decompiler_files = [
+	"action.cc",
+	"architecture.cc",
+	"block.cc",
+	"blockaction.cc",
+	"capability.cc",
+	"cast.cc",
+	"comment.cc",
+	"condexe.cc",
+	"constseq.cc",
+	"coreaction.cc",
+	"cover.cc",
+	"cpool.cc",
+	"crc32.cc",
+	"database.cc",
+	"double.cc",
+	"dynamic.cc",
+	"emulate.cc",
+	"emulateutil.cc",
+	"flow.cc",
+	"fspec.cc",
+	"funcdata.cc",
+	"funcdata_block.cc",
+	"funcdata_op.cc",
+	"funcdata_varnode.cc",
+	"globalcontext.cc",
+	"graph.cc",
+	"heritage.cc",
+	"jumptable.cc",
+	"loadimage.cc",
+	"memstate.cc",
+	"merge.cc",
+	"modelrules.cc",
+	"multiprecision.cc",
+	"op.cc",
+	"opbehavior.cc",
+	"options.cc",
+	"override.cc",
+	"paramid.cc",
+	"pcodeinject.cc",
+	"prefersplit.cc",
+	"prettyprint.cc",
+	"printc.cc",
+	"printjava.cc",
+	"printlanguage.cc",
+	"rangeutil.cc",
+	"ruleaction.cc",
+	"signature.cc",
+	"stringmanage.cc",
+	"subflow.cc",
+	"transform.cc",
+	"type.cc",
+	"typeop.cc",
+	"unionresolve.cc",
+	"userop.cc",
+	"variable.cc",
+	"varmap.cc",
+	"varnode.cc"
+]
+
+def decompiler_opt_files = [
+	"comment_ghidra.cc",
+	"cpool_ghidra.cc",
+	"database_ghidra.cc",
+	"ghidra_arch.cc",
+	"ghidra_context.cc",
+	"ghidra_process.cc",
+	"ghidra_translate.cc",
+	"inject_ghidra.cc",
+	"loadimage_ghidra.cc",
+	"signature_ghidra.cc",
+	"string_ghidra.cc",
+	"typegrp_ghidra.cc"
+]
+
+def decompiler_debug_files = [
+	"bfd_arch.cc",
+	"callgraph.cc",
+	"codedata.cc",
+	"consolemain.cc",
+	"grammar.cc",
+	"ifacedecomp.cc",
+	"ifaceterm.cc",
+	"inject_sleigh.cc",
+	"interface.cc",
+	"loadimage_bfd.cc",
+	"loadimage_xml.cc",
+	"libdecomp.cc",
+	"raw_arch.cc",
+	"rulecompile.cc",
+	"sleigh_arch.cc",
+	"testfunction.cc",
+	"unify.cc",
+	"xml_arch.cc"
+]
+
+def sleigh_common_files = [
+	"compression.cc",
+	"context.cc",
+	"filemanage.cc",
+	"pcodecompile.cc",
+	"pcodeparse.cc",
+	"semantics.cc",
+	"slaformat.cc",
+	"sleigh.cc",
+	"sleighbase.cc",
+	"slghpatexpress.cc",
+	"slghpattern.cc",
+	"slghsymbol.cc"
+]
+
+def sleigh_files = [
+	"slgh_compile.cc",
+	"slghparse.cc",
+	"slghscan.cc"
+]
+
+def sleigh_debug_files = [
+	"globalcontext.cc"
+]
+
+/**
+ * Try to find libbfd*.so or a static libbfd.a for linking decomp_dbg
+ */
+def linkBFDUnix = {
+	def stdout = new ByteArrayOutputStream()
+	exec {
+		ignoreExitValue false /* fail and abort if there is an error */
+		commandLine 'bash', '-c', 'ld.bfd -v | grep -o \"[0-9].*$\"'
+		standardOutput = stdout
+	}
+	def lib = "-lbfd-" + stdout.toString().trim()
+	stdout.reset()
+	def ld = "ld -o /dev/null " + lib + " 2>&1 | grep -o \"cannot find -\""
+	exec {
+		ignoreExitValue true /* it would fail and abort otherwise */
+		commandLine 'bash', '-c', ld
+		standardOutput = stdout
+	}
+	/* Use libbfd-* if found */
+	if (stdout.toString().trim() == "")
+		return lib + " -Wl,--no-whole-archive -liberty -lsframe -lz -lzstd"
+	/* Fallback to libbfd */
+	return "-lbfd -Wl,--no-whole-archive -liberty -lsframe -lz -lzstd"
+}
+
 /**
  * Define the "native build model" for building the decompiler executables.
+ * Options:
+ * -PsysZlib	Build against system zlib (ignored for Windows)
+ * -Pdebug	Build debug interfaces (not for Windows)
+ * -Plto	Enable Link Time Optimization (Gcc and Clang; not for debug interfaces)
  */
 model {
-	// Define the source files that are compiled and linked to become the decompiler.
-	// The decompiler source is a bit weird in that all the cpp and headers all live in
-	// the same directory with other files that are not used by the decompiler.
-	// That is why we have to list every cpp file that makes up the decomplier.
 	components {
-			
 		decompile(NativeExecutableSpec) {
-		
 			baseName "decompile"
-									
 			// these tell gradle for which platforms to build a decompiler executable.
 			targetPlatform "win_x86_64"
 			targetPlatform "linux_x86_64"
@@ -46,105 +208,28 @@ model {
 			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
-					// NOTE: The bison/flex generated files are assumed to be up-to-date.
-					//       The task `generateParsers` should be executed if needed.
-					// builtBy yaccDecompiler
-		            source {
-		                srcDir "src/decompile/cpp"
-		                
-		         	 	include "marshal.cc"
-		                include "space.cc"
-		                include "float.cc"
-		                include "address.cc"
-		                include "pcoderaw.cc"
-		                include "translate.cc"
-		                include "opcodes.cc"
-		                include "globalcontext.cc"
-		                include "capability.cc"
-		                include "architecture.cc"
-		                include "options.cc"
-		                include "graph.cc"
-		                include "cover.cc"
-		                include "block.cc"
-		                include "cast.cc"
-		                include "typeop.cc"
-		                include "database.cc"
-		                include "cpool.cc"
-		                include "comment.cc"
-						include "stringmanage.cc"
-						include "modelrules.cc"
-		                include "fspec.cc"
-		                include "action.cc"
-		                include "loadimage.cc"
-		                include "varnode.cc"
-		                include "op.cc"
-		                include "type.cc"
-		                include "variable.cc"
-		                include "varmap.cc"
-		                include "jumptable.cc"
-		                include "emulate.cc"
-		                include "emulateutil.cc"
-		                include "flow.cc"
-		                include "userop.cc"
-		                include "multiprecision.cc"
-		                include "funcdata.cc"
-		                include "funcdata_block.cc"
-		                include "funcdata_varnode.cc"
-		                include "unionresolve.cc"
-		                include "funcdata_op.cc"
-		                include "pcodeinject.cc"
-		                include "heritage.cc"
-		                include "prefersplit.cc"
-		                include "rangeutil.cc"
-		                include "ruleaction.cc"
-		                include "subflow.cc"
-		                include "transform.cc"
-		                include "blockaction.cc"
-		                include "merge.cc"
-		                include "double.cc"
-		                include "constseq.cc"
-		                include "coreaction.cc"
-		                include "condexe.cc"
-		                include "override.cc"
-		                include "dynamic.cc"
-		                include "crc32.cc"
-		                include "prettyprint.cc"
-		                include "printlanguage.cc"
-		                include "printc.cc"
-		                include "printjava.cc"
-		                include "memstate.cc"
-		                include "opbehavior.cc"
-		                include "paramid.cc"
-		                include "ghidra_arch.cc"
-		                include "inject_ghidra.cc"
-		                include "ghidra_translate.cc"
-		                include "loadimage_ghidra.cc"
-		                include "typegrp_ghidra.cc"
-		                include "database_ghidra.cc"
-		                include "ghidra_context.cc"
-		                include "cpool_ghidra.cc"
-		                include "ghidra_process.cc"
-		                include "comment_ghidra.cc"
-						include "string_ghidra.cc"
-						include "signature.cc"
-						include "signature_ghidra.cc"
-		         //       include "callgraph.cc"			// uncomment for debug
-		         //       include "ifacedecomp.cc"			// uncomment for debug
-		         //       include "ifaceterm.cc"			// uncomment for debug
-		         //       include "interface.cc"			// uncomment for debug
-		         
-		         		// generated source files
-		         		
-		         	 	include "xml.cc"
-		         // 	  include "grammar.cc"				// used by diagnostic console mode
-		            }
+					source {
+						srcDir "src/decompile/cpp"
+						include core_files
+						include decompiler_files
+						include decompiler_opt_files
+					}
 					exportedHeaders {
 						srcDir "src/decompile/cpp"
 					}
-				} // end cpp				
-			} // end sources
+				}
+			}
+			binaries.all { b ->
+				if (b.toolChain in Gcc || b.toolChain in Clang) {
+					b.cppCompiler.args "-O2"
+					if (project.hasProperty('lto')) {
+						b.cppCompiler.args "-flto"
+						b.linker.args "-flto"
+					}
+				}
+			}
 		} // end decompile
-		
+
 		sleigh(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
 			targetPlatform "linux_x86_64"
@@ -155,84 +240,147 @@ model {
 			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
-					// NOTE: The bison/flex generated files are assumed to be up-to-date.
-					//       The task `generateParsers` should be executed if needed.
-					// builtBy lexSleigh
 					source {
 						srcDir "src/decompile/cpp"
-						
-		         	 	include "marshal.cc"
-						include "space.cc"
-						include "float.cc"
-						include "address.cc"
-						include "pcoderaw.cc"
-						include "translate.cc"
-						include "opcodes.cc"
-						include "globalcontext.cc"
-						include "sleigh.cc"
-						include "pcodecompile.cc"
-						include "sleighbase.cc"
-						include "slghsymbol.cc"
-						include "slghpatexpress.cc"
-						include "slghpattern.cc"
-						include "semantics.cc"
-						include "context.cc"
-						include "slaformat.cc"
-						include "compression.cc"
-						include "filemanage.cc"
-						include "slgh_compile.cc"
-						
-						// generated source files
-						
-						include "xml.cc"
-						include "pcodeparse.cc"
-						include "slghparse.cc"
-						include "slghscan.cc"
+						include core_files
+						include sleigh_common_files
+						include sleigh_files
 					}
 					exportedHeaders {
 						srcDir "src/decompile/cpp"
 					}
-				} // end cpp
-				
-				c {
-					source {
-						srcDir "src/decompile/zlib"
-						include "*.c"
+				}
+				if (isCurrentWindows() || !project.hasProperty('sysZlib')) {
+					c {
+						source {
+							srcDir "src/decompile/zlib"
+							include "*.c"
+						}
 					}
 				}
-			} // end sources (sleigh)
-			
-			binaries {
-				all{ b ->
+			}
+			binaries.all { b ->
+				if (b.toolChain in Gcc || b.toolChain in Clang) {
+					b.cppCompiler.args "-O2"
+					if (project.hasProperty('sysZlib')) {
+						b.linker.args "-lz"
+					}
+					if (project.hasProperty('lto')) {
+						b.cppCompiler.args "-flto"
+						if (!project.hasProperty('sysZlib')) {
+							b.cCompiler.args "-flto"
+						}
+						b.linker.args "-flto"
+					}
+				}
+				if (isCurrentWindows() || !project.hasProperty('sysZlib')) {
 					b.cppCompiler.define "LOCAL_ZLIB"
 					b.cCompiler.define "NO_GZIP"
 				}
-			} // end binaries.all (sleigh)
+			}
 		} // end sleigh
-		
-	}  // end components
-	
+
+		if (project.hasProperty('debug')) {
+			decomp_dbg(NativeExecutableSpec) {
+				baseName "decomp_dbg"
+				targetPlatform "linux_x86_64"
+				targetPlatform "linux_arm_64"
+				targetPlatform "mac_x86_64"
+				targetPlatform "mac_arm_64"
+				targetPlatform "freebsd_x86_64"
+				sources {
+					cpp {
+						source {
+							srcDir "src/decompile/cpp"
+							include core_files
+							include decompiler_files
+							include decompiler_debug_files
+							include sleigh_common_files
+						}
+						exportedHeaders {
+							srcDir "src/decompile/cpp"
+						}
+					}
+				}
+				binaries.all { b ->
+					if (b.toolChain in Gcc || b.toolChain in Clang) {
+						b.cppCompiler.args "-g"
+						b.linker.args linkBFDUnix().split(" ")
+					}
+					else if (b.toolChain in VisualCpp) {
+						b.cppCompiler.args "/Zi"
+						b.cppCompiler.args "/FS"
+						b.linker.args "/DEBUG"
+					}
+					b.cppCompiler.define "CPUI_DEBUG"
+					b.cppCompiler.define "__TERMINAL__"
+				}
+			} // end decomp_dbg
+
+			sleigh_dbg(NativeExecutableSpec) {
+				targetPlatform "linux_x86_64"
+				targetPlatform "linux_arm_64"
+				targetPlatform "mac_x86_64"
+				targetPlatform "mac_arm_64"
+				targetPlatform "freebsd_x86_64"
+				sources {
+					cpp {
+						source {
+							srcDir "src/decompile/cpp"
+							include core_files
+							include sleigh_common_files
+							include sleigh_files
+							include sleigh_debug_files
+						}
+						exportedHeaders {
+							srcDir "src/decompile/cpp"
+						}
+					}
+					if (isCurrentWindows() || !project.hasProperty('sysZlib')) {
+						c {
+							source {
+								srcDir "src/decompile/zlib"
+								include "*.c"
+							}
+						}
+					}
+				}
+				binaries.all { b ->
+					if (b.toolChain in Gcc || b.toolChain in Clang) {
+						b.cppCompiler.args "-g"
+						if (project.hasProperty('sysZlib')) {
+							b.linker.args "-lz"
+						}
+					}
+					else if (b.toolChain in VisualCpp) {
+						b.cppCompiler.args "/Zi"
+						b.cppCompiler.args "/FS"
+						b.linker.args "/DEBUG"
+					}
+					if (isCurrentWindows() || !project.hasProperty('sysZlib')) {
+						b.cppCompiler.define "LOCAL_ZLIB"
+					}
+					b.cppCompiler.define "YYDEBUG"
+				}
+			} // end sleigh_dbg
+		} // end debug
+	} // end components
+
 	binaries {
-		all{ b ->
-			if (b.toolChain in Gcc) {
+		all { b ->
+			if (b.toolChain in Gcc || b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"
 				b.cppCompiler.args "-Wall"
-				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
-				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
 				b.cppCompiler.args "-Wno-sign-compare"
 				if (b.targetPlatform.operatingSystem.linux) {
-//					b.linker.args "-static"
 					b.cppCompiler.define "LINUX"
 					b.cppCompiler.define "_LINUX"
 				}
 			}
-		 	else if (b.toolChain in VisualCpp) {
+			else if (b.toolChain in VisualCpp) {
 				b.cppCompiler.args "/EHsc"
 				b.cppCompiler.define "_SECURE_SCL=0"
 				b.cppCompiler.define "_HAS_ITERATOR_DEBUGGING=0"
-				// b.cppCompiler.args "/Zi"		// for DEBUG, uncomment this line
-				// b.cppCompiler.args "/FS"		// for DEBUG, uncomment this line
-				// b.linker.args "/DEBUG"		// for DEBUG, uncomment this line
 				if (b.targetPlatform.operatingSystem.windows) {
 					b.cppCompiler.define "WINDOWS"
 					b.cppCompiler.define "_WINDOWS"
@@ -250,17 +398,6 @@ model {
 				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
 				b.cCompiler.define "ZLIB_WINAPI"
 			}
-			else if (b.toolChain in Clang) {
-				b.cppCompiler.args "-std=c++11"
-				b.cppCompiler.args "-Wall"
-				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
-				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
-				b.cppCompiler.args "-Wno-sign-compare"
-				b.cppCompiler.args "-w"
-				if (b.targetPlatform.operatingSystem.linux) {
-//					b.linker.args "-static"
-				}
-			}
-		}
-	}
+		} // end all
+	} // end binaries
 } // end model
