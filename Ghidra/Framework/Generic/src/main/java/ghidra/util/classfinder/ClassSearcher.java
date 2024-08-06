@@ -24,8 +24,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeListener;
@@ -561,7 +560,18 @@ public class ClassSearcher {
 		for (ResourceFile moduleRoot : moduleRootDirectories) {
 			ResourceFile file = new ResourceFile(moduleRoot, "data/ExtensionPoint.manifest");
 			if (file.exists()) {
-				extensionPointSuffixes.addAll(FileUtilities.getLinesQuietly(file));
+				for (String line : FileUtilities.getLinesQuietly(file)) {
+					line = line.trim();
+					try {
+						Pattern.compile(line);
+						extensionPointSuffixes.add(line);
+					}
+					catch (PatternSyntaxException e) {
+						Msg.error(ClassSearcher.class,
+							"Skipping invalid extension point suffix '%s' found in '%s'"
+									.formatted(line, file));
+					}
+				}
 			}
 		}
 
