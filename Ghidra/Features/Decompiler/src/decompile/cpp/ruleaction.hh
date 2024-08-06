@@ -61,6 +61,7 @@ class AddTreeState {
   PcodeOp *distributeOp;	///< A CPUI_INT_MULT op that needs to be distributed
   uint8 multsum;		///< Sum of multiple constants
   uint8 nonmultsum;		///< Sum of non-multiple constants
+  vector<Varnode*> multiequalsToInspect;  ///< CPUI_MULTIEQUALs that might potentially lead to discovering the constant multiple being used
   bool preventDistribution;	///< Do not distribute "multiply by constant" operation
   bool isDistributeUsed;	///< Are terms produced by distributing used
   bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
@@ -76,6 +77,7 @@ class AddTreeState {
   bool buildDegenerate(void);		///< Transform ADD into degenerate PTRADD
   void buildTree(void);			///< Build the transformed ADD tree
   void clear(void);			///< Reset for a new ADD tree traversal
+  bool inspectMultiequals(void);        ///< Check all potential CPUI_MULTIEQUALs in an attempt to transform the expression and find the multiple
 public:
   AddTreeState(Funcdata &d,PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
   bool apply(void);		///< Attempt to transform the pointer expression
