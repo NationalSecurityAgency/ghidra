@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -480,6 +480,51 @@ public class PrimitiveMsType extends AbstractMsType {
 			// 128-bit near pointer to a 32-bit unicode char (LLVM doc on 0x0700)
 			case 0x077b:
 				typeString = "T_128PCHAR32";
+				typeSize = 16;
+				break;
+
+			//=======================================
+			// 8-bit char8_t type from C++20 standard
+			// Note that std::is_same_v<unsigned char, char8_t> is suppose to return false
+			//=======================================
+			// char8_t
+			case 0x007c:
+				typeString = "T_CHAR8";
+				typeSize = 1;
+				break;
+			// 16-bit pointer to a char8_t
+			case 0x017c:
+				typeString = "T_PCHAR8";
+				typeSize = 2;
+				break;
+			// 16:16 far pointer to a char8_t
+			case 0x027c:
+				typeString = "T_PFCHAR8";
+				typeSize = 4;
+				break;
+			// 16:16 huge pointer to a char8_t
+			case 0x037c:
+				typeString = "T_PHCHAR8";
+				typeSize = 4;
+				break;
+			// 32-bit pointer to a char8_t
+			case 0x047c:
+				typeString = "T_32PCHAR8";
+				typeSize = 4;
+				break;
+			// 16:32 pointer to a char8_t
+			case 0x057c:
+				typeString = "T_32PFCHAR8";
+				typeSize = 6;
+				break;
+			// 64-bit pointer to a char8_t
+			case 0x067c:
+				typeString = "T_64PCHAR8";
+				typeSize = 8;
+				break;
+			// 128-bit near pointer to a char8_t (LLVM doc on 0x0700)
+			case 0x077c:
+				typeString = "T_128PCHAR8";
 				typeSize = 16;
 				break;
 
