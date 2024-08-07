@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
-import ghidra.util.Conv;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -66,7 +65,7 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 			value = reader.readLong(index);
 		}
 		else {
-			value = reader.readInt(index) & Conv.INT_MASK;
+			value = reader.readUnsignedInt(index);
 		}
 	}
 
@@ -100,7 +99,7 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 	 * @param value the new thunk value
 	 */
 	public void setValue(int value) {
-		this.value = value & Conv.INT_MASK;
+		this.value = Integer.toUnsignedLong(value);
 	}
 
 	/**
@@ -154,9 +153,7 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 		return ibn;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.StructConverter#toDataType()
-	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		UnionDataType union = new UnionDataType("u1");
 		union.setCategoryPath(new CategoryPath("/PE"));
@@ -174,9 +171,7 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 		return struct;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
-	 */
+	@Override
 	public byte[] toBytes(DataConverter dc) {
 		if (is64bit) {
 			return dc.getBytes(value);
