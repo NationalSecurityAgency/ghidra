@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,8 +75,14 @@ public class ImportDataDirectory extends DataDirectory {
 	}
 
 	@Override
+	protected boolean validateSize() {
+		// The Windows loader is known to not check the size of this DataDirectory
+		return false;
+	}
+
+	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader)
+			NTHeader nt)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException,
 			MemoryAccessException {
 
@@ -84,7 +90,7 @@ public class ImportDataDirectory extends DataDirectory {
 			return;
 		}
 		monitor.setMessage("[" + program.getName() + "]: import(s)...");
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -100,8 +106,8 @@ public class ImportDataDirectory extends DataDirectory {
 
 			setPlateComment(program, addr, ImportDescriptor.NAME);
 			for (int j = 0; j < 5; ++j) {
-				PeUtils.createData(program, addr, DWORD, log);
-				addr = addr.add(DWORD.getLength());
+				PeUtils.createData(program, addr, DWordDataType.dataType, log);
+				addr = addr.add(DWordDataType.dataType.getLength());
 			}
 
 			if (descriptor.getName() == 0 && descriptor.getTimeDateStamp() == 0) {
@@ -112,7 +118,7 @@ public class ImportDataDirectory extends DataDirectory {
 			if (dll != null && dll.startsWith(program.getName())) {
 				Msg.warn(this,
 					program.getName() + " potentially modified via import of local exports");
-				DataDirectory[] dataDirectories = ntHeader.getOptionalHeader().getDataDirectories();
+				DataDirectory[] dataDirectories = nt.getOptionalHeader().getDataDirectories();
 				exportDirectory =
 					(ExportDataDirectory) dataDirectories[OptionalHeader.IMAGE_DIRECTORY_ENTRY_EXPORT];
 			}
@@ -150,7 +156,7 @@ public class ImportDataDirectory extends DataDirectory {
 					ExportInfo exportInfo = exportDirectory.getExports()[j];
 					long address = exportInfo.getAddress();
 					long thunkAddr = va(intptr, isBinary);
-					byte[] bytes = ntHeader.getOptionalHeader().is64bit() ? conv.getBytes(address)
+					byte[] bytes = nt.getOptionalHeader().is64bit() ? conv.getBytes(address)
 							: conv.getBytes((int) address);
 					try {
 						program.getMemory().setBytes(
@@ -169,8 +175,8 @@ public class ImportDataDirectory extends DataDirectory {
 					long ibnAddr = va(thunks[j].getAddressOfData(), isBinary);
 					Address ibnAddress = space.getAddress(ibnAddr);
 					setPlateComment(program, ibnAddress, ImportByName.NAME);
-					PeUtils.createData(program, ibnAddress, WORD, log);
-					Address ibnNameAddress = ibnAddress.add(WORD.getLength());
+					PeUtils.createData(program, ibnAddress, WordDataType.dataType, log);
+					Address ibnNameAddress = ibnAddress.add(WordDataType.dataType.getLength());
 					PeUtils.createData(program, ibnNameAddress, tsdt, log);
 				}
 
@@ -182,7 +188,8 @@ public class ImportDataDirectory extends DataDirectory {
 			throws MemoryAccessException {
 		DataType dt = null;
 		if (isBinary) {
-			dt = ntHeader.getOptionalHeader().is64bit() ? (DataType) QWORD : (DataType) DWORD;
+			dt = ntHeader.getOptionalHeader().is64bit() ? (DataType) QWordDataType.dataType
+					: (DataType) DWordDataType.dataType;
 		}
 		else {
 			dt = new PointerDataType(null, -1, program.getDataTypeManager());
@@ -208,7 +215,8 @@ public class ImportDataDirectory extends DataDirectory {
 			dt = new PointerDataType(null, -1, program.getDataTypeManager());
 		}
 		else {
-			dt = ntHeader.getOptionalHeader().is64bit() ? (DataType) QWORD : (DataType) DWORD;
+			dt = ntHeader.getOptionalHeader().is64bit() ? (DataType) QWordDataType.dataType
+					: (DataType) DWordDataType.dataType;
 		}
 		PeUtils.createData(program, thunkAddress, dt, log);
 	}
@@ -367,17 +375,5 @@ public class ImportDataDirectory extends DataDirectory {
 				info.getDLL() + " " + info.getName() + "\n");
 		}
 		return buff.toString();
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.StructConverter#toDataType()
-	 */
-	@Override
-	public DataType toDataType() throws DuplicateNameException {
-		StructureDataType struct = new StructureDataType(NAME, 0);
-		DataType array = new ArrayDataType(BYTE, size, 1);
-		struct.add(array, array.getLength(), "IMPORT", null);
-		struct.setCategoryPath(new CategoryPath("/PE"));
-		return struct;
 	}
 }
