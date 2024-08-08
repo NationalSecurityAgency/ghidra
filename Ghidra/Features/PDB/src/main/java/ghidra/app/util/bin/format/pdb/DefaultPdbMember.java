@@ -80,17 +80,17 @@ public class DefaultPdbMember extends PdbMember {
 		if (name == null) {
 			return null;
 		}
+		// name may contain namespace prefix class members
+		int lastColonIndex = name.lastIndexOf("::");
+		if (lastColonIndex > 0) {
+			name = name.substring(lastColonIndex + 2);
+		}
 		if (kind == PdbKind.MEMBER) {
 			// Strip bitfield data if present (see parseBitField method)
 			int bitFieldColonIndex = name.indexOf(':');
 			if (bitFieldColonIndex >= 0) {
-				return name.substring(0, bitFieldColonIndex);
+				name = name.substring(0, bitFieldColonIndex);
 			}
-		}
-		// name may contain namespace prefix for non-Member class members
-		int lastColonIndex = name.lastIndexOf(':');
-		if (lastColonIndex > 0) {
-			name = name.substring(lastColonIndex + 1);
 		}
 		return name;
 	}
@@ -121,6 +121,10 @@ public class DefaultPdbMember extends PdbMember {
 	private void parseBitField(String name) {
 		if (name == null || kind != PdbKind.MEMBER) {
 			return;
+		}
+		int namespaceIndex = name.lastIndexOf("::");
+		if (namespaceIndex != -1){
+			name = name.substring(namespaceIndex + 2);
 		}
 		int bitFieldColonIndex = name.indexOf(':');
 		if (bitFieldColonIndex >= 0) {
