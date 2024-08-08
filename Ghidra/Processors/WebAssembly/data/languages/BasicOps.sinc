@@ -1,0 +1,522 @@
+## Memory Instructions
+memalign: "align="^ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+memoffset: "offset="^ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+loadaddr: memalign memoffset is memalign; memoffset; sp1_32 {
+	addr:4 = memoffset:4 + sp1_32;
+	export addr;
+}
+
+storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
+	addr:4 = memoffset:4 + sp2_32;
+	export addr;
+}
+
+:i32.load loadaddr is opc=0x28; loadaddr; sp1_32; ctx_is_directive=0 {
+	sp1_32 = *:4 loadaddr;
+}
+:i64.load loadaddr is opc=0x29; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = *:8 loadaddr;
+}
+:f32.load loadaddr is opc=0x2A; loadaddr; sp1_32; ctx_is_directive=0 {
+	sp1_32 = *:4 loadaddr;
+}
+:f64.load loadaddr is opc=0x2B; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = *:8 loadaddr;
+}
+:i32.load8_s loadaddr is opc=0x2C; loadaddr; sp1_32; ctx_is_directive=0 {
+	sp1_32 = sext(*:1 loadaddr);
+}
+:i32.load8_u loadaddr is opc=0x2D; loadaddr; sp1_32; ctx_is_directive=0 {
+	sp1_32 = zext(*:1 loadaddr);
+}
+:i32.load16_s loadaddr is opc=0x2E; loadaddr; sp1_32; ctx_is_directive=0 {
+	sp1_32 = sext(*:2 loadaddr);
+}
+:i32.load16_u loadaddr is opc=0x2F; loadaddr; sp1_32; ctx_is_directive=0 {
+	sp1_32 = zext(*:2 loadaddr);
+}
+:i64.load8_s loadaddr is opc=0x30; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(*:1 loadaddr);
+}
+:i64.load8_u loadaddr is opc=0x31; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = zext(*:1 loadaddr);
+}
+:i64.load16_s loadaddr is opc=0x32; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(*:2 loadaddr);
+}
+:i64.load16_u loadaddr is opc=0x33; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = zext(*:2 loadaddr);
+}
+:i64.load32_s loadaddr is opc=0x34; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(*:4 loadaddr);
+}
+:i64.load32_u loadaddr is opc=0x35; loadaddr; sp1_64; ctx_is_directive=0 {
+	sp1_64 = zext(*:4 loadaddr);
+}
+
+:i32.store storeaddr is opc=0x36; storeaddr; sp1_32; ctx_is_directive=0 {
+	*:4 storeaddr = sp1_32;
+}
+:i64.store storeaddr is opc=0x37; storeaddr; sp1_64; ctx_is_directive=0 {
+	*:8 storeaddr = sp1_64;
+}
+:f32.store storeaddr is opc=0x38; storeaddr; sp1_32; ctx_is_directive=0 {
+	*:4 storeaddr = sp1_32;
+}
+:f64.store storeaddr is opc=0x39; storeaddr; sp1_64; ctx_is_directive=0 {
+	*:8 storeaddr = sp1_64;
+}
+:i32.store8 storeaddr is opc=0x3A; storeaddr; sp1_32; ctx_is_directive=0 {
+	*:1 storeaddr = sp1_32:1;
+}
+:i32.store16 storeaddr is opc=0x3B; storeaddr; sp1_32; ctx_is_directive=0 {
+	*:2 storeaddr = sp1_32:2;
+}
+:i64.store8 storeaddr is opc=0x3C; storeaddr; sp1_64; ctx_is_directive=0 {
+	*:1 storeaddr = sp1_64:1;
+}
+:i64.store16 storeaddr is opc=0x3D; storeaddr; sp1_64; ctx_is_directive=0 {
+	*:2 storeaddr = sp1_64:2;
+}
+:i64.store32 storeaddr is opc=0x3E; storeaddr; sp1_64; ctx_is_directive=0 {
+	*:4 storeaddr = sp1_64:4;
+}
+
+## Numeric Instructions
+:i32.eqz  is opc=0x45; sp1_32; ctx_is_directive=0 {
+	sp1_32 = zext(sp1_32 == 0);
+}
+:i32.eq  is opc=0x46; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 == sp1_32);
+}
+:i32.ne  is opc=0x47; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 != sp1_32);
+}
+:i32.lt_s  is opc=0x48; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 s< sp1_32);
+}
+:i32.lt_u  is opc=0x49; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 < sp1_32);
+}
+:i32.gt_s  is opc=0x4A; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 s> sp1_32);
+}
+:i32.gt_u  is opc=0x4B; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 > sp1_32);
+}
+:i32.le_s  is opc=0x4C; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 s<= sp1_32);
+}
+:i32.le_u  is opc=0x4D; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 <= sp1_32);
+}
+:i32.ge_s  is opc=0x4E; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 s>= sp1_32);
+}
+:i32.ge_u  is opc=0x4F; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 >= sp1_32);
+}
+:i64.eqz  is opc=0x50; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = zext(sp1_64 == 0);
+}
+:i64.eq  is opc=0x51; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 == sp1_64);
+}
+:i64.ne  is opc=0x52; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 != sp1_64);
+}
+:i64.lt_s  is opc=0x53; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 s< sp1_64);
+}
+:i64.lt_u  is opc=0x54; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 < sp1_64);
+}
+:i64.gt_s  is opc=0x55; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 s> sp1_64);
+}
+:i64.gt_u  is opc=0x56; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 > sp1_64);
+}
+:i64.le_s  is opc=0x57; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 s<= sp1_64);
+}
+:i64.le_u  is opc=0x58; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 <= sp1_64);
+}
+:i64.ge_s  is opc=0x59; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 s>= sp1_64);
+}
+:i64.ge_u  is opc=0x5A; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 >= sp1_64);
+}
+:f32.eq  is opc=0x5B; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 f== sp1_32);
+}
+:f32.ne  is opc=0x5C; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 f!= sp1_32);
+}
+:f32.lt  is opc=0x5D; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 f< sp1_32);
+}
+:f32.gt  is opc=0x5E; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 f> sp1_32);
+}
+:f32.le  is opc=0x5F; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 f<= sp1_32);
+}
+:f32.ge  is opc=0x60; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_32 f>= sp1_32);
+}
+:f64.eq  is opc=0x61; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 f== sp1_64);
+}
+:f64.ne  is opc=0x62; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 f!= sp1_64);
+}
+:f64.lt  is opc=0x63; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 f< sp1_64);
+}
+:f64.gt  is opc=0x64; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 f> sp1_64);
+}
+:f64.le  is opc=0x65; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 f<= sp1_64);
+}
+:f64.ge  is opc=0x66; sp1_64; sp2_32; sp2_64; ctx_is_directive=0 {
+	sp2_32 = zext(sp2_64 f>= sp1_64);
+}
+:i32.clz  is opc=0x67; sp1_32; ctx_is_directive=0 {
+	sp1_32 = clz(sp1_32);
+}
+:i32.ctz  is opc=0x68; sp1_32; ctx_is_directive=0 {
+	sp1_32 = ctz(sp1_32);
+}
+:i32.popcnt  is opc=0x69; sp1_32; ctx_is_directive=0 {
+	sp1_32 = popcnt(sp1_32);
+}
+:i32.add  is opc=0x6A; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 + sp1_32;
+}
+:i32.sub  is opc=0x6B; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 - sp1_32;
+}
+:i32.mul  is opc=0x6C; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 * sp1_32;
+}
+:i32.div_s  is opc=0x6D; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 s/ sp1_32;
+}
+:i32.div_u  is opc=0x6E; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 / sp1_32;
+}
+:i32.rem_s  is opc=0x6F; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 s% sp1_32;
+}
+:i32.rem_u  is opc=0x70; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 % sp1_32;
+}
+:i32.and  is opc=0x71; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 & sp1_32;
+}
+:i32.or  is opc=0x72; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 | sp1_32;
+}
+:i32.xor  is opc=0x73; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 ^ sp1_32;
+}
+:i32.shl  is opc=0x74; sp1_32; sp2_32; ctx_is_directive=0 {
+	cnt:4 = (sp1_32 & 31);
+	sp2_32 = sp2_32 << cnt;
+}
+:i32.shr_s  is opc=0x75; sp1_32; sp2_32; ctx_is_directive=0 {
+	cnt:4 = (sp1_32 & 31);
+	sp2_32 = sp2_32 s>> cnt;
+}
+:i32.shr_u  is opc=0x76; sp1_32; sp2_32; ctx_is_directive=0 {
+	cnt:4 = (sp1_32 & 31);
+	sp2_32 = sp2_32 >> cnt;
+}
+:i32.rotl  is opc=0x77; sp1_32; sp2_32; ctx_is_directive=0 {
+	cnt:4 = (sp1_32 & 31);
+	sp2_32 = ((sp2_32 << cnt) | (sp2_32 >> (32 - cnt)));
+}
+:i32.rotr  is opc=0x78; sp1_32; sp2_32; ctx_is_directive=0 {
+	cnt:4 = (sp1_32 & 31);
+	sp2_32 = ((sp2_32 >> cnt) | (sp2_32 << (32 - cnt)));
+}
+:i64.clz  is opc=0x79; sp1_64; ctx_is_directive=0 {
+	sp1_64 = clz(sp1_64);
+}
+:i64.ctz  is opc=0x7A; sp1_64; ctx_is_directive=0 {
+	sp1_64 = ctz(sp1_64);
+}
+:i64.popcnt  is opc=0x7B; sp1_64; ctx_is_directive=0 {
+	sp1_64 = popcnt(sp1_64);
+}
+:i64.add  is opc=0x7C; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 + sp1_64;
+}
+:i64.sub  is opc=0x7D; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 - sp1_64;
+}
+:i64.mul  is opc=0x7E; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 * sp1_64;
+}
+:i64.div_s  is opc=0x7F; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 s/ sp1_64;
+}
+:i64.div_u  is opc=0x80; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 / sp1_64;
+}
+:i64.rem_s  is opc=0x81; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 s% sp1_64;
+}
+:i64.rem_u  is opc=0x82; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 % sp1_64;
+}
+:i64.and  is opc=0x83; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 & sp1_64;
+}
+:i64.or  is opc=0x84; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 | sp1_64;
+}
+:i64.xor  is opc=0x85; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 ^ sp1_64;
+}
+:i64.shl  is opc=0x86; sp1_64; sp2_64; ctx_is_directive=0 {
+	cnt:8 = (sp1_64 & 63);
+	sp2_64 = sp2_64 << cnt;
+}
+:i64.shr_s  is opc=0x87; sp1_64; sp2_64; ctx_is_directive=0 {
+	cnt:8 = (sp1_64 & 63);
+	sp2_64 = sp2_64 s>> cnt;
+}
+:i64.shr_u  is opc=0x88; sp1_64; sp2_64; ctx_is_directive=0 {
+	cnt:8 = (sp1_64 & 63);
+	sp2_64 = sp2_64 >> cnt;
+}
+:i64.rotl  is opc=0x89; sp1_64; sp2_64; ctx_is_directive=0 {
+	cnt:8 = (sp1_64 & 63);
+	sp2_64 = (sp2_64 << cnt) | (sp2_64 >> (64 - cnt));
+}
+:i64.rotr  is opc=0x8A; sp1_64; sp2_64; ctx_is_directive=0 {
+	cnt:8 = (sp1_64 & 63);
+	sp2_64 = (sp2_64 >> cnt) | (sp2_64 << (64 - cnt));
+}
+:f32.abs  is opc=0x8B; sp1_32; ctx_is_directive=0 {
+	sp1_32 = abs(sp1_32);
+}
+:f32.neg  is opc=0x8C; sp1_32; ctx_is_directive=0 {
+	sp1_32 = f- sp1_32;
+}
+:f32.ceil  is opc=0x8D; sp1_32; ctx_is_directive=0 {
+	sp1_32 = ceil(sp1_32);
+}
+:f32.floor  is opc=0x8E; sp1_32; ctx_is_directive=0 {
+	sp1_32 = floor(sp1_32);
+}
+:f32.trunc  is opc=0x8F; sp1_32; ctx_is_directive=0 {
+	if (sp1_32 f>= 0) goto <pos>;
+	sp1_32 = ceil(sp1_32);
+	goto inst_next;
+<pos>
+	sp1_32 = floor(sp1_32);
+}
+:f32.nearest  is opc=0x90; sp1_32; ctx_is_directive=0 {
+	sp1_32 = round(sp1_32);
+}
+:f32.sqrt  is opc=0x91; sp1_32; ctx_is_directive=0 {
+	sp1_32 = sqrt(sp1_32);
+}
+:f32.add  is opc=0x92; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 f+ sp1_32;
+}
+:f32.sub  is opc=0x93; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 f- sp1_32;
+}
+:f32.mul  is opc=0x94; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 f* sp1_32;
+}
+:f32.div  is opc=0x95; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = sp2_32 f/ sp1_32;
+}
+:f32.min  is opc=0x96; sp1_32; sp2_32; ctx_is_directive=0 {
+	if(sp1_32 f> sp2_32 || nan(sp2_32)) goto inst_next;
+	sp2_32 = sp1_32;
+}
+:f32.max  is opc=0x97; sp1_32; sp2_32; ctx_is_directive=0 {
+	if(sp1_32 f< sp2_32 || nan(sp2_32)) goto inst_next;
+	sp2_32 = sp1_32;
+}
+:f32.copysign  is opc=0x98; sp1_32; sp2_32; ctx_is_directive=0 {
+	sp2_32 = (sp2_32 & 0x7fffffff) | (sp1_32 & 0x80000000);
+}
+:f64.abs  is opc=0x99; sp1_64; ctx_is_directive=0 {
+	sp1_64 = abs(sp1_64);
+}
+:f64.neg  is opc=0x9A; sp1_64; ctx_is_directive=0 {
+	sp1_64 = f- sp1_64;
+}
+:f64.ceil  is opc=0x9B; sp1_64; ctx_is_directive=0 {
+	sp1_64 = ceil(sp1_64);
+}
+:f64.floor  is opc=0x9C; sp1_64; ctx_is_directive=0 {
+	sp1_64 = floor(sp1_64);
+}
+:f64.trunc  is opc=0x9D; sp1_64; ctx_is_directive=0 {
+	if (sp1_64 f>= 0) goto <pos>;
+	sp1_64 = ceil(sp1_64);
+	goto inst_next;
+<pos>
+	sp1_64 = floor(sp1_64);
+}
+:f64.nearest  is opc=0x9E; sp1_64; ctx_is_directive=0 {
+	sp1_64 = round(sp1_64);
+}
+:f64.sqrt  is opc=0x9F; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sqrt(sp1_64);
+}
+:f64.add  is opc=0xA0; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 f+ sp1_64;
+}
+:f64.sub  is opc=0xA1; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 f- sp1_64;
+}
+:f64.mul  is opc=0xA2; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 f* sp1_64;
+}
+:f64.div  is opc=0xA3; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = sp2_64 f/ sp1_64;
+}
+:f64.min  is opc=0xA4; sp1_64; sp2_64; ctx_is_directive=0 {
+	if(sp1_64 f> sp2_64 || nan(sp2_64)) goto inst_next;
+	sp2_64 = sp1_64;
+}
+:f64.max  is opc=0xA5; sp1_64; sp2_64; ctx_is_directive=0 {
+	if(sp1_64 f< sp2_64 || nan(sp2_64)) goto inst_next;
+	sp2_64 = sp1_64;
+}
+:f64.copysign  is opc=0xA6; sp1_64; sp2_64; ctx_is_directive=0 {
+	sp2_64 = (sp2_64 & 0x7fffffffffffffff) | (sp1_64 & 0x8000000000000000);
+}
+:i32.wrap_i64  is opc=0xA7; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = sp1_64:4;
+}
+:i32.trunc_f32_s  is opc=0xA8; sp1_32; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_32);
+}
+# TODO: Can we do an unsigned trunc?
+:i32.trunc_f32_u  is opc=0xA9; sp1_32; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_32);
+}
+:i32.trunc_f64_s  is opc=0xAA; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_64);
+}
+:i32.trunc_f64_u  is opc=0xAB; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_64);
+}
+:i64.extend_i32_s  is opc=0xAC; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(sp1_32);
+}
+:i64.extend_i32_u  is opc=0xAD; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = zext(sp1_32);
+}
+:i64.trunc_f32_s  is opc=0xAE; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_32);
+}
+:i64.trunc_f32_u  is opc=0xAF; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_32);
+}
+:i64.trunc_f64_s  is opc=0xB0; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_64);
+}
+:i64.trunc_f64_u  is opc=0xB1; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_64);
+}
+:f32.convert_i32_s  is opc=0xB2; sp1_32; ctx_is_directive=0 {
+	sp1_32 = int2float(sp1_32);
+}
+:f32.convert_i32_u  is opc=0xB3; sp1_32; ctx_is_directive=0 {
+	local tmp:8 = zext(sp1_32);
+	sp1_32 = int2float(tmp);
+}
+:f32.convert_i64_s  is opc=0xB4; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = int2float(sp1_64);
+}
+:f32.convert_i64_u  is opc=0xB5; sp1_32; sp1_64; ctx_is_directive=0 {
+	local tmp:9 = zext(sp1_64);
+	sp1_32 = int2float(tmp);
+}
+:f32.demote_f64  is opc=0xB6; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = float2float(sp1_64);
+}
+:f64.convert_i32_s  is opc=0xB7; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = int2float(sp1_32);
+}
+:f64.convert_i32_u  is opc=0xB8; sp1_32; sp1_64; ctx_is_directive=0 {
+	local tmp:8 = zext(sp1_32);
+	sp1_64 = int2float(tmp);
+}
+:f64.convert_i64_s  is opc=0xB9; sp1_64; ctx_is_directive=0 {
+	sp1_64 = int2float(sp1_64);
+}
+:f64.convert_i64_u  is opc=0xBA; sp1_64; ctx_is_directive=0 {
+	local tmp:9 = zext(sp1_64);
+	sp1_64 = int2float(tmp);
+}
+:f64.promote_f32  is opc=0xBB; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = float2float(sp1_32);
+}
+# No need to do anything since our stack is untyped
+:i32.reinterpret_f32  is opc=0xBC; ctx_is_directive=0 {}
+:i64.reinterpret_f64  is opc=0xBD; ctx_is_directive=0 {}
+:f32.reinterpret_i32  is opc=0xBE; ctx_is_directive=0 {}
+:f64.reinterpret_i64  is opc=0xBF; ctx_is_directive=0 {}
+:i32.extend8_s  is opc=0xC0; sp1_32; ctx_is_directive=0 {
+	sp1_32 = sext(sp1_32:1);
+}
+:i32.extend16_s  is opc=0xC1; sp1_32; ctx_is_directive=0 {
+	sp1_32 = sext(sp1_32:2);
+}
+:i64.extend8_s  is opc=0xC2; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(sp1_64:1);
+}
+:i64.extend16_s  is opc=0xC3; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(sp1_64:2);
+}
+:i64.extend32_s  is opc=0xC4; sp1_64; ctx_is_directive=0 {
+	sp1_64 = sext(sp1_64:4);
+}
+
+# TODO: actually handle saturation, or express semantics via pcodeop?
+:i32.trunc_sat_f32_s  is opc=0xFC; opc2_0; sp1_32; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_32);
+}
+# TODO: Can we do an unsigned trunc?
+:i32.trunc_sat_f32_u  is opc=0xFC; opc2_1; sp1_32; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_32);
+}
+:i32.trunc_sat_f64_s  is opc=0xFC; opc2_2; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_64);
+}
+:i32.trunc_sat_f64_u  is opc=0xFC; opc2_3; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_32 = trunc(sp1_64);
+}
+:i64.trunc_sat_f32_s  is opc=0xFC; opc2_4; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_32);
+}
+:i64.trunc_sat_f32_u  is opc=0xFC; opc2_5; sp1_32; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_32);
+}
+:i64.trunc_sat_f64_s  is opc=0xFC; opc2_6; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_64);
+}
+:i64.trunc_sat_f64_u  is opc=0xFC; opc2_7; sp1_64; ctx_is_directive=0 {
+	sp1_64 = trunc(sp1_64);
+}
