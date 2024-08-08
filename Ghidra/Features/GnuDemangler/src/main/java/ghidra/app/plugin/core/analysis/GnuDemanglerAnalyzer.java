@@ -122,7 +122,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
 		useStandardReplacements =
-			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useStandardReplacements);
+			options.getBoolean(OPTION_NAME_DEMANGLE_USE_STANDARD_REPLACEMENTS,
+				useStandardReplacements);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
 		useDeprecatedDemangler =
 			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
