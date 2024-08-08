@@ -264,6 +264,11 @@ macro resflags(result) {
   tmpZR = result == 0;
 }
 
+macro resflags_with_shift_carry(result) {
+  resflags(result);
+  tmpCY = shift_carry;
+}
+
 macro th_logicflags() {
   tmpCY = shift_carry;
   tmpOV = OV;
@@ -1259,22 +1264,22 @@ with : ARMcondCk=1 {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:and^thSBIT_ZN^ItCond	Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=0 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
+:and^thSBIT_CZN^ItCond	Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=0 & thSBIT_CZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   build ThumbExpandImm12;
   Rd0811 = Rn0003 & ThumbExpandImm12;
-  resflags(Rd0811);
-  build thSBIT_ZN;
+  resflags_with_shift_carry(Rd0811);
+  build thSBIT_CZN;
 }
 
-:and^thSBIT_ZN^ItCond^".w"	Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=0 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811 & thshift2
+:and^thSBIT_CZN^ItCond^".w"	Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=0 & thSBIT_CZN & Rn0003; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
   build thshift2;
   Rd0811 = Rn0003 & thshift2;
-  resflags(Rd0811);
-  build thSBIT_ZN;
+  resflags_with_shift_carry(Rd0811);
+  build thSBIT_CZN;
 }
 @endif # VERSION_6T2 || VERSION_7
 
@@ -1402,13 +1407,13 @@ macro th_set_carry_for_asr(op1,shift_count) {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:bic^thSBIT_ZN^ItCond   Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=1 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
+:bic^thSBIT_CZN^ItCond   Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=1 & thSBIT_CZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   build ThumbExpandImm12;
   Rd0811 = Rn0003&(~ThumbExpandImm12);
-  resflags(Rd0811);
-  build thSBIT_ZN;
+  resflags_with_shift_carry(Rd0811);
+  build thSBIT_CZN;
 }
 
 :bic^thSBIT_CZNO^ItCond^".w"	Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=1 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
@@ -2664,12 +2669,12 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:mov^thSBIT_ZN^ItCond^".w"	Rd0811,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=2 & thSBIT_ZN & sop0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12
+:mov^thSBIT_CZN^ItCond^".w"	Rd0811,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   Rd0811 = ThumbExpandImm12;
-  resflags(Rd0811);
-  build thSBIT_ZN;
+  resflags_with_shift_carry(Rd0811);
+  build thSBIT_CZN;
 }
 
 :movw^ItCond	Rd0811,Immed16 		is TMode=1 & ItCond & (op11=0x1e & thc0909=1 & sop0508=2 & thc0404=0; thc1515=0 & Rd0811) & Immed16
@@ -3011,20 +3016,20 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   spsr = (spsr& ~thspsrmask) | (Rn0003 & thspsrmask);
 }
 
-:mvn^thSBIT_ZN^ItCond    Rd0811,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=3 & thSBIT_ZN & thc0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12
+:mvn^thSBIT_CZN^ItCond    Rd0811,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=3 & thSBIT_CZN & thc0003=15; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   Rd0811 = ~ThumbExpandImm12;
-  resflags(Rd0811);
-  build thSBIT_ZN;
+  resflags_with_shift_carry(Rd0811);
+  build thSBIT_CZN;
 }
 
-:mvn^thSBIT_ZN^ItCond^".w"  Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=3 & thSBIT_ZN & thc0003=15; thc1515=0 & Rd0811 & thshift2
+:mvn^thSBIT_CZN^ItCond^".w"  Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=3 & thSBIT_CZN & thc0003=15; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
   Rd0811 = ~thshift2;
-  resflags(Rd0811);
-  build thSBIT_ZN;
+  resflags_with_shift_carry(Rd0811);
+  build thSBIT_CZN;
 }
 
 @endif # VERSION_6T2 || VERSION_7
