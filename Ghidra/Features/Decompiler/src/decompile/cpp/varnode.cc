@@ -485,6 +485,7 @@ void Varnode::copySymbol(const Varnode *vn)
   mapentry = vn->mapentry;	// Copy any symbol
   flags &= ~(Varnode::typelock | Varnode::namelock);
   flags |= (Varnode::typelock | Varnode::namelock) & vn->flags;
+  addlflags |= vn->addlflags & Varnode::enum_bitshift_32;
   if (high != (HighVariable *)0) {
     high->typeDirty();
     if (mapentry != (SymbolEntry *)0)

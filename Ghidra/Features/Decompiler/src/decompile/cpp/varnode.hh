@@ -129,7 +129,8 @@ public:
     spacebase_placeholder = 0x400, ///< This varnode is inserted artificially to track a register
 				///< value at a specific point in the code
     stop_uppropagation = 0x800,	///< Data-types do not propagate from an output into \b this
-    has_implied_field = 0x1000	///< The varnode is implied but also has a data-type that needs resolution
+    has_implied_field = 0x1000,	///< The varnode is implied but also has a data-type that needs resolution
+    enum_bitshift_32 = 0x2000   ///< Constant of enum type that must be >>32 before printing
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -261,6 +262,7 @@ public:
   bool hasNoLocalAlias(void) const { return ((flags&Varnode::nolocalalias)!=0); } ///< Are there (not) any local pointers that might affect \b this?
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); } ///< Has \b this been visited by the current algorithm?
   bool isActiveHeritage(void) const { return ((addlflags&Varnode::activeheritage)!=0); } ///< Is \b this currently being traced by the Heritage algorithm?
+  bool isEnumBitshift32(void) const { return ((addlflags&Varnode::enum_bitshift_32)!=0); } ///< Is \b this a constant of enum type that needs to be >>32 before printing?
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
   bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
   bool stopsUpPropagation(void) const { return ((addlflags&Varnode::stop_uppropagation)!=0); }	///< Is data-type propagation stopped
@@ -299,6 +301,7 @@ public:
   bool isNameLock(void) const { return ((flags&Varnode::namelock)!=0); } ///< Does \b this have a locked name?
   void setActiveHeritage(void) { addlflags |= Varnode::activeheritage; } ///< Mark \b this as currently being linked into the SSA tree
   void clearActiveHeritage(void) { addlflags &= ~Varnode::activeheritage; }	///< Mark \b this as not (actively) being linked into the SSA tree
+  void setEnumBitshift32(void) { addlflags |= Varnode::enum_bitshift_32; } ///< Mark \b this as a constant of enum type that needs to be >>32 before printing
   void setMark(void) const { flags |= Varnode::mark; } ///< Mark this Varnode for breadcrumb algorithms
   void clearMark(void) const { flags &= ~Varnode::mark; } ///< Clear the mark on this Varnode
   void setDirectWrite(void) { flags |= Varnode::directwrite; } ///< Mark \b this as directly affected by a legal input
