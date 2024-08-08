@@ -53,6 +53,11 @@ public:
     throw LowlevelError("Cannot currently get instruction length through this interface"); }
   virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const {
     throw LowlevelError("Cannot dump assembly through this interface"); }
+  virtual JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
+  virtual JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
+
+  /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
+  virtual void renormalizeJoinAddress(Address &addr,int4 size);
 };
 
 } // End namespace ghidra
