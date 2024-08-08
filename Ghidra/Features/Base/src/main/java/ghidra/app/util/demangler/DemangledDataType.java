@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,6 +67,7 @@ public class DemangledDataType extends DemangledType {
 	public final static String WCHAR_T = "wchar_t";
 	public final static String WCHAR16 = "char16_t";
 	public final static String WCHAR32 = "char32_t";
+	public final static String CHAR8_T = "char8_t";
 	public final static String SHORT = "short";
 	public final static String INT = "int";
 	public final static String INT0_T = "int0_t";
@@ -94,7 +95,7 @@ public class DemangledDataType extends DemangledType {
 	private static final String UNSIGNED_LONG = "unsigned long";
 
 	public final static String[] PRIMITIVES =
-		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, SHORT, INT, INT0_T, LONG,
+		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, CHAR8_T, SHORT, INT, INT0_T, LONG,
 			LONG_LONG, FLOAT, FLOAT2, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
 
 	private int arrayDimensions = 0;
@@ -255,6 +256,9 @@ public class DemangledDataType extends DemangledType {
 		}
 		else if (WCHAR32.equals(name)) {
 			dt = WideChar32DataType.dataType;
+		}
+		else if (CHAR8_T.equals(name)) {
+			dt = UnsignedCharDataType.dataType;
 		}
 		else if (SHORT.equals(name)) {
 			if (isUnsigned()) {
