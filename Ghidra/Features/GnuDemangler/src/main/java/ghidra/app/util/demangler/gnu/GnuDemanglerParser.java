@@ -289,6 +289,19 @@ public class GnuDemanglerParser {
 	private static final Pattern DESCRIPTIVE_PREFIX_PATTERN =
 		Pattern.compile("((.+ )(for|to) )(.+)");
 
+	/*
+	 * Sample:  global constructors keyed to cyg_libc_stdio_altout
+	 *
+	 * Pattern: global (constructors|destructors) keyed to text
+	 *
+	 * Parts:
+	 * 			-global (constructors|destructors) keyed to (group 1)
+	 * 			-text (group 3)
+	 *
+	 */
+	private static final Pattern GLOBAL_CTOR_DTOR_FOR_PATTERN =
+		Pattern.compile("(global (constructors|destructors) keyed to )(.+)");
+
 	/**
 	 * The c 'decltype' keyword pattern
 	 */
@@ -485,6 +498,13 @@ public class GnuDemanglerParser {
 			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
 			if (arrayMatcher.matches()) {
 				return new ArrayHandler(demangled, prefix, type);
+			}
+
+			Matcher globalCtorMatcher = GLOBAL_CTOR_DTOR_FOR_PATTERN.matcher(demangled);
+			if (globalCtorMatcher.matches()) {
+				prefix = globalCtorMatcher.group(1);
+				type = globalCtorMatcher.group(3);
+				return new GlobalCtorDtorHandler(demangled, prefix, type);
 			}
 
 			return new ItemInNamespaceHandler(demangled, prefix, type);
@@ -1633,13 +1653,11 @@ public class GnuDemanglerParser {
 
 		ItemInNamespaceHandler(String demangled) {
 			super(demangled);
-			this.demangled = demangled;
 			this.type = demangled;
 		}
 
 		ItemInNamespaceHandler(String demangled, String prefix, String item) {
 			super(demangled);
-			this.demangled = demangled;
 			this.prefix = prefix;
 			this.type = item;
 		}
@@ -1648,6 +1666,40 @@ public class GnuDemanglerParser {
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledObject demangledObject = parseItemInNamespace(type);
 			return demangledObject;
+		}
+	}
+
+	private class GlobalCtorDtorHandler extends SpecialPrefixHandler {
+
+		GlobalCtorDtorHandler(String demangled, String prefix, String item) {
+			super(demangled);
+			this.prefix = prefix;
+			this.type = item;
+		}
+
+		@Override
+		DemangledObject doBuild(Demangled namespace) {
+
+			//
+			// Since we are for constructors/destructors, assume each item is function
+			//
+			String functionName = type;
+			if (!functionName.contains("(")) {
+				// add parens so the type will be parsed as a function
+				functionName += "()";
+			}
+
+			DemangledObject demangledFunction = parseFunctionOrVariable(functionName);
+			demangledFunction.setOriginalDemangled(demangled);
+
+			// e.g., global.constructors.keyed.to.functionName
+			String parsedFunctionName = demangledFunction.getName();
+			String prefixNoSpaces = prefix.replaceAll("\s", "\\.");
+			String fullName = prefixNoSpaces + parsedFunctionName;
+
+			demangledFunction.setName(fullName);
+			demangledFunction.setBackupPlateComment(demangled);
+			return demangledFunction;
 		}
 	}
 
@@ -1685,9 +1737,8 @@ public class GnuDemanglerParser {
 				//
 				if ("char".equals(arrayType) && type.contains("StringLiteral")) {
 					// treat a char[] as a string
-					DemangledString ds =
-						new DemangledString(variable.getMangledString(), demangled, type, type,
-							-1 /*unknown length*/, false);
+					DemangledString ds = new DemangledString(variable.getMangledString(), demangled,
+						type, type, -1 /*unknown length*/, false);
 					ds.setSpecialPrefix(prefix);
 					return ds;
 				}
