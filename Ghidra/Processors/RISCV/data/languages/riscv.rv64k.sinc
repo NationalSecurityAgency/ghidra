@@ -1,6 +1,8 @@
 # RV64 Crypto Extension
 # NOTE  0.6.2
 
+rcon: op2023 is op2023 { local tmp:$(XLEN) = op2023; export tmp; }
+
 # 0001010 rs2 rs1 010 rd 0101011 saes64.decs
 :saes64.decs   rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x5b & op1214=0x2 & op2531=0x0a  unimpl
 
