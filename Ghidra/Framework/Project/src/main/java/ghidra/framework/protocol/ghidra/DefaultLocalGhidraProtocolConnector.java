@@ -86,7 +86,7 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 
 	/**
 	 * Get the ProjectLocator associated with a local project URL.
-	 * @return project locator object or null if URL supplies a a RepositoryAdapter and/or 
+	 * @return project locator object or null if URL supplies a RepositoryAdapter and/or 
 	 * RepositoryServerAdapter.
 	 */
 	public ProjectLocator getLocalProjectLocator() {
@@ -119,7 +119,7 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	}
 
 	/**
-	 * Connect and establish loca project project data instance.  Opening a project for
+	 * Connect and establish local project data instance.  Opening a project for
 	 * write access is subject to in-use lock restriction.
 	 * See {@link #getStatusCode()} if null is returned.
 	 * @param readOnlyAccess true if project data should be read-only

@@ -130,7 +130,7 @@ class TaskRunner {
 
 	private void taskFinished() {
 
-		// This will release the the task dialog.  We passed this latch to the dialog at
+		// This will release the task dialog.  We passed this latch to the dialog at
 		// construction so that does not block until we notify it in the Swing.runLater() below.
 		// If we only rely on that notification, then the notification will be blocked when the
 		// dialog is waiting in the Swing thread.

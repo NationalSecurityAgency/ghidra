@@ -66,7 +66,7 @@ import utility.function.Callback;
  * </PRE>
  * <P>
  * And finally, the third way is where you have to perform some processing on each record of a 
- * certain type. This can be done using the the {@link #each(EventType...)}, followed by the
+ * certain type. This can be done using the {@link #each(EventType...)}, followed by the
  * {@link EachBuilder#call(Consumer)} if you just want the record, or 
  * {@link EachBuilder#call(BiConsumer)} if you want the record and the event.
  * <P>

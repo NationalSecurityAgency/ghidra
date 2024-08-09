@@ -26,7 +26,7 @@ import resources.ResourceManager;
 /**
  * A wrapper for an icon that suppresses errors. Some Icons that are mined from a 
  * {@link LookAndFeel} have specialized uses and will throw exceptions if used outside
- * their intended component. This class is used when trying to show them in the the theme
+ * their intended component. This class is used when trying to show them in the theme
  * editor table.
  */
 public class ProtectedIcon implements Icon {

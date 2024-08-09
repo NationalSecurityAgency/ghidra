@@ -175,7 +175,7 @@ public class WindowActionManager {
 	 * Returns the set of actions for this window.
 	 * 
 	 * <p>
-	 * Note this returns the the original passed-in actions and not the proxy actions that the
+	 * Note this returns the original passed-in actions and not the proxy actions that the
 	 * window uses.
 	 * 
 	 * @return the set of actions for this window

@@ -137,13 +137,13 @@ abstract class DataDBAdapter {
 	abstract DBRecord getRecord(long key) throws IOException;
 
 	/**
-	 * Get the record before the given address address.
+	 * Get the record before the given address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract DBRecord getRecordBefore(Address addr) throws IOException;
 
 	/**
-	 * Get a record iterator starting at the given address address.
+	 * Get a record iterator starting at the given address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract RecordIterator getRecords(Address addr, boolean forward) throws IOException;
@@ -176,7 +176,7 @@ abstract class DataDBAdapter {
 	abstract int getRecordCount() throws IOException;
 
 	/**
-	 * Get the record at or before the given address address.
+	 * Get the record at or before the given address.
 	 * @param addr
 	 * @throws IOException if there was a problem accessing the database
 	 * @return

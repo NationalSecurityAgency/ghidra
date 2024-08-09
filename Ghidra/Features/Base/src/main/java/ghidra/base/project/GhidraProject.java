@@ -128,7 +128,7 @@ public class GhidraProject {
 	 *
 	 * @param projectDirPath the directory path to contain the new Ghidra project.
 	 * @param projectName the name of the project to be created.
-	 * @param temporary if true, deletes the the project when it is closed - useful for testing.
+	 * @param temporary if true, deletes the project when it is closed - useful for testing.
 	 * @return an open ghidra project.
 	 * @throws IOException if there was a problem accessing the project
 	 */

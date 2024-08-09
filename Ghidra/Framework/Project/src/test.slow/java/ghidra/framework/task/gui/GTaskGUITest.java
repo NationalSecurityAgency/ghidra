@@ -590,7 +590,7 @@ public class GTaskGUITest extends AbstractDockingTest {
 			// to release that lock, be still be able to block the advance() method so that the
 			// test does not keep going until we let our 'higher priority task' get
 			// scheduled.   So, signal that our work is done, but then wait for the sub-work
-			// to be be scheduled.
+			// to be scheduled.
 			//
 			debug(getName() + ": release workFinished latch early");
 			workFinishedLatch.countDown();

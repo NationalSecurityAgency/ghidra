@@ -162,7 +162,7 @@ public class GhidraLauncher {
 			boolean gradleDevMode = classpathList.isEmpty();
 			if (gradleDevMode) {
 				// Add the module jars Gradle built.
-				// Note: this finds Extensions' jar files so there is no need to to call
+				// Note: this finds Extensions' jar files so there is no need to call
 				// addExtensionJarPaths()
 				addModuleJarPaths(classpathList, modules);
 			}

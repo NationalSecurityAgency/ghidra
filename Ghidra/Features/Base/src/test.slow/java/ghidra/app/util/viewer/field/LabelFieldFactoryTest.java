@@ -318,7 +318,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testOffcutStringWhenOffcutIsOnTheNullTerminatingCharacter() throws Exception {
 		//
 		// We can have a scenario where there is an offcut into a string where the offcut index
-		// is the the last byte, which is the null terminator, which we do not render
+		// is the last byte, which is the null terminator, which we do not render
 		//
 		env.close(program);
 		program = buildSegmentedProgram();

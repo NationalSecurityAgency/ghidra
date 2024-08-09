@@ -133,7 +133,7 @@ public interface ProjectManager {
 	 * Establish a connection to the given host and port number. 
 	 * @param host server name or IP address
 	 * @param portNumber server port or 0 for default
-	 * @param forceConnect if true and currently not connected, an attempt will be be to connect
+	 * @param forceConnect if true and currently not connected, an attempt will be made to connect
 	 * @return a handle to the remote server containing shared repositories
 	 */
 	public RepositoryServerAdapter getRepositoryServerAdapter(String host, int portNumber,

@@ -114,7 +114,7 @@ public class EventManager {
 	}
 
 	/**
-	 * Add the given tool listener to be notified notified when tool events are generated
+	 * Add the given tool listener to be notified when tool events are generated
 	 * 
 	 * @param listener listener to add
 	 */

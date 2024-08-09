@@ -1317,7 +1317,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	}
 
 	/**
-	 * Update the view list if the the given path is the an ancestor of any of
+	 * Update the view list if the given path is the an ancestor of any of
 	 * the paths currently in the view; remove the descendant and add the
 	 * ancestor path.
 	 *

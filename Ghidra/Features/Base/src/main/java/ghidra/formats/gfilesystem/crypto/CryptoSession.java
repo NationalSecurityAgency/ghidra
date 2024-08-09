@@ -28,7 +28,7 @@ import ghidra.framework.generic.auth.Password;
  * Typically used to query passwords and to add known good passwords
  * to caches for later re-retrieval.
  * <p>
- * Closing a CryptoSession instance does not invalidate the instance, instead is is a suggestion
+ * Closing a CryptoSession instance does not invalidate the instance, instead is a suggestion
  * that the instance should not be used for any further nested sessions.
  * <p>
  * See {@link CryptoProviders#newSession()}.

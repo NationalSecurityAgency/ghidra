@@ -66,7 +66,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * This is the root node of the tree's data model. It may or may not be the root node that is
-	 * currently being displayed by the tree. If there is currently a filter applied, then then the
+	 * currently being displayed by the tree. If there is currently a filter applied, then the
 	 * displayed root node will be a clone whose children have been trimmed to only those that match
 	 * the filter. By keeping this variable around, we can give this node to clients, regardless of
 	 * the root node visible in the tree.
@@ -1611,7 +1611,7 @@ public class GTree extends JPanel implements BusyListener {
 
 		/**
 		 * Calling setSelectedPaths on GTree queues the selection for after any currently scheduled
-		 * tasks. This method sets the selected path immediately and does not wait for for scheduled
+		 * tasks. This method sets the selected path immediately and does not wait for scheduled
 		 * tasks.
 		 *
 		 * @param path the path to select.

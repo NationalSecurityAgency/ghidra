@@ -313,7 +313,7 @@ public class ColorUtils {
 	 * @param green the green value (0 - 255)
 	 * @param blue  the blue value (0 - 255)
 	 * @param alpha the alpha (transparency) value (0 - 255) with 0 being fully transparent and 255 
-	 * being fully opaque opaque
+	 * being fully opaque
 	 * @return the color object for the given values
 	 */
 	public static Color getColor(int red, int green, int blue, int alpha) {

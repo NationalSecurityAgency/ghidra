@@ -200,7 +200,7 @@ public abstract class MDModifierType extends MDDataType {
 
 	protected void insertCVMod(StringBuilder builder) {
 		cvMod.insert(builder);
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(builder); // 20170714
 	}
 
@@ -266,7 +266,7 @@ public abstract class MDModifierType extends MDDataType {
 		// if (!isArray()) { //20170523
 		insertCVMod(builder);
 		// }
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		// 20170714 dmang.cleanOutput(builder);
 		// 20170605 insertArrayString(builder); //only available for "data"
 		// refType

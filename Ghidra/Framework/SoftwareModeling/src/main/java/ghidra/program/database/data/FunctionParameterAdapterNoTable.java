@@ -30,7 +30,7 @@ class FunctionParameterAdapterNoTable extends FunctionParameterAdapter {
 	/**
 	 * Gets a pre-table version of the adapter for the Function Definition Parameters database table.
 	 * @param handle handle to the database which doesn't contain the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public FunctionParameterAdapterNoTable(DBHandle handle) {

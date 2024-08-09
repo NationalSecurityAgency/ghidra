@@ -715,7 +715,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		UniversalID universalID = newDataType.getUniversalID();
 		SourceArchive sourceArchive = newDataType.getSourceArchive();
 		if (sourceArchive == newFileArchive.getLocalSourceArchive()) {
-			// Use the the old file archive as the source archive since local.
+			// Use the old file archive as the source archive since local.
 			sourceArchive = oldFileArchive.getLocalSourceArchive();
 		}
 		DataType oldDataType;

@@ -99,7 +99,7 @@ public abstract class MDParsableItem {
 	public final String toString() {
 		StringBuilder builder = new StringBuilder();
 		insert(builder);
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(builder);
 		return builder.toString();
 	}

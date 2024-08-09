@@ -777,7 +777,7 @@ public class CppCompositeType {
 		//  rearranges the order of the Base Class records such that they are not necessarily in
 		//  the order that the class was declared, and it seems that the member order follows the
 		//  order of the class hierarchy declaration.
-		// We use recursion and also also reordering so Base Classes always follow their children,
+		// We use recursion and also reordering so Base Classes always follow their children,
 		//  so with multiple virtual inheritance, a parent from multiple family lines will likely
 		//  get moved.
 		CategoryPath cn;

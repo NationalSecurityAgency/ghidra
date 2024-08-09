@@ -127,7 +127,7 @@ public class SparseImageDecompressor {
 	}
 
 	/**
-	 * Writes a chunk of blocks are are zero filled.
+	 * Writes a chunk of blocks are zero filled.
 	 * <p>
 	 * @param blocks number of blocks to write
 	 * @param monitor {@link TaskMonitor} to watch
@@ -199,7 +199,7 @@ public class SparseImageDecompressor {
 	}
 
 	/**
-	 * Writes a chunk of blocks are are read from the source file.
+	 * Writes a chunk of blocks are read from the source file.
 	 * <p>
 	 * @param blocks number of blocks to copy
 	 * @param monitor {@link TaskMonitor} to monitor

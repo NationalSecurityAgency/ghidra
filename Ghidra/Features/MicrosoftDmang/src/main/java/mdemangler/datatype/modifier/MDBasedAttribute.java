@@ -22,7 +22,7 @@ import mdemangler.naming.MDQualifiedName;
 // ***********NOTE: For "based5 bug" or "basedptr"**************
 //
 // Any modifier type that has a case '5' (representing that the
-// Modifier location is based on a a pointer location ("basedptr")
+// Modifier location is based on a pointer location ("basedptr")
 // is currently invalid in the Microsoft model.  There is a bug
 // (my words for it) where it seem that in this case, the notation
 // of an invalid option here is noted with a null character ('\0')

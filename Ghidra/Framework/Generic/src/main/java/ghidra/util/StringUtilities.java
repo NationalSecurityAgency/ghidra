@@ -989,7 +989,7 @@ public class StringUtilities {
 	/**
 	 * Replaces escaped characters in a string to corresponding control characters. For example a
 	 * string containing a backslash character followed by a 'n' character would be replaced with a
-	 * single line feed (0x0a) character. One use for this is to to allow users to type strings in a
+	 * single line feed (0x0a) character. One use for this is to allow users to type strings in a
 	 * text field and include control characters such as line feeds and tabs.
 	 *
 	 * The string that contains 'a','b','c', '\', 'n', 'd', '\', 'u', '0', '0', '0', '1', 'e' would

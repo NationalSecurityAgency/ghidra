@@ -2032,7 +2032,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * </ol>
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
-	 * 			(in headless mode or when using using .properties file)
+	 * 			(in headless mode or when using .properties file)
 	 * @param approveButtonText the approve button text (in GUI mode - typically, this would
 	 * 		  	be "Open" or "Save") or the second part of the variable name (in headless mode
 	 * 			or when using .properties file)

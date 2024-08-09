@@ -32,7 +32,7 @@ public class BytesFieldLocation extends CodeUnitLocation {
 	 * @param componentPath the data component path which is specified as an array of indexes
 	 * where each index indicates the index into nested structures. For instructions or
 	 * simple data, this should be null.
-	 * @param columnInByte the character position in the the bytes
+	 * @param columnInByte the character position in the bytes
 	 */
 	public BytesFieldLocation(Program program, Address addr, Address byteAddress,
 			int[] componentPath, int columnInByte) {

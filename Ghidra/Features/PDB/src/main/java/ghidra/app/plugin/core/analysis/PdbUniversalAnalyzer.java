@@ -329,7 +329,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 	//==============================================================================================
 	/**
-	 * A background command that performs additional PDB analysis after after other analysis
+	 * A background command that performs additional PDB analysis after other analysis
 	 *  works on function internals.  The first phase must have been run, as it reads the PDB
 	 *  and processes data types, retaining the information needed for this step.  Not what all
 	 *  processing we will do here and whether we might need additional commands like this one.

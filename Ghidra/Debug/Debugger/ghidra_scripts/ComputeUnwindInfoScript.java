@@ -51,7 +51,7 @@ public class ComputeUnwindInfoScript extends GhidraScript {
 			return;
 		}
 		println("Stack depth at " + currentAddress + ": " + info.depth());
-		println("Return address address: " + addressToString(info.ofReturn()));
+		println("Return address: " + addressToString(info.ofReturn()));
 		println("Saved registers:");
 		for (Entry<Register, Address> entry : info.saved().entrySet()) {
 			println("  " + entry);

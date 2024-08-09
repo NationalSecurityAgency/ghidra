@@ -420,7 +420,7 @@ public class ExecutableScorer {
 	 * to create symmetric score contributions and accumulate the contributions in the matrix
 	 * @param pairs is the full list of pairs in the cluster
 	 * @param i is the first function pair sharing this pair of executables
-	 * @param j is the the last(+1) function pair sharing this pair of executables
+	 * @param j is the last(+1) function pair sharing this pair of executables
 	 */
 	private void scoreAcrossExecutablePair(List<FunctionPair> pairs, int i, int j) {
 		int size = j - i;

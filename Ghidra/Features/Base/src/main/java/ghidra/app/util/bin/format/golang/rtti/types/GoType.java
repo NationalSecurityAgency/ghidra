@@ -344,7 +344,7 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	 * referenced by the derived type.
 	 *  
 	 * @param discoveredTypes set of already iterated types
-	 * @return boolean boolean flag, if false the type has already been discovered, if true
+	 * @return boolean flag, if false the type has already been discovered, if true
 	 * the type was encountered for the first time 
 	 * @throws IOException if error reading type info
 	 */

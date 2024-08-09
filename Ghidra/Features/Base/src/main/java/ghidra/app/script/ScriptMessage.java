@@ -19,7 +19,7 @@ import org.apache.logging.log4j.message.Message;
 
 /**
  * A simple {@link Message} implementation that allows us to use the filtering capability
- * of log4j.  This class has a formatted and unformatted message.  log4j writes the the formatted
+ * of log4j.  This class has a formatted and unformatted message.  log4j writes the formatted
  * message out.  Our formatted message is the original message given to us.   We use the
  * unformatted message, in conjunction with a regex filter to allow for filtering such that
  * the script log file only has script messages.

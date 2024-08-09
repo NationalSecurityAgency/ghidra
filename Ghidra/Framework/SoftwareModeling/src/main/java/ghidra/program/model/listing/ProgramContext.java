@@ -144,7 +144,7 @@ public interface ProgramContext {
 			Address end);
 
 	/**
-	 * Returns the bounding address-range containing addr and the the same RegisterValue throughout.
+	 * Returns the bounding address-range containing addr and the same RegisterValue throughout.
 	 * The range returned may be limited by other value changes associated with register's base-register.
 	 * @param register program register
 	 * @param addr program address

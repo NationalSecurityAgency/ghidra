@@ -293,7 +293,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * proceed to the following instructions. I don't really care, since the test is the
 			 * JMP gets deleted after the update to PC.
 			 */
 		});
@@ -328,7 +328,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * proceed to the following instructions. I don't really care, since the test is the
 			 * JMP gets deleted after the update to PC.
 			 */
 		});
@@ -377,7 +377,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
 			/**
 			 * Depending on preference for branch or fall-through, the disassembler may or may not
-			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * proceed to the following instructions. I don't really care, since the test is the
 			 * JMP gets deleted after the update to PC.
 			 */
 		});

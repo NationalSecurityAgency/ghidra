@@ -336,7 +336,7 @@ public class BitTree implements ShortKeySet, Serializable {
         if(containsKey((short)0)) {
             return (short)0;
         }
-        // otherwise return the the next key after 0.
+        // otherwise return the next key after 0.
         return getNext((short)0);
     }
 
@@ -373,7 +373,7 @@ public class BitTree implements ShortKeySet, Serializable {
     }
 
     /**
-     * Tests if the the nth bit is on.
+     * Tests if the nth bit is on.
      */
     private boolean isBitSet(int n) {
         int intIndex = n >> 5;

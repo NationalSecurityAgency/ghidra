@@ -57,7 +57,7 @@ public class DWARFUtil {
 	 * Returns the field name of a final static variable in class <code>clazz</code>
 	 * which holds a specific value.
 	 * <p>
-	 * Can be thought of as an enum numeric value to to name lookup.
+	 * Can be thought of as an enum numeric value to name lookup.
 	 * <p>
 	 * @param clazz
 	 * @param value

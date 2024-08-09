@@ -311,7 +311,7 @@ To manipulate variable size:
 * **Zero Extension**: `RAX + zext(EBX)`
 * **Sign Extension**: `RAX + sext(EBX)`
 * **Truncation**: `RAX:4` &mdash; Equivalent to `EAX`
-* **Truncation**: `AL + RBX(4)` &mdash; AL added to the the 5th byte of RBX
+* **Truncation**: `AL + RBX(4)` &mdash; AL added to the 5th byte of RBX
 * **Bit Extraction**: `RAX[7,8]` &mdash; Equivalent to `AL`
 
 **NOTE**: The second form of truncation drops the least-significant 4 bytes of RBX and takes as many of the remaining bytes (1 in this case) as necessary to match size with AL.

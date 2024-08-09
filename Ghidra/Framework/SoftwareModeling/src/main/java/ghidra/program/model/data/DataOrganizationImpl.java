@@ -905,7 +905,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	 * Restore settings from an XML stream. This expects to see parser positioned on the
 	 * &lt;data_organization&gt; start tag.  The XML is designed to override existing language-specific
 	 * default settings which are pre-populated with {@link #getDefaultOrganization(Language)}.  This
-	 * will will ensure that the endianness setting is properly established since it is not included
+	 * will ensure that the endianness setting is properly established since it is not included
 	 * in the XML.
 	 * @param parser is the XML stream
 	 */

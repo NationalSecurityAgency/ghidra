@@ -172,7 +172,7 @@ public class OverlayHelpTree {
 		//
 		// The parent to children map is cleared as nodes are created.   The map is populated by
 		// adding any references to the 'parent' key as they are loaded from the help files.
-		// As we build nodes, starting at the root, will will create child nodes for those that
+		// As we build nodes, starting at the root, we will create child nodes for those that
 		// reference the 'parent' key.   If the map is empty, then it means we never built a
 		// node for the 'parent' key, which means we never found a help file containing the
 		// definition for that key.

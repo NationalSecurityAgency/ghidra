@@ -124,7 +124,7 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 
 	private void initialize() {
 		// We want to load our state after we have been associated with a DockingWindowManager. 
-		// If the table is displayable, then we are are properly setup...
+		// If the table is displayable, then we are properly setup...
 		if (table.isDisplayable()) {
 			restoreState();
 			return;

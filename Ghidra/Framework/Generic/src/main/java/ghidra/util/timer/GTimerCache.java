@@ -237,7 +237,7 @@ public class GTimerCache<K, V> {
 
 	/**
 	 * Called when an item's cache time has expired to determine if the item should be removed from
-	 * the cache. The default to to remove an item when its time has expired. Subclasses can 
+	 * the cache. The default is to remove an item when its time has expired. Subclasses can 
 	 * override this method to have more control over expiring value removal.
 	 * <P>
 	 * Note: this method will always be called from within a synchronized block. Subclasses should

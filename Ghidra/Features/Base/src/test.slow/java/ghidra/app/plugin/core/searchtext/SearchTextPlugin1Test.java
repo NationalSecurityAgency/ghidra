@@ -242,7 +242,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSearchStringEntry() throws Exception {
-		// verify that a string string must be entered
+		// verify that a string must be entered
 
 		SearchTextDialog dialog = getDialog();
 

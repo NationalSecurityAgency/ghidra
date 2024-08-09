@@ -47,7 +47,7 @@ import ghidra.util.SystemUtilities;
  * Further, it does not properly locate the shared HTML file reference.  This class allows lookups
  * across modules by overridden the lookup functionality done by the map object.  More specifically,
  * we override {@link #getCombinedMap()} and {@link #getLocalMap()} to use a custom delegate map
- * object that knows how do do this "cross-module" help lookup.
+ * object that knows how to do this "cross-module" help lookup.
  * 
  *
  *@see GHelpHTMLEditorKit

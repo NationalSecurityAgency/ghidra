@@ -3801,7 +3801,7 @@ select <emphasis>s</emphasis> registers. As is described in
 <xref linkend="sleigh_local_change"/>, these assignments by themselves
 cause only a local context change.  However, the
 subsequent <emphasis role="bold">globalset</emphasis> directives make
-the change persist outside of the the instructions
+the change persist outside of the instructions
 themselves. The <emphasis role="bold">globalset</emphasis> directive
 takes two parameters, the second being the particular context variable
 being changed. The first parameter indicates the first address where

@@ -48,7 +48,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter implements RecordTranslator {
 	/**
 	 * Gets a version 1 adapter for the Typedef database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public TypedefDBAdapterV1(DBHandle handle) throws VersionException {

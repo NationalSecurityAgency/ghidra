@@ -595,7 +595,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		// We are trying to test that the user can type the name of a type (not pick it from the
 		// list) that exists in an open archive *that is not set on the dialog*.  The intent is
 		// that if we have to parse the text provided by the user, that we don't automatically
-		// pick one when it is an an archive that we didn't specify (like the program archive).
+		// pick one when it is an archive that we didn't specify (like the program archive).
 		//
 		// To test this, start with 3 types in a file archive: foo and a typedef to foo
 		// (foo_typedef) and a pointer to the typedef.

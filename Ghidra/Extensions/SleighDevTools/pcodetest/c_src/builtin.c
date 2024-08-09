@@ -423,7 +423,7 @@ static void ftoa(float f, char *buff, int len)
 		fa = f2;
 		// printf("%f = %u 2^%d 10^%d?\n", f, fa, e2, ea);
 		while (e2 > 0) {
-			// If the the high bit is set
+			// If the high bit is set
 			// then we can't multiply by 2
 			// without losing it, so divide by 10
 			// and round off

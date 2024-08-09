@@ -140,8 +140,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	/**
-	 * Copies the the non-default options from the program analysis options into a new options object
-	 * @return the the non-default options from the program analysis options into a new options object
+	 * Copies the non-default options from the program analysis options into a new options object
+	 * @return the non-default options from the program analysis options into a new options object
 	 */
 	private Options getNonDefaultProgramOptions() {
 		FileOptions options = new FileOptions("Current Program Options");

@@ -38,7 +38,7 @@ public interface IteratorSTL<T> {
 	/**
 	 * Advances the iterator to the next position.
 	 * @return a reference to the iterator itself
-	 * @throws IndexOutOfBoundsException if the the iterator is already past the last element.
+	 * @throws IndexOutOfBoundsException if the iterator is already past the last element.
 	 */
 	IteratorSTL<T> increment();
 
@@ -65,7 +65,7 @@ public interface IteratorSTL<T> {
 	IteratorSTL<T> decrement(int n);
 
 	/**
-	 * Returns true if the iterator is positioned on the first first element of the collection.  If the
+	 * Returns true if the iterator is positioned on the first element of the collection.  If the
 	 * collection is empty, this will always return false.
 	 * @return true if the iterator is positioned on the first element of the collection.
 	 */

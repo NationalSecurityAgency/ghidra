@@ -161,7 +161,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * For testing: to verify the contents of a message delivered to the console log
 	 * 
 	 * @param ctx the context
-	 * @return the the log entry
+	 * @return the log entry
 	 */
 	public LogRow<?> getLogRow(ActionContext ctx) {
 		return provider.getLogRow(ctx);

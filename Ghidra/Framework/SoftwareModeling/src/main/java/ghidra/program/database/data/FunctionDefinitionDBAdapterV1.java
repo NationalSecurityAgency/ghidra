@@ -67,7 +67,7 @@ class FunctionDefinitionDBAdapterV1 extends FunctionDefinitionDBAdapter
 	 * (e.g., this adapter being used during upgrade operation).  Should be null if not performing
 	 * an upgrade in which case calling convention IDs will reflect generic convention ordinals.
 	 * 
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public FunctionDefinitionDBAdapterV1(DBHandle handle, String tablePrefix,

@@ -110,7 +110,7 @@ class RegisterContextBuilder {
 	 * @param valueFrom point from which existing register value should
 	 * be read from program context.
 	 * @param overwrite this method will take not action and return false if 
-	 * this parameter is false and and a context value has previously been set,
+	 * this parameter is false and a context value has previously been set,
 	 * otherwise an attempt will be made to overwrite the current value state.
 	 * @return true if value was set, otherwise false.
 	 */

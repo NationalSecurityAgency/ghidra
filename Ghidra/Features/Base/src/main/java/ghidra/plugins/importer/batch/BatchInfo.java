@@ -177,7 +177,7 @@ public class BatchInfo {
 	 * <p>
 	 * @param fsrl {@link FSRL} of the file to add.
 	 * @param taskMonitor {@link TaskMonitor} to watch and update with progress.
-	 * @return boolean true if something in the the file produced something to import.
+	 * @return boolean true if something in the file produced something to import.
 	 * @throws IOException if io error when reading files.
 	 * @throws CancelledException if user cancels.
 	 */
@@ -210,7 +210,7 @@ public class BatchInfo {
 	 * <p>
 	 * @param fsrl {@link FSRL} of the file to probe and process
 	 * @param taskMonitor {@link TaskMonitor} to watch and update.
-	 * @return boolean true if something in the the file produced something to import.
+	 * @return boolean true if something in the file produced something to import.
 	 * @throws IOException if io error when reading files.
 	 * @throws CancelledException if user cancels.
 	 */

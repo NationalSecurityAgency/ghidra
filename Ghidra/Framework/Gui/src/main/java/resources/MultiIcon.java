@@ -25,7 +25,7 @@ import generic.theme.GIcon;
 import ghidra.util.ColorUtils;
 
 /**
- * Icon class for for displaying overlapping icons.  Icons are drawn in the order they
+ * Icon class for displaying overlapping icons.  Icons are drawn in the order they
  * are added.
  */
 public class MultiIcon implements Icon {

@@ -388,7 +388,7 @@ public class MergeProgram {
 
 				}
 				catch (Exception e) {
-					throw new RuntimeException("Exception updating function function", e);
+					throw new RuntimeException("Exception updating function", e);
 				}
 			}
 		}

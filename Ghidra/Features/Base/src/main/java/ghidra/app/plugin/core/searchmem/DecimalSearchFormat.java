@@ -215,7 +215,7 @@ public class DecimalSearchFormat extends SearchFormat {
 	 * the start of an exponent expression (example 2.34e would become 2.34. So woudl 2.34-)
 	 * @param the string that will be parsed into a float or double
 	 * @return the parsable string
-	 * @exception NumberFormatException thrown if the the tok contains any of "dDfF".
+	 * @exception NumberFormatException thrown if the tok contains any of "dDfF".
 	 */
 	private String preProcessFloat(String tok) {
 		if ((tok.indexOf('d') >= 0) || (tok.indexOf('D') >= 0) || (tok.indexOf('F') >= 0) ||

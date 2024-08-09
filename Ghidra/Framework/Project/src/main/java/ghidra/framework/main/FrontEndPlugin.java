@@ -652,7 +652,7 @@ public class FrontEndPlugin extends Plugin
 			}
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, "Error Exporting Tool", "Error exporting tool tool", e);
+			Msg.showError(this, null, "Error Exporting Tool", "Error exporting tool", e);
 		}
 	}
 

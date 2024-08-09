@@ -33,7 +33,7 @@ import ghidra.util.task.TaskLauncher;
 /**
  * A job to transition vertices in a graph for location and visibility.  The parent class 
  * handled the opacity callback.  The progress of the job is used by this class to move 
- * vertices from the the start location to the final destination, where the progress is the
+ * vertices from the start location to the final destination, where the progress is the
  * percentage of the total move to display.
  *
  * @param <V> the vertex type

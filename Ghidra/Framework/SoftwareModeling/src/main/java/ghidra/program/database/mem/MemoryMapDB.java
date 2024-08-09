@@ -1968,7 +1968,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Attempts to remove the the given overlay address space.  Removal will only succeed if no
+	 * Attempts to remove the given overlay address space.  Removal will only succeed if no
 	 * memory blocks currently reside within the space.
 	 * 
 	 * @param addressSpace overlay address space to be removed

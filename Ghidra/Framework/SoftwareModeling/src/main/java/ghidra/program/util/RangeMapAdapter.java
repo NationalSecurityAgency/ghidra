@@ -96,7 +96,7 @@ public interface RangeMapAdapter {
 			throws CancelledException;
 
 	/**
-	 * Returns the bounding address-range containing addr and the the same value throughout.
+	 * Returns the bounding address-range containing addr and the same value throughout.
 	 * This range will be limited by any value change associated with the base register.
 	 * @param addr the containing address
 	 * @return single value address-range containing addr

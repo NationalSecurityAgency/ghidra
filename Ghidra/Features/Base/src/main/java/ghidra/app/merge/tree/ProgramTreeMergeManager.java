@@ -79,7 +79,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	 * @param myProgram source of changes to apply to the destination
 	 * program
 	 * @param originalProgram program that was originally checked out
-	 * @param latestProgram program that that is the latest version; the
+	 * @param latestProgram program that is the latest version; the
 	 * resultProgram and latestProgram start out as being identical
 	 * @param latestChangeSet change set of the destination program
 	 * @param myChangeSet change set for the source program

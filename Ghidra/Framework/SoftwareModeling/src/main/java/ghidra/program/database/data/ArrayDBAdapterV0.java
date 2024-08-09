@@ -44,7 +44,7 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 	/**
 	 * Gets a version 0 read-only adapter for the {@link ArrayDB} database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public ArrayDBAdapterV0(DBHandle handle) throws VersionException {

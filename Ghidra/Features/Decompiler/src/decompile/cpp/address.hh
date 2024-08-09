@@ -16,7 +16,7 @@
 /// \file address.hh
 /// \brief Classes for specifying addresses and other low-level constants
 ///
-///  All addresses are absolute and there are are no registers in CPUI. However,
+///  All addresses are absolute and there are no registers in CPUI. However,
 ///  all addresses are prefixed with an "immutable" pointer, which can
 ///  specify a separate RAM space, a register space, an i/o space etc. Thus
 ///  a translation from a real machine language will typically simulate registers

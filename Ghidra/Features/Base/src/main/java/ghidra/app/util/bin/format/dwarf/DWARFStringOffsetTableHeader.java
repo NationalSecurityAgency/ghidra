@@ -45,7 +45,7 @@ public class DWARFStringOffsetTableHeader extends DWARFIndirectTableHeader {
 		// length : dwarf_length
 		// version : 2 bytes
 		// padding : 2 bytes
-		// offsets : array of elements are are dwarf_format_int sized
+		// offsets : array of elements are dwarf_format_int sized
 
 		long startOffset = reader.getPointerIndex();
 		DWARFLengthValue lengthInfo = DWARFLengthValue.read(reader, defaultIntSize);

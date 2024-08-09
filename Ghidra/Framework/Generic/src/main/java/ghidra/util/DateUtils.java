@@ -242,7 +242,7 @@ public class DateUtils {
 	 * Returns the current local time zone time-of-day as simple time string.
 	 * See {@value #TIME_FORMAT_STRING}.
 	 *
-	 * @return current time-of-day a a string
+	 * @return current time-of-day as a string
 	 */
 	public static String formatCurrentTime() {
 		return TIME_FORMATTER.format(toLocalDate(new Date()));

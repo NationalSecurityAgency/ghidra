@@ -41,7 +41,7 @@ public class GTheme extends GThemeValueMap {
 	private final File file;
 
 	/**
-	 * Creates a new GTheme with the given name, the default {@link LookAndFeel} for the the 
+	 * Creates a new GTheme with the given name, the default {@link LookAndFeel} for the 
 	 * platform and not using dark defaults. This theme will be using all the standard defaults
 	 * from the theme.property files and the defaults from the default LookAndFeel.
 	 * @param name the name for this GTheme

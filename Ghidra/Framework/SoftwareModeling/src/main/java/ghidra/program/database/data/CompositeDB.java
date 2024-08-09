@@ -530,7 +530,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * NOTE: Currently a change in calculated alignment can not be provided since
 	 * this value is not stored.
 	 * 
-	 * @param isAutoChange true if changes are in response to another another datatype's change.
+	 * @param isAutoChange true if changes are in response to another datatype's change.
 	 * @param notify if true notification will be sent to parents if a size change
 	 * or component placement change is detected.
 	 * @return true if a layout change was detected.

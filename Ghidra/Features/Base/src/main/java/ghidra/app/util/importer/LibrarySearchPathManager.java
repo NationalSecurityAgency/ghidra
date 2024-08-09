@@ -113,7 +113,7 @@ public class LibrarySearchPathManager {
 	}
 
 	/**
-	 * Adds the specified library search path path to the end of the path search list
+	 * Adds the specified library search path to the end of the path search list
 	 * 
 	 * @param path the library search path to add
 	 * @return true if the path was appended, false if the path was a duplicate

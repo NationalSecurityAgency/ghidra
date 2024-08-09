@@ -249,7 +249,7 @@ public class DWARFExpressionEvaluator {
 			// Retrieve value held in register X and add offset from operand and push result on stack.
 			// Fake it using zero as register value.
 			// Mainly only useful if offset is zero or if non-zero the register happens to
-			// be the the stack pointer.
+			// be the stack pointer.
 			long offset = currentOp.getOperandValue(0);
 			push(0 /*fake register value */ + offset);
 			lastRegister = currentOp.getRelativeOpCodeOffset(DW_OP_breg0);

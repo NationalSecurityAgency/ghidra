@@ -315,7 +315,7 @@ public abstract class AbstractThemeReader {
 		}
 
 		/**
-		 * Adds a raw line from the file to this section. The line will be parsed into a a
+		 * Adds a raw line from the file to this section. The line will be parsed into a
 		 * key-value pair.
 		 * @param line the line to be added/parsed
 		 * @param lineNumber the line number in the file for this line

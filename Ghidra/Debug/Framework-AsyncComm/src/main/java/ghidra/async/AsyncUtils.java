@@ -342,7 +342,7 @@ import ghidra.util.Msg;
  * more succinct syntax.
  * 
  * <p>
- * Finally, notice the call to to {@link AsyncSequenceHandlerForRunner#exit(Object)} passing the
+ * Finally, notice the call to {@link AsyncSequenceHandlerForRunner#exit(Object)} passing the
  * final result of the sequence. Requiring this is a bit of a nuisance, but it makes clear what the
  * result of the sequence is. Furthermore, {@code exit} can be called by any action, not just the
  * final one. In the composition pattern, execution cannot be truncated except by error handling. In

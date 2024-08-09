@@ -36,7 +36,7 @@ public class GenericDataFlavor extends DataFlavor {
 	 * @param representationClass the class used to transfer data in this flavor
 	 * @param humanPresentableName the human-readable string used to 
 	 * identify this flavor. If this parameter is null then the value of 
-	 * the the MIME Content Type is used.
+	 * the MIME Content Type is used.
 	 */
 	public GenericDataFlavor(Class<?> representationClass, String humanPresentableName) {
 		super(representationClass, humanPresentableName);

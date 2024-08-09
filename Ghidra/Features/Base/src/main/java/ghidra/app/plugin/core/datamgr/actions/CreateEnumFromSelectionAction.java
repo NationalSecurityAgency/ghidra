@@ -77,7 +77,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 	}
 
 	private void selectNewEnum(GTree gTree, String parentName, String name) {
-		// Select new node in tree; run later to give the tree a chance to add the the new node
+		// Select new node in tree; run later to give the tree a chance to add the new node
 		Swing.runLater(() -> {
 			GTreeNode rootNode = gTree.getViewRoot();
 			gTree.setSelectedNodeByNamePath(

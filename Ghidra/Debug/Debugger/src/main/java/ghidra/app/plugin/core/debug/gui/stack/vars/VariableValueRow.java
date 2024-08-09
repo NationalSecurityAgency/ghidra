@@ -138,7 +138,7 @@ public interface VariableValueRow {
 	/**
 	 * Render the key for display in diagnostics
 	 * 
-	 * @return the the key as a string
+	 * @return the key as a string
 	 */
 	default String keyToSimpleString() {
 		return key().toString();

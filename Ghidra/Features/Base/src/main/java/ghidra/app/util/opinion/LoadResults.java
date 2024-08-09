@@ -53,7 +53,7 @@ public class LoadResults<T extends DomainObject> implements Iterable<Loaded<T>> 
 	}
 	
 	/**
-	 * Creates a a new {@link LoadResults} that contains a new {@link Loaded} 
+	 * Creates a new {@link LoadResults} that contains a new {@link Loaded} 
 	 * {@link DomainObject} created from the given parameters.  This new {@link Loaded} 
 	 * {@link DomainObject} is assumed to be the {@link #getPrimary() primary} {@link Loaded} 
 	 * {@link DomainObject}.

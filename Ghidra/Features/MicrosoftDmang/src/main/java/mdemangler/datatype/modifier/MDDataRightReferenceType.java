@@ -53,7 +53,7 @@ public class MDDataRightReferenceType extends MDModifierType {
 		else {
 			cvMod.insert(builder);
 		}
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		// Following to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(builder);
 	}
 }

@@ -40,7 +40,7 @@ public class NameDeduper {
 	}
 
 	/**
-	 * Add names to the the de-duper that have already been used.
+	 * Add names to the de-duper that have already been used.
 	 *  
 	 * @param alreadyUsedNames names already used
 	 */

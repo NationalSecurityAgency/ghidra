@@ -62,7 +62,7 @@ public interface Listing {
 	public CodeUnit getCodeUnitContaining(Address addr);
 
 	/**
-	 * get the next code unit that starts an an address that is greater than the
+	 * get the next code unit that starts an address that is greater than the
 	 * given address. The search will include instructions, defined data, and
 	 * undefined data.
 	 *

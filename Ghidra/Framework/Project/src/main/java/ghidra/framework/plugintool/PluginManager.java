@@ -631,7 +631,7 @@ class PluginManager {
 	 * @param usingPlugin the plugin whose used services should not be provided by any plugins in the list
 	 * @param serviceProvidingPlugins the list of plugins that is being tested to see if they provide any
 	 * services used by p;
-	 * @return true if no plugins in the the list provide any services used by p.
+	 * @return true if no plugins in the list provide any services used by p.
 	 */
 	private boolean checkServices(Plugin usingPlugin, List<Plugin> serviceProvidingPlugins) {
 		for (Class<?> usedService : usingPlugin.getServicesRequired()) {

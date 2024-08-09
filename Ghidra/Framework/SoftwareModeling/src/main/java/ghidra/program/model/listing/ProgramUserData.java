@@ -131,7 +131,7 @@ public interface ProgramUserData extends UserData {
 
 	/**
 	 * Get the Options for the given optionsName
-	 * @param optionsName the name of the options options to retrieve
+	 * @param optionsName the name of the options to retrieve
 	 * @return The options for the given name
 	 */
 	public Options getOptions(String optionsName);

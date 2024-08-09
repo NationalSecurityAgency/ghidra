@@ -713,7 +713,7 @@ public:
 
   /// \brief Restore attributes for \b this from a parent element that is not a Scope
   ///
-  /// Attributes are read from the (already opened) element, prior to reading reading the
+  /// Attributes are read from the (already opened) element, prior to reading the
   /// \<scope> element specific to \b this Scope
   /// \param decoder is the stream decoder
   virtual void decodeWrappingAttributes(Decoder &decoder) {}

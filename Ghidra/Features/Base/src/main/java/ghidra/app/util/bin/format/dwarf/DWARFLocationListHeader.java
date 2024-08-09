@@ -33,7 +33,7 @@ public class DWARFLocationListHeader extends DWARFIndirectTableHeader {
 		// address_size : 1 byte
 		// segment_selector_size : 1 byte
 		// offset entry count: 4 bytes
-		// offsets : array of elements are are dwarf_format_int sized
+		// offsets : array of elements are dwarf_format_int sized
 
 		long startOffset = reader.getPointerIndex();
 		DWARFLengthValue lengthInfo = DWARFLengthValue.read(reader, defaultIntSize);

@@ -128,7 +128,7 @@ Once installed, any .sinc or .slaspec file that is edited will be brought up in 
     <p>The editor validates the definition of variables including locals.
     Though legal in the sleigh compiler, it has been found that not declaring local variables leads to
     errors that are not be caught by the sleigh compiler.  For example, assigning to a variable 'ro' when the actual register name is 'r0' may go
-    unnoticed.  All local variables must be defined with with the 'local' keyword or with an initial ':size'.</p>
+    unnoticed.  All local variables must be defined with the 'local' keyword or with an initial ':size'.</p>
     <p>Warnings on duplicate names of tokens is marked in yellow.  Complex matching patterns such as <i>'!='&nbsp&nbsp'&lt'&nbsp&nbsp'&gt'</i> are warnings as well.  Using
     comparison matching operators can cause the generated .sla file to be much larger than necessary.  Comparison matching should really never be used on any
     tokens that are bigger than a few bits as the number of match cases generated will be large.  Their use is unavoidable in some cases.<p>

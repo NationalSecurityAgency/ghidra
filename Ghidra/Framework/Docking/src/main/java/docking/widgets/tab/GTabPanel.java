@@ -349,7 +349,7 @@ public class GTabPanel<T> extends JPanel {
 
 	/**
 	 * Sets the predicate that will be called before removing a tab via the gui close control. Note
-	 * that that tab panel's default action is to remove the tab value, but if you set your own
+	 * that the tab panel's default action is to remove the tab value, but if you set your own
 	 * consumer, you have the responsibility to remove the value.
 	 * @param closeTabConsumer the consumer called when the close gui control is clicked.
 	 */

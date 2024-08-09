@@ -297,7 +297,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 	public void testDyamicData_AddressField() throws Exception {
 
 		//
-		// Dynamic data types should show all references to the the outermost data, including
+		// Dynamic data types should show all references to the outermost data, including
 		// offcut.
 		//
 
@@ -336,7 +336,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 	public void testDyamicData_MnemonicField() throws Exception {
 
 		//
-		// Dynamic data types should show all references to the the outermost data, including
+		// Dynamic data types should show all references to the outermost data, including
 		// offcut.  Also, since we are searching from the mnemonic, we find all data references.
 		//
 

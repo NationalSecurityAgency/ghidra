@@ -23,7 +23,7 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
 
 /**
- * An immutable path of keys leading from one object object to another
+ * An immutable path of keys leading from one object to another
  * 
  * <p>
  * Often, the source is the root. These are often taken as a parameter when searching for values. In

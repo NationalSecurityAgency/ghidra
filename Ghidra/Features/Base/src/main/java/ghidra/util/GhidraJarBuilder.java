@@ -409,7 +409,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			// Special case for Log4j:
 			//
 			//  	Log4j scatters .dat files around in modules that use the log4j
-			//		plugin construct. Each one contains the plugins that that module
+			//		plugin construct. Each one contains the plugins that the module
 			//		requires. The problem is that each of these has the exact same path:
 			//
 			//		META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat

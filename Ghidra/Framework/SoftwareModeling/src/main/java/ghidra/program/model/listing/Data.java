@@ -138,7 +138,7 @@ public interface Data extends CodeUnit, Settings {
 	public String getComponentPathName();
 
 	/**
-	 * Returns true if this is a pointer, implies getValue() will will return an Object that is an
+	 * Returns true if this is a pointer, implies getValue() will return an Object that is an
 	 * Address.
 	 * @return true if a pointer
 	 */

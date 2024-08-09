@@ -378,7 +378,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			return fsrl.getName();
 		}
 
-		// If the ByteProvider dosn't have have an FSRL, use the given domainFileName
+		// If the ByteProvider dosn't have an FSRL, use the given domainFileName
 		return domainFileName;
 	}
 

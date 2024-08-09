@@ -603,7 +603,7 @@ public class DyldCacheHeader implements StructConverter {
 	/**
 	 * Gets the {@link DyldCacheLocalSymbolsInfo}.
 	 * 
-	 * @return The {@link DyldCacheLocalSymbolsInfo}.  Could be be null if it didn't parse. 
+	 * @return The {@link DyldCacheLocalSymbolsInfo}.  Could be null if it didn't parse. 
 	 */
 	public DyldCacheLocalSymbolsInfo getLocalSymbolsInfo() {
 		return localSymbolsInfo;

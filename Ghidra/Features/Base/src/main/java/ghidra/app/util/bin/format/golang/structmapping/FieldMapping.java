@@ -69,7 +69,7 @@ public @interface FieldMapping {
 	 * {@link DataTypeMapperContext context}.
 	 * <p>
 	 * For example, a version number could be used to allow some optional fields to be skipped
-	 * depending on the the concrete {@link DataTypeMapper}'s information during structure
+	 * depending on the concrete {@link DataTypeMapper}'s information during structure
 	 * mapping registration.
 	 * <p>
 	 * Similar to {@link #optional()}

@@ -222,7 +222,7 @@ class ApplyStackVariables {
 			return null;
 		}
 		if (wrappedDataType.isZeroLengthArray()) {
-			log.appendMsg("PDB", "Zero length array not supported for for " + member.kind + ": " +
+			log.appendMsg("PDB", "Zero length array not supported for " + member.kind + ": " +
 				member.memberDataTypeName);
 			return null;
 		}

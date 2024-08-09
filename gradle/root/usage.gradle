@@ -23,7 +23,7 @@ task usage {
 			
 GHIDRA GRADLE
 
-    Note: Most tasks can can be used to affect all modules or can
+    Note: Most tasks can be used to affect all modules or can
           be run against a specific module. For example:
 
 	from root project, "gradle buildHelp"  builds help for all modules.

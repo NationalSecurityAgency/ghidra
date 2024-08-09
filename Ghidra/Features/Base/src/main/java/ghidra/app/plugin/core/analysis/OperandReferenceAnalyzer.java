@@ -1107,7 +1107,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Returns the length of the Unicode string found at address.
 	 *
-	 * @return length of string in in words (two byte unicode characters).
+	 * @return length of string in words (two byte unicode characters).
 	 */
 	private int checkUnicodeString(Memory mem, Address adref) {
 		int len = getWStrLen(mem, adref); // returns -1 for bad

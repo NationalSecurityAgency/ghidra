@@ -85,7 +85,7 @@ public class SimpleWeightedDigraph extends WeightedDigraph {
 	}
 
 	/** 
-	 * Add an edge with the the default edge weight. 
+	 * Add an edge with the default edge weight. 
 	 * 
 	 * If an edge from and to the vertices
 	 * specified by the edge already exists in the graph, 
@@ -106,7 +106,7 @@ public class SimpleWeightedDigraph extends WeightedDigraph {
 	}
 
 	/** 
-	 * Add an edge with the the specified edge weight. 
+	 * Add an edge with the specified edge weight. 
 	 * 
 	 * If an edge from and to the vertices
 	 * specified by the edge already exists in the graph,

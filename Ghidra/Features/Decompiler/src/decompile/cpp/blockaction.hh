@@ -163,7 +163,7 @@ class TraceDAG {
   FlowBlock *finishblock;		///< Designated exit block for the DAG (or null)
   void removeTrace(BlockTrace *trace);	///< Remove the indicated BlockTrace
   void processExitConflict(list<BadEdgeScore>::iterator start,list<BadEdgeScore>::iterator end);
-  BlockTrace *selectBadEdge(void);	///< Select the the most likely unstructured edge from active BlockTraces
+  BlockTrace *selectBadEdge(void);	///< Select the most likely unstructured edge from active BlockTraces
   void insertActive(BlockTrace *trace);	///< Move a BlockTrace into the \e active category
   void removeActive(BlockTrace *trace);	///< Remove a BlockTrace from the \e active category
   bool checkOpen(BlockTrace *trace);	///< Check if we can push the given BlockTrace into its next node

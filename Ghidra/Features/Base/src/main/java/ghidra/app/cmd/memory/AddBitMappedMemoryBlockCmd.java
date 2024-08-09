@@ -35,7 +35,7 @@ public class AddBitMappedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	 * @param name the name for the new memory block.
 	 * @param comment the comment for the block
 	 * @param source indicates what is creating the block
-	 * @param start the start address for the the block
+	 * @param start the start address for the block
 	 * @param length the length of the new block in number of bits to be mapped
 	 * @param read sets the block's read permission flag
 	 * @param write sets the block's write permission flag
