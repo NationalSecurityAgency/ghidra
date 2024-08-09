@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,6 @@ import ghidra.app.util.opinion.ElfLoader;
 import ghidra.pcode.emulate.EmulateExecutionState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.NotFoundException;
@@ -61,8 +60,7 @@ public class EmuX86DeobfuscateExampleScript extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 
-		String format =
-			currentProgram.getOptions(Program.PROGRAM_INFO).getString("Executable Format", null);
+		String format = currentProgram.getExecutableFormat();
 
 		if (currentProgram == null || !currentProgram.getName().startsWith(PROGRAM_NAME) ||
 			!"x86:LE:64:default".equals(currentProgram.getLanguageID().toString()) ||
