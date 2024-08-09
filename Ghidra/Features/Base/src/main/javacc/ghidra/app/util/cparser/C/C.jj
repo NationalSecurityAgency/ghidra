@@ -516,15 +516,13 @@ public class CParser {
     }
     
 
-    private DataType allocateEnumDT(Token t, ArrayList<EnumMember> list) {
+    private DataType allocateEnumDT(Token t, ArrayList<EnumMember> list, Declaration dec) {
     	String enumName = (t != null ? t.image : ("enum_" + cnt++));
-    	
-    	// get the normal enum size, which is an int
-    	// TODO: allow for packing of enum to smallest value with either dataOrganization, or packing flag
-        int normalEnumLen = (dtMgr != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
-        
-        // create an initial enum and add all new members
-        EnumDataType enumDT= new EnumDataType(getCurrentCategoryPath(), enumName, 8, dtMgr);
+
+        // Create an initial enum
+        EnumDataType enumDT = new EnumDataType(getCurrentCategoryPath(), enumName, 8, dtMgr);
+
+        // Add all new enum members
         if (list != null) {
             for (EnumMember member : list) {
                 try {
@@ -533,18 +531,21 @@ public class CParser {
                     addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
                 }
             }
-            // get the minimum length to represent the values and resize if too big
-            int minLen = enumDT.getMinimumPossibleLength();
-            if (minLen > normalEnumLen) {
-                enumDT.setLength(minLen);
-            } else {
-                enumDT.setLength(normalEnumLen);
-            }
-        } else {
-            // length doesn't really matter, forward declaration with no values
-            enumDT.setLength(normalEnumLen);
         }
-        
+
+        int defaultEnumLen = 0;
+        if (dec.getQualifiers().contains(PACKED)) {
+            // Get the default packed enum length
+            defaultEnumLen = (dtMgr != null ? dtMgr.getDataOrganization().getCharSize() : 1);
+        } else {
+            // Get the default enum size, which is an int
+            defaultEnumLen = (dtMgr != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
+        }
+
+        // If values in the enum require a bigger size, expand the enum...
+        int enumLen = Math.max(defaultEnumLen, enumDT.getMinimumPossibleLength());
+        enumDT.setLength(enumLen);
+
         return addDef(enums, enumDT.getName(), enumDT);
     }
 
@@ -1186,7 +1187,7 @@ TOKEN :
     |
     <UNALIGNED : "__unaligned" >
     |
-    <PACKED : "__packed" >
+    <PACKED : ( [ "_" ] )* "packed" >
     |
     <ATTRIBUTE : "__attribute" (["_"])* >
     |
@@ -1807,7 +1808,7 @@ Declaration TypeQualifier(Declaration dec) : {}
       <RESTRICT> |
       <EXTENSION> |
       <STATIC> |
-      <PACKED> |
+      <PACKED> { dec.addQualifier(PACKED); } |
       <UNALIGNED> |
       ( DeclSpec(dec) )
     )
@@ -2235,7 +2236,7 @@ DataType EnumSpecifier() : {
         LOOKAHEAD(3)
         [AttributeSpecList(dec)] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
         {
-            dt = allocateEnumDT(t, list);
+            dt = allocateEnumDT(t, list, dec);
         }
         |
         t= <IDENTIFIER>
@@ -2243,7 +2244,7 @@ DataType EnumSpecifier() : {
             dt= getEnumDef(t.image);
             // not defined yet, define an empty one
             if (dt == null) {
-            	dt = allocateEnumDT(t, null);
+                dt = allocateEnumDT(t, null, dec);
             }
         }
     )
