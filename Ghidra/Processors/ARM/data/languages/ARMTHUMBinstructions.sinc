@@ -2809,7 +2809,7 @@ primask: "primask"			is epsilon {}
   Rd0811 = 0;
   b:1 = isCurrentModePrivileged();
   if (!b) goto inst_next; 
-  Rd0811 = isIRQinterruptsEnabled(); # should reflect primask register/bit
+  Rd0811 = isIRQinterruptsEnabled() ^ 1; # should reflect primask register/bit
 }
 
 basepri: "basepri"			is epsilon {}
@@ -2925,7 +2925,7 @@ define pcodeop setBasePriority;
   build ItCond;
   b:1 = isCurrentModePrivileged();
   if (!b) goto inst_next;
-  enableIRQinterrupts((Rn0003 & 1) == 1); # should set/clear primask register/bit
+  enableIRQinterrupts((Rn0003 & 1) == 0); # should set/clear primask register/bit
 }
 
 :msr^ItCond basepri,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm=17 & basepri
