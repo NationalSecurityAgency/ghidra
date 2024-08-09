@@ -918,7 +918,7 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	denom:$(SIZE) = regorimm & 0xffffffff;
 	RD = numerator s/ denom;
 	zeroflags(RD);
-	i_vf = (RD s>= 0x80000000) || (RD s<= -0x7ffffffff);
+	i_vf = (RD s>= 0x80000000) || (RD s<= -0x7fffffff);
 	i_cf = 0;
 	x_vf = 0;
 	x_cf = 0;
