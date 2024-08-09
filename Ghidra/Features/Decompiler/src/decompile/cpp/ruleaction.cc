@@ -6099,9 +6099,21 @@ bool AddTreeState::apply(void)
     clear();
     preventDistribution = true;
     spanAddTree(baseOp,1);
+    if (!valid) return false;
   }
   calcSubtype();
-  if (!valid) return false;
+  if (!valid) {
+    if (!preventDistribution && distributeOp != (PcodeOp *)0) {
+      clear();
+      preventDistribution = true;
+      spanAddTree(baseOp,1);
+      if (!valid) return false;
+      calcSubtype();
+      if (!valid) return false;
+    } else {
+      return false;
+    }
+  }
   while(valid && distributeOp != (PcodeOp *)0) {
     if (!data.distributeIntMultAdd(distributeOp)) {
       valid = false;
