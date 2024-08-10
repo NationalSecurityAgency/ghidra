@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,9 @@ package ghidra.app.plugin.core.programtree;
 
 import java.awt.datatransfer.*;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import docking.dnd.GClipboard;
@@ -29,90 +28,66 @@ import ghidra.util.Msg;
 import ghidra.util.exception.NotFoundException;
 
 /**
- * Manage paste operations for the tree.
+ * Manage paste operations for the Program Tree.
  */
 class PasteManager {
 
-	private ProgramTreeActionManager actionMgr;
-	private ProgramDnDTree tree;
-	private DefaultTreeModel treeModel;
-	private Clipboard cutClipboard;
+	private ProgramTreeActionManager actionManager;
 	private String lastGroupPasted;
 
-	/**
-	 * Constructor
-	 */
-	PasteManager(ProgramTreeActionManager actionMgr) {
-		this.actionMgr = actionMgr;
-		cutClipboard = actionMgr.getCutClipboard();
+	PasteManager(ProgramTreeActionManager actionManager) {
+		this.actionManager = actionManager;
 	}
 
-	/**
-	 * Return true if the pasteNode can be pasted at the destNode.
-	 * @param destNode destination node for where the pasteNode will be pasted
-	 * @param pasteNode node to paste
-	 * @param isCutOperation true if the operation was "cut" versus "copy"
-	 */
 	boolean isPasteAllowed(ProgramNode destNode, ProgramNode pasteNode, boolean isCutOperation) {
 		if (destNode.getProgram() != pasteNode.getProgram() ||
 			destNode.getRoot() != pasteNode.getRoot()) {
 			return false;
 		}
-		try {
-			if (destNode.getName().equals(pasteNode.getName())) {
-				return false;
-			}
-			if (destNode.isNodeAncestor(pasteNode)) {
-				return false;
-			}
 
-			if (destNode.isFragment() && pasteNode.isModule()) {
-				if (isCutOperation && !pasteNode.getModule().isDescendant(destNode.getFragment())) {
+		if (destNode.getName().equals(pasteNode.getName())) {
+			return false;
+		}
 
-					return true; // pasted module can be flattened onto 
-					// destination fragment
+		if (destNode.isNodeAncestor(pasteNode)) {
+			return false;
+		}
+
+		if (destNode.isFragment() && pasteNode.isModule()) {
+			if (isCutOperation && !pasteNode.getModule().isDescendant(destNode.getFragment())) {
+				return true; // pasted module can be flattened onto destination fragment
+			}
+			return false;
+		}
+
+		if (destNode.isFragment() && pasteNode.isFragment()) {
+			if (isCutOperation) {
+				return true;
+			}
+			return false;
+		}
+
+		if (destNode.isModule()) {
+			ProgramModule destModule = destNode.getModule();
+
+			if (pasteNode.isModule()) {
+				if (pasteNode.getModule().isDescendant(destModule)) {
+					return false;
 				}
-				return false;
-			}
-
-			if (destNode.isFragment() && pasteNode.isFragment()) {
-				if (isCutOperation) {
-					return true;
-				}
-				return false;
-			}
-			if (destNode.isModule()) {
-				ProgramModule destModule = destNode.getModule();
-
-				if (pasteNode.isModule()) {
-					if (pasteNode.getModule().isDescendant(destModule)) {
-						return false;
-					}
-					if (!isCutOperation && destModule.contains(pasteNode.getModule())) {
-						return false;
-					}
-				}
-				else if (!isCutOperation && destModule.contains(pasteNode.getFragment())) {
+				if (!isCutOperation && destModule.contains(pasteNode.getModule())) {
 					return false;
 				}
 			}
+			else if (!isCutOperation && destModule.contains(pasteNode.getFragment())) {
+				return false;
+			}
+		}
 
-			return true;
-		}
-		catch (RuntimeException e) {
-			// this is a hack for unknown reasons
-		}
-		return false;
+		return true;
 	}
 
-	/**
-	 * Do the paste operation.
-	 * @param destNode destination node for where the paste the contents of
-	 * system clipboard.
-	 */
-	@SuppressWarnings("unchecked")
-	// cast is OK, it is data that we are expecting
-	void paste(ProgramNode destNode) {
+	@SuppressWarnings("unchecked") // cast is OK, it is data that we are expecting
+	void paste(ProgramDnDTree tree, ProgramNode destNode) {
 
 		int transactionID = tree.startTransaction("Paste");
 		if (transactionID < 0) {
@@ -125,34 +100,32 @@ class PasteManager {
 		Clipboard systemClipboard = GClipboard.getSystemClipboard();
 		Transferable t = systemClipboard.getContents(tree);
 		try {
-			if (t == null || !t.isDataFlavorSupported(TreeTransferable.localTreeNodeFlavor)) {
+			if (t == null ||
+				!t.isDataFlavorSupported(ProgramTreeTransferable.localTreeNodeFlavor)) {
 				return;
 			}
+
 			tree.setBusyCursor(true);
 			lastGroupPasted = null;
-			ArrayList<ProgramNode> list =
-				(ArrayList<ProgramNode>) t.getTransferData(TreeTransferable.localTreeNodeFlavor);
-
+			List<ProgramNode> list =
+				(List<ProgramNode>) t.getTransferData(ProgramTreeTransferable.localTreeNodeFlavor);
 			if (list == null) {
-				// SCR 7990--something bad has happened to the copy buffer
 				return;
 			}
 
-			for (int i = 0; i < list.size(); i++) {
-				ProgramNode tnode = list.get(i);
-
-				if (destNode.getRoot() != tnode.getRoot()) {
+			for (ProgramNode node : list) {
+				if (destNode.getRoot() != node.getRoot()) {
 					lastGroupPasted = null;
 					break;
 				}
 
-				if (!destNode.getName().equals(tnode.getName())) {
-					if (pasteGroup(destNode, tnode)) {
-						if (!(destNode.isFragment() && tnode.isModule())) {
+				if (!destNode.getName().equals(node.getName())) {
+					if (pasteGroup(tree, destNode, node)) {
+						if (!(destNode.isFragment() && node.isModule())) {
 							// this was not a "flatten module" operation
 							// so we can leave the busy cursor set
 							// until the domain object event comes in
-							lastGroupPasted = tnode.getName();
+							lastGroupPasted = node.getName();
 						}
 					}
 				}
@@ -163,18 +136,14 @@ class PasteManager {
 			}
 
 			// do "cut" operations now if there are any
-			actionMgr.checkClipboard(true);
-			actionMgr.clearSystemClipboard();
-			actionMgr.enablePasteAction(false);
+			actionManager.cutClipboardNodes(tree);
 			tree.removeSelectionPath(path);
 			tree.addSelectionPath(path);
-
 		}
 		catch (UnsupportedFlavorException e) {
 			// data flavor is not supported
 			Msg.showError(this, null, "Paste from Clipboard Failed",
 				"Data flavor in clipboard is not supported.", e);
-
 		}
 		catch (IOException e) {
 			// data is no longer available
@@ -182,33 +151,19 @@ class PasteManager {
 				"Data is no longer available for paste operation", e);
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, null, null, e);
+			Msg.showError(this, null, "Unexpected Exception Pasting",
+				"Unexpected exception pasting nodes", e);
 		}
 		finally {
 			tree.endTransaction(transactionID, true);
 		}
 	}
 
-	/**
-	 * Get the name of the last group that was pasted.
-	 */
 	String getLastGroupPasted() {
 		return lastGroupPasted;
 	}
 
-	/**
-	 * Method setProgramTreeView.
-	 * @param tree
-	 */
-	void setProgramTreeView(ProgramDnDTree tree) {
-		this.tree = tree;
-		treeModel = (DefaultTreeModel) tree.getModel();
-	}
-
-	/**
-	 * Paste the group at nodeToPaste at destNode.
-	 */
-	private boolean pasteGroup(ProgramNode destNode, ProgramNode nodeToPaste) {
+	private boolean pasteGroup(ProgramDnDTree tree, ProgramNode destNode, ProgramNode nodeToPaste) {
 
 		if (destNode.isFragment()) {
 			// can paste either a fragment or a module onto a fragment;
@@ -216,11 +171,12 @@ class PasteManager {
 			// descendant fragments are moved to the destination fragment.
 			try {
 				tree.mergeGroup(nodeToPaste.getGroup(), destNode.getFragment());
-				actionMgr.removeFromClipboard(cutClipboard, nodeToPaste);
+				actionManager.removeFromClipboard(tree, nodeToPaste);
 				return true;
 
 			}
 			catch (ConcurrentModificationException e) {
+				// ha!
 			}
 			catch (Exception e) {
 				Msg.showError(this, null, null, "Error Merging Fragments", e);
@@ -231,30 +187,24 @@ class PasteManager {
 		ProgramModule targetModule = destNode.getModule();
 
 		if (targetModule == null) {
-			nodeToPaste.setDeleted(false);
-			treeModel.reload(nodeToPaste);
+			actionManager.clearCut(nodeToPaste);
 			Msg.showError(this, null, "Paste from Clipboard Failed",
 				"Paste of " + nodeToPaste + " at\n" + destNode.getName() + " is not allowed.");
 
 			return false;
 		}
 
-		return pasteNode(destNode, nodeToPaste);
+		return pasteNode(tree, destNode, nodeToPaste);
 	}
 
-	/**
-	 * Paste the node at the destination node.
-	 */
-	private boolean pasteNode(ProgramNode destNode, ProgramNode nodeToPaste) {
+	private boolean pasteNode(ProgramDnDTree tree, ProgramNode destNode, ProgramNode nodeToPaste) {
 
 		ProgramModule targetModule = destNode.getModule();
-		// make sure we have something to paste
 		ProgramModule module = nodeToPaste.getModule();
 		ProgramFragment fragment = nodeToPaste.getFragment();
 
 		if (module == null && fragment == null) {
-			nodeToPaste.setDeleted(false);
-			treeModel.reload(nodeToPaste);
+			actionManager.clearCut(nodeToPaste);
 			Msg.showError(this, null, "Paste from Clipboard Failed",
 				"Could not paste " + nodeToPaste + " at " + targetModule.getName());
 			return false;
@@ -263,10 +213,10 @@ class PasteManager {
 		boolean pasteOK = false;
 		try {
 			if (module != null) {
-				pasteOK = pasteModule(destNode, nodeToPaste, targetModule, module);
+				pasteOK = pasteModule(tree, destNode, nodeToPaste, targetModule, module);
 			}
 			else {
-				pasteOK = pasteFragment(nodeToPaste, targetModule, fragment);
+				pasteOK = pasteFragment(tree, nodeToPaste, targetModule, fragment);
 			}
 
 			// don't match the expansion state unless the destination
@@ -281,37 +231,35 @@ class PasteManager {
 
 		}
 		catch (CircularDependencyException e) {
-			removeFromClipboard(nodeToPaste);
 			Msg.showError(this, null, "Paste from Clipboard Failed", e.getMessage());
 		}
 		catch (DuplicateGroupException e) {
-			nodeToPaste.setDeleted(false);
-			tree.reloadNode(nodeToPaste);
-
+			// handled below
 		}
 		catch (NotFoundException e) {
-			removeFromClipboard(nodeToPaste);
-			nodeToPaste.setDeleted(false);
 			Msg.showError(this, null, "Paste from Clipboard Failed", e.getMessage());
 		}
+
+		removeFromClipboard(tree, nodeToPaste);
 		return false;
 	}
 
 	/**
 	 * Paste the fragment at the given module.
 	 */
-	private boolean pasteFragment(ProgramNode nodeToPaste, ProgramModule targetModule,
-			ProgramFragment fragment) throws NotFoundException, DuplicateGroupException {
+	private boolean pasteFragment(ProgramDnDTree tree, ProgramNode nodeToPaste,
+			ProgramModule targetModule, ProgramFragment fragment)
+			throws NotFoundException, DuplicateGroupException {
 		boolean pasteOK = false;
 
 		if (targetModule.contains(fragment)) {
 			if (targetModule.equals(nodeToPaste.getParentModule())) {
-				removeFromClipboard(nodeToPaste);
+				removeFromClipboard(tree, nodeToPaste);
 			}
 		}
-		else if (actionMgr.clipboardContains(nodeToPaste)) {
+		else if (actionManager.clipboardContains(nodeToPaste)) {
 			targetModule.reparent(nodeToPaste.getName(), nodeToPaste.getParentModule());
-			removeFromClipboard(nodeToPaste);
+			removeFromClipboard(tree, nodeToPaste);
 			pasteOK = true;
 		}
 		else {
@@ -321,7 +269,7 @@ class PasteManager {
 		return pasteOK;
 	}
 
-	private boolean pasteModule(ProgramNode destNode, ProgramNode nodeToPaste,
+	private boolean pasteModule(ProgramDnDTree tree, ProgramNode destNode, ProgramNode nodeToPaste,
 			ProgramModule targetModule, ProgramModule module)
 			throws NotFoundException, CircularDependencyException, DuplicateGroupException {
 
@@ -332,12 +280,12 @@ class PasteManager {
 		}
 		if (targetModule.contains(module)) {
 			if (targetModule.equals(nodeToPaste.getParentModule())) {
-				removeFromClipboard(nodeToPaste);
+				removeFromClipboard(tree, nodeToPaste);
 			}
 		}
-		else if (actionMgr.clipboardContains(nodeToPaste)) {
+		else if (actionManager.clipboardContains(nodeToPaste)) {
 			targetModule.reparent(nodeToPaste.getName(), nodeToPaste.getParentModule());
-			removeFromClipboard(nodeToPaste);
+			removeFromClipboard(tree, nodeToPaste);
 			pasteOK = true;
 		}
 		else {
@@ -352,15 +300,9 @@ class PasteManager {
 		return pasteOK;
 	}
 
-	/**
-	 * Remove the given node from the cut clipboard, so that "cut" changes
-	 * will not be applied.
-	 * @param node node to remove from the cut clipboard
-	 */
-	private void removeFromClipboard(ProgramNode node) {
-		actionMgr.removeFromClipboard(cutClipboard, node);
-		node.setDeleted(false);
-		tree.reloadNode(node);
+	private void removeFromClipboard(ProgramDnDTree tree, ProgramNode node) {
+		actionManager.removeFromClipboard(tree, node);
+		actionManager.clearCut(node);
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,8 +136,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
 		assertEquals(DEFAULT_TREE_NAME + "(1)", vps.getViewName());
 		assertEquals(tabbedPane.getSelectedComponent(), vps.getViewComponent());
-		SwingUtilities
-				.invokeAndWait(() -> createTreeAction.actionPerformed(new DefaultActionContext()));
+		performAction(createTreeAction);
 		program.flushEvents();
 		vps = provider.getCurrentViewProvider();
 		treeNames = program.getListing().getTreeNames();
@@ -152,8 +151,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testUndoRedo() throws Exception {
 		ProgramTreePlugin treePlugin = env.getPlugin(ProgramTreePlugin.class);
 		final DockingActionIf createTreeAction = getAction(treePlugin, "Create Default Tree View");
-		SwingUtilities
-				.invokeAndWait(() -> createTreeAction.actionPerformed(new DefaultActionContext()));
+		performAction(createTreeAction);
 		program.flushEvents();
 		env.showTool();
 		ViewProviderService vps = provider.getCurrentViewProvider();
@@ -163,8 +161,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
 		assertEquals(DEFAULT_TREE_NAME + "(1)", vps.getViewName());
 		assertEquals(tabbedPane.getSelectedComponent(), vps.getViewComponent());
-		SwingUtilities
-				.invokeAndWait(() -> createTreeAction.actionPerformed(new DefaultActionContext()));
+		performAction(createTreeAction);
 		program.flushEvents();
 		vps = provider.getCurrentViewProvider();
 		treeNames = program.getListing().getTreeNames();
@@ -237,7 +234,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testCloseView() throws Exception {
 		// close "Program Tree"
 		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
-		SwingUtilities.invokeAndWait(() -> closeAction.actionPerformed(new DefaultActionContext()));
+		performAction(closeAction);
 
 		waitForBusyTool(tool);
 
@@ -261,8 +258,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setCurrentViewProvider("Tree Two");
 
 		final DockingActionIf deleteAction = getAction(plugin, "Delete Tree View");
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
+		performAction(deleteAction);
 
 		waitForBusyTool(tool);
 
@@ -300,31 +296,26 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setCurrentViewProvider("Main Tree");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
+		performAction(deleteAction);
 		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree One");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
+		performAction(deleteAction);
 		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree Two");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
+		performAction(deleteAction);
 		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree Three");
 
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
+		performAction(deleteAction);
 		waitForBusyTool(tool);
 
 		// attempt to delete the last view
-		SwingUtilities
-				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
+		performAction(deleteAction);
 		waitForBusyTool(tool);
 
 		ViewProviderService vps = provider.getCurrentViewProvider();
@@ -341,10 +332,10 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
 
 		setCurrentViewProvider(DEFAULT_TREE_NAME);
-		SwingUtilities.invokeAndWait(() -> closeAction.actionPerformed(new DefaultActionContext()));
+		performAction(closeAction);
 
 		setCurrentViewProvider("Main Tree");
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			closeAction.actionPerformed(new DefaultActionContext());
 			provider.setCurrentViewProvider("Tree One");
 			closeAction.actionPerformed(new DefaultActionContext());
