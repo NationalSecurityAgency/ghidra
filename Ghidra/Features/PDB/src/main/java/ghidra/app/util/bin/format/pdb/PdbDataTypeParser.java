@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.pdb;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
@@ -190,10 +192,13 @@ class PdbDataTypeParser {
 		// [16]
 		if (dataTypeName.startsWith("*") || dataTypeName.startsWith("[")) {
 			// prepend undefined since intent is some datatype
-			Msg.warn(this, "dataTypeName \"" + dataTypeName + 
+			Msg.warn(this, "dataTypeName \"" + dataTypeName +
 				"\" references a pointer or array without a declared datatype; assuming undefined");
 			dataTypeName = "undefined" + dataTypeName;
 		}
+
+		// Deal with other unrecognized types
+		dataTypeName = StringUtils.replace(dataTypeName, "<NoType>", "undefined");
 
 		// Example type representations:
 		// char *[2][3]     pointer(array(array(char,3),2))
