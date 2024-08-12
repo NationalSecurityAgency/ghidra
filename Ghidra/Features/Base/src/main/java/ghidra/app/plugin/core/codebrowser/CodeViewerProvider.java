@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,7 +105,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private CoordinatedListingPanelListener coordinatedListingPanelListener;
 	private FormatManager formatMgr;
 	private FieldPanelCoordinator coordinator;
-
+	private ProgramSelectionListener liveProgramSelectionListener = (selection, trigger) -> {
+		liveSelection = selection;
+		updateSubTitle();
+	};
 	private FocusingMouseListener focusingMouseListener;
 
 	private CodeBrowserClipboardProvider codeViewerClipboardProvider;
@@ -116,6 +119,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private CloneCodeViewerAction cloneCodeViewerAction;
 
 	private ProgramSelection currentSelection;
+	private ProgramSelection liveSelection;
 	private ProgramSelection currentHighlight;
 	private String currentStringSelection;
 
@@ -163,6 +167,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		createActions();
 		listingPanel.setProgramLocationListener(this);
 		listingPanel.setProgramSelectionListener(this);
+		listingPanel.setLiveProgramSelectionListener(liveProgramSelectionListener);
 		listingPanel.setStringSelectionListener(this);
 		listingPanel.addIndexMapChangeListener(this);
 
@@ -542,11 +547,18 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private void doSetSelection(ProgramSelection selection) {
 
+		liveSelection = null;
 		currentSelection = selection;
 		codeViewerClipboardProvider.setSelection(currentSelection);
 		listingPanel.setSelection(currentSelection);
 		plugin.selectionChanged(this, currentSelection);
 		contextChanged();
+		updateSubTitle();
+	}
+
+	private void updateSubTitle() {
+
+		ProgramSelection selection = liveSelection != null ? liveSelection : currentSelection;
 		String selectionInfo = null;
 		if (!selection.isEmpty()) {
 			long n = selection.getNumAddresses();
