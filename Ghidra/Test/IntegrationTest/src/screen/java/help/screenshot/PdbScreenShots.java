@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 import pdb.PdbPlugin;
 import pdb.symbolserver.*;
-import pdb.symbolserver.ui.ConfigPdbDialog;
-import pdb.symbolserver.ui.LoadPdbDialog;
+import pdb.symbolserver.ui.*;
 
 public class PdbScreenShots extends GhidraScreenShotGenerator {
 
@@ -64,7 +63,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testSymbolServerConfig_Screenshot() throws IOException {
+	public void testSymbolServerConfig_Screenshot() {
 		PdbPlugin.saveSymbolServerServiceConfig(null);
 		ConfigPdbDialog configPdbDialog = new ConfigPdbDialog();
 		showDialogWithoutBlocking(tool, configPdbDialog);
@@ -79,7 +78,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 		LocalSymbolStore localSymbolStore1 = new LocalSymbolStore(localSymbolStore1Root);
 		SameDirSymbolStore sameDirSymbolStore = new SameDirSymbolStore(null);
 		List<SymbolServer> symbolServers = List.of(sameDirSymbolStore,
-			new HttpSymbolServer(URI.create("https://msdl.microsoft.com/download/symbols/")));
+			HttpSymbolServer.createTrusted("https://msdl.microsoft.com/download/symbols/"));
 		SymbolServerService symbolServerService =
 			new SymbolServerService(localSymbolStore1, symbolServers);
 		PdbPlugin.saveSymbolServerServiceConfig(symbolServerService);
@@ -88,7 +87,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 		configPdbDialog.setSymbolServerService("/home/user/symbols", symbolServers);
 		showDialogWithoutBlocking(tool, configPdbDialog);
 		waitForSwing();
-		captureDialog(ConfigPdbDialog.class, 410, 280);
+		captureDialog(ConfigPdbDialog.class, 520, 280);
 	}
 
 	@Test
@@ -112,10 +111,27 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 		showDialogWithoutBlocking(tool, configPdbDialog);
 		waitForSwing();
 		runSwing(() -> {
+			configPdbDialog.setWellknownSymbolServers(createFakeWellKnowns());
 			configPdbDialog.pushAddLocationButton();
 		});
 		waitForSwing();
 		captureMenu();
+	}
+
+	List<WellKnownSymbolServerLocation> createFakeWellKnowns() {
+		// due to module dependencies, this screen shot test can't see the contents of the normal
+		// PDBURL file loaded from the 'z public release' module.
+		return List.of( // should be same as the PDB_SYMBOL_SERVERS.PDBURL file
+			new WellKnownSymbolServerLocation("", "https://msdl.microsoft.com/download/symbols/",
+				"WARNING: Check your organization's security policy before downloading files from the internet.",
+				"screen shot"),
+			new WellKnownSymbolServerLocation("",
+				"https://chromium-browser-symsrv.commondatastorage.googleapis.com",
+				"WARNING: Check your organization's security policy before downloading files from the internet.",
+				"screen shot"),
+			new WellKnownSymbolServerLocation("", "https://symbols.mozilla.org/",
+				"WARNING: Check your organization's security policy before downloading files from the internet.",
+				"screen shot"));
 	}
 
 	@Test
@@ -158,7 +174,7 @@ public class PdbScreenShots extends GhidraScreenShotGenerator {
 				localSymbolStore1, SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 2)),
 			new SymbolFileLocation("HelloWorld.pdb", sameDirSymbolStoreWithFakePath,
 				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 1)));
-		Set<FindOption> findOptions = FindOption.of(FindOption.ALLOW_REMOTE, FindOption.ANY_AGE);
+		Set<FindOption> findOptions = FindOption.of(FindOption.ALLOW_UNTRUSTED, FindOption.ANY_AGE);
 		runSwing(() -> {
 			loadPdbDialog.setSearchOptions(findOptions);
 			loadPdbDialog.setSearchResults(symbolFileLocations, findOptions);

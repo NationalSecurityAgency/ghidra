@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,14 @@
  */
 package pdb.symbolserver;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -128,14 +126,14 @@ public class SymbolServerServiceTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void test_Remote() throws IOException, CancelledException {
+	public void test_Trusted() throws IOException, CancelledException {
 		String payload = "testdummy";
 		SymbolServerService symbolServerService =
 			new SymbolServerService(localSymbolStore1,
 				List.of(localSymbolStore2, new DummySymbolServer(payload)));
 		SymbolFileInfo searchPdb = SymbolFileInfo.fromValues("file1.pdb", "11223344", 0);
 		List<SymbolFileLocation> results =
-			symbolServerService.find(searchPdb, FindOption.of(FindOption.ALLOW_REMOTE),
+			symbolServerService.find(searchPdb, FindOption.of(FindOption.ALLOW_UNTRUSTED),
 				TaskMonitor.DUMMY);
 
 		assertEquals(1, results.size());
@@ -148,8 +146,9 @@ public class SymbolServerServiceTest extends AbstractGenericTest {
 	@Test
 	public void test_NoRemote() throws CancelledException {
 		String payload = "testdummy";
+		DummySymbolServer dummySymbolServer = new DummySymbolServer(payload);
 		SymbolServerService symbolServerService =
-			new SymbolServerService(localSymbolStore1, List.of(new DummySymbolServer(payload)));
+			new SymbolServerService(localSymbolStore1, List.of(dummySymbolServer));
 		SymbolFileInfo searchPdb = SymbolFileInfo.fromValues("file1.pdb", "11223344", 0);
 		List<SymbolFileLocation> results =
 			symbolServerService.find(searchPdb, FindOption.NO_OPTIONS, TaskMonitor.DUMMY);
