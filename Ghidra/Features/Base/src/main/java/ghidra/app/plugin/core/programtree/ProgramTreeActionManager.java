@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.programtree;
 
 import java.awt.datatransfer.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.*;
@@ -24,18 +23,18 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.swing.KeyStroke;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import docking.action.*;
 import docking.dnd.GClipboard;
-import docking.widgets.tree.GTreeNode;
 import generic.timer.ExpiringSwingTimer;
 import ghidra.app.cmd.module.*;
 import ghidra.framework.cmd.CompoundCmd;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
@@ -46,15 +45,12 @@ import ghidra.util.exception.NotEmptyException;
  * Class to manage actions and popup menus for the program tree.
  */
 class ProgramTreeActionManager implements ClipboardOwner {
-// popup for multi selection
-	private Clipboard tempClipboard; // temporary clipboard used for the
-	// "cut" operation
-	private ProgramDnDTree tree; // tree currently in the view
+
+	private Clipboard tempClipboard; // temporary clipboard used for the "cut" operation
 	private ProgramNode root;
 
 	private Program program;
 
-	// actions
 	private DockingAction cutAction;
 	private DockingAction copyAction;
 	private DockingAction pasteAction;
@@ -67,37 +63,30 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	private DockingAction collapseAction;
 	private DockingAction goToViewAction;
 	private DockingAction removeViewAction;
-	private DockingAction replaceViewAction;
+	private DockingAction setViewAction;
+	private DockingAction addToViewAction;
 
 	private DockingAction[] actions;
 
-	private PasteManager pasteMgr; // handles the paste operations
-	private ArrayList<TreePath> viewList;
-	private SelectionListener selectionListener;
+	private PasteManager pasteManager;
+	private List<TreePath> viewList;
 	private ProgramTreePlugin plugin;
-	private boolean replacingView;
+	private boolean isSettingView;
 
 	ProgramTreeActionManager(ProgramTreePlugin plugin) {
 		this.plugin = plugin;
-		tempClipboard = new Clipboard("ProgramTree");
-		selectionListener = new SelectionListener();
-		pasteMgr = new PasteManager(this);
+		this.tempClipboard = new Clipboard("ProgramTree");
+		this.pasteManager = new PasteManager(this);
 		createActions(plugin.getName());
 	}
 
 	void setProgramTreeView(String treeName, ProgramDnDTree tree) {
-		if (this.tree != null) {
-			this.tree.removeTreeSelectionListener(selectionListener);
-		}
-
-		this.tree = tree;
-		pasteMgr.setProgramTreeView(tree);
-
 		if (tree != null) {
 			DefaultTreeModel treeModel = (DefaultTreeModel) tree.getModel();
 			root = (ProgramNode) treeModel.getRoot();
+
+			// TODO should not need this
 			viewList = tree.getViewList();
-			tree.addTreeSelectionListener(selectionListener);
 		}
 	}
 
@@ -111,13 +100,9 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
 		// check the temporary clipboard and revert "cut" operations
 		// back to normal in the program node info.
-		checkClipboard(false);
-
+		clearCutClipboardNodes();
 	}
 
-	/**
-	 * Set the program, and update the root node.
-	 */
 	void setProgram(Program program) {
 		this.program = program;
 		tempClipboard.setContents(null, this);
@@ -127,14 +112,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	}
 
 	String getLastGroupPasted() {
-		return pasteMgr.getLastGroupPasted();
-	}
-
-	/**
-	 * Return true if actions were created for the tree.
-	 */
-	boolean actionsCreated() {
-		return cutAction != null;
+		return pasteManager.getLastGroupPasted();
 	}
 
 	/**
@@ -146,332 +124,407 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		return actions;
 	}
 
-	/**
-	 * Enable or disable actions according to the given
-	 * node.  Called by the ProgramTree when the selection changes.
-	 */
-	void adjustSingleActions(ProgramNode node) {
-
-		if (program == null) {
-			disableActions();
-			return;
-		}
-
-		try {
-			//add menu items according to the selected node
-			TreePath path = node.getTreePath();
-
-			pasteAction.setEnabled(isPasteOk(node));
-			renameAction.setEnabled(true);
-			goToViewAction.setEnabled(true);
-
-			replaceViewAction.setEnabled(true);
-			removeViewAction.setEnabled(true);
-
-			if (node == root) {
-				copyAction.setEnabled(false);
-				cutAction.setEnabled(false);
-				deleteAction.setEnabled(false);
-				expandAction.setEnabled(!allPathsExpanded(path));
-				collapseAction.setEnabled(!allPathsCollapsed(path));
-				createFolderAction.setEnabled(true);
-				createFragmentAction.setEnabled(true);
-				mergeAction.setEnabled(false);
-				return;
-			}
-
-			// node is either a Module or Fragment
-			copyAction.setEnabled(true);
-			cutAction.setEnabled(true);
-			setDeleteActionEnabled();
-
-			if (node.isFragment()) {
-				createFolderAction.setEnabled(false);
-				createFragmentAction.setEnabled(false);
-				expandAction.setEnabled(false);
-				mergeAction.setEnabled(false);
-				collapseAction.setEnabled(false);
-
-			}
-			else {
-				createFolderAction.setEnabled(true);
-				createFragmentAction.setEnabled(true);
-				expandAction.setEnabled(!allPathsExpanded(path));
-				mergeAction.setEnabled(true);
-				collapseAction.setEnabled(!allPathsCollapsed(path));
-			}
-		}
-		catch (ConcurrentModificationException e) {
-		}
-	}
-
-	/**
-	 * Enable the actions according to what is selected.
-	 * If a "root"-type node is selected, then either all of its children
-	 * must be selected, or none of its children can be selected.
-	 * If the "root"-type node is not selected, then any of its children
-	 * may be selected.
-	 * Called by the ProgramTree when the selection changes.
-	 */
-	void adjustMultiActions() {
-
-		cutAction.setEnabled(false);
-		copyAction.setEnabled(false);
-		deleteAction.setEnabled(false);
-		replaceViewAction.setEnabled(false);
-
-		try {
-			if (validMultiSelection()) {
-				copyAction.setEnabled(true);
-				cutAction.setEnabled(true);
-				setDeleteActionEnabled();
-				replaceViewAction.setEnabled(true);
-				enableViewActions();
-			}
-			enableMergeAction();
-		}
-		catch (ConcurrentModificationException e) {
-		}
-	}
-
-	/**
-	 * Disable menu options for the single selection actions.
-	 */
-	void disableActions() {
-		goToViewAction.setEnabled(false);
-		removeViewAction.setEnabled(false);
-		replaceViewAction.setEnabled(false);
-		cutAction.setEnabled(false);
-		copyAction.setEnabled(false);
-		pasteAction.setEnabled(false);
-		deleteAction.setEnabled(false);
-		renameAction.setEnabled(false);
-		expandAction.setEnabled(false);
-		collapseAction.setEnabled(false);
-		createFolderAction.setEnabled(false);
-		createFragmentAction.setEnabled(false);
-		mergeAction.setEnabled(false);
-	}
-
-	/**
-	 * Create actions for the given owner.
-	 * @param owner
-	 */
 	private void createActions(String owner) {
 
 		List<DockingAction> list = new ArrayList<>();
 
 		goToViewAction = new ProgramTreeAction("Go To start of folder/fragment in View", owner,
-			new String[] { "Go To in View" },
-			KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK)) {
+			KeyStroke.getKeyStroke("ENTER")) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (context instanceof ProgramTreeActionContext ptac) {
+					return ptac.hasSingleNodeSelection() || ptac.hasFullNodeMultiSelection();
+				}
+				return false;
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				addToView();
+				goToView((ProgramTreeActionContext) context);
 			}
 		};
-		goToViewAction.setEnabled(false);
 
-		goToViewAction
-				.setPopupMenuData(new MenuData(new String[] { "Go To in View" }, null, "aview"));
+		goToViewAction.setPopupMenuData(new MenuData(new String[] { "Go To in View" }, "aview"));
 
 		list.add(goToViewAction);
 
 		removeViewAction = new ProgramTreeAction("Remove folder/fragment from View", owner,
-			new String[] { "Remove From View" },
-			KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK)) {
+			KeyStroke.getKeyStroke("R")) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (ptac.hasSingleNodeSelection() || ptac.hasFullNodeMultiSelection()) {
+
+					TreePath[] paths = ptac.getSelectionPaths();
+					for (TreePath path : paths) {
+						ProgramNode node = (ProgramNode) path.getLastPathComponent();
+						if (node.isInView()) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				removeFromView();
+				removeFromView((ProgramTreeActionContext) context);
 			}
 		};
-		removeViewAction.setEnabled(false);
 
 		removeViewAction
-				.setPopupMenuData(new MenuData(new String[] { "Remove from View" }, null, "aview"));
+				.setPopupMenuData(new MenuData(new String[] { "Remove from View" }, "aview"));
 
 		list.add(removeViewAction);
 
-		replaceViewAction =
-			new ProgramTreeAction("Replace View", owner, new String[] { "Replace View" },
-				KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK)) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					replaceView();
+		setViewAction = new ProgramTreeAction("Set View", owner, KeyStroke.getKeyStroke("S")) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (context instanceof ProgramTreeActionContext ptac) {
+					return ptac.hasSingleNodeSelection() || ptac.hasFullNodeMultiSelection();
 				}
-			};
-		replaceViewAction.setEnabled(false);
+				return false;
+			}
 
-		replaceViewAction
-				.setPopupMenuData(new MenuData(new String[] { "Replace View" }, null, "aview"));
+			@Override
+			public void actionPerformed(ActionContext context) {
+				setView((ProgramTreeActionContext) context);
+			}
+		};
 
-		list.add(replaceViewAction);
+		setViewAction.setPopupMenuData(new MenuData(new String[] { "Set View" }, "aview"));
 
-		cutAction =
-			new ProgramTreeAction("Cut folder/fragment", owner, new String[] { "Cut" }, null) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					cut();
+		list.add(setViewAction);
+
+		addToViewAction = new ProgramTreeAction("Add to View", owner, KeyStroke.getKeyStroke("A")) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (context instanceof ProgramTreeActionContext ptac) {
+					return ptac.hasSingleNodeSelection() || ptac.hasFullNodeMultiSelection();
 				}
-			};
-		cutAction.setEnabled(false);
+				return false;
+			}
 
-// ACTIONS - auto generated
-		cutAction.setPopupMenuData(new MenuData(new String[] { "Cut" }, null, "edit"));
+			@Override
+			public void actionPerformed(ActionContext context) {
+				addToView((ProgramTreeActionContext) context);
+			}
+		};
+
+		addToViewAction.setPopupMenuData(new MenuData(new String[] { "Add to View" }, "aview"));
+
+		list.add(addToViewAction);
+
+		cutAction = new ProgramTreeAction("Cut folder/fragment", owner, null) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (ptac.hasFullNodeMultiSelection()) {
+					return true;
+				}
+
+				if (ptac.hasSingleNodeSelection()) {
+					return !ptac.isOnlyRootNodeSelected();
+				}
+
+				return false;
+			}
+
+			@Override
+			public void actionPerformed(ActionContext context) {
+				cut((ProgramTreeActionContext) context);
+			}
+		};
+
+		cutAction.setPopupMenuData(new MenuData(new String[] { "Cut" }, "edit"));
 
 		list.add(cutAction);
 
-		copyAction =
-			new ProgramTreeAction("Copy folder/fragment", owner, new String[] { "Copy" }, null) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					copy();
-				}
-			};
-		copyAction.setEnabled(false);
+		copyAction = new ProgramTreeAction("Copy folder/fragment", owner, null) {
 
-// ACTIONS - auto generated
-		copyAction.setPopupMenuData(new MenuData(new String[] { "Copy" }, null, "edit"));
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (ptac.hasFullNodeMultiSelection()) {
+					return true;
+				}
+
+				if (ptac.hasSingleNodeSelection()) {
+					return !ptac.isOnlyRootNodeSelected();
+				}
+
+				return false;
+			}
+
+			@Override
+			public void actionPerformed(ActionContext context) {
+				copy((ProgramTreeActionContext) context);
+			}
+		};
+
+		copyAction.setPopupMenuData(new MenuData(new String[] { "Copy" }, "edit"));
 
 		list.add(copyAction);
 
-		pasteAction = new ProgramTreeAction("Paste folder/fragment", owner,
-			new String[] { "Paste" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		pasteAction = new ProgramTreeAction("Paste folder/fragment", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
 			@Override
-			public void actionPerformed(ActionContext context) {
-				TreePath path = tree.getSelectionPath();
-				ProgramNode node = (ProgramNode) path.getLastPathComponent();
-				pasteMgr.paste(node);
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				ProgramNode node = ptac.getSingleSelectedNode();
+				return node != null && isPasteOk(node);
 			}
 
+			@Override
+			public void actionPerformed(ActionContext context) {
+				ProgramTreeActionContext ptac = (ProgramTreeActionContext) context;
+				ProgramNode node = ptac.getSingleSelectedNode();
+				ProgramDnDTree tree = ptac.getTree();
+				pasteManager.paste(tree, node);
+			}
 		};
-		pasteAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		pasteAction.setPopupMenuData(new MenuData(new String[] { "Paste" }, null, "edit"));
+		pasteAction.setPopupMenuData(new MenuData(new String[] { "Paste" }, "edit"));
 
 		list.add(pasteAction);
 
-		createFolderAction = new ProgramTreeAction("Create Folder", owner,
-			new String[] { "Create Folder" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		createFolderAction = new ProgramTreeAction("Create Folder", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (!ptac.hasSingleNodeSelection()) {
+					return false;
+				}
+
+				if (ptac.isOnlyRootNodeSelected()) {
+					return true;
+				}
+
+				ProgramNode node = ptac.getSingleSelectedNode();
+				return !node.isFragment();
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				createFolder();
+				createFolder((ProgramTreeActionContext) context);
 			}
 
 		};
-		createFolderAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		createFolderAction.setPopupMenuData(
-			new MenuData(new String[] { "Create Folder" }, null, "createGroup"));
+		createFolderAction
+				.setPopupMenuData(new MenuData(new String[] { "Create Folder" }, "createGroup"));
 
 		list.add(createFolderAction);
 
-		createFragmentAction = new ProgramTreeAction("Create Fragment", owner,
-			new String[] { "Create Fragment" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		createFragmentAction = new ProgramTreeAction("Create Fragment", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (!ptac.hasSingleNodeSelection()) {
+					return false;
+				}
+
+				if (ptac.isOnlyRootNodeSelected()) {
+					return true;
+				}
+
+				ProgramNode node = ptac.getSingleSelectedNode();
+				return !node.isFragment();
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				createFragment((ProgramNode) tree.getLastSelectedPathComponent());
+				createFragment((ProgramTreeActionContext) context);
 			}
 		};
-		createFragmentAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		createFragmentAction.setPopupMenuData(
-			new MenuData(new String[] { "Create Fragment" }, null, "createGroup"));
+		createFragmentAction
+				.setPopupMenuData(new MenuData(new String[] { "Create Fragment" }, "createGroup"));
 
 		list.add(createFragmentAction);
 
-		mergeAction = new ProgramTreeAction("Merge folder/fragment with Parent", owner,
-			new String[] { "Merge with Parent" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		mergeAction = new ProgramTreeAction("Merge folder/fragment with Parent", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (ptac.hasSingleNodeSelection()) {
+					ProgramNode node = ptac.getSingleSelectedNode();
+					if (ptac.isOnlyRootNodeSelected() || node.isFragment()) {
+						return false;
+					}
+				}
+
+				return isMergeEnabled(ptac);
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				merge();
+				merge((ProgramTreeActionContext) context);
 			}
 		};
-		mergeAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		mergeAction.setPopupMenuData(
-			new MenuData(new String[] { "Merge with Parent" }, null, "merge"));
+		mergeAction.setPopupMenuData(new MenuData(new String[] { "Merge with Parent" }, "merge"));
 
 		list.add(mergeAction);
 
-		deleteAction = new ProgramTreeAction("Delete folder/fragment", owner,
-			new String[] { "Delete" }, null) {
+		deleteAction = new ProgramTreeAction("Delete folder/fragment", owner, null) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+				return isDeleteEnabled(ptac);
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				delete();
+				delete((ProgramTreeActionContext) context);
 			}
 		};
-		deleteAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }, null, "delete"));
+		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }, "delete"));
 		deleteAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
 		list.add(deleteAction);
 
-		renameAction = new ProgramTreeAction("Rename folder/fragment", owner,
-			new String[] { "Rename" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		renameAction = new ProgramTreeAction("Rename folder/fragment", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (context instanceof ProgramTreeActionContext ptac) {
+					return ptac.hasSingleNodeSelection();
+				}
+				return false;
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
+				ProgramDnDTree tree = ((ProgramTreeActionContext) context).getTree();
 				tree.rename();
 			}
 		};
-		renameAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		renameAction.setPopupMenuData(new MenuData(new String[] { "Rename" }, null, "delete"));
+		renameAction.setPopupMenuData(new MenuData(new String[] { "Rename" }, "delete"));
 
 		list.add(renameAction);
 
-		expandAction = new ProgramTreeAction("Expand All folders/fragments", owner,
-			new String[] { "Expand ALL" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		expandAction = new ProgramTreeAction("Expand All folders/fragments", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (!ptac.hasSingleNodeSelection()) {
+					return false;
+				}
+
+				if (ptac.isOnlyRootNodeSelected()) {
+					return !allPathsExpanded(ptac);
+				}
+
+				ProgramNode node = ptac.getSingleSelectedNode();
+				if (node.isFragment()) {
+					return false;
+				}
+
+				return !allPathsExpanded(ptac);
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				expand();
+				expand((ProgramTreeActionContext) context);
 			}
 		};
-		expandAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		expandAction.setPopupMenuData(new MenuData(new String[] { "Expand All" }, null, "expand"));
+		expandAction.setPopupMenuData(new MenuData(new String[] { "Expand All" }, "expand"));
 
 		list.add(expandAction);
 
-		collapseAction = new ProgramTreeAction("Collapse All folders/fragments", owner,
-			new String[] { "Collapse ALL" }, null, ProgramTreeAction.SINGLE_SELECTION) {
+		collapseAction = new ProgramTreeAction("Collapse All folders/fragments", owner, null,
+			ProgramTreeAction.SINGLE_SELECTION) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProgramTreeActionContext ptac)) {
+					return false;
+				}
+
+				if (!ptac.hasSingleNodeSelection()) {
+					return false;
+				}
+
+				if (ptac.isOnlyRootNodeSelected()) {
+					return !allPathsCollapsed(ptac);
+				}
+
+				ProgramNode node = ptac.getSingleSelectedNode();
+				if (node.isFragment()) {
+					return false;
+				}
+
+				return !allPathsCollapsed(ptac);
+			}
+
 			@Override
 			public void actionPerformed(ActionContext context) {
-				collapse();
+				collapse((ProgramTreeActionContext) context);
 			}
 		};
-		collapseAction.setEnabled(false);
 
-// ACTIONS - auto generated
-		collapseAction
-				.setPopupMenuData(new MenuData(new String[] { "Collapse All" }, null, "expand"));
+		collapseAction.setPopupMenuData(new MenuData(new String[] { "Collapse All" }, "expand"));
 
 		list.add(collapseAction);
 
 		actions = new DockingAction[list.size()];
 		actions = list.toArray(actions);
-
-	}
-
-	/**
-	 * Get the temporary clipboard the holds the "cut" nodes.
-	 */
-	Clipboard getCutClipboard() {
-		return tempClipboard;
 	}
 
 	/**
 	 * Remove node from the list of ProgramNodes in the clipboard. This method is called
 	 * if there was a problem pasting a group.
+	 * @param tree the tree
+	 * @param node the node
 	 */
-	void removeFromClipboard(Clipboard clipboard, ProgramNode node) {
+	void removeFromClipboard(ProgramDnDTree tree, ProgramNode node) {
 
 		try {
 			List<ProgramNode> list = getProgramNodeListFromClipboard();
@@ -482,49 +535,38 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				list.remove(node);
 			}
 
-			node.setDeleted(false);
-			tree.reloadNode(node);
+			clearCut(node);
 
 			if (listSize == 0) {
-				if (clipboard == GClipboard.getSystemClipboard()) {
-					doClearSystemClipboard(clipboard);
-				}
-				else {
-					clipboard.setContents(null, this);
-				}
+				tempClipboard.setContents(null, this);
 			}
 		}
 		catch (UnsupportedFlavorException e) {
 			// data flavor is not supported
-			Msg.showError(this, null, "Cut from Clipboard " + clipboard.getName() + " Failed",
+			Msg.showError(this, null, "Cut from Clipboard " + tempClipboard.getName() + " Failed",
 				"Data flavor in clipboard is not supported.", e);
-
 		}
 		catch (IOException e) {
 			// data is no longer available
-			Msg.showError(this, null, "Cut from Clipboard " + clipboard.getName() + " Failed",
+			Msg.showError(this, null, "Cut from Clipboard " + tempClipboard.getName() + " Failed",
 				"Data is no longer available for paste operation", e);
 		}
 		catch (Exception e) {
-			String message = e.getMessage();
-			Msg.showError(this, null, "Cut from Clipboard " + clipboard.getName() + " Failed",
-				message == null ? e.getClass().getSimpleName() : message, e);
+			String message = ExceptionUtils.getMessage(e);
+			Msg.showError(this, null, "Cut from Clipboard " + tempClipboard.getName() + " Failed",
+				message, e);
 		}
 	}
 
-	void enablePasteAction(boolean enabled) {
-		pasteAction.setEnabled(enabled);
+	void clearCut(ProgramNode node) {
+		node.setDeleted(false);
+		plugin.repaintProvider();
 	}
 
-	/**
-	 * Return true if the given node is on the temporary "cut" clipboard.
-	 */
 	boolean clipboardContains(ProgramNode node) {
 		try {
 			List<ProgramNode> list = getProgramNodeListFromClipboard();
-
 			if (list == null) {
-				// SCR 7990--something bad has happened to the copy buffer
 				return false;
 			}
 
@@ -533,7 +575,6 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		catch (UnsupportedFlavorException e) {
 			// data flavor is not supported
 			throw new AssertException("Data flavor in clipboard is not supported.");
-
 		}
 		catch (IOException e) {
 			// data is no longer available
@@ -541,13 +582,13 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				"Data is no longer available for paste operation", e);
 		}
 		catch (Exception e) {
+			Msg.error(this, "Unexpected exception checking clipboard", e);
 		}
 		return false;
 	}
 
 	@SuppressWarnings("unchecked")
-	// the cast is generating the warning, but we verified the
-	// type is correct
+	// the cast is generating the warning, but we verified the type is correct
 	private List<ProgramNode> getProgramNodeListFromClipboard()
 			throws UnsupportedFlavorException, IOException {
 		List<ProgramNode> nodeList = Collections.emptyList();
@@ -555,101 +596,80 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		if (t == null) {
 			return nodeList;
 		}
-		if (!t.isDataFlavorSupported(TreeTransferable.localTreeNodeFlavor)) {
+		if (!t.isDataFlavorSupported(ProgramTreeTransferable.localTreeNodeFlavor)) {
 			return nodeList;
 		}
 		List<ProgramNode> list =
-			(List<ProgramNode>) t.getTransferData(TreeTransferable.localTreeNodeFlavor);
+			(List<ProgramNode>) t.getTransferData(ProgramTreeTransferable.localTreeNodeFlavor);
 		return list;
 	}
 
-	/**
-	  * Check clipboard for cut operations.
-	  * @param applyCutChanges true if cut operation should be performed;
-	  * false means that the nodes will revert to their normal icons
-	  * (i.e., not showing as "cut")
-	  */
-	void checkClipboard(boolean applyCutChanges) {
-
-		// cut the contents of the clipboard from the program, as
-		// a paste was not done...
-		try {
-			List<ProgramNode> list = getProgramNodeListFromClipboard();
-
-			if (list == null) {
-				// SCR 7990--something bad has happened to the copy buffer
-				return;
+	void cutClipboardNodes(ProgramDnDTree tree) {
+		// cut the contents of the clipboard from the program, as a paste was not done
+		List<ProgramNode> list = getNodesFromClipboard();
+		for (ProgramNode node : list) {
+			if (tree.getModel().getRoot() != node.getRoot()) {
+				break;
 			}
 
-			for (ProgramNode node : list) {
-				if (tree.getModel().getRoot() != node.getRoot()) {
-					break;
-				}
+			ProgramModule parentModule = node.getParentModule();
+			Group group = node.getGroup();
+			try {
+				parentModule.removeChild(group.getName());
+			}
+			catch (NotEmptyException e) {
+				clearCut(node);
+			}
+			catch (ConcurrentModificationException e) {
+				// ha!
+			}
+		}
 
-				if (applyCutChanges) {
+		clearSystemClipboard();
+		tempClipboard.setContents(null, this);
+	}
 
-					ProgramModule parentModule = node.getParentModule();
-					Group group = node.getGroup();
-					try {
-						parentModule.removeChild(group.getName());
-					}
-					catch (NotEmptyException e) {
-						node.setDeleted(false);
-						tree.reloadNode(node);
-						//Err.log(e, "Cut from Clipboard Failed");
-					}
-					catch (ConcurrentModificationException e) {
-					}
-				}
-				else {
-					// reverse the indication that tree node is being cut
-					// first make sure that the group still exists
-					try {
-						Group g = node.getGroup();
-						// call a method on group to make sure it is still valid
-						g.getName();
+	void clearCutClipboardNodes() {
 
-						node.setDeleted(false);
-						tree.reloadNode(node);
-					}
-					catch (ConcurrentModificationException e) {
-					}
-				}
+		// cut the contents of the clipboard from the program, as a paste was not done
+		List<ProgramNode> list = getNodesFromClipboard();
+		for (ProgramNode node : list) {
+			node.setDeleted(false);
+		}
 
+		plugin.repaintProvider();
+		tempClipboard.setContents(null, this);
+	}
+
+	private List<ProgramNode> getNodesFromClipboard() {
+		try {
+			List<ProgramNode> list = getProgramNodeListFromClipboard();
+			if (list != null) {
+				return list;
 			}
 		}
 		catch (UnsupportedFlavorException e) {
-			// data flavor is not supported
 			throw new AssertException("Data flavor in clipboard is not supported.");
-
-		}
-		catch (IOException e) {
-			// data is no longer available
-			Msg.showError(this, null, "Cut from Clipboard Failed",
-				"Data is no longer available for paste operation", e);
 		}
 		catch (Exception e) {
+			Msg.error(this, "Unexpected exception checking clipboard", e);
 		}
-
-		try {
-			tempClipboard.setContents(null, this);
-		}
-		catch (Exception e) {
-		}
+		return List.of();
 	}
 
 	/**
 	 * Clear the system clipboard if there is tree transferable data on it.
 	 */
-	void clearSystemClipboard() {
 
+	void clearSystemClipboard() {
 		try {
 			Clipboard systemClipboard = GClipboard.getSystemClipboard();
-			if (!systemClipboard.isDataFlavorAvailable(TreeTransferable.localTreeNodeFlavor)) {
+			if (!systemClipboard
+					.isDataFlavorAvailable(ProgramTreeTransferable.localTreeNodeFlavor)) {
 				return;
 			}
 
-			Object data = systemClipboard.getData(TreeTransferable.localTreeNodeFlavor);
+			Object data = systemClipboard.getData(ProgramTreeTransferable.localTreeNodeFlavor);
 			if (data == null) {
 				return;
 			}
@@ -665,7 +685,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	private void doClearSystemClipboard(Clipboard systemClipboard) {
 		// for some reason setting the contents to null for the system clipboard causes a
 		// NullPointerException, so just set it with an empty transferable.
-		TreeTransferable dummyContents = new TreeTransferable(new ProgramNode[0]);
+		ProgramTreeTransferable dummyContents = new ProgramTreeTransferable(new ProgramNode[0]);
 		systemClipboard.setContents(dummyContents, (clipboard, contents) -> {
 			// a dummy implementation that will not prevent this plugin from being
 			// reclaimed when it is disposed
@@ -673,106 +693,24 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	}
 
 	boolean isReplacingView() {
-		return replacingView;
+		return isSettingView;
 	}
 
-	////////////////////////////////////////////////////////////////////////
-	// ** private methods **
-	////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Validate the selection for a case of the multi-selection
-	 * for either the popup menu or the plugin action.
-	 * @return true if the root node is not selected, or
-	 * a node and all of its children are selected or only
-	 * a parent node is selected; return false if this is not
-	 * the case.
-	 */
-	private boolean validMultiSelection() {
-
-		TreePath[] paths = tree.getSelectionPaths();
-		if (paths == null) {
-			return false;
-		}
-		TreePath rootPath = root.getTreePath();
-		for (TreePath element : paths) {
-			if (element.equals(rootPath)) {
-				return false;
-			}
-		}
-
+	private void addToView(ProgramTreeActionContext context) {
+		ProgramDnDTree tree = context.getTree();
+		TreePath[] paths = context.getSelectionPaths();
 		for (TreePath path : paths) {
-
-			ProgramNode node = (ProgramNode) path.getLastPathComponent();
-			// if the node allows children, then verify that
-			// either (1) only the parent is selected, or
-			// (2) all children are selected
-			if (node.getAllowsChildren() && !validPathSelection(node, paths)) {
-				return false;
-			}
+			updateViewList(tree, path);
 		}
-
-		return true;
+		tree.fireTreeViewChanged();
 	}
 
-	/**
-	 * Enable the view range actions according what is already in the
-	 * the view.
-	 */
-	private void enableViewActions() {
-		goToViewAction.setEnabled(true);
-		removeViewAction.setEnabled(true);
-	}
+	private void goToView(ProgramTreeActionContext context) {
 
-	/**
-	 * For a multi-selection case, verifies that a selection
-	 * from the node's level is valid.
-	 * Returns true if (1) either the paths of all children of node
-	 * are selected, or if (2) none of the paths of all children of node
-	 * are selected.
-	 * Returns false if not all of the children of node are selected
-	 */
-	private boolean validPathSelection(ProgramNode node, TreePath[] selectedPaths) {
+		// the selected node must be represented in the view for the 'go to' to work 
+		addToView(context);
 
-		int nchild = node.getChildCount();
-		int numberSelected = 0;
-
-		for (int i = 0; i < nchild; i++) {
-			ProgramNode child = (ProgramNode) node.getChildAt(i);
-			TreePath childPath = child.getTreePath();
-
-			// see if childPath is in selected list
-			for (TreePath element : selectedPaths) {
-				if (childPath.equals(element)) {
-					++numberSelected;
-					break;
-				}
-			}
-		}
-		if (numberSelected == 0 || numberSelected == nchild) {
-			return true;
-		}
-		return false;
-	}
-
-	///////////////////////////////////////////////////////////////////
-	// ** menu item callback methods for single selection popup
-	///////////////////////////////////////////////////////////////////
-
-	private void addToView() {
-
-		TreePath path = tree.getSelectionPath();
-
-		if (tree.getSelectionCount() > 1) {
-			path = tree.getLeadSelectionPath();
-		}
-
-		TreePath[] paths = tree.getSelectionPaths();
-		for (TreePath element : paths) {
-			updateViewList(element);
-		}
-
-		ProgramNode node = (ProgramNode) path.getLastPathComponent();
+		ProgramNode node = context.getLeadSelectedNode();
 		ProgramFragment f = node.getFragment();
 		Address addr = null;
 		if (f != null && !f.isEmpty()) {
@@ -783,114 +721,97 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			addr = module.getFirstAddress();
 		}
 
-		//notify listeners of change
-		tree.fireTreeViewChanged();
 		if (addr != null) {
+			ProgramDnDTree tree = context.getTree();
 			tree.goTo(addr);
 		}
 	}
 
-	/**
-	 * Remove the selected path from the current view.
-	 */
-	private void removeFromView() {
+	private void removeFromView(ProgramTreeActionContext context) {
 
-		if (tree.getSelectionCount() == 1) {
-			TreePath path = tree.getSelectionPath();
+		ProgramDnDTree tree = context.getTree();
+		TreePath[] paths = context.getSelectionPaths();
+		if (paths.length == 1) {
+			TreePath path = paths[0];
 			if (viewList.contains(path)) {
-				removePathFromView(path, true);
+				tree.removeFromView(path);
 			}
 			else {
-				// remove all descendants from the view
-				removeChildFromView((ProgramNode) path.getLastPathComponent());
-				tree.fireTreeViewChanged();
+				// remove all descendants from the view				
+				ProgramNode node = (ProgramNode) path.getLastPathComponent();
+				removeChildFromView(tree, node);
 			}
 		}
 		else {
-			removeRangeFromView();
-		}
-	}
-
-	/**
-	 * Remove path from the view.
-	 * @param path tree path
-	 * @param fireEvent true means to fire the tree view changed
-	 */
-	private void removePathFromView(TreePath path, boolean fireEvent) {
-		if (viewList.contains(path)) {
-			tree.removeFromView(path);
-			if (fireEvent) {
-				tree.fireTreeViewChanged();
+			for (TreePath path : paths) {
+				tree.removeFromView(path);
 			}
 		}
+
+		tree.fireTreeViewChanged();
 	}
 
 	/**
 	 * Recursively remove nodes from view.
 	 */
-	private void removeChildFromView(ProgramNode node) {
+	private void removeChildFromView(ProgramDnDTree tree, ProgramNode node) {
 		for (int i = 0; i < node.getChildCount(); i++) {
 			ProgramNode child = (ProgramNode) node.getChildAt(i);
 			if (child.getAllowsChildren()) {
-				removeChildFromView(child);
+				removeChildFromView(tree, child);
 			}
 			else {
-				removePathFromView(child.getTreePath(), false);
+				TreePath path = child.getTreePath();
+				if (viewList.contains(path)) {
+					tree.removeFromView(path);
+				}
 			}
 		}
 	}
 
-	/**
-	 * Replace the current view with the selected paths.
-	 */
-	private void replaceView() {
-		replacingView = true;
+	private void setView(ProgramTreeActionContext context) {
+		isSettingView = true;
 		try {
-			tree.setViewPaths(tree.getSelectionPaths());
+			ProgramDnDTree tree = context.getTree();
+			tree.setViewPaths(context.getSelectionPaths());
 		}
 		finally {
-			replacingView = false;
+			isSettingView = false;
 		}
 	}
 
-	/**
-	 * Put selected paths on the clipboard.
-	 */
-	private void cut() {
+	private void cut(ProgramTreeActionContext context) {
 		// revert the "cut" if something is in the temporary clipboard
-		checkClipboard(false);
+		clearCutClipboardNodes();
 
-		if (tree.getSelectionCount() == 1) {
+		TreePath[] paths = context.getSelectionPaths();
+		if (paths.length == 0) {
+			return;
+		}
 
-			// cut to clipboard
-			TreePath[] paths = new TreePath[] { tree.getSelectionPath() };
-			setClipboardContents(GClipboard.getSystemClipboard(), paths);
-			// put on the temporary clipboard
-			setClipboardContents(tempClipboard, paths);
-			setNodesDeleted(paths);
-		}
-		else {
-			cutRange();
-		}
+		// cut to clipboard
+		setClipboardContents(GClipboard.getSystemClipboard(), paths);
+		// put on the temporary clipboard
+		setClipboardContents(tempClipboard, paths);
+		setNodesDeleted(paths);
 	}
 
 	/**
 	 * Put selected paths on the clipboard; clear the temp clipboard
 	 * if something was there.
 	 */
-	private void copy() {
+	private void copy(ProgramTreeActionContext context) {
 
 		// revert the "cut" if something is in the temporary clipboard
-		checkClipboard(false);
+		clearCutClipboardNodes();
 
-		if (tree.getSelectionCount() == 1) {
-			// copy to clipboard
-			setClipboardContents(GClipboard.getSystemClipboard(),
-				new TreePath[] { tree.getSelectionPath() });
+		TreePath[] paths = context.getSelectionPaths();
+		if (paths.length == 0) {
+			return;
 		}
-		else {
-			copyRange();
-		}
+
+		// copy to clipboard
+		setClipboardContents(GClipboard.getSystemClipboard(), paths);
 	}
 
 	/**
@@ -902,16 +823,18 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		for (TreePath element : paths) {
 			ProgramNode node = (ProgramNode) element.getLastPathComponent();
 			node.setDeleted(true);
-			tree.reloadNode(node);
 		}
+
+		plugin.repaintProvider();
 	}
 
 	/**
 	 * Delete node(s) from the tree; called from the action listener
 	 * on the menu.
 	 */
-	private void delete() {
+	private void delete(ProgramTreeActionContext context) {
 
+		ProgramDnDTree tree = context.getTree();
 		int transactionID = tree.startTransaction("Delete");
 		if (transactionID < 0) {
 			return;
@@ -919,46 +842,47 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		boolean success = false;
 		try {
 			synchronized (root) {
-				try {
-					success = deleteRange();
-				}
-				catch (Exception e) {
-					Msg.showError(this, null, null, null, e);
-				}
+				TreePath[] paths = context.getSelectionPaths();
+				success = delete(tree, paths);
 			}
 		}
 		finally {
 			tree.endTransaction(transactionID, success);
 		}
-
 	}
 
-	/**
-	 * Expand the first selected node; called from an action listener
-	 * on a menu.
-	 */
-	private void expand() {
-		TreePath path = tree.getLeadSelectionPath();
-		tree.expandNode((ProgramNode) tree.getLastSelectedPathComponent());
-		expandAction.setEnabled(!allPathsExpanded(path));
-		collapseAction.setEnabled(!allPathsCollapsed(path));
+	private boolean delete(ProgramDnDTree tree, TreePath[] paths) {
+
+		boolean changesMade = false;
+		StringBuilder sb = new StringBuilder();
+
+		for (TreePath element : paths) {
+			ProgramNode node = (ProgramNode) element.getLastPathComponent();
+			if (tree.removeGroup(node, sb)) {
+				changesMade = true;
+			}
+		}
+
+		if (sb.length() > 0) {
+			sb.insert(0, "Failed to delete the following:\n");
+			Msg.showWarn(getClass(), null, "Delete Failed", sb.toString());
+		}
+		return changesMade;
 	}
 
-	/**
-	 * Collapse the first selected node; called from an action listener
-	 * on a menu.
-	 */
-	private void collapse() {
-		TreePath path = tree.getLeadSelectionPath();
-		collapseNode((ProgramNode) tree.getLastSelectedPathComponent());
-		expandAction.setEnabled(!allPathsExpanded(path));
-		collapseAction.setEnabled(!allPathsCollapsed(path));
+	void expand(ProgramTreeActionContext context) {
+		ProgramDnDTree tree = context.getTree();
+		tree.expandNode(context.getSingleSelectedNode());
+		plugin.contextChanged();
 	}
 
-	/**
-	 * Collapse all descendants starting at node.
-	 */
-	private void collapseNode(ProgramNode node) {
+	private void collapse(ProgramTreeActionContext context) {
+		ProgramDnDTree tree = context.getTree();
+		collapseNode(tree, context.getSingleSelectedNode());
+		plugin.contextChanged();
+	}
+
+	private void collapseNode(ProgramDnDTree tree, ProgramNode node) {
 
 		int nchild = node.getChildCount();
 		for (int i = 0; i < nchild; i++) {
@@ -968,7 +892,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			if (child.equals(node) || child.isLeaf()) {
 				continue;
 			}
-			collapseNode(child);
+			collapseNode(tree, child);
 		}
 		tree.collapsePath(node.getTreePath());
 	}
@@ -977,29 +901,31 @@ class ProgramTreeActionManager implements ClipboardOwner {
 	 * Merge a module with its parent. The module is deleted if it has
 	 * no other parents; called by the action listener on a menu.
 	 */
-	private void merge() {
+	private void merge(ProgramTreeActionContext context) {
 		synchronized (root) {
-			ArrayList<ProgramNode> list = tree.getSortedSelection();
-			CompoundCmd compCmd = new CompoundCmd("Merge with Parent");
+
+			CompoundCmd<Program> cmd = new CompoundCmd<>("Merge with Parent");
+			ProgramDnDTree tree = context.getTree();
 			String treeName = tree.getTreeName();
-			for (ProgramNode node : list) {
-				tree.removeSelectionPath(node.getTreePath());
+			TreePath[] paths = context.getSelectionPaths();
+			for (TreePath path : paths) {
+
+				ProgramNode node = (ProgramNode) path.getLastPathComponent();
+				tree.removeSelectionPath(path);
 				ProgramNode parentNode = (ProgramNode) node.getParent();
 				if (node.isModule() && parentNode != null) {
-					compCmd.add(new MergeFolderCmd(treeName, node.getName(), parentNode.getName()));
+					cmd.add(new MergeFolderCmd(treeName, node.getName(), parentNode.getName()));
 				}
 			}
-			if (!plugin.getTool().execute(compCmd, program)) {
-				plugin.getTool().setStatusInfo(compCmd.getStatusMsg());
+
+			PluginTool tool = plugin.getTool();
+			if (!tool.execute(cmd, program)) {
+				tool.setStatusInfo(cmd.getStatusMsg());
 			}
 		}
 	}
 
-	/**
-	 * Create a new empty fragment; called from an action listener on
-	 * a menu.
-	 */
-	private void createFragment(ProgramNode node) {
+	private void createFragment(ProgramTreeActionContext context) {
 		synchronized (root) {
 
 			String errMsg = null;
@@ -1007,54 +933,52 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			// sync program so we don't get a deadlock --
 			// an event gets generated because of the add module.
 			synchronized (program) {
+				ProgramDnDTree tree = context.getTree();
 				String name = tree.getNewFragmentName();
 				String treeName = tree.getTreeName();
+				ProgramNode node = context.getSingleSelectedNode();
 				CreateFragmentCmd cmd = new CreateFragmentCmd(treeName, name, node.getName());
 				if (tree.getTool().execute(cmd, program)) {
 					ProgramFragment f = program.getListing().getFragment(treeName, name);
-					initiateCellEditor(node, f);
+					initiateCellEditor(tree, node, f);
 				}
 				else {
 					errMsg = cmd.getStatusMsg();
 				}
 			}
 			if (errMsg != null) {
-				Msg.showError(this, tree, "Create Fragment Failed", errMsg);
+				Msg.showError(this, null, "Create Fragment Failed", errMsg);
 			}
 		}
 	}
 
-	/**
-	 * Create a new empty module; called from an action listener on
-	 * a menu.
-	 */
-	private void createFolder() {
-		String errorMsg = null;
-
+	private void createFolder(ProgramTreeActionContext context) {
+		String errorMessage = null;
 		synchronized (root) {
 			// sync program so we don't get a deadlock --
 			// an event gets generated because of the add module.
 			synchronized (program) {
-				ProgramNode node = (ProgramNode) tree.getLastSelectedPathComponent();
+				ProgramNode node = context.getSingleSelectedNode();
 
 				// if the node has not been yet visited, then when the group is added via the
 				// command below, the new child node in the parent will not be found
 				node.visit();
 
+				ProgramDnDTree tree = context.getTree();
 				String name = tree.getNewFolderName();
 				String treeName = tree.getTreeName();
 				CreateFolderCommand cmd = new CreateFolderCommand(treeName, name, node.getName());
 				if (tree.getTool().execute(cmd, program)) {
 					ProgramModule m = program.getListing().getModule(treeName, name);
-					initiateCellEditor(node, m);
+					initiateCellEditor(tree, node, m);
 				}
 				else {
-					errorMsg = cmd.getStatusMsg();
+					errorMessage = cmd.getStatusMsg();
 				}
 			}
 		}
-		if (errorMsg != null) {
-			Msg.showError(this, tree, "Create Folder Failed", errorMsg);
+		if (errorMessage != null) {
+			Msg.showError(this, null, "Create Folder Failed", errorMessage);
 		}
 
 	}
@@ -1075,11 +999,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		ExpiringSwingTimer.get(supplier, expireMs, consumer);
 	}
 
-	/**
-	 * Find the node corresponding to the given group. Start the cell
-	 * editor for the child node.
-	 */
-	private void initiateCellEditor(ProgramNode parent, Group group) {
+	private void initiateCellEditor(ProgramDnDTree tree, ProgramNode parent, Group group) {
 		if (!parent.wasVisited()) {
 			tree.visitNode(parent);
 		}
@@ -1088,79 +1008,6 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			tree.setEditable(true);
 			tree.startEditingAtPath(c.getTreePath());
 		});
-	}
-
-	///////////////////////////////////////////////////////////////////////
-	// *** callbacks for multi selection popup
-	///////////////////////////////////////////////////////////////////////
-	/**
-	 * Cut a range of nodes and put them on the clipboard;
-	 * called from an action listener on a menu.
-	 */
-	private void cutRange() {
-
-		TreePath[] paths = tree.getSelectionPaths();
-
-		if (paths.length == 0) {
-			return;
-		}
-		// cut to clipboard
-		setClipboardContents(GClipboard.getSystemClipboard(), paths);
-		// put on the temporary clipboard
-		setClipboardContents(tempClipboard, paths);
-		setNodesDeleted(paths);
-	}
-
-	/**
-	 * Copy a range of nodes and put them on the clipboard;
-	 * called from an action listener on a menu.
-	 */
-	private void copyRange() {
-
-		// generate a list of selected modules that are
-		// "root"-type modules, i.e., not submodules within the selection.
-		TreePath[] paths = tree.getSelectionPaths();
-
-		if (paths.length == 0) {
-			return;
-		}
-		// cut to clipboard
-		setClipboardContents(GClipboard.getSystemClipboard(), paths);
-	}
-
-	/**
-	 * Delete a range of Modules; called from an action listener on a menu.
-	 * @return true if program was affected
-	 */
-	private boolean deleteRange() {
-
-		TreePath[] paths = tree.getSelectionPaths();
-
-		boolean changesMade = false;
-		StringBuffer sb = new StringBuffer();
-
-		for (TreePath element : paths) {
-			ProgramNode node = (ProgramNode) element.getLastPathComponent();
-			if (tree.removeGroup(node, sb)) {
-				changesMade = true;
-			}
-		}
-
-		if (sb.length() > 0) {
-			sb.insert(0, "Failed to delete the following:\n");
-			Msg.showWarn(getClass(), tree, "Delete Failed", sb.toString());
-		}
-		return changesMade;
-	}
-
-	private void removeRangeFromView() {
-		TreePath[] selPaths = tree.getSelectionPaths();
-		for (TreePath element : selPaths) {
-			tree.removeFromView(element);
-		}
-		if (selPaths.length > 0) {
-			tree.fireTreeViewChanged();
-		}
 	}
 
 	/**
@@ -1174,14 +1021,23 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			nodes[i] = (ProgramNode) paths[i].getLastPathComponent();
 		}
 
-		TreeTransferable contents = new TreeTransferable(nodes);
+		ProgramTreeTransferable contents = new ProgramTreeTransferable(nodes);
 		clipboard.setContents(contents, this);
 	}
 
-	/**
-	 * Return true if this path has all of its sub-paths expanded.
-	 */
-	private boolean allPathsExpanded(TreePath path) {
+	private boolean allPathsExpanded(ProgramTreeActionContext context) {
+
+		if (!context.hasSingleNodeSelection()) {
+			return false;
+		}
+
+		ProgramDnDTree tree = context.getTree();
+		TreePath[] paths = context.getSelectionPaths();
+		TreePath path = paths[0];
+		return allPathsExpanded(tree, path);
+	}
+
+	private boolean allPathsExpanded(ProgramDnDTree tree, TreePath path) {
 
 		ProgramNode node = (ProgramNode) path.getLastPathComponent();
 		if (node.isLeaf()) {
@@ -1204,7 +1060,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				return false;
 			}
 
-			if (!allPathsExpanded(child.getTreePath())) {
+			if (!allPathsExpanded(tree, child.getTreePath())) {
 				return false;
 			}
 		}
@@ -1214,18 +1070,26 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		return true;
 	}
 
-	/**
-	 * Return true if this path has all of its sub-paths collapsed.
-	 */
-	private boolean allPathsCollapsed(TreePath path) {
+	private boolean allPathsCollapsed(ProgramTreeActionContext context) {
+
+		if (!context.hasSingleNodeSelection()) {
+			return false;
+		}
+
+		ProgramDnDTree tree = context.getTree();
+		TreePath[] paths = context.getSelectionPaths();
+		TreePath path = paths[0];
+		return allPathsCollapsed(tree, path);
+	}
+
+	private boolean allPathsCollapsed(ProgramDnDTree tree, TreePath path) {
 		ProgramNode node = (ProgramNode) path.getLastPathComponent();
 
 		if (tree.isExpanded(path)) {
 			return false;
 		}
-		boolean allLeaves = true; // variable for knowing whether
-		// all children are leaves
 
+		boolean allLeaves = true; // variable for knowing whether all children are leaves
 		int nchild = node.getChildCount();
 		for (int i = 0; i < nchild; i++) {
 			ProgramNode child = (ProgramNode) node.getChildAt(i);
@@ -1237,7 +1101,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				return false;
 			}
 
-			if (!allPathsCollapsed(child.getTreePath())) {
+			if (!allPathsCollapsed(tree, child.getTreePath())) {
 				return false;
 			}
 		}
@@ -1247,43 +1111,31 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		return true;
 	}
 
-	/**
-	 * Returns true if the paste operation is valid for
-	 * the given node.
-	 * If the node and node to paste have the same name, then return
-	 * false.
-	 */
 	@SuppressWarnings("unchecked")
 	// the cast is safe, since we checked the flavor
 	private boolean isPasteOk(ProgramNode destNode) {
 
 		boolean isCutOperation = false;
 		Clipboard systemClipboard = GClipboard.getSystemClipboard();
-		if (!systemClipboard.isDataFlavorAvailable(TreeTransferable.localTreeNodeFlavor)) {
+		if (!systemClipboard.isDataFlavorAvailable(ProgramTreeTransferable.localTreeNodeFlavor)) {
 			return false;
 		}
 
-		try {
-			// we will put items on the 'tempClipboard' when the cut action is executed
-			Transferable temp = tempClipboard.getContents(this);
-			isCutOperation = (temp != null);
-		}
-		catch (Exception e) {
-			// bad stuff on the clipboard, so ignore it
-			return false;
-		}
+		// we will put items on the 'tempClipboard' when the cut action is executed
+		Transferable temp = tempClipboard.getContents(this);
+		isCutOperation = (temp != null);
 
 		try {
-			List<ProgramNode> list =
-				(List<ProgramNode>) systemClipboard.getData(TreeTransferable.localTreeNodeFlavor);
+			List<ProgramNode> list = (List<ProgramNode>) systemClipboard
+					.getData(ProgramTreeTransferable.localTreeNodeFlavor);
 			if (list == null) {
-				// SCR 7990--something bad has happened to the copy buffer
 				return false;
 			}
 
 			boolean pasteEnabled = false;
 			for (ProgramNode pasteNode : list) {
-				boolean pasteAllowed = pasteMgr.isPasteAllowed(destNode, pasteNode, isCutOperation);
+				boolean pasteAllowed =
+					pasteManager.isPasteAllowed(destNode, pasteNode, isCutOperation);
 				if (isCutOperation && !pasteAllowed) {
 					// for cut operation all nodes must be able to be pasted at destNode
 					return false;
@@ -1307,25 +1159,19 @@ class ProgramTreeActionManager implements ClipboardOwner {
 				"Data is no longer available for paste operation", e);
 		}
 		catch (Exception e) {
-			String msg = e.getMessage();
-			if (msg == null) {
-				msg = e.toString();
-			}
-			Msg.showError(this, null, "Check Clipboard Failed", msg, e);
+			String message = ExceptionUtils.getMessage(e);
+			Msg.showError(this, null, "Check Clipboard Failed", message, e);
 		}
 		return false;
 	}
 
 	/**
-	 * Update the view list if the the given path is the an ancestor of any of
-	 * the paths currently in the view; remove the descendant and add the
-	 * ancestor path.
-	 *
-	 * @param path
-	 *            path the check against the view list
-	 *
+	 * Update the view list if the the given path is the an ancestor of any of the paths currently 
+	 * in the view; remove the descendant and add the ancestor path. 
+	 * @param tree the tree
+	 * @param path path the check against the view list
 	 */
-	private void updateViewList(TreePath path) {
+	private void updateViewList(ProgramDnDTree tree, TreePath path) {
 		ProgramNode node = (ProgramNode) path.getLastPathComponent();
 		if (!tree.hasAncestorsInView(node) && !viewList.contains(path)) {
 			for (int i = 0; i < viewList.size(); i++) {
@@ -1339,79 +1185,45 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		}
 	}
 
-	private void selectionChanged() {
-		// adjust actions according to what is selected
-		int count = tree.getSelectionCount();
-		disableActions();
-		if (count == 1) {
-			adjustSingleActions((ProgramNode) tree.getSelectionPath().getLastPathComponent());
-		}
-		else if (validMultiSelection()) {
-			copyAction.setEnabled(true);
-			cutAction.setEnabled(true);
-			deleteAction.setEnabled(true);
-			replaceViewAction.setEnabled(true);
-			enableViewActions();
-		}
-		enableMergeAction();
-	}
+	private boolean isDeleteEnabled(ProgramTreeActionContext context) {
 
-	private void setDeleteActionEnabled() {
-		deleteAction.setEnabled(false);
+		TreePath[] paths = context.getSelectionPaths();
+		if (paths == null) {
+			return false;
+		}
 
-		TreePath[] paths = tree.getSelectionPaths();
 		for (TreePath element : paths) {
 			ProgramNode node = (ProgramNode) element.getLastPathComponent();
 			if (node.isFragment()) {
 				ProgramFragment f = node.getFragment();
 
 				if (f.isEmpty() || (!f.isEmpty() && node.getFragment().getNumParents() > 1)) {
-					deleteAction.setEnabled(true);
-					break;
+					return true;
 				}
 			}
 			else {
 				ProgramModule m = node.getModule();
 				if (m.getNumChildren() == 0 || m.getNumParents() > 1) {
-					deleteAction.setEnabled(true);
-					break;
+					return true;
 				}
 			}
 		}
 
+		return false;
 	}
 
-	private void enableMergeAction() {
-		mergeAction.setEnabled(false);
-		TreePath[] paths = tree.getSelectionPaths();
+	private boolean isMergeEnabled(ProgramTreeActionContext context) {
+		TreePath[] paths = context.getSelectionPaths();
 		if (paths == null) {
-			return;
+			return false;
 		}
+
 		for (TreePath element : paths) {
 			ProgramNode node = (ProgramNode) element.getLastPathComponent();
 			if (node.isModule()) {
-				mergeAction.setEnabled(true);
-				return;
+				return true;
 			}
 		}
-	}
-
-	/**
-	 * A listener for selection events on the ProgramDnDTree.
-	 */
-	private class SelectionListener implements TreeSelectionListener {
-
-		/**
-		 * Called whenever the value of the selection changes.
-		 */
-		@Override
-		public void valueChanged(TreeSelectionEvent e) {
-			if (program == null) {
-				return;
-			}
-
-			selectionChanged();
-		}
-
+		return false;
 	}
 }
