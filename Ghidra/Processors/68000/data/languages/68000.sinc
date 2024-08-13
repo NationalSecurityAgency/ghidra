@@ -2687,7 +2687,7 @@ m2fpC2:   FPCR				is FPCR & f12=1				{ FPCR = *movemptr; movemptr = movemptr + 1
 m2fpC2:   					is f12=0					{ }
 m2fpC1:   m2fpC2" "FPSR		is FPSR & f11=1 & m2fpC2	{ FPSR = *movemptr; movemptr = movemptr + 12; }
 m2fpC1:   m2fpC2			is f11=0 & m2fpC2			{ }
-m2fpC0: { m2fpC1" "FPCR }	is FPCR & f10=1 & m2fpC1	{ FPCR = *movemptr; movemptr = movemptr + 12; }
+m2fpC0: { m2fpC1" "FPIAR }	is FPIAR & f10=1 & m2fpC1	{ FPIAR = *movemptr; movemptr = movemptr + 12; }
 m2fpC0: { m2fpC1 }			is f10=0 & m2fpC1			{ }
 
 # Floating point control register to Memory
