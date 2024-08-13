@@ -41,6 +41,7 @@ public class ProgramSelection implements AddressSetView {
 	 * @param to the end of the selection
 	 */
 	public ProgramSelection(Address from, Address to) {
+		this();
 		if (to.compareTo(from) < 0) {
 			Address temp = to;
 			to = from;
