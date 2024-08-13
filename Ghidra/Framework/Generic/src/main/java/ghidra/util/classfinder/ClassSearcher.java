@@ -174,7 +174,7 @@ public class ClassSearcher {
 		}
 
 		List<Class<? extends T>> list = new ArrayList<>();
-		for (ClassFileInfo info : extensionPointSuffixToInfoMap.get(suffix)) {
+		for (ClassFileInfo info : extensionPointSuffixToInfoMap.getOrDefault(suffix, Set.of())) {
 
 			if (falsePositiveCache.contains(info)) {
 				continue;
