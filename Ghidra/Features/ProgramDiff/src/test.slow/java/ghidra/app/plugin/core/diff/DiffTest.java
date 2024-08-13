@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -428,7 +428,7 @@ public class DiffTest extends DiffTestAdapter {
 
 		// Replace view with .data
 		selectTreeNodeByText(tree, ".data");
-		invokeAndWait(replaceView);
+		setView();
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
 		bottomOfFile(fp1);
@@ -436,7 +436,7 @@ public class DiffTest extends DiffTestAdapter {
 
 		// Replace with program view
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		invokeAndWait(replaceView);
+		setView();
 		topOfFile(fp1);
 		assertEquals(addr("100"), cb.getCurrentAddress());
 		bottomOfFile(fp1);
@@ -455,8 +455,7 @@ public class DiffTest extends DiffTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
-
-		runSwing(() -> replaceView.actionPerformed(new DefaultActionContext()));
+		setView();
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -482,11 +481,11 @@ public class DiffTest extends DiffTestAdapter {
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> replaceView.actionPerformed(new DefaultActionContext()));
+		runSwing(() -> setView.actionPerformed(programTreeProvider.getActionContext(null)));
 
 		selectTreeNodeByText(tree, ".rsrc");
 
-		runSwing(() -> goToView.actionPerformed(new DefaultActionContext()));
+		runSwing(() -> goToView.actionPerformed(programTreeProvider.getActionContext(null)));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());

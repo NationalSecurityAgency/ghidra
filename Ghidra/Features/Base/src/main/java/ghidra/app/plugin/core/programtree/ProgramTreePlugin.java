@@ -990,5 +990,4 @@ public class ProgramTreePlugin extends ProgramPlugin
 			currentProvider.selectPathsForLocation(currentLocation);
 		}
 	}
-
 }
