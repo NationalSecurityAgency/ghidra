@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.async.*;
@@ -41,6 +42,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 
+@Ignore("deprecated")
 public class GadpClientTest implements AsyncTestUtils {
 	private static final String HELLO_WORLD = "Hello, World!";
 	private static final String TEST_HOST = "localhost";
@@ -401,7 +403,8 @@ public class GadpClientTest implements AsyncTestUtils {
 			assertEquals(HELLO_WORLD, waitOn(fetchVal1));
 			assertEquals(HELLO_WORLD, waitOn(fetchVal2));
 
-			CompletableFuture<?> fetchVal3 = client.fetchModelValue(PathUtils.parse("value"), RefreshBehavior.REFRESH_ALWAYS);
+			CompletableFuture<?> fetchVal3 =
+				client.fetchModelValue(PathUtils.parse("value"), RefreshBehavior.REFRESH_ALWAYS);
 			srv.handleResyncAttributes(List.of(), true, null, Map.of("value", "Hi"));
 			assertEquals("Hi", waitOn(fetchVal3));
 		}

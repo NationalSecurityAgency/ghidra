@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,19 +24,20 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-	shortDescription = "Debugger targets manager", //
-	description = "GUI to manage connections to external debuggers and trace recording", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
+@PluginInfo(
+	shortDescription = "Debugger targets manager",
+	description = """
+			GUI to manage connections to external debuggers and trace recording. \
+			Deprecated since 11.2 for removal in 11.3.""",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.DEPRECATED,
 	eventsConsumed = {
-		ModelActivatedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerModelService.class, //
-	} //
-)
+		ModelActivatedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerModelService.class,
+	})
 public class DebuggerTargetsPlugin extends AbstractDebuggerPlugin {
 	@AutoServiceConsumed
 	protected DebuggerModelService modelService;

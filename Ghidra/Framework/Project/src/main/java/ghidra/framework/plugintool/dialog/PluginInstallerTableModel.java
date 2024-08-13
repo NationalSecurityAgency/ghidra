@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,13 +50,12 @@ class PluginInstallerTableModel
 
 	public static final Icon EXPERIMENTAL_ICON = Icons.WARNING_ICON;
 	public static final Icon DEV_ICON = Icons.STRONG_WARNING_ICON;
+	public static final Icon DEPRECATED_ICON = Icons.WARNING_ICON;
 
-	private static Map<PluginStatus, Icon> statusIconMap = new HashMap<>();
-
-	static {
-		statusIconMap.put(PluginStatus.UNSTABLE, DEV_ICON);
-		statusIconMap.put(PluginStatus.STABLE, EXPERIMENTAL_ICON);
-	}
+	private static Map<PluginStatus, Icon> statusIconMap = Map.ofEntries(
+		Map.entry(PluginStatus.UNSTABLE, DEV_ICON),
+		Map.entry(PluginStatus.STABLE, EXPERIMENTAL_ICON),
+		Map.entry(PluginStatus.DEPRECATED, DEPRECATED_ICON));
 
 	private PluginConfigurationModel model;
 	private List<PluginDescription> pluginDescriptions;
@@ -66,8 +65,8 @@ class PluginInstallerTableModel
 	 * Constructs a new data model.
 	 * 
 	 * @param tool the current tool
-	 * @param parentComponent the ui component that should be forced to refresh if a plugin's
-	 * state changes.
+	 * @param parentComponent the ui component that should be forced to refresh if a plugin's state
+	 *            changes.
 	 * @param pluginDescriptions the list of plugin descriptions to display
 	 * @param model the main plugin configuration model
 	 */
@@ -116,8 +115,7 @@ class PluginInstallerTableModel
 	}
 
 	/**
-	 * Overridden to handle the case where a user has toggled the installation column
-	 * checkbox.
+	 * Overridden to handle the case where a user has toggled the installation column checkbox.
 	 */
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
@@ -177,8 +175,8 @@ class PluginInstallerTableModel
 	}
 
 	/**
-	 * Column for displaying the interactive checkbox, allowing the user to install
-	 * or uninstall the plugin.
+	 * Column for displaying the interactive checkbox, allowing the user to install or uninstall the
+	 * plugin.
 	 */
 	private class PluginInstalledColumn extends
 			AbstractDynamicTableColumn<PluginDescription, Boolean, List<PluginDescription>> {
