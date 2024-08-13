@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -723,7 +723,42 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 	}
 
 	@Test
-	public void testCustomStack() throws Exception {
+	public void testCustomStackByContext() throws Exception {
+		createProgram();
+		intoProject(program);
+
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x00400000);
+		Register regSP = program.getRegister("sp");
+		try (Transaction tx = program.openTransaction("Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+
+			program.getProgramContext()
+					.setRegisterValue(addrText, addrText,
+						new RegisterValue(regSP, BigInteger.valueOf(0x00200000)));
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		assertTrue(emulationPlugin.actionEmulateProgram.isEnabled());
+		performAction(emulationPlugin.actionEmulateProgram);
+
+		Trace trace = traceManager.getCurrentTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		assertEquals(new BigInteger("00200000", 16),
+			regs.getViewValue(0, regSP).getUnsignedValue());
+	}
+
+	@Test
+	public void testCustomStackByBlock() throws Exception {
 		createProgram();
 		intoProject(program);
 		Memory memory = program.getMemory();
@@ -733,7 +768,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
 				(byte) 0, TaskMonitor.DUMMY, false);
 			blockText.setExecute(true);
-			memory.createUninitializedBlock("STACK", addr(program, 0x00001234), 0x1000, false);
+			memory.createUninitializedBlock(ProgramEmulationUtils.BLOCK_NAME_STACK,
+				addr(program, 0x00001234), 0x1000, false);
 		}
 
 		programManager.openProgram(program);
