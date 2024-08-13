@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,19 @@ package agent.dbgmodel.model.invm;
 
 import java.util.List;
 
+import org.junit.Ignore;
+
 import agent.dbgeng.model.AbstractModelForDbgengProcessActivationTest;
 import ghidra.dbg.target.TargetInterpreter;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
 
+@Ignore("deprecated")
 public class InVmModelForDbgmodelProcessActivationTest
 		extends AbstractModelForDbgengProcessActivationTest {
 
+	@Override
 	protected PathPattern getProcessPattern() {
 		return new PathPattern(PathUtils.parse("Sessions[0x0].Processes[]"));
 	}
@@ -40,6 +44,7 @@ public class InVmModelForDbgmodelProcessActivationTest
 		return PathUtils.parse("Sessions[0x0]");
 	}
 
+	@Override
 	public String getIdFromCapture(String line) {
 		return "0x" + line.split("\\s+")[3];
 	}

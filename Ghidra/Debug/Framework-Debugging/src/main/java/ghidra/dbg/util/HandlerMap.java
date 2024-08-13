@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,11 @@ import java.util.function.BiFunction;
  * @param <T> the root type for all handlers and passed objects
  * @param <A> the type of custom additional argument
  * @param <R> the type of result returned by the handler
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
+ *             Anymore, the use case this supported can be accomplished with Java's new switch
+ *             statements on types.
  */
+@Deprecated(forRemoval = true, since = "11.2")
 public class HandlerMap<T, A, R> {
 	private LinkedHashMap<Class<? extends T>, BiFunction<?, ? super A, ? extends R>> map =
 		new LinkedHashMap<>();

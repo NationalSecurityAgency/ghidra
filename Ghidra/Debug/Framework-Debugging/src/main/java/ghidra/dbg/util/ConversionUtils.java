@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,14 +17,11 @@ package ghidra.dbg.util;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
-import ghidra.dbg.attributes.TargetStringList;
-import ghidra.dbg.attributes.TargetStringList.MutableTargetStringList;
-import ghidra.dbg.target.TargetMemory;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
-
+/**
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
+ */
+@Deprecated(forRemoval = true, since = "11.2")
 public enum ConversionUtils {
 	;
 	/**
@@ -54,18 +51,5 @@ public enum ConversionUtils {
 			System.arraycopy(bytes, 0, result, length - bytes.length, bytes.length);
 		}
 		return result;
-	}
-
-	/**
-	 * @deprecated Since removing getAddressFactory from {@link TargetMemory}, I don't think this is
-	 *             needed anymore.
-	 */
-	@Deprecated(forRemoval = true)
-	public static TargetStringList addressFactoryToSpaceNameSet(AddressFactory factory) {
-		return Arrays.asList(factory.getAddressSpaces())
-				.stream()
-				// TODO .filter
-				.map(AddressSpace::getName)
-				.collect(Collectors.toCollection(MutableTargetStringList::new));
 	}
 }

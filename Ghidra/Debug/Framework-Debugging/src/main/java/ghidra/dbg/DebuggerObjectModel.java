@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,10 @@ import ghidra.util.Msg;
  * Users and implementors of this interface may find {@link AsyncUtils} useful. An implementation of
  * this interface should never block the calling thread to wait on an external event, otherwise, you
  * risk deadlocking Ghidra's UI.
+ * 
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
  */
+@Deprecated(forRemoval = true, since = "11.2")
 public interface DebuggerObjectModel {
 
 	public static enum RefreshBehavior {
