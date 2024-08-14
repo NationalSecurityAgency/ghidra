@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.action;
+package ghidra.debug.api.action;
 
 import java.util.*;
 
@@ -21,15 +21,15 @@ import javax.swing.Icon;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigFieldCodec;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -50,7 +50,7 @@ public interface AutoMapSpec extends ExtensionPoint {
 		}
 
 		private synchronized void classesChanged(ChangeEvent evt) {
-			MiscellaneousUtils.collectUniqueInstances(AutoMapSpec.class, specsByName,
+			InstanceUtils.collectUniqueInstances(AutoMapSpec.class, specsByName,
 				AutoMapSpec::getConfigName);
 		}
 	}
@@ -87,11 +87,17 @@ public interface AutoMapSpec extends ExtensionPoint {
 
 	String getMenuName();
 
-	default Icon getMenuIcon() {
-		return DebuggerResources.ICON_CONFIG;
-	}
+	Icon getMenuIcon();
 
 	Collection<TraceEvent<?, ?>> getChangeTypes();
+
+	boolean objectHasType(TraceObjectValue value);
+
+	String getInfoForObjects(Trace trace);
+
+	default boolean hasTask() {
+		return true;
+	}
 
 	default String getTaskTitle() {
 		return getMenuName();
@@ -119,6 +125,33 @@ public interface AutoMapSpec extends ExtensionPoint {
 		tool.executeBackgroundCommand(cmd, trace);
 	}
 
-	void performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			ProgramManager programManager, TaskMonitor monitor) throws CancelledException;
+	List<Program> programs(ProgramManager programManager);
+
+	/**
+	 * Perform the actual mapping
+	 * 
+	 * @param mappingService the mapping service
+	 * @param trace the trace
+	 * @param programs the programs to consider
+	 * @param monitor a task monitor
+	 * @return true if any mappings were added
+	 * @throws CancelledException if the task monitor cancelled the task
+	 */
+	boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
+			List<Program> programs, TaskMonitor monitor) throws CancelledException;
+
+	/**
+	 * Perform the actual mapping
+	 * 
+	 * @param mappingService the mapping service
+	 * @param trace the trace
+	 * @param programManager the program manager
+	 * @param monitor a task monitor
+	 * @return true if any mappings were added
+	 * @throws CancelledException if the task monitor cancelled the task
+	 */
+	default boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
+			ProgramManager programManager, TaskMonitor monitor) throws CancelledException {
+		return performMapping(mappingService, trace, programs(programManager), monitor);
+	}
 }

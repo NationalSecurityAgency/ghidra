@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,11 @@ import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
-import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
+import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoServiceProvided;
 import ghidra.framework.plugintool.util.PluginStatus;
 
 @PluginInfo(
@@ -37,6 +37,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		ProgramActivatedPluginEvent.class,
 		ProgramLocationPluginEvent.class,
 		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
 	},
@@ -44,8 +45,13 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		DebuggerStaticMappingService.class,
 		DebuggerTraceManagerService.class,
 		ProgramManager.class,
+	},
+	servicesProvided = {
+		DebuggerAutoMappingService.class,
 	})
 public class DebuggerModulesPlugin extends AbstractDebuggerPlugin {
+
+	@AutoServiceProvided(iface = DebuggerAutoMappingService.class)
 	protected DebuggerModulesProvider provider;
 
 	public DebuggerModulesPlugin(PluginTool tool) {
@@ -68,23 +74,17 @@ public class DebuggerModulesPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof ProgramOpenedPluginEvent ev) {
-			provider.programOpened(ev.getProgram());
-		}
-		else if (event instanceof ProgramActivatedPluginEvent ev) {
-			provider.setProgram(ev.getActiveProgram());
-		}
-		else if (event instanceof ProgramLocationPluginEvent ev) {
-			provider.setLocation(ev.getLocation());
-		}
-		else if (event instanceof ProgramClosedPluginEvent ev) {
-			provider.programClosed(ev.getProgram());
-		}
-		else if (event instanceof TraceActivatedPluginEvent ev) {
-			provider.coordinatesActivated(ev.getActiveCoordinates());
-		}
-		else if (event instanceof TraceClosedPluginEvent ev) {
-			provider.traceClosed(ev.getTrace());
+		switch (event) {
+			case ProgramOpenedPluginEvent ev -> provider.programOpened(ev.getProgram());
+			case ProgramActivatedPluginEvent ev -> provider.setProgram(ev.getActiveProgram());
+			case ProgramLocationPluginEvent ev -> provider.setLocation(ev.getLocation());
+			case ProgramClosedPluginEvent ev -> provider.programClosed(ev.getProgram());
+			case TraceOpenedPluginEvent ev -> provider.traceOpened(ev.getTrace());
+			case TraceActivatedPluginEvent ev -> provider
+					.coordinatesActivated(ev.getActiveCoordinates());
+			case TraceClosedPluginEvent ev -> provider.traceClosed(ev.getTrace());
+			default -> {
+			}
 		}
 	}
 

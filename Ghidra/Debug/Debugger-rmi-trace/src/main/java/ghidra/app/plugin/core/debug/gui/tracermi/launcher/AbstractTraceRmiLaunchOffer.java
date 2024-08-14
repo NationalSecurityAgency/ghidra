@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,9 @@ import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
-import ghidra.debug.api.modules.*;
-import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.action.AutoMapSpec;
+import ghidra.debug.api.modules.DebuggerMissingProgramActionContext;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.*;
@@ -50,7 +51,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.pty.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
-import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
@@ -185,16 +185,31 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		return result;
 	}
 
-	protected Collection<ModuleMapEntry> invokeMapper(TaskMonitor monitor,
-			DebuggerStaticMappingService mappingService, Trace trace) throws CancelledException {
+	protected boolean invokeMapper(TaskMonitor monitor, DebuggerStaticMappingService mappingService,
+			TraceRmiConnection connection, Trace trace, AutoMapSpec spec)
+			throws CancelledException {
 		if (program == null) {
-			return List.of();
+			return false;
 		}
-		Map<TraceModule, ModuleMapProposal> map = mappingService
-				.proposeModuleMaps(trace.getModuleManager().getAllModules(), List.of(program));
-		Collection<ModuleMapEntry> proposal = MapProposal.flatten(map.values());
-		mappingService.addModuleMappings(proposal, monitor, true);
-		return proposal;
+
+		if (spec.performMapping(mappingService, trace, List.of(program), monitor)) {
+			return true;
+		}
+
+		try {
+			mappingService.changesSettled().get(1, TimeUnit.SECONDS);
+		}
+		catch (InterruptedException | ExecutionException | TimeoutException e) {
+			// Whatever, just check for the mapping
+		}
+
+		Address probeAddress = getMappingProbeAddress();
+		if (probeAddress == null) {
+			return true; // Probably shouldn't happen, but if it does, say "success"
+		}
+		ProgramLocation probe = new ProgramLocation(program, probeAddress);
+		long snap = connection.getLastSnapshot(trace);
+		return mappingService.getOpenMappedLocation(trace, probe, snap) != null;
 	}
 
 	protected SaveState saveLauncherArgsToState(Map<String, ?> args,
@@ -543,7 +558,9 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected void initializeMonitor(TaskMonitor monitor) {
-		if (requiresImage()) {
+		DebuggerAutoMappingService auto = tool.getService(DebuggerAutoMappingService.class);
+		AutoMapSpec spec = auto.getAutoMapSpec();
+		if (requiresImage() && spec.hasTask()) {
 			monitor.setMaximum(6);
 		}
 		else {
@@ -557,6 +574,11 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		if (!requiresImage()) {
 			return;
 		}
+		DebuggerAutoMappingService auto = tool.getService(DebuggerAutoMappingService.class);
+		AutoMapSpec spec = auto.getAutoMapSpec(trace);
+		if (!spec.hasTask()) {
+			return;
+		}
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		monitor.setMessage("Waiting for module mapping");
@@ -567,14 +589,14 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		catch (TimeoutException e) {
 			monitor.setMessage(
 				"Timed out waiting for module mapping. Invoking the mapper.");
-			Collection<ModuleMapEntry> mapped;
+			boolean mapped;
 			try {
-				mapped = invokeMapper(monitor, mappingService, trace);
+				mapped = invokeMapper(monitor, mappingService, connection, trace, spec);
 			}
 			catch (CancelledException ce) {
 				throw new CancellationException(e.getMessage());
 			}
-			if (mapped.isEmpty()) {
+			if (!mapped) {
 				throw new NoStaticMappingException(
 					"The resulting target process has no mapping to the static image.");
 			}
