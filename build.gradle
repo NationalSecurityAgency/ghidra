@@ -49,7 +49,7 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 /***************************************************************************************
  * Identify supported Python command
  ***************************************************************************************/
-project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
+project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9']
 project.ext.PYTHON3 = findPython3()
 project.ext.PYTHON_DEPS = new HashSet<String>()
 
@@ -215,10 +215,10 @@ def findPython3() {
 		}
 	}
 	// Don't fail until task execution. Just let "python3" fail.
-	// Force use of non-existent python3.7 instead of unsupported python version
+	// Force use of non-existent python3.9 instead of unsupported python version
 	// which should fail if a python build is performed.
 	println("Warning: Python3 command not found (required for build)")
-	return 'python3.7'
+	return 'python3.9'
 }
 
 /******************************************************************************************

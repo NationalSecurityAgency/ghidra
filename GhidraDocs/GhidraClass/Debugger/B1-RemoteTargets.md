@@ -145,8 +145,8 @@ Or, inside `gdb`:
 >>> sys.version
 ```
 
-Suppose this identifies version 3.7.
-Retry the installation commands using `python3.7 -m pip ...`.
+Suppose this identifies version 3.9.
+Retry the installation commands using `python3.9 -m pip ...`.
 If you have multiple copies of the same version in different locations, you may need to invoke `python3` using its complete path.
 
 In the worst case, copy the Python source over and add it to your `PYTHONPATH`.
