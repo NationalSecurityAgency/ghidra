@@ -759,6 +759,23 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
 	  </UL>
 
 	  
+	<H3><A name="dbgeng_attach"></A>dbgeng-attach</H3>
+
+	<P>This launcher allows the user to attach to a local running process. Options are the same as those for the base dbgeng, except for ProcessId and AttachFlags</P>
+
+
+	<H4>Options</H4>
+
+	<UL>
+	    <LI><B>ProcessId</B>: The pid of the process you wish to attach to.</LI>
+
+		<LI><B>AttachFlags</B>: Flags used when attaching to the target process, typically DEBUG_ATTACH_PROCESS(0).  Other possible values
+		are defined in dbgeng.h and determine whether the attach should be invasive or not
+		and the status of the process after attaching.</LI>
+
+	  </UL>
+
+	  
 	  <H3><A name="dbgeng_remote"></A>dbgeng-remote</H3>
 
 	  <P>This launcher extends the base dbgeng launcher adding an option for connecting through a remote process server.

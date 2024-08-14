@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 import code
 from contextlib import contextmanager
@@ -32,7 +32,6 @@ from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
-from .dbgeng.idebugclient5 import *
 
 PAGE_SIZE = 4096
 
@@ -295,6 +294,23 @@ def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0
             dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
     if start_trace:
         ghidra_trace_start(command)
+
+
+@util.dbg.eng_thread
+def ghidra_trace_attach(pid=None, attach_flags='0', initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+    """
+    Create a session by attaching.
+    """
+
+    dbg = util.dbg._base
+    if initial_break:
+        dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
+    if attach_flags == None:
+        attach_flags = '0'
+    if pid != None:
+        dbg._client.AttachProcess(int(pid,0), int(attach_flags,0))
+    if start_trace:
+        ghidra_trace_start("pid_"+pid)
 
 
 @util.dbg.eng_thread
