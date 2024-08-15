@@ -148,7 +148,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	private void initOptions(ToolOptions options) {
 		isReplaceViewMode = options.getBoolean(REPLACE_VIEW_OPTION_NAME, isReplaceViewMode);
 		options.registerOption(REPLACE_VIEW_OPTION_NAME, isReplaceViewMode,
-			new HelpLocation(getName(), "Replace_View"), REPLACE_VIEW_OPTION_DESCRIPTION);
+			new HelpLocation(getName(), "Set_View"), REPLACE_VIEW_OPTION_DESCRIPTION);
 
 		options.addOptionsChangeListener(this);
 	}

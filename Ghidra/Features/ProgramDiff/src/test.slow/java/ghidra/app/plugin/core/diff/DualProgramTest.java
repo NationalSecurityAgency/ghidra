@@ -27,8 +27,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.Test;
 
-import docking.DefaultActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.fieldpanel.LayoutModel;
 import ghidra.app.cmd.label.AddLabelCmd;
@@ -403,7 +402,8 @@ public class DualProgramTest extends DiffTestAdapter {
 		setView();
 		selectTreeNodeByText(tree, ".rsrc");
 
-		performAction(goToView, true);
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(goToView, context, true);
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
