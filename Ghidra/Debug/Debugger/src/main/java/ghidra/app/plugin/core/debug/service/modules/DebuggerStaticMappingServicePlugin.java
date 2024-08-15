@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -253,12 +253,15 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		private void objectRestored() {
 			synchronized (lock) {
+				Set<Program> fromClosure = collectAffectedByTrace(trace);
 				var old = Map.copyOf(outbound);
-				outbound.clear();
-				loadOutboundEntries(); // Also places/updates corresponding inbound entries
+				clearOutboundEntries();
+				loadOutboundEntries(); // Also places corresponding inbound entries
 				if (!old.equals(outbound)) {
-					// TODO: What about removed corresponding inbound entries? 
-					doAffectedByTraceClosed(trace);
+					if (!fromClosure.isEmpty()) {
+						traceAffected(trace);
+					}
+					programsAffected(fromClosure);
 					doAffectedByTraceOpened(trace);
 				}
 			}
@@ -309,9 +312,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			destInfo.inbound.put(me, me.getStaticAddress());
 		}
 
-		protected void removeOutboundAndInboundEntries(MappingEntry me) {
-			outbound.remove(me.getTraceAddressSnapRange());
-
+		protected void removeInboundEntryFor(MappingEntry me) {
 			InfoPerProgram destInfo = trackedProgramInfo.get(me.getStaticProgramURL());
 			if (destInfo == null) {
 				return; // Not opened
@@ -319,11 +320,23 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			destInfo.inbound.remove(me);
 		}
 
+		protected void removeOutboundAndInboundEntries(MappingEntry me) {
+			outbound.remove(me.getTraceAddressSnapRange());
+			removeInboundEntryFor(me);
+		}
+
 		protected void loadOutboundEntries() {
 			TraceStaticMappingManager manager = trace.getStaticMappingManager();
 			for (TraceStaticMapping mapping : manager.getAllEntries()) {
 				putOutboundAndInboundEntries(new MappingEntry(mapping));
 			}
+		}
+
+		protected void clearOutboundEntries() {
+			for (MappingEntry me : outbound.values()) {
+				removeInboundEntryFor(me);
+			}
+			outbound.clear();
 		}
 
 		public boolean programOpened(Program other, InfoPerProgram otherInfo) {
@@ -347,8 +360,14 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		public Set<Program> getOpenMappedProgramsAtSnap(long snap) {
 			Set<Program> result = new HashSet<>();
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				MappingEntry me = out.getValue();
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				if (!me.isStaticProgramOpen()) {
 					continue;
 				}
@@ -357,27 +376,42 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				}
 				result.add(me.program);
 			}
+			outbound.values().removeAll(toClean);
 			return result;
 		}
 
 		public ProgramLocation getOpenMappedLocations(Address address, Lifespan span) {
 			TraceAddressSnapRange at = new ImmutableTraceAddressSnapRange(address, span);
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				if (out.getKey().intersects(at)) {
 					MappingEntry me = out.getValue();
+					if (me.mapping.isDeleted()) {
+						Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+						toClean.add(me);
+						continue;
+					}
 					if (me.isStaticProgramOpen()) {
+						outbound.values().removeAll(toClean);
 						return me.mapTraceAddressToProgramLocation(address);
 					}
 				}
 			}
+			outbound.values().removeAll(toClean);
 			return null;
 		}
 
 		protected void collectOpenMappedPrograms(AddressRange rng, Lifespan span,
 				Map<Program, Collection<MappedAddressRange>> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				MappingEntry me = out.getValue();
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				if (me.program == null) {
 					continue;
 				}
@@ -389,6 +423,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				result.computeIfAbsent(me.program, p -> new TreeSet<>())
 						.add(new MappedAddressRange(srcRng, dstRng));
 			}
+			outbound.values().removeAll(toClean);
 		}
 
 		public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(AddressSetView set,
@@ -402,14 +437,21 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		protected void collectMappedProgramURLsInView(AddressRange rng, Lifespan span,
 				Set<URL> result) {
+			Set<MappingEntry> toClean = new HashSet<>();
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
+				MappingEntry me = out.getValue();
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				if (!out.getKey().intersects(tatr)) {
 					continue;
 				}
-				MappingEntry me = out.getValue();
 				result.add(me.getStaticProgramURL());
 			}
+			outbound.values().removeAll(toClean);
 		}
 
 		public Set<URL> getMappedProgramURLsInView(AddressSetView set, Lifespan span) {
@@ -455,11 +497,19 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		public boolean isMappedInTrace(Trace trace) {
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (MappingEntry me : inbound.keySet()) {
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				if (Objects.equals(trace, me.getTrace())) {
+					inbound.keySet().removeAll(toClean);
 					return true;
 				}
 			}
+			inbound.keySet().removeAll(toClean);
 			return false;
 		}
 
@@ -476,30 +526,43 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		public Set<TraceLocation> getOpenMappedTraceLocations(Address address) {
 			Set<TraceLocation> result = new HashSet<>();
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address, true)
 					.entrySet()) {
+				MappingEntry me = inPreceding.getKey();
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				Address start = inPreceding.getValue();
 				if (start == null) {
 					continue;
 				}
-				MappingEntry me = inPreceding.getKey();
 				if (!me.isInProgramRange(address)) {
 					continue;
 				}
 				result.add(me.mapProgramAddressToTraceLocation(address));
 			}
+			inbound.keySet().removeAll(toClean);
 			return result;
 		}
 
 		public TraceLocation getOpenMappedTraceLocation(Trace trace, Address address, long snap) {
 			// TODO: Map by trace?
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address, true)
 					.entrySet()) {
+				MappingEntry me = inPreceding.getKey();
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				Address start = inPreceding.getValue();
 				if (start == null) {
 					continue;
 				}
-				MappingEntry me = inPreceding.getKey();
 				if (me.getTrace() != trace) {
 					continue;
 				}
@@ -509,21 +572,29 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				if (!me.isInTraceLifespan(snap)) {
 					continue;
 				}
+				inbound.keySet().removeAll(toClean);
 				return me.mapProgramAddressToTraceLocation(address);
 			}
+			inbound.keySet().removeAll(toClean);
 			return null;
 		}
 
 		protected void collectOpenMappedViews(AddressRange rng,
 				Map<TraceSpan, Collection<MappedAddressRange>> result) {
+			Set<MappingEntry> toClean = new HashSet<>();
 			for (Entry<MappingEntry, Address> inPreceeding : inbound
 					.headMapByValue(rng.getMaxAddress(), true)
 					.entrySet()) {
+				MappingEntry me = inPreceeding.getKey();
+				if (me.mapping.isDeleted()) {
+					Msg.warn(this, "Encountered deleted mapping: " + me.mapping);
+					toClean.add(me);
+					continue;
+				}
 				Address start = inPreceeding.getValue();
 				if (start == null) {
 					continue;
 				}
-				MappingEntry me = inPreceeding.getKey();
 				if (!me.isInProgramRange(rng)) {
 					continue;
 				}
@@ -533,6 +604,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				result.computeIfAbsent(me.getTraceSpan(), p -> new TreeSet<>())
 						.add(new MappedAddressRange(srcRange, dstRange));
 			}
+			inbound.keySet().removeAll(toClean);
 		}
 
 		public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(
@@ -605,6 +677,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private void programAffected(Program program) {
 		synchronized (affectedTraces) {
 			affectedPrograms.add(program);
+			changeDebouncer.contact(null);
+		}
+	}
+
+	private void programsAffected(Collection<Program> programs) {
+		synchronized (affectedTraces) {
+			affectedPrograms.addAll(programs);
 			changeDebouncer.contact(null);
 		}
 	}
@@ -706,12 +785,21 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 	}
 
-	private void doAffectedByTraceOpened(Trace trace) {
+	private Set<Program> collectAffectedByTrace(Trace trace) {
+		Set<Program> set = new HashSet<>();
 		for (InfoPerProgram info : trackedProgramInfo.values()) {
 			if (info.isMappedInTrace(trace)) {
-				traceAffected(trace);
-				programAffected(info.program);
+				set.add(info.program);
 			}
+		}
+		return set;
+	}
+
+	private void doAffectedByTraceOpened(Trace trace) {
+		Set<Program> set = collectAffectedByTrace(trace);
+		if (!set.isEmpty()) {
+			traceAffected(trace);
+			programsAffected(set);
 		}
 	}
 
