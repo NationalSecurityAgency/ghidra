@@ -1,0 +1,49 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa0f28d0f20f10057100000083
+ff0a7408660fefc0f30f5ac2f20f1015
+6400000083fe0a7408660fefd2f30f5a
+d1f20f5cc2f20f5ac0c3
+</bytechunk>
+<bytechunk space="ram" offset="0x10003a" readonly="true">
+                    f30f1efaf30f
+5ac983ff14741ff30f5ac0660f57054d
+000000660f540d55000000660f2fc80f
+97c00fb6c0c3f20f10052200000083fe
+1475d8f20f100d1d000000ebce
+</bytechunk>
+<bytechunk space="ram" offset="0x100080" readonly="true">
+17f25dd1adf9f13f891c09d1adf9f13f
+</bytechunk>
+<bytechunk space="ram" offset="0x100090" readonly="true">
+dbccdd45cac0234033f68845cac02340
+00000000000000800000000000000000
+ffffffffffffff7f0000000000000000
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="prec_conditions"/>
+<symbol space="ram" offset="0x10003a" name="prec_comparison"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line extern float4 prec_conditions(float4 a,float4 b,int4 cond1,int4 cond2);</com>
+  <com>parse line extern int4 prec_comparison(float4 c,float4 d,int4 cond1,int4 cond2);</com>
+  <com>lo fu prec_conditions</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu prec_comparison</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Floating-point cast #1" min="1" max="1">fVar1 = \(float8\)a;</stringmatch>
+<stringmatch name="Floating-point cast #2" min="1" max="1">fVar2 = \(float8\)b;</stringmatch>
+<stringmatch name="Floating-point cast #3" min="1" max="1">fVar1 = 1\.1234567812345;</stringmatch>
+<stringmatch name="Floating-point cast #4" min="1" max="1">fVar2 = 1\.12345678;</stringmatch>
+<stringmatch name="Floating-point cast #5" min="1" max="1">return \(float4\)\(fVar1 \- fVar2\);</stringmatch>
+<stringmatch name="Floating-point cast #6" min="1" max="1">fVar1 = \(float8\)c;</stringmatch>
+<stringmatch name="Floating-point cast #7" min="1" max="1">fVar2 = \(float8\)d;</stringmatch>
+<stringmatch name="Floating-point cast #8" min="1" max="1">fVar1 = 9\.8765432198765;</stringmatch>
+<stringmatch name="Floating-point cast #9" min="1" max="1">fVar2 = 9\.87654321;</stringmatch>
+<stringmatch name="Floating-point cast #10" min="1" max="1">return.*\-fVar1 &lt; ABS\(fVar2\)</stringmatch>
+</decompilertest>

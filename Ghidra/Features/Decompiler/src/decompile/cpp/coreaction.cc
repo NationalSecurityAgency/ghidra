@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -563,7 +563,10 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
   if (mode < 2)
     collectLaneSizes(vn,lanedRegister,checkLanes);
   else {
-    checkLanes.addLaneSize(4);		// Default lane size
+    int4 defaultSize = data.getArch()->types->getSizeOfPointer();		// Default lane size
+    if (defaultSize != 4)
+      defaultSize = 8;
+    checkLanes.addLaneSize(defaultSize);
   }
   LanedRegister::const_iterator enditer = checkLanes.end();
   for(LanedRegister::const_iterator iter=checkLanes.begin();iter!=enditer;++iter) {
@@ -582,6 +585,7 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
 int4 ActionLaneDivide::apply(Funcdata &data)
 
 {
+  data.setLanedRegGenerated();
   map<VarnodeData,const LanedRegister *>::const_iterator iter;
   for(int4 mode=0;mode<3;++mode) {
     bool allStorageProcessed = true;
@@ -594,6 +598,10 @@ int4 ActionLaneDivide::apply(Funcdata &data)
       bool allVarnodesProcessed = true;
       while(viter != venditer) {
 	Varnode *vn = *viter;
+	if (vn->hasNoDescend()) {
+	  ++viter;
+	  continue;
+	}
 	if (processVarnode(data, vn, *lanedReg, mode)) {
 	  viter = data.beginLoc(sz,addr);
 	  venditer = data.endLoc(sz, addr);	// Recalculate bounds
@@ -610,7 +618,6 @@ int4 ActionLaneDivide::apply(Funcdata &data)
     if (allStorageProcessed) break;
   }
   data.clearLanedAccessMap();
-  data.setLanedRegGenerated();
   return 0;
 }
 
@@ -1337,7 +1344,6 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
       }
     }
   }
-  data.setLanedRegGenerated();
   return 0;
 }
 
@@ -5515,6 +5521,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleOrMultiBool("analysis") );
 	actprop->addRule( new RuleXorSwap("analysis") );
 	actprop->addRule( new RuleLzcountShiftBool("analysis") );
+	actprop->addRule( new RuleFloatSign("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );
 	actprop->addRule( new RuleSubvarSubpiece("subvar") );
 	actprop->addRule( new RuleSplitFlow("subvar") );
@@ -5591,6 +5598,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RuleAddUnsigned("cleanup") );
     actcleanup->addRule( new Rule2Comp2Sub("cleanup") );
     actcleanup->addRule( new RuleSubRight("cleanup") );
+    actcleanup->addRule( new RuleFloatSignCleanup("cleanup") );
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
     actcleanup->addRule( new RuleExtensionPush("cleanup") );
     actcleanup->addRule( new RulePieceStructure("cleanup") );

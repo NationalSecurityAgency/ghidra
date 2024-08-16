@@ -23,6 +23,7 @@ src/decompile/datatests/displayformat.xml||GHIDRA||||END|
 src/decompile/datatests/divopt.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
 src/decompile/datatests/elseif.xml||GHIDRA||||END|
+src/decompile/datatests/floatcast.xml||GHIDRA||||END|
 src/decompile/datatests/floatprint.xml||GHIDRA||||END|
 src/decompile/datatests/forloop1.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_loaditer.xml||GHIDRA||||END|

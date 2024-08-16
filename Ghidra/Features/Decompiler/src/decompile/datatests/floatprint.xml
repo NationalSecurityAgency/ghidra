@@ -53,7 +53,7 @@ bbbdd7d9df7cdb3d000000000000f03f
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Float print #1" min="1" max="1">floatv1 = 0.3333333;</stringmatch>
+<stringmatch name="Float print #1" min="1" max="1">floatv1 = 0.33333334;</stringmatch>
 <stringmatch name="Float print #2" min="1" max="1">floatv2 = 2.0;</stringmatch>
 <stringmatch name="Float print #3" min="1" max="1">floatv3 = -0.001;</stringmatch>
 <stringmatch name="Float print #4" min="1" max="1">floatv4 = 1e-06;</stringmatch>
@@ -66,5 +66,5 @@ bbbdd7d9df7cdb3d000000000000f03f
 <stringmatch name="Float print #11" min="1" max="1">double4 = 1e-10;</stringmatch>
 <stringmatch name="Float print #12" min="1" max="1">double5 = INFINITY;</stringmatch>
 <stringmatch name="Float print #13" min="1" max="1">double6 = -NAN;</stringmatch>
-<stringmatch name="Float print #14" min="1" max="1">double7 = 3.141592653589793e-06;</stringmatch>
+<stringmatch name="Float print #14" min="1" max="1">double7 = 3.1415926535897933e-06;</stringmatch>
 </decompilertest>
