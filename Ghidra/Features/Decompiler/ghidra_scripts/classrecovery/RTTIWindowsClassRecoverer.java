@@ -151,9 +151,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 		// otherwise figure everything out from scratch
 		else {
-			monitor.setMessage("Figuring out class method types");
+			Msg.debug(this, "Figuring out class method types");
 			processConstructorAndDestructors(recoveredClasses);
-
 		}
 
 		// create order of vftable in constructor map for each class that has a constructor so far
@@ -166,22 +165,34 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// using all the information found above, create the class structures, add the constructor,
 		// destructor, vfunctions to class which finds the appropriate class structure and assigns 
 		// to "this" param
-		monitor.setMessage("Creating class data types and applying class structures");
+		Msg.debug(this, "Getting class information from destructors");
+		monitor.setMessage("Getting class information from destructors");
 		figureOutClassDataMembers(recoveredClasses);
 
 		if (USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS) {
+			Msg.debug(this, "Creating shorted names for classes with templates");
+			monitor.setMessage("Creating shorted names for classes with templates");
 			extendedFlatAPI.createShortenedTemplateNamesForClasses(recoveredClasses);
 		}
 
+		Msg.debug(this, "Creating and applying class structures");
+		monitor.setMessage("Creating and applying class structures");
 		createAndApplyClassStructures(recoveredClasses);
 
 		if (!isPDBLoaded) {
 			// create better vftable labels for multi vftable classes
+			Msg.debug(this, "Updating labels of vftables for classes with multiple");
+			monitor.setMessage("Updating labels of vftables for classes with multiple");
 			updateMultiVftableLabels(recoveredClasses);
+
+			Msg.debug(this, "Removing empty namespaces and unreferenced empty class structures");
+			monitor.setMessage("Removing empty namespaces and unreferenced empty class structures");
 			removeEmptyClassesAndStructures();
 
 			// fix up deleting destructors to have vector and scalar names and to split 
 			// non-contiguous ones into two seaparate functions
+			Msg.debug(this, "Fixup previously found deleting destructors's symbols");
+			monitor.setMessage("Fixup previously found deleting destructors's symbols");
 			fixUpDeletingDestructors(recoveredClasses);
 		}
 
@@ -685,7 +696,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Symbol> vftables = new ArrayList<Symbol>();
 
+		int countProgress = 0;
 		for (Symbol completeObjectLocatorSymbol : completeObjectLocatorSymbols) {
+			monitor.setMessage("Creating missing vftables");
+			monitor.setMaximum(completeObjectLocatorSymbols.size());
+			monitor.setProgress(countProgress++);
 			monitor.checkCancelled();
 			Address completeObjectLocatorAddress = completeObjectLocatorSymbol.getAddress();
 
@@ -860,7 +875,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Symbol> classHierarchyDescriptorList = getListOfClassHierarchyDescriptors();
 
+		int countProgress = 0;
 		for (Symbol classHierarchyDescriptorSymbol : classHierarchyDescriptorList) {
+			monitor.setMessage("Recovering classes from hierarchy descriptors");
+			monitor.setMaximum(classHierarchyDescriptorList.size());
+			monitor.setProgress(countProgress++);
 			monitor.checkCancelled();
 			Address classHierarchyDescriptorAddress = classHierarchyDescriptorSymbol.getAddress();
 
@@ -1290,56 +1309,91 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
 
 		List<Address> allVftables = getAllVftables();
+		monitor.setProgress(0);
+		monitor.setMaximum(0);
 
 		// update the class lists to narrow the class objects possible cd lists and indeterminate 
 		// lists to remove functions that are also on vfunction lists
+		int steps = 16;
+		int s = 1;
+		Msg.debug(this, "Calling trimConstructorDestructorLists");
+		monitor.setMessage(String.format("Cleaning constructor/destructor list (%s of %s)", s++, steps));
 		trimConstructorDestructorLists(recoveredClasses, allVftables);
 
+		Msg.debug(this, "Calling determineOperatorDeleteAndNewFunctions");
+		monitor.setMessage(String.format("Searching operator delete/new functions (%s of %s)", s++, steps));
 		determineOperatorDeleteAndNewFunctions(allVftables);
 
-		// find deleting destructors 
+		// find deleting destructors
+		Msg.debug(this, "Calling findDeletingDestructors");
+		monitor.setMessage(String.format("Searching deleting destructors in the virtual functions (%s of %s)", s++, steps));
 		findDeletingDestructors(recoveredClasses, allVftables);
 
 		// use atexit param list to find more destructors
+		Msg.debug(this, "Calling findDestructorsUsingAtexitCalledFunctions");
+		monitor.setMessage(String.format("Searching destructors using functions called by atexit (%s of %s)", s++, steps));
 		findDestructorsUsingAtexitCalledFunctions(recoveredClasses);
 
 		// figure out which are inlined and put on separate list to be processed later
+		Msg.debug(this, "Calling separateInlinedConstructorDestructors");
+		monitor.setMessage(String.format("Separating inlined constructors and destructors (%s of %s)", s++, steps));
 		separateInlinedConstructorDestructors(recoveredClasses);
 
 		// figure out which member functions are constructors and which are destructors
-		// using the order their parents are called		
+		// using the order their parents are called
+		Msg.debug(this, "Calling processRegularConstructorsAndDestructorsUsingCallOrder");
+		monitor.setMessage(String.format("Processing regular constructors and destructors using call order (%s of %s)", s++, steps));
 		processRegularConstructorsAndDestructorsUsingCallOrder(recoveredClasses);
 
 		// determine which of the inlines are constructors and which are destructors
+		Msg.debug(this, "Calling processInlinedConstructorsAndDestructors");
+		monitor.setMessage(String.format("Processing inlined constructors and destructors (%s of %s)", s++, steps));
 		processInlinedConstructorsAndDestructors(recoveredClasses);
 
+		Msg.debug(this, "Calling findConstructorsAndDestructorsUsingAncestorClassFunctions");
+		monitor.setMessage(String.format("Searching constructors and destructors using ancestor class functions (%s of %s)", s++, steps));
 		findConstructorsAndDestructorsUsingAncestorClassFunctions(recoveredClasses);
 
+		Msg.debug(this, "Calling findInlineConstructorsAndDestructorsUsingRelatedClassFunctions");
+		monitor.setMessage(String.format("Searching constructors and destructors using related class functions (%s of %s)", s++, steps));
 		findInlineConstructorsAndDestructorsUsingRelatedClassFunctions(recoveredClasses);
 
-		// use the load/store information from decompiler to figure out as many of the 
+		// use the load/store information from decompiler to figure out as many of the
 		// ones that could not be determined in earlier stages
+		Msg.debug(this, "Calling processRemainingIndeterminateConstructorsAndDestructors");
+		monitor.setMessage(String.format("Processing remaining indeterminate constructors and destructors (%s of %s)", s++, steps));
 		processRemainingIndeterminateConstructorsAndDestructors(recoveredClasses);
 
 		// use the known constructors and known vfunctions to figure out basic clone functions
+		Msg.debug(this, "Calling findBasicCloneFunctions");
+		monitor.setMessage(String.format("Searcing basic clone functions... (%s of %s)", s++, steps));
 		findBasicCloneFunctions(recoveredClasses);
 
 		// This has to be here. It needs all the info from the previously run methods to do this.
-		// Finds the constructors that have multiple basic blocks, reference the vftable not in the 
+		// Finds the constructors that have multiple basic blocks, reference the vftable not in the
 		// first block, and call non-parent constructors and non operator new before the vftable ref
+		Msg.debug(this, "Calling findMoreInlinedConstructors");
+		monitor.setMessage(String.format("Searching inlined constructors (%s of %s)", s++, steps));
 		findMoreInlinedConstructors(recoveredClasses);
 
+		Msg.debug(this, "Calling findDestructorsWithNoParamsOrReturn");
+		monitor.setMessage(String.format("Searching destructors with no params or return (%s of %s)", s++, steps));
 		findDestructorsWithNoParamsOrReturn(recoveredClasses);
 
-		// use vftables with references to all the same function (except possibly one deleting 
+		// use vftables with references to all the same function (except possibly one deleting
 		// destructor)to find the purecall function
+		Msg.debug(this, "Calling identifyPureVirtualFunction");
+		monitor.setMessage(String.format("Identifying pure virtual functions (%s of %s)", s++, steps));
 		identifyPureVirtualFunction(recoveredClasses);
 
+		Msg.debug(this, "Calling findRealVBaseFunctions");
+		monitor.setMessage(String.format("Processing constructors and destructors (%s of %s)", s++, steps));
 		findRealVBaseFunctions(recoveredClasses);
 
-		// make constructors and destructors _thiscalls 
+		// make constructors and destructors _thiscalls
+		Msg.debug(this, "Calling makeConstructorsAndDestructorsThiscalls");
+		monitor.setMessage(String.format("Processing constructors and destructors this calls (%s of %s)", s++, steps));
 		makeConstructorsAndDestructorsThiscalls(recoveredClasses);
-
 	}
 
 	/**
@@ -2078,7 +2132,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
 
 		// first process all the classes with no parents
+		int countProgress = 0;
 		while (recoveredClassIterator.hasNext()) {
+			monitor.setMaximum(recoveredClasses.size());
+			monitor.setProgress(countProgress++);
 			monitor.checkCancelled();
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
@@ -2116,8 +2173,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 			numLoops++;
 
+			countProgress = 0;
 			recoveredClassIterator = recoveredClasses.iterator();
 			while (recoveredClassIterator.hasNext()) {
+				monitor.setMaximum(recoveredClasses.size());
+				monitor.setProgress(countProgress++);
 
 				RecoveredClass recoveredClass = recoveredClassIterator.next();
 
@@ -2597,7 +2657,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		if (recoveredClasses.isEmpty()) {
 			return;
 		}
+
+		int countProgress = 0;
 		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.setMaximum(recoveredClasses.size());
+			monitor.setProgress(countProgress++);
 			monitor.checkCancelled();
 
 			// if there are no vftables or only one vftable in this class then there is no need to 
@@ -2639,7 +2703,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Function> processedFunctions = new ArrayList<>();
 
+		int countProgress = 0;
 		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.setMaximum(recoveredClasses.size());
+			monitor.setProgress(countProgress++);
 			monitor.checkCancelled();
 
 			List<Function> deletingDestructors = recoveredClass.getDeletingDestructors();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to promote the namespace is a class namespace. 
+	 * Method to promote the namespace is a class namespace.
 	 * @param namespace the namespace for the vftable
 	 * @return true if namespace is (now) a class namespace or false if it could not be promoted.
 	 * @throws InvalidInputException if namespace was contained in function and could not be promoted
@@ -209,7 +209,10 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			throws CancelledException, DuplicateNameException, InvalidInputException,
 			CircularDependencyException {
 
+		int countProgress = 0;
 		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.setMaximum(recoveredClasses.size());
+			monitor.setProgress(countProgress++);
 			monitor.checkCancelled();
 			// we can only figure out structure info for functions with vftable since that is
 			// what we use to determine which variable is being used to store the class structure
@@ -235,7 +238,7 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 					continue;
 				}
 
-				// skip if other classes contain this function as an inline inlined destructor or 
+				// skip if other classes contain this function as an inline inlined destructor or
 				// inlined indeterminate
 				if (isInlineDestructorOrIndeterminateInAnyClass(memberFunction)) {
 					continue;
