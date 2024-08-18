@@ -220,5 +220,10 @@ public class DataTypeIndexer {
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 			markStale();
 		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
+			markStale();
+		}
 	}
 }

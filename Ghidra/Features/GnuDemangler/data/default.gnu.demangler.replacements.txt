@@ -1,0 +1,205 @@
+// 
+// This file contains a list of search and replace text pairs.
+// Each line is one specialaization name to full library definition.
+//
+// This list is based on content found in:
+//		https://en.cppreference.com/w/cpp/string
+//		https://en.cppreference.com/w/cpp/io
+//		https://en.cppreference.com/w/cpp/regex/basic_regex
+//
+// The list has been tested against a small selection of known samples, but since not all of these entries have been tested, they have been built based on observed patterns and are quite speculative.
+
+// 
+// Users can edit this file or add content to new files in an installation.
+// New files must end with '.gnu.demangler.replacements.txt' and must be placed inside of a module's 'data' directory.
+// When each replacement file is loaded, the will be sorted by name.  
+// All replacements will be processed in the order the files are loaded, in the order listed in each file.
+// 
+// The replacements will be executed in the order they are listed in this file.
+// 
+// Each line must be of the format: replacement text | whitespace | search text
+// The replacement text may be two literal double quote characters (""), which signals to replace the match with the empty string.
+// Any line can be disabled by deleting or prepending a double forward slash.
+//
+
+
+//
+// General removal statements
+//
+
+// current tests show this is a non-leading mangled namespace placeholder
+""		::__1
+
+// current tests show this is a non-leading mangled namespace placeholder
+""		::__cxx11
+
+// current tests show this is only in the leading mangled namespace position
+""		__gnu_cxx::
+
+
+// speculative: pool_allocator has been spotted in some binaries; replace first so the cases below will match
+std::allocator<char>		pool_allocator<char>
+
+
+//
+// Standard c++ library typedefs
+// 
+std::string		std::basic_string<char, std::char_traits<char>, std::allocator<char> >
+std::wstring		std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >
+std::u8string		std::basic_string<char8_t, std::char_traits<char8_t>, std::allocator<char8_t> >
+std::u16string		std::basic_string<char16_t, std::char_traits<char16_t>, std::allocator<char16_t> >
+std::u32string		std::basic_string<char32_t, std::char_traits<char32_t>, std::allocator<char32_t> >
+
+std::string_view		std::basic_string_view<char, std::char_traits<char>, std::allocator<char> >
+std::wstring_view		std::basic_string_view<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >
+std::u8string_view		std::basic_string<char8_t_view, std::char_traits<char8_t_view>, std::allocator<char8_t_view> >
+std::u16string_view		std::basic_string<char16_t_view, std::char_traits<char16_t_view>, std::allocator<char16_t_view> >
+std::u32string_view		std::basic_string<char32_t_view, std::char_traits<char32_t_view>, std::allocator<char32_t_view> >
+
+std::stringstream		std::basic_stringstream<char, std::char_traits<char>, std::allocator<char> >
+std::wstringstream		std::basic_stringstream<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >
+std::istringstream		std::basic_istringstream<char, std::char_traits<char>, std::allocator<char> >
+std::wistringstream		std::basic_istringstream<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >
+std::ostringstream		std::basic_ostringstream<char, std::char_traits<char>, std::allocator<char> >
+std::wostringstream		std::basic_ostringstream<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >
+
+std::spanbuf		std::basic_spanbuf<char, std::char_traits<char> >
+std::wspanbuf		std::basic_spanbuf<wchar_t, std::char_traits<wchar_t> >
+std::ispanstream		std::basic_ispanstream<char, std::char_traits<char> >
+std::wispanstream		std::basic_ispanstream<wchar_t, std::char_traits<wchar_t> >
+std::spanstream		std::basic_spanstream<char, std::char_traits<char> >
+std::wspanstream		std::basic_spanstream<wchar_t, std::char_traits<wchar_t> >
+std::syncbuf		std::basic_syncbuf<char, std::char_traits<char> >
+std::wsyncbuf		std::basic_syncbuf<wchar_t, std::char_traits<wchar_t> >
+std::osyncstream		std::basic_osyncstream<char, std::char_traits<char> >
+std::wosyncstream		std::basic_osyncstream<wchar_t, std::char_traits<wchar_t> >
+
+std::stringbuf		std::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >
+std::wstringbuf		std::basic_stringbuf<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >
+std::ios		std::basic_ios<char, std::char_traits<char> >
+std::wios		std::basic_ios<wchar_t, std::char_traits<wchar_t> >
+std::istream		std::basic_istream<char, std::char_traits<char> >
+std::wistream		std::basic_istream<wchar_t, std::char_traits<wchar_t> >
+std::ostream		std::basic_ostream<char, std::char_traits<char> >
+std::wostream		std::basic_ostream<wchar_t, std::char_traits<wchar_t> >
+std::iostream		std::basic_iostream<char, std::char_traits<char> >
+std::wiostream		std::basic_iostream<wchar_t, std::char_traits<wchar_t> >
+std::fstream		std::basic_fstream<char, std::char_traits<char> >
+std::wfstream		std::basic_fstream<wchar_t, std::char_traits<wchar_t> >
+std::ifstream		std::basic_ifstream<char, std::char_traits<char> >
+std::wifstream		std::basic_ifstream<wchar_t, std::char_traits<wchar_t> >
+std::ofstream		std::basic_ofstream<char, std::char_traits<char> >
+std::wofstream		std::basic_ofstream<wchar_t, std::char_traits<wchar_t> >
+std::streambuf		std::basic_streambuf<char, std::char_traits<char> >
+std::wstreambuf		std::basic_streambuf<wchar_t, std::char_traits<wchar_t> >
+std::filebuf		std::basic_filebuf<char, std::char_traits<char> >
+std::wfilebuf		std::basic_filebuf<wchar_t, std::char_traits<wchar_t> >
+
+std::regex		std::basic_regex<char, std::regex_traits<char> >
+std::wregex		std::basic_regex<wchar_t, std::regex_traits<wchar_t> >
+
+
+//
+// Secondary pass conversions
+//
+// These run after previous conversions so that we can perform further replacements
+// 
+
+std::string::string		std::string::basic_string
+std::string::~string		std::string::~basic_string
+std::wstring::wstring		std::wstring::basic_string
+std::wstring::~wstring		std::wstring::~basic_string
+std::u8string::u8string		std::u8string::basic_string
+std::u8string::~u8string		std::u8string::~basic_string
+std::u16string::u16string		std::u16string::basic_string
+std::u16string::~u16string		std::u16string::~basic_string
+std::u32string::u32string		std::u32string::basic_string
+std::u32string::~u32string		std::u32string::~basic_string
+std::string_view::string_view		std::string_view::basic_string_view
+std::string_view::~string_view		std::string_view::~basic_string_view
+std::wstring_view::wstring_view		std::wstring_view::basic_string_view
+std::wstring_view::~wstring_view		std::wstring_view::~basic_string_view
+std::u8string_view::u8string_view		std::u8string_view::basic_string
+std::u8string_view::~u8string_view		std::u8string_view::~basic_string
+std::u16string_view::u16string_view		std::u16string_view::basic_string
+std::u16string_view::~u16string_view		std::u16string_view::~basic_string
+std::u32string_view::u32string_view		std::u32string_view::basic_string
+std::u32string_view::~u32string_view		std::u32string_view::~basic_string
+std::stringstream::stringstream		std::stringstream::basic_stringstream
+std::stringstream::~stringstream		std::stringstream::~basic_stringstream
+std::wstringstream::wstringstream		std::wstringstream::basic_stringstream
+std::wstringstream::~wstringstream		std::wstringstream::~basic_stringstream
+std::istringstream::istringstream		std::istringstream::basic_istringstream
+std::istringstream::~istringstream		std::istringstream::~basic_istringstream
+td::wistringstream::wistringstream		std::wistringstream::basic_istringstream
+std::wistringstream::~wistringstream		std::wistringstream::~basic_istringstream
+std::ostringstream::ostringstream		std::ostringstream::basic_ostringstream
+std::ostringstream::~ostringstream		std::ostringstream::~basic_ostringstream
+std::wostringstream::wostringstream		std::wostringstream::basic_ostringstream
+std::wostringstream::~wostringstream		std::wostringstream::~basic_ostringstream
+std::stringbuf::stringbuf		std::stringbuf::basic_stringbuf
+std::stringbuf::~stringbuf		std::stringbuf::~basic_stringbuf
+std::wstringbuf::wstringbuf		std::wstringbuf::basic_stringbuf
+std::wstringbuf::~wstringbuf		std::wstringbuf::~basic_stringbuf
+std::ios::ios		std::ios::basic_ios
+std::ios::~ios		std::ios::~basic_ios
+std::wios::wios		std::wios::basic_ios
+std::wios::~wios		std::wios::~basic_ios
+std::istream::istream		std::istream::basic_istream
+std::istream::~istream		std::istream::~basic_istream
+std::wistream::wistream		std::wistream::basic_istream
+std::wistream::~wistream		std::wistream::~basic_istream
+std::ostream::ostream		std::ostream::basic_ostream
+std::ostream::~ostream		std::ostream::~basic_ostream
+std::wostream::wostream		std::wostream::basic_ostream
+std::wostream::~wostream		std::wostream::~basic_ostream
+std::iostream::iostream		std::iostream::basic_iostream
+std::iostream::~iostream		std::iostream::~basic_iostream
+std::wiostream::wiostream		std::wiostream::basic_iostream
+std::wiostream::~wiostream		std::wiostream::~basic_iostream
+std::fstream::fstream		std::fstream::basic_fstream
+std::fstream::~fstream		std::fstream::~basic_fstream
+std::wfstream::wfstream		std::wfstream::basic_fstream
+std::wfstream::~wfstream		std::wfstream::~basic_fstream
+std::ifstream::ifstream		std::ifstream::basic_ifstream
+std::ifstream::~ifstream		std::ifstream::~basic_ifstream
+std::wifstream::wifstream		std::wifstream::basic_ifstream
+std::wifstream::~wifstream		std::wifstream::~basic_ifstream
+std::ofstream::ofstream		std::ofstream::basic_ofstream
+std::ofstream::~ofstream		std::ofstream::~basic_ofstream
+std::wofstream::wofstream		std::wofstream::basic_ofstream
+std::wofstream::~wofstream		std::wofstream::~basic_ofstream
+std::streambuf::streambuf		std::streambuf::basic_streambuf
+std::streambuf::~streambuf		std::streambuf::~basic_streambuf
+std::wstreambuf::wstreambuf		std::wstreambuf::basic_streambuf
+std::wstreambuf::~wstreambuf		std::wstreambuf::~basic_streambuf
+std::filebuf::filebuf		std::filebuf::basic_filebuf
+std::filebuf::~filebuf		std::filebuf::~basic_filebuf
+std::wfilebuf::wfilebuf		std::wfilebuf::basic_filebuf
+std::wfilebuf::~wfilebuf		std::wfilebuf::~basic_filebuf
+std::spanbuf::spanbuf		std::spanbuf::basic_spanbuf
+std::spanbuf::~spanbuf		std::spanbuf::~basic_spanbuf
+std::wspanbuf::wspanbuf		std::wspanbuf::basic_spanbuf
+std::wspanbuf::~wspanbuf		std::wspanbuf::~basic_spanbuf
+std::ispanstream::ispanstream		std::ispanstream::basic_ispanstream
+std::ispanstream::~ispanstream		std::ispanstream::~basic_ispanstream
+std::wispanstream::wispanstream		std::wispanstream::basic_ispanstream
+std::wispanstream::~wispanstream		std::wispanstream::~basic_ispanstream
+std::spanstream::spanstream		std::spanstream::basic_spanstream
+std::spanstream::~spanstream		std::spanstream::~basic_spanstream
+std::wspanstream::wspanstream		std::wspanstream::basic_spanstream
+std::wspanstream::~wspanstream		std::wspanstream::~basic_spanstream
+std::syncbuf::syncbuf		std::syncbuf::basic_syncbuf
+std::syncbuf::~syncbuf		std::syncbuf::~basic_syncbuf
+std::wsyncbuf::wsyncbuf		std::wsyncbuf::basic_syncbuf
+std::wsyncbuf::~wsyncbuf		std::wsyncbuf::~basic_syncbuf
+std::osyncstream::osyncstream		std::osyncstream::basic_osyncstream
+std::osyncstream::~osyncstream		std::osyncstream::~basic_osyncstream
+std::wosyncstream::wosyncstream		std::wosyncstream::basic_osyncstream
+std::wosyncstream::~wosyncstream		std::wosyncstream::~basic_osyncstream
+
+
+// speculative: 
+std::string std::basic_string<std::remove_const<char const>::type, std::char_traits<std::remove_const<char const>::type>, std::allocator<std::remove_const<char const>::type> >
+
+

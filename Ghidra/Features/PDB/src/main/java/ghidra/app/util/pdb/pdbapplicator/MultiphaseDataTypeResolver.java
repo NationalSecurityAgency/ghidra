@@ -20,19 +20,19 @@ import java.util.Map;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.BitFieldDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Performs appropriated multiple passes on data types to get theme filled in and resolved
+ * Performs appropriate multiple passes on data types to get theme filled in and resolved
  */
 public class MultiphaseDataTypeResolver {
 
 	private DefaultPdbApplicator applicator;
 	private AbstractPdb pdb;
-	private TaskMonitor monitor;
 
 	private RecordStack todoStack;
 	private RecordStack resolveStack;
@@ -40,7 +40,6 @@ public class MultiphaseDataTypeResolver {
 	public MultiphaseDataTypeResolver(DefaultPdbApplicator applicator) {
 		this.applicator = applicator;
 		this.pdb = applicator.getPdb();
-		this.monitor = applicator.getMonitor();
 		todoStack = new RecordStack();
 		resolveStack = new RecordStack();
 	}
@@ -50,10 +49,12 @@ public class MultiphaseDataTypeResolver {
 	 *  type.  Deals with cyclic dependencies and ultimately stores resolved (in most cases)
 	 *  types in the DefaultPdbApplicator types map
 	 * @param recordNumber the record number
+	 * @param monitor the task monitor to use
 	 * @throws PdbException upon processing error
 	 * @throws CancelledException upon user cancellation
 	 */
-	void process(RecordNumber recordNumber) throws PdbException, CancelledException {
+	void process(RecordNumber recordNumber, TaskMonitor monitor)
+			throws PdbException, CancelledException {
 
 		// If found in the applicator map then the type is completed.
 		if (applicator.getDataType(recordNumber) != null) {
@@ -81,6 +82,9 @@ public class MultiphaseDataTypeResolver {
 				}
 				todoStack.pop();
 				resolveStack.push(recordToProcess);
+				// only update when popped; 1st of 2 monitor updates;  monitor count was
+				//  initialized in DefaultPdbApplicator.processAndResolveDataTypesSequentially()
+				monitor.incrementProgress(1);
 			}
 		}
 		// If set true above, location where one might do conditional: todoStack.setDebug(false)
@@ -89,11 +93,17 @@ public class MultiphaseDataTypeResolver {
 		while ((recordToProcess = resolveStack.pop()) != null) {
 			monitor.checkCancelled();
 			DataType dataType = applicator.getDataType(recordToProcess);
-			// Resolve and re-store most data types
-			if (!(dataType instanceof PointerDataType || dataType instanceof BitFieldDataType)) {
+			// Resolve and re-store most types.  Normally we wouldn't want to resolve
+			// pointer types, but here it is preferred while we have the types in hand the the
+			// PDB would have a type record if it wasn't used somewhere here or as the referred-to
+			// type of a typedef.
+			if (!(dataType instanceof BitFieldDataType)) {
 				dataType = applicator.resolve(dataType);
 				applicator.putDataType(recordToProcess, dataType);
 			}
+			// 2nd of 2 monitor updates;  monitor count was initialized in
+			//  DefaultPdbApplicator.processAndResolveDataTypesSequentially()
+			monitor.incrementProgress(1);
 		}
 	}
 
@@ -152,6 +162,7 @@ public class MultiphaseDataTypeResolver {
 		RecordNode tail;
 		boolean debug;
 		StringBuilder debugBuilder;
+		long numNodes;
 
 		/**
 		 * Constructor for new record stack
@@ -165,6 +176,7 @@ public class MultiphaseDataTypeResolver {
 			head.prev = tail;
 			tail.next = head;
 			tail.prev = null;
+			numNodes = 0L; // does not count HEAD/TAIL special nodes
 		}
 
 		/**
@@ -205,6 +217,7 @@ public class MultiphaseDataTypeResolver {
 					debugBuilder.append("\n");
 				}
 				map.put(recordNumber, node);
+				numNodes++;
 			}
 			else { // already exists in non-top-of-stack position
 				removeNodeLinkage(node);
@@ -235,6 +248,7 @@ public class MultiphaseDataTypeResolver {
 			}
 			removeNodeLinkage(node);
 			map.remove(node.recordNumber);
+			numNodes--;
 			if (debug) {
 				debugBuilder.append(" pop:");
 				debugBuilder.append(node.recordNumber);
@@ -289,6 +303,7 @@ public class MultiphaseDataTypeResolver {
 			int count = 0;
 			RecordNode node = head.prev;
 			StringBuilder builder = new StringBuilder();
+			builder.append(numNodes + ":");
 			builder.append('[');
 			while (node != tail && count < TO_STRING_LIMIT) {
 				if (count != 0) {

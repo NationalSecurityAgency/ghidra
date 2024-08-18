@@ -889,18 +889,17 @@ define pcodeop vpunpcklqdq_avx2 ;
 }
 
 # PXOR 4-518 PAGE 1638 LINE 85497
-define pcodeop vpxor_avx2 ;
 :VPXOR YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0xEF; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
 {
-	local tmp:32 = vpxor_avx2( vexVVVV_YmmReg, YmmReg2_m256 );
+	local tmp:32 = vexVVVV_YmmReg ^ YmmReg2_m256;
 	ZmmReg1 = zext(tmp);
 }
 
 # VEXTRACTI128/VEXTRACTI32x4/VEXTRACTI64x2/VEXTRACTI32x8/VEXTRACTI64x4 5-106 PAGE 1930 LINE 99432
-define pcodeop vextracti128_avx2 ;
 :VEXTRACTI128 XmmReg2_m128, YmmReg1, imm8 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x39; YmmReg1 ... & XmmReg2_m128; imm8
 {
-	XmmReg2_m128 = vextracti128_avx2( YmmReg1, imm8:1 );
+	local ext:1 = imm8:1 == 1;
+	XmmReg2_m128 = (YmmReg1[0,128] * zext(ext==0)) | (YmmReg1[128,128] * zext(ext==1));
 }
 
 # VPBLENDD 5-321 PAGE 2145 LINE 110309

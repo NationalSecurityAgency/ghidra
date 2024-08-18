@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import org.jdom.Element;
 
 import generic.cache.FixedSizeMRUCachingFactory;
 import generic.stl.Pair;
-import ghidra.feature.vt.api.correlator.address.ExactMatchAddressCorrelator;
-import ghidra.feature.vt.api.correlator.address.LastResortAddressCorrelator;
+import ghidra.feature.vt.api.correlator.address.*;
+import ghidra.features.codecompare.correlator.CodeCompareAddressCorrelator;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
@@ -37,6 +37,20 @@ public class AddressCorrelatorManager {
 
 	private static final int DATA_CORRELATION_CACHE_SIZE = 5;
 	private static final int FUNCTION_CORRELATION_CACHE_SIZE = 5;
+	private static final Comparator<? super AddressCorrelator> CORRELATOR_COMPARATOR = (c1, c2) -> {
+
+		int p1 = c1.getPriority();
+		int p2 = c2.getPriority();
+		int d = p1 - p2;
+		if (d != 0) {
+			return d;
+		}
+
+		// pick something as a tie-breaker
+		String n1 = c1.getClass().getSimpleName();
+		String n2 = c2.getClass().getSimpleName();
+		return n1.compareTo(n2);
+	};
 
 	private List<AddressCorrelator> correlatorList;
 
@@ -55,22 +69,26 @@ public class AddressCorrelatorManager {
 
 	private void initializeAddressCorrelators(VTSessionSupplier sessionSupplier) {
 		correlatorList.add(new ExactMatchAddressCorrelator(sessionSupplier));
+		correlatorList.add(new VTHashedFunctionAddressCorrelator());
+		correlatorList.add(new CodeCompareAddressCorrelator());
+
+		// Note: at the time of writing this comment, the linear address correlator will not be
+		// executed for functions.  The VTHashedFunctionAddressCorrelator handles function 
+		// correlation between programs with the same architecture and the 
+		// CodeCompareAddressCorrelator handles function correlation between programs with different
+		// architectures.  This will still get called for data correlation.
+		correlatorList.add(new LinearAddressCorrelator());
+
 		correlatorList.addAll(initializeAddressCorrelators());
+
+		correlatorList.sort(CORRELATOR_COMPARATOR);
 	}
 
 	private List<AddressCorrelator> initializeAddressCorrelators() {
 
 		List<DiscoverableAddressCorrelator> instances =
 			ClassSearcher.getInstances(DiscoverableAddressCorrelator.class);
-		List<AddressCorrelator> addressCorrelatorList = new ArrayList<AddressCorrelator>(instances);
-
-		Collections.sort(addressCorrelatorList,
-			(o1, o2) -> o1.getClass().getSimpleName().compareTo(o2.getClass().getSimpleName()));
-
-		// Put the LastResortCorrelator in case a better address correlation isn't found.
-		addressCorrelatorList.add(new LastResortAddressCorrelator());
-
-		return addressCorrelatorList;
+		return new ArrayList<AddressCorrelator>(instances);
 	}
 
 	public AddressCorrelation getCorrelator(Function source, Function destination) {
@@ -92,12 +110,14 @@ public class AddressCorrelatorManager {
 	}
 
 	private AddressCorrelation getDataCorrelator(Data source, Data destination) {
+
 		for (AddressCorrelator correlator : correlatorList) {
 			AddressCorrelation correlation = correlator.correlate(source, destination);
 			if (correlation != null) {
 				return correlation;
 			}
 		}
+
 		return null;
 	}
 

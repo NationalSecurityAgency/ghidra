@@ -1020,7 +1020,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				starti
 				ghidra trace start
 				ghidra trace tx-start "Tx"
-				break main
+				break *main
 				hbreak *main+10
 				watch -l *((char*)(&main+20))
 				rwatch -l *((char(*)[8])(&main+30))
@@ -1046,7 +1046,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			// NB. starti avoid use of temporary main breakpoint
 			assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
 				Set.of(TraceBreakpointKind.SW_EXECUTE),
-				"main");
+				"*main");
 			assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
 				Set.of(TraceBreakpointKind.HW_EXECUTE),
 				"*main+10");

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -53,6 +52,7 @@ import agent.dbgmodel.jna.dbgmodel.UnknownWithUtils;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.NumericUtilities;
 
+@Ignore("deprecated")
 public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected static HostDataModelAccess cachedAccess = null;
 	protected static DebugClient cachedClient = null;

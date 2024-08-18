@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
@@ -35,11 +34,16 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Automatically creates a structure definition based on the references found by the decompiler.
+ * Automatically create a Structure data-type based on references found by the decompiler to a
+ * root parameter or other variable.
  *
- * If the parameter is already a structure pointer, any new references found will be added
- * to the structure, even if the structure must grow.
- *
+ * If the parameter is already a Structure pointer, any new references found can optionally be added
+ * to the existing Structure data-type.
+ * {@link #processStructure(HighVariable, Function, boolean, boolean, DecompInterface)} is the primary
+ * entry point to the helper, which computes the new or updated Structure based on an existing
+ * decompiled function. Decompilation, if not provided externally, can be performed by calling
+ * {@link #computeHighVariable(Address, Function, DecompInterface)}.  A decompiler process,
+ * if not provided externally, can be started by calling {@link #setUpDecompiler(DecompileOptions)}.
  */
 public class FillOutStructureHelper {
 
@@ -61,7 +65,6 @@ public class FillOutStructureHelper {
 
 	private Program currentProgram;
 	private TaskMonitor monitor;
-	private DecompileOptions decompileOptions;
 
 	private static final int maxCallDepth = 1;
 
@@ -75,36 +78,35 @@ public class FillOutStructureHelper {
 	 * Constructor.
 	 * 
 	 * @param program the current program
-	 * @param decompileOptions decompiler options 
-	 *   (see {@link DecompilerUtils#getDecompileOptions(ServiceProvider, Program)})
 	 * @param monitor task monitor
 	 */
-	public FillOutStructureHelper(Program program, DecompileOptions decompileOptions,
-			TaskMonitor monitor) {
+	public FillOutStructureHelper(Program program, TaskMonitor monitor) {
 		this.currentProgram = program;
-		this.decompileOptions = decompileOptions;
 		this.monitor = monitor;
 	}
 
 	/**
-	 * Method to create a structure data type for a variable in the given function.
-	 * Unlike the applyTo() action, this method will not modify the function, its variables,
-	 * or any existing data-types. A new structure is always created.
-	 * @param var a parameter, local variable, or global variable used in the given function
-	 * @param function the function to process
-	 * @param createNewStructure if true a new structure with a unique name will always be generated,
-	 * if false and variable corresponds to a structure pointer the existing structure will be 
+	 * Create or update a Structure data-type given a function and a root pointer variable.
+	 * The function must already be decompiled, but if a decompiler interface is provided, this
+	 * method will recursively follow variable references into CALLs, possibly triggering additional
+	 * decompilation.
+	 * @param var is the pointer variable
+	 * @param function is the function to process
+	 * @param createNewStructure if true a new Structure with a unique name will always be generated,
+	 * if false and the variable corresponds to a Structure pointer, the existing Structure will be 
 	 * updated instead.
 	 * @param createClassIfNeeded if true and variable corresponds to a <B>this</B> pointer without 
 	 * an assigned Ghidra Class (i.e., {@code void * this}), the function will be assigned to a 
-	 * new unique Ghidra Class namespace with a new identically named structure returned.  If false,
-	 * a new uniquely structure will be created.
-	 * @return a filled-in structure or null if one could not be created
+	 * new unique Ghidra Class namespace with a new identically named Structure returned.  If false,
+	 * a new unique Structure will be created.
+	 * @param decomplib is the (optional) decompiler interface, which can be used to recursively
+	 * decompile into CALLs.
+	 * @return a filled-in Structure or null if one could not be created
 	 */
 	public Structure processStructure(HighVariable var, Function function,
-			boolean createNewStructure, boolean createClassIfNeeded) {
+			boolean createNewStructure, boolean createClassIfNeeded, DecompInterface decomplib) {
 
-		if (var == null || var.getSymbol() == null || var.getOffset() >= 0) {
+		if (var == null) {
 			return null;
 		}
 
@@ -120,7 +122,9 @@ public class FillOutStructureHelper {
 		}
 
 		fillOutStructureDef(var);
-		pushIntoCalls();
+		if (decomplib != null) {
+			pushIntoCalls(decomplib);
+		}
 
 		long size = componentMap.getSize();
 		if (size == 0) {
@@ -132,7 +136,7 @@ public class FillOutStructureHelper {
 		}
 
 		if (structDT == null) {
-			if (createClassIfNeeded && DecompilerUtils.testForAutoParameterThis(var, function)) {
+			if (createClassIfNeeded && DecompilerUtils.isThisParameter(var, function)) {
 				structDT = createUniqueClassNamespaceAndStructure(var, (int) size, function);
 			}
 			else {
@@ -168,7 +172,7 @@ public class FillOutStructureHelper {
 	/**
 	 * Retrieve the component map that was generated when structure was created using decompiler 
 	 * info. Results are not valid until 
-	 * {@link #processStructure(HighVariable, Function, boolean, boolean)} is invoked.
+	 * {@link #processStructure(HighVariable, Function, boolean, boolean, DecompInterface)} is invoked.
 	 * @return componentMap
 	 */
 	public NoisyStructureBuilder getComponentMap() {
@@ -179,7 +183,7 @@ public class FillOutStructureHelper {
 	 * Retrieve the offset/pcodeOp pairs that are used to store data into the variable
 	 * used to fill-out structure.
 	 * Results are not valid until 
-	 * {@link #processStructure(HighVariable, Function, boolean, boolean)} is invoked.
+	 * {@link #processStructure(HighVariable, Function, boolean, boolean, DecompInterface)} is invoked.
 	 * @return the pcodeOps doing the storing to the associated variable
 	 */
 	public List<OffsetPcodeOpPair> getStorePcodeOps() {
@@ -190,7 +194,7 @@ public class FillOutStructureHelper {
 	 * Retrieve the offset/pcodeOp pairs that are used to load data from the variable
 	 * used to fill-out structure.
 	 * Results are not valid until 
-	 * {@link #processStructure(HighVariable, Function, boolean, boolean)} is invoked.
+	 * {@link #processStructure(HighVariable, Function, boolean, boolean, DecompInterface)} is invoked.
 	 * @return the pcodeOps doing the loading from the associated variable
 	 */
 	public List<OffsetPcodeOpPair> getLoadPcodeOps() {
@@ -237,8 +241,9 @@ public class FillOutStructureHelper {
 	/**
 	 * Recursively visit calls that take the structure pointer as a parameter.
 	 * Add any new references to the offsetToDataTypeMap.
+	 * @param decomplib is the active interface for decompiling
 	 */
-	private void pushIntoCalls() {
+	private void pushIntoCalls(DecompInterface decomplib) {
 		AddressSet doneSet = new AddressSet();
 
 		while (addressToCallInputMap.size() > 0) {
@@ -256,7 +261,7 @@ public class FillOutStructureHelper {
 				doneSet.addRange(addr, addr);
 				Function func = currentProgram.getFunctionManager().getFunctionAt(addr);
 				Address storageAddr = savedList.get(addr);
-				HighVariable paramHighVar = computeHighVariable(storageAddr, func);
+				HighVariable paramHighVar = computeHighVariable(storageAddr, func, decomplib);
 				if (paramHighVar != null) {
 					fillOutStructureDef(paramHighVar);
 				}
@@ -268,77 +273,73 @@ public class FillOutStructureHelper {
 	 * Decompile a function and return the resulting HighVariable associated with a storage address
 	 * @param storageAddress the storage address of the variable
 	 * @param function is the function
+	 * @param decomplib is the active interface to use for decompiling
 	 * @return the corresponding HighVariable or null
 	 */
-	public HighVariable computeHighVariable(Address storageAddress, Function function) {
+	public HighVariable computeHighVariable(Address storageAddress, Function function,
+			DecompInterface decomplib) {
 		if (storageAddress == null) {
 			return null;
 		}
-		DecompInterface decomplib = setUpDecompiler();
 		HighVariable highVar = null;
 
 		// call decompiler to get syntax tree
-		try {
-			if (!decomplib.openProgram(currentProgram)) {
-				return null;
-			}
-
-			DecompileResults results = decomplib.decompileFunction(function,
-				decomplib.getOptions().getDefaultTimeout(), monitor);
-			if (monitor.isCancelled()) {
-				return null;
-			}
-
-			HighFunction highFunc = results.getHighFunction();
-
-			// no decompile...
-			if (highFunc == null) {
-				return null;
-			}
-
-			// try to map the variable
-			HighSymbol sym =
-				highFunc.getMappedSymbol(storageAddress, function.getEntryPoint().subtractWrap(1L));
-			if (sym == null) {
-				sym = highFunc.getMappedSymbol(storageAddress, null);
-			}
-			if (sym == null) {
-				sym = highFunc.getMappedSymbol(storageAddress, function.getEntryPoint());
-			}
-			if (sym == null) {
-				sym = highFunc.getLocalSymbolMap()
-						.findLocal(storageAddress, function.getEntryPoint().subtractWrap(1L));
-			}
-			if (sym == null) {
-				sym = highFunc.getLocalSymbolMap().findLocal(storageAddress, null);
-			}
-			if (sym == null) {
-				sym = highFunc.getLocalSymbolMap()
-						.findLocal(storageAddress, function.getEntryPoint());
-			}
-			if (sym == null) {
-				return null;
-			}
-
-			highVar = sym.getHighVariable();
-		}
-		finally {
-			decomplib.dispose();
+		DecompileResults results = decomplib.decompileFunction(function,
+			decomplib.getOptions().getDefaultTimeout(), monitor);
+		if (monitor.isCancelled()) {
+			return null;
 		}
 
+		HighFunction highFunc = results.getHighFunction();
+
+		// no decompile...
+		if (highFunc == null) {
+			return null;
+		}
+
+		// try to map the variable
+		HighSymbol sym =
+			highFunc.getMappedSymbol(storageAddress, function.getEntryPoint().subtractWrap(1L));
+		if (sym == null) {
+			sym = highFunc.getMappedSymbol(storageAddress, null);
+		}
+		if (sym == null) {
+			sym = highFunc.getMappedSymbol(storageAddress, function.getEntryPoint());
+		}
+		if (sym == null) {
+			sym = highFunc.getLocalSymbolMap()
+					.findLocal(storageAddress, function.getEntryPoint().subtractWrap(1L));
+		}
+		if (sym == null) {
+			sym = highFunc.getLocalSymbolMap().findLocal(storageAddress, null);
+		}
+		if (sym == null) {
+			sym = highFunc.getLocalSymbolMap()
+					.findLocal(storageAddress, function.getEntryPoint());
+		}
+		if (sym == null) {
+			return null;
+		}
+
+		highVar = sym.getHighVariable();
 		return highVar;
 	}
 
 	/**
-	 * Set up a decompiler interface for recovering data-flow
+	 * Set up a decompiler interface and prepare for decompiling on the currentProgram. 
+	 * The interface can be used to pass to computeHighVariable or to processStructure.
+	 * @param options are the options to pass to the decompiler
 	 * @return the decompiler interface
 	 */
-	private DecompInterface setUpDecompiler() {
+	public DecompInterface setUpDecompiler(DecompileOptions options) {
 		DecompInterface decomplib = new DecompInterface();
-		decomplib.setOptions(decompileOptions);
+		decomplib.setOptions(options);
 		decomplib.toggleCCode(true);
 		decomplib.toggleSyntaxTree(true);
 		decomplib.setSimplificationStyle("decompile");
+		if (!decomplib.openProgram(currentProgram)) {
+			return null;
+		}
 		return decomplib;
 	}
 

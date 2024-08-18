@@ -53,12 +53,17 @@ public class eBPF_ElfRelocationHandler
 			return RelocationResult.SKIPPED;
 		}
 
-		int symbolIndex = relocation.getSymbolIndex();
-		long new_value = 0;
-		int byteLength = 8;
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+
+		long new_value;
+		int byteLength;
 
 		switch (type) {
 			case R_BPF_64_64: {
+				byteLength = 12;
 				new_value = symbolAddr.getAddressableWordOffset();
 				Byte dst = memory.getByte(relocationAddress.add(0x1));
 				memory.setLong(relocationAddress.add(0x4), new_value);
@@ -66,6 +71,7 @@ public class eBPF_ElfRelocationHandler
 				break;
 			}
 			case R_BPF_64_32: {
+				byteLength = 8;
 
 				// if we have, e.g, non-static function, it will be marked in the relocation table
 				// and indexed in the symbol table and it's easy to calculate the pc-relative offset
@@ -92,14 +98,24 @@ public class eBPF_ElfRelocationHandler
 						int offset = (int) (func_addr - instr_next);
 						memory.setInt(relocationAddress.add(0x4), offset);
 					}
+//					else {
+//						markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(), 
+//							symbolName, elfRelocationContext.getLog());
+//						return RelocationResult.UNSUPPORTED;
+//					}
 				}
+//				else {
+//					markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(), 
+//						symbolName, elfRelocationContext.getLog());
+//					return RelocationResult.UNSUPPORTED;
+//				}
 				break;
 			}
 			default: {
-				if (symbolIndex == 0) {
-					markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-						"applied relocation with symbol-index of 0", elfRelocationContext.getLog());
-				}
+// TODO: it may be appropriate to bookmark unsupported relocations
+// Relocation treatment for .BTF sections may differ
+//    			markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(), 
+//	    		symbolName, elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 			}
 		}

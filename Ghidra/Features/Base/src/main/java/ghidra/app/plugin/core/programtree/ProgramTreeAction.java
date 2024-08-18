@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,38 +27,40 @@ import docking.action.KeyBindingData;
  */
 abstract class ProgramTreeAction extends DockingAction {
 
-    final static int SINGLE_SELECTION=0;
-    final static int MULTI_SELECTION=1;
+	final static int SINGLE_SELECTION = 0;
+	final static int MULTI_SELECTION = 1;
 
-    private int selectionType;
+	private int selectionType;
 
-    ProgramTreeAction(String name, String owner, String[] defaultPopupPath, KeyStroke defaultKeyBinding) {
-        this(name, owner, defaultPopupPath,
-              defaultKeyBinding, MULTI_SELECTION);
-    }
-    ProgramTreeAction(String name, String owner,
-                String[] defaultPopupPath,
-                KeyStroke defaultKeyBinding,int selectionType) {
-        super(name, owner);
-        
-        this.selectionType = selectionType;
-        if (defaultKeyBinding != null) {
-            setKeyBindingData( new KeyBindingData( defaultKeyBinding ) );
-        }
-        setEnabled(false); 
-    }
-    @Override
-    public boolean isValidContext(ActionContext context) {
-    	return context.getContextObject() instanceof ProgramNode;
-    }
-    @Override
-    public boolean isAddToPopup(ActionContext context) {
-    	return true;
-    }
-    /**
-     * Get the selection type associated with this action.
-     */
-    int getSelectionType() {
-        return selectionType;
-    }
+	ProgramTreeAction(String name, String owner, KeyStroke defaultKeyBinding) {
+		this(name, owner, defaultKeyBinding, MULTI_SELECTION);
+	}
+
+	ProgramTreeAction(String name, String owner, KeyStroke defaultKeyBinding, int selectionType) {
+		super(name, owner);
+
+		this.selectionType = selectionType;
+		if (defaultKeyBinding != null) {
+			setKeyBindingData(new KeyBindingData(defaultKeyBinding));
+		}
+		setEnabled(false);
+	}
+
+	@Override
+	public boolean isValidContext(ActionContext context) {
+		return context.getContextObject() instanceof ProgramNode;
+	}
+
+	@Override
+	public boolean isAddToPopup(ActionContext context) {
+		return true;
+	}
+
+	/**
+	 * Get the selection type associated with this action.
+	 * @return the selection type
+	 */
+	int getSelectionType() {
+		return selectionType;
+	}
 }

@@ -1,3 +1,8 @@
+######################################################################################
+## PLEASE NOTE: This version of the lldb-based debugger is being deprecated.        ##
+##   Please try the Python-based traceRMI versions documented in the Debugger help. ##
+######################################################################################
+
 To use the LLDB agent in Ghidra, you will need to build the JNI interface to the LLDB Scripting Bridge.
 
 If you are using the distribution (vs. source) and wish to use the default swig files included (LLDB v17), you can use the

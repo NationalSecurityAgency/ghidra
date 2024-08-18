@@ -119,7 +119,7 @@ public class TestDummyProjectData implements ProjectData {
 	}
 
 	@Override
-	public void refresh(boolean force) throws IOException {
+	public void refresh(boolean force) {
 		// stub
 	}
 

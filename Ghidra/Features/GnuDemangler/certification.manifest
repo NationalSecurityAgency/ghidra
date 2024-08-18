@@ -1,3 +1,4 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+data/default.gnu.demangler.replacements.txt||GHIDRA||||END|
 src/test/resources/ghidra/app/util/demangler/gnu_mangled_names.txt||GHIDRA||reviewed||END|

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import javax.swing.*;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.GTable;
 import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
@@ -33,6 +34,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import help.Help;
+import help.HelpService;
 
 /**
  * Editor provider for a Composite Data Type.
@@ -259,9 +262,8 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return editorModel.hasChanges();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		editorPanel.domainObjectRestored(domainObject);
+	public void dataTypeManagerRestored() {
+		editorPanel.dataTypeManagerRestored();
 	}
 
 	@Override
@@ -332,4 +334,28 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return true;
 	}
 
+	protected void registerHelp(Object object, String anchor) {
+		HelpService help = Help.getHelpService();
+		help.registerHelp(object, new HelpLocation(getHelpTopic(), getHelpName() + "_" + anchor));
+	}
+
+	protected void requestTableFocus() {
+
+		JTable table = editorPanel.getTable();
+		if (!table.isEditing()) {
+			table.requestFocus();
+			return;
+		}
+
+		if (table instanceof GTable gTable) {
+			gTable.requestTableEditorFocus();
+		}
+		else {
+			table.getEditorComponent().requestFocus();
+		}
+	}
+
+	protected void closeDependentEditors() {
+		// do nothing by default
+	}
 }

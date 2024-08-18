@@ -19,6 +19,7 @@
 # use only. Please run the Java version in a production environment.
 
 #@category Examples.Python
+#@runtime Jython
 
 runScript("HelloWorldScript.java")
 runScript("HelloWorldPopupScript.java")

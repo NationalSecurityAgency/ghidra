@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.Memory;
-
-import java.io.IOException;
 
 /**
  * A Byte Provider implementation based on Memory.
@@ -28,6 +28,7 @@ public class MemoryMutableByteProvider extends MemoryByteProvider implements Mut
 	/**
 	 * Constructs a new provider for a specific address space.
 	 * @param memory the memory
+	 * @param space the address space
 	 */
 	public MemoryMutableByteProvider(Memory memory, AddressSpace space) {
 		super(memory, space);

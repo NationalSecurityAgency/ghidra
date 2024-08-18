@@ -5597,7 +5597,8 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RuleSplitCopy("splitcopy") );
     actcleanup->addRule( new RuleSplitLoad("splitpointer") );
     actcleanup->addRule( new RuleSplitStore("splitpointer") );
-    actcleanup->addRule( new RuleStringSequence("constsequence"));
+    actcleanup->addRule( new RuleStringCopy("constsequence"));
+    actcleanup->addRule( new RuleStringStore("constsequence"));
   }
   act->addAction( actcleanup );
 

@@ -910,5 +910,10 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 			// don't care
 		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
+			// don't care
+		}
 	}
 }

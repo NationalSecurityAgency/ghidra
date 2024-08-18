@@ -122,7 +122,7 @@
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x7"/>
         </pentry>
-        <pentry minsize="1" maxsize="500" align="4">
+        <pentry minsize="1" maxsize="500" align="8">
           <addr offset="0" space="stack"/>
         </pentry>
       </input>

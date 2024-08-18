@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,7 @@ import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.file.formats.dump.*;
 import ghidra.file.formats.dump.cmd.ModuleToPeHelper;
-import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -109,8 +107,7 @@ public class Pagedump extends DumpFile {
 		addins.add("ntoskrnl");
 		addins.add("ntkrnlmp");
 
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		props.setString("Executable Format", PeLoader.PE_NAME);
+		program.setExecutableFormat(PeLoader.PE_NAME);
 		initManagerList(addins);
 
 		createBlocks = OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME, options,
@@ -198,7 +195,7 @@ public class Pagedump extends DumpFile {
 			pdb.deserialize();
 			DefaultPdbApplicator applicator =
 				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
-					program.getImageBase(), applicatorOptions, (MessageLog) null);
+					program.getImageBase(), applicatorOptions, monitor, (MessageLog) null);
 			applicator.applyNoAnalysisState();
 		}
 		catch (PdbException | IOException | CancelledException e) {

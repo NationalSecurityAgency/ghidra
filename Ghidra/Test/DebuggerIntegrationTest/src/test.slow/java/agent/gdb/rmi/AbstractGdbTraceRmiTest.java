@@ -23,11 +23,11 @@ import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
@@ -157,16 +157,22 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 	}
 
 	protected record GdbResult(boolean timedOut, int exitCode, String stdout, String stderr) {
+		String filterLines(String in, Predicate<String> lineTest) {
+			return Stream.of(in.split("\n")).filter(lineTest).collect(Collectors.joining("\n"));
+		}
+
 		protected String handle() {
-			if (!"".equals(stderr) | 0 != exitCode) {
+			String filtErr = filterLines(stderr, line -> {
+				return !line.contains("warning: could not find '.gnu_debugaltlink' file");
+			});
+			if (!filtErr.isBlank() | 0 != exitCode) {
 				throw new GdbError(exitCode, stdout, stderr);
 			}
 			return stdout;
 		}
 	}
 
-	protected record ExecInGdb(Process gdb, CompletableFuture<GdbResult> future) {
-	}
+	protected record ExecInGdb(Process gdb, CompletableFuture<GdbResult> future) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInGdb execInGdb(String script) throws IOException {
@@ -345,8 +351,7 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 		return out.split(head)[1].split("---")[0].replace("(gdb)", "").trim();
 	}
 
-	record MemDump(long address, byte[] data) {
-	}
+	record MemDump(long address, byte[] data) {}
 
 	protected MemDump parseHexDump(String dump) throws IOException {
 		// First, get the address. Assume contiguous, so only need top line.

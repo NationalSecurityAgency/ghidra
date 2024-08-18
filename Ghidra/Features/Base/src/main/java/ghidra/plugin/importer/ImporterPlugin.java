@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,8 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.CharBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -91,6 +92,7 @@ public class ImporterPlugin extends Plugin
 	private GhidraFileChooser chooser;
 	private FrontEndService frontEndService;
 	private DockingAction batchImportAction;
+	private FileSystemService fsService;
 
 	public ImporterPlugin(PluginTool tool) {
 		super(tool);
@@ -163,20 +165,9 @@ public class ImporterPlugin extends Plugin
 			return;
 		}
 
-		BatchImportDialog.showAndImport(tool, null, files2FSRLs(files), destFolder,
+		List<FSRL> fsrls = files.stream().map(f -> fsService().getLocalFSRL(f)).toList();
+		BatchImportDialog.showAndImport(tool, null, fsrls, destFolder,
 			getTool().getService(ProgramManager.class));
-	}
-
-	private List<FSRL> files2FSRLs(List<File> files) {
-		if (files == null) {
-			return Collections.emptyList();
-		}
-
-		List<FSRL> result = new ArrayList<>(files.size());
-		for (File f : files) {
-			result.add(FileSystemService.getInstance().getLocalFSRL(f));
-		}
-		return result;
 	}
 
 	@Override
@@ -190,7 +181,7 @@ public class ImporterPlugin extends Plugin
 			return;
 		}
 
-		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
+		FSRL fsrl = fsService().getLocalFSRL(file);
 		ProgramManager manager = tool.getService(ProgramManager.class);
 		ImporterUtilities.showImportDialog(tool, manager, fsrl, folder, null);
 	}
@@ -301,7 +292,6 @@ public class ImporterPlugin extends Plugin
 		if (addToProgramAction != null) {
 			addToProgramAction.setEnabled(false);
 		}
-		ProgramMappingService.clear();
 	}
 
 	@Override
@@ -315,8 +305,6 @@ public class ImporterPlugin extends Plugin
 		if (addToProgramAction != null) {
 			addToProgramAction.setEnabled(false);
 		}
-
-		ProgramMappingService.clear();
 	}
 
 	private void setupImportAction() {
@@ -483,7 +471,7 @@ public class ImporterPlugin extends Plugin
 		ProgramManager manager = tool.getService(ProgramManager.class);
 		Program program = manager.getCurrentProgram();
 
-		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
+		FSRL fsrl = fsService().getLocalFSRL(file);
 		TaskLauncher.launchModal("Show Add To Program Dialog", monitor -> {
 			ImporterUtilities.showAddToProgramDialog(fsrl, program, tool, monitor);
 		});
@@ -504,12 +492,11 @@ public class ImporterPlugin extends Plugin
 
 		try {
 			Memory memory = program.getMemory();
-			FileSystemService fsService = FileSystemService.getInstance();
 
 			// create a tmp ByteProvider that contains the bytes from the selected region
 			FileCacheEntry tmpFile;
 			try (FileCacheEntryBuilder tmpFileBuilder =
-				fsService.createTempFile(range.getLength())) {
+				fsService().createTempFile(range.getLength())) {
 				byte[] bytes = new byte[(int) range.getLength()];
 				memory.getBytes(range.getMinAddress(), bytes);
 				tmpFileBuilder.write(bytes);
@@ -520,7 +507,7 @@ public class ImporterPlugin extends Plugin
 			String rangeName =
 				block.getName() + "[" + range.getMinAddress() + "," + range.getMaxAddress() + "]";
 			ByteProvider bp =
-				fsService.getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
+				fsService().getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp);
 
 			ImporterDialog importerDialog = new ImporterDialog(tool,
@@ -533,5 +520,13 @@ public class ImporterPlugin extends Plugin
 		catch (MemoryAccessException e) {
 			Msg.showError(this, null, "Memory Access Error Occurred", e.getMessage(), e);
 		}
+	}
+
+	private FileSystemService fsService() {
+		// use a delayed initialization so we don't force the FileSystemService to initialize
+		if (fsService == null) {
+			fsService = FileSystemService.getInstance();
+		}
+		return fsService;
 	}
 }

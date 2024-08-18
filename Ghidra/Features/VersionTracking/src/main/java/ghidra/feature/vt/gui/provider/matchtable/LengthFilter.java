@@ -90,11 +90,6 @@ public class LengthFilter extends Filter<VTMatch> {
 	}
 
 	@Override
-	public void clearFilter() {
-		textField.setText(DEFAULT_FILTER_VALUE.toString());
-	}
-
-	@Override
 	public FilterEditingStatus getFilterStatus() {
 		return textField.getFilterStatus();
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -589,6 +589,16 @@ public abstract class ThemeManager {
 	 * @param fontStyle the font style
 	 */
 	public void registerFont(Component component, String fontId, int fontStyle) {
+		// do nothing
+	}
+
+	/**
+	 * Removes the component and font id binding made in a previous call to 
+	 * {@link #registerFont(Component, String)}.
+	 * @param component the component to remove
+	 * @param fontId the id of the font previously registered
+	 */
+	public void unRegisterFont(JComponent component, String fontId) {
 		// do nothing
 	}
 

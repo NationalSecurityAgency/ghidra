@@ -66,6 +66,11 @@ public class PIC30_ElfRelocationHandler
 			ElfSymbol elfSymbol, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
 
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+		
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 

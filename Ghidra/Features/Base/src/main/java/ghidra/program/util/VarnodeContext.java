@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,6 +76,7 @@ public class VarnodeContext implements ProcessorContext {
 	
 	private final int BAD_OFFSET_SPACEID;   // address space for offsets from an unknown value;
 	
+	static final String SUSPECT_CONST_NAME = "SuspectConst";
 	private final int SUSPECT_OFFSET_SPACEID;   // address space for suspect constant values
 	public final Address SUSPECT_ZERO_ADDRESS;
 	
@@ -109,7 +110,7 @@ public class VarnodeContext implements ProcessorContext {
 		/* Suspect constants act like constants, but are in a SuspectConst
 		 * address space instead of the constant space.
 		 */
-		SUSPECT_ZERO_ADDRESS = addrFactory.getAddress(getAddressSpace("SuspectConst"), 0);
+		SUSPECT_ZERO_ADDRESS = addrFactory.getAddress(getAddressSpace(SUSPECT_CONST_NAME), 0);
 		SUSPECT_OFFSET_SPACEID  = SUSPECT_ZERO_ADDRESS.getAddressSpace().getSpaceID();
 
 		this.programContext = programContext;
@@ -1753,6 +1754,20 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 					throw new AssertException("Duplicate name should not occur.");
 				}
 			}
+		}
+		try {
+			// Use JOIN type space for suspect constants, it is used by the decompiler, so can
+			// be repurposed for this algorithm.
+			// Hack for current storage allows suspect constants to fit in a byte. The current
+			// algorithm is sensitive to the space ID value and must be less than 0x7f.  Only types that are
+			// between 0-16 will work correctly because of how the spaceID is calculated based on the space type.
+			// The spaceID is computed using the type.
+			AddressSpace suspectConstspc = new GenericAddressSpace(VarnodeContext.SUSPECT_CONST_NAME, 64,
+				AddressSpace.TYPE_JOIN, 0);
+			addAddressSpace(suspectConstspc);
+		}
+		catch (DuplicateNameException e) {
+			throw new AssertException("Duplicate name should not occur.");
 		}
 		try {
 			addAddressSpace(AddressSpace.EXTERNAL_SPACE);

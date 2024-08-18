@@ -24,6 +24,7 @@
 # generate the original bytes of the imported file and asks the user to provide a filename to store the bytes.  YARA then runs on that file.
 
 #@category Memory.YARA
+#@runtime Jython
 
 import os.path
 import sys

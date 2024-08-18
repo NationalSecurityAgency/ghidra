@@ -17,6 +17,7 @@ package ghidra.app.decompiler.component;
 
 import java.awt.Color;
 
+import generic.json.Json;
 import ghidra.app.decompiler.CTokenHighlightMatcher;
 import ghidra.app.decompiler.ClangToken;
 
@@ -39,5 +40,10 @@ class NameTokenMatcher implements CTokenHighlightMatcher {
 			return colorProvider.getColor(token);
 		}
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 }

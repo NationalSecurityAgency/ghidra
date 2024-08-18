@@ -48,12 +48,40 @@ public class MDQualifier extends MDParsableItem {
 		return (nameAnonymous != null);
 	}
 
+	public boolean isLocalNamespace() {
+		return (nameNumbered != null);
+	}
+
+	public boolean isNameC() {
+		return (nameC != null);
+	}
+
+	public boolean isNameQ() {
+		return (nameQ != null);
+	}
+
 	public MDNestedName getNested() {
 		return nameNested;
 	}
 
 	public String getAnonymousName() {
 		return nameAnonymous.getName();
+	}
+
+	public String getLocalNamespace() {
+		return nameNumbered.getName();
+	}
+
+	public String getLocalNamespaceNumber() {
+		return nameNumbered.getNumber().toString();
+	}
+
+	public String getNameC() {
+		return nameC;
+	}
+
+	public String getNameQ() {
+		return nameQ;
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private File DEFAULT_FORCE_LOAD_FILE = new File(DEFAULT_SYMBOLS_DIR, "sample.pdb");
 	private File forceLoadFile;
 
-	private boolean searchRemoteLocations = false;
+	private boolean searchUntrustedLocations = false;
 
 	//==============================================================================================
 	// Additional instance data
@@ -164,7 +164,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			pdbFile = forceLoadFile;
 		}
 		else {
-			pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchRemoteLocations, monitor);
+			pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchUntrustedLocations, monitor);
 		}
 		if (pdbFile == null) {
 			// warnings have already been logged
@@ -205,8 +205,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
 
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb, program,
-				program.getDataTypeManager(), program.getImageBase(), pdbApplicatorOptions, log);
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+					program.getImageBase(), pdbApplicatorOptions, monitor, log);
 			applicator.applyDataTypesAndMainSymbolsAnalysis();
 
 			AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
@@ -261,9 +262,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
 				DEFAULT_FORCE_LOAD_FILE, null, OPTION_DESCRIPTION_FORCELOAD_FILE);
 		}
-		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS,
-			searchRemoteLocations, null,
-			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_REMOTE_LOCATIONS);
+		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS,
+			searchUntrustedLocations, null,
+			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_UNTRUSTED_LOCATIONS);
 
 		pdbReaderOptions.registerOptions(options);
 		pdbApplicatorOptions.registerAnalyzerOptions(options);
@@ -280,8 +281,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			forceLoadFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
 		}
 
-		searchRemoteLocations = options.getBoolean(
-			PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS, searchRemoteLocations);
+		searchUntrustedLocations = options.getBoolean(
+			PdbAnalyzerCommon.OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS, searchUntrustedLocations);
 
 		pdbReaderOptions.loadOptions(options);
 		pdbApplicatorOptions.loadAnalyzerOptions(options);
@@ -311,19 +312,19 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Sets the "allow remote" option that will be used by the analyzer when it is next invoked
+	 * Sets the "allow untrusted" option that will be used by the analyzer when it is next invoked
 	 * on the specified program.
 	 * <p>
 	 * Normally when the analyzer attempts to locate a matching PDB file it
-	 * will default to NOT searching remote symbol servers.  A headless script could
-	 * use this method to allow the analyzer to search remote symbol servers.
+	 * will default to NOT searching untrusted symbol servers.  A headless script could
+	 * use this method to allow the analyzer to search untrusted symbol servers.
 	 *
 	 * @param program {@link Program}
-	 * @param allowRemote boolean flag, true means analyzer can search remote symbol
+	 * @param allowUntrusted boolean flag, true means analyzer can search remote symbol
 	 * servers
 	 */
-	public static void setAllowRemoteOption(Program program, boolean allowRemote) {
-		PdbAnalyzerCommon.setAllowRemoteOption(NAME, program, allowRemote);
+	public static void setAllowUntrustedOption(Program program, boolean allowUntrusted) {
+		PdbAnalyzerCommon.setAllowUntrustedOption(NAME, program, allowUntrusted);
 	}
 
 	//==============================================================================================
@@ -360,7 +361,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 				pdb.deserialize();
 				DefaultPdbApplicator applicator =
 					new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
-						program.getImageBase(), pdbApplicatorOptions, log);
+						program.getImageBase(), pdbApplicatorOptions, monitor, log);
 				applicator.applyFunctionInternalsAnalysis();
 				return true;
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,10 @@
  */
 package pdb.symbolserver;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,8 +30,7 @@ import pdb.PdbUtils;
 
 /**
  * A (lowercase-'S') service that searches for and fetches symbol files
- * from a set of local and remote {@link SymbolServer symbolservers}. (not to be 
- * confused with a Plugin service)
+ * from a set of {@link SymbolServer symbolservers}. (not to be confused with a Plugin service)
  * <p>
  * Instances of this class are meant to be easily created when needed
  * and just as easily thrown away when not used or when the search 
@@ -50,9 +48,8 @@ public class SymbolServerService {
 	/**
 	 * Creates a new SymbolServerService instance.
 	 * <p>
-	 * @param symbolStore a {@link SymbolStore} - where all
-	 *  remote files are placed when downloaded. Also treated as a SymbolServer
-	 *  and searched first
+	 * @param symbolStore a {@link SymbolStore} - where all remote files are placed when 
+	 * downloaded. Also treated as a SymbolServer and searched first
 	 * @param symbolServers  a list of {@link SymbolServer symbol servers} - searched in order
 	 */
 	public SymbolServerService(SymbolStore symbolStore, List<SymbolServer> symbolServers) {
@@ -89,19 +86,6 @@ public class SymbolServerService {
 	 */
 	public List<SymbolServer> getSymbolServers() {
 		return new ArrayList<>(symbolServers.subList(1, symbolServers.size()));
-	}
-
-	/**
-	 * Returns the number of configured symbol servers that are considered 'remote'.
-	 * @return number of remote symbol servers
-	 */
-	public int getRemoteSymbolServerCount() {
-		int remoteSymbolServerCount = (int) getSymbolServers()
-				.stream()
-				.filter(ss -> !ss.isLocal())
-				.count();
-
-		return remoteSymbolServerCount;
 	}
 
 	/**
@@ -150,9 +134,9 @@ public class SymbolServerService {
 
 		for_each_symbol_server_loop: for (SymbolServer symbolServer : symbolServers) {
 			monitor.checkCancelled();
-			if (!symbolServer.isLocal() && !findOptions.contains(FindOption.ALLOW_REMOTE)) {
+			if (!symbolServer.isTrusted() && !findOptions.contains(FindOption.ALLOW_UNTRUSTED)) {
 				Msg.debug(this,
-					logPrefix() + ": skipping non-local symbol server " +
+					logPrefix() + ": skipping untrusted symbol server " +
 						symbolServer.getDescriptiveName());
 				continue;
 			}

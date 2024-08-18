@@ -388,6 +388,11 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		public DataType getFormalDataType() {
 			return variable.getDataType();
 		}
+
+		@Override
+		public boolean hasStorageConflict() {
+			return false;
+		}
 	}
 
 }

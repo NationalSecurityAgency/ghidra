@@ -146,6 +146,9 @@
                     <ref name="symbol_type"/>
                   </attribute>
                 </optional>
+                <optional>
+                  <attribute name="description"/>
+                </optional>
               </element>
 
             </oneOrMore>

@@ -28,4 +28,8 @@ public class UnionEditorPanel extends CompEditorPanel {
 		return null;
 	}
 
+	@Override
+	protected boolean choosePacking() {
+		return true; // packing is not destructive to unions, so safe to use without prompting
+	}
 }

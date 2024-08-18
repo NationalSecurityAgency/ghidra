@@ -62,6 +62,15 @@ public interface ByteBlock {
 	}
 
 	/**
+	 * Get the short value at the given index.
+	 * @param index byte index
+	 * @throws ByteBlockAccessException if the block cannot be read
+	 * @throws IndexOutOfBoundsException if the given index is not in this
+	 * block.
+	 */
+	public short getShort(BigInteger index) throws ByteBlockAccessException;
+
+	/**
 	 * Get the int value at the given index.
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
@@ -88,6 +97,16 @@ public interface ByteBlock {
 	 * block.
 	 */
 	public void setByte(BigInteger index, byte value) throws ByteBlockAccessException;
+
+	/**
+	 * Set the short at the given index.
+	 * @param index byte index
+	 * @param value value to set
+	 * @throws ByteBlockAccessException if the block cannot be updated
+	 * @throws IndexOutOfBoundsException if the given index is not in this
+	 * block.
+	 */
+	public void setShort(BigInteger index, short value) throws ByteBlockAccessException;
 
 	/**
 	 * Set the int at the given index.

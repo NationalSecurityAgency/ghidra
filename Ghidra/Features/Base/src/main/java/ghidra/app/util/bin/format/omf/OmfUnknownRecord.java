@@ -18,7 +18,13 @@ package ghidra.app.util.bin.format.omf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.omf.omf.OmfRecordTypes;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * An unknown OMF record
+ */
 public class OmfUnknownRecord extends OmfRecord {
 
 	/**
@@ -28,7 +34,16 @@ public class OmfUnknownRecord extends OmfRecord {
 	 * @throws IOException If an IO-related error occurred
 	 */
 	public OmfUnknownRecord(BinaryReader reader) throws IOException {
-		readRecordHeader(reader);
-		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
+		super(reader);
+	}
+
+	@Override
+	public void parseData() throws IOException, OmfException {
+		// No record-specific data to read
+	}
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		return OmfUtils.toOmfRecordDataType(this, OmfRecordTypes.getName(recordType));
 	}
 }

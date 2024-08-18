@@ -19,11 +19,7 @@ import java.awt.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.*;
 
-import org.apache.commons.lang3.StringUtils;
-
-import docking.widgets.SearchLocation;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.field.*;
@@ -31,16 +27,12 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
-import ghidra.util.Msg;
 
 /**
- * 
- *
  * Control the GUI layout for displaying tokenized C code
  */
 public class ClangLayoutController implements LayoutModel, LayoutModelListener {
@@ -53,10 +45,10 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	private Field[] fieldList; // Array of fields comprising layout
 	private FontMetrics metrics;
 	private FieldHighlightFactory hlFactory;
-	private ArrayList<LayoutModelListener> listeners;
+	private List<LayoutModelListener> listeners;
 	private Color[] syntaxColor; // Foreground colors.
 	private BigInteger numIndexes = BigInteger.ZERO;
-	private ArrayList<ClangLine> lines = new ArrayList<>();
+	private List<ClangLine> lines = new ArrayList<>();
 
 	private boolean showLineNumbers = true;
 
@@ -71,7 +63,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		buildLayouts(null, null, null, false);
 	}
 
-	public ArrayList<ClangLine> getLines() {
+	public List<ClangLine> getLines() {
 		return lines;
 	}
 
@@ -248,7 +240,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		}
 	}
 
-	private void splitToMaxWidthLines(ArrayList<String> res, String line) {
+	private void splitToMaxWidthLines(List<String> res, String line) {
 		int maxchar;
 		if ((maxWidth == 0) || (indentWidth == 0)) {
 			maxchar = 40;
@@ -257,7 +249,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			maxchar = maxWidth / indentWidth;
 		}
 		String[] toklist = line.split("[ \t]+");
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		int cursize = 0;
 		boolean atleastone = false;
 		int i = 0;
@@ -275,7 +267,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 				res.add(finishLine);
 				cursize = 5;
 				atleastone = false;
-				buf = new StringBuffer();
+				buf = new StringBuilder();
 				buf.append("     ");
 			}
 			else {
@@ -302,7 +294,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			return false; // No error message to add
 		}
 		String[] errlines_init = errmsg.split("[\n\r]+");
-		ArrayList<String> errlines = new ArrayList<>();
+		List<String> errlines = new ArrayList<>();
 		for (String element : errlines_init) {
 			splitToMaxWidthLines(errlines, element);
 		}
@@ -337,255 +329,13 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		return null;
 	}
 
-//==================================================================================================
-// Search Related Methods
-//==================================================================================================
-
-	private SearchLocation findNextTokenGoingForward(
-			java.util.function.Function<String, SearchMatch> matcher, String searchString,
-			FieldLocation currentLocation) {
-
-		int row = currentLocation.getIndex().intValue();
-		for (int i = row; i < fieldList.length; i++) {
-			ClangTextField field = (ClangTextField) fieldList[i];
-			String partialLine =
-				getTextLineFromOffset((i == row) ? currentLocation : null, field, true);
-			SearchMatch match = matcher.apply(partialLine);
-			if (match == SearchMatch.NO_MATCH) {
-				continue;
-			}
-			if (i == row) { // cursor is on this line
-				//
-				// The match start for all lines without the cursor will be relative to the start
-				// of the line, which is 0.  However, when searching on the row with the cursor,
-				// the match start is relative to the cursor position.  Update the start to
-				// compensate for the difference between the start of the line and the cursor.
-				//
-				String fullLine = field.getText();
-				int cursorOffset = fullLine.length() - partialLine.length();
-				match.start += cursorOffset;
-				match.end += cursorOffset;
-			}
-			FieldNumberColumnPair pair = getFieldIndexFromOffset(match.start, field);
-			FieldLocation fieldLocation =
-				new FieldLocation(i, pair.getFieldNumber(), 0, pair.getColumn());
-
-			return new FieldBasedSearchLocation(fieldLocation, match.start, match.end - 1,
-				searchString, true);
-		}
-		return null;
-	}
-
-	private SearchLocation findNextTokenGoingBackward(
-			java.util.function.Function<String, SearchMatch> matcher, String searchString,
-			FieldLocation currentLocation) {
-
-		int row = currentLocation.getIndex().intValue();
-		for (int i = row; i >= 0; i--) {
-			ClangTextField field = (ClangTextField) fieldList[i];
-			String textLine =
-				getTextLineFromOffset((i == row) ? currentLocation : null, field, false);
-
-			SearchMatch match = matcher.apply(textLine);
-			if (match != SearchMatch.NO_MATCH) {
-				FieldNumberColumnPair pair = getFieldIndexFromOffset(match.start, field);
-				FieldLocation fieldLocation =
-					new FieldLocation(i, pair.getFieldNumber(), 0, pair.getColumn());
-
-				return new FieldBasedSearchLocation(fieldLocation, match.start, match.end - 1,
-					searchString, false);
-			}
-		}
-		return null;
-	}
-
-	public SearchLocation findNextTokenForSearchRegex(String searchString,
-			FieldLocation currentLocation, boolean forwardSearch) {
-
-		Pattern pattern = null;
-		try {
-			pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-		}
-		catch (PatternSyntaxException e) {
-			Msg.showError(this, decompilerPanel, "Regular Expression Syntax Error", e.getMessage());
-			return null;
-		}
-
-		Pattern finalPattern = pattern;
-		if (forwardSearch) {
-
-			java.util.function.Function<String, SearchMatch> function = textLine -> {
-
-				Matcher matcher = finalPattern.matcher(textLine);
-				if (matcher.find()) {
-					int start = matcher.start();
-					int end = matcher.end();
-					return new SearchMatch(start, end, textLine);
-				}
-
-				return SearchMatch.NO_MATCH;
-			};
-
-			return findNextTokenGoingForward(function, searchString, currentLocation);
-		}
-
-		java.util.function.Function<String, SearchMatch> reverse = textLine -> {
-
-			Matcher matcher = finalPattern.matcher(textLine);
-
-			if (!matcher.find()) {
-				return SearchMatch.NO_MATCH;
-			}
-
-			int start = matcher.start();
-			int end = matcher.end();
-
-			// Since the matcher can only match from the start to end of line, we need
-			// to find all matches and then take the last match
-			while (matcher.find()) {
-				start = matcher.start();
-				end = matcher.end();
-			}
-
-			return new SearchMatch(start, end, textLine);
-		};
-
-		return findNextTokenGoingBackward(reverse, searchString, currentLocation);
-	}
-
-	public SearchLocation findNextTokenForSearch(String searchString, FieldLocation currentLocation,
-			boolean forwardSearch) {
-
-		if (forwardSearch) {
-
-			java.util.function.Function<String, SearchMatch> function = textLine -> {
-
-				int index = StringUtils.indexOfIgnoreCase(textLine, searchString);
-				if (index == -1) {
-					return SearchMatch.NO_MATCH;
-				}
-
-				return new SearchMatch(index, index + searchString.length(), textLine);
-			};
-
-			return findNextTokenGoingForward(function, searchString, currentLocation);
-		}
-
-		java.util.function.Function<String, SearchMatch> function = textLine -> {
-
-			int index = StringUtils.lastIndexOfIgnoreCase(textLine, searchString);
-			if (index == -1) {
-				return SearchMatch.NO_MATCH;
-			}
-			return new SearchMatch(index, index + searchString.length(), textLine);
-		};
-
-		return findNextTokenGoingBackward(function, searchString, currentLocation);
-	}
-
-	private String getTextLineFromOffset(FieldLocation location, ClangTextField textField,
-			boolean forwardSearch) {
-
-		if (location == null) { // the cursor location is not on this line; use all of the text
-			return textField.getText();
-		}
-
-		if (textField.getText().isEmpty()) { // the cursor is on blank line
-			return "";
-		}
-
-		String partialText = textField.getText();
-
-		if (forwardSearch) {
-
-			int nextCol = location.getCol();
-
-			// protects against the location column being out of range (this can happen if we're
-			// searching forward and the cursor is past the last token)
-			if (nextCol >= partialText.length()) {
-				return "";
-			}
-
-			// skip a character to start the next search; this prevents matching the previous match
-			return partialText.substring(nextCol);
-		}
-
-		// backwards search
-		return partialText.substring(0, location.getCol());
-	}
-
-	private FieldNumberColumnPair getFieldIndexFromOffset(int screenOffset,
-			ClangTextField textField) {
-		RowColLocation rowColLocation = textField.textOffsetToScreenLocation(screenOffset);
-
-		// we use 0 here because currently there is only one field, which is the entire line
-		return new FieldNumberColumnPair(0, rowColLocation.col());
-	}
-
-	private static class SearchMatch {
-		private static SearchMatch NO_MATCH = new SearchMatch(-1, -1, null);
-		private int start;
-		private int end;
-		private String textLine;
-
-		SearchMatch(int start, int end, String textLine) {
-			this.start = start;
-			this.end = end;
-			this.textLine = textLine;
-		}
-
-		@Override
-		public String toString() {
-			if (this == NO_MATCH) {
-				return "NO MATCH";
-			}
-			return "[start=" + start + ",end=" + end + "]: " + textLine;
-		}
-	}
-//==================================================================================================
-// End Search Related Methods
-//==================================================================================================
-
-	ClangToken getTokenForLocation(FieldLocation fieldLocation) {
-		int row = fieldLocation.getIndex().intValue();
-		ClangTextField field = (ClangTextField) fieldList[row];
-		return field.getToken(fieldLocation);
-	}
-
 	public void locationChanged(FieldLocation loc, Field field, Color locationColor,
 			Color parenColor) {
 		// Highlighting is now handled through the decompiler panel's highlight controller.
-	}
-
-	public boolean changePending() {
-		return false;
 	}
 
 	@Override
 	public void flushChanges() {
 		// nothing to do
 	}
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	private class FieldNumberColumnPair {
-		private final int fieldNumber;
-		private final int column;
-
-		FieldNumberColumnPair(int fieldNumber, int column) {
-			this.fieldNumber = fieldNumber;
-			this.column = column;
-
-		}
-
-		int getFieldNumber() {
-			return fieldNumber;
-		}
-
-		int getColumn() {
-			return column;
-		}
-	}
-
 }

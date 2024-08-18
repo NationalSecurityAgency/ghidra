@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,15 +32,6 @@ public class ProgramSelection implements AddressSetView {
 	 * Construct a new empty ProgramSelection.
 	 */
 	public ProgramSelection() {
-		this((AddressFactory) null);
-	}
-
-	/**
-	 * Construct a new empty ProgramSelection.
-	 * @param addressFactory the address factory for the address set
-	 * associated with this program selection.
-	 */
-	public ProgramSelection(AddressFactory addressFactory) {
 		addressSet = new AddressSet();
 	}
 
@@ -50,18 +41,7 @@ public class ProgramSelection implements AddressSetView {
 	 * @param to the end of the selection
 	 */
 	public ProgramSelection(Address from, Address to) {
-		this(null, from, to);
-	}
-
-	/**
-	 * Constructor.
-	 * @param addressFactory the address factory for the address set
-	 * associated with this program selection.
-	 * @param from the start of the selection
-	 * @param to the end of the selection
-	 */
-	public ProgramSelection(AddressFactory addressFactory, Address from, Address to) {
-		this(addressFactory);
+		this();
 		if (to.compareTo(from) < 0) {
 			Address temp = to;
 			to = from;
@@ -75,28 +55,7 @@ public class ProgramSelection implements AddressSetView {
 	 * @param setView address set for the selection
 	 */
 	public ProgramSelection(AddressSetView setView) {
-		this(null, setView);
-	}
-
-	/**
-	 * Construct a new ProgramSelection
-	 * @param addressFactory the address factory for the address set
-	 * associated with this program selection.
-	 * @param setView address set for the selection
-	 */
-	public ProgramSelection(AddressFactory addressFactory, AddressSetView setView) {
 		addressSet = new AddressSet(setView);
-	}
-
-	/**
-	 * Construct a new ProgramSelection from the indicated interior selection.
-	 * @param addressFactory the address factory for the address set
-	 * associated with this program selection.
-	 * @param sel the interior selection
-	 */
-	public ProgramSelection(AddressFactory addressFactory, InteriorSelection sel) {
-		this(addressFactory, sel.getStartAddress(), sel.getEndAddress());
-		interiorSelection = sel;
 	}
 
 	/**
@@ -104,7 +63,51 @@ public class ProgramSelection implements AddressSetView {
 	 * @param sel the interior selection
 	 */
 	public ProgramSelection(InteriorSelection sel) {
-		this(null, sel);
+		this(sel.getStartAddress(), sel.getEndAddress());
+		interiorSelection = sel;
+	}
+
+	/**
+	 * Construct a new empty ProgramSelection.
+	 * @param addressFactory NOT USED
+	 * @deprecated use {@link #ProgramSelection()}
+	 */
+	@Deprecated(since = "11.2", forRemoval = true)
+	public ProgramSelection(AddressFactory addressFactory) {
+		this();
+	}
+
+	/**
+	 * Constructor.
+	 * @param addressFactory NOT USED
+	 * @param from the start of the selection
+	 * @param to the end of the selection
+	 */
+	@Deprecated(since = "11.2", forRemoval = true)
+	public ProgramSelection(AddressFactory addressFactory, Address from, Address to) {
+		this(from, to);
+	}
+
+	/**
+	 * Construct a new ProgramSelection
+	 * @param addressFactory NOT USED
+	 * @param setView address set for the selection
+	 * @deprecated use {@link #ProgramSelection(AddressSetView)}
+	 */
+	@Deprecated(since = "11.2", forRemoval = true)
+	public ProgramSelection(AddressFactory addressFactory, AddressSetView setView) {
+		this(setView);
+	}
+
+	/**
+	 * Construct a new ProgramSelection from the indicated interior selection.
+	 * @param addressFactory NOT USED
+	 * @param sel the interior selection
+	 * @deprecated use {@link #ProgramSelection(InteriorSelection)}s
+	 */
+	@Deprecated(since = "11.2", forRemoval = true)
+	public ProgramSelection(AddressFactory addressFactory, InteriorSelection sel) {
+		this(sel);
 	}
 
 	/**

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,12 @@ public enum PluginStatus {
 	RELEASED("Released (Tested and Documented)"),
 	STABLE("Useable, but not fully tested or documented"),
 	UNSTABLE("This plugin is under Development. Use of this plugin is not recommended."),
-	HIDDEN("This plugin is not available via the plugin configuration GUI");
+	HIDDEN("This plugin is not available via the plugin configuration GUI"),
+	/**
+	 * Developers should include in the plugin description the version when the plugin became
+	 * deprecated and, if subject to removal, the version that removal is expected.
+	 */
+	DEPRECATED("This plugin is useable, but deprecated and may soon be removed");
 
 	private String description;
 

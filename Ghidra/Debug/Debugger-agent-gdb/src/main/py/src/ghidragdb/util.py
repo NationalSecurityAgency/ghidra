@@ -4,9 +4,9 @@
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -344,6 +344,41 @@ def _choose_breakpoint_location_info_reader():
 BREAKPOINT_LOCATION_INFO_READER = _choose_breakpoint_location_info_reader()
 
 
+class MemCatchpointSetterV8(object):
+    def install_catchpoint(self):
+        return object()
+
+
+class MemCatchpointSetterV11(object):
+    def install_catchpoint(self):
+        breaks_before = set(gdb.breakpoints())
+        try:
+            gdb.execute("""
+                catch syscall group:memory
+                commands
+                silent
+                hooks-ghidra event-memory
+                cont
+                end
+                """)            
+            return (set(gdb.breakpoints()) - breaks_before).pop()
+        except Exception as e:
+            print(f"Error setting memory catchpoint: {e}")
+            return object()
+
+
+def _choose_mem_catchpoint_setter():
+    if GDB_VERSION.major >= 11:
+        return MemCatchpointSetterV11()
+    if GDB_VERSION.major >= 8:
+        return MemCatchpointSetterV8()
+    else:
+        raise gdb.GdbError(
+            "GDB version not recognized by ghidragdb: " + GDB_VERSION.full)
+
+
+MEM_CATCHPOINT_SETTER = _choose_mem_catchpoint_setter()
+
 def set_bool_param_by_api(name, value):
     gdb.set_parameter(name, value)
 
@@ -381,13 +416,27 @@ class RegisterDesc(namedtuple('BaseRegisterDesc', ['name'])):
 
 def get_register_descs(arch, group='all'):
     if hasattr(arch, "registers"):
-        return arch.registers(group)
+        try:
+            return arch.registers(group)
+        except ValueError: # No such group, or version too old
+            return arch.registers()
     else:
         descs = []
-        regset = gdb.execute(
-            f"info registers {group}", to_string=True).strip().split('\n')
+        try: 
+            regset = gdb.execute(
+                f"info registers {group}", to_string=True).strip().split('\n')
+        except Exception as e:
+            regset = gdb.execute(
+                f"info registers", to_string=True).strip().split('\n')
         for line in regset:
             if not line.startswith(" "):
                 tokens = line.strip().split()
                 descs.append(RegisterDesc(tokens[0]))
         return descs
+    
+def selected_frame():
+    try:
+        return gdb.selected_frame()
+    except Exception as e:
+        print("No selected frame")
+        return None

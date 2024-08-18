@@ -460,7 +460,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		return result;
 	}
 
-
 	/**
 	 * Returns the golang version
 	 * @return {@link GoVer}
@@ -842,9 +841,8 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		// gdt data base.  This method only leaves the target gdt filename + ".step1" in the db.
 		File tmpGDTFile = new File(gdtFile.getParentFile(), gdtFile.getName() + ".step1.gdt");
 		FileDataTypeManager tmpFdtm = FileDataTypeManager.createFileArchive(tmpGDTFile);
-		int tx = -1;
+		int tx = tmpFdtm.startTransaction("Import");
 		try {
-			tx = tmpFdtm.startTransaction("Import");
 			tmpFdtm.addDataTypes(registeredStructDTs, DataTypeConflictHandler.DEFAULT_HANDLER,
 				monitor);
 			if (runtimeFuncSnapshot) {
@@ -879,17 +877,14 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 			Msg.error(this, "Error when exporting types to file: %s".formatted(gdtFile), e);
 		}
 		finally {
-			if (tx != -1) {
-				tmpFdtm.endTransaction(tx, true);
-			}
+			tmpFdtm.endTransaction(tx, true);
 		}
 
 		tmpFdtm.save();
 
 		FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
-		tx = -1;
+		tx = fdtm.startTransaction("Import");
 		try {
-			tx = fdtm.startTransaction("Import");
 			tmpFdtm.getAllDataTypes()
 					.forEachRemaining(
 						dt -> fdtm.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER));
@@ -898,9 +893,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 			}
 		}
 		finally {
-			if (tx != -1) {
-				fdtm.endTransaction(tx, true);
-			}
+			fdtm.endTransaction(tx, true);
 		}
 
 		fdtm.save();
@@ -925,7 +918,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		}
 		return existingDT;
 	}
-
 
 	private List<DataType> createBootstrapFuncDefs(DataTypeManager destDTM, CategoryPath destCP,
 			TaskMonitor monitor) throws CancelledException {
@@ -958,7 +950,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		}
 		return results;
 	}
-
 
 	private void moveAllDataTypesTo(DataTypeManager dtm, CategoryPath srcCP, CategoryPath destCP)
 			throws DuplicateNameException, DataTypeDependencyException, InvalidNameException {
@@ -1182,7 +1173,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 				.map(Entry::getKey)
 				.collect(toSet());
 		typeDupCount.clear();
-		
+
 		for (GoType goType : goTypes.values()) {
 			String typeName = goType.getNameWithPackageString();
 			if (dupedTypeNames.contains(typeName)) {
@@ -1270,10 +1261,11 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 		StructureContext<T> structContext = getStructureContextOfInstance(structInstance);
 		String fallbackName = defaultValue;
-		fallbackName = fallbackName == null && structContext != null
-				? "%s_%x".formatted(structContext.getMappingInfo().getStructureName(),
-					structContext.getStructureStart())
-				: "invalid_object";
+		fallbackName =
+			fallbackName == null && structContext != null
+					? "%s_%x".formatted(structContext.getMappingInfo().getStructureName(),
+						structContext.getStructureStart())
+					: "invalid_object";
 		return GoName.createFakeInstance(fallbackName);
 	}
 
@@ -1295,7 +1287,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		}
 		return "unknown_type_%x".formatted(offset);
 	}
-
 
 	/**
 	 * Returns the {@link GoType} corresponding to an offset that is relative to the controlling
@@ -1441,15 +1432,13 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 	private AddressRange getPclntabSearchRange() {
 		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "rdata");
-		return memBlock != null
-				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
+		return memBlock != null ? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
 	}
 
 	private AddressRange getModuledataSearchRange() {
 		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "data");
-		return memBlock != null
-				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
+		return memBlock != null ? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
 	}
 
@@ -1488,7 +1477,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		}
 		return result;
 	}
-
 
 	public Symbol getGoSymbol(String symbolName) {
 		return getGoSymbol(program, symbolName);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import static ghidra.pcode.utils.SlaFormat.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,7 +89,7 @@ public class SleighLanguage implements Language {
 	/**
 	 * Cached instruction prototypes
 	 */
-	private LinkedHashMap<Integer, SleighInstructionPrototype> instructProtoMap;
+	private ConcurrentHashMap<Integer, SleighInstructionPrototype> instructProtoMap;
 	private DecisionNode root = null;
 	/**
 	 * table of AddressSpaces
@@ -148,7 +149,7 @@ public class SleighLanguage implements Language {
 		buildVolatileSymbolAddresses();
 		xrefRegisters();
 
-		instructProtoMap = new LinkedHashMap<>();
+		instructProtoMap = new ConcurrentHashMap<>();
 
 		initParallelHelper();
 	}
@@ -374,20 +375,15 @@ public class SleighLanguage implements Language {
 				new SleighInstructionPrototype(this, buf, context, contextcache, inDelaySlot, null);
 			Integer hashcode = newProto.hashCode();
 
-			if (!instructProtoMap.containsKey(hashcode)) {
-				newProto.cacheInfo(buf, context, true);
-			}
-
-			synchronized (instructProtoMap) {
-				res = instructProtoMap.get(hashcode);
-				if (res == null) { // We have a prototype we have never seen
-					// before, build it fully
-					instructProtoMap.put(hashcode, newProto);
-					res = newProto;
-				}
-				if (inDelaySlot && res.hasDelaySlots()) {
-					throw new NestedDelaySlotException();
-				}
+			// get existing proto and use it
+			// if doesn't exist in map, cache info and store new proto
+			res = instructProtoMap.computeIfAbsent(hashcode, h -> {
+			    newProto.cacheInfo(buf, context, true);
+			    return newProto;
+			});
+			
+			if (inDelaySlot && res.hasDelaySlots()) {
+				throw new NestedDelaySlotException();
 			}
 		}
 		catch (MemoryAccessException e) {
@@ -756,14 +752,28 @@ public class SleighLanguage implements Language {
 			}
 			else if (elName.equals("default_symbols")) {
 				XmlElement subel = parser.start();
+				Address previousAddr = null;
+				int     previousSize = 1;
 				while (parser.peek().getName().equals("symbol")) {
 					XmlElement symbol = parser.start();
 					String labelName = symbol.getAttribute("name");
 					String addressString = symbol.getAttribute("address");
 					String typeString = symbol.getAttribute("type");
+					String comment = symbol.getAttribute("description");
 					ProcessorSymbolType type = ProcessorSymbolType.getType(typeString);
 					boolean isEntry = SpecXmlUtils.decodeBoolean(symbol.getAttribute("entry"));
-					Address startAddress = addressFactory.getAddress(addressString);
+					Address startAddress = null;
+					if (addressString.equalsIgnoreCase("next")) {
+						if (previousAddr == null) {
+							Msg.error(this, "use of addr=\"next\" tag with no previous address for " +
+						        labelName + " : " + description.getSpecFile());
+						} else {
+							startAddress = previousAddr.add(previousSize);
+						}
+					}
+					else {
+						startAddress = addressFactory.getAddress(addressString);
+					}
 					int rangeSize = SpecXmlUtils.decodeInt(symbol.getAttribute("size"));
 					Boolean isVolatile =
 						SpecXmlUtils.decodeNullableBoolean(symbol.getAttribute("volatile"));
@@ -774,7 +784,7 @@ public class SleighLanguage implements Language {
 					else {
 						AddressLabelInfo info;
 						try {
-							info = new AddressLabelInfo(startAddress, rangeSize, labelName, false,
+							info = new AddressLabelInfo(startAddress, rangeSize, labelName, comment, false,
 								isEntry, type, isVolatile);
 						}
 						catch (AddressOverflowException e) {
@@ -801,6 +811,8 @@ public class SleighLanguage implements Language {
 					}
 					// skip the end tag
 					parser.end(symbol);
+					previousAddr = startAddress;
+					previousSize = rangeSize;
 				}
 				parser.end(subel);
 			}

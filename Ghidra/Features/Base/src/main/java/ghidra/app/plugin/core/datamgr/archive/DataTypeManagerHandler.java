@@ -640,7 +640,6 @@ public class DataTypeManagerHandler {
 
 	void dataTypeManagerChanged(FileArchive archive, DataTypeManager oldManager,
 			DataTypeManager newManager) {
-
 		oldManager.removeDataTypeManagerListener(listenerDelegate);
 		newManager.addDataTypeManagerListener(listenerDelegate);
 		dataTypeIndexer.removeDataTypeManager(oldManager);
@@ -1239,6 +1238,13 @@ public class DataTypeManagerHandler {
 				listener.programArchitectureChanged(dataTypeManager);
 			}
 		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
+			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
+				listener.restored(dataTypeManager);
+			}
+		}
 	}
 
 	/**
@@ -1412,8 +1418,7 @@ public class DataTypeManagerHandler {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		DataTreeDialog dialog =
-			new DataTreeDialog(null, "Save As", SAVE, createArchiveFileFilter);
+		DataTreeDialog dialog = new DataTreeDialog(null, "Save As", SAVE, createArchiveFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();

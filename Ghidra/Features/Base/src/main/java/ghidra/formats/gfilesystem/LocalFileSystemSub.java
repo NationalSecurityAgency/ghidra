@@ -16,7 +16,6 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,7 +96,7 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 			return List.of();
 		}
 		File localDir = getFileFromGFile(directory);
-		if (Files.isSymbolicLink(localDir.toPath())) {
+		if (FSUtilities.isSymlink(localDir)) {
 			return List.of();
 		}
 
@@ -112,7 +111,8 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 		String relPath = FSUtilities.normalizeNativePath(directory.getPath());
 
 		for (File f : localFiles) {
-			if (!(f.isFile() || f.isDirectory())) {
+			boolean isSymlink = FSUtilities.isSymlink(f); // check this manually to allow broken symlinks to appear in listing
+			if (!(isSymlink || f.isFile() || f.isDirectory())) {
 				// skip non-file things
 				continue;
 			}
@@ -133,7 +133,7 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 			return rootFS.getFileAttributes(localFile);
 		}
 		catch (IOException e) {
-			// fail and return null
+			// fail and return empty
 		}
 		return FileAttributes.EMPTY;
 	}
@@ -146,6 +146,11 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 	@Override
 	public FSRLRoot getFSRL() {
 		return fsFSRL;
+	}
+
+	@Override
+	public GFile getRootDir() {
+		return rootGFile;
 	}
 
 	@Override
@@ -209,5 +214,15 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 	public String getMD5Hash(GFile file, boolean required, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		return rootFS.getMD5Hash(file.getFSRL(), required, monitor);
+	}
+
+	@Override
+	public GFile resolveSymlinks(GFile file) throws IOException {
+		File f = getFileFromGFile(file);
+		File canonicalFile = f.getCanonicalFile();
+		if (f.equals(canonicalFile)) {
+			return file;
+		}
+		return getGFile(canonicalFile);
 	}
 }

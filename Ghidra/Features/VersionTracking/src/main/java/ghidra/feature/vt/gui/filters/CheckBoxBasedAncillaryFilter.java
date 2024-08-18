@@ -15,8 +15,7 @@
  */
 package ghidra.feature.vt.gui.filters;
 
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.APPLIED;
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.NONE;
+import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.*;
 
 import java.awt.Container;
 import java.awt.LayoutManager;
@@ -149,13 +148,6 @@ public abstract class CheckBoxBasedAncillaryFilter<T> extends AncillaryFilter<T>
 		}
 
 		return FilterShortcutState.REQUIRES_CHECK;
-	}
-
-	@Override
-	public void clearFilter() {
-		for (CheckBoxInfo<T> info : checkBoxInfos) {
-			info.setSelected(true);
-		}
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package classrecovery;
 
 import java.util.*;
 
-import ghidra.app.decompiler.DecompileOptions;
-import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.util.FillOutStructureHelper;
 import ghidra.app.decompiler.util.FillOutStructureHelper.OffsetPcodeOpPair;
 import ghidra.app.util.opinion.PeLoader;
@@ -868,7 +866,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			// Get class name from class vftable is in
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
-
+			if (classNamespace.isGlobal()) {
+				Msg.warn(this, "ClassHierarchyDescriptor at " + classHierarchyDescriptorAddress +
+					" is unexpectedly in the Global namespace so processing cannot continue for " +
+					"this class");
+				continue;
+			}
 			// get the data type category associated with the given class namespace
 			Category category = getDataTypeCategory(classNamespace);
 
@@ -1480,10 +1483,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 
-		DecompileOptions decompileOptions =
-			DecompilerUtils.getDecompileOptions(serviceProvider, program);
-		FillOutStructureHelper fillStructHelper =
-			new FillOutStructureHelper(program, decompileOptions, monitor);
+		FillOutStructureHelper fillStructHelper = new FillOutStructureHelper(program, monitor);
 
 		for (Function constructor : constructorList) {
 
@@ -1568,7 +1568,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			monitor.checkCancelled();
 
-			fillStructHelper.processStructure(highVariable, function, true, false);
+			fillStructHelper.processStructure(highVariable, function, true, false, null);
 			List<OffsetPcodeOpPair> stores = fillStructHelper.getStorePcodeOps();
 			stores = removePcodeOpsNotInFunction(function, stores);
 
@@ -2484,7 +2484,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					baseClassDescriptorAddress.toString());
 				continue;
 			}
-			
+
 			// Continue if the class has mult inh but base class is not on the parent list
 			if (!recoveredClass.getParentList().contains(baseClass)) {
 				continue;
@@ -2662,8 +2662,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				if (numAddressRanges == 1) {
 					fixupContiguousDeletingDestructorSymbols(function);
 					processedFunctions.add(function);
+					continue;
 				}
-				else if (numAddressRanges == 2) {
+				if (numAddressRanges == 2) {
 					// else fixup split dd function 
 					Function scalarDeletingDestructor = createSplitDeletingDestructorFunction(body);
 					if (scalarDeletingDestructor == null) {
@@ -2674,7 +2675,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					fixupSplitDeletingDestructorSymbols(function, scalarDeletingDestructor);
 					processedFunctions.add(function);
 				}
-				// else if > 2 do nothing - not sure how to handle or even if they exist
+				// if > 2 do nothing - not sure how to handle or even if they exist
 			}
 		}
 	}

@@ -19,6 +19,10 @@ import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 
+/**
+ * An enum to represent different levels of access specifiers (private, package-private, protected,
+ * public) with corresponding access levels
+ */
 public enum AccessSpec {
 	PRIVATE(0), PACKAGE(1), PROTECTED(2), PUBLIC(3);
 
@@ -29,7 +33,7 @@ public enum AccessSpec {
 	}
 
 	/**
-	 * Checks if the second permits the same or more access than the first
+	 * Check if the second permits the same or more access than the first
 	 * 
 	 * @param first the first
 	 * @param second the second

@@ -20,6 +20,7 @@ import java.util.*;
 import docking.options.OptionsService;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
+import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.framework.options.ToolOptions;
@@ -33,9 +34,10 @@ import ghidra.program.model.pcode.*;
 public class DecompilerUtils {
 
 	/**
-	 * Gaither decompiler options from tool and program.  If tool is null or does not provide
+	 * Gather decompiler options from tool and program.  If tool is null or does not provide
 	 * a {@link OptionsService} provider only options stored within the program will be consumed.
-	 * @param serviceProvider plugin tool or service provider providing access to {@link OptionsService}
+	 * @param serviceProvider plugin tool or service provider providing access to 
+	 * {@link OptionsService}
 	 * @param program program
 	 * @return decompiler options
 	 */
@@ -49,7 +51,8 @@ public class DecompilerUtils {
 		}
 		if (service != null) {
 			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
+			ToolOptions fieldOptions = service.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
+			options.grabFromToolAndProgram(fieldOptions, opt, program);
 		}
 		else {
 			options.grabFromProgram(program);
@@ -281,7 +284,7 @@ public class DecompilerUtils {
 	 * @param function decompiled function
 	 * @return true if {@code var} corresponds to existing auto {@code this} parameter, else false
 	 */
-	public static boolean testForAutoParameterThis(HighVariable var, Function function) {
+	public static boolean isThisParameter(HighVariable var, Function function) {
 		if (var instanceof HighParam) {
 			int slot = ((HighParam) var).getSlot();
 			Parameter parameter = function.getParameter(slot);
@@ -626,7 +629,7 @@ public class DecompilerUtils {
 
 		String destinationStart = label.getText() + ':';
 		Address address = label.getMinAddress();
-		List<ClangToken> tokens = DecompilerUtils.getTokens(root, address);
+		List<ClangToken> tokens = getTokens(root, address);
 		for (ClangToken token : tokens) {
 			if (isGoToStatement(token)) {
 				continue; // ignore any goto statements
@@ -791,7 +794,7 @@ public class DecompilerUtils {
 	 * @param group is the token hierarchy
 	 * @return the array of ClangLine objects
 	 */
-	public static ArrayList<ClangLine> toLines(ClangTokenGroup group) {
+	public static List<ClangLine> toLines(ClangTokenGroup group) {
 
 		List<ClangNode> alltoks = new ArrayList<>();
 		group.flatten(alltoks);

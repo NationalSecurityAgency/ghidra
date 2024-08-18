@@ -15,6 +15,14 @@
  */
 package ghidra.app.merge.listing;
 
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.ProgramMultiUserMergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
@@ -24,16 +32,9 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
-import java.util.ArrayList;
-
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * <code>RegisterMergeManager</code> handles the merge for a single named register.
@@ -98,6 +99,17 @@ class RegisterMergeManager implements ListingMergeConstants {
 	 * @param latestChanges the address set of changes between original and latest versioned program.  
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
+	/**
+	 * Creates a RegisterMergeManager.
+	 * @param registerName
+	 * @param mergeManager
+	 * @param resultPgm the program to be updated with the result of the merge.
+	 * @param originalPgm the program that was checked out.
+	 * @param latestPgm the latest checked-in version of the program.
+	 * @param myPgm the program requesting to be checked in.
+	 * @param latestChanges the address set of changes between original and latest versioned program.  
+	 * @param myChanges the address set of changes between original and my modified program.
+	 */
 	RegisterMergeManager(String registerName, ProgramMultiUserMergeManager mergeManager,
 			Program resultPgm, Program originalPgm, Program latestPgm, Program myPgm,
 			ProgramChangeSet latestChanges, ProgramChangeSet myChanges) {
@@ -123,10 +135,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#apply()
-	 */
-	public void apply() {
+	void apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
 		// If the "Use For All" check box is selected 
@@ -138,25 +147,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		merge(min, max, resultReg);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#cancel()
-	 */
-	public void cancel() {
+	void cancel() {
 		conflictOption = CANCELED;
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#getDescription()
-	 */
-	public String getDescription() {
-		return "Merge Register";
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.MergeResolver#getName()
-	 */
-	public String getName() {
-		return "Register Merger";
 	}
 
 	/**
@@ -167,9 +159,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		if (conflictSet != null) {
 			return; //This method only needs to be called once.
 		}
-		RegisterConflicts rc =
-			new RegisterConflicts(registerName, originalContext, latestContext, myContext,
-				resultContext);
+		RegisterConflicts rc = new RegisterConflicts(registerName, originalContext, latestContext,
+			myContext, resultContext);
 		Memory resultMem = resultPgm.getMemory();
 		AddressSetView myDiffs =
 			rc.getRegisterDifferences(registerName, originalContext, myContext, mySet, monitor);
@@ -177,8 +168,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		conflictSet = new AddressSet();
 		rvrs = rc.getConflicts(setToCheck, monitor);
 		if (rvrs.length > 0) {
-			for (int j = 0; j < rvrs.length; j++) {
-				conflictSet.add(rvrs[j]);
+			for (AddressRange rvr : rvrs) {
+				conflictSet.add(rvr);
 			}
 		}
 		autoSet = setToCheck.subtract(conflictSet);
@@ -187,20 +178,19 @@ class RegisterMergeManager implements ListingMergeConstants {
 	/**
 	 * Merges all the register values for the named register being managed by this merge manager.
 	 * @param monitor the monitor that provides feedback to the user.
-	 * @throws ProgramConflictException
 	 * @throws CancelledException if the user cancels
 	 */
 	public void merge(TaskMonitor monitor) throws CancelledException {
-		monitor.setMessage("Auto-merging " + registerName +
-			" Register Values and determining conflicts.");
+		monitor.setMessage(
+			"Auto-merging " + registerName + " Register Values and determining conflicts.");
 
 		determineConflicts(monitor);
 
 		// Auto merge any program context changes from my program where the
 		// resulting program has the mem addresses but the latest doesn't.
 		AddressRangeIterator arIter = autoSet.getAddressRanges();
-		try {
-			while (arIter.hasNext() && !monitor.isCancelled()) {
+		while (arIter.hasNext() && !monitor.isCancelled()) {
+			try {
 				AddressRange range = arIter.next();
 				Address rangeMin = range.getMinAddress();
 				Address rangeMax = range.getMaxAddress();
@@ -215,9 +205,10 @@ class RegisterMergeManager implements ListingMergeConstants {
 						valueRange.getMaxAddress(), value);
 				}
 			}
-		}
-		catch (ContextChangeException e) {
-			// ignore since processor context-register is not handled by this merge manager
+			catch (ContextChangeException e) {
+				// processor context-register is not handled here and should not occur
+				throw new AssertException(e);
+			}
 		}
 
 		int totalConflicts = rvrs.length;
@@ -298,7 +289,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 			resultContext.setValue(resultRegister, minAddress, maxAddress, myValue);
 		}
 		catch (ContextChangeException e) {
-			// ignore since this merge manager does not handle the processor context register
+			// processor context-register is not handled here and should not occur
+			throw new AssertException(e);
 		}
 	}
 
@@ -316,7 +308,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 	}
 
 	private void showMergePanel(final Address minAddress, final Address maxAddress,
-			final BigInteger latestValue, final BigInteger myValue, final BigInteger originalValue) {
+			final BigInteger latestValue, final BigInteger myValue,
+			final BigInteger originalValue) {
 		this.min = minAddress;
 		this.max = maxAddress;
 		try {
@@ -339,9 +332,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
 				public void run() {
-					VerticalChoicesPanel panel =
-						getConflictsPanel(minAddress, maxAddress, latestValue, myValue,
-							originalValue, changeListener);
+					VerticalChoicesPanel panel = getConflictsPanel(minAddress, maxAddress,
+						latestValue, myValue, originalValue, changeListener);
 					listingMergePanel.setBottomComponent(panel);
 				}
 			});
@@ -377,12 +369,11 @@ class RegisterMergeManager implements ListingMergeConstants {
 			conflictPanel.clear();
 		}
 		conflictPanel.setTitle("\"" + registerName + "\" Register Value");
-		String text =
-			"Register: " + ConflictUtility.getEmphasizeString(registerName) +
-				ConflictUtility.spaces(4) + "Address Range: " +
-				ConflictUtility.getAddressString(minAddress) + " - " +
-				ConflictUtility.getAddressString(maxAddress) +
-				"<br>Select the desired register value for the address range.";
+		String text = "Register: " + ConflictUtility.getEmphasizeString(registerName) +
+			ConflictUtility.spaces(4) + "Address Range: " +
+			ConflictUtility.getAddressString(minAddress) + " - " +
+			ConflictUtility.getAddressString(maxAddress) +
+			"<br>Select the desired register value for the address range.";
 		conflictPanel.setHeader(text);
 		conflictPanel.setRowHeader(getRegisterInfo(-1, null));
 		conflictPanel.addRadioButtonRow(getRegisterInfo(MergeConstants.LATEST, latestValue),
@@ -431,7 +422,8 @@ class RegisterMergeManager implements ListingMergeConstants {
 		Register conflictResultReg;
 
 		RegisterConflicts(String registerName, ProgramContext originalContext,
-				ProgramContext latestContext, ProgramContext myContext, ProgramContext resultContext) {
+				ProgramContext latestContext, ProgramContext myContext,
+				ProgramContext resultContext) {
 			this.conflictRegisterName = registerName;
 			this.conflictOriginalContext = originalContext;
 			this.conflictLatestContext = latestContext;
@@ -496,13 +488,11 @@ class RegisterMergeManager implements ListingMergeConstants {
 
 			ArrayList<AddressRange> conflicts = new ArrayList<AddressRange>();
 
-			AddressSet tempLatestChanges =
-				getRegisterDifferences(conflictRegisterName, conflictOriginalContext,
-					conflictLatestContext, addressSet, monitor);
+			AddressSet tempLatestChanges = getRegisterDifferences(conflictRegisterName,
+				conflictOriginalContext, conflictLatestContext, addressSet, monitor);
 
-			AddressSet tempMyChanges =
-				getRegisterDifferences(conflictRegisterName, conflictOriginalContext,
-					conflictMyContext, addressSet, monitor);
+			AddressSet tempMyChanges = getRegisterDifferences(conflictRegisterName,
+				conflictOriginalContext, conflictMyContext, addressSet, monitor);
 
 			AddressSet bothChanged = tempMyChanges.intersect(tempLatestChanges);
 
@@ -513,19 +503,16 @@ class RegisterMergeManager implements ListingMergeConstants {
 				Address rangeMin = range.getMinAddress();
 				Address rangeMax = range.getMaxAddress();
 
-				AddressRangeIterator it1 =
-					conflictLatestContext.getRegisterValueAddressRanges(conflictLatestReg,
-						rangeMin, rangeMax);
-				AddressRangeIterator it2 =
-					conflictMyContext.getRegisterValueAddressRanges(conflictMyReg, rangeMin,
-						rangeMax);
+				AddressRangeIterator it1 = conflictLatestContext
+						.getRegisterValueAddressRanges(conflictLatestReg, rangeMin, rangeMax);
+				AddressRangeIterator it2 = conflictMyContext
+						.getRegisterValueAddressRanges(conflictMyReg, rangeMin, rangeMax);
 				AddressRangeIterator it = new CombinedAddressRangeIterator(it1, it2);
 
 				while (it.hasNext()) {
 					AddressRange addrRange = it.next();
-					BigInteger lastestValue =
-						conflictLatestContext.getValue(conflictLatestReg,
-							addrRange.getMinAddress(), false);
+					BigInteger lastestValue = conflictLatestContext.getValue(conflictLatestReg,
+						addrRange.getMinAddress(), false);
 					BigInteger myValue =
 						conflictMyContext.getValue(conflictMyReg, addrRange.getMinAddress(), false);
 					boolean sameValue =

@@ -42,11 +42,10 @@ public class SetRegisterCmd implements Command<Program> {
 	 *                      A null value indicates that no value should be associated over the range.
 	 */
 	public SetRegisterCmd(Register register, Address start, Address end, BigInteger value) {
-		if (start.getAddressSpace() != end.getAddressSpace()) {
+		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
 			throw new IllegalArgumentException(
-				"start and end address must be in the same address space");
+				"start and end address must be within the same address space");
 		}
-
 		this.register = register;
 		this.start = start;
 		this.end = end;

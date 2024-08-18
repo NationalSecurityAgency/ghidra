@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -159,7 +159,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected AddressSet getAddressSet(Address start, boolean forward) {
 		AddressFactory factory = program.getAddressFactory();
-		AddressSet all = program.allAddresses;
+		AddressSetView all = program.getAllAddresses();
 		return forward
 				? factory.getAddressSet(start, all.getMaxAddress())
 				: factory.getAddressSet(all.getMinAddress(), start);
@@ -281,7 +281,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	protected Iterator<TraceCodeUnit> getCodeUnitIterator(boolean forward) {
-		AddressSetView set = program.allAddresses;
+		AddressSetView set = program.getAllAddresses();
 		return getCodeUnitIterator(forward ? set.getMinAddress() : set.getMaxAddress(), forward);
 	}
 
@@ -300,7 +300,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	protected Iterator<TraceData> getDataIterator(boolean forward) {
-		AddressSetView set = program.allAddresses;
+		AddressSetView set = program.getAllAddresses();
 		return getDataIterator(forward ? set.getMinAddress() : set.getMaxAddress(), forward);
 	}
 

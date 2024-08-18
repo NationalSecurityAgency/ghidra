@@ -3688,7 +3688,7 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
   return res;
 }
 
-// Don't create more than a depth of 2, i.e. ptr->ptr->ptr->...
+/// Don't create more than a depth of 1, i.e. ptr->ptr
 /// \param s is the size of the pointer
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
@@ -3697,16 +3697,8 @@ TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
 
 {
   if (pt->getMetatype()==TYPE_PTR) {
-    Datatype *basetype = ((TypePointer *)pt)->getPtrTo();
-    type_metatype meta = basetype->getMetatype();
     // Make sure that at least we return a pointer to something the size of -pt-
-    if (meta == TYPE_PTR)
-      pt = getBase(pt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
-    else if (meta == TYPE_UNKNOWN) {
-      if (basetype->getSize() == pt->getSize())	// If -pt- is pointer to UNKNOWN of the size of a pointer
-	return (TypePointer *)pt; // Just return pt, don't add another pointer
-      pt = getBase(pt->getSize(),TYPE_UNKNOWN);	// Otherwise construct pointer to UNKNOWN of size of pointer
-    }
+    pt = getBase(pt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
   }
   return getTypePointer(s,pt,ws);
 }

@@ -15,6 +15,7 @@
 ##
 # Examples of Jython-specific functionality
 # @category: Examples.Python
+# @runtime Jython
 
 # Using Java data structures from Jython
 python_list = [1, 2, 3]

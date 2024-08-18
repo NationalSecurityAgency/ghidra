@@ -36,11 +36,6 @@ public class NullClangHighlightController extends ClangHighlightController {
 	}
 
 	@Override
-	public String getPrimaryHighlightedText() {
-		return null;
-	}
-
-	@Override
 	public void addPrimaryHighlights(ClangNode parentNode, ColorProvider colorProvider) {
 		// stub
 	}
@@ -51,7 +46,7 @@ public class NullClangHighlightController extends ClangHighlightController {
 	}
 
 	@Override
-	public void addBraceHighlight(ClangSyntaxToken token, Color highlightColor) {
+	public void addPrimaryHighlightToTokensForBrace(ClangSyntaxToken token, Color highlightColor) {
 		// stub
 	}
 

@@ -150,7 +150,13 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		// unless there is a good data type at the location
 		boolean isHarvard = program.getLanguage().getDefaultSpace() != program.getLanguage().getDefaultDataSpace();
 		checkPointerParamRefsOption = program.getDefaultPointerSize() <= 2 || isHarvard;
+
+		checkStoredRefsOption = program.getDefaultPointerSize() > 2 && !isHarvard;
 		
+		long size = program.getAddressFactory().getDefaultAddressSpace().getSize();
+		minSpeculativeRefAddress = size * 16;
+		maxSpeculativeRefAddress = size * 8;
+
 		checkParamRefsOption = !(program.getAddressFactory()
 				.getDefaultAddressSpace() instanceof SegmentedAddressSpace);
 
@@ -570,12 +576,9 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		options.registerOption(MIN_KNOWN_REFADDRESS_OPTION_NAME, minStoreLoadRefAddress, null,
 			MIN_KNOWN_REFADDRESS_OPTION_DESCRIPTION);
 
-		long size = program.getAddressFactory().getDefaultAddressSpace().getSize();
-		minSpeculativeRefAddress = size * 16;
 		options.registerOption(MIN_SPECULATIVE_REFADDRESS_OPTION_NAME, minSpeculativeRefAddress, null,
 			MIN_SPECULATIVE_REFADDRESS_OPTION_DESCRIPTION);
 
-		maxSpeculativeRefAddress = size * 8;
 		options.registerOption(MAX_SPECULATIVE_REFADDRESS_OPTION_NAME, maxSpeculativeRefAddress, null,
 			MAX_SPECULATIVE_REFADDRESS_OPTION_DESCRIPTION);
 	}

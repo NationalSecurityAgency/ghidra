@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1021,8 +1021,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (regs == null && register.getAddressSpace().isRegisterSpace()) {
 			return false;
 		}
-		AddressRange range =
-			current.getPlatform().getConventionalRegisterRange(regs.getAddressSpace(), register);
+		AddressRange range = current.getPlatform()
+				.getConventionalRegisterRange(regs == null ? null : regs.getAddressSpace(),
+					register);
 		return viewKnown.contains(range.getMinAddress(), range.getMaxAddress());
 	}
 
@@ -1145,8 +1146,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (mem == null) {
 			return result;
 		}
-		AddressSpace regSpace =
-			thread.getTrace().getBaseLanguage().getAddressFactory().getRegisterSpace();
+		AddressSpace regSpace = thread.getTrace().getBaseAddressFactory().getRegisterSpace();
 		AddressSet everKnown = new AddressSet();
 		for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : mem.getMostRecentStates(
 			thread.getTrace().getTimeManager().getMaxSnap(),

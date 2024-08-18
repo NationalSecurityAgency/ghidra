@@ -283,12 +283,6 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 	}
 
 	@Override
-	public void clearFilter() {
-		lowerAddressRangeTextField.setText(MIN_ADDRESS_VALUE.toString());
-		upperAddressRangeTextField.setText(MAX_ADDRESS_VALUE.toString());
-	}
-
-	@Override
 	public JComponent getComponent() {
 		return component;
 	}

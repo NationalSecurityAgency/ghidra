@@ -128,12 +128,6 @@ public abstract class AbstractDoubleRangeFilter<T> extends Filter<T>
 	}
 
 	@Override
-	public void clearFilter() {
-		lowerBoundField.setText(minValue.toString());
-		upperBoundField.setText(maxValue.toString());
-	}
-
-	@Override
 	public FilterEditingStatus getFilterStatus() {
 		FilterEditingStatus lowerStatus = lowerBoundField.getFilterStatus();
 		FilterEditingStatus upperStatus = upperBoundField.getFilterStatus();
