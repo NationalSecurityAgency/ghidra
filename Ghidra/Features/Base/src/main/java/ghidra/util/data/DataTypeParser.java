@@ -507,9 +507,13 @@ public class DataTypeParser {
 		int nextIndex = 1;
 		while (nextIndex < dataTypeModifiers.length()) {
 			char c = dataTypeModifiers.charAt(nextIndex);
-			if (c == '*' || c == '[' || c == ':' || c == '{') {
+			int constIndex = dataTypeModifiers.indexOf("const");
+			if (c == '*' || c == '[' || c == ':' || c == '{' || c == '&') {
 				list.add(dataTypeModifiers.substring(startIndex, nextIndex));
 				startIndex = nextIndex;
+			}else if (constIndex != -1 && nextIndex == constIndex) {
+				nextIndex = constIndex + 4;
+				startIndex = constIndex;
 			}
 			++nextIndex;
 		}
