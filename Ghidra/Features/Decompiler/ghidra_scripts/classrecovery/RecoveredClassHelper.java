@@ -406,9 +406,9 @@ public class RecoveredClassHelper {
 	 * @return a map of the given functions calling addresses to the called functions 
 	 * @throws CancelledException if cancelled
 	 */
-	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction)
+	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction, Set<Address> visited)
 			throws CancelledException {
-
+		visited.add(function.getEntryPoint());
 		Map<Address, Function> functionCallMap = new HashMap<Address, Function>();
 
 		InstructionIterator instructions =
@@ -434,9 +434,9 @@ public class RecoveredClassHelper {
 				Address functionAddress = reference.getFromAddress();
 				Function secondHalfOfFunction =
 					extendedFlatAPI.getReferencedFunction(functionAddress);
-				if (secondHalfOfFunction != null) {
+				if (secondHalfOfFunction != null && !visited.contains(secondHalfOfFunction.getEntryPoint())) {
 					Map<Address, Function> functionCallMap2 =
-						getFunctionCallMap(secondHalfOfFunction, false);
+						getFunctionCallMap(secondHalfOfFunction, false, visited);
 					for (Address addr : functionCallMap2.keySet()) {
 						monitor.checkCancelled();
 						functionCallMap.put(addr, functionCallMap2.get(addr));
@@ -446,6 +446,10 @@ public class RecoveredClassHelper {
 			}
 		}
 		return functionCallMap;
+	}
+
+	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction) throws CancelledException {
+		return getFunctionCallMap(function, getThunkedFunction, new HashSet<>());
 	}
 
 	public void updateNamespaceToClassMap(Namespace namespace, RecoveredClass recoveredClass) {
