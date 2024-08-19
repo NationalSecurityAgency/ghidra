@@ -213,10 +213,14 @@ public class ApplyDataTypes {
 				element = parser.start("member");
 				PdbXmlMember pdbXmlMember = pdbParser.getPdbXmlMember(element);
 				memberList.add(pdbXmlMember);
+				if ("class".equals(startElement.getName()) && !pdbParser.isProcessedClass(startElement.getAttribute("name"))) {
+					pdbParser.setClassVfunc(name, element.getAttribute("name"));
+				}
 				membersOnly &= (pdbXmlMember.kind == PdbKind.MEMBER);
 				parser.end(element);
 				element = parser.peek();
 			}
+			pdbParser.setProcessedClass(startElement.getAttribute("name"));
 			parser.end(startElement);
 			this.hasNormalMembersOnly = membersOnly;
 			this.isClass = "class".equals(startElement.getName()) || isInferredClass(kindStr);

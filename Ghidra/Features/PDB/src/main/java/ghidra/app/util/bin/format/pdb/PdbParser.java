@@ -27,7 +27,9 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
+import ghidra.app.util.cparser.C.ParseException;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.parser.FunctionSignatureParser;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
@@ -74,6 +76,7 @@ public class PdbParser {
 	private final boolean isXML;
 	private final Program program;
 	private DataTypeManager dataMgr;
+	private FunctionSignatureParser	funcParser;
 	private final DataTypeManagerService service;
 	private final PdbProgramAttributes programAttributes;
 	private Process process;
@@ -93,6 +96,10 @@ public class PdbParser {
 	private PdbDataTypeParser dataTypeParser;
 	private Map<SymbolPath, Boolean> namespaceMap = new TreeMap<>(); // false: simple namespace, true: class namespace
 
+	// Map of classes with a set of identified vfuncs
+	private Map<String, List<String>> classMap = new HashMap<>();
+	private Set<String> processedClasses = new HashSet<>();
+	
 	/**
 	 * Creates a PdbParser instance.
 	 * 
@@ -132,6 +139,7 @@ public class PdbParser {
 		this.program = program;
 		this.dataMgr = program.getDataTypeManager();
 		this.service = service;
+		this.funcParser =  new FunctionSignatureParser(dataMgr, service, pdbCategory, true);
 		this.forceAnalysis = forceAnalysis;
 		this.monitor = monitor != null ? monitor : TaskMonitor.DUMMY;
 		this.isXML = pdbFile.getName().toLowerCase().endsWith(PdbFileType.XML.toString());
@@ -766,6 +774,25 @@ public class PdbParser {
 			baseDataType, dataMgr);
 	}
 
+	FunctionDefinitionDataType createFuncDef(String name, String className, String undecorated, MessageLog log) throws CancelledException {
+		FunctionDefinitionDataType dt = null;
+		String fullName = String.format("%s::%s", className, name);
+		SymbolPath path = new SymbolPath(fullName);
+		boolean cdecl = undecorated.contains(" __cdecl");
+		if (cdecl)
+			undecorated = undecorated.replaceAll("__cdecl", "");
+		try {
+			dt = funcParser.parse(null, undecorated);
+			CategoryPath catPath = getCategory(path.getParent(), true);
+			dt.setCategoryPath(catPath);
+			dt.setCallingConvention(cdecl ? "__cdecl" : "__thiscall");
+			dataMgr.addDataType(dt, DataTypeConflictHandler.KEEP_HANDLER);
+		} catch (ParseException | InvalidInputException e) {
+			log.appendMsg("PDB", "Failed to parse function definition:  " + fullName + ": " + undecorated + " : " + e);
+		}
+		return dt;
+	}
+
 	EnumDataType createEnum(String name, int length) {
 		SymbolPath path = new SymbolPath(name);
 		// Ghidra does not like size of zero.
@@ -1110,7 +1137,41 @@ public class PdbParser {
 	public PdbXmlMember getPdbXmlMember(XmlElement element) {
 		return new PdbXmlMember(element);
 	}
+	
+	public void setClassVfunc(String className, String vFunc) {
+		List<String> vfuncList = classMap.containsKey(className) ? classMap.get(className) : new ArrayList<>();
+		vfuncList.add(vFunc);
+		classMap.put(className, vfuncList);
+	}
+	
+	public int classVfuncIndex(String className, String vFunc) {
+		if (classMap.containsKey(className)) {
+			List<String> vfuncList = classMap.get(className);
+			return vfuncList.indexOf(vFunc);
+		}
+		return -1;
+	}
+	
+	public int numClassMembers(String className) {
+		if (classMap.containsKey(className)) {
+			List<String> vfuncList = classMap.get(className);
+			return vfuncList.size();
+		}
+		return 0;
+	}
 
+	public int numClasses() {
+		return classMap.size();
+	}
+	
+	public boolean isProcessedClass(String classname) {
+		return processedClasses.contains(classname);
+	}
+
+	public void setProcessedClass(String classname) {
+		processedClasses.add(classname);
+	}
+	
 	class PdbXmlMember extends DefaultPdbMember {
 
 		PdbXmlMember(XmlTreeNode node) {
