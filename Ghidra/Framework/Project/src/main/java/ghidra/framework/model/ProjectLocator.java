@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -143,23 +143,23 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * @returns true if this project URL corresponds to a transient project
-	 * (e.g., corresponds to remote Ghidra URL)
+	 * {@return true if this project URL corresponds to a transient project
+	 * (e.g., corresponds to remote Ghidra URL)}
 	 */
 	public boolean isTransient() {
 		return false;
 	}
 
 	/**
-	 * @returns the URL associated with this local project.  If using a temporary transient
-	 * project location this URL should not be used.
+	 * {@return the URL associated with this local project.  If using a temporary transient
+	 * project location this URL should not be used.}
 	 */
 	public URL getURL() {
 		return url;
 	}
 
 	/**
-	 * @returns the name of the project identified by this project info.
+	 * {@return the name of the project identified by this project info.}
 	 */
 	public String getName() {
 		return name;
@@ -168,6 +168,7 @@ public class ProjectLocator {
 	/**
 	 * Get the location of the project which will contain marker file
 	 * ({@link #getMarkerFile()}) and project directory ({@link #getProjectDir()}). 
+	 * <p>
 	 * Note: directory may or may not exist.
 	 * @return project location directory
 	 */
@@ -176,29 +177,28 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * @returns the project directory
+	 * {@return the project directory}
 	 */
 	public File getProjectDir() {
 		return new File(location, name + PROJECT_DIR_SUFFIX);
 	}
 
 	/**
-	 * @returns the file that indicates a Ghidra project.
+	 * {@return the file that indicates a Ghidra project.}
 	 */
 	public File getMarkerFile() {
 		return new File(location, name + PROJECT_FILE_SUFFIX);
 	}
 
 	/**
-	 * @returns project lock file to prevent multiple accesses to the
-	 * same project at once.
+	 * {@return project lock file to prevent multiple accesses to the same project at once.}
 	 */
 	public File getProjectLockFile() {
 		return new File(location, name + LOCK_FILE_SUFFIX);
 	}
 
 	/**
-	 * @returns the project directory file extension.
+	 * {@return the project directory file extension.}
 	 */
 	public static String getProjectDirExtension() {
 		return PROJECT_DIR_SUFFIX;
@@ -230,23 +230,22 @@ public class ProjectLocator {
 	}
 
 	/**
-	 * @returns the file extension suitable for creating file filters for the file chooser.
+	 * {@return the file extension suitable for creating file filters for the file chooser}
 	 */
 	public static String getProjectExtension() {
 		return PROJECT_FILE_SUFFIX;
 	}
 
 	/**
-	 * Returns whether the given file is a project directory.
+	 * {@return whether the given file is a project directory.}
 	 * @param file file to check
-	 * @return  true if the file is a project directory 
 	 */
 	public static boolean isProjectDir(File file) {
 		return file.isDirectory() && file.getName().endsWith(PROJECT_DIR_SUFFIX);
 	}
 
 	/**
-	 * @returns true if project storage exists
+	 * {@return true if project storage exists}
 	 */
 	public boolean exists() {
 		return getMarkerFile().isFile() && getProjectDir().isDirectory();
