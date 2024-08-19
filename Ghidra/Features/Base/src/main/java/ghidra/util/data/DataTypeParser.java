@@ -15,8 +15,10 @@
  */
 package ghidra.util.data;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -150,12 +152,15 @@ public class DataTypeParser {
 	public DataType parse(String dataTypeString, CategoryPath category)
 			throws InvalidDataTypeException, CancelledException {
 		dataTypeString = dataTypeString.replaceAll("\\s+", " ").trim();
-		String dataTypeName = getBaseString(dataTypeString);
-		DataType namedDt = getNamedDataType(dataTypeName, category);
+		String dataTypeName = getBaseString(getBaseName(dataTypeString));
+		CategoryPath categoryName = getCategory(dataTypeString);
+		CategoryPath categoryQuery = category != null ? category: categoryName;			
+		DataType namedDt = getNamedDataType(dataTypeName, categoryQuery);
 		if (namedDt == null) {
 			throw new InvalidDataTypeException("Valid data-type not specified");
 		}
-		return parseDataTypeModifiers(namedDt, dataTypeString.substring(dataTypeName.length()));
+		int startIndex = dataTypeString.length() - getBaseName(dataTypeString).length();
+		return parseDataTypeModifiers(namedDt, dataTypeString.substring(startIndex + dataTypeName.length()));
 	}
 
 	/**
@@ -688,5 +693,70 @@ public class DataTypeParser {
 		int getElementSize() {
 			return elementSize;
 		}
+	}
+	/**
+	 * Get the category path associated with the namespace qualified data type name
+	 * @param namespaceQualifiedDataTypeName data type name
+	 * @return the category path
+	 */
+	private static CategoryPath getCategory(String namespaceQualifiedDataTypeName) {
+		List<String> names = splitNamespace(namespaceQualifiedDataTypeName);
+		CategoryPath category = null;
+		if (names.size() > 1) {
+			category = CategoryPath.ROOT;
+			for (int i = 0; i < names.size() - 1; i++) {
+				category = new CategoryPath(category, names.get(i));
+			}
+		}
+		return category;
+	}
+
+	/**
+	 * Get the basename associated with the namespace qualified data type name
+	 * 
+	 * @param namespaceQualifiedDataTypeName data type name
+	 * @return the basename
+	 */
+	private static String getBaseName(String namespaceQualifiedDataTypeName) {
+		List<String> names = splitNamespace(namespaceQualifiedDataTypeName);
+		return names.get(names.size() - 1);
+	}
+
+	/**
+	 * Splits the input string on "::", ignoring splits inside templates.
+	 * 
+	 * @param namespaceQualifiedDataTypeName the full data type name
+	 * @return a list of namespace components
+	 */
+	private static List<String> splitNamespace(String namespaceQualifiedDataTypeName) {
+		List<String> parts = new ArrayList<>();
+		StringBuilder currentPart = new StringBuilder();
+		int angleBracketLevel = 0;
+
+		for (int i = 0; i < namespaceQualifiedDataTypeName.length(); i++) {
+			char c = namespaceQualifiedDataTypeName.charAt(i);
+
+			if (c == '<') {
+				angleBracketLevel++;
+			} else if (c == '>') {
+				angleBracketLevel--;
+			} else if (c == ':' && i + 1 < namespaceQualifiedDataTypeName.length()
+					&& namespaceQualifiedDataTypeName.charAt(i + 1) == ':' && angleBracketLevel == 0) {
+				// We found "::" outside of a template, so split here
+				parts.add(currentPart.toString().trim());
+				currentPart.setLength(0); // Reset the current part
+				i++; // Skip the next ':' since we know it's part of "::"
+				continue;
+			}
+
+			currentPart.append(c);
+		}
+
+		// Add the final part
+		if (currentPart.length() > 0) {
+			parts.add(currentPart.toString().trim());
+		}
+
+		return parts;
 	}
 }
