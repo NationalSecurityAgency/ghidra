@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,9 @@ public class PdbPrimitiveTypeApplicator {
 	private DataType voidGhidraPrimitive = null;
 	private DataType charGhidraPrimitive = null;
 	private DataType signedCharGhidraPrimitive = null;
+	// Note that std::is_same_v<unsigned char, char8_t> is suppose to return false
 	private DataType unsignedCharGhidraPrimitive = null;
+	private DataType char8GhidraPrimitive = null;
 
 	//private Map<Integer, DataType> booleanGhidraPrimitives = new HashMap<>();
 	private Map<Integer, DataType> integralGhidraPrimitives = new HashMap<>();
@@ -106,6 +108,19 @@ public class PdbPrimitiveTypeApplicator {
 			unsignedCharGhidraPrimitive = resolve(dataType);
 		}
 		return unsignedCharGhidraPrimitive;
+	}
+
+	// 8-bit char8_t type from C++20 standard
+	// Note that std::is_same_v<unsigned char, char8_t> is suppose to return false
+	// So we are creating and storing off a separate type here.  Whether ghidra thinks they are
+	// the same or not is up to the type system or up to our changing what we do in these two
+	// methods (the one above and this one).  If we care to make them different, then do it here.
+	DataType getChar8Type() {
+		if (char8GhidraPrimitive == null) {
+			DataType dataType = new UnsignedCharDataType(getDataTypeManager());
+			char8GhidraPrimitive = resolve(dataType);
+		}
+		return char8GhidraPrimitive;
 	}
 
 	DataType getUnicode16Type() {

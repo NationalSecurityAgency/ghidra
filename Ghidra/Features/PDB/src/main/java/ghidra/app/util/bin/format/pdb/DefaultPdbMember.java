@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.exception.CancelledException;
 /**
  * <code>PdbMember</code> convey PDB member information used for datatype
  * reconstruction. The <i>memberDataTypeName</i> is expected to include
- * namespace prefixes when relevant.  When representing bitfields the 
+ * namespace prefixes when relevant.  When representing bitfields the
  * <i>memberName</i> is used to convey bit-size and bit-offset information
  * (e.g., fieldname:SSSS:XXXX where SSSS corresponds to the bit-size
  * and XXXX corresponds to an bit-offset).  If bit-offset information is
@@ -81,8 +81,8 @@ public class DefaultPdbMember extends PdbMember {
 	}
 
 	private static String getMemberName(String name, PdbKind kind) {
-		if (name == null) {
-			return null;
+		if (StringUtils.isBlank(name)) {
+			return name;
 		}
 		if (kind == PdbKind.MEMBER) {
 			// Strip bitfield data if present (see parseBitField method)
@@ -92,9 +92,6 @@ public class DefaultPdbMember extends PdbMember {
 			}
 		}
 		// name may contain namespace prefix for non-Member class members
-		if (StringUtils.isEmpty(name)) {
-			return name;
-		}
 		List<String> names = SymbolPathParser.parse(name);
 		return names.get(names.size() - 1);
 	}

@@ -3,6 +3,7 @@
 ##MODULE IP: MIT
 Module.manifest||GHIDRA||||END|
 data/debugger-launchers/kernel-dbgeng.bat||GHIDRA||||END|
+data/debugger-launchers/local-dbgeng-attach.bat||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng-ext.bat||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng.bat||GHIDRA||||END|
 data/debugger-launchers/local-ttd.bat||GHIDRA||||END|

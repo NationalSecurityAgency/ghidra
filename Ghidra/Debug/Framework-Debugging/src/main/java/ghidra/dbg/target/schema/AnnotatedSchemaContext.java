@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
-import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
+import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
@@ -35,6 +35,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.util.Msg;
 import utilities.util.reflection.ReflectionUtilities;
 
+@Deprecated(forRemoval = true, since = "11.2")
 public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 	public static class AnnotatedAttributeSchema extends DefaultAttributeSchema {
@@ -102,7 +103,8 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	static Set<Class<? extends TargetObject>> getBoundsOfFetchElements(
 			Class<? extends TargetObject> cls) {
 		try {
-			Method method = cls.getMethod("fetchElements", new Class<?>[] { RefreshBehavior.class });
+			Method method =
+				cls.getMethod("fetchElements", new Class<?>[] { RefreshBehavior.class });
 			Type ret = method.getGenericReturnType();
 			Map<TypeVariable<?>, Type> argsCf =
 				TypeUtils.getTypeArguments(ret, CompletableFuture.class);

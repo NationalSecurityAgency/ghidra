@@ -1019,7 +1019,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String demangled = process.demangle(mangled);
 
 		/*
-			typeinfo for 
+			typeinfo for
 				std::__ndk1::__function::__func<
 					dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1},
 					std::__ndk1::allocator<dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1}>,
@@ -2211,10 +2211,63 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertName(object,
 			"__allocate_at_least[abi:v160006]<std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>",
 			"std");
-
 		String signature = object.getSignature(false);
 		assertEquals(
 			"std::__allocation_result<std::allocator_traits<std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>::pointer> std::__allocate_at_least[abi:v160006]<std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>(std::allocator<std::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void *,&VPTimeFreqConverter_Dispose>>> &,unsigned long)",
+			signature);
+	}
+
+	@Test
+	public void testGlobalConstructor() throws Exception {
+
+		//
+		// mangled: _GLOBAL__I_cyg_libc_stdio_altout
+		//
+		// demangled: global constructors keyed to cyg_libc_stdio_altout
+		//
+		// updated name: global.constructors.keyed.to.cyg_libc_stdio_altout
+		//
+
+		String mangled = "_GLOBAL__I_cyg_libc_stdio_altout";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		assertEquals("global constructors keyed to cyg_libc_stdio_altout",
+			object.getOriginalDemangled());
+		assertName(object, "global.constructors.keyed.to.cyg_libc_stdio_altout");
+
+		String signature = object.getSignature(false);
+		assertEquals("undefined global.constructors.keyed.to.cyg_libc_stdio_altout(void)",
+			signature);
+	}
+
+	@Test
+	public void testGlobalDestructor() throws Exception {
+
+		//
+		// mangled: _GLOBAL__D_cyg_libc_stdio_altout
+		//
+		// demangled: global destructors keyed to cyg_libc_stdio_altout
+		//
+		// updated name: global.destructors.keyed.to.cyg_libc_stdio_altout
+		//
+
+		String mangled = "_GLOBAL__D_cyg_libc_stdio_altout";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		assertEquals("global destructors keyed to cyg_libc_stdio_altout",
+			object.getOriginalDemangled());
+		assertName(object, "global.destructors.keyed.to.cyg_libc_stdio_altout");
+
+		String signature = object.getSignature(false);
+		assertEquals("undefined global.destructors.keyed.to.cyg_libc_stdio_altout(void)",
 			signature);
 	}
 

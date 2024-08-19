@@ -75,8 +75,8 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		// "rttiFound" option added in 10.3 so if analyzed with previous version analyzer will rerun
-		if (hasRun(program)) {
-			return true;
+		if(hasRun(program)) {
+	//		return true;
 		}
 
 		Address commonVfTableAddress = RttiUtil.findTypeInfoVftableAddress(program, monitor);

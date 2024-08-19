@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,30 +15,28 @@
  */
 package pdb.symbolserver.ui;
 
-import static java.util.stream.Collectors.toList;
-import static pdb.symbolserver.ui.SymbolServerRow.LocationStatus.INVALID;
-import static pdb.symbolserver.ui.SymbolServerRow.LocationStatus.VALID;
+import static java.util.stream.Collectors.*;
 
+import java.awt.Component;
+import java.awt.FontMetrics;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.awt.Component;
-
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 
 import docking.widgets.table.*;
+import generic.theme.GIcon;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
-import ghidra.util.Swing;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
-import ghidra.util.task.TaskLauncher;
 import pdb.symbolserver.SymbolServer;
 import resources.Icons;
 
 /**
- * Table model for the {@link SymbolServerPanel} table
+ * Table model for the {@link ConfigPdbDialog} table
  */
 class SymbolServerTableModel
 		extends GDynamicColumnTableModel<SymbolServerRow, List<SymbolServerRow>> {
@@ -64,9 +62,7 @@ class SymbolServerTableModel
 	}
 
 	List<SymbolServer> getSymbolServers() {
-		return rows.stream()
-				.map(SymbolServerRow::getSymbolServer)
-				.collect(toList());
+		return rows.stream().map(SymbolServerRow::getSymbolServer).collect(toList());
 	}
 
 	void addSymbolServer(SymbolServer ss) {
@@ -90,26 +86,6 @@ class SymbolServerTableModel
 		}
 		dataChanged = true;
 		fireTableDataChanged();
-	}
-
-	void refreshSymbolServerLocationStatus() {
-		List<SymbolServerRow> rowsCopy = new ArrayList<>(this.rows);
-		TaskLauncher.launchNonModal("Refresh Symbol Server Location Status", monitor -> {
-			monitor.initialize(rowsCopy.size());
-			monitor.setMessage("Refreshing symbol server status");
-			try {
-				for (SymbolServerRow row : rowsCopy) {
-					if (monitor.isCancelled()) {
-						break;
-					}
-					monitor.setMessage("Checking " + row.getSymbolServer().getName());
-					row.setStatus(row.getSymbolServer().isValid(monitor) ? VALID : INVALID);
-				}
-			}
-			finally {
-				Swing.runLater(SymbolServerTableModel.this::fireTableDataChanged);
-			}
-		});
 	}
 
 	void moveRow(int rowIndex, int deltaIndex) {
@@ -159,9 +135,15 @@ class SymbolServerTableModel
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 		DynamicTableColumn<SymbolServerRow, ?, ?> column = getColumn(columnIndex);
-		if (column instanceof EnabledColumn) {
+		if (column instanceof EnabledColumn && aValue instanceof Boolean) {
 			SymbolServerRow row = getRowObject(rowIndex);
 			row.setEnabled((Boolean) aValue);
+			dataChanged = true;
+			fireTableDataChanged();
+		}
+		else if (column instanceof TrustedColumn && aValue instanceof Boolean) {
+			SymbolServerRow row = getRowObject(rowIndex);
+			row.setTrusted((Boolean) aValue);
 			dataChanged = true;
 			fireTableDataChanged();
 		}
@@ -170,7 +152,7 @@ class SymbolServerTableModel
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		DynamicTableColumn<SymbolServerRow, ?, ?> column = getColumn(columnIndex);
-		return column instanceof EnabledColumn;
+		return column instanceof EnabledColumn || column instanceof TrustedColumn;
 	}
 
 	@Override
@@ -178,6 +160,7 @@ class SymbolServerTableModel
 		TableColumnDescriptor<SymbolServerRow> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new EnabledColumn());
+		descriptor.addVisibleColumn(new TrustedColumn());
 		descriptor.addVisibleColumn(new StatusColumn());
 		descriptor.addVisibleColumn(new LocationColumn());
 
@@ -187,9 +170,10 @@ class SymbolServerTableModel
 	//-------------------------------------------------------------------------------------------
 
 	private static class StatusColumn extends
-			AbstractDynamicTableColumnStub<SymbolServerRow, SymbolServerRow.LocationStatus> {
+			AbstractDynamicTableColumnStub<SymbolServerRow, SymbolServerRow.LocationStatus>
+			implements TableColumnInitializer {
 
-		private static final Icon VALID_ICON = Icons.get("images/checkmark_green.gif");
+		private static final Icon VALID_ICON = new GIcon("icon.checkmark.green");
 		private static final Icon INVALID_ICON = Icons.ERROR_ICON;
 
 		private static Icon[] icons = new Icon[] { null, VALID_ICON, INVALID_ICON };
@@ -206,7 +190,7 @@ class SymbolServerTableModel
 
 		@Override
 		public String getColumnDisplayName(Settings settings) {
-			return "";
+			return "Status";
 		}
 
 		@Override
@@ -219,14 +203,23 @@ class SymbolServerTableModel
 			return renderer;
 		}
 
+		@Override
+		public void initializeTableColumn(TableColumn col, FontMetrics fm, int padding) {
+			int colWidth = fm.stringWidth("Status") + padding;
+			col.setPreferredWidth(colWidth);
+			col.setMaxWidth(colWidth * 2);
+			col.setMinWidth(colWidth);
+		}
+
 	}
 
 	private static class EnabledColumn
-			extends AbstractDynamicTableColumnStub<SymbolServerRow, Boolean> {
+			extends AbstractDynamicTableColumnStub<SymbolServerRow, Boolean>
+			implements TableColumnInitializer {
 
 		@Override
 		public String getColumnDisplayName(Settings settings) {
-			return "";
+			return "Enabled";
 		}
 
 		@Override
@@ -240,6 +233,43 @@ class SymbolServerTableModel
 			return "Enabled";
 		}
 
+		@Override
+		public void initializeTableColumn(TableColumn col, FontMetrics fm, int padding) {
+			int colWidth = fm.stringWidth("Enabled") + padding;
+			col.setPreferredWidth(colWidth);
+			col.setMaxWidth(colWidth * 2);
+			col.setMinWidth(colWidth);
+		}
+
+	}
+
+	private static class TrustedColumn
+			extends AbstractDynamicTableColumnStub<SymbolServerRow, Boolean>
+			implements TableColumnInitializer {
+
+		@Override
+		public String getColumnDisplayName(Settings settings) {
+			return "Trusted";
+		}
+
+		@Override
+		public Boolean getValue(SymbolServerRow rowObject, Settings settings,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			return rowObject.isTrusted();
+		}
+
+		@Override
+		public String getColumnName() {
+			return "Trusted";
+		}
+
+		@Override
+		public void initializeTableColumn(TableColumn col, FontMetrics fm, int padding) {
+			int colWidth = fm.stringWidth("Trusted") + padding;
+			col.setPreferredWidth(colWidth);
+			col.setMaxWidth(colWidth * 2);
+			col.setMinWidth(colWidth);
+		}
 	}
 
 	private static class LocationColumn
@@ -305,5 +335,6 @@ class SymbolServerTableModel
 		public String getFilterString(E t, Settings settings) {
 			return t == null ? "" : t.toString();
 		}
+
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,7 +111,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	ProgramTreePlugin pt;
 	ComponentProvider programTreeProvider;
-	DockingActionIf replaceView;
+	DockingActionIf setView;
 	DockingActionIf goToView;
 	DockingActionIf removeView;
 
@@ -484,8 +484,8 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		pt = env.getPlugin(ProgramTreePlugin.class);
-		showProgramTree();
-		replaceView = getAction(pt, "Replace View");
+		programTreeProvider = showProvider(tool, "Program Tree");
+		setView = getAction(pt, "Set View");
 		goToView = getAction(pt, "Go To start of folder/fragment in View");
 		removeView = getAction(pt, "Remove folder/fragment from View");
 
@@ -509,6 +509,11 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		env.dispose();
+	}
+
+	protected void setView() {
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(setView, context, true);
 	}
 
 	void closeDiff() throws Exception {
@@ -1132,13 +1137,6 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail(message);
 		}
 		assertEquals(expectedSelection, currentSelection);
-	}
-
-	private void showProgramTree() {
-
-		ProgramTreePlugin ptree = env.getPlugin(ProgramTreePlugin.class);
-		programTreeProvider = (ComponentProvider) getInstanceField("viewProvider", ptree);
-		tool.showComponentProvider(programTreeProvider, true);
 	}
 
 	JTree getProgramTree() {
