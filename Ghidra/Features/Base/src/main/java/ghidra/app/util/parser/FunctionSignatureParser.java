@@ -58,6 +58,8 @@ public class FunctionSignatureParser {
 	private Map<String, String> nameMap = new HashMap<>();
 	private DataTypeManager destDataTypeManager;
 	private ParserDataTypeManagerService dtmService;
+	private boolean cacheChooser = false;
+	private CategoryPath defaultCategory = null;
 
 	/**
 	 * Constructs a SignatureParser for a program.  The destDataTypeManager and/or
@@ -83,6 +85,25 @@ public class FunctionSignatureParser {
 	}
 
 	/**
+	 * Constructs a SignatureParser for a program.  The destDataTypeManager and/or
+	 * service must be specified.
+	 * 
+	 * @param destDataTypeManager the destination datatype maanger.
+	 * @param service the DataTypeManagerService to use for resolving datatypes that
+	 *                can't be found in the given program. Can be null to utilize
+	 *                program based types only.
+	 * @param defaultCategory the default category to check first 
+	 * @param cacheChooser whether to cache the chooser selections across the 
+	 *                signature parser instead of just a single signature. 
+	 *                This is useful for bulk signature processing.
+	 */
+	public FunctionSignatureParser(DataTypeManager destDataTypeManager,
+			DataTypeQueryService service, CategoryPath defaultCategory, boolean cacheChooser) {
+		this(destDataTypeManager, service);
+		this.cacheChooser = cacheChooser;
+		this.defaultCategory = defaultCategory;				
+	}
+	/**
 	 * Parse the given function signature text into a FunctionDefinitionDataType.
 	 *
 	 * @param originalSignature the function signature before editing. This may be
@@ -95,8 +116,10 @@ public class FunctionSignatureParser {
 	 */
 	public FunctionDefinitionDataType parse(FunctionSignature originalSignature,
 			String signatureText) throws ParseException, CancelledException {
-		dtMap.clear();
-		nameMap.clear();
+		if (!cacheChooser){
+			dtMap.clear();
+			nameMap.clear();
+		}
 		if (dtmService != null) {
 			dtmService.clearCache(); // clear datatype selection cache
 		}
@@ -141,6 +164,11 @@ public class FunctionSignatureParser {
 		}
 		dtMap.put(dataType.getName(), dataType);
 		cacheDataType(baseType);
+	}
+	
+	private void cacheDataType(DataType dataType, String dataTypeString) {
+		dtMap.put(dataTypeString, dataType);
+		cacheDataType(dataType);
 	}
 
 	private boolean hasVarArgs(String newSignatureText) {
@@ -321,10 +349,22 @@ public class FunctionSignatureParser {
 
 		DataType dataType = null;
 		try {
-			dataType = dataTypeParser.parse(dataTypeName);
-		}
-		catch (InvalidDataTypeException e) {
-			// ignore - return null
+			if (this.defaultCategory != null) {
+				dataType = dataTypeParser.parse(dataTypeName, this.defaultCategory);
+			}
+			if (dataType != null && cacheChooser) {
+				cacheDataType(dataType, dataTypeName);
+			}
+		} catch (InvalidDataTypeException e) {
+			try {
+				// try again without category
+				dataType = dataTypeParser.parse(dataTypeName);
+				if (dataType != null && cacheChooser) {
+					cacheDataType(dataType, dataTypeName);
+				}
+			} catch (InvalidDataTypeException e2) {
+				// ignore
+			}
 		}
 		return dataType;
 	}
