@@ -378,11 +378,11 @@ public class DataTypeParser {
 		}
 
 		// give up and ask the user
-		return proptUserForType(baseName);
+		return promptUserForType(baseName);
 
 	}
 
-	private DataType proptUserForType(String baseName) throws CancelledException {
+	private DataType promptUserForType(String baseName) throws CancelledException {
 
 		if (dataTypeManagerService == null) {
 			return null;
