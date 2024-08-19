@@ -4362,8 +4362,13 @@ public class RecoveredClassHelper {
 		//create function definition for each virtual function and put in vftable structure and
 		// data subfolder
 		CategoryPath classPath = recoveredClass.getClassPath();
+	    Namespace classNamespace = symbolTable.getNamespace(classPath.getName(), null);
 
+		DataType PDBvftable = findDataType(dataTypeManager, "vftable",
+				new CategoryPath(CategoryPath.ROOT, classPath.getName()), new ArrayList<>());
+		
 		List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
+		int usedVfunctionNumber = 0;
 		for (Address vftableAddress : vftableAddresses) {
 			monitor.checkCancelled();
 			PointerDataType vftablePointerDataType =
@@ -4392,13 +4397,43 @@ public class RecoveredClassHelper {
 			for (Function vfunction : vFunctions) {
 
 				monitor.checkCancelled();
+				DataTypeComponent entry = getPDBvfTableEntry(PDBvftable, usedVfunctionNumber);
+				FunctionDefinition funcDef = getFunctionDefinition(entry);
+
 				if (vfunction == null) {
 					Pointer nullPointer = dataTypeManager.getPointer(DataType.DEFAULT);
 					vftableStruct.add(nullPointer, "null pointer", null);
 					continue;
 				}
-
+				
 				String forClassSuffix = getForClassSuffix(vftableStructureName);
+				if (funcDef != null) {
+					// Set the parameters
+			        ParameterDefinition[] paramDefs = funcDef.getArguments();
+			        Variable[] parameters = new Variable[paramDefs.length];
+			        for (int i = 0; i < paramDefs.length; i++) {
+			            parameters[i] = new ParameterImpl(
+			                paramDefs[i].getName(),
+			                paramDefs[i].getDataType(),
+			                vfunction.getProgram(),
+			                SourceType.IMPORTED
+			            );
+			        }					
+			        vfunction.replaceParameters(Function.FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, // Update type
+							true, // Preserve existing storage (or set false if you want to override)
+							SourceType.IMPORTED, // Source of the parameter definitions
+							parameters // Parameter definitions to set
+					);
+
+					// Set the calling convention
+					vfunction.setCallingConvention(funcDef.getCallingConvention().toString());
+					vfunction.setName(funcDef.getName().replaceAll(" ", "_"), SourceType.IMPORTED);
+					if (classNamespace != null)
+						vfunction.setParentNamespace(classNamespace);
+					vfunction.setReturnType(
+							funcDef.getReturnType() != null ? funcDef.getReturnType() : new VoidDataType(),
+							SourceType.IMPORTED);
+				}
 				String functionDefName = vfunction.getName();
 				int indexOfSuffix = functionDefName.indexOf(forClassSuffix);
 
@@ -4437,7 +4472,10 @@ public class RecoveredClassHelper {
 
 				// Create comment to indicate it is a virtual function and which number in the table
 				String comment = VFUNCTION_COMMENT + vfunctionNumber;
-
+				if (funcDef != null) {
+					comment += entry.getComment().substring(2);
+				}
+				
 				// add comment suffix for multi classes to distinguish which vftable it is for
 
 				if (!forClassSuffix.isEmpty()) {
@@ -4496,6 +4534,7 @@ public class RecoveredClassHelper {
 				vftableStruct.add(functionPointerDataType, nameField,
 					classCommentPrefix + " " + comment);
 				vfunctionNumber++;
+				usedVfunctionNumber++;
 			}
 
 			// align the structure then add it to the data type manager
@@ -4511,6 +4550,46 @@ public class RecoveredClassHelper {
 			api.createData(vftableAddress, vftableStruct);
 
 		}
+	}
+
+	/**
+	 * Returns the DataTypeComponent at the index.
+	 * 
+	 * @param PDBvftable a vfTable filled with FuncDefEntries.
+	 * @param index      index in vfTable. Corresponds to vfunc index.
+	 * @return DataTypeComponent at entry location or null
+	 */
+	private DataTypeComponent getPDBvfTableEntry(DataType PDBvftable, int index) {
+		if (PDBvftable != null && PDBvftable instanceof Structure) {
+			Structure PDBvftableStruct = (Structure) PDBvftable;
+			try {
+				return PDBvftableStruct.getComponent(index); // Get the DataTypeComponent
+			} catch (IndexOutOfBoundsException e) {
+				// ignore
+			}
+		}
+		return null;
+	}
+
+	/**
+	 *  Get FunctionDefinition from a DataTypeComponent
+	 * @param component the component to convert
+	 * @return FunctionDefinition or null
+	 */
+	private FunctionDefinition getFunctionDefinition(DataTypeComponent component) {
+		if (component != null) {
+			DataType entry = component.getDataType(); // Extract the DataType from the component
+
+			if (entry instanceof Pointer) {
+				Pointer funcDefPtr = (Pointer) entry;
+
+				// Now check if the pointer's underlying type is a FunctionDefinitionDataType
+				if (funcDefPtr.getDataType() instanceof FunctionDefinition) {
+					return (FunctionDefinition) funcDefPtr.getDataType();
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -8540,6 +8619,84 @@ public class RecoveredClassHelper {
 			}
 		}
 		return classStructureDataType;
+	}
+	
+	/**
+	 * Method to find datatypes that partially match the category
+	 * @param dtm the datatypemanager to search
+	 * @param baseName the base name
+	 * @param category the category/namespace
+	 * @param list a list of all matches
+	 * @return the found dataType or null
+	 */
+	private DataType findDataType(DataTypeManager dtm, String baseName, CategoryPath category,
+			List<DataType> list) {
+
+		DataTypeManager builtInDTM = BuiltInDataTypeManager.getDataTypeManager();
+		if (dtm == null) {
+			// no DTM specified--try the built-ins
+			return findDataType(builtInDTM, baseName, category, list);
+		}
+
+		if (category != null) {
+			DataType dt = dtm.getDataType(category, baseName);
+			if (dt != null) {
+				list.add(dt);
+				return dt;
+			}
+			// Search for partial category matches
+			// Get the depth of the input category path
+			int targetDepth = category.getPath().split("/").length - 1;
+
+			// Stack to hold categories for iterative traversal
+			Stack<Category> categoryStack = new Stack<>();
+			categoryStack.add(dtm.getRootCategory());
+
+			while (!categoryStack.isEmpty()) {
+			    // Pop the next category to check
+			    Category currentCategory = categoryStack.pop();
+			    CategoryPath categoryPath = currentCategory.getCategoryPath();
+
+			    // Get the current category's depth
+			    int currentDepth = categoryPath.getPath().split("/").length;
+
+			    // Determine if we should check this category based on the target depth
+			    boolean isMatchingLevel = targetDepth <= currentDepth;
+
+			    if (isMatchingLevel) {
+			        if (categoryPath.getPath().endsWith(category.getPath())) {
+			            dt = dtm.getDataType(categoryPath, baseName);
+			            if (dt != null) {
+			                list.add(dt);
+			                return dt;
+			            }
+			        }
+			    }
+
+			    // Add subcategories to the stack for further searching
+			    categoryStack.addAll(Arrays.asList(currentCategory.getCategories()));
+			}
+		}
+		else {
+
+			// handle C primitives (e.g.  long long, unsigned long int, etc.)
+			DataType dataType = DataTypeUtilities.getCPrimitiveDataType(baseName);
+			if (dataType != null) {
+				return dataType.clone(dtm);
+			}
+
+			dtm.findDataTypes(baseName, list);
+			if (list.size() == 1) {
+				return list.get(0);
+			}
+		}
+
+		// nothing found--try the built-ins if we haven't yet
+		if (list.isEmpty() && dtm != builtInDTM) {
+			return findDataType(builtInDTM, baseName, category, list);
+		}
+
+		return null;
 	}
 
 }
