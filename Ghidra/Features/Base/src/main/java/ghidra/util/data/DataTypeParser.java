@@ -410,6 +410,38 @@ public class DataTypeParser {
 				list.add(dt);
 				return dt;
 			}
+			// Search for partial category matches
+			// Get the depth of the input category path
+			int targetDepth = category.getPath().split("/").length - 1;
+
+			// Stack to hold categories for iterative traversal
+			Stack<Category> categoryStack = new Stack<>();
+			categoryStack.add(dtm.getRootCategory());
+
+			while (!categoryStack.isEmpty()) {
+			    // Pop the next category to check
+			    Category currentCategory = categoryStack.pop();
+			    CategoryPath categoryPath = currentCategory.getCategoryPath();
+
+			    // Get the current category's depth
+			    int currentDepth = categoryPath.getPath().split("/").length;
+
+			    // Determine if we should check this category based on the target depth
+			    boolean isMatchingLevel = targetDepth <= currentDepth;
+
+			    if (isMatchingLevel) {
+			        if (categoryPath.getPath().endsWith(category.getPath())) {
+			            dt = dtm.getDataType(categoryPath, baseName);
+			            if (dt != null) {
+			                list.add(dt);
+			                return dt;
+			            }
+			        }
+			    }
+
+			    // Add subcategories to the stack for further searching
+			    categoryStack.addAll(Arrays.asList(currentCategory.getCategories()));
+			}
 		}
 		else {
 
