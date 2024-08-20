@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import javax.swing.*;
 
 import org.junit.Test;
 
-import docking.widgets.OptionDialog;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Library;
@@ -125,6 +124,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(new ByteDataType());
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
+
+		structureModel.viewDTM.clearUndo();
 
 		waitForSwing();
 
@@ -807,11 +808,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		if (packingButton.isSelected()) {
 			return;
 		}
-
-		pressButton(packingButton, false);
-		OptionDialog confirmDialog = waitForDialogComponent(OptionDialog.class);
-		pressButtonByText(confirmDialog, "Yes");
-		waitForSwing();
+		pressButton(packingButton, true);
 	}
 
 	private void checkRow(int rowIndex, int offset, int length, String mnemonic, DataType dataType,
@@ -829,6 +826,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 	}
 
 	private DataTypeComponent addDataType(DataType dataType) {
-		return structureModel.viewComposite.add(dataType);
+		return structureModel.viewDTM.withTransaction("Add Test Component",
+			() -> structureModel.viewComposite.add(dataType));
 	}
 }

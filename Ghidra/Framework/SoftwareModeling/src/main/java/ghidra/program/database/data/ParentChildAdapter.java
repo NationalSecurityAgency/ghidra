@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,6 +81,16 @@ abstract class ParentChildAdapter {
 	abstract void removeRecord(long parentID, long childID) throws IOException;
 
 	/**
+	 * Get the unique set of child IDs associated with the specified parent ID.
+	 * Since a parent may have duplicate parent-child records, this method
+	 * avoids returning the same child more than once.
+	 * @param parentID parent datatype ID
+	 * @return set of child datatype IDs
+	 * @throws IOException if a DB IO error occurs
+	 */
+	abstract Set<Long> getChildIds(long parentID) throws IOException;
+
+	/**
 	 * Get the unique set of parent ID associated with the specified childID.
 	 * Since composite parents may have duplicate parent-child records, this method
 	 * avoids returning the same parent more than once.
@@ -89,6 +99,14 @@ abstract class ParentChildAdapter {
 	 * @throws IOException if a DB IO error occurs
 	 */
 	abstract Set<Long> getParentIds(long childID) throws IOException;
+
+	/** 
+	 * Determine if there is one or more parents associated with the specified childID.
+	 * @param childID child datatype ID
+	 * @return true if a parent was identified, else false
+	 * @throws IOException if a DB IO error occurs
+	 */
+	abstract boolean hasParent(long childID) throws IOException;
 
 	abstract void removeAllRecordsForParent(long parentID) throws IOException;
 

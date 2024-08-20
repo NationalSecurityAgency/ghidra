@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,11 +46,13 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));
-		adjustEnablement();
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		try {
 			boolean isContiguousSelection = model.getSelection().getNumRanges() == 1;
 			if (isContiguousSelection) {
@@ -72,7 +74,10 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 	}
 
 	@Override
-	public void adjustEnablement() {
+	public boolean isEnabledForContext(ActionContext context) {
+		if (hasIncompleteFieldEntry()) {
+			return false;
+		}
 		boolean enabled = false;
 		if (model.viewComposite instanceof Structure) {
 			boolean isContiguousSelection = model.getSelection().getNumRanges() == 1;
@@ -82,7 +87,7 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 			enabled = isContiguousSelection &&
 				model.isInsertAllowed(model.getMinIndexSelected(), undefinedDt);
 		}
-		setEnabled(enabled);
+		return enabled;
 	}
 
 }

@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
@@ -212,6 +213,9 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		lock.acquire();
 		try {
 			checkDeleted();
+			if (Objects.equals(desc, record.getString(CompositeDBAdapter.COMPOSITE_COMMENT_COL))) {
+				return;
+			}
 			record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, desc);
 			compositeAdapter.updateRecord(record, true);
 			dataMgr.dataTypeChanged(this, false);
@@ -391,13 +395,17 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		return record.getLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL);
 	}
 
+	void doSetLastChangeTime(long lastChangeTime) throws IOException {
+		record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
+		compositeAdapter.updateRecord(record, false);
+	}
+
 	@Override
 	public void setLastChangeTime(long lastChangeTime) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
-			compositeAdapter.updateRecord(record, false);
+			doSetLastChangeTime(lastChangeTime);
 			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {

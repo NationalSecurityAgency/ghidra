@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,10 +79,8 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		pgmTestCat.moveCategory(pgmBbCat, TaskMonitor.DUMMY);
 		waitForSwing();
-		assertTrue(model.getOriginalCategoryPath()
-				.getPath()
-				.startsWith(
-					pgmTestCat.getCategoryPathName()));
+		assertTrue(
+			model.getOriginalCategoryPath().getPath().startsWith(pgmTestCat.getCategoryPathName()));
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 	}
 
@@ -117,8 +115,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		SwingUtilities.invokeLater(() -> {
 			programDTM.remove(complexUnion, TaskMonitor.DUMMY);
 			programDTM.getCategory(pgmRootCat.getCategoryPath())
-					.removeCategory("Temp",
-						TaskMonitor.DUMMY);
+					.removeCategory("Temp", TaskMonitor.DUMMY);
 		});
 
 		waitForSwing();
@@ -280,8 +277,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 	public void testEditedDataTypeMoved() {
 		init(complexUnion, pgmTestCat, false);
 
-		assertEquals(pgmTestCat.getCategoryPathName(),
-			model.getOriginalCategoryPath().getPath());
+		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		SwingUtilities.invokeLater(() -> {
 			try {
 				pgmAaCat.moveDataType(complexUnion, DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -299,9 +295,8 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		init(complexUnion, pgmTestCat, false);
 
 		assertEquals(21, model.getNumComponents());
-		SwingUtilities.invokeLater(() -> complexUnion.getDataTypeManager()
-				.remove(
-					simpleStructure, TaskMonitor.DUMMY));
+		SwingUtilities.invokeLater(
+			() -> complexUnion.getDataTypeManager().remove(simpleStructure, TaskMonitor.DUMMY));
 		waitForSwing();
 		assertEquals(15, model.getNumComponents());
 	}
@@ -321,9 +316,8 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		waitForSwing();
 		assertTrue(simpleUnion.isEquivalent(getDataType(0)));
 
-		SwingUtilities.invokeLater(() -> simpleUnion.getDataTypeManager()
-				.remove(simpleUnion,
-					TaskMonitor.DUMMY));
+		SwingUtilities.invokeLater(
+			() -> simpleUnion.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
 		waitForSwing();
 		assertEquals(0, model.getNumComponents());
 	}
@@ -497,18 +491,14 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		newComplexUnion.add(new CharDataType(), 1);
 
 		programDTM.replaceDataType(complexUnion, newComplexUnion, true);
-		waitForSwing();
-		DataType origCopy = newComplexUnion.clone(null);
 
 		// Verify the Reload Union Editor? dialog is displayed.
-		Window dialog = waitForWindow("Reload Union Editor?");
+		Window dialog = waitForWindow("Close Union Editor?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "Yes");
-		dialog.dispose();
-		dialog = null;
+		waitForSwing();
 
-		assertEquals(((Union) origCopy).getNumComponents(), model.getNumComponents());
-		assertTrue(origCopy.isEquivalent(model.viewComposite));
+		assertFalse(provider.isVisible());
 	}
 
 	@Test
@@ -532,14 +522,14 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		newComplexUnion.add(new CharDataType(), 1);
 
 		programDTM.replaceDataType(complexUnion, newComplexUnion, true);
-		waitForSwing();
 
 		// Verify the Reload Union Editor? dialog is displayed.
-		Window dialog = waitForWindow("Reload Union Editor?");
+		Window dialog = waitForWindow("Close Union Editor?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "No");
-		dialog.dispose();
-		dialog = null;
+		waitForSwing();
+
+		assertTrue(provider.isVisible());
 
 		assertEquals(((Union) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
@@ -556,8 +546,14 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 
 		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 		programDTM.replaceDataType(complexUnion, newComplexUnion, true);
+
+		// Verify Union Editor closes (we don't want two editors for the same type)
+		Window dialog = waitForWindow("Closing Union Editor");
+		assertNotNull(dialog);
+		pressButtonByText(dialog, "OK");
 		waitForSwing();
-		assertTrue(newComplexUnion.isEquivalent(model.viewComposite));
+
+		assertFalse(provider.isVisible());
 	}
 
 }

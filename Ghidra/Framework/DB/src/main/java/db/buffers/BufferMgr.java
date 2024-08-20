@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,6 +68,7 @@ public class BufferMgr {
 	private Object snapshotLock = new Object(); // Used to prevent BufferNode modifications during snapshot
 	private boolean modifiedSinceSnapshot = false;
 	private boolean hasNonUndoableChanges = false;
+	private long modCount;
 
 	private int bufferSize;
 
@@ -238,7 +239,7 @@ public class BufferMgr {
 		if (lockCount != 0) {
 			throw new IOException("Unable to re-initialize buffer cache while in-use");
 		}
-		
+
 		if (cacheFile != null) {
 			cacheFile.delete();
 		}
@@ -248,7 +249,7 @@ public class BufferMgr {
 		cacheTail = new BufferNode(TAIL, -1);
 		cacheHead.nextCached = cacheTail;
 		cacheTail.prevCached = cacheHead;
-		
+
 		cacheSize = 0;
 		buffersOnHand = 0;
 
@@ -264,7 +265,7 @@ public class BufferMgr {
 				cacheFile.setParameter(name, sourceFile.getParameter(name));
 			}
 		}
-		
+
 		resetCacheStatistics();
 
 		if (alwaysPreCache) {
@@ -1093,6 +1094,7 @@ public class BufferMgr {
 					throw new AssertException();
 				}
 
+				++modCount;
 				modifiedSinceSnapshot = true;
 
 				// Establish current checkpoint if necessary
@@ -1197,6 +1199,14 @@ public class BufferMgr {
 				return true;
 			}
 		}
+	}
+
+	/**
+	 * Provides a means of detecting changes to the underlying database during a transaction.
+	 * @return current modification count
+	 */
+	public synchronized long getModCount() {
+		return modCount;
 	}
 
 	/**

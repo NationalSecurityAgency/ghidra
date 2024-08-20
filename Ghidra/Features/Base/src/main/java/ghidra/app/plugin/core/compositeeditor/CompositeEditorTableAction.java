@@ -30,7 +30,15 @@ import ghidra.util.HelpLocation;
  * <p>
  * Note: Any new actions must be registered in the editor manager via the actions's name.
  */
-abstract public class CompositeEditorTableAction extends DockingAction implements EditorAction {
+abstract public class CompositeEditorTableAction extends DockingAction
+		implements CompositeEditorModelListener {
+
+	static final String MAIN_ACTION_GROUP = "0_MAIN_EDITOR_ACTION";
+	static final String UNDOREDO_ACTION_GROUP = "1_UNDOREDO_EDITOR_ACTION";
+	static final String BASIC_ACTION_GROUP = "2_BASIC_EDITOR_ACTION";
+	static final String DATA_ACTION_GROUP = "3_DATA_EDITOR_ACTION";
+	static final String COMPONENT_ACTION_GROUP = "4_COMPONENT_EDITOR_ACTION";
+	static final String BITFIELD_ACTION_GROUP = "5_COMPONENT_EDITOR_ACTION";
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
@@ -86,14 +94,15 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		tool = null;
 	}
 
+	protected boolean hasIncompleteFieldEntry() {
+		return provider.editorPanel.hasInvalidEntry() || provider.editorPanel.hasUncomittedEntry();
+	}
+
 	protected void requestTableFocus() {
 		if (provider != null) {
 			provider.requestTableFocus();
 		}
 	}
-
-	@Override
-	abstract public void adjustEnablement();
 
 	public String getHelpName() {
 		return getName();
@@ -101,31 +110,31 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	@Override
 	public void selectionChanged() {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 	public void editStateChanged(int i) {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 	@Override
 	public void compositeEditStateChanged(int type) {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 	@Override
 	public void endFieldEditing() {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 	@Override
 	public void componentDataChanged() {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 	@Override
 	public void compositeInfoChanged() {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 	@Override
@@ -135,7 +144,7 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	@Override
 	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
-		adjustEnablement();
+		provider.contextChanged();
 	}
 
 }

@@ -162,10 +162,14 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		closeComponent(false);
+	}
+
+	void closeComponent(boolean force) {
 		if (editorModel != null && editorModel.editingField) {
 			editorModel.endFieldEditing();
 		}
-		if (saveChanges(true) != 0) {
+		if (force || saveChanges(true) != 0) {
 			super.closeComponent();
 			dispose();
 		}
@@ -260,10 +264,6 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	@Override
 	public boolean needsSave() {
 		return editorModel.hasChanges();
-	}
-
-	public void dataTypeManagerRestored() {
-		editorPanel.dataTypeManagerRestored();
 	}
 
 	@Override
