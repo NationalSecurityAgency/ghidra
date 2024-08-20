@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,10 @@
  */
 package docking;
 
-import java.awt.Frame;
-import java.awt.Window;
-import java.util.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -25,8 +26,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
+import generic.timer.ExpiringSwingTimer;
 import ghidra.util.Msg;
-import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -275,7 +276,7 @@ public class ComponentPlaceholder {
 	/**
 	 * Requests focus for the component associated with this placeholder.
 	 */
-	void requestFocus() {
+	void requestFocusWhenReady() {
 		DockableComponent tmp = comp;// put in temp variable in case another thread deletes it
 		if (tmp == null) {
 			return;
@@ -285,12 +286,20 @@ public class ComponentPlaceholder {
 		activateWindow();
 
 		// make sure the tab has time to become active before trying to request focus
-		tmp.requestFocus();
-
-		Swing.runLater(() -> {
-			tmp.requestFocus();
-			contextChanged();
+		ExpiringSwingTimer.runWhen(this::isShowing, 750, () -> {
+			doRequestFocus(tmp);
 		});
+	}
+
+	private void doRequestFocus(DockableComponent dockableComponent) {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Window activeWindow = kfm.getActiveWindow();
+		if (activeWindow == null) {
+			return; // our application isn't focused--don't do anything
+		}
+
+		dockableComponent.requestFocus();
+		contextChanged();
 	}
 
 	// makes sure that the given window is not in an iconified state
