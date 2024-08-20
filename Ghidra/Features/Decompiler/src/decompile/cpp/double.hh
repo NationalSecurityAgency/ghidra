@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,12 +160,8 @@ public:
 class Equal2Form {
   SplitVarnode in;
   Varnode *hi1,*hi2,*lo1,*lo2;
-  PcodeOp *equalop,*orop;
-  PcodeOp *hixor,*loxor;
-  int4 orhislot,xorhislot;
+  PcodeOp *boolAndOr;
   SplitVarnode param2;
-  bool checkLoForm(void);
-  bool fillOutFromOr(Funcdata &data);
   bool replace(Funcdata &data);
 public:
   bool applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data);

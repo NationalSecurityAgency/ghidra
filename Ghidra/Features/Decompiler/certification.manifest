@@ -50,6 +50,7 @@ src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
+src/decompile/datatests/orcompare.xml||GHIDRA||||END|
 src/decompile/datatests/packstructaccess.xml||GHIDRA||||END|
 src/decompile/datatests/partialmerge.xml||GHIDRA||||END|
 src/decompile/datatests/partialsplit.xml||GHIDRA||||END|

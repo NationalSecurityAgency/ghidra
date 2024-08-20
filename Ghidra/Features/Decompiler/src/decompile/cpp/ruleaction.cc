@@ -10101,66 +10101,6 @@ Varnode *RulePopcountBoolXor::getBooleanResult(Varnode *vn,int4 bitPos,int4 &con
   }
 }
 
-/// \class RuleOrMultiBool
-/// \brief Simplify boolean expressions that are combined through INT_OR
-///
-/// Convert expressions involving boolean values b1 and b2:
-///  - `(b1 << 6) | (b2 << 2)  != 0  =>  b1 || b2
-void RuleOrMultiBool::getOpList(vector<uint4> &oplist) const
-
-{
-  oplist.push_back(CPUI_INT_OR);
-}
-
-int4 RuleOrMultiBool::applyOp(PcodeOp *op,Funcdata &data)
-
-{
-  Varnode *outVn = op->getOut();
-  list<PcodeOp *>::const_iterator iter;
-
-  if (popcount(outVn->getNZMask()) != 2) return 0;
-  for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
-    PcodeOp *baseOp = *iter;
-    OpCode opc = baseOp->code();
-    // Result of INT_OR must be compared with zero
-    if (opc != CPUI_INT_EQUAL && opc != CPUI_INT_NOTEQUAL) continue;
-    Varnode *zerovn = baseOp->getIn(1);
-    if (!zerovn->isConstant()) continue;
-    if (zerovn->getOffset() != 0) continue;
-    int4 pos0 = leastsigbit_set(outVn->getNZMask());
-    int4 pos1 = mostsigbit_set(outVn->getNZMask());
-    int4 constRes0,constRes1;
-    Varnode *b1 = RulePopcountBoolXor::getBooleanResult(outVn, pos0, constRes0);
-    if (b1 == (Varnode *)0 && constRes0 != 1) continue;
-    Varnode *b2 = RulePopcountBoolXor::getBooleanResult(outVn, pos1, constRes1);
-    if (b2 == (Varnode *)0 && constRes1 != 1) continue;
-    if (b1 == (Varnode *)0 && b2 == (Varnode *)0) continue;
-
-    if (b1 == (Varnode *)0)
-      b1 = data.newConstant(1, 1);
-    if (b2 == (Varnode *)0)
-      b2 = data.newConstant(1, 1);
-    if (opc == CPUI_INT_EQUAL) {
-      PcodeOp *newOp = data.newOp(2,baseOp->getAddr());
-      Varnode *notIn = data.newUniqueOut(1, newOp);
-      data.opSetOpcode(newOp, CPUI_BOOL_OR);
-      data.opSetInput(newOp, b1, 0);
-      data.opSetInput(newOp, b2, 1);
-      data.opInsertBefore(newOp, baseOp);
-      data.opRemoveInput(baseOp, 1);
-      data.opSetInput(baseOp, notIn, 0);
-      data.opSetOpcode(baseOp, CPUI_BOOL_NEGATE);
-    }
-    else {
-      data.opSetOpcode(baseOp, CPUI_BOOL_OR);
-      data.opSetInput(baseOp, b1, 0);
-      data.opSetInput(baseOp, b2, 1);
-    }
-    return 1;
-  }
-  return 0;
-}
-
 /// \brief Return \b true if concatenating with a SUBPIECE of the given Varnode is unusual
 ///
 /// \param vn is the given Varnode
@@ -10550,53 +10490,65 @@ int4 RuleFloatSignCleanup::applyOp(PcodeOp *op,Funcdata &data)
 void RuleOrCompare::getOpList(vector<uint4> &oplist) const
 
 {
-  oplist.push_back(CPUI_INT_EQUAL);
-  oplist.push_back(CPUI_INT_NOTEQUAL);
+  oplist.push_back(CPUI_INT_OR);
 }
 
 int4 RuleOrCompare::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  // make sure the comparison is against 0
-  if (! op->getIn(1)->constantMatch(0)) return 0;
+  Varnode *outvn = op->getOut();
+  list<PcodeOp *>::const_iterator iter;
+  bool hasCompares = false;
+  for(iter=outvn->beginDescend();iter!=outvn->endDescend();++iter) {
+    PcodeOp *compOp = *iter;
+    OpCode opc = compOp->code();
+    if (opc != CPUI_INT_EQUAL && opc != CPUI_INT_NOTEQUAL)
+      return 0;
+    if (!compOp->getIn(1)->constantMatch(0))
+      return 0;
+    hasCompares = true;
+  }
+  if (!hasCompares)
+    return 0;
 
-  // make sure the other operand is an INT_OR
-  PcodeOp *or_op = op->getIn(0)->getDef();
-  if (or_op == (PcodeOp *)0) return 0;
-  if (or_op->code() != CPUI_INT_OR) return 0;
-
-  Varnode* V = or_op->getIn(0);
-  Varnode* W = or_op->getIn(1);
+  Varnode* V = op->getIn(0);
+  Varnode* W = op->getIn(1);
 
   // make sure V and W are in SSA form
   if (V->isFree()) return 0;
   if (W->isFree()) return 0;
 
-  // construct the new segment:
-  // if the original condition was INT_EQUAL: BOOL_AND(INT_EQUAL(V, 0:|V|), INT_EQUAL(W, 0:|W|))
-  // if the original condition was INT_NOTEQUAL: BOOL_OR(INT_NOTEQUAL(V, 0:|V|), INT_NOTEQUAL(W, 0:|W|))
-  Varnode* zero_V = data.newConstant(V->getSize(), 0);
-  Varnode* zero_W = data.newConstant(W->getSize(), 0);
-  PcodeOp* eq_V = data.newOp(2, op->getAddr());
-  data.opSetOpcode(eq_V, op->code());
-  data.opSetInput(eq_V, V, 0);
-  data.opSetInput(eq_V, zero_V, 1);
-  PcodeOp* eq_W = data.newOp(2, op->getAddr());
-  data.opSetOpcode(eq_W, op->code());
-  data.opSetInput(eq_W, W, 0);
-  data.opSetInput(eq_W, zero_W, 1);
+  iter = outvn->beginDescend();
+  while(iter!=outvn->endDescend()) {
+    PcodeOp *equalOp = *iter;
+    OpCode opc = equalOp->code();
+    ++iter;		// Advance iterator immediately as equalOp gets modified
+    // construct the new segment:
+    // if the original condition was INT_EQUAL: BOOL_AND(INT_EQUAL(V, 0:|V|), INT_EQUAL(W, 0:|W|))
+    // if the original condition was INT_NOTEQUAL: BOOL_OR(INT_NOTEQUAL(V, 0:|V|), INT_NOTEQUAL(W, 0:|W|))
+    Varnode* zero_V = data.newConstant(V->getSize(), 0);
+    Varnode* zero_W = data.newConstant(W->getSize(), 0);
+    PcodeOp* eq_V = data.newOp(2, equalOp->getAddr());
+    data.opSetOpcode(eq_V, opc);
+    data.opSetInput(eq_V, V, 0);
+    data.opSetInput(eq_V, zero_V, 1);
+    PcodeOp* eq_W = data.newOp(2, equalOp->getAddr());
+    data.opSetOpcode(eq_W, opc);
+    data.opSetInput(eq_W, W, 0);
+    data.opSetInput(eq_W, zero_W, 1);
 
-  Varnode* eq_V_out = data.newUniqueOut(1, eq_V);
-  Varnode* eq_W_out = data.newUniqueOut(1, eq_W);
+    Varnode* eq_V_out = data.newUniqueOut(1, eq_V);
+    Varnode* eq_W_out = data.newUniqueOut(1, eq_W);
 
-  // make sure the comparisons' output is already defined
-  data.opInsertBefore(eq_V, op);
-  data.opInsertBefore(eq_W, op);
+    // make sure the comparisons' output is already defined
+    data.opInsertBefore(eq_V, equalOp);
+    data.opInsertBefore(eq_W, equalOp);
 
-  // change the original INT_EQUAL into a BOOL_AND, and INT_NOTEQUAL becomes BOOL_OR
-  data.opSetOpcode(op, op->code() == CPUI_INT_EQUAL ? CPUI_BOOL_AND : CPUI_BOOL_OR);
-  data.opSetInput(op, eq_V_out, 0);
-  data.opSetInput(op, eq_W_out, 1);
+    // change the original INT_EQUAL into a BOOL_AND, and INT_NOTEQUAL becomes BOOL_OR
+    data.opSetOpcode(equalOp, opc == CPUI_INT_EQUAL ? CPUI_BOOL_AND : CPUI_BOOL_OR);
+    data.opSetInput(equalOp, eq_V_out, 0);
+    data.opSetInput(equalOp, eq_W_out, 1);
+  }
 
   return 1;
 }
