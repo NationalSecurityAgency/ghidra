@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.math.BigInteger;
-import java.util.NoSuchElementException;
+
+import javax.help.UnsupportedOperationException;
 
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
@@ -61,6 +62,11 @@ class UnionEditorModel extends CompEditorModel {
 		adjustOffsets();
 		this.showHexNumbers = showInHex;
 
+	}
+
+	@Override
+	public String getTypeName() {
+		return "Union";
 	}
 
 	@Override
@@ -169,11 +175,6 @@ class UnionEditorModel extends CompEditorModel {
 		finally {
 			applyingFieldEdit = false;
 		}
-	}
-
-	@Override
-	public void clearComponent(int rowIndex) {
-		// clearing not supported
 	}
 
 	/**
@@ -345,8 +346,9 @@ class UnionEditorModel extends CompEditorModel {
 		if (range != null) {
 			// Determine the number of bytes.
 			// Get the size of the range.
-			for (int i =
-				range.getStart().getIndex().intValue(); i < range.getEnd().getIndex().intValue(); i++) {
+			for (int i = range.getStart().getIndex().intValue(); i < range.getEnd()
+					.getIndex()
+					.intValue(); i++) {
 				DataTypeComponent comp = getComponent(i);
 				numBytesInRange = Math.max(numBytesInRange, comp.getLength());
 			}
@@ -378,10 +380,10 @@ class UnionEditorModel extends CompEditorModel {
 			String comment) throws InvalidDataTypeException {
 		checkIsAllowableDataType(dataType);
 		try {
-			DataTypeComponent dtc =
-				((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
-			if (rowIndex <= row) {
-				row++;
+			DataTypeComponent dtc = viewDTM.withTransaction("Add Component",
+				() -> ((Union) viewComposite).insert(rowIndex, dataType, length, name, comment));
+			if (rowIndex <= currentEditRow) {
+				currentEditRow++;
 			}
 			adjustSelection(rowIndex, 1);
 			notifyCompositeChanged();
@@ -395,12 +397,17 @@ class UnionEditorModel extends CompEditorModel {
 	@Override
 	public void insert(int rowIndex, DataType dataType, int length, int numCopies,
 			TaskMonitor monitor) throws InvalidDataTypeException, CancelledException {
-
-		monitor.initialize(numCopies);
-		for (int i = 0; i < numCopies; i++) {
-			monitor.checkCancelled();
-			insert(rowIndex + i, dataType, length, null, null);
-			monitor.incrementProgress(1);
+		int txId = viewDTM.startTransaction("Insert Multiple");
+		try {
+			monitor.initialize(numCopies);
+			for (int i = 0; i < numCopies; i++) {
+				monitor.checkCancelled();
+				insert(rowIndex + i, dataType, length, null, null);
+				monitor.incrementProgress(1);
+			}
+		}
+		finally {
+			viewDTM.endTransaction(txId, true);
 		}
 	}
 
@@ -410,9 +417,10 @@ class UnionEditorModel extends CompEditorModel {
 		checkIsAllowableDataType(dataType);
 		try {
 			boolean isSelected = selection.containsEntirely(BigInteger.valueOf(rowIndex));
-			((Union) viewComposite).delete(rowIndex);
-			DataTypeComponent dtc =
-				((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
+			DataTypeComponent dtc = viewDTM.withTransaction("Replace Component", () -> {
+				((Union) viewComposite).delete(rowIndex);
+				return ((Union) viewComposite).insert(rowIndex, dataType, length, name, comment);
+			});
 			if (isSelected) {
 				selection.addRange(rowIndex, rowIndex + 1);
 				fixSelection();
@@ -456,12 +464,20 @@ class UnionEditorModel extends CompEditorModel {
 		FieldSelection overlap = new FieldSelection();
 		overlap.addRange(startRowIndex, endRowIndex + 1);
 		overlap.intersect(selection);
-
-		// Union just replaces entire selection range with single instance of new component.
-		deleteComponentRange(startRowIndex, endRowIndex, monitor);
-
 		boolean replacedSelected = (overlap.getNumRanges() > 0);
-		insert(startRowIndex, datatype, length, null, null);
+
+		int txId = viewDTM.startTransaction("Insert Multiple");
+		try {
+
+			// Union just replaces entire selection range with single instance of new component.
+			deleteComponentRange(startRowIndex, endRowIndex, monitor);
+
+			insert(startRowIndex, datatype, length, null, null);
+		}
+		finally {
+			viewDTM.endTransaction(txId, true);
+		}
+
 		if (replacedSelected) {
 			selection.addRange(startRowIndex, startRowIndex + 1);
 			fixSelection();
@@ -475,30 +491,38 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void clearComponents(int[] rows) throws UsrException {
-		throw new UsrException("Can't clear components in a union.");
+	protected void clearComponent(int rowIndex) {
+		throw new UnsupportedOperationException("Can't clear components in a union.");
+	}
+
+	@Override
+	public void clearComponents(int[] rows) {
+		throw new UnsupportedOperationException("Can't clear components in a union.");
 	}
 
 	@Override
 	void removeDtFromComponents(Composite comp) {
-		DataType newDt = viewDTM.getDataType(comp.getDataTypePath());
+		DataTypePath path = comp.getDataTypePath();
+		DataType newDt = viewDTM.getDataType(path);
 		if (newDt == null) {
 			return;
 		}
-		int num = getNumComponents();
-		for (int i = num - 1; i >= 0; i--) {
-			DataTypeComponent dtc = getComponent(i);
-			DataType dt = dtc.getDataType();
-			if (dt instanceof Composite) {
-				Composite dtcComp = (Composite) dt;
-				if (dtcComp.isPartOf(newDt)) {
-					deleteComponent(i);
-					String msg =
-						"Components containing " + comp.getDisplayName() + " were removed.";
-					setStatus(msg, true);
+		viewDTM.withTransaction("Remove use of " + path, () -> {
+			int num = getNumComponents();
+			for (int i = num - 1; i >= 0; i--) {
+				DataTypeComponent dtc = getComponent(i);
+				DataType dt = dtc.getDataType();
+				if (dt instanceof Composite) {
+					Composite dtcComp = (Composite) dt;
+					if (dtcComp.isPartOf(newDt)) {
+						deleteComponent(i);
+						String msg =
+							"Components containing " + comp.getDisplayName() + " were removed.";
+						setStatus(msg, true);
+					}
 				}
 			}
-		}
+		});
 	}
 
 	/**
@@ -530,22 +554,6 @@ class UnionEditorModel extends CompEditorModel {
 	 */
 	@Override
 	protected int consumeByComponent(int rowIndex) {
-		return 0;
-	}
-
-	/**
-	 *  Consumes the number of undefined bytes requested if they are available.
-	 *
-	 * @param rowIndex index of the row (component).
-	 * @param numDesired the number of Undefined bytes desired.
-	 * @return the number of components removed from the structure when the
-	 * bytes were consumed.
-	 * @throws java.util.NoSuchElementException if the index is invalid.
-	 * @throws InvalidDataTypeException if there aren't enough bytes.
-	 */
-	@Override
-	protected int consumeUndefinedBytes(int rowIndex, int numDesired)
-			throws NoSuchElementException, InvalidDataTypeException {
 		return 0;
 	}
 

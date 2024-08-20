@@ -18,24 +18,24 @@ package ghidra.app.plugin.core.compositeeditor;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.action.KeyBindingData;
 import generic.theme.GIcon;
-import ghidra.app.util.datatype.EmptyCompositeException;
-import ghidra.program.model.data.InvalidDataTypeException;
 
 /**
- * ApplyAction is an action for applying editor changes.
+ * {@link RedoChangeAction} facilitates an redo of recently undone/reverted composite editor changes.
  */
-public class ApplyAction extends CompositeEditorTableAction {
+public class RedoChangeAction extends CompositeEditorTableAction {
 
-	public final static String ACTION_NAME = "Apply Editor Changes";
-	private final static String GROUP_NAME = MAIN_ACTION_GROUP;
-	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.apply");
-	private final static String[] POPUP_PATH = new String[] { "Apply Edits" };
+	public static String DESCRIPTION = "Redo Change";
+	public final static String ACTION_NAME = "Redo Editor Change";
+	private final static String GROUP_NAME = UNDOREDO_ACTION_GROUP;
+	private final static Icon ICON = new GIcon("icon.redo");
+	private final static String[] POPUP_PATH = new String[] { DESCRIPTION };
 
-	public ApplyAction(CompositeEditorProvider provider) {
+	public RedoChangeAction(CompositeEditorProvider provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
-
-		setDescription("Apply editor changes");
+		setKeyBindingData(new KeyBindingData("ctrl shift Z"));
+		setDescription("Redo editor change");
 	}
 
 	@Override
@@ -43,15 +43,8 @@ public class ApplyAction extends CompositeEditorTableAction {
 		if (!isEnabledForContext(context)) {
 			return;
 		}
-
-		provider.editorPanel.comitEntryChanges();
-
-		try {
-			model.apply();
-		}
-		catch (EmptyCompositeException | InvalidDataTypeException e) {
-			model.setStatus(e.getMessage(), true);
-		}
+		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		viewDTM.redo();
 	}
 
 	@Override
@@ -59,6 +52,11 @@ public class ApplyAction extends CompositeEditorTableAction {
 		if (hasIncompleteFieldEntry()) {
 			return false;
 		}
-		return model.hasChanges() && model.isValidName();
+		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		boolean canRedo = viewDTM.canRedo();
+		setEnabled(canRedo);
+		String description = DESCRIPTION + (canRedo ? (": " + viewDTM.getRedoName()) : "");
+		setDescription(description);
+		return canRedo;
 	}
 }

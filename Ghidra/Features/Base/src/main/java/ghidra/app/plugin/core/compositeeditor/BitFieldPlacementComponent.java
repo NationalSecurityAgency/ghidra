@@ -460,7 +460,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		repaint();
 	}
 
-	void applyBitField(DataType baseDataType, String fieldName, String fieldComment,
+	DataTypeComponent applyBitField(DataType baseDataType, String fieldName, String fieldComment,
 			boolean deleteConflicts, CompositeChangeListener listener) {
 		if (!editUseEnabled) {
 			throw new IllegalStateException("component not constructed for edit use");
@@ -519,9 +519,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			if (listener != null) {
 				listener.componentChanged(dtc.getOrdinal());
 			}
+			return dtc;
 		}
 		catch (ArrayIndexOutOfBoundsException | InvalidDataTypeException e) {
-			Msg.error(this, "Unexpected bitfield apply error", e);
+			Msg.showError(this, this, "Unexpected bitfield apply error", e);
+			return null;
 		}
 		finally {
 			editMode = EditMode.NONE;
@@ -1031,14 +1033,6 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			leftChopBytes = leftChop;
 			rightChopBytes = rightChop;
 			allocationBytes = allocationByteSize - leftChopBytes - rightChopBytes;
-
-			if (allocationBytes <= 0) {
-				int junk = 0;
-				// allocation shrunk - need to adjust window
-
-				// TODO: Need to adjust view port sizing when allocationByteSize changes
-
-			}
 
 			allocateBits();
 			layoutBits();

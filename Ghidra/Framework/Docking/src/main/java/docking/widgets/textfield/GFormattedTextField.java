@@ -4,18 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.feature.vt.gui.filters;
-
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.*;
+package docking.widgets.textfield;
 
 import java.awt.Color;
 import java.awt.event.FocusEvent;
@@ -30,34 +28,42 @@ import javax.swing.event.DocumentListener;
 
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
 import ghidra.util.SystemUtilities;
 
-public class FilterFormattedTextField extends JFormattedTextField {
+/**
+ * {@link GFormattedTextField} provides an implementation of {@link JFormattedTextField} 
+ * which facilitates entry validation with an indication of its current status.
+ * <br>
+ * When modified from its default value the field background will reflect its 
+ * current status.
+ */
+public class GFormattedTextField extends JFormattedTextField {
 	private static final Color ERROR_BACKGROUND_COLOR =
-		new GColor("color.bg.version.tracking.filter.formatted.field.error");
+		new GColor("color.bg.formatted.field.error");
 	private static final Color EDITING_BACKGROUND_COLOR =
-		new GColor("color.bg.version.tracking.filter.formatted.field.editing");
+		new GColor("color.bg.formatted.field.editing");
 	private static final Color EDITING_FOREGROUND_COLOR =
-		new GColor("color.fg.version.tracking.filter.formatted.field.editing");
+		new GColor("color.fg.formatted.field.editing");
 
-	private Set<FilterStatusListener> listeners = new HashSet<>();
+	public static enum Status {
+		UNCHANGED, CHANGED, INVALID;
+	}
 
-	private FilterEditingStatus currentStatus = NONE;
-	private final Object defaultValue;
-	private final String defaultText;
+	private Set<TextEntryStatusListener> listeners = new HashSet<>();
+
+	private Status currentStatus = Status.UNCHANGED;
+	private Object defaultValue;
+	private String defaultText;
 	private boolean isError;
 	private boolean ignoreFocusEditChanges;
 
 	/** A flag to let us know when we can ignore focus updates */
 	private boolean isProcessingFocusEvent;
 
-	public FilterFormattedTextField(AbstractFormatterFactory factory, Object defaultValue) {
+	public GFormattedTextField(AbstractFormatterFactory factory, Object defaultValue) {
 		super(factory);
+
 		setValue(defaultValue);
-		this.defaultValue = defaultValue;
-		this.defaultText = getText(); // get the formatted text
-		this.currentStatus = NONE;
 
 		getDocument().addDocumentListener(new DocumentListener() {
 			@Override
@@ -76,8 +82,18 @@ public class FilterFormattedTextField extends JFormattedTextField {
 			}
 		});
 
-		addPropertyChangeListener("value", evt -> editingFinished());
+		setDefaultValue(defaultValue);
 
+		addPropertyChangeListener("value", evt -> editingFinished());
+	}
+
+	/**
+	 * Establish default value.  Text field value should be set before invoking this method.
+	 * @param defaultValue default value
+	 */
+	public void setDefaultValue(Object defaultValue) {
+		this.defaultValue = defaultValue;
+		this.defaultText = getText(); // get the formatted text
 		update();
 	}
 
@@ -100,22 +116,22 @@ public class FilterFormattedTextField extends JFormattedTextField {
 		isProcessingFocusEvent = false;
 	}
 
-	public FilterEditingStatus getFilterStatus() {
+	public Status getTextEntryStatus() {
 		return currentStatus;
 	}
 
-	public void addFilterStatusListener(FilterStatusListener listener) {
+	public void addTextEntryStatusListener(TextEntryStatusListener listener) {
 		listeners.add(listener);
 	}
 
-	private void filterStatusChanged(FilterEditingStatus status) {
+	private void textEntryStatusChanged(Status status) {
 		currentStatus = status;
 		if (listeners == null) {
 			return; // happens during construction
 		}
 
-		for (FilterStatusListener listener : listeners) {
-			listener.filterStatusChanged(status);
+		for (TextEntryStatusListener listener : listeners) {
+			listener.statusChanged(this);
 		}
 	}
 
@@ -195,24 +211,24 @@ public class FilterFormattedTextField extends JFormattedTextField {
 			setBackground(Colors.BACKGROUND);
 		}
 
-		filterStatusChanged(currentStatus);
+		textEntryStatusChanged(currentStatus);
 	}
 
 	private void updateStatus() {
-		FilterEditingStatus oldStatus = currentStatus;
+		Status oldStatus = currentStatus;
 		if (isError) {
-			currentStatus = FilterEditingStatus.ERROR;
+			currentStatus = Status.INVALID;
 		}
 
 		else if (hasNonDefaultValue()) {
-			currentStatus = APPLIED;
+			currentStatus = Status.CHANGED;
 		}
 		else {
-			currentStatus = NONE;
+			currentStatus = Status.UNCHANGED;
 		}
 
 		if (oldStatus != currentStatus) {
-			filterStatusChanged(currentStatus);
+			textEntryStatusChanged(currentStatus);
 		}
 	}
 

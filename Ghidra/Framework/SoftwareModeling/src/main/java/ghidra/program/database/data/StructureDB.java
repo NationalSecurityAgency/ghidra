@@ -2301,7 +2301,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				checkAncestry(replacementDt);
 			}
 			catch (Exception e) {
-				// TODO: should we flag bad replacement
+				// Handle bad replacement with use of undefined component
 				replacementDt = isPackingEnabled() ? Undefined1DataType.dataType : DataType.DEFAULT;
 			}
 

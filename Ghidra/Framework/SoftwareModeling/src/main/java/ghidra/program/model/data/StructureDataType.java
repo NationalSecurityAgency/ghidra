@@ -1640,13 +1640,13 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	 * @param dataType the data type of the new component
 	 * @param newOffset offset of replacement component which must fall within origComponents bounds
 	 * @param length the length of the new component
-	 * @param name the field name of the new component
+	 * @param fieldName the field name of the new component
 	 * @param comment the comment for the new component
 	 * @return the new component or null if only a clear operation was performed.
 	 * @throws IllegalArgumentException if unable to identify/make sufficient space 
 	 */
 	private DataTypeComponent replaceComponents(LinkedList<DataTypeComponentImpl> origComponents,
-			DataType dataType, int newOffset, int length, String name, String comment)
+			DataType dataType, int newOffset, int length, String fieldName, String comment)
 			throws IllegalArgumentException {
 
 		boolean clearOnly = false;
@@ -1721,8 +1721,8 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		DataTypeComponentImpl newDtc = null;
 		if (!clearOnly) {
 			// insert new component
-			newDtc = new DataTypeComponentImpl(dataType, this, length, newOrdinal, newOffset, name,
-				comment);
+			newDtc = new DataTypeComponentImpl(dataType, this, length, newOrdinal, newOffset,
+				fieldName, comment);
 			components.add(index, newDtc);
 		}
 

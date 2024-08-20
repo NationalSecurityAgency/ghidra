@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,11 +46,13 @@ public class UnpackageAction extends CompositeEditorTableAction {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));
-		adjustEnablement();
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		// If lots of components, verify the user really wants to unpackage.
 		int currentRowIndex =
 			model.getSelection().getFieldRange(0).getStart().getIndex().intValue();
@@ -60,7 +62,7 @@ public class UnpackageAction extends CompositeEditorTableAction {
 			String title = "Continue with unpackage?";
 			int response =
 				OptionDialog.showYesNoDialog(model.getProvider().getComponent(), title, question);
-			if (response != 1) { // User did not select yes.
+			if (response != OptionDialog.YES_OPTION) { // User did not select yes.
 				return;
 			}
 		}
@@ -85,7 +87,7 @@ public class UnpackageAction extends CompositeEditorTableAction {
 	}
 
 	@Override
-	public void adjustEnablement() {
-		setEnabled(model.isUnpackageAllowed());
+	public boolean isEnabledForContext(ActionContext context) {
+		return !hasIncompleteFieldEntry() && model.isUnpackageAllowed();
 	}
 }

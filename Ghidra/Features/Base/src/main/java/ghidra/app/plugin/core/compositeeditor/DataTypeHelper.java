@@ -56,19 +56,6 @@ public class DataTypeHelper {
 		return new String(result, 0, resultIndex);
 	}
 
-	public static DataType resolveDataType(DataType dt, DataTypeManager resolveDtm,
-			DataTypeConflictHandler conflictHandler) {
-		int txID = 0;
-		try {
-			txID = resolveDtm.startTransaction("Apply data type \"" + dt.getName() + "\"");
-			dt = resolveDtm.resolve(dt, conflictHandler);
-		}
-		finally {
-			resolveDtm.endTransaction(txID, (dt != null));
-		}
-		return dt;
-	}
-
 	/**
 	 * Parses a data type that was typed in the composite data type editor.
 	 * It creates a DataTypeInstance that consists of the data type and its size.

@@ -15,33 +15,27 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import java.awt.event.KeyEvent;
-
 import javax.swing.Icon;
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import generic.theme.GIcon;
-import ghidra.util.exception.UsrException;
 
 /**
- * Action for use in the composite data type editor.
- * This action has help associated with it.
+ * {@link UndoChangeAction} facilitates an undo of recent composite editor changes.
  */
-public class ArrayAction extends CompositeEditorTableAction {
+public class UndoChangeAction extends CompositeEditorTableAction {
 
-	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.array");
-	public final static String ACTION_NAME = "Create Array";
-	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
-	private final static String DESCRIPTION = "Create an array";
-	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0);
-	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
+	public static String DESCRIPTION = "Undo Change";
+	public final static String ACTION_NAME = "Undo Editor Change";
+	private final static String GROUP_NAME = UNDOREDO_ACTION_GROUP;
+	private final static Icon ICON = new GIcon("icon.undo");
+	private final static String[] POPUP_PATH = new String[] { DESCRIPTION };
 
-	public ArrayAction(CompositeEditorProvider provider) {
+	public UndoChangeAction(CompositeEditorProvider provider) {
 		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
+		setKeyBindingData(new KeyBindingData("ctrl Z"));
 		setDescription(DESCRIPTION);
-		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 	}
 
 	@Override
@@ -49,18 +43,21 @@ public class ArrayAction extends CompositeEditorTableAction {
 		if (!isEnabledForContext(context)) {
 			return;
 		}
-		try {
-			model.createArray();
-		}
-		catch (UsrException e1) {
-			model.setStatus(e1.getMessage());
-		}
-		requestTableFocus();
+		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		viewDTM.undo();
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		return !hasIncompleteFieldEntry() && model.isArrayAllowed();
+		if (hasIncompleteFieldEntry()) {
+			return false;
+		}
+		CompositeViewerDataTypeManager viewDTM = model.getViewDataTypeManager();
+		boolean canUndo = viewDTM.canUndo();
+		setEnabled(canUndo);
+		String description = DESCRIPTION + (canUndo ? (": " + viewDTM.getUndoName()) : "");
+		setDescription(description);
+		return canUndo;
 	}
 
 }
