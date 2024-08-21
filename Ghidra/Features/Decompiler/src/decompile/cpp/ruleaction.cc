@@ -5977,7 +5977,42 @@ bool AddTreeState::inspectMultiequals(void) {
       continue;
     }
     Varnode *in2 = op->getIn(1);
-    if (!in2->isWritten() || in2->loneDescend() != op) continue;
+    if (!in2->isWritten()) continue;
+    bool failed = false;
+    PcodeOp* comparisonOp = nullptr;
+    list<PcodeOp *>::const_iterator in2Desc;
+    for (in2Desc = in2->beginDescend(); in2Desc != in2->endDescend(); ++in2Desc) {
+      PcodeOp* desc = *in2Desc;
+      if (desc == op) {
+        continue;
+      }
+      if (desc->code() != CPUI_INT_SLESS) {
+        failed = true;
+        break;
+      }
+      if (comparisonOp == nullptr) {
+	comparisonOp = desc;
+	if (comparisonOp->numInput() != 2) {
+	  failed = true;
+	  break;
+	}
+	const Varnode* comparisonOperand = comparisonOp->getIn(1);
+	if (!comparisonOperand->isConstant()) {
+	  failed = true;
+	  break;
+	}
+        uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
+        intb comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
+	if (comparisonsval % size != 0) {
+	  failed = true;
+	  break;
+	}
+      } else {
+        failed = true;
+        break;
+      }
+    }
+    if (failed) continue;
     PcodeOp *op2 = in2->getDef();
     if (op2->code() != CPUI_INT_ADD) continue;
     Varnode *addTerm = op2->getIn(0);
@@ -6026,6 +6061,14 @@ bool AddTreeState::inspectMultiequals(void) {
       if (desc == op1 || desc == op2 || desc->code() == CPUI_INDIRECT) continue;
       PcodeOp *newMultOp = data.newOpBefore(desc, CPUI_INT_MULT, vn, data.newConstant(addConst->getSize(), (multiplier * size) & ptrmask));
       data.opSetInput(desc, newMultOp->getOut(), desc->getSlot(vn));
+    }
+    if (comparisonOp != nullptr) {
+      const Varnode* comparisonOperand = comparisonOp->getIn(1);
+      uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
+      intb comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
+      sign_extend(comparisonsval, comparisonOperand->getSize() * 8 - 1);
+      data.opSetInput(comparisonOp,
+	data.newConstant(comparisonOperand->getSize(), (uintb)(comparisonsval / (multiplier * size)) & ptrmask), 1);
     }
     return true;
   }
