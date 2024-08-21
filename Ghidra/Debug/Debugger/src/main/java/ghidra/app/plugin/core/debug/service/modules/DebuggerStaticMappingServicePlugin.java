@@ -377,6 +377,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				result.add(me.program);
 			}
 			outbound.values().removeAll(toClean);
+			mappingsAffected(toClean);
 			return result;
 		}
 
@@ -393,11 +394,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 					}
 					if (me.isStaticProgramOpen()) {
 						outbound.values().removeAll(toClean);
+						mappingsAffected(toClean);
 						return me.mapTraceAddressToProgramLocation(address);
 					}
 				}
 			}
 			outbound.values().removeAll(toClean);
+			mappingsAffected(toClean);
 			return null;
 		}
 
@@ -424,6 +427,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 						.add(new MappedAddressRange(srcRng, dstRng));
 			}
 			outbound.values().removeAll(toClean);
+			mappingsAffected(toClean);
 		}
 
 		public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(AddressSetView set,
@@ -452,6 +456,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				result.add(me.getStaticProgramURL());
 			}
 			outbound.values().removeAll(toClean);
+			mappingsAffected(toClean);
 		}
 
 		public Set<URL> getMappedProgramURLsInView(AddressSetView set, Lifespan span) {
@@ -506,10 +511,12 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				}
 				if (Objects.equals(trace, me.getTrace())) {
 					inbound.keySet().removeAll(toClean);
+					mappingsAffected(toClean);
 					return true;
 				}
 			}
 			inbound.keySet().removeAll(toClean);
+			mappingsAffected(toClean);
 			return false;
 		}
 
@@ -545,6 +552,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				result.add(me.mapProgramAddressToTraceLocation(address));
 			}
 			inbound.keySet().removeAll(toClean);
+			mappingsAffected(toClean);
 			return result;
 		}
 
@@ -573,9 +581,11 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 					continue;
 				}
 				inbound.keySet().removeAll(toClean);
+				mappingsAffected(toClean);
 				return me.mapProgramAddressToTraceLocation(address);
 			}
 			inbound.keySet().removeAll(toClean);
+			mappingsAffected(toClean);
 			return null;
 		}
 
@@ -605,6 +615,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 						.add(new MappedAddressRange(srcRange, dstRange));
 			}
 			inbound.keySet().removeAll(toClean);
+			mappingsAffected(toClean);
 		}
 
 		public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(
@@ -683,6 +694,16 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	private void programsAffected(Collection<Program> programs) {
 		synchronized (affectedTraces) {
+			affectedPrograms.addAll(programs);
+			changeDebouncer.contact(null);
+		}
+	}
+
+	private void mappingsAffected(Collection<MappingEntry> entries) {
+		Set<Trace> traces = entries.stream().map(e -> e.getTrace()).collect(Collectors.toSet());
+		Set<Program> programs = entries.stream().map(e -> e.program).collect(Collectors.toSet());
+		synchronized (affectedTraces) {
+			affectedTraces.addAll(traces);
 			affectedPrograms.addAll(programs);
 			changeDebouncer.contact(null);
 		}
