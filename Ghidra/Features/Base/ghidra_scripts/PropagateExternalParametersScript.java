@@ -134,8 +134,8 @@ public class PropagateExternalParametersScript extends GhidraScript {
 		for (Reference extRef : extRefs) {
 
 			Address refAddr = extRef.getFromAddress();
-
 			String refMnemonic = listing.getCodeUnitAt(refAddr).getMnemonicString();
+
 			Function calledFromFunc = listing.getFunctionContaining(refAddr);
 			if (calledFromFunc == null) {
 				continue;
@@ -147,8 +147,14 @@ public class PropagateExternalParametersScript extends GhidraScript {
 				while (tempIter.hasNext()) {
 					Reference thunkRef = tempIter.next();
 					Address thunkRefAddr = thunkRef.getFromAddress();
-					String thunkRefMnemonic =
-						listing.getCodeUnitAt(thunkRefAddr).getMnemonicString();
+                                        
+					CodeUnit cu = listing.getCodeUnitAt(thunkRefAddr);
+					if(cu == null) {
+						// println("Referenced CodeUnit is null: " + thunkRefAddr);
+						continue;
+					}
+					String thunkRefMnemonic = cu.getMnemonicString();
+
 					Function thunkRefFunc = listing.getFunctionContaining(thunkRefAddr);
 					if ((thunkRefMnemonic.equals(new String("CALL")) && (thunkRefFunc != null))) {
 						CodeUnitIterator cuIt =
@@ -297,7 +303,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 					setEOLComment(cu.getMinAddress(), params[index].getDataType().getDisplayName() +
 						" " + params[index].getName() + " for " + extFuncName);
 					// add the following to the EOL comment to see the value of the optype
-					//	+" " + toHexString(currentProgram.getListing().getInstructionAt(cu.getMinAddress()).getOperandType(0), false, true)
+					//	+ " | " + ghidra.program.model.lang.OperandType.toString(currentProgram.getListing().getInstructionAt(cu.getMinAddress()).getOperandType(0))
 					addResult(params[index].getName(), params[index].getDataType(),
 						cu.getMinAddress(), extFuncName);
 					index++;
