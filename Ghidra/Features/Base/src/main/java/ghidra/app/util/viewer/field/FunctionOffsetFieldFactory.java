@@ -19,37 +19,35 @@ import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
-import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.mem.MemoryBlockSourceInfo;
+import ghidra.program.model.listing.Function;
 import ghidra.program.util.OffsetFieldType;
 
 /**
  *  Generates Function Offset fields
  */
-public class FileOffsetFieldFactory extends AbstractOffsetFieldFactory {
+public class FunctionOffsetFieldFactory extends AbstractOffsetFieldFactory {
 
-	private static final String FIELD_OFFSET_DESCRIPTION = "File";
-	private static final String FIELD_NAME_DESCRIPTION = "File";
+	private static final String FIELD_OFFSET_DESCRIPTION = "Function";
+	private static final String FIELD_NAME_DESCRIPTION = "Function";
 
 	/**
-	 * Creates a new default {@link FileOffsetFieldFactory}
+	 * Creates a new default {@link FunctionOffsetFieldFactory}
 	 */
-	public FileOffsetFieldFactory() {
+	public FunctionOffsetFieldFactory() {
 		super(FIELD_OFFSET_DESCRIPTION);
 	}
 
 	/**
-	 * Creates a new {@link FileOffsetFieldFactory}
+	 * Creates a new {@link FunctionOffsetFieldFactory}
 	 * 
 	 * @param model the {@link FieldFormatModel} that the field belongs to
 	 * @param hlProvider the {@link ListingHighlightProvider}
 	 * @param displayOptions the {@link Options} for display properties
 	 * @param fieldOptions the {@link Options} for field specific properties
 	 */
-	private FileOffsetFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
+	private FunctionOffsetFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_OFFSET_DESCRIPTION, FIELD_NAME_DESCRIPTION, model, hlProvider, displayOptions,
 			fieldOptions);
@@ -59,25 +57,20 @@ public class FileOffsetFieldFactory extends AbstractOffsetFieldFactory {
 	public FieldFactory newInstance(FieldFormatModel formatModel,
 			ListingHighlightProvider highlightProvider, ToolOptions options,
 			ToolOptions fieldOptions) {
-		return new FileOffsetFieldFactory(formatModel, highlightProvider, options, fieldOptions);
+		return new FunctionOffsetFieldFactory(formatModel, highlightProvider, options,
+			fieldOptions);
 	}
 
 	@Override
 	public String getOffsetValue(CodeUnit cu) {
 		Address addr = cu.getAddress();
-		MemoryBlock block = cu.getProgram().getMemory().getBlock(addr);
+		Function function = cu.getProgram().getListing().getFunctionContaining(addr);
 		String text = "";
-		for (MemoryBlockSourceInfo sourceInfo : block.getSourceInfos()) {
-			if (sourceInfo.contains(addr)) {
-				if (sourceInfo.getFileBytes().isPresent()) {
-					FileBytes fileBytes = sourceInfo.getFileBytes().get();
-					long offset = sourceInfo.getFileBytesOffset(addr);
-					text = String.format(useHex ? "0x%x" : "%d", offset);
-					if (showName) {
-						text = "%s:%s".formatted(fileBytes.getFilename(), text);
-					}
-					break;
-				}
+		if (function != null) {
+			long offset = addr.subtract(function.getEntryPoint());
+			text = String.format(useHex ? "0x%x" : "%d", offset);
+			if (showName) {
+				text = "%s:%s".formatted(function.getName(), text);
 			}
 		}
 		return text;
@@ -85,6 +78,6 @@ public class FileOffsetFieldFactory extends AbstractOffsetFieldFactory {
 
 	@Override
 	public OffsetFieldType getOffsetFieldType() {
-		return OffsetFieldType.FILE;
+		return OffsetFieldType.FUNCTION;
 	}
 }
