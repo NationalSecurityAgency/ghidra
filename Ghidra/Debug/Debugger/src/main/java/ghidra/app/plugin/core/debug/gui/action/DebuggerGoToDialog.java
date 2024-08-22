@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,6 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToTrait.GoToResult;
 import ghidra.app.plugin.core.debug.gui.breakpoint.AbstractDebuggerSleighInputDialog;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
 import ghidra.debug.api.action.GoToInput;
 import ghidra.framework.plugintool.util.PluginUtils;
@@ -82,10 +81,9 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 		});
 	}
 
-	protected void populateSpaces(SleighLanguage language) {
+	protected void populateSpaces(AddressFactory factory) {
 		String curSpace = (String) comboSpaces.getSelectedItem();
 		modelSpaces.removeAllElements();
-		AddressFactory factory = language.getAddressFactory();
 		List<String> names = Stream.of(factory.getAddressSpaces())
 				.filter(AddressSpace::isMemorySpace)
 				.map(AddressSpace::getName)
@@ -128,7 +126,11 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 		}
 		future.thenAccept(result -> {
 			if (!result.success()) {
-				setStatusText("<html>Address <code>" + result.address() + "</code> not in trace", MessageType.ERROR,
+				setStatusText("""
+						<html>Address <code>%s</code> not in address map.
+						Consider <b>Force Full View</b>.
+						""".formatted(result.address()),
+					MessageType.ERROR,
 					true);
 			}
 			else {
@@ -147,9 +149,9 @@ public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
 		close();
 	}
 
-	public void show(SleighLanguage language, GoToInput defaultInput) {
-		populateSpaces(language);
-		if (language.getAddressFactory().getAddressSpace(defaultInput.space()) != null) {
+	public void show(AddressFactory factory, GoToInput defaultInput) {
+		populateSpaces(factory);
+		if (factory.getAddressSpace(defaultInput.space()) != null) {
 			comboSpaces.setSelectedItem(defaultInput.space());
 		}
 		prompt(trait.tool, defaultInput.offset());
