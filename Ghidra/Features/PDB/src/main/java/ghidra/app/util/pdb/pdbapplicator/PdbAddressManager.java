@@ -358,6 +358,9 @@ public class PdbAddressManager {
 	private void determineMemoryBlocks() throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if(debugInfo == null) {
+			return;
+		}
 		segmentMapList = debugInfo.getSegmentMapList();
 		if (debugInfo instanceof PdbNewDebugInfo) {
 			DebugData debugData = ((PdbNewDebugInfo) debugInfo).getDebugData();
