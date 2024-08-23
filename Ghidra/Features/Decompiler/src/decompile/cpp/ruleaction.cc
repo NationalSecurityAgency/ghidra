@@ -9801,6 +9801,136 @@ int4 RuleIgnoreNan::applyOp(PcodeOp *op,Funcdata &data)
   return (count > 0) ? 1 : 0;
 }
 
+/// \class RuleUnsigned2Float
+/// \brief Simplify conversion:  `T = int2float((X >> 1) | X & #1);  T + T   =>  int2float( zext(X) )`
+///
+/// Architectures like x86 can use this sequence to simulate an unsigned integer to floating-point conversion,
+/// when they don't have the conversion in hardware.
+void RuleUnsigned2Float::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_FLOAT_INT2FLOAT);
+}
+
+int4 RuleUnsigned2Float::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *invn = op->getIn(0);
+  if (!invn->isWritten()) return 0;
+  PcodeOp *orop = invn->getDef();
+  if (orop->code() != CPUI_INT_OR) return 0;
+  if (!orop->getIn(0)->isWritten() || !orop->getIn(1)->isWritten()) return 0;
+  PcodeOp *shiftop = orop->getIn(0)->getDef();
+  PcodeOp *andop;
+  if (shiftop->code() != CPUI_INT_RIGHT) {
+    andop = shiftop;
+    shiftop = orop->getIn(1)->getDef();
+  }
+  else {
+    andop = orop->getIn(1)->getDef();
+  }
+  if (shiftop->code() != CPUI_INT_RIGHT) return 0;
+  if (!shiftop->getIn(1)->constantMatch(1)) return 0;	// Shift to right by 1 exactly to clear high-bit
+  Varnode *basevn = shiftop->getIn(0);
+  if (basevn->isFree()) return 0;
+  if (andop->code() == CPUI_INT_ZEXT) {
+    if (!andop->getIn(0)->isWritten()) return 0;
+    andop = andop->getIn(0)->getDef();
+  }
+  if (andop->code() != CPUI_INT_AND) return 0;
+  if (!andop->getIn(1)->constantMatch(1)) return 0;	// Mask off least significant bit
+  Varnode *vn = andop->getIn(0);
+  if (basevn != vn) {
+    if (!vn->isWritten()) return 0;
+    PcodeOp *subop = vn->getDef();
+    if (subop->code() != CPUI_SUBPIECE) return 0;
+    if (subop->getIn(1)->getOffset() != 0) return 0;
+    vn = subop->getIn(0);
+    if (basevn != vn) return 0;
+  }
+  Varnode *outvn = op->getOut();
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=outvn->beginDescend();iter!=outvn->endDescend();++iter) {
+    PcodeOp *addop = *iter;
+    if (addop->code() != CPUI_FLOAT_ADD) continue;
+    if (addop->getIn(0) != outvn) continue;
+    if (addop->getIn(1) != outvn) continue;
+    PcodeOp *zextop = data.newOp(1,addop->getAddr());
+    data.opSetOpcode(zextop, CPUI_INT_ZEXT);
+    Varnode *zextout = data.newUniqueOut(TypeOpFloatInt2Float::preferredZextSize(basevn->getSize()), zextop);
+    data.opSetOpcode(addop, CPUI_FLOAT_INT2FLOAT);
+    data.opRemoveInput(addop, 1);
+    data.opSetInput(zextop, basevn, 0);
+    data.opSetInput(addop, zextout, 0);
+    data.opInsertBefore(zextop, addop);
+    return 1;
+  }
+  return 0;
+}
+
+/// \class RuleInt2FloatCollapse
+/// \brief Collapse equivalent FLOAT_INT2FLOAT computations along converging data-flow paths
+///
+/// Look for two code paths with different ways of calculating an unsigned integer to floating-point conversion,
+/// one of which is chosen by examining the most significant bit of the integer.  The two paths can be collapsed
+/// into a single FLOAT_INT2FLOAT operation.
+void RuleInt2FloatCollapse::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_FLOAT_INT2FLOAT);
+}
+
+int4 RuleInt2FloatCollapse::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  if (!op->getIn(0)->isWritten()) return 0;
+  PcodeOp *zextop = op->getIn(0)->getDef();
+  if (zextop->code() != CPUI_INT_ZEXT) return 0;	// Original FLOAT_INT2FLOAT must be unsigned form
+  Varnode *basevn = zextop->getIn(0);
+  if (basevn->isFree()) return 0;
+  PcodeOp *multiop = op->getOut()->loneDescend();
+  if (multiop == (PcodeOp *)0) return 0;
+  if (multiop->code() != CPUI_MULTIEQUAL) return 0;	// Output comes together with 1 other flow
+  if (multiop->numInput() != 2) return 0;
+  int4 slot = multiop->getSlot(op->getOut());
+  Varnode *otherout = multiop->getIn(1-slot);
+  if (!otherout->isWritten()) return 0;
+  PcodeOp *op2 = otherout->getDef();
+  if (op2->code() != CPUI_FLOAT_INT2FLOAT) return 0;	// The other flow must be a signed FLOAT_INT2FLOAT
+  if (basevn != op2->getIn(0)) return 0;		// taking the same input
+  int4 dir2unsigned;					// Control path to unsigned conversion
+  FlowBlock *cond = FlowBlock::findCondition(multiop->getParent(), slot, multiop->getParent(), 1-slot, dir2unsigned);
+  if (cond == (FlowBlock *)0) return 0;
+  PcodeOp *cbranch = cond->lastOp();
+  if (cbranch == (PcodeOp *)0 || cbranch->code() != CPUI_CBRANCH) return 0;
+  if (!cbranch->getIn(1)->isWritten()) return 0;
+  if (cbranch->isBooleanFlip()) return 0;
+  PcodeOp *compare = cbranch->getIn(1)->getDef();
+  if (compare->code() != CPUI_INT_SLESS) return 0;
+  if (compare->getIn(1)->constantMatch(0)) {		// If condition is (basevn < 0)
+    if (compare->getIn(0) != basevn) return 0;
+    if (dir2unsigned != 1) return 0;	// True branch must be the unsigned FLOAT_INT2FLOAT
+  }
+  else if (compare->getIn(0)->constantMatch(calc_mask(basevn->getSize()))) {	// If condition is (-1 < basevn)
+    if (compare->getIn(1) != basevn) return 0;
+    if (dir2unsigned == 1) return 0;	// True branch must be to signed FLOAT_INT2FLOAT
+  }
+  else
+    return 0;
+  BlockBasic *outbl = multiop->getParent();
+  data.opUninsert(multiop);
+  data.opSetOpcode(multiop, CPUI_FLOAT_INT2FLOAT);		// Redefine the MULTIEQUAL as unsigned FLOAT_INT2FLOAT
+  data.opRemoveInput(multiop, 0);
+  PcodeOp *newzext = data.newOp(1, multiop->getAddr());
+  data.opSetOpcode(newzext, CPUI_INT_ZEXT);
+  Varnode *newout = data.newUniqueOut(TypeOpFloatInt2Float::preferredZextSize(basevn->getSize()), newzext);
+  data.opSetInput(newzext,basevn,0);
+  data.opSetInput(multiop, newout, 0);
+  data.opInsertBegin(multiop, outbl);		// Reinsert modified MULTIEQUAL after any other MULTIEQUAL
+  data.opInsertBefore(newzext, multiop);
+  return 1;
+}
+
 /// \class RuleFuncPtrEncoding
 /// \brief Eliminate ARM/THUMB style masking of the low order bits on function pointers
 ///

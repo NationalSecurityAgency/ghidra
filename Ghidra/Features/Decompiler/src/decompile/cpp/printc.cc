@@ -827,6 +827,19 @@ void PrintC::opBoolNegate(const PcodeOp *op)
   }
 }
 
+void PrintC::opFloatInt2Float(const PcodeOp *op)
+
+{
+  const PcodeOp *zextOp = TypeOpFloatInt2Float::absorbZext(op);
+  const Varnode *vn0 = (zextOp != (const PcodeOp *)0) ? zextOp->getIn(0) : op->getIn(0);
+  Datatype *dt = op->getOut()->getHighTypeDefFacing();
+  if (!option_nocasts) {
+    pushOp(&typecast,op);
+    pushType(dt);
+  }
+  pushVn(vn0,op,mods);
+}
+
 void PrintC::opSubpiece(const PcodeOp *op)
 
 {

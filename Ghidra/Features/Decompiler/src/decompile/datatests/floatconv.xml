@@ -1,0 +1,55 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!-- Tests of signed and unsigned integer to floating-point conversions -->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa83ef10660fefc0f30f2ac7f3
+0f59058d000000c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000a4" readonly="true">
+        6f1283ba
+</bytechunk>
+<bytechunk space="ram" offset="0x1000aa" readonly="true">
+                    f30f1efa5548
+89e548897de8488b45e84883e8104885
+c07807f2480f2ac0eb154889c248d1ea
+83e0014809c2f2480f2ac2f20f58c0f2
+0f1145f8f20f104df8f20f10051f0000
+00f20f59c1f20f1145f8f20f1045f85d
+c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100110" readonly="true">
+fca9f1d24d6250bf
+</bytechunk>
+<bytechunk space="ram" offset="0x140020194" readonly="true">
+        4883c1f00f57c07807f2480f
+2ac1eb154889c883e10148d1e84809c8
+f2480f2ac0f20f58c0f20f5905170000
+00c20000
+</bytechunk>
+<bytechunk space="ram" offset="0x1400201d8" readonly="true">
+                fca9f1d24d6250bf
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="rand_calc"/>
+<symbol space="ram" offset="0x1000aa" name="rand_ulong"/>
+<symbol space="ram" offset="0x140020194" name="ulconv_win"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line extern float4 rand_calc(uint4 fval);</com>
+  <com>parse line extern float8 rand_ulong(uint8 lval);</com>
+  <com>lo fu rand_calc</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu rand_ulong</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu ulconv_win</com>
+  <com>map param 0 [register,8,8] uint8 llval</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Floating-point convert #1" min="1" max="1">return \(float4\)\(int4\)\(fval - 0x10\) \* -0.001;</stringmatch>
+<stringmatch name="Floating-point convert #2" min="1" max="1">return \(float8\)\(lval - 0x10\) \* -0.001;</stringmatch>
+<stringmatch name="Floating-point convert #3" min="1" max="1">return \(float8\)\(llval - 0x10\) \* -0.001;</stringmatch>
+</decompilertest>

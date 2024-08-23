@@ -3776,6 +3776,12 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
   case CPUI_CALL:
   case CPUI_CALLIND:
     break;		// Call output doesn't indicate consumption of inputs
+  case CPUI_FLOAT_INT2FLOAT:
+    a = 0;
+    if (outc != 0)
+      a = coveringmask(op->getIn(0)->getNZMask());
+    pushConsumed(a,op->getIn(0), worklist);
+    break;
   default:
     a = (outc==0) ? 0 : ~((uintb)0); // all or nothing
     for(int4 i=0;i<op->numInput();++i)
@@ -5538,6 +5544,8 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleSubfloatConvert("floatprecision") );
 	actprop->addRule( new RuleFloatCast("floatprecision") );
 	actprop->addRule( new RuleIgnoreNan("floatprecision") );
+	actprop->addRule( new RuleUnsigned2Float("analysis") );
+	actprop->addRule( new RuleInt2FloatCollapse("analysis") );
 	actprop->addRule( new RulePtraddUndo("typerecovery") );
 	actprop->addRule( new RulePtrsubUndo("typerecovery") );
 	actprop->addRule( new RuleSegment("segment") );
