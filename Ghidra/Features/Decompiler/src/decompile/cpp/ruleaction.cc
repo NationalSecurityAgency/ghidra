@@ -5918,6 +5918,28 @@ bool AddTreeState::spanAddTree(PcodeOp *op,uint8 treeCoeff)
   return false;		// At least one of the sides contains multiples
 }
 
+intb AddTreeState::greatestCommonDivisor(intb val1, intb val2) {
+  intb op1multiplier = val1;
+  if (val1 < 0) val1 = -val1;
+  if (val2 < 0) val2 = -val2;
+  if (val1 != 0 && val2 != 0) {
+    while (val2 != val1) {  // greatest common divisor: euclid's algorithm
+      if (val2 > val1) {
+        val2 -= val1;
+      } else {
+        val1 -= val2;
+      }
+    }
+    return val2;
+  } else if (val1 != 0) {
+    return val1;
+  } else if (val2 != 0) {
+    return val2;
+  } else {
+    return -1;
+  }
+}
+
 // \brief Modify surrounding expressions in an attempt to recover the multiple
 // 
 // For situations like this:
@@ -5958,8 +5980,6 @@ bool AddTreeState::inspectMultiequals(void) {
       if (!multConst->isConstant()) continue;
       uintb multval = multConst->getOffset() & ptrmask;
       intb multsval = sign_extend(multval, in1->getSize() * 8 - 1);
-      intb multrem = multsval % size;
-      if (multrem != 0 || multsval == 0) continue;
       op1Val = multsval;
       op1ReplacementSlot = 1;
       op1Size = multConst->getSize();
@@ -5968,8 +5988,6 @@ bool AddTreeState::inspectMultiequals(void) {
       if (!assignmentConst->isConstant() || op1->numInput() != 1) continue;
       uintb assignval = assignmentConst->getOffset() & ptrmask;
       intb assignsval = sign_extend(assignval, in1->getSize() * 8 - 1);
-      intb assignrem = assignsval % size;
-      if (assignrem != 0) continue;
       op1Val = assignsval;
       op1ReplacementSlot = 0;
       op1Size = assignmentConst->getSize();
@@ -5979,6 +5997,8 @@ bool AddTreeState::inspectMultiequals(void) {
     Varnode *in2 = op->getIn(1);
     if (!in2->isWritten()) continue;
     bool failed = false;
+    int4 comparisonsvalSize;
+    intb comparisonsval;
     PcodeOp* comparisonOp = nullptr;
     list<PcodeOp *>::const_iterator in2Desc;
     for (in2Desc = in2->beginDescend(); in2Desc != in2->endDescend(); ++in2Desc) {
@@ -5986,7 +6006,7 @@ bool AddTreeState::inspectMultiequals(void) {
       if (desc == op) {
         continue;
       }
-      if (desc->code() != CPUI_INT_SLESS) {
+      if (desc->code() != CPUI_INT_SLESS && desc->code() != CPUI_INT_SLESSEQUAL) {
         failed = true;
         break;
       }
@@ -6001,12 +6021,9 @@ bool AddTreeState::inspectMultiequals(void) {
 	  failed = true;
 	  break;
 	}
-        uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
-        intb comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
-	if (comparisonsval % size != 0) {
-	  failed = true;
-	  break;
-	}
+	comparisonsvalSize = comparisonOperand->getSize();
+	uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
+        comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
       } else {
         failed = true;
         break;
@@ -6021,35 +6038,44 @@ bool AddTreeState::inspectMultiequals(void) {
     if (!addConst->isConstant()) continue;
     uintb addval = addConst->getOffset() & ptrmask;
     intb addsval = sign_extend(addval, in2->getSize() * 8 - 1);
-    intb addrem = addsval % size;
-    if (addrem != 0 || addsval == 0) continue;
-    intb op1multiplier = op1Val / size;
-    if (op1multiplier < 0) op1multiplier = -op1multiplier;
-    intb addmultiplier = addsval / size;
-    if (addmultiplier < 0) addmultiplier = -addmultiplier;
-    intb multiplier;
-    if (op1multiplier != 0 && addmultiplier != 0) {
-      while (addmultiplier != op1multiplier) {  // greatest common divisor: euclid's algorithm
-	if (addmultiplier > op1multiplier) {
-	  addmultiplier -= op1multiplier;
-	} else {
-	  op1multiplier -= addmultiplier;
-	}
-      }
-      multiplier = addmultiplier;
-    } else if (op1multiplier != 0) {
-      multiplier = op1multiplier;
-    } else if (addmultiplier != 0) {
-      multiplier = addmultiplier;
-    } else {
-      continue;
+    bool needDistributeCopy = false;
+    if (op1->code() == CPUI_COPY
+        && (size == 0 && op1Val != 0 || op1Val % size != 0)
+        && (baseType->getMetatype() == TYPE_STRUCT
+          || baseType->getMetatype() == TYPE_SPACEBASE)) {
+      // if the constant in CPUI_COPY is an offset to a member of the struct,
+      // -needDistributeCopy- being true will mean we want to duplicate that constant
+      // into all mentions of the -vn- and in the original CPUI_COPY replace it with 0
+      nonmultsum = op1Val;
+      biggestNonMultCoeff = 0;
+      nonmult.push_back(op1ReplacementSlot != -1 ? op1->getIn(op1ReplacementSlot) : op1->getOut());
+      calcSubtype();
+      needDistributeCopy = (valid && isSubtype);
     }
-    multiple.push_back(vn);
-    coeff.push_back(multiplier * size);
-    Varnode *newConstForOp1 = data.newConstant(op1Size, (op1Val / (size * multiplier)) & ptrmask);
-    data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
-    Varnode *newConstForAdd = data.newConstant(addConst->getSize(), (addsval / (size * multiplier)) & ptrmask);
-    data.opSetInput(op2, newConstForAdd, 1);
+    Varnode *newConstForOp1;
+    intb extra = 0;
+    if (needDistributeCopy) {
+      extra = op1Val;
+      newConstForOp1 = data.newConstant(op1Size, 0);
+      data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+      if (comparisonOp != nullptr) {
+        const Varnode* comparisonOperand = comparisonOp->getIn(1);
+        data.opSetInput(comparisonOp,
+          data.newConstant(comparisonOperand->getSize(), (uintb)(comparisonsval - op1Val) & ptrmask), 1);
+        comparisonsval -= op1Val;
+      }
+      op1Val = 0;
+    } else if (op1Val % size != 0 || addsval % size != 0) continue;  // the value in CPUI_COPY is either not the offset into the struct or op1 is not a CPUI_COPY
+    intb multiplier = greatestCommonDivisor(op1Val, addsval);
+    if (comparisonOp != nullptr && !needDistributeCopy) {
+      multiplier = greatestCommonDivisor(multiplier, comparisonsval);
+    }
+    if (multiplier != 1) {
+      Varnode *newConstForOp1 = data.newConstant(op1Size, (op1Val / multiplier) & ptrmask);
+      data.opSetInput(op1, newConstForOp1, op1ReplacementSlot);
+      Varnode *newConstForAdd = data.newConstant(addConst->getSize(), (addsval / multiplier) & ptrmask);
+      data.opSetInput(op2, newConstForAdd, 1);
+    }
     list<PcodeOp *>::const_iterator descendListIter;
     vector<PcodeOp *> descendants;
     for (descendListIter = vn->beginDescend(); descendListIter != vn->endDescend(); ++descendListIter) {
@@ -6059,16 +6085,30 @@ bool AddTreeState::inspectMultiequals(void) {
     for (descendIter = descendants.begin(); descendIter != descendants.end(); ++descendIter) {
       PcodeOp *desc = *descendIter;
       if (desc == op1 || desc == op2 || desc->code() == CPUI_INDIRECT) continue;
-      PcodeOp *newMultOp = data.newOpBefore(desc, CPUI_INT_MULT, vn, data.newConstant(addConst->getSize(), (multiplier * size) & ptrmask));
-      data.opSetInput(desc, newMultOp->getOut(), desc->getSlot(vn));
+      int4 inSlot = desc->getSlot(vn);
+      PcodeOp *newMultOp = nullptr;
+      Varnode* nodeToAdd;
+      if (multiplier != 1) {
+        newMultOp = data.newOpBefore(desc, CPUI_INT_MULT, vn, data.newConstant(addConst->getSize(), multiplier & ptrmask));
+        nodeToAdd = newMultOp->getOut();
+      } else {
+        nodeToAdd = vn;
+      }
+      if (extra != 0) {
+        newMultOp = data.newOpBefore(desc, CPUI_INT_ADD, nodeToAdd, data.newConstant(op1Size, (uintb)extra & ptrmask));
+      }
+      if (newMultOp != nullptr) {
+        data.opSetInput(desc, newMultOp->getOut(), inSlot);
+      }
     }
     if (comparisonOp != nullptr) {
       const Varnode* comparisonOperand = comparisonOp->getIn(1);
       uintb comparisonval = comparisonOperand->getOffset() & ptrmask;
       intb comparisonsval = sign_extend(comparisonval, comparisonOperand->getSize() * 8 - 1);
-      sign_extend(comparisonsval, comparisonOperand->getSize() * 8 - 1);
-      data.opSetInput(comparisonOp,
-	data.newConstant(comparisonOperand->getSize(), (uintb)(comparisonsval / (multiplier * size)) & ptrmask), 1);
+      if (multiplier != 1) {
+        data.opSetInput(comparisonOp,
+	  data.newConstant(comparisonOperand->getSize(), (uintb)(comparisonsval / multiplier) & ptrmask), 1);
+      }
     }
     return true;
   }

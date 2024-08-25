@@ -78,6 +78,7 @@ class AddTreeState {
   void buildTree(void);			///< Build the transformed ADD tree
   void clear(void);			///< Reset for a new ADD tree traversal
   bool inspectMultiequals(void);        ///< Check all potential CPUI_MULTIEQUALs in an attempt to transform the expression and find the multiple
+  intb greatestCommonDivisor(intb val1, intb val2);  ///< Euclid's algorithm for finding the greatest common divisor of two integers
 public:
   AddTreeState(Funcdata &d,PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
   bool apply(void);		///< Attempt to transform the pointer expression
