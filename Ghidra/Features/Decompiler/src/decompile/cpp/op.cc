@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -672,20 +672,33 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
   case CPUI_INT_MULT:
     val = getIn(0)->getNZMask();
     resmask = getIn(1)->getNZMask();
-    sz1 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(val);
-    if (sz1 == -1)
-      resmask = 0;
+    if (size > sizeof(uintb)) {
+      resmask = fullmask;
+    }
     else {
-      sz2 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(resmask);
-      if (sz2 == -1)
+      sz1 = mostsigbit_set(val);
+      sz2 = mostsigbit_set(resmask);
+      if (sz1 == -1 || sz2 == -1) {
 	resmask = 0;
+      }
       else {
-	if (sz1 + sz2 < 8*size-2)
-	  fullmask >>= (8*size-2-sz1-sz2);
-	sz1 = leastsigbit_set(val);
-	sz2 = leastsigbit_set(resmask);
-	resmask = (~((uintb)0))<<(sz1+sz2);
-	resmask &= fullmask;
+	int4 l1 = leastsigbit_set(val);
+	int4 l2 = leastsigbit_set(resmask);
+	sa = l1 + l2;
+	if (sa >= 8*size) {
+	  resmask = 0;
+	}
+	else {
+	  sz1 = sz1 - l1 + 1;
+	  sz2 = sz2 - l2 + 1;
+	  int4 total = sz1 + sz2;
+	  if (sz1 == 1 || sz2 == 1)
+	    total -= 1;
+	  resmask = fullmask;
+	  if (total < 8 * size)
+	    resmask >>= (8*size - total);
+	  resmask = (resmask << sa) & fullmask;
+	}
       }
     }
     break;

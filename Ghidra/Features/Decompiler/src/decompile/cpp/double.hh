@@ -161,12 +161,8 @@ public:
 class Equal2Form {
   SplitVarnode in;
   Varnode *hi1,*hi2,*lo1,*lo2;
-  PcodeOp *equalop,*orop;
-  PcodeOp *hixor,*loxor;
-  int4 orhislot,xorhislot;
+  PcodeOp *boolAndOr;
   SplitVarnode param2;
-  bool checkLoForm(void);
-  bool fillOutFromOr(Funcdata &data);
   bool replace(Funcdata &data);
 public:
   bool applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data);

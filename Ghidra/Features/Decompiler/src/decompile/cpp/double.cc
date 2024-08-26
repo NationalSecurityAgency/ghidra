@@ -1124,9 +1124,6 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	break;
       case CPUI_INT_OR:
 	{
-	  Equal2Form equal2form;
-	  if (equal2form.applyRule(in,workop,workishi,data))
-	    return 1;
 	  LogicalForm logicalform;
 	  if (logicalform.applyRule(in,workop,workishi,data))
 	    return 1;
@@ -1134,9 +1131,6 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	break;
       case CPUI_INT_XOR:
 	{
-	  Equal2Form equal2form;
-	  if (equal2form.applyRule(in,workop,workishi,data))
-	    return 1;
 	  LogicalForm logicalform;
 	  if (logicalform.applyRule(in,workop,workishi,data))
 	    return 1;
@@ -1150,6 +1144,9 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	    return 1;
 	  Equal1Form equal1form;
 	  if (equal1form.applyRule(in,workop,workishi,data))
+	    return 1;
+	  Equal2Form equal2form;
+	  if (equal2form.applyRule(in,workop,workishi,data))
 	    return 1;
 	}
 	break;
@@ -1918,95 +1915,30 @@ bool Equal1Form::applyRule(SplitVarnode &i,PcodeOp *hop,bool workishi,Funcdata &
   return false;
 }
 
-bool Equal2Form::checkLoForm(void)
-
-{ // Assuming we have equal <- or <- xor <- hi1, verify if we have the full equal form
-  Varnode *orvnin = orop->getIn(1-orhislot);
-  if (orvnin == lo1) {		// lo2 is an implied 0
-    loxor = (PcodeOp *)0;
-    lo2 = (Varnode *)0;
-    return true;
-  }
-  if (!orvnin->isWritten()) return false;
-  loxor = orvnin->getDef();
-  if (loxor->code() != CPUI_INT_XOR) return false;
-  if (loxor->getIn(0) == lo1) {
-    lo2 = loxor->getIn(1);
-    return true;
-  }
-  else if (loxor->getIn(1) == lo1) {
-    lo2 = loxor->getIn(0);
-    return true;
-  }
-  return false;
-}
-
-bool Equal2Form::fillOutFromOr(Funcdata &data)
-
-{ // We have filled in either or <- xor <- hi1,  OR,  or <- hi1
-  // Now try to fill in the rest of the form
-  Varnode *outvn = orop->getOut();
-  list<PcodeOp *>::const_iterator iter,enditer;
-  iter = outvn->beginDescend();
-  enditer = outvn->endDescend();
-  while(iter != enditer) {
-    equalop = *iter;
-    ++iter;
-    if ((equalop->code() != CPUI_INT_EQUAL)&&(equalop->code() != CPUI_INT_NOTEQUAL)) continue;
-    if (!equalop->getIn(1)->isConstant()) continue;
-    if (equalop->getIn(1)->getOffset() != 0) continue;
-
-    if (!checkLoForm()) continue;
-    if (!replace(data)) continue;
-    return true;
-  }
-  return false;
-}
-
 bool Equal2Form::replace(Funcdata &data)
 
 {
-  if ((hi2==(Varnode *)0)&&(lo2==(Varnode *)0)) {
-    param2.initPartial(in.getSize(),0); // Double precis zero constant
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
-  }
-  if ((hi2==(Varnode *)0)&&(lo2->isConstant())) {
-    param2.initPartial(in.getSize(),lo2->getOffset());
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
-  }
-  if ((lo2==(Varnode *)0)&&(hi2->isConstant())) {
-    param2.initPartial(in.getSize(),hi2->getOffset() << 8*lo1->getSize());
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
-  }
-  if (lo2 == (Varnode *)0) {
-    // Equal to a zero extended and shifted var
-    return false;
-  }
-  if (hi2 == (Varnode *)0) {
-    // Equal to a zero extended var
-    return false;
-  }
   if (hi2->isConstant()&&lo2->isConstant()) {
     uintb val = hi2->getOffset();
     val <<= 8*lo1->getSize();
     val |= lo2->getOffset();
     param2.initPartial(in.getSize(),val);
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
+    return SplitVarnode::prepareBoolOp(in,param2,boolAndOr);
   }
   if (hi2->isConstant()||lo2->isConstant()) {
     // Some kind of mixed form
     return false;
   }
   param2.initPartial(in.getSize(),lo2,hi2);
-  return SplitVarnode::prepareBoolOp(in,param2,equalop);
+  return SplitVarnode::prepareBoolOp(in,param2,boolAndOr);
 }
 
 // Given a known double precis input, look for double precision compares of the form
 //   a == b,  a != b
 //
 // We look for
-//     res = ((hi1 ^ hi2) | (lo1 ^ lo2) == 0)
-//  where hi2 or lo2 may be zero, and optimized out
+//     res = (hi1 == hi2) && (lo1 == lo2) or
+//     res = (hi1 != hi2) || (lo1 != lo2)
 bool Equal2Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data)
 
 {
@@ -2015,41 +1947,37 @@ bool Equal2Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &d
   in = i;
   hi1 = in.getHi();
   lo1 = in.getLo();
-
-  if (op->code() == CPUI_INT_OR) {
-    orop = op;
-    orhislot = op->getSlot(hi1);
-    hixor = (PcodeOp *)0;
-    hi2 = (Varnode *)0;
-    if (fillOutFromOr(data)) {
-      if (!param2.exceedsConstPrecision()) {
-	SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
-	return true;
-      }
+  OpCode eqCode = op->code();
+  int4 hi1slot = op->getSlot(hi1);
+  hi2 = op->getIn(1-hi1slot);
+  Varnode *outvn = op->getOut();
+  list<PcodeOp *>::const_iterator iter,enditer;
+  iter = outvn->beginDescend();
+  enditer = outvn->endDescend();
+  while(iter != enditer) {
+    boolAndOr = *iter;
+    ++iter;
+    if (eqCode == CPUI_INT_EQUAL && boolAndOr->code() != CPUI_BOOL_AND) continue;
+    if (eqCode == CPUI_INT_NOTEQUAL && boolAndOr->code() != CPUI_BOOL_OR) continue;
+    int4 slot = boolAndOr->getSlot(outvn);
+    Varnode *othervn = boolAndOr->getIn(1-slot);
+    if (!othervn->isWritten()) continue;
+    PcodeOp *equalLo = othervn->getDef();
+    if (equalLo->code() != eqCode) continue;
+    if (equalLo->getIn(0) == lo1) {
+      lo2 = equalLo->getIn(1);
     }
-  }
-  else {			// We see an XOR
-    hixor = op;
-    xorhislot = hixor->getSlot(hi1);
-    hi2 = hixor->getIn(1-xorhislot);
-    Varnode *vn = op->getOut();
-    list<PcodeOp *>::const_iterator iter,enditer;
-    iter = vn->beginDescend();
-    enditer = vn->endDescend();
-    while(iter != enditer) {
-      orop = *iter;
-      ++iter;
-      if (orop->code() != CPUI_INT_OR) continue;
-      orhislot = orop->getSlot(vn);
-      if (fillOutFromOr(data)) {
-	if (!param2.exceedsConstPrecision()) {
-	  SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
-	  return true;
-	}
-      }
+    else if (equalLo->getIn(1) == lo1) {
+      lo2 = equalLo->getIn(0);
     }
+    else {
+      continue;
+    }
+    if (!replace(data)) continue;
+    if (param2.exceedsConstPrecision()) continue;
+    SplitVarnode::replaceBoolOp(data,boolAndOr,in,param2,eqCode);
+    return true;
   }
-
   return false;
 }
 
