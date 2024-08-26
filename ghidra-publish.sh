@@ -7,10 +7,10 @@ set -o pipefail
 # https://repo1.maven.org/maven2/io/joern/ghidra/
 # see also https://github.com/NationalSecurityAgency/ghidra/issues/799
 
-VERSION=11.0_PUBLIC_20231222
-VERSION_SHORTER=11.0
+VERSION=11.1.2_PUBLIC_20240709
+VERSION_SHORTER=11.1.2
 VERSION_SHORT=${VERSION_SHORTER}_PUBLIC
-CUSTOM_RELEASE_VERSION=${VERSION}-2
+CUSTOM_RELEASE_VERSION=${VERSION}+1
 
 SONATYPE_URL=https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
