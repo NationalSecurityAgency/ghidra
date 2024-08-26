@@ -640,13 +640,13 @@ class ComponentNode extends Node {
 					return; // cancelled
 				}
 
-				// If the user changes the name, then we want to replace all of the
-				// parts of the title with that name.  We skip the subtitle, as that 
-				// doesn't make sense in that case.
-				provider.setTitle(newName);   // title on window
-				provider.setSubTitle("");     // part after the title
-				provider.setTabText(newName); // text on the tab
-				placeholder.update();
+				// If the user changes the name, then we want to replace all of the parts of the 
+				// title with that name.  We do not supply a custom subtitle, as that doesn't make 
+				// sense in this case, but we clear it so the user's title is the only thing 
+				// visible.  This means that providers can still update the subtitle later.
+				provider.setCustomTitle(newName);   // title on window
+				provider.setSubTitle("");           // part after the title
+				provider.setCustomTabText(newName); // text on the tab
 			}
 		}
 	}
