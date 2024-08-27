@@ -18,15 +18,19 @@ define pcodeop vectorShiftRightWordUnsigned;
     vrD_64_0 = vrA_64_0 ^ vrB_64_0;
 }
 
+@if REGISTER_SIZE=="8"
 :evmergehi S,A,B        is OP=4 & S & A & B & XOP_0_10=556
 {
-    vectorMergeHigh(S,A,B);
+	S[32,32] = A[32,32];
+	S[ 0,32] = B[ 0,32];
 }
 
 :evmergelo S,A,B        is OP=4 & S & A & B & XOP_0_10=557
 {
-    vectorMergeLow(S,A,B);
+	S[32,32] = A[0,32];
+	S[ 0,32] = B[0,32];
 }
+@endif
 
 
 :evldd RT,dUI16PlusRAOrZeroAddress is OP=4 & RT & dUI16PlusRAOrZeroAddress & XOP_0_10=769
@@ -41,18 +45,30 @@ define pcodeop vectorShiftRightWordUnsigned;
     RT = *:8 ($(EATRUNC));
 }
 
+@if REGISTER_SIZE=="8"
 @ifndef IS_ISA
 :evsrws S,A,B        is OP=4 & S & A & B & XOP_0_10=545
 {
-    vectorShiftRightWordSigned(S,A,B);
+	local low:4 = A[0,32];
+	local high:4 = A[32,32];
+	local low_shift:1 = B[0,5];
+	local high_shift:1 = B[32,5];
+	S[0,32] = low s>> zext(low_shift);
+	S[32,32] = high s>> zext(high_shift);
 }
 @endif
 
 @ifndef IS_ISA
 :evsrwu S,A,B        is OP=4 & S & A & B & XOP_0_10=544
 {
-    vectorShiftRightWordUnsigned(S,A,B);
+	local low:4 = A[0,32];
+	local high:4 = A[32,32];
+	local low_shift:1 = B[0,5];
+	local high_shift:1 = B[32,5];
+	S[0,32] = low >> zext(low_shift);
+	S[32,32] = high >> zext(high_shift);
 }
+@endif
 @endif
 
 :evstdd RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=801 
@@ -73,32 +89,20 @@ define pcodeop vectorShiftRightWordUnsigned;
 	RT = RA;
 }
 
+@if REGISTER_SIZE=="8"
 # evmergehilo rD,rA,rB 010 0010 1110
-define pcodeop VectorMergeHighLow;
-:evmergehilo D,A,B is OP=4 & A & B & D & XOP_0_10=558 {
- local lo = (A & 0x00000000FFFFFFFF);
- local hi = ((A & 0xFFFFFFFF00000000) >> 32);
- #local b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
- local b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
+:evmergehilo S,A,B is OP=4 & S & A & B & XOP_0_10=558 {
+	S[32,32] = A[32,32];
+	S[ 0,32] = B[ 0,32];
 
- lo = lo;
- hi = b_hi;
-
- D = ((hi << 32) | lo);
 }
 
 # evmergelohi rD,rA,rB 010 0010 1111
-:evmergelohi D,A,B is OP=4 & D & A & B & XOP_0_10=559 {
- local lo = (A & 0x00000000FFFFFFFF);
- local hi = ((A & 0xFFFFFFFF00000000) >> 32);
- local b_lo:$(REGISTER_SIZE) = (B & 0x00000000FFFFFFFF);
- #local b_hi:$(REGISTER_SIZE) = ((B & 0xFFFFFFFF00000000) >> 32);
-
- lo = lo;
- hi = b_lo;
-
- D = ((hi << 32) | lo);
+:evmergelohi S,A,B is OP=4 & S & A & B & XOP_0_10=559 {
+ 	S[32,32] = A[ 0,32];
+	S[ 0,32] = B[32,32];
 }
+@endif
 
 # evstwwe rS,rA,UIMM 011 0011 1001
 :evstwwe RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=0x339
