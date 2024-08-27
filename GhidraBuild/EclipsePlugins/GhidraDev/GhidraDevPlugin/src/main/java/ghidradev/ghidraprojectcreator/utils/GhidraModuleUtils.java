@@ -110,7 +110,7 @@ public class GhidraModuleUtils {
 		sourceFolderInfos.add(new SourceFolderInfo(project.getFolder("ghidra_scripts"),
 			project.getFolder("bin/scripts")));
 		for (SourceFolderInfo sourceFolderInfo : sourceFolderInfos) {
-			GhidraProjectUtils.createFolder(sourceFolderInfo.outputFolder(), monitor);
+			GhidraProjectUtils.createFolder(sourceFolderInfo.sourceFolder(), monitor);
 		}
 
 		// Put the source directories in the project's classpath
