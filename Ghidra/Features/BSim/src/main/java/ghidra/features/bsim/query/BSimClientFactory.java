@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,10 @@ public class BSimClientFactory {
 	}
 
 	/**
-	 * Given the URL for a BSim server construct the appropriate BSim client object (implementing FunctionDatabase)
+	 * Given the URL for a BSim server construct the appropriate BSim client object 
+	 * (implementing FunctionDatabase).  Returned instance must be 
+	 * {@link FunctionDatabase#close() closed} when done using it to prevent depletion
+	 * of database connections.
 	 * @param bsimServerInfo  BSim server details
 	 * @param async true if database commits should be asynchronous
 	 * @return the database client
