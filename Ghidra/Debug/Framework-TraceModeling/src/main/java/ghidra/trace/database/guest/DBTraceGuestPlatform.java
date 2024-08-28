@@ -231,11 +231,6 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 	}
 
 	@Override
-	public AddressFactory getAddressFactory() {
-		return manager.trace.getBaseAddressFactory();
-	}
-
-	@Override
 	public CompilerSpec getCompilerSpec() {
 		return compilerSpec;
 	}
