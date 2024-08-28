@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.query.inmemory;
+package ghidra.features.bsim.query.file;
 
 import static org.junit.Assert.*;
 
@@ -26,7 +26,6 @@ import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.Error;
 import ghidra.features.bsim.query.description.DatabaseInformation;
-import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
 import ghidra.features.bsim.query.protocol.CreateDatabase;
 import ghidra.features.bsim.query.protocol.ResponseInfo;
@@ -50,7 +49,7 @@ public class BSimH2DatabaseManagerTest extends AbstractGhidraHeadedIntegrationTe
 
 	@After
 	public void tearDown() {
-		//cleanup();
+		cleanup();
 	}
 
 	private File getTempDbDir() {
@@ -77,7 +76,7 @@ public class BSimH2DatabaseManagerTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private BSimServerInfo createDatabase(String databaseName, List<String> tags,
-		List<String> execats, String expectedError) {
+			List<String> execats, String expectedError) {
 
 		BSimServerInfo h2DbInfo = getBsimServerInfo(databaseName);
 		Msg.debug(this, "Creating H2 File DB: " + h2DbInfo);

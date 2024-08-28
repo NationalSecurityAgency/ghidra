@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,9 @@ import ghidra.features.bsim.query.facade.SFOverviewInfo;
 import ghidra.features.bsim.query.facade.SFQueryInfo;
 import ghidra.features.bsim.query.protocol.*;
 import ghidra.framework.Application;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 
 public interface FunctionDatabase extends AutoCloseable {
 
@@ -239,7 +241,15 @@ public interface FunctionDatabase extends AutoCloseable {
 		if (res == 3) {
 			throw new LSHException("Query signature data has no setting information");
 		}
-		throw new LSHException("Query signature data does not match database");
+		throw new LSHException("Query signature data " +
+			getFormattedVersion(manage.getMajorVersion(), manage.getMinorVersion(),
+				manage.getSettings()) +
+			" does not match database " +
+			getFormattedVersion(info.major, info.minor, info.settings));
+	}
+
+	private static String getFormattedVersion(int maj, int min, int settings) {
+		return String.format("%d.%d:0x%02x", maj, min, settings);
 	}
 
 	public static boolean checkSettingsForInsert(DescriptionManager manage,
@@ -262,8 +272,11 @@ public interface FunctionDatabase extends AutoCloseable {
 		if (res == 3) {
 			throw new LSHException("Trying to insert signature data with no setting information");
 		}
-		throw new LSHException(
-			"Trying to insert signature data with settings that don't match database");
+		throw new LSHException("Trying to insert signature data " +
+			getFormattedVersion(manage.getMajorVersion(), manage.getMinorVersion(),
+				manage.getSettings()) +
+			" with settings that don't match database " +
+			getFormattedVersion(info.major, info.minor, info.settings));
 	}
 
 	public static String constructFatalError(int flags, ExecutableRecord newrec,
