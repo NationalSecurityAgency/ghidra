@@ -483,9 +483,13 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
 			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
-			waitOn(lb.delete());
+			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
+			waitOn(delete);
 		}
+		waitForDomainObject(program);
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
 		try (Transaction tx = program.openTransaction("Disassemble")) {
@@ -501,6 +505,9 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 		runSwing(() -> dialog.okCallback());
 		handleSetBreakpointInvocation(TraceBreakpointKindSet.SW_EXECUTE, 0x55550123);
+		waitForDomainObject(program);
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -515,9 +522,13 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
 			TraceBreakpoint brk = Unique.assertOne(lb.getTraceBreakpoints(tb.trace));
-			waitOn(lb.delete());
+			CompletableFuture<Void> delete = lb.delete();
 			handleDeleteBreakpointInvocation(brk);
+			waitOn(delete);
 		}
+		waitForDomainObject(program);
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
 		try (Transaction tx = program.openTransaction("Disassemble")) {
@@ -532,6 +543,9 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 		runSwing(() -> dialog.okCallback());
 		handleSetBreakpointInvocation(TraceBreakpointKindSet.ACCESS, 0x55550123);
+		waitForDomainObject(program);
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
