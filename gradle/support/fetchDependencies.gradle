@@ -51,6 +51,7 @@ ext.DOWNLOADS_DIR = file("${DEPS_DIR}/downloads")
 ext.FID_DIR = file("${DEPS_DIR}/fidb")
 ext.FLAT_REPO_DIR = file("${DEPS_DIR}/flatRepo")
 ext.OFFLINE = System.properties["offline"] != null
+ext.HIDE_DOWNLOAD_PROGRESS = System.properties["hideDownloadProgress"] != null
 ext.createdDirs = [] as Set
 
 file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
@@ -275,17 +276,22 @@ def download(url, file) {
 	def dataBuffer = new byte[1024];
 	int bytesRead;
 	int totalRead;
+	if (HIDE_DOWNLOAD_PROGRESS) {
+		print "   Downloading..."
+	}
 	while ((bytesRead = istream.read(dataBuffer, 0, 1024)) != -1) { 
 		ostream.write(dataBuffer, 0, bytesRead);
 		totalRead += bytesRead
-		print "\r"
-		print "   Downloading: " + totalRead + " of " + size
-		if (!size.equals("???")) {
-			int pctComplete = (totalRead / size) * 100
-			print " (" + pctComplete + "%)"
+		if (!HIDE_DOWNLOAD_PROGRESS) {
+			print "\r"
+			print "   Downloading: " + totalRead + " of " + size
+			if (!size.equals("???")) {
+				int pctComplete = (totalRead / size) * 100
+				print " (" + pctComplete + "%)"
+			}
+			print "                                               " // overwrite gradle timer output
+			System.out.flush()
 		}
-		print "                                               " // overwrite gradle timer output
-		System.out.flush()
 	}
 	println()
 	istream.close();
