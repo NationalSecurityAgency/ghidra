@@ -26,6 +26,7 @@ Linux/support/convertStorage||GHIDRA||||END|
 Linux/support/gdbGADPServerRun||GHIDRA||||END|
 Linux/support/ghidraClean||GHIDRA||||END|
 Linux/support/ghidraDebug||GHIDRA||||END|
+Linux/support/jshellRun||GHIDRA||||END|
 Linux/support/pythonRun||GHIDRA||||END|
 Linux/support/sleigh||GHIDRA||||END|
 Windows/ghidraRun.bat||GHIDRA||||END|
@@ -45,6 +46,7 @@ Windows/support/dbgmodelGADPServerRun.bat||GHIDRA||||END|
 Windows/support/ghidra.ico||GHIDRA||||END|
 Windows/support/ghidraClean.bat||GHIDRA||||END|
 Windows/support/ghidraDebug.bat||GHIDRA||||END|
+Windows/support/jshellRun.bat||GHIDRA||||END|
 Windows/support/launch.bat||GHIDRA||||END|
 Windows/support/pythonRun.bat||GHIDRA||||END|
 Windows/support/sleigh.bat||GHIDRA||||END|
