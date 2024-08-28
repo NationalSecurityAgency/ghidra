@@ -20,8 +20,8 @@ import static ghidra.pcode.utils.SlaFormat.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,7 +82,7 @@ public class SleighLanguage implements Language {
 	 */
 	private String segmentedspace = "";
 	private String segmentType = "";
-	private AddressSet volatileAddresses;
+	private AddressSet volatileAddresses = new AddressSet();
 	private AddressSet volatileSymbolAddresses;
 	private AddressSet nonVolatileSymbolAddresses;
 	private ContextCache contextcache = null;
@@ -155,9 +155,6 @@ public class SleighLanguage implements Language {
 	}
 
 	private void buildVolatileSymbolAddresses() {
-		if (volatileAddresses == null) {
-			volatileAddresses = new AddressSet();
-		}
 		if (volatileSymbolAddresses != null) {
 			volatileAddresses.add(volatileSymbolAddresses);
 		}
@@ -378,10 +375,10 @@ public class SleighLanguage implements Language {
 			// get existing proto and use it
 			// if doesn't exist in map, cache info and store new proto
 			res = instructProtoMap.computeIfAbsent(hashcode, h -> {
-			    newProto.cacheInfo(buf, context, true);
-			    return newProto;
+				newProto.cacheInfo(buf, context, true);
+				return newProto;
 			});
-			
+
 			if (inDelaySlot && res.hasDelaySlots()) {
 				throw new NestedDelaySlotException();
 			}
@@ -680,9 +677,6 @@ public class SleighLanguage implements Language {
 						throw new SleighException("no support for volatile registers yet");
 					}
 					Pair<Address, Address> range = parseRange(next);
-					if (volatileAddresses == null) {
-						volatileAddresses = new AddressSet();
-					}
 					volatileAddresses.addRange(range.first, range.second);
 					// skip the end tag
 					parser.end(next);
@@ -709,6 +703,7 @@ public class SleighLanguage implements Language {
 					String registerAlias = reg.getAttribute("alias");
 					String groupName = reg.getAttribute("group");
 					boolean isHidden = SpecXmlUtils.decodeBoolean(reg.getAttribute("hidden"));
+					boolean isVolatile = SpecXmlUtils.decodeBoolean(reg.getAttribute("volatile"));
 					if (registerRename != null) {
 						if (!registerBuilder.renameRegister(registerName, registerRename)) {
 							throw new SleighException(
@@ -732,6 +727,11 @@ public class SleighLanguage implements Language {
 						if (isHidden) {
 							registerBuilder.setFlag(registerName, Register.TYPE_HIDDEN);
 						}
+						if (isVolatile) {
+							Address first = register.getAddress();
+							Address second = first.add(register.getNumBytes() - 1);
+							volatileAddresses.addRange(first, second);
+						}
 						String sizes = reg.getAttribute("vector_lane_sizes");
 						if (sizes != null) {
 							String[] lanes = sizes.split(",");
@@ -753,7 +753,7 @@ public class SleighLanguage implements Language {
 			else if (elName.equals("default_symbols")) {
 				XmlElement subel = parser.start();
 				Address previousAddr = null;
-				int     previousSize = 1;
+				int previousSize = 1;
 				while (parser.peek().getName().equals("symbol")) {
 					XmlElement symbol = parser.start();
 					String labelName = symbol.getAttribute("name");
@@ -765,9 +765,11 @@ public class SleighLanguage implements Language {
 					Address startAddress = null;
 					if (addressString.equalsIgnoreCase("next")) {
 						if (previousAddr == null) {
-							Msg.error(this, "use of addr=\"next\" tag with no previous address for " +
-						        labelName + " : " + description.getSpecFile());
-						} else {
+							Msg.error(this,
+								"use of addr=\"next\" tag with no previous address for " +
+									labelName + " : " + description.getSpecFile());
+						}
+						else {
 							startAddress = previousAddr.add(previousSize);
 						}
 					}
@@ -784,7 +786,8 @@ public class SleighLanguage implements Language {
 					else {
 						AddressLabelInfo info;
 						try {
-							info = new AddressLabelInfo(startAddress, rangeSize, labelName, comment, false,
+							info = new AddressLabelInfo(startAddress, rangeSize, labelName, comment,
+								false,
 								isEntry, type, isVolatile);
 						}
 						catch (AddressOverflowException e) {
