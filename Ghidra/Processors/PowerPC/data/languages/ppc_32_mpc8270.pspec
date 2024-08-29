@@ -303,7 +303,7 @@ don't know about the DCRs though
 	<register name="spr10a" group="SPR_UNNAMED"/>
 	<register name="spr10b" group="SPR_UNNAMED"/>
 	<register name="TBLr" group="SPR" volatile="true"/>
-	<register name="TBUr" group="SPR" voaltile="true"/>
+	<register name="TBUr" group="SPR" volatile="true"/>
 	<register name="spr10e" group="SPR_UNNAMED"/>
 	<register name="spr10f" group="SPR_UNNAMED"/>
 
