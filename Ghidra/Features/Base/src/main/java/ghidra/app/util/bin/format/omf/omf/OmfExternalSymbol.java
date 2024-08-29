@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,7 @@ public class OmfExternalSymbol extends OmfRecord {
 	private boolean isStatic;
 	protected List<OmfSymbol> symbols = new ArrayList<>();
 	
-	private record Reference(OmfString name, OmfIndex type) {}
-
+	private record Reference(OmfString name, OmfIndex typeIndex) {}
 	private List<Reference> refs = new ArrayList<>();
 
 	public OmfExternalSymbol(BinaryReader reader, boolean isStatic) throws IOException {
@@ -42,9 +41,9 @@ public class OmfExternalSymbol extends OmfRecord {
 	public void parseData() throws IOException, OmfException {
 		while (dataReader.getPointerIndex() < dataEnd) {
 			OmfString name = OmfUtils.readString(dataReader);
-			OmfIndex type = OmfUtils.readIndex(dataReader);
-			refs.add(new Reference(name, type));
-			symbols.add(new OmfSymbol(name.str(), type.value(), 0, 0, 0));
+			OmfIndex typeIndex = OmfUtils.readIndex(dataReader);
+			refs.add(new Reference(name, typeIndex));
+			symbols.add(new OmfSymbol(name.str(), typeIndex.value(), 0, 0, 0));
 		}
 	}
 
@@ -62,8 +61,8 @@ public class OmfExternalSymbol extends OmfRecord {
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		for (Reference ref : refs) {
-			struct.add(ref.name.toDataType(), "name", null);
-			struct.add(ref.type.toDataType(), "type", null);
+			struct.add(ref.name.toDataType(), "external_name", null);
+			struct.add(ref.typeIndex.toDataType(), "type_index", null);
 		}
 		struct.add(BYTE, "checksum", null);
 

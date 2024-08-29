@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -324,11 +324,14 @@ public class OmfFileHeader extends OmfRecord {
 	 * @throws IOException for problems reading data
 	 * @throws OmfException for malformed records
 	 */
-	public static OmfFileHeader parse(AbstractOmfRecordFactory factory, TaskMonitor monitor, MessageLog log)
-			throws IOException, OmfException {
+	public static OmfFileHeader parse(AbstractOmfRecordFactory factory, TaskMonitor monitor,
+			MessageLog log) throws IOException, OmfException {
 		OmfRecord record = factory.readNextRecord();
 		if (!(record instanceof OmfFileHeader header)) {
 			throw new OmfException("Object file does not start with proper header");
+		}
+		if (!record.validCheckSum()) {
+			logRecord("Invalid checksum", record, log);
 		}
 		header.records.add(header);
 		OmfData lastDataBlock = null;
@@ -336,7 +339,7 @@ public class OmfFileHeader extends OmfRecord {
 		while (true) {
 			record = factory.readNextRecord();
 			if (!record.validCheckSum()) {
-				throw new OmfException("Invalid checksum!");
+				logRecord("Invalid checksum", record, log);
 			}
 			header.records.add(record);
 
@@ -358,7 +361,7 @@ public class OmfFileHeader extends OmfRecord {
 			}
 			else if (record instanceof OmfComdefRecord comdef) {
 				header.evaluateComdef(comdef);
-				header.externsymbols.add((OmfExternalSymbol) record);
+				header.externsymbols.add(comdef);
 			}
 			else if (record instanceof OmfComdatExternalSymbol comdat) {
 				comdat.loadNames(header.nameList);
@@ -494,7 +497,8 @@ public class OmfFileHeader extends OmfRecord {
 	}
 
 	private static void logRecord(String description, OmfRecord record, MessageLog log) {
-		log.appendMsg(description + " (" + record + ")");
+		log.appendMsg("%s (0x%x - %s @ 0x%x)".formatted(description, record.getRecordType(),
+			OmfRecordTypes.getName(record.getRecordType()), record.getRecordOffset()));
 	}
 
 	@Override
