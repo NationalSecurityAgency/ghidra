@@ -230,7 +230,9 @@
             <tocdef id="Data" sortgroup="c" text="Data"  target="help/topics/DataPlugin/Data.htm" >
                 <tocdef id="Create Data" sortgroup="a" text="Create Data"  target="help/topics/DataPlugin/Data.htm" />
                 <tocdef id="Data Types" sortgroup="b" text="Data Types"  target="help/topics/DataPlugin/Data.htm#DataTypes" />
-                <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm" />
+                <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm">
+                    <tocdef id="LibreTranslate" sortgroup="e" text="LibreTranslate"  target="help/topics/LibreTranslatePlugin/LibreTranslatePlugin.htm" />
+                </tocdef>
                 <tocdef id="Save Image" sortgroup="e" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>
         
