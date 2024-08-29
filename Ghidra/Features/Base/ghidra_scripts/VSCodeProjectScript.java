@@ -268,7 +268,11 @@ public class VSCodeProjectScript extends GhidraScript {
 		}
 
 		// Fix Ghidra installation directory path in build.gradle
+		File buildTemplateGradleFile = new File(projectDir, "buildTemplate.gradle");
 		File buildGradleFile = new File(projectDir, "build.gradle");
+		if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
+			throw new IOException("Failed to rename: " + buildTemplateGradleFile);
+		}
 		String fileData = FileUtils.readFileToString(buildGradleFile, StandardCharsets.UTF_8);
 		fileData =
 			fileData.replaceAll("<REPLACE>", FilenameUtils.separatorsToUnix(installDir.getPath()));

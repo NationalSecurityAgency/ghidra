@@ -177,6 +177,11 @@ public class GhidraModuleUtils {
 				return excludeRegexes.stream().map(r -> Pattern.compile(r)).noneMatch(
 					p -> p.matcher(f.getName()).matches());
 			}, null);
+			File buildTemplateGradleFile = new File(projectDir, "buildTemplate.gradle");
+			File buildGradleFile = new File(projectDir, "build.gradle");
+			if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
+				throw new IOException("Failed to rename: " + buildTemplateGradleFile);
+			}
 		}
 		catch (CancelledException | IOException e) {
 			throw new IOException("Failed to copy skeleton directory: " + projectDir);
