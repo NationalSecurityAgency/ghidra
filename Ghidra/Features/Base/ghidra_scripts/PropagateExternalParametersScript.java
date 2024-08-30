@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,8 @@ import ghidra.program.model.symbol.*;
 
 public class PropagateExternalParametersScript extends GhidraScript {
 	private List<PushedParamInfo> results = new ArrayList<>();
+
+	private static final boolean PRINT_OPTYPE = false;
 
 	@Override
 	public void run() throws Exception {
@@ -147,9 +149,9 @@ public class PropagateExternalParametersScript extends GhidraScript {
 				while (tempIter.hasNext()) {
 					Reference thunkRef = tempIter.next();
 					Address thunkRefAddr = thunkRef.getFromAddress();
-                                        
+
 					CodeUnit cu = listing.getCodeUnitAt(thunkRefAddr);
-					if(cu == null) {
+					if (cu == null) {
 						// println("Referenced CodeUnit is null: " + thunkRefAddr);
 						continue;
 					}
@@ -300,10 +302,18 @@ public class PropagateExternalParametersScript extends GhidraScript {
 					numSkips--;
 				}
 				else {
+
+					// if option is true add the value of the optype to the EOL comment
+					String opType = "";
+					if (PRINT_OPTYPE) {
+						opType = " " + toHexString(currentProgram.getListing()
+								.getInstructionAt(cu.getMinAddress())
+								.getOperandType(0),
+							false, true);
+					}
 					setEOLComment(cu.getMinAddress(), params[index].getDataType().getDisplayName() +
-						" " + params[index].getName() + " for " + extFuncName);
-					// add the following to the EOL comment to see the value of the optype
-					//	+ " | " + ghidra.program.model.lang.OperandType.toString(currentProgram.getListing().getInstructionAt(cu.getMinAddress()).getOperandType(0))
+						" " + params[index].getName() + " for " + extFuncName + opType);
+
 					addResult(params[index].getName(), params[index].getDataType(),
 						cu.getMinAddress(), extFuncName);
 					index++;
