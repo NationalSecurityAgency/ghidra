@@ -5762,8 +5762,8 @@ bool AddTreeState::hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) con
     return true;
   }
 
-  uint8 distBefore = offBefore;
-  uint8 distAfter = -offAfter;
+  uint8 distBefore = (offBefore < 0) ? -offBefore : offBefore;
+  uint8 distAfter = (offAfter < 0) ? -offAfter : offAfter;
   if (arrayHint != 1) {
     if (elSizeBefore != arrayHint)
       distBefore += 0x1000;

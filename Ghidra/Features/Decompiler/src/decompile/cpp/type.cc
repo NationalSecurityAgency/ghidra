@@ -177,8 +177,8 @@ Datatype *Datatype::getSubType(int8 off,int8 *newoff) const
   return (Datatype *)0;
 }
 
-/// Find the first component data-type after the given offset that is (or contains)
-/// an array, and pass back the difference between the component's start and the given offset.
+/// Find the first component data-type that is (or contains) an array starting after the given
+/// offset, and pass back the difference between the component's start and the given offset.
 /// Return the component data-type or null if no array is found.
 /// \param off is the given offset into \b this data-type
 /// \param newoff is used to pass back the offset difference
@@ -190,8 +190,8 @@ Datatype *Datatype::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *e
   return (TypeArray *)0;
 }
 
-/// Find the first component data-type before the given offset that is (or contains)
-/// an array, and pass back the difference between the component's start and the given offset.
+/// Find the last component data-type that is (or contains) an array starting before the given
+/// offset, and pass back the difference between the component's start and the given offset.
 /// Return the component data-type or null if no array is found.
 /// \param off is the given offset into \b this data-type
 /// \param newoff is used to pass back the offset difference
@@ -1663,7 +1663,8 @@ int4 TypeStruct::getHoleSize(int4 off) const
 Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
 
 {
-  int4 i = getLowerBoundField(off);
+  int4 firstIndex = getLowerBoundField(off);
+  int4 i = firstIndex;
   while(i >= 0) {
     const TypeField &subfield( field[i] );
     int8 diff = off - subfield.offset;
@@ -1676,7 +1677,8 @@ Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8
     }
     else {
       int8 suboff;
-      Datatype *res = subtype->nearestArrayedComponentBackward(subtype->getSize(), &suboff, elSize);
+      int8 remain = (i == firstIndex) ? diff : subtype->getSize() - 1;
+      Datatype *res = subtype->nearestArrayedComponentBackward(remain, &suboff, elSize);
       if (res != (Datatype *)0) {
 	*newoff = diff;
 	return subtype;
@@ -1691,10 +1693,22 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
 
 {
   int4 i = getLowerBoundField(off);
-  i += 1;
+  int8 remain;
+  if (i < 0) {		// No component starting before off
+    i += 1;		// First component starting after
+    remain = 0;
+  }
+  else {
+    const TypeField &subfield( field[i] );
+    remain = off - subfield.offset;
+    if (remain != 0 && (subfield.type->getMetatype() != TYPE_STRUCT || remain >= subfield.type->getSize())) {
+      i += 1;		// Middle of non-structure that we must go forward from, skip over it
+      remain = 0;
+    }
+  }
   while(i<field.size()) {
     const TypeField &subfield( field[i] );
-    int8 diff = subfield.offset - off;
+    int8 diff = subfield.offset - off;		// The first struct field examined may have a negative diff
     if (diff > 128) break;
     Datatype *subtype = subfield.type;
     if (subtype->getMetatype() == TYPE_ARRAY) {
@@ -1704,13 +1718,14 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
     }
     else {
       int8 suboff;
-      Datatype *res = subtype->nearestArrayedComponentForward(0, &suboff, elSize);
+      Datatype *res = subtype->nearestArrayedComponentForward(remain, &suboff, elSize);
       if (res != (Datatype *)0) {
 	*newoff = -diff;
 	return subtype;
       }
     }
     i += 1;
+    remain = 0;
   }
   return (Datatype *)0;
 }
