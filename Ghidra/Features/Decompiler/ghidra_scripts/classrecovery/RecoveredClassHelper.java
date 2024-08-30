@@ -479,7 +479,8 @@ public class RecoveredClassHelper {
 		return functionToLoadPcodeOps.get(function);
 	}
 
-	public Set<Function> getAllVfunctions(List<Address> vftableAddresses) throws CancelledException {
+	public Set<Function> getAllVfunctions(List<Address> vftableAddresses)
+			throws CancelledException {
 		if (vftableAddresses.isEmpty()) {
 			return Collections.emptySet();
 		}
@@ -3294,6 +3295,14 @@ public class RecoveredClassHelper {
 	public void addConstructorsToClassNamespace(RecoveredClass recoveredClass,
 			Structure classStruct) throws Exception {
 
+		DataType undefinedDT = null;
+		if (defaultPointerSize == 4) {
+			undefinedDT = new Undefined4DataType();
+		}
+		if (defaultPointerSize == 8) {
+			undefinedDT = new Undefined8DataType();
+		}
+
 		Namespace classNamespace = recoveredClass.getClassNamespace();
 		String className = recoveredClass.getName();
 
@@ -3310,68 +3319,51 @@ public class RecoveredClassHelper {
 					true);
 			}
 
-			// if current decompiler function return type is a pointer then set the return type
-			// to a pointer to the class structure, otherwise if it is a void, make it a void so the
-			// listing has void too, otherwise, leave it as is, probably a void
-			String returnType = getReturnTypeFromDecompiler(constructorFunction);
+			// commit what the decompiler knows first so that retyping will not
+			// completely overwrite decompiler with listing signature
+			decompilerUtils.commitFunction(constructorFunction);
 
-			// Set error bookmark, add error message, and  get the listing return type if the
-			// decompiler return type is null
-			if (returnType == null) {
+			HighFunction highFunction = decompilerUtils.getHighFunction(constructorFunction);
+			if (highFunction == null) {
+				String msg =
+					"Decompiler Error: Failed to decompile function possibly due to the addition of class structure. ";
 
-				String msg1 = "Decompiler Error: Failed to decompile function";
-				String msg2 = ", possibly due to the addition of class structure.";
-
-				Msg.debug(this, msg1 + " at " + constructorFunction.getEntryPoint() + msg2);
+				Msg.debug(this, msg + constructorFunction.getEntryPoint());
 
 				program.getBookmarkManager()
 						.setBookmark(constructorFunction.getEntryPoint(), BookmarkType.ERROR,
-							"Decompiler Error", msg1 + msg2);
-
-				// get the return type from the listing and in some cases it will
-				// indicate the correct type to help determine the below type to add
-				returnType = constructorFunction.getReturnType().getDisplayName();
+							"Decompiler Error", msg);
+				continue;
 			}
 
-			if (returnType.equals("void")) {
-				constructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
+			DataType returnType = highFunction.getFunctionPrototype().getReturnType();
+			if (returnType == null) {
+				Msg.debug(this,
+					"ERROR: Return type is null " + constructorFunction.getEntryPoint());
+				continue;
 			}
-			else if (returnType.contains("*")) {
-				DataType classPointerDataType = dataTypeManager.getPointer(classStruct);
-				constructorFunction.setReturnType(classPointerDataType, SourceType.ANALYSIS);
-			}
-			// if neither and it is a FID function change it to undefined so the decompiler will
+
+			// if a FID function and isn't void or * change it to undefined so the decompiler will
 			// recompute it
-			else if (isFidFunction(constructorFunction)) {
-				DataType undefinedDT = null;
-				if (defaultPointerSize == 4) {
-					undefinedDT = new Undefined4DataType();
-				}
-				if (defaultPointerSize == 8) {
-					undefinedDT = new Undefined8DataType();
-				}
+			String returnTypeString = returnType.getDisplayName();
+			if (isFidFunction(constructorFunction) && returnTypeString != "void" &&
+				!returnTypeString.contains("*")) {
+
 				if (undefinedDT != null) {
 					constructorFunction.setReturnType(undefinedDT, SourceType.ANALYSIS);
 				}
 			}
 
+			// if return type is a pointer then make sure it is the class structure 
+			if (returnType.getDisplayName().contains("*")) {
+				DataType classPointerDataType = dataTypeManager.getPointer(classStruct);
+				if (!returnType.isEquivalent(classPointerDataType)) {
+					constructorFunction.setReturnType(classPointerDataType,
+						SourceType.ANALYSIS);
+				}
+			}
+
 		}
-	}
-
-	/**
-	 * Get the return value from the decompiler signature for the given function
-	 * @param function the given function
-	 * @return the decompiler return value for the given function
-	 */
-	private String getReturnTypeFromDecompiler(Function function) {
-
-		DataType decompilerReturnType = decompilerUtils.getDecompilerReturnType(function);
-
-		if (decompilerReturnType == null) {
-			return null;
-		}
-
-		return decompilerReturnType.getDisplayName();
 	}
 
 	/**
@@ -3399,8 +3391,7 @@ public class RecoveredClassHelper {
 				createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, true,
 					true);
 			}
-
-			destructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
+			decompilerUtils.commitFunction(destructorFunction);
 		}
 	}
 
@@ -3426,6 +3417,7 @@ public class RecoveredClassHelper {
 
 			createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, false,
 				false);
+			decompilerUtils.commitFunction(destructorFunction);
 		}
 	}
 
@@ -3450,8 +3442,7 @@ public class RecoveredClassHelper {
 				createNewSymbolAtFunction(vbaseDestructorFunction, destructorName, classNamespace,
 					true, true);
 			}
-
-			vbaseDestructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
+			decompilerUtils.commitFunction(vbaseDestructorFunction);
 		}
 
 	}
@@ -3606,6 +3597,7 @@ public class RecoveredClassHelper {
 						function.getEntryPoint().toString());
 				}
 				return;
+
 			}
 
 			symbol = lcmd.getSymbol();
@@ -4674,6 +4666,7 @@ public class RecoveredClassHelper {
 					createNewSymbolAtFunction(vfunction, vfunctionName, classNamespace, setPrimary,
 						removeBadFID);
 				}
+				decompilerUtils.commitFunction(vfunction);
 			}
 		}
 	}
@@ -5040,6 +5033,10 @@ public class RecoveredClassHelper {
 			if (nameVfunctions) {
 				createNewSymbolAtFunction(indeterminateFunction,
 					className + "_Constructor_or_Destructor", classNamespace, false, false);
+				// in this case since indeterminate, only commit if script names it
+				// if name flag is not set then it will have correct name from debug and be handled 
+				// in other methods (ie addConst, addDest)
+				decompilerUtils.commitFunction(indeterminateFunction);
 			}
 
 		}

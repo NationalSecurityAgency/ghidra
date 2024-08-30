@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,8 @@
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
 
-import docking.options.OptionsService;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
-import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
@@ -27,7 +25,10 @@ import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
-import ghidra.util.exception.CancelledException;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.util.Msg;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerScriptUtils {
@@ -107,6 +108,30 @@ public class DecompilerScriptUtils {
 		}
 
 		return decompRes.getHighFunction().getFunctionPrototype().getReturnType();
+	}
+
+	public void commitFunction(Function function) {
+		DecompileResults decompRes = decompInterface.decompileFunction(function,
+			decompInterface.getOptions().getDefaultTimeout(), monitor);
+
+		if (decompRes == null || decompRes.getHighFunction() == null ||
+			decompRes.getHighFunction().getFunctionPrototype() == null) {
+			Msg.debug(this, "Couldn't commit params - null high function");
+			return;
+		}
+
+		try {
+			HighFunctionDBUtil.commitParamsToDatabase(decompRes.getHighFunction(), true,
+				ReturnCommitOption.COMMIT, SourceType.ANALYSIS);
+		}
+		catch (DuplicateNameException e) {
+			Msg.debug(this, "Couldn't commit params " + e);
+			return;
+		}
+		catch (InvalidInputException e) {
+			Msg.debug(this, "Couldn't commit params " + e);
+			return;
+		}
 	}
 
 	/**
