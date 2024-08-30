@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,8 @@ import ghidra.program.model.symbol.*;
 
 public class PropagateExternalParametersScript extends GhidraScript {
 	private List<PushedParamInfo> results = new ArrayList<>();
+
+	private static final boolean PRINT_OPTYPE = false;
 
 	@Override
 	public void run() throws Exception {
@@ -134,8 +136,8 @@ public class PropagateExternalParametersScript extends GhidraScript {
 		for (Reference extRef : extRefs) {
 
 			Address refAddr = extRef.getFromAddress();
-
 			String refMnemonic = listing.getCodeUnitAt(refAddr).getMnemonicString();
+
 			Function calledFromFunc = listing.getFunctionContaining(refAddr);
 			if (calledFromFunc == null) {
 				continue;
@@ -147,8 +149,14 @@ public class PropagateExternalParametersScript extends GhidraScript {
 				while (tempIter.hasNext()) {
 					Reference thunkRef = tempIter.next();
 					Address thunkRefAddr = thunkRef.getFromAddress();
-					String thunkRefMnemonic =
-						listing.getCodeUnitAt(thunkRefAddr).getMnemonicString();
+
+					CodeUnit cu = listing.getCodeUnitAt(thunkRefAddr);
+					if (cu == null) {
+						// println("Referenced CodeUnit is null: " + thunkRefAddr);
+						continue;
+					}
+					String thunkRefMnemonic = cu.getMnemonicString();
+
 					Function thunkRefFunc = listing.getFunctionContaining(thunkRefAddr);
 					if ((thunkRefMnemonic.equals(new String("CALL")) && (thunkRefFunc != null))) {
 						CodeUnitIterator cuIt =
@@ -294,10 +302,18 @@ public class PropagateExternalParametersScript extends GhidraScript {
 					numSkips--;
 				}
 				else {
+
+					// if option is true add the value of the optype to the EOL comment
+					String opType = "";
+					if (PRINT_OPTYPE) {
+						opType = " " + toHexString(currentProgram.getListing()
+								.getInstructionAt(cu.getMinAddress())
+								.getOperandType(0),
+							false, true);
+					}
 					setEOLComment(cu.getMinAddress(), params[index].getDataType().getDisplayName() +
-						" " + params[index].getName() + " for " + extFuncName);
-					// add the following to the EOL comment to see the value of the optype
-					//	+" " + toHexString(currentProgram.getListing().getInstructionAt(cu.getMinAddress()).getOperandType(0), false, true)
+						" " + params[index].getName() + " for " + extFuncName + opType);
+
 					addResult(params[index].getName(), params[index].getDataType(),
 						cu.getMinAddress(), extFuncName);
 					index++;
