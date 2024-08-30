@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package docking.widgets.table.threaded;
 import static docking.widgets.table.AddRemoveListItem.Type.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
@@ -861,6 +862,17 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
+	 * Adds a consumer that will be notified when the model finishes loading. The consumer
+	 * is passed a boolean that indicates is true if the loading was cancelled. After the
+	 * table completes loading, the listener is removed.
+	 *
+	 * @param completedLoadingConsumer the consumer to be notified when the table is done loading
+	 */
+	public void addInitialLoadListener(Consumer<Boolean> completedLoadingConsumer) {
+		listeners.add(new OneTimeCompletedLoadingAdapter(completedLoadingConsumer));
+	}
+
+	/**
 	 * This is a way to know about updates from the table.
 	 *
 	 * @param listener the listener to add
@@ -1014,6 +1026,36 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			removeThreadedTableModelListener(this);
 			delegate.loadingFinished(wasCancelled);
 		}
+	}
+
+	/**
+	 * Class to adapt a {@link ThreadedTableModelListener} to a single use Consumer that gets
+	 * notified once when the table is done loading and then removes the threaded table model 
+	 * listener.
+	 */
+	private class OneTimeCompletedLoadingAdapter implements ThreadedTableModelListener {
+		private Consumer<Boolean> completedLoadingConsumer;
+
+		OneTimeCompletedLoadingAdapter(Consumer<Boolean> completedLoadingConsumer) {
+			this.completedLoadingConsumer = completedLoadingConsumer;
+		}
+
+		@Override
+		public void loadPending() {
+			// do nothing
+		}
+
+		@Override
+		public void loadingStarted() {
+			// do nothing
+		}
+
+		@Override
+		public void loadingFinished(boolean wasCancelled) {
+			removeThreadedTableModelListener(this);
+			completedLoadingConsumer.accept(wasCancelled);
+		}
+
 	}
 
 }

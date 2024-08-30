@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -235,10 +235,14 @@ public class DockableHeader extends GenericHeader
 		Component firstComponent = policy.getFirstComponent(dockComp);
 		if (firstComponent == null) {
 			ComponentPlaceholder info = dockComp.getComponentWindowingPlaceholder();
+			String title = "";
+			if (info != null) {
+				title = ": Title: " + info.getTitle() + "";
+			}
 			Msg.debug(this,
-				"Found a ComponentProvider that does not contain a " + "focusable component: " +
-					info.getTitle() + ".  ComponentProviders are " +
-					"required to have at least one focusable component!");
+				"Found a Component Provider that does not contain a focusable component" +
+					title +
+					". Component Providers are required to have at least one focusable component!");
 			setSelected(false); // can't select it can't take focus
 		}
 	}

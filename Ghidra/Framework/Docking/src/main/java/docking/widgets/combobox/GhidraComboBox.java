@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import ghidra.util.exception.AssertException;
  *
  * <p>
  * 2) Adds the auto-completion feature. As a user types in the field, the combo box suggest the
- * nearest matching entry in the combo box model.
+ * nearest matching entry in the combo box model. This is enabled by default.
  *
  * <p>
  * It also fixes the following bug:
@@ -70,6 +70,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	private PassThroughActionListener passThroughActionListener;
 	private PassThroughKeyListener passThroughKeyListener;
 	private PassThroughDocumentListener passThroughDocumentListener;
+	private DocumentListener documentListener;
 
 	/**
 	 * Default constructor.
@@ -344,6 +345,21 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		else {
 			super.requestFocus();
 		}
+
+	}
+
+	/**
+	 * This enables or disables auto completion. When on, the combobox will attempt to auto-fill
+	 * the input text box with drop-down items that start with the text entered. This behavior
+	 * may not be desirable when the drop-down list is more than just a list of previously typed
+	 * strings. Auto completion is on by default.
+	 * @param enable if true, auto completion is on, otherwise it is off.
+	 */
+	public void setAutoCompleteEnabled(boolean enable) {
+		removeDocumentListener(documentListener);
+		if (enable) {
+			addDocumentListener(documentListener);
+		}
 	}
 
 	private String matchHistory(String input) {
@@ -397,8 +413,8 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		if (getRenderer() instanceof JComponent) {
 			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
 		}
-		// add our internal listener to with all the others that the pass through listener will call
-		addDocumentListener(new MatchingItemsDocumentListener());
+		documentListener = new MatchingItemsDocumentListener();
+		addDocumentListener(documentListener);
 
 	}
 
@@ -422,7 +438,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		textField.getDocument().addDocumentListener(passThroughDocumentListener);
 	}
 
-	private JTextField getTextField() {
+	public JTextField getTextField() {
 		Object object = getEditor().getEditorComponent();
 		if (object instanceof JTextField textField) {
 			return textField;
