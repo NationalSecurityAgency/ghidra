@@ -37,7 +37,8 @@ public class OmfFileHeader extends OmfRecord {
 	private List<OmfSegmentHeader> segments = new ArrayList<>();
 	private List<OmfGroupRecord> groups = new ArrayList<>();
 	private List<OmfExternalSymbol> externsymbols = new ArrayList<>();
-	private List<OmfSymbolRecord> symbols = new ArrayList<>();
+	private List<OmfSymbolRecord> publicSymbols = new ArrayList<>();
+	private List<OmfSymbolRecord> localSymbols = new ArrayList<>();
 	private List<OmfFixupRecord> fixup = new ArrayList<>();
 	private List<OmfSegmentHeader> extraSeg = null;    // Holds implied segments that don't have official header record
 	//	private OmfModuleEnd endModule = null;
@@ -128,10 +129,17 @@ public class OmfFileHeader extends OmfRecord {
 	}
 
 	/**
-	 * @return the list of symbols exported by this file
+	 * @return the list of public symbols exported by this file
 	 */
 	public List<OmfSymbolRecord> getPublicSymbols() {
-		return symbols;
+		return publicSymbols;
+	}
+
+	/**
+	 * @return the list of local symbols in this file
+	 */
+	public List<OmfSymbolRecord> getLocalSymbols() {
+		return localSymbols;
 	}
 
 	/**
@@ -371,7 +379,12 @@ public class OmfFileHeader extends OmfRecord {
 				header.externsymbols.add(external);
 			}
 			else if (record instanceof OmfSymbolRecord symbol) {
-				header.symbols.add(symbol);
+				if (symbol.isStatic()) {
+					header.localSymbols.add(symbol);
+				}
+				else {
+					header.publicSymbols.add(symbol);
+				}
 			}
 			else if (record instanceof OmfNamesRecord names) {
 				names.appendNames(header.nameList); // Keep names, otherwise don't save record
