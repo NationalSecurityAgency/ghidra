@@ -1212,6 +1212,10 @@ YmmReg2_m256: m256      is m256                              { export m256; }
 ZmmReg2_m512: ZmmReg2   is mod=3 & ZmmReg2                   { export ZmmReg2; }
 ZmmReg2_m512: m512      is m512                              { export m512; }
 
+# used to extend ZmmReg2 if not assigning to m128
+XmmReg2_m128_extend: XmmReg2 is mod=3 & XmmReg2 & ZmmReg2 { ZmmReg2 = zext(XmmReg2); }
+XmmReg2_m128_extend: XmmReg2 is mod & XmmReg2 { }
+
 m32bcst64:  m32 is m32 { local tmp:4 = m32; BCST8[0,32] = tmp; BCST8[32,32] = tmp; export BCST8; }
 m32bcst128: m32 is m32 { local tmp:4 = m32; BCST16[0,32] = tmp; BCST16[32,32] = tmp; BCST16[64,32] = tmp; BCST16[96,32] = tmp; export BCST16; }
 m32bcst256: m32 is m32 {
