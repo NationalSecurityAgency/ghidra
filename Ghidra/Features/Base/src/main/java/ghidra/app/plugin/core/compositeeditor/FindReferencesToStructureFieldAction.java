@@ -70,7 +70,7 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		setEnabled(false);
-		if (!hasIncompleteFieldEntry()) {
+		if (hasIncompleteFieldEntry()) {
 			return false;
 		}
 		if (model.getSelectedComponentRows().length != 1) {
