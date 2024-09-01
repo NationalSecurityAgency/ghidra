@@ -176,7 +176,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 	@Test
 	public void testNoShowPendingWhileLoading() throws Exception {
 		//
-		// Tests that the the pending panel is not shown while we are in the middle of an 
+		// Tests that the pending panel is not shown while we are in the middle of an 
 		// incremental load.  In non-incremental models this is not an issue, as the model 
 		// itself will not send out pending events while a load is taking place (the data is 
 		// just added to the current load process).  However, in the incremental case, the model's

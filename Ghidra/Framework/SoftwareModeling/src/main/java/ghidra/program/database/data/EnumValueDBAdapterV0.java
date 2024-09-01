@@ -36,7 +36,7 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	/**
 	 * Gets a version 0 adapter for the Enumeration Data Type Values database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	EnumValueDBAdapterV0(DBHandle handle) throws VersionException {

@@ -293,7 +293,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 	/**
 	 * Gets the default range of the given {@link DyldCacheMappingAndSlideInfo}
 	 * 
-	 * @param mappingInfo The {@link DyldCacheMappingAndSlideInfo} to the the range of
+	 * @param mappingInfo The {@link DyldCacheMappingAndSlideInfo} to the range of
 	 * @return The default range of the given {@link DyldCacheMappingAndSlideInfo}
 	 */
 	private RangeSet<Long> getRangeSet(DyldCacheMappingAndSlideInfo mappingInfo) {

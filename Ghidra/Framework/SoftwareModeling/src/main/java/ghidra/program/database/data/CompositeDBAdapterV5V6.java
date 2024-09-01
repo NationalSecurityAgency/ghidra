@@ -71,7 +71,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	 * @param handle handle to the database containing the table.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
 	 * @param tablePrefix prefix to be used with default table name
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if IO error occurs
 	 */

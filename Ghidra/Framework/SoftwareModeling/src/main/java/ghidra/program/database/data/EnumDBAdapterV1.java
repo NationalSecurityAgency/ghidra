@@ -54,7 +54,7 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	 * @param handle handle to the database containing the table.
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException an IO error occured during table creation
 	 */

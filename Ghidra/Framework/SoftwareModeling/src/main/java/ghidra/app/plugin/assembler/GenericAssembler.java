@@ -76,7 +76,7 @@ public interface GenericAssembler<RP extends AssemblyResolvedPatterns> {
 	 * @param line the textual assembly code
 	 * @return the binary machine code, suitable for placement at the given address
 	 * @throws AssemblySyntaxException the textual instruction is not well-formed
-	 * @throws AssemblySemanticException the the well-formed instruction cannot be assembled
+	 * @throws AssemblySemanticException the well-formed instruction cannot be assembled
 	 */
 	public byte[] assembleLine(Address at, String line)
 			throws AssemblySyntaxException, AssemblySemanticException;

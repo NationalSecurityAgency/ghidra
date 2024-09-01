@@ -43,7 +43,7 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	 * @param handle handle to the database containing the table.
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param create create table if true else acquire for read-only or update use
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if there is trouble accessing the database.
 	 */

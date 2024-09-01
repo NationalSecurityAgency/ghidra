@@ -25,7 +25,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * Implementation for a snapshot of the the byte viewer's current view.
+ * Implementation for a snapshot of the byte viewer's current view.
  */
 class ByteViewerState {
 

@@ -27,7 +27,7 @@ import ghidra.program.util.ProgramLocation;
 public abstract class MarkerDescriptor {
 
 	/**
-	 * Called when the navigation bar to the right of the window is clicked to allow the the 
+	 * Called when the navigation bar to the right of the window is clicked to allow the 
 	 * creator of a Marker an opportunity to provide a more specific ProgramLocation for
 	 * navigation. If null is specified, the client will navigate to the corresponding address.
 	 * @param loc the marker location

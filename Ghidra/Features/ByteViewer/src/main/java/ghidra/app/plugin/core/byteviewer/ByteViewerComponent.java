@@ -411,8 +411,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Get the the color of unsaved byte changes
-	 * @return the the color of unsaved byte changes
+	 * Get the color of unsaved byte changes
+	 * @return the color of unsaved byte changes
 	 */
 	Color getEditColor() {
 		return editColor;

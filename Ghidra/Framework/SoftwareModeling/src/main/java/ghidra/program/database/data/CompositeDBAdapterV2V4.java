@@ -66,7 +66,7 @@ class CompositeDBAdapterV2V4 extends CompositeDBAdapter implements RecordTransla
 	/**
 	 * Gets a read-only adapter for the Composite database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	CompositeDBAdapterV2V4(DBHandle handle) throws VersionException {

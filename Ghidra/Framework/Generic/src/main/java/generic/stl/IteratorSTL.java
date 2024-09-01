@@ -38,7 +38,7 @@ public interface IteratorSTL<T> {
 	/**
 	 * Advances the iterator to the next position.
 	 * @return a reference to the iterator itself
-	 * @throws IndexOutOfBoundsException if the the iterator is already past the last element.
+	 * @throws IndexOutOfBoundsException if the iterator is already past the last element.
 	 */
 	IteratorSTL<T> increment();
 

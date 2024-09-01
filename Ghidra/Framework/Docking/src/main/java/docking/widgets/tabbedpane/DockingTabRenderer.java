@@ -240,7 +240,7 @@ public class DockingTabRenderer extends JPanel {
 	/**
 	 * A class to handle mouse events specifically for BasicTabbedPaneUI$TabContainer, which does
 	 * not forward mouse events on to the tabbed pane.  When using custom tab renderers, which 
-	 * we are, tabbed panes that are larger than the the renderer will not get mouse events that
+	 * we are, tabbed panes that are larger than the renderer will not get mouse events that
 	 * are over the tab, but not the renderer.
 	 */
 	private class TabContainerForwardingMouseListener extends MouseAdapter {

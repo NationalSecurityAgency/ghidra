@@ -47,7 +47,7 @@ public interface GraphDisplay {
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
 	 * the {@link GraphDisplayListener#locationFocusChanged(AttributedVertex)}. For example, if we
-	 * are updating the the location due to an event from the main application, we don't want to
+	 * are updating the location due to an event from the main application, we don't want to
 	 * notify the application the graph changed to avoid event cycles. See {@link EventTrigger} for
 	 * more information.
 	 */
@@ -73,7 +73,7 @@ public interface GraphDisplay {
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
 	 * the {@link GraphDisplayListener#selectionChanged(Set)}. For example, if we are updating
-	 * the the location due to an event from the main application, we don't want to notify the
+	 * the location due to an event from the main application, we don't want to notify the
 	 * application the graph changed to avoid event cycles. See {@link EventTrigger} for more
 	 * information.
 	 */
