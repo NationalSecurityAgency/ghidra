@@ -49,11 +49,11 @@ import utilities.util.FileUtilities;
  * Note: {@link GhidraBundle}, its implementations, and this class constitute a bridge between 
  * OSGi's {@link Bundle} and Ghidra.
  * <ul>
- * <li> unqualified, "bundle" will mean {@link GhidraBundle}
+ * <li> unqualified, "bundle" will mean {@link GhidraBundle}</li>
  * <li> use of OSGi types, including {@link Bundle} and {@link Framework}, should be package scoped 
- * (not public)  
+ * (not public) </li>
  * <li> bundle lifecycle is simplified to "active"(same as OSGi "active" state) and "inactive" 
- * (OSGi "uninstalled" state)
+ * (OSGi "uninstalled" state)</li>
  * </ul>
  */
 public class BundleHost {

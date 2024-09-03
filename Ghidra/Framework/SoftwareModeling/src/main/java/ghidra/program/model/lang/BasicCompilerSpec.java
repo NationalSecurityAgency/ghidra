@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -582,7 +582,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	/**
-	 * Initialize this object from an XML stream.  A single \<compiler_spec> tag is expected.
+	 * Initialize this object from an XML stream.  A single {@code <compiler_spec>} tag is expected.
 	 * @param parser is the XML stream
 	 * @throws XmlParseException for badly formed XML
 	 * @throws DuplicateNameException if we parse more than one PrototypeModel with the same name

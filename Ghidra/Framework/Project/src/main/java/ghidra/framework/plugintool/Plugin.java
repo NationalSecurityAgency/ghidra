@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,15 +40,17 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <p>
  * <h2>Well formed Plugins:</h2>
  * <UL>
- * 	<LI>Derive from <code>Plugin</code> (directly or indirectly).
- * 	<LI>Class name ends with "Plugin" and does not match any other Plugin, regardless of
- * 	its location in the package tree.
- * 	<LI>Have a {@link PluginInfo @PluginInfo()} annotation.
- * 	<LI>Have a constructor with exactly 1 parameter: PluginTool.
- * 		<UL>
- *  			<LI><code>public MyPlugin(PluginTool tool) { ... }</code>
- *  		</UL>
- *  	<LI>Usually overrides <code>protected void init()</code>.
+ *   <LI>Derive from <code>Plugin</code> (directly or indirectly).</LI>
+ *   <LI>Class name ends with "Plugin" and does not match any other Plugin, regardless of its 
+ *       location in the package tree.</LI>
+ *   <LI>Have a {@link PluginInfo @PluginInfo()} annotation.</LI>
+ *   <LI>Have a constructor with exactly 1 parameter: PluginTool.</LI>
+ *   <LI>
+ *     <UL>
+ *       <LI><code>public MyPlugin(PluginTool tool) { ... }</code></LI>
+ *     </UL>
+ *   </LI>
+ *   <LI>Usually overrides <code>protected void init()</code>.</LI>
  * </UL>
  * <h2>Class naming</h2>
  * All Plugin Classes <b>MUST END IN</b> "Plugin".  If not, the ClassSearcher will not find them.
@@ -58,50 +60,60 @@ import ghidra.util.classfinder.ExtensionPoint;
  *
  * <h2>Plugin Life cycle</h2>
  * <OL>
- * 	<LI>Your Plugin's constructor is called
- * 		<OL>
- * 			<LI>Plugin base class constructor is called.
- * 				<OL>
- * 					<LI>Services listed in the @PluginInfo annotation are automatically added
- * 					to dependency list
- * 				</OL>
- * 			<LI>Your Plugin publishes any services listed in PluginInfo using
- * 			{@link Plugin#registerServiceProvided(Class, Object) registerServiceProvided()}.
- * 			(required)
- *  			<LI>Create Actions (optional)
- *  			<LI>Register {@link ghidra.framework.options.Options Options} with the
- * {@link PluginTool#getOptions(String)}. (optional)<br>
- * 		</OL>
- * 	<LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
+ *   <LI>Your Plugin's constructor is called</LI>
+ *   <LI>
+ *     <OL>
+ *       <LI>Plugin base class constructor is called.</LI>
+ *       <LI>
+ *         <OL>
+ *           <LI>Services listed in the @PluginInfo annotation are automatically added to dependency 
+ *               list</LI>
+ *         </OL>
+ *       </LI>
+ *       <LI>Your Plugin publishes any services listed in PluginInfo using
+ *           {@link Plugin#registerServiceProvided(Class, Object) registerServiceProvided()}.
+ *           (required)</LI>
+ *       <LI>Create Actions (optional)</LI>
+ *       <LI>Register {@link ghidra.framework.options.Options Options} with the
+ *           {@link PluginTool#getOptions(String)}. (optional)</LI><br>
+ *     </OL>
+ *  </LI>
+ *  <LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
  * 	If your dependencies are not available (i.e., not installed, threw an exception during their
  *	initialization, etc), your Plugin's {@link #dispose()} will be called and then your Plugin
- *	instance will be discarded.<br>
- *	<LI>Your Plugin's {@link #init()} method is called (when its dependencies are met).
- * 		<OL>
- * 			<LI>Call {@link PluginTool#getService(Class)} to get service
- * 			implementations. (the service class being requested should already be
- * 			listed in the @PluginInfo)
- * 			<LI>Create Actions (optional)
- * 			<LI>Other initialization stuff.
- * 		</OL>
- *	<LI>Your Plugin's {@link #readConfigState(SaveState)} is called.
- * 	<LI>...user uses Ghidra...
- * 		<UL>
- * 			<LI>Your Plugin's {@link #processEvent(PluginEvent)} is called for events.
- * 			<LI>Your Plugin's Action's methods (i.e.,
- * 			{@link DockingAction#actionPerformed(docking.ActionContext) actionPerformed}) are
- * 			called.
- * 			<LI>Your Plugin's published service methods are called by other Plugins.
- * 			<LI>Your Plugin's listener methods are called.
- * 		</UL>
- * 	<LI>Plugin is unloaded due to shutdown of the Tool or being disabled by user
- * 		<OL>
- *			<LI>Your Plugin's {@link #writeConfigState(SaveState)} is called - override this
- *			method to write configuration info into the Tool definition.
- * 			<LI>Your Plugin's {@link #dispose()} is called - override this method to free
- * 			any resources and perform any needed cleanup.
- * 			<LI>Your Plugin's services and events are de-registered automatically.
- * 		</OL>
+ *	instance will be discarded.</LI><br>
+ *  <LI>Your Plugin's {@link #init()} method is called (when its dependencies are met).</LI>
+ *  <LI>
+ *    <OL>
+ *      <LI>Call {@link PluginTool#getService(Class)} to get service
+ *          implementations. (the service class being requested should already be
+ *          listed in the @PluginInfo)</LI>
+ *       <LI>Create Actions (optional)</LI>
+ *       <LI>Other initialization stuff.</LI>
+ *    </OL>
+ *  </LI>
+ *  <LI>Your Plugin's {@link #readConfigState(SaveState)} is called.</LI>
+ *  <LI>...user uses Ghidra...</LI>
+ * 	<LI>
+ *    <UL>
+ *      <LI>Your Plugin's {@link #processEvent(PluginEvent)} is called for events.</LI>
+ *      <LI>Your Plugin's Action's methods (i.e.,
+ *          {@link DockingAction#actionPerformed(docking.ActionContext) actionPerformed}) are
+ *          called.</LI>
+ *      <LI>Your Plugin's published service methods are called by other Plugins.</LI>
+ *      <LI>Your Plugin's listener methods are called.</LI>
+ *    </UL>
+ *  </LI>
+ * 	<LI>Plugin is unloaded due to shutdown of the Tool or being disabled by user</LI>
+ * 	<LI>
+ *    <OL>
+ *      <LI>Your Plugin's {@link #writeConfigState(SaveState)} is called - override this
+ *          method to write configuration info into the Tool definition.</LI>
+ *      <LI>Your Plugin's {@link #dispose()} is called - override this method to free
+ *          any resources and perform any needed cleanup.</LI>
+ *      <LI>Your Plugin's services and events are de-registered automatically.</LI>
+ *    </OL>
+ *   </LI>
  * </OL>
  *
  * <h2>Plugin Service dependency</h2>
@@ -164,26 +176,26 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <h2>Plugin Events</h2>
  * <UL>
  * 	<LI>Every type of plugin event should be represented by some class extending
- *  {@link PluginEvent}.
+ *  {@link PluginEvent}.</LI>
  *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some
- *  natural grouping.
+ *  natural grouping.</LI>
  * </UL>
  *
  * <h2>Component Providers</h2>
  * <UL>
  *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when
- *  the plugin is added to the tool.
+ *  the plugin is added to the tool.</LI>
  * </UL>
  *
  * <h2>Important interfaces Plugins often need to implement</h2>
  * <UL>
  * 	<LI>{@link OptionsChangeListener} - to receive notification when a configuration option
- * 	is changed by the user.
+ * 	is changed by the user.</LI>
  * 	<LI>{@link ApplicationLevelPlugin} - marks this Plugin as being suitable for inclusion in the
- * 		application-level tool.
+ * 		application-level tool.</LI>
  * 	<LI>{@link ApplicationLevelOnlyPlugin} - marks this Plugin as application-level only, not
- * 		usable in an application's sub-tools.
- * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.
+ * 		usable in an application's sub-tools.</LI>
+ * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.</LI>
  * </UL>
  *
  */

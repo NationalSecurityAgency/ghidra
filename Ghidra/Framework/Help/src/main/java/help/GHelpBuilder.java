@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,9 +37,9 @@ import help.validator.location.HelpModuleCollection;
  * Note: Help links must not be absolute.  They can be relative, including <code>. and ..</code>
  * syntax.  Further, they can use the special help system syntax, which is:
  * <ul>
- * 	<li><code><b>help/topics/</b>topicName/Filename.html</code> for referencing help topic files
+ * 	<li><code><b>help/topics/</b>topicName/Filename.html</code> for referencing help topic files</li>
  *  <li><code><b>help/</b>shared/image.png</code> for referencing image files at paths rooted under
- *                                            the module's root help dir
+ *                                            the module's root help dir</li>
  * </ul>
  */
 public class GHelpBuilder {

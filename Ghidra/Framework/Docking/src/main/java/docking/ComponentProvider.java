@@ -49,17 +49,17 @@ import utilities.util.reflection.ReflectionUtilities;
  * <p>
  * This also provides several useful convenience methods:
  * <ul>
- *  <li>{@link #addLocalAction(DockingActionIf)}
- *  <li>{@link #addToTool()}
- *  <li>{@link #setVisible(boolean)}
- *  <li>{@link #setTitle(String)}
- *  <li>{@link #setIcon(Icon)}
+ *  <li>{@link #addLocalAction(DockingActionIf)}</li>
+ *  <li>{@link #addToTool()}</li>
+ *  <li>{@link #setVisible(boolean)}</li>
+ *  <li>{@link #setTitle(String)}</li>
+ *  <li>{@link #setIcon(Icon)}</li>
  * </ul>
  * <p>
  * There are a handful of stub methods that can be overridden as desired:
  * <ul>
- *  <li>{@link #componentActivated()} and {@link #componentDeactived()}
- *  <li>{@link #componentHidden()} and {@link #componentShown()}
+ *  <li>{@link #componentActivated()} and {@link #componentDeactived()}</li>
+ *  <li>{@link #componentHidden()} and {@link #componentShown()}</li>
  * </ul>
  *
  * <p>

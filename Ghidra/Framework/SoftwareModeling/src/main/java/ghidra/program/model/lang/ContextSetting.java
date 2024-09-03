@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,11 +47,11 @@ public final class ContextSetting {
 	}
 
 	/**
-	 * Construct from an XML \<set> tag.  The tag is a child of either \<context_set> or \<tracked_set>
-	 * which provides details of the memory range affected.
+	 * Construct from an XML {@code <set>} tag.  The tag is a child of either {@code <context_set>}
+	 * or {@code <tracked_set>} which provides details of the memory range affected.
 	 * @param el is the XML tag
 	 * @param cspec is used to lookup register names present in the tag
-	 * @param isContextReg is true for a \<context_set> parent, false for a \<tracked_set> parent
+	 * @param isContextReg is true for a {@code <context_set>} parent, false for a {@code <tracked_set>} parent
 	 * @param first is the first Address in the affected memory range
 	 * @param last is the last Address in the affected memory range
 	 */

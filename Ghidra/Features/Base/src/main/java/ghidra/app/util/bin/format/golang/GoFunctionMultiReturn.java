@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,10 +30,10 @@ import ghidra.program.model.lang.Register;
  * <p>
  * Assigning custom storage for the return value is complicated by:
  * <ul>
- *  <li>golang storage allocations depend on the formal ordering of the return values
- * 	<li>stack storage must be last in a list of varnodes
+ *  <li>golang storage allocations depend on the formal ordering of the return values</li>
+ * 	<li>stack storage must be last in a list of varnodes</li>
  * 	<li>the decompiler maps a structure's contents to the list of varnodes in an endian-dependent
- * 	manner.
+ * 	manner.</li>
  * </ul>
  * To meet these complications, the structure's layout is modified to put all items that were
  * marked as being stack parameters to either the front or back of the structure.

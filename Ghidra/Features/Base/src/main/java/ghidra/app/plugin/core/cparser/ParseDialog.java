@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,9 +58,9 @@ import resources.Icons;
  * Dialog that shows files used for parsing C header files. The profile has a list of source header
  * files to parse, followed by parse options (compiler directives). Ghidra supplies a Windows
  * profile by default in core/parserprofiles. The user can do "save as" on this default profile to
- * create new profiles that will be written to the user's <home>/userprofiles directory. The
+ * create new profiles that will be written to the user's {@code <home>/userprofiles} directory. The
  * CParserPlugin creates this directory if it doesn't exist.
- *
+ * <p>
  * The data types resulting from the parse operation can either be added to the data type manager in
  * the current program, or written to an archive data file.
  *
