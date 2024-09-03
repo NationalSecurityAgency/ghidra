@@ -695,7 +695,10 @@ public:
 class TypeOpFloatInt2Float : public TypeOpFunc {
 public:
   TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatInt2Float(op); }
+  static const PcodeOp *absorbZext(const PcodeOp *op);
+  static int4 preferredZextSize(int4 inSize);
 };
 
 /// \brief Information about the FLOAT_FLOAT2FLOAT op-code

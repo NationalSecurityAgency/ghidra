@@ -70,7 +70,8 @@ class SubvariableFlow {
       compare_patch,		///< Turn compare op inputs into logical values
       parameter_patch,		///< Convert a CALL/CALLIND/RETURN/BRANCHIND parameter into logical value
       extension_patch,		///< Convert op into something that copies/extends logical value, adding zero bits
-      push_patch		///< Convert an operator output to the logical value
+      push_patch,		///< Convert an operator output to the logical value
+      int2float_patch		///< Zero extend logical value into FLOAT_INT2FLOAT operator
     };
     patchtype type;		///< The type of \b this patch
     PcodeOp *patchOp;		///< Op being affected
@@ -101,6 +102,7 @@ class SubvariableFlow {
   bool tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn);
   bool trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn);
+  bool tryInt2FloatPull(PcodeOp *op,ReplaceVarnode *rvn);
   bool traceForward(ReplaceVarnode *rvn);	///< Trace the logical data-flow forward for the given subgraph variable
   bool traceBackward(ReplaceVarnode *rvn);	///< Trace the logical data-flow backward for the given subgraph variable
   bool traceForwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow forward assuming sign-extensions
