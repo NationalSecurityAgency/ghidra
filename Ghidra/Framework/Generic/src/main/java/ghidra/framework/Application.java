@@ -44,7 +44,7 @@ import utility.module.ModuleUtilities;
  * <pre>
  *   ApplicationLayout layout = new GhidraApplicationLayout();
  *   ApplicationConfiguration configuration = new GhidraApplicationConfiguration();
- *   Application.initalizeApplication(layout, configuration);
+ *   Application.initializeApplication(layout, configuration);
  * </pre>
  */
 public class Application {
