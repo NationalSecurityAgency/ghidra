@@ -16,6 +16,7 @@
 package ghidra.features.base.memsearch.gui;
 
 import java.awt.*;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,7 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
+import docking.util.GGlassPaneMessage;
 import generic.theme.GIcon;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
@@ -99,6 +101,9 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	private MemorySearchOptions options;
 	private SearchGuiModel model;
 	private boolean isPrivate = false;
+
+	// used to show a temporary message over the table
+	private GGlassPaneMessage glassPaneMessage;
 
 	public MemorySearchProvider(MemorySearchPlugin plugin, Navigatable navigatable,
 			SearchSettings settings, MemorySearchOptions options, SearchHistory history) {
@@ -355,9 +360,9 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		setBusy(false);
 		updateSubTitle();
 		if (!cancelled && terminatedEarly) {
-			Msg.showInfo(getClass(), resultsPanel, "Search Limit Exceeded!",
-				"Stopped search after finding " + options.getSearchLimit() + " matches.\n" +
-					"The search limit can be changed at Edit->Tool Options, under Search.");
+			showAlert("Search Limit Exceeded!\n\nStopped search after finding " +
+				options.getSearchLimit() + " matches.\n" +
+				"The search limit can be changed at Edit \u2192 Tool Options, under Search.");
 
 		}
 		else if (!foundResults) {
@@ -545,6 +550,8 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	}
 
 	private void dispose() {
+		glassPaneMessage.hide();
+		glassPaneMessage = null;
 		matchHighlighter.dispose();
 		USED_IDS.remove(id);
 		if (navigatable != null) {
@@ -638,18 +645,24 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		return byteMatcher.getDescription();
 	}
 
-	void showAlert(String alertMessage) {
-		// replace with water mark concept
-		Toolkit.getDefaultToolkit().beep();
-		Msg.showInfo(this, null, "Search Results", alertMessage);
-	}
-
 	@Override
 	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
 		ActionContext context = new NavigatableActionContext(this, navigatable);
 		context.setContextObject(contextObject);
 		context.setSourceComponent(sourceComponent);
 		return context;
+	}
+
+	private void showAlert(String message) {
+		Toolkit.getDefaultToolkit().beep();
+
+		if (glassPaneMessage == null) {
+			GhidraTable table = resultsPanel.getTable();
+			glassPaneMessage = new GGlassPaneMessage(table);
+			glassPaneMessage.setHideDelay(Duration.ofSeconds(3));
+		}
+
+		glassPaneMessage.showCenteredMessage(message);
 	}
 
 }
