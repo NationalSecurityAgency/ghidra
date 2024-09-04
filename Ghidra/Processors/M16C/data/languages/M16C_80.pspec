@@ -288,7 +288,7 @@
     <symbol name="WATCHDOG_TIMER_INT_VECTOR" address="RAM:FFFFF0" entry="true" type="code_ptr"/>
     <symbol name="NOT_DBC_INT_VECTOR" address="RAM:FFFFF4" entry="true" type="code_ptr"/>
     <symbol name="NOT_NMI_INT_VECTOR" address="RAM:FFFFF8" entry="true" type="code_ptr"/>
-    <symbol name="RESET_INT_VECTOR" address="RAM:FFFFFC" eentry="true" type="code_ptr"/>
+    <symbol name="RESET_INT_VECTOR" address="RAM:FFFFFC" entry="true" type="code_ptr"/>
   </default_symbols>
   <default_memory_blocks>
     <memory_block name="SFR" start_address="RAM:0000" mode="rw" length="0x03FF" initialized="false"/>
