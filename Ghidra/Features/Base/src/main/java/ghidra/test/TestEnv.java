@@ -362,7 +362,7 @@ public class TestEnv {
 	 * @param ghidraClass The class of the dialog the user desires
 	 * @param maxTimeMS The max amount of time in milliseconds to wait for the requested dialog
 	 *        to appear.
-	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
+	 * @return The first occurrence of a dialog that extends the given <code>ghidraClass</code>
 	 * @deprecated use instead {@link AbstractDockingTest#waitForDialogComponent(Class)}
 	 */
 	@Deprecated
