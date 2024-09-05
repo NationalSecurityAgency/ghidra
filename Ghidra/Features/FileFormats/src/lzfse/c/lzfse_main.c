@@ -60,7 +60,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 // Same as realloc(x,s), except x is freed when realloc fails
 static inline void *lzfse_reallocf(void *x, size_t s) {
   void *y = realloc(x, s);
-  if (y == 0) {
+  if (y == NULL) {
     free(x);
     return 0;
   }
