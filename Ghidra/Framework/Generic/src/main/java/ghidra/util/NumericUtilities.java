@@ -33,6 +33,8 @@ public final class NumericUtilities {
 
 	private final static String HEX_PREFIX_X = "0X";
 	private final static String HEX_PREFIX_x = "0x";
+	private final static String BIN_PREFIX = "0B";
+	private final static String OCT_PREFIX = "0";
 
 	private final static Set<Class<? extends Number>> INTEGER_TYPES = new HashSet<>();
 	static {
@@ -233,6 +235,49 @@ public final class NumericUtilities {
 			s = "-" + s;
 		}
 		return new BigInteger(s, 16);
+	}
+
+	private static BigInteger decodeMagnitude(int p, String s) {
+		// Special case, so it doesn't get chewed by octal parser
+		if ("0".equals(s)) {
+			return BigInteger.ZERO;
+		}
+		if (s.regionMatches(true, p, HEX_PREFIX_X, 0, HEX_PREFIX_X.length())) {
+			return new BigInteger(s.substring(p + HEX_PREFIX_X.length()), 16);
+		}
+		if (s.regionMatches(true, p, BIN_PREFIX, 0, BIN_PREFIX.length())) {
+			return new BigInteger(s.substring(p + BIN_PREFIX.length()), 2);
+		}
+		// Check last, because prefix is shortest.
+		if (s.regionMatches(true, p, OCT_PREFIX, 0, OCT_PREFIX.length())) {
+			return new BigInteger(s.substring(p + OCT_PREFIX.length()), 8);
+		}
+		return new BigInteger(s.substring(p), 10);
+	}
+
+	/**
+	 * Decode a big integer in hex, binary, octal, or decimal, based on the prefix 0x, 0b, or 0.
+	 * 
+	 * <p>
+	 * This checks for the presence of a case-insensitive prefix. 0x denotes hex, 0b denotes binary,
+	 * 0 denotes octal. If no prefix is given, decimal is assumed. A sign +/- may immediately
+	 * precede the prefix. If no sign is given, a positive value is assumed.
+	 * 
+	 * @param s the string to parse
+	 * @return the decoded value
+	 */
+	public static BigInteger decodeBigInteger(String s) {
+		int p = 0;
+		boolean negative = false;
+		if (s.startsWith("+")) {
+			p = 1;
+		}
+		else if (s.startsWith("-")) {
+			p = 1;
+			negative = true;
+		}
+		BigInteger mag = decodeMagnitude(p, s);
+		return negative ? mag.negate() : mag;
 	}
 
 	/**
