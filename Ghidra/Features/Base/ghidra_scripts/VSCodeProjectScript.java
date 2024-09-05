@@ -65,7 +65,7 @@ public class VSCodeProjectScript extends GhidraScript {
 		writeSettings(installDir, projectDir, classpathSourceMap);
 		writeLaunch(installDir, projectDir, classpathSourceMap);
 		writeSampleScriptJava(projectDir);
-		writeSampleScriptPyhidra(projectDir);
+		writeSampleScriptPyGhidra(projectDir);
 		writeSampleModule(installDir, projectDir);
 
 		println("Successfully created VSCode project directory at: " + projectDir);
@@ -228,13 +228,13 @@ public class VSCodeProjectScript extends GhidraScript {
 		FileUtils.writeStringToFile(scriptFile, sampleScript, StandardCharsets.UTF_8);
 	}
 	
-	private void writeSampleScriptPyhidra(File projectDir) throws IOException {
+	private void writeSampleScriptPyGhidra(File projectDir) throws IOException {
 		File scriptsDir = new File(projectDir, "ghidra_scripts");
 		File scriptFile = new File(scriptsDir, "sample_script.py");
 		String sampleScript = """
-				# Sample Pyhidra GhidraScript
+				# Sample PyGhidra GhidraScript
 				# @category Examples
-				# @runtime Pyhidra
+				# @runtime PyGhidra
 
 				from java.util import LinkedList
 				java_list = LinkedList([1,2,3])

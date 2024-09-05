@@ -53,8 +53,8 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 			Map.entry("java.math.BigDecimal", "decimal.Decimal")));
 
 	// FIXME: list and set aren't automatically converted to java.util.List and java.util.Set :(
-	// if wanted they could be setup to be converted automatically by pyhidra
-	// however, when passed as a parameter and modified, the original underlyng python container
+	// if wanted they could be setup to be converted automatically by PyGhidra
+	// however, when passed as a parameter and modified, the original underlying python container
 	// wouldn't be modified. To make it work as expected, a python implementation for
 	// java.util.List and java.util.Set would need to be created using jpype.JImplements,
 	// that would wrap the list/set before passing it to Java instead of copying the contents
