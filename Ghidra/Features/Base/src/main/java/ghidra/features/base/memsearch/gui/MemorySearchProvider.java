@@ -550,13 +550,19 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 	}
 
 	private void dispose() {
-		glassPaneMessage.hide();
-		glassPaneMessage = null;
+		if (glassPaneMessage != null) {
+			glassPaneMessage.hide();
+			glassPaneMessage = null;
+		}
+
 		matchHighlighter.dispose();
+
 		USED_IDS.remove(id);
+
 		if (navigatable != null) {
 			navigatable.removeNavigatableListener(this);
 		}
+
 		resultsPanel.dispose();
 		tool.removeContextListener(this);
 		program.removeCloseListener(this);
