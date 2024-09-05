@@ -655,7 +655,7 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 			if (tb != null) {
 				if (traceManager != null && traceManager.getOpenTraces().contains(tb.trace)) {
-					traceManager.closeTrace(tb.trace);
+					traceManager.closeTraceNoConfirm(tb.trace);
 				}
 				tb.close();
 			}
