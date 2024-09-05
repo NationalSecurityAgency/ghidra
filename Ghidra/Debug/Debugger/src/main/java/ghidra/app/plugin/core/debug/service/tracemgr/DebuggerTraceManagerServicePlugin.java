@@ -984,16 +984,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			navigationHistoryService.clear(trace.getProgramView());
 		}
 		synchronized (listenersByTrace) {
-			trace.release(this);
 			lastCoordsByTrace.remove(trace);
 			trace.removeListener(listenersByTrace.remove(trace));
 			//Msg.debug(this, "Remaining Consumers of " + trace + ": " + trace.getConsumerList());
 		}
-		if (current.getTrace() == trace) {
-			activate(DebuggerCoordinates.NOWHERE, ActivationCause.ACTIVATE_DEFAULT);
+		try {
+			if (current.getTrace() == trace) {
+				activate(DebuggerCoordinates.NOWHERE, ActivationCause.ACTIVATE_DEFAULT);
+			}
+			else {
+				contextChanged();
+			}
 		}
-		else {
-			contextChanged();
+		finally {
+			trace.release(this);
 		}
 	}
 
