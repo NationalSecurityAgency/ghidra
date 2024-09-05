@@ -43,6 +43,7 @@ import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.timer.GTimer;
+import ghidra.util.timer.GTimerMonitor;
 
 /**
  * Internal panel of the memory search window that manages the controls for the search feature. This
@@ -62,8 +63,10 @@ class MemorySearchControlPanel extends JPanel {
 	private List<ButtonState<Combiner>> initialSearchButtonStates;
 	private List<ButtonState<Combiner>> combinerSearchButtonStates;
 	private JComboBox<SearchFormat> formatComboBox;
+
 	private PopupWindow popup;
 	private String errorMessage;
+	private GTimerMonitor clearInputMonitor;
 
 	MemorySearchControlPanel(MemorySearchProvider provider, SearchGuiModel model,
 			SearchHistory history) {
@@ -296,7 +299,7 @@ class MemorySearchControlPanel extends JPanel {
 		if (errorMessage == null) {
 			return;
 		}
-		errorMessage = null;
+
 		DockingUtils.setTipWindowEnabled(false);
 
 		Point location = searchInputField.getLocation();
@@ -305,13 +308,15 @@ class MemorySearchControlPanel extends JPanel {
 
 		JToolTip tip = new JToolTip();
 		tip.setTipText(errorMessage);
+		errorMessage = null;
 
 		if (popup != null) {
 			popup.dispose();
+			clearInputMonitor.cancel();
 		}
 		popup = new PopupWindow(tip);
-		popup.showPopup(searchInputField, location, true);
-		GTimer.scheduleRunnable(1500, this::clearInputError);
+		popup.showPopup(searchInputField.getParent(), location, true);
+		clearInputMonitor = GTimer.scheduleRunnable(2000, this::clearInputError);
 		Toolkit.getDefaultToolkit().beep();
 	}
 
@@ -321,6 +326,9 @@ class MemorySearchControlPanel extends JPanel {
 		PopupWindow.hideAllWindows();
 		if (popup != null) {
 			popup.dispose();
+			popup = null;
+			clearInputMonitor.cancel();
+			clearInputMonitor = null;
 		}
 	}
 
