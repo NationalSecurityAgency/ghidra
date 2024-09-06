@@ -625,9 +625,7 @@ class EnumEditorPanel extends JPanel {
 		};
 
 		private record CellEditRequest(EnumEditorPanel editorPanel, EnumEntry editedEntry,
-				int editCol,
-				KeyEvent e)
-				implements Runnable {
+				int editCol, KeyEvent e) implements Runnable {
 
 			@Override
 			public void run() {
@@ -696,9 +694,9 @@ class EnumEditorPanel extends JPanel {
 						nextRow = rowCount - 1;
 						nextCol = columnCount - 1;
 					}
-
-					editorPanel.edit(nextRow, nextCol);
 				}
+
+				editorPanel.edit(nextRow, nextCol);
 			}
 
 		}
