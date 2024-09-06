@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -264,7 +264,18 @@ public class PopupWindow {
 	 * Shows this popup window unless popups are disabled as reported by 
 	 * {@link DockingUtils#isTipWindowEnabled()}.  If {@code forceShow} is true, then the popup 
 	 * will be shown regardless of the state returned by {@link DockingUtils#isTipWindowEnabled()}.
-	 * @param component the component for the popup
+	 * <P>
+	 * Note: the component passed in is the component to which the {@code location} the location 
+	 * belongs.   In the example below, the component used to get the location is to the component
+	 * passed to this method.  This is because the location is relative to the parent's coordinate
+	 * space.  Thus, when calling this method, make sure to use the correct component.
+	 * <PRE>
+	 * Point location = textField.getLocation(); // this is relative to the text field's parent
+	 * Component parent = textField.getParent();
+	 * PopupWindow.showPopup(parent, location, true);
+	 * </PRE>
+	 * 
+	 * @param component the component whose coordinate space the location belongs
 	 * @param location the location to show the popup
 	 * @param forceShow true to show the popup even popups are disabled application-wide
 	 */
@@ -395,14 +406,14 @@ public class PopupWindow {
 
 			Rectangle newArea = new Rectangle(keepVisibleAea);
 			Point point = newArea.getLocation();
-			SwingUtilities.convertPointToScreen(point, source.getParent());
+			SwingUtilities.convertPointToScreen(point, source);
 			newArea.setLocation(point);
 			return newArea;
 		}
 
 		// for debug
 		private void installDebugPainter(Rectangle keepVisibleArea) {
-//
+
 //			GGlassPane glassPane = GGlassPane.getGlassPane(source);
 //			for (GGlassPanePainter p : painters) {
 //				glassPane.removePainter(p);
@@ -439,7 +450,8 @@ public class PopupWindow {
 				// show where the user hovered
 				if (location != null) {
 					Point p = new Point(location);
-					p = SwingUtilities.convertPoint(source.getParent(), p.x, p.y, glassPane);
+					p = SwingUtilities.convertPoint(source, p.x, p.y, glassPane);
+
 					g.setColor(Palette.RED.withAlpha(alpha));
 					int offset = 10;
 					g.fillRect(p.x - offset, p.y - offset, (offset * 2), (offset * 2));
