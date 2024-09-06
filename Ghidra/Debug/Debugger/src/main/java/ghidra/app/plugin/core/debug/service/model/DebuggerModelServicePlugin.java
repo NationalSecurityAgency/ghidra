@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerModelService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
@@ -380,10 +381,17 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected void removeRecorder(TraceRecorder recorder) {
 		synchronized (recordersByTarget) {
 			TraceRecorder old = recordersByTarget.remove(recorder.getTarget());
-			if (old != recorder) {
-				throw new AssertionError("Container-recorder mix up");
+			/**
+			 * Possible race condition when quickly launching and stopping a recording. If it's
+			 * already removed, that's actually fine. If we get something non-null that doesn't
+			 * match, then yeah, something's truly gone wrong.
+			 */
+			if (old != null) {
+				if (old != recorder) {
+					throw new AssertionError("Container-recorder mix up");
+				}
+				old.removeListener(listenerOnRecorders);
 			}
-			old.removeListener(listenerOnRecorders);
 		}
 		recorderListeners.invoke().elementRemoved(recorder);
 	}

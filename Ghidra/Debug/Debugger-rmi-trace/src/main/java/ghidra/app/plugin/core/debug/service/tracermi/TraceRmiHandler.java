@@ -188,6 +188,18 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					.collect(Collectors.toUnmodifiableList());
 		}
 
+		/**
+		 * Call only for cleanup. Cannot be re-used after this
+		 * 
+		 * @return the open traces that were removed
+		 */
+		public synchronized List<OpenTrace> clearAll() {
+			List<OpenTrace> all = List.copyOf(byId.values());
+			byId.clear();
+			byTrace.clear();
+			return all;
+		}
+
 		public CompletableFuture<OpenTrace> getFirstAsync() {
 			return first;
 		}
@@ -273,14 +285,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		terminateTerminals();
 
 		socket.close();
-		while (!openTxes.isEmpty()) {
-			Tid nextKey = openTxes.keySet().iterator().next();
-			OpenTx open = openTxes.remove(nextKey);
-			open.tx.close();
+		synchronized (openTxes) {
+			while (!openTxes.isEmpty()) {
+				Tid nextKey = openTxes.keySet().iterator().next();
+				OpenTx open = openTxes.remove(nextKey);
+				open.tx.close();
+			}
 		}
-		while (!openTraces.isEmpty()) {
-			DoId nextKey = openTraces.idSet().iterator().next();
-			OpenTrace open = openTraces.removeById(nextKey);
+
+		for (OpenTrace open : openTraces.clearAll()) {
 			if (traceManager == null || traceManager.isSaveTracesByDefault()) {
 				try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
 					open.trace.save("Save on Disconnect", monitor);
@@ -610,7 +623,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected Tid requireAvailableTid(Tid tid) {
-		OpenTx tx = openTxes.get(tid);
+		OpenTx tx;
+		synchronized (openTxes) {
+			tx = openTxes.get(tid);
+		}
 		if (tx != null) {
 			throw new TxIdInUseError();
 		}
@@ -946,7 +962,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected ReplyEndTx handleEndTx(RequestEndTx req) {
-		OpenTx tx = openTxes.remove(new Tid(new DoId(req.getOid()), req.getTxid().getId()));
+		OpenTx tx;
+		synchronized (openTxes) {
+			tx = openTxes.remove(new Tid(new DoId(req.getOid()), req.getTxid().getId()));
+		}
 		if (tx == null) {
 			throw new InvalidTxIdError(req.getTxid().getId());
 		}
@@ -1159,7 +1178,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		@SuppressWarnings("resource")
 		OpenTx tx =
 			new OpenTx(tid, open.trace.openTransaction(req.getDescription()), req.getUndoable());
-		openTxes.put(tx.txId, tx);
+		synchronized (openTxes) {
+			openTxes.put(tx.txId, tx);
+		}
 		return ReplyStartTx.getDefaultInstance();
 	}
 
