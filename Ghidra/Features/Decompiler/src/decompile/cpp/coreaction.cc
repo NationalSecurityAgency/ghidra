@@ -4410,12 +4410,8 @@ int4 ActionSwitchNorm::apply(Funcdata &data)
   for(int4 i=0;i<data.numJumpTables();++i) {
     JumpTable *jt = data.getJumpTable(i);
     if (!jt->isLabelled()) {
-      if (jt->recoverLabels(&data)) { // Recover case statement labels
-	// If this returns true, the jumptable was not fully recovered during flow analysis
-	// So we need to issue a restart
-	data.getOverride().insertMultistageJump(jt->getOpAddress());
-	data.setRestartPending(true);
-      }
+      jt->matchModel(&data);
+      jt->recoverLabels(&data);	// Recover case statement labels
       jt->foldInNormalization(&data);
       count += 1;
     }

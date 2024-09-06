@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -528,13 +528,10 @@ JumpTable::RecoveryMode Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt
   try {
     jt->setLoadCollect(flow->doesJumpRecord());
     jt->setIndirectOp(partop);
-    if (jt->getStage()>0)
+    if (jt->isPartial())
       jt->recoverMultistage(&partial);
     else
       jt->recoverAddresses(&partial); // Analyze partial to recover jumptable addresses
-  }
-  catch(JumptableNotReachableError &err) {	// Thrown by recoverAddresses
-    return JumpTable::fail_noflow;
   }
   catch(JumptableThunkError &err) {		// Thrown by recoverAddresses
     return JumpTable::fail_thunk;
@@ -645,7 +642,7 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
   jt = linkJumpTable(op);		// Search for pre-existing jumptable
   if (jt != (JumpTable *)0) {
     if (!jt->isOverride()) {
-      if (jt->getStage() != 1)
+      if (!jt->isPartial())
 	return jt;		// Previously calculated jumptable (NOT an override and NOT incomplete)
     }
     mode = stageJumpTable(partial,jt,op,flow); // Recover based on override information

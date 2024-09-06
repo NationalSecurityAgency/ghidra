@@ -73,6 +73,8 @@ src/decompile/datatests/stackstring.xml||GHIDRA||||END|
 src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
 src/decompile/datatests/switchhide.xml||GHIDRA||||END|
 src/decompile/datatests/switchind.xml||GHIDRA||||END|
+src/decompile/datatests/switchloop.xml||GHIDRA||||END|
+src/decompile/datatests/switchmulti.xml||GHIDRA||||END|
 src/decompile/datatests/switchreturn.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
 src/decompile/datatests/twodim.xml||GHIDRA||||END|

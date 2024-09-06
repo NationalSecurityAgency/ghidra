@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,11 +40,6 @@ extern ElementId ELEM_STARTVAL;		///< Marshaling element \<startval>
 /// \brief Exception thrown for a thunk mechanism that looks like a jump-table
 struct JumptableThunkError : public LowlevelError {
   JumptableThunkError(const string &s) : LowlevelError(s) {}	///< Construct with an explanatory string
-};
-
-/// \brief Exception thrown is there are no legal flows to a switch
-struct JumptableNotReachableError : public LowlevelError {
-  JumptableNotReachableError(const string &s) : LowlevelError(s) {}	///< Constructor
 };
 
 /// \brief A description where and how data was loaded from memory
@@ -547,9 +542,8 @@ public:
     success = 0,		///< JumpTable is fully recovered
     fail_normal = 1,		///< Normal failure to recover
     fail_thunk = 2,		///< Likely \b thunk
-    fail_noflow = 3,		///< No legal flow to BRANCHIND
-    fail_return = 4,  		///< Likely \b return operation
-    fail_callother = 5		///< Address formed by CALLOTHER
+    fail_return = 3,  		///< Likely \b return operation
+    fail_callother = 4		///< Address formed by CALLOTHER
   };
 private:
   /// \brief An address table index and its corresponding out-edge
@@ -575,9 +569,12 @@ private:
   uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
   uint4 maxleftright;		///< Maximum shifts to normalize
   uint4 maxext;			///< Maximum extensions to normalize
-  int4 recoverystage;		///< 0=no stages recovered, 1=additional stage needed, 2=complete
+  bool partialTable;		///< Set to \b true if \b this table is incomplete and needs additional recovery steps
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
   bool defaultIsFolded;		///< The \e default block is the target of a folded CBRANCH (and cannot have a label)
+  void saveModel(void);		///< Save off current model (if any) and prepare for instantiating a new model
+  void restoreSavedModel(void);	///< Restore any saved model as the current model
+  void clearSavedModel(void);	///< Clear any saved model
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
   void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
@@ -590,8 +587,8 @@ public:
   bool isRecovered(void) const { return !addresstable.empty(); }	///< Return \b true if a model has been recovered
   bool isLabelled(void) const { return !label.empty(); }		///< Return \b true if \e case labels are computed
   bool isOverride(void) const;				///< Return \b true if \b this table was manually overridden
-  bool isPossibleMultistage(void) const { return (addresstable.size()==1); }	///< Return \b true if this could be multi-staged
-  int4 getStage(void) const { return recoverystage; }	///< Return what stage of recovery this jump-table is in.
+  bool isPartial(void) const { return partialTable; }	///< Return \b true if \b this is a partial table needing more recovery
+  void markComplete(void) { partialTable = false; }	///< Mark whatever is recovered so far as the complete table
   int4 numEntries(void) const { return addresstable.size(); }	///< Return the size of the address table for \b this jump-table
   uintb getSwitchVarConsume(void) const { return switchVarConsume; }	///< Get bits of switch variable consumed by \b this table
   int4 getDefaultBlock(void) const { return defaultBlock; }	///< Get the out-edge corresponding to the \e default switch destination
@@ -616,7 +613,8 @@ public:
   bool foldInGuards(Funcdata *fd) { return jmodel->foldInGuards(fd,this); }	///< Hide any guard code for \b this switch
   void recoverAddresses(Funcdata *fd);		///< Recover the raw jump-table addresses (the address table)
   void recoverMultistage(Funcdata *fd);		///< Recover jump-table addresses keeping track of a possible previous stage
-  bool recoverLabels(Funcdata *fd);		///< Recover the case labels for \b this jump-table
+  void matchModel(Funcdata *fd);		///< Try to match JumpTable model to the existing function
+  void recoverLabels(Funcdata *fd);		///< Recover the case labels for \b this jump-table
   bool checkForMultistage(Funcdata *fd);	///< Check if this jump-table requires an additional recovery stage
   void clear(void);				///< Clear instance specific data for \b this jump-table
   void encode(Encoder &encoder) const;		///< Encode \b this jump-table as a \<jumptable> element
