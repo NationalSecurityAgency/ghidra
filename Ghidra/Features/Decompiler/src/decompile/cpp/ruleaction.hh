@@ -811,6 +811,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  static Varnode *shortenExtension(PcodeOp *extOp,int4 maxSize,Funcdata &data);
   static bool cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *ext0In,Varnode *ext1In,Funcdata &data);
 };
 class RuleConcatCommute : public Rule {

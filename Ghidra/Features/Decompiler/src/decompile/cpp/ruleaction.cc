@@ -4129,6 +4129,24 @@ void RuleSubCommute::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_SUBPIECE);
 }
 
+/// \brief Shrink the output of an extension to the given size
+///
+/// The output of either a INT_ZEXT or INT_SEXT is replaced with a smaller/truncated Varnode.
+/// \param extOp is the INT_ZEXT or INT_SEXT
+/// \param maxSize is the given size to shrink the output to
+/// \param data is the function owning the extension
+/// \return the new smaller Varnode
+Varnode *RuleSubCommute::shortenExtension(PcodeOp *extOp,int4 maxSize,Funcdata &data)
+
+{
+  Varnode *origOut = extOp->getOut();
+  Address addr = origOut->getAddr();
+  if (addr.isBigEndian())
+    addr = addr + (origOut->getSize() - maxSize);
+  data.opUnsetOutput(extOp);
+  return data.newVarnodeOut(maxSize, addr, extOp);
+}
+
 /// \brief Eliminate input extensions on given binary PcodeOp
 ///
 /// Make some basic checks.  Replace the input and output Varnodes with smaller sizes.
@@ -4141,13 +4159,28 @@ void RuleSubCommute::getOpList(vector<uint4> &oplist) const
 bool RuleSubCommute::cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *ext0In,Varnode *ext1In,Funcdata &data)
 
 {
-  if (ext0In->getSize() != ext1In->getSize()) return false;	// Sizes must match
-  if (ext0In->isFree()) return false;		// Must be able to propagate inputs
-  if (ext1In->isFree()) return false;
+  int4 maxSize;
   Varnode *outvn = longform->getOut();
   if (outvn->loneDescend() != subOp) return false;	// Must be exactly one output to SUBPIECE
+  if (ext0In->getSize() == ext1In->getSize()) {
+    maxSize = ext0In->getSize();
+    if (ext0In->isFree()) return false;		// Must be able to propagate inputs
+    if (ext1In->isFree()) return false;
+  }
+  else if (ext0In->getSize() < ext1In->getSize()) {
+    maxSize = ext1In->getSize();
+    if (ext1In->isFree()) return false;
+    if (longform->getIn(0)->loneDescend() != longform) return false;
+    ext0In = shortenExtension(longform->getIn(0)->getDef(), maxSize, data);
+  }
+  else {
+    maxSize = ext0In->getSize();
+    if (ext0In->isFree()) return false;
+    if (longform->getIn(1)->loneDescend() != longform) return false;
+    ext1In = shortenExtension(longform->getIn(1)->getDef(), maxSize, data);
+  }
   data.opUnsetOutput(longform);
-  outvn = data.newUniqueOut(ext0In->getSize(),longform);	// Create truncated form of longform output
+  outvn = data.newUniqueOut(maxSize,longform);	// Create truncated form of longform output
   data.opSetInput(longform,ext0In,0);
   data.opSetInput(longform,ext1In,1);
   data.opSetInput(subOp,outvn,0);
