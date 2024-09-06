@@ -406,22 +406,16 @@ public class StackEditorModel extends CompositeEditorModel {
 		if (columnIndex == LENGTH) {
 			return false;
 		}
-		if ((rowIndex < 0) || (rowIndex >= getRowCount())) {
+		if (rowIndex < 0 || rowIndex >= getRowCount()) {
+			return false;
+		}
+		if (columnIndex < 0 || columnIndex >= getColumnCount()) {
 			return false;
 		}
 		DataTypeComponent dtc = stackDt.getComponent(rowIndex);
 		if (dtc == null) {
 			return false;
 		}
-//		if (columnIndex != NAME) {
-//			int offset = dtc.getOffset();
-//			if (!hasCustomParameterStorage && originalStack.isParameterOffset(offset)) {
-//				return false;
-//			}
-//		}
-//		if (dtc.getDataType() instanceof StackPieceDataType) {
-//			return false;
-//		}
 		boolean notDefined = (stackDt.getDefinedComponentAtOrdinal(rowIndex) == null);
 		return !(notDefined && (columnIndex == OFFSET));
 	}

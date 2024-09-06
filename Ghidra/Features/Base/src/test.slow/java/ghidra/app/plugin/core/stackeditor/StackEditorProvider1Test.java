@@ -140,6 +140,29 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 	}
 
 	@Test
+	public void testEditUsingArrowKeys() throws Exception {
+
+		init(SIMPLE_STACK);
+
+		int row = 1;
+		int column = model.getNameColumn();
+		clickTableCell(getTable(), row, column, 1);
+		assertColumn(column);
+		performAction(editFieldAction, provider, true);
+
+		// change name
+		JTextField tf = getCellEditorTextField();
+		setText(tf, tf.getText() + "change");
+
+		downArrow(tf);
+		assertRow(row + 1);
+		assertColumn(column);
+
+		assertIsEditingField(row + 1, column);
+		escape();
+	}
+
+	@Test
 	public void testDeleteAssociatedFunction() throws Exception {
 		Window dialog;
 		// Create the stack frame @ 00000200.
