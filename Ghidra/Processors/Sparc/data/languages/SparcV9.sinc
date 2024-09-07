@@ -351,7 +351,13 @@ RS2: rs2  is rs2              { export rs2; }
 #For the destination operand RD, we export a temporary varnode with value 0.
 #This is because writes to g0 are allowed, but they have no visible effect (see the Sparc manual).
 #This way the value of g0 won't appear to change when using the pcode emulator.
+#
 RD: rd  is rd & rd_zero=0 { local tmp:$(SIZE) = 0; export tmp; }
+# didrestore is picked up by call instruction only
+# this will cause any instruction that assigns to the o7 return address register
+# in the delay slot of a call instruction to turn the call into a call/return
+#
+RD: rd  is rd & rd_d=15   { didrestore = 1; export rd; }
 RD: rd  is rd             { export rd; }
 
 regorimm: RS2       is i=0 & RS2    { export RS2; }
@@ -990,8 +996,14 @@ sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE)
 
 # special case where link register is loaded with return address; functions as indirect call
 :jmpl    retea,RD                    is op=0x2 & RD & prd=15 & op3=0x38 & retea { build retea; RD = inst_start; delayslot(1); call [retea]; }
+:jmpl    retea                       is op=0x2 & rd=0 &        op3=0x38 & retea { build retea; delayslot(1);  goto [retea]; }
 
-:jmpl    retea                       is op=0x2 & rd=0 & op3=0x38 & retea { build retea; delayslot(1);  goto [retea]; }
+# special case: when returning a structure, some software inserts unimpl <struct size> instruction after every caller
+#               jumps to linkRegister(o7)+12, instead of normal linkregister(o7)+8
+:jmpl    retea                       is op=0x2 & rd=0 & rs1=31 & op3=0x38 & i=1 & simm13=12 & retea { build retea; delayslot(1);  return [retea]; }
+:jmpl    retea                       is op=0x2 & rd=0 & rs1=15 & op3=0x38 & i=1 & simm13=12 & retea { build retea; delayslot(1);  return [retea]; }
+
+# really jmpl instruction using linkRegister(o7)+8
 :ret                                 is op=0x2 & rd=0 & rs1=31 & op3=0x38 & i=1 & simm13=8 & retea   { build retea; delayslot(1); return [retea]; }
 :retl                                is op=0x2 & rd=0 & rs1=15 & op3=0x38 & i=1 & simm13=8 & retea   { build retea; delayslot(1); return [retea]; }
 

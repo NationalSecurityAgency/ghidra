@@ -11,5 +11,5 @@ data/languages/SparcV9_64.cspec||GHIDRA||||END|
 data/languages/SparcV9_64.slaspec||GHIDRA||||END|
 data/languages/SparcVIS.sinc||GHIDRA||||END|
 data/manuals/Sparc.idx||GHIDRA||reviewed||END|
-data/patterns/SPARC_patterns.xml||GHIDRA||reviewed||END|
+data/patterns/SPARC_patterns.xml||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|

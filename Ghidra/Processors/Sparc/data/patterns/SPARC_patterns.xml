@@ -32,4 +32,19 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
+  
+  <pattern>
+     <data> 0x81 0xc3 0xe0 0x08 0xae 0x03 0xc0 0x17 </data> <!-- retl ;  _add o7,l7,l7 -->
+     <funcstart label="__sparc_get_pc_thunk.l7" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0x81 0xc3 0xe0 0x08 0x82 0x03 0xc0 0x01 </data> <!-- retl ;  _add o7,g1,g1 -->
+     <funcstart label="__sparc_get_pc_thunk.g1" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0x81 0xc3 0xe0 0x08 0x90 0x02 0x00 0x0f </data> <!-- retl ;  _add o0,o7,o0 -->
+     <funcstart label="__sparc_get_pc_thunk.o0" validcode="function"/>
+  </pattern>
  </patternlist>
