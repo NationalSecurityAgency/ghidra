@@ -28,17 +28,17 @@ import ghidra.features.bsim.query.description.*;
 
 /**
  * This is the SQL table "desctable", which holds one row for each function ingested into the database.
- * A row (DescriptionRow) consists of basic meta-data about the function: name, address, executable
+ * A row (DescriptionRow) consists of basic meta-data about the function: name, spaceid, address, executable
  */
 public class DescriptionTable extends SQLComplexTable {
 
 	//@formatter:off
 	private static final String INSERT_STMT =
-		"INSERT INTO desctable (id,name_func,id_exe,id_signature,flags,addr) VALUES(DEFAULT,?,?,?,?,?)";
+		"INSERT INTO desctable (id,name_func,id_exe,id_signature,flags,spaceid,addr) VALUES(DEFAULT,?,?,?,?,?,?)";
 	private static final String SELECT_BY_SIGNATURE_ID_STMT =
 		"SELECT ALL * FROM  desctable WHERE id_signature = "; // used as simple Statement w/ appended param
 	private static final String SELECT_BY_FUNC_NAMEADDR_STMT =
-		"SELECT ALL * FROM  desctable WHERE name_func = ? AND addr = ? AND id_exe = ?";
+		"SELECT ALL * FROM  desctable WHERE name_func = ? AND spaceid = ? AND addr = ? AND id_exe = ?";
 	private static final String SELECT_BY_FUNC_NAME_STMT =
 		"SELECT ALL * FROM  desctable WHERE name_func = ? AND id_exe = ?";
 	//@formatter:on
@@ -48,6 +48,7 @@ public class DescriptionTable extends SQLComplexTable {
 		public String func_name;		// Name of the function
 		public long id_exe;				// Row id of the executable (within exetable) containing function
 		public long id_sig;				// Row id of the feature vector (within vectortable) describing function
+		public int spaceid;				// The Address Space ID of the function
 		public long addr;				// The (starting) address of the function
 		public int flags;				// bit vector describing tags that are active for this function
 	}
@@ -85,9 +86,9 @@ public class DescriptionTable extends SQLComplexTable {
 	@Override
 	public void create(Statement st) throws SQLException {
 		st.executeUpdate("CREATE TABLE  desctable" +
-			" (id BIGSERIAL PRIMARY KEY,name_func TEXT,id_exe INTEGER,id_signature BIGINT,flags INTEGER,addr BIGINT)");
+			" (id BIGSERIAL PRIMARY KEY,name_func TEXT,id_exe INTEGER,id_signature BIGINT,flags INTEGER,spaceid INTEGER,addr BIGINT)");
 		st.executeUpdate("CREATE INDEX sigindex ON desctable (id_signature)");
-		st.executeUpdate("CREATE INDEX exefuncindex ON desctable (id_exe,name_func,addr)");
+		st.executeUpdate("CREATE INDEX exefuncindex ON desctable (id_exe,name_func,spaceid,addr)");
 	}
 
 	@Override
@@ -197,7 +198,7 @@ public class DescriptionTable extends SQLComplexTable {
 	public static FunctionDescription convertDescriptionRow(DescriptionRow descRow,
 		ExecutableRecord exeRecord, DescriptionManager descManager, SignatureRecord sigRecord) {
 		FunctionDescription fres =
-			descManager.newFunctionDescription(descRow.func_name, descRow.addr, exeRecord);
+			descManager.newFunctionDescription(descRow.func_name, descRow.spaceid, descRow.addr, exeRecord);
 		descManager.setFunctionDescriptionId(fres, new RowKeySQL(descRow.rowid));
 		descManager.setFunctionDescriptionFlags(fres, descRow.flags);
 		descManager.setSignatureId(fres, descRow.id_sig);
@@ -220,7 +221,9 @@ public class DescriptionTable extends SQLComplexTable {
 		descRow.id_exe = resultSet.getInt(3);
 		descRow.id_sig = resultSet.getLong(4);
 		descRow.flags = resultSet.getInt(5);
-		descRow.addr = resultSet.getLong(6);
+		descRow.spaceid = resultSet.getInt(6);
+		descRow.addr = resultSet.getLong(7);
+
 	}
 
 	/**
@@ -279,7 +282,8 @@ public class DescriptionTable extends SQLComplexTable {
 		s.setInt(2, (int) func.getExecutableRecord().getRowId().getLong());
 		s.setLong(3, vecid);
 		s.setInt(4, func.getFlags());
-		s.setLong(5, func.getAddress());
+		s.setInt(5, func.getSpaceID());
+		s.setLong(6, func.getAddress());
 		s.executeUpdate();
 
 		try (ResultSet rs = s.getGeneratedKeys()) {
@@ -340,7 +344,7 @@ public class DescriptionTable extends SQLComplexTable {
 			selectWithFilterWhereClause = whereClause;
 			StringBuffer buf = new StringBuffer();
 			buf.append(
-				"SELECT desctable.id,desctable.name_func,desctable.id_exe,desctable.id_signature,desctable.flags,desctable.addr FROM desctable");
+				"SELECT desctable.id,desctable.name_func,desctable.id_exe,desctable.id_signature,desctable.flags,desctable.spaceid,desctable.addr FROM desctable");
 			buf.append(tableClause);
 			buf.append(" WHERE desctable.id_signature = ? ");
 			buf.append(whereClause);
@@ -383,21 +387,23 @@ public class DescriptionTable extends SQLComplexTable {
 
 	/**
 	 * Query the description table for the row describing a single function.
-	 * A function is uniquely identified by: its name, address, and the executable it is in 
+	 * A function is uniquely identified by: its name, its address (address space + offset), and the executable it is in
 	 * @param executableId is the row id (of exetable) of the executable containing the function
 	 * @param functionName is the name of the function
-	 * @param functionAddress is the address of the function
+	 * @param spaceID is the address space ID of the function address
+	 * @param functionAddress is the address offset of the function
 	 * @return the corresponding row of the table, or null
 	 * @throws SQLException if there is an error creating or executing the query
 	 */
 	public DescriptionRow queryFuncNameAddr(long executableId, String functionName,
-		long functionAddress) throws SQLException {
+		int spaceID, long functionAddress) throws SQLException {
 		PreparedStatement s = selectByFuncAddrAndExeStatement
 			.prepareIfNeeded(() -> db.prepareStatement(SELECT_BY_FUNC_NAMEADDR_STMT));
 		s.setString(1, functionName);
-		s.setLong(2, functionAddress);
-		s.setInt(3, (int) executableId);
-		s.setFetchSize(3);	// Should only every be at most 1
+		s.setInt(2, spaceID);
+		s.setLong(3, functionAddress);
+		s.setInt(4, (int) executableId);
+		s.setFetchSize(4);	// Should only every be at most 1
 
 		DescriptionRow resultRow = null;
 		try (ResultSet rs = s.executeQuery()) {

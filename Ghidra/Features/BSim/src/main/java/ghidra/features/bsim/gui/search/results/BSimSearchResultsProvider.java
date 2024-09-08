@@ -53,6 +53,7 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -526,9 +527,12 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 					resultRow.getSimilarFunctionName() + ".");
 		}
 		FunctionDescription matchFunctionDescription = resultRow.getMatchFunctionDescription();
-		long matchOffset = matchFunctionDescription.getAddress();
-		Address matchEntryPoint =
-			matchProgram.getAddressFactory().getDefaultAddressSpace().getAddress(matchOffset);
+
+		AddressSpace space = program.getAddressFactory().getAddressSpace(matchFunctionDescription.getSpaceID());
+		if (space == null) {
+			space = program.getAddressFactory().getDefaultAddressSpace();
+		}
+		Address matchEntryPoint = space.getAddress(matchFunctionDescription.getAddress());
 		FunctionManager matchFunctionManager = matchProgram.getFunctionManager();
 		Function matchFunction = matchFunctionManager.getFunctionAt(matchEntryPoint);
 		if (matchFunction == null) {

@@ -158,7 +158,11 @@ public abstract class AbstractBSimApplyTask extends ProgramTask {
 
 		FunctionDescription matchDescription = result.getMatchFunctionDescription();
 		long addressOffset = matchDescription.getAddress();
-		AddressSpace space = remoteProgram.getAddressFactory().getDefaultAddressSpace();
+		int spaceid = matchDescription.getSpaceID();
+		AddressSpace space = remoteProgram.getAddressFactory().getAddressSpace(spaceid);
+		if (space == null) {
+			space = remoteProgram.getAddressFactory().getDefaultAddressSpace();
+		}
 		Address address = space.getAddress(addressOffset);
 		FunctionManager remoteFunctionManager = remoteProgram.getFunctionManager();
 		Function matchFunction = remoteFunctionManager.getFunctionAt(address);

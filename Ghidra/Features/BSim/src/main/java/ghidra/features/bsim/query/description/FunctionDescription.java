@@ -28,6 +28,7 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 	private final ExecutableRecord exerec;
 	private final String function_name; // Name of the function (unique within the executable)
 	private final long address; // Address offset of this function within its executable or -1 for a library function 
+	private final int spaceid; // ID of the address space that contains this function
 	private SignatureRecord sigrec;
 	private List<CallgraphEntry> callrec;
 	private RowKey id; // table id of this description
@@ -40,13 +41,14 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 		public boolean flags; // Do we update the flags
 	}
 
-	public FunctionDescription(ExecutableRecord ex, String name, long addr) {
+	public FunctionDescription(ExecutableRecord ex, String name, int space_id, long addr) {
 		exerec = ex;
 		function_name = name;
 		sigrec = null;
 		id = null;
 		vectorid = 0;
 		address = addr;
+		spaceid = space_id;
 		flags = 0;
 		callrec = null;
 	}
@@ -102,6 +104,10 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 		return address;
 	}
 
+	public int getSpaceID() {
+		return spaceid;
+	}
+
 	public int getFlags() {
 		return flags;
 	}
@@ -117,6 +123,10 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 		if (comp != 0) {
 			return false;
 		}
+		comp = Integer.compare(spaceid, o.spaceid);
+		if (comp != 0) {
+			return false;
+		}
 		comp = Long.compareUnsigned(address, o.address);
 		return (comp == 0);
 	}
@@ -126,6 +136,8 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 		int val = (int) (address >> 32) + exerec.hashCode();
 		val *= 151;
 		val ^= function_name.hashCode();
+		val *= 73;
+		val ^= spaceid;
 		val *= 13;
 		val ^= (int) address;
 		return val;
@@ -143,6 +155,10 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 			return comp;
 		}
 		comp = function_name.compareTo(o.function_name);
+		if (comp != 0) {
+			return comp;
+		}
+		comp = Integer.compare(spaceid, o.spaceid);
 		if (comp != 0) {
 			return comp;
 		}
@@ -186,6 +202,7 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 		fwrite.append("<fdesc name=\"");
 		SpecXmlUtils.xmlEscapeWriter(fwrite, function_name);
 		if (address != -1) {
+			fwrite.append("\" spaceid=\"").append(Integer.toString(spaceid));
 			fwrite.append("\" addr=\"0x").append(Long.toHexString(address));
 		}
 		if ((sigrec != null) && (sigrec.getCount() > 0)) {
@@ -230,16 +247,21 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 		int count = 0;
 		XmlElement el = parser.start("fdesc");
 		String fname = el.getAttribute("name");
+		String spaceidString = el.getAttribute("spaceid");
 		String addrString = el.getAttribute("addr");
 		String sigdupstr = el.getAttribute("sigdup");
 		long address = -1;			// Default value if no attribute present
+		int spaceid = 0;
 		if (addrString != null) {
 			address = SpecXmlUtils.decodeLong(addrString);
+		}
+		if (spaceidString != null) {
+			spaceid = SpecXmlUtils.decodeInt(spaceidString);
 		}
 		if (sigdupstr != null) {
 			count = SpecXmlUtils.decodeInt(sigdupstr);
 		}
-		FunctionDescription fdesc = man.newFunctionDescription(fname, address, erec);
+		FunctionDescription fdesc = man.newFunctionDescription(fname, spaceid, address, erec);
 		if (parser.peek().isStart()) {
 			if (parser.peek().getName().equals("lshcosine")) {
 				SignatureRecord.restoreXml(parser, vectorFactory, man, fdesc, count);
@@ -261,34 +283,41 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 	}
 
 	/**
-	 * Create a map from addresses to functions
+	 * Create a map from address space id's to maps of offsets to function descriptions
 	 * @param iter is the list of functions to map
 	 * @return the Map
 	 */
-	public static Map<Long, FunctionDescription> createAddressToFunctionMap(
+	public static Map<Integer, TreeMap<Long, FunctionDescription>> createAddressToFunctionMap(
 			Iterator<FunctionDescription> iter) {
-		TreeMap<Long, FunctionDescription> addrmap = new TreeMap<Long, FunctionDescription>();
+		TreeMap<Integer, TreeMap<Long, FunctionDescription>> spacemap = new TreeMap<>();
 		while (iter.hasNext()) {
 			FunctionDescription func = iter.next();
 			long addr = func.getAddress();
 			if (addr == -1) {
 				continue;
 			}
-			addrmap.put(addr, func);
+			Integer spaceid = (Integer)func.getSpaceID();
+			if (spacemap.containsKey(spaceid)) {
+				spacemap.get(spaceid).put(addr, func);
+			} else {
+				TreeMap<Long, FunctionDescription> addrmap = new TreeMap<Long, FunctionDescription>();
+				addrmap.put(addr,func);
+				spacemap.put(spaceid, addrmap);
+			}
 		}
-		return addrmap;
+		return spacemap;
 	}
 
 	/**
 	 * Match new functions to old functions via the address, test if there is an update between the two functions,
 	 * generate an update record if there is, return the list of updates
 	 * @param iter is the list of NEW functions
-	 * @param addrMap is a map from address to OLD functions
+	 * @param spacemap is a map from address space id's to addresses from that space to OLD functions
 	 * @param badList is a container for new functions that could not be mapped to old
 	 * @return the list of Update records
 	 */
 	public static List<Update> generateUpdates(Iterator<FunctionDescription> iter,
-			Map<Long, FunctionDescription> addrMap, List<FunctionDescription> badList) {
+			Map<Integer, TreeMap<Long, FunctionDescription>> spaceMap, List<FunctionDescription> badList) {
 		List<FunctionDescription.Update> updateList = new ArrayList<FunctionDescription.Update>();
 		Update curupdate = new Update();
 		while (iter.hasNext()) {
@@ -297,6 +326,11 @@ public class FunctionDescription implements Comparable<FunctionDescription> {
 			if (addr == -1) {
 				continue;
 			}
+			Integer spaceid = (Integer)newfunc.getSpaceID();
+			if(!spaceMap.containsKey(spaceid)) {
+				continue;
+			}
+			TreeMap<Long, FunctionDescription> addrMap = spaceMap.get(spaceid);
 			FunctionDescription oldfunc = addrMap.get(addr);
 			if (oldfunc == null) {
 				badList.add(newfunc); // Keep track of functions with update info which we couldn't find

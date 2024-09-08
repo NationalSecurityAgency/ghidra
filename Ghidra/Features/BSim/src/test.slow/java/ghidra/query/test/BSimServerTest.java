@@ -75,6 +75,7 @@ public class BSimServerTest {
 		return parser;
 	}
 
+
 	@BeforeClass
 	public static void setUp() throws Exception {
 		util = new BSimServerTestUtil();
@@ -196,8 +197,8 @@ public class BSimServerTest {
 			assertTrue(readRec.hasCategory("Test Category", "shared"));
 			// Comparing function "history_filename"
 			FunctionDescription bashFunc =
-				originalBash.findFunction("FUN_001cc840", 0x1cc840, bashRec);
-			FunctionDescription readFunc = manager.findFunction("FUN_00134a70", 0x134a70, readRec);
+				originalBash.findFunction("FUN_001cc840", 433, 0x1cc840, bashRec);
+			FunctionDescription readFunc = manager.findFunction("FUN_00134a70", 433, 0x134a70, readRec);
 			VectorCompare compareData = new VectorCompare();
 			double sig = bashFunc.getSignatureRecord()
 					.getLSHVector()
@@ -217,7 +218,7 @@ public class BSimServerTest {
 		while (iter.hasNext()) {
 			FunctionDescription func1 = iter.next();
 			FunctionDescription func2 =
-				manager2.findFunction(func1.getFunctionName(), func1.getAddress(), eRec2);
+				manager2.findFunction(func1.getFunctionName(), func1.getSpaceID(), func1.getAddress(), eRec2);
 			assertEquals(func1.getFlags(), func2.getFlags());
 			if (func1.getSignatureRecord() == null) {
 				assertTrue(func2.getSignatureRecord() == null);
@@ -553,7 +554,7 @@ public class BSimServerTest {
 		List<CategoryRecord> catrec = new ArrayList<>();
 		catrec.add(new CategoryRecord("Test Category", "SHARED!"));
 		update.manage.setExeCategories(exerec, catrec);
-		update.manage.newFunctionDescription("my_remove_history", 0x131c00, exerec);
+		update.manage.newFunctionDescription("my_remove_history", 433, 0x131c00, exerec);
 		ResponseUpdate respUpdate = update.execute(client);
 		testForError(respUpdate);
 		assertEquals(respUpdate.exeupdate, 1);
@@ -595,7 +596,7 @@ public class BSimServerTest {
 		catrec = new ArrayList<>();
 		catrec.add(new CategoryRecord("Test Category", "shared"));
 		update.manage.setExeCategories(exerec, catrec);
-		update.manage.newFunctionDescription("remove_history", 0x131c00, exerec);
+		update.manage.newFunctionDescription("remove_history", 433, 0x131c00, exerec);
 		testForError(update.execute(client));
 		if (util.isElasticSearch) {
 			Thread.sleep(2000);		// Give chance for refresh timer to expire

@@ -587,7 +587,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 				continue;
 			}
 			DescriptionRow row = descTable.queryFuncNameAddr(erec.getRowId().getLong(),
-				func.getFunctionName(), func.getAddress());
+				func.getFunctionName(), func.getSpaceID(), func.getAddress());
 			if (row == null) {
 				newfuncs = true;
 				continue;
@@ -714,14 +714,14 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			List<FunctionDescription> funclist = new ArrayList<FunctionDescription>();
 			queryAllFunc(funclist, erec_db, dbmanage, 0);
 
-			// Create a map from address to executables
-			Map<Long, FunctionDescription> addrmap =
+			// Create a map from address spaces, to address offsets, to executables
+			Map<Integer, TreeMap<Long, FunctionDescription>> spacemap =
 				FunctionDescription.createAddressToFunctionMap(funclist.iterator());
 
 			// Match new functions to old functions via the address
 			List<FunctionDescription.Update> updatelist;
 			updatelist =
-				FunctionDescription.generateUpdates(manage.listFunctions(erec), addrmap, badfunc);
+				FunctionDescription.generateUpdates(manage.listFunctions(erec), spacemap, badfunc);
 
 			if (!has_exe_update && updatelist.isEmpty()) {
 				return 0; // All updates are in place already
@@ -930,7 +930,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			throw new LSHException("Could not resolve filter specifying executable: " + exename);
 		}
 
-		DescriptionRow descRow = descTable.queryFuncNameAddr(row.rowid, functionname, -1);
+		DescriptionRow descRow = descTable.queryFuncNameAddr(row.rowid, functionname, 0, -1);
 		if (descRow == null) {
 			throw new LSHException(
 				"Could not resolve filter specifying function: [" + exename + "]" + functionname);
@@ -1441,16 +1441,17 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 	 * @param manager - container for record
 	 * @param erec - previously queried ExecutableRecord
 	 * @param funcname - name of function to query for
+	 * @param spaceid - id of the address space of the function
 	 * @param address - address of function to query for
 	 * @param sigs - true if signature of function should also be returned
 	 * @return the resulting FunctionDescription or null
 	 * @throws SQLException if there is an error issuing the query
 	 */
 	private FunctionDescription queryByNameAddress(DescriptionManager manager,
-			ExecutableRecord erec, String funcname, long address, boolean sigs)
+			ExecutableRecord erec, String funcname, int spaceid, long address, boolean sigs)
 			throws SQLException {
 		DescriptionRow row =
-			descTable.queryFuncNameAddr(erec.getRowId().getLong(), funcname, address);
+			descTable.queryFuncNameAddr(erec.getRowId().getLong(), funcname, spaceid, address);
 		FunctionDescription func = DescriptionTable.convertDescriptionRow(row, erec, manager, null);
 		if (sigs) {
 			queryAssociatedSignature(func, manager, null);
@@ -1693,7 +1694,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			}
 			else {
 				funcA = queryByNameAddress(resManage, erec, pairInput.funcA.funcName,
-					pairInput.funcA.address, true);
+					pairInput.funcA.spaceid, pairInput.funcA.address, true);
 				if (funcA == null) {
 					accumulator.missedFunc += 1;
 				}
@@ -1705,7 +1706,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			}
 			else {
 				funcB = queryByNameAddress(resManage, erec, pairInput.funcB.funcName,
-					pairInput.funcB.address, true);
+					pairInput.funcB.spaceid, pairInput.funcB.address, true);
 				if (funcB == null) {
 					accumulator.missedFunc += 1;
 				}
@@ -2078,7 +2079,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 		}
 		for (FunctionEntry entry : query.functionKeys) {
 			FunctionDescription func =
-				queryByNameAddress(response.manage, exe, entry.funcName, entry.address, true);
+				queryByNameAddress(response.manage, exe, entry.funcName, entry.spaceid, entry.address, true);
 			if (func == null) {
 				throw new LSHException("Could not find function: " + entry.funcName);
 			}

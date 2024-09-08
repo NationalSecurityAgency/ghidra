@@ -63,6 +63,7 @@ public class SimilarityNote implements Comparable<SimilarityNote> {
 		buf.append("<note");
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", func.getExecutableRecord().getXrefIndex());
 		SpecXmlUtils.xmlEscapeAttribute(buf, "name", func.getFunctionName());
+		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "spaceid", func.getSpaceID());
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "addr", func.getAddress());
 		buf.append(">\n");
 		buf.append(" <sim>").append(Double.toString(sim)).append("</sim>\n");
@@ -75,8 +76,9 @@ public class SimilarityNote implements Comparable<SimilarityNote> {
 		XmlElement el = parser.start("note");
 		int id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
 		ExecutableRecord exe = exeMap.get(id);
+		int spaceid = SpecXmlUtils.decodeInt(el.getAttribute("spaceid"));
 		long address = SpecXmlUtils.decodeLong(el.getAttribute("addr"));
-		func = manage.findFunction(el.getAttribute("name"), address, exe);
+		func = manage.findFunction(el.getAttribute("name"), spaceid, address, exe);
 		parser.start("sim");
 		sim = Double.parseDouble(parser.end().getText());
 		parser.start("sig");

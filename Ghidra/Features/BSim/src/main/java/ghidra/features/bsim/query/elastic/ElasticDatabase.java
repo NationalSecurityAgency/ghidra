@@ -232,6 +232,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			builder.append("\", \"id_signature\": \"");
 			Base64Lite.encodeLongBase64(builder, vecid);
 			builder.append("\", \"flags\": ").append(desc.getFlags());
+			builder.append(", \"spaceid\": ").append(desc.getSpaceID());
 			builder.append(", \"addr\": ").append(desc.getAddress());
 			if (info.trackcallgraph) {
 				List<String> vals = generateChildIds(manager, desc);
@@ -326,11 +327,12 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * most 1 document should be returned
 	 * @param exeId is the document id of the executable to match
 	 * @param functionName is the name of the function to match
+	 * @param spaceid is the id of the address space of the function
 	 * @param address is the address of the function to match
 	 * @return the JSON function document or null if none match
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONObject queryFuncNameAddress(String exeId, String functionName, long address)
+	private JSONObject queryFuncNameAddress(String exeId, String functionName, int spaceid, long address)
 			throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"_source\": { \"excludes\": [ \"childid\" ] }");
@@ -340,6 +342,10 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("        \"term\": {");
 		buffer.append("          \"name_func\": \"");
 		buffer.append(JSONObject.escape(functionName));
+		buffer.append("\"},");
+		buffer.append("        \"term\": {");
+		buffer.append("           \"spaceid\": ").append(spaceid);
+		buffer.append("} },");
 		buffer.append("\"},");
 		buffer.append("        \"term\": {");
 		buffer.append("           \"addr\": ").append(address);
@@ -1023,17 +1029,18 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @param manager is the container for the FunctionDescription
 	 * @param exeRecord is the given executable
 	 * @param functionName is the function name
+	 * @param spaceid is ID of the address space of the function
 	 * @param address is the function address
 	 * @param fillInSignatures is true if the SignatureRecord should be filled in
 	 * @return the recovered FunctionDescription or null if not found
 	 * @throws ElasticException for communication problems with the server
 	 */
 	private FunctionDescription queryByNameAddress(DescriptionManager manager,
-			ExecutableRecord exeRecord, String functionName, long address, boolean fillInSignatures)
+			ExecutableRecord exeRecord, String functionName, int spaceid, long address, boolean fillInSignatures)
 			throws ElasticException {
 		RowKeyElastic eKey = (RowKeyElastic) exeRecord.getRowId();
 		String exeId = eKey.generateExeIdString();
-		JSONObject doc = queryFuncNameAddress(exeId, functionName, address);
+		JSONObject doc = queryFuncNameAddress(exeId, functionName, spaceid, address);
 		if (doc == null) {
 			return null;
 		}
@@ -1328,13 +1335,13 @@ public class ElasticDatabase implements FunctionDatabase {
 		List<FunctionDescription> funclist = new ArrayList<>();
 		queryAllFunc(funclist, erec_db, exeId, dbmanage, 0);
 
-		// Create a map from address to executables
-		Map<Long, FunctionDescription> addrmap =
-			FunctionDescription.createAddressToFunctionMap(funclist.iterator());
+		// Create a map from address spaces, to address offsets, to executables
+		Map<Integer, TreeMap<Long, FunctionDescription>> spacemap =
+				FunctionDescription.createAddressToFunctionMap(funclist.iterator());
 
 		// Match new functions to old functions via the address
 		List<FunctionDescription.Update> updatelist;
-		updatelist = FunctionDescription.generateUpdates(manager.listFunctions(exeRecord), addrmap,
+		updatelist = FunctionDescription.generateUpdates(manager.listFunctions(exeRecord), spacemap,
 			badFunctions);
 
 		if (!has_exe_update && updatelist.isEmpty()) {
@@ -1461,10 +1468,11 @@ public class ElasticDatabase implements FunctionDatabase {
 		RowKey rowid = RowKeyElastic.parseFunctionId((String) hit.get("_id"));
 		JSONObject source = (JSONObject) hit.get("_source");
 		String func_name = (String) source.get("name_func");
+		int spaceid = (Integer) source.get("spaceid");
 		long addr = (Long) source.get("addr");
 		int flags = ((Long) source.get("flags")).intValue();
 		long id_sig = Base64Lite.decodeLongBase64((String) source.get("id_signature"));
-		FunctionDescription fres = manager.newFunctionDescription(func_name, addr, exeRecord);
+		FunctionDescription fres = manager.newFunctionDescription(func_name, spaceid, addr, exeRecord);
 		manager.setFunctionDescriptionId(fres, rowid);
 		manager.setFunctionDescriptionFlags(fres, flags);
 		manager.setSignatureId(fres, id_sig);
@@ -1988,6 +1996,9 @@ public class ElasticDatabase implements FunctionDatabase {
 		builder.append("      \"flags\": { ");
 		builder.append("        \"type\": \"integer\", ");
 		builder.append("        \"index\": false }, ");
+		builder.append("      \"spaceid\": { ");
+		builder.append("        \"type\": \"integer\", ");
+		builder.append("        \"doc_values\": false }, ");
 		builder.append("      \"addr\": { ");
 		builder.append("        \"type\": \"long\", ");
 		builder.append("        \"doc_values\": false }, ");
@@ -3032,7 +3043,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			}
 			else {
 				funcA = queryByNameAddress(resManage, erec, pairInput.funcA.funcName,
-					pairInput.funcA.address, true);
+					pairInput.funcA.spaceid, pairInput.funcA.address, true);
 				if (funcA == null) {
 					missedFunc += 1;
 				}
@@ -3044,7 +3055,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			}
 			else {
 				funcB = queryByNameAddress(resManage, erec, pairInput.funcB.funcName,
-					pairInput.funcB.address, true);
+					pairInput.funcA.spaceid, pairInput.funcB.address, true);
 				if (funcB == null) {
 					missedFunc += 1;
 				}
@@ -3467,7 +3478,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		}
 		for (FunctionEntry entry : query.functionKeys) {
 			FunctionDescription func =
-				queryByNameAddress(response.manage, exe, entry.funcName, entry.address, true);
+				queryByNameAddress(response.manage, exe, entry.funcName, entry.spaceid, entry.address, true);
 			if (func == null) {
 				throw new LSHException("Could not find function: " + entry.funcName);
 			}

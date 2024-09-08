@@ -41,7 +41,7 @@ public class TestNearestVectorResult extends SimilarityVectorResult {
 			new ExecutableRecord(hash, executableName, "gcc", "x86", new Date(), null, null, null);
 
 		FunctionDescription description =
-			new FunctionDescription(executableRecord, queryFunctionName, 0x10000);
+			new FunctionDescription(executableRecord, queryFunctionName, 0, 0x10000);
 		description.setSignatureRecord(new SignatureRecord(new TestLSHVector()));
 		return description;
 	}

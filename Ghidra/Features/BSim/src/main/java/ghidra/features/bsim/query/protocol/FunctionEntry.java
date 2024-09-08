@@ -29,6 +29,7 @@ import ghidra.xml.XmlPullParser;
  */
 public class FunctionEntry {
 	public String funcName;			// Name of the function within the executable
+	public int spaceid;			// id of the Address Space of the function
 	public long address;			// Address of the function
 
 	private FunctionEntry() {
@@ -37,12 +38,15 @@ public class FunctionEntry {
 	
 	public FunctionEntry(FunctionDescription desc) {
 		funcName = desc.getFunctionName();
+		spaceid = desc.getSpaceID();
 		address = desc.getAddress();
 	}
 
 	public void saveXml(Writer writer) throws IOException {
 		writer.append("<fentry name=\"");
 		SpecXmlUtils.xmlEscapeWriter(writer, funcName);
+		writer.append("\" spaceid=\"");
+		writer.append(Long.toString(spaceid));
 		writer.append("\" addr=\"0x");
 		writer.append(Long.toHexString(address));
 		writer.append("\"/>\n");
@@ -52,6 +56,7 @@ public class FunctionEntry {
 		FunctionEntry functionEntry = new FunctionEntry();
 		XmlElement startEl = parser.start("fentry");
 		functionEntry.funcName = startEl.getAttribute("name");
+		functionEntry.spaceid = SpecXmlUtils.decodeInt(startEl.getAttribute("spaceid"));
 		functionEntry.address = SpecXmlUtils.decodeLong(startEl.getAttribute("addr"));
 		parser.end(startEl);
 		return functionEntry;

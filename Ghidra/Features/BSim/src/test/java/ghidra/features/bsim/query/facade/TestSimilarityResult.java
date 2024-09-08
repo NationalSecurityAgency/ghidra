@@ -28,20 +28,20 @@ public class TestSimilarityResult extends SimilarityResult {
 //	protected static Random random = new Random();
 
 	public TestSimilarityResult(String queryFunctionName, String executableName,
-			String matchFunction, long address, double significance, double confidence) {
-		super(createFunctionDescription(queryFunctionName, executableName, address));
-		addNote(createFunctionDescription(matchFunction, executableName, address), significance,
+			String matchFunction, int spaceid, long address, double significance, double confidence) {
+		super(createFunctionDescription(queryFunctionName, executableName, spaceid, address));
+		addNote(createFunctionDescription(matchFunction, executableName, spaceid, address), significance,
 			confidence);
 	}
 
 	protected static FunctionDescription createFunctionDescription(String queryFunctionName,
-			String executableName, long address) {
+			String executableName, int spaceid, long address) {
 		String hash = getMd5(executableName);
 		ExecutableRecord executableRecord =
 			new ExecutableRecord(hash, executableName, "gcc", "x86", new Date(), null, null, null);
 
 		FunctionDescription description =
-			new FunctionDescription(executableRecord, queryFunctionName, address);
+			new FunctionDescription(executableRecord, queryFunctionName, spaceid, address);
 		return description;
 	}
 

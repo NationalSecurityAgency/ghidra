@@ -69,7 +69,7 @@ public class ResponseChildren extends QueryResponseRecord {
 
 		ExecutableRecord exe = manage.findExecutable(md5string);
 		for (FunctionEntry entry : qchild.functionKeys) {
-			correspond.add(manage.findFunction(entry.funcName, entry.address, exe));
+			correspond.add(manage.findFunction(entry.funcName, entry.spaceid, entry.address, exe));
 		}
 		parser.end();
 	}
