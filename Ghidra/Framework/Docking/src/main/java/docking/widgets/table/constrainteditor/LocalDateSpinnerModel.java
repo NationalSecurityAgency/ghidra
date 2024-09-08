@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,9 @@ public class LocalDateSpinnerModel extends AbstractSpinnerModel {
 	 * @param maxDate maximum value for spinner model. (Can be null)
 	 * @param calendarField specifies the year, month, or day to increment/decrement. One of:
 	 *  <ul>
-	 *    <li><code>Calendar.YEAR</code>
-	 *    <li><code>Calendar.MONTH</code>
-	 *    <li><code>Calendar.DAY_OF_MONTH</code>
+	 *    <li>{@link Calendar#YEAR}</li>
+	 *    <li>{@link Calendar#MONTH}</li>
+	 *    <li>{@link Calendar#DAY_OF_MONTH}</li>
 	 *  </ul>
 	 * <p>
 	 */
@@ -128,9 +128,9 @@ public class LocalDateSpinnerModel extends AbstractSpinnerModel {
 	 *
 	 * @param calendarField one of
 	 *  <ul>
-	 *    <li><code>Calendar.YEAR</code>
-	 *    <li><code>Calendar.MONTH</code>
-	 *    <li><code>Calendar.DAY_OF_MONTH</code>
+	 *    <li>{@link Calendar#YEAR}</li>
+	 *    <li>{@link Calendar#MONTH}</li>
+	 *    <li>{@link Calendar#DAY_OF_MONTH}</li>
 	 *  </ul>
 	 * <p>
 	 *

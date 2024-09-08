@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -370,6 +370,78 @@ Varnode *Funcdata::setInputVarnode(Varnode *vn)
     vn->setReturnAddress();
   }
   return vn;
+}
+
+/// A new Varnode that covers both the original Varnodes is created and is itself marked as a function input.
+/// Any CPUI_PIECE reading the original Varnodes is converted to a CPUI_COPY reading the new Varnode. If there
+/// are other ops reading the original Varnodes, they are changed to read replacement Varnodes, which are
+/// defined as SUBPIECEs of the new Varnode.  The original Varnodes are destroyed.
+/// \param vnHi is the most significant Varnode to combine
+/// \param vnLo is the least significant Varnode
+void Funcdata::combineInputVarnodes(Varnode *vnHi,Varnode *vnLo)
+
+{
+  if (!vnHi->isInput() || !vnLo->isInput())
+    throw LowlevelError("Varnodes being combined are not inputs");
+  bool isContiguous;
+  Address addr = vnLo->getAddr();
+  if (addr.isBigEndian()) {
+    addr = vnHi->getAddr();
+    Address otheraddr = addr + vnHi->getSize();
+    isContiguous = (otheraddr == vnLo->getAddr());
+  }
+  else {
+    Address otheraddr = addr + vnLo->getSize();
+    isContiguous = (otheraddr == vnHi->getAddr());
+  }
+  if (!isContiguous)
+    throw LowlevelError("Input varnodes being combined are not contiguous");
+  vector<PcodeOp *> pieceList;
+  bool otherOps = false;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vnHi->beginDescend();iter!=vnHi->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() == CPUI_PIECE && op->getIn(0) == vnHi && op->getIn(1) == vnLo)
+      pieceList.push_back(op);
+    else
+      otherOps = true;
+  }
+  for(int4 i=0;i<pieceList.size();++i) {
+    opRemoveInput(pieceList[i], 1);
+    opUnsetInput(pieceList[i], 0);
+  }
+  PcodeOp *subHi = (PcodeOp *)0;
+  PcodeOp *subLo = (PcodeOp *)0;
+  if (otherOps) {
+    // If there are other PcodeOps besides PIECEs that are directly combining vnHi and vnLo
+    // create replacement Varnodes constructed as SUBPIECEs of the new combined Varnode
+    BlockBasic *bb = (BlockBasic *)bblocks.getBlock(0);
+    subHi = newOp(2,bb->getStart());
+    opSetOpcode(subHi, CPUI_SUBPIECE);
+    opSetInput(subHi,newConstant(4, vnLo->getSize()),1);
+    Varnode *newHi = newVarnodeOut(vnHi->getSize(),vnHi->getAddr(),subHi);
+    opInsertBegin(subHi, bb);
+    subLo = newOp(2,bb->getStart());
+    opSetOpcode(subLo, CPUI_SUBPIECE);
+    opSetInput(subLo,newConstant(4, 0),1);
+    Varnode *newLo = newVarnodeOut(vnLo->getSize(),vnLo->getAddr(),subLo);
+    opInsertBegin(subLo, bb);
+    totalReplace(vnHi, newHi);
+    totalReplace(vnLo, newLo);
+  }
+  int4 outSize = vnHi->getSize() + vnLo->getSize();
+  vbank.destroy(vnHi);
+  vbank.destroy(vnLo);
+  Varnode *inVn = newVarnode(outSize, addr);
+  inVn = setInputVarnode(inVn);
+  for(int4 i=0;i<pieceList.size();++i) {
+    opSetInput(pieceList[i],inVn,0);
+    opSetOpcode(pieceList[i], CPUI_COPY);
+  }
+  if (otherOps) {
+    opSetInput(subHi,inVn,0);
+    opSetInput(subLo,inVn,0);
+  }
 }
 
 /// Construct a constant Varnode up to 128 bits,  using INT_ZEXT and PIECE if necessary.

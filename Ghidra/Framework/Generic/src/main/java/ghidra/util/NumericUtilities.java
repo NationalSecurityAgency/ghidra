@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,8 @@ public final class NumericUtilities {
 
 	private final static String HEX_PREFIX_X = "0X";
 	private final static String HEX_PREFIX_x = "0x";
+	private final static String BIN_PREFIX = "0B";
+	private final static String OCT_PREFIX = "0";
 
 	private final static Set<Class<? extends Number>> INTEGER_TYPES = new HashSet<>();
 	static {
@@ -98,20 +100,69 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Parses the given string as a numeric value, detecting whether or not it begins with a hex
-	 * prefix, and if not, parses as a long int value.
+	 * Parses the given decimal/hex string as an {@code int} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
 	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank or has too many digits 
+	 * @return the {@code int} value, or 0 if the string to parse is null or blank
+	 * @throws NumberFormatException if the string does not represent a valid {@code int} value 
+	 */
+	public static int parseInt(String s) {
+		String origStr = s;
+		int sign = 1;
+
+		s = (s == null ? "" : s.trim());
+		if (s.length() == 0) {
+			return 0;
+		}
+		if (s.startsWith("-")) {
+			sign = -1;
+			s = s.substring(1);
+		}
+		int radix = 10;
+
+		if (s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X)) {
+			if (s.length() > 10) {
+				throw new NumberFormatException(s + " has too many digits.");
+			}
+			s = s.substring(2);
+			radix = 16;
+		}
+		if (s.length() == 0) {
+			return 0;
+		}
+		try {
+			BigInteger bi = new BigInteger(s, radix);
+			return bi.intValue() * sign;
+		}
+		catch (NumberFormatException e) {
+			// This is a little hacky, but the message should be complete and report about the
+			// original string
+			NumberFormatException e2 =
+				new NumberFormatException("Cannot parse int from " + origStr);
+			e2.setStackTrace(e.getStackTrace());
+			throw e2;
+		}
+		catch (ArithmeticException e) {
+			throw new NumberFormatException(origStr + " is too big.");
+		}
+	}
+	
+	/**
+	 * Parses the given decimal/hex string as a {@code long} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @return the {@code long} value, or 0 if the string to parse is null or blank
+	 * @throws NumberFormatException if the string does not represent a valid {@code long} value 
 	 */
 	public static long parseLong(String s) {
 		String origStr = s;
-		long value = 0;
 		long sign = 1;
 
 		s = (s == null ? "" : s.trim());
 		if (s.length() == 0) {
-			return value;
+			return 0;
 		}
 		if (s.startsWith("-")) {
 			sign = -1;
@@ -184,6 +235,49 @@ public final class NumericUtilities {
 			s = "-" + s;
 		}
 		return new BigInteger(s, 16);
+	}
+
+	private static BigInteger decodeMagnitude(int p, String s) {
+		// Special case, so it doesn't get chewed by octal parser
+		if ("0".equals(s)) {
+			return BigInteger.ZERO;
+		}
+		if (s.regionMatches(true, p, HEX_PREFIX_X, 0, HEX_PREFIX_X.length())) {
+			return new BigInteger(s.substring(p + HEX_PREFIX_X.length()), 16);
+		}
+		if (s.regionMatches(true, p, BIN_PREFIX, 0, BIN_PREFIX.length())) {
+			return new BigInteger(s.substring(p + BIN_PREFIX.length()), 2);
+		}
+		// Check last, because prefix is shortest.
+		if (s.regionMatches(true, p, OCT_PREFIX, 0, OCT_PREFIX.length())) {
+			return new BigInteger(s.substring(p + OCT_PREFIX.length()), 8);
+		}
+		return new BigInteger(s.substring(p), 10);
+	}
+
+	/**
+	 * Decode a big integer in hex, binary, octal, or decimal, based on the prefix 0x, 0b, or 0.
+	 * 
+	 * <p>
+	 * This checks for the presence of a case-insensitive prefix. 0x denotes hex, 0b denotes binary,
+	 * 0 denotes octal. If no prefix is given, decimal is assumed. A sign +/- may immediately
+	 * precede the prefix. If no sign is given, a positive value is assumed.
+	 * 
+	 * @param s the string to parse
+	 * @return the decoded value
+	 */
+	public static BigInteger decodeBigInteger(String s) {
+		int p = 0;
+		boolean negative = false;
+		if (s.startsWith("+")) {
+			p = 1;
+		}
+		else if (s.startsWith("-")) {
+			p = 1;
+			negative = true;
+		}
+		BigInteger mag = decodeMagnitude(p, s);
+		return negative ? mag.negate() : mag;
 	}
 
 	/**

@@ -1,0 +1,1019 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search Memory</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <BLOCKQUOTE>
+      <H1>Search Formats</H1>
+
+      <P>The selected format determines how the user input is used to generate a search byte
+      sequence (and possibly mask byte sequence). They are also used to format bytes back into
+      "values" to be displayed in the table, if applicable.</P>
+
+      <H2>Hex:</H2>
+
+      <BLOCKQUOTE>
+        <P>The hex format allows the user to specify the search bytes as hex values.</P>
+
+        <H4>Notes:</H4>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The input string is interpreted as a sequence of hex numbers, separated by spaces.</LI>
+
+        <LI>Wildcard characters can be used to match any single hex digit (i.e. any 4 bit
+        value).</LI>
+
+        <LI>Either the '.' or '?' character can be used for the wildcard character.</LI>
+
+        <LI>Each hex number group (groups are separated by spaces) will produce a sequence of bytes
+        that may be reversed depending on the byte order. To avoid byte ordering effects, separate
+        each two digit hex value with a space.</LI>
+
+        <LI>The byte search pattern is formed by concatenating the bytes from each hex number
+        group.</LI>
+
+        <LI>The Hex format generates no "values" in the values table column (it would just be a
+        repeat of the bytes column).</LI>
+
+        <LI>As a convenience, if a user enters a single wildcard value within the search text, then
+        the search string will be interpreted as if 2 consecutive wildcard characters were entered,
+        meaning to match any byte value.</LI>
+
+        <LI>Similarly, if the search string contains an odd number of characters, then a 0 is
+        prepended to the search string, based on the assumption that a single hex digit implies a
+        leading 0 value.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <H4>Examples: (Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>12</TD>
+
+              <TD>12</TD>
+
+              <TD>FF</TD>
+            </TR>
+
+            <TR>
+              <TD>12 A4</TD>
+
+              <TD>12 A4</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>12A4</TD>
+
+              <TD>A4 12</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>12 3456</TD>
+
+              <TD>12 56 34</TD>
+
+              <TD>FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>5 E12</TD>
+
+              <TD>05 12 0E</TD>
+
+              <TD>FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>5.</TD>
+
+              <TD>50</TD>
+
+              <TD>F0</TD>
+            </TR>
+
+            <TR>
+              <TD>.5</TD>
+
+              <TD>05</TD>
+
+              <TD>0F</TD>
+            </TR>
+
+            <TR>
+              <TD>12.4</TD>
+
+              <TD>04 12</TD>
+
+              <TD>0F FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>12</TD>
+
+              <TD>12</TD>
+
+              <TD>FF</TD>
+            </TR>
+
+            <TR>
+              <TD>12 A4</TD>
+
+              <TD>12 A4</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>12A4</TD>
+
+              <TD>12 A4</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>12 3456</TD>
+
+              <TD>12 34 56</TD>
+
+              <TD>FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>5 E12</TD>
+
+              <TD>05 0E 12</TD>
+
+              <TD>FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>5.</TD>
+
+              <TD>50</TD>
+
+              <TD>F0</TD>
+            </TR>
+
+            <TR>
+              <TD>.5</TD>
+
+              <TD>05</TD>
+
+              <TD>0F</TD>
+            </TR>
+
+            <TR>
+              <TD>12.4</TD>
+
+              <TD>12 04</TD>
+
+              <TD>FF 0F</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>Binary:</H2>
+
+      <BLOCKQUOTE>
+        <P>The Binary format allows the user to specify the search bytes as binary
+        values.</P>
+
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The input string is interpreted as a sequence of binary numbers.</LI>
+
+        <LI>Binary values must always be specified in groups of up to 8 "0" or "1" digits.</LI>
+
+        <LI>Since a group can have at most 8 characters, a group always represents 1 byte.</LI>
+
+        <LI>Since a group can be only 1 byte, byte ordering doesn't affect the binary format.</LI>
+
+        <LI>Wildcard characters can be used to match any single binary digit (i.e. any 1 bit
+        value).</LI>
+
+        <LI>Either the '.' or '?' character can be used for the wildcard character.</LI>
+
+        <LI>The byte search pattern is formed by concatenating the bytes from each binary number
+        group.</LI>
+
+        <LI>The binary format generates no "values" in the values table column</LI>
+
+        <LI>As a convenience, if a user enters less than 8 binary digits, it is assumed that the
+        leading bits are 0.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <H4>Examples:</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>10000001</TD>
+
+              <TD>81</TD>
+
+              <TD>FF</TD>
+            </TR>
+
+            <TR>
+              <TD>11</TD>
+
+              <TD>03</TD>
+
+              <TD>FF</TD>
+            </TR>
+
+            <TR>
+              <TD>0 1 0</TD>
+
+              <TD>00 01 00</TD>
+
+              <TD>FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>0 10</TD>
+
+              <TD>00 02</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>111.00.0</TD>
+
+              <TD>E0</TD>
+
+              <TD>ED</TD>
+            </TR>
+
+            <TR>
+              <TD>1 . 0</TD>
+
+              <TD>01 00 00</TD>
+
+              <TD>FF 00 FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>String:</H2>
+
+      <BLOCKQUOTE>
+        <P>The String format allows the user to search to specify the search bytes as a string.</P>
+
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The input string is converted to bytes using the chosen character encoding.</LI>
+
+        <LI>If the <I>Case Sensitive</I> option is on, the bytes are translated exactly to the
+        string values and the masks bytes are all 0xFF.</LI>
+
+        <LI>If the <I>Case Sensitive</I> option is off, the bytes are translated to the string values in
+        upper case and the masks are all 0xEF, meaning matches
+        will be found regardless of the case of the input string or the bytes in memory.</LI>
+
+        <LI>If the <I>Escape Sequences</I> option is on, values such as "\n" or "\t" are translated to
+        their single byte equivalent escape value.</LI>
+
+        <LI>If the <I>Escape Sequences</I> option is off, values such as "\n" or "\t" are
+        translated literally to those characters (e.g. the "\" char followed by the "n" char.</LI>
+
+        <LI>The String format generates strings for the table's <I>Match Value</I> column.</LI>
+
+        <LI>Wild cards are not supported by the String format.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <H4>Examples: (Encoding is Ascii, Case Sensitive is on, Escape Sequences is off)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>Hey0</TD>
+
+              <TD>48 65 79 30</TD>
+
+              <TD>FF FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>Hey\n</TD>
+
+              <TD>49 65 79 5c 6e</TD>
+
+              <TD>FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Encoding is Ascii, Case Sensitive is off, Escape Sequences is off)</H4>
+
+        <BLOCKQUOTE>
+          DF DF DF FF 
+
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>Hey0</TD>
+
+              <TD>48 45 59 30</TD>
+            </TR>
+
+            <TR>
+              <TD>Hey\n</TD>
+
+              <TD>49 65 79 5c 6e</TD>
+
+              <TD>DF DF DF DF FF DF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Encoding is Ascii, Case Sensitive is on, Escape Sequences is on)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>Hey0</TD>
+
+              <TD>48 65 79 30</TD>
+
+              <TD>FF FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>Hey\n</TD>
+
+              <TD>49 65 79 0A</TD>
+
+              <TD>FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+      </BLOCKQUOTE>
+        <H4>Examples: (Encoding is UTF-16, Case Sensitive is on, Escape Sequences is off, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>Hey</TD>
+
+              <TD>48 00 65 00 70 00 79 00</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>a\n</TD>
+
+              <TD>61 00 5c 00 6e 00</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Encoding is UTF-16, Case Sensitive is on, Escape Sequences is off, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>Hey</TD>
+
+              <TD>00 48 00 65 00 70 00 79</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>a\n</TD>
+
+              <TD>00 61 00 5c 00 6e</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE><A name="RegularExpressions"></A> 
+
+      <H2>Reg Ex:</H2>
+
+      <BLOCKQUOTE>
+        <P>The Reg Ex format allows the user to search memory for strings using Java regular
+        expressions.</P>
+
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The Reg Ex format treats consecutive bytes in memory as if it was a string and uses the
+        input string as the specification for the regular expression.</LI>
+
+        <LI>The Reg Ex format generates no bytes and masks, instead using Java's regular expression
+        engine to try and find matches.</LI>
+
+        <LI>The Reg Ex format generates strings for the table's <I>Match Value</I> column.</LI>
+		
+		<LI>For more information on supported regular expression syntax, see the page on
+			 <A href="Regular_Expressions.htm">Regular Expressions</A>
+      </UL>
+
+      <H2>Decimal:</H2>
+
+      <BLOCKQUOTE>
+        <P>The <I>Decimal</I> format allows the user to search for a sequence of decimal values.</P>
+
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The input string can have one or more decimal values, separated by
+        spaces.</LI>
+
+		<LI>Each decimal value in the input text, are converted to a sequence of bytes. The number
+		of bytes for each value is determined by the size as specified in the decimal options.
+		
+		<LI>If the <I>Unsigned</I> option is on, negative number can't be entered.</LI>
+		
+		<LI>If the <I>Unsigned</I> option is on, input numbers can be as big as the largest
+		unsigned value that can be represented by the selected byte size. For example, if the
+		byte size is 1, the largest unsigned value you can enter is 255.</LI>
+		
+		<LI>If the <I>Unsigned</I> option is off, input numbers can be from the lowest negative
+		number to the highest positive number for values that can be represented by the selected
+		byte size. For example, if the byte size is 1, the entered values can be from -128 to 127.
+
+        <LI>The endian setting affects the order of the bytes generated for decimal values.</LI>
+
+        <LI>The Decimal format does not support wildcards.</LI>
+
+        <LI>The byte search pattern is formed by concatenating the bytes from each decimal
+        number entered in the input.</LI>
+
+        <LI>The Decimal format displays decimal values in the table's <I>Match Value</I> column.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <H4>Examples: (Size = 1 byte, Signed Values)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1 0 127</TD>
+
+              <TD>FF 0 7F</TD>
+
+              <TD>FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 2 byte, Signed Values, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1 0 32767</TD>
+
+              <TD>FF FF 00 00 FF 7F</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 2 byte, Signed Values, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1 0 32767</TD>
+
+              <TD>FF FF 00 00 7F FF</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+        <H4>Examples: (Size = 4 byte, Signed Values, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1 5</TD>
+
+              <TD>FF FF FF FF 05 00 00 00</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 4 byte, Signed Values, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1 5</TD>
+
+              <TD>FF FF FF FF 00 00 00 05</TD>
+
+              <TD>FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 8 byte, Signed Values, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>05 00 00 00 00 00 00 00</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 8 byte, Signed Values, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>-1</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>00 00 00 00 00 00 00 05</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+ 
+        <H4>Examples: (Size = 1 byte, Unsigned Values)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>0 256</TD>
+
+              <TD>0 FF</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+        <H4>Examples: (Size = 2 byte, Unsigned Values, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>05 00</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>65535</TD>
+
+              <TD>FF FF</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 2 byte, Unsigned Values, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD>5</TD>
+
+              <TD>0 05</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+
+            <TR>
+              <TD>65535</TD>
+
+              <TD>FF FF</TD>
+
+              <TD>FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 4 byte, Unsigned Values, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>05 00 00 00</TD>
+
+              <TD>FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 4 byte, Unsigned Values, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>00 00 00 05</TD>
+
+              <TD>FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+
+      <BLOCKQUOTE>
+        <H4>Examples: (Size = 8 byte, Unsigned Values, Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>05 00 00 00 00 00 00 00</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+
+        <H4>Examples: (Size = 8 byte, Unsigned Values, Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>5</TD>
+
+              <TD>00 00 00 00 00 00 00 05</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+          </TABLE>
+        </BLOCKQUOTE>
+              </BLOCKQUOTE>
+        
+        
+     <H2>Float:</H2>
+
+      <BLOCKQUOTE>
+        <P>The Float format allows the user to enter floating point numbers of size 4 bytes.</P>
+
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The input string is interpreted as a sequence of floating point numbers.</LI>
+
+        <LI>Each floating point number is converted to 4 bytes.</LI>
+
+        <LI>The <I>Endian</I> setting affects the order of the bytes.</LI>
+
+        <LI>Wildcard characters are not supported.</LI>
+
+        <LI>The byte search pattern is formed by concatenating the bytes from each floating point
+        number.</LI>
+
+        <LI>The Float format generates floating point numbers in the values table column</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <H4>Examples: (Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>3.14</TD>
+
+              <TD>C3 F5 48 40</TD>
+
+              <TD>FF FF FF FF</TD>
+            </TR>
+
+            </TABLE>
+        </BLOCKQUOTE>
+        <H4>Examples: (Big Endian)</H4>
+                <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>3.14</TD>
+
+              <TD>40 48 F5 C3</TD>
+
+              <TD>FF FF FF FF</TD>
+            </TR>
+
+            </TABLE>
+        </BLOCKQUOTE>
+        
+      </BLOCKQUOTE>
+     <H2>Double:</H2>
+
+      <BLOCKQUOTE>
+        <P>The Double format allows the user to enter floating point numbers of size 8 bytes.</P>
+
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI>The input string is interpreted as a sequence of floating point numbers.</LI>
+
+        <LI>Each floating point number is converted to 8 bytes.</LI>
+
+        <LI>The <I>Endian</I> setting affects the order of the bytes.</LI>
+
+        <LI>Wildcard characters are not supported.</LI>
+
+        <LI>The byte search pattern is formed by concatenating the bytes from each floating point
+        number.</LI>
+
+        <LI>The Double format generates floating point numbers in the values table column</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <H4>Examples: (Little Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>3.14</TD>
+
+              <TD>1F 85 EB 51 B8 1E 09 40</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+            </TABLE>
+        </BLOCKQUOTE>
+        <H4>Examples: (Big Endian)</H4>
+
+        <BLOCKQUOTE>
+          <TABLE border="1">
+            <TR>
+              <TD><B>Input String</B></TD>
+
+              <TD><B>Byte Sequence</B></TD>
+
+              <TD><B>Mask Bytes</B></TD>
+            </TR>
+
+            <TR>
+              <TD>3.14</TD>
+
+              <TD>40 09 1E B8 51 EB 85 1F</TD>
+
+              <TD>FF FF FF FF FF FF FF FF</TD>
+            </TR>
+            </TABLE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+    </BLOCKQUOTE>
+    <BR>
+     <BR>
+  </BODY>
+</HTML>

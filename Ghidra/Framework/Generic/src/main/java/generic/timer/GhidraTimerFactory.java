@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,51 +15,25 @@
  */
 package generic.timer;
 
-import ghidra.util.SystemUtilities;
+import java.util.Timer;
 
+import ghidra.util.SystemUtilities;
+import ghidra.util.timer.GTimer;
+
+/**
+ * Creates a new {@link GhidraTimer} appropriate for a headed or headless environment.
+ * <P>
+ * If running a headed environment, the callback will happen on the Swing thread.  Otherwise, the
+ * callback will happen on the non-Swing {@link Timer} thread.
+ * <P>
+ * See also {@link GTimer}
+ */
 public class GhidraTimerFactory {
 	public static GhidraTimer getGhidraTimer(int initialDelay, int delay, TimerCallback callback) {
 		if (SystemUtilities.isInHeadlessMode()) {
 			return new GhidraSwinglessTimer(initialDelay, delay, callback);
-			
+
 		}
 		return new GhidraSwingTimer(initialDelay, delay, callback);
-	}
-	
-	public static void main(String[] args) throws InterruptedException {
-		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, "true");
-		final GhidraTimer t = GhidraTimerFactory.getGhidraTimer(500,500,null);
-		t.setDelay(500);
-		TimerCallback callback1 = new TimerCallback() {
-			int i = 0;
-			public void timerFired() {
-				System.out.println("A: "+i);
-				if (++i == 20) {
-					t.stop();
-				}
-			}
-		};
-		t.setTimerCallback(callback1);
-		t.start();
-		
-		final GhidraTimer t2 = GhidraTimerFactory.getGhidraTimer(250, 1000, null);
-		
-		TimerCallback callback2 = new TimerCallback() {
-			int i = 0;
-			public void timerFired() {
-				System.out.println("B: "+i);
-				if (++i == 100) {
-					t2.stop();
-				}
-			}
-		};
-		t2.setInitialDelay(250);
-		t2.setTimerCallback(callback2);
-		t2.start();
-
-		
-		
-		Thread.sleep(20000);
-
 	}
 }

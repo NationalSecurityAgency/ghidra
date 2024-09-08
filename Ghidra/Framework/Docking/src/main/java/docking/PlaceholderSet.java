@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import java.util.Map.Entry;
 /**
  * A class that tracks:
  * <ul>
- *  	<li>placeholders that are being used for a given provider
- *  	<li>placeholders that are no longer being used, which are available for reuse 
+ *  	<li>placeholders that are being used for a given provider</li>
+ *  	<li>placeholders that are no longer being used, which are available for reuse </li>
  * </ul>
  */
 class PlaceholderSet {

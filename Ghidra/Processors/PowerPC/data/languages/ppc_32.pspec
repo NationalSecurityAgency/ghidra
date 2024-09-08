@@ -304,8 +304,8 @@
 	<register name="spr109" group="SPR_UNNAMED"/>
 	<register name="spr10a" group="SPR_UNNAMED"/>
 	<register name="spr10b" group="SPR_UNNAMED"/>
-	<register name="TBLr" group="SPR"/>
-	<register name="TBUr" group="SPR"/>
+	<register name="TBLr" group="SPR" volatile="true"/>
+	<register name="TBUr" group="SPR" volatile="true"/>
 	<register name="spr10e" group="SPR_UNNAMED"/>
 	<register name="spr10f" group="SPR_UNNAMED"/>
 	
@@ -321,8 +321,8 @@
 	<register name="spr119" group="SPR_UNNAMED"/>
 	<register name="spr11a" rename="EAR" group="SPR"/>
 	<register name="spr11b" group="SPR_UNNAMED"/>
-	<register name="TBLw" group="SPR"/>
-	<register name="TBUw" group="SPR"/>
+	<register name="TBLw" group="SPR" volatile="true"/>
+	<register name="TBUw" group="SPR" volatile="true"/>
 	<register name="spr11e" group="SPR_UNNAMED"/>
 	<register name="spr11f" rename="PVR" group="SPR"/>
 

@@ -268,7 +268,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
   virtual void encode(Encoder &encoder) const;	///< Encode the data-type to a stream
-  virtual bool isPtrsubMatching(uintb off) const;	///< Is this data-type suitable as input to a CPUI_PTRSUB op
+  virtual bool isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const;	///< Is this data-type suitable as input to a CPUI_PTRSUB op
   virtual Datatype *getStripped(void) const;		///< Get a stripped version of \b this for formal use in formal declarations
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);	///< Tailor data-type propagation based on Varnode use
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);	///< Find a previously resolved sub-type
@@ -393,6 +393,7 @@ protected:
   AddrSpace *spaceid;		///< If non-null, the address space \b this is intented to point into
   TypePointer *truncate;	///< Truncated form of the pointer (if not null)
   uint4 wordsize;               ///< What size unit does the pointer address
+  static bool testForArraySlack(Datatype *dt,int8 off);	///< Test if an \e out-of-bounds offset makes sense as array slack
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this pointer data-type from a stream
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
   void calcTruncate(TypeFactory &typegrp);	// Assign a truncated pointer subcomponent if necessary
@@ -420,7 +421,7 @@ public:
   virtual Datatype *clone(void) const { return new TypePointer(*this); }
   virtual void encode(Encoder &encoder) const;
   virtual TypePointer *downChain(int8 &off,TypePointer *&par,int8 &parOff,bool allowArrayWrap,TypeFactory &typegrp);
-  virtual bool isPtrsubMatching(uintb off) const;
+  virtual bool isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
 };
@@ -633,7 +634,7 @@ public:
   virtual Datatype *clone(void) const { return new TypePointerRel(*this); }
   virtual void encode(Encoder &encoder) const;
   virtual TypePointer *downChain(int8 &off,TypePointer *&par,int8 &parOff,bool allowArrayWrap,TypeFactory &typegrp);
-  virtual bool isPtrsubMatching(uintb off) const;
+  virtual bool isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const;
   virtual Datatype *getStripped(void) const { return stripped; }	///< Get the plain form of the pointer
   static Datatype *getPtrToFromParent(Datatype *base,int4 off,TypeFactory &typegrp);
 };

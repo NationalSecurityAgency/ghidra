@@ -57,18 +57,24 @@
       entry shows a name for the BSim database, its type (postgres, elastic, or file), a host ip
       and port (if applicable), and finally the number of active connections.</P>
 
-      <P>There are three primary actions for this dialog:</P>
+      <P>There are four primary actions for this dialog:</P>
       <A name="Manage_Servers_Actions"></A> 
 
       <UL>
-        <LI><IMG alt="" src="Icons.ADD_ICON">&nbsp;Add a new database/server definition - a
-        Define Server Dialog will be shown.</LI>
+        <LI><IMG alt="" src="Icons.ADD_ICON">&nbsp;Add a new BSim database/server definition - an
+        Add BSim Server Dialog will be shown.</LI>
 
         <LI><IMG alt="" src="Icons.DELETE_ICON">&nbsp;Delete a database/server definition - The
-        selected entry will be deleted.</LI>
+        selected entry will be deleted.  This action will force an immediate disconnect for an
+        active/idle connection and should be used with care.</LI>
+        
+        <LI><IMG alt="" src="icon.bsim.disconnected"><IMG alt="" src="icon.bsim.connected">&nbsp;
+        Connect or disconnect an inactive database/server connection.  This action is not supported
+        by Elastic database servers.</LI>
 
         <LI><IMG alt="" src="icon.bsim.change.password">&nbsp;Change password - A change password
-        dialog will appear for the selected entry</LI>
+        dialog will appear for the selected database server.  Action is disabled for databases
+        which do not use a password (e.g., Local H2 File database).</LI>
       </UL>
 
       <H3><A name="Add_Server_Definition_Dialog">Defining a new BSim server/database</A></H3>

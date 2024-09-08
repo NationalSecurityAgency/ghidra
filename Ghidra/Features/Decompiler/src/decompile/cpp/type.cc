@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -177,8 +177,8 @@ Datatype *Datatype::getSubType(int8 off,int8 *newoff) const
   return (Datatype *)0;
 }
 
-/// Find the first component data-type after the given offset that is (or contains)
-/// an array, and pass back the difference between the component's start and the given offset.
+/// Find the first component data-type that is (or contains) an array starting after the given
+/// offset, and pass back the difference between the component's start and the given offset.
 /// Return the component data-type or null if no array is found.
 /// \param off is the given offset into \b this data-type
 /// \param newoff is used to pass back the offset difference
@@ -190,8 +190,8 @@ Datatype *Datatype::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *e
   return (TypeArray *)0;
 }
 
-/// Find the first component data-type before the given offset that is (or contains)
-/// an array, and pass back the difference between the component's start and the given offset.
+/// Find the last component data-type that is (or contains) an array starting before the given
+/// offset, and pass back the difference between the component's start and the given offset.
 /// Return the component data-type or null if no array is found.
 /// \param off is the given offset into \b this data-type
 /// \param newoff is used to pass back the offset difference
@@ -528,8 +528,10 @@ void Datatype::calcAlignSize(void)
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
 /// Perform this check.
 /// \param off is the given offset
+/// \param extra is any additional constant being added to the pointer
+/// \param multiplier is the size of any index multiplier being added to the pointer
 /// \return \b true if \b this is a suitable PTRSUB data-type
-bool Datatype::isPtrsubMatching(uintb off) const
+bool Datatype::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
 
 {
   return false;
@@ -897,14 +899,14 @@ void TypePointer::printRaw(ostream &s) const
 Datatype *TypePointer::getSubType(int8 off,int8 *newoff) const
 
 {
-  if (truncate == (TypePointer *)0)
-    return truncate;
-  int8 min = ((flags & truncate_bigendian) != 0) ? size - truncate->getSize() : 0;
-  if (off >= min && off < min + truncate->getSize()) {
-    *newoff = off - min;
-    return truncate;
+  if (truncate != (TypePointer *)0) {
+    int8 min = ((flags & truncate_bigendian) != 0) ? size - truncate->getSize() : 0;
+    if (off >= min && off < min + truncate->getSize()) {
+      *newoff = off - min;
+      return truncate;
+    }
   }
-  return (Datatype *)0;
+  return Datatype::getSubType(off, newoff);
 }
 
 int4 TypePointer::compare(const Datatype &op,int4 level) const
@@ -958,6 +960,27 @@ void TypePointer::encode(Encoder &encoder) const
     encoder.writeSpace(ATTRIB_SPACE, spaceid);
   ptrto->encodeRef(encoder);
   encoder.closeElement(ELEM_TYPE);
+}
+
+/// If the given data-type is an array, or has an arrayed component, return \b true.
+/// \param dt is the given data-type to check
+/// \param off is the out-of-bounds offset
+/// \return \b true is an array is present
+bool TypePointer::testForArraySlack(Datatype *dt,int8 off)
+
+{
+  int8 newoff;
+  int8 elSize;
+  if (dt->getMetatype() == TYPE_ARRAY)
+    return true;
+  Datatype *compType;
+  if (off < 0) {
+    compType = dt->nearestArrayedComponentForward(off, &newoff, &elSize);
+  }
+  else {
+    compType = dt->nearestArrayedComponentBackward(off, &newoff, &elSize);
+  }
+  return (compType != (Datatype *)0);
 }
 
 /// Parse a \<type> element with a child describing the data-type being pointed to
@@ -1070,19 +1093,49 @@ TypePointer *TypePointer::downChain(int8 &off,TypePointer *&par,int8 &parOff,boo
   return typegrp.getTypePointer(size,pt,wordsize);
 }
 
-bool TypePointer::isPtrsubMatching(uintb off) const
+bool TypePointer::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
 
 {
-  if (ptrto->getMetatype()==TYPE_SPACEBASE) {
+  type_metatype meta = ptrto->getMetatype();
+  if (meta==TYPE_SPACEBASE) {
     int8 newoff = AddrSpace::addressToByteInt(off,wordsize);
-    ptrto->getSubType(newoff,&newoff);
-    if (newoff != 0)
+    Datatype *subType = ptrto->getSubType(newoff,&newoff);
+    if (subType == (Datatype *)0 || newoff != 0)
+      return false;
+    extra = AddrSpace::addressToByteInt(extra,wordsize);
+    if (extra < 0 || extra >= subType->getSize()) {
+      if (!testForArraySlack(subType, extra))
+	return false;
+    }
+  }
+  else if (meta == TYPE_ARRAY) {
+    if (off != 0)
+      return false;
+    multiplier = AddrSpace::addressToByteInt(multiplier,wordsize);
+    if (multiplier >= ptrto->getAlignSize())
       return false;
   }
-  else if (ptrto->getMetatype() == TYPE_ARRAY || ptrto->getMetatype() == TYPE_STRUCT) {
+  else if (meta == TYPE_STRUCT) {
     int4 typesize = ptrto->getSize();
-    if ((typesize <= AddrSpace::addressToByteInt(off,wordsize))&&(typesize!=0))
+    multiplier = AddrSpace::addressToByteInt(multiplier,wordsize);
+    if (multiplier >= ptrto->getAlignSize())
       return false;
+    int8 newoff = AddrSpace::addressToByteInt(off,wordsize);
+    extra = AddrSpace::addressToByteInt(extra, wordsize);
+    Datatype *subType = ptrto->getSubType(newoff,&newoff);
+    if (subType != (Datatype *)0) {
+      if (newoff != 0)
+	return false;
+      if (extra < 0 || extra >= subType->getSize()) {
+	if (!testForArraySlack(subType, extra))
+	  return false;
+      }
+    }
+    else {
+      extra += newoff;
+      if ((extra < 0 || extra >= typesize)&&(typesize!=0))
+        return false;
+    }
   }
   else if (ptrto->getMetatype() == TYPE_UNION) {
     // A PTRSUB reaching here cannot be used for a union field resolution
@@ -1154,6 +1207,8 @@ int4 TypeArray::compareDependency(const Datatype &op) const
 Datatype *TypeArray::getSubType(int8 off,int8 *newoff) const
 
 {				// Go down exactly one level, to type of element
+  if (off >= size)
+    return Datatype::getSubType(off, newoff);
   *newoff = off % arrayof->getAlignSize();
   return arrayof;
 }
@@ -1608,7 +1663,8 @@ int4 TypeStruct::getHoleSize(int4 off) const
 Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const
 
 {
-  int4 i = getLowerBoundField(off);
+  int4 firstIndex = getLowerBoundField(off);
+  int4 i = firstIndex;
   while(i >= 0) {
     const TypeField &subfield( field[i] );
     int8 diff = off - subfield.offset;
@@ -1621,7 +1677,8 @@ Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8
     }
     else {
       int8 suboff;
-      Datatype *res = subtype->nearestArrayedComponentBackward(subtype->getSize(), &suboff, elSize);
+      int8 remain = (i == firstIndex) ? diff : subtype->getSize() - 1;
+      Datatype *res = subtype->nearestArrayedComponentBackward(remain, &suboff, elSize);
       if (res != (Datatype *)0) {
 	*newoff = diff;
 	return subtype;
@@ -1636,10 +1693,22 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
 
 {
   int4 i = getLowerBoundField(off);
-  i += 1;
+  int8 remain;
+  if (i < 0) {		// No component starting before off
+    i += 1;		// First component starting after
+    remain = 0;
+  }
+  else {
+    const TypeField &subfield( field[i] );
+    remain = off - subfield.offset;
+    if (remain != 0 && (subfield.type->getMetatype() != TYPE_STRUCT || remain >= subfield.type->getSize())) {
+      i += 1;		// Middle of non-structure that we must go forward from, skip over it
+      remain = 0;
+    }
+  }
   while(i<field.size()) {
     const TypeField &subfield( field[i] );
-    int8 diff = subfield.offset - off;
+    int8 diff = subfield.offset - off;		// The first struct field examined may have a negative diff
     if (diff > 128) break;
     Datatype *subtype = subfield.type;
     if (subtype->getMetatype() == TYPE_ARRAY) {
@@ -1649,13 +1718,14 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
     }
     else {
       int8 suboff;
-      Datatype *res = subtype->nearestArrayedComponentForward(0, &suboff, elSize);
+      Datatype *res = subtype->nearestArrayedComponentForward(remain, &suboff, elSize);
       if (res != (Datatype *)0) {
 	*newoff = -diff;
 	return subtype;
       }
     }
     i += 1;
+    remain = 0;
   }
   return (Datatype *)0;
 }
@@ -2465,13 +2535,14 @@ TypePointer *TypePointerRel::downChain(int8 &off,TypePointer *&par,int8 &parOff,
   return origPointer->downChain(off,par,parOff,allowArrayWrap,typegrp);
 }
 
-bool TypePointerRel::isPtrsubMatching(uintb off) const
+bool TypePointerRel::isPtrsubMatching(int8 off,int8 extra,int8 multiplier) const
 
 {
   if (stripped != (TypePointer *)0)
-    return TypePointer::isPtrsubMatching(off);
+    return TypePointer::isPtrsubMatching(off,extra,multiplier);
   int4 iOff = AddrSpace::addressToByteInt(off,wordsize);
-  iOff += offset;
+  extra = AddrSpace::addressToByteInt(extra, wordsize);
+  iOff += offset + extra;
   return (iOff >= 0 && iOff <= parent->getSize());
 }
 
@@ -3874,27 +3945,27 @@ TypePointer *TypeFactory::resizePointer(TypePointer *ptr,int4 newSize)
 Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
 
 {
-  if (offset + size > ct->getSize())
-    return (Datatype *)0;
   Datatype *lastType = (Datatype *)0;
   int8 lastOff = 0;
   int8 curOff = offset;
   do {
-    if (ct->getSize() <= size) {
-      if (ct->getSize() == size)
-	return ct;			// Perfect size match
-      break;
+    if (ct->getSize() < size + curOff) {	// Range is beyond end of current data-type
+      break;					// Construct partial around last data-type
     }
-    else if (ct->getMetatype() == TYPE_UNION) {
+    if (ct->getSize() == size)
+	return ct;				// Perfect size match
+    if (ct->getMetatype() == TYPE_UNION) {
       return getTypePartialUnion((TypeUnion *)ct, curOff, size);
     }
     lastType = ct;
     lastOff = curOff;
     ct = ct->getSubType(curOff,&curOff);
   } while(ct != (Datatype *)0);
-  // If we reach here, lastType is bigger than size
-  if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
-    return getTypePartialStruct(lastType, lastOff, size);
+  if (lastType != (Datatype *)0) {
+    // If we reach here, lastType is bigger than size
+    if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
+      return getTypePartialStruct(lastType, lastOff, size);
+  }
   return (Datatype *)0;
 }
 

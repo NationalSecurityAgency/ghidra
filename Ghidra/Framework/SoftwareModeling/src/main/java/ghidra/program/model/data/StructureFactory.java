@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,12 +47,12 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if <code>dataLength</code> is not greater than zero
+	 *              <li>if <code>dataLength</code> is not greater than zero</li>
 	 *              <li>if the number of components to add exceeds the available
-	 *                  address space
+	 *                  address space</li>
 	 *              <li>if there are any instructions in the provided
-	 *                  address space
-	 *              <li>if there are no data components to add to the structure
+	 *                  address space</li>
+	 *              <li>if there are no data components to add to the structure</li>
 	 *         </ul>
 	 */
 	public static Structure createStructureDataType(Program program, Address address,
@@ -73,13 +73,13 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if <code>structureName</code> is <code>null</code>
-	 *              <li>if <code>dataLength</code> is not greater than zero
+	 *              <li>if <code>structureName</code> is <code>null</code></li>
+	 *              <li>if <code>dataLength</code> is not greater than zero</li>
 	 *              <li>if the number of components to add exceeds the available
-	 *                  address space
+	 *                  address space</li>
 	 *              <li>if there are any instructions in the provided
-	 *                  address space
-	 *              <li>if there are no data components to add to the structure
+	 *                  address space</li>
+	 *              <li>if there are no data components to add to the structure</li>
 	 *         </ul>
 	 */
 	public static Structure createStructureDataType(Program program, Address address,
@@ -147,9 +147,9 @@ public class StructureFactory {
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
 	 *              <li>if the component at <code>fromPath</code> or the component
-	 *                  at <code>toPath</code> are null
-	 *              <li>if there is not data to add to the structure
-	 *              <li>if the parent data type is not a structure
+	 *                  at <code>toPath</code> are null</li>
+	 *              <li>if there is not data to add to the structure</li>
+	 *              <li>if the parent data type is not a structure</li>
 	 *         </ul>
 	 */
 	public static Structure createStructureDataTypeInStrucuture(Program program, Address address,
@@ -176,11 +176,11 @@ public class StructureFactory {
 	 * @return A new structure not yet added to memory.
 	 * @throws IllegalArgumentException for the following conditions:
 	 *         <ul>
-	 *              <li>if <code>structureName</code> is <code>null</code>
+	 *              <li>if <code>structureName</code> is <code>null</code></li>
 	 *              <li>if the component at <code>fromPath</code> or the component
-	 *                  at <code>toPath</code> are null
-	 *              <li>if there is not data to add to the structure
-	 *              <li>if the parent data type is not a structure
+	 *                  at <code>toPath</code> are null</li>
+	 *              <li>if there is not data to add to the structure</li>
+	 *              <li>if the parent data type is not a structure</li>
 	 *         </ul>
 	 */
 	public static Structure createStructureDataTypeInStrucuture(Program program, Address address,

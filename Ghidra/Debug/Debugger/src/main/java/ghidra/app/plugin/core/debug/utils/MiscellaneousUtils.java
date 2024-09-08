@@ -33,8 +33,9 @@ public enum MiscellaneousUtils {
 	 * Obtain a swing component which may be used to edit the property.
 	 * 
 	 * <p>
-	 * This has been shamelessly stolen from {@link EditorState#getEditorComponent()}, which seems
-	 * entangled with Ghidra's whole options system. I think this portion could be factored out.
+	 * This has was originally stolen from {@link EditorState#getEditorComponent()}, which seems
+	 * entangled with Ghidra's whole options system. Can that be factored out? Since then, the two
+	 * have drifted apart.
 	 * 
 	 * @param editor the editor for which to obtain an interactive component for editing
 	 * @return the component
@@ -53,16 +54,11 @@ public enum MiscellaneousUtils {
 			return new PropertyText(editor);
 		}
 
-		Class<? extends PropertyEditor> clazz = editor.getClass();
-		String clazzName = clazz.getSimpleName();
-		if (clazzName.startsWith("String")) {
-			// Most likely some kind of string editor with a null value.  Just use a string 
-			// property and let the value be empty.
-			return new PropertyText(editor);
-		}
-
-		throw new IllegalStateException(
-			"Ghidra does not know how to use PropertyEditor: " + editor.getClass().getName());
+		/**
+		 * TODO: Would be nice to know the actual type, but alas! Just default to a PropertyText and
+		 * hope all goes well.
+		 */
+		return new PropertyText(editor);
 	}
 
 	public static void rigFocusAndEnter(Component c, Runnable runnable) {

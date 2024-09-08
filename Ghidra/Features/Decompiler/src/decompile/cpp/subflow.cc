@@ -330,6 +330,41 @@ bool SubvariableFlow::trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn)
   return true;
 }
 
+/// \brief Determine if the subgraph variable flows naturally into a terminal FLOAT_INT2FLOAT operation
+///
+/// The original data-flow must pad the logical value with zero bits, making the conversion to
+/// floating-point unsigned.  A PatchRecord is created that preserves the FLOAT_INT2FLOAT but inserts an
+/// additional INT_ZEXT operation to preserve the unsigned nature of the conversion.
+/// \param op is the FLOAT_INT2FLOAT conversion operation
+/// \param rvn is the logical value flowing into the conversion
+bool SubvariableFlow::tryInt2FloatPull(PcodeOp *op,ReplaceVarnode *rvn)
+
+{
+  if ((rvn->mask & 1) == 0) return false;	// Logical value must be justified
+  if ((rvn->vn->getNZMask()&~rvn->mask)!=0)
+    return false;				// Everything outside the logical value must be zero
+  if (rvn->vn->getSize() == flowsize)
+    return false;				// There must be some (zero) extension
+  bool pullModification = true;
+  if (rvn->vn->isWritten() && rvn->vn->getDef()->code() == CPUI_INT_ZEXT) {
+    if (rvn->vn->getSize() == TypeOpFloatInt2Float::preferredZextSize(flowsize)) {
+      if (rvn->vn->loneDescend() == op) {
+	pullModification = false;		// This patch does not count as a modification
+	// The INT_ZEXT -> FLOAT_INT2FLOAT has the correct form and does not need to be modified.
+	// We indicate this by NOT incrementing pullcount, so there has to be at least one other
+	// terminal patch in order for doTrace() to return true.
+      }
+    }
+  }
+  patchlist.emplace_back();
+  patchlist.back().type = PatchRecord::int2float_patch;
+  patchlist.back().patchOp = op;
+  patchlist.back().in1 = rvn;
+  if (pullModification)
+    pullcount += 1;
+  return true;
+}
+
 /// Try to trace the logical variable through descendant Varnodes
 /// creating new nodes in the logical subgraph and updating the worklist.
 /// \param rvn is the given subgraph variable to trace
@@ -585,6 +620,10 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       if (bitsize != 1) return false;
       if (rvn->mask != 1) return false;
       addBooleanPatch(op,rvn,slot);
+      break;
+    case CPUI_FLOAT_INT2FLOAT:
+      if (!tryInt2FloatPull(op, rvn)) return false;
+      hcount += 1;
       break;
     case CPUI_CBRANCH:
       if ((bitsize != 1)||(slot != 1)) return false;
@@ -1451,6 +1490,18 @@ void SubvariableFlow::doReplacement(void)
       }
     case PatchRecord::push_patch:
       break;	// Shouldn't see these here, handled earlier
+    case PatchRecord::int2float_patch:
+      {
+	PcodeOp *zextOp = fd->newOp(1, pullop->getAddr());
+	fd->opSetOpcode(zextOp, CPUI_INT_ZEXT);
+	Varnode *invn = getReplaceVarnode((*piter).in1);
+	fd->opSetInput(zextOp,invn,0);
+	int4 sizeout = TypeOpFloatInt2Float::preferredZextSize(invn->getSize());
+	Varnode *outvn = fd->newUniqueOut(sizeout, zextOp);
+	fd->opInsertBefore(zextOp, pullop);
+	fd->opSetInput(pullop, outvn, 0);
+	break;
+      }
     }
   }
 }

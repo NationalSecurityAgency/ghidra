@@ -40,6 +40,18 @@ import ghidra.util.task.TaskMonitor;
 public class ByModuleAutoMapSpec implements AutoMapSpec {
 	public static final String CONFIG_NAME = "1_MAP_BY_MODULE";
 
+	/**
+	 * Get the instance.
+	 * 
+	 * <p>
+	 * Note this will not work until after the class searcher is done.
+	 * 
+	 * @return the instance
+	 */
+	public static ByModuleAutoMapSpec instance() {
+		return (ByModuleAutoMapSpec) AutoMapSpec.fromConfigName(CONFIG_NAME);
+	}
+
 	@Override
 	public String getConfigName() {
 		return CONFIG_NAME;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -330,6 +331,91 @@ public class NumericUtilitiesTest {
 		assertEquals(errorMessage, expected.length, actual.length);
 		for (int i = 0; i < expected.length; i++) {
 			assertEquals(errorMessage, expected[i], actual[i]);
+		}
+	}
+
+	@Test
+	public void testDecodeBigInteger() {
+		// Zero special cases
+		assertEquals(BigInteger.ZERO, NumericUtilities.decodeBigInteger("0"));
+		assertEquals(BigInteger.ZERO, NumericUtilities.decodeBigInteger("000"));
+		// Decimal
+		assertEquals(BigInteger.valueOf(99), NumericUtilities.decodeBigInteger("99"));
+		assertEquals(BigInteger.valueOf(99), NumericUtilities.decodeBigInteger("+99"));
+		assertEquals(BigInteger.valueOf(-99), NumericUtilities.decodeBigInteger("-99"));
+		// Hex
+		assertEquals(BigInteger.valueOf(0x99), NumericUtilities.decodeBigInteger("0x99"));
+		assertEquals(BigInteger.valueOf(0x99), NumericUtilities.decodeBigInteger("+0x99"));
+		assertEquals(BigInteger.valueOf(-0x99), NumericUtilities.decodeBigInteger("-0x99"));
+		// Binary
+		assertEquals(BigInteger.valueOf(0b110), NumericUtilities.decodeBigInteger("0b110"));
+		assertEquals(BigInteger.valueOf(0b110), NumericUtilities.decodeBigInteger("+0b110"));
+		assertEquals(BigInteger.valueOf(-0b110), NumericUtilities.decodeBigInteger("-0b110"));
+		// Octal
+		assertEquals(BigInteger.valueOf(0755), NumericUtilities.decodeBigInteger("0755"));
+		assertEquals(BigInteger.valueOf(0755), NumericUtilities.decodeBigInteger("+0755"));
+		assertEquals(BigInteger.valueOf(-0755), NumericUtilities.decodeBigInteger("-0755"));
+
+		// Errors
+		try {
+			NumericUtilities.decodeBigInteger("");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("+");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("-");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("0x");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("0b");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("a01");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("081");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("0x9g");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger(" 10");
+			fail();
+		}
+		catch (NumberFormatException e) {
+		}
+		try {
+			NumericUtilities.decodeBigInteger("10 ");
+			fail();
+		}
+		catch (NumberFormatException e) {
 		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.rmi.trace.TraceRmi.*;
-import ghidra.rmi.trace.TraceRmi.Compiler;
 import ghidra.rmi.trace.TraceRmi.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Lifespan;
@@ -69,7 +68,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
 public class TraceRmiHandler implements TraceRmiConnection {
-	public static final String VERSION = "11.1";
+	public static final String VERSION = "11.2";
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -129,11 +128,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 	}
 
-	protected record Tid(DoId doId, int txId) {
-	}
+	protected record Tid(DoId doId, int txId) {}
 
-	protected record OpenTx(Tid txId, Transaction tx, boolean undoable) {
-	}
+	protected record OpenTx(Tid txId, Transaction tx, boolean undoable) {}
 
 	protected class OpenTraceMap {
 		private final Map<DoId, OpenTrace> byId = new HashMap<>();
@@ -388,7 +385,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected static void sendDelimited(OutputStream out, RootMessage msg, long dbgSeq)
 			throws IOException {
-		ByteBuffer buf = ByteBuffer.allocate(4);
+		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
 		buf.putInt(msg.getSerializedSize());
 		out.write(buf.array());
 		msg.writeTo(out);
@@ -867,6 +864,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			throws InvalidNameException, IOException, CancelledException {
 		DomainFolder traces = getOrCreateNewTracesFolder();
 		List<String> path = sanitizePath(req.getPath().getPath());
+		if (path.isEmpty()) {
+			throw new IllegalArgumentException("CreateTrace: path (name) cannot be empty");
+		}
 		DomainFolder folder = createFolders(traces, path.subList(0, path.size() - 1));
 		CompilerSpec cs = requireCompilerSpec(req.getLanguage(), req.getCompiler());
 		DBTrace trace = new DBTrace(path.get(path.size() - 1), cs, this);

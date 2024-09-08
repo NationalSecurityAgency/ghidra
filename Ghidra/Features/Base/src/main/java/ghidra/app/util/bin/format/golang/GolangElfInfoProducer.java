@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,16 +28,17 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Handles marking up and program info for Golang binaries.
- * <p>
  * <ul>
- * 	<li>NoteGoBuildId
- * 	<li>GoBuildInfo
- * 	<ul>
- * 		<li>Go version
- * 		<li>App path, main package
- * 		<li>Module dependency list
- * 		<li>Build settings / flags
- * 	</ul>
+ *   <li>NoteGoBuildId</li>
+ * 	 <li>GoBuildInfo</li>
+ *   <li>
+ *     <ul>
+ *       <li>Go version</li>
+ *       <li>App path, main package</li>
+ *       <li>Module dependency list</li>
+ *       <li>Build settings / flags</li>
+ *     </ul>
+ *   </li>
  * </ul>
  */
 public class GolangElfInfoProducer implements ElfInfoProducer {

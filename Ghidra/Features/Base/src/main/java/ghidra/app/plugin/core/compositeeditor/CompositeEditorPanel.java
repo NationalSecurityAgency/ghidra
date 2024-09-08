@@ -486,8 +486,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (index >= 0) {
 			row = index;
 			table.setRowSelectionInterval(row, row);
-			if (model.isCellEditable(index, modelColumn)) {
-				return beginEditField(model.getRow(), model.getColumn());
+			if (model.isCellEditable(row, modelColumn)) {
+				return beginEditField(row, modelColumn);
 			}
 		}
 		return false;
@@ -500,6 +500,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	protected boolean editBelowField() {
 		int row = model.getRow();
 		int modelColumn = model.getColumn();
+
 		// Get the current row (index) and column (fieldNum).
 		int index = row;
 		index++;
@@ -508,8 +509,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (index < numComps) {
 			row = index;
 			table.setRowSelectionInterval(row, row);
-			if (model.isCellEditable(index, modelColumn)) {
-				return beginEditField(model.getRow(), model.getColumn());
+			if (model.isCellEditable(row, modelColumn)) {
+				return beginEditField(row, modelColumn);
 			}
 		}
 		return false;
@@ -602,7 +603,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				model.setColumn(modelIndex);
 			}
 			else {
-				model.setColumn(-1);
+				model.setColumn(e.getFirstIndex());
 			}
 		});
 

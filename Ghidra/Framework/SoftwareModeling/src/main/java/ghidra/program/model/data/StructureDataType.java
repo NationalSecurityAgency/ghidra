@@ -29,7 +29,7 @@ import ghidra.util.exception.AssertException;
  * NOTES: 
  * <ul>
  * <li>Implementation is not thread safe when being modified.</li>
- * <li>For a structure to treated as having a zero-length (see {@link #isZeroLength()}) it 
+ * <li>For a structure to treated as having a zero-length (see {@link #isZeroLength()}) it </li>
  * 
  * </ul>
  * 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,25 @@
 package ghidra.features.bsim.gui.search.dialog;
 
 import java.awt.BorderLayout;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import javax.swing.*;
 
 import org.bouncycastle.util.Arrays;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
-import docking.action.DockingAction;
+import docking.*;
+import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
 import docking.widgets.PasswordChangeDialog;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import generic.theme.GIcon;
+import ghidra.features.bsim.gui.BSimServerManager;
 import ghidra.features.bsim.query.*;
+import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.Error;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
 import ghidra.framework.plugintool.PluginTool;
@@ -42,14 +46,13 @@ import resources.Icons;
  */
 public class BSimServerDialog extends DialogComponentProvider {
 
-	// TODO: Add connected status indicator (not sure how this relates to elastic case which will likely have a Session concept)
-	// TODO: Add "Disconnect" action (only works when active connections is 0; does not apply to elastic)
-
 	private PluginTool tool;
 	private BSimServerManager serverManager;
 	private BSimServerTableModel serverTableModel;
-	private GFilterTable<BSimServerInfo> filterTable;
+	private GFilterTable<BSimServerInfo> serverTable;
 	private BSimServerInfo lastAdded = null;
+
+	private ToggleDockingAction dbConnectionAction;
 
 	public BSimServerDialog(PluginTool tool, BSimServerManager serverManager) {
 		super("BSim Server Manager");
@@ -60,7 +63,7 @@ public class BSimServerDialog extends DialogComponentProvider {
 		addDismissButton();
 		setPreferredSize(600, 400);
 		notifyContextChanged();  // kick actions to initialized enabled state
-		setHelpLocation(new HelpLocation("BSimSearchPlugin","BSim_Servers_Dialog" ));
+		setHelpLocation(new HelpLocation("BSimSearchPlugin", "BSim_Servers_Dialog"));
 	}
 
 	@Override
@@ -70,34 +73,101 @@ public class BSimServerDialog extends DialogComponentProvider {
 	}
 
 	private void createToolbarActions() {
-		HelpLocation help = new HelpLocation("BSimSearchPlugin","Manage_Servers_Actions" );
-		
+		HelpLocation help = new HelpLocation("BSimSearchPlugin", "Manage_Servers_Actions");
+
 		DockingAction addServerAction =
-			new ActionBuilder("Add Server", "Dialog").toolBarIcon(Icons.ADD_ICON)
-				.helpLocation(help)
-				.onAction(e -> defineBsimServer())
-				.build();
+			new ActionBuilder("Add BSim Database", "Dialog").toolBarIcon(Icons.ADD_ICON)
+					.helpLocation(help)
+					.onAction(e -> defineBsimServer())
+					.build();
 		addAction(addServerAction);
 		DockingAction removeServerAction =
-			new ActionBuilder("Delete Server", "Dialog").toolBarIcon(Icons.DELETE_ICON)
-				.helpLocation(help)
-				.onAction(e -> deleteBsimServer())
-				.enabledWhen(c -> hasSelection())
-				.build();
+			new ActionBuilder("Delete BSim Database", "Dialog").toolBarIcon(Icons.DELETE_ICON)
+					.helpLocation(help)
+					.onAction(e -> deleteBsimServer())
+					.enabledWhen(c -> hasSelection())
+					.build();
 		addAction(removeServerAction);
 
-		DockingAction changePasswordAction = new ActionBuilder("Change User Password", "Dialog")
-			.helpLocation(help)
-			.toolBarIcon(new GIcon("icon.bsim.change.password"))
-			.onAction(e -> changePassword())
-			.enabledWhen(c -> hasSelection())
-			.build();
+		dbConnectionAction =
+			new ToggleActionBuilder("Toggle Database Connection", "Dialog").helpLocation(help)
+					.toolBarIcon(new GIcon("icon.bsim.disconnected"))
+					.onAction(e -> toggleSelectedJDBCDataSourceConnection())
+					.enabledWhen(c -> isNonActiveJDBCDataSourceSelected(c))
+					.build();
+		addAction(dbConnectionAction);
+
+		DockingAction changePasswordAction =
+			new ActionBuilder("Change User Password", "Dialog").helpLocation(help)
+					.toolBarIcon(new GIcon("icon.bsim.change.password"))
+					.onAction(e -> changePassword())
+					.enabledWhen(c -> canChangePassword())
+					.build();
 		addAction(changePasswordAction);
 
 	}
 
+	private void toggleSelectedJDBCDataSourceConnection() {
+
+		BSimServerInfo serverInfo = serverTable.getSelectedRowObject();
+		if (serverInfo == null || serverInfo.getDBType() == DBType.elastic) {
+			return;
+		}
+
+		BSimJDBCDataSource dataSource = BSimServerManager.getDataSourceIfExists(serverInfo);
+		if (dataSource == null) {
+			// connect
+			dataSource = BSimServerManager.getDataSource(serverInfo);
+			try (Connection connection = dataSource.getConnection()) {
+				// do nothing
+			}
+			catch (SQLException e) {
+				Msg.showError(this, rootPanel, "BSim Connection Failure", e.getMessage());
+			}
+		}
+		else {
+			dataSource.dispose();
+		}
+		serverTableModel.fireTableDataChanged();
+		notifyContextChanged();
+	}
+
+	private boolean isNonActiveJDBCDataSourceSelected(ActionContext c) {
+		BSimServerInfo serverInfo = serverTable.getSelectedRowObject();
+		if (serverInfo == null) {
+			return false;
+		}
+
+		// TODO: May need connection listener on dataSource to facilitate GUI update,
+		// although modal dialog avoids the issue somewhat
+
+		dbConnectionAction.setDescription(dbConnectionAction.getName());
+
+		ConnectionPoolStatus status = serverTableModel.getConnectionPoolStatus(serverInfo);
+		if (status.isActive) {
+
+			// Show connected icon
+			dbConnectionAction
+					.setToolBarData(new ToolBarData(new GIcon("icon.bsim.connected"), null));
+			dbConnectionAction.setSelected(true);
+			dbConnectionAction.setDescription("Disconnect idle BSim Database connection");
+
+			// disconnect permitted when no active connections
+			return status.activeCount == 0;
+		}
+
+		// Show disconnected icon (elastic always shown as disconnected)
+		dbConnectionAction
+				.setToolBarData(new ToolBarData(new GIcon("icon.bsim.disconnected"), null));
+		dbConnectionAction.setSelected(false);
+		dbConnectionAction.setDescription("Connect BSim Database");
+
+		// Action never enabled for elastic DB (i.e., does not use pooled JDBC data source)
+		return serverInfo.getDBType() != DBType.elastic;
+	}
+
 	private void changePassword() {
-		BSimServerInfo serverInfo = filterTable.getSelectedRowObject();
+		BSimServerInfo serverInfo = serverTable.getSelectedRowObject();
 		if (serverInfo == null) {
 			return;
 		}
@@ -141,8 +211,13 @@ public class BSimServerDialog extends DialogComponentProvider {
 		}
 	}
 
+	private boolean canChangePassword() {
+		BSimServerInfo serverInfo = serverTable.getSelectedRowObject();
+		return serverInfo != null && serverInfo.getDBType() != DBType.file;
+	}
+
 	private void deleteBsimServer() {
-		BSimServerInfo selected = filterTable.getSelectedRowObject();
+		BSimServerInfo selected = serverTable.getSelectedRowObject();
 		if (selected != null) {
 			int answer =
 				OptionDialog.showYesNoDialog(getComponent(), "Delete Server Configuration?",
@@ -152,7 +227,7 @@ public class BSimServerDialog extends DialogComponentProvider {
 					answer = OptionDialog.showOptionDialogWithCancelAsDefaultButton(getComponent(),
 						"Active Server Configuration!",
 						"Database connections are still active!\n" +
-							"Are you sure you want to delete server?",
+							"Are you sure you want to terminate connections and delete server?",
 						"Yes", OptionDialog.WARNING_MESSAGE);
 					if (answer == OptionDialog.YES_OPTION) {
 						serverManager.removeServer(selected, true);
@@ -169,7 +244,7 @@ public class BSimServerDialog extends DialogComponentProvider {
 		if (newServerInfo != null) {
 			serverManager.addServer(newServerInfo);
 			lastAdded = newServerInfo;
-			Swing.runLater(() -> filterTable.setSelectedRowObject(newServerInfo));
+			Swing.runLater(() -> serverTable.setSelectedRowObject(newServerInfo));
 		}
 	}
 
@@ -178,11 +253,11 @@ public class BSimServerDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		serverTableModel = new BSimServerTableModel(serverManager);
-		filterTable = new GFilterTable<>(serverTableModel);
-		GTable table = filterTable.getTable();
+		serverTable = new GFilterTable<>(serverTableModel);
+		GTable table = serverTable.getTable();
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.getSelectionModel().addListSelectionListener(e -> notifyContextChanged());
-		panel.add(filterTable, BorderLayout.CENTER);
+		panel.add(serverTable, BorderLayout.CENTER);
 
 		if (serverTableModel.getRowCount() > 0) {
 			table.setRowSelectionInterval(0, 0);
@@ -192,7 +267,7 @@ public class BSimServerDialog extends DialogComponentProvider {
 	}
 
 	private boolean hasSelection() {
-		return filterTable.getSelectedRowObject() != null;
+		return serverTable.getSelectedRowObject() != null;
 	}
 
 	public BSimServerInfo getLastAdded() {

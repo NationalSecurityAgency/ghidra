@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.datamgr.editor;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -27,6 +28,8 @@ import org.junit.*;
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.*;
+import docking.widgets.table.ColumnSortState.SortDirection;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
@@ -469,8 +472,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testEditName() throws Exception {
-		Enum enummDt = editSampleEnum();
 
+		Enum enummDt = editSampleEnum();
 		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
 
 		runSwing(() -> {
@@ -480,6 +483,37 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		applyChanges(true);
 		assertEquals("MyColors", enummDt.getName());
+	}
+
+	@Test
+	public void testEditName_RowChanges_NavigationWithTab() throws Exception {
+
+		editSampleEnum();
+
+		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
+		JTable table = panel.getTable();
+
+		sortOnNameColumn();
+
+		int row = 0;
+		int col = 0;
+		clickTableCell(table, row, col, 2);
+		assertTrue(runSwing(() -> table.isEditing()));
+
+		// note: this new name will cause the enum entry at row 0 to get moved to row 1
+		String newName = "MyColors";
+		JTextField editorField = getCellEditorTextField();
+		assertNotNull(editorField);
+		setText(editorField, newName);
+
+		pressTab(editorField);
+
+		// get the row after the table has been sorted
+		int newRow = findRowByName(newName);
+		assertNotEquals(row, newRow);
+
+		int newColumn = col + 1;
+		assertEditing(newRow, newColumn);
 	}
 
 	@Test
@@ -671,6 +705,71 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void sortOnNameColumn() {
+
+		JTable table = getTable();
+		SortedTableModel sortedModel = (SortedTableModel) table.getModel();
+		TableSortState sortState = getSortState(sortedModel);
+		ColumnSortState primarySortState = sortState.iterator().next();
+		SortDirection sortDirection = primarySortState.getSortDirection();
+		if (primarySortState.getColumnModelIndex() == EnumTableModel.NAME_COL) {
+			if (SortDirection.ASCENDING == sortDirection) {
+				return; // already sorted
+			}
+		}
+
+		TableSortState newSortState =
+			TableSortState.createDefaultSortState(EnumTableModel.NAME_COL, true);
+		runSwing(() -> sortedModel.setTableSortState(newSortState));
+	}
+
+	private TableSortState getSortState(SortedTableModel sortedModel) {
+		return runSwing(() -> sortedModel.getTableSortState());
+	}
+
+	private JTable getTable() {
+		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
+		return panel.getTable();
+	}
+
+	protected JTextField getCellEditorTextField() {
+		Object editorComponent = getTable().getEditorComponent();
+		if (editorComponent instanceof JTextField) {
+			return (JTextField) editorComponent;
+		}
+
+		fail("Either not editing, or editing a field that is a custom editor (not a text field)");
+		return null;
+	}
+
+	private void assertEditing(int row, int column) {
+		JTable table = getTable();
+		assertTrue(runSwing(table::isEditing));
+		assertEquals(row, (int) runSwing(table::getEditingRow));
+		assertEquals(row, (int) runSwing(table::getEditingColumn));
+	}
+
+	private int findRowByName(String name) {
+
+		JTable table = getTable();
+		return runSwing(() -> {
+			int col = 0; // Name column defaults to 0
+			int n = table.getRowCount();
+			for (int i = 0; i < n; i++) {
+				String value = table.getValueAt(i, col).toString();
+				if (name.equals(value)) {
+					return i;
+				}
+			}
+			return -1;
+		});
+	}
+
+	private void pressTab(JComponent component) {
+		triggerActionKey(component, 0, KeyEvent.VK_TAB);
+		waitForSwing();
+	}
 
 	private EnumEditorPanel findEditorPanel(Window w) {
 		Window[] windows = w.getOwnedWindows();

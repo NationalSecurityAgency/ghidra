@@ -29,7 +29,7 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.*;
 
-import ghidra.GhidraLauncher;
+import ghidra.Ghidra;
 
 /**
  * Utility methods for working with Ghidra launchers in Eclipse.
@@ -134,10 +134,7 @@ public class GhidraLaunchUtils {
 
 	/**
 	 * Sets the main type name attribute in the provided working copy.  For Ghidra projects, this 
-	 * should be {@link GhidraLauncher}.
-	 * <p>
-	 * TODO: {@link GhidraLauncher#main(String[])} is deprecated.  Fix in future version of
-	 * GhidraDev when we are ready to break backwards compatibility with Ghidra.
+	 * should be {@link Ghidra}.
 	 * 
 	 * @param wc The launch configuration working copy to modify.
 	 * @return The modified working copy.
@@ -145,7 +142,7 @@ public class GhidraLaunchUtils {
 	public static ILaunchConfigurationWorkingCopy setMainTypeName(
 			ILaunchConfigurationWorkingCopy wc) {
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME,
-			GhidraLauncher.class.getName());
+			Ghidra.class.getName());
 		return wc;
 	}
 
@@ -216,6 +213,18 @@ public class GhidraLaunchUtils {
 		List<String> newList = new ArrayList<>();
 		IJavaProject javaProject = JavaRuntime.getJavaProject(wc);
 		if (javaProject != null) {
+
+			// Add current project (might need to add dependent projects later)
+			newList.add(JavaRuntime.newProjectRuntimeClasspathEntry(javaProject).getMemento());
+
+			// Add JDK
+			newList.add(JavaRuntime
+					.newRuntimeContainerClasspathEntry(
+						JavaRuntime.newJREContainerPath(JavaRuntime.getVMInstall(javaProject)),
+						IRuntimeClasspathEntry.STANDARD_CLASSES)
+					.getMemento());
+
+			// Add Ghidra jar source
 			for (IClasspathEntry entry : javaProject.getRawClasspath()) {
 				IPath sourcePath = entry.getSourceAttachmentPath();
 				if (sourcePath != null) {

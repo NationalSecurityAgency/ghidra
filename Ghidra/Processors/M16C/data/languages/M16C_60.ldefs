@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <!--
+  	Version-1.1 12-Dec-2008 - complete rewrite of M16C_60.slaspec
+  -->
+  <language processor="M16C/60"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.1"
+            slafile="M16C_60.sla"
+            processorspec="M16C_60.pspec"
+            manualindexfile="../manuals/M16C_60.idx"
+            id="M16C/60:LE:16:default">
+    <description>Renesas M16C/60 16-Bit MicroComputer</description>
+    <compiler name="default" spec="M16C_60.cspec" id="default"/>
+    <external_name tool="gnu" name="m16c"/>
+  </language>
+</language_definitions>

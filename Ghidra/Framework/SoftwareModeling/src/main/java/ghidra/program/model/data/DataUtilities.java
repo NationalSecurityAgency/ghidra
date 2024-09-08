@@ -424,7 +424,7 @@ public final class DataUtilities {
 	 * </li>
 	 * <li>If the originalDataType is any type of pointer the supplied newDatatype
 	 * will replace the pointer's base type (e.g., int * would become db * when
-	 * newDataType is {@link ByteDataType}).
+	 * newDataType is {@link ByteDataType}).</li>
 	 * </ul>
 	 * <P>If false, only required transformations will be applied, Example:
 	 * if newDataType is a FunctionDefinitionDataType it will be transformed
