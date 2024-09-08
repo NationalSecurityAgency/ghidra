@@ -60,7 +60,7 @@
             variant="TC1767"
             version="1.3.1"
             slafile="tricore.sla"
-            processorspec="tc177x.pspec"
+            processorspec="tc1767.pspec"
 	    manualindexfile="../manuals/tricore.idx"
             id="tricore:LE:32:tc1767">
     <description>Siemens Tricore Embedded Processor TC1767</description>
