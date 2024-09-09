@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,6 +113,40 @@ public class DataTypeIndexer {
 // Inner Classes
 //==================================================================================================
 
+	// We use a case-insensitive sort on the data since clients may perform case-insensitive 
+	// searches.  This class was using the DataTypeComparator.INSTANCE for sorting, which is 
+	// case-sensitive.  This produced cases where not all matching data were found during queries, 
+	// which depended on how the binary search traversed the list.  If there is a reason to use that
+	// comparator over this one, then we need to re-think how this list is sorted.
+	private class CaseInsensitiveDataTypeComparator implements Comparator<DataType> {
+		@Override
+		public int compare(DataType dt1, DataType dt2) {
+			String name1 = dt1.getName();
+			String name2 = dt2.getName();
+
+			// if the names are the same, then sort by the path            
+			if (name1.equalsIgnoreCase(name2)) {
+
+				if (!name1.equals(name2)) {
+					// let equivalent names be sorted by case ('-' for lower-case first)
+					return -name1.compareTo(name2);
+				}
+
+				String dtmName1 = dt1.getDataTypeManager().getName();
+				String dtmName2 = dt2.getDataTypeManager().getName();
+
+				// if they have the same name, and are in the same DTM, then compare paths
+				if (dtmName1.equalsIgnoreCase(dtmName2)) {
+					return dt1.getPathName().compareToIgnoreCase(dt2.getPathName());
+				}
+
+				return dtmName1.compareToIgnoreCase(dtmName2);
+			}
+
+			return name1.compareToIgnoreCase(name2);
+		}
+	}
+
 	private class IndexerTask extends Task {
 
 		private List<DataType> list = new ArrayList<>();
@@ -133,7 +167,7 @@ public class DataTypeIndexer {
 				monitor.incrementProgress(1);
 			}
 
-			Collections.sort(list, DataTypeComparator.INSTANCE);
+			Collections.sort(list, new CaseInsensitiveDataTypeComparator());
 		}
 
 		List<DataType> getList() {
