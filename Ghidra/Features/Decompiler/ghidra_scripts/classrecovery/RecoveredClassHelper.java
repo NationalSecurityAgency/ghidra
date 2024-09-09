@@ -4525,6 +4525,102 @@ public class RecoveredClassHelper {
 	}
 
 	/**
+	 * Method to fixup the function definitions corresponding to purecalls from vftables after
+	 * all the child classes have been updated. This is because the function defintions for these
+	 * abstract function definitions are generated based on the child function signatures which
+	 * are not updated at the time the parent class structures are created.
+	 * @throws CancelledException if cancelled
+	 */
+	protected void fixupPurecallFunctionDefs() throws CancelledException {
+
+		// do nothing if no purecall 
+		if (purecall == null) {
+			return;
+		}
+
+		List<Address> processedVftables = new ArrayList<Address>();
+
+		// get references to purecall function to figure out which classes to process
+		ReferenceIterator purecallRefs =
+			program.getReferenceManager().getReferencesTo(purecall.getEntryPoint());
+
+		while (purecallRefs.hasNext()) {
+			monitor.checkCancelled();
+
+			Reference purecallRef = purecallRefs.next();
+			Address fromAddress = purecallRef.getFromAddress();
+
+			// get data containing the purecall reference to get the vftable structure
+			Data data = program.getListing().getDataContaining(fromAddress);
+
+			// skip if not a data ref
+			if (data == null) {
+				continue;
+			}
+
+			DataType dataType = data.getDataType();
+
+			// skip if not ref'd by a vftable
+			if (!dataType.getName().contains("vftable")) {
+				continue;
+			}
+
+			Address vftableAddress = data.getMinAddress();
+
+			// skip - already processed this whole table
+			if (processedVftables.contains(vftableAddress)) {
+				continue;
+			}
+
+			RecoveredClass recoveredClass = vftableToClassMap.get(vftableAddress);
+
+			// use the vftable structure fields to figure out which vfunctions in that vftable are 
+			// purecalls and to also get the vfunction function definition data type
+			Structure vftableStructure = (Structure) dataType;
+			int vfunctionNumber = 1;
+			for (DataTypeComponent component : vftableStructure.getComponents()) {
+				monitor.checkCancelled();
+				if (component.getComment().contains("pure")) {
+					// get an associated child vfunction signure to update the parent's function definition
+					Function childVirtualFunction =
+						getChildVirtualFunction(recoveredClass, vfunctionNumber);
+
+					if (childVirtualFunction == null) {
+						Msg.debug(this, "Cannot get associated vfunction " + vfunctionNumber);
+						continue;
+					}
+
+					// get the function definition from the child vfunction
+					FunctionDefinitionDataType newDef =
+						new FunctionDefinitionDataType(childVirtualFunction, false);
+
+					// update the this param to replace class struct with void so that the 
+					// definition is generic thiscall
+					ParameterDefinition[] arguments = newDef.getArguments();
+
+					PointerDataType voidPtrDt = new PointerDataType(VoidDataType.dataType);
+					arguments[0].setDataType(voidPtrDt);
+
+					// use it to reset the parent's associated abstract(pure) function definition 
+					Pointer functionDefPtr = (Pointer) component.getDataType();
+
+					FunctionDefinition functionDef =
+						(FunctionDefinition) functionDefPtr.getDataType();
+
+					functionDef.setArguments(arguments);
+					functionDef.setReturnType(newDef.getReturnType());
+
+				}
+				vfunctionNumber++;
+			}
+
+			processedVftables.add(vftableAddress);
+
+		}
+
+	}
+
+	/**
 	 * Method to get a child class virtual function at the given offset into the correct virtual function table
 	 * @param recoveredClass the given class
 	 * @param virtualFunctionNumber the virtual function offset into the table
