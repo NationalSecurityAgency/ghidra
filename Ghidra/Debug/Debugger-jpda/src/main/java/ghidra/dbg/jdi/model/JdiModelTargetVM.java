@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import com.sun.jdi.request.*;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.*;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
@@ -43,15 +44,35 @@ import ghidra.lifecycle.Internal;
  * TODO: Implementing {@link TargetLauncher} here doesn't seem right. While it's convenient from a
  * UI perspective, it doesn't make sense semantically.
  */
-@TargetObjectSchemaInfo(name = "VM", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "VM",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
-		@TargetAttributeType(name = "Breakpoints", type = JdiModelTargetBreakpointContainer.class, fixed = true),
-		@TargetAttributeType(name = "Classes", type = JdiModelTargetClassContainer.class, fixed = true),
-		@TargetAttributeType(name = "Modules", type = JdiModelTargetModuleContainer.class, fixed = true),
-		@TargetAttributeType(name = "Threads", type = JdiModelTargetThreadContainer.class, required = true, fixed = true),
-		@TargetAttributeType(name = "ThreadGroups", type = JdiModelTargetThreadGroupContainer.class, fixed = true),
-		@TargetAttributeType(type = Object.class) }, canonicalContainer = true)
+		@TargetAttributeType(
+			name = "Breakpoints",
+			type = JdiModelTargetBreakpointContainer.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Classes",
+			type = JdiModelTargetClassContainer.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Modules",
+			type = JdiModelTargetModuleContainer.class,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Threads",
+			type = JdiModelTargetThreadContainer.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "ThreadGroups",
+			type = JdiModelTargetThreadGroupContainer.class,
+			fixed = true),
+		@TargetAttributeType(type = Object.class) },
+	canonicalContainer = true)
 public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		TargetProcess, //
 		TargetAggregate, //
@@ -156,7 +177,6 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		Map<String, Object> attrs = new HashMap<>();
 		attrs.put("version", vm.version());
 		attrs.put("description", vm.description());
-		attrs.put("canAddMethods", Boolean.valueOf(vm.canAddMethod()));
 		attrs.put("canBeModified", Boolean.valueOf(vm.canBeModified()));
 		attrs.put("canForceEarlyReturn", Boolean.valueOf(vm.canForceEarlyReturn()));
 		attrs.put("canGetBytecodes", Boolean.valueOf(vm.canGetBytecodes()));
@@ -176,8 +196,6 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		attrs.put("canRedefineClasses", Boolean.valueOf(vm.canRedefineClasses()));
 		attrs.put("canRequestMonitorEvents", Boolean.valueOf(vm.canRequestMonitorEvents()));
 		attrs.put("canRequestVMDeathEvent", Boolean.valueOf(vm.canRequestVMDeathEvent()));
-		attrs.put("canUnrestrictedlyRedefineClasses",
-			Boolean.valueOf(vm.canUnrestrictedlyRedefineClasses()));
 		attrs.put("canUseInstanceFilters", Boolean.valueOf(vm.canUseInstanceFilters()));
 		attrs.put("canUseSourceNameFilters", Boolean.valueOf(vm.canUseSourceNameFilters()));
 		attrs.put("canWatchFieldAccess", Boolean.valueOf(vm.canWatchFieldAccess()));
@@ -219,7 +237,8 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		Map<String, Argument> defaultArguments = cx.defaultArguments();
 		Map<String, Argument> jdiArgs = JdiModelTargetLauncher.getArguments(defaultArguments,
 			JdiModelTargetLauncher.getParameters(defaultArguments), args);
-		return getManager().addVM(cx, jdiArgs).thenApply(__ -> null);
+		getManager().addVM(cx, jdiArgs);
+		return CompletableFuture.completedFuture(null);
 	}
 
 	@Override
@@ -293,36 +312,42 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	}
 
 	@Override
-	public void vmSelected(VirtualMachine eventVM, JdiCause cause) {
+	public DebugStatus vmSelected(VirtualMachine eventVM, JdiCause cause) {
 		if (eventVM.equals(vm)) {
 			((JdiModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
+		return DebugStatus.NO_CHANGE;
 	}
 
-	public void vmStateChanged(TargetExecutionState targetState, JdiReason reason) {
+	public DebugStatus vmStateChanged(TargetExecutionState targetState, JdiReason reason) {
 		changeAttributes(List.of(), List.of(), Map.of( //
 			STATE_ATTRIBUTE_NAME, targetState //
 		), reason.desc());
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void monitorContendedEntered(MonitorContendedEnteredEvent evt, JdiCause cause) {
+	public DebugStatus monitorContendedEntered(MonitorContendedEnteredEvent evt, JdiCause cause) {
 		System.err.println(this + ":" + evt);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void monitorContendedEnter(MonitorContendedEnterEvent evt, JdiCause cause) {
+	public DebugStatus monitorContendedEnter(MonitorContendedEnterEvent evt, JdiCause cause) {
 		System.err.println(this + ":" + evt);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void monitorWaited(MonitorWaitedEvent evt, JdiCause cause) {
+	public DebugStatus monitorWaited(MonitorWaitedEvent evt, JdiCause cause) {
 		System.err.println(this + ":" + evt);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void monitorWait(MonitorWaitEvent evt, JdiCause cause) {
+	public DebugStatus monitorWait(MonitorWaitEvent evt, JdiCause cause) {
 		System.err.println(this + ":" + evt);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	protected void updateDisplayAttribute() {

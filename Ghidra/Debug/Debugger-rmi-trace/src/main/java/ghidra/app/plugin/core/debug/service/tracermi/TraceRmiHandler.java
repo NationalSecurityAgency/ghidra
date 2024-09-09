@@ -244,6 +244,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		this.plugin = plugin;
 		plugin.addHandler(this);
 		this.socket = socket;
+		if (socket == null) {
+			throw new RuntimeException("Socket cannot be null");
+		}
 		this.in = socket.getInputStream();
 		this.out = socket.getOutputStream();
 

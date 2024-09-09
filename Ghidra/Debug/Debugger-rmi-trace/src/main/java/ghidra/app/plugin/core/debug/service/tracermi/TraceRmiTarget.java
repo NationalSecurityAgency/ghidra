@@ -391,8 +391,9 @@ public class TraceRmiTarget extends AbstractTarget {
 			boolean allowSuitableObject) {
 		Map<String, ActionEntry> result = new HashMap<>();
 		for (RemoteMethod m : methods) {
-			result.put(m.name(), createEntry(m, context, allowContextObject, allowCoordsObject,
-				allowSuitableObject));
+			ActionEntry entry = createEntry(m, context, allowContextObject, allowCoordsObject,
+				allowSuitableObject);
+			result.put(m.name(), entry);
 		}
 		return result;
 	}

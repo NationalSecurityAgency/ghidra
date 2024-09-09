@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.agent.DefaultTargetModelRoot;
 import ghidra.dbg.jdi.manager.*;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.*;
@@ -61,7 +62,7 @@ import ghidra.util.Msg;
 			required = true,
 			fixed = true),
 		@TargetAttributeType(
-			name = "VirtualMachines",
+			name = "VMs",
 			type = JdiModelTargetVMContainer.class,
 			required = true,
 			fixed = true),
@@ -153,24 +154,26 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 	*/
 
 	@Override
-	public void vmSelected(VirtualMachine vm, JdiCause cause) {
+	public DebugStatus vmSelected(VirtualMachine vm, JdiCause cause) {
 		if (vm.allThreads().isEmpty()) {
 			JdiModelTargetVM targetVM = vms.getTargetVM(vm);
 			setFocus(targetVM);
 		}
 		// Otherwise, we'll presumably get the =thread-selected event 
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void threadSelected(ThreadReference thread, StackFrame frame, JdiCause cause) {
+	public DebugStatus threadSelected(ThreadReference thread, StackFrame frame, JdiCause cause) {
 		JdiModelTargetVM vm = vms.getTargetVM(thread.threadGroup().virtualMachine());
 		JdiModelTargetThread t = vm.threads.getTargetThread(thread);
 		if (frame == null) {
 			setFocus(t);
-			return;
+			return DebugStatus.NO_CHANGE;
 		}
 		JdiModelTargetStackFrame f = t.stack.getTargetFrame(frame);
 		setFocus(f);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	public void setAccessible(boolean accessible) {
@@ -199,7 +202,8 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 		Map<String, Argument> defaultArguments = cx.defaultArguments();
 		Map<String, Argument> jdiArgs = JdiModelTargetLauncher.getArguments(defaultArguments,
 			JdiModelTargetLauncher.getParameters(defaultArguments), args);
-		return getManager().addVM(cx, jdiArgs).thenApply(__ -> null);
+		getManager().addVM(cx, jdiArgs);
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/**

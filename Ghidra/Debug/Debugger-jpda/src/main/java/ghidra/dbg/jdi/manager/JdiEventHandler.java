@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,8 @@
  */
 package ghidra.dbg.jdi.manager;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -26,7 +28,6 @@ import com.sun.jdi.request.EventRequest;
 import ghidra.async.AsyncReference;
 import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 
 public class JdiEventHandler implements Runnable {
 
@@ -35,16 +36,16 @@ public class JdiEventHandler implements Runnable {
 	String shutdownMessageKey;
 
 	private VirtualMachine vm;
-	private Thread thread;
+	private Thread handlerThread;
 	private JdiEventHandler global;
 
 	protected final AsyncReference<Integer, JdiCause> state =
 		new AsyncReference<>(ThreadReference.THREAD_STATUS_NOT_STARTED);
-	public final ListenerSet<JdiEventsListener> listenersEvent =
-		new ListenerSet<>(JdiEventsListener.class, true);
+	public final Set<JdiEventsListener> listenersEvent = new HashSet<>();
 	protected final ExecutorService eventThread = Executors.newSingleThreadExecutor();
 
 	public JdiEventHandler() {
+		// Nothing to do here
 	}
 
 	public JdiEventHandler(VirtualMachine vm, JdiEventHandler global) {
@@ -54,18 +55,19 @@ public class JdiEventHandler implements Runnable {
 	}
 
 	public void start() {
-		this.thread = new Thread(this, "event-handler");
-		thread.start();
+		this.handlerThread = new Thread(this, "event-handler");
+		handlerThread.start();
 	}
 
 	synchronized void shutdown() {
 		connected = false;  // force run() loop termination
-		thread.interrupt();
+		handlerThread.interrupt();
 		while (!completed) {
 			try {
 				wait();
 			}
 			catch (InterruptedException exc) {
+				// IGNORE
 			}
 		}
 	}
@@ -115,9 +117,9 @@ public class JdiEventHandler implements Runnable {
 				}
 				else if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
 					setCurrentThread(eventSet);
-					event(
-						() -> listenersEvent.invoke().processStop(eventSet, JdiCause.Causes.UNCLAIMED),
-						"processStopped");
+					for (JdiEventsListener listener : listenersEvent) {
+						listener.processStop(eventSet, JdiCause.Causes.UNCLAIMED);
+					}
 				}
 			}
 			catch (InterruptedException exc) {
@@ -135,68 +137,33 @@ public class JdiEventHandler implements Runnable {
 	}
 
 	private DebugStatus processEvent(Event event) {
-		System.err.println(event + ":" + vm);
-		if (event instanceof ExceptionEvent) {
-			return processException((ExceptionEvent) event);
-		}
-		else if (event instanceof BreakpointEvent) {
-			return processBreakpoint((BreakpointEvent) event);
-		}
-		else if (event instanceof WatchpointEvent) {
-			return processWatchpoint((WatchpointEvent) event);
-		}
-		else if (event instanceof AccessWatchpointEvent) {
-			return processAccessWatchpoint((AccessWatchpointEvent) event);
-		}
-		else if (event instanceof ModificationWatchpointEvent) {
-			return processWatchpointModification((ModificationWatchpointEvent) event);
-		}
-		else if (event instanceof StepEvent) {
-			return processStep((StepEvent) event);
-		}
-		else if (event instanceof MethodEntryEvent) {
-			return processMethodEntry((MethodEntryEvent) event);
-		}
-		else if (event instanceof MethodExitEvent) {
-			return processMethodExit((MethodExitEvent) event);
-		}
-		else if (event instanceof MonitorContendedEnteredEvent) {
-			return processMCEntered((MonitorContendedEnteredEvent) event);
-		}
-		else if (event instanceof MonitorContendedEnterEvent) {
-			return processMCEnter((MonitorContendedEnterEvent) event);
-		}
-		else if (event instanceof MonitorWaitedEvent) {
-			return processMonitorWaited((MonitorWaitedEvent) event);
-		}
-		else if (event instanceof MonitorWaitEvent) {
-			return processMonitorWait((MonitorWaitEvent) event);
-		}
-		else if (event instanceof ClassPrepareEvent) {
-			return processClassPrepare((ClassPrepareEvent) event);
-		}
-		else if (event instanceof ClassUnloadEvent) {
-			return processClassUnload((ClassUnloadEvent) event);
-		}
-		else if (event instanceof ThreadStartEvent) {
-			return processThreadStart((ThreadStartEvent) event);
-		}
-		else if (event instanceof ThreadDeathEvent) {
-			return processThreadDeath((ThreadDeathEvent) event);
-		}
-		else if (event instanceof VMStartEvent) {
-			return processVMStart((VMStartEvent) event);
-		}
-		else if (event instanceof VMDisconnectEvent) {
-			return processVMDisconnect((VMDisconnectEvent) event);
-		}
-		else if (event instanceof VMDeathEvent) {
-			return processVMDeath((VMDeathEvent) event);
-		}
-		else {
-			System.err.println("Unknown event: " + event);
-			return null;
-		}
+		//System.err.println(event + ":" + vm);
+		return switch (event) {
+			case ExceptionEvent ev -> processException(ev);
+			case AccessWatchpointEvent ev -> processAccessWatchpoint(ev);
+			case ModificationWatchpointEvent ev -> processWatchpointModification(ev);
+			case WatchpointEvent ev -> processWatchpoint(ev);
+			case StepEvent ev -> processStep(ev);
+			case MethodEntryEvent ev -> processMethodEntry(ev);
+			case MethodExitEvent ev -> processMethodExit(ev);
+			case MonitorContendedEnteredEvent ev -> processMCEntered(ev);
+			case MonitorContendedEnterEvent ev -> processMCEnter(ev);
+			case MonitorWaitedEvent ev -> processMonitorWaited(ev);
+			case MonitorWaitEvent ev -> processMonitorWait(ev);
+			case ClassPrepareEvent ev -> processClassPrepare(ev);
+			case ClassUnloadEvent ev -> processClassUnload(ev);
+			case ThreadStartEvent ev -> processThreadStart(ev);
+			case ThreadDeathEvent ev -> processThreadDeath(ev);
+			case VMStartEvent ev -> processVMStart(ev);
+			case VMDisconnectEvent ev -> processVMDisconnect(ev);
+			case VMDeathEvent ev -> processVMDeath(ev);
+			default -> processUnknown(event);
+		};
+	}
+
+	private DebugStatus processUnknown(Event event) {
+		System.err.println("Unknown event: " + event);
+		return null;
 	}
 
 	private boolean vmDied = false;
@@ -214,9 +181,11 @@ public class JdiEventHandler implements Runnable {
 			/*
 			 * Inform jdb command line processor that jdb is being shutdown. JDK-8154144.
 			 */
-			event(() -> listenersEvent.invoke().processShutdown(event, JdiCause.Causes.UNCLAIMED),
-				"processStopped");
-			return null; ///false;
+			DebugStatus status = DebugStatus.NO_CHANGE;
+			for (JdiEventsListener listener : listenersEvent) {
+				status = update(status, listener.processShutdown(event, JdiCause.Causes.UNCLAIMED));
+			}
+			return status;
 		}
 		else {
 			throw new InternalError();
@@ -293,257 +262,300 @@ public class JdiEventHandler implements Runnable {
 		JdiThreadInfo.setCurrentThread(thread);
 	}
 
+	private DebugStatus update(DebugStatus status, DebugStatus update) {
+		if (update == null) {
+			update = DebugStatus.BREAK;
+		}
+		return update.equals(DebugStatus.NO_CHANGE) ? status : update;
+	}
+
 	/**
 	 * Handler for breakpoint events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processBreakpoint(BreakpointEvent evt) {
-		event(() -> listenersEvent.invoke().breakpointHit(evt, JdiCause.Causes.UNCLAIMED),
-			"breakpointHit");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.breakpointHit(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for exception events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processException(ExceptionEvent evt) {
-		event(() -> listenersEvent.invoke().exceptionHit(evt, JdiCause.Causes.UNCLAIMED),
-			"exceptionHit");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.exceptionHit(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for method entry events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processMethodEntry(MethodEntryEvent evt) {
-		event(() -> listenersEvent.invoke().methodEntry(evt, JdiCause.Causes.UNCLAIMED), "methodEntry");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.methodEntry(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for method exit events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processMethodExit(MethodExitEvent evt) {
-		event(() -> listenersEvent.invoke().methodExit(evt, JdiCause.Causes.UNCLAIMED), "methodExit");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.methodExit(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for class prepared events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processClassPrepare(ClassPrepareEvent evt) {
-		event(() -> listenersEvent.invoke().classPrepare(evt, JdiCause.Causes.UNCLAIMED),
-			"classPrepare");
-		/*
-		if (!Env.specList.resolve(cle)) {
-		    MessageOutput.lnprint("Stopping due to deferred breakpoint errors.");
-		    return true;
-		} else {
-		    return false;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.classPrepare(evt, JdiCause.Causes.UNCLAIMED));
 		}
-		*/
-		return DebugStatus.GO;
+		return status;
 	}
 
 	/**
 	 * Handler for class unload events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processClassUnload(ClassUnloadEvent evt) {
-		event(() -> listenersEvent.invoke().classUnload(evt, JdiCause.Causes.UNCLAIMED), "classUnload");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.classUnload(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for monitor contended entered events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processMCEntered(MonitorContendedEnteredEvent evt) {
-		event(() -> listenersEvent.invoke().monitorContendedEntered(evt, JdiCause.Causes.UNCLAIMED),
-			"monitorContendedEntered");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status =
+				update(status, listener.monitorContendedEntered(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for monitor contended enter events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processMCEnter(MonitorContendedEnterEvent evt) {
-		event(() -> listenersEvent.invoke().monitorContendedEnter(evt, JdiCause.Causes.UNCLAIMED),
-			"monitorContendedEnter");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.monitorContendedEnter(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for monitor waited events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processMonitorWaited(MonitorWaitedEvent evt) {
-		event(() -> listenersEvent.invoke().monitorWaited(evt, JdiCause.Causes.UNCLAIMED),
-			"monitorWaited");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.monitorWaited(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for monitor waited events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processMonitorWait(MonitorWaitEvent evt) {
-		event(() -> listenersEvent.invoke().monitorWait(evt, JdiCause.Causes.UNCLAIMED), "monitorWait");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.monitorWait(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for step events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processStep(StepEvent evt) {
 		evt.request().disable();
-		event(() -> listenersEvent.invoke().stepComplete(evt, JdiCause.Causes.UNCLAIMED), "step");
-		return DebugStatus.STEP_INTO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.stepComplete(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for watchpoint events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processWatchpoint(WatchpointEvent evt) {
-		event(() -> listenersEvent.invoke().watchpointHit(evt, JdiCause.Causes.UNCLAIMED),
-			"watchpointHit");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.watchpointHit(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for access watchpoint events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processAccessWatchpoint(AccessWatchpointEvent evt) {
-		event(() -> listenersEvent.invoke().accessWatchpointHit(evt, JdiCause.Causes.UNCLAIMED),
-			"accessWatchpointHit");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.accessWatchpointHit(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for watchpoint modified events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processWatchpointModification(ModificationWatchpointEvent evt) {
-		event(() -> listenersEvent.invoke().watchpointModified(evt, JdiCause.Causes.UNCLAIMED),
-			"watchpointModified");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.watchpointModified(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for thread death events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processThreadDeath(ThreadDeathEvent evt) {
-		event(() -> listenersEvent.invoke().threadExited(evt, JdiCause.Causes.UNCLAIMED),
-			"threadExited");
-		JdiThreadInfo.removeThread(evt.thread());
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.threadExited(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
+	}
+
+	/**
+	 * Handler for vm start events
+	 * 
+	 * @param thread eventThread
+	 * @param threadState state
+	 * @param reason reason
+	 * @return status
+	 */
+	public DebugStatus processThreadStateChanged(ThreadReference thread, int threadState,
+			JdiReason reason) {
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.threadStateChanged(thread, threadState,
+				JdiCause.Causes.UNCLAIMED, reason));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for thread start events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processThreadStart(ThreadStartEvent evt) {
 		JdiThreadInfo.addThread(evt.thread());
-		event(() -> listenersEvent.invoke().threadStarted(evt, JdiCause.Causes.UNCLAIMED),
-			"threadStarted");
-		return DebugStatus.GO;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.threadStarted(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for vm death events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processVMDeath(VMDeathEvent evt) {
 		shutdownMessageKey = "The application exited";
-		event(() -> listenersEvent.invoke().vmDied(evt, JdiCause.Causes.UNCLAIMED), "vmDied");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.vmDied(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for vm disconnect events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processVMDisconnect(VMDisconnectEvent evt) {
 		shutdownMessageKey = "The application has been disconnected";
-		event(() -> listenersEvent.invoke().vmDisconnected(evt, JdiCause.Causes.UNCLAIMED),
-			"vmDisconnected");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.vmDisconnected(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	/**
 	 * Handler for vm start events
 	 * 
 	 * @param evt the event
-	 * @param v nothing
-	 * @return
+	 * @return status
 	 */
 	protected DebugStatus processVMStart(VMStartEvent evt) {
-		event(() -> listenersEvent.invoke().vmStarted(evt, JdiCause.Causes.UNCLAIMED), "vmStarted");
-		return DebugStatus.BREAK;
+		DebugStatus status = DebugStatus.NO_CHANGE;
+		for (JdiEventsListener listener : listenersEvent) {
+			status = update(status, listener.vmStarted(evt, JdiCause.Causes.UNCLAIMED));
+		}
+		return status;
 	}
 
 	public Integer getState() {
@@ -560,4 +572,5 @@ public class JdiEventHandler implements Runnable {
 		}
 		return set;
 	}
+
 }

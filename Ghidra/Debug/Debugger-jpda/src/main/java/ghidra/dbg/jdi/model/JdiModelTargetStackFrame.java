@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import com.sun.jdi.*;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.model.iface1.JdiModelSelectableObject;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetFocusScope;
 import ghidra.dbg.target.TargetFocusScope;
@@ -32,8 +33,11 @@ import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "StackFrame", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "StackFrame",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(type = Object.class) })
 public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl implements TargetStackFrame, //
 		//TargetRegisterBank, //
@@ -120,10 +124,12 @@ public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl implement
 	}
 
 	@Override
-	public void threadSelected(ThreadReference eventThread, StackFrame eventFrame, JdiCause cause) {
+	public DebugStatus threadSelected(ThreadReference eventThread, StackFrame eventFrame,
+			JdiCause cause) {
 		if (eventThread.equals(thread.thread) && eventFrame.equals(frame)) {
 			((JdiModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
