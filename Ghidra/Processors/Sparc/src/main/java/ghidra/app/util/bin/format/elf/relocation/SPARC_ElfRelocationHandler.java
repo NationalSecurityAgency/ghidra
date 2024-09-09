@@ -62,9 +62,8 @@ public class SPARC_ElfRelocationHandler
 		
 		// Handle relative relocations that do not require symbolAddr or symbolValue 
 		switch (type) {
-
 			case R_SPARC_RELATIVE:
-				newValue = (int) elfRelocationContext.getElfHeader().getImageBase() + (int) addend;
+				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
 				memory.setInt(relocationAddress, (int) newValue);
 				return new RelocationResult(Status.APPLIED, byteLength);
 				
@@ -72,7 +71,7 @@ public class SPARC_ElfRelocationHandler
 				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
 					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
-			
+				
 			default:
 				break;
 		}
@@ -206,11 +205,6 @@ public class SPARC_ElfRelocationHandler
 
 			case R_SPARC_GLOB_DAT:
 				newValue = symbolValue;
-				memory.setInt(relocationAddress, (int) newValue);
-				break;
-				
-			case R_SPARC_RELATIVE:
-				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
 				memory.setInt(relocationAddress, (int) newValue);
 				break;
 				
@@ -369,11 +363,6 @@ public class SPARC_ElfRelocationHandler
 				newValue &= mask;
 				memory.setInt(relocationAddress, oldValue | (int) newValue);
 				break;
-				
-			case R_SPARC_COPY:
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
 
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
