@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<tocroot>
+  <tocref id="Ghidra Functionality">
+    <tocref id="Scripting">
+      <tocdef id="Pyhidra Interpreter" sortgroup="z" text="Pyhidra Interpreter" target="help/topics/Pyhidra/interpreter.html" />
+    </tocref>
+  </tocref>
+</tocroot>

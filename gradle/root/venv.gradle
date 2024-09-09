@@ -1,0 +1,17 @@
+
+/******************************************************************************************
+ * TASK createPythonVirtualEnvironment
+ *
+ * Summary: Creates a Python virtual environment directory at "build/venv"  
+ ******************************************************************************************/
+task createPythonVirtualEnvironment(type: Exec) {
+	def venvDir = "build/venv"
+	def binDir = isCurrentWindows() ? "Scripts" : "bin"
+	def suffix = isCurrentWindows() ? ".exe" : "3"
+	project.ext.PYTHON3_VENV = "${rootProject.projectDir}/${venvDir}/${binDir}/python${suffix}"
+	project.ext.PIP3_VENV = "${rootProject.projectDir}/${venvDir}/${binDir}/pip${suffix}"
+
+	commandLine	rootProject.PYTHON3, "-m", "venv", venvDir, "--copies"
+}
+
+rootProject.prepDev.dependsOn createPythonVirtualEnvironment

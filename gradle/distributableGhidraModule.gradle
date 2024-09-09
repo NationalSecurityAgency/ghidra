@@ -183,6 +183,7 @@ plugins.withType(JavaPlugin) {
 		}
 		from (p.projectDir.toString() + "/ghidra_scripts") {
 			exclude 'bin/'
+			exclude '**/__pycache__/**'
 			into { zipPath + "/ghidra_scripts" }
 		}
 		

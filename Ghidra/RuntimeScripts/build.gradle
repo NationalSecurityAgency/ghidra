@@ -43,7 +43,7 @@ rootProject.PLATFORMS.each { platform ->
 				include "gradlew"
 				into "support/gradle"
 			}
-			t.from (p.file("Linux/ghidraRun")) 
+			t.from (p.file("Linux/ghidraRun"))
 		}
 
 		if (isWindows(platform.name)) {

@@ -28,3 +28,7 @@ rootProject.createJavadocs {
 rootProject.createJsondocs {
 	source sourceSets.main.allJava
 }
+
+rootProject.createPythonTypeStubs {
+	source sourceSets.main.allJava
+}
