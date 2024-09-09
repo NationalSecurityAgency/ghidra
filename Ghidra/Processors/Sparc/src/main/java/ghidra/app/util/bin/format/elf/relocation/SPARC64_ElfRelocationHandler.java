@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,69 +44,85 @@ public class SPARC64_ElfRelocationHandler extends SPARC_ElfRelocationHandler {
 		long pc = relocationAddress.getOffset();
 
 		int oldIntValue = memory.getInt(relocationAddress);
-		int newIntValue = 0;
-		long newLongValue = 0;
+		long newValue = 0;
 		int  mask = 0;
 		int byteLength = 8; // most relocations affect 8-bytes (change if different)
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+			case R_SPARC_RELATIVE:
+				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
+				memory.setLong(relocationAddress, newValue);
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_SPARC_COPY:
+				int symbolIndex = relocation.getSymbolIndex();
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+				
+			case R_SPARC_SIZE64:
+				newValue = sym.getSize() + addend;
+				memory.setLong(relocationAddress, newValue);
+				break;
+				
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
 		
 		// Relocation docs: https://docs.oracle.com/cd/E19120-01/open.solaris/819-0690/chapter6-24-1/index.html
 		//
 		switch (type) {
 			case R_SPARC_HI22:
-				newIntValue = (int) ((symbolValue + addend) >>> 10);
+				newValue = (int) ((symbolValue + addend) >>> 10);
 				mask = 0x003fffff;
 				oldIntValue &= ~(mask);
-				newIntValue &= mask;
-				memory.setInt(relocationAddress, oldIntValue | newIntValue);
+				newValue &= mask;
+				memory.setInt(relocationAddress, oldIntValue | (int) newValue);
 				byteLength = 4;
 				break;
 				
 			case R_SPARC_OLO10:
-				newIntValue = (int) ((symbolValue + addend) & 0x3FF) + (int)((relocation.getRelocationInfo()<<32)>>40);
+				newValue = (int) ((symbolValue + addend) & 0x3FF) + (int)((relocation.getRelocationInfo()<<32)>>40);
 				mask = 0x00001fff;
 				oldIntValue &= ~(mask);
-				newIntValue &= mask;
-				memory.setInt(relocationAddress, oldIntValue | newIntValue);
+				newValue &= mask;
+				memory.setInt(relocationAddress, oldIntValue | (int) newValue);
 				byteLength = 4;
 				break;
 				
 			case R_SPARC_GLOB_DAT:
-				newLongValue = symbolValue + addend;
-				memory.setLong(relocationAddress, newLongValue);
-				break;
-				
-			case R_SPARC_RELATIVE:
-				newLongValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
-				memory.setLong(relocationAddress, newLongValue);
+				newValue = symbolValue + addend;
+				memory.setLong(relocationAddress, newValue);
 				break;
 				
 			case R_SPARC_64:
-				newLongValue = symbolValue + addend;
-				memory.setLong(relocationAddress, newLongValue);
+				newValue = symbolValue + addend;
+				memory.setLong(relocationAddress, newValue);
 				break;
 
 			case R_SPARC_DISP64:
-				newLongValue = symbolValue + addend - pc;
-				memory.setLong(relocationAddress, newLongValue);
+				newValue = symbolValue + addend - pc;
+				memory.setLong(relocationAddress, newValue);
 				break;
 
 			case R_SPARC_UA64:
 			case R_SPARC_REGISTER:
-				newLongValue = symbolValue + addend;
-				memory.setLong(relocationAddress, newLongValue);
-				break;
-				
-			case R_SPARC_SIZE64:
-				newLongValue = sym.getSize() + addend;
-				memory.setLong(relocationAddress, newLongValue);
+				newValue = symbolValue + addend;
+				memory.setLong(relocationAddress, newValue);
 				break;
 			
 			case R_SPARC_H34:
-				newIntValue = (int) ((symbolValue + addend) >>> 12);
+				newValue = (int) ((symbolValue + addend) >>> 12);
 				mask = 0x003fffff;
 				oldIntValue &= ~(mask);
-				newIntValue &= mask;
-				memory.setInt(relocationAddress, oldIntValue | newIntValue);
+				newValue &= mask;
+				memory.setInt(relocationAddress, oldIntValue | (int) newValue);
 				byteLength = 4;
 				break;
 			
@@ -122,12 +138,12 @@ public class SPARC64_ElfRelocationHandler extends SPARC_ElfRelocationHandler {
 
 				// this is not the way JMP_SLOT is always done, but it should work in all cases of a large 64-bit address
 			    // other variants are optimized to handle smaller address values
-				newLongValue = (symbolValue + addend);
+				newValue = (symbolValue + addend);
 				
-				long hh = newLongValue >> 42;
-				long hl = (newLongValue >> 32) & 0x3ff;
-				long lh = (newLongValue & 0xffffffff) >> 10; 
-				long ll = newLongValue & 0x3ff;
+				long hh = newValue >> 42;
+				long hl = (newValue >> 32) & 0x3ff;
+				long lh = (newValue & 0xffffffff) >> 10; 
+				long ll = newValue & 0x3ff;
 				
 				memory.setInt(relocationAddress,         (int) (sparc_sethi_g1 | hh));
 				memory.setInt(relocationAddress.add(4),  (int) (sparc_sethi_g5 | lh));
