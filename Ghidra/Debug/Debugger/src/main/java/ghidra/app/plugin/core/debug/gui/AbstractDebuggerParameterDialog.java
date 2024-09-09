@@ -700,6 +700,11 @@ public abstract class AbstractDebuggerParameterDialog<P> extends DialogComponent
 			return;
 		}
 		memorized.put(parameterNameAndType(parameter), value);
+		PropertyEditor editor = paramEditors.get(parameter);
+		// Editors may not be populated yet
+		if (editor != null) {
+			setEditorValue(editor, parameter, value);
+		}
 	}
 
 	public void forgetMemorizedArguments() {
