@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,29 +15,33 @@
  */
 package ghidra.dbg.jdi.manager.impl;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
+import com.sun.jdi.event.Event;
 
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.manager.JdiCause.Causes;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
 public class JdiManagerImpl implements JdiManager {
 
-	public DebugStatus status;
-
 	private VirtualMachineManager virtualMachineManager;
 	private final Map<String, VirtualMachine> vms = new LinkedHashMap<>();
 	private VirtualMachine curVM = null;
+	private ThreadReference curThread = null;
+	private StackFrame curFrame = null;
+	private Location curLocation = null;
+	private Event curEvent = null;
+
 	private final Map<String, VirtualMachine> unmodifiableVMs = Collections.unmodifiableMap(vms);
 
 	protected final ListenerSet<JdiTargetOutputListener> listenersTargetOutput =
@@ -77,7 +81,7 @@ public class JdiManagerImpl implements JdiManager {
 	@Override
 	public void terminate() {
 		/**
-		 * NB: can use manager.connectedVMs, because technically, other things could be using the
+		 * NB: can't use manager.connectedVMs, because technically, other things could be using the
 		 * JDI outside of this manager.
 		 */
 		for (VirtualMachine vm : vms.values()) {
@@ -174,7 +178,7 @@ public class JdiManagerImpl implements JdiManager {
 	}
 
 	@Override
-	public CompletableFuture<VirtualMachine> addVM(Connector cx, List<String> args) {
+	public VirtualMachine addVM(Connector cx, List<String> args) {
 		Map<String, Connector.Argument> arguments = cx.defaultArguments();
 		if (cx instanceof LaunchingConnector) {
 			if (arguments.containsKey("command")) {
@@ -206,33 +210,39 @@ public class JdiManagerImpl implements JdiManager {
 	}
 
 	@Override
-	public CompletableFuture<VirtualMachine> addVM(Connector cx,
-			Map<String, Connector.Argument> args) {
-		return CompletableFuture.supplyAsync(() -> {
-			try {
-				curVM = connectVM(cx, args);
-				JdiEventHandler eventHandler = new JdiEventHandler(curVM, globalEventHandler);
-				eventHandler.start();
-				eventHandler.setState(ThreadReference.THREAD_STATUS_NOT_STARTED, Causes.UNCLAIMED);
-				eventHandlers.put(curVM, eventHandler);
-				vms.put(curVM.name(), curVM);
-				connectors.put(curVM, cx);
-			}
-			catch (VMDisconnectedException e) {
-				System.out.println("Virtual Machine is disconnected.");
-				return ExceptionUtils.rethrow(e);
-			}
-			catch (Exception e) {
-				return ExceptionUtils.rethrow(e);
-			}
-			return curVM;
-		});
+	public VirtualMachine addVM(Connector cx, Map<String, Connector.Argument> args) {
+		try {
+			setCurrentVM(connectVM(cx, args));
+			JdiEventHandler eventHandler = new JdiEventHandler(getCurrentVM(), globalEventHandler);
+			eventHandler.start();
+			eventHandler.setState(ThreadReference.THREAD_STATUS_NOT_STARTED, Causes.UNCLAIMED);
+			eventHandlers.put(getCurrentVM(), eventHandler);
+			vms.put(getCurrentVM().name(), getCurrentVM());
+			connectors.put(getCurrentVM(), cx);
+		}
+		catch (VMDisconnectedException e) {
+			Msg.error(this, "Virtual Machine is disconnected.");
+			return null;
+		}
+		catch (Exception e) {
+			Msg.error(this, "Could not connect Virtual Machine", e);
+			return null;
+		}
+		return getCurrentVM();
+	}
+
+	public void addVM(VirtualMachine vm) {
+		JdiEventHandler eventHandler = new JdiEventHandler(vm, globalEventHandler);
+		eventHandler.start();
+		eventHandler.setState(ThreadReference.THREAD_STATUS_NOT_STARTED, Causes.UNCLAIMED);
+		eventHandlers.put(getCurrentVM(), eventHandler);
+		vms.put(getCurrentVM().name(), getCurrentVM());
 	}
 
 	@Override
 	public CompletableFuture<Void> removeVM(VirtualMachine vm) {
-		if (curVM == vm) {
-			curVM = null;
+		if (getCurrentVM() == vm) {
+			setCurrentVM(null);
 		}
 		vms.remove(vm.name());
 		connectors.remove(vm);
@@ -275,4 +285,50 @@ public class JdiManagerImpl implements JdiManager {
 		return eventHandlers.get(vm);
 	}
 
+	public VirtualMachine getCurrentVM() {
+		return curVM;
+	}
+
+	public void setCurrentVM(VirtualMachine vm) {
+		this.curVM = vm;
+		if (!vms.containsValue(vm)) {
+			addVM(vm);
+		}
+	}
+
+	public ThreadReference getCurrentThread() {
+		if (curThread == null) {
+			List<ThreadReference> threads = curVM.allThreads();
+			curThread = threads.getFirst();
+		}
+		return curThread;
+	}
+
+	public void setCurrentThread(ThreadReference thread) {
+		this.curThread = thread;
+	}
+
+	public StackFrame getCurrentFrame() {
+		return curFrame;
+	}
+
+	public void setCurrentFrame(StackFrame frame) {
+		this.curFrame = frame;
+	}
+
+	public void setCurrentLocation(Location location) {
+		this.curLocation = location;
+	}
+
+	public Location getCurrentLocation() {
+		return curLocation;
+	}
+
+	public void setCurrentEvent(Event event) {
+		this.curEvent = event;
+	}
+
+	public Event getCurrentEvent() {
+		return curEvent;
+	}
 }

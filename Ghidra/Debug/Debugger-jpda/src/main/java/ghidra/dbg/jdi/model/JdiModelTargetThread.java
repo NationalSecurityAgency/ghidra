@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import com.sun.jdi.request.StepRequest;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.*;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetFocusScope;
@@ -34,15 +35,27 @@ import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
-@TargetObjectSchemaInfo(name = "Thread", elements = { //
-	@TargetElementType(type = Void.class) }, attributes = {
+@TargetObjectSchemaInfo(
+	name = "Thread",
+	elements = { //
+		@TargetElementType(type = Void.class) },
+	attributes = {
 		@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class),
-		@TargetAttributeType(name = "Registers", type = JdiModelTargetRegisterContainer.class, required = true, fixed = true),
-		@TargetAttributeType(name = "Stack", type = JdiModelTargetStack.class, required = true, fixed = true),
+		@TargetAttributeType(
+			name = "Registers",
+			type = JdiModelTargetRegisterContainer.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "Stack",
+			type = JdiModelTargetStack.class,
+			required = true,
+			fixed = true),
 		@TargetAttributeType(name = "Status", type = Integer.class),
 		@TargetAttributeType(name = "UID", type = Long.class, fixed = true),
 		@TargetAttributeType(type = Object.class) //
-}, canonicalContainer = true)
+	},
+	canonicalContainer = true)
 public class JdiModelTargetThread extends JdiModelTargetObjectReference implements //
 		TargetThread, //
 		JdiModelTargetAccessConditioned, //
@@ -214,7 +227,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	}
 
 	@Override
-	public void stepComplete(StepEvent evt, JdiCause cause) {
+	public DebugStatus stepComplete(StepEvent evt, JdiCause cause) {
 		if (evt.thread().equals(thread)) {
 			setLocation(evt.location());
 			changeAttributes(List.of(), List.of(), Map.of( //
@@ -222,10 +235,11 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 			), "Refreshed");
 			stateChanged(thread.status(), JdiReason.Reasons.STEP);
 		}
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	public void breakpointHit(BreakpointEvent evt, JdiCause cause) {
+	public DebugStatus breakpointHit(BreakpointEvent evt, JdiCause cause) {
 		if (evt.thread().equals(thread)) {
 			setLocation(evt.location());
 			changeAttributes(List.of(), List.of(), Map.of( //
@@ -233,12 +247,13 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 			), "Refreshed");
 			stateChanged(thread.status(), JdiReason.Reasons.BREAKPOINT_HIT);
 		}
+		return DebugStatus.BREAK;
 	}
 
 	// Which of these is actually going to fire, i.e. are separate events generated for subclasses?
 
 	@Override
-	public void watchpointHit(WatchpointEvent evt, JdiCause cause) {
+	public DebugStatus watchpointHit(WatchpointEvent evt, JdiCause cause) {
 		if (evt.thread().equals(thread)) {
 			setLocation(evt.location());
 			changeAttributes(List.of(), List.of(), Map.of( //
@@ -246,10 +261,11 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 			), "Refreshed");
 			stateChanged(thread.status(), JdiReason.Reasons.WATCHPOINT_HIT);
 		}
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	public void accessWatchpointHit(AccessWatchpointEvent evt, JdiCause cause) {
+	public DebugStatus accessWatchpointHit(AccessWatchpointEvent evt, JdiCause cause) {
 		if (evt.thread().equals(thread)) {
 			setLocation(evt.location());
 			changeAttributes(List.of(), List.of(), Map.of( //
@@ -257,13 +273,16 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 			), "Refreshed");
 			stateChanged(thread.status(), JdiReason.Reasons.ACCESS_WATCHPOINT_HIT);
 		}
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	public void threadSelected(ThreadReference eventThread, StackFrame frame, JdiCause cause) {
+	public DebugStatus threadSelected(ThreadReference eventThread, StackFrame frame,
+			JdiCause cause) {
 		if (eventThread.equals(thread) && frame == null) {
 			((JdiModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
 		}
+		return DebugStatus.NO_CHANGE;
 	}
 
 	private void stateChanged(int state, JdiReason reason) {
@@ -274,8 +293,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		}
 		targetVM.vmStateChanged(targetState, reason);
 		JdiEventHandler eventHandler = getManager().getEventHandler(targetVM.vm);
-		eventHandler.listenersEvent.invoke().threadStateChanged(thread, state,
-			JdiCause.Causes.UNCLAIMED, reason);
+		eventHandler.processThreadStateChanged(thread, state, reason);
 	}
 
 	public void threadStateChanged(TargetExecutionState targetState) {
@@ -385,8 +403,9 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	}
 
 	@Override
-	public void threadStarted(ThreadStartEvent evt, JdiCause cause) {
+	public DebugStatus threadStarted(ThreadStartEvent evt, JdiCause cause) {
 		threadSelected(evt.thread(), null, JdiCause.Causes.UNCLAIMED);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
