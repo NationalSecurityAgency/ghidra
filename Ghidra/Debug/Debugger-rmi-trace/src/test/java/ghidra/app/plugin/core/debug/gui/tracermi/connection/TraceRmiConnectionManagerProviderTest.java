@@ -48,6 +48,11 @@ import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.util.exception.CancelledException;
 
 public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	private static final String SCHEMA_XML = """
+			<context>
+			  <schema name="Root" elementResync="NEVER" attributeResync="NEVER" />
+			</context>
+			""";
 	TraceRmiConnectionManagerProvider provider;
 	TraceRmiService traceRmiService;
 	DebuggerControlService controlService;
@@ -179,6 +184,17 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	}
 
 	@Test
+	public void testCloseWithdrawsTargets() throws Exception {
+		Target target;
+		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
+			cx.client.createTrace(0, "bash");
+			target = waitForPass(() -> Unique.assertOne(targetService.getPublishedTargets()));
+		}
+		// Outside the try, the connection has been closed
+		waitForPass(() -> assertFalse(targetService.getPublishedTargets().contains(target)));
+	}
+
+	@Test
 	public void testServerNode() throws Exception {
 		TraceRmiServerNode node = TraceRmiConnectionTreeHelper.getServerNode(provider.rootNode);
 		assertEquals("Server: CLOSED", node.getDisplayText());
@@ -213,8 +229,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	}
 
 	public record Cx(SocketChannel channel, TestTraceRmiClient client,
-			TraceRmiConnection connection)
-			implements AutoCloseable {
+			TraceRmiConnection connection) implements AutoCloseable {
 		public static Cx complete(TraceRmiAcceptor acceptor, String description)
 				throws IOException, CancelledException {
 			SocketChannel channel = null;
@@ -378,11 +393,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 
 	@Test
 	public void testActivateTargetNode() throws Exception {
-		SchemaContext ctx = XmlSchemaContext.deserialize("""
-				<context>
-				  <schema name="Root" elementResync="NEVER" attributeResync="NEVER" />
-				</context>
-				""");
+		SchemaContext ctx = XmlSchemaContext.deserialize(SCHEMA_XML);
 		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
 			cx.client.createTrace(1, "bash");
 			try (Tx tx = cx.client.new Tx(1, 1, "Create snapshots")) {

@@ -197,6 +197,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			List<OpenTrace> all = List.copyOf(byId.values());
 			byId.clear();
 			byTrace.clear();
+			for (OpenTrace open : all) {
+				plugin.withdrawTarget(open.target);
+			}
 			return all;
 		}
 
