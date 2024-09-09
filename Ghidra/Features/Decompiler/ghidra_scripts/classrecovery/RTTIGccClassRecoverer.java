@@ -221,6 +221,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Msg.debug(this, "Creating and Applying Class structures");
 		createAndApplyClassStructures();
 
+		// fix purecall vfunction definitions
+		fixupPurecallFunctionDefs();
+
 		updateMultiVftableLabels();
 
 		return recoveredClasses;

@@ -175,6 +175,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		createAndApplyClassStructures(recoveredClasses);
 
+		// fix purecall vfunction definitions
+		fixupPurecallFunctionDefs();
+
 		if (!isPDBLoaded) {
 			// create better vftable labels for multi vftable classes
 			updateMultiVftableLabels(recoveredClasses);
