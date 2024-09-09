@@ -383,7 +383,13 @@ public abstract class ScriptAttributesParser {
 			String key = ent.getKey();
 			if (key.startsWith(PREFIX_ENV)) {
 				String varName = key.substring(PREFIX_ENV.length());
-				env.put(varName, Objects.toString(ent.getValue().get(args).val()));
+				ValStr<?> val = ent.getValue().get(args);
+				if (val == null || val.val() == null) {
+					env.put(varName, "");
+				}
+				else {
+					env.put(varName, Objects.toString(val.val()));
+				}
 			}
 		}
 	}
