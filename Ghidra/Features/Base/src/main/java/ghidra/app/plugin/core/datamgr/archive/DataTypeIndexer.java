@@ -119,31 +119,37 @@ public class DataTypeIndexer {
 	// which depended on how the binary search traversed the list.  If there is a reason to use that
 	// comparator over this one, then we need to re-think how this list is sorted.
 	private class CaseInsensitiveDataTypeComparator implements Comparator<DataType> {
+
 		@Override
 		public int compare(DataType dt1, DataType dt2) {
 			String name1 = dt1.getName();
 			String name2 = dt2.getName();
 
-			// if the names are the same, then sort by the path            
-			if (name1.equalsIgnoreCase(name2)) {
-
-				if (!name1.equals(name2)) {
-					// let equivalent names be sorted by case ('-' for lower-case first)
-					return -name1.compareTo(name2);
-				}
-
-				String dtmName1 = dt1.getDataTypeManager().getName();
-				String dtmName2 = dt2.getDataTypeManager().getName();
-
-				// if they have the same name, and are in the same DTM, then compare paths
-				if (dtmName1.equalsIgnoreCase(dtmName2)) {
-					return dt1.getPathName().compareToIgnoreCase(dt2.getPathName());
-				}
-
-				return dtmName1.compareToIgnoreCase(dtmName2);
+			int result = name1.compareToIgnoreCase(name2);
+			if (result != 0) {
+				return result;
 			}
 
-			return name1.compareToIgnoreCase(name2);
+			result = name1.compareTo(name2);
+			if (result != 0) {
+				// let equivalent names be sorted by case ('-' for lower-case first)
+				return -result;
+			}
+
+			// if the names are the same, then sort by data type manager
+			String dtmName1 = dt1.getDataTypeManager().getName();
+			String dtmName2 = dt2.getDataTypeManager().getName();
+			result = dtmName1.compareToIgnoreCase(dtmName2);
+			if (result != 0) {
+				return result;
+			}
+
+			// if they have the same name, and are in the same DTM, then compare paths
+			CategoryPath cp1 = dt1.getCategoryPath();
+			CategoryPath cp2 = dt2.getCategoryPath();
+			String p1 = cp1.getPath();
+			String p2 = cp2.getPath();
+			return p1.compareToIgnoreCase(p2);
 		}
 	}
 
