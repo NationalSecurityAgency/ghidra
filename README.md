@@ -29,7 +29,7 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 21 64-bit][jdk]
+* Install [JDK 21 64-bit][jdk] or <a href="https://www.oracle.com/java/technologies/downloads/">Oracle JDK 22</a>
 * Download a Ghidra [release file][releases]
   - **NOTE:** The official multi-platform release file is named 
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
@@ -46,7 +46,7 @@ directory.
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 21 64-bit][jdk]
+* [JDK 21 64-bit][jdk] or <a href="https://www.oracle.com/java/technologies/downloads/">Oracle JDK 22</a>
 * [Gradle 8.5+][gradle] (or provided Gradle wrapper if Internet connection is available)
 * [Python3][python3] (version 3.9 to 3.12) with bundled pip
 * make, gcc, and g++ (Linux/macOS-only)
