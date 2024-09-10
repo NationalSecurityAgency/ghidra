@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,6 @@ distributePyDep("JPype1-1.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x8
 distributePyDep("JPype1-1.5.0-cp312-cp312-win_amd64.whl")
 distributePyDep("JPype1-1.5.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl")
 distributePyDep("JPype1-1.5.0-cp39-cp39-win_amd64.whl")
-distributePyDep("JPype1-1.5.0.tar.gz")
 distributePyDep("packaging-23.2-py3-none-any.whl")
 distributePyDep("setuptools-68.0.0-py3-none-any.whl")
 
@@ -54,7 +53,7 @@ task installJPype(type: Exec) {
 	dependsOn(":createPythonVirtualEnvironment")
 	
 	File depsDir = file("${DEPS_DIR}/PyGhidra")
-	File binRepoDir = file("${BIN_REPO}/Ghidra/Features/PyGhidra")
+	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 	
 	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "$dir", "JPype1"
