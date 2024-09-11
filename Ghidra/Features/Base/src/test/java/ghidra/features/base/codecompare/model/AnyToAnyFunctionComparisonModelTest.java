@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.services.FunctionComparisonService;
-import ghidra.features.base.codecompare.model.DefaultFunctionComparisonModel;
+import ghidra.features.base.codecompare.model.AnyToAnyFunctionComparisonModel;
 import ghidra.features.base.codecompare.model.FunctionComparisonModelListener;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.data.ByteDataType;
@@ -41,10 +41,10 @@ import ghidra.util.datastruct.Duo.Side;
  * model directly.
  * <ul>
  * <li>The API methods being tested: {@link FunctionComparisonService}</li>
- * <li>The model being used for verification: {@link DefaultFunctionComparisonModel}</li>
+ * <li>The model being used for verification: {@link AnyToAnyFunctionComparisonModel}</li>
  * </ul>
  */
-public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationTest {
+public class AnyToAnyFunctionComparisonModelTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private Program program1;
 	private Program program2;
@@ -54,7 +54,7 @@ public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationT
 	private Function b1;
 	private Function b2;
 	private Function b3;
-	private DefaultFunctionComparisonModel model;
+	private AnyToAnyFunctionComparisonModel model;
 
 	@Before
 	public void setUp() throws Exception {
@@ -66,7 +66,7 @@ public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testSetNoFunctions() throws Exception {
-		model = new DefaultFunctionComparisonModel(new HashSet<>());
+		model = new AnyToAnyFunctionComparisonModel(new HashSet<>());
 		assertTrue(model.isEmpty());
 		assertEquals(0, model.getFunctions(LEFT).size());
 		assertEquals(0, model.getFunctions(RIGHT).size());
@@ -77,7 +77,7 @@ public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testSetOneFunctions() throws Exception {
 		Set<Function> set = Set.of(b1);
-		model = new DefaultFunctionComparisonModel(set);
+		model = new AnyToAnyFunctionComparisonModel(set);
 
 		assertFalse(model.isEmpty());
 		assertEquals(List.of(b1), model.getFunctions(LEFT));
@@ -89,7 +89,7 @@ public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testPairOfFunctions() throws Exception {
 		Set<Function> set = Set.of(b1, b2);
-		model = new DefaultFunctionComparisonModel(set);
+		model = new AnyToAnyFunctionComparisonModel(set);
 
 		assertEquals(List.of(b1, b2), model.getFunctions(LEFT));
 		assertEquals(List.of(b1, b2), model.getFunctions(RIGHT));
@@ -235,7 +235,7 @@ public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testSettingBadFunctionActive() {
 		Set<Function> set = Set.of(a1, b1);
-		model = new DefaultFunctionComparisonModel(set);
+		model = new AnyToAnyFunctionComparisonModel(set);
 
 		assertEquals(a1, model.getActiveFunction(LEFT));
 		model.setActiveFunction(LEFT, a3);
@@ -280,9 +280,9 @@ public class DefaultComparisonModelTest extends AbstractGhidraHeadedIntegrationT
 		return builder;
 	}
 
-	private DefaultFunctionComparisonModel createTestModel() {
+	private AnyToAnyFunctionComparisonModel createTestModel() {
 		Set<Function> set = Set.of(b1, b2, a1, a2);
-		return new DefaultFunctionComparisonModel(set);
+		return new AnyToAnyFunctionComparisonModel(set);
 	}
 
 	private class TestFunctionComparisonModelListener implements FunctionComparisonModelListener {
