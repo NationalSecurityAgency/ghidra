@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.python.pydev.debug.regularLaunchConfigurationType">
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/Features PyGhidra/src/main/py/src/pyghidra"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="2"/>
+    </listAttribute>
+    <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+        <mapEntry key="GHIDRA_INSTALL_DIR" value="${project_loc:/___root}"/>
+        <mapEntry key="JAVA_HOME_OVERRIDE" value="${ee_home:JavaSE-21}"/>
+        <mapEntry key="PYGHIDRA_DEBUG" value="1"/>
+    </mapAttribute>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${workspace_loc:Features PyGhidra/src/main/py/src/pyghidra}"/>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_OTHER_WORKING_DIRECTORY" value="${workspace_loc:Features PyGhidra/src/main/py/src/pyghidra}"/>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-v"/>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:Features PyGhidra/src/main/py/src/pyghidra}"/>
+    <stringAttribute key="org.python.pydev.debug.ATTR_INTERPRETER" value="__default"/>
+    <stringAttribute key="org.python.pydev.debug.ATTR_PROJECT" value="Features PyGhidra"/>
+    <stringAttribute key="process_factory_id" value="org.python.pydev.debug.processfactory.PyProcessFactory"/>
+</launchConfiguration>

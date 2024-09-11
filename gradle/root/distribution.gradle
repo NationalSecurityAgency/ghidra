@@ -194,6 +194,94 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	}
 }
 
+task createPythonTypeStubs(type: Javadoc, description: 'Generate pyi stubs for all projects', group: 'Documentation') {
+
+	group 'private'
+
+	String ROOT_PROJECT_DIR = rootProject.projectDir.toString()
+
+	destinationDir file(ROOT_PROJECT_DIR + "/build/typestubs/src")
+
+	failOnError false
+
+	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
+	// find referenced classes.
+	classpath =  rootProject.ext.ghidraPath
+
+
+	// Generate at package level because user may try to get help directly on an object they have
+	// rather than its public interface.
+	options.addBooleanOption("package", true)
+
+	// Set the ghidra flag to enable the creation of the ghidra_builtins pseudo package
+	options.addBooleanOption("ghidra", true)
+
+	// Newer versions of gradle set this to true by default.
+	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
+	options.setNoTimestamp(false)
+
+	// Some internal packages are not public and need to be exported.
+	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
+
+	options.doclet = "ghidra.doclets.typestubs.PythonTypeStubDoclet"
+	doFirst {
+		options.docletpath = new ArrayList(configurations.jsondoc.files)
+	}
+}
+
+
+task createGhidraStubsWheel {
+	group 'private'
+	description "Creates the ghidra-stubs wheel for the Ghidra api.  [gradle/root/distribution.gradle]"
+
+	dependsOn("createPythonTypeStubs")
+
+	String ROOT_PROJECT_DIR = rootProject.projectDir.toString()
+
+	def cwd = file(ROOT_PROJECT_DIR + "/build/typestubs")
+	def destinationDir = file(cwd.toString() + "/dist")
+
+	it.outputs.file(destinationDir.toString() + "/ghidra_stubs-${project.version}-py3-none-any.whl")
+
+	doFirst {
+		copy {
+			from(file(ROOT_PROJECT_DIR + "/LICENSE"))
+			into cwd
+		}
+
+		def manifest = file(cwd.toString() + "/MANIFEST.in" )
+		manifest.write("graft src\n")
+
+		def pyproject = file(cwd.toString() + "/pyproject.toml" )
+		pyproject.write("""\
+			[build-system]
+			requires = ["setuptools", "wheel"]
+			build-backend = "setuptools.build_meta"
+
+			[project]
+			name = "ghidra-stubs"
+			version = "${project.version}"
+			classifiers = [
+				"License :: OSI Approved :: Apache Software License",
+				"Typing :: Stubs Only",
+			]
+			""".stripIndent()
+		)
+	}
+
+	doLast {
+		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
+		exec {
+			workingDir { cwd.toString() }
+			commandLine	rootProject.PYTHON3, "-m", "pip"
+			args "wheel", "-w", destinationDir.toString(), "--no-index"
+			args "-f", setuptools
+			args "."
+		}
+	}
+}
+
+
 /*********************************************************************************
  * JAVADOCS - ZIP
  *
@@ -334,6 +422,13 @@ task assembleDistribution (type: Copy) {
 	// JAVADOCS
 	/////////////////
 	from (zipJavadocs) {
+		into 'docs'
+	}
+
+	////////////////////////////
+	// Ghidra Python type stubs
+	////////////////////////////
+	from (createGhidraStubsWheel) {
 		into 'docs'
 	}
 	

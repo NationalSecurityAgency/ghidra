@@ -70,7 +70,9 @@ rootProject.assembleDistribution {
 		exclude '**/*.pyc'
 		exclude '**/*.pyo'
 		exclude '**/__pycache__/**'
-		exclude 'dist/*.tar.gz'
+		exclude '**/.pytest_cache'
+		exclude '**/*.egg-info'
+		exclude 'build'
 		into { zipPath + "/pypkg" }
 	}
 }

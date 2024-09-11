@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.remoteJavaApplication">
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/Features PyGhidra"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="4"/>
+    </listAttribute>
+    <booleanAttribute key="org.eclipse.jdt.launching.ALLOW_TERMINATE" value="true"/>
+    <mapAttribute key="org.eclipse.jdt.launching.CONNECT_MAP">
+        <mapEntry key="hostname" value="localhost"/>
+        <mapEntry key="port" value="18001"/>
+    </mapAttribute>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Features PyGhidra"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_CONNECTOR_ID" value="org.eclipse.jdt.launching.socketAttachConnector"/>
+</launchConfiguration>

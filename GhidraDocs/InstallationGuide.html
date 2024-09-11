@@ -40,6 +40,7 @@ future releases.
     <li><a href="#RunServer">Ghidra Server</a></li>
     <li><a href="#RunHeadless">Headless (Batch) Mode</a></li>
     <li><a href="#RunJar">Single Jar Mode</a></li>
+	<li><a href="#RunPyGhidra">PyGhidra</a></li>
   </ul>
   <li><a href="#Extensions">Extensions</a></li>
   <ul>
@@ -98,8 +99,10 @@ Ghidra team if you have a specific need.</p></blockquote>
       </li>
     </ul>
   </ul>
-  <li>Python3 (3.9 to 3.12; for Debugger support)</li>
+  <li>Python3 (3.9 to 3.12)</li>
   <ul>
+    <li>Python 3.7 to 3.12 for <a href="#DebuggerPython">Debugger support</a></li>
+    <li>Python 3.9 to 3.12 for <a href="#RunPyGhidra">PyGhidra support</a></li>
     <li>This is available from <a href="https://python.org">Python.org</a> or most operating system's
      app stores or software repositories.  For Linux it is recommended that the system's package
      repository be used to install a suitable version of Python.</li>
@@ -306,7 +309,7 @@ is complete.</p>
     </td>
   </tr>
   <tr>
-    <td valign="top"><b>LICENSE.txt</b></td>
+    <td valign="top"><b>LICENSE</b></td>
     <td valign="top">Ghidra license information.</td>
   </tr>
   <tr>
@@ -436,11 +439,36 @@ mode using the command line. For more information, see the
 <p>Normally, Ghidra is installed as an entire directory structure that allows modular inclusion or
 removal of feature sets and also provides many files that can be extended or configured. However,
 there are times when it would be useful to have	all or some subset of Ghidra compressed into a
-single jar file at the expense of	configuration options. This makes Ghidra easier to run from the
+single jar file at the expense of configuration options. This makes Ghidra easier to run from the
 command line for headless operation or to use as a library of reverse engineering capabilities for
 another Java application.</p>
 <p>A single ghidra.jar file can be created using the
 <i>&lt;GhidraInstallDir&gt;</i>/support/buildGhidraJar script.</p>
+
+<h3><a name="RunPyGhidra"></a>PyGhidra Mode</h3>
+<p>Ghidra has integrated the the popular PyGhidra extension to enable native CPython 3 support out of
+the box. To enable this support, Ghidra must be launched from a Python environment using special
+launch scripts.</p>
+<ol>
+  <li>
+    Navigate to <i>&lt;GhidraInstallDir&gt;</i>/support/
+  </li>
+  <li>
+    <p>Run <i>pyghidraRun.bat</i> (Windows) or <i>pyghidraRun</i> (Linux or macOS)</p>
+    <p>If the <b>pyghidra</b> Python module has not yet been installed, the script will offer to 
+    install it for you, along with its dependencies. If you prefer to install it manually, execute:
+    <pre>python3 -m pip install --no-index -f <i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Features/PyGhidra/pypkg/dist pyghidra</pre>
+    <b>NOTE: </b>You may also install and run PyGhidra from within a 
+    <a href="https://docs.python.org/3/tutorial/venv.html">virtual environment</a> if you desire.
+    <p>If Ghidra failed to launch, see the <a href="#Troubleshooting">Troubleshooting</a> section.
+    </p>
+  </li>
+</ol>
+<p>Once PyGhidra has been installed, you are free to use it like any other Python module. You may
+import it from other Python scripts, or launch PyGhidra using the <i>pyghidra</i> or <i>pyghidraw</i>
+commands. For more information on using PyGhidra, see the 
+<i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Features/PyGhidra/PyGhidra_README.html file.</p>
+
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="Extensions"></a>Extensions</h2>
