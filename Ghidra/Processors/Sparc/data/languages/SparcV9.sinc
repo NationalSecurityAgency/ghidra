@@ -834,23 +834,25 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 :udivx  RS1,regorimm,RD              is op=2 & RD & op3=0x0d & RS1 & regorimm {RD = RS1  / regorimm;}
 
 #----------------MULTIPLY 32 bit
-@if SIZE=="8"
+
 :umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm
 {
 	local res:8 = zext(RS1:4) * zext(regorimm:4);
-	Y = res >> 32;
+	Y = zext(res[32,32]);
 	RD = res:4;
 }
+
 :smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm
 {
 	local res:8 = sext(RS1:4) * sext(regorimm:4);
-	Y = res s>> 32;
+	Y = zext(res[32,32]);
 	RD = res:4;
 }
+
 :umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm
 {
 	local res:8 = zext(RS1:4) * zext(regorimm:4);
-	Y = res >> 32;
+	Y = zext(res[32,32]);
 	zeroflags(res:4);
 	RD = res:4;
 	logicflags();
@@ -858,46 +860,11 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 :smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm
 {
 	local res:8 = sext(RS1:4) * sext(regorimm:4);
-	Y = res s>> 32;
+	Y = zext(res[32,32]);
 	zeroflags(res:4);
 	RD = res:4;
 	logicflags();
 }
-
-@else
-# size = 4
-:umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm
-{
-	local res:8 = zext(RS1:4) * zext(regorimm:4);
-	Y = res[32,32];
-	RD = res:4;
-}
-
-:smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm
-{
-	local res:8 = sext(RS1:4) * sext(regorimm:4);
-	Y = res[32,32];
-	RD = res:4;
-}
-
-:umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm
-{
-	local res:8 = zext(RS1:4) * zext(regorimm:4);
-	Y = res[32,32];
-	zeroflags(res:4);
-	RD = res:4;
-	logicflags();
-}
-:smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm
-{
-	local res:8 = sext(RS1:4) * sext(regorimm:4);
-	Y = res[32,32];
-	zeroflags(res:4);
-	RD = res:4;
-	logicflags();
-}
-
-@endif
 
 #----------------MULTIPLY Step
 
@@ -1028,10 +995,7 @@ sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE)
 :restore                             is op=0x2 & rd=0 & op3=0x3d                {                             restore(); didrestore=1; }
 
 # FIXME  'jmpl' can have 'return' in the delayslot to return from a user trap handler
-#        - jmpl    sets the trapped PC supplied to user trap handler
-#        - return  sets the trapped nPC supplied to user trap handler
-#        Nothing in instruction encoding defines this, requiring a context register;
-#        or a fake 8-byte instruction, requiring logic for 64-bits of tokens
+#    @see PR #6285
 
 :return  retea                       is op=0x2 & op3=0x39 & retea { build retea; restore(); delayslot(1); didrestore=1; return [retea]; }
 
@@ -1134,7 +1098,9 @@ trap: RS1+swtrap  is i=1 & RS1 & swtrap { local tmp = ((RS1 + swtrap) & 0x7F); e
 :t^tcc TICC, trap                    is op=0x2 & op3=0x3a & tcc & TICC & trap
 {
 	if (!tcc) goto inst_next;
-	sw_trap(trap);
+	local dest:$(SIZE) = sw_trap(trap);
+	# trap should fall thru by default, can be over-ridden to a branch/call-return
+	call [dest];
 }
 
 membar_mask:  is cmask & mmask { tmp:1 = (cmask << 4) | mmask; export tmp; }
@@ -1211,9 +1177,9 @@ resv30: "%resv30"  is  fcn { local reloc = zext(TL == 1)*&RESV30_1 + zext(TL == 
 define pcodeop IllegalInstructionTrap;
 
 :illtrap const22                     is op = 0 & op2 = 0 & const22 {
-	IllegalInstructionTrap(const22:4);
-	tmp:$(SIZE) = 0; # trap - don't fall-thru
-	return [ tmp ];
+	local dest:$(SIZE) = IllegalInstructionTrap(const22:4);
+	# trap should not fall thru by default, can be over-ridden to a call
+	goto [dest];
 }
 
 :prefetch ea,fcn                     is op=3 & fcn & op3 = 0x2d & ea {}
