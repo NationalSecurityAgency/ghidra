@@ -65,7 +65,10 @@ task installEditablePyGhidra(type: Exec) {
 
 	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py"
 }
-rootProject.prepDev.dependsOn installEditablePyGhidra
+
+if (findPython3(false)) {
+	rootProject.prepDev.dependsOn installEditablePyGhidra
+}
 
 // Add pyghidra_launcher.py to the release
 rootProject.assembleDistribution {

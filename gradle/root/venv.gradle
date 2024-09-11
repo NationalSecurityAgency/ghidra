@@ -28,4 +28,6 @@ task createPythonVirtualEnvironment(type: Exec) {
 	commandLine	rootProject.PYTHON3, "-m", "venv", venvDir, "--copies"
 }
 
-rootProject.prepDev.dependsOn createPythonVirtualEnvironment
+if (findPython3(false)) {
+	rootProject.prepDev.dependsOn createPythonVirtualEnvironment
+}
