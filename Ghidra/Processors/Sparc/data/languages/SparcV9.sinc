@@ -839,14 +839,22 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 {
 	local res:8 = zext(RS1:4) * zext(regorimm:4);
 	Y = zext(res[32,32]);
-	RD = res:4;
+@if SIZE=="4"
+	RD = res:4;     # 32 bit only gets lower 4 bytes
+@else
+	RD = res;       # 64 bit gets full product
+@endif
 }
 
 :smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm
 {
 	local res:8 = sext(RS1:4) * sext(regorimm:4);
 	Y = zext(res[32,32]);
-	RD = res:4;
+@if SIZE=="4"
+	RD = res:4;     # 32 bit only gets lower 4 bytes
+@else
+	RD = res;       # 64 bit gets full product
+@endif
 }
 
 :umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm
@@ -854,7 +862,11 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	local res:8 = zext(RS1:4) * zext(regorimm:4);
 	Y = zext(res[32,32]);
 	zeroflags(res:4);
-	RD = res:4;
+@if SIZE=="4"
+	RD = res:4;     # 32 bit only gets lower 4 bytes
+@else
+	RD = res;       # 64 bit gets full product
+@endif
 	logicflags();
 }
 :smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm
@@ -862,7 +874,11 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	local res:8 = sext(RS1:4) * sext(regorimm:4);
 	Y = zext(res[32,32]);
 	zeroflags(res:4);
-	RD = res:4;
+@if SIZE=="4"
+	RD = res:4;     # 32 bit only gets lower 4 bytes
+@else
+	RD = res;       # 64 bit gets full product
+@endif
 	logicflags();
 }
 
@@ -896,7 +912,7 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 
 :udiv    RS1,regorimm,RD             is op=2 & RD & op3=0x0e & RS1 & regorimm
 {
-	numerator:8 = (zext(Y) << 32) + zext(RS1);
+	numerator:8 = (zext(Y) << 32) + zext(RS1:4);
 	denom:8 = zext(regorimm:4);
 	local res:8 = numerator / denom;
 	RD = zext(res:4);
