@@ -404,11 +404,14 @@ public class RecoveredClassHelper {
 	 * @param function the given function
 	 * @param getThunkedFunction if true, use the thunked function in the map, if false use the 
 	 * directly called function from the calling function even if it is a thunk
+	 * @param visited the set of function entry point addresses already processed
 	 * @return a map of the given functions calling addresses to the called functions 
 	 * @throws CancelledException if cancelled
 	 */
-	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction, Set<Address> visited)
+	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction,
+			Set<Address> visited)
 			throws CancelledException {
+
 		visited.add(function.getEntryPoint());
 		Map<Address, Function> functionCallMap = new HashMap<Address, Function>();
 
@@ -435,7 +438,8 @@ public class RecoveredClassHelper {
 				Address functionAddress = reference.getFromAddress();
 				Function secondHalfOfFunction =
 					extendedFlatAPI.getReferencedFunction(functionAddress);
-				if (secondHalfOfFunction != null && !visited.contains(secondHalfOfFunction.getEntryPoint())) {
+				if (secondHalfOfFunction != null &&
+					!visited.contains(secondHalfOfFunction.getEntryPoint())) {
 					Map<Address, Function> functionCallMap2 =
 						getFunctionCallMap(secondHalfOfFunction, false, visited);
 					for (Address addr : functionCallMap2.keySet()) {
@@ -449,7 +453,8 @@ public class RecoveredClassHelper {
 		return functionCallMap;
 	}
 
-	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction) throws CancelledException {
+	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction)
+			throws CancelledException {
 		return getFunctionCallMap(function, getThunkedFunction, new HashSet<>());
 	}
 
