@@ -181,8 +181,9 @@ Translate *SleighArchitecture::buildTranslator(DocumentStorage &store)
     iter->second.reset(loader, context);
     return &iter->second;
   }
-  translators[languageindex] = Sleigh(loader,context);
-  return &translators[languageindex];
+  pair<map<int4,Sleigh>::iterator,bool> res;
+  res = translators.emplace(piecewise_construct,forward_as_tuple(languageindex),forward_as_tuple(loader,context));
+  return &(*res.first).second;
 }
 
 PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
