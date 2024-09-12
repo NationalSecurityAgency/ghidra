@@ -871,9 +871,7 @@ public class RecoveredClassHelper {
 			return null;
 		}
 
-		if (classList.contains(recoveredClass)) {
-			classList.remove(recoveredClass);
-		}
+		classList.remove(recoveredClass);
 
 		if (classList.size() == 0) {
 			return null;
@@ -5324,8 +5322,8 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 */
 	public List<Function> getVfunctions(Address vftableAddress) throws CancelledException {
+		List<Function> virtualFunctionList = new ArrayList<>();
 
-		Set<Function> vfunctionSet = new HashSet<Function>();
 		Data vftableData = program.getListing().getDefinedDataAt(vftableAddress);
 
 		// now make sure the array or the structure is all pointers
@@ -5348,13 +5346,10 @@ public class RecoveredClassHelper {
 			Function function = extendedFlatAPI.getReferencedFunction(functionPointerAddress);
 
 			if (function != null) {
-				vfunctionSet.add(function);
+				virtualFunctionList.add(function);
 			}
-
 		}
-		List<Function> virtualFunctionList = new ArrayList<Function>(vfunctionSet);
 		return virtualFunctionList;
-
 	}
 
 	/**
