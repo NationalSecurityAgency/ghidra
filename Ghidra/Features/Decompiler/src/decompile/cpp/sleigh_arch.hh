@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,7 +106,7 @@ public:
 /// Generally a \e language \e id (i.e. x86:LE:64:default) is provided, then this
 /// object is able to automatically load in configuration and construct the Translate object.
 class SleighArchitecture : public Architecture {
-  static map<int4,Sleigh *> translators;		///< Map from language index to instantiated translators
+  static map<int4,Sleigh> translators;		///< Map from language index to instantiated translators
   static vector<LanguageDescription> description;	///< List of languages we know about
   int4 languageindex;					///< Index (within LanguageDescription array) of the active language
   string filename;					///< Name of active load-image file
