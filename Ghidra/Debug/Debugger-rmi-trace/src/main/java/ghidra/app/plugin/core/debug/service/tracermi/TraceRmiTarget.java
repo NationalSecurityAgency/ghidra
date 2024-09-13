@@ -810,12 +810,14 @@ public class TraceRmiTarget extends AbstractTarget {
 
 		public MatchedMethod getBest(String name, ActionName action,
 				Supplier<List<? extends MethodMatcher>> preferredSupplier) {
-			return map.computeIfAbsent(name, n -> chooseBest(action, preferredSupplier.get()));
+			return getBest(name, action, preferredSupplier.get());
 		}
 
 		public MatchedMethod getBest(String name, ActionName action,
 				List<? extends MethodMatcher> preferred) {
-			return map.computeIfAbsent(name, n -> chooseBest(action, preferred));
+			synchronized (map) {
+				return map.computeIfAbsent(name, n -> chooseBest(action, preferred));
+			}
 		}
 
 		private MatchedMethod chooseBest(ActionName name, List<? extends MethodMatcher> preferred) {
