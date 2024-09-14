@@ -137,7 +137,7 @@ public class FontModifierTest {
 	public void testInvalidModifierString() {
 		try {
 			FontModifier.parse("asdfasf");
-			fail("Expected IllegalArgumentExcption");
+			fail("Expected IllegalArgumentException");
 		}
 		catch (ParseException e) {
 			// expected
@@ -148,7 +148,7 @@ public class FontModifierTest {
 	public void testInvalidModifierString2() {
 		try {
 			FontModifier.parse("[12]aa[13]");
-			fail("Expected IllegalArgumentExcption");
+			fail("Expected IllegalArgumentException");
 		}
 		catch (ParseException e) {
 			// expected
@@ -159,7 +159,7 @@ public class FontModifierTest {
 	public void testInvalidModifierString3() {
 		try {
 			FontModifier.parse("[12]aa13]");
-			fail("Expected IllegalArgumentExcption");
+			fail("Expected IllegalArgumentException");
 		}
 		catch (ParseException e) {
 			// expected
@@ -170,7 +170,7 @@ public class FontModifierTest {
 	public void testInvalidModifierString4() {
 		try {
 			FontModifier.parse("[12][plain]sz");
-			fail("Expected IllegalArgumentExcption");
+			fail("Expected IllegalArgumentException");
 		}
 		catch (ParseException e) {
 			// expected

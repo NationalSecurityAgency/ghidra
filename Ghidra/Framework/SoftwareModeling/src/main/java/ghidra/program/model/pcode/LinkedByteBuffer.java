@@ -184,7 +184,7 @@ public class LinkedByteBuffer {
 		}
 		for (;;) {
 			if (byteCount > maxCount) {
-				throw new IOException("Response buffer size exceded for: " + description);
+				throw new IOException("Response buffer size exceeded for: " + description);
 			}
 			do {
 				if (currentPos == BUFFER_SIZE) {
@@ -277,7 +277,7 @@ public class LinkedByteBuffer {
 			currentBuffer.array[currentPos++] = tok;
 			byteCount += 1;
 			if (byteCount > maxCount) {
-				throw new IOException("Response buffer size exceded for: " + description);
+				throw new IOException("Response buffer size exceeded for: " + description);
 			}
 		}
 	}
