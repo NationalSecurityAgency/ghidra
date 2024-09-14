@@ -23,7 +23,7 @@ import ghidra.app.plugin.core.debug.client.tracermi.DefaultRegisterMapper;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 
-public class TraceJdiArch {
+public class JdiArch {
 
 	private LanguageID langID;
 	private Language language;

@@ -21,6 +21,7 @@ import java.util.Map;
 import com.sun.jdi.*;
 
 import ghidra.app.plugin.core.debug.client.tracermi.*;
+import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceMethod;
 import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
@@ -28,65 +29,87 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
-public class TraceJdiManager {
+public class JdiManager {
 
 	private static final int STATIC_METHOD_SEPARATION = 3;
 	public static final long BLOCK_SIZE = 0x1000L;
 	public static final long DEFAULT_SECTION = 0x0000L;
 
-	public static final String PREFIX_INVISIBLE = "_";
-	public static final String DISPLAY_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "display";
-	public static final String STATE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "state";
-	public static final String MODULE_NAME_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module_name";
-	public static final String ARCH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "arch";
-	public static final String DEBUGGER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "debugger";
-	public static final String OS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "os";
-	public static final String ENDIAN_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "endian";
-	public static final String ACCESSIBLE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "accessible";
+	public static final String ATTR_DISPLAY = "_display";
+	public static final String ATTR_STATE = "_state";
+	public static final String ATTR_MODULE_NAME = "_module_name";
+	public static final String ATTR_ARCH = "_arch";
+	public static final String ATTR_DEBUGGER = "_debugger";
+	public static final String ATTR_OS = "_os";
+	public static final String ATTR_ENDIAN = "_endian";
+	public static final String ATTR_ACCESSIBLE = "_accessible";
+	public static final String ATTR_ADDRESS = "Address";
+	public static final String ATTR_ALIVE = "Alive";
+	public static final String ATTR_CLASS = "Class";
+	public static final String ATTR_COMMAND_LINE = "CommandLine";
+	public static final String ATTR_COUNT = "Count";
+	public static final String ATTR_ENABLED = "Enabled";
+	public static final String ATTR_EXECUTABLE = "Executable";
+	public static final String ATTR_EXIT_CODE = "ExitCode";
+	public static final String ATTR_INDEX = "Index";
+	public static final String ATTR_INSTANCE = "Instance";
+	public static final String ATTR_LENGTH = "Length";
+	public static final String ATTR_LINENO = "LineNo";
+	public static final String ATTR_LOCATION = "Location";
+	public static final String ATTR_NAME = "Name";
+	public static final String ATTR_PC = "PC";
+	public static final String ATTR_PLATFORM_ONLY = "PlatformOnly";
+	public static final String ATTR_RANGE = "Range";
+	public static final String ATTR_RANGE_CP = "RangeCP"; // Constant pool
+	public static final String ATTR_SIGNATURE = "Signature";
+	public static final String ATTR_THREAD = "Thread";
+	public static final String ATTR_TYPE = "Type";
+	public static final String ATTR_VALUE = "Value";
+	public static final String ATTR_EXCLUDE = "Exclude";
+	public static final String ATTR_INCLUDE = "Include";
 
-	private JdiManagerImpl manager;
-	private TraceJdiArch arch;
-	private TraceJdiHooks hooks;
-	private TraceJdiMethods methods;
-	private TraceJdiCommands commands;
+	private final JdiManagerImpl manager;
+	private final JdiArch arch;
+	private final JdiHooks hooks;
+	private final JdiMethods methods;
+	private final JdiCommands commands;
 
-	Map<String, Object> objectRegistry = new HashMap<>();
-	Map<Object, String> reverseRegistry = new HashMap<>();
-	RmiMethodRegistry remoteMethodRegistry = new RmiMethodRegistry();
-	Map<Object, Boolean> scopeRegistry = new HashMap<>();
+	final Map<String, Object> objectRegistry = new HashMap<>();
+	final Map<Object, String> reverseRegistry = new HashMap<>();
+	final RmiMethodRegistry remoteMethodRegistry = new RmiMethodRegistry();
+	final Map<Object, Boolean> scopeRegistry = new HashMap<>();
 
 	protected final AddressSpace ram = new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
-	protected Long ramIndex = Long.valueOf(BLOCK_SIZE);
+	protected Long ramIndex = BLOCK_SIZE;
 	protected final AddressSpace pool =
 		new GenericAddressSpace("constantPool", 64, AddressSpace.TYPE_RAM, 0);
-	protected Long poolIndex = Long.valueOf(0x0L);
-	public AddressRangeImpl defaultRange;
+	protected Long poolIndex = 0x0L;
+	public final AddressRangeImpl defaultRange;
 
-	private Map<String, AddressRange> addressRangeByMethod = new HashMap<>();
-	private Map<String, Method> methodsByKey = new HashMap<>();
-	private Map<ReferenceType, AddressRange> addressRangeByClass = new HashMap<>();
-	private Map<ReferenceType, AddressRange> cpAddressRangeByClass = new HashMap<>();
+	private final Map<String, AddressRange> addressRangeByMethod = new HashMap<>();
+	private final Map<String, Method> methodsByKey = new HashMap<>();
+	private final Map<ReferenceType, AddressRange> addressRangeByClass = new HashMap<>();
+	private final Map<ReferenceType, AddressRange> cpAddressRangeByClass = new HashMap<>();
 
-	private Map<String, DebugStatus> returnStatusMap = new HashMap<>();
-	TargetObjectSchema rootSchema;
+	private final Map<String, DebugStatus> returnStatusMap = new HashMap<>();
+	final TargetObjectSchema rootSchema;
 
-	public TraceJdiManager(JdiManagerImpl manager, Map<String, String> env) {
+	public JdiManager(JdiManagerImpl manager, Map<String, String> env) {
 		this(manager);
 		commands.ghidraTraceConnect(env.get("GHIDRA_TRACE_RMI_ADDR"));
 		commands.ghidraTraceStart(env.get("OPT_TARGET_CLASS"));
 	}
 
-	// NB: Needed for testing
-	public TraceJdiManager(JdiManagerImpl manager) {
+	public JdiManager(JdiManagerImpl manager) {
 		this.manager = manager;
 		Address start = ram.getAddress(DEFAULT_SECTION);
 		defaultRange = new AddressRangeImpl(start, start.add(BLOCK_SIZE - 1));
 		rootSchema = RmiClient.loadSchema("jdi_schema.xml", "Debugger");
 
-		arch = new TraceJdiArch();
-		commands = new TraceJdiCommands(this); // Must precede methods/hooks
-		methods = new TraceJdiMethods(this);
-		hooks = new TraceJdiHooks(this);
+		arch = new JdiArch();
+		commands = new JdiCommands(this); // Must precede methods/hooks
+		methods = new JdiMethods(this, commands);
+		hooks = new JdiHooks(this, commands);
 		hooks.installHooks();
 	}
 
@@ -94,19 +117,19 @@ public class TraceJdiManager {
 		return manager;
 	}
 
-	public TraceJdiArch getArch() {
+	public JdiArch getArch() {
 		return arch;
 	}
 
-	public TraceJdiCommands getCommands() {
+	public JdiCommands getCommands() {
 		return commands;
 	}
 
-	public TraceJdiMethods getMethods() {
+	public JdiMethods getMethods() {
 		return methods;
 	}
 
-	public TraceJdiHooks getHooks() {
+	public JdiHooks getHooks() {
 		return hooks;
 	}
 
@@ -114,12 +137,11 @@ public class TraceJdiManager {
 		return commands.state.client;
 	}
 
-	public void registerRemoteMethod(TraceJdiMethods methods, java.lang.reflect.Method m,
-			String name) {
+	public void registerRemoteMethod(JdiMethods methods, java.lang.reflect.Method m, String name) {
 		String action = name;
 		String display = name;
 		String description = name;
-		RmiMethodRegistry.TraceMethod annot = m.getAnnotation(RmiMethodRegistry.TraceMethod.class);
+		TraceMethod annot = m.getAnnotation(TraceMethod.class);
 		if (annot == null) {
 			return;
 		}
@@ -134,6 +156,10 @@ public class TraceJdiManager {
 		if (pcount < 1) {
 			return;
 		}
+		/**
+		 * TODO: The return type should be reflected from the method; however, none of the parameter
+		 * collection routines currently use the return type, so just use ANY for now.
+		 */
 		TargetObjectSchema schema = EnumerableTargetObjectSchema.ANY;
 		RmiRemoteMethod method = new RmiRemoteMethod(rootSchema.getContext(), name, action, display,
 			description, schema, methods, m);
@@ -152,27 +178,33 @@ public class TraceJdiManager {
 	}
 
 	public AddressRange putAddressRange(ReferenceType cls, AddressSet set) {
-		if (set.isEmpty()) {
-			addressRangeByClass.put(cls, defaultRange);
-			return defaultRange;
+		synchronized (addressRangeByClass) {
+			if (set.isEmpty()) {
+				addressRangeByClass.put(cls, defaultRange);
+				return defaultRange;
+			}
+			AddressRange range = new AddressRangeImpl(set.getMinAddress(), set.getMaxAddress());
+			addressRangeByClass.put(cls, range);
+			return range;
 		}
-		AddressRange range = new AddressRangeImpl(set.getMinAddress(), set.getMaxAddress());
-		addressRangeByClass.put(cls, range);
-		return range;
 	}
 
 	public AddressRange getAddressRange(ReferenceType cls) {
 		if (cls == null) {
 			return defaultRange;
 		}
-		return addressRangeByClass.get(cls);
+		synchronized (addressRangeByClass) {
+			return addressRangeByClass.get(cls);
+		}
 	}
 
 	public ReferenceType getReferenceTypeForAddress(Address address) {
-		for (ReferenceType ref : addressRangeByClass.keySet()) {
-			AddressRange range = addressRangeByClass.get(ref);
-			if (range.contains(address)) {
-				return ref;
+		synchronized (addressRangeByClass) {
+			for (ReferenceType ref : addressRangeByClass.keySet()) {
+				AddressRange range = addressRangeByClass.get(ref);
+				if (range.contains(address)) {
+					return ref;
+				}
 			}
 		}
 		return null;
@@ -182,19 +214,21 @@ public class TraceJdiManager {
 		if (cls == null) {
 			return defaultRange;
 		}
-		AddressRange range = cpAddressRangeByClass.get(cls);
-		if (range == null) {
-			registerConstantPool(cls, sz);
-			range = cpAddressRangeByClass.get(cls);
+		synchronized (cpAddressRangeByClass) {
+			AddressRange range = cpAddressRangeByClass.get(cls);
+			if (range == null) {
+				registerConstantPool(cls, sz);
+				range = cpAddressRangeByClass.get(cls);
+			}
+			return range;
 		}
-		return range;
 	}
 
 	public void registerConstantPool(ReferenceType declaringType, int sz) {
-		if (!cpAddressRangeByClass.containsKey(declaringType)) {
-			if (manager.getCurrentVM().canGetConstantPool()) {
-				long length = sz == 0 ? 2 : sz;
-				synchronized (cpAddressRangeByClass) {
+		synchronized (cpAddressRangeByClass) {
+			if (!cpAddressRangeByClass.containsKey(declaringType)) {
+				if (manager.getCurrentVM().canGetConstantPool()) {
+					long length = sz == 0 ? 2 : sz;
 					Address start = pool.getAddress(poolIndex);
 					AddressRangeImpl range =
 						new AddressRangeImpl(start, start.add(length - 1));
@@ -208,10 +242,12 @@ public class TraceJdiManager {
 	}
 
 	public ReferenceType getReferenceTypeForPoolAddress(Address address) {
-		for (ReferenceType ref : cpAddressRangeByClass.keySet()) {
-			AddressRange range = cpAddressRangeByClass.get(ref);
-			if (range.contains(address)) {
-				return ref;
+		synchronized (cpAddressRangeByClass) {
+			for (ReferenceType ref : cpAddressRangeByClass.keySet()) {
+				AddressRange range = cpAddressRangeByClass.get(ref);
+				if (range.contains(address)) {
+					return ref;
+				}
 			}
 		}
 		return null;
@@ -221,21 +257,25 @@ public class TraceJdiManager {
 		if (method == null) {
 			return defaultRange;
 		}
-		AddressRange range = addressRangeByMethod.get(methodToKey(method));
-		if (range == null) {
-			return defaultRange;
+		synchronized (addressRangeByMethod) {
+			AddressRange range = addressRangeByMethod.get(methodToKey(method));
+			if (range == null) {
+				return defaultRange;
+			}
+			return range;
 		}
-		return range;
 	}
 
 	public Method getMethodForAddress(Address address) {
-		for (String methodName : addressRangeByMethod.keySet()) {
-			AddressRange range = addressRangeByMethod.get(methodName);
-			if (range.contains(address)) {
-				return methodsByKey.get(methodName);
+		synchronized (addressRangeByMethod) {
+			for (String methodName : addressRangeByMethod.keySet()) {
+				AddressRange range = addressRangeByMethod.get(methodName);
+				if (range.contains(address)) {
+					return methodsByKey.get(methodName);
+				}
 			}
+			return null;
 		}
-		return null;
 	}
 
 	public Address getAddressFromLocation(Location location) {
@@ -364,5 +404,4 @@ public class TraceJdiManager {
 			}
 		}
 	}
-
 }

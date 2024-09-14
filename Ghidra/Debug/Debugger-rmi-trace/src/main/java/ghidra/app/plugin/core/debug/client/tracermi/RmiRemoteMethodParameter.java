@@ -19,24 +19,24 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.rmi.trace.TraceRmi.*;
 
 public class RmiRemoteMethodParameter {
-	
+
 	private final String name;
 	private final TargetObjectSchema schema;
 	private final boolean required;
-	private final Value defaultValue;
+	private final Object defaultValue;
 	private final String display;
 	private final String description;
 
-	public RmiRemoteMethodParameter(String name, TargetObjectSchema schema, boolean required, 
-			Value defaultValue, String display, String description) {
+	public RmiRemoteMethodParameter(String name, TargetObjectSchema schema, boolean required,
+			Object defaultValue, String display, String description) {
 		this.name = name;
 		this.schema = schema;
 		this.required = required;
 		this.defaultValue = defaultValue;
 		this.display = display;
-		this.description = description;		
+		this.description = description;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -57,15 +57,11 @@ public class RmiRemoteMethodParameter {
 		return ValueType.newBuilder().setName(schemaName).build();
 	}
 
-	public Value getDefaultValue() {
-		if (defaultValue != null) {
-			return defaultValue;
-		}
-		return Value.newBuilder().setNullValue(Null.newBuilder()).build();
+	public Object getDefaultValue() {
+		return defaultValue;
 	}
 
 	public boolean isRequired() {
 		return required;
 	}
-
 }
