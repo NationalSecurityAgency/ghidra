@@ -191,9 +191,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
 	],
 	[
-		name: "Pybag-2.2.10-py3-none-any.whl",
-		url: "https://files.pythonhosted.org/packages/2d/e0/f877c91e036fcaed2a827f80d6cbdf1d26cffc3333c9ebda31c55c45f050/Pybag-2.2.10-py3-none-any.whl",
-		sha256: "81cf1e33dd667dd217dc56a123326796e6799b8569f2c6efb78c16375caf9b2b",
+		name: "Pybag-2.2.12-py3-none-any.whl",
+		url: "https://files.pythonhosted.org/packages/ce/78/91db67e7fe1546dc8b02c38591b7732980373d2d252372f7358054031dd4/Pybag-2.2.12-py3-none-any.whl",
+		sha256: "eda5ee6c4e873902981b7f525b42a02428b87c7368df2c5bdfe1ded0e6884126",
 		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
 	],
 	[
