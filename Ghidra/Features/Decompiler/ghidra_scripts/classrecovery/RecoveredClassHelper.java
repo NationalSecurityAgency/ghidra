@@ -4527,7 +4527,7 @@ public class RecoveredClassHelper {
 			// apply the structure. It has to be one or the other and the correct length
 			// because of the check at the beginning of the script that checked for either
 			// array or structure of pointers and got size from them initially
-			api.clearListing(vftableAddress);
+			api.clearListing(vftableAddress, vftableAddress.add(vftableStruct.getLength() - 1));
 			api.createData(vftableAddress, vftableStruct);
 
 		}
