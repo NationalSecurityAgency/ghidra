@@ -62,8 +62,12 @@ task installJPype(type: Exec) {
 // Install PyGhidra in editable mode to the development virtual environment
 task installEditablePyGhidra(type: Exec) {
 	dependsOn("installJPype")
+	
+	File depsDir = file("${DEPS_DIR}/PyGhidra")
+	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
+	def dir = depsDir.exists() ? depsDir : binRepoDir
 
-	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py"
+	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
 }
 
 if (findPython3(false)) {
