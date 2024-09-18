@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,26 +44,27 @@ public class TableSortState implements Iterable<ColumnSortState> {
 	/**
 	 * Creates a sort state with the given column as the sorted column (sorted ascending).
 	 * 
-	 * @param columnIndex The column to sort
+	 * @param columnModelIndex The column to sort
 	 * @return a sort state with the given column as the sorted column (sorted ascending).
 	 * @see TableSortStateEditor
 	 */
-	public static TableSortState createDefaultSortState(int columnIndex) {
-		return new TableSortState(new ColumnSortState(columnIndex, SortDirection.ASCENDING, 1));
+	public static TableSortState createDefaultSortState(int columnModelIndex) {
+		return new TableSortState(
+			new ColumnSortState(columnModelIndex, SortDirection.ASCENDING, 1));
 	}
 
 	/**
 	 * Creates a sort state with the given column as the sorted column in the given direction.
 	 * 
-	 * @param columnIndex The column to sort
+	 * @param columnModelIndex The column to sort
 	 * @param isAscending True to sort ascending; false to sort descending
 	 * @return a sort state with the given column as the sorted column (sorted ascending).
 	 * @see TableSortStateEditor
 	 */
-	public static TableSortState createDefaultSortState(int columnIndex, boolean isAscending) {
+	public static TableSortState createDefaultSortState(int columnModelIndex, boolean isAscending) {
 		SortDirection sortDirection =
 			isAscending ? SortDirection.ASCENDING : SortDirection.DESCENDING;
-		return new TableSortState(new ColumnSortState(columnIndex, sortDirection, 1));
+		return new TableSortState(new ColumnSortState(columnModelIndex, sortDirection, 1));
 	}
 
 	public TableSortState() {
@@ -111,9 +112,9 @@ public class TableSortState implements Iterable<ColumnSortState> {
 		return columnSortStates.isEmpty();
 	}
 
-	public ColumnSortState getColumnSortState(int columnIndex) {
+	public ColumnSortState getColumnSortState(int columnModelIndex) {
 		for (ColumnSortState sortState : columnSortStates) {
-			if (sortState.getColumnModelIndex() == columnIndex) {
+			if (sortState.getColumnModelIndex() == columnModelIndex) {
 				return sortState;
 			}
 		}
