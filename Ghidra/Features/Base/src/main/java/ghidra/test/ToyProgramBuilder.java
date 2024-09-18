@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 		Program program = getProgram();
 		addrFactory = program.getAddressFactory();
 		defaultSpace = addrFactory.getDefaultAddressSpace();
-		definedInstrAddresses = new ArrayList<Address>();
+		definedInstrAddresses = new ArrayList<>();
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 		Program program = getProgram();
 		addrFactory = program.getAddressFactory();
 		defaultSpace = addrFactory.getDefaultAddressSpace();
-		definedInstrAddresses = new ArrayList<Address>();
+		definedInstrAddresses = new ArrayList<>();
 	}
 
 	private static String getToyLanguageId(boolean bigEndian, boolean wordAligned) {
@@ -149,8 +149,8 @@ public class ToyProgramBuilder extends ProgramBuilder {
 		}
 		int relDest = (int) dest.subtract(address);
 		if (relDest > Byte.MAX_VALUE || relDest < Byte.MIN_VALUE) {
-			throw new IllegalArgumentException("targetAddr is out of range for instruction: " +
-				relDest);
+			throw new IllegalArgumentException(
+				"targetAddr is out of range for instruction: " + relDest);
 		}
 		return (short) (relDest & 0xff);
 	}
@@ -162,8 +162,8 @@ public class ToyProgramBuilder extends ProgramBuilder {
 		}
 		int relDest = (int) dest.subtract(address);
 		if (relDest > Byte.MAX_VALUE || relDest < Byte.MIN_VALUE) {
-			throw new IllegalArgumentException("targetAddr is out of range for instruction: " +
-				relDest);
+			throw new IllegalArgumentException(
+				"targetAddr is out of range for instruction: " + relDest);
 		}
 		return (short) (relDest & 0xffff);
 	}
@@ -393,6 +393,16 @@ public class ToyProgramBuilder extends ProgramBuilder {
 
 	/**
 	 * Add call (consumes 2-bytes)
+	 * @param offset instruction address offset
+	 * @param dest call destination offset
+	 * @throws MemoryAccessException
+	 */
+	public void addBytesCall(String offset, long dest) throws MemoryAccessException {
+		addBytesCall(offset, toHex(dest));
+	}
+
+	/**
+	 * Add call (consumes 2-bytes)
 	 * @param addr instruction address
 	 * @param destAddr call destination address
 	 * @throws MemoryAccessException
@@ -499,8 +509,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param offset instruction address offset
 	 * @throws MemoryAccessException
 	 */
-	public void addBytesSkipConditional(long offset)
-			throws MemoryAccessException {
+	public void addBytesSkipConditional(long offset) throws MemoryAccessException {
 		addBytesSkipConditional(toHex(offset));
 	}
 
@@ -509,8 +518,7 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	 * @param addr instruction address
 	 * @throws MemoryAccessException
 	 */
-	public void addBytesSkipConditional(String addr)
-			throws MemoryAccessException {
+	public void addBytesSkipConditional(String addr) throws MemoryAccessException {
 		Address address = addr(addr);
 		addInstructionWords(address, (short) (0x8000)); // skeq
 	}

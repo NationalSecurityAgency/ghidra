@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -681,18 +681,18 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			"Show the Function Call Tree window for the function " + "selected in the call tree");
 		tool.addLocalAction(this, newCallTree);
 
-		// 
+		//
 		// Provider menu actions
 		//
 		//@formatter:off
 		filterThunksAction = new ToggleActionBuilder("Filter Thunks", plugin.getName())
-			.selected(false)			
+			.selected(false)
 			.description("Thunk functions will not be shown in the tree when selected")
 			.helpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter_Thunks"))
 			.menuPath("Filter Thunks")
 			.onAction(c -> {
 				callTreeOptions = callTreeOptions.withFilterThunks(filterThunksAction.isSelected());
-				doUpdate();				
+				doUpdate();
 			})
 			.buildAndInstallLocal(this);
 		//@formatter:on
@@ -705,7 +705,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			.menuPath("Show Namespace")
 			.onAction(c -> {
 				callTreeOptions = callTreeOptions.withShowNamespace(showNamespaceAction.isSelected());
-				doUpdate();				
+				doUpdate();
 			})
 			.buildAndInstallLocal(this);
 		//@formatter:on
@@ -860,6 +860,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			}
 		};
 		tree.setPaintHandlesForLeafNodes(false);
+		tree.setDoubleClickExpansionEnabled(false); // reserve double-click for navigation
 //		tree.setFilterVisible(false);
 		return tree;
 	}
