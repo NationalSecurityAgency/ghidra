@@ -86,3 +86,8 @@ Release
 *.log
 core.*
 !core.png
+!core.py
+
+# python files
+*.egg-info
+__pycache__
