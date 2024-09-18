@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,13 +57,13 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private File swiftDir;
 	private boolean useIncompletePrefix = true;
 	private boolean useUnsupportedPrefix = true;
-	private SwiftDemangler demangler = new SwiftDemangler();
 
 	/**
 	 * Creates a new {@link SwiftDemanglerAnalyzer}
 	 */
 	public SwiftDemanglerAnalyzer() {
 		super(NAME, DESCRIPTION);
+		demangler = new SwiftDemangler();
 		setDefaultEnablement(true);
 	}
 
@@ -76,7 +76,7 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 		try {
-			demangler.initialize(program);
+			((SwiftDemangler) demangler).initialize(program);
 		}
 		catch (IOException e) {
 			log.appendMsg(e.getMessage());
@@ -86,9 +86,9 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	}
 
 	@Override
-	protected DemangledObject doDemangle(String mangled, DemanglerOptions options, MessageLog log)
+	protected DemangledObject doDemangle(MangledContext mangledContext, MessageLog log)
 			throws DemangledException {
-		return demangler.demangle(mangled, options);
+		return demangler.demangle(mangledContext);
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,8 @@ package mdemangler;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 import mdemangler.MDContext.MDContextType;
 import mdemangler.datatype.MDDataType;
@@ -38,6 +40,9 @@ import mdemangler.template.MDTemplateArgumentsList;
 public class MDMang {
 	public static final char DONE = MDCharacterIterator.DONE;
 
+	protected int architectureSize = 32;
+	protected boolean isFunction = false;
+
 	protected String mangled;
 	protected MDCharacterIterator iter;
 	protected String errorMessage;
@@ -45,11 +50,146 @@ public class MDMang {
 
 	protected List<MDContext> contextStack;
 
+	protected boolean errorOnRemainingChars = false;
+
 	public enum ProcessingMode {
 		DEFAULT_STANDARD, LLVM
 	}
 
 	private ProcessingMode processingMode;
+
+	//==============================================================================================
+	// Mangled Context
+
+	/**
+	 * Sets the mangled string to be demangled
+	 * @param mangledIn the string to be demangled
+	 */
+	public void setMangledSymbol(String mangledIn) {
+		this.mangled = mangledIn;
+	}
+
+	/**
+	 * Gets the mangled string being demangled
+	 * @return the string being demangled
+	 */
+	public String getMangledSymbol() {
+		return mangled;
+	}
+
+	/**
+	 * Sets the architecture size.  Default is 64 bits
+	 * @param size the architecture size
+	 */
+	public void setArchitectureSize(int size) {
+		architectureSize = size;
+	}
+
+	/**
+	 * Returns the architecture size (bits)
+	 * @return the architecture size
+	 */
+	public int getArchitectureSize() {
+		return architectureSize;
+	}
+
+	/**
+	 * Sets whether the symbol is known to be for a function
+	 * @param isFunction {@code true} if known to be a symbol for a function
+	 */
+	public void setIsFunction(boolean isFunction) {
+		this.isFunction = isFunction;
+	}
+
+	/**
+	 * Returns whether the symbol is known to be for a function
+	 * @return {@code true} if known to be a symbol for a function
+	 */
+	public boolean isFunction() {
+		return isFunction;
+	}
+
+	//==============================================================================================
+	// Control
+
+	/**
+	 * Controls whether an exception is thrown if there are remaining characters after demangling.
+	 * Default is {@code false}
+	 * @param errorOnRemainingCharsArg {@code true} to error if characters remaining
+	 */
+	public void setErrorOnRemainingChars(boolean errorOnRemainingCharsArg) {
+		errorOnRemainingChars = errorOnRemainingCharsArg;
+	}
+
+	/**
+	 * Returns {@code true} if the process will throw an exception if characters remain after
+	 * demangling
+	 * @return {@code true} if errors will occur on remaining characters
+	 */
+	public boolean errorOnRemainingChars() {
+		return errorOnRemainingChars;
+	}
+
+	/**
+	 * Returns the error message when demangle() returns null.
+	 * @return the error message for the demangle() call.
+	 */
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	/**
+	 * Returns the number of unprocessed mangled characters. Note that
+	 * demangle() has a flag controlling whether remaining characters causes an
+	 * error
+	 * @return the integer number of characters that remain
+	 */
+	public int getNumCharsRemaining() {
+		return iter.getLength() - iter.getIndex();
+	}
+
+	//==============================================================================================
+	// Processing
+
+	/**
+	 * Demangles the string already stored and returns a parsed item
+	 * @return item detected and parsed
+	 * @throws MDException upon error parsing item
+	 */
+	public MDParsableItem demangle() throws MDException {
+		initState();
+		item = MDMangObjectParser.determineItemAndParse(this);
+		if (item instanceof MDObjectCPP) {
+			// MDMANG SPECIALIZATION USED.
+			item = getEmbeddedObject((MDObjectCPP) item);
+		}
+		int numCharsRemaining = getNumCharsRemaining();
+		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
+			throw new MDException(
+				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
+		}
+		return item;
+	}
+
+	/**
+	 * Demangles the mangled "type" name already stored and returns a parsed MDDataType
+	 * @return the parsed MDDataType
+	 * @throws MDException upon parsing error
+	 */
+	public MDDataType demangleType() throws MDException {
+		initState();
+		MDDataType mdDataType = MDDataTypeParser.determineAndParseDataType(this, false);
+		item = mdDataType;
+		int numCharsRemaining = getNumCharsRemaining();
+		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
+			throw new MDException(
+				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
+		}
+		return mdDataType;
+	}
+
+	//==============================================================================================
+	// Internal processing control
 
 	public void setProcessingMode(ProcessingMode processingMode) {
 		this.processingMode = processingMode;
@@ -68,32 +208,12 @@ public class MDMang {
 	}
 
 	/**
-	 * Demangles the string passed in and returns a parsed item.
-	 *
-	 * @param mangledIn
-	 *            the string to be demangled.
-	 * @param errorOnRemainingChars
-	 *            boolean flag indicating whether remaining characters causes an
-	 *            error.
-	 * @return the item that has been parsed.
-	 * @throws MDException upon parsing error
-	 */
-	public MDParsableItem demangle(String mangledIn, boolean errorOnRemainingChars)
-			throws MDException {
-		if (mangledIn == null || mangledIn.isEmpty()) {
-			throw new MDException("Invalid mangled symbol.");
-		}
-		setMangledSymbol(mangledIn);
-		return demangle(errorOnRemainingChars);
-	}
-
-	/**
 	 * Variables that get set at the very beginning.
 	 * @throws MDException if mangled name is not set
 	 */
 	protected void initState() throws MDException {
-		if (mangled == null) {
-			throw new MDException("MDMang: Mangled string is null.");
+		if (StringUtils.isBlank(mangled)) {
+			throw new MDException("MDMang: Mangled string is null or blank.");
 		}
 		errorMessage = "";
 		processingMode = ProcessingMode.DEFAULT_STANDARD;
@@ -109,108 +229,7 @@ public class MDMang {
 		setIndex(0);
 	}
 
-	/**
-	 * Demangles the string already stored and returns a parsed item.
-	 *
-	 * @param errorOnRemainingChars
-	 *            boolean flag indicating whether remaining characters causes an
-	 *            error.
-	 * @return item detected and parsed
-	 * @throws MDException upon error parsing item
-	 */
-	public MDParsableItem demangle(boolean errorOnRemainingChars) throws MDException {
-		initState();
-		item = MDMangObjectParser.determineItemAndParse(this);
-		if (item instanceof MDObjectCPP) {
-			// MDMANG SPECIALIZATION USED.
-			item = getEmbeddedObject((MDObjectCPP) item);
-		}
-		int numCharsRemaining = getNumCharsRemaining();
-		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
-			throw new MDException(
-				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
-		}
-		return item;
-	}
-
-	/**
-	 * Demangles the mangled "type" name and returns a parsed MDDataType
-	 *
-	 * @param mangledIn the mangled "type" string to be demangled
-	 * @param errorOnRemainingChars
-	 *            boolean flag indicating whether remaining characters causes an
-	 *            error
-	 * @return the parsed MDDataType
-	 * @throws MDException upon parsing error
-	 */
-	public MDDataType demangleType(String mangledIn, boolean errorOnRemainingChars)
-			throws MDException {
-		if (mangledIn == null || mangledIn.isEmpty()) {
-			throw new MDException("Invalid mangled symbol.");
-		}
-		setMangledSymbol(mangledIn);
-		return demangleType(errorOnRemainingChars);
-	}
-
-	/**
-	 * Demangles the mangled "type" name already stored and returns a parsed MDDataType
-	 *
-	 * @param errorOnRemainingChars
-	 *            boolean flag indicating whether remaining characters causes an
-	 *            error
-	 * @return the parsed MDDataType
-	 * @throws MDException upon parsing error
-	 */
-	public MDDataType demangleType(boolean errorOnRemainingChars) throws MDException {
-		initState();
-		MDDataType mdDataType = MDDataTypeParser.determineAndParseDataType(this, false);
-		item = mdDataType;
-		int numCharsRemaining = getNumCharsRemaining();
-		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
-			throw new MDException(
-				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
-		}
-		return mdDataType;
-	}
-
-	/**
-	 * Sets the mangled string to be demangled.
-	 *
-	 * @param mangledIn
-	 *            the string to be demangled.
-	 */
-	public void setMangledSymbol(String mangledIn) {
-		this.mangled = mangledIn;
-	}
-
-	/**
-	 * Gets the mangled string being demangled.
-	 *
-	 * @return the string being demangled.
-	 */
-	public String getMangledSymbol() {
-		return mangled;
-	}
-
-	/**
-	 * Returns the error message when demangle() returns null.
-	 *
-	 * @return the error message for the demangle() call.
-	 */
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
-	/**
-	 * Returns the number of unprocessed mangled characters. Note that
-	 * demangle() has a flag controlling whether remaining characters causes an
-	 * error.
-	 *
-	 * @return the integer number of characters that remain.
-	 */
-	public int getNumCharsRemaining() {
-		return iter.getLength() - iter.getIndex();
-	}
+	//==============================================================================================
 
 	/******************************************************************************/
 	/******************************************************************************/
@@ -252,9 +271,10 @@ public class MDMang {
 	}
 
 	/**
-	 * Sets the current index.
-	 * @param index the position to set.
-	 * @throws IllegalArgumentException if index is not in range from 0 to string.length()-1
+	 * Sets the current index.  Can set index to just beyond the text to represent the iterator
+	 * being at the end of the text
+	 * @param index the position to set
+	 * @throws IllegalArgumentException if index is not in range from 0 to string.length()
 	 */
 	public void setIndex(int index) {
 		iter.setIndex(index);

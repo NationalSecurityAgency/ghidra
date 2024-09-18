@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ public class MDBaseTestConfiguration {
 	// Internal variables
 	protected String mangled;
 	protected MDParsableItem demangItem;
+	protected boolean isFunction = false;
 
 	protected String demangled;
 	protected String truth;
@@ -59,6 +60,10 @@ public class MDBaseTestConfiguration {
 		if (!quiet) {
 			Msg.info(this, message);
 		}
+	}
+
+	public void setIsFunction(boolean isFunctionArg) {
+		isFunction = isFunctionArg;
 	}
 
 	/**
@@ -85,6 +90,7 @@ public class MDBaseTestConfiguration {
 			outputInfo.append(getTestHeader());
 		}
 
+		mdm.setIsFunction(isFunction);
 		// Meant to be overridden, as needed by extended classes
 		demangItem = doDemangleSymbol(mdm, mangled);
 		demangled = (demangItem == null) ? "" : demangItem.toString();
@@ -123,6 +129,7 @@ public class MDBaseTestConfiguration {
 		}
 	}
 
+	// Need to do a better job here
 	private boolean isMangled(String s) {
 		if (s.charAt(0) == '?') {
 			return true;
@@ -130,9 +137,9 @@ public class MDBaseTestConfiguration {
 		else if (s.startsWith("__")) {
 			return true;
 		}
-		else if ((s.charAt(0) == '_') || Character.isUpperCase(s.charAt(1))) {
-			return true;
-		}
+//		else if ((s.charAt(0) == '_') || Character.isUpperCase(s.charAt(1))) {
+//			return true;
+//		}
 		return false;
 	}
 
@@ -193,8 +200,10 @@ public class MDBaseTestConfiguration {
 
 	// Meant to be overridden, as needed by extended classes
 	protected MDParsableItem doDemangleSymbol(MDMang mdmIn, String mangledIn) throws Exception {
+		mdmIn.setMangledSymbol(mangledIn);
+		mdmIn.setErrorOnRemainingChars(true);
 		try {
-			return mdmIn.demangle(mangledIn, true);
+			return mdmIn.demangle();
 		}
 		catch (MDException e) {
 			return null;
