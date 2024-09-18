@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,8 @@ import resources.icons.TranslateIcon;
 
 public class IncomingCallNode extends CallNode {
 
-	private Icon INCOMING_ICON = Icons.ARROW_UP_LEFT_ICON;
-	private Icon INCOMING_FUNCTION_ICON;
+	private static final Icon INCOMING_ICON = Icons.ARROW_UP_LEFT_ICON;
+	private Icon incomingFunctionIcon;
 
 	private Icon icon = null;
 	private final Address functionAddress;
@@ -55,10 +55,10 @@ public class IncomingCallNode extends CallNode {
 		this.sourceAddress = sourceAddress;
 		this.functionAddress = function.getEntryPoint();
 
-		MultiIcon incomingFunctionIcon = new MultiIcon(INCOMING_ICON, false, 32, 16);
+		MultiIcon multiIcon = new MultiIcon(INCOMING_ICON, false, 32, 16);
 		TranslateIcon translateIcon = new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0);
-		incomingFunctionIcon.addIcon(translateIcon);
-		INCOMING_FUNCTION_ICON = incomingFunctionIcon;
+		multiIcon.addIcon(translateIcon);
+		incomingFunctionIcon = multiIcon;
 	}
 
 	@Override
@@ -79,8 +79,19 @@ public class IncomingCallNode extends CallNode {
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 
+		List<GTreeNode> children = new ArrayList<>();
+		doGenerateChildren(functionAddress, children, monitor);
+
+		Collections.sort(children, new CallNodeComparator());
+
+		return children;
+	}
+
+	private void doGenerateChildren(Address address, List<GTreeNode> results, TaskMonitor monitor)
+			throws CancelledException {
+
 		FunctionSignatureFieldLocation location =
-			new FunctionSignatureFieldLocation(program, functionAddress);
+			new FunctionSignatureFieldLocation(program, address);
 
 		Set<Address> addresses = ReferenceUtils.getReferenceAddresses(location, monitor);
 		LazyMap<Function, List<GTreeNode>> nodesByFunction =
@@ -93,6 +104,13 @@ public class IncomingCallNode extends CallNode {
 				continue;
 			}
 
+			// If we are not showing thunks, then replace each thunk with all calls to that thunk
+			if (callerFunction.isThunk() && !callTreeOptions.allowsThunks()) {
+				Address callerEntry = callerFunction.getEntryPoint();
+				doGenerateChildren(callerEntry, results, monitor);
+				continue;
+			}
+
 			IncomingCallNode node =
 				new IncomingCallNode(program, callerFunction, fromAddress, callTreeOptions);
 			addNode(nodesByFunction, node);
@@ -102,9 +120,7 @@ public class IncomingCallNode extends CallNode {
 				.stream()
 				.flatMap(list -> list.stream())
 				.collect(Collectors.toList());
-		Collections.sort(children, new CallNodeComparator());
-
-		return children;
+		results.addAll(children);
 	}
 
 	@Override
@@ -115,7 +131,7 @@ public class IncomingCallNode extends CallNode {
 	@Override
 	public Icon getIcon(boolean expanded) {
 		if (icon == null) {
-			icon = INCOMING_FUNCTION_ICON;
+			icon = incomingFunctionIcon;
 			if (functionIsInPath()) {
 				icon = CallTreePlugin.RECURSIVE_ICON;
 			}
