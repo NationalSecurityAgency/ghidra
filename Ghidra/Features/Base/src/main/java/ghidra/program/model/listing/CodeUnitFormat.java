@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,12 +45,12 @@ public class CodeUnitFormat {
 	/**
 	 * Supported memory address shift cases (bits)
 	 */
-	private static final int[] SHIFT_CASES = new int[] { 1, 2, 8, 16, 32 };
+	private static final int[] SHIFT_CASES = new int[] { 1, 2, 8, 16 };
 
 	/**
 	 * Supported memory address mask cases (mask value)
 	 */
-	private static final long[] MASK_CASES = new long[] { 0x0ff, 0x0ffff, 0x0ffffffff };
+	private static final long[] MASK_CASES = new long[] { 0x0ffff, 0x0ffffffff };
 
 	/**
 	 * Default code unit format
@@ -834,29 +834,31 @@ public class CodeUnitFormat {
 		if (addr.isMemoryAddress()) {
 
 			// Include "offset" prefix since addrOffset does not match originalValue
-			list.add("offset ");
-
-			// Check for shift cases
-			for (int element : SHIFT_CASES) {
-				if ((addrOffset >>> element) == originalValue && originalValue != 0x0) {
-					list.add(opObj);
-					if (options.includeScalarReferenceAdjustment) {
-						list.add(" >>");
-						list.add(Integer.toString(element));
+			if (options.includeScalarReferenceAdjustment) {
+				list.add("offset ");
+				
+				// Check for shift cases
+				for (int element : SHIFT_CASES) {
+					if ((addrOffset >>> element) == originalValue && originalValue != 0x0) {
+						list.add(opObj);
+						if (options.includeScalarReferenceAdjustment) {
+							list.add(" >>");
+							list.add(Integer.toString(element));
+						}
+						return list;
 					}
-					return list;
 				}
-			}
-
-			// Check for mask cases
-			for (long element : MASK_CASES) {
-				if ((addrOffset & element) == originalValue) {
-					list.add(opObj);
-					if (options.includeScalarReferenceAdjustment) {
-						list.add(" &");
-						list.add("0x" + Long.toHexString(element));
+	
+				// Check for mask cases
+				for (long element : MASK_CASES) {
+					if ((addrOffset & element) == originalValue) {
+						list.add(opObj);
+						if (options.includeScalarReferenceAdjustment) {
+							list.add(" &");
+							list.add("0x" + Long.toHexString(element));
+						}
+						return list;
 					}
-					return list;
 				}
 			}
 
