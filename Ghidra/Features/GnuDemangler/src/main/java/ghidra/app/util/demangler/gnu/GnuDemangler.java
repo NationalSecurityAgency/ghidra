@@ -77,7 +77,9 @@ public class GnuDemangler implements Demangler {
 	public DemangledObject demangle(MangledContext mangledContext)
 			throws DemangledException {
 		DemangledObject demangled = demangleInternal(mangledContext);
-		demangled.setMangledContext(mangledContext);
+		if (demangled != null) {
+			demangled.setMangledContext(mangledContext);
+		}
 		return demangled;
 	}
 
