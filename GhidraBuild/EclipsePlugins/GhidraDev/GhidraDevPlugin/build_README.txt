@@ -2,6 +2,9 @@ GhidraDev is currently built from Eclipse and checked into the bin repo.  Ideall
 one day, but we aren't there yet.  We do rely on Gradle prepDev to generate the Eclipse project and 
 build GhidraDev's dependencies though, hence the build.gradle file.
 
+Attention: Refer to the GhidraDev README for information on installing and sourcing PyDev if you
+encounter any problems.
+
 NOTE: Only "Eclipse for RCP and RAP Developers" has the ability to do the below instructions.  The
 following instructions assume that you are using this version of Eclipse.
 

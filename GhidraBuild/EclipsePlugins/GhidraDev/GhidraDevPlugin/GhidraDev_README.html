@@ -44,6 +44,7 @@ change with future releases.</p>
   <li><a href="#Launching">Launching and Debugging Ghidra</a></li>
   <li><a href="#PyDevSupport">PyDev Support</a></li>
   <ul>
+    <li><a href="#PyDevDownload">Sourcing PyDev</a></li>
     <li><a href="#PyDevInstall">Installing PyDev</a></li>
     <li><a href="#PyDevConfigure">Configuring PyDev</a></li>
   </ul>
@@ -202,7 +203,7 @@ that specify other projects on their build paths.</p>
 
 <h2><a name="OptionalRequirements"></a>Optional Requirements</h2>
 <ul>
-  <li>PyDev 6.3.1 - 9.3.0 (<a href="#PyDevSupport">more info</a>)</li>
+  <li>PyDev 6.3.1 - 9.3.0 (<a href="#PyDevSupport">more info and links to packages</a>)</li>
   <li>CDT 8.6.0 or later</li>
   <li>
     Gradle - required version(s) specified by linked Ghidra release 
@@ -358,6 +359,16 @@ Launching Ghidra from Eclipse independent of a project is not supported.</p>
 <h2><a name="PyDevSupport"></a>PyDev Support</h2>
 <p>GhidraDev is able to integrate with PyDev to conveniently configure Python support into Ghidra
 script and module projects.</p>
+
+<h3><a name="PyDevDownload"></a>Sourcing PyDev</h3>
+<p>Currently the maximum supported version is 9.3.0, and as of 2024, the current major version
+is 12. 9.3.0 can still be downloaded from the following sources:</p>
+<ol>
+  <li><a href="https://github.com/fabioz/Pydev/releases/tag/pydev_9_3_0">https://github.com/fabioz/Pydev/releases/tag/pydev_9_3_0<a/></li>
+  <li><code>https://www.pydev.org/update_sites/9.3.0/</code> (as updated source for Eclipse's package management)</li>
+</ol>
+<p>Manually verify the downloaded packages whenever possible, as Eclipse will flag the above as <strong>unsigned</strong></p>
+
 <h3><a name="PyDevInstall"></a>Installing PyDev</h3>
 <p>From Eclipse:</p>
 <ol>
