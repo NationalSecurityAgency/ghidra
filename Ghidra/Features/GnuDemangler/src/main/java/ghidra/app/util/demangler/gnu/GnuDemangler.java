@@ -66,19 +66,27 @@ public class GnuDemangler implements Demangler {
 	}
 
 	@Override
-	@Deprecated(since = "9.2", forRemoval = true)
-	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
+	@Deprecated(since = "11.3", forRemoval = true)
+	public DemangledObject demangle(String mangled, DemanglerOptions demanglerOptions)
 			throws DemangledException {
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
-		return demangle(mangled, options);
+		MangledContext mangledContext = createMangledContext(mangled, demanglerOptions, null, null);
+		return demangle(mangledContext);
 	}
 
 	@Override
-	public DemangledObject demangle(String mangled, DemanglerOptions demanglerOtions)
+	public DemangledObject demangle(MangledContext mangledContext)
+			throws DemangledException {
+		DemangledObject demangled = demangleInternal(mangledContext);
+		demangled.setMangledContext(mangledContext);
+		return demangled;
+	}
+
+	private DemangledObject demangleInternal(MangledContext mangledContext)
 			throws DemangledException {
 
-		GnuDemanglerOptions options = getGnuOptions(demanglerOtions);
+		DemanglerOptions demanglerOptions = mangledContext.getOptions();
+		String mangled = mangledContext.getMangled();
+		GnuDemanglerOptions options = getGnuOptions(demanglerOptions);
 		if (skip(mangled, options)) {
 			return null;
 		}

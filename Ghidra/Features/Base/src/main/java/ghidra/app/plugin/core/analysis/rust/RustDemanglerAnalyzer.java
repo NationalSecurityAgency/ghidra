@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.app.services.AnalysisPriority;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.*;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
@@ -64,10 +63,9 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private RustDemanglerFormat demanglerFormat = RustDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
 
-	private RustDemangler demangler = new RustDemangler();
-
 	public RustDemanglerAnalyzer() {
 		super(NAME, DESCRIPTION);
+		demangler = new RustDemangler();
 		// Set priority to one before the default AbstractDemanglerAnalyzer priority
 		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before().before().before());
 		setDefaultEnablement(true);
@@ -121,17 +119,18 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	}
 
 	@Override
-	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOptions,
-			MessageLog log) throws DemangledException {
-		return demangler.demangle(mangled, demanglerOptions);
+	protected DemangledObject doDemangle(MangledContext mangledContext, MessageLog log)
+			throws DemangledException {
+		return demangler.demangle(mangledContext);
 	}
 
 	@Override
-	protected void apply(Program program, Address address, DemangledObject demangled,
-			DemanglerOptions options, MessageLog log, TaskMonitor monitor) {
+	protected void apply(MangledContext mangledContext, DemangledObject demangled, MessageLog log,
+			TaskMonitor monitor) {
 		try {
 			if (demangled instanceof DemangledFunction defunc) {
-				defunc.applyTo(program, address, options, monitor);
+				defunc.applyTo(mangledContext.getProgram(), mangledContext.getAddress(),
+					mangledContext.getOptions(), monitor);
 			}
 		}
 		catch (Exception e) {
@@ -148,7 +147,7 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		DemangledVariable demangledVariable = new DemangledVariable(mangled, original, name);
 		demangledVariable.setNamespace(namespace);
 
-		super.apply(program, address, demangledVariable, options, log, monitor);
+		super.apply(mangledContext, demangledVariable, log, monitor);
 	}
 
 //==================================================================================================

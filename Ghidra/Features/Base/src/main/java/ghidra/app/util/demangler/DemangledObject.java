@@ -44,37 +44,38 @@ public abstract class DemangledObject implements Demangled {
 	/*
 	 	The following names probably need to be refactored.   Until then, this is how the following
 	 	fields are used.
-	 	
+
 	 		mangled -
 	 			Source: The original mangled string as seen in the program
 	 		    Usage: Can be used to see if a program symbol has already been demangled
-	 		          
+
 	 		originalDemangled -
 	 			Source: The raw demangled string returned from the demangler
 	 		    Usage: for display
-	 		    
+
 	 		demangledName -
 	 			Source: The name as created by the parser which may transform or even replace the
 	 			        string returned from the demangler
 	 		    Usage: for display
-	 		                
+
 	 		name -
 	 			Source: This is derived from the 'demangledName' This is updated to be suitable
 	 		            for use as a symbol name.  This may be null while building, but is
 	 		            expected to be non-null when applyTo() is called
 	 		    Usage: The name that will be applied when applyTo() is called.
-	 		    
-	 		    
-	 		    
+
+
+
 	 	Future: These variables should be refactored and renamed to be clearer and more cohesive,
 	 	        something like:
-	 	        
+
 	 	        mangled
 	 	        rawDemangled
 	 	        escapedDemangled
 	 	        symbolName
-	 	
+
 	 */
+	protected MangledContext mangledContext; // the mangled context, which includes mangled string
 	protected final String mangled; // original mangled string
 	protected String originalDemangled; // raw demangled string
 	private String demangledName; // updated demangled string
@@ -110,8 +111,26 @@ public abstract class DemangledObject implements Demangled {
 	private boolean demangledNameSucceeded = false;
 	private String errorMessage = null;
 
+	/**
+	 * Constructor.  This is the older constructor that does not take a mangled context
+	 * @param mangled the mangled string
+	 * @param originalDemangled the raw demangled string; usually what comes from the upstream
+	 * demangler process, if there is one
+	 */
 	DemangledObject(String mangled, String originalDemangled) {
 		this.mangled = mangled;
+		this.originalDemangled = originalDemangled;
+	}
+
+	/**
+	 * Constructor.
+	 * @param mangledContext the context, which includes the mangled string
+	 * @param originalDemangled the raw demangled string; usually what comes from the upstream
+	 * demangler process, if there is one
+	 */
+	DemangledObject(MangledContext mangledContext, String originalDemangled) {
+		this.mangledContext = mangledContext;
+		this.mangled = mangledContext.getMangled();
 		this.originalDemangled = originalDemangled;
 	}
 
@@ -228,6 +247,16 @@ public abstract class DemangledObject implements Demangled {
 	 */
 	public boolean demangledNameSuccessfully() {
 		return demangledNameSucceeded;
+	}
+
+	@Override
+	public void setMangledContext(MangledContext mangledContextArg) {
+		mangledContext = mangledContextArg;
+	}
+
+	@Override
+	public MangledContext getMangledContext() {
+		return mangledContext;
 	}
 
 	@Override
@@ -378,7 +407,7 @@ public abstract class DemangledObject implements Demangled {
 	 * Apply this demangled object detail to the specified program.
 	 * <br>
 	 * NOTE: An open Program transaction must be established prior to invoking this method.
-	 * 
+	 *
 	 * @param program program to which demangled data should be applied.
 	 * @param address address which corresponds to this demangled object
 	 * @param options options which control how demangled data is applied
@@ -389,6 +418,25 @@ public abstract class DemangledObject implements Demangled {
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
 		return applyPlateCommentOnly(program, address);
+	}
+
+	/**
+	 * Apply this demangled object detail to the specified program.  This method only works
+	 * if the {@link MangledContext} was set with the appropriate constructor or with the
+	 * {@link #setMangledContext(MangledContext)} method
+	 * <br>
+	 * NOTE: An open Program transaction must be established prior to invoking this method.
+	 *
+	 * @param monitor task monitor
+	 * @return true if successfully applied, else false
+	 * @throws Exception if an error occurs during the apply operation or if the context is null
+	 */
+	public boolean applyUsingContext(TaskMonitor monitor) throws Exception {
+		if (mangledContext == null) {
+			throw new DemangledException("Null context found for: " + mangled);
+		}
+		return applyTo(mangledContext.getProgram(), mangledContext.getAddress(),
+			mangledContext.getOptions(), monitor);
 	}
 
 	/**
