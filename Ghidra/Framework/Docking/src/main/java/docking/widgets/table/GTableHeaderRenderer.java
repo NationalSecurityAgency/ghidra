@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,21 @@
 package docking.widgets.table;
 
 import java.awt.*;
-import java.awt.font.TextAttribute;
-import java.text.AttributedString;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.*;
 
-import generic.theme.*;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
 
 public class GTableHeaderRenderer extends DefaultTableCellRenderer {
-
-	private static final Color SORT_NUMBER_FG_COLOR = new GColor("color.fg");
 
 	private static final int PADDING_FOR_COLUMN_NUMBER = 8;
 	private static final Icon UP_ICON =
@@ -47,9 +47,22 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 
 	private Icon primaryIcon = EMPTY_ICON;
 	private Icon helpIcon = EMPTY_ICON;
-	protected boolean isPaintingPrimarySortColumn;
+	private double sortEmphasis = -1;
+	private Image sortImage; // cached image
 
 	private Component rendererComponent;
+
+	/**
+	 * Sets the an emphasis value for this column that is used to slightly enlarge and call out the
+	 * sort for the column.  
+	 * @param sortEmphasis the emphasis value
+	 */
+	public void setSortEmphasis(double sortEmphasis) {
+		this.sortEmphasis = sortEmphasis;
+		if (sortEmphasis < 0) {
+			sortImage = null;
+		}
+	}
 
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -147,6 +160,30 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		return clippedText;
 	}
 
+	// creates an image from the given icon; used scaling the image
+	private Image createImage(Icon icon) {
+
+		if (sortImage != null) {
+			return sortImage;
+		}
+
+		int w = icon.getIconWidth();
+		int h = icon.getIconHeight();
+
+		BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = (Graphics2D) bi.getGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		icon.paintIcon(this, g2d, 0, 0);
+
+		g2d.dispose();
+
+		sortImage = bi;
+		return bi;
+	}
+
+	// We have overridden paint children to add the sort column icon and the help icon, depending 
+	// on if this column is sorted and/or hovered.
 	@Override
 	protected void paintChildren(Graphics g) {
 
@@ -155,9 +192,131 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		int offset = 4;
 		int x = helpPoint.x - primaryIcon.getIconWidth() - offset;
 		int y = getIconStartY(primaryIcon.getIconHeight());
-		primaryIcon.paintIcon(this, g, x, y);
 
-		helpIcon.paintIcon(this, g, helpPoint.x, helpPoint.y);
+		if (sortEmphasis <= 1.0) {
+			// default icon painting; no emphasis
+			primaryIcon.paintIcon(this, g, x, y);
+			helpIcon.paintIcon(this, g, helpPoint.x, helpPoint.y);
+			return;
+		}
+
+		//
+		// This column has been emphasized.  We use the notion of emphasis to remind users that they
+		// are using a  multi-column sort.  When users are toggling the sort direction of a given
+		// column, it is easy to forget that other columns are also sorted, especially when those
+		// columns are in the users peripheral vision.  TableUtils uses an animator to control the
+		// emphasis for all sorted columns, other than the clicked column.  We hope that this 
+		// emphasis creates enough movement in the users peripheral vision to serve as a gentle 
+		// reminder that the table sort consists of more than just the clicked column.
+		//
+		// There is no emphasis applied to columns when only a single column is sorted.  See the 
+		// paint method for details on how the emphasis is used.
+		//
+
+		// create an image and use the graphics for painting the scaled/emphasized version 
+		Image image = createImage(primaryIcon);
+		paintImage((Graphics2D) g, image, x, y);
+	}
+
+	// x,y are relative to the end of the component using 0,0 
+	private void paintImage(Graphics2D g2d, Image image, int x, int y) {
+
+		//
+		// Currently, the sort emphasis is used to scale the sort icon.   This code will scale the
+		// icon, up to a maximum.  The emphasis set on this column will grow and then shrink as the
+		// values are updated by an animator.   The icon image being painted here will start at the
+		// current icon location, grow to the max emphasis, and then shrink back to its original 
+		// size.
+		// 
+		double max = 1.3D;
+		double scale = sortEmphasis;
+		scale = Math.min(max, scale);
+
+		AffineTransform originalTransform = g2d.getTransform();
+		try {
+
+			AffineTransform cloned = (AffineTransform) originalTransform.clone();
+			cloned.scale(scale, scale);
+
+			g2d.setTransform(cloned);
+
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+
+			// center the growing icon over the normal icon using the size delta and dividing by 2
+			int iw = image.getWidth(null);
+			int ih = image.getHeight(null);
+			double dw = (iw * scale) - iw;
+			double dh = (ih * scale) - ih;
+			double halfDw = dw / 2;
+			double halfDh = dh / 2;
+
+			// as the image grows, we must move x,y back so it stays centered
+			double sx = x / scale;
+			double sy = y / scale;
+			int fx = (int) Math.round(sx - halfDw);
+			int fy = (int) Math.round(sy - halfDh);
+
+			// to make the icon change more noticeable to the user, paint a small highlight behind
+			// the icon being emphasized
+			paintBgHighlight(g2d, scale, max, fx, fy, iw, ih);
+
+			g2d.drawImage(image, fx, fy, null);
+		}
+		finally {
+			g2d.setTransform(originalTransform);
+		}
+	}
+
+	/**
+	 * Paints a background highlight under the icon that will get painted.
+	 * @param g2d the graphics
+	 * @param scale the current scale, up to max 
+	 * @param max the max emphasis size
+	 * @param ix the icon x
+	 * @param iy the icon y
+	 * @param iw the icon width
+	 * @param ih the icon height
+	 */
+	private void paintBgHighlight(Graphics2D g2d, double scale, double max, double ix, double iy,
+			double iw, double ih) {
+
+		// range from 0 to max (e.g., 0 to .3); highlight will fade in from full alpha
+		double range = max - 1;
+		double current = scale - 1;
+		double alpha = current;
+
+		Composite originalComposite = g2d.getComposite();
+		try {
+			AlphaComposite alphaComposite = AlphaComposite.getInstance(
+				AlphaComposite.SrcOver.getRule(), (float) alpha);
+
+			g2d.setComposite(alphaComposite);
+			g2d.setColor(Colors.FOREGROUND);
+
+			// highlight size is a range from 0 to max, where max is currently .3; grow the 
+			// highlight shape as the animation progresses 
+			double percent = current / range;
+			double bgpadding = 1;
+			double fullbgw = iw;
+			double fullbgh = ih;
+			double bgw = (fullbgw + bgpadding) * percent;
+			double bgh = (fullbgh + bgpadding) * percent;
+
+			// center using the delta between the icon size and the current highlight size
+			double halfpadding = (bgpadding / 2);
+			double bgwd = (iw + bgpadding) - bgw;
+			double bghd = (ih + bgpadding) - bgh;
+			double halfw = bgwd / 2;
+			double halfh = bghd / 2;
+			double bgx = (ix - halfpadding) + halfw;
+			double bgy = (iy - halfpadding) + halfh;
+
+			g2d.fillRoundRect((int) bgx, (int) bgy, (int) bgw, (int) bgh, 6, 6);
+		}
+		finally {
+			g2d.setComposite(originalComposite);
+		}
 	}
 
 	private Point getHelpIconLocation() {
@@ -293,24 +452,18 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	private Icon getColumnIconForSortState(TableSortState columnSortStates,
 			ColumnSortState sortState, boolean isPendingSort) {
 
+		if (isPendingSort) {
+			return PENDING_ICON;
+		}
+
 		Icon icon = (sortState.isAscending() ? UP_ICON : DOWN_ICON);
 		if (columnSortStates.getSortedColumnCount() != 1) {
 			MultiIcon multiIcon = new MultiIcon(icon);
 			int sortOrder = sortState.getSortOrder();
-			if (sortOrder == 1) {
-				isPaintingPrimarySortColumn = true;
-			}
 			String numberString = Integer.toString(sortOrder);
 			multiIcon.addIcon(new NumberPainterIcon(icon.getIconWidth() + PADDING_FOR_COLUMN_NUMBER,
 				icon.getIconHeight(), numberString));
 			icon = multiIcon;
-		}
-		else {
-			isPaintingPrimarySortColumn = true;
-		}
-
-		if (isPendingSort) {
-			icon = PENDING_ICON;
 		}
 
 		return icon;
@@ -322,6 +475,7 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		int middle = height / 2;
 		int halfHeight = iconHeight / 2;
 		int y = middle - halfHeight;
+
 		return y;
 	}
 
@@ -362,26 +516,20 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 
 			Font font = Gui.getFont(FONT_ID);
 			g.setFont(font);
+			g.setColor(Colors.FOREGROUND);
 			FontMetrics fontMetrics = g.getFontMetrics();
 			int numberHeight = fontMetrics.getAscent();
 
-			int padding = 2;
-
 			// draw the number on the right...
+			int padding = 2;
 			int startX = x + (iconWidth - numberWidth) + padding;
 
-			// ...and at the same start y as the sort icon
-			int iconY = getIconStartY(iconHeight);
-			int textBaseline = iconY + numberHeight - padding;
+			// note: padding here helps make up the difference between the number's actual height 
+			// and the font metrics ascent
+			int heightPadding = 2;
+			int absoluteY = y + numberHeight - heightPadding;
 
-			AttributedString as = new AttributedString(numberText);
-			as.addAttribute(TextAttribute.FOREGROUND, SORT_NUMBER_FG_COLOR);
-			as.addAttribute(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-			as.addAttribute(TextAttribute.FAMILY, font.getFamily());
-			as.addAttribute(TextAttribute.SIZE, font.getSize2D());
-
-			g.drawString(as.getIterator(), startX, textBaseline);
-
+			g.drawString(numberText, startX, absoluteY);
 		}
 
 	}
