@@ -356,7 +356,7 @@ public class TableUtils {
 	}
 
 	/**
-	 * An animation runner that creates the painter and the values that will be interpollated by
+	 * An animation runner that creates the painter and the values that will be interpolated by
 	 * the animator.  Each column that is sorted will be emphasized, except for the column that was
 	 * clicked, as not to be annoying to the user.   The intent of emphasizing the columns is to 
 	 * signal to the user that other columns are part of the sort, not just the column that was 
