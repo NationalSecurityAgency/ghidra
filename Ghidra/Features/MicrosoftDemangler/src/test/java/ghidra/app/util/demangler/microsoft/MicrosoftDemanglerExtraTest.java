@@ -275,8 +275,8 @@ public class MicrosoftDemanglerExtraTest extends AbstractGenericTest {
 	// Result: stdcall function; 12 bytes
 	public void testCStyleStdcallWith32Function() throws Exception {
 		String mangled = "_func_stdcall@12";
-		String expectedDemangled = "func_stdcall";
-		String expectedFunction = "__stdcall func_stdcall(undefined4,undefined4,undefined4)";
+		String expectedDemangled = "__stdcall func_stdcall,12";
+		String expectedFunction = "__stdcall func_stdcall(void)";
 		String expectedConvention = "__stdcall";
 		int expectedNumBytes = 12;
 		processWith32Function(mangled, expectedDemangled, expectedFunction, expectedConvention,
@@ -327,8 +327,8 @@ public class MicrosoftDemanglerExtraTest extends AbstractGenericTest {
 	// Result: fastcall function (stripped '@'); 12 bytes
 	public void testCStyleFastcallWith32Function() throws Exception {
 		String mangled = "@func_fastcall@12";
-		String expectedDemangled = "func_fastcall";
-		String expectedFunction = "__fastcall func_fastcall(undefined4,undefined4,undefined4)";
+		String expectedDemangled = "__fastcall func_fastcall,12";
+		String expectedFunction = "__fastcall func_fastcall(void)";
 		String expectedConvention = "__fastcall";
 		int expectedNumBytes = 12;
 		processWith32Function(mangled, expectedDemangled, expectedFunction, expectedConvention,
@@ -379,8 +379,8 @@ public class MicrosoftDemanglerExtraTest extends AbstractGenericTest {
 	// Result: vectorcall function; 12 bytes
 	public void testCStyleVectorcallWith32Function() throws Exception {
 		String mangled = "func_vectorcall@@12";
-		String expectedDemangled = "func_vectorcall";
-		String expectedFunction = "__vectorcall func_vectorcall(undefined4,undefined4,undefined4)";
+		String expectedDemangled = "__vectorcall func_vectorcall,12";
+		String expectedFunction = "__vectorcall func_vectorcall(void)";
 		String expectedConvention = "__vectorcall";
 		int expectedNumBytes = 12;
 		processWith32Function(mangled, expectedDemangled, expectedFunction, expectedConvention,
@@ -405,8 +405,8 @@ public class MicrosoftDemanglerExtraTest extends AbstractGenericTest {
 	// Result: vectorcall function; 12 bytes
 	public void testCStyleVectorcallWith64Function() throws Exception {
 		String mangled = "func_vectorcall@@12";
-		String expectedDemangled = "func_vectorcall";
-		String expectedFunction = "__vectorcall func_vectorcall(undefined4,undefined4,undefined4)";
+		String expectedDemangled = "__vectorcall func_vectorcall,12";
+		String expectedFunction = "__vectorcall func_vectorcall(void)";
 		String expectedConvention = "__vectorcall";
 		int expectedNumBytes = 12;
 		processWith64Function(mangled, expectedDemangled, expectedFunction, expectedConvention,
