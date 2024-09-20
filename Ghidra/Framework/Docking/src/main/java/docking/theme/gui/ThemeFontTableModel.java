@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,7 +141,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			return "<No Value>";
 		}
 		if (resolvedFont.refId() != null) {
-			return "[" + resolvedFont.refId() + "]";
+			return resolvedFont.getValueText();
 		}
 
 		Font font = resolvedFont.font();
@@ -193,7 +193,8 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			if (fontValue == null) {
 				return null;
 			}
-			return new ResolvedFont(id, fontValue.getReferenceId(), valueMap.getResolvedFont(id));
+			return new ResolvedFont(fontValue, id, fontValue.getReferenceId(),
+				valueMap.getResolvedFont(id));
 		}
 
 		@Override
@@ -237,7 +238,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 
 			Font font = resolvedFont.font();
 			if (font != null) {
-				setToolTipText(FontValue.fontToString(font));
+				setToolTipText(resolvedFont.getFullValueText());
 			}
 
 			return label;
@@ -250,6 +251,41 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 
 	}
 
-	private record ResolvedFont(String id, String refId, Font font) {
-		/**/}
+	// This class is used as a column cell value.  It holds the info that defines the font in the
+	// theme files, as long as the final font that was loaded by the system.
+	private record ResolvedFont(FontValue fontValue, String id, String refId, Font font) {
+
+		String getValueText() {
+
+			if (refId == null) {
+				return FontValue.fontToString(font);
+			}
+
+			FontModifier modifier = fontValue.getModifier();
+			String modifierText = "";
+			if (modifier != null) {
+				modifierText = "*";
+			}
+
+			// ex: [font.foo] 
+			//     [font.foo]*
+			return "[" + refId + "]" + modifierText;
+		}
+
+		String getFullValueText() {
+			if (refId == null) {
+				return FontValue.fontToString(font);
+			}
+
+			FontModifier modifier = fontValue.getModifier();
+			String modifierText = "";
+			if (modifier != null) {
+				modifierText = "    [%s]%s".formatted(refId, modifier.toString());
+			}
+
+			// ex: monospaced-PLAIN-13 
+			//     monospaced-PLAIN-13    [font.foo][monospaced]
+			return FontValue.fontToString(font) + modifierText;
+		}
+	}
 }
