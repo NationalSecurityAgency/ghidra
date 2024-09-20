@@ -25,12 +25,11 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.VoidDataType;
-import mdemangler.MDMangBaseTest;
 import mdemangler.object.MDObjectC;
 
 /**
  * This class performs extra demangler testing for special cases that do not fit
- * the testing pattern found in {@link MDMangBaseTest} and {@link MicrosoftDemanglerTest}
+ * the testing pattern found in MDMangBaseTest and {@link MicrosoftDemanglerTest}
  */
 public class MicrosoftDemanglerExtraTest extends AbstractGenericTest {
 
