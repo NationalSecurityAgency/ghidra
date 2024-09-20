@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,8 +70,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"<li><b>Block Model Changes Only</b> - relayout the graph when the block model changes " +
 		"(like when a label has been added to the program in the currently graphed function)</li>" +
 		"<li><b>Vertex Grouping Changes Only</b> - when vertices are grouped or ungrouped</li>" +
-		"<li><b>Never</b> - do not automatically relayout the graph</li></ul><br><br>" +
-		"<b><i>See help for more</i></b>";
+		"<li><b>Never</b> - do not automatically relayout the graph</li></ul>";
 
 	private static final String DEFAULT_VERTEX_BACKGROUND_COLOR_KEY = "Default Vertex Color";
 	private static final String DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION =
