@@ -254,13 +254,22 @@ public abstract class LookAndFeelManager {
 
 	private void checkForAlreadyRegistered(Component component, String newFontId) {
 		String existingFontId = componentToIdMap.get(component);
-		if (existingFontId != null) {
-			Msg.warn(this, """
-					Component has a Font ID registered more than once. \
-					Previously registered ID: '%s'.  Newly registered ID: '%s'.
-						""".formatted(existingFontId, newFontId),
-				ReflectionUtilities.createJavaFilteredThrowable());
+		if (existingFontId == null) {
+			return; // never registered before
 		}
+
+		if (component instanceof FontChangeListener) {
+			// Special Case: this allows clients to control how they listen to font changes.  We 
+			// have guilty knowledge that some clients will use one listener to listen to multiple
+			// font ids, so don't print a warning for this case.
+			return;
+		}
+
+		Msg.warn(this, """
+				Component has a Font ID registered more than once. \
+				Previously registered ID: '%s'.  Newly registered ID: '%s'.
+					""".formatted(existingFontId, newFontId),
+			ReflectionUtilities.createJavaFilteredThrowable());
 	}
 
 	private Font toUiResource(Font font) {
