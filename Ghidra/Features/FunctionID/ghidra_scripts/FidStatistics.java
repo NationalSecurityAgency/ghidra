@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,12 @@ import java.io.*;
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;
+import ghidra.feature.fid.db.FidProgramID;
 import ghidra.feature.fid.db.FidQueryService;
 import ghidra.feature.fid.service.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.Symbol;
@@ -564,7 +564,7 @@ public class FidStatistics extends GhidraScript {
 		highFalsePositive = new FileWriter(highFile);
 
 		FidQueryService queryService = null;
-		Language lastLanguage = null;
+		FidProgramID lastID = null;
 		int maxPrograms = programList.size();
 		int counter = 0;
 		try {
@@ -572,12 +572,13 @@ public class FidStatistics extends GhidraScript {
 				Program program = null;
 				try {
 					program = (Program) domainFile.getDomainObject(this, false, false, monitor);
-					if (queryService == null || !lastLanguage.equals(program.getLanguage())) {
+					FidProgramID currentID = new FidProgramID(program, false);
+					if (queryService == null || !lastID.equals(currentID)) {
 						if (queryService != null) {
 							queryService.close();
 						}
-						lastLanguage = program.getLanguage();
-						queryService = service.openFidQueryService(lastLanguage, false);
+						lastID = currentID;
+						queryService = service.openFidQueryService(currentID, false);
 					}
 					processProgram(program, queryService);
 					counter += 1;
