@@ -69,11 +69,11 @@
 		<logger name="ghidra.app.plugin.core.analysis" level="DEBUG" />
 		<logger name="ghidra.app.plugin.prototype" level="INFO" />	
 		<logger name="ghidra.app.script" level="INFO" />
-		<logger name="ghidra.app.util.importer" level="DEBUG" /> <!-- AutoImporter shows excessive path info -->
+		<logger name="ghidra.app.util.importer" level="TRACE" /> <!-- AutoImporter shows excessive path info -->
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
 		<logger name="ghidra.trace" level="DEBUG" />
-		<logger name="ghidra.util.classfinder" level="DEBUG" />		
-		<logger name="ghidra.util.extensions" level="DEBUG" />
+		<logger name="ghidra.util.classfinder" level="TRACE" />
+		<logger name="ghidra.util.extensions" level="TRACE" />
 		<logger name="ghidra.util.task" level="DEBUG" />	
 		<logger name="ghidra.sleigh.grammar" level="DEBUG" />		
 		<logger name="functioncalls" level="DEBUG" />
@@ -81,7 +81,7 @@
 		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" /> 
 
 		<Root level="ALL">
-			<AppenderRef ref="console" level="DEBUG"/> 
+			<AppenderRef ref="console" level="TRACE"/>
 			<AppenderRef ref="detail" level="DEBUG"/> 
 			<AppenderRef ref="script" level="DEBUG"/> 
 			<AppenderRef ref="logPanel" level="INFO"/> 
