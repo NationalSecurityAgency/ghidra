@@ -60,7 +60,11 @@ public class DomainFolderChangesDisplayPlugin extends Plugin
 	@Override
 	protected void dispose() {
 		FrontEndService frontEnd = tool.getService(FrontEndService.class);
-		frontEnd.addProjectListener(this);
+
+		// FrontEndService might have been disposed already during teardown (FrontEndPlugin)
+		if (frontEnd != null) {
+			frontEnd.removeProjectListener(this);
+		}
 
 		Project activeProject = tool.getProjectManager().getActiveProject();
 		if (activeProject != null) {
