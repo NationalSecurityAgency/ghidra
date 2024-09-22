@@ -12,467 +12,525 @@
   </HEAD>
 
   <BODY lang="EN-US">
-    <H1>Search Memory</H1>
-
-    <P>Search Memory locates sequences of bytes in program memory. &nbsp;The search is based on a
-    value entered as hex numbers, decimal numbers or strings.&nbsp; The byte sequence may contain
-    "wildcards" that will match any byte (or possibly nibble). String searching also allows for the
-    use of <A href="#RegularExpression">regular expression</A> searches.</P>
-
-    <P>To Search Memory:</P>
-
     <BLOCKQUOTE>
-      <OL>
-        <LI>From the Tool, select <B>Search</B><IMG alt="" border="0" src="help/shared/arrow.gif">
-        <B>Memory</B></LI>
+      <A name="Memory Search"></A> 
 
-        <LI>Enter a Hex String in the Value field<BR>
-         This will create a Hex Sequence for searching.</LI>
+      <H1>Search Memory</H1>
 
-        <LI>Choose "Next" to find the next occurrence<BR>
-         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        - or -<BR>
-         Choose "Previous" to find the previous occurrence<BR>
-         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        - or -<BR>
-         Choose "Search All" to find all occurrences.</LI>
-      </OL>
-    </BLOCKQUOTE>
+      <P>The memory search feature locates sequences of bytes in program memory. The search is
+      based on user entered values which can be specified in a variety of formats such as hex,
+      binary, string, and decimal values. The hex and binary formats support "wildcards" which can
+      match any bit or nibbles depending on the format. String search also supports the use of <A
+      href="Search_Formats.htm#RegularExpressions">regular expression</A> searches.</P>
 
-	
-	    <H2>Search Formats</H2>
-	
-	    <BLOCKQUOTE>
-	      <UL type="disc">
-	        <LI><A href="#Hex">Hex</A></LI>
-	
-	        <LI><A href="#String">String</A></LI>
-	
-	        <LI><A href="#Decimal">Decimal</A></LI>
-	
-	        <LI><A href="#Binary">Binary</A></LI>
-	
-	        <LI><A href="#Regular_Expression">Regular Expression</A></LI>
-	      </UL>
-	    </BLOCKQUOTE>
-
-    <P align="center"><IMG src="images/SearchMemoryHex.png" border="0" alt=""> &nbsp;</P>
-
-    <H2>Search Options</H2>
-
-    <BLOCKQUOTE>
-      <H3>Search</H3>
+      <P>To create a new memory search window, select <B>Search</B> <IMG alt="" border="0" src=
+      "help/shared/arrow.gif"><B>Memory</B> from the main tool menu or use the default keybinding
+      "S".</P>
+		<P><IMG alt="" border="0" src="help/shared/tip.png">By default, search windows and their
+		tabs display "Search Memory:" followed by the search string and the program name. This
+		can be changed by right-clicking on the title or table to change its name. (This is true
+		for all transient windows.)</P>
+      <H2>Contents</H2>
 
       <BLOCKQUOTE>
-        <H4>Search Value</H4>
-      </BLOCKQUOTE>
-
-      <UL>
-        <LI>The value to search.&nbsp; The values entered will be interpreted based on the
-        <I>Format</I> options.</LI>
-      </UL>
-
-      <BLOCKQUOTE>
-        <H4>Hex Sequence</H4>
-      </BLOCKQUOTE>
-
-      <UL>
-        <LI>As the search value is entered, this field will display the exact hex byte sequence
-        that will be searched for in memory.</LI>
-      </UL>
-
-      <H3>Format</H3>
-
-      <BLOCKQUOTE>
-        <H4><A name="Hex"></A><B>Hex:</B></H4>
-      </BLOCKQUOTE>
-
-      <UL>
-        <LI>Value is interpreted as a sequence of hex numbers, separated by spaces.&nbsp; Wildcard
-        characters can be used to match any single hex digit (i.e. any 4 bit value). &nbsp;Either
-        the '.' or '?' character can be used for the wildcard character.</LI>
-
-        <LI>Each hex number (separated by spaces) will produce a sequence of bytes that may be
-        reversed depending on the Byte Order.</LI>
-
-        <LI>The byte search pattern is formed by concatenating the bytes from each hex number.</LI>
-      </UL>
-
-      <BLOCKQUOTE>
-        <BLOCKQUOTE>
-          <P><B>Example:</B></P>
-
-          <TABLE border="1" width="526">
-            <TBODY>
-              <TR>
-                <TD width="260">
-                  <P><B>Value:&nbsp;&nbsp;&nbsp;</B></P>
-                </TD>
-
-                <TD width="252">
-                  <P>&nbsp;"1234 567 89ab"</P>
-                </TD>
-              </TR>
-
-              <TR>
-                <TD width="260">
-                  <P><B><A href="help/topics/Glossary/glossary.htm#LittleEndian">Little Endian</A>
-                  Hex Sequence&nbsp;&nbsp;&nbsp;</B></P>
-                </TD>
-
-                <TD width="252">
-                  <P>34 12 67 05 ab 89</P>
-                </TD>
-              </TR>
-
-              <TR>
-                <TD width="260">
-                  <P><B><A href="help/topics/Glossary/glossary.htm#BigEndian">Big Endian</A> Hex
-                  Sequence&nbsp;&nbsp;&nbsp;</B></P>
-                </TD>
-
-                <TD width="252">
-                  <P>12 34 05 67 89 ab</P>
-                </TD>
-              </TR>
-            </TBODY>
-          </TABLE>
-          
-		<P><IMG alt="" border="0" src="help/shared/tip.png">
-          As a convenience, if a user enters a single wildcard value within the search text, then 
-          the search string will be interpreted as if 2 consecutive wildcard characters were 
-          entered, meaning to match any byte value.
-          </P>          
-          <P>
-          Similarly, if the search string contains an odd number of characters, then a 0 is prepended
-          to the search string, based on the assumption that a single hex digit implies a leading
-          0 value. 
-          </P>          
-          
-          
-        </BLOCKQUOTE>
-      </BLOCKQUOTE>
-
-      <P>&nbsp;</P>
-
-      <BLOCKQUOTE>
-        <H4><A name="String"></A><B>String:</B></H4>
-
-        <BLOCKQUOTE>
-          <P>Value is interpreted as the specified character encoding. The center panel of the
-          Search Memory dialog shows the <I>Format Options</I>, described below.</P>
-
-          <P align="center"><IMG border="0" src="images/SearchMemoryString.png" alt=""></P>
-
-          <UL>
-            <LI><I>Encoding</I> - Interprets strings by the specified encoding.&nbsp; Note that
-            byte ordering determines if the high order byte comes first or last.</LI>
-
-            <LI><I>Case Sensitive</I> - Turning off this option will search for the string
-            regardless of case using the specified character encoding. Only applicable for English
-            characters.</LI>
-
-            <LI><I>Escape Sequences</I> - Enabling this option allows escape sequences in the
-            search value (i.e., allows \n to be searched for).</LI>
-          </UL>
-        </BLOCKQUOTE>
-
-        <H4><A name="Decimal"></A><B>Decimal:</B></H4>
-
-        <BLOCKQUOTE>
-          <P>Value is interpreted as a sequence of decimal numbers, separated by spaces. The center
-          panel of the Search Memory dialog shows the <I>Decimal Options</I>, described below.</P>
-        </BLOCKQUOTE>
-
-        <P align="center"><IMG border="0" src="images/SearchMemoryDecimal.png" alt=""></P>
-
         <UL>
-          <LI>Only numbers that fit the specified Decimal Options are allowed to be entered.</LI>
-
-          <LI>The byte search pattern is formed by concatenating the bytes from each&nbsp;
-          number.</LI>
-
           <LI>
-            Valid decimal numbers are: 
+            <A href="#Memory_Search_Window">Memory Search Window</A> 
 
             <UL>
-              <LI><B>Byte</B> - any fixed point 8 bit number&nbsp; (-128 to 255)</LI>
+              <LI><A href="#Search_Controls">Search Controls</A></LI>
 
-              <LI><B>Word</B> - any fixed point 16 bit number (-32768 to 65535)</LI>
+              <LI><A href="#Scan_Controls">Scan Controls</A></LI>
 
-              <LI><B>DWord</B> - any fixed point 32 bit number (you get the idea.....)</LI>
+              <LI><A href="#Results_Table">Results Table</A></LI>
 
-              <LI><B>QWord</B> - any fixed point 64 bit number</LI>
-
-              <LI><B>Float</B> - any 32 bit floating point number</LI>
-
-              <LI><B>Double</B> any 64 bit floating point number</LI>
+              <LI><A href="#Options">Options</A></LI>
             </UL>
           </LI>
+
+          <LI><A href="#Search_Formats">Search Formats</A></LI>
+
+          <LI><A href="#Actions">Actions</A></LI>
+
+          <LI><A href="#Combining_Searches">Combining Searches</A></LI>
+
+          <LI><A href="#Repeating_Searches">Repeating Last Search Forwards/Backwards</A></LI>
+
+          <LI><A href="#Highlight_Options">Highlight Search Options</A></LI>
         </UL>
+      </BLOCKQUOTE><A name="Memory_Search_Window"></A> 
 
-      <H4><A name="Binary"></A><B>Binary:</B></H4>
-
-      <BLOCKQUOTE>
-        <P>Value is interpreted as a sequence of binary numbers, separated by spaces.&nbsp;
-        Wildcard characters ('x' or '?' or '.') can be used to match any bit.</P>
-      </BLOCKQUOTE>
-
-      <P align="center"><IMG border="0" src="images/SearchMemoryBinary.png" alt=""></P>
-
-      <UL>
-        <LI>Only binary digits (0 or 1) or wildcard characters (*?.) are allowed to be
-        entered.</LI>
-
-        <LI>The byte search pattern is formed by concatenating the bytes from each&nbsp;
-        number.</LI>
-
-        <LI>An additional Mask byte which is not shown, is generated for each search byte to handle
-        the wildcards.</LI>
-      </UL>
-
-      <H4><A name="Regular_Expression"></A><B>Regular Expression:</B></H4>
+      <H2>Memory Search Window</H2>
 
       <BLOCKQUOTE>
-        <P>Value is interpreted as a Java <A name="RegularExpression"></A><I>Regular Expression</I>
-        that is matched against memory as if all memory was a string. Help on how to form regular
-        expressions is available on the <A href="Regular_Expressions.htm">Regular Expression
-        Help</A> page.</P>
-      </BLOCKQUOTE>
+        <P>The Memory Search Window provides controls and options for entering search values and
+        and a table for displaying the search results. It supports both bulk searching and
+        incremental searching forwards and backwards. Also, users can perform additional searches
+        and combine those results with the existing results using set operations. The window also
+        has a "scan" feature which will re-examine the bytes of the current results set, looking
+        for memory changes at those locations (this is most useful when debugging). Scanning has an
+        option for reducing the results to those that either changed, didn't change, were
+        incremented, or were decremented.</P>
 
-      <P align="center"><IMG border="0" src="images/SearchMemoryRegex.png" alt=""></P>
+        <P align="center"><IMG src="images/MemorySearchProvider.png" border="0" alt=""> &nbsp;</P>
 
-      <UL>
-        <LI>Regular Expressions can only be used to search forward in memory.</LI>
+        <P align="center"><I>Memory Search Window</I></P>
+        <A name="Search_Controls"></A> 
 
-        <LI>No Hex Sequence is displayed for regular expressions.</LI>
-      </UL>
-    </BLOCKQUOTE>
-
-    <H3>Memory Block Types</H3>
-
-    <UL>
-      <LI>Selects which initialized memory blocks are searched. Ghidra now stores external
-      information from the program's file header in special memory blocks. These blocks do not live
-      in the program's address space, but instead are stored in the "OTHER" address space. Memory
-      blocks which would be found in an actual running version of the program are referred to as
-      "Loaded Memory Blocks."</LI>
-
-      <LI style="list-style: none">
-        <UL>
-          <LI>Loaded Blocks - will search only "loaded" memory blocks (memory blocks that would
-          appear in an actual running instance of the program) and not "Other" information memory
-          blocks.</LI>
-
-          <LI>All Blocks - will search all memory blocks including "Other" blocks.</LI>
-        </UL>
-      </LI>
-    </UL>
-
-    <P>&nbsp;</P>
-
-    <H3>Selection Scope</H3>
-
-    <UL type="disc">
-      <LI><B>Search All</B> - If this option is selected, the search will search all memory in the
-      tool.</LI>
-
-      <LI><B>Search Selection</B> - If this option is selected, the search will be restricted to
-      the current selection in the tool. This option is only enabled if there is a current
-      selection in the tool.</LI>
-    </UL>
-
-    <P>&nbsp;</P>
-
-    <H3><B>Code Unit Scope</B></H3>
-
-    <BLOCKQUOTE>
-      <P>Filters the matches based upon the code unit containing a given address.</P>
-
-      <UL type="disc">
-        <LI><B>Instructions</B> - includes instruction code units in the search.</LI>
-
-        <LI><B>Defined Data</B> - includes defined data in the search.</LI>
-
-        <LI><B>Undefined Data</B> - includes undefined data in the search.</LI>
-      </UL>
-    </BLOCKQUOTE>
-
-    <H3><B>Byte Order</B></H3>
-
-    <BLOCKQUOTE>
-      <P>Sets the byte ordering for multi-byte values.&nbsp; Has no effect on non-Unicode Ascii
-      values, Binary, or regular expressions.</P>
-
-      <P><B>Little Endian</B> - places low-order bytes first.<BR>
-       For example, the hex number "1234" will generate the bytes "34" , "12".</P>
-
-      <P><B>Big Endian</B> - places high-order bytes first.<BR>
-       For example, the hex number "1234" will generate the bytes "12", "34".</P>
-    </BLOCKQUOTE>
-
-    <H3>Alignment</H3>
-
-    <UL type="disc">
-      <LI>Generally the alignment defaults to 1, but can be set to any number greater than 0. The
-      search results will be limited to those that begin on the specified byte alignment. In other
-      words, an alignment of 1 will get all matching results regardless of the address where each
-      begins. An alignment of 2 will only return matching results that begin on a word aligned
-      address.</LI>
-    </UL>
-
-    <P>&nbsp;</P>
-
-    <H3>Searching</H3>
-
-    <UL>
-      <LI>Next / Previous - Finds the next/previous occurrence of the byte pattern from the current
-      cursor location; if you mouse click in the Code Browser to move focus there, you can choose
-      <B><A name="Repeat_Memory_Search"></A>Search</B><IMG alt="" border="0" src=
-      "help/shared/arrow.gif"> <B>Repeat Memory Search</B> to go to the next/previous match
-      found.</LI>
-
-      <LI>Search All - Finds all occurrences of the byte pattern in a <A href=
-      "Query_Results_Dialog.htm">Query Results display</A>.</LI>
-    </UL>
-
-    <BLOCKQUOTE>
-      <P><IMG alt="" border="0" src="help/shared/tip.png"> For very large Programs that may take a
-      while to search, you can cancel the search at any time. For these situations, a progress bar
-      is displayed, along with a <B><FONT size="4">Cancel</FONT></B> button. Click on the <B><FONT
-      size="4">Cancel</FONT></B> button to stop the search.&nbsp;</P>
-
-      <P><IMG alt="" border="0" src="help/shared/note.png"> Dismissing the search dialog
-      automatically cancels the search operation.</P>
-    </BLOCKQUOTE>
-
-    <H3>&nbsp;</H3>
-
-    <H3>Highlight Search Option</H3>
-
-    <BLOCKQUOTE>
-      <P>You can specify that the bytes found in the search be highlighted in the Code Browser by
-      selecting the <I>Highlight Search Results</I> checkbox on the Search Options panel. To view
-      the Search Options, select <B>Edit</B><IMG alt="" border="0" src="help/shared/arrow.gif">
-      <B>Tool Options...</B> from the tool menu, then select the <I>Search</I> node in the Options
-      tree in the Options dialog. You can also change the highlight color. Click on the color bar
-      next to <I>Highlight Color</I> to bring up a color chooser. Choose the new color, click on
-      the <B>OK</B> button. Apply your changes by clicking on the <B>OK</B> or <B>Apply</B> button
-      on the Options dialog.&nbsp;</P>
-
-      <BLOCKQUOTE>
-	      <P><IMG alt="" border="0" src="help/shared/note.png"> Highlights are displayed for the last
-	      search that you did. For example, if you bring up the Search Program Text dialog and search
-	      for text, that string now becomes the new highlight string. Similarly, if you invoke <A href=
-	      "help/topics/CodeBrowserPlugin/CodeBrowser.htm#cursorTextHighlight">cursor text
-	      highlighting</A>, that becomes the new highlight string.</P>
-      </BLOCKQUOTE>
-
-      <P>Highlights are dropped when you close the search dialog, or close the query results window
-      for your most recent search.</P>
-
-      <BR><BR>
-
-    </BLOCKQUOTE>
-
-    <H3><A name="Mnemonic_Search"></A>Search for Matching Instructions</H3>
-
-    <BLOCKQUOTE>
-      <P>This action works only on a selection of code. It uses the selected instructions to build
-      a combined mask/value bit pattern that is then used to populate the search field in the
-      Memory Search Dialog. This enables searching through memory for a particular ordering of
-      instructions. There are three options available:&nbsp;</P>
-
-      <UL>
-        <LI><B>Include Operands</B> - All bits that make up the instruction and all bits that make
-        up the operands will be included in the search pattern.</LI>
-
-        <LI><B>Exclude Operands</B> - All bits that make up the instruction are included in the
-        search pattern but the bits that make up the operands will be masked off to enable wild
-        carding for those bits.</LI>
-
-        <LI><B>Include Operands (except constants)</B> - All bits that make up the instruction are
-        included in the search pattern and all bits that make up the operands, except constant
-        operands, which will be masked off to enable wild carding for those bits.</LI>
-      </UL>
-
-      <BLOCKQUOTE>
-        <P>Example:</P>
-
-        <P>A user first selects the following lines of code. Then, from the Search menu they choose
-        <B>Search for Matching Instructions</B> and one of the following options:</P>
-
-        <P align="center"><IMG border="1" src="images/SearchInstructions.png" alt=""></P>
-        <B>Option 1:</B> 
+        <H3>Search Controls</H3>
 
         <BLOCKQUOTE>
-          <P>If the <B>Include Operands</B> action is chosen then the search will find all
-          instances of the following instructions and operands.</P>
+          <P>At the top of the window as shown above, there are several GUI elements for initializing and
+          executing a memory byte search. These controls can be closed from the view after a search
+          to give more space to view results using the <IMG alt="" border="0"
+          src="icon.base.mem.search.panel.search"> toolbar button.</P>
 
-          <P align="center"><IMG border="1" src="images/SearchInstructionsIncludeOperands.png" alt=
-          ""></P>
+          <H4>Search Format Field:</H4>
 
-          <P>All of the bytes that make up the selected code will be searched for exactly, with no
-          wild carding. The bit pattern <B>10000101 11000000 01010110 01101010 00010100
-          01011110</B> which equates to the byte pattern <B>85 c0 56 6a 14 5e</B> is searched
-          for.<BR>
-          <BR>
-          </P>
-        </BLOCKQUOTE><B>Option 2:</B> 
+          <BLOCKQUOTE>
+            <P>This is a drop-down list of formats whose selected format determines how to
+            interpret the text in the <I>Search Input Field</I>. The format will convert the user's
+            input into a sequence of bytes (and possibly masks). Details on each format are
+            described in the <A href="Search_Formats.htm"><I>Search Formats</I></A> section.</P>
+          </BLOCKQUOTE>
+
+          <H4>Search Input Field:</H4>
+
+          <BLOCKQUOTE>
+            <P>Next to the <I>Search Format</I> drop-down, there is a text field where users can
+            enter one or more values to be searched. This field performs validation depending on
+            the active format. For example, when the format is <I>Hex</I>, users can only enter
+            hexadecimal values.</P>
+          </BLOCKQUOTE>
+
+          <H4>Previous Search Drop Down:</H4>
+
+          <BLOCKQUOTE>
+            <P>At the end of the input field, there is a drop-down list of previous searches.
+            Selecting one of these will populate the input field with that previous search input,
+            as well as the relevant settings that were used in that search such as the search
+            format.</P>
+          </BLOCKQUOTE>
+
+          <H4>Search Button:</H4>
+
+          <BLOCKQUOTE>
+            <P>Pressing the search button will initiate a search. When the results table is empty,
+            the only choice is to do an initial search. If there are current results showing in the
+            table, a drop-down will appear at the back of the button, allowing the user to combine
+            new search results with the existing results using set operations. See the 
+            <A href="#Combining_Searches"><I>Combining Searches</I></A> section
+            below for more details.</P>
+          </BLOCKQUOTE>
+
+          <H4>Byte Sequence Field:</H4>
+
+          <BLOCKQUOTE>
+            <P>This field is used to show the user the bytes sequence that will be search for based
+            on the format and the user input entered. Hovering on this field will also display the
+            masks that will be used (if applicable).</P>
+          </BLOCKQUOTE>
+
+          <H4>Selection Only Checkbox:</H4>
+
+          <BLOCKQUOTE>
+            <P>If there is a current selection, then this checkbox will be enabled and provide the
+            user with the option to restrict the search to only the selected addresses. Note that
+            there is an action that controls whether this option will be selected automatically if
+            a selection exists.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE><A name="Scan_Controls"></A> 
+
+        <H3>Scan Controls</H3>
 
         <BLOCKQUOTE>
-          <P>If the <B>Exclude Operands</B> option is chosen then the search will find all
-          instances of the following instructions only.</P>
+          <P>The scan controls are used to re-examine search results, looking for values that have
+          changed since the search was initiated. This is primary useful when debugging. The
+          scan controls are not showing by default. Pressing the <IMG alt="" border="0"
+          src="icon.base.mem.search.panel.scan"> toolbar button will show the scan panel just
+          above the results table.</P>
 
-          <P align="center"><IMG border="1" src="images/SearchInstructionsExcludeOperands.png" alt=
-          ""></P>
+          <P align="center"><IMG src="images/MemorySearchProviderWithScanPanelOn.png" border="0"
+          alt=""> &nbsp;</P>
 
-          <P>Only the parts of the byte pattern that make up the instructions will be searched for
-          with the remaining bits used as wildcards. The bit pattern <B>10000101 11...... 01010...
-          01101010 ........ 01011...</B> is searched for where the .'s indicate the wild carded
-          values.<BR>
-          <BR>
-          </P>
-        </BLOCKQUOTE><B>Option 3:</B> 
+          <P align="center"><I>Memory Search Window With Scan Controls Showing</I></P>
+
+          <H4>Scan Values Button:</H4>
+
+          <BLOCKQUOTE>
+            <P>This button initiates a scan of the byte values in all the matches in the results
+            table. Depending on the selected scan option, the set of matches in the table may be
+            reduced based on the values that changed.</P>
+          </BLOCKQUOTE>
+
+          <H4>Scan Option Radio Buttons</H4>
+
+          <BLOCKQUOTE>
+            <P>One of the following buttons can be selected and they determine how the set of
+            current matches should be reduced based on changed values.</P>
+
+            <UL>
+              <LI><B>Equals</B> This option will keep all matches whose values haven't changed and
+              remove any matches whose bytes have changed.</LI>
+
+              <LI><B>Not Equals</B> This option will keep all matches whose values have changed and
+              will remove any matches whose bytes have not changed.</LI>
+
+              <LI><B>Increased</B> This option will keep all matches whose values have increased
+              and will remove any matches whose values decreased or stayed the same.</LI>
+
+              <LI><B>Decreased</B> This option will keep all matches whose values have decreased
+              and will remove any matches whose values increased or stayed the same.</LI>
+            </UL>
+
+            <P><IMG alt="" border="0" src="help/shared/tip.png">The <I>Increased</I> or
+            <I>Decreased</I> options really only make sense for matches that represent numerical
+            values such as integers or floats. In other cases it makes the determination based on
+            the first byte in the sequence that changed, as if they were a sequence of 1 byte
+            unsigned values.</P>
+
+            <P><IMG alt="" border="0" src="help/shared/tip.png">Another way to see changed bytes is
+            to use the <A href= "#Refresh_Values"><I>Refresh</I></A> toolbar action. This will 
+            update the bytes for each search result and show them in red without reducing the set
+            of results.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE><A name="Results_Table"></A> 
+
+        <H3>Results Table</H3>
 
         <BLOCKQUOTE>
-          <P>If the <B>Include Operands (except constants)</B> option is chosen then the search
-          will find all instances of the instruction and all operands except the 0x14 which is a
-          constant.</P>
-
-          <P align="center"><IMG border="1" src=
-          "images/SearchInstructionsIncludeOperandsNoConsts.png" alt=""></P>
-
-          <P>The bit pattern <B>10000101 11000000 01010110 01101010 ........ 01011110</B> which
-          equates to the byte pattern <B>85 c0 56 6a xx 5e</B> is searched for where xx can be any
-          number N between 0x0 and 0xff.<BR>
-          <BR>
-          </P>
+          <P>The bottom part of the window is the search results table. Each row in the table
+          represents one search match. The table can contain combined results from multiple
+          searches. At the bottom of the results table, all the standard table filters are
+          available. The table has the following default columns, but additional columns can be
+          added by right-clicking on any column header.</P>
         </BLOCKQUOTE>
+
+        <UL>
+          <LI><B>Location:</B> Displays the address of the first byte in the matching
+          sequence.</LI>
+
+          <LI><B>Match Bytes:</B> Displays the bytes of the matching sequence. (Note: if you
+          refresh or scan, the bytes can change. Changed bytes will be displayed in red.)</LI>
+
+          <LI><B>Match Value:</B> Displays the matching bytes as a value where the value is
+          determined by the <I>Search Format</I>. Note that not all formats have a meaningful
+          value, in which case the column value will be empty.</LI>
+
+          <LI><B>Label:</B> Displays any labels that are present at the match address.</LI>
+
+          <LI><B>Code Unit:</B> Displays the instruction or data that the match address.</LI>
+        </UL><A name="Options"></A> 
+
+        <H3>Options</H3>
+
+        <BLOCKQUOTE>
+          <P>The options panel is not displayed by default. Pressing the <IMG alt="" border="0"
+          src="icon.base.mem.search.panel.options"> toolbar button will show them along the right side of the
+          window.</P>
+        </BLOCKQUOTE>
+
+        <P align="center"><IMG src="images/MemorySearchProviderWithOptionsOn.png" border="0" alt=
+        ""> &nbsp;</P>
+
+        <P align="center"><I>Memory Search Window With Options Open</I></P>
+
+         <H4>Byte Options</H4>
+         <BLOCKQUOTE>
+         <P>These are general options that affect most searches.</P>
+         <UL>
+         	<LI><B>Endianess:</B> This chooses the byte ordering for values that are larger than
+         	one byte. Big Endian orders the bytes most significant first. Little Endian orders the
+         	bytes least significant first.
+         	<LI><B>Alignment:</B> The alignment requires that matches must start on an address that
+         	has an offset that is a multiple of the specified integer field. For example, an
+         	alignment of two would require that the address have an even value.</LI>
+        </BLOCKQUOTE>
+
+         <H4>Decimal Options</H4>
+
+        <BLOCKQUOTE>
+          <P>These options apply when parsing input as decimal values.</P>
+
+          <UL>
+            <LI><B>Size:</B> The size (in bytes) of the decimal values.</LI>
+
+            <LI><B>Unsigned:</B> If checked, the values will be interpreted as unsigned values
+            and the input field won't accept negative values.</LI>
+          </UL>
+        </BLOCKQUOTE>
+ 
+         <H4>String Options</H4>
+
+        <BLOCKQUOTE>
+          <P>These options apply when parsing input as string data.</P>
+
+          <UL>
+            <LI><B>Encoding:</B> Specified the char set used to convert between strings and 
+            bytes. (ASCII, UTF8, or UTF 16) </LI>
+            
+            <LI><B>Case Sensitive:</B> If unselected, causes mask bytes to be generated such that
+            the search will not be case sensitive. Otherwise, the bytes must match exactly the
+            input the user entered.</LI>
+
+            <LI><B>Escape Sequences:</B> Determines if standard escape sequences are interpreted
+            literally or not. For example, if checked, and the user enters "\n", the search will
+            look for an end of line character. If unchecked, the search will look for a "\"
+            followed by an "n". Supported escape sequences include "\n", "\r", "\b", "\f", "\0",
+            "\x##", "\u####", "\U#########".</LI>
+          </UL>
+        </BLOCKQUOTE>
+ 
+        <H4>Code Type Filters</H4>
+
+        <BLOCKQUOTE>
+          <P>These are filters that can be applied to choose what type(s) of code units to
+          include in the results. By default, they are all selected. The types are:</P>
+
+          <UL>
+            <LI><B>Instructions:</B> Include matches that start at or in an instruction.</LI>
+
+            <LI><B>Defined Data:</B> Include matches that start at or in a define data.</LI>
+
+            <LI><B>Undefined Data:</B> Include matches that start at or in undefined data.</LI>
+          </UL>
+        </BLOCKQUOTE>
+        
+        <H4>Memory Regions</H4>
+
+        <BLOCKQUOTE>
+          <P>Choose one or more memory regions to search. The available regions can vary depending
+          on the context, but the default regions are:</P>
+
+          <UL>
+            <LI><B>Loaded Blocks:</B> These include all the memory blocks defined that are actually
+            part of a loaded executable binary. On by default.</LI>
+
+            <LI><B>Other Blocks:</B> These are other than loaded blocks, typically representing
+            file header data. Off by default.</LI>
+          </UL>
+        </BLOCKQUOTE>
+        
+        
+        
+        
+        
+      </BLOCKQUOTE><A name="Search_Formats"></A> 
+
+      <H2>Search Formats</H2>
+
+      <BLOCKQUOTE>
+        <P>The selected format determines how the user input is used to generate a search byte
+        sequence (and possibly mask byte sequence). They are also used to format bytes back into
+        "values" to be displayed in the table, if applicable.</P>
+
+        <P>See the page on <A href="Search_Formats.htm">Search Formats</A> for full details on each
+        format.</P>
+      </BLOCKQUOTE><A name="Actions"></A> 
+
+      <H2>Actions</H2>
+
+      <BLOCKQUOTE>
+        <A name="Search_Next"></A> 
+
+        <H3><IMG alt="" border="0" src="icon.down">&nbsp;&nbsp;Incremental Search Forward</H3>
+
+        <BLOCKQUOTE>
+          <P>This action searches forward in memory, starting at the address just after the current
+          cursor location. It will continue until a match is found or the highest address in the
+          search space is reached. It does not "wrap". If a match is found, it it is added to the
+          current table of results.</P>
+        </BLOCKQUOTE><A name="Search_Previous"></A> 
+
+        <H3><IMG alt="" border="0" src="icon.up">&nbsp;&nbsp;Incremental Search Backwards</H3>
+
+        <BLOCKQUOTE>
+          <P>This action searches backwards in memory, starting at the address just before the
+          current cursor location. It will continue until a match is found or the lowest address in
+          the search space is reached. It does not "wrap". If a match is found, it it is added to
+          the current table of results.</P>
+        </BLOCKQUOTE><A name="Refresh_Values"></A> 
+
+        <H3><IMG alt="" border="0" src="icon.refresh">&nbsp;&nbsp;Refresh</H3>
+
+        <BLOCKQUOTE>
+          <P>This action will read the bytes again from memory for every match in the results
+          table, looking to see if any of the bytes have changed. If so, the <I>Match Bytes</I> and
+          <I>Match Value</I> columns will display the changed values in red.</P>
+        </BLOCKQUOTE><A name="Toggle_Search"></A> 
+
+        <H3><IMG alt="" border="0" src="icon.base.mem.search.panel.search">&nbsp;&nbsp;Toggle
+        Search Controls</H3>
+
+        <BLOCKQUOTE>
+          <P>This action toggles the <A href="#Search_Controls">search controls</A> on or off.</P>
+        </BLOCKQUOTE><A name="Toggle_Scan"></A> 
+
+        <H3><IMG alt="" border="0" src="icon.base.mem.search.panel.scan">&nbsp;&nbsp;Toggle Scan
+        Controls</H3>
+
+        <BLOCKQUOTE>
+          <P>This action toggles the <A href="#Scan_Controls">scan controls</A> on or off.</P>
+        </BLOCKQUOTE><A name="Toggle_Options"></A> 
+
+        <H3><IMG alt="" border="0" src="icon.base.mem.search.panel.options">&nbsp;&nbsp;Toggle
+        Options Panel</H3>
+
+        <BLOCKQUOTE>
+          <P>This action toggles the <A href="#Options">options display</A> on or off.</P>
+        </BLOCKQUOTE>
+
+        <H3><IMG alt="" border="0" src="icon.make.selection">&nbsp;&nbsp;Make Selection</H3>
+
+        <BLOCKQUOTE>
+          <P>This action will create a selection in the associated view from all the currently
+          selected match table rows.</P>
+        </BLOCKQUOTE>
+
+        <H3><IMG alt="" border="0" src="icon.navigate.in">&nbsp;&nbsp;Toggle Single Click
+        Navigation</H3>
+
+        <BLOCKQUOTE>
+          <P>This action toggles on or off whether a single row selection change triggers
+          navigation in the associated view. If this option is off, the user must double-click on a
+          row to navigate in the associated view.</P>
+        </BLOCKQUOTE>
+
+        <H3><IMG alt="" border="0" src="icon.plugin.table.delete.row">&nbsp;&nbsp;Delete Selected
+        Table Rows</H3>
+
+        <BLOCKQUOTE>
+          <P>This action deletes all selected rows in the results match table.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE><A name="Combining_Searches"></A> 
+
+      <H2>Combining Searches</H2>
+
+      <BLOCKQUOTE>
+        <P>Results from multiple searches can be combined in various ways. These options are only
+        available once you have results in the table. Once results are present, the <I>Search
+        Button</I> changes to a button that has a drop down menu that allows you do decide how you
+        want additional searches to interact with the current results showing in the results table.
+        The options are as follows:</P>
+
+        <H4>New Search</H4>
+
+        <BLOCKQUOTE>
+          This option causes all existing result matches to be replaced with the results of the new
+          search. When this option is selected, the button text will show "New Search".
+ 			<P><IMG alt="" border="0" src="help/shared/tip.png">This does not create a new
+			search memory window, but re-uses this window.  To create a new
+			search window, you must go back to the search memory action from the main menu.</P>
+       </BLOCKQUOTE>
+
+        <H4>A union B</H4>
+
+        <BLOCKQUOTE>
+          This option adds the results from the new search to all the existing result matches. When
+          this option is selected, the button text will show "Add To Search".
+        </BLOCKQUOTE>
+
+        <H4>A intersect B</H4>
+
+        <BLOCKQUOTE>
+          This option will combine the results of the new search with the existing search, but only
+          keep results that are in both the existing result set and the new search result set. When
+          this option is selected, the button text will show "Intersect Search".
+        </BLOCKQUOTE>
+
+        <H4>A xor B</H4>
+
+        <BLOCKQUOTE>
+          This option will combine the results of the new search with the existing search, but only
+          keep results that are in either the new or existing results, but not both.
+          When this option is selected, the button text will show "Xor Search".
+        </BLOCKQUOTE>
+
+        <H4>A - B</H4>
+
+        <BLOCKQUOTE>
+          Subtracts the new results from the existing results. When
+          this option is selected, the button text will show "A-B Search".
+        </BLOCKQUOTE>
+
+        <H4>B - A</H4>
+
+        <BLOCKQUOTE>
+          Subtracts the existing results from the new results. When this option is
+          selected, the button text will show "B-A Search".
+        </BLOCKQUOTE>
+
+        <P><IMG alt="" border="0" src="help/shared/tip.png">Many of these set operations only make
+        sense if you do advanced searches using wildcards. For example, if you do a search for
+        integer values of 5, it would make no sense to intersect that with a search for integer
+        values of 3. The sets are mutually exclusive, so the intersection would be empty.
+        Explaining how to take advantage of these options is beyond the scope of this document.</P>
+      </BLOCKQUOTE><A name="Repeating_Searches"></A> 
+
+      <H2>Search Forward/Backwards Using Global Actions</H2>
+
+      <BLOCKQUOTE>
+        <P>Once at least one search has been executed using the <A href=
+        "#Memory_Search_Window"><I>Memory Search Window</I></A>, the search can be repeated in an
+        incremental fashion outside a search window using global actions in the main tool menu or
+        their assigned default keybindings.</P>
+        <A name="Repeat_Search_Forwards"></A> 
+
+        <H3>Search Memory Forwards:</H3>
+
+        <P>This action will use the input data and settings from the last memory search and begin
+        searching forwards in memory starting at the cursor location in the associated Listing
+        display. If a match is found, the cursor in the Listing will be placed on the found match
+        location. To execute this action, select <B>Search</B> <IMG alt="" border="0" src=
+        "help/shared/arrow.gif"><B>Search Memory Forwards</B> from the main tool menu or press
+        <B>F3</B> (the default keybinding.)</P>
+        <A name="Repeat_Search_Backwards"></A> 
+
+        <H3>Search Memory Backwards:</H3>
+
+        <P>This action will use the input data and settings from the last memory search and begin
+        searching backwards in memory starting at the cursor location in the associated Listing
+        display. If a match is found, the cursor in the Listing will be placed on the found match
+        location. To execute this action, select <B>Search</B> <IMG alt="" border="0" src=
+        "help/shared/arrow.gif"><B>Search Memory Backwards</B> from the main tool menu or press
+        <B>&lt;Shift&gt;F3</B> (the default keybinding.)</P>
+      </BLOCKQUOTE><A name="Highlight_Options"></A> 
+
+      <H2>Highlight Search Options</H2>
+
+      <BLOCKQUOTE>
+        <P>You can control how the bytes found in the search be highlighted in the Code Browser by
+        selecting the <I>Highlight Search Results</I> checkbox on the Search Options panel. To view
+        the Search Options, select <B>Edit</B><IMG alt="" border="0" src="help/shared/arrow.gif">
+        <B>Tool Options...</B> from the tool menu, then select the <I>Search</I> node in the
+        Options tree in the Options dialog. You can also change the highlight color. Click on the
+        color bar next to <I>Highlight Color</I> to bring up a color chooser. Choose the new color,
+        click on the <B>OK</B> button. Apply your changes by clicking on the <B>OK</B> or
+        <B>Apply</B> button on the Options dialog.&nbsp;</P>
+
+        <BLOCKQUOTE>
+          <P><IMG alt="" border="0" src="help/shared/note.png"> Highlights are displayed for the
+          last search that you did. For example, if you bring up the Search Program Text dialog and
+          search for text, that string now becomes the new highlight string. Similarly, if you
+          invoke <A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm#cursorTextHighlight">cursor
+          text highlighting</A>, that becomes the new highlight string.</P>
+        </BLOCKQUOTE>
+
+        <P>Highlights are removed when you close the search window.</P>
+        <BR>
+        <BR>
       </BLOCKQUOTE>
 
-      <P><IMG alt="Note" src="help/shared/note.png">The previous operations can only work on a
-      <B>single</B> selected region. If multiple regions are selected, the following error dialog
-      will be shown and the operation will be cancelled.</P>
+      <P class="providedbyplugin">Provided by: <I>Memory Search Plugin</I></P>
 
-      <P align="center"><IMG border="1" src="images/MultipleSelectionError.png" alt=""></P>
-      <BR>
+      <P class="relatedtopic">Related Topics:</P>
+
+      <UL>
+        <LI><A href="Searching.htm">Searching Program Text</A></LI>
+
+        <LI><A href="Regular_Expressions.htm">Regular Expressions</A></LI>
+      </UL><BR>
       <BR>
     </BLOCKQUOTE>
-
-    <P class="providedbyplugin">Provided by: the <B><I>MemSearchPlugin</I></B> &nbsp;</P>
-    &nbsp; 
-
-    <P class="relatedtopic">Related Topics:</P>
-
-    <UL>
-      <LI><A href="Searching.htm">Searching Program Text</A></LI>
-
-      <LI><A href="Query_Results_Dialog.htm">Query Results</A></LI>
-
-      <LI><A href="Regular_Expressions.htm">Regular Expressions</A></LI>
-    </UL>
-    <BR>
-     <BR>
   </BODY>
 </HTML>

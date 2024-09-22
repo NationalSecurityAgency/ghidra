@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -582,7 +582,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 * Waits for the first window of the given class.
 	 *
 	 * @param ghidraClass The class of the dialog the user desires
-	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
+	 * @return The first occurrence of a dialog that extends the given <code>ghidraClass</code>
 	 * @see #waitForDialogComponent(Window, Class, int)
 	 */
 	public static <T extends DialogComponentProvider> T waitForDialogComponent(
@@ -598,7 +598,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 * @param clazz The class of the dialog the user desires
 	 * @param timeoutMS The max amount of time in milliseconds to wait for the requested dialog
 	 *        to appear.
-	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
+	 * @return The first occurrence of a dialog that extends the given <code>ghidraClass</code>
 	 * @deprecated Instead call one of the methods that does not take a timeout
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.

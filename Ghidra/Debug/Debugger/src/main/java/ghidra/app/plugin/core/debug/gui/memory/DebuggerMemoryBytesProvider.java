@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,7 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.byteviewer.*;
-import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
@@ -46,6 +45,8 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.action.GoToInput;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
+import ghidra.features.base.memsearch.bytesource.EmptyByteSource;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -665,5 +666,13 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			newProvider.setLocation(currentLocation);
 			newProvider.panel.setViewerPosition(vp);
 		});
+	}
+
+	@Override
+	public AddressableByteSource getByteSource() {
+		if (current == DebuggerCoordinates.NOWHERE) {
+			return EmptyByteSource.INSTANCE;
+		}
+		return new DebuggerByteSource(tool, current.getView(), current.getTarget(), readsMemTrait);
 	}
 }

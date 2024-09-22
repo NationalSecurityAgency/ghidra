@@ -428,6 +428,19 @@
 				Only demangle symbols that follow known compiler mangling patterns. 
 				Leaving this option off may cause non-mangled symbols to get demangled.
 				</TD>				
+			</TR><TR>
+				<TD>Use Standard Text Replacements
+				</TD>
+				<TD>
+				Use text simplifications in demangled output, for example to use standard c++ 
+				typedefs. Using this option will produce shorter demangled output in some cases.
+				<P>
+				The simplifications are defined in 
+				<CODE>Ghidra/Features/GnuDemangler/data/default.gnu.demangler.replacements.txt</CODE>
+				This file can be edited.  Also new files can be added with more simplifications.
+				Each new file must end with <CODE>.gnu.demangler.replacements.txt</CODE> and must 
+				reside inside of a module's <CODE>data</CODE> directory.
+				</TD>				
 			</TR>		
 		</TABLE>
 		</P>

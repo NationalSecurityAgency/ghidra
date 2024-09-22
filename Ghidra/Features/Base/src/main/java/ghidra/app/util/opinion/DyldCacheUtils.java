@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,26 +157,22 @@ public class DyldCacheUtils {
 				String uuid = subcacheEntry.getUuid();
 				String extension = subcacheEntry.getCacheExtension();
 				FSRL fsrl = uuidToFileMap.get(uuid);
-				if (fsrl != null) {
-					log.appendMsg("Including subcache: " + fsrl.getName() + " - " + uuid);
-				}
-				else {
-					log.appendMsg(String.format("Missing subcache: %s%s",
+				if (fsrl == null) {
+					throw new IOException("Missing subcache: %s%s".formatted(
 						extension != null ? (baseProvider.getName() + extension + " - ") : "",
 						uuid));
 				}
+				log.appendMsg("Including subcache: " + fsrl.getName() + " - " + uuid);
 			}
 			String symbolUUID = baseHeader.getSymbolFileUUID();
 			if (symbolUUID != null) {
 				FSRL symbolFSRL = uuidToFileMap.get(symbolUUID);
-				if (symbolFSRL != null) {
-					log.appendMsg(
-						"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
+				if (symbolFSRL == null) {
+					throw new IOException("Missing symbols subcache: %s.symbols - %s"
+							.formatted(baseProvider.getName(), symbolUUID));
 				}
-				else {
-					log.appendMsg(String.format("Missing symbols subcache: %s.symbols - %s",
-						baseProvider.getName(), symbolUUID));
-				}
+				log.appendMsg(
+					"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
 			}
 		}
 

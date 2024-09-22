@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,13 +40,13 @@ import resources.Icons;
  * The NextPrevCodeUnitPlugin generates a GoTo event based on where the cursor
  * is located in the program. The GoTo events provided by this plugin are:
  * <UL>
- * <LI>Next-Previous Instruction
- * <LI>Next-Previous Defined Data
- * <LI>Next-Previous Undefined Data
- * <LI>Next-Previous Function
- * <LI>Next-Previous Non-Function
- * <LI>Next-Previous Label
- * <LI>Next-Previous Bookmark
+ * <LI>Next-Previous Instruction</LI>
+ * <LI>Next-Previous Defined Data</LI>
+ * <LI>Next-Previous Undefined Data</LI>
+ * <LI>Next-Previous Function</LI>
+ * <LI>Next-Previous Non-Function</LI>
+ * <LI>Next-Previous Label</LI>
+ * <LI>Next-Previous Bookmark</LI>
  * </UL>
  */
 //@formatter:off

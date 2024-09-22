@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.ConnectionType;
 import ghidra.features.bsim.query.FunctionDatabase.Status;
+import ghidra.util.Msg;
 
 public class BSimH2FileDBConnectionManager {
 
@@ -44,7 +45,7 @@ public class BSimH2FileDBConnectionManager {
 	 * Get all H2 File DB data sorces which exist in the JVM.
 	 * @return all H2 File DB data sorces
 	 */
-	public static Collection<BSimH2FileDataSource> getAllDataSources() {
+	public static synchronized Collection<BSimH2FileDataSource> getAllDataSources() {
 		// Create copy to avoid potential concurrent modification
 		return Collections.unmodifiableCollection(new ArrayList<>(dataSourceMap.values()));
 	}
@@ -57,7 +58,7 @@ public class BSimH2FileDBConnectionManager {
 	 * @throws IllegalArgumentException if {@code fileServerInfo} does not specify an
 	 * H2 File DB type.
 	 */
-	public static BSimH2FileDataSource getDataSource(BSimServerInfo fileServerInfo) {
+	public static synchronized BSimH2FileDataSource getDataSource(BSimServerInfo fileServerInfo) {
 		if (fileServerInfo.getDBType() != DBType.file) {
 			throw new IllegalArgumentException("expected file info");
 		}
@@ -79,26 +80,26 @@ public class BSimH2FileDBConnectionManager {
 	 * @return existing H2 File data source or null if server info does not correspond to an
 	 * H2 File or has not be established as an H2 File data source.  
 	 */
-	public static BSimH2FileDataSource getDataSourceIfExists(BSimServerInfo serverInfo) {
+	public static synchronized BSimH2FileDataSource getDataSourceIfExists(
+			BSimServerInfo serverInfo) {
 		return dataSourceMap.get(serverInfo);
 	}
 
-	private static synchronized void remove(BSimServerInfo serverInfo, boolean force) {
+	private static synchronized boolean remove(BSimServerInfo serverInfo, boolean force) {
 		BSimH2FileDataSource ds = dataSourceMap.get(serverInfo);
 		if (ds == null) {
-			return;
+			return true;
 		}
 		int n = ds.bds.getNumActive();
-		if (n != 0) {
-			System.out
-					.println("Unable to remove data source which has " + n + " active connections");
-			if (!force) {
-				return;
-			}
+		if (n != 0 && !force) {
+			Msg.error(BSimH2FileDBConnectionManager.class,
+				"Unable to remove data source which has " + n + " active connections");
+			return false;
 		}
 		ds.close();
 		dataSourceMap.remove(serverInfo);
 		BSimVectorStoreManager.remove(serverInfo);
+		return true;
 	}
 
 	/**
@@ -123,20 +124,31 @@ public class BSimH2FileDBConnectionManager {
 			return serverInfo;
 		}
 
+		@Override
 		public void dispose() {
 			BSimH2FileDBConnectionManager.remove(serverInfo, true);
 		}
 
 		/**
-		 * Delete the database files associated with this H2 File DB.  When complete
-		 * this data source will no longer be valid and should no tbe used.
+		 * Delete the database files associated with this H2 File DB.  This will fail immediately 
+		 * if active connections exist.  Otherwise removal will be attempted and this data source 
+		 * will no longer be valid.
+		 * @return true if DB sucessfully removed
 		 */
-		public void delete() {
-			dispose();
+		public synchronized boolean delete() {
 
 			File dbf = new File(serverInfo.getDBName());
 
-			// TODO: Should we check for lock on database - could be another process
+			if (getActiveConnections() != 0) {
+				Msg.error(this, "Failed to delete active database: " + dbf);
+				return false;
+			}
+
+			dispose();
+
+			if (dbf.isFile()) {
+				return true;
+			}
 
 			String name = dbf.getName();
 			int ix = name.lastIndexOf(BSimServerInfo.H2_FILE_EXTENSION);
@@ -145,6 +157,13 @@ public class BSimH2FileDBConnectionManager {
 			}
 
 			DeleteDbFiles.execute(dbf.getParent(), name, true);
+
+			if (!dbf.isFile()) {
+				return true;
+			}
+
+			Msg.error(this, "Failed to delete database: " + dbf);
+			return false;
 		}
 
 		/**
@@ -179,6 +198,11 @@ public class BSimH2FileDBConnectionManager {
 		@Override
 		public int getActiveConnections() {
 			return bds.getNumActive();
+		}
+
+		@Override
+		public int getIdleConnections() {
+			return bds.getNumIdle();
 		}
 
 		private String getH2FileUrl() {

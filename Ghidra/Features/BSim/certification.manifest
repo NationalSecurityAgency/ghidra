@@ -42,6 +42,8 @@ src/main/help/help/topics/BSimSearchPlugin/images/BSimSearchDialog.png||GHIDRA||
 src/main/help/help/topics/BSimSearchPlugin/images/ManageServersDialog.png||GHIDRA||||END|
 src/main/resources/bsim.log4j.xml||GHIDRA||||END|
 src/main/resources/images/checkmark_yellow.gif||GHIDRA||||END|
+src/main/resources/images/connected.png||GHIDRA||||END|
+src/main/resources/images/disconnected.png||GHIDRA||||END|
 src/main/resources/images/flag_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/preferences-desktop-user-password.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/preferences-web-browser-shortcuts-32.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

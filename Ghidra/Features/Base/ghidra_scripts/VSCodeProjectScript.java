@@ -65,6 +65,7 @@ public class VSCodeProjectScript extends GhidraScript {
 		writeSettings(installDir, projectDir, classpathSourceMap);
 		writeLaunch(installDir, projectDir, classpathSourceMap);
 		writeSampleScriptJava(projectDir);
+		writeSampleScriptPyGhidra(projectDir);
 		writeSampleModule(installDir, projectDir);
 
 		println("Successfully created VSCode project directory at: " + projectDir);
@@ -226,6 +227,25 @@ public class VSCodeProjectScript extends GhidraScript {
 		}
 		FileUtils.writeStringToFile(scriptFile, sampleScript, StandardCharsets.UTF_8);
 	}
+	
+	private void writeSampleScriptPyGhidra(File projectDir) throws IOException {
+		File scriptsDir = new File(projectDir, "ghidra_scripts");
+		File scriptFile = new File(scriptsDir, "sample_script.py");
+		String sampleScript = """
+				# Sample PyGhidra GhidraScript
+				# @category Examples
+				# @runtime PyGhidra
+
+				from java.util import LinkedList
+				java_list = LinkedList([1,2,3])
+
+				block = currentProgram.memory.getBlock('.text')
+				""";
+		if (!FileUtilities.mkdirs(scriptFile.getParentFile())) {
+			throw new IOException("Failed to create: " + scriptFile.getParentFile());
+		}
+		FileUtils.writeStringToFile(scriptFile, sampleScript, StandardCharsets.UTF_8);
+	}
 
 	/**
 	 * Write a sample Java-based Ghidra module into the VSCode project directory
@@ -268,7 +288,11 @@ public class VSCodeProjectScript extends GhidraScript {
 		}
 
 		// Fix Ghidra installation directory path in build.gradle
+		File buildTemplateGradleFile = new File(projectDir, "buildTemplate.gradle");
 		File buildGradleFile = new File(projectDir, "build.gradle");
+		if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
+			throw new IOException("Failed to rename: " + buildTemplateGradleFile);
+		}
 		String fileData = FileUtils.readFileToString(buildGradleFile, StandardCharsets.UTF_8);
 		fileData =
 			fileData.replaceAll("<REPLACE>", FilenameUtils.separatorsToUnix(installDir.getPath()));

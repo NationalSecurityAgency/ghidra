@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,22 +58,26 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * 	<li>Find the GoBuildInfo struct.  This struct is the easiest to locate, even when the binary
  * 	is stripped.  This gives us the go pointerSize (probably same as ghidra pointer size) and the
  * 	goVersion.  This struct does not rely on StructureMapping, allowing its use before a
- * 	DataTypeMapper is created.
- * 	<li>Create DataTypeMapper
- * 	<li>Find the runtime.firstmoduledata structure.
- * 		<ul>
- *			<li>If there are symbols, just use the symbol or named memory block.
- *			<li>If stripped:
+ * 	DataTypeMapper is created.</li>
+ * 	<li>Create DataTypeMapper</li>
+ * 	<li>Find the runtime.firstmoduledata structure.</li>
+ * 	<li>
+ *     <ul>
+ *			<li>If there are symbols, just use the symbol or named memory block.</li>
+ *			<li>If stripped:</li>
+ *			<li>
  *				<ul>
  * 					<li>Find the pclntab.  This has a magic signature, a pointerSize, and references
- * 					to a couple of tables that are also referenced in the moduledata structure.
+ * 					to a couple of tables that are also referenced in the moduledata structure.</li>
  * 					<li>Search memory for a pointer to the pclntab struct.  This should be the first
  * 					field of the moduledata structure.  The values that are duplicated between the
- * 					two structures can be compared to ensure validity.
+ * 					two structures can be compared to ensure validity.</li>
  * 					<li>Different binary formats (Elf vs PE) will determine which memory blocks to
- * 					search.
- * 				</ul>  
- * 		</ul>
+ * 					search.</li>
+ * 				</ul>
+ * 			</li>  
+ * 	   </ul>
+ *  </li>
  * </ul>
  */
 public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContext {

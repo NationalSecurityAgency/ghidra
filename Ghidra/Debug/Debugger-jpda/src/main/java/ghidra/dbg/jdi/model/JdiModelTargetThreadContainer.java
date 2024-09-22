@@ -25,6 +25,7 @@ import com.sun.jdi.ThreadReference;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.*;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetEventScope;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -72,7 +73,7 @@ public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	public void threadStateChanged(ThreadReference thread, Integer state, JdiCause cause,
+	public DebugStatus threadStateChanged(ThreadReference thread, Integer state, JdiCause cause,
 			JdiReason reason) {
 		JdiModelTargetThread targetThread = getTargetThread(thread);
 		TargetExecutionState targetState = targetThread.convertState(state);
@@ -80,6 +81,7 @@ public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl
 		TargetEventType eventType = getEventType(reason);
 		broadcast().event(this, targetThread, eventType,
 			"Thread " + targetThread.getName() + " state changed", List.of(targetThread));
+		return DebugStatus.NO_CHANGE;
 	}
 
 	private TargetEventType getEventType(JdiReason reason) {

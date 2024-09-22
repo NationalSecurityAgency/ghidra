@@ -21,8 +21,11 @@ src/decompile/datatests/deindirect.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect2.xml||GHIDRA||||END|
 src/decompile/datatests/displayformat.xml||GHIDRA||||END|
 src/decompile/datatests/divopt.xml||GHIDRA||||END|
+src/decompile/datatests/doublemove.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
 src/decompile/datatests/elseif.xml||GHIDRA||||END|
+src/decompile/datatests/floatcast.xml||GHIDRA||||END|
+src/decompile/datatests/floatconv.xml||GHIDRA||||END|
 src/decompile/datatests/floatprint.xml||GHIDRA||||END|
 src/decompile/datatests/forloop1.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_loaditer.xml||GHIDRA||||END|
@@ -49,6 +52,7 @@ src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
+src/decompile/datatests/orcompare.xml||GHIDRA||||END|
 src/decompile/datatests/packstructaccess.xml||GHIDRA||||END|
 src/decompile/datatests/partialmerge.xml||GHIDRA||||END|
 src/decompile/datatests/partialsplit.xml||GHIDRA||||END|

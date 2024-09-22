@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1802,5 +1802,32 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		listingPlugin.updateNow();
 		waitForSwing();
 		assertFalse(listingPanel.isHoverShowing());
+	}
+
+	@Test
+	public void testWithOverlaySpaces() throws Throwable {
+		createAndOpenTrace("DATA:BE:64:default");
+		AddressSpace ram = tb.trace.getBaseAddressFactory().getDefaultAddressSpace();
+
+		AddressSpace ram0;
+		AddressSpace ram1;
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
+			ram0 = mm.createOverlayAddressSpace("ram0", ram);
+			ram1 = mm.createOverlayAddressSpace("ram1", ram);
+
+			mm.createRegion("Memory[0]", 0, tb.range(ram1, 0, 0x1000),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			mm.createRegion("Memory[1]", 0, tb.range(ram0, 0x1000, 0x2000),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
+		}
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(ram0.getAddress(0x1002), listingProvider.getListingPanel()
+				.getListingModel()
+				.getAddressAfter(ram0.getAddress(0x1001)));
 	}
 }

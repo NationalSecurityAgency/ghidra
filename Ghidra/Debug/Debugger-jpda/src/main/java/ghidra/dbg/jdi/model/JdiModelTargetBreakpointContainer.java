@@ -25,6 +25,7 @@ import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
@@ -62,22 +63,25 @@ public class JdiModelTargetBreakpointContainer extends JdiModelTargetObjectImpl 
 	}
 
 	@Override
-	public void breakpointCreated(JdiBreakpointInfo info, JdiCause cause) {
+	public DebugStatus breakpointCreated(JdiBreakpointInfo info, JdiCause cause) {
 		changeElements(List.of(), List.of(getTargetBreakpointSpec(info)), Map.of(), "Created");
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void breakpointModified(JdiBreakpointInfo newInfo, JdiBreakpointInfo oldInfo,
+	public DebugStatus breakpointModified(JdiBreakpointInfo newInfo, JdiBreakpointInfo oldInfo,
 			JdiCause cause) {
 		getTargetBreakpointSpec(oldInfo).updateInfo(oldInfo, newInfo, "Modified");
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void breakpointDeleted(JdiBreakpointInfo info, JdiCause cause) {
+	public DebugStatus breakpointDeleted(JdiBreakpointInfo info, JdiCause cause) {
 		synchronized (this) {
 			specsByInfo.remove(info);
 		}
 		changeElements(List.of(info.toString()), List.of(), Map.of(), "Deleted");
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override

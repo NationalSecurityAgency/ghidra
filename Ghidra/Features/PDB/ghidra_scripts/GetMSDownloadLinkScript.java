@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.AccessMode;
 import java.util.List;
 
@@ -44,8 +43,8 @@ public class GetMSDownloadLinkScript extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		SymbolServerService symbolService =
-			new SymbolServerService(new SameDirSymbolStore(null), List.of(
-				new HttpSymbolServer(URI.create(MS_PUBLIC_SYMBOL_SERVER_URL))));
+			new SymbolServerService(new SameDirSymbolStore(null),
+				List.of(HttpSymbolServer.createTrusted(MS_PUBLIC_SYMBOL_SERVER_URL)));
 
 		File f = askFile("File To Scan", "Select");
 		if (f == null) {
@@ -63,9 +62,7 @@ public class GetMSDownloadLinkScript extends GhidraScript {
 					", sizeOfImage: " + Integer.toHexString(sizeOfImage));
 				SymbolFileInfo symbolFileInfo = SymbolFileInfo.fromValues(f.getName().toLowerCase(),
 					Integer.toHexString(timeDateStamp), sizeOfImage);
-				List<SymbolFileLocation> findResults =
-					symbolService.find(symbolFileInfo, FindOption.of(FindOption.ALLOW_REMOTE),
-						monitor);
+				List<SymbolFileLocation> findResults = symbolService.find(symbolFileInfo, monitor);
 				if (findResults.isEmpty()) {
 					println("Not found on " + MS_PUBLIC_SYMBOL_SERVER_URL);
 					return;

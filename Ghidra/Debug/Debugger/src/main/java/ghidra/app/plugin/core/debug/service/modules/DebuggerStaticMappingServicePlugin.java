@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,9 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.stream.Stream;
 
 import db.Transaction;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -35,8 +33,6 @@ import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposa
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.*;
-import ghidra.async.AsyncDebouncer;
-import ghidra.async.AsyncTimer;
 import ghidra.debug.api.modules.*;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
@@ -45,9 +41,8 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.generic.util.datastruct.TreeValueSortedMap;
-import ghidra.generic.util.datastruct.ValueSortedMap;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
@@ -55,498 +50,64 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger static mapping manager",
 	description = "Track and manage static mappings (program-trace relocations)",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
-	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class,
-		TraceOpenedPluginEvent.class, TraceClosedPluginEvent.class, },
-	servicesRequired = { ProgramManager.class, DebuggerTraceManagerService.class, },
-	servicesProvided = { DebuggerStaticMappingService.class, })
-//@formatter:on
+	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class, },
+	servicesRequired = {
+		ProgramManager.class,
+		DebuggerTraceManagerService.class,
+	},
+	servicesProvided = {
+		DebuggerStaticMappingService.class,
+	})
 public class DebuggerStaticMappingServicePlugin extends Plugin
 		implements DebuggerStaticMappingService, DomainFolderChangeListener {
 
-	protected class MappingEntry {
-		private final TraceStaticMapping mapping;
+	record ChangeCollector(DebuggerStaticMappingServicePlugin plugin, Set<Trace> traces,
+			Set<Program> programs) implements AutoCloseable {
 
-		private Program program;
-		private AddressRange staticRange;
+		static <T> Set<T> subtract(Set<T> a, Set<T> b) {
+			Set<T> result = new HashSet<>(a);
+			result.removeAll(b);
+			return result;
+		}
 
-		public MappingEntry(TraceStaticMapping mapping) {
-			this.mapping = mapping;
+		public ChangeCollector(DebuggerStaticMappingServicePlugin plugin) {
+			this(plugin, new HashSet<>(), new HashSet<>());
+		}
+
+		public void traceAffected(Trace trace) {
+			this.traces.add(trace);
+		}
+
+		public void programAffected(Program program) {
+			if (program != null) {
+				this.programs.add(program);
+			}
 		}
 
 		@Override
-		public boolean equals(Object o) {
-			if (!(o instanceof MappingEntry that)) {
-				return false;
-			}
-			// Yes, use identity, since it should be the same trace db records
-			if (this.mapping != that.mapping) {
-				return false;
-			}
-			if (this.program != that.program) {
-				return false;
-			}
-			if (!Objects.equals(this.staticRange, that.staticRange)) {
-				return false;
-			}
-			return true;
-		}
-
-		public Trace getTrace() {
-			return mapping.getTrace();
-		}
-
-		public Address addOrMax(Address start, long length) {
-			Address result = start.addWrapSpace(length);
-			if (result.compareTo(start) < 0) {
-				Msg.warn(this, "Mapping entry caused overflow in static address space");
-				return start.getAddressSpace().getMaxAddress();
-			}
-			return result;
-		}
-
-		public boolean programOpened(Program opened) {
-			if (mapping.getStaticProgramURL().equals(ProgramURLUtils.getUrlFromProgram(opened))) {
-				this.program = opened;
-				Address minAddr = opened.getAddressFactory().getAddress(mapping.getStaticAddress());
-				Address maxAddr = addOrMax(minAddr, mapping.getLength() - 1);
-				this.staticRange = new AddressRangeImpl(minAddr, maxAddr);
-				return true;
-			}
-			return false;
-		}
-
-		public boolean programClosed(Program closed) {
-			if (this.program == closed) {
-				this.program = null;
-				this.staticRange = null;
-				return true;
-			}
-			return false;
-		}
-
-		public Address getTraceAddress() {
-			return mapping.getMinTraceAddress();
-		}
-
-		public Address getStaticAddress() {
-			if (staticRange == null) {
-				return null;
-			}
-			return staticRange.getMinAddress();
-		}
-
-		public TraceSpan getTraceSpan() {
-			return new DefaultTraceSpan(mapping.getTrace(), mapping.getLifespan());
-		}
-
-		public TraceAddressSnapRange getTraceAddressSnapRange() {
-			// NOTE: No need to capture shape since static mappings are immutable
-			return new ImmutableTraceAddressSnapRange(mapping.getTraceAddressRange(),
-				mapping.getLifespan());
-		}
-
-		public boolean isInTraceRange(Address address, Long snap) {
-			return mapping.getTraceAddressRange().contains(address) &&
-				(snap == null || mapping.getLifespan().contains(snap));
-		}
-
-		public boolean isInTraceRange(AddressRange rng, Long snap) {
-			return mapping.getTraceAddressRange().intersects(rng) &&
-				(snap == null || mapping.getLifespan().contains(snap));
-		}
-
-		public boolean isInTraceLifespan(long snap) {
-			return mapping.getLifespan().contains(snap);
-		}
-
-		public boolean isInProgramRange(Address address) {
-			if (staticRange == null) {
-				return false;
-			}
-			return staticRange.contains(address);
-		}
-
-		public boolean isInProgramRange(AddressRange rng) {
-			if (staticRange == null) {
-				return false;
-			}
-			return staticRange.intersects(rng);
-		}
-
-		protected Address mapTraceAddressToProgram(Address address) {
-			assert isInTraceRange(address, null);
-			long offset = address.subtract(mapping.getMinTraceAddress());
-			return staticRange.getMinAddress().addWrapSpace(offset);
-		}
-
-		public ProgramLocation mapTraceAddressToProgramLocation(Address address) {
-			if (program == null) {
-				throw new IllegalStateException("Static program is not opened");
-			}
-			return new ProgramLocation(program, mapTraceAddressToProgram(address));
-		}
-
-		public AddressRange mapTraceRangeToProgram(AddressRange rng) {
-			assert isInTraceRange(rng, null);
-			AddressRange part = rng.intersect(mapping.getTraceAddressRange());
-			Address min = mapTraceAddressToProgram(part.getMinAddress());
-			Address max = mapTraceAddressToProgram(part.getMaxAddress());
-			return new AddressRangeImpl(min, max);
-		}
-
-		protected Address mapProgramAddressToTrace(Address address) {
-			assert isInProgramRange(address);
-			long offset = address.subtract(staticRange.getMinAddress());
-			return mapping.getMinTraceAddress().addWrapSpace(offset);
-		}
-
-		protected TraceLocation mapProgramAddressToTraceLocation(Address address) {
-			return new DefaultTraceLocation(mapping.getTrace(), null, mapping.getLifespan(),
-				mapProgramAddressToTrace(address));
-		}
-
-		public AddressRange mapProgramRangeToTrace(AddressRange rng) {
-			assert (rng.intersects(staticRange));
-			AddressRange part = rng.intersect(staticRange);
-			Address min = mapProgramAddressToTrace(part.getMinAddress());
-			Address max = mapProgramAddressToTrace(part.getMaxAddress());
-			return new AddressRangeImpl(min, max);
-		}
-
-		public boolean isStaticProgramOpen() {
-			return program != null;
-		}
-
-		public URL getStaticProgramURL() {
-			return mapping.getStaticProgramURL();
+		public void close() {
+			plugin.changeListeners.getProxy().mappingsChanged(traces, programs);
 		}
 	}
 
-	protected class InfoPerTrace extends TraceDomainObjectListener {
-		private Trace trace;
-		private Map<TraceAddressSnapRange, MappingEntry> outbound = new HashMap<>();
-
-		public InfoPerTrace(Trace trace) {
-			this.trace = trace;
-
-			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
-			listenFor(TraceEvents.MAPPING_ADDED, this::staticMappingAdded);
-			listenFor(TraceEvents.MAPPING_DELETED, this::staticMappingDeleted);
-
-			trace.addListener(this);
-
-			loadOutboundEntries();
-		}
-
-		private void objectRestored() {
-			synchronized (lock) {
-				var old = Map.copyOf(outbound);
-				outbound.clear();
-				loadOutboundEntries(); // Also places/updates corresponding inbound entries
-				if (!old.equals(outbound)) {
-					// TODO: What about removed corresponding inbound entries? 
-					doAffectedByTraceClosed(trace);
-					doAffectedByTraceOpened(trace);
-				}
-			}
-		}
-
-		private void staticMappingAdded(TraceStaticMapping mapping) {
-			// Msg.debug(this, "Trace Mapping added: " + mapping);
-			synchronized (lock) {
-				MappingEntry me = new MappingEntry(mapping);
-				putOutboundAndInboundEntries(me);
-				if (me.program != null) {
-					traceAffected(trace);
-					programAffected(me.program);
-				}
-			}
-		}
-
-		private void staticMappingDeleted(TraceStaticMapping mapping) {
-			synchronized (lock) {
-				MappingEntry me =
-					outbound.get(new ImmutableTraceAddressSnapRange(mapping.getTraceAddressRange(),
-						mapping.getLifespan()));
-				if (me == null) {
-					Msg.warn(this, "It appears I lost track of something that just got removed");
-					return;
-				}
-				Program program = me.program;
-				removeOutboundAndInboundEntries(me);
-				if (program != null) {
-					traceAffected(trace);
-					programAffected(program);
-				}
-			}
-		}
-
-		public void dispose() {
-			trace.removeListener(this);
-		}
-
-		protected void putOutboundAndInboundEntries(MappingEntry me) {
-			outbound.put(me.getTraceAddressSnapRange(), me);
-
-			InfoPerProgram destInfo = trackedProgramInfo.get(me.getStaticProgramURL());
-			if (destInfo == null) {
-				return; // Not opened
-			}
-			me.programOpened(destInfo.program);
-			destInfo.inbound.put(me, me.getStaticAddress());
-		}
-
-		protected void removeOutboundAndInboundEntries(MappingEntry me) {
-			outbound.remove(me.getTraceAddressSnapRange());
-
-			InfoPerProgram destInfo = trackedProgramInfo.get(me.getStaticProgramURL());
-			if (destInfo == null) {
-				return; // Not opened
-			}
-			destInfo.inbound.remove(me);
-		}
-
-		protected void loadOutboundEntries() {
-			TraceStaticMappingManager manager = trace.getStaticMappingManager();
-			for (TraceStaticMapping mapping : manager.getAllEntries()) {
-				putOutboundAndInboundEntries(new MappingEntry(mapping));
-			}
-		}
-
-		public boolean programOpened(Program other, InfoPerProgram otherInfo) {
-			boolean result = false;
-			for (MappingEntry me : outbound.values()) {
-				if (me.programOpened(other)) {
-					otherInfo.inbound.put(me, me.getStaticAddress());
-					result = true;
-				}
-			}
-			return result;
-		}
-
-		public boolean programClosed(Program other) {
-			boolean result = false;
-			for (MappingEntry me : outbound.values()) {
-				result |= me.programClosed(other);
-			}
-			return result;
-		}
-
-		public Set<Program> getOpenMappedProgramsAtSnap(long snap) {
-			Set<Program> result = new HashSet<>();
-			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
-				MappingEntry me = out.getValue();
-				if (!me.isStaticProgramOpen()) {
-					continue;
-				}
-				if (!out.getKey().getLifespan().contains(snap)) {
-					continue;
-				}
-				result.add(me.program);
-			}
-			return result;
-		}
-
-		public ProgramLocation getOpenMappedLocations(Address address, Lifespan span) {
-			TraceAddressSnapRange at = new ImmutableTraceAddressSnapRange(address, span);
-			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
-				if (out.getKey().intersects(at)) {
-					MappingEntry me = out.getValue();
-					if (me.isStaticProgramOpen()) {
-						return me.mapTraceAddressToProgramLocation(address);
-					}
-				}
-			}
-			return null;
-		}
-
-		protected void collectOpenMappedPrograms(AddressRange rng, Lifespan span,
-				Map<Program, Collection<MappedAddressRange>> result) {
-			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
-			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
-				MappingEntry me = out.getValue();
-				if (me.program == null) {
-					continue;
-				}
-				if (!out.getKey().intersects(tatr)) {
-					continue;
-				}
-				AddressRange srcRng = out.getKey().getRange().intersect(rng);
-				AddressRange dstRng = me.mapTraceRangeToProgram(rng);
-				result.computeIfAbsent(me.program, p -> new TreeSet<>())
-						.add(new MappedAddressRange(srcRng, dstRng));
-			}
-		}
-
-		public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(AddressSetView set,
-				Lifespan span) {
-			Map<Program, Collection<MappedAddressRange>> result = new HashMap<>();
-			for (AddressRange rng : set) {
-				collectOpenMappedPrograms(rng, span, result);
-			}
-			return Collections.unmodifiableMap(result);
-		}
-
-		protected void collectMappedProgramURLsInView(AddressRange rng, Lifespan span,
-				Set<URL> result) {
-			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
-			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
-				if (!out.getKey().intersects(tatr)) {
-					continue;
-				}
-				MappingEntry me = out.getValue();
-				result.add(me.getStaticProgramURL());
-			}
-		}
-
-		public Set<URL> getMappedProgramURLsInView(AddressSetView set, Lifespan span) {
-			Set<URL> result = new HashSet<>();
-			for (AddressRange rng : set) {
-				collectMappedProgramURLsInView(rng, span, result);
-			}
-			return Collections.unmodifiableSet(result);
-		}
-	}
-
-	protected class InfoPerProgram implements DomainObjectListener {
-		private Program program;
-
-		private ValueSortedMap<MappingEntry, Address> inbound =
-			TreeValueSortedMap.createWithNaturalOrder();
-
-		public InfoPerProgram(Program program) {
-			this.program = program;
-			program.addListener(this);
-			loadInboundEntries();
-		}
-
-		@Override
-		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			if (ev.contains(DomainObjectEvent.FILE_CHANGED)) {
-				// TODO: This seems like overkill
-				programClosed(program);
-				programOpened(program);
-			}
-			// TODO: Can I listen for when the program moves?
-			// TODO: Or when relevant blocks move?
-		}
-
-		protected void loadInboundEntries() {
-			for (InfoPerTrace traceInfo : trackedTraceInfo.values()) {
-				for (MappingEntry out : traceInfo.outbound.values()) {
-					if (out.program == program) {
-						inbound.put(out, out.getStaticAddress());
-					}
-				}
-			}
-		}
-
-		public boolean isMappedInTrace(Trace trace) {
-			for (MappingEntry me : inbound.keySet()) {
-				if (Objects.equals(trace, me.getTrace())) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		public boolean traceClosed(Trace trace) {
-			Set<MappingEntry> updates = new HashSet<>();
-			for (Entry<MappingEntry, Address> ent : inbound.entrySet()) {
-				MappingEntry me = ent.getKey();
-				if (Objects.equals(trace, me.getTrace())) {
-					updates.add(me);
-				}
-			}
-			return inbound.keySet().removeAll(updates);
-		}
-
-		public Set<TraceLocation> getOpenMappedTraceLocations(Address address) {
-			Set<TraceLocation> result = new HashSet<>();
-			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address, true)
-					.entrySet()) {
-				Address start = inPreceding.getValue();
-				if (start == null) {
-					continue;
-				}
-				MappingEntry me = inPreceding.getKey();
-				if (!me.isInProgramRange(address)) {
-					continue;
-				}
-				result.add(me.mapProgramAddressToTraceLocation(address));
-			}
-			return result;
-		}
-
-		public TraceLocation getOpenMappedTraceLocation(Trace trace, Address address, long snap) {
-			// TODO: Map by trace?
-			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address, true)
-					.entrySet()) {
-				Address start = inPreceding.getValue();
-				if (start == null) {
-					continue;
-				}
-				MappingEntry me = inPreceding.getKey();
-				if (me.getTrace() != trace) {
-					continue;
-				}
-				if (!me.isInProgramRange(address)) {
-					continue;
-				}
-				if (!me.isInTraceLifespan(snap)) {
-					continue;
-				}
-				return me.mapProgramAddressToTraceLocation(address);
-			}
-			return null;
-		}
-
-		protected void collectOpenMappedViews(AddressRange rng,
-				Map<TraceSpan, Collection<MappedAddressRange>> result) {
-			for (Entry<MappingEntry, Address> inPreceeding : inbound
-					.headMapByValue(rng.getMaxAddress(), true)
-					.entrySet()) {
-				Address start = inPreceeding.getValue();
-				if (start == null) {
-					continue;
-				}
-				MappingEntry me = inPreceeding.getKey();
-				if (!me.isInProgramRange(rng)) {
-					continue;
-				}
-
-				AddressRange srcRange = me.staticRange.intersect(rng);
-				AddressRange dstRange = me.mapProgramRangeToTrace(rng);
-				result.computeIfAbsent(me.getTraceSpan(), p -> new TreeSet<>())
-						.add(new MappedAddressRange(srcRange, dstRange));
-			}
-		}
-
-		public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(
-				AddressSetView set) {
-			Map<TraceSpan, Collection<MappedAddressRange>> result = new HashMap<>();
-			for (AddressRange rng : set) {
-				collectOpenMappedViews(rng, result);
-			}
-			return Collections.unmodifiableMap(result);
-		}
-	}
-
-	private final Map<Trace, InfoPerTrace> trackedTraceInfo = new HashMap<>();
-	private final Map<URL, InfoPerProgram> trackedProgramInfo = new HashMap<>();
+	final Map<Trace, InfoPerTrace> traceInfoByTrace = new HashMap<>();
+	final Map<Program, InfoPerProgram> programInfoByProgram = new HashMap<>();
+	final Map<URL, InfoPerProgram> programInfoByUrl = new HashMap<>();
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
@@ -555,14 +116,11 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoWiring;
 
-	private final Object lock = new Object();
+	final Object lock = new Object();
 
-	private final AsyncDebouncer<Void> changeDebouncer =
-		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
+	final ExecutorService executor = Executors.newSingleThreadExecutor();
 	private final ListenerSet<DebuggerStaticMappingChangeListener> changeListeners =
 		new ListenerSet<>(DebuggerStaticMappingChangeListener.class, true);
-	private Set<Trace> affectedTraces = new HashSet<>();
-	private Set<Program> affectedPrograms = new HashSet<>();
 
 	private final ProgramModuleIndexer programModuleIndexer;
 	private final ModuleMapProposalGenerator moduleMapProposalGenerator;
@@ -572,41 +130,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		this.autoWiring = AutoService.wireServicesProvidedAndConsumed(this);
 		this.programModuleIndexer = new ProgramModuleIndexer(tool);
 		this.moduleMapProposalGenerator = new ModuleMapProposalGenerator(programModuleIndexer);
-
-		changeDebouncer.addListener(this::fireChangeListeners);
-		tool.getProject().getProjectData().addDomainFolderChangeListener(this);
 	}
 
 	@Override
 	protected void dispose() {
 		tool.getProject().getProjectData().removeDomainFolderChangeListener(this);
+		executor.close();
 		super.dispose();
-	}
-
-	private void fireChangeListeners(Void v) {
-		Set<Trace> traces;
-		Set<Program> programs;
-		synchronized (affectedTraces) {
-			traces = Collections.unmodifiableSet(affectedTraces);
-			programs = Collections.unmodifiableSet(affectedPrograms);
-			affectedTraces = new HashSet<>();
-			affectedPrograms = new HashSet<>();
-		}
-		changeListeners.invoke().mappingsChanged(traces, programs);
-	}
-
-	private void traceAffected(Trace trace) {
-		synchronized (affectedTraces) {
-			affectedTraces.add(trace);
-			changeDebouncer.contact(null);
-		}
-	}
-
-	private void programAffected(Program program) {
-		synchronized (affectedTraces) {
-			affectedPrograms.add(program);
-			changeDebouncer.contact(null);
-		}
 	}
 
 	@Override
@@ -619,73 +149,134 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		changeListeners.remove(l);
 	}
 
+	void checkAndClearProgram(ChangeCollector cc, MappingEntry me) {
+		InfoPerProgram info = programInfoByUrl.get(me.getStaticProgramUrl());
+		if (info == null) {
+			return;
+		}
+		info.clearProgram(cc, me);
+	}
+
+	void checkAndFillProgram(ChangeCollector cc, MappingEntry me) {
+		InfoPerProgram info = programInfoByUrl.get(me.getStaticProgramUrl());
+		if (info == null) {
+			return;
+		}
+		info.fillProgram(cc, me);
+	}
+
 	@Override
 	public CompletableFuture<Void> changesSettled() {
-		return changeDebouncer.stable();
+		return CompletableFuture.runAsync(() -> {
+		}, executor);
+	}
+
+	void programsChanged() {
+		try (ChangeCollector cc = new ChangeCollector(this)) {
+			// Invoke change callbacks without the lock! (try must surround sync)
+			synchronized (lock) {
+				programsChanged(cc);
+			}
+		}
+	}
+
+	void programsChanged(ChangeCollector cc) {
+		Set<Program> curProgs = Stream.of(programManager.getAllOpenPrograms())
+				.filter(p -> !p.isClosed()) // Double-check
+				.collect(Collectors.toSet());
+		Set<InfoPerProgram> removed = programInfoByProgram.values()
+				.stream()
+				.filter(i -> !curProgs.contains(i.program) || !i.urlMatches())
+				.collect(Collectors.toSet());
+		processRemovedProgramInfos(cc, removed);
+		Set<Program> added = ChangeCollector.subtract(curProgs, programInfoByProgram.keySet());
+		processAddedPrograms(cc, added);
+	}
+
+	void processRemovedProgramInfos(ChangeCollector cc, Set<InfoPerProgram> removed) {
+		for (InfoPerProgram info : removed) {
+			processRemovedProgramInfo(cc, info);
+		}
+	}
+
+	void processRemovedProgramInfo(ChangeCollector cc, InfoPerProgram info) {
+		programInfoByProgram.remove(info.program);
+		programInfoByUrl.remove(info.url);
+		info.clearEntries(cc);
+	}
+
+	void processAddedPrograms(ChangeCollector cc, Set<Program> added) {
+		for (Program program : added) {
+			processAddedProgram(cc, program);
+		}
+	}
+
+	void processAddedProgram(ChangeCollector cc, Program program) {
+		InfoPerProgram info = new InfoPerProgram(this, program);
+		programInfoByProgram.put(program, info);
+		programInfoByUrl.put(info.url, info);
+		info.fillEntries(cc);
+	}
+
+	private void tracesChanged() {
+		try (ChangeCollector cc = new ChangeCollector(this)) {
+			// Invoke change callbacks without the lock! (try must surround sync)
+			synchronized (lock) {
+				tracesChanged(cc);
+			}
+		}
+	}
+
+	void tracesChanged(ChangeCollector cc) {
+		Set<Trace> curTraces = traceManager.getOpenTraces()
+				.stream()
+				.filter(t -> !t.isClosed()) // Double-check
+				.collect(Collectors.toSet());
+		Set<Trace> oldTraces = traceInfoByTrace.keySet();
+
+		Set<Trace> removed = ChangeCollector.subtract(oldTraces, curTraces);
+		Set<Trace> added = ChangeCollector.subtract(curTraces, oldTraces);
+
+		processRemovedTraces(cc, removed);
+		processAddedTraces(cc, added);
+	}
+
+	void processRemovedTraces(ChangeCollector cc, Set<Trace> removed) {
+		for (Trace trace : removed) {
+			processRemovedTrace(cc, trace);
+		}
+	}
+
+	void processRemovedTrace(ChangeCollector cc, Trace trace) {
+		InfoPerTrace info = traceInfoByTrace.remove(trace);
+		info.removeEntries(cc);
+	}
+
+	void processAddedTraces(ChangeCollector cc, Set<Trace> added) {
+		for (Trace trace : added) {
+			processAddedTrace(cc, trace);
+		}
+	}
+
+	void processAddedTrace(ChangeCollector cc, Trace trace) {
+		InfoPerTrace info = new InfoPerTrace(this, trace);
+		traceInfoByTrace.put(trace, info);
+		info.resyncEntries(cc);
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProgramOpenedPluginEvent) {
-			ProgramOpenedPluginEvent openedEvt = (ProgramOpenedPluginEvent) event;
-			programOpened(openedEvt.getProgram());
+			CompletableFuture.runAsync(this::programsChanged, executor);
 		}
 		else if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent closedEvt = (ProgramClosedPluginEvent) event;
-			programClosed(closedEvt.getProgram());
+			CompletableFuture.runAsync(this::programsChanged, executor);
 		}
 		else if (event instanceof TraceOpenedPluginEvent) {
-			TraceOpenedPluginEvent openedEvt = (TraceOpenedPluginEvent) event;
-			traceOpened(openedEvt.getTrace());
+			CompletableFuture.runAsync(this::tracesChanged, executor);
 		}
 		else if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent closedEvt = (TraceClosedPluginEvent) event;
-			traceClosed(closedEvt.getTrace());
-		}
-	}
-
-	private void programOpened(Program program) {
-		synchronized (lock) {
-			if (program instanceof TraceProgramView) {
-				return; // TODO: Allow this?
-			}
-			URL url = ProgramURLUtils.getUrlFromProgram(program);
-			if (url == null) {
-				// Not in a project. Nothing could refer to it anyway....
-				// TODO: If the program is saved into a project, it could be....
-				return;
-			}
-			InfoPerProgram newInfo = new InfoPerProgram(program);
-			InfoPerProgram mustBeNull = trackedProgramInfo.put(url, newInfo);
-			assert mustBeNull == null;
-
-			for (InfoPerTrace info : trackedTraceInfo.values()) {
-				if (info.programOpened(program, newInfo)) {
-					programAffected(program);
-					traceAffected(info.trace);
-				}
-			}
-		}
-	}
-
-	private void programClosed(Program program) {
-		synchronized (lock) {
-			if (program instanceof TraceProgramView) {
-				return;
-			}
-			// NB. The URL may have changed, so can't use that as key
-			for (Iterator<InfoPerProgram> it = trackedProgramInfo.values().iterator(); it
-					.hasNext();) {
-				InfoPerProgram info = it.next();
-				if (info.program == program) {
-					it.remove();
-				}
-			}
-			for (InfoPerTrace info : trackedTraceInfo.values()) {
-				if (info.programClosed(program)) {
-					traceAffected(info.trace);
-				}
-			}
+			CompletableFuture.runAsync(this::tracesChanged, executor);
 		}
 	}
 
@@ -694,57 +285,12 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		// This get called when a domain object is saved into the active project
 		// We essentially need to update the URL, which requires examining every entry
 		// TODO: Could probably cut out a bit of the kruft, but this should do
-		if (object instanceof Program) {
-			Program program = (Program) object;
+		if (object instanceof Program program) {
 			synchronized (lock) {
-				programClosed(program);
-				int i = ArrayUtils.indexOf(programManager.getAllOpenPrograms(), program);
-				if (i >= 0) {
-					programOpened(program);
+				if (programInfoByProgram.containsKey(program)) {
+					CompletableFuture.runAsync(this::programsChanged, executor);
 				}
 			}
-		}
-	}
-
-	private void doAffectedByTraceOpened(Trace trace) {
-		for (InfoPerProgram info : trackedProgramInfo.values()) {
-			if (info.isMappedInTrace(trace)) {
-				traceAffected(trace);
-				programAffected(info.program);
-			}
-		}
-	}
-
-	private void traceOpened(Trace trace) {
-		synchronized (lock) {
-			if (trace.isClosed()) {
-				Msg.warn(this, "Got traceOpened for a close trace");
-				return;
-			}
-			InfoPerTrace newInfo = new InfoPerTrace(trace);
-			InfoPerTrace mustBeNull = trackedTraceInfo.put(trace, newInfo);
-			assert mustBeNull == null;
-			doAffectedByTraceOpened(trace);
-		}
-	}
-
-	private void doAffectedByTraceClosed(Trace trace) {
-		for (InfoPerProgram info : trackedProgramInfo.values()) {
-			if (info.traceClosed(trace)) {
-				programAffected(info.program);
-			}
-		}
-	}
-
-	private void traceClosed(Trace trace) {
-		synchronized (lock) {
-			InfoPerTrace traceInfo = trackedTraceInfo.remove(trace);
-			if (traceInfo == null) {
-				Msg.warn(this, "Got traceClosed without/before traceOpened");
-				return;
-			}
-			traceInfo.dispose();
-			doAffectedByTraceClosed(trace);
 		}
 	}
 
@@ -851,7 +397,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	protected InfoPerTrace requireTrackedInfo(Trace trace) {
-		InfoPerTrace info = trackedTraceInfo.get(trace);
+		InfoPerTrace info = traceInfoByTrace.get(trace);
 		if (info == null) {
 			return noTraceInfo();
 		}
@@ -859,11 +405,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	protected InfoPerProgram requireTrackedInfo(Program program) {
-		URL url = ProgramURLUtils.getUrlFromProgram(program);
-		if (url == null) {
-			return noProject();
-		}
-		InfoPerProgram info = trackedProgramInfo.get(url);
+		InfoPerProgram info = programInfoByProgram.get(program);
 		if (info == null) {
 			return noProgramInfo();
 		}
@@ -888,7 +430,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			if (info == null) {
 				return null;
 			}
-			return info.getOpenMappedLocations(loc.getAddress(), loc.getLifespan());
+			return info.getOpenMappedProgramLocation(loc.getAddress(), loc.getLifespan());
 		}
 	}
 
@@ -981,7 +523,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			if (info == null) {
 				return null;
 			}
-			urls = info.getMappedProgramURLsInView(set, Lifespan.at(snap));
+			urls = info.getMappedProgramUrlsInView(set, Lifespan.at(snap));
 		}
 		Set<Program> result = new HashSet<>();
 		for (URL url : urls) {

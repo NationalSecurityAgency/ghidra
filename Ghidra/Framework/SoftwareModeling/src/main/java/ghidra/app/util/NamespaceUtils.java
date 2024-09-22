@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,25 +29,25 @@ import ghidra.util.exception.*;
  * <a id="examples"></a>
  * Example string format:
  * <ul>
- *     <li>global{@link Namespace#DELIMITER ::}child1{@link Namespace#DELIMITER ::}child2
- *     <li>child1
+ *     <li>global{@link Namespace#DELIMITER ::}child1{@link Namespace#DELIMITER ::}child2</li>
+ *     <li>child1</li>
  * </ul>
  * <a id="assumptions"></a>
  * <b>Assumptions for creating namespaces from a path string: </b>
  * <ul>
  *     <li>All elements of a namespace path should be namespace symbols and not other
- *         symbol types.
- *     <li>Absolute paths can optionally start with the global namespace.
+ *         symbol types.</li>
+ *     <li>Absolute paths can optionally start with the global namespace.</li>
  *     <li>You can provide a relative path that will start at the given
- *         parent namespace (or global if there is no parent provided).
+ *         parent namespace (or global if there is no parent provided).</li>
  *     <li>You can provide a path that has as its first entry the name of the
  *         given parent.  In this case, the first entry will not be created,
- *         but rather the provided parent will be used.
+ *         but rather the provided parent will be used.</li>
  *     <li>If you provide a path and a parent, but the first element of the
  *         path is the global namespace, then the global namespace will be
- *         used as the parent namespace and not the one that was provided.
+ *         used as the parent namespace and not the one that was provided.</li>
  *     <li>You cannot embed the global namespace in a path, but it can be at
- *         the root.
+ *         the root.</li>
  * </ul>
  *
  *

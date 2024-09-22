@@ -614,6 +614,7 @@ public class SymbolicPropogator {
 						//       FLOW end will probably work correctly, but....
 						//
 						vContext.flowStart(minInstrAddress, maxAddr);
+						retAddr = null;
 					}
 				}
 

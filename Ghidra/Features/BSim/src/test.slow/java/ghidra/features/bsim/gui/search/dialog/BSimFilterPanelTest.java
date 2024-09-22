@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.features.bsim.gui.search.dialog;
 import static org.junit.Assert.*;
 
 import java.sql.SQLException;
-import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,7 +30,6 @@ import ghidra.features.bsim.query.SQLFunctionDatabase;
 import ghidra.features.bsim.query.client.*;
 import ghidra.features.bsim.query.facade.FunctionDatabaseTestDouble;
 import ghidra.features.bsim.query.protocol.BSimFilter;
-import ghidra.program.database.symbol.FunctionSymbol;
 
 /**
  * Tests the filtering components of BSim accessible from the UI. This will cover the 
@@ -44,9 +43,9 @@ import ghidra.program.database.symbol.FunctionSymbol;
  */
 public class BSimFilterPanelTest extends AbstractBSimPluginTest {
 
-	private Set<FunctionSymbol> selectedFunctions = new HashSet<>();
 	private BSimFilterPanel filterPanel;
 
+	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
@@ -57,6 +56,7 @@ public class BSimFilterPanelTest extends AbstractBSimPluginTest {
 		filterPanel = BSimSearchDialogTestHelper.getFilterPanel(searchDialog);
 	}
 
+	@Override
 	@After
 	public void tearDown() throws Exception {
 		close(searchDialog);

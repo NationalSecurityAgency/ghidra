@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,8 @@ class Funcdata {
     restart_pending = 0x400,	///< Analysis must be restarted (because of new override info)
     unimplemented_present = 0x800,	///< Set if function contains unimplemented instructions
     baddata_present = 0x1000,	///< Set if function flowed into bad data
-    double_precis_on = 0x2000	///< Set if we are performing double precision recovery
+    double_precis_on = 0x2000,	///< Set if we are performing double precision recovery
+    typerecovery_exceeded= 0x4000	///< Set if data-type propagation passes reached maximum
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
@@ -151,6 +152,7 @@ public:
   bool hasUnreachableBlocks(void) const { return ((flags&blocks_unreachable)!=0); }	///< Did this function exhibit unreachable code
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Will data-type analysis be performed
   bool hasTypeRecoveryStarted(void) const { return ((flags&typerecovery_start)!=0); }	///< Has data-type recovery processes started
+  bool isTypeRecoveryExceeded(void) const { return ((flags&typerecovery_exceeded)!=0); }	///< Has maximum propagation passes been reached
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
   void setLanedRegGenerated(void) { minLanedSize = 1000000; }	///< Mark that laned registers have been collected
@@ -180,6 +182,7 @@ public:
   ///
   /// \param val is \b true if data-type analysis is enabled
   void setTypeRecovery(bool val) { flags = val ? (flags | typerecovery_on) : (flags & ~typerecovery_on); }
+  void setTypeRecoveryExceeded(void) { flags |= typerecovery_exceeded; }	///< Mark propagation passes have reached maximum
   void startCastPhase(void) { cast_phase_index = vbank.getCreateIndex(); }	///< Start the \b cast insertion phase
   uint4 getCastPhaseIndex(void) const { return cast_phase_index; }	///< Get creation index at the start of \b cast insertion
   uint4 getHighLevelIndex(void) const { return high_level_index; }	///< Get creation index at the start of HighVariable creation
@@ -288,6 +291,7 @@ public:
   Varnode *newUnique(int4 s,Datatype *ct=(Datatype *)0);	///< Create a new \e temporary Varnode
   Varnode *newCodeRef(const Address &m);			///< Create a code address \e annotation Varnode
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
+  void combineInputVarnodes(Varnode *vnHi,Varnode *vnLo);	///< Combine two contiguous input Varnodes into one
   Varnode *newExtendedConstant(int4 s,uint8 *val,PcodeOp *op);	///< Create extended precision constant
   void adjustInputVarnodes(const Address &addr,int4 sz);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode

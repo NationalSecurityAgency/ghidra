@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,18 +27,23 @@ import javax.swing.Icon;
 
 import generic.theme.GIcon;
 import generic.theme.Gui;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
+import ghidra.debug.api.ValStr;
+import ghidra.debug.api.tracermi.LaunchParameter;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.AutoConfigState.PathIsDir;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 
 /**
  * A parser for reading attributes from a script header
  */
 public abstract class ScriptAttributesParser {
+	public static final String ENV_GHIDRA_HOME = "GHIDRA_HOME";
+	public static final String ENV_GHIDRA_TRACE_RMI_ADDR = "GHIDRA_TRACE_RMI_ADDR";
+	public static final String ENV_GHIDRA_TRACE_RMI_HOST = "GHIDRA_TRACE_RMI_HOST";
+	public static final String ENV_GHIDRA_TRACE_RMI_PORT = "GHIDRA_TRACE_RMI_PORT";
+
 	public static final String AT_TITLE = "@title";
 	public static final String AT_DESC = "@desc";
 	public static final String AT_MENU_PATH = "@menu-path";
@@ -69,9 +74,28 @@ public abstract class ScriptAttributesParser {
 	public static final String MSGPAT_INVALID_ARGS_SYNTAX =
 		"%s: Invalid %s syntax. Use \"Display\" \"Tool Tip\"";
 	public static final String MSGPAT_INVALID_TTY_SYNTAX =
-		"%s: Invalid %s syntax. Use TTY_TARGET [if env:OPT_EXTRA_TTY]";
+		"%s: Invalid %s syntax. Use TTY_TARGET [if env:OPT [== VAL]]";
+	public static final String MSGPAT_INVALID_TTY_NO_PARAM =
+		"%s: In %s: No such parameter '%s'";
+	public static final String MSGPAT_INVALID_TTY_NOT_BOOL =
+		"%s: In %s: Parameter '%s' must have bool type";
+	public static final String MSGPAT_INVALID_TTY_BAD_VAL =
+		"%s: In %s: Parameter '%s' has type %s, but '%s' cannot be parsed as such";
 	public static final String MSGPAT_INVALID_TIMEOUT_SYNTAX = "" +
 		"%s: Invalid %s syntax. Use [milliseconds]";
+
+	public static class ParseException extends Exception {
+		private Location loc;
+
+		public ParseException(Location loc, String message) {
+			super(message);
+			this.loc = loc;
+		}
+
+		public Location getLocation() {
+			return loc;
+		}
+	}
 
 	protected record Location(String fileName, int lineNo) {
 		@Override
@@ -80,31 +104,36 @@ public abstract class ScriptAttributesParser {
 		}
 	}
 
-	protected interface OptType<T> {
-		static OptType<?> parse(Location loc, String typeName,
-				Map<String, UserType<?>> userEnums) {
+	protected interface OptType<T> extends ValStr.Decoder<T> {
+		static OptType<?> parse(Location loc, String typeName, Map<String, UserType<?>> userEnums)
+				throws ParseException {
 			OptType<?> type = BaseType.parseNoErr(typeName);
 			if (type == null) {
 				type = userEnums.get(typeName);
 			}
 			if (type == null) { // still
-				Msg.error(ScriptAttributesParser.class,
-					"%s: Invalid type %s".formatted(loc, typeName));
-				return null;
+				throw new ParseException(loc, "%s: Invalid type %s".formatted(loc, typeName));
 			}
 			return type;
 		}
 
-		default TypeAndDefault<T> withCastDefault(Object defaultValue) {
-			return new TypeAndDefault<>(this, cls().cast(defaultValue));
+		default TypeAndDefault<T> withCastDefault(ValStr<Object> defaultValue) {
+			return new TypeAndDefault<>(this, ValStr.cast(cls(), defaultValue));
 		}
 
 		Class<T> cls();
 
-		T decode(Location loc, String str);
+		default T decode(Location loc, String str) throws ParseException {
+			try {
+				return decode(str);
+			}
+			catch (Exception e) {
+				throw new ParseException(loc, "%s: %s".formatted(loc, e.getMessage()));
+			}
+		}
 
-		ParameterDescription<T> createParameter(String name, T defaultValue, String display,
-				String description);
+		LaunchParameter<T> createParameter(String name, String display, String description,
+				boolean required, ValStr<T> defaultValue);
 	}
 
 	protected interface BaseType<T> extends OptType<T> {
@@ -120,12 +149,10 @@ public abstract class ScriptAttributesParser {
 			};
 		}
 
-		public static BaseType<?> parse(Location loc, String typeName) {
+		public static BaseType<?> parse(Location loc, String typeName) throws ParseException {
 			BaseType<?> type = parseNoErr(typeName);
 			if (type == null) {
-				Msg.error(ScriptAttributesParser.class,
-					"%s: Invalid base type %s".formatted(loc, typeName));
-				return null;
+				throw new ParseException(loc, "%s: Invalid base type %s".formatted(loc, typeName));
 			}
 			return type;
 		}
@@ -137,7 +164,7 @@ public abstract class ScriptAttributesParser {
 			}
 
 			@Override
-			public String decode(Location loc, String str) {
+			public String decode(String str) {
 				return str;
 			}
 		};
@@ -149,18 +176,14 @@ public abstract class ScriptAttributesParser {
 			}
 
 			@Override
-			public BigInteger decode(Location loc, String str) {
+			public BigInteger decode(String str) {
 				try {
-					if (str.startsWith("0x")) {
-						return new BigInteger(str.substring(2), 16);
-					}
-					return new BigInteger(str);
+					return NumericUtilities.decodeBigInteger(str);
 				}
 				catch (NumberFormatException e) {
-					Msg.error(ScriptAttributesParser.class,
-						("%s: Invalid int for %s: %s. You may prefix with 0x for hexadecimal. " +
-							"Otherwise, decimal is used.").formatted(loc, AT_ENV, str));
-					return null;
+					throw new IllegalArgumentException(
+						"Invalid int %s. Prefixes 0x, 0b, and 0 (octal) are allowed."
+								.formatted(str));
 				}
 			}
 		};
@@ -172,17 +195,16 @@ public abstract class ScriptAttributesParser {
 			}
 
 			@Override
-			public Boolean decode(Location loc, String str) {
-				Boolean result = switch (str) {
+			public Boolean decode(String str) {
+				Boolean result = switch (str.trim().toLowerCase()) {
 					case "true" -> true;
 					case "false" -> false;
 					default -> null;
 				};
 				if (result == null) {
-					Msg.error(ScriptAttributesParser.class,
-						"%s: Invalid bool for %s: %s. Only true or false (in lower case) is allowed."
-								.formatted(loc, AT_ENV, str));
-					return null;
+					throw new IllegalArgumentException(
+						"Invalid bool for %s: %s. Only true or false is allowed."
+								.formatted(AT_ENV, str));
 				}
 				return result;
 			}
@@ -195,7 +217,7 @@ public abstract class ScriptAttributesParser {
 			}
 
 			@Override
-			public Path decode(Location loc, String str) {
+			public Path decode(String str) {
 				return Paths.get(str);
 			}
 		};
@@ -207,7 +229,7 @@ public abstract class ScriptAttributesParser {
 			}
 
 			@Override
-			public PathIsDir decode(Location loc, String str) {
+			public PathIsDir decode(String str) {
 				return new PathIsDir(Paths.get(str));
 			}
 		};
@@ -219,7 +241,7 @@ public abstract class ScriptAttributesParser {
 			}
 
 			@Override
-			public PathIsFile decode(Location loc, String str) {
+			public PathIsFile decode(String str) {
 				return new PathIsFile(Paths.get(str));
 			}
 		};
@@ -228,11 +250,15 @@ public abstract class ScriptAttributesParser {
 			return new UserType<>(this, choices.stream().map(cls()::cast).toList());
 		}
 
+		default UserType<T> withChoices(List<T> choices) {
+			return new UserType<>(this, choices);
+		}
+
 		@Override
-		default ParameterDescription<T> createParameter(String name, T defaultValue, String display,
-				String description) {
-			return ParameterDescription.create(cls(), name, false, defaultValue, display,
-				description);
+		default LaunchParameter<T> createParameter(String name, String display, String description,
+				boolean required, ValStr<T> defaultValue) {
+			return LaunchParameter.create(cls(), name, display, description, required, defaultValue,
+				this);
 		}
 	}
 
@@ -243,62 +269,57 @@ public abstract class ScriptAttributesParser {
 		}
 
 		@Override
-		public T decode(Location loc, String str) {
-			return base.decode(loc, str);
+		public T decode(String str) {
+			return base.decode(str);
 		}
 
 		@Override
-		public ParameterDescription<T> createParameter(String name, T defaultValue, String display,
-				String description) {
-			return ParameterDescription.choices(cls(), name, choices, defaultValue, display,
-				description);
+		public LaunchParameter<T> createParameter(String name, String display, String description,
+				boolean required, ValStr<T> defaultValue) {
+			return LaunchParameter.choices(cls(), name, display, description, choices,
+				defaultValue);
 		}
 	}
 
-	protected record TypeAndDefault<T>(OptType<T> type, T defaultValue) {
+	protected record TypeAndDefault<T>(OptType<T> type, ValStr<T> defaultValue) {
 		public static TypeAndDefault<?> parse(Location loc, String typeName, String defaultString,
-				Map<String, UserType<?>> userEnums) {
+				Map<String, UserType<?>> userEnums) throws ParseException {
 			OptType<?> tac = OptType.parse(loc, typeName, userEnums);
-			if (tac == null) {
-				return null;
-			}
 			Object value = tac.decode(loc, defaultString);
-			if (value == null) {
-				return null;
-			}
-			return tac.withCastDefault(value);
+			return tac.withCastDefault(new ValStr<>(value, defaultString));
 		}
 
-		public ParameterDescription<T> createParameter(String name, String display,
-				String description) {
-			return type.createParameter(name, defaultValue, display, description);
+		public LaunchParameter<T> createParameter(String name, String display, String description) {
+			return type.createParameter(name, display, description, false, defaultValue);
 		}
 	}
 
 	public interface TtyCondition {
-		boolean isActive(Map<String, ?> args);
+		boolean isActive(Map<String, ValStr<?>> args);
 	}
 
 	enum ConstTtyCondition implements TtyCondition {
 		ALWAYS {
 			@Override
-			public boolean isActive(Map<String, ?> args) {
+			public boolean isActive(Map<String, ValStr<?>> args) {
 				return true;
 			}
 		},
 	}
 
-	record EqualsTtyCondition(String key, String repr) implements TtyCondition {
+	record EqualsTtyCondition(LaunchParameter<?> param, Object value) implements TtyCondition {
 		@Override
-		public boolean isActive(Map<String, ?> args) {
-			return Objects.toString(args.get(key)).equals(repr);
+		public boolean isActive(Map<String, ValStr<?>> args) {
+			ValStr<?> valStr = param.get(args);
+			return Objects.equals(valStr == null ? null : valStr.val(), value);
 		}
 	}
 
-	record BoolTtyCondition(String key) implements TtyCondition {
+	record BoolTtyCondition(LaunchParameter<Boolean> param) implements TtyCondition {
 		@Override
-		public boolean isActive(Map<String, ?> args) {
-			return args.get(key) instanceof Boolean b && b.booleanValue();
+		public boolean isActive(Map<String, ValStr<?>> args) {
+			ValStr<Boolean> valStr = param.get(args);
+			return valStr != null && valStr.val();
 		}
 	}
 
@@ -318,9 +339,8 @@ public abstract class ScriptAttributesParser {
 
 	public record ScriptAttributes(String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
-			Map<String, ParameterDescription<?>> parameters, Map<String, TtyCondition> extraTtys,
-			int timeoutMillis, boolean noImage) {
-	}
+			Map<String, LaunchParameter<?>> parameters, Map<String, TtyCondition> extraTtys,
+			int timeoutMillis, boolean noImage) {}
 
 	/**
 	 * Convert an arguments map into a command line and environment variables
@@ -335,34 +355,41 @@ public abstract class ScriptAttributesParser {
 	 * @param address the address of the listening TraceRmi socket
 	 */
 	public static void processArguments(List<String> commandLine, Map<String, String> env,
-			File script, Map<String, ParameterDescription<?>> parameters, Map<String, ?> args,
+			File script, Map<String, LaunchParameter<?>> parameters, Map<String, ValStr<?>> args,
 			SocketAddress address) {
 
 		commandLine.add(script.getAbsolutePath());
-		env.put("GHIDRA_HOME", Application.getInstallationDirectory().getAbsolutePath());
+		env.put(ENV_GHIDRA_HOME, Application.getInstallationDirectory().getAbsolutePath());
 		if (address != null) {
-			env.put("GHIDRA_TRACE_RMI_ADDR", sockToString(address));
+			env.put(ENV_GHIDRA_TRACE_RMI_ADDR, sockToString(address));
 			if (address instanceof InetSocketAddress tcp) {
-				env.put("GHIDRA_TRACE_RMI_HOST", tcp.getAddress().getHostAddress());
-				env.put("GHIDRA_TRACE_RMI_PORT", Integer.toString(tcp.getPort()));
+				env.put(ENV_GHIDRA_TRACE_RMI_HOST, tcp.getAddress().getHostAddress());
+				env.put(ENV_GHIDRA_TRACE_RMI_PORT, Integer.toString(tcp.getPort()));
 			}
 		}
 
-		ParameterDescription<?> paramDesc;
-		for (int i = 1; (paramDesc = parameters.get("arg:" + i)) != null; i++) {
-			commandLine.add(Objects.toString(paramDesc.get(args)));
+		LaunchParameter<?> param;
+		for (int i = 1; (param = parameters.get("arg:" + i)) != null; i++) {
+			// Don't use ValStr.str here. I'd like the script's input normalized
+			commandLine.add(Objects.toString(param.get(args).val()));
 		}
 
-		paramDesc = parameters.get("args");
-		if (paramDesc != null) {
-			commandLine.addAll(ShellUtils.parseArgs((String) paramDesc.get(args)));
+		param = parameters.get("args");
+		if (param != null) {
+			commandLine.addAll(ShellUtils.parseArgs(param.get(args).str()));
 		}
 
-		for (Entry<String, ParameterDescription<?>> ent : parameters.entrySet()) {
+		for (Entry<String, LaunchParameter<?>> ent : parameters.entrySet()) {
 			String key = ent.getKey();
 			if (key.startsWith(PREFIX_ENV)) {
 				String varName = key.substring(PREFIX_ENV.length());
-				env.put(varName, Objects.toString(ent.getValue().get(args)));
+				ValStr<?> val = ent.getValue().get(args);
+				if (val == null || val.val() == null) {
+					env.put(varName, "");
+				}
+				else {
+					env.put(varName, Objects.toString(val.val()));
+				}
 			}
 		}
 	}
@@ -376,7 +403,7 @@ public abstract class ScriptAttributesParser {
 	private String iconId;
 	private HelpLocation helpLocation;
 	private final Map<String, UserType<?>> userTypes = new HashMap<>();
-	private final Map<String, ParameterDescription<?>> parameters = new LinkedHashMap<>();
+	private final Map<String, LaunchParameter<?>> parameters = new LinkedHashMap<>();
 	private final Map<String, TtyCondition> extraTtys = new LinkedHashMap<>();
 	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_TIMEOUT_MILLIS;
 	private boolean noImage = false;
@@ -401,9 +428,17 @@ public abstract class ScriptAttributesParser {
 	 */
 	protected abstract String removeDelimiter(String line);
 
-	public ScriptAttributes parseFile(File script) throws FileNotFoundException {
+	/**
+	 * Parse the header from the give input stream
+	 * 
+	 * @param stream the stream from of the input stream file
+	 * @param scriptName the name of the script file
+	 * @return the parsed attributes
+	 * @throws IOException if there was an issue reading the stream
+	 */
+	public ScriptAttributes parseStream(InputStream stream, String scriptName) throws IOException {
 		try (BufferedReader reader =
-			new BufferedReader(new InputStreamReader(new FileInputStream(script)))) {
+			new BufferedReader(new InputStreamReader(stream))) {
 			String line;
 			for (int lineNo = 1; (line = reader.readLine()) != null; lineNo++) {
 				if (ignoreLine(lineNo, line)) {
@@ -413,9 +448,22 @@ public abstract class ScriptAttributesParser {
 				if (comment == null) {
 					break;
 				}
-				parseComment(new Location(script.getName(), lineNo), comment);
+				parseComment(new Location(scriptName, lineNo), comment);
 			}
-			return validate(script.getName());
+			return validate(scriptName);
+		}
+	}
+
+	/**
+	 * Parse the header of the given script file
+	 * 
+	 * @param script the file
+	 * @return the parsed attributes
+	 * @throws FileNotFoundException if the script file could not be found
+	 */
+	public ScriptAttributes parseFile(File script) throws FileNotFoundException {
+		try {
+			return parseStream(new FileInputStream(script), script.getName());
 		}
 		catch (FileNotFoundException e) {
 			// Avoid capture by IOException
@@ -468,7 +516,7 @@ public abstract class ScriptAttributesParser {
 
 	protected void parseTitle(Location loc, String str) {
 		if (title != null) {
-			Msg.warn(this, "%s: Duplicate @title".formatted(loc));
+			reportWarning("%s: Duplicate %s".formatted(loc, AT_TITLE));
 		}
 		title = str;
 	}
@@ -483,161 +531,222 @@ public abstract class ScriptAttributesParser {
 
 	protected void parseMenuPath(Location loc, String str) {
 		if (menuPath != null) {
-			Msg.warn(this, "%s: Duplicate %s".formatted(loc, AT_MENU_PATH));
+			reportWarning("%s: Duplicate %s".formatted(loc, AT_MENU_PATH));
 		}
 		menuPath = List.of(str.trim().split("\\."));
 		if (menuPath.isEmpty()) {
-			Msg.error(this,
+			reportError(
 				"%s: Empty %s. Ignoring.".formatted(loc, AT_MENU_PATH));
 		}
 	}
 
 	protected void parseMenuGroup(Location loc, String str) {
 		if (menuGroup != null) {
-			Msg.warn(this, "%s: Duplicate %s".formatted(loc, AT_MENU_GROUP));
+			reportWarning("%s: Duplicate %s".formatted(loc, AT_MENU_GROUP));
 		}
 		menuGroup = str;
 	}
 
 	protected void parseMenuOrder(Location loc, String str) {
 		if (menuOrder != null) {
-			Msg.warn(this, "%s: Duplicate %s".formatted(loc, AT_MENU_ORDER));
+			reportWarning("%s: Duplicate %s".formatted(loc, AT_MENU_ORDER));
 		}
 		menuOrder = str;
 	}
 
 	protected void parseIcon(Location loc, String str) {
 		if (iconId != null) {
-			Msg.warn(this, "%s: Duplicate %s".formatted(loc, AT_ICON));
+			reportWarning("%s: Duplicate %s".formatted(loc, AT_ICON));
 		}
 		iconId = str.trim();
 		if (!Gui.hasIcon(iconId)) {
-			Msg.error(this,
+			reportError(
 				"%s: Icon id %s not registered in the theme".formatted(loc, iconId));
 		}
 	}
 
 	protected void parseHelp(Location loc, String str) {
 		if (helpLocation != null) {
-			Msg.warn(this, "%s: Duplicate %s".formatted(loc, AT_HELP));
+			reportWarning("%s: Duplicate %s".formatted(loc, AT_HELP));
 		}
 		String[] parts = str.trim().split("#", 2);
 		if (parts.length != 2) {
-			Msg.error(this, MSGPAT_INVALID_HELP_SYNTAX.formatted(loc, AT_HELP));
+			reportError(MSGPAT_INVALID_HELP_SYNTAX.formatted(loc, AT_HELP));
 			return;
 		}
 		helpLocation = new HelpLocation(parts[0].trim(), parts[1].trim());
 	}
 
+	protected <T> UserType<T> parseEnumChoices(Location loc, BaseType<T> baseType,
+			List<String> choiceParts) {
+		List<T> choices = new ArrayList<>();
+		boolean err = false;
+		for (String s : choiceParts) {
+			try {
+				choices.add(baseType.decode(loc, s));
+			}
+			catch (ParseException e) {
+				reportError(e.getMessage());
+			}
+		}
+		if (err) {
+			return null;
+		}
+		return baseType.withChoices(choices);
+	}
+
 	protected void parseEnum(Location loc, String str) {
 		List<String> parts = ShellUtils.parseArgs(str);
 		if (parts.size() < 2) {
-			Msg.error(this, MSGPAT_INVALID_ENUM_SYNTAX.formatted(loc, AT_ENUM));
+			reportError(MSGPAT_INVALID_ENUM_SYNTAX.formatted(loc, AT_ENUM));
 			return;
 		}
 		String[] nameParts = parts.get(0).split(":", 2);
 		if (nameParts.length != 2) {
-			Msg.error(this, MSGPAT_INVALID_ENUM_SYNTAX.formatted(loc, AT_ENUM));
+			reportError(MSGPAT_INVALID_ENUM_SYNTAX.formatted(loc, AT_ENUM));
 			return;
 		}
 		String name = nameParts[0].trim();
-		BaseType<?> baseType = BaseType.parse(loc, nameParts[1]);
-		if (baseType == null) {
+		BaseType<?> baseType;
+		try {
+			baseType = BaseType.parse(loc, nameParts[1]);
+		}
+		catch (ParseException e) {
+			reportError(e.getMessage());
 			return;
 		}
-		List<?> choices = parts.stream().skip(1).map(s -> baseType.decode(loc, s)).toList();
-		if (choices.contains(null)) {
-			return;
+		UserType<?> userType = parseEnumChoices(loc, baseType, parts.subList(1, parts.size()));
+		if (userType == null) {
+			return; // errors already reported
 		}
-		UserType<?> userType = baseType.withCastChoices(choices);
 		if (userTypes.put(name, userType) != null) {
-			Msg.warn(this, "%s: Duplicate %s %s. Replaced.".formatted(loc, AT_ENUM, name));
+			reportWarning("%s: Duplicate %s %s. Replaced.".formatted(loc, AT_ENUM, name));
 		}
 	}
 
 	protected void parseEnv(Location loc, String str) {
 		List<String> parts = ShellUtils.parseArgs(str);
 		if (parts.size() != 3) {
-			Msg.error(this, MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
+			reportError(MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
 			return;
 		}
 		String[] nameParts = parts.get(0).split(":", 2);
 		if (nameParts.length != 2) {
-			Msg.error(this, MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
+			reportError(MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
 			return;
 		}
 		String trimmed = nameParts[0].trim();
 		String name = PREFIX_ENV + trimmed;
 		String[] tadParts = nameParts[1].split("=", 2);
 		if (tadParts.length != 2) {
-			Msg.error(this, MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
+			reportError(MSGPAT_INVALID_ENV_SYNTAX.formatted(loc, AT_ENV));
 			return;
 		}
-		TypeAndDefault<?> tad =
-			TypeAndDefault.parse(loc, tadParts[0].trim(), tadParts[1].trim(), userTypes);
-		ParameterDescription<?> param = tad.createParameter(name, parts.get(1), parts.get(2));
-		if (parameters.put(name, param) != null) {
-			Msg.warn(this, "%s: Duplicate %s %s. Replaced.".formatted(loc, AT_ENV, trimmed));
+		try {
+			TypeAndDefault<?> tad =
+				TypeAndDefault.parse(loc, tadParts[0].trim(), tadParts[1].trim(), userTypes);
+			LaunchParameter<?> param = tad.createParameter(name, parts.get(1), parts.get(2));
+			if (parameters.put(name, param) != null) {
+				reportWarning("%s: Duplicate %s %s. Replaced.".formatted(loc, AT_ENV, trimmed));
+			}
+		}
+		catch (ParseException e) {
+			reportError(e.getMessage());
 		}
 	}
 
 	protected void parseArg(Location loc, String str, int argNum) {
 		List<String> parts = ShellUtils.parseArgs(str);
 		if (parts.size() != 3) {
-			Msg.error(this, MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
+			reportError(MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
 			return;
 		}
 		String colonType = parts.get(0).trim();
 		if (!colonType.startsWith(":")) {
-			Msg.error(this, MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
+			reportError(MSGPAT_INVALID_ARG_SYNTAX.formatted(loc, AT_ARG));
 			return;
 		}
-		OptType<?> type = OptType.parse(loc, colonType.substring(1), userTypes);
-		if (type == null) {
-			return;
+		OptType<?> type;
+		try {
+			type = OptType.parse(loc, colonType.substring(1), userTypes);
+			String name = PREFIX_ARG + argNum;
+			parameters.put(name,
+				type.createParameter(name, parts.get(1), parts.get(2), true,
+					new ValStr<>(null, "")));
 		}
-		String name = PREFIX_ARG + argNum;
-		parameters.put(name, ParameterDescription.create(type.cls(), name, true, null,
-			parts.get(1), parts.get(2)));
+		catch (ParseException e) {
+			reportError(e.getMessage());
+		}
 	}
 
 	protected void parseArgs(Location loc, String str) {
 		List<String> parts = ShellUtils.parseArgs(str);
 		if (parts.size() != 2) {
-			Msg.error(this, MSGPAT_INVALID_ARGS_SYNTAX.formatted(loc, AT_ARGS));
+			reportError(MSGPAT_INVALID_ARGS_SYNTAX.formatted(loc, AT_ARGS));
 			return;
 		}
-		ParameterDescription<String> parameter = ParameterDescription.create(String.class,
-			"args", false, "", parts.get(0), parts.get(1));
+
+		LaunchParameter<String> parameter = BaseType.STRING.createParameter(
+			"args", parts.get(0), parts.get(1), false, ValStr.str(""));
 		if (parameters.put(KEY_ARGS, parameter) != null) {
-			Msg.warn(this, "%s: Duplicate %s. Replaced".formatted(loc, AT_ARGS));
+			reportWarning("%s: Duplicate %s. Replaced".formatted(loc, AT_ARGS));
 		}
 	}
 
 	protected void putTty(Location loc, String name, TtyCondition condition) {
 		if (extraTtys.put(name, condition) != null) {
-			Msg.warn(this, "%s: Duplicate %s. Ignored".formatted(loc, AT_TTY));
+			reportWarning("%s: Duplicate %s. Ignored".formatted(loc, AT_TTY));
 		}
 	}
 
 	protected void parseTty(Location loc, String str) {
 		List<String> parts = ShellUtils.parseArgs(str);
 		switch (parts.size()) {
-			case 1:
+			case 1 -> {
 				putTty(loc, parts.get(0), ConstTtyCondition.ALWAYS);
 				return;
-			case 3:
+			}
+			case 3 -> {
 				if ("if".equals(parts.get(1))) {
-					putTty(loc, parts.get(0), new BoolTtyCondition(parts.get(2)));
+					LaunchParameter<?> param = parameters.get(parts.get(2));
+					if (param == null) {
+						reportError(
+							MSGPAT_INVALID_TTY_NO_PARAM.formatted(loc, AT_TTY, parts.get(2)));
+						return;
+					}
+					if (param.type() != Boolean.class) {
+						reportError(
+							MSGPAT_INVALID_TTY_NOT_BOOL.formatted(loc, AT_TTY, param.name()));
+						return;
+					}
+					@SuppressWarnings("unchecked")
+					LaunchParameter<Boolean> asBoolParam = (LaunchParameter<Boolean>) param;
+					putTty(loc, parts.get(0), new BoolTtyCondition(asBoolParam));
 					return;
 				}
-			case 5:
+			}
+			case 5 -> {
 				if ("if".equals(parts.get(1)) && "==".equals(parts.get(3))) {
-					putTty(loc, parts.get(0), new EqualsTtyCondition(parts.get(2), parts.get(4)));
-					return;
+					LaunchParameter<?> param = parameters.get(parts.get(2));
+					if (param == null) {
+						reportError(
+							MSGPAT_INVALID_TTY_NO_PARAM.formatted(loc, AT_TTY, parts.get(2)));
+						return;
+					}
+					try {
+						Object value = param.decode(parts.get(4)).val();
+						putTty(loc, parts.get(0), new EqualsTtyCondition(param, value));
+						return;
+					}
+					catch (Exception e) {
+						reportError(MSGPAT_INVALID_TTY_BAD_VAL.formatted(loc, AT_TTY,
+							param.name(), param.type(), parts.get(4)));
+						return;
+					}
 				}
+			}
 		}
-		Msg.error(this, MSGPAT_INVALID_TTY_SYNTAX.formatted(loc, AT_TTY));
+		reportError(MSGPAT_INVALID_TTY_SYNTAX.formatted(loc, AT_TTY));
 	}
 
 	protected void parseTimeout(Location loc, String str) {
@@ -645,7 +754,7 @@ public abstract class ScriptAttributesParser {
 			timeoutMillis = Integer.parseInt(str);
 		}
 		catch (NumberFormatException e) {
-			Msg.error(this, MSGPAT_INVALID_TIMEOUT_SYNTAX.formatted(loc, AT_TIMEOUT));
+			reportError(MSGPAT_INVALID_TIMEOUT_SYNTAX.formatted(loc, AT_TIMEOUT));
 		}
 	}
 
@@ -654,12 +763,13 @@ public abstract class ScriptAttributesParser {
 	}
 
 	protected void parseUnrecognized(Location loc, String line) {
-		Msg.warn(this, "%s: Unrecognized metadata: %s".formatted(loc, line));
+		reportWarning("%s: Unrecognized metadata: %s".formatted(loc, line));
 	}
 
 	protected ScriptAttributes validate(String fileName) {
 		if (title == null) {
-			Msg.error(this, "%s is required. Using script file name.".formatted(AT_TITLE));
+			reportError(
+				"%s is required. Using script file name: '%s'".formatted(AT_TITLE, fileName));
 			title = fileName;
 		}
 		if (menuPath == null) {
@@ -682,5 +792,13 @@ public abstract class ScriptAttributesParser {
 
 	private String getDescription() {
 		return description == null ? null : description.toString();
+	}
+
+	protected void reportWarning(String message) {
+		Msg.warn(this, message);
+	}
+
+	protected void reportError(String message) {
+		Msg.error(this, message);
 	}
 }

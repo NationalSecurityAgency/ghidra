@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,8 +91,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 	public boolean acceptServer(BSimServerInfo serverInfo) {
 		// FIXME: Use task to correct dialog parenting issue caused by password prompt
 		String errorMessage = null;
-		try {
-			FunctionDatabase database = BSimClientFactory.buildClient(serverInfo, true);
+		try (FunctionDatabase database = BSimClientFactory.buildClient(serverInfo, true)) {
 			if (database.initialize()) {
 				return true;
 			}

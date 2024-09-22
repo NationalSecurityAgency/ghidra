@@ -115,9 +115,8 @@ public class GnuDemangler implements Demangler {
 				throw new DemangledException(true);
 			}
 
-			boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
 			DemangledObject demangledObject =
-				parse(originalMangled, process, demangled, onlyKnownPatterns);
+				parse(originalMangled, process, demangled, options);
 			if (demangledObject == null) {
 				return demangledObject;
 			}
@@ -226,14 +225,16 @@ public class GnuDemangler implements Demangler {
 	}
 
 	private DemangledObject parse(String mangled, GnuDemanglerNativeProcess process,
-			String demangled, boolean demangleOnlyKnownPatterns) {
+			String demangled, GnuDemanglerOptions options) {
 
-		if (demangleOnlyKnownPatterns && !isKnownMangledString(mangled, demangled)) {
+		boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
+		if (onlyKnownPatterns && !isKnownMangledString(mangled, demangled)) {
 			return null;
 		}
 
+		boolean replaceStdTypedefs = options.shouldUseStandardReplacements();
 		GnuDemanglerParser parser = new GnuDemanglerParser();
-		DemangledObject demangledObject = parser.parse(mangled, demangled);
+		DemangledObject demangledObject = parser.parse(mangled, demangled, replaceStdTypedefs);
 		return demangledObject;
 	}
 

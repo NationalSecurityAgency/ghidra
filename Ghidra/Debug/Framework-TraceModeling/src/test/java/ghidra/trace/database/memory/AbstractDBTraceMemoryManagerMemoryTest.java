@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -958,6 +958,37 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 
 			assertEquals(4, space.getBytes(0, os.getAddress(0x4000), read));
 			assertArrayEquals(b.arr(1, 2, 3, 4), read.array());
+		}
+	}
+
+	@Test
+	public void testReplicateNpeScenario() throws Exception {
+		ByteBuffer buf4k = ByteBuffer.allocate(0x1000);
+		AddressSetView set = b.set(
+			b.range(0x00400000, 0x00404fff),
+			b.range(0x00605000, 0x00606fff),
+			b.range(0x7ffff7a2c000L, 0x7ffff7a33fffL));
+		Random random = new Random();
+		for (int i = 0; i < 30; i++) {
+			try (Transaction tx = b.startTransaction()) {
+				for (int j = 0; j < 3; j++) {
+					for (AddressRange r : set) {
+						for (AddressRange rc : new AddressRangeChunker(r, 0x1000)) {
+							if (random.nextInt(100) < 20) {
+								memory.setState(0, rc, TraceMemoryState.ERROR);
+								continue;
+							}
+							buf4k.position(0);
+							buf4k.limit(0x1000);
+							memory.putBytes(0, rc.getMinAddress(), buf4k);
+						}
+					}
+				}
+			}
+
+			try (Transaction tx = b.startTransaction()) {
+				memory.setState(0, b.range(0, -1), TraceMemoryState.UNKNOWN);
+			}
 		}
 	}
 }

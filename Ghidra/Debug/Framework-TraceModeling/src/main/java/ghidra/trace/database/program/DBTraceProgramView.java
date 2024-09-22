@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -708,7 +708,8 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	protected final DomainObjectEventQueues eventQueues;
 	protected EventTranslator eventTranslator;
-	protected final AddressSet allAddresses = new AddressSet();
+	private volatile boolean allAddressesValid;
+	private volatile AddressSetView allAddresses;;
 
 	protected final DBTraceProgramViewBookmarkManager bookmarkManager;
 	protected final DBTraceProgramViewEquateTable equateTable;
@@ -733,17 +734,13 @@ public class DBTraceProgramView implements TraceProgramView {
 	Long versionTag = 0L;
 
 	public DBTraceProgramView(DBTrace trace, long snap, CompilerSpec compilerSpec) {
-		for (AddressSpace space : trace.getBaseAddressFactory().getPhysicalSpaces()) {
-			if (space.getType() == AddressSpace.TYPE_OTHER) {
-				continue;
-			}
-			allAddresses.add(space.getMinAddress(), space.getMaxAddress());
-		}
 		this.trace = trace;
 		this.snap = snap;
 		this.languageID = compilerSpec.getLanguage().getLanguageID();
 		this.language = compilerSpec.getLanguage();
 		this.compilerSpec = compilerSpec;
+
+		checkRefreshAllAddresses();
 
 		this.viewport = trace.createTimeViewport();
 		this.viewport.setSnap(snap);
@@ -764,6 +761,25 @@ public class DBTraceProgramView implements TraceProgramView {
 
 		this.changes = new DBTraceProgramViewChangeSet();
 
+	}
+
+	protected void checkRefreshAllAddresses() {
+		if (this.allAddressesValid) {
+			return;
+		}
+		AddressSet allAddresses = new AddressSet();
+		for (AddressSpace space : trace.getBaseAddressFactory().getPhysicalSpaces()) {
+			if (space.getType() != AddressSpace.TYPE_OTHER) {
+				allAddresses.add(space.getMinAddress(), space.getMaxAddress());
+			}
+		}
+		this.allAddresses = allAddresses;
+		this.allAddressesValid = true;
+	}
+
+	protected AddressSetView getAllAddresses() {
+		checkRefreshAllAddresses();
+		return allAddresses;
 	}
 
 	protected void viewportChanged() {
@@ -1500,11 +1516,13 @@ public class DBTraceProgramView implements TraceProgramView {
 	public void updateMemoryAddSpaceBlock(AddressSpace space) {
 		// Spaces not not time-bound. No visibility check.
 		memory.updateAddSpaceBlock(space);
+		allAddressesValid = false;
 	}
 
 	public void updateMemoryDeleteSpaceBlock(AddressSpace space) {
 		// Spaces not not time-bound. No visibility check.
 		memory.updateDeleteSpaceBlock(space);
+		allAddressesValid = false;
 	}
 
 	public void updateMemoryRefreshBlocks() {

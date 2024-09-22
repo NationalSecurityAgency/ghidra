@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,6 @@ import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
 import ghidra.features.bsim.query.protocol.*;
 import ghidra.util.MessageType;
-import ghidra.util.Msg;
 
 public class CreateH2BSimDatabaseScript extends GhidraScript {
 	private static final String NAME = "Database Name";
@@ -80,31 +79,27 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 		askValues("Enter Database Parameters",
 			"Enter values required to create a new BSim H2 database.", values);
 
-		FunctionDatabase h2Database = null;
-		try {
-			String databaseName = values.getString(NAME);
-			File dbDir = values.getFile(DIRECTORY);
-			String template = values.getChoice(DATABASE_TEMPLATE);
-			String functionTagsCSV = values.getString(FUNCTION_TAGS);
-			List<String> tags = parseCSV(functionTagsCSV);
+		String databaseName = values.getString(NAME);
+		File dbDir = values.getFile(DIRECTORY);
+		String template = values.getChoice(DATABASE_TEMPLATE);
+		String functionTagsCSV = values.getString(FUNCTION_TAGS);
+		List<String> tags = parseCSV(functionTagsCSV);
 
-			String exeCatCSV = values.getString(EXECUTABLE_CATEGORIES);
-			List<String> cats = parseCSV(exeCatCSV);
+		String exeCatCSV = values.getString(EXECUTABLE_CATEGORIES);
+		List<String> cats = parseCSV(exeCatCSV);
 
-			File dbFile = new File(dbDir, databaseName);
+		File dbFile = new File(dbDir, databaseName);
+		BSimServerInfo serverInfo =
+			new BSimServerInfo(DBType.file, null, 0, dbFile.getAbsolutePath());
 
-			BSimServerInfo serverInfo =
-				new BSimServerInfo(DBType.file, null, 0, dbFile.getAbsolutePath());
-			h2Database = BSimClientFactory.buildClient(serverInfo, false);
-			BSimH2FileDataSource bds =
-				BSimH2FileDBConnectionManager.getDataSourceIfExists(h2Database.getServerInfo());
-			if (bds.getActiveConnections() > 0) {
-				//if this happens, there is a connection to the database but the
-				//database file was deleted
-				Msg.showError(this, null, "Connection Error",
-					"There is an existing connection to the database!");
-				return;
-			}
+		BSimH2FileDataSource existingBDS =
+			BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
+		if (existingBDS != null && existingBDS.getActiveConnections() > 0) {
+			popup("There is an existing connection to the database.");
+			return;
+		}
+
+		try (FunctionDatabase h2Database = BSimClientFactory.buildClient(serverInfo, false)) {
 
 			CreateDatabase command = new CreateDatabase();
 			command.info = new DatabaseInformation();
@@ -140,11 +135,13 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 			popup("Database " + values.getString(NAME) + " created successfully!");
 		}
 		finally {
-			if (h2Database != null) {
-				h2Database.close();
+			if (existingBDS == null) {
+				// Dispose database source if it did not previously exist
 				BSimH2FileDataSource bds =
-					BSimH2FileDBConnectionManager.getDataSourceIfExists(h2Database.getServerInfo());
-				bds.dispose();
+					BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
+				if (bds != null) {
+					bds.dispose();
+				}
 			}
 		}
 

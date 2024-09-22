@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,11 +38,13 @@ public class PointerAction extends CompositeEditorTableAction {
 		super(provider, ACTION_NAME, GROUP_NAME, null, null, null);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));
-		adjustEnablement();
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		try {
 			model.add(POINTER_DT);
 		}
@@ -55,16 +57,8 @@ public class PointerAction extends CompositeEditorTableAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		// Do nothing since we always want it enabled so the user gets a "doesn't fit" message.
-		return model.getRowCount() > 0 && model.hasSelection() && model.isContiguousSelection();
+		return !hasIncompleteFieldEntry() && model.getRowCount() > 0 && model.hasSelection() &&
+			model.isContiguousSelection();
 	}
 
-	@Override
-	public void adjustEnablement() {
-		// Allow the user to get a "doesn't fit" message on contiguous selection.
-		// Also allow message indicating you must have a selection.
-		boolean hasSelection = model.hasSelection();
-		boolean enable = model.getRowCount() > 0 &&
-			(!hasSelection || (hasSelection && model.isContiguousSelection()));
-		setEnabled(enable);
-	}
 }

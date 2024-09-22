@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -177,6 +177,9 @@ public:
 
   /// \brief Toggle Java specific aspects of the op-code information
   static void selectJavaOperators(vector<TypeOp *> &inst,bool val);
+
+  /// \brief Return the floating-point operation associated with the \e sign bit manipulation by the given PcodeOp
+  static OpCode floatSignManipulation(PcodeOp *op);
 };
 
 // Major classes of operations
@@ -692,7 +695,10 @@ public:
 class TypeOpFloatInt2Float : public TypeOpFunc {
 public:
   TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans);			///< Constructor
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatInt2Float(op); }
+  static const PcodeOp *absorbZext(const PcodeOp *op);
+  static int4 preferredZextSize(int4 inSize);
 };
 
 /// \brief Information about the FLOAT_FLOAT2FLOAT op-code

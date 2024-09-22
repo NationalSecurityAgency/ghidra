@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.*;
 
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.task.TaskMonitor;
+import pdb.symbolserver.SymbolServer.StatusRequiresContext;
 
 /**
  * A Pdb symbol server / symbol store, similar to the {@link LocalSymbolStore}, 
@@ -27,7 +28,7 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * 
  */
-public class SameDirSymbolStore implements SymbolStore {
+public class SameDirSymbolStore implements SymbolStore, StatusRequiresContext {
 
 	/**
 	 * Descriptive string
@@ -164,11 +165,6 @@ public class SameDirSymbolStore implements SymbolStore {
 	@Override
 	public String getFileLocation(String filename) {
 		return getFile(filename).getPath();
-	}
-
-	@Override
-	public boolean isLocal() {
-		return true;
 	}
 
 	@Override

@@ -202,11 +202,11 @@ public class LibraryLookupTable {
 	 * <pre>
 	 *   Ghidra/Features/Base/data/symbols/[win32|win64]
 	 * </pre>
-	 * Alternatively, a user specific resource directory may be used which
-	 * is located at
-	 * <pre>
-	 *   &lt;USER_HOME&gt;/.ghidra/&lt;.ghidraVersion&gt;/symbols/[win32|win64]
-	 * </pre>
+	 * Alternatively, a user specific resource directory may be used which 
+	 * is located at 
+	 * <pre>{@code
+	 *   <user settings>/symbols/[win32|win64]
+	 * }</pre>
 	 * The cacheMap is a static cache which always returns the same
 	 * instance for a given DLL name.
 	 *

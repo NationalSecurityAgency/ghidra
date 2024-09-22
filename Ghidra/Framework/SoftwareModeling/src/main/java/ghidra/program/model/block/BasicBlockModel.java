@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +25,14 @@ import ghidra.program.model.symbol.*;
  * Each Codeblock is made up of contiguous instructions in address order.
  *
  *  Blocks satisfy the following:<ol>
- *   <li>Any instruction with a label starts a block.
+ *   <li>Any instruction with a label starts a block.</li>
  *   <li>Each instruction that could cause program control flow to change local to 
- *       the containing function (i.e., excludes calls) is the last instruction of a Codeblock.
+ *       the containing function (i.e., excludes calls) is the last instruction of a Codeblock.</li>
  *   <li>All other instructions are "NOP" fallthroughs, meaning
  *      after execution the program counter will be at
- *      the instruction immediately following.
+ *      the instruction immediately following.</li>
  *   <li>Any instruction that is unreachable and has no label is also considered the start
- *       of a block.
+ *       of a block.</li>
  * </ol>
  * So a CodeBlock in this model consists of contiguous code that has zero or
  * more fallthrough or call instructions followed by a single flow instruction.
@@ -41,11 +40,12 @@ import ghidra.program.model.symbol.*;
  * have a label at any other instruction contained in the block.
  * 
  * This model handles delay slot instructions with the following 
- * assumptions:<ol>
+ * assumptions:
+ * <ol>
  * <li>The delay slot depth of the delayed instruction will always
  *     correspond to the number of delay slot instructions immediately
  *     following the instruction. The model may not behave properly if
- *     the disassembled code violates this assumption.
+ *     the disassembled code violates this assumption.</li>
  * </ol>
  * @see ghidra.program.model.block.CodeBlockModel
  */

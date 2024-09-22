@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,6 +68,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			case String s when s.startsWith("CodeGear") -> "codegearcpp";
 			case String s when s.equals("MS C") -> "windows";
 			case String s when s.startsWith("Watcom") -> "watcom";
+			case null -> null;
 			default -> null;
 		};
 	}
@@ -120,9 +121,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			header.sortSegmentDataBlocks();
 			OmfFileHeader.doLinking(IMAGE_BASE, header.getSegments(), header.getGroups());
 		}
-		catch (OmfException ex) {
+		catch (OmfException e) {
 			if (header == null) {
-				throw new IOException("OMF File header was corrupted");
+				throw new IOException("OMF File header was corrupted. " + e.getMessage());
 			}
 			log.appendMsg("File was corrupted - leaving partial program " + provider.getName());
 		}

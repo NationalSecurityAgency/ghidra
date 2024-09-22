@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import javax.swing.tree.TreePath;
 import docking.DialogComponentProvider;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
@@ -68,8 +68,7 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		panel.add(nameTextField);
 
 		// data type info
-		dataTypeEditor =
-			new DataTypeSelectionEditor(plugin.getTool(), AllowedDataTypes.ALL);
+		dataTypeEditor = new DataTypeSelectionEditor(plugin.getTool(), AllowedDataTypes.ALL);
 		panel.add(new GLabel("Data type:"));
 		panel.add(dataTypeEditor.getEditorComponent());
 
@@ -88,8 +87,8 @@ public class CreateTypeDefDialog extends DialogComponentProvider {
 		dataTypeEditor.setDefaultSelectedTreePath(selectedTreePath);
 
 		dataTypeManagerBox = new GhidraComboBox<>();
-		dataTypeManagerBox.setRenderer(
-			GListCellRenderer.createDefaultCellTextRenderer(dtm -> dtm.getName()));
+		dataTypeManagerBox
+				.setRenderer(GComboBoxCellRenderer.createDefaultTextRenderer(dtm -> dtm.getName()));
 
 		DataTypeManager[] dataTypeManagers = plugin.getDataTypeManagers();
 		for (DataTypeManager manager : dataTypeManagers) {

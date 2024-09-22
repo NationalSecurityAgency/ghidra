@@ -645,8 +645,14 @@ public class BitFieldEditorPanel extends JPanel {
 			}
 			deleteConflicts = (option == OptionDialog.OPTION_ONE);
 		}
-		placementComponent.applyBitField(baseDataType, fieldNameTextField.getText().trim(),
-			fieldCommentTextField.getText().trim(), deleteConflicts, listener);
+
+		boolean doDeleteConflicts = deleteConflicts;
+		this.composite.getDataTypeManager()
+				.withTransaction("Apply Bitfield",
+					() -> placementComponent.applyBitField(baseDataType,
+						fieldNameTextField.getText().trim(), fieldCommentTextField.getText().trim(),
+						doDeleteConflicts, listener));
+
 		enableControls(false);
 		return true;
 	}

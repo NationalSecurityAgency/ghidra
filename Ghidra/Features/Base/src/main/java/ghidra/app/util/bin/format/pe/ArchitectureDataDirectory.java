@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -27,7 +28,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-public class ArchitectureDataDirectory extends DataDirectory {
+public class ArchitectureDataDirectory extends DataDirectory implements StructConverter {
     private final static String NAME = "IMAGE_DIRECTORY_ENTRY_ARCHITECTURE";
 
     private String copyright;
@@ -43,9 +44,9 @@ public class ArchitectureDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException {
+			NTHeader nt) throws DuplicateNameException, CodeUnitInsertionException {
 		monitor.setMessage(program.getName()+": architecture...");
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -75,16 +76,13 @@ public class ArchitectureDataDirectory extends DataDirectory {
         return copyright;
     }
 
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
-    @Override
-    public DataType toDataType() throws DuplicateNameException {
-        StructureDataType struct = new StructureDataType(NAME, 0);
-        if (size > 0) {
-        	struct.add(new StringDataType(), size, "Copyright", null);
-        }
-        struct.setCategoryPath(new CategoryPath("/PE"));
-        return struct;
-    }
+	@Override
+	public DataType toDataType() throws DuplicateNameException {
+		StructureDataType struct = new StructureDataType(NAME, 0);
+		if (size > 0) {
+			struct.add(new StringDataType(), size, "Copyright", null);
+		}
+		struct.setCategoryPath(new CategoryPath("/PE"));
+		return struct;
+	}
 }

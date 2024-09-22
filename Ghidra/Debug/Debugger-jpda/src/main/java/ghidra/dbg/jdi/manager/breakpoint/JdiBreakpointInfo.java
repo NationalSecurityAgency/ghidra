@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.jdi.manager.breakpoint;
 
-import java.util.*;
+import java.util.Objects;
 
 import com.sun.jdi.*;
 import com.sun.jdi.request.*;
@@ -69,14 +69,12 @@ public class JdiBreakpointInfo {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!((obj instanceof JdiBreakpointInfo))) {
-			return false;
+		if (obj instanceof JdiBreakpointInfo that) {
+			if (this.request == that.request) {
+				return true;
+			}
 		}
-		JdiBreakpointInfo that = (JdiBreakpointInfo) obj;
-		if (this.request != that.request) {
-			return false;
-		}
-		return true;
+		return false;
 	}
 
 	/**
@@ -130,11 +128,11 @@ public class JdiBreakpointInfo {
 	}
 
 	public boolean isEnabled() {
-		if (request instanceof BreakpointRequest) {
-			return ((BreakpointRequest) request).isEnabled();
+		if (request instanceof BreakpointRequest breakreq) {
+			return breakreq.isEnabled();
 		}
-		if (request instanceof WatchpointRequest) {
-			return ((WatchpointRequest) request).isEnabled();
+		if (request instanceof WatchpointRequest watchReq) {
+			return watchReq.isEnabled();
 		}
 		return false;
 	}

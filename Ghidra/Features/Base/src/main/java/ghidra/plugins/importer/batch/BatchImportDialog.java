@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,10 @@ import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.preferences.Preferences;
 import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugins.importer.batch.BatchGroup.BatchLoadConfig;
 import ghidra.plugins.importer.tasks.ImportBatchTask;
@@ -53,6 +55,8 @@ import ghidra.util.task.TaskLauncher;
 
 public class BatchImportDialog extends DialogComponentProvider {
 
+	private static final String PREF_STRIPCONTAINER = "BATCHIMPORT.STRIPCONTAINER";
+	private static final String PREF_STRIPLEADING = "BATCHIMPORT.STRIPLEADING";
 	private static final String LAST_IMPORT_DIR = "LastBatchImportDir";
 
 	/**
@@ -71,10 +75,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 	 */
 	public static void showAndImport(PluginTool tool, BatchInfo batchInfo, List<FSRL> initialFiles,
 			DomainFolder defaultFolder, ProgramManager programManager) {
-		BatchImportDialog dialog = new BatchImportDialog(batchInfo, defaultFolder);
-		dialog.setProgramManager(programManager);
+		BatchImportDialog dialog = new BatchImportDialog(batchInfo, defaultFolder, programManager);
 		SystemUtilities.runSwingLater(() -> {
-			dialog.build();
 			if (initialFiles != null && !initialFiles.isEmpty()) {
 				dialog.addSources(initialFiles);
 			}
@@ -88,8 +90,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private BatchInfo batchInfo;
 	private DomainFolder destinationFolder;
 	private ProgramManager programManager;
-	private boolean stripLeading = true;
-	private boolean stripContainer = false;
+	private boolean stripLeading = getBooleanPref(PREF_STRIPLEADING, true);
+	private boolean stripContainer = getBooleanPref(PREF_STRIPCONTAINER, false);
 	private boolean openAfterImporting = false;
 
 	private BatchImportTableModel tableModel;
@@ -100,17 +102,22 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private SourcesListModel sourceListModel;
 
-	private BatchImportDialog(BatchInfo batchInfo, DomainFolder defaultFolder) {
+	private BatchImportDialog(BatchInfo batchInfo, DomainFolder defaultFolder,
+			ProgramManager programManager) {
 		super("Batch Import", true);
 
 		this.batchInfo = (batchInfo != null) ? batchInfo : new BatchInfo();
 		this.destinationFolder = defaultFolder != null ? defaultFolder
-				: ghidra.framework.main.AppInfo.getActiveProject().getProjectData().getRootFolder();
+				: AppInfo.getActiveProject().getProjectData().getRootFolder();
+		this.programManager = programManager;
+
 		setHelpLocation(new HelpLocation("ImporterPlugin", "Batch_Import_Dialog"));
 
 		// a reasonable size that is long enough to show path information and table columns with
 		// a height that has enough room to show table rows and import sources
 		setPreferredSize(900, 600);
+
+		build();
 	}
 
 	private void build() {
@@ -417,9 +424,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private boolean addSources(List<FSRL> filesToAdd) {
 
-		List<FSRL> updatedFiles = filesToAdd.stream()
-				.map(FSRL::convertRootToContainer)
-				.collect(Collectors.toList());
+		List<FSRL> updatedFiles = filesToAdd.stream().map(FSRL::convertRootToContainer).toList();
 
 		List<FSRL> badFiles = batchInfo.addFiles(updatedFiles);
 		if (!badFiles.isEmpty()) {
@@ -589,10 +594,12 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private void setStripLeading(boolean stripLeading) {
 		this.stripLeading = stripLeading;
+		setBooleanPref(PREF_STRIPLEADING, stripLeading);
 	}
 
 	private void setStripContainer(boolean stripContainer) {
 		this.stripContainer = stripContainer;
+		setBooleanPref(PREF_STRIPCONTAINER, stripContainer);
 	}
 
 	private void setMaxDepth(int newMaxDepth) {
@@ -604,7 +611,12 @@ public class BatchImportDialog extends DialogComponentProvider {
 		refreshData();
 	}
 
-	private void setProgramManager(ProgramManager programManager) {
-		this.programManager = programManager;
+	private static boolean getBooleanPref(String name, boolean defaultValue) {
+		return Boolean
+				.parseBoolean(Preferences.getProperty(name, Boolean.toString(defaultValue), true));
+	}
+
+	private static void setBooleanPref(String name, boolean value) {
+		Preferences.setProperty(name, Boolean.toString(value));
 	}
 }

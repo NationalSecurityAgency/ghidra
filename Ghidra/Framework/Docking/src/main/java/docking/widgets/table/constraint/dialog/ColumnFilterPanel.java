@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import javax.swing.border.BevelBorder;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.layout.VerticalLayout;
 import resources.Icons;
@@ -72,17 +72,10 @@ class ColumnFilterPanel extends JPanel {
 
 		DefaultComboBoxModel<ColumnFilterData<?>> model = new DefaultComboBoxModel<>(v);
 		columnFilterComboBox = new GhidraComboBox<>(model);
-		columnFilterComboBox.setRenderer(new GListCellRenderer<>() {
-
+		columnFilterComboBox.setRenderer(new GComboBoxCellRenderer<>() {
 			@Override
 			protected String getItemText(ColumnFilterData<?> value) {
 				return value == null ? "" : value.getName();
-			}
-
-			@Override
-			public boolean shouldAlternateRowBackgroundColor() {
-				// alternating colors look odd in this combo box
-				return false;
 			}
 		});
 

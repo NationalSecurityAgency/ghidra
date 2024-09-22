@@ -40,6 +40,7 @@ future releases.
     <li><a href="#RunServer">Ghidra Server</a></li>
     <li><a href="#RunHeadless">Headless (Batch) Mode</a></li>
     <li><a href="#RunJar">Single Jar Mode</a></li>
+	<li><a href="#RunPyGhidra">PyGhidra</a></li>
   </ul>
   <li><a href="#Extensions">Extensions</a></li>
   <ul>
@@ -98,8 +99,10 @@ Ghidra team if you have a specific need.</p></blockquote>
       </li>
     </ul>
   </ul>
-  <li>Python3 (3.7 to 3.12; for Debugger support)</li>
+  <li>Python3 (3.9 to 3.12)</li>
   <ul>
+    <li>Python 3.7 to 3.12 for <a href="#DebuggerPython">Debugger support</a></li>
+    <li>Python 3.9 to 3.12 for <a href="#RunPyGhidra">PyGhidra support</a></li>
     <li>This is available from <a href="https://python.org">Python.org</a> or most operating system's
      app stores or software repositories.  For Linux it is recommended that the system's package
      repository be used to install a suitable version of Python.</li>
@@ -112,6 +115,7 @@ Ghidra team if you have a specific need.</p></blockquote>
 <h2><a name="Install"></a>Installing Ghidra</h2>
 <p>To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem
 destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc)</p>
+
 <h3><a name="InstallationNotes"></a>Installation Notes</h3>
 <ul>
   <li>
@@ -122,6 +126,22 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
     Windows, removing Ghidra is as simple as deleting the Ghidra installation directory.  On the
     down side, Ghidra will not automatically create a shortcut on the desktop or appear in
     application start menus.
+  </li>
+  <li>
+    When launching Ghidra for the first time on macOS, the macOS Gatekeeper feature may attempt
+    to quarantine the pre-built unsigned Ghidra native components. Two techniques can be used to 
+    prevent this from happening:
+    <ul>
+      <li>
+        Prior to extracting the Ghidra distribution file, running 
+        <i>xattr -d com.apple.quarantine ghidra_&lt;version&gt;_&lt;date&gt;.zip</i>
+        from a terminal.
+      </li>
+      <li>
+        Prior to first launch, following the instructions in the 
+        <a href="#Build">Building Native Components</a> section.
+      </li>
+    </ul>
   </li>
   <li>
     Administrative privilege may be required to extract Ghidra to certain filesystem destinations
@@ -289,7 +309,7 @@ is complete.</p>
     </td>
   </tr>
   <tr>
-    <td valign="top"><b>LICENSE.txt</b></td>
+    <td valign="top"><b>LICENSE</b></td>
     <td valign="top">Ghidra license information.</td>
   </tr>
   <tr>
@@ -379,7 +399,7 @@ existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirecto
 
 <h2><a name="DebuggerPython"></a>Installing the Debugger's Python Dependencies</h2>
 <p>The Debugger now uses Python to connect to the host platform's native debuggers. This requires
-Python3 (3.7 to 3.12) and some additional packages. These packages are included in the distribution,
+Python3 (3.9 to 3.12) and some additional packages. These packages are included in the distribution,
 but you may still install them from PyPI if you prefer:</p>
 <ul>
 <li>psutil</li>
@@ -419,11 +439,36 @@ mode using the command line. For more information, see the
 <p>Normally, Ghidra is installed as an entire directory structure that allows modular inclusion or
 removal of feature sets and also provides many files that can be extended or configured. However,
 there are times when it would be useful to have	all or some subset of Ghidra compressed into a
-single jar file at the expense of	configuration options. This makes Ghidra easier to run from the
+single jar file at the expense of configuration options. This makes Ghidra easier to run from the
 command line for headless operation or to use as a library of reverse engineering capabilities for
 another Java application.</p>
 <p>A single ghidra.jar file can be created using the
 <i>&lt;GhidraInstallDir&gt;</i>/support/buildGhidraJar script.</p>
+
+<h3><a name="RunPyGhidra"></a>PyGhidra Mode</h3>
+<p>Ghidra has integrated the the popular PyGhidra extension to enable native CPython 3 support out of
+the box. To enable this support, Ghidra must be launched from a Python environment using special
+launch scripts.</p>
+<ol>
+  <li>
+    Navigate to <i>&lt;GhidraInstallDir&gt;</i>/support/
+  </li>
+  <li>
+    <p>Run <i>pyghidraRun.bat</i> (Windows) or <i>pyghidraRun</i> (Linux or macOS)</p>
+    <p>If the <b>pyghidra</b> Python module has not yet been installed, the script will offer to 
+    install it for you, along with its dependencies. If you prefer to install it manually, execute:
+    <pre>python3 -m pip install --no-index -f <i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Features/PyGhidra/pypkg/dist pyghidra</pre>
+    <b>NOTE: </b>You may also install and run PyGhidra from within a 
+    <a href="https://docs.python.org/3/tutorial/venv.html">virtual environment</a> if you desire.
+    <p>If Ghidra failed to launch, see the <a href="#Troubleshooting">Troubleshooting</a> section.
+    </p>
+  </li>
+</ol>
+<p>Once PyGhidra has been installed, you are free to use it like any other Python module. You may
+import it from other Python scripts, or launch PyGhidra using the <i>pyghidra</i> or <i>pyghidraw</i>
+commands. For more information on using PyGhidra, see the 
+<i>&lt;GhidraInstallDir&gt;</i>/Ghidra/Features/PyGhidra/PyGhidra_README.html file.</p>
+
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="Extensions"></a>Extensions</h2>
@@ -464,7 +509,9 @@ can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions directory.</p>
   </li>
   <li>
     Extensions installed from the Ghidra front-end GUI get installed at 
-    <i>&lt;UserDir&gt;</i>/.ghidra/.ghidra-[version]/Extensions.
+    <i>&lt;UserSettings&gt;</i>/Extensions, where <i>&lt;UserSettings&gt;</i> can be looked up in
+    the Ghidra front-end GUI under <i>Help -> Runtime Information -> Application Layout ->
+    Settings Directory.
   </li>
   <li>
     <p>It is possible to install Ghidra extensions directly into the Ghidra installation directory.

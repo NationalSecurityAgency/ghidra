@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,6 +70,14 @@ public class DWARFImportOptions {
 	private static final String OPTION_IMPORT_LOCAL_VARS_DESC =
 		"Import local variable information from DWARF and attempt to create Ghidra local variables.";
 
+	private static final String OPTION_IGNORE_PARAM_STORAGE = "Ignore Parameter Storage Info";
+	private static final String OPTION_IGNORE_PARAM_STORAGE_DESC =
+		"Ignore any function parameter storage info specifed, allow automatic layout.";
+
+	private static final String OPTION_DEFAULT_CC = "Default Calling Convention";
+	private static final String OPTION_DEFAULT_CC_DESC =
+		"Name of default calling convention to assign to functions (e.g. __cdecl, __stdcall, etc), or leave blank.";
+
 	//==================================================================================================
 	// Old Option Names - Should stick around for multiple major versions after 10.2
 	//==================================================================================================
@@ -104,6 +112,8 @@ public class DWARFImportOptions {
 	private boolean importLocalVariables = true;
 	private boolean useBookmarks = true;
 	private boolean outputSourceLineInfo = false;
+	private boolean ignoreParamStorage = false;
+	private String defaultCC = "";
 
 	/**
 	 * Create new instance
@@ -374,6 +384,22 @@ public class DWARFImportOptions {
 		this.outputSourceLineInfo = outputSourceLineInfo;
 	}
 
+	public boolean isIgnoreParamStorage() {
+		return ignoreParamStorage;
+	}
+
+	public void setIgnoreParamStorage(boolean ignoreParamStorage) {
+		this.ignoreParamStorage = ignoreParamStorage;
+	}
+
+	public String getDefaultCC() {
+		return defaultCC;
+	}
+
+	public void setDefaultCC(String defaultCC) {
+		this.defaultCC = defaultCC;
+	}
+
 	/**
 	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
 	 * 
@@ -409,6 +435,11 @@ public class DWARFImportOptions {
 
 		options.registerOption(OPTION_SOURCE_LINEINFO, isOutputSourceLineInfo(), null,
 			OPTION_SOURCE_LINEINFO_DESC);
+
+		options.registerOption(OPTION_IGNORE_PARAM_STORAGE, isIgnoreParamStorage(), null,
+			OPTION_IGNORE_PARAM_STORAGE_DESC);
+
+		options.registerOption(OPTION_DEFAULT_CC, getDefaultCC(), null, OPTION_DEFAULT_CC_DESC);
 	}
 
 	/**
@@ -433,6 +464,9 @@ public class DWARFImportOptions {
 			options.getBoolean(OPTION_IMPORT_LOCAL_VARS, isImportLocalVariables()));
 		setOutputSourceLineInfo(
 			options.getBoolean(OPTION_SOURCE_LINEINFO, isOutputSourceLineInfo()));
+		setIgnoreParamStorage(
+			options.getBoolean(OPTION_IGNORE_PARAM_STORAGE, isIgnoreParamStorage()));
+		setDefaultCC(options.getString(OPTION_DEFAULT_CC, getDefaultCC()));
 
 	}
 }

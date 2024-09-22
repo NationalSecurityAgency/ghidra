@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,20 +23,20 @@ import javax.swing.JComponent;
  * It is intended to be used by the code completion process, especially the
  * CodeCompletionWindow.  It encapsulates:
  * <ul>
- * <li> a description of the completion (what are you completing?)
- * <li> the actual String that will be inserted
- * <li> an optional Component that will be in the completion List
- * <li> the number of characters to remove before the insertion of the completion
+ * <li> a description of the completion (what are you completing?)</li>
+ * <li> the actual String that will be inserted</li>
+ * <li> an optional Component that will be in the completion List</li>
+ * <li> the number of characters to remove before the insertion of the completion</li>
  * </ul>
  * <p>
  * For example, if one wants to autocomplete a string "Runscr" into "runScript", 
  * the fields may look as follows:
  * <ul>
- * <li> description: "runScript (Method)"
- * <li> insertion: "runScript"
- * <li> component: null or JLabel("runScript (Method)")
+ * <li> description: "runScript (Method)"</li>
+ * <li> insertion: "runScript"</li>
+ * <li> component: null or JLabel("runScript (Method)")</li>
  * <li> charsToRemove: 6 (i.e. the length of "Runscr", 
- *      as it may be required later to correctly replace the string)
+ *      as it may be required later to correctly replace the string)</li>
  * </ul>
  */
 public class CodeCompletion implements Comparable<CodeCompletion> {

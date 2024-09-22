@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,10 +32,11 @@ import docking.widgets.fieldpanel.support.FieldSelection;
  * When edit actions occur and there is a selection, the listener's are notified
  * of the new selection via the listener's overrideSelection method.
  */
-import ghidra.app.plugin.core.compositeeditor.CompositeEditorModel;
-import ghidra.app.plugin.core.compositeeditor.DataTypeHelper;
+import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
@@ -78,6 +79,11 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
+	public String getTypeName() {
+		return "Stack";
+	}
+
+	@Override
 	protected boolean allowsZeroLengthComponents() {
 		return false;
 	}
@@ -105,8 +111,23 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	protected Composite createViewCompositeFromOriginalComposite(Composite original) {
-		return (Composite) original.copy(original.getDataTypeManager());
+	protected void createViewCompositeFromOriginalComposite(Composite original) {
+
+		if (viewDTM != null) {
+			viewDTM.close();
+			viewDTM = null;
+		}
+
+		// Use temporary standalone view datatype manager which will not manage the viewComposite
+		viewDTM = new CompositeViewerDataTypeManager(originalDTM.getName(), originalDTM);
+
+		// NOTE: StackFrameDataType cannot be resolved
+		viewComposite = (Composite) original.copy(viewDTM);
+	}
+
+	@Override
+	protected void restoreEditor() {
+		throw new UnsupportedOperationException("undo/redo not supported");
 	}
 
 	StackFrameDataType getViewComposite() {
@@ -127,21 +148,10 @@ public class StackEditorModel extends CompositeEditorModel {
 		int stackLocalSize = originalStack.getLocalSize();
 		int stackParamOffset = originalStack.getParameterOffset();
 		int stackParamSize = originalStack.getParameterSize();
-		hadChanges = (editReturnAddressOffset != stackReturnAddressOffset) ||
+		hasChanges = (editReturnAddressOffset != stackReturnAddressOffset) ||
 			(editLocalSize != stackLocalSize) || (editParamOffset != stackParamOffset) ||
 			(editParamSize != stackParamSize) || super.updateAndCheckChangeState();
-		return hadChanges;
-	}
-
-	/**
-	 *  Returns the current dataType name (Structure or Union) as a string.
-	 */
-	@Override
-	protected String getTypeName() {
-		if (viewComposite instanceof StackFrameDataType) {
-			return "Stack";
-		}
-		return super.getTypeName();
+		return hasChanges;
 	}
 
 	@Override
@@ -396,22 +406,16 @@ public class StackEditorModel extends CompositeEditorModel {
 		if (columnIndex == LENGTH) {
 			return false;
 		}
-		if ((rowIndex < 0) || (rowIndex >= getRowCount())) {
+		if (rowIndex < 0 || rowIndex >= getRowCount()) {
+			return false;
+		}
+		if (columnIndex < 0 || columnIndex >= getColumnCount()) {
 			return false;
 		}
 		DataTypeComponent dtc = stackDt.getComponent(rowIndex);
 		if (dtc == null) {
 			return false;
 		}
-//		if (columnIndex != NAME) {
-//			int offset = dtc.getOffset();
-//			if (!hasCustomParameterStorage && originalStack.isParameterOffset(offset)) {
-//				return false;
-//			}
-//		}
-//		if (dtc.getDataType() instanceof StackPieceDataType) {
-//			return false;
-//		}
 		boolean notDefined = (stackDt.getDefinedComponentAtOrdinal(rowIndex) == null);
 		return !(notDefined && (columnIndex == OFFSET));
 	}
@@ -433,11 +437,6 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	StackFrameDataType getEditorStack() {
 		return (StackFrameDataType) viewComposite;
-	}
-
-	@Override
-	public void clearComponent(int ordinal) {
-		((StackFrameDataType) viewComposite).clearComponent(ordinal);
 	}
 
 	@Override
@@ -684,11 +683,6 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public boolean isCycleAllowed(CycleGroup cycleGroup) {
-		return true;
-	}
-
-	@Override
 	public boolean isDeleteAllowed() {
 		if (selection.getNumRanges() != 1) {
 			return false;
@@ -840,7 +834,7 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	/** Gets the original field name within the parent data type for a given row in the editor */
 	private boolean isOriginalFieldName(String testName, int rowIndex) {
-		StackFrameDataType dataType = (StackFrameDataType) getOriginalComposite();
+		StackFrameDataType dataType = getOriginalComposite();
 		String fieldName = getFieldNameAtRow(rowIndex, dataType);
 		return SystemUtilities.isEqual(fieldName, testName);
 	}
@@ -858,7 +852,11 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	@Override
 	public DataTypeComponent add(DataType dataType) throws UsrException {
-		return replace(dataType);
+		int rowIndex = getMinIndexSelected();
+		if (rowIndex < 0) {
+			throw new UsrException("A component must be selected.");
+		}
+		return replace(rowIndex, dataType);
 	}
 
 	/**
@@ -1019,7 +1017,7 @@ public class StackEditorModel extends CompositeEditorModel {
 					newSv.setComment(comment);
 				}
 			}
-			load(new StackFrameDataType(original, dtm));
+			load(new StackFrameDataType(original, viewDTM));
 			clearStatus();
 			return true;
 		}
@@ -1106,10 +1104,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		return replace(rowIndex, dataType);
 	}
 
-	/*
-	 * 
-	 */
-	public DataTypeComponent replace(int index, DataType dataType) throws UsrException {
+	private DataTypeComponent replace(int index, DataType dataType) throws UsrException {
 		try {
 			DataTypeInstance dti = getDropDataType(index, dataType);
 			return replace(index, dti.getDataType(), dti.getLength());
@@ -1121,17 +1116,12 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	@Override
 	public DataTypeComponent replace(int index, DataType dt, int dtLength) throws UsrException {
+
 		OffsetPairs offsetSelection = getRelOffsetSelection();
-		int transID = startTransaction("Apply Data Type \"" + dt.getName() + "\"");
-		try {
-			fieldEdited(
-				DataTypeInstance.getDataTypeInstance(dt, dtLength, usesAlignedLengthComponents()),
-				index, getDataTypeColumn());
-			setRelOffsetSelection(offsetSelection);
-		}
-		finally {
-			endTransaction(transID);
-		}
+		fieldEdited(
+			DataTypeInstance.getDataTypeInstance(dt, dtLength, usesAlignedLengthComponents()),
+			index, getDataTypeColumn());
+		setRelOffsetSelection(offsetSelection);
 		return getComponent(index);
 	}
 
@@ -1157,6 +1147,48 @@ public class StackEditorModel extends CompositeEditorModel {
 		}
 		// Arrays currently use aligned-length only
 		return max / dtc.getDataType().getAlignedLength();
+	}
+
+	@Override
+	public void restored(DataTypeManager dataTypeManager) {
+
+		StackFrameDataType sfdt = getOriginalComposite();
+		Function function = sfdt.getFunction();
+		if (function.isDeleted()) {
+			// Cancel Editor.
+			provider.dispose();
+			PluginTool tool = ((StackEditorProvider) provider).getPlugin().getTool();
+			tool.setStatusInfo("Stack Editor was closed for " + provider.getName());
+			return;
+		}
+
+		updateAndCheckChangeState();
+
+		boolean reload = true;
+		if (hasChanges) {
+			// The user has modified the structure so prompt for whether or
+			// not to reload the structure.
+			String question = "The program \"dtm.getName()\" has been restored.\n" + "\"" +
+				currentName + "\" may have changed outside the editor.\n" +
+				"Discard edits and reload the Stack Editor?";
+			String title = "Reload Stack Editor?";
+			int response = OptionDialog
+					.showYesNoDialogWithNoAsDefaultButton(provider.getComponent(), title, question);
+			if (response != 1) {
+				reload = false;
+			}
+		}
+		if (reload) {
+
+			StackFrame stack = function.getStackFrame();
+			StackFrameDataType newSfdt =
+				new StackFrameDataType(stack, function.getProgram().getDataTypeManager());
+
+			load(newSfdt); // reload the stack model based on current stack frame
+		}
+		else {
+			refresh();
+		}
 	}
 
 	@Override
@@ -1235,22 +1267,24 @@ public class StackEditorModel extends CompositeEditorModel {
 		}
 	}
 
+	/**
+	 * Get the stack frame model datatype being edited
+	 * @return stack frame model datatype
+	 */
 	@Override
-	protected Composite getOriginalComposite() {
-		// This is to allow the stack editor panel to have access.
-		return originalComposite; // not contained within datatype manager
+	protected StackFrameDataType getOriginalComposite() {
+		return (StackFrameDataType) originalComposite;
+	}
+
+	@Override
+	protected boolean originalCompositeExists() {
+		return false;
 	}
 
 	@Override
 	protected DataTypeManager getOriginalDataTypeManager() {
 		// This is to allow the stack editor panel to have access.
 		return super.getOriginalDataTypeManager();
-	}
-
-	@Override
-	protected void fixupOriginalPath(Composite composite) {
-		// This is to allow the stack editor panel to have access.
-		super.fixupOriginalPath(composite);
 	}
 
 	@Override
@@ -1276,10 +1310,25 @@ public class StackEditorModel extends CompositeEditorModel {
 		for (int i = comps.length - 1; i >= 0; i--) {
 			DataTypeComponent component = comps[i];
 			DataType compDt = component.getDataType();
-			if (compDt.isDeleted()) {
-				clearComponent(component.getOrdinal());
+			if (compDt instanceof DatabaseObject) {
+				// NOTE: viewDTM only maps view-to-original IDs for DataTypeDB
+				long myId = viewDTM.getID(compDt);
+				if (viewDTM.findOriginalDataTypeFromMyID(myId) == null) {
+					// Datatype not found
+					clearComponent(component.getOrdinal());
+				}
 			}
 		}
+
+		viewDTM.refreshDBTypesFromOriginal();
+	}
+
+	@Override
+	protected void clearComponents(int[] rows) {
+		for (int i = rows.length - 1; i >= 0; i--) {
+			((StackFrameDataType) viewComposite).clearComponent(rows[i]);
+		}
+		notifyCompositeChanged();
 	}
 
 	//**************************************************************************
@@ -1288,24 +1337,6 @@ public class StackEditorModel extends CompositeEditorModel {
 	// prompted for a length when the user tries to apply a -1 length data type.
 	//**************************************************************************
 	//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-	@Override
-	public DataType resolve(DataType dt) {
-		if (dt instanceof StackPieceDataType) {
-			return dt;
-		}
-		return DataTypeHelper.resolveDataType(dt, viewDTM, null);
-	}
-
-	/**
-	 * This method overrides the CompositeEditorModel to wrap the resolve of the data type
-	 * in a transaction.
-	 */
-	@Override
-	public DataType resolveDataType(DataType dt, DataTypeManager resolveDtm,
-			DataTypeConflictHandler conflictHandler) {
-		return DataTypeHelper.resolveDataType(dt, resolveDtm, conflictHandler);
-	}
 
 	@Override
 	public DataTypeInstance validateComponentDataType(int index, String dtString)
@@ -1323,7 +1354,6 @@ public class StackEditorModel extends CompositeEditorModel {
 			}
 		}
 
-		DataTypeManager originalDTM = getOriginalDataTypeManager();
 		DataType newDt = DataTypeHelper.parseDataType(index, dtString, this, originalDTM,
 			provider.getDtmService());
 
@@ -1337,7 +1367,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		int newLength = newDt.getLength();
 
 		checkIsAllowableDataType(newDt);
-		newDt = DataTypeHelper.resolveDataType(newDt, viewDTM, null);
+		newDt = resolveDataType(newDt, viewDTM, null);
 		int maxLength = getMaxReplaceLength(index);
 		if (newLength <= 0) {
 			throw new UsrException("Can't currently add this data type--not enough space.");

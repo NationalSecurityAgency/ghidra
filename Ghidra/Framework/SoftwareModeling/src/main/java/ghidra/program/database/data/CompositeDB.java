@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
@@ -212,6 +213,9 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		lock.acquire();
 		try {
 			checkDeleted();
+			if (Objects.equals(desc, record.getString(CompositeDBAdapter.COMPOSITE_COMMENT_COL))) {
+				return;
+			}
 			record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, desc);
 			compositeAdapter.updateRecord(record, true);
 			dataMgr.dataTypeChanged(this, false);
@@ -345,6 +349,11 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		compositeAdapter.updateRecord(record, true);
 	}
 
+	protected void removeComponentRecord(long compKey) throws IOException {
+		componentAdapter.removeRecord(compKey);
+		dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
+	}
+
 	/**
 	 * This method throws an exception if the indicated data type is not a valid
 	 * data type for a component of this composite data type.  If the DEFAULT 
@@ -386,13 +395,17 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		return record.getLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL);
 	}
 
+	void doSetLastChangeTime(long lastChangeTime) throws IOException {
+		record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
+		compositeAdapter.updateRecord(record, false);
+	}
+
 	@Override
 	public void setLastChangeTime(long lastChangeTime) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
-			compositeAdapter.updateRecord(record, false);
+			doSetLastChangeTime(lastChangeTime);
 			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {

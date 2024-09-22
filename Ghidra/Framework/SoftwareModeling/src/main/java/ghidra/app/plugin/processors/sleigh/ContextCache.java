@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,19 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
-
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import generic.stl.Pair;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.*;
 
 public class ContextCache {
 	private int context_size = 0;
 	private Register contextBaseRegister = null;
 
-	private BigInteger lastContextValue;
-	private int[] lastContextWords;
-
+	Pair <BigInteger, int []> lastValue = null;
+	
 	public ContextCache() {
 	}
 
@@ -57,12 +56,15 @@ public class ContextCache {
 		}
 	}
 
-	private synchronized int[] getWords(BigInteger value) {
-		if (value.equals(lastContextValue)) {
-			return lastContextWords;
-		}
+	private int[] getWords(BigInteger value) {
 
+		Pair <BigInteger, int []> lastValueTmp = lastValue;
+		if (lastValueTmp != null && value.equals(lastValueTmp.first)) {
+			return lastValueTmp.second;
+		}
+		
 		int[] words = new int[context_size];
+
 		byte[] bytes = value.toByteArray();
 		int byteIndexDiff = context_size * 4 - bytes.length;
 		for (int i = 0; i < context_size; i++) {
@@ -73,8 +75,10 @@ public class ContextCache {
 			}
 			words[i] = word;
 		}
-		lastContextValue = value;
-		lastContextWords = words;
+		
+		lastValueTmp = new Pair<BigInteger, int[]>(value, words);
+		lastValue = lastValueTmp;
+		
 		return words;
 	}
 

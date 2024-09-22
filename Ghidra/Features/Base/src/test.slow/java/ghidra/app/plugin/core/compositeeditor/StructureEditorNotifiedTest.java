@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -596,7 +596,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		int numComps = model.getNumComponents();
 		int len = model.getLength();
-		
+
 		assertEquals(87, complexStructure.getComponent(16).getDataType().getLength());
 		assertEquals(29, complexStructure.getComponent(19).getDataType().getLength());
 		assertEquals(24, complexStructure.getComponent(20).getDataType().getLength());
@@ -675,17 +675,14 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		programDTM.replaceDataType(complexStructure, newComplexStructure, true);
 		waitForSwing();
-		DataType origCopy = newComplexStructure.clone(null);
 
 		// Verify the Reload Structure Editor? dialog is displayed.
-		dialog = waitForWindow("Reload Structure Editor?");
+		dialog = waitForWindow("Close Structure Editor?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "Yes");
-		dialog.dispose();
-		dialog = null;
+		waitForSwing();
 
-		assertEquals(((Structure) origCopy).getNumComponents(), model.getNumComponents());
-		assertTrue(origCopy.isEquivalent(model.viewComposite));
+		assertFalse(provider.isVisible());
 	}
 
 	@Test
@@ -708,10 +705,12 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		waitForSwing();
 
 		// Verify the Reload Structure Editor? dialog is displayed.
-		Window dialog = waitForWindow("Reload Structure Editor?");
+		Window dialog = waitForWindow("Close Structure Editor?");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "No");
-		dialog.dispose();
+		waitForSwing();
+
+		assertTrue(provider.isVisible());
 
 		assertEquals(((Structure) viewCopy).getNumComponents(), model.getNumComponents());
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
@@ -728,8 +727,14 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		programDTM.replaceDataType(complexStructure, newComplexStructure, true);
+
+		// Verify Structure Editor closes (we don't want two editors for the same type)
+		Window dialog = waitForWindow("Closing Structure Editor");
+		assertNotNull(dialog);
+		pressButtonByText(dialog, "OK");
 		waitForSwing();
-		assertTrue(newComplexStructure.isEquivalent(model.viewComposite));
+
+		assertFalse(provider.isVisible());
 	}
 
 }

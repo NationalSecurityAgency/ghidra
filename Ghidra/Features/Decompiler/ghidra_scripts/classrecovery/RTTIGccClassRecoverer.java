@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -220,6 +220,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Msg.debug(this, "Creating and Applying Class structures");
 		createAndApplyClassStructures();
+
+		// fix purecall vfunction definitions
+		fixupPurecallFunctionDefs();
 
 		updateMultiVftableLabels();
 
@@ -2820,20 +2823,24 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// get the newly created symbol to get the namespace
 		Symbol typeinfoNameSymbol = symbolTable.getPrimarySymbol(typeinfoNameAddress);
 
+		Namespace typeinfoNamespace = typeinfoNameSymbol.getParentNamespace();
+
 		// need to account for rare case where there are more than one typeinfos with
 		// exact same class and name so make two classes in this case - name second one
 		// dupe#
 		List<Symbol> symbols = symbolTable.getSymbols(typeinfoNameSymbol.getName(),
-			typeinfoNameSymbol.getParentNamespace());
+			typeinfoNamespace);
 		if (symbols.size() > 1) {
 
+			Namespace parentNamespace = typeinfoNamespace.getParentNamespace();
 			Msg.debug(this, "Duplicate typeinfo namespace: " +
-				typeinfoNameSymbol.getParentNamespace().toString());
+				typeinfoNamespace.toString());
 			for (Symbol symbol : symbols) {
 				Msg.debug(this, symbol.getAddress());
 			}
-			Namespace newNamespace = symbolTable.getOrCreateNameSpace(globalNamespace,
-				typeinfoNameSymbol.getParentNamespace().getName(true) + "DUPE",
+
+			Namespace newNamespace = symbolTable.getOrCreateNameSpace(parentNamespace,
+				typeinfoNamespace.getName() + "DUPE",
 				SourceType.ANALYSIS);
 			try {
 				typeinfoNameSymbol.setNamespace(newNamespace);
@@ -2867,7 +2874,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		return newSymbol;
 	}
-
 
 	private Symbol createTypeinfoSymbolFromNonMangledString(Address typeinfoAddress)
 			throws DuplicateNameException, InvalidInputException, CancelledException {
@@ -3752,7 +3758,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 		return null;
 	}
-
 
 	/*
 	 * Method to find special vtable using special typeinfo references. This

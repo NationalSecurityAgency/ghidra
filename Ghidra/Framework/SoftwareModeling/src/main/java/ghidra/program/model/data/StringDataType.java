@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,23 +23,23 @@ import ghidra.util.classfinder.ClassTranslator;
  * <p>
  * All string data types:
  * <ul>
- * <li>{@link StringDataType} - this type, fixed length, user settable charset.
- * <li>{@link StringUTF8DataType} - fixed length UTF-8 string.
- * <li>{@link TerminatedStringDataType} - terminated and unbounded string, user settable charset.
- * <li>{@link TerminatedUnicodeDataType} - terminated and unbounded UTF-16 string.
- * <li>{@link TerminatedUnicode32DataType} - terminated and unbounded UTF-32 string.
- * <li>{@link PascalString255DataType} - length-prefixed string (limited to 255 chars), user settable charset.
- * <li>{@link PascalStringDataType} - length-prefixed string (limited to 64k), user settable charset.
- * <li>{@link PascalUnicodeDataType} - length-prefixed UTF-16 (limited to 64k).
- * <li>{@link UnicodeDataType} - fixed length UTF-16 string.
- * <li>{@link Unicode32DataType} - fixed length UTF-32 string.
+ * <li>{@link StringDataType} - this type, fixed length, user settable charset.</li>
+ * <li>{@link StringUTF8DataType} - fixed length UTF-8 string.</li>
+ * <li>{@link TerminatedStringDataType} - terminated and unbounded string, user settable charset.</li>
+ * <li>{@link TerminatedUnicodeDataType} - terminated and unbounded UTF-16 string.</li>
+ * <li>{@link TerminatedUnicode32DataType} - terminated and unbounded UTF-32 string.</li>
+ * <li>{@link PascalString255DataType} - length-prefixed string (limited to 255 chars), user settable charset.</li>
+ * <li>{@link PascalStringDataType} - length-prefixed string (limited to 64k), user settable charset.</li>
+ * <li>{@link PascalUnicodeDataType} - length-prefixed UTF-16 (limited to 64k).</li>
+ * <li>{@link UnicodeDataType} - fixed length UTF-16 string.</li>
+ * <li>{@link Unicode32DataType} - fixed length UTF-32 string.</li>
  * </ul>
  * <p>
  * The following settings are supported by all string types on the data instance:
  * <ul>
  * <li> {@link TranslationSettingsDefinition} - controls display of string values that have been
- * translated to english.
- * <li> {@link RenderUnicodeSettingsDefinition} - controls display of non-ascii Unicode characters.
+ * translated to English.</li>
+ * <li> {@link RenderUnicodeSettingsDefinition} - controls display of non-ascii Unicode characters.</li>
  * </ul>
  */
 public class StringDataType extends AbstractStringDataType {

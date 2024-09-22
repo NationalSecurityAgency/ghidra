@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,13 +34,14 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 	public FindReferencesToStructureFieldAction(CompositeEditorProvider provider) {
 		super(provider, ACTION_NAME, BASIC_ACTION_GROUP, new String[] { ACTION_NAME }, null, null);
 		setDescription(DESCRIPTION);
-		adjustEnablement();
 		setHelpLocation(new HelpLocation(HelpTopics.FIND_REFERENCES, "Data_Types"));
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		FindAppliedDataTypesService service = tool.getService(FindAppliedDataTypesService.class);
 		if (service == null) {
 			Msg.showError(this, null, "Missing Plugin",
@@ -67,24 +68,27 @@ public class FindReferencesToStructureFieldAction extends CompositeEditorTableAc
 	}
 
 	@Override
-	public void adjustEnablement() {
+	public boolean isEnabledForContext(ActionContext context) {
 		setEnabled(false);
+		if (hasIncompleteFieldEntry()) {
+			return false;
+		}
 		if (model.getSelectedComponentRows().length != 1) {
-			return;
+			return false;
 		}
 
 		Composite composite = model.getOriginalComposite();
 		if (composite == null) {
-			return; // not sure if this can happen
+			return false; // not sure if this can happen
 		}
 
 		String fieldName = getFieldName();
 		if (fieldName == null) {
-			return;
+			return false;
 		}
 
-		setEnabled(true);
 		updateMenuName(fieldName);
+		return true;
 	}
 
 	private void updateMenuName(String name) {

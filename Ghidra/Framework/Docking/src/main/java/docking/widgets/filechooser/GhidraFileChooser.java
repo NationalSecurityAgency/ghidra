@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -393,7 +393,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		JLabel filterLabel = new GLabel("Type:");
 		filterCombo = new GComboBox<>();
-		filterCombo.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
+		filterCombo.setRenderer(GListCellRenderer.createDefaultTextRenderer(
 			fileFilter -> fileFilter != null ? fileFilter.getDescription() : ""));
 		filterModel = (DefaultComboBoxModel<GhidraFileFilter>) filterCombo.getModel();
 		addFileFilter(GhidraFileFilter.ALL);
@@ -626,13 +626,13 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * Sets the <code>GhidraFileChooser</code> to allow the user to just
 	 * select files, just select
 	 * directories, or select both files and directories.  The default is
-	 * <code>JFilesChooser.FILES_ONLY</code>.
+	 * {@link JFileChooser#FILES_ONLY}.
 	 *
 	 * @param mode the type of files to be displayed:
 	 * <ul>
-	 * <li>GhidraFileChooser.FILES_ONLY
-	 * <li>GhidraFileChooser.DIRECTORIES_ONLY
-	 * <li>GhidraFileChooser.FILES_AND_DIRECTORIES
+	 * <li>{@link GhidraFileChooser#FILES_ONLY}</li>
+	 * <li>{@link GhidraFileChooser#DIRECTORIES_ONLY}</li>
+	 * <li>{@link GhidraFileChooser#FILES_AND_DIRECTORIES}</li>
 	 * </ul>
 	 *
 	 * @exception IllegalArgumentException  if <code>mode</code> is an
@@ -1007,8 +1007,8 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	 * <ul>
 	 *  <li>If the parent directory of the file exists, then the parent directory will be made
 	 *      the current directory and the name of the file will be put into the filename
-	 *      textfield; otherwise,
-	 *  <li>If the parent file does <b>not</b> exist, then the selection is cleared.
+	 *      textfield; otherwise,</li>
+	 *  <li>If the parent file does <b>not</b> exist, then the selection is cleared.</li>
 	 * </ul>
 	 * <p>
 	 * If the given file is null, then the selected file state is cleared.

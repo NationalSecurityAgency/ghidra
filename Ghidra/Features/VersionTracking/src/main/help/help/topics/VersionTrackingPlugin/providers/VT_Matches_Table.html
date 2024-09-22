@@ -329,12 +329,19 @@
 	      	you will be prompted to confirm your decision.
 	      	</P>
 	      	<P>
-	      	Generally, we suggest users should not delete accepted matches.  The more matches that 
-	      	are accepted, the better the Version Tracking results, since user choices affect 
-	      	future match scores.  Keeping accepted matches and the applied markup provides
-	      	future analysis with more corroborating details.  Contrastingly, deleting accepted 
-	      	matches while keeping applied markup will remove supporting evidence that the user has 
-	      	already substantiated.
+	      	Generally, we suggest users should not delete accepted matches for the following reasons:
+	      	<ul>
+	      	<li>Accepted matches are used by some of the other correlators to find more matches. If
+	      	completely deleted, those other correlators will not have as much information to work 
+	      	from. </li>
+	      	<li>The number of implied match votes and conflicts will be altered when accepted 
+	      	matches are completely removed.</li>
+	      	<li>If deleting an accepted match causes the number of votes to reach
+	      	zero for a particular implied match, the implied match will be deleted as well. </li>
+	      	<li>Selecting an accepted match in the match table allows users to see what markup was
+	      	applied when the match was accepted. Deleting accepted matches while keeping applied 
+ 			markup will remove this supporting evidence regarding how the markup was generated.</li>
+ 			</ul>
 	      	</P>
 	      		<BLOCKQUOTE>
 	      		<P><IMG src="help/shared/tip.png">An alternative to deleting matches is to 

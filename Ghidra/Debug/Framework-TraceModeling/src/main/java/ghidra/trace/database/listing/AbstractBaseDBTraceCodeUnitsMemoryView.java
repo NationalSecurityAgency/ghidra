@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.trace.database.listing;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 
 import generic.NestedIterator;
@@ -258,8 +259,11 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public T getFloor(long snap, Address address) {
 		try (LockHold hold = LockHold.lock(readLock())) {
-			for (AddressRange range : DBTraceUtils.getAddressSet(
-				manager.getBaseLanguage().getAddressFactory(), address, false)) {
+			Iterator<AddressRange> it = DBTraceUtils
+					.getAddressSet(manager.getTrace().getBaseAddressFactory(), address, false)
+					.iterator(false);
+			while (it.hasNext()) {
+				AddressRange range = it.next();
 				M m = getForSpace(range.getAddressSpace(), false);
 				T candidate = m == null ? nullOrUndefined(snap, range.getMaxAddress())
 						: m.getFloor(snap, range.getMaxAddress());
@@ -303,7 +307,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	public T getCeiling(long snap, Address address) {
 		try (LockHold hold = LockHold.lock(readLock())) {
 			for (AddressRange range : DBTraceUtils.getAddressSet(
-				manager.getBaseLanguage().getAddressFactory(), address, true)) {
+				manager.getTrace().getBaseAddressFactory(), address, true)) {
 				M m = getForSpace(range.getAddressSpace(), false);
 				T candidate = m == null ? nullOrUndefined(snap, range.getMinAddress())
 						: m.getCeiling(snap, range.getMinAddress());
@@ -333,7 +337,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 		if (min.hasSameAddressSpace(max)) {
 			return get(snap, new AddressRangeImpl(min, max), forward);
 		}
-		return get(snap, manager.getBaseLanguage().getAddressFactory().getAddressSet(min, max),
+		return get(snap, manager.getTrace().getBaseAddressFactory().getAddressSet(min, max),
 			forward);
 	}
 
@@ -360,7 +364,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 * @see TraceBaseCodeUnitsView#get(long, Address, boolean)
 	 */
 	public Iterable<? extends T> get(long snap, Address start, boolean forward) {
-		AddressFactory factory = manager.getBaseLanguage().getAddressFactory();
+		AddressFactory factory = manager.getTrace().getBaseAddressFactory();
 		return get(snap, DBTraceUtils.getAddressSet(factory, start, forward), forward);
 	}
 
@@ -368,7 +372,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 * @see TraceBaseCodeUnitsView#get(long, boolean)
 	 */
 	public Iterable<? extends T> get(long snap, boolean forward) {
-		return get(snap, manager.getBaseLanguage().getAddressFactory().getAddressSet(), forward);
+		return get(snap, manager.getTrace().getBaseAddressFactory().getAddressSet(), forward);
 	}
 
 	/**
@@ -398,7 +402,7 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public AddressSetView getAddressSetView(long snap) {
 		AddressSet result = new AddressSet();
-		for (AddressRange range : manager.getBaseLanguage().getAddressFactory().getAddressSet()) {
+		for (AddressRange range : manager.getTrace().getBaseAddressFactory().getAddressSet()) {
 			M m = getForSpace(range.getAddressSpace(), false);
 			if (m == null) {
 				result.add(emptyOrFullAddressSetUndefined(range));

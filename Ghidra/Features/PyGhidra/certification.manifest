@@ -1,0 +1,18 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+.gitignore||GHIDRA||||END|
+.launch/Ghidra Attach.launch||GHIDRA||||END|
+.launch/PyGhidra GUI Debug.launch||GHIDRA||||END|
+.launch/PyGhidra GUI.launch||GHIDRA||||END|
+.launch/PyGhidra Interpreter Debug.launch||GHIDRA||||END|
+.launch/PyGhidra Interpreter.launch||GHIDRA||||END|
+.launch/_PyGhidra GUI Debug.launch||GHIDRA||||END|
+.launch/_PyGhidra Interpreter Debug.launch||GHIDRA||||END|
+Module.manifest||GHIDRA||||END|
+data/python.theme.properties||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/PyGhidra/interpreter.html||GHIDRA||||END|
+src/main/py/LICENSE||GHIDRA||||END|
+src/main/py/MANIFEST.in||GHIDRA||||END|
+src/main/py/README.md||GHIDRA||||END|
+src/main/py/pyproject.toml||GHIDRA||||END|

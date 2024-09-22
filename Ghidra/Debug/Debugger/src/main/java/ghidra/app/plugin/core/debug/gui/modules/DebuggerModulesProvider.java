@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import static ghidra.framework.main.DataTreeDialogType.*;
+import static ghidra.framework.main.DataTreeDialogType.OPEN;
 
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -40,18 +40,18 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.plugin.core.debug.gui.action.AutoMapSpec;
-import ghidra.app.plugin.core.debug.gui.action.AutoMapSpec.AutoMapSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
-import ghidra.app.plugin.core.debug.service.model.TraceRecorderTarget;
 import ghidra.app.plugin.core.debug.service.modules.MapModulesBackgroundCommand;
 import ghidra.app.plugin.core.debug.service.modules.MapSectionsBackgroundCommand;
 import ghidra.app.services.*;
+import ghidra.debug.api.action.AutoMapSpec;
+import ghidra.debug.api.action.AutoMapSpec.AutoMapSpecConfigFieldCodec;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.modules.*;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
@@ -68,11 +68,14 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceEvent;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 
-public class DebuggerModulesProvider extends ComponentProviderAdapter {
+public class DebuggerModulesProvider extends ComponentProviderAdapter
+		implements DebuggerAutoMappingService {
+
 	protected static final AutoConfigState.ClassHandler<DebuggerModulesProvider> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerModulesProvider.class, MethodHandles.lookup());
 
@@ -336,27 +339,82 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected class ForMappingTraceListener extends TraceDomainObjectListener {
-		public ForMappingTraceListener(AutoMapSpec spec) {
+	protected static class AutoMapState extends TraceDomainObjectListener
+			implements TransactionListener {
+
+		private final PluginTool tool;
+		private final Trace trace;
+		private final AutoMapSpec spec;
+		private volatile boolean couldHaveChanged = true;
+		private volatile String infosLastTime = "";
+
+		public AutoMapState(PluginTool tool, Trace trace, AutoMapSpec spec) {
+			this.tool = tool;
+			this.trace = trace;
+			this.spec = spec;
 			for (TraceEvent<?, ?> type : spec.getChangeTypes()) {
 				listenFor(type, this::changed);
 			}
 
-			// Delete this if/when TraceRecorderTarget is removed
-			listenFor(TraceEvents.BYTES_CHANGED, this::memoryChanged);
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
+
+			trace.addListener(this);
+			trace.addTransactionListener(this);
+		}
+
+		public void dispose() {
+			trace.removeListener(this);
+			trace.removeTransactionListener(this);
 		}
 
 		private void changed() {
-			cueAutoMap = true;
+			couldHaveChanged = true;
 		}
 
-		private void memoryChanged(TraceAddressSnapRange range) {
-			if (range.getRange().getAddressSpace().isRegisterSpace()) {
+		private void valueCreated(TraceObjectValue value) {
+			couldHaveChanged = true;
+		}
+
+		private void objectRestored(DomainObjectChangeRecord rec) {
+			couldHaveChanged = true;
+		}
+
+		@Override
+		public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
+		}
+
+		@Override
+		public void transactionEnded(DomainObjectAdapterDB domainObj) {
+			checkAutoMap();
+		}
+
+		@Override
+		public void undoStackChanged(DomainObjectAdapterDB domainObj) {
+		}
+
+		@Override
+		public void undoRedoOccurred(DomainObjectAdapterDB domainObj) {
+		}
+
+		private void checkAutoMap() {
+			if (!couldHaveChanged) {
 				return;
 			}
-			if (current.getTarget() instanceof TraceRecorderTarget) {
-				doCuedAutoMap();
+			couldHaveChanged = false;
+			String infosThisTime = spec.getInfoForObjects(trace);
+			if (Objects.equals(infosThisTime, infosLastTime)) {
+				return;
 			}
+			infosLastTime = infosThisTime;
+
+			spec.runTask(tool, trace);
+		}
+
+		public void forceMap() {
+			couldHaveChanged = true;
+			infosLastTime = "";
+			checkAutoMap();
 		}
 	}
 
@@ -534,8 +592,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	@AutoConfigStateField
 	boolean filterSectionsByModules = false;
 
-	boolean cueAutoMap;
-	private ForMappingTraceListener forMappingListener;
+	private final Map<Trace, AutoMapState> autoMapStateByTrace = new WeakHashMap<>();
+	private AutoMapState forMappingListener;
 
 	DockingAction actionImportMissingModule;
 	DockingAction actionMapMissingModule;
@@ -612,6 +670,10 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void dispose() {
+		for (AutoMapState state : autoMapStateByTrace.values()) {
+			state.dispose();
+		}
+
 		if (consoleService != null) {
 			removeResolutionActionMaybe(consoleService, actionImportMissingModule);
 			removeResolutionActionMaybe(consoleService, actionMapMissingModule);
@@ -885,12 +947,20 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	private void doSetAutoMapSpec(AutoMapSpec autoMapSpec) {
-		if (this.autoMapSpec == autoMapSpec) {
+		this.autoMapSpec = autoMapSpec;
+
+		Trace trace = current.getTrace();
+		if (trace == null) {
 			return;
 		}
-		removeOldTraceListener();
-		this.autoMapSpec = autoMapSpec;
-		addNewTraceListener();
+		AutoMapState state = autoMapStateByTrace.remove(trace);
+		if (state != null && state.spec.equals(autoMapSpec)) {
+			autoMapStateByTrace.put(trace, state);
+		}
+		else {
+			state.dispose();
+			autoMapStateByTrace.put(trace, new AutoMapState(tool, trace, autoMapSpec));
+		}
 	}
 
 	private void activatedImportMissingModule(DebuggerMissingModuleActionContext context) {
@@ -1256,9 +1326,14 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	public void programOpened(Program program) {
+		AutoMapState mapState = autoMapStateByTrace.get(current.getTrace());
+		// TODO: All open traces, or just the current one?
+		if (mapState == null) {
+			// Could be, e.g., current is NOWHERE
+			return;
+		}
 		// TODO: Debounce this?
-		cueAutoMap = true;
-		doCuedAutoMap();
+		mapState.forceMap();
 	}
 
 	public void programClosed(Program program) {
@@ -1268,24 +1343,16 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		cleanMissingProgramMessages(null, program);
 	}
 
+	public void traceOpened(Trace trace) {
+		autoMapStateByTrace.computeIfAbsent(trace, t -> new AutoMapState(tool, trace, autoMapSpec));
+	}
+
 	public void traceClosed(Trace trace) {
+		AutoMapState state = autoMapStateByTrace.remove(trace);
+		if (state != null) {
+			state.dispose();
+		}
 		cleanMissingProgramMessages(trace, null);
-	}
-
-	protected void addNewTraceListener() {
-		if (current.getTrace() != null && autoMapSpec != null) {
-			forMappingListener = new ForMappingTraceListener(autoMapSpec);
-			current.getTrace().addListener(forMappingListener);
-		}
-	}
-
-	protected void removeOldTraceListener() {
-		if (forMappingListener != null) {
-			if (current.getTrace() != null) {
-				current.getTrace().removeListener(forMappingListener);
-			}
-			forMappingListener = null;
-		}
 	}
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
@@ -1294,17 +1361,20 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		boolean changeTrace = current.getTrace() != coordinates.getTrace();
+		Trace newTrace = coordinates.getTrace();
+		boolean changeTrace = current.getTrace() != newTrace;
 		if (changeTrace) {
 			myActionContext = null;
-			removeOldTraceListener();
 		}
 		current = coordinates;
-		if (changeTrace) {
-			addNewTraceListener();
+
+		AutoMapState amState = autoMapStateByTrace.get(newTrace);
+		if (amState != null) {
+			// Can't just set field directly. Want GUI update.
+			setAutoMapSpec(amState.spec);
 		}
 
-		if (Trace.isLegacy(coordinates.getTrace())) {
+		if (Trace.isLegacy(newTrace)) {
 			modulesPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			sectionsPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			legacyModulesPanel.coordinatesActivated(coordinates);
@@ -1332,22 +1402,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 
 		contextChanged();
-
-		if (coordinates.getTarget() instanceof TraceRecorderTarget) {
-			// HACK while TraceRecorderTarget is still around
-			cueAutoMap = true;
-		}
-		doCuedAutoMap();
-	}
-
-	private void doCuedAutoMap() {
-		if (cueAutoMap) {
-			cueAutoMap = false;
-			Trace trace = current.getTrace();
-			if (autoMapSpec != null && trace != null) {
-				autoMapSpec.runTask(tool, trace);
-			}
-		}
 	}
 
 	public void setSelectedModules(Set<TraceModule> sel) {
@@ -1398,8 +1452,15 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		actionAutoMap.setCurrentActionStateByUserData(spec);
 	}
 
+	@Override
 	public AutoMapSpec getAutoMapSpec() {
 		return autoMapSpec;
+	}
+
+	@Override
+	public AutoMapSpec getAutoMapSpec(Trace trace) {
+		AutoMapState state = autoMapStateByTrace.get(trace);
+		return state == null ? autoMapSpec : state.spec;
 	}
 
 	public void writeConfigState(SaveState saveState) {

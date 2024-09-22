@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.program.model.data;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -36,7 +38,7 @@ public final class DataUtilities {
 	 * @return true if name is valid, else false
 	 */
 	public static boolean isValidDataTypeName(String name) {
-		if (name == null || name.length() == 0) {
+		if (StringUtils.isBlank(name)) {
 			return false;
 		}
 
@@ -422,7 +424,7 @@ public final class DataUtilities {
 	 * </li>
 	 * <li>If the originalDataType is any type of pointer the supplied newDatatype
 	 * will replace the pointer's base type (e.g., int * would become db * when
-	 * newDataType is {@link ByteDataType}).
+	 * newDataType is {@link ByteDataType}).</li>
 	 * </ul>
 	 * <P>If false, only required transformations will be applied, Example:
 	 * if newDataType is a FunctionDefinitionDataType it will be transformed

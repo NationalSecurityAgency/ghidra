@@ -53,6 +53,8 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 		//@formatter:off
 		return new CompositeEditorTableAction[] {
 			new ApplyAction(this),
+			new UndoChangeAction(this),
+			new RedoChangeAction(this),
 			new MoveUpAction(this),
 			new MoveDownAction(this),
 			new DuplicateAction(this),

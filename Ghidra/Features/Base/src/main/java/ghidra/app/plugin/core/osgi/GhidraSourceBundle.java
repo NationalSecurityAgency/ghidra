@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,8 +138,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * Source bundles are compiled to a path relative to the user's home:  
-	 * &nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
+	 * Source bundles are compiled to a path relative to the user's settings directory:  
+	 * &nbsp;{@code <user settings>/osgi/compiled-bundles/<sourceDirHash> }
 	 *  
 	 * @return the destination for compiled source bundles
 	 *
@@ -154,7 +154,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * a hash of the source directory path.
 	 * 
 	 * <p>This hash is also used as the final path component of the compile destination:
-	 * <br/>&nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
+	 * <br/>&nbsp;{@code <user settings>/osgi/compiled-bundles/<sourceDirHash> }
 	 * 
 	 * @param sourceDir the source directory
 	 * @return a string hash of the source directory path

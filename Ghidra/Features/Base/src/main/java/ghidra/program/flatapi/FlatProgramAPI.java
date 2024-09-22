@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,14 @@ import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.clear.ClearOptions;
-import ghidra.app.plugin.core.searchmem.RegExSearchData;
 import ghidra.app.script.GhidraScript;
+import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
+import ghidra.features.base.memsearch.bytesource.ProgramByteSource;
+import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
+import ghidra.features.base.memsearch.searcher.MemoryMatch;
+import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -49,7 +55,6 @@ import ghidra.util.ascii.AsciiCharSetRecognizer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.*;
-import ghidra.util.search.memory.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -57,8 +62,8 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * NOTE:
  * <ol>
- * 	<li>NO METHODS *SHOULD* EVER BE REMOVED FROM THIS CLASS.
- * 	<li>NO METHOD SIGNATURES *SHOULD* EVER BE CHANGED IN THIS CLASS.
+ * 	<li>NO METHODS *SHOULD* EVER BE REMOVED FROM THIS CLASS.</li>
+ * 	<li>NO METHOD SIGNATURES *SHOULD* EVER BE CHANGED IN THIS CLASS.</li>
  * </ol>
  * <p>
  * This class is used by GhidraScript.
@@ -771,15 +776,38 @@ public class FlatProgramAPI {
 	public final Address[] findBytes(AddressSetView set, String byteString, int matchLimit,
 			int alignment) {
 
-		return findBytes(set, byteString, matchLimit, alignment, false);
+		if (matchLimit <= 0) {
+			matchLimit = 500;
+		}
+
+		SearchSettings settings = new SearchSettings().withAlignment(alignment);
+		ByteMatcher matcher = new RegExByteMatcher(byteString, settings);
+		AddressableByteSource byteSource = new ProgramByteSource(currentProgram);
+		Memory memory = currentProgram.getMemory();
+		AddressSet intersection = memory.getLoadedAndInitializedAddressSet().intersect(set);
+
+		MemorySearcher searcher = new MemorySearcher(byteSource, matcher, intersection, matchLimit);
+		Accumulator<MemoryMatch> accumulator = new ListAccumulator<>();
+		searcher.findAll(accumulator, monitor);
+
+		//@formatter:off
+		List<Address> addresses =
+			accumulator.stream()
+                       .map(r -> r.getAddress())
+                       .collect(Collectors.toList());
+		//@formatter:on
+		return addresses.toArray(new Address[addresses.size()]);
 	}
 
 	/**
+	 * This method has been deprecated, use {@link #findBytes(Address, String, int, int)} instead.
+	 * The concept of searching and finding matches that span gaps (address ranges where no memory
+	 * blocks have been defined), is no longer supported. If this capability has value to anyone, 
+	 * please contact the Ghidra team and let us know.
+	 * <P>
 	 * Finds a byte pattern within an addressSet.
 	 *
-	 * Note: When searchAcrossAddressGaps is set to true, the ranges within the addressSet are
-	 * treated as a contiguous set when searching.
-	 *
+	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
 	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
@@ -794,49 +822,21 @@ public class FlatProgramAPI {
 	 * @param byteString the byte pattern for which to search
 	 * @param matchLimit The number of matches to which the search should be restricted
 	 * @param alignment byte alignment to use for search starts. For example, a value of
-	 *        1 searches from every byte.  A value of 2 only matches runs that begin on a even
-	 *        address boundary.
-	 * @param searchAcrossAddressGaps when set to 'true' searches for matches across the gaps
-	 *        of each addressRange contained in the addresSet.
+	 *    1 searches from every byte.  A value of 2 only matches runs that begin on a even
+	 *    address boundary.
+	 * @param searchAcrossAddressGaps This parameter is no longer supported and its value is
+	 * ignored. Previously, if true, match results were allowed to span non-continguous memory
+	 * ranges. 
 	 * @return the start addresses that contain byte patterns that match the given byteString
 	 * @throws IllegalArgumentException if the byteString is not a valid regular expression
 	 * @see #findBytes(Address, String)
+	 * 
+	 * @deprecated see description for details.
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public final Address[] findBytes(AddressSetView set, String byteString, int matchLimit,
 			int alignment, boolean searchAcrossAddressGaps) {
-
-		if (matchLimit <= 0) {
-			matchLimit = 500;
-		}
-
-		RegExSearchData searchData = RegExSearchData.createRegExSearchData(byteString);
-
-		//@formatter:off
-		SearchInfo searchInfo = new SearchInfo(searchData,
-											   matchLimit,
-											   false,     // search selection
-											   true,      // search forward
-											   alignment,
-											   true,      // include non-loaded blocks
-											   null);
-		//@formatter:on
-
-		Memory memory = currentProgram.getMemory();
-		AddressSet intersection = memory.getLoadedAndInitializedAddressSet().intersect(set);
-
-		RegExMemSearcherAlgorithm searcher = new RegExMemSearcherAlgorithm(searchInfo, intersection,
-			currentProgram, searchAcrossAddressGaps);
-
-		Accumulator<MemSearchResult> accumulator = new ListAccumulator<>();
-		searcher.search(accumulator, monitor);
-
-		//@formatter:off
-		List<Address> addresses =
-			accumulator.stream()
-                       .map(r -> r.getAddress())
-                       .collect(Collectors.toList());
-		//@formatter:on
-		return addresses.toArray(new Address[addresses.size()]);
+		return findBytes(set, byteString, matchLimit, alignment);
 	}
 
 	/**
@@ -1512,21 +1512,21 @@ public class FlatProgramAPI {
 	public final Namespace getNamespace(Namespace parent, String namespaceName) {
 		return currentProgram.getSymbolTable().getNamespace(namespaceName, parent);
 	}
-	
-/**
-	 * Creates a new {@link Namespace} with the given name contained inside the
-	 * specified parent namespace.
-	 * Pass <code>null</code> for parent to indicate the global namespace.
-	 * If a {@link Namespace} or {@link GhidraClass} with the given name already exists, the
-	 * existing one will be returned.
-	 * @param parent the parent namespace, or null for global namespace
-	 * @param namespaceName the requested namespace's name
-	 * @return the namespace with the given name
-	 * @throws DuplicateNameException if a {@link Library} symbol exists with the given name
-	 * @throws InvalidInputException if the name is invalid
-	 * @throws IllegalArgumentException if parent Namespace does not correspond to
-	 * <code>currerntProgram</code>
-	 */
+
+	/**
+		 * Creates a new {@link Namespace} with the given name contained inside the
+		 * specified parent namespace.
+		 * Pass <code>null</code> for parent to indicate the global namespace.
+		 * If a {@link Namespace} or {@link GhidraClass} with the given name already exists, the
+		 * existing one will be returned.
+		 * @param parent the parent namespace, or null for global namespace
+		 * @param namespaceName the requested namespace's name
+		 * @return the namespace with the given name
+		 * @throws DuplicateNameException if a {@link Library} symbol exists with the given name
+		 * @throws InvalidInputException if the name is invalid
+		 * @throws IllegalArgumentException if parent Namespace does not correspond to
+		 * <code>currerntProgram</code>
+		 */
 	public final Namespace createNamespace(Namespace parent, String namespaceName)
 			throws DuplicateNameException, InvalidInputException {
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
@@ -1539,7 +1539,7 @@ public class FlatProgramAPI {
 		}
 		return symbolTable.createNameSpace(parent, namespaceName, SourceType.USER_DEFINED);
 	}
-	
+
 	/**
 	 * Creates a new {@link GhidraClass} with the given name contained inside the
 	 * specified parent namespace.
