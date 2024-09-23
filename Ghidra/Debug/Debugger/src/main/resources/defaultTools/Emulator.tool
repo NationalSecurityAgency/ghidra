@@ -6,128 +6,133 @@
     <ICON LOCATION="emulator32.png" />
     <TOOL TOOL_NAME="Emulator" INSTANCE_NAME="">
         <OPTIONS />
+        <PACKAGE NAME="Debugger">
+            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.gui.interpreters.DebuggerInterpreterPlugin" />
+            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectionManagerPlugin" />
+            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin" />
+            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin" />
+        </PACKAGE>
         <PACKAGE NAME="Ghidra Core">
             <EXCLUDE CLASS="ghidra.plugins.fsbrowser.FileSystemBrowserPlugin" />
-            <INCLUDE CLASS="ghidra.app.plugin.core.editor.TextEditorManagerPlugin" />
             <INCLUDE CLASS="ghidra.app.plugin.core.interpreter.InterpreterPanelPlugin" />
         </PACKAGE>
-        <PACKAGE NAME="Debugger">
-            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsPlugin" />
-            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin" />
-            <EXCLUDE CLASS="ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin" />
-        </PACKAGE>
-        <ROOT_NODE X_POS="984" Y_POS="4743" WIDTH="1920" HEIGHT="1017" EX_STATE="0" FOCUSED_OWNER="CodeBrowserPlugin" FOCUSED_NAME="Listing" FOCUSED_TITLE="Listing: ">
-            <SPLIT_NODE WIDTH="1918" HEIGHT="908" DIVIDER_LOCATION="767" ORIENTATION="VERTICAL">
+        <ROOT_NODE X_POS="320" Y_POS="192" WIDTH="1920" HEIGHT="1017" EX_STATE="0">
+            <SPLIT_NODE WIDTH="1906" HEIGHT="921" DIVIDER_LOCATION="767" ORIENTATION="VERTICAL">
                 <SPLIT_NODE WIDTH="100" HEIGHT="100" DIVIDER_LOCATION="0" ORIENTATION="VERTICAL">
-                    <SPLIT_NODE WIDTH="1918" HEIGHT="693" DIVIDER_LOCATION="251" ORIENTATION="HORIZONTAL">
-                        <COMPONENT_NODE TOP_INFO="3">
-                            <COMPONENT_INFO NAME="DataTypes Provider" OWNER="DataTypeManagerPlugin" TITLE="Data Type Manager" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678283" />
-                            <COMPONENT_INFO NAME="Program Tree" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612505585920414" />
-                            <COMPONENT_INFO NAME="Symbol Tree" OWNER="SymbolTreePlugin" TITLE="Symbol Tree" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612505585920408" />
-                            <COMPONENT_INFO NAME="Debug Console" OWNER="DebuggerConsolePlugin" TITLE="Debug Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678282" />
-                        </COMPONENT_NODE>
+                    <SPLIT_NODE WIDTH="1906" HEIGHT="703" DIVIDER_LOCATION="251" ORIENTATION="HORIZONTAL">
+                        <SPLIT_NODE WIDTH="477" HEIGHT="703" DIVIDER_LOCATION="433" ORIENTATION="VERTICAL">
+                            <COMPONENT_NODE TOP_INFO="3">
+                                <COMPONENT_INFO NAME="DataTypes Provider" OWNER="DataTypeManagerPlugin" TITLE="Data Type Manager" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629452" />
+                                <COMPONENT_INFO NAME="Program Tree" OWNER="ProgramTreePlugin" TITLE="Program Trees" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004460958955487" />
+                                <COMPONENT_INFO NAME="Symbol Tree" OWNER="SymbolTreePlugin" TITLE="Symbol Tree" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004460958955482" />
+                                <COMPONENT_INFO NAME="Debug Console" OWNER="DebuggerConsolePlugin" TITLE="Debug Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629451" />
+                            </COMPONENT_NODE>
+                            <COMPONENT_NODE TOP_INFO="0">
+                                <COMPONENT_INFO NAME="Model" OWNER="DebuggerModelPlugin" TITLE="Model" ACTIVE="true" GROUP="Debugger.Core" INSTANCE_ID="3622004957652629465" />
+                            </COMPONENT_NODE>
+                        </SPLIT_NODE>
                         <SPLIT_NODE WIDTH="1293" HEIGHT="590" DIVIDER_LOCATION="785" ORIENTATION="VERTICAL">
                             <SPLIT_NODE WIDTH="1386" HEIGHT="638" DIVIDER_LOCATION="705" ORIENTATION="VERTICAL">
-                                <SPLIT_NODE WIDTH="1434" HEIGHT="693" DIVIDER_LOCATION="679" ORIENTATION="HORIZONTAL">
-                                    <SPLIT_NODE WIDTH="971" HEIGHT="693" DIVIDER_LOCATION="506" ORIENTATION="VERTICAL">
+                                <SPLIT_NODE WIDTH="1425" HEIGHT="703" DIVIDER_LOCATION="679" ORIENTATION="HORIZONTAL">
+                                    <SPLIT_NODE WIDTH="965" HEIGHT="703" DIVIDER_LOCATION="506" ORIENTATION="VERTICAL">
                                         <COMPONENT_NODE TOP_INFO="0">
-                                            <COMPONENT_INFO NAME="Listing" OWNER="DebuggerListingPlugin" TITLE="Dynamic" ACTIVE="true" GROUP="Core" INSTANCE_ID="3527612550024571272" />
+                                            <COMPONENT_INFO NAME="Listing" OWNER="DebuggerListingPlugin" TITLE="Dynamic" ACTIVE="true" GROUP="Core" INSTANCE_ID="3622004957275142089" />
                                         </COMPONENT_NODE>
                                         <COMPONENT_NODE TOP_INFO="0">
-                                            <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3527612550024571270" />
+                                            <COMPONENT_INFO NAME="Listing" OWNER="CodeBrowserPlugin" TITLE="Listing: " ACTIVE="true" GROUP="Core" INSTANCE_ID="3622004957275142087" />
                                         </COMPONENT_NODE>
                                     </SPLIT_NODE>
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompiler" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612505585920415" />
-                                        <COMPONENT_INFO NAME="Bytes" OWNER="ByteViewerPlugin" TITLE="Bytes: No Program" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571265" />
-                                        <COMPONENT_INFO NAME="Data Window" OWNER="DataWindowPlugin" TITLE="Defined Data" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678290" />
-                                        <COMPONENT_INFO NAME="Defined Strings" OWNER="ViewStringsPlugin" TITLE="Defined Strings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678297" />
-                                        <COMPONENT_INFO NAME="Equates Table" OWNER="EquateTablePlugin" TITLE="Equates Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571268" />
-                                        <COMPONENT_INFO NAME="External Programs" OWNER="ReferencesPlugin" TITLE="External Programs" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571271" />
-                                        <COMPONENT_INFO NAME="Functions Window" OWNER="FunctionWindowPlugin" TITLE="Functions" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571274" />
-                                        <COMPONENT_INFO NAME="Relocation Table" OWNER="RelocationTablePlugin" TITLE="Relocation Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678296" />
-                                        <COMPONENT_INFO NAME="Modules" OWNER="DebuggerModulesPlugin" TITLE="Modules" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678286" />
-                                        <COMPONENT_INFO NAME="Registers" OWNER="DebuggerRegistersPlugin" TITLE="Registers" ACTIVE="true" GROUP="Debugger.Core" INSTANCE_ID="3527612550976678298" />
-                                        <COMPONENT_INFO NAME="Breakpoints" OWNER="DebuggerBreakpointsPlugin" TITLE="Breakpoints" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678295" />
+                                        <COMPONENT_INFO NAME="Decompiler" OWNER="DecompilePlugin" TITLE="Decompile" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957275142080" />
+                                        <COMPONENT_INFO NAME="Bytes" OWNER="ByteViewerPlugin" TITLE="Bytes: No Program" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142082" />
+                                        <COMPONENT_INFO NAME="Data Window" OWNER="DataWindowPlugin" TITLE="Defined Data" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629460" />
+                                        <COMPONENT_INFO NAME="Defined Strings" OWNER="ViewStringsPlugin" TITLE="Defined Strings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629468" />
+                                        <COMPONENT_INFO NAME="Equates Table" OWNER="EquateTablePlugin" TITLE="Equates Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142085" />
+                                        <COMPONENT_INFO NAME="External Programs" OWNER="ReferencesPlugin" TITLE="External Programs" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142088" />
+                                        <COMPONENT_INFO NAME="Functions Window" OWNER="FunctionWindowPlugin" TITLE="Functions" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142091" />
+                                        <COMPONENT_INFO NAME="Relocation Table" OWNER="RelocationTablePlugin" TITLE="Relocation Table" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629467" />
+                                        <COMPONENT_INFO NAME="Modules" OWNER="DebuggerModulesPlugin" TITLE="Modules" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629455" />
+                                        <COMPONENT_INFO NAME="Registers" OWNER="DebuggerRegistersPlugin" TITLE="Registers" ACTIVE="true" GROUP="Debugger.Core" INSTANCE_ID="3622004957652629469" />
+                                        <COMPONENT_INFO NAME="Breakpoints" OWNER="DebuggerBreakpointsPlugin" TITLE="Breakpoints" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629466" />
                                         <COMPONENT_INFO NAME="DebuggerInterpreterPlugin" OWNER="InterpreterPanelPlugin" TITLE="Interpreter" ACTIVE="false" GROUP="Default" INSTANCE_ID="3381048220378451114" />
                                         <COMPONENT_INFO NAME="Interpreter" OWNER="InterpreterPanelPlugin" TITLE="Interpreter" ACTIVE="false" GROUP="Default" INSTANCE_ID="3398988136451618475" />
                                     </COMPONENT_NODE>
                                 </SPLIT_NODE>
                                 <SPLIT_NODE WIDTH="1386" HEIGHT="189" DIVIDER_LOCATION="495" ORIENTATION="HORIZONTAL">
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="Data Type Preview" OWNER="DataTypePreviewPlugin" TITLE="Data Type Preview" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678279" />
+                                        <COMPONENT_INFO NAME="Data Type Preview" OWNER="DataTypePreviewPlugin" TITLE="Data Type Preview" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629448" />
                                     </COMPONENT_NODE>
                                     <COMPONENT_NODE TOP_INFO="0">
-                                        <COMPONENT_INFO NAME="Virtual Disassembler - Current Instruction" OWNER="DisassembledViewPlugin" TITLE="Disassembled View" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571267" />
+                                        <COMPONENT_INFO NAME="Virtual Disassembler - Current Instruction" OWNER="DisassembledViewPlugin" TITLE="Disassembled View" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142084" />
                                     </COMPONENT_NODE>
                                 </SPLIT_NODE>
                             </SPLIT_NODE>
                             <COMPONENT_NODE TOP_INFO="0">
-                                <COMPONENT_INFO NAME="Bookmarks" OWNER="BookmarkPlugin" TITLE="Bookmarks" ACTIVE="false" GROUP="Core.Bookmarks" INSTANCE_ID="3527612505585920412" />
+                                <COMPONENT_INFO NAME="Bookmarks" OWNER="BookmarkPlugin" TITLE="Bookmarks" ACTIVE="false" GROUP="Core.Bookmarks" INSTANCE_ID="3622004460958955486" />
                             </COMPONENT_NODE>
                         </SPLIT_NODE>
                     </SPLIT_NODE>
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Function Call Trees" OWNER="CallTreePlugin" TITLE="Function Call Trees" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612505585920409" />
+                        <COMPONENT_INFO NAME="Function Call Trees" OWNER="CallTreePlugin" TITLE="Function Call Trees" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004460958955483" />
                     </COMPONENT_NODE>
                 </SPLIT_NODE>
-                <SPLIT_NODE WIDTH="1918" HEIGHT="211" DIVIDER_LOCATION="348" ORIENTATION="HORIZONTAL">
+                <SPLIT_NODE WIDTH="1906" HEIGHT="214" DIVIDER_LOCATION="348" ORIENTATION="HORIZONTAL">
                     <COMPONENT_NODE TOP_INFO="1">
-                        <COMPONENT_INFO NAME="Regions" OWNER="DebuggerRegionsPlugin" TITLE="Regions" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678293" />
-                        <COMPONENT_INFO NAME="Stack" OWNER="DebuggerStackPlugin" TITLE="Stack" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678280" />
-                        <COMPONENT_INFO NAME="Console" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550024571264" />
-                        <COMPONENT_INFO NAME="Watches" OWNER="DebuggerWatchesPlugin" TITLE="Watches" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612505585920407" />
+                        <COMPONENT_INFO NAME="Regions" OWNER="DebuggerRegionsPlugin" TITLE="Regions" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629463" />
+                        <COMPONENT_INFO NAME="Stack" OWNER="DebuggerStackPlugin" TITLE="Stack" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629449" />
+                        <COMPONENT_INFO NAME="Console" OWNER="ConsolePlugin" TITLE="Console" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957275142081" />
+                        <COMPONENT_INFO NAME="Watches" OWNER="DebuggerWatchesPlugin" TITLE="Watches" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004460958955481" />
                     </COMPONENT_NODE>
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Threads" OWNER="DebuggerThreadsPlugin" TITLE="Threads" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678284" />
-                        <COMPONENT_INFO NAME="Time" OWNER="DebuggerTimePlugin" TITLE="Time" ACTIVE="true" GROUP="Default" INSTANCE_ID="3527612550976678287" />
+                        <COMPONENT_INFO NAME="Threads" OWNER="DebuggerThreadsPlugin" TITLE="Threads" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629454" />
+                        <COMPONENT_INFO NAME="Time" OWNER="DebuggerTimePlugin" TITLE="Time" ACTIVE="true" GROUP="Default" INSTANCE_ID="3622004957652629457" />
                         <COMPONENT_INFO NAME="Pcode Stepper" OWNER="DebuggerPcodeStepperPlugin" TITLE="Pcode Stepper" ACTIVE="false" GROUP="Default" INSTANCE_ID="3381240965691561509" />
                     </COMPONENT_NODE>
                 </SPLIT_NODE>
             </SPLIT_NODE>
             <WINDOW_NODE X_POS="426" Y_POS="178" WIDTH="1033" HEIGHT="689">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Script Manager" OWNER="GhidraScriptMgrPlugin" TITLE="Script Manager" ACTIVE="false" GROUP="Script Group" INSTANCE_ID="3527612505585920410" />
+                    <COMPONENT_INFO NAME="Script Manager" OWNER="GhidraScriptMgrPlugin" TITLE="Script Manager" ACTIVE="false" GROUP="Script Group" INSTANCE_ID="3622004460958955484" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="423" Y_POS="144" WIDTH="927" HEIGHT="370">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Memory Map" OWNER="MemoryMapPlugin" TITLE="Memory Map" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612505585920405" />
+                    <COMPONENT_INFO NAME="Memory Map" OWNER="MemoryMapPlugin" TITLE="Memory Map" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004460958955479" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="383" Y_POS="7" WIDTH="1020" HEIGHT="1038">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Function Graph" OWNER="FunctionGraphPlugin" TITLE="Function Graph" ACTIVE="false" GROUP="Function Graph" INSTANCE_ID="3527612550976678299" />
+                    <COMPONENT_INFO NAME="Function Graph" OWNER="FunctionGraphPlugin" TITLE="Function Graph" ACTIVE="false" GROUP="Function Graph" INSTANCE_ID="3622004957652629470" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="550" Y_POS="206" WIDTH="655" HEIGHT="509">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Register Manager" OWNER="RegisterPlugin" TITLE="Register Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571273" />
+                    <COMPONENT_INFO NAME="Register Manager" OWNER="RegisterPlugin" TITLE="Register Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142090" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="287" Y_POS="186" WIDTH="1424" HEIGHT="666">
                 <SPLIT_NODE WIDTH="1408" HEIGHT="559" DIVIDER_LOCATION="573" ORIENTATION="HORIZONTAL">
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Symbol Table" OWNER="SymbolTablePlugin" TITLE="Symbol Table" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3527612550976678291" />
+                        <COMPONENT_INFO NAME="Symbol Table" OWNER="SymbolTablePlugin" TITLE="Symbol Table" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3622004957652629461" />
                     </COMPONENT_NODE>
                     <COMPONENT_NODE TOP_INFO="0">
-                        <COMPONENT_INFO NAME="Symbol References" OWNER="SymbolTablePlugin" TITLE="Symbol References" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3527612550976678292" />
+                        <COMPONENT_INFO NAME="Symbol References" OWNER="SymbolTablePlugin" TITLE="Symbol References" ACTIVE="false" GROUP="symbolTable" INSTANCE_ID="3622004957652629462" />
                     </COMPONENT_NODE>
                 </SPLIT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Checksum Generator" OWNER="ComputeChecksumsPlugin" TITLE="Checksum Generator" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550024571269" />
+                    <COMPONENT_INFO NAME="Checksum Generator" OWNER="ComputeChecksumsPlugin" TITLE="Checksum Generator" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957275142086" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Function Tags" OWNER="FunctionTagPlugin" TITLE="Function Tags" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612505585920413" />
+                    <COMPONENT_INFO NAME="Function Tags" OWNER="FunctionTagPlugin" TITLE="Function Tags" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629453" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Comment Window" OWNER="CommentWindowPlugin" TITLE="Comments" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678289" />
+                    <COMPONENT_INFO NAME="Comment Window" OWNER="CommentWindowPlugin" TITLE="Comments" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629459" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="-1" Y_POS="-1" WIDTH="0" HEIGHT="0">
@@ -137,7 +142,7 @@
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Function Call Graph" OWNER="FunctionCallGraphPlugin" TITLE="Function Call Graph" ACTIVE="false" GROUP="Function Call Graph" INSTANCE_ID="3527612550976678281" />
+                    <COMPONENT_INFO NAME="Function Call Graph" OWNER="FunctionCallGraphPlugin" TITLE="Function Call Graph" ACTIVE="false" GROUP="Function Call Graph" INSTANCE_ID="3622004957652629450" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="658" Y_POS="1489" WIDTH="470" HEIGHT="540">
@@ -147,7 +152,7 @@
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="BundleManager" OWNER="GhidraScriptMgrPlugin" TITLE="Bundle Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612505585920411" />
+                    <COMPONENT_INFO NAME="BundleManager" OWNER="GhidraScriptMgrPlugin" TITLE="Bundle Manager" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004460958955485" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="2105" Y_POS="966" WIDTH="1122" HEIGHT="546">
@@ -157,21 +162,43 @@
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Static Mappings" OWNER="DebuggerStaticMappingPlugin" TITLE="Static Mappings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678294" />
+                    <COMPONENT_INFO NAME="Static Mappings" OWNER="DebuggerStaticMappingPlugin" TITLE="Static Mappings" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629464" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="1429" Y_POS="806" WIDTH="982" HEIGHT="580">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Memview" OWNER="DebuggerMemviewPlugin" TITLE="Memview" ACTIVE="false" GROUP="Default" INSTANCE_ID="3527612550976678288" />
+                    <COMPONENT_INFO NAME="Memview" OWNER="DebuggerMemviewPlugin" TITLE="Memview" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629458" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
             <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
                 <COMPONENT_NODE TOP_INFO="0">
-                    <COMPONENT_INFO NAME="Memory" OWNER="DebuggerMemoryBytesPlugin" TITLE="Memory" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="3527612505585920404" />
+                    <COMPONENT_INFO NAME="Memory" OWNER="DebuggerMemoryBytesPlugin" TITLE="Memory" ACTIVE="false" GROUP="disconnected" INSTANCE_ID="3622004460958955478" />
+                </COMPONENT_NODE>
+            </WINDOW_NODE>
+            <WINDOW_NODE X_POS="0" Y_POS="0" WIDTH="0" HEIGHT="0">
+                <COMPONENT_NODE TOP_INFO="0">
+                    <COMPONENT_INFO NAME="Jython" OWNER="InterpreterPanelPlugin" TITLE="Jython" ACTIVE="false" GROUP="Default" INSTANCE_ID="3622004957652629456" />
                 </COMPONENT_NODE>
             </WINDOW_NODE>
         </ROOT_NODE>
         <PREFERENCES>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider$BreakpointLocationTableModel:State:Name:Address:Trace:Threads:Comment:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.State" WIDTH="24" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Name" WIDTH="100" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Address" WIDTH="100" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Trace" WIDTH="100" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Threads" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Comment" WIDTH="100" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Sleigh" WIDTH="30" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="2" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="2" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
             <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.memview.MemviewMapModel:Name:Start Address:End Address:Start Time:End Time:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
@@ -291,6 +318,21 @@
                     </Table_State>
                 </XML>
             </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.model.PathTableModel:Path:Key:Value:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TracePathStringColumn.Path" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TracePathLastKeyColumn.Key" WIDTH="115" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TracePathValueColumn.Value" WIDTH="115" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TracePathLastLifespanColumn.Life" WIDTH="114" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TracePathLastLifespanPlotColumn.Plot" WIDTH="500" VISIBLE="false" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="3" SORT_DIRECTION="ascending" SORT_ORDER="2" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
             <PREFERENCE_STATE NAME="ghidra.app.plugin.core.equate.EquateTableModel:Name:Value:# Refs:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
@@ -390,6 +432,20 @@
                         <COLUMN NAME="Length" WIDTH="114" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider$LogTableModel:Icon:Message:Actions:Time:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Icon" WIDTH="24" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Message" WIDTH="229" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Actions" WIDTH="128" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Time" WIDTH="94" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="2" SORT_DIRECTION="descending" SORT_ORDER="1" />
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="3" SORT_DIRECTION="descending" SORT_ORDER="2" />
                         </TABLE_SORT_STATE>
                     </Table_State>
                 </XML>
@@ -498,9 +554,9 @@
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Fav" WIDTH="38" VISIBLE="true" />
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.#" WIDTH="38" VISIBLE="true" />
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Name" WIDTH="63" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Value" WIDTH="123" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Type" WIDTH="73" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Repr" WIDTH="122" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Value" WIDTH="122" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Type" WIDTH="72" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Repr" WIDTH="121" VISIBLE="true" />
                         <COLUMN NAME="ghidra.taint.gui.field.TaintDebuggerRegisterColumnFactory$1.Taint" WIDTH="500" VISIBLE="false" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="descending" SORT_ORDER="1" />
@@ -620,11 +676,11 @@
             <PREFERENCE_STATE NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel:Snap:Timestamp:Event Thread:Schedule:Description:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Snap" WIDTH="181" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Timestamp" WIDTH="341" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Event Thread" WIDTH="181" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Schedule" WIDTH="202" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Description" WIDTH="341" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Snap" WIDTH="180" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Timestamp" WIDTH="339" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Event Thread" WIDTH="180" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Schedule" WIDTH="201" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Description" WIDTH="338" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                         </TABLE_SORT_STATE>
@@ -780,10 +836,10 @@
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionPathColumn.Path" WIDTH="500" VISIBLE="false" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionStartColumn.Start" WIDTH="91" VISIBLE="true" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionEndColumn.End" WIDTH="92" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionStartColumn.Start" WIDTH="90" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionEndColumn.End" WIDTH="91" VISIBLE="true" />
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionNameColumn.Name" WIDTH="91" VISIBLE="true" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionModuleNameColumn.Module Name" WIDTH="92" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionModuleNameColumn.Module Name" WIDTH="91" VISIBLE="true" />
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionsPanel$SectionLengthColumn.Length" WIDTH="91" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="1" />
@@ -922,12 +978,12 @@
             <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider$WatchTableModel:Expression:Address:Symbol:Value:Type:Repr:Error:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Expression" WIDTH="95" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Address" WIDTH="95" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Expression" WIDTH="94" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Address" WIDTH="94" VISIBLE="true" />
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Symbol" WIDTH="95" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Value" WIDTH="95" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Value" WIDTH="94" VISIBLE="true" />
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Type" WIDTH="95" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Repr" WIDTH="95" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Repr" WIDTH="94" VISIBLE="true" />
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Error" WIDTH="94" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
@@ -942,6 +998,20 @@
                         <COLUMN NAME="Code" WIDTH="423" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.model.ObjectTableModel:Key:Value:Life:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueKeyColumn.Key" WIDTH="127" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueValColumn.Value" WIDTH="127" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueLifeColumn.Life" WIDTH="126" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueLifePlotColumn.Plot" WIDTH="500" VISIBLE="false" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="2" SORT_DIRECTION="ascending" SORT_ORDER="2" />
                         </TABLE_SORT_STATE>
                     </Table_State>
                 </XML>
@@ -995,13 +1065,13 @@
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.State" WIDTH="24" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Name" WIDTH="95" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Address" WIDTH="95" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Image" WIDTH="65" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Length" WIDTH="42" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Kinds" WIDTH="94" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Name" WIDTH="93" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Address" WIDTH="93" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Image" WIDTH="63" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Length" WIDTH="41" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Kinds" WIDTH="92" VISIBLE="true" />
                         <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Locations" WIDTH="18" VISIBLE="true" />
-                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Sleigh" WIDTH="24" VISIBLE="true" />
+                        <COLUMN NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel$EnumeratedDynamicTableColumn.Sleigh" WIDTH="30" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="3" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="2" SORT_DIRECTION="ascending" SORT_ORDER="2" />
@@ -1061,6 +1131,21 @@
                     </Table_State>
                 </XML>
             </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModuleTableModel:Path:Base:Max:Name:Mapping:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModulePathColumn.Path" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModuleBaseColumn.Base" WIDTH="91" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModuleMaxColumn.Max" WIDTH="91" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModuleNameColumn.Name" WIDTH="91" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModuleMappingColumn.Mapping" WIDTH="91" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPanel$ModuleLengthColumn.Length" WIDTH="90" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
             <PREFERENCE_STATE NAME="docking.widgets.table.DefaultEnumeratedColumnTableModel:Snap:Timestamp:Event Thread:Ticks:Description:">
                 <XML NAME="COLUMN_DATA">
                     <Table_State>
@@ -1071,6 +1156,24 @@
                         <COLUMN NAME="Description" WIDTH="286" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadTableModel:Path:Name:PC:Function:Module:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadPathColumn.Path" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadNameColumn.Name" WIDTH="248" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadPcColumn.PC" WIDTH="248" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadFunctionColumn.Function" WIDTH="247" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadModuleColumn.Module" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadSpColumn.SP" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadStateColumn.State" WIDTH="248" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadCommentColumn.Comment" WIDTH="500" VISIBLE="false" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel$ThreadPlotColumn.Plot" WIDTH="247" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="1" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                         </TABLE_SORT_STATE>
                     </Table_State>
                 </XML>
@@ -1130,6 +1233,19 @@
                         <COLUMN NAME="Category" WIDTH="122" VISIBLE="true" />
                         <TABLE_SORT_STATE>
                             <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="2" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPanel$StackTableModel:Level:PC:Function:Module:">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPanel$FrameLevelColumn.Level" WIDTH="33" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPanel$FramePcColumn.PC" WIDTH="209" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPanel$FrameFunctionColumn.Function" WIDTH="209" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPanel$FrameModuleColumn.Module" WIDTH="209" VISIBLE="true" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
                         </TABLE_SORT_STATE>
                     </Table_State>
                 </XML>
@@ -1256,10 +1372,10 @@
                     <Table_State>
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionKeyColumn.Key" WIDTH="500" VISIBLE="false" />
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionPathColumn.Path" WIDTH="500" VISIBLE="false" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionNameColumn.Name" WIDTH="142" VISIBLE="true" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionStartColumn.Start" WIDTH="142" VISIBLE="true" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionEndColumn.End" WIDTH="142" VISIBLE="true" />
-                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionLengthColumn.Length" WIDTH="142" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionNameColumn.Name" WIDTH="141" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionStartColumn.Start" WIDTH="141" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionEndColumn.End" WIDTH="141" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionLengthColumn.Length" WIDTH="141" VISIBLE="true" />
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionReadColumn.Read" WIDTH="32" VISIBLE="true" />
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionWriteColumn.Write" WIDTH="32" VISIBLE="true" />
                         <COLUMN NAME="ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPanel$RegionExecuteColumn.Execute" WIDTH="32" VISIBLE="true" />
@@ -1269,7 +1385,23 @@
                     </Table_State>
                 </XML>
             </PREFERENCE_STATE>
+            <PREFERENCE_STATE NAME="DEFAULT">
+                <XML NAME="COLUMN_DATA">
+                    <Table_State>
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueKeyColumn.Key" WIDTH="115" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueValColumn.Value" WIDTH="115" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueLifeColumn.Life" WIDTH="114" VISIBLE="true" />
+                        <COLUMN NAME="ghidra.app.plugin.core.debug.gui.model.columns.TraceValueLifePlotColumn.Plot" WIDTH="500" VISIBLE="false" />
+                        <TABLE_SORT_STATE>
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="0" SORT_DIRECTION="ascending" SORT_ORDER="1" />
+                            <COLUMN_SORT_STATE COLUMN_MODEL_INDEX="2" SORT_DIRECTION="ascending" SORT_ORDER="2" />
+                        </TABLE_SORT_STATE>
+                    </Table_State>
+                </XML>
+            </PREFERENCE_STATE>
         </PREFERENCES>
+        <EXTENSIONS>
+        </EXTENSIONS>
     </TOOL>
 </TOOL_CONFIG>
 
