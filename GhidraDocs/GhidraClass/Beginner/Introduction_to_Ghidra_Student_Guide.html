@@ -46,9 +46,9 @@
 <br>
 <li>Platforms Supported:</li>
 <ul>
-  <li>Microsoft Windows 7 or 10 (64-bit)</li>
-  <li>Linux (64-bit, CentOS 7 is preferred)</li>
-  <li>macOS (OS X) 10.8.3+ (Mountain Lion or later)</li>
+  <li>Microsoft Windows 10 or later (64-bit)</li>
+  <li>Linux (64-bit)</li>
+  <li>macOS 10.13 or later</li>
 </ul>
 
 
@@ -419,13 +419,18 @@ Before you can do anything else, you must first create a project. Projects are u
     <li>Go to <b>File->Import File...</b></li>
     <li>Browse to the program you want to import. Click on &quot;supported formats&quot; if you want to see a list of formats Ghidra supports. Ghidra can import (PE, ELF, raw binary, intel hex, gzf (ghidra zip file), etc.)</li>
     <li><b>Recognized type</b>: If recognizable, Ghidra will fill in the correct file format otherwise it will show "raw binary" and you must choose the correct language/compiler pair.</li>
-      <li><b>Raw Binary</b>: You may always choose raw binary if you do not want any imported information and you must choose the correct language/compiler pair. </li>
+    <li><b>Raw Binary</b>: You may always choose raw binary if you do not want any imported information and you must choose the correct language/compiler pair. </li>
     <li>Choose a new project folder if you want the loading programs in a subfolder.</li>
-<li>Options:</li>
-  <ul>
-    <li>The Library Search Path is a list of folders that Ghidra checks for dynamically linked library (DLL) files. If your folder is not on the list, add it using the green plus button.</li>
-    <li>There is an option to attempt to load all related dynamically linked library files into your project at the same time as the loading program. This option also links all DLL calls to their external program location so that you can navigate to them. <b>NOTE: This option only works for programs containing enough metadata to determine which DLL(s) to load.</b></li>
-</ul>
+    <li>Options Button:</li>
+  		<ul>
+    		<li>There are several import options including a few for importing and linking dynamically linked library (DLL) files along with your program. </li>
+    			<ul>
+					<li>You can choose to use libraries already in your project or import them from disk</li>
+    				<li>You can edit the list of paths to search for on disk libraries</li>
+    				<li>You can choose a subfolder in your project to save them</li>
+    				<li>Hit F1 on the Options window to see more information about all of the import options.
+				</ul>
+		</ul>
   </ol>
   </p>
 </div>
@@ -634,6 +639,7 @@ Before you can do anything else, you must first create a project. Projects are u
   <li>Hover on icons to see their function</li>
   <li>Closing a tool vs. exiting Ghidra</li>
   <li>Cursor vs. Selection driven actions</li>
+  <li>Themes</li>
 </ul>
 <div role="note">
   <p>
@@ -651,6 +657,7 @@ Before you can do anything else, you must first create a project. Projects are u
     <li>Main menus and sub-menus in general are used for global actions. The right-click menu is context-sensitive, which means that different actions are available on the right-click menu depending on what item your mouse is on.</li>
     <li>If there is no selection, many actions act only on the current cursor location. When there is a selection, these actions will act on an entire selection.</li>
     <li><b>Common Windows Menu icons</b> The last several icons on the icon bar correspond to some of the common items in the Windows menu: Bookmark manager, ByteViewer, Function Call Tree, Data Type Manager, Decompiler, Function Graph, Script manager, Memory Map, Register Manager, Symbol Table, Symbol References, Symbol Tree. These will be covered separately later.</li>
+	<li><b>Themes</b> You can change the look and feel of Ghidra to include colors, fonts and such using themes. To do so, choose Edit->Theme... from the Project Manager window. You can switch to a new theme (for example Dark Theme), configure the current theme, create a new theme, import an existing theme that someone else created, export a theme you created, or delete a theme. </li>
   </ul>
   </p>
 </div>
@@ -968,7 +975,7 @@ Before you can do anything else, you must first create a project. Projects are u
       
       <li><b>Navigation</b> You can navigate by address or label column. Just click on the value in the column to start navigation.</li>
       <li><b>Sorting</b> You can sort by any column, ascending or descending. To sort, click on the top of the column and you will see a stair step indicating ascending or descending. Then click to reverse. You can sub-sort by doing <b>Ctrl-click</b> on the other secondary columns</li>
-      <li><b>Filtering/Filter Options</b> You can type the filter value in the bottom text box and press enter. The filter option has a default setting that will filter out any row that does not contain the text in the filter unless you change the default option using the button to the right of the filter. Other filter options include: <b>Starts With</b>, Matches Exactly</b>, <b>Regular Expressions</b>, <b>Case Sensitive</b>, Inverting the filter</b>, and <b>Multi-Term Filtering</b>.</li>
+      <li><b>Filtering/Filter Options</b> You can type the filter value in the bottom text box and press enter. The filter option has a default setting that will filter out any row that does not contain the text in the filter unless you change the default option using the <b>Filter Settings</b> button to the right of the filter. Other filter settings include: <b>Starts With</b>, <b>Matches Exactly</b>, <b>Regular Expressions</b>, <b>Case Sensitive</b>, <b>Inverting the filter</b>, and <b>Multi-Term Filtering</b>. There is also a <b>Create Column Filter</b> button which will allow for more complex filtering on a specific column or using set operations on multiple column filters.</li>
       <li><b>Add/remove columns</b> You can right-click on any column and choose to remove it or add a new column next to it. </li>
       <li><b>Move columns</b> You can move columns by clicking, dragging, and letting go of the click where you want the column to end up.</li>
       <li><b>Column settings</b> Some columns have special settings you can change using the right-click menu.</li>
@@ -1624,10 +1631,12 @@ Before you can do anything else, you must first create a project. Projects are u
   <li>GZF (Ghidra Zip File)</li>
   <li>XML</li>
   <li>HTML</li>
-  <li>Binary</li>
+  <li>Raw Bytes</li>
   <li>Intel Hex</li>
   <li>C code (.c and .h files)</li>
   <li>Ascii</li>
+  <li>Original File</li>
+  <li>SARIF</li>
 </ul>
 <div role="note">
   <p>
@@ -1638,10 +1647,13 @@ Before you can do anything else, you must first create a project. Projects are u
       <li><b>Ghidra Zip file (GZF)</b> uses custom format to compress all information contained in a Ghidra program so that users can share program information. </li>
       <li><b>XML</b> Used to export information about the current program, to other tools if an importer has been written to recognize it in the other tool. There is potential loss of information due to inconsistencies between tools. NOTE: An exemplar IdaPro set of plugins/loaders are included in ghidra_<version>/Extensions/IDAPro. Also included is an IdaPro export plugin that creates XML that Ghidra can import.</li>
       <li><b>HTML</b> exports selection or entire program as navigable html</li>
-      <li><b>Binary</b> exports selection or entire program as binary</li>
+      <li><b>Raw Bytes</b> exports selection or entire program as binary. This does not preserve the original file layout unless there was only one memory block in the original file.</li>
       <li><b>Intel Hex</b> exports selection or entire program as Intel hex format</li>
       <li><b>C</b> exports selection or entire program as C code (Including corresponding .h file)</li>
       <li><b>Ascii</b> exports selection or entire program as printable Ascii file</li>
+  	  <li><b>Original File</b> Writes a program back to its original file layout. By default, any file-backed bytes that were modified by the user in the program database will be reflected in the new file. Optionally, the program can be written back to its unmodified file bytes, discarding all user modifications.</li>
+      <li><b>SARIF</b> Creates SARIF files that contains information from a Ghidra program so that users can share program information.</li>
+
     </ul>
   </ul>
   </p>
@@ -1832,10 +1844,13 @@ Before you can do anything else, you must first create a project. Projects are u
   <ul>
     <li>To open the Search Memory dialog go to <b>Search->Memory...</b></li>
     <ul>
-      <li>Allows users to search for byte(s) contained in program memory</li>
+      <li>This dialog allows users to search for byte(s) contained in program memory</li>
       <li>Can limit to a selection</li>
-      <li>Can enter search value as hex, string, decimal, binary or regular expression. Choosing these options brings up other sub-options if applicable (i.e., if you pick <b>String</b> you will see a sub-menu allowing you to choose case-sensitive or unicode)</li>
+      <li>Can enter search value as hex, string, decimal, binary, float, double or regular expression. </li>
+	  <li>There is an options panel which allows you to set various options such as endianess, alignment, size, signedness, encoding, case sensitiveness, and whether bytes are in instructions, defined data, or undefined data and whether in loaded memory blocks or other types of blocks.</li>
       <li>Using regular expressions in search memory allow a more flexible byte pattern search such as searching for two numerical digits followed by three ASCII characters without knowing the exact values.</li>
+      <li>After doing one search, the user can use the New Search pull down to perform set operations between the first search and a follow-on search.</li>
+	  <li>There is a scan panel that can be used to rescan the bytes in the current search results table to see if any of the found bytes are the same, have changed, have increased, or have decreased.</li>
     </ul>
   </ul>
   </p>
@@ -1858,7 +1873,7 @@ Before you can do anything else, you must first create a project. Projects are u
   <b><u>Notes:</u></b>
   <ul>
     
-    <li>To open the Search for Strings dialog go to <b>Search->Search for Strings...</b></li>
+    <li>To open the Search for Strings dialog go to <b>Search->for Strings...</b></li>
     <ul>
       <li>Allows users to search for potential strings found in all or selected portion of memory.</li>
       <li>By default searches for null terminated ASCII and unicode.</li>
@@ -1883,7 +1898,10 @@ Before you can do anything else, you must first create a project. Projects are u
       <li>Can change the offset of the beginning of the string if there are ASCII chars at the beginning that do not belong in your string.</li>
       <li>Can have it include alignment nulls at the end of the string. The number of nulls included is based on the alignment value chosen.</li>
     </ul>
-  </ul>
+
+  	<li>There is a similar string search that allows you to search for strings with other encodings beyond the simple string search. To run it choose <b>Search -> for Encoded Strings...</b> It is similar to search for strings but will show strings using the given encoding. You can also choose to limit the search to a specific script (ie alphabet), translate the found strings, and more. Do F1 on this action to get more detailed information.</li>
+
+  	</ul>
   </p>
 </div>
 </section>
@@ -2164,6 +2182,7 @@ Before you can do anything else, you must first create a project. Projects are u
     <li>To open the Defined Functions Window go to <b>Window->Functions</b></li>
     <ul>
       <li>This table lists all functions in the current program</li>
+	  <li>Note: One cool thing you can do with this table is select a subset of the functions and choose <b>Compare Function(s)</b> to see a side by side comparison view of the functions that you chose. For more info about this table, hit F1 while it is open.</li>
     </ul>
     <li>To open the Defined Strings Window go to <b>Window->Defined Strings</b></li>
     <ul>
@@ -2509,6 +2528,8 @@ Before you can do anything else, you must first create a project. Projects are u
     <li>By default the Function Call Trees show all calls in address order to or from the current function. There is an option to collapse any duplicates and show each call once.</li>
     <li>Optionally toggle whether Listing navigates to currently selected function.</li>
     <li>Optionally toggle whether Function Call Trees updates when navigating to new function in Listing.</li>
+	<li>There is an option in the black triangle pull down to show or not show thunks to functions in the tree.</li>
+	<li>There is an option in the black triangle pull down to show or not show the namespace of the function names in the tree.</li>
 
 
   </ul>
