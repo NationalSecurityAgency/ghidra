@@ -106,15 +106,6 @@ public class SwiftDemangler implements Demangler {
 		return null;
 	}
 
-	@Override
-	public DemangledObject demangle(MangledContext context) throws DemangledException {
-		DemanglerOptions op = context.getOptions();
-		String mangled = context.getMangled();
-		DemangledObject demangledObject = demangle(mangled, op);
-		demangledObject.setMangledContext(context);
-		return demangledObject;
-	}
-
 	/**
 	 * Get a new {@link Demangled} by demangling the given mangled string
 	 *
