@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,7 @@ import docking.widgets.tree.tasks.GTreeBulkTask;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.actions.*;
 import ghidra.app.plugin.core.symboltree.nodes.*;
-import ghidra.framework.model.DomainObjectListener;
-import ghidra.framework.model.DomainObjectListenerBuilder;
+import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -391,6 +390,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	}
 
 	void programClosed(Program closedProgram) {
+		tree.cancelWork();
 		treeStateMap.remove(closedProgram);
 	}
 
@@ -508,6 +508,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 
 		if (program != loc.getProgram()) {
+			return;
+		}
+
+		if (!isVisible()) {
 			return;
 		}
 
@@ -674,11 +678,23 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			monitor.setMessage("Searching for " + searchSymbol.getName());
-			SymbolNode key = SymbolNode.createNode(searchSymbol, program);
-			GTreeNode node = rootNode.findSymbolTreeNode(key, true, monitor);
-			if (node != null) {
-				tree.setSelectedNode(node);
+			try {
+				monitor.setMessage("Searching for " + searchSymbol.getName());
+				SymbolNode key = SymbolNode.createNode(searchSymbol, program);
+				GTreeNode node = rootNode.findSymbolTreeNode(key, true, monitor);
+				if (node != null) {
+					tree.setSelectedNode(node);
+				}
+			}
+			catch (DomainObjectException doe) {
+				// We have seen this happen if this task is searching for symbols and the program is
+				// closed.   The code has been updated to cancel the tree work as the program is 
+				// being closed.  We are keeping this here to guard against another unseen path into
+				// this type of exception.
+				Throwable cause = doe.getCause();
+				if (!(cause instanceof ClosedException)) {
+					throw doe;
+				}
 			}
 		}
 	}
