@@ -914,6 +914,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			}
 		}
 		if (restored) {
+			invalidateCache();
 			notifyRestored();
 		}
 	}

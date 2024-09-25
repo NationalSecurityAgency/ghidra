@@ -278,7 +278,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 
 	@Override
 	public void componentDataChanged() {
-		// Don't need to update other than table when component data changes.
+		provider.contextChanged();
 	}
 
 	@Override
