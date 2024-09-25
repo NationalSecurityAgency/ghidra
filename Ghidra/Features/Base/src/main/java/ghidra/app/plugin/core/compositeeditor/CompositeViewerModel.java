@@ -1146,6 +1146,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 			for (CompositeViewerModelListener listener : modelListeners) {
 				listener.selectionChanged();
 			}
+			provider.contextChanged();
 		});
 	}
 
