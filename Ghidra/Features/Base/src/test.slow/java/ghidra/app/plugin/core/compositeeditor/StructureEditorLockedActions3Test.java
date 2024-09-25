@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -196,7 +196,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorTe
 		assertEquals(9, getModel().getNumComponents());
 		assertEquals("byte", getDataType(1).getName());
 		assertEquals(getDataType(1), dt1);
-		assertEquals("pointer doesn't fit.", getModel().getStatus());
+		assertTrue(getModel().getStatus().contains("requires 1 additional"));
 		assertEquals(1, getDataType(1).getLength());
 		assertEquals(1, getModel().getComponent(1).getLength());
 		assertEquals(DataType.DEFAULT, getDataType(2));

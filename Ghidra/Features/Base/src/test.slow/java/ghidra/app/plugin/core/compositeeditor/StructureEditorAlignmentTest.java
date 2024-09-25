@@ -593,12 +593,12 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		assertNotNull(asciiDt);
 		addAtPoint(asciiDt, 2, 3);
 
-		assertEquals(3, structureModel.getNumComponents());
-		assertEquals(4, structureModel.getRowCount());
+		assertEquals(7, structureModel.getNumComponents());
+		assertEquals(8, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", new ByteDataType(), "", "");
 		checkRow(1, 1, 4, "float", new FloatDataType(), "", "");
 		checkRow(2, 5, 1, "char", asciiDt, "", "");
-		assertLength(6);
+		assertLength(10);
 		assertActualAlignment(1);
 	}
 

@@ -215,36 +215,8 @@ class StructureEditorModel extends CompEditorModel {
 		}
 
 		viewDTM.withTransaction("Set Size", () -> {
-			int length = currentLength;
 			Structure structure = (Structure) viewComposite;
-			if (length > size) {
-				int numComponents = structure.getNumComponents();
-
-				DataTypeComponent dtc = structure.getComponentContaining(size);
-				int ordinal = dtc.getOrdinal();
-
-				// retain any zero-length components which have an offset equal the new size
-				while (dtc.getOffset() == size && dtc.getLength() == 0 &&
-					(ordinal + 1) < numComponents) {
-					dtc = structure.getComponent(++ordinal);
-				}
-
-				// remove trailing components outside of new size
-				for (int index = numComponents - 1; index >= ordinal; index--) {
-					structure.delete(index);
-					int bitFieldResidualBytes = structure.getNumComponents() - index;
-					for (int i = 0; i < bitFieldResidualBytes; i++) {
-						// bitfield removal may cause injection of undefined bytes - remove them
-						structure.delete(index);
-					}
-				}
-				// structure may shrink too much from component removal - may need to grow
-				length = (viewComposite.isZeroLength()) ? 0 : viewComposite.getLength();
-			}
-			if (length < size) {
-				// Increasing structure length.
-				structure.growStructure(size - length);
-			}
+			structure.setLength(size);
 		});
 		notifyCompositeChanged();
 	}
@@ -372,13 +344,17 @@ class StructureEditorModel extends CompEditorModel {
 			throw new IllegalArgumentException("Invalid component index specified");
 		}
 		DataType dt = originalComp.getDataType();
-		int dtLen = dt.getLength();
+		int len = dt.getLength();
+		if (len < 0) {
+			len = originalComp.getLength();
+		}
 		checkIsAllowableDataType(dt);
 
+		int dtcLen = len;
 		viewDTM.withTransaction("Duplicate Components", () -> {
 			int startIndex = index + 1;
-			if (isShowingUndefinedBytes() && (dt != DataType.DEFAULT)) {
-				int endIndex = startIndex + (dtLen * multiple) - 1;
+			if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(index)) {
+				int endIndex = startIndex + (dtcLen * multiple) - 1;
 				if (startIndex < getNumComponents()) {
 					deleteComponentRange(startIndex, endIndex, monitor);
 				}
@@ -605,21 +581,16 @@ class StructureEditorModel extends CompEditorModel {
 		if (comp == null) {
 			return false;
 		}
-		DataType dt = comp.getDataType();
-		if (viewComposite.isPackingEnabled()) {
+		if (viewComposite.isPackingEnabled() || isAtEnd(rowIndex)) {
 			return true;
 		}
+		DataType dt = comp.getDataType();
 		if (dt.equals(DataType.DEFAULT)) {
 			return true; // Insert an undefined and push everything down.
 		}
 		if (comp.isBitFieldComponent()) {
 			return false; // unable to place non-packed bitfield in a reasonable fashion
 		}
-		// Can always duplicate at the end.
-		if (isAtEnd(rowIndex) || onlyUndefinedsUntilEnd(rowIndex + 1)) {
-			return true;
-		}
-		// Otherwise can only duplicate if enough room.
 
 		// Get the size of the data type at this index and the number of
 		// undefined bytes following it.
@@ -627,8 +598,7 @@ class StructureEditorModel extends CompEditorModel {
 		if (dtSize <= 0) {
 			dtSize = comp.getLength();
 		}
-		int undefSize = getNumUndefinedBytesAt(rowIndex + 1);
-		if (dtSize <= undefSize) {
+		if (dtSize <= getNumUndefinedBytesAfter(comp)) {
 			return true;
 		}
 		return false;
@@ -701,8 +671,7 @@ class StructureEditorModel extends CompEditorModel {
 				1 == currentRange.getEnd().getIndex().intValue());
 
 		if (isOneComponent) {
-			if (!isShowingUndefinedBytes() || isAtEnd(currentIndex) ||
-				onlyUndefinedsUntilEnd(currentIndex + 1)) {
+			if (isPackingEnabled() || isAtEnd(currentIndex)) {
 				return true; // allow replace of component when aligning.
 			}
 
@@ -711,10 +680,6 @@ class StructureEditorModel extends CompEditorModel {
 			DataTypeComponent comp = getComponent(currentIndex);
 			if (comp != null) {
 				DataType compDt = comp.getDataType();
-				int numCompBytes = comp.getLength();
-				int numFollowing = getNumUndefinedBytesAt(currentIndex + 1);
-				int numAvailable = numCompBytes + numFollowing;
-				// Drop on pointer.
 				if (compDt instanceof Pointer ||
 					DataTypeHelper.getBaseType(compDt) instanceof Pointer) {
 					// Don't create undefined byte pointers.
@@ -723,10 +688,8 @@ class StructureEditorModel extends CompEditorModel {
 					}
 					return true;
 				}
-				else if (datatype.getLength() <= numAvailable) {
-					return true;
-				}
-				return false;
+				int numAvailable = comp.getLength() + getNumUndefinedBytesAfter(comp);
+				return datatype.getLength() <= numAvailable;
 			}
 			return true;
 		}
@@ -774,17 +737,18 @@ class StructureEditorModel extends CompEditorModel {
 		catch (InvalidDataTypeException e) {
 			return false;
 		}
-
-		if (isShowingUndefinedBytes()) {
-			if (isAtEnd(rowIndex)) {
-				return true;
-			}
-			int maxBytes = dtc.getLength() + getNumUndefinedBytesAt(rowIndex + 1);
-			if (dataType.getLength() > maxBytes) {
-				return false;
-			}
+		
+		if (isPackingEnabled() || isAtEnd(rowIndex)) {
+			return true;
 		}
-		return true;
+		
+		int undefSize = getNumUndefinedBytesAfter(dtc);
+		if (undefSize < 0) {
+			return true;
+		}
+		
+		int numAvailable = dtc.getLength() + undefSize;
+		return dataType.getLength() <= numAvailable;
 	}
 
 	// *************************************************************
@@ -804,9 +768,11 @@ class StructureEditorModel extends CompEditorModel {
 	 */
 	@Override
 	public int getMaxAddLength(int rowIndex) {
-		int maxLength = Integer.MAX_VALUE;
 		if (rowIndex >= getNumComponents() - 1) {
-			return maxLength;
+			return Integer.MAX_VALUE;
+		}
+		if (isPackingEnabled() || isAtEnd(rowIndex)) {
+			return Integer.MAX_VALUE;
 		}
 		DataTypeComponent comp = getComponent(rowIndex);
 		FieldRange currentRange = getSelectedRangeContaining(rowIndex);
@@ -817,18 +783,9 @@ class StructureEditorModel extends CompEditorModel {
 				1 == currentRange.getEnd().getIndex().intValue());
 
 		if (isOneComponent) {
-			if (!isShowingUndefinedBytes()) {
-				return maxLength;
-			}
-
-			// FreeForm editing mode (showing Undefined Bytes).
-			int numAvailable = comp.getLength() + getNumUndefinedBytesAt(rowIndex + 1);
-			return (maxLength == -1) ? numAvailable : Math.min(maxLength, numAvailable);
+			return comp.getLength() + getNumUndefinedBytesAfter(comp);
 		}
-		DataTypeComponent startComp = getComponent(currentRange.getStart().getIndex().intValue());
-		DataTypeComponent endComp = getComponent(currentRange.getEnd().getIndex().intValue() - 1);
-		int numAvailable = endComp.getOffset() + endComp.getLength() - startComp.getOffset();
-		return (maxLength == -1) ? numAvailable : Math.min(maxLength, numAvailable);
+		return getNumBytesInRange(currentRange);
 	}
 
 	/**
@@ -842,26 +799,34 @@ class StructureEditorModel extends CompEditorModel {
 	 */
 	@Override
 	public int getMaxReplaceLength(int currentIndex) {
-		if (!isShowingUndefinedBytes()) { // Can replace at any index
+
+		if (currentIndex >= getNumComponents() - 1) {
 			return Integer.MAX_VALUE;
 		}
+		if (isPackingEnabled() || isAtEnd(currentIndex)) {
+			return Integer.MAX_VALUE;
+		}
+		
 		// Can only replace with what fits unless at last component or empty last line.
 		DataTypeComponent comp = getComponent(currentIndex);
 		int numComponents = getNumComponents();
 		if ((currentIndex >= (numComponents - 1)) && (currentIndex <= numComponents)) {
 			return Integer.MAX_VALUE; // Last component or empty entry immediately after it.
 		}
-		else if (comp == null) {
+		if (comp == null) {
 			return 0; // No such component. Not at valid edit index.
 		}
 
 		// Otherwise, get size of component and number of Undefined bytes after it.
-		FieldRange range = getSelectedRangeContaining(currentIndex);
-		if (range == null ||
-			range.getStart().getIndex().intValue() == range.getEnd().getIndex().intValue() - 1) {
-			return comp.getLength() + getNumUndefinedBytesAt(currentIndex + 1);
+		FieldRange currentRange = getSelectedRangeContaining(currentIndex);
+		boolean isOneComponent =
+				(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
+					1 == currentRange.getEnd().getIndex().intValue());
+		
+		if (isOneComponent) {
+			return comp.getLength() + getNumUndefinedBytesAfter(comp);
 		}
-		return getNumBytesInRange(range);
+		return getNumBytesInRange(currentRange);
 	}
 
 	/**
@@ -959,7 +924,7 @@ class StructureEditorModel extends CompEditorModel {
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
 
 			// FreeForm editing mode (showing Undefined Bytes).
-			if (isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
+			if (!isPackingEnabled() && !isAtEnd(rowIndex)) {
 				int origLen = getComponent(rowIndex).getLength();
 				dtc = viewDTM.withTransaction("Replace Component", () -> {
 					return ((Structure) viewComposite).replace(componentOrdinal, dataType, length,
@@ -983,14 +948,22 @@ class StructureEditorModel extends CompEditorModel {
 			}
 			else {
 				dtc = viewDTM.withTransaction("Replace Component", () -> {
-					((Structure) viewComposite).delete(componentOrdinal);
-					return ((Structure) viewComposite).insert(componentOrdinal, dataType, length,
-						name, comment);
+					Structure struct = (Structure) viewComposite;
+					DataTypeComponent comp = getComponent(rowIndex);
+					if (!isPackingEnabled()) {
+						// We are at end with packing disabled - grow structure if needed
+						int avail = comp.getLength() + getNumUndefinedBytesAfter(comp);
+						if (length > avail) {
+							struct.growStructure(length - avail);
+						}
+					}
+					return ((Structure) viewComposite).replace(componentOrdinal, dataType, length, name, comment);
 				});
 			}
 			return dtc;
 		}
 		catch (IllegalArgumentException exc) {
+			// NOTE: Use of exception may cause transaction rollback
 			throw new InvalidDataTypeException(exc.getMessage());
 		}
 	}

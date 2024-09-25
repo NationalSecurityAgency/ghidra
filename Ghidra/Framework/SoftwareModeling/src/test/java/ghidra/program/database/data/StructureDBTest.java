@@ -1449,6 +1449,40 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(dtc1, barStruct.getComponent(6));
 
 	}
+	
+	@Test
+	public void testSetLength() {
+
+		assertEquals(8, struct.getLength());
+		assertEquals(4, struct.getNumComponents());
+		assertEquals(4, struct.getNumDefinedComponents());
+		
+		struct.setLength(20);
+		assertEquals(20, struct.getLength());
+		assertEquals(16, struct.getNumComponents());
+		assertEquals(4, struct.getNumDefinedComponents());
+		
+		// new length is offcut within 3rd component at offset 0x3 which should get cleared
+		struct.setLength(4);
+		assertEquals(4, struct.getLength());
+		assertEquals(3, struct.getNumComponents());
+		assertEquals(2, struct.getNumDefinedComponents());
+		
+		// Maximum length supported by GUI editor is ~Integer.MAX_VALUE/10
+		int len = Integer.MAX_VALUE / 10;
+		struct.setLength(len);
+		assertEquals(len, struct.getLength());
+		assertEquals(len - 1, struct.getNumComponents());
+		assertEquals(2, struct.getNumDefinedComponents());
+		
+		len /= 2;
+		struct.replaceAtOffset(len-2, WordDataType.dataType, -1, "x", null); // will be preserved below
+		struct.replaceAtOffset(len+2, WordDataType.dataType, -1, "y", null); // will be cleared below
+		struct.setLength(len);
+		assertEquals(len, struct.getLength());
+		assertEquals(len - 2, struct.getNumComponents());
+		assertEquals(3, struct.getNumDefinedComponents());
+	}
 
 	@Test
 	public void testDeleteMany() {

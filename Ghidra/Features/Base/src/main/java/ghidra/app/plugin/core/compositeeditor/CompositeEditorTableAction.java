@@ -30,8 +30,7 @@ import ghidra.util.HelpLocation;
  * <p>
  * Note: Any new actions must be registered in the editor manager via the actions's name.
  */
-abstract public class CompositeEditorTableAction extends DockingAction
-		implements CompositeEditorModelListener {
+abstract public class CompositeEditorTableAction extends DockingAction {
 
 	static final String MAIN_ACTION_GROUP = "0_MAIN_EDITOR_ACTION";
 	static final String UNDOREDO_ACTION_GROUP = "1_UNDOREDO_EDITOR_ACTION";
@@ -79,14 +78,12 @@ abstract public class CompositeEditorTableAction extends DockingAction
 		this.model = provider.getModel();
 		this.plugin = provider.plugin;
 		this.tool = plugin.getTool();
-		model.addCompositeEditorModelListener(this);
 		String helpAnchor = provider.getHelpName() + "_" + getHelpName();
 		setHelpLocation(new HelpLocation(provider.getHelpTopic(), helpAnchor));
 	}
 
 	@Override
 	public void dispose() {
-		model.removeCompositeEditorModelListener(this);
 		super.dispose();
 		provider = null;
 		model = null;
@@ -106,45 +103,6 @@ abstract public class CompositeEditorTableAction extends DockingAction
 
 	public String getHelpName() {
 		return getName();
-	}
-
-	@Override
-	public void selectionChanged() {
-		provider.contextChanged();
-	}
-
-	public void editStateChanged(int i) {
-		provider.contextChanged();
-	}
-
-	@Override
-	public void compositeEditStateChanged(int type) {
-		provider.contextChanged();
-	}
-
-	@Override
-	public void endFieldEditing() {
-		provider.contextChanged();
-	}
-
-	@Override
-	public void componentDataChanged() {
-		provider.contextChanged();
-	}
-
-	@Override
-	public void compositeInfoChanged() {
-		provider.contextChanged();
-	}
-
-	@Override
-	public void statusChanged(String message, boolean beep) {
-		// we are an action; don't care about status messages
-	}
-
-	@Override
-	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
-		provider.contextChanged();
 	}
 
 }
