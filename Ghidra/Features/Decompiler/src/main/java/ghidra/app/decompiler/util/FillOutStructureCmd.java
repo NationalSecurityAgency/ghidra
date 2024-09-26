@@ -66,23 +66,24 @@ public class FillOutStructureCmd extends BackgroundCommand<Program> {
 			throw new AssertionError("program does not match location");
 		}
 
+		Function function =
+			program.getFunctionManager().getFunctionContaining(location.getAddress());
+		if (function == null) {
+			setStatusMsg("Function not found at " + location.getAddress());
+			return false;
+		}
+
+		FillOutStructureHelper fillStructureHelper =
+			new FillOutStructureHelper(program, monitor);
+		DecompInterface decompInterface = fillStructureHelper.setUpDecompiler(decompileOptions);
 		try {
-			Function function =
-				program.getFunctionManager().getFunctionContaining(location.getAddress());
-			if (function == null) {
-				setStatusMsg("Function not found at " + location.getAddress());
-				return false;
-			}
-
-			FillOutStructureHelper fillStructureHelper =
-				new FillOutStructureHelper(program, decompileOptions, monitor);
-
 			HighVariable var = null;
 
 			if (!(location instanceof DecompilerLocation dloc)) {
 				// if we don't have one, make one, and map variable to a varnode
 				Address storageAddr = computeStorageAddress(function);
-				var = fillStructureHelper.computeHighVariable(storageAddr, function);
+				var =
+					fillStructureHelper.computeHighVariable(storageAddr, function, decompInterface);
 			}
 			else {
 
@@ -108,7 +109,8 @@ public class FillOutStructureCmd extends BackgroundCommand<Program> {
 				}
 			}
 
-			Structure structDT = fillStructureHelper.processStructure(var, function, false, true);
+			Structure structDT =
+				fillStructureHelper.processStructure(var, function, false, true, decompInterface);
 			if (structDT == null) {
 				setStatusMsg("Failed to fill-out structure");
 				return false;
@@ -120,7 +122,7 @@ public class FillOutStructureCmd extends BackgroundCommand<Program> {
 			pointerDT = program.getDataTypeManager()
 					.addDataType(pointerDT, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-			boolean isThisParam = DecompilerUtils.testForAutoParameterThis(var, function);
+			boolean isThisParam = DecompilerUtils.isThisParameter(var, function);
 			if (!isThisParam) {
 				commitVariable(var, pointerDT, isThisParam);
 			}
@@ -130,6 +132,9 @@ public class FillOutStructureCmd extends BackgroundCommand<Program> {
 		catch (Exception e) {
 			Msg.showError(this, null, "Auto Create Structure Failed",
 				"Failed to create Structure variable", e);
+		}
+		finally {
+			decompInterface.dispose();
 		}
 		return false;
 	}

@@ -631,7 +631,10 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	public void testPointerToQuestionToData() throws Exception {
 		mangled = "?var@@3PD?BHC";
 		msTruth = "";
-		mdTruth = msTruth;
+		// This is a non-sensical result, but the end result we get from our current processing
+		//  model.  I believe this was probably a symbol I created to see if a pointer to a '?'
+		//  modifier to data could happen (from undname perspective vs. a real world perspective).
+		mdTruth = "BHC const volatile * var";
 		demangleAndTest();
 	}
 
@@ -655,7 +658,10 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	public void testReferenceToQuestionToData() throws Exception {
 		mangled = "?var@@3AD?BHC";
 		msTruth = "";
-		mdTruth = msTruth;
+		// This is a non-sensical result, but the end result we get from our current processing
+		//  model.  I believe this was probably a symbol I created to see if a reference to a '?'
+		//  modifier to data could happen (from undname perspective vs. a real world perspective).
+		mdTruth = "BHC const volatile & var";
 		demangleAndTest();
 	}
 
@@ -678,8 +684,11 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testQuestionToQuestionToData() throws Exception {
 		mangled = "?var@@3?D?BHC";
-		msTruth = "";
-		mdTruth = msTruth;
+		msTruth = ""; //fails
+		// This is a non-sensical result, but the end result we get from our current processing
+		//  model.  I believe this was probably a symbol I created to see if '?' modifiers could
+		//  be nested (from undname perspective vs. a real world perspective).
+		mdTruth = "BHC const volatile var";
 		demangleAndTest();
 	}
 
@@ -1378,6 +1387,20 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	public void testStdNullptrArgVar() throws Exception {
 		mangled = "?Name@@3$$TA";
 		msTruth = "std::nullptr_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// $$T was found to be the reference type of a right-reference, and we needed to change
+	//  special extended types to be reached from basic data types instead of from primary data
+	//  types.  Primary data types used to send out to extended and basic handling.  Now extended
+	//  is sent out by basic.  See MDDataTypeParser.
+	// MDStdNullPtrType "$$T" referenced by RRef (any reference type)
+	// Manufactured
+	@Test
+	public void testStdNullPtrReferencedByRRef() throws Exception {
+		mangled = "?fn@@3P6AH$$QA$$T@ZA";
+		msTruth = "int (__cdecl* fn)(std::nullptr_t &&)";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -3697,11 +3720,127 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
-	//Q: __vectorcall block
+	//Q,R: __vectorcall block
 	@Test
 	public void testFunctionCallingConventions_Q__vectorcall() throws Exception {
 		mangled = "?fnii@@YQHH@Z";
 		msTruth = "int __vectorcall fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_R__vectorcall() throws Exception {
+		mangled = "?fnii@@YRHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int __vectorcall fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//S,T: __swift_1 block
+	// MSFT is as shown
+	// LLVM is "__attribute__((__swiftcall__))" for code S and blank for T
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_S__swift_1() throws Exception {
+		mangled = "?fnii@@YSHH@Z";
+		String llTruth = "int __attribute__((__swiftcall__)) fnii(int)\n";
+		msTruth = "int __swift_1 fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MSFT is as shown
+	// LLVM is "__attribute__((__swiftcall__))" for code S and blank for T
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_T__swift_1() throws Exception {
+		mangled = "?fnii@@YTHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int __swift_1 fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//U,V: __swift_2 block
+	// MSFT is as shown for U, but blank for V
+	// LLVM is blank for both
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_U__swift_2() throws Exception {
+		mangled = "?fnii@@YUHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int __swift_2 fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MSFT is as shown for U, but blank for V
+	// LLVM is blank for both
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_V__blank() throws Exception {
+		mangled = "?fnii@@YVHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int fnii(int)";
+		mdTruth = "int __swift_2 fnii(int)";
+		demangleAndTest();
+	}
+
+	//W,X: __swiftasynccall block
+	// MSFT is blank
+	// LLVM is "__attribute__((__swiftasynccall__))" for code W and blank for X
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_W__swiftasynccall() throws Exception {
+		mangled = "?fnii@@YWHH@Z";
+		String llTruth = "int __attribute__((__swiftasynccall__)) fnii(int)";
+		msTruth = "int fnii(int)";
+		mdTruth = "int __swiftasynccall fnii(int)";
+		demangleAndTest();
+	}
+
+	// MSFT is blank
+	// LLVM is "__attribute__((__swiftasynccall__))" for code W and blank for X
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_X__blank() throws Exception {
+		mangled = "?fnii@@YXHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int fnii(int)";
+		mdTruth = "int __swiftasynccall fnii(int)";
+		demangleAndTest();
+	}
+
+	//Y,Z:  blank block
+	// I suspect this is blank only unless/until the standard accepts a new convention for it
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_Y__blank() throws Exception {
+		mangled = "?fnii@@YYHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// I suspect this is blank only unless/until the standard accepts a new convention for it
+	// Manufactured
+	@Test
+	public void testFunctionCallingConventions_Z__blank() throws Exception {
+		mangled = "?fnii@@YZHH@Z";
+		String llTruth = "int fnii(int)";
+		msTruth = "int fnii(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testFunctionNoExcept() throws Exception {
+		mangled = "?fnii@@YAHH@_E";
+		msTruth = "int __cdecl fnii(int) noexcept";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -14524,10 +14663,13 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	public void testThreadSafeStaticGuard_1() throws Exception {
 		mangled =
 			"?$TSS0@?1??GetCategoryMap@CDynamicRegistrationInfoSource@XPerfAddIn@@SAPEBU_ATL_CATMAP_ENTRY@ATL@@XZ@4HA";
+		String llTruth =
+			"int `public: static struct ATL::_ATL_CATMAP_ENTRY const * __cdecl XPerfAddIn::CDynamicRegistrationInfoSource::GetCategoryMap(void)'::`2'::$TSS0";
+		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
+		msTruth =
+			"int `public: static struct ATL::_ATL_CATMAP_ENTRY const * __ptr64 __cdecl XPerfAddIn::CDynamicRegistrationInfoSource::GetCategoryMap(void)'::`2'::$TSS0";
 		mdTruth =
 			"int `public: static struct ATL::_ATL_CATMAP_ENTRY const * __ptr64 __cdecl XPerfAddIn::CDynamicRegistrationInfoSource::GetCategoryMap(void)'::`2'::`thread safe static guard{0}'";
-		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
-		msTruth = mdTruth;
 		demangleAndTest();
 	}
 
@@ -14550,10 +14692,13 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testNonvisibleStaticGuard() throws Exception {
 		mangled = "?$S1@?1??name0@name1@name2@@KAHPEBGAEAG@Z@4HA";
+		String llTruth =
+			"int `protected: static int __cdecl name2::name1::name0(unsigned short const *, unsigned short &)'::`2'::$S1";
+		//TODO: Create MDMangVS2015 Specialization
+		msTruth =
+			"int `protected: static int __cdecl name2::name1::name0(unsigned short const * __ptr64,unsigned short & __ptr64)'::`2'::$S1";
 		mdTruth =
 			"int `protected: static int __cdecl name2::name1::name0(unsigned short const * __ptr64,unsigned short & __ptr64)'::`2'::`nonvisible static guard{1}'";
-		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
-		msTruth = mdTruth;
 		demangleAndTest();
 	}
 
@@ -14576,10 +14721,13 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testReferenceTemporary() throws Exception {
 		mangled = "?$RT1@?1??name0@name1@name2@@KAHPEBGAEAG@Z@4HA";
+		String llTruth =
+			"int `protected: static int __cdecl name2::name1::name0(unsigned short const *, unsigned short &)'::`2'::$RT1";
+		//TODO: Create MDMangVS2015 Specialization
+		msTruth =
+			"int `protected: static int __cdecl name2::name1::name0(unsigned short const * __ptr64,unsigned short & __ptr64)'::`2'::$RT1";
 		mdTruth =
 			"int `protected: static int __cdecl name2::name1::name0(unsigned short const * __ptr64,unsigned short & __ptr64)'::`2'::`reference temporary{1}'";
-		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
-		msTruth = mdTruth;
 		demangleAndTest();
 	}
 
@@ -14740,6 +14888,431 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
+
+	//=====================
+
+	@Test
+	public void testUnionType() throws Exception {
+		mangled = ".?ATmyUnion@@";
+		msTruth = "union myUnion";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testStructType() throws Exception {
+		mangled = ".?AUmyStruct@@";
+		msTruth = "struct myStruct";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testClassType() throws Exception {
+		mangled = ".?AVmyClass@@";
+		msTruth = "class myClass";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testEnumType() throws Exception {
+		mangled = ".?AW4myEnum@@";
+		msTruth = "enum myEnum";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+	// The following are tests to support working on dot-separated symbol names.  They are
+	//  ignored for now, as we have nothing to support the processing at this time
+
+	// MSFT CLI symbol from loader.  Has anonymous namespace (mangled), a dot delimiter to
+	//  represent namespace delimiter, and then a "normal" name (which in this case is a
+	//  demangled name with spaces).
+	@Ignore
+	public void testDotSeparatedSymbolCliOrig() throws Exception {
+		mangled = "?A0xfedcba98.name0<struct _name1,struct _name2 const >";
+		msTruth = "";
+		mdTruth = "";
+		demangleAndTest();
+	}
+
+	//Same MSFT CLI symbol from loader, but where SymbolUtilities was used to replace spaces
+	//  with underscores.  We need to determine that we can process either way... then need to
+	//  make decision on whether symbols from load should get processed by demangler before
+	//  SymbolUtilities gets a hold of them... this is generally contrary to what we would want,
+	//  but if we cannot lay down symbols with spaces, then we need to make sure we can still
+	//  operate either way
+	@Ignore
+	public void testDotSeparatedSymbolCliWithUnderscores() throws Exception {
+		mangled = "?A0xfedcba98.name0<struct__name1,struct__name2_const_>";
+		msTruth = "";
+		mdTruth = "";
+		demangleAndTest();
+	}
+
+	// Complete LLVM type symbol with weak prefix and associated suffix
+	@Ignore
+	public void testLLVMWeakPrefixDefaultXmmSuffix() throws Exception {
+		mangled = ".weak.??_7name0@@6B@.default.__xmm@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		//llTruth = ""; // fail
+		msTruth = "";
+		mdTruth = "const name0::`vftable'";
+		demangleAndTest();
+	}
+
+	// Not expected to be a true symbol, but want to understand partial processing with
+	//  complete suffix
+	@Ignore
+	public void testVftableLLVMWeakPartial1() throws Exception {
+		mangled = "??_7name0@@6B@.default.__xmm@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		//llTruth = "const name0::`vftable'";
+		msTruth = "";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Not expected to be a true symbol, but want to understand partial processing with
+	//  partial suffix
+	@Ignore
+	public void testVftableLLVMWeakPartial2() throws Exception {
+		mangled = "??_7name0@@6B@.default";
+		//llTruth = "const name0::`vftable'";
+		msTruth = "";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Ignore
+	public void testVftable() throws Exception {
+		mangled = "??_7name0@@6B@";
+		msTruth = "const name0::`vftable'";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Note the suffix seems like an already or partially demangled name.  Note that name0
+	// seems like a plain tag (no closing '@'), there is a regular namespace delimiter "::",
+	// the suffix "3@" is almost like a backreference tag with the '@' closing the full
+	// qualified name... except... we've seen numbers that are beyond the backref range as
+	// here, but also have seen numbers like 18.
+	@Ignore
+	public void testMangledTypeWithNamespaceSuffix() throws Exception {
+		mangled = ".?AT<unnamed-tag>@name0::3@";
+		msTruth = "";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+
+	@Test
+	public void testLLVM177639() throws Exception {
+		mangled =
+			".?AVname0@?3??name1@name2@?Aname3@@QEAA_KQEBXQEAX_KQ6A_K2PEAX3P6A_KPEAD23@_E@Z@Z@`fedcba98";
+		//llTruth = ""; // fails
+		msTruth = "";
+		mdTruth =
+			"class `public: unsigned __int64 __cdecl `anonymous namespace'::name2::name1(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
+
+	@Test
+	public void testLlvmQuestionModifierType1WithSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1??name1@name2@name3@name4@@AEAA?AU?$name5@V?$name6@V?$name7@U?$name8@Uname9@name2@name3@name4@@@name4@@@name4@@@name4@@E@4@_K0@Z@`fedcba98";
+		//llTruth = ""; // fails
+		msTruth = "";
+		// We don't do anything with the suffix at this time... TODO: consider options as
+		//  things are figured out
+		mdTruth =
+			"class `private: struct name4::name5<class name4::name6<class name4::name7<struct name4::name8<struct name4::name3::name2::name9> > >,unsigned char> __cdecl name4::name3::name2::name1(unsigned __int64,unsigned __int64) __ptr64'::`2'::name0";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testLlvmQuestionModifierType1CounterPointMinusSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1??name1@name2@name3@name4@@AEAA?AU?$name5@V?$name6@V?$name7@U?$name8@Uname9@name2@name3@name4@@@name4@@@name4@@@name4@@E@4@_K0@Z@";
+		//llTruth = "";
+		msTruth = "";
+		mdTruth =
+			"class `private: struct name4::name5<class name4::name6<class name4::name7<struct name4::name8<struct name4::name3::name2::name9> > >,unsigned char> __cdecl name4::name3::name2::name1(unsigned __int64,unsigned __int64) __ptr64'::`2'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
+
+	@Test
+	public void testLlvmQuestionModifierType2WithSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1???$name1@Vname0@?3??name2@name3@?Aname4@@QEAA_KQEBXQEAX_KQ6A_K2PEAX3P6A_KPEAD23@_E@Z@Z@@?Aname4@@YA_KQ6A_K_KPEAX1P6A_KPEAD01@_E@Z_KQEAXV0?3??name2@name3@1@QEAA_KQEBX604@Z@@Z@`fedcba98";
+		msTruth = "";
+		// We don't do anything with the suffix at this time... TODO: consider options as
+		//  things are figured out
+		mdTruth =
+			"class `unsigned __int64 __cdecl `anonymous namespace'::name1<class `public: unsigned __int64 __cdecl `anonymous namespace'::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0>(unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept),unsigned __int64,void * __ptr64 const,class `public: unsigned __int64 __cdecl Aname4::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0)'::`2'::name0";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testLlvmQuestionModifierType2CounterPointMinusSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1???$name1@Vname0@?3??name2@name3@?Aname4@@QEAA_KQEBXQEAX_KQ6A_K2PEAX3P6A_KPEAD23@_E@Z@Z@@?Aname4@@YA_KQ6A_K_KPEAX1P6A_KPEAD01@_E@Z_KQEAXV0?3??name2@name3@1@QEAA_KQEBX604@Z@@Z@";
+		msTruth = "";
+		mdTruth =
+			"class `unsigned __int64 __cdecl `anonymous namespace'::name1<class `public: unsigned __int64 __cdecl `anonymous namespace'::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0>(unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept),unsigned __int64,void * __ptr64 const,class `public: unsigned __int64 __cdecl Aname4::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0)'::`2'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
+
+	// This one had been getting "SpecialName not expected in qualification list" because of there
+	// only being one '?' for the embedded object.... this is one of the situations where LLVM
+	// appears to fail to adhere to the MSFT mangling scheme.  So we had to put in special
+	// processing after catching the exception on the MSFT processing pass
+	@Test
+	public void testLlvmBadObjectNesting() throws Exception {
+		mangled = ".?AW4name0@?name1@name2@@YAX_N@Z@";
+		//llTruth = ""; // fails
+		msTruth = ""; // fails
+		mdTruth = msTruth = "enum `void __cdecl name2::name1(bool)'::name0";
+		demangleAndTest();
+	}
+
+	// Since MSFT undname does not process mangled "type" names, we create a mangled "symbol"
+	// name to test against.  This one is a symbol "x" that is a pointer to the type in question
+	// above.  We also inject the second '?' to show MSFT being able to process the mangled
+	// symbol name when it follows the MSFT mangling scheme
+	@Test
+	public void testLlvmBadObjectNestingCounterPoint1() throws Exception {
+		mangled = "?x@@3PAW4name0@??name1@name2@@YAX_N@Z@A";
+		//llTruth = ""; // fails whether it has ?, ??, or ??? at the embedding point
+		msTruth = "enum `void __cdecl name2::name1(bool)'::name0 * x";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Second counterpoint to the above where we properly follow the MSFT embedding scheme,
+	//  but where this is only a type name, which MSFT cannot process
+	@Test
+	public void testLlvmBadObjectNestingCounterPoint2() throws Exception {
+		mangled = ".?AW4name0@??name1@name2@@YAX_N@Z@";
+		//llTruth = ""; // fails whether it has ?, ??, or ??? at the embedding point
+		msTruth = ""; //fails
+		mdTruth = "enum `void __cdecl name2::name1(bool)'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
+
+	// This one had been getting "CV code not expected: @" because of the second '@' was not
+	// getting pulled when there was an empty MDQualification... we changed to MDQualifiedName
+	// to fix this.
+	@Test
+	public void testCVModMemberPointerEmptyQualifiedName() throws Exception {
+		mangled = "?name0@@3P8@@AAXH@ZA";
+		String llTruth = ""; // fails
+		msTruth = "void (__cdecl* name0)(int)";
+		mdTruth = msTruth;
+	}
+
+	// CounterPoint1 is same mangled name, but with a qualified name for the member pointer.
+	@Test
+	public void testCVModMemberPointerEmptyQualifiedNameCounterPoint1() throws Exception {
+		mangled = "?name0@@3P8name1@name2@@AAXH@ZA";
+		String llTruth = ""; // fails
+		msTruth = "void (__cdecl name2::name1::* name0)(int)";
+		mdTruth = msTruth;
+	}
+
+	// CounterPoint2 is same as CounterPoint1, but being a pointer to the member pointer...
+	// this allows LLVM to present a reasonable result.
+	@Test
+	public void testCVModMemberPointerEmptyQualifiedNameCounterPoint2() throws Exception {
+		mangled = "?name0@@3PAP8name1@name2@@AAXH@ZA";
+		String llTruth = "void (__cdecl name2::name1::**name0)(int)";
+		msTruth = "void (__cdecl name2::name1::** name0)(int)";
+		mdTruth = msTruth;
+	}
+
+	// CounterPoint3 is same as CounterPoint2, but again with an empty qualified name...
+	// this allows LLVM to present a result, but sketchy that it doesn't provdide the calling
+	// convention.
+	@Test
+	public void testCVModMemberPointerEmptyQualifiedNameCounterPoint3() throws Exception {
+		mangled = "?name0@@3PAP8@@AAXH@ZA";
+		String llTruth = "void & ( **name0)(int)"; // Seems bad that llvm loses "__cdecl"
+		msTruth = "void (__cdecl** name0)(int)";
+		mdTruth = msTruth;
+	}
+
+	//=====================
+
+	// MDCustomDataType "?"
+	// Manufactured
+	@Test
+	public void testCustomDataType() throws Exception {
+		mangled = "?fn@@3P6AHVaaa@@?bbb@@Vccc@@@ZA";
+		msTruth = "int (__cdecl* fn)(class aaa,bbb,class ccc)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MDCustomDataType "?"
+	// Manufactured to see if backref can ref the CustomDataType
+	// Question is whether the backref references the CustomDataType or the one after
+	@Test
+	public void testCustomDataTypeBackRef0() throws Exception {
+		mangled = "?fn@@3P6AHVaaa@@?bbb@@Vccc@@0@ZA";
+		msTruth = "int (__cdecl* fn)(class aaa,bbb,class ccc,class aaa)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MDCustomDataType "?"
+	// Manufactured to see if backref can ref the CustomDataType
+	// Question is whether the backref references the CustomDataType or the one after
+	@Test
+	public void testCustomDataTypeBackRef1() throws Exception {
+		mangled = "?fn@@3P6AHVaaa@@?bbb@@Vccc@@1@ZA";
+		msTruth = "int (__cdecl* fn)(class aaa,bbb,class ccc,bbb)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MDCustomDataType "?"
+	// Manufactured to see if backref can ref the CustomDataType
+	// Question is whether the backref references the CustomDataType or the one after
+	@Test
+	public void testCustomDataTypeBackRef2() throws Exception {
+		mangled = "?fn@@3P6AHVaaa@@?bbb@@Vccc@@2@ZA";
+		msTruth = "int (__cdecl* fn)(class aaa,bbb,class ccc,class ccc)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+
+	// MDNamedUnspecifiedType "$$Y" (not sure how should differ from "?" code, except maybe for
+	//  template param vs. regular)
+	// Manufactured
+	@Test
+	public void testNamedUnspecifiedType() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$Ybbb@@Vccc@@@@A";
+		msTruth = "class Tc<class aaa,bbb,class ccc> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MDNamedUnspecifiedType "$$Y" (not sure how should differ from "?" code, except maybe for
+	//  template param vs. regular)
+	// Manufactured to see if backref can ref the MDNamedUnspecifiedType
+	// Question is whether the backref references the MDNamedUnspecifiedType or the one after
+	@Test
+	public void testNamedUnspecifiedTypeBackRef0() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$Ybbb@@Vccc@@0@@A";
+		msTruth = "class Tc<class aaa,bbb,class ccc,class aaa> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MDNamedUnspecifiedType "$$Y" (not sure how should differ from "?" code, except maybe for
+	//  template param vs. regular)
+	// Manufactured to see if backref can ref the MDNamedUnspecifiedType
+	// Question is whether the backref references the MDNamedUnspecifiedType or the one after
+	@Test
+	public void testNamedUnspecifiedTypeBackRef1() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$Ybbb@@Vccc@@1@@A";
+		msTruth = "class Tc<class aaa,bbb,class ccc,bbb> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// MDNamedUnspecifiedType "$$Y" (not sure how should differ from "?" code, except maybe for
+	//  template param vs. regular)
+	// Manufactured to see if backref can ref the MDNamedUnspecifiedType
+	// Question is whether the backref references the MDNamedUnspecifiedType or the one after
+	@Test
+	public void testNamedUnspecifiedTypeBackRef2() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$Ybbb@@Vccc@@2@@A";
+		msTruth = "class Tc<class aaa,bbb,class ccc,class ccc> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+
+	// Empty Param Pack "$$V"
+	// Manufactured
+	@Test
+	public void testTemplateEmptyParamType() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$VVbbb@@@@";
+		msTruth = "class Tc<class aaa,class bbb> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Empty Param Pack "$$V"
+	// Manufactured to see if backref can ref the $$V... counterpoint to the next test
+	// This one should have expected results
+	@Test
+	public void testTemplateEmptyParamTypeBackRef0() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$VVbbb@@0@@";
+		msTruth = "class Tc<class aaa,class bbb,class aaa> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Empty Param Pack "$$V"
+	// Manufactured to see if backref can ref the $$V
+	// Question is whether the backref references the $$V or the one after
+	@Test
+	public void testTemplateEmptyParamTypeBackRef1() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$VVbbb@@1@@";
+		msTruth = "class Tc<class aaa,class bbb,class bbb> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+
+	// End Template Param Pack "$$Z"
+	// Manufactured
+	@Test
+	public void testTemplateEndParamType() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$ZVbbb@@@@";
+		msTruth = "class Tc<class aaa,class bbb> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// End Template Param Pack "$$Z"
+	// Manufactured to see if backref can ref the $$Z... counterpoint to the next test
+	// This one should have expected results
+	@Test
+	public void testTemplateEndParamTypeBackRef0() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$ZVbbb@@0@@";
+		msTruth = "class Tc<class aaa,class bbb,class aaa> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// End Template Param Pack "$$Z"
+	// Manufactured to see if backref can ref the $$Z
+	// Question is whether the backref references the $$Z or the one after
+	@Test
+	public void testTemplateEndParamTypeBackRef1() throws Exception {
+		mangled = "?Ti@@3V?$Tc@Vaaa@@$$ZVbbb@@1@@";
+		msTruth = "class Tc<class aaa,class bbb,class bbb> Ti";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
 
 	//TODO: ignore for now.
 	@Ignore

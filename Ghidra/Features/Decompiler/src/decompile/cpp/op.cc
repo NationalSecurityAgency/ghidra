@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -672,20 +672,33 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
   case CPUI_INT_MULT:
     val = getIn(0)->getNZMask();
     resmask = getIn(1)->getNZMask();
-    sz1 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(val);
-    if (sz1 == -1)
-      resmask = 0;
+    if (size > sizeof(uintb)) {
+      resmask = fullmask;
+    }
     else {
-      sz2 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(resmask);
-      if (sz2 == -1)
+      sz1 = mostsigbit_set(val);
+      sz2 = mostsigbit_set(resmask);
+      if (sz1 == -1 || sz2 == -1) {
 	resmask = 0;
+      }
       else {
-	if (sz1 + sz2 < 8*size-2)
-	  fullmask >>= (8*size-2-sz1-sz2);
-	sz1 = leastsigbit_set(val);
-	sz2 = leastsigbit_set(resmask);
-	resmask = (~((uintb)0))<<(sz1+sz2);
-	resmask &= fullmask;
+	int4 l1 = leastsigbit_set(val);
+	int4 l2 = leastsigbit_set(resmask);
+	sa = l1 + l2;
+	if (sa >= 8*size) {
+	  resmask = 0;
+	}
+	else {
+	  sz1 = sz1 - l1 + 1;
+	  sz2 = sz2 - l2 + 1;
+	  int4 total = sz1 + sz2;
+	  if (sz1 == 1 || sz2 == 1)
+	    total -= 1;
+	  resmask = fullmask;
+	  if (total < 8 * size)
+	    resmask >>= (8*size - total);
+	  resmask = (resmask << sa) & fullmask;
+	}
       }
     }
     break;
@@ -756,9 +769,9 @@ int4 PcodeOp::compareOrder(const PcodeOp *bop) const
 /// whether a Varnode is a leaf of this tree.
 /// \param rootVn is the given root of the CONCAT tree
 /// \param vn is the Varnode to test as a leaf
-/// \param typeOffset is byte offset of the test Varnode within fully concatenated value
+/// \param relOffset is byte offset of the test Varnode within fully concatenated value (rooted at \b rootVn)
 /// \return \b true is the test Varnode is a leaf of the tree
-bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset)
+bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 relOffset)
 
 {
   if (vn->isMapped() && rootVn->getSymbolEntry() != vn->getSymbolEntry()) {
@@ -770,7 +783,7 @@ bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset)
   PcodeOp *op = vn->loneDescend();
   if (op == (PcodeOp *)0) return true;
   if (vn->isAddrTied()) {
-    Address addr = rootVn->getAddr() + typeOffset;
+    Address addr = rootVn->getAddr() + relOffset;
     if (vn->getAddr() != addr) return true;
   }
   return false;
@@ -820,17 +833,18 @@ Varnode *PieceNode::findRoot(Varnode *vn)
 /// \param stack holds the markup for each node of the tree
 /// \param rootVn is the given root of the tree
 /// \param op is the current PIECE op to explore as part of the tree
-/// \param baseOffset is the offset associated with the output of the current PIECE op
-void PieceNode::gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset)
+/// \param baseOffset is the offset associated with the output of the current PIECE op wihtin the data-type
+/// \param rootOffset is the offset of the \b rootVn within the data-type
+void PieceNode::gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset,int4 rootOffset)
 
 {
   for(int4 i=0;i<2;++i) {
     Varnode *vn = op->getIn(i);
     int4 offset = (rootVn->getSpace()->isBigEndian() == (i==1)) ? baseOffset + op->getIn(1-i)->getSize() : baseOffset;
-    bool res = isLeaf(rootVn,vn,offset);
+    bool res = isLeaf(rootVn,vn,offset-rootOffset);
     stack.emplace_back(op,i,offset,res);
     if (!res)
-      gatherPieces(stack,rootVn,vn->getDef(),offset);
+      gatherPieces(stack,rootVn,vn->getDef(),offset,rootOffset);
   }
 }
 

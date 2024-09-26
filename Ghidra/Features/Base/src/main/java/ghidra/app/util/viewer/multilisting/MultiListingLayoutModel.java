@@ -321,25 +321,6 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.format.FormatModelListener#formatModelAdded(ghidra.app.util.viewer.format.FieldFormatModel)
-	 */
-	@Override
-	public void formatModelAdded(FieldFormatModel model) {
-		dataChanged(true);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.format.FormatModelListener#formatModelRemoved(ghidra.app.util.viewer.format.FieldFormatModel)
-	 */
-	@Override
-	public void formatModelRemoved(FieldFormatModel model) {
-		dataChanged(true);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.format.FormatModelListener#formatModelChanged(ghidra.app.util.viewer.format.FieldFormatModel)
-	 */
 	@Override
 	public void formatModelChanged(FieldFormatModel model) {
 		modelSizeChanged();

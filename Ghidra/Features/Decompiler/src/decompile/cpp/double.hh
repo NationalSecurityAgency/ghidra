@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,6 +95,7 @@ public:
 			  PcodeOp *existop);
   static bool prepareIndirectOp(SplitVarnode &in,PcodeOp *affector);
   static void replaceIndirectOp(Funcdata &data,SplitVarnode &out,SplitVarnode &in,PcodeOp *affector);
+  static void replaceCopyForce(Funcdata &data,const Address &addr,SplitVarnode &in,PcodeOp *copylo,PcodeOp *copyhi);
   static int4 applyRuleIn(SplitVarnode &in,Funcdata &data);
 };
 
@@ -160,12 +161,8 @@ public:
 class Equal2Form {
   SplitVarnode in;
   Varnode *hi1,*hi2,*lo1,*lo2;
-  PcodeOp *equalop,*orop;
-  PcodeOp *hixor,*loxor;
-  int4 orhislot,xorhislot;
+  PcodeOp *boolAndOr;
   SplitVarnode param2;
-  bool checkLoForm(void);
-  bool fillOutFromOr(Funcdata &data);
   bool replace(Funcdata &data);
 public:
   bool applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data);
@@ -299,14 +296,30 @@ public:
   bool applyRule(SplitVarnode &i,PcodeOp *ind,bool workishi,Funcdata &data);
 };
 
-/// \brief Simply a double precision operation, starting from a marked double precision input.
+/// \brief Collapse two COPYs into contiguous address forced Varnodes
+///
+/// The inputs must be pieces of a logical whole and outputs must be address forced with no descendants.
+/// Take into account special form of COPYs holding global variables upto/past a RETURN.
+class CopyForceForm {
+  SplitVarnode in;			///< Incoming pieces to COPY
+  Varnode *reslo;			///< Least significant result of global COPY
+  Varnode *reshi;			///< Most significant result of global COPY
+  PcodeOp *copylo;			///< Partial COPY of least significant piece
+  PcodeOp *copyhi;			///< Partial COPY of most significant piece
+  Address addrOut;			///< Storage address
+public:
+  bool verify(Varnode *h,Varnode *l,Varnode *w,PcodeOp *cpy);		///< Make sure the COPYs have the correct form
+  bool applyRule(SplitVarnode &i,PcodeOp *cpy,bool workishi,Funcdata &data);	/// Verify and then collapse COPYs
+};
+
+/// \brief Simply a double precision operation, pushing down one level, starting from a marked double precision input.
 ///
 /// This rule starts by trying to find a pair of Varnodes that are SUBPIECE from a whole,
 /// are marked as double precision, and that are then used in some double precision operation.
 /// The various operation \e forms are overlayed on the data-flow until a matching one is found.  The
 /// pieces of the double precision operation are then transformed into a single logical operation on the whole.
 class RuleDoubleIn : public Rule {
-  int4 attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp);
+  int4 attemptMarking(Varnode *vn,PcodeOp *subpieceOp);
 public:
   RuleDoubleIn(const string &g) : Rule(g, 0, "doublein") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -318,6 +331,20 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+/// \brief Simplify a double precision operation, pulling back one level, starting from inputs to a PIECE operation
+class RuleDoubleOut : public Rule {
+  int4 attemptMarking(Varnode *vnhi,Varnode *vnlo,PcodeOp *pieceOp);
+public:
+  RuleDoubleOut(const string &g) : Rule(g, 0, "doubleout") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleDoubleOut(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Collapse contiguous loads: `x = CONCAT44(*(ptr+4),*ptr)  =>  x = *ptr`
 class RuleDoubleLoad : public Rule {
 public:
   RuleDoubleLoad(const string &g) : Rule( g, 0, "doubleload") {}
@@ -330,6 +357,7 @@ public:
   static PcodeOp *noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *spc,vector<PcodeOp *> *indirects);
 };
 
+/// \brief Collapse contiguous stores:  `*ptr = SUB(x,0); *(ptr + 4) = SUB(x,4)  =>  *ptr = x`
 class RuleDoubleStore : public Rule {
 public:
   RuleDoubleStore(const string &g) : Rule( g, 0, "doublestore") {}

@@ -43,7 +43,7 @@ public class DWARFRange implements Comparable<DWARFRange> {
 	public DWARFRange(long start, long end) {
 		if (Long.compareUnsigned(end, start) < 0) {
 			throw new IllegalArgumentException(
-				"Range max (%d) cannot be less than min (%d).".formatted(end, start));
+				"Range max (%x) cannot be less than min (%x).".formatted(end, start));
 		}
 		this.start = start;
 		this.end = end;

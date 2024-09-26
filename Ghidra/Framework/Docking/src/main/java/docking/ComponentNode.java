@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import org.jdom.Element;
 import docking.actions.KeyBindingUtils;
 import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import help.HelpService;
 import utilities.util.reflection.ReflectionUtilities;
@@ -108,12 +109,9 @@ class ComponentNode extends Node {
 			return;
 		}
 		ComponentPlaceholder placeholder = getPlaceHolderForComponent(component);
-		if (placeholder == null) {
-			return;
+		if (placeholder != null) {
+			placeholder.requestFocusWhenReady();
 		}
-		Swing.runLater(() -> {
-			placeholder.requestFocus();
-		});
 	}
 
 	private boolean containsPlaceholder(ComponentPlaceholder placeholder) {
@@ -642,13 +640,13 @@ class ComponentNode extends Node {
 					return; // cancelled
 				}
 
-				// If the user changes the name, then we want to replace all of the
-				// parts of the title with that name.  We skip the subtitle, as that 
-				// doesn't make sense in that case.
-				provider.setTitle(newName);   // title on window
-				provider.setSubTitle("");     // part after the title
-				provider.setTabText(newName); // text on the tab
-				placeholder.update();
+				// If the user changes the name, then we want to replace all of the parts of the 
+				// title with that name.  We do not supply a custom subtitle, as that doesn't make 
+				// sense in this case, but we clear it so the user's title is the only thing 
+				// visible.  This means that providers can still update the subtitle later.
+				provider.setCustomTitle(newName);   // title on window
+				provider.setSubTitle("");           // part after the title
+				provider.setCustomTabText(newName); // text on the tab
 			}
 		}
 	}

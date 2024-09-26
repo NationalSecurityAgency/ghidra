@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,9 +39,9 @@ import ghidra.util.task.TaskMonitor;
  * <P>
  * This is implemented by storing records for each contiguous range with the same value.
  * <ul>
- * 		<li>The key is the encoded start address of the range.
- * 		<li>The TO_COL column of the record stores the encoded end address of the range.
- * 		<li>The VALUE_COL column of the record stores the value for the range.
+ * 		<li>The key is the encoded start address of the range.</li>
+ * 		<li>The TO_COL column of the record stores the encoded end address of the range.</li>
+ * 		<li>The VALUE_COL column of the record stores the value for the range.</li>
  * </ul>
  * <P>
  * This implementation is complicated by several issues. 
@@ -51,7 +51,7 @@ import ghidra.util.task.TaskMonitor;
  * 		  Encoded addresses do not necessarily encode to keys that have the same ordering. 
  * 	      Therefore, all comparisons must be done in address space and not in the encoded space.
  * 		  Also, record iterators must use the {@link AddressKeyRecordIterator} which will return
- * 		  records in address order versus encoded key order.
+ * 		  records in address order versus encoded key order.</li>
  *     <li>The default space's image base can be changed after records have been created. This can
  *        cause the address ranges represented by a record to wrap around. For example, suppose
  *        the image base is 0 and you paint a range from address 0 to 0x20, which say maps to
@@ -66,7 +66,8 @@ import ghidra.util.task.TaskMonitor;
  *        logic, any wrapping record will first be split into two records before painting. However
  *        we can only do this during a write operation (when we can make changes). Since the getter
  *        methods and iterators cannot modify the database, they have to deal with wrapping
- *        records on the fly.
+ *        records on the fly.</li>
+ * </ol>
  */
 public class AddressRangeMapDB implements DBListener {
 	public static final String RANGE_MAP_TABLE_PREFIX = "Range Map - ";

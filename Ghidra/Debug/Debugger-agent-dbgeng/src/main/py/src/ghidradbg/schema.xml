@@ -8,13 +8,13 @@
 		<attribute name="Utility" schema="ANY" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY"/>
 	</schema>
 	<schema name="SessionContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Configurable" />
 		<element schema="Session" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY"/>
 	</schema>
 	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Activatable" />
@@ -34,7 +34,7 @@
 		<attribute name="_focus" schema="Selectable" required="yes" hidden="yes" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY"/>
 	</schema>
 	<schema name="Selectable" elementResync="NEVER" attributeResync="NEVER">
 		<element schema="OBJECT" />
@@ -53,7 +53,7 @@
 		<interface name="BreakpointSpecContainer" />
 		<element schema="BreakpointSpec" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="AvailableContainer" canonical="yes" elementResync="ALWAYS" attributeResync="NEVER">
 		<interface name="Configurable" />
@@ -65,7 +65,7 @@
 		<interface name="Configurable" />
 		<element schema="Process" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="BreakpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="BreakpointSpec" />
@@ -132,7 +132,7 @@
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_short_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="Environment" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Environment" />
@@ -152,7 +152,7 @@
 		<interface name="ModuleContainer" />
 		<element schema="Module" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="Memory" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Memory" />
@@ -178,7 +178,7 @@
 		<interface name="Configurable" />
 		<element schema="Thread" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Method" />
@@ -207,7 +207,7 @@
 		<attribute name="_short_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute name="Advance" schema="Method" required="yes" fixed="yes" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="Module" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Module" />
@@ -255,7 +255,7 @@
 		<element schema="StackFrame" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="SymbolContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
 		<interface name="SymbolNamespace" />
@@ -284,7 +284,7 @@
 		<attribute name="Frame Offset" schema="ADDRESS" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" hidden="yes" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="Section" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Section" />

@@ -89,7 +89,7 @@ public class ScriptPathsPropertyEditor extends AbstractTypedPropertyEditor<Strin
 	protected class ScriptPathsPanel extends PathnameTablePanel {
 		public ScriptPathsPanel(String[] paths, Callback resetCallback) {
 			// disable edits, top/bottom irrelevant, unordered
-			super(paths, resetCallback, false, false, false);
+			super(paths, resetCallback, false, false, false, false);
 		}
 
 		@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import generic.theme.GIcon;
 import ghidra.program.database.ProgramBuilder;
@@ -108,14 +107,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(node);
 		assertTrue(copyAction.isEnabled());
-		performAction(copyAction);
+		performTreeAction(copyAction);
 
 		node = (ProgramNode) root.getChildAt(5);
 		int origCount = node.getChildCount();
 		setSelectionPath(node);
 		assertTrue(pasteAction.isEnabled());
 
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		expandNode(node);
@@ -142,7 +141,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode node = (ProgramNode) root.getChildAt(0);
 		setSelectionPath(node);
 		assertTrue(copyAction.isEnabled());
-		performAction(copyAction);
+		performTreeAction(copyAction);
 
 		setSelectionPath(root);
 
@@ -161,7 +160,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(node);
 		assertTrue(copyAction.isEnabled());
 
-		performAction(copyAction, true);
+		performTreeAction(copyAction);
 		ProgramNode[] nodes = findNodes("C");
 		setSelectionPath(nodes[0]);
 
@@ -180,7 +179,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		// select USER32.DLL
 		setSelectionPath(fnode);
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		// select DLLs
 		node = (ProgramNode) root.getChildAt(6);
 		setSelectionPath(node);
@@ -200,10 +199,10 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(cpNode);
 
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		setSelectionPath(pasteNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		assertEquals(childCount + 1, pasteNode.getChildCount());
@@ -228,7 +227,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode cnode2 = (ProgramNode) node.getChildAt(1);
 		setSelectionPaths(cnode1, cnode2);
 		assertTrue(copyAction.isEnabled());
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		// create a new module and paste fragments there
 		tx(program, () -> {
 			root.getModule().createModule("Test");
@@ -238,7 +237,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(destNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		visitNode(destNode);
@@ -253,7 +252,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode cnode2 = (ProgramNode) node.getChildAt(1);
 		setSelectionPaths(cnode1, cnode2);
 		assertTrue(copyAction.isEnabled());
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		// create a new module and paste fragments there
 		tx(program, () -> {
 			ProgramModule m = root.getModule().createModule("Test");
@@ -266,7 +265,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(destNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		expandNode(root);
@@ -300,7 +299,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode cnode2 = (ProgramNode) node.getChildAt(1);
 		setSelectionPaths(cnode1, cnode2);
 		assertTrue(copyAction.isEnabled());
-		performAction(copyAction);
+		performTreeAction(copyAction);
 
 		// get node for DLLs
 		ProgramNode destNode = (ProgramNode) root.getChildAt(5);
@@ -308,7 +307,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(destNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		expandNode(root);
@@ -341,12 +340,12 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		// set the view to Functions
 		setSelectionPath(node);
 		setViewPaths(node);
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		ProgramNode subrNode = (ProgramNode) root.getChildAt(8);
 
 		setSelectionPath(subrNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		// verify the view is not affected
@@ -375,10 +374,10 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(subrNode);
 
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		setSelectionPath(node);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		assertTrue(plugin.getView().hasSameAddresses(node.getModule().getAddressSet()));
@@ -399,12 +398,12 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode child = (ProgramNode) node.getChildAt(0);
 		setSelectionPath(child);
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		ProgramNode subrNode = (ProgramNode) root.getChildAt(8);
 
 		setSelectionPath(subrNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		// verify the view is not affected
@@ -426,14 +425,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(fnode);
 		assertTrue(cutAction.isEnabled());
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		ProgramNode funcNode = (ProgramNode) root.getChildAt(6);// Functions
 		ProgramNode destNode = (ProgramNode) funcNode.getChildAt(0);// doStuff fragment
 
 		// now select the doStuff fragment as the destination node
 		setSelectionPath(destNode);
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		assertTrue(destNode.getFragment().contains(fnodeSet));
@@ -479,14 +478,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(fnode);
 		assertTrue(cutAction.isEnabled());
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		ProgramNode funcNode = (ProgramNode) root.getChildAt(6);// Functions
 		ProgramNode destNode = (ProgramNode) funcNode.getChildAt(0);// ghidra fragment
 
 		// now select the ghidra fragment as the destination node
 		setSelectionPath(destNode);
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		assertTrue(destNode.getFragment().contains(fnodeSet));
@@ -523,14 +522,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(node);
 		assertTrue(cutAction.isEnabled());
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		node = (ProgramNode) root.getChildAt(5);//DLLs
 		int origCount = node.getChildCount();
 		setSelectionPath(node);
 		assertTrue(pasteAction.isEnabled());
 
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		expandNode(node);
@@ -558,10 +557,10 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPath(cNode);
 		// cut Functions
-		performAction(cutAction);
+		performTreeAction(cutAction);
 		setSelectionPath(destNode);// paste at DLLs
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		assertEquals(childCount + 1, destNode.getChildCount());
@@ -604,12 +603,12 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(stringsNode);
 
 		// cut Strings
-		performAction(cutAction);
+		performTreeAction(cutAction);
 		// paste at Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		setSelectionPath(funcNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		// Strings, L should be expanded
@@ -636,13 +635,13 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(stringsNode);
 
 		// cut Strings
-		performAction(cutAction);
+		performTreeAction(cutAction);
 		// paste at Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		collapsePath(funcNode.getTreePath());
 		setSelectionPath(funcNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		// Functions should remain collapsed
 		assertTrue(tree.isCollapsed(funcNode.getTreePath()));
@@ -663,13 +662,13 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(stringsNode);
 
 		// cut Strings
-		performAction(cutAction);
+		performTreeAction(cutAction);
 		// paste at Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		expandPath(funcNode.getTreePath());
 		setSelectionPath(funcNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		stringsNode = funcNode.getChild("Strings");
 		assertTrue(tree.isCollapsed(stringsNode.getTreePath()));
@@ -690,14 +689,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(stringsNode);
 
 		// cut Strings
-		performAction(cutAction);
+		performTreeAction(cutAction);
 		// paste at Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		visitNode(funcNode);
 		collapsePath(funcNode.getTreePath());
 		setSelectionPath(funcNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		assertTrue(tree.isCollapsed(funcNode.getTreePath()));
 	}
@@ -721,14 +720,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPaths(new TreePath[] { rsrcNode.getTreePath(), textNode.getTreePath() });
 
 		// cut Strings
-		runSwing(() -> cutAction.actionPerformed(new DefaultActionContext()));
+		performTreeAction(cutAction);
 
 		// select Strings (has no fragments)
 		ProgramNode stringsNode = root.getChild("Strings");
 		visitNode(stringsNode);
 		setSelectionPath(stringsNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		assertEquals(3, stringsNode.getChildCount());
 		assertEquals("rsrc", stringsNode.getChildAt(1).toString());
@@ -788,7 +787,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 			addSelectionPath(cutNodes[i].getTreePath());
 		}
 
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		// select a destination fragment
 		ProgramNode stringsNode = root.getChild("Strings");
@@ -798,7 +797,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode fnode = cNode.getChild("testl");
 		setSelectionPath(fnode);
 
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		for (ProgramNode cutNode : cutNodes) {
 			assertNull(listing.getFragment("Main Tree", cutNode.getName()));
@@ -859,7 +858,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode testNode = root.getChild("Test");
 		setSelectionPath(testNode);
 
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		// paste at 010074d4
 		ProgramNode stringsNode = root.getChild("Strings");
@@ -869,7 +868,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode fnode = cNode.getChild("testl");
 		setSelectionPath(fnode);
 
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		root = (ProgramNode) tree.getModel().getRoot();
@@ -937,12 +936,12 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		// set the view to DLLs
 		setSelectionPath(node);
 		setViewPaths(new TreePath[] { node.getTreePath() });
-		performAction(copyAction);
+		performTreeAction(copyAction);
 		ProgramNode everythingNode = root.getChild("Everything");
 
 		setSelectionPath(everythingNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 		waitForProgram(program);
 
 		// cut a fragment in the view and paste onto a collapsed folder
@@ -953,7 +952,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode dataNode = root.getChild(".data");
 		setSelectionPath(dataNode);
 		setViewPaths(new TreePath[] { dataNode.getTreePath() });
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		// select DLLs in Everything
 		ProgramNode evNode = root.getChild("Everything");
@@ -962,7 +961,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		visitNode(dllsNode);
 		setSelectionPath(dllsNode);
 
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		// first occurrence of DLLs should have icon for descendant in view
 		ProgramNode[] nodes = findNodes("DLLs");
@@ -991,13 +990,13 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		assertTrue(plugin.getView().hasSameAddresses(set));
 
 		setSelectionPath(debugNode);
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		// paste to an expanded folder not in the view
 		ProgramNode subrNode = root.getChild("Subroutines");
 		expandNode(subrNode);
 		setSelectionPath(subrNode);
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		assertTrue(plugin.getView().hasSameAddresses(set));
 	}
@@ -1012,14 +1011,14 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setViewPaths(dataNode, debugNode);
 
 		setSelectionPath(debugNode);
-		performAction(cutAction);
+		performTreeAction(cutAction);
 		// paste onto another fragment that is not in the view
 		ProgramNode funcNode = root.getChild("Functions");
 		visitNode(funcNode);
 		ProgramNode sscanfNode = funcNode.getChild("sscanf");
 
 		setSelectionPath(sscanfNode);
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		assertTrue(plugin.getView().hasSameAddresses(dataNode.getFragment()));
 	}
@@ -1042,11 +1041,11 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		// cut first fragment in Subroutines
 		setSelectionPath(node);
-		performAction(cutAction);
+		performTreeAction(cutAction);
 
 		// paste at the debug node
 		setSelectionPath(debugNode);
-		performAction(pasteAction);
+		performTreeAction(pasteAction);
 
 		assertTrue(plugin.getView().contains(set));
 	}

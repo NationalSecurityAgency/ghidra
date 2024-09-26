@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,18 +35,18 @@ import generic.theme.laf.UiDefaultsMapper;
  *  	<LI>VIEW - these ids are used for the colors and fonts used for widgets that display data
  *  			such as Trees, Tables, TextFieds, and Lists</LI>
  *  	<LI>MENU - these ids are used by menu components such as Menus and MenuItems.</LI>
- *  	<LI>TOOLTIP - these ids are used just by the tooltip component
+ *  	<LI>TOOLTIP - these ids are used just by the tooltip component</LI>
  * </UL>
  * <P>
  * For each of those categories the ids specify a specific property for those components.
  * <UL>
- * 		<LI> BG - the background color
- * 		<LI> FG - the foreground color
- * 		<LI> BG_SELECTED - the background color when the component is selected
- * 		<LI> FG_SELECTED - the foreground color when the component is selected
- * 		<LI> FG_DISABLED - the foreground color when the component is disabled
- * 		<LI> BG_BORDER - the border color
- * 		<LI> FONT - the font
+ * 		<LI> BG - the background color</LI>
+ * 		<LI> FG - the foreground color</LI>
+ * 		<LI> BG_SELECTED - the background color when the component is selected</LI>
+ * 		<LI> FG_SELECTED - the foreground color when the component is selected</LI>
+ * 		<LI> FG_DISABLED - the foreground color when the component is disabled</LI>
+ * 		<LI> BG_BORDER - the border color</LI>
+ * 		<LI> FONT - the font</LI>
  * </UL>
  */
 public class SystemThemeIds {

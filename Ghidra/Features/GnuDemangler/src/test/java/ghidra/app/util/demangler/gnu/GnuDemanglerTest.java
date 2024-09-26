@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,6 +84,45 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		catch (DemangledException e) {
 			// expected
 		}
+	}
+
+	@Test
+	public void testUseStandardReplacements() throws Exception {
+
+		// 
+		// Mangled: _ZTv0_n24_NSt19basic_ostringstreamIcSt11char_traitsIcE14pool_allocatorIcEED0Ev
+		//
+		// Demangled: virtual thunk to std::basic_ostringstream<char, std::char_traits<char>, pool_allocator<char> >::~basic_ostringstream()
+		//
+		// Replaced: virtual thunk to undefined __thiscall std::ostringstream::~ostringstream(void)
+		//
+		String mangled =
+			"_ZTv0_n24_NSt19basic_ostringstreamIcSt11char_traitsIcE14pool_allocatorIcEED0Ev";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setUseStandardReplacements(true);
+		DemangledObject dobj = demangler.demangle(mangled, options);
+		assertNotNull(dobj);
+
+		String signature = dobj.getSignature();
+		assertEquals(
+			"virtual thunk to undefined __thiscall std::ostringstream::~ostringstream(void)",
+			signature);
+
+		//
+		// Now disable demangled string replacement
+		// 
+		options.setUseStandardReplacements(false);
+		dobj = demangler.demangle(mangled, options);
+		assertNotNull(dobj);
+
+		String fullSignature = dobj.getSignature();
+		assertEquals(
+			"virtual thunk to undefined __thiscall std::basic_ostringstream<char,std::char_traits<char>,pool_allocator<char>>::~basic_ostringstream(void)",
+			fullSignature);
 	}
 
 	@Test

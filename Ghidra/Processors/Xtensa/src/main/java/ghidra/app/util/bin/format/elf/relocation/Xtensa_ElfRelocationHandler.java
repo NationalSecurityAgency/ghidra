@@ -57,6 +57,24 @@ public class Xtensa_ElfRelocationHandler
 
 		int byteLength = -1;
 		int newValue;
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_XTENSA_RELATIVE:
+				newValue = ((int) elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend);
+				memory.setInt(relocationAddress, newValue);
+				byteLength = 4;
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}		
 
 		int diff_mask = 0;
 		boolean neg = false;
@@ -70,12 +88,6 @@ public class Xtensa_ElfRelocationHandler
 				break;
 
 //			case R_XTENSA_RTLD:
-
-			case R_XTENSA_RELATIVE:
-				newValue = ((int) elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend);
-				memory.setInt(relocationAddress, newValue);
-				byteLength = 4;
-				break;
 
 			case R_XTENSA_GLOB_DAT:
 			case R_XTENSA_JMP_SLOT:

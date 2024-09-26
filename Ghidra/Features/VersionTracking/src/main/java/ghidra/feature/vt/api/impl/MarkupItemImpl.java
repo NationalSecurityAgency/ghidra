@@ -501,4 +501,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 			newStatus);
 	}
 
+	// non-interface method
+	public MarkupItemStorage getStorage() {
+		return markupItemStorage;
+	}
 }

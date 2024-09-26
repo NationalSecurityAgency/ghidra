@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.progmgr.ProgramLocator;
 import ghidra.app.util.dialog.CheckoutDialog;
-import ghidra.framework.client.*;
+import ghidra.framework.client.ClientUtil;
+import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.protocol.ghidra.GhidraURLQuery;
@@ -209,7 +210,7 @@ public class ProgramOpener {
 
 		User user = domainFile.getParent().getProjectData().getUser();
 
-		CheckoutDialog dialog = new CheckoutDialog(domainFile, user);
+		CheckoutDialog dialog = Swing.runNow(() -> new CheckoutDialog(domainFile, user));
 		if (dialog.showDialog() == CheckoutDialog.CHECKOUT) {
 			try {
 				monitor.setMessage("Checking Out " + domainFile.getName());

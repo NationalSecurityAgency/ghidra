@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,16 @@
  */
 package ghidra.app.context;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import docking.ComponentProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.util.*;
 
-public class ProgramLocationActionContext extends ProgramActionContext {
+public class ProgramLocationActionContext extends ProgramActionContext
+		implements FunctionSupplierContext {
 
 	private final ProgramLocation location;
 	private final ProgramSelection selection;
@@ -54,7 +57,6 @@ public class ProgramLocationActionContext extends ProgramActionContext {
 
 	public ProgramSelection getHighlight() {
 		return highlight == null ? new ProgramSelection() : highlight;
-
 	}
 
 	/**
@@ -93,5 +95,44 @@ public class ProgramLocationActionContext extends ProgramActionContext {
 
 	public boolean hasHighlight() {
 		return (highlight != null && !highlight.isEmpty());
+	}
+
+	@Override
+	public boolean hasFunctions() {
+		if (selection == null || selection.isEmpty()) {
+			return getFunctionForLocation() != null;
+		}
+		// see if selection contains at least one function
+		FunctionManager functionManager = program.getFunctionManager();
+		FunctionIterator functionIter = functionManager.getFunctions(selection, true);
+		return functionIter.hasNext();
+	}
+
+	@Override
+	public Set<Function> getFunctions() {
+		Set<Function> functions = new HashSet<>();
+		if (selection == null || selection.isEmpty()) {
+			functions.add(getFunctionForLocation());
+		}
+		else {
+			FunctionManager functionManager = program.getFunctionManager();
+			FunctionIterator functionIter = functionManager.getFunctions(selection, true);
+			for (Function selectedFunction : functionIter) {
+				functions.add(selectedFunction);
+			}
+		}
+		return functions;
+	}
+
+	private Function getFunctionForLocation() {
+		if (location instanceof FunctionLocation functionLocation) {
+			Address functionAddress = functionLocation.getFunctionAddress();
+			return program.getFunctionManager().getFunctionAt(functionAddress);
+		}
+		Address address = getAddress();
+		if (address != null) {
+			return program.getFunctionManager().getFunctionContaining(address);
+		}
+		return null;
 	}
 }

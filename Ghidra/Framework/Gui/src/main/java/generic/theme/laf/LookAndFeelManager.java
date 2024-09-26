@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,7 @@ import utilities.util.reflection.ReflectionUtilities;
  */
 public abstract class LookAndFeelManager {
 
+	private static final int DEFAULT_CURSOR_BLINK_RATE = 500;
 	private LafType laf;
 	private Map<String, ComponentFontRegistry> fontRegistryMap = new HashMap<>();
 	private Map<Component, String> componentToIdMap = new WeakHashMap<>();
@@ -236,6 +237,21 @@ public abstract class LookAndFeelManager {
 		register.addComponent(component, fontStyle);
 	}
 
+	/**
+	 * Removes the given component and id binding from this class.
+	 * @param component the component to remove
+	 * @param fontId the id used when originally registered
+	 * @see #registerFont(Component, String)
+	 */
+	public void unRegisterFont(JComponent component, String fontId) {
+		componentToIdMap.remove(component);
+
+		ComponentFontRegistry registry = fontRegistryMap.get(fontId);
+		if (registry != null) {
+			registry.removeComponent(component);
+		}
+	}
+
 	private void checkForAlreadyRegistered(Component component, String newFontId) {
 		String existingFontId = componentToIdMap.get(component);
 		if (existingFontId != null) {
@@ -290,6 +306,7 @@ public abstract class LookAndFeelManager {
 	 */
 	protected void fixupLookAndFeelIssues() {
 		installGlobalFontSizeOverride();
+		installCursorBlinkingProperties();
 	}
 
 	/**
@@ -355,6 +372,15 @@ public abstract class LookAndFeelManager {
 		setGlobalFontSizeOverride(overrideFontInteger);
 	}
 
+	public void installCursorBlinkingProperties() {
+		UIDefaults defaults = UIManager.getDefaults();
+
+		int blinkRate = themeManager.isBlinkingCursors() ? DEFAULT_CURSOR_BLINK_RATE : 0;
+		defaults.put("TextPane.caretBlinkRate", blinkRate);
+		defaults.put("TextField.caretBlinkRate", blinkRate);
+		defaults.put("TextArea.caretBlinkRate", blinkRate);
+	}
+
 	private void installCustomLookAndFeelActions() {
 		// these prefixes are for text components
 		String[] UIPrefixValues =
@@ -386,9 +412,7 @@ public abstract class LookAndFeelManager {
 		UIDefaults defaults = UIManager.getDefaults();
 
 		Set<Entry<Object, Object>> set = defaults.entrySet();
-		Iterator<Entry<Object, Object>> iterator = set.iterator();
-		while (iterator.hasNext()) {
-			Entry<Object, Object> entry = iterator.next();
+		for (Entry<Object, Object> entry : set) {
 			Object key = entry.getKey();
 
 			if (key.toString().toLowerCase().indexOf("font") != -1) {
@@ -429,5 +453,4 @@ public abstract class LookAndFeelManager {
 		}
 		return colorKeys;
 	}
-
 }

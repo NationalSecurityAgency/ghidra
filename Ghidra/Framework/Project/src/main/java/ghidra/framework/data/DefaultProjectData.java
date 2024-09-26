@@ -686,11 +686,19 @@ public class DefaultProjectData implements ProjectData {
 	}
 
 	public void releaseDomainFiles(Object consumer) {
-		for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
-			try {
+		List<DomainObjectAdapter> matchingObjs = new ArrayList<>();
+		synchronized (this) {
+			for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
 				if (domainObj.getConsumerList().contains(consumer)) {
-					domainObj.release(consumer);
+					matchingObjs.add(domainObj);
 				}
+			}
+		}
+
+		// release consumers outside of synch block
+		for (DomainObjectAdapter domainObj : matchingObjs) {
+			try {
+				domainObj.release(consumer);
 			}
 			catch (IllegalArgumentException e) {
 				// ignore
@@ -703,7 +711,7 @@ public class DefaultProjectData implements ProjectData {
 	 * @param list the list to receive the changed domain files
 	 */
 	@Override
-	public void findOpenFiles(List<DomainFile> list) {
+	public synchronized void findOpenFiles(List<DomainFile> list) {
 		for (DomainObjectAdapter domainObj : openDomainObjects.values()) {
 			list.add(domainObj.getDomainFile());
 		}

@@ -29,7 +29,7 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 17 64-bit][jdk17]
+* Install [JDK 21 64-bit][jdk]
 * Download a Ghidra [release file][releases]
   - **NOTE:** The official multi-platform release file is named 
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
@@ -46,9 +46,9 @@ directory.
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 17 64-bit][jdk17]
-* [Gradle 7.3+][gradle]
-* [Python3][python3] (version 3.7 to 3.12) with bundled pip
+* [JDK 21 64-bit][jdk]
+* [Gradle 8.5+][gradle] (or provided Gradle wrapper if Internet connection is available)
+* [Python3][python3] (version 3.9 to 3.12) with bundled pip
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
@@ -65,9 +65,11 @@ cd ghidra-master
 **NOTE:** Instead of downloading the compressed source, you may instead want to clone the GitHub 
 repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
 
-##### Download additional build dependencies into source repository: 
+##### Download additional build dependencies into source repository:
+**NOTE:** If an Internet connection is available and you did not install Gradle, the following 
+`gradle` commands may be replaced with `./gradle(.bat)`.
 ```
-gradle -I gradle/support/fetchDependencies.gradle init
+gradle -I gradle/support/fetchDependencies.gradle
 ```
 
 ##### Create development build: 
@@ -127,7 +129,7 @@ source project.
 [known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
-[jdk17]: https://adoptium.net/temurin/releases
+[jdk]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
 [python3]: https://www.python.org/downloads/
 [vs]: https://visualstudio.microsoft.com/vs/community/

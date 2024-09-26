@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.dbg.util.PathPredicates.Align;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
@@ -345,25 +346,15 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	private Map<String, Object> promptArgs(RemoteMethod method, Map<String, Object> defaults) {
-		SchemaContext ctx = getSchemaContext();
+		/**
+		 * TODO: RemoteMethod parameter descriptions should also use ValStr. This map conversion
+		 * stuff is getting onerous and hacky.
+		 */
+		Map<String, ValStr<?>> defs = ValStr.fromPlainMap(defaults);
 		RemoteMethodInvocationDialog dialog = new RemoteMethodInvocationDialog(tool,
-			method.display(), method.display(), null);
-		while (true) {
-			for (RemoteParameter param : method.parameters().values()) {
-				Object val = defaults.get(param.name());
-				if (val != null) {
-					Class<?> type = ctx.getSchema(param.type()).getType();
-					dialog.setMemorizedArgument(param.name(), type.asSubclass(Object.class),
-						val);
-				}
-			}
-			Map<String, Object> args = dialog.promptArguments(ctx, method.parameters(), defaults);
-			if (args == null) {
-				// Cancelled
-				return null;
-			}
-			return args;
-		}
+			getSchemaContext(), method.display(), method.display(), null);
+		Map<String, ValStr<?>> args = dialog.promptArguments(method.parameters(), defs, defs);
+		return args == null ? null : ValStr.toPlainMap(args);
 	}
 
 	private CompletableFuture<?> invokeMethod(boolean prompt, RemoteMethod method,
@@ -818,12 +809,14 @@ public class TraceRmiTarget extends AbstractTarget {
 
 		public MatchedMethod getBest(String name, ActionName action,
 				Supplier<List<? extends MethodMatcher>> preferredSupplier) {
-			return map.computeIfAbsent(name, n -> chooseBest(action, preferredSupplier.get()));
+			return getBest(name, action, preferredSupplier.get());
 		}
 
 		public MatchedMethod getBest(String name, ActionName action,
 				List<? extends MethodMatcher> preferred) {
-			return map.computeIfAbsent(name, n -> chooseBest(action, preferred));
+			synchronized (map) {
+				return map.computeIfAbsent(name, n -> chooseBest(action, preferred));
+			}
 		}
 
 		private MatchedMethod chooseBest(ActionName name, List<? extends MethodMatcher> preferred) {

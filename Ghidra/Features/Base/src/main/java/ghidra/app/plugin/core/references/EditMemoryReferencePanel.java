@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 				.setAccessibleDescription(
 					"Selecting this checkbox allows entering a refernce offset");
 		offsetCheckbox.setHorizontalAlignment(SwingConstants.RIGHT);
-		offsetCheckbox.addChangeListener(e -> enableOffsetField(offsetCheckbox.isSelected()));
+		offsetCheckbox.addItemListener(e -> enableOffsetField(offsetCheckbox.isSelected()));
 		offsetField = new JTextField();
 		offsetField.getAccessibleContext().setAccessibleName("Enter Offset");
 
@@ -123,7 +123,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		includeOtherOverlaysCheckbox = new JCheckBox("Include OTHER overlay spaces",
 			Boolean.getBoolean(Preferences.getProperty(INCLUDE_OTHER_OVERLAY_PREFERENCE, "false")));
-		includeOtherOverlaysCheckbox.addChangeListener(e -> refreshToAddressField());
+		includeOtherOverlaysCheckbox.addItemListener(e -> refreshToAddressField());
 
 		refTypes = new GhidraComboBox<>(MEM_REF_TYPES);
 		refTypes.getAccessibleContext().setAccessibleName("Memory Ref Types");

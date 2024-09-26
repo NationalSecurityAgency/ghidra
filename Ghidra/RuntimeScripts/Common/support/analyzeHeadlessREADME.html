@@ -130,7 +130,9 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         [<a href="#commit">-commit [&quot;&lt;comment&gt;&quot;]</a>]
         [<a href="#okToDelete">-okToDelete</a>]
         [<a href="#max-cpu">-max-cpu &lt;max cpu cores to use&gt;</a>]
+        [<a href="#librarySearchPaths">-librarySearchPaths &lt;path1&gt;[;&lt;path2&gt;...]</a>]
         [<a href="#loader">-loader &lt;desired loader name&gt;</a>]
+        [<a href="#loader">-loader-&lt;loader argument name&gt; &lt;loader argument value&gt;</a>]
 
 </PRE>
 
@@ -583,6 +585,14 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     </LI>
     
 	<br><br>
+	
+	<LI>
+	<a name="librarySearchPaths"><typewriter>-librarySearchPaths &lt;path1&gt;[;&lt;path2&gt;...]</typewriter></a><br>
+	Specifies an ordered list of library search paths to use during import instead of the default. 
+	Search paths may be either full system paths or "FSRLs".
+	</LI>
+	
+	<br><br>
 
     <LI>
     <a name="loader"><typewriter>-loader &lt;desired loader name&gt;</typewriter></a><br>
@@ -606,8 +616,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-linkExistingProjectLibraries &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-projectLibrarySearchFolder &lt;project path&gt;</typewriter></LI>
-        <LI><typewriter>-loader-loadLocalLibraries &lt;true|false&gt;</typewriter></LI>
-        <LI><typewriter>-loader-loadSystemLibraries &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-loadLibraries &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-libraryLoadDepth &lt;depth&gt;</typewriter></LI>
         <LI><typewriter>-loader-libraryDestinationFolder &lt;project path&gt;</typewriter></LI>
         <LI><typewriter>-loader-applyRelocations &lt;true|false&gt;</typewriter></LI>
@@ -623,8 +632,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-linkExistingProjectLibraries &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-projectLibrarySearchFolder &lt;project path&gt;</typewriter></LI>
-        <LI><typewriter>-loader-loadLocalLibraries &lt;true|false&gt;</typewriter></LI>
-        <LI><typewriter>-loader-loadSystemLibraries &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-loadLibraries &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-libraryLoadDepth &lt;depth&gt;</typewriter></LI>
         <LI><typewriter>-loader-libraryDestinationFolder &lt;project path&gt;</typewriter></LI>
         <LI><typewriter>-loader-ordinalLookup &lt;true|false&gt;</typewriter></LI>
@@ -637,8 +645,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         <LI><typewriter>-loader-anchorLabels &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-linkExistingProjectLibraries &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-projectLibrarySearchFolder &lt;project path&gt;</typewriter></LI>
-        <LI><typewriter>-loader-loadLocalLibraries &lt;true|false&gt;</typewriter></LI>
-        <LI><typewriter>-loader-loadSystemLibraries &lt;true|false&gt;</typewriter></LI>
+        <LI><typewriter>-loader-loadLibraries &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-libraryLoadDepth &lt;depth&gt;</typewriter></LI>
         <LI><typewriter>-loader-libraryDestinationFolder &lt;project path&gt;</typewriter></LI>
       </UL>

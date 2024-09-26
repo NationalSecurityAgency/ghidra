@@ -50,13 +50,20 @@ public class AVR32_ElfRelocationHandler
 			throws MemoryAccessException {
 
 		Program program = elfRelocationContext.getProgram();
+
+		int symbolIndex = relocation.getSymbolIndex();
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+		
 		Memory memory = program.getMemory();
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 
 		long addend = relocation.getAddend(); // will be 0 for REL case
 
 		long offset = (int) relocationAddress.getOffset();
-		int symbolIndex = relocation.getSymbolIndex();
 
 		int oldValue = memory.getInt(relocationAddress);
 
@@ -64,8 +71,6 @@ public class AVR32_ElfRelocationHandler
 		int newValueShiftToAligntoUpper = 0;
 
 		switch (type) {
-			case R_AVR32_NONE:
-				return RelocationResult.SKIPPED;
 			case R_AVR32_32:
 				int newValue = (((int) symbolValue + (int) addend) & 0xffffffff);
 				memory.setInt(relocationAddress, newValue);

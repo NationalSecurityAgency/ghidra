@@ -175,6 +175,7 @@
         <tocdef id="Symbol Table" text="Symbol Table"  target="help/topics/SymbolTablePlugin/symbol_table.htm">
             <tocdef id="Symbol References" sortgroup="a" text="Symbol References"  target="help/topics/SymbolTablePlugin/symbol_references.htm" />
             <tocdef id="Symbol Tree" sortgroup="b" text="Symbol Tree" target="help/topics/SymbolTreePlugin/SymbolTree.htm" />
+            <tocdef id="Temporary Symbol Table" sortgroup="c" text="Temporary Symbol Table" target="help/topics/SymbolTablePlugin/symbol_table_transient.htm" />
         </tocdef>
         
         <tocdef id="Relocation Table" text="Relocation Table"  target="help/topics/RelocationTablePlugin/relocation_table.htm" />

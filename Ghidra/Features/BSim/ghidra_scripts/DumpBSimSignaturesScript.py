@@ -16,6 +16,7 @@
 # Generate the BSim signature for the function at the current address, then dump the 
 # signature hashes to the console 
 # @category: BSim.python
+# @runtime Jython
 
 import ghidra.app.decompiler.DecompInterface as DecompInterface
 import ghidra.app.decompiler.DecompileOptions as DecompileOptions

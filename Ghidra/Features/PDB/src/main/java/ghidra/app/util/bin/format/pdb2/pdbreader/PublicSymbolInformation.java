@@ -203,19 +203,18 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	 */
 	@Override
 	void dump(Writer writer) throws IOException, CancelledException, PdbException {
-		StringBuilder builder = new StringBuilder();
-		builder.append("PublicSymbolInformation-------------------------------------\n");
-		dumpPubHeader(builder);
-		dumpHashHeader(builder);
-		dumpHashBasics(builder);
-		dumpHashRecords(builder);
+		PdbReaderUtils.dumpHead(writer, this);
+		dumpPubHeader(writer);
+		dumpHashHeader(writer);
+		dumpHashBasics(writer);
+		dumpHashRecords(writer);
 
-		dumpAddressMap(builder);
-		dumpThunkMap(builder);
-		dumpSectionMap(builder);
+		dumpAddressMap(writer);
+		dumpThunkMap(writer);
+		dumpSectionMap(writer);
+		writer.write("\n");
 
-		builder.append("\nEnd PublicSymbolInformation---------------------------------\n");
-		writer.write(builder.toString());
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 	//==============================================================================================
@@ -239,23 +238,23 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 
 	/**
 	 * Debug method for dumping Address Map information from this {@link AbstractSymbolInformation}
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpAddressMap(StringBuilder builder)
+	private void dumpAddressMap(Writer writer)
 			throws CancelledException, IOException, PdbException {
-		builder.append("AddressMapSymbolOffsets-------------------------------------\n");
+		writer.write("AddressMapSymbolOffsets-------------------------------------\n");
 		List<Long> myAddressMapSymbolOffsets = getAddressMapSymbolOffsets();
-		builder.append("numAddressMapSymbolOffsets: " + myAddressMapSymbolOffsets.size() + "\n");
+		writer.write("numAddressMapSymbolOffsets: " + myAddressMapSymbolOffsets.size() + "\n");
 		int num = 0;
 		for (Long val : myAddressMapSymbolOffsets) {
 			pdb.checkCancelled();
-			builder.append(String.format("0X%08X: 0X%012X\n", num++, val));
+			writer.write(String.format("0X%08X: 0X%012X\n", num++, val));
 		}
-		builder.append("\nEnd AddressMapSymbolOffsets---------------------------------\n");
+		writer.write("\nEnd AddressMapSymbolOffsets---------------------------------\n");
 	}
 
 	/**
@@ -279,24 +278,24 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 
 	/**
 	 * Debug method for dumping Thunk Map information from this {@link AbstractSymbolInformation}
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpThunkMap(StringBuilder builder)
+	private void dumpThunkMap(Writer writer)
 			throws CancelledException, IOException, PdbException {
 		Map<Integer, Integer> myThunkTargetOffsetsByTableOffset =
 			getThunkTargetOffsetsByTableOffset();
-		builder.append("ThunkMap----------------------------------------------------\n");
-		builder.append("numThunkTargetOffsetsByTableOffset: " +
+		writer.write("ThunkMap----------------------------------------------------\n");
+		writer.write("numThunkTargetOffsetsByTableOffset: " +
 			myThunkTargetOffsetsByTableOffset.size() + "\n");
 		for (Map.Entry<Integer, Integer> entry : myThunkTargetOffsetsByTableOffset.entrySet()) {
 			pdb.checkCancelled();
-			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
+			writer.write(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
-		builder.append("\nEnd ThunkMap------------------------------------------------\n");
+		writer.write("\nEnd ThunkMap------------------------------------------------\n");
 	}
 
 	/**
@@ -320,51 +319,43 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 
 	/**
 	 * Debug method for dumping Section Map information from this {@link AbstractSymbolInformation}
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpSectionMap(StringBuilder builder)
+	private void dumpSectionMap(Writer writer)
 			throws CancelledException, IOException, PdbException {
 		Map<Integer, Integer> myAbsoluteOffsetsBySectionNumber =
 			getAbsoluteOffsetsBySectionNumber();
-		builder.append("SectionMap--------------------------------------------------\n");
-		builder.append(
+		writer.write("SectionMap--------------------------------------------------\n");
+		writer.write(
 			"numAbsoluteOffsetsBySectionNumber: " + myAbsoluteOffsetsBySectionNumber.size() + "\n");
 		for (Map.Entry<Integer, Integer> entry : myAbsoluteOffsetsBySectionNumber.entrySet()) {
 			pdb.checkCancelled();
-			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
+			writer.write(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
-		builder.append("\nEnd SectionMap----------------------------------------------\n");
+		writer.write("\nEnd SectionMap----------------------------------------------\n");
 	}
 
 	/**
 	 * Debug method for dumping the {@link PublicSymbolInformation} header
-	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	private void dumpPubHeader(StringBuilder builder) {
-		builder.append("PublicSymbolInformationHeader-------------------------------\n");
-		builder.append("symbolHashLength: ");
-		builder.append(symbolHashLength);
-		builder.append("\naddressMapLength: ");
-		builder.append(addressMapLength);
-		builder.append("\nnumThunks: ");
-		builder.append(numThunks);
-		builder.append("\nthunkSize: ");
-		builder.append(thunkSize);
-		builder.append("\niSectionThunkTable: ");
-		builder.append(iSectionThunkTable);
-		builder.append("\noffsetThunkTable: ");
-		builder.append(offsetThunkTable);
-		builder.append("\nnumSections: ");
-		builder.append(numSections);
-		builder.append("\nthunkMapLength: ");
-		builder.append(thunkMapLength);
-		builder.append("\nthunkTableLength: ");
-		builder.append(thunkTableLength);
-		builder.append("\nEnd PublicSymbolInformationHeader---------------------------\n");
+	private void dumpPubHeader(Writer writer) throws IOException {
+		writer.write("PublicSymbolInformationHeader-------------------------------\n");
+		writer.write("symbolHashLength: " + symbolHashLength);
+		writer.write("\naddressMapLength: " + addressMapLength);
+		writer.write("\nnumThunks: " + numThunks);
+		writer.write("\nthunkSize: " + thunkSize);
+		writer.write("\niSectionThunkTable: " + iSectionThunkTable);
+		writer.write("\noffsetThunkTable: " + offsetThunkTable);
+		writer.write("\nnumSections: " + numSections);
+		writer.write("\nthunkMapLength: " + thunkMapLength);
+		writer.write("\nthunkTableLength: " + thunkTableLength);
+		writer.write("\nEnd PublicSymbolInformationHeader---------------------------\n");
 	}
 
 	void deserializePubHeader() throws PdbException, CancelledException, IOException {

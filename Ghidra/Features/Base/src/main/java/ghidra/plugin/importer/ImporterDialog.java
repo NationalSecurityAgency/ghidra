@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.app.services.ProgramManager;
@@ -259,7 +259,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.setEnterKeyForwarding(true);
 		loaderComboBox.setRenderer(
-			GListCellRenderer.createDefaultCellTextRenderer(loader -> loader.getName()));
+			GComboBoxCellRenderer.createDefaultTextRenderer(loader -> loader.getName()));
 
 		if (!orderedLoaders.isEmpty()) {
 			loaderComboBox.setSelectedIndex(0);
@@ -572,8 +572,8 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private void chooseProjectFolder() {
-		DataTreeDialog dataTreeDialog = new DataTreeDialog(getComponent(),
-			"Choose a project folder", CHOOSE_FOLDER);
+		DataTreeDialog dataTreeDialog =
+			new DataTreeDialog(getComponent(), "Choose a project folder", CHOOSE_FOLDER);
 		dataTreeDialog.setSelectedFolder(destinationFolder);
 		dataTreeDialog.showComponent();
 		DomainFolder folder = dataTreeDialog.getDomainFolder();

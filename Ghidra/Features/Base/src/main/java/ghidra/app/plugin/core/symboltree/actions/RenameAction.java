@@ -15,37 +15,29 @@
  */
 package ghidra.app.plugin.core.symboltree.actions;
 
-import javax.swing.tree.TreePath;
-
 import docking.action.MenuData;
-import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
 import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
 
 public class RenameAction extends SymbolTreeContextAction {
 
 	public RenameAction(SymbolTreePlugin plugin) {
 		super("Rename Symbol", plugin.getName());
-		setPopupMenuData(new MenuData(new String[] { "Rename" }, null, "xxx", MenuData.NO_MNEMONIC,
-			"1"));
+		setPopupMenuData(
+			new MenuData(new String[] { "Rename" }, null, "xxx", MenuData.NO_MNEMONIC, "1"));
 	}
 
 	@Override
 	public boolean isEnabledForContext(SymbolTreeActionContext context) {
-		TreePath[] selectionPaths = context.getSelectedSymbolTreePaths();
-		if (selectionPaths.length == 1) {
-			Object object = selectionPaths[0].getLastPathComponent();
-			return (object instanceof SymbolNode);
-		}
-		return false;
+		SymbolTreeNode node = context.getSelectedNode();
+		return node instanceof SymbolNode;
 	}
 
 	@Override
 	public void actionPerformed(SymbolTreeActionContext context) {
-		TreePath[] selectionPaths = context.getSelectedSymbolTreePaths();
-		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-		context.getSymbolTree().startEditing(node);
+		context.getSymbolTree().startEditing(context.getSelectedNode());
 	}
 
 }

@@ -24,6 +24,8 @@ import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
 
 public abstract class SymbolTreeContextAction extends DockingAction {
 
+	protected static final String MIDDLE_MENU_GROUP = "0Middle";
+
 	public SymbolTreeContextAction(String name, String owner) {
 		super(name, owner);
 	}

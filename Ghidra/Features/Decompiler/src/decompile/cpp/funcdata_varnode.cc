@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -372,6 +372,78 @@ Varnode *Funcdata::setInputVarnode(Varnode *vn)
   return vn;
 }
 
+/// A new Varnode that covers both the original Varnodes is created and is itself marked as a function input.
+/// Any CPUI_PIECE reading the original Varnodes is converted to a CPUI_COPY reading the new Varnode. If there
+/// are other ops reading the original Varnodes, they are changed to read replacement Varnodes, which are
+/// defined as SUBPIECEs of the new Varnode.  The original Varnodes are destroyed.
+/// \param vnHi is the most significant Varnode to combine
+/// \param vnLo is the least significant Varnode
+void Funcdata::combineInputVarnodes(Varnode *vnHi,Varnode *vnLo)
+
+{
+  if (!vnHi->isInput() || !vnLo->isInput())
+    throw LowlevelError("Varnodes being combined are not inputs");
+  bool isContiguous;
+  Address addr = vnLo->getAddr();
+  if (addr.isBigEndian()) {
+    addr = vnHi->getAddr();
+    Address otheraddr = addr + vnHi->getSize();
+    isContiguous = (otheraddr == vnLo->getAddr());
+  }
+  else {
+    Address otheraddr = addr + vnLo->getSize();
+    isContiguous = (otheraddr == vnHi->getAddr());
+  }
+  if (!isContiguous)
+    throw LowlevelError("Input varnodes being combined are not contiguous");
+  vector<PcodeOp *> pieceList;
+  bool otherOps = false;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vnHi->beginDescend();iter!=vnHi->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() == CPUI_PIECE && op->getIn(0) == vnHi && op->getIn(1) == vnLo)
+      pieceList.push_back(op);
+    else
+      otherOps = true;
+  }
+  for(int4 i=0;i<pieceList.size();++i) {
+    opRemoveInput(pieceList[i], 1);
+    opUnsetInput(pieceList[i], 0);
+  }
+  PcodeOp *subHi = (PcodeOp *)0;
+  PcodeOp *subLo = (PcodeOp *)0;
+  if (otherOps) {
+    // If there are other PcodeOps besides PIECEs that are directly combining vnHi and vnLo
+    // create replacement Varnodes constructed as SUBPIECEs of the new combined Varnode
+    BlockBasic *bb = (BlockBasic *)bblocks.getBlock(0);
+    subHi = newOp(2,bb->getStart());
+    opSetOpcode(subHi, CPUI_SUBPIECE);
+    opSetInput(subHi,newConstant(4, vnLo->getSize()),1);
+    Varnode *newHi = newVarnodeOut(vnHi->getSize(),vnHi->getAddr(),subHi);
+    opInsertBegin(subHi, bb);
+    subLo = newOp(2,bb->getStart());
+    opSetOpcode(subLo, CPUI_SUBPIECE);
+    opSetInput(subLo,newConstant(4, 0),1);
+    Varnode *newLo = newVarnodeOut(vnLo->getSize(),vnLo->getAddr(),subLo);
+    opInsertBegin(subLo, bb);
+    totalReplace(vnHi, newHi);
+    totalReplace(vnLo, newLo);
+  }
+  int4 outSize = vnHi->getSize() + vnLo->getSize();
+  vbank.destroy(vnHi);
+  vbank.destroy(vnLo);
+  Varnode *inVn = newVarnode(outSize, addr);
+  inVn = setInputVarnode(inVn);
+  for(int4 i=0;i<pieceList.size();++i) {
+    opSetInput(pieceList[i],inVn,0);
+    opSetOpcode(pieceList[i], CPUI_COPY);
+  }
+  if (otherOps) {
+    opSetInput(subHi,inVn,0);
+    opSetInput(subLo,inVn,0);
+  }
+}
+
 /// Construct a constant Varnode up to 128 bits,  using INT_ZEXT and PIECE if necessary.
 /// This method is temporary until we have full extended precision constants.
 /// \param s is the size of the Varnode in bytes
@@ -632,7 +704,7 @@ bool Funcdata::replaceVolatile(Varnode *vn)
 {
   PcodeOp *newop;
   if (vn->isWritten()) {	// A written value
-    VolatileWriteOp *vw_op = glb->userops.getVolatileWrite();
+    UserPcodeOp *vw_op = glb->userops.registerBuiltin(UserPcodeOp::BUILTIN_VOLATILE_WRITE);
     if (!vn->hasNoDescend()) throw LowlevelError("Volatile memory was propagated");
     PcodeOp *defop = vn->getDef();
     newop = newOp(3,defop->getAddr());
@@ -651,7 +723,7 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     opInsertAfter(newop,defop); // Insert after defining op
   }
   else {			// A read value
-    VolatileReadOp *vr_op = glb->userops.getVolatileRead();
+    UserPcodeOp *vr_op = glb->userops.registerBuiltin(UserPcodeOp::BUILTIN_VOLATILE_READ);
     if (vn->hasNoDescend()) return false; // Dead
     PcodeOp *readop = vn->loneDescend();
     if (readop == (PcodeOp *)0)
@@ -1002,7 +1074,6 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
     if (ct != (Datatype *)0) {
       if (vn->updateType(ct,false,false))
 	updateoccurred = true;
-      vn->getHigh()->finalizeDatatype(ct);	// Permanently set the data-type on the HighVariable
     }
   } while(iter != enditer);
   return updateoccurred;
@@ -1311,6 +1382,41 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
   }
   return true;
 }
+
+/// \brief Create Varnode (and associated PcodeOp) that will display as a string constant
+///
+/// The raw data for the encoded string is given. If the data encodes a legal string, the string
+/// is stored in the StringManager, and a Varnode is created that will display in output as the
+/// quoted string.  A given pointer data-type is assigned to the new Varnode and also indicates
+/// the character data-type associated with the encoding. Internally, a \e stringdata user-op is
+/// also created and its output is the Varnode actually returned.
+/// \param buf is the raw bytes of the encoded string
+/// \param size is the number of bytes
+/// \param ptrType is the given pointer to character data-type
+/// \param readOp is the PcodeOp that will read the new Varnode
+/// \return the new Varnode or null is the encoding isn't a legal string
+Varnode *Funcdata::getInternalString(const uint1 *buf,int4 size,Datatype *ptrType,PcodeOp *readOp)
+
+{
+  if (ptrType->getMetatype() != TYPE_PTR)
+    return (Varnode *)0;
+  Datatype *charType = ((TypePointer *)ptrType)->getPtrTo();
+
+  const Address &addr(readOp->getAddr());
+  uint8 hash = glb->stringManager->registerInternalStringData(addr, buf, size, charType);
+  if (hash == 0)
+    return (Varnode *)0;
+  glb->userops.registerBuiltin(UserPcodeOp::BUILTIN_STRINGDATA);
+  PcodeOp *stringOp = newOp(2,addr);
+  opSetOpcode(stringOp, CPUI_CALLOTHER);
+  stringOp->clearFlag(PcodeOp::call);
+  opSetInput(stringOp, newConstant(4, UserPcodeOp::BUILTIN_STRINGDATA), 0);
+  opSetInput(stringOp, newConstant(8, hash), 1);
+  Varnode *resVn = newUniqueOut(ptrType->getSize(), stringOp);
+  resVn->updateType(ptrType, true, false);
+  opInsertBefore(stringOp, readOp);
+  return resVn;
+};
 
 /// Follow the Varnode back to see if it comes from the return address for \b this function.
 /// If so, return \b true.  The return address can flow through COPY, INDIRECT, and AND operations.

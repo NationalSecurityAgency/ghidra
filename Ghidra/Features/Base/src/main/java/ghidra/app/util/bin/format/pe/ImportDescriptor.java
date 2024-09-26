@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -211,9 +211,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 		return timeDateStamp != NOT_BOUND;
 	}
 
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
+	@Override
     public DataType toDataType() throws DuplicateNameException {
         UnionDataType union = new UnionDataType("union");
         union.add(DWORD, "Characteristics",    null);
@@ -230,9 +228,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
         return struct;
     }
 
-    /**
-     * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
-     */
+	@Override
 	public byte [] toBytes(DataConverter dc) {
 		byte [] bytes = new byte[SIZEOF];
 

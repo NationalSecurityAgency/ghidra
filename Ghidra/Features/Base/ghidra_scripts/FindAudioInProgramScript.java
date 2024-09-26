@@ -15,16 +15,15 @@
  */
 //Finds programs containing various audio resources such as WAV's 
 //@category Resources
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.WAVEDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class FindAudioInProgramScript extends GhidraScript {
 
@@ -36,8 +35,10 @@ public class FindAudioInProgramScript extends GhidraScript {
 
 		//look for WAV data types
 		WAVEDataType wdt = new WAVEDataType();
+		MIDIDataType mdt = new MIDIDataType();
 
 		totalFound += findAudioData("WAV", wdt, WAVEDataType.MAGIC, WAVEDataType.MAGIC_MASK);
+		totalFound += findAudioData("MIDI", mdt, MIDIDataType.MAGIC, MIDIDataType.MAGIC_MASK);
 
 		if (totalFound == 0) {
 			println("No Audio data found in " + currentProgram.getName());
@@ -54,12 +55,12 @@ public class FindAudioInProgramScript extends GhidraScript {
 
 		int numDataFound = 0;
 		List<Address> foundList = scanForAudioData(pattern, mask);
-		//Loop over all potential found WAVs
+		//Loop over all potential found audio
 		for (int i = 0; i < foundList.size(); i++) {
 			boolean foundData = false;
-			//See if already applied WAV
+			//See if already applied data type
 			Data data = getDataAt(foundList.get(i));
-			//If not already applied, try to apply WAV data type
+			//If not already applied, try to apply audio data type
 			if (data == null) {
 				println("Trying to apply " + dataName + " datatype at " +
 					foundList.get(i).toString());
@@ -67,7 +68,7 @@ public class FindAudioInProgramScript extends GhidraScript {
 				try {
 					Data newData = createData(foundList.get(i), dt);
 					if (newData != null) {
-						println("Applied WAV at " + newData.getAddressString(false, true));
+						printf("Applied %s at %s", dataName, newData.getAddressString(false, true));
 						foundData = true;
 					}
 				}

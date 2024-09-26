@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 	private static final String ERROR_TITLE = "Error in PDB Analyzer";
 
-	private boolean searchRemoteLocations = false;
+	private boolean searchUntrustedLocations = false;
 
 	// only try once per transaction due to extensive error logging which may get duplicated
 	private long lastTransactionId = -1;
@@ -85,7 +85,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		File pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchRemoteLocations, monitor);
+		File pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchUntrustedLocations, monitor);
 		if (pdbFile == null) {
 			// warnings have already been logged
 			return false;
@@ -138,15 +138,15 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 
-		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS,
-			searchRemoteLocations, null,
-			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_REMOTE_LOCATIONS);
+		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS,
+			searchUntrustedLocations, null,
+			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_UNTRUSTED_LOCATIONS);
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		searchRemoteLocations = options.getBoolean(
-			PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS, searchRemoteLocations);
+		searchUntrustedLocations = options.getBoolean(
+			PdbAnalyzerCommon.OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS, searchUntrustedLocations);
 	}
 
 	/**
@@ -165,18 +165,18 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Sets the "allow remote" option that will be used by the analyzer when it is next invoked
+	 * Sets the "allow untrusted" option that will be used by the analyzer when it is next invoked
 	 * on the specified program.
 	 * <p>
 	 * Normally when the analyzer attempts to locate a matching PDB file it
-	 * will default to NOT searching remote symbol servers.  A headless script could
-	 * use this method to allow the analyzer to search remote symbol servers.
+	 * will default to NOT searching untrusted symbol servers.  A headless script could
+	 * use this method to allow the analyzer to search untrusted symbol servers.
 	 * 
 	 * @param program {@link Program}
-	 * @param allowRemote boolean flag, true means analyzer can search remote symbol
+	 * @param allowUntrusted boolean flag, true means analyzer can search untrusted symbol
 	 * servers
 	 */
-	public static void setAllowRemoteOption(Program program, boolean allowRemote) {
-		PdbAnalyzerCommon.setAllowRemoteOption(NAME, program, allowRemote);
+	public static void setAllowUntrustedOption(Program program, boolean allowUntrusted) {
+		PdbAnalyzerCommon.setAllowUntrustedOption(NAME, program, allowUntrusted);
 	}
 }

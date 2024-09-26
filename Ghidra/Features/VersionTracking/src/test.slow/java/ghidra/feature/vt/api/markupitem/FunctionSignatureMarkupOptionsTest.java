@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,8 +73,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		super();
 	}
 
-@Test
-    public void testExcludeCallingConvention() throws Exception {
+	@Test
+	public void testExcludeCallingConvention() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setCallingConvention(sourceFunction, "__cdecl"); // unknown, default, __stdcall, __cdecl, __fastcall, __thiscall
@@ -118,8 +118,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testNameMatchReplaceCallingConventionBothSpecified() throws Exception {
+	@Test
+	public void testNameMatchReplaceCallingConventionBothSpecified() throws Exception {
 		setLanguage(destinationProgram, "Toy:LE:32:default", "default");
 
 		useMatch("0x00411860", "0x00411830");
@@ -165,8 +165,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testNameMatchNotFoundCallingConventionBothSpecified() throws Exception {
+	@Test
+	public void testNameMatchNotFoundCallingConventionBothSpecified() throws Exception {
 		setLanguage(destinationProgram, "Toy:LE:32:default", "default");
 
 		useMatch("0x00411860", "0x00411830");
@@ -212,8 +212,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceSrcCallFixupNoDestCallFixup() {
+	@Test
+	public void testReplaceSrcCallFixupNoDestCallFixup() {
 		useMatch("0x00411860", "0x00411830");
 
 		setCallFixup(sourceFunction, "SEH_prolog4");
@@ -256,8 +256,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceNoSrcCallFixupDestCallFixup() {
+	@Test
+	public void testReplaceNoSrcCallFixupDestCallFixup() {
 		useMatch("0x00411860", "0x00411830");
 
 		setCallFixup(destinationFunction, "SEH_prolog4");
@@ -300,8 +300,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceSrcCallFixupSameDestCallFixup() {
+	@Test
+	public void testReplaceSrcCallFixupSameDestCallFixup() {
 		useMatch("0x00411860", "0x00411830");
 
 		setCallFixup(sourceFunction, "SEH_prolog4");
@@ -345,8 +345,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceSrcCallFixupDifferentDestCallFixup() {
+	@Test
+	public void testReplaceSrcCallFixupDifferentDestCallFixup() {
 		useMatch("0x00411860", "0x00411830");
 
 		setCallFixup(sourceFunction, "SEH_prolog4");
@@ -390,8 +390,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testExcludeSrcCallFixupDifferentDestCallFixup() {
+	@Test
+	public void testExcludeSrcCallFixupDifferentDestCallFixup() {
 		useMatch("0x00411860", "0x00411830");
 
 		setCallFixup(sourceFunction, "SEH_prolog4");
@@ -435,8 +435,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceNoSrcCallFixupNoDestCallFixup() {
+	@Test
+	public void testReplaceNoSrcCallFixupNoDestCallFixup() {
 		useMatch("0x00411860", "0x00411830");
 
 		checkSignatures("void addPerson(Person * * list, char * name)",
@@ -477,8 +477,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testExcludeReturnType() throws Exception {
+	@Test
+	public void testExcludeReturnType() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new FloatDataType(), SourceType.USER_DEFINED);
@@ -518,8 +518,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceDefinedReturnTypeWithDefined() throws Exception {
+	@Test
+	public void testReplaceDefinedReturnTypeWithDefined() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new FloatDataType(), SourceType.USER_DEFINED);
@@ -560,8 +560,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceUndefinedReturnTypeWithDefinedForReplace() throws Exception {
+	@Test
+	public void testReplaceUndefinedReturnTypeWithDefinedForReplace() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new FloatDataType(), SourceType.USER_DEFINED);
@@ -601,8 +601,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testDontReplaceDefinedReturnTypeWithDefinedForUndefinedOnly() throws Exception {
+	@Test
+	public void testDontReplaceDefinedReturnTypeWithDefinedForUndefinedOnly() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new FloatDataType(), SourceType.USER_DEFINED);
@@ -644,8 +644,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceUndefinedReturnTypeWithDefinedForUndefinedOnly() throws Exception {
+	@Test
+	public void testReplaceUndefinedReturnTypeWithDefinedForUndefinedOnly() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new FloatDataType(), SourceType.USER_DEFINED);
@@ -687,8 +687,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testReplaceDefaultReturnTypeWithUndefined() throws Exception {
+	@Test
+	public void testReplaceDefaultReturnTypeWithUndefined() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new Undefined4DataType(), SourceType.USER_DEFINED);
@@ -728,8 +728,8 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-@Test
-    public void testDontReplaceDefinedReturnTypeWithUndefined() throws Exception {
+	@Test
+	public void testDontReplaceDefinedReturnTypeWithUndefined() throws Exception {
 		useMatch("0x00411860", "0x00411830");
 
 		setReturnType(sourceFunction, new Undefined4DataType(), SourceType.USER_DEFINED);
@@ -770,15 +770,13 @@ public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatur
 		checkMarkupStatus(functionSignatureMarkupItems, VTMarkupItemStatus.UNAPPLIED);
 	}
 
-
-
 	// TODO
 	// TODO
 	// TODO this address needs to be updated: I think it is 00411da0/00411d80
 	// TODO
 	// TODO
 
-private void setLanguage(Program program, String languageID, String compilerSpecName)
+	private void setLanguage(Program program, String languageID, String compilerSpecName)
 			throws IllegalStateException, LockException, IncompatibleLanguageException,
 			LanguageNotFoundException {
 		int transaction = -1;

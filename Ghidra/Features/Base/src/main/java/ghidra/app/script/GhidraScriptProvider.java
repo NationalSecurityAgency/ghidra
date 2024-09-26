@@ -106,6 +106,19 @@ public abstract class GhidraScriptProvider
 			throws IOException;
 
 	/**
+	 * Returns an optional runtime environment name of a {@link GhidraScriptProvider} that scripts
+	 * can specify they require to run under. Useful for when more than one
+	 * {@link GhidraScriptProvider} uses the same file extension.
+	 * 
+	 * @return an optional runtime environment name of a {@link GhidraScriptProvider} that scripts
+	 * can specify they require to run under (could be null if there is no requirement)
+	 * @see ScriptInfo#AT_RUNTIME
+	 */
+	public String getRuntimeEnvironmentName() {
+		return null;
+	}
+
+	/**
 	 * Returns a Pattern that matches block comment openings.
 	 * 
 	 * <p>
@@ -160,6 +173,9 @@ public abstract class GhidraScriptProvider
 
 			if (metadataItem.equals(ScriptInfo.AT_CATEGORY)) {
 				writer.print(category);
+			}
+			else if (metadataItem.equals(ScriptInfo.AT_RUNTIME)) {
+				writer.print(getRuntimeEnvironmentName());
 			}
 
 			writer.println("");

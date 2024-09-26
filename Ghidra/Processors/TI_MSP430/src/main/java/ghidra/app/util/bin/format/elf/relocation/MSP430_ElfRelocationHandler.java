@@ -46,8 +46,14 @@ public class MSP430_ElfRelocationHandler
 			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
 
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
+		
 		int symbolIndex = relocation.getSymbolIndex();
 		long addend = relocation.getAddend(); // will be 0 for REL case
 		long offset = relocationAddress.getOffset();

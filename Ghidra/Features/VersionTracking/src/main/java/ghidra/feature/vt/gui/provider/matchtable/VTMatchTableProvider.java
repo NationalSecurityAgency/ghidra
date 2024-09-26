@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,166 +15,42 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
-import static ghidra.feature.vt.api.impl.VTEvent.ASSOCIATION_STATUS_CHANGED;
-import static ghidra.feature.vt.api.impl.VTEvent.MATCH_SET_ADDED;
-import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_INDEX;
-import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_VALUE;
-import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.NO_SELECTION_TRACKING;
-import static ghidra.feature.vt.gui.plugin.VTPlugin.FILTERED_ICON;
-import static ghidra.feature.vt.gui.plugin.VTPlugin.UNFILTERED_ICON;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.ACCEPT_MATCH_OPTIONS_NAME;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_DATA_NAME_ON_ACCEPT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_FUNCTION_NAME_ON_ACCEPT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_MARKUP_OPTIONS_NAME;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_DATA_CORRELATOR;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_EXACT_FUNCTION_CORRELATORS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_IMPLIED_MATCH_CORRELATOR;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_OPTIONS_NAME;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_REFERENCE_CORRELATORS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_SYMBOL_CORRELATOR;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_CORRELATOR_MIN_LEN_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_MATCH_DATA_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALL_FIXUP;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_DATA_MATCH_DATA_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_EOL_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_NAME;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_IGNORE_EXCLUDED_MARKUP_ITEMS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_IGNORE_INCOMPLETE_MARKUP_ITEMS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_LABELS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PLATE_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_POST_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PRE_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_REPEATABLE_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_VAR_ARGS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DISPLAY_APPLY_MARKUP_OPTIONS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.END_OF_LINE_COMMENT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_CORRELATOR_MIN_LEN_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_NAME;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_SIGNATURE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.HIGHEST_NAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.IGNORE_EXCLUDED_MARKUP_ITEMS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.IGNORE_INCOMPLETE_MARKUP_ITEMS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.LABELS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.MAX_CONFLICTS_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.MIN_VOTES_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_DATA_TYPES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PLATE_COMMENT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.POST_COMMENT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PRE_COMMENT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.REPEATABLE_COMMENT;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_DUPE_FUNCTION_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_DATA_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_FUNCTION_BYTES_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_FUNCTION_INST_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_SYMBOL_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_REF_CORRELATORS_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.SYMBOL_CORRELATOR_MIN_LEN_OPTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.VAR_ARGS;
-import static ghidra.framework.model.DomainObjectEvent.RESTORED;
+import static ghidra.feature.vt.api.impl.VTEvent.*;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.*;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static ghidra.framework.model.DomainObjectEvent.*;
 
-import java.awt.Adjustable;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
-import docking.ActionContext;
-import docking.DockingWindowManager;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.builder.ActionBuilder;
-import docking.widgets.table.AbstractSortedTableModel;
-import docking.widgets.table.GTable;
-import docking.widgets.table.RowObjectSelectionManager;
-import docking.widgets.table.RowObjectTableModel;
-import docking.widgets.table.SelectionManager;
+import docking.widgets.table.*;
+import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
+import docking.widgets.table.columnfilter.ColumnFilterManager;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
-import ghidra.feature.vt.api.main.VTMarkupItem;
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.actions.AcceptMatchAction;
-import ghidra.feature.vt.gui.actions.ApplyBlockedMatchAction;
-import ghidra.feature.vt.gui.actions.ApplyMatchAction;
-import ghidra.feature.vt.gui.actions.ChooseMatchTagAction;
-import ghidra.feature.vt.gui.actions.ClearMatchAction;
-import ghidra.feature.vt.gui.actions.CreateSelectionAction;
-import ghidra.feature.vt.gui.actions.EditAllTagsAction;
-import ghidra.feature.vt.gui.actions.MatchTableSelectionAction;
-import ghidra.feature.vt.gui.actions.RejectMatchAction;
-import ghidra.feature.vt.gui.actions.RemoveMatchAction;
-import ghidra.feature.vt.gui.actions.RemoveMatchTagAction;
-import ghidra.feature.vt.gui.actions.TableSelectionTrackingState;
+import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.editors.MatchTagCellEditor;
-import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
-import ghidra.feature.vt.gui.filters.Filter;
+import ghidra.feature.vt.gui.filters.*;
 import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
-import ghidra.feature.vt.gui.filters.FilterDialogModel;
-import ghidra.feature.vt.gui.filters.FilterStatusListener;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTControllerListener;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.plugin.VersionTrackingPluginPackage;
-import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.DestinationLabelTableColumn;
-import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.SourceLabelTableColumn;
-import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
-import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.TagTableColumn;
-import ghidra.feature.vt.gui.util.AllTextFilter;
-import ghidra.feature.vt.gui.util.FilterIconFlashTimer;
-import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.feature.vt.gui.util.MatchStatusRenderer;
-import ghidra.feature.vt.gui.util.VTSymbolRenderer;
-import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.EventType;
+import ghidra.feature.vt.gui.plugin.*;
+import ghidra.feature.vt.gui.util.*;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.*;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
+import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -206,6 +82,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 	private AncillaryFilterDialogComponentProvider<VTMatch> ancillaryFilterDialog;
 	private JButton ancillaryFilterButton;
+	private ColumnFilterManager<VTMatch> columnFilterManager;
+	private VTColumnFilter vtColumnFilter;
 
 	private FilterIconFlashTimer<VTMatch> iconTimer;
 	private Set<Filter<VTMatch>> filters = new HashSet<>();
@@ -282,21 +160,19 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	private void compareFunctions(VTMatchContext c) {
-		Set<Function> sourceFunctions = new HashSet<>();
-		Set<Function> destinationFunctions = new HashSet<>();
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
 		List<VTMatch> matches = c.getFunctionMatches();
 
 		for (VTMatch match : matches) {
 			MatchInfo matchInfo = controller.getMatchInfo(match);
 
 			Function sourceFunction = matchInfo.getSourceFunction();
-			sourceFunctions.add(sourceFunction);
 			Function destinationFunction = matchInfo.getDestinationFunction();
-			destinationFunctions.add(destinationFunction);
+			model.addMatch(sourceFunction, destinationFunction);
 		}
 
 		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
-		service.compareFunctions(sourceFunctions, destinationFunctions);
+		service.createCustomComparison(model, null);
 	}
 
 	// callback method from the MatchTableSelectionAction
@@ -514,8 +390,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		JPanel innerPanel = new JPanel(new HorizontalLayout(4));
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
-		JComponent nameFilterPanel = createTextFilterPanel();
-		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
+		JComponent textFilterPanel = createTextFilterPanel();
+		parentPanel.add(textFilterPanel, BorderLayout.CENTER);
 		parentPanel.add(innerPanel, BorderLayout.EAST);
 
 		JComponent scoreFilterPanel = createScoreFilterPanel();
@@ -537,13 +413,33 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		helpService.registerHelp(parentPanel, filterHelpLocation);
 		helpService.registerHelp(ancillaryFilterButton, filterHelpLocation);
 
+		JButton columnFilterButton = createColumnFilterButton();
+		innerPanel.add(columnFilterButton);
+
 		innerPanel.add(ancillaryFilterButton);
 
 		return parentPanel;
 	}
 
+	private JButton createColumnFilterButton() {
+
+		String preferenceKey =
+			matchesTable.getPreferenceKey() + ColumnFilterManager.FILTER_EXTENSION;
+		columnFilterManager = new ColumnFilterManager<VTMatch>(matchesTable, matchesTableModel,
+			preferenceKey, this::updateColumnFilter);
+
+		vtColumnFilter = new VTColumnFilter(columnFilterManager.getCurrentFilter());
+		addFilter(vtColumnFilter);
+
+		return columnFilterManager.getConfigureButton();
+	}
+
+	private void updateColumnFilter() {
+		vtColumnFilter.setFilter(columnFilterManager.getCurrentFilter());
+		refilter();
+	}
+
 	private JComponent createTextFilterPanel() {
-//		MatchNameFilter nameFilterPanel = new MatchNameFilter(controller, matchesTable);
 		AllTextFilter<VTMatch> allTextFilter =
 			new AllTextFilter<>(controller, matchesTable, matchesTableModel);
 		allTextFilter.setName(TEXT_FILTER_NAME);
@@ -634,6 +530,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		}
 
 		ancillaryFilterDialog.dispose();
+
+		columnFilterManager.dispose();
 	}
 
 	@Override
@@ -1197,4 +1095,78 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			return list;
 		}
 	}
+
+	private class VTColumnFilter extends Filter<VTMatch> {
+
+		private ColumnBasedTableFilter<VTMatch> columnFilter;
+
+		VTColumnFilter(ColumnBasedTableFilter<VTMatch> columnFilter) {
+			this.columnFilter = columnFilter;
+		}
+
+		void setFilter(ColumnBasedTableFilter<VTMatch> columnFilter) {
+			this.columnFilter = columnFilter;
+		}
+
+		@Override
+		public boolean passesFilter(VTMatch t) {
+			if (columnFilter == null) {
+				return true;
+			}
+			return columnFilter.acceptsRow(t);
+		}
+
+		@Override
+		public FilterEditingStatus getFilterStatus() {
+			if (columnFilter == null || columnFilter.isEmpty()) {
+				return FilterEditingStatus.NONE;
+			}
+
+			return FilterEditingStatus.APPLIED;
+		}
+
+		@Override
+		public JComponent getComponent() {
+			// This filter is configured outside of the VT filter API
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public FilterShortcutState getFilterShortcutState() {
+			return FilterShortcutState.REQUIRES_CHECK;
+		}
+
+		@Override
+		public Filter<VTMatch> createCopy() {
+			return this; // does not currently support copying; should not be needed
+		}
+
+		@Override
+		public void readConfigState(SaveState saveState) {
+			// handled by the column filter manager
+		}
+
+		@Override
+		public void writeConfigState(SaveState saveState) {
+			// handled by the column filter manager
+		}
+
+		@Override
+		public boolean isSubFilterOf(Filter<VTMatch> otherFilter) {
+
+			Class<?> clazz = getClass();
+			Class<?> otherClazz = otherFilter.getClass();
+			if (!clazz.equals(otherClazz)) {
+				return false; // must be the same class
+			}
+
+			VTColumnFilter otherColumnFilter = (VTColumnFilter) otherFilter;
+			if (columnFilter == null && otherColumnFilter.columnFilter == null) {
+				return true;
+			}
+			return columnFilter.isSubFilterOf(otherColumnFilter.columnFilter);
+		}
+
+	}
+
 }

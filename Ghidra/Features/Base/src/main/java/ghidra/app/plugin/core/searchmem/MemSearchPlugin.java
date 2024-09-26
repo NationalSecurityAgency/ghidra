@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +16,14 @@
 package ghidra.app.plugin.core.searchmem;
 
 import java.awt.Color;
-import java.awt.event.KeyEvent;
 import java.util.*;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
 import docking.*;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
@@ -64,7 +64,7 @@ import ghidra.util.task.*;
  */
 //@formatter:off
 @PluginInfo(
-	status = PluginStatus.RELEASED,
+	status = PluginStatus.DEPRECATED,
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.SEARCH,
 	shortDescription = "Search bytes in memory",
@@ -73,12 +73,12 @@ import ghidra.util.task.*;
 			" The value may contain \"wildcards\" or regular expressions" +
 			" that will match any byte or nibble.",
 	servicesRequired = { ProgramManager.class, GoToService.class, TableService.class, CodeViewerService.class },
-	servicesProvided = { MemorySearchService.class },
+//	servicesProvided = { MemorySearchService.class },
 	eventsConsumed = { ProgramSelectionPluginEvent.class }
 )
 //@formatter:on
 public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
-		DockingContextListener, NavigatableRemovalListener, MemorySearchService {
+		DockingContextListener, NavigatableRemovalListener {
 
 	/** Constant for read/writeConfig() for dialog options */
 	private static final String SHOW_ADVANCED_OPTIONS = "Show Advanced Options";
@@ -243,12 +243,12 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 	}
 
-	@Override
-	public void setIsMnemonic(boolean isMnemonic) {
-		// provides the dialog with the knowledge of whether or not
-		// the action being performed is a MnemonicSearchPlugin
-		this.isMnemonic = isMnemonic;
-	}
+//	@Override
+//	public void setIsMnemonic(boolean isMnemonic) {
+//		// provides the dialog with the knowledge of whether or not
+//		// the action being performed is a MnemonicSearchPlugin
+//		this.isMnemonic = isMnemonic;
+//	}
 
 	private void setNavigatable(Navigatable newNavigatable) {
 		if (newNavigatable == navigatable) {
@@ -329,16 +329,16 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		return new BytesFieldLocation(program, address);
 	}
 
-	@Override
-	public void search(byte[] bytes, NavigatableActionContext context) {
-		setNavigatable(context.getNavigatable());
-		invokeSearchDialog(context);
-	}
-
-	@Override
-	public void setSearchText(String maskedString) {
-		searchDialog.setSearchText(maskedString);
-	}
+//	@Override
+//	public void search(byte[] bytes, NavigatableActionContext context) {
+//		setNavigatable(context.getNavigatable());
+//		invokeSearchDialog(context);
+//	}
+//
+//	@Override
+//	public void setSearchText(String maskedString) {
+//		searchDialog.setSearchText(maskedString);
+//	}
 
 	private void createActions() {
 		searchAction = new NavigatableContextAction("Search Memory", getName(), false) {
@@ -349,9 +349,8 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			}
 		};
 		searchAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAction.getName()));
-		String[] menuPath = new String[] { "&Search", "&Memory..." };
+		String[] menuPath = new String[] { "&Search", "Memory (Deprecated)..." };
 		searchAction.setMenuBarData(new MenuData(menuPath, "search"));
-		searchAction.setKeyBindingData(new KeyBindingData('S', 0));
 		searchAction.setDescription("Search Memory for byte sequence");
 		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);
@@ -372,10 +371,10 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
 		menuPath = new String[] { "&Search", "Repeat Memory Search" };
 		searchAgainAction.setMenuBarData(new MenuData(menuPath, "search"));
-		searchAgainAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
 		searchAgainAction.setDescription("Search Memory for byte sequence");
 		searchAgainAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAgainAction);
+
 	}
 
 	private void initializeOptionListeners() {

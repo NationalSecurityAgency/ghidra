@@ -37,6 +37,7 @@ from pybag.dbgeng import util as DbgUtil
 from pybag.dbgeng.callbacks import DbgEngCallbacks
 
 from ghidradbg.dbgmodel.ihostdatamodelaccess import HostDataModelAccess
+from _winapi import STILL_ACTIVE
 
 
 DbgVersion = namedtuple('DbgVersion', ['full', 'name', 'dotted', 'arch'])
@@ -236,6 +237,7 @@ class GhidraDbg(object):
                      'load_dump'
                      ]:
             setattr(self, name, self.eng_thread(getattr(base, name)))
+            self.IS_KERNEL = False
 
     def _new_base(self):
         self._protected_base = AllDbg()
@@ -364,6 +366,8 @@ class GhidraDbg(object):
     @check_thread
     def pid(self):
         try:
+            if is_kernel():
+                return 0
             return self._base._systems.GetCurrentProcessSystemId()
         except exception.E_UNEXPECTED_Error:
             # There is no process
@@ -451,10 +455,27 @@ def get_breakpoints():
 @dbg.eng_thread
 def selected_process():
     try:
+        if is_kernel():
+            do = dbg._base._systems.GetCurrentProcessDataOffset()
+            id = c_ulong()
+            offset = c_ulonglong(do)
+            nproc = dbg._base._systems._sys.GetProcessIdByDataOffset(offset, byref(id))
+            return id.value
         if dbg.use_generics:
             return dbg._base._systems.GetCurrentProcessSystemId()
         return dbg._base._systems.GetCurrentProcessId()
-    except exception.E_UNEXPECTED_Error:
+    except (exception.E_UNEXPECTED_Error, exception.E_NOTIMPL_Error) as e:
+        # NB: we're intentionally returning 0 instead of None
+        return 0
+
+
+@dbg.eng_thread
+def selected_process_space():
+    try:
+        if is_kernel():
+            return dbg._base._systems.GetCurrentProcessDataOffset()
+        return selected_process()
+    except (exception.E_UNEXPECTED_Error, exception.E_NOTIMPL_Error) as e:
         # NB: we're intentionally returning 0 instead of None
         return 0
 
@@ -462,10 +483,12 @@ def selected_process():
 @dbg.eng_thread
 def selected_thread():
     try:
+        if is_kernel():
+            return 0
         if dbg.use_generics:
             return dbg._base._systems.GetCurrentThreadSystemId()
         return dbg._base._systems.GetCurrentThreadId()
-    except exception.E_UNEXPECTED_Error:
+    except (exception.E_UNEXPECTED_Error, exception.E_NOTIMPL_Error) as e:
         return None
 
 
@@ -485,6 +508,10 @@ def selected_frame():
 
 @dbg.eng_thread
 def select_process(id: int):
+    if is_kernel():
+        # TODO: Ideally this should get the data offset from the id and then call
+        #  SetImplicitProcessDataOffset
+        return
     if dbg.use_generics:
         id = get_proc_id(id)
     return dbg._base._systems.SetCurrentProcessId(id)
@@ -492,6 +519,10 @@ def select_process(id: int):
 
 @dbg.eng_thread
 def select_thread(id: int):
+    if is_kernel():
+        # TODO: Ideally this should get the data offset from the id and then call
+        #  SetImplicitThreadDataOffset
+        return
     if dbg.use_generics:
         id = get_thread_id(id)
     return dbg._base._systems.SetCurrentThreadId(id)
@@ -586,7 +617,23 @@ def GetCurrentProcessPeb():
     # TODO: upstream?
     _dbg = dbg._base
     offset = c_ulonglong()
-    hr = _dbg._systems._sys.GetCurrentProcessPeb(byref(offset))
+    if dbg.is_kernel():
+        hr = _dbg._systems._sys.GetCurrentProcessDataOffset(byref(offset))
+    else:
+        hr = _dbg._systems._sys.GetCurrentProcessPeb(byref(offset))
+    exception.check_err(hr)
+    return offset.value
+
+
+@dbg.eng_thread
+def GetCurrentThreadTeb():
+    # TODO: upstream?
+    _dbg = dbg._base
+    offset = c_ulonglong()
+    if is_kernel():
+        hr = _dbg._systems._sys.GetCurrentThreadDataOffset(byref(offset))
+    else:
+        hr = _dbg._systems._sys.GetCurrentThreadTeb(byref(offset))
     exception.check_err(hr)
     return offset.value
 
@@ -594,6 +641,8 @@ def GetCurrentProcessPeb():
 @dbg.eng_thread
 def GetExitCode():
     # TODO: upstream?
+    if is_kernel():
+        return STILL_ACTIVE
     exit_code = c_ulong()
     hr = dbg._base._client._cli.GetExitCode(byref(exit_code))
     return exit_code.value
@@ -669,6 +718,21 @@ def get_proc_id(pid):
     return None
 
 
+def full_mem():
+    sizeptr = 64; #int(gdb.parse_and_eval('sizeof(void*)')) * 8
+    infoLow = DbgEng._MEMORY_BASIC_INFORMATION64()
+    infoLow.BaseAddress = 0
+    infoLow.RegionSize = (1 << (sizeptr-1))
+    infoLow.Protect = 0xFFF
+    infoLow.Name = "UMEM"
+    infoHigh = DbgEng._MEMORY_BASIC_INFORMATION64()
+    infoHigh.BaseAddress = 1 << (sizeptr-1)
+    infoHigh.RegionSize = (1 << (sizeptr-1))
+    infoHigh.Protect = 0xFFF
+    infoHigh.Name = "KMEM"
+    return [ infoLow, infoHigh ]
+
+
 @dbg.eng_thread
 def get_thread_id(tid):
     """Get the list of all threads"""
@@ -715,37 +779,105 @@ def get_object(relpath):
     if relpath != '':
         pathstr += "."+relpath
     path = split_path(pathstr)
+    # print(f"PATH: {pathstr}")
     return root.GetOffspring(path)
 
 
 @dbg.eng_thread
 def get_attributes(obj):
     """Get the list of attributes"""
+    if obj is None:
+        return None
     return obj.GetAttributes()
 
 
 @dbg.eng_thread
 def get_elements(obj):
     """Get the list of all threads"""
+    if obj is None:
+        return None
     return obj.GetElements()
 
 
 @dbg.eng_thread
 def get_kind(obj):
     """Get the list of all threads"""
+    if obj is None:
+        return None
+    kind = obj.GetKind()
+    if kind is None:
+        return None
     return obj.GetKind().value
 
 
 @dbg.eng_thread
 def get_type(obj):
     """Get the list of all threads"""
+    if obj is None:
+        return None
     return obj.GetTypeKind()
 
 
 @dbg.eng_thread
 def get_value(obj):
     """Get the list of all threads"""
+    if obj is None:
+        return None
     return obj.GetValue()
+
+
+@dbg.eng_thread
+def get_intrinsic_value(obj):
+    """Get the list of all threads"""
+    if obj is None:
+        return None
+    return obj.GetIntrinsicValue()
+
+
+@dbg.eng_thread
+def get_target_info(obj):
+    """Get the list of all threads"""
+    if obj is None:
+        return None
+    return obj.GetTargetInfo()
+
+
+@dbg.eng_thread
+def get_type_info(obj):
+    """Get the list of all threads"""
+    if obj is None:
+        return None
+    return obj.GetTypeInfo()
+
+
+@dbg.eng_thread
+def get_name(obj):
+    """Get the list of all threads"""
+    if obj is None:
+        return None
+    return obj.GetName().value
+
+
+@dbg.eng_thread
+def to_display_string(obj):
+    """Get the list of all threads"""
+    if obj is None:
+        return None
+    return obj.ToDisplayString()
+
+
+@dbg.eng_thread
+def get_location(obj):
+    """Get the list of all threads"""
+    if obj is None:
+        return None
+    try:
+        loc = obj.GetLocation()
+        if loc is None:
+            return None
+        return hex(loc.Offset)
+    except:
+        return None
 
 
 conv_map = {}
@@ -762,3 +894,11 @@ def get_convenience_variable(id):
 
 def set_convenience_variable(id, value):
     conv_map[id] = value
+    
+    
+def set_kernel(value):
+    dbg.IS_KERNEL = value
+    
+    
+def is_kernel():
+    return dbg.IS_KERNEL

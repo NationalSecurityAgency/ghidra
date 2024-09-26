@@ -30,14 +30,10 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableNameFieldLocation;
 import ghidra.util.table.GhidraTableCellRenderer;
 
-class SymbolRenderer extends GhidraTableCellRenderer {
+public class SymbolRenderer extends GhidraTableCellRenderer {
 	private SymbolInspector inspector;
 
-	SymbolRenderer() {
-		super();
-	}
-
-	void setSymbolInspector(SymbolInspector inspector) {
+	public void setSymbolInspector(SymbolInspector inspector) {
 		this.inspector = inspector;
 	}
 
@@ -50,7 +46,7 @@ class SymbolRenderer extends GhidraTableCellRenderer {
 		int column = data.getColumnModelIndex();
 		boolean isSelected = data.isSelected();
 
-		if (value == null && column == SymbolTableModel.LABEL_COL) {
+		if (value == null && column == AbstractSymbolTableModel.LABEL_COL) {
 			setText("<< REMOVED >>");
 		}
 		else if (value instanceof Symbol) {

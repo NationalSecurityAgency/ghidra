@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import utility.function.ExceptionalCallback;
-import utility.function.ExceptionalSupplier;
 
 public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		extends AbstractGhidraHeadedDebuggerIntegrationTest {
@@ -102,22 +100,6 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		}
 	}
 
-	protected <U, E extends Throwable> U expectMappingChange(ExceptionalSupplier<U, E> supplier)
-			throws Throwable {
-		mappingChangeListener.ar.set(false, null);
-		U result = supplier.get();
-		waitOn(mappingChangeListener.ar.waitValue(true));
-		return result;
-	}
-
-	protected <E extends Throwable> void expectMappingChange(ExceptionalCallback<E> runnable)
-			throws Throwable {
-		expectMappingChange(() -> {
-			runnable.call();
-			return null;
-		});
-	}
-
 	protected DebuggerStaticMappingService mappingService;
 	protected DebuggerLogicalBreakpointService breakpointService;
 
@@ -134,8 +116,6 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 	protected NoDuplicatesBreakpointsChangeListener changeListener =
 		new NoDuplicatesBreakpointsChangeListener();
-	protected ForTimingMappingChangeListener mappingChangeListener =
-		new ForTimingMappingChangeListener();
 
 	protected abstract void createTarget1() throws Throwable;
 
@@ -169,10 +149,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 	protected abstract TraceBreakpoint findLoc(Set<TraceBreakpoint> locs, int index);
 
-	protected abstract void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
+	protected abstract void handleToggleBreakpointInvocation(T target,
+			TraceBreakpoint expectedBreakpoint,
 			boolean expectedEnabled) throws Throwable;
 
-	protected abstract void handleDeleteBreakpointInvocation(TraceBreakpoint expectedBreakpoint)
+	protected abstract void handleDeleteBreakpointInvocation(T target,
+			TraceBreakpoint expectedBreakpoint)
 			throws Throwable;
 
 	@Before
@@ -182,7 +164,6 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
 
 		breakpointService.addChangeListener(changeListener);
-		mappingService.addChangeListener(mappingChangeListener);
 	}
 
 	@After
@@ -269,6 +250,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 					.createInitializedBlock(".text", addr(p, 0x00400000), 0x1000, (byte) 0, monitor,
 						false);
 		}
+		waitForDomainObject(p);
 	}
 
 	protected void addProgramBreakpoints(Program p) throws Throwable {
@@ -280,6 +262,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 					.setBookmark(addr(p, 0x00400321), LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
 						"SW_EXECUTE;1", "");
 		}
+		waitForDomainObject(p);
 	}
 
 	protected void refetchProgramBreakpoints(Program p) throws Throwable {
@@ -297,6 +280,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 			p.getBookmarkManager().removeBookmark(enBm);
 			p.getBookmarkManager().removeBookmark(disBm);
 		}
+		waitForDomainObject(p);
 	}
 
 	protected void assertLogicalBreakpointForLoneAccessBreakpoint(Trace trace) {
@@ -546,8 +530,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
@@ -564,9 +548,9 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
 		addProgramBreakpoints(program);
-		waitForSwing();
 
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 	}
@@ -584,12 +568,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
 		addProgramBreakpoints(program);
-		waitForSwing();
 
 		changeListener.assertAgreesWithService();
 
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 	}
@@ -606,12 +590,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
+		addTextMapping(target1, text, program);
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
-		});
+		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 	}
 
 	@Test
@@ -627,14 +611,14 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
-		});
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 		changeListener.assertAgreesWithService();
 
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 	}
@@ -660,8 +644,9 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		// NOTE: Extraneous mappings-changed events can cause timing issues here.
 		// TODO: Better testing for static mapping listener events?
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 	}
@@ -680,12 +665,15 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		MR text = addTargetTextRegion(target1);
 		addTextMapping(target1, text, program);
 		addProgramBreakpoints(program);
-		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 
-		expectMappingChange(() -> programManager.openProgram(program));
-		waitForSwing();
+		programManager.openProgram(program);
+		waitForDomainObject(program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 	}
@@ -704,13 +692,17 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		MR text = addTargetTextRegion(target1);
 		addTextMapping(target1, text, program);
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1));
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 
-		expectMappingChange(() -> programManager.openProgram(program));
-		waitForSwing();
+		programManager.openProgram(program);
+		waitForDomainObject(program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> assertLogicalBreakpointForMappedSoftwareBreakpoint(trace));
+		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 	}
 
 	@Test
@@ -722,12 +714,16 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		createProgramFromTrace(trace);
 		intoProject(program);
 		programManager.openProgram(program);
-		waitForSwing();
+		waitForDomainObject(program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 
 		programManager.closeProgram(program, true);
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
@@ -741,13 +737,17 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		createProgramFromTrace(trace);
 		intoProject(program);
 		programManager.openProgram(program);
-		waitForSwing();
+		waitForDomainObject(program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 
 		traceManager.closeTrace(trace);
 		terminateTarget(target1);
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
@@ -766,13 +766,14 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		addProgramTextBlock(program);
 		addProgramBreakpoints(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 
 		removeProgramBreakpoints(program);
-		waitForSwing();
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
@@ -791,13 +792,15 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		addProgramTextBlock(program);
 		addProgramBreakpoints(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 
-		expectMappingChange(() -> removeTextMapping(target1, program));
-		waitForSwing();
+		removeTextMapping(target1, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointsForUnmappedBookmarks();
 		assertTrue(breakpointService.getBreakpoints(trace).isEmpty());
@@ -818,19 +821,19 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		programManager.openProgram(program);
 
 		addProgramTextBlock(program);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 		assertServiceAgreesWithOpenProgramsAndTraces();
 
 		removeTargetSoftwareBreakpoint(target1);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			// NB. The bookmark remains
-			LogicalBreakpoint one = Unique.assertOne(breakpointService.getAllBreakpoints());
-			assertTrue(one.getTraceBreakpoints().isEmpty());
-		});
+		// NB. The bookmark remains
+		LogicalBreakpoint one = Unique.assertOne(breakpointService.getAllBreakpoints());
+		assertTrue(one.getTraceBreakpoints().isEmpty());
 	}
 
 	@Test
@@ -848,14 +851,16 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		programManager.openProgram(program);
 
 		addProgramTextBlock(program);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 		assertServiceAgreesWithOpenProgramsAndTraces();
 
-		expectMappingChange(() -> removeTextMapping(target1, program));
-		waitForSwing();
+		removeTextMapping(target1, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		// NB. Bookmark remains
 		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 2);
@@ -881,23 +886,19 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addTextMapping(target1, text1, program);
 		addTextMapping(target3, text3, program);
-		waitForSwing();
-		waitForPass(() -> {
-			assertEquals(2,
-				mappingService
-						.getOpenMappedLocations(
-							new ProgramLocation(program, addr(program, 0x00400123)))
-						.size());
-		});
-		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(2, mappingService
+				.getOpenMappedLocations(new ProgramLocation(program, addr(program, 0x00400123)))
+				.size());
 
 		addProgramBreakpoints(program);
 		addTargetSoftwareBreakpoint(target1, text1);
 		addTargetSoftwareBreakpoint(target3, text3);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
-		});
+		assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
 	}
 
 	@Test
@@ -920,26 +921,24 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addTextMapping(target1, text1, program);
 		addTextMapping(target3, text3, program);
-		waitForSwing();
-		waitForPass(() -> {
-			assertEquals(2,
-				mappingService
-						.getOpenMappedLocations(
-							new ProgramLocation(program, addr(program, 0x00400123)))
-						.size());
-		});
-		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(2, mappingService
+				.getOpenMappedLocations(new ProgramLocation(program, addr(program, 0x00400123)))
+				.size());
 
 		addProgramBreakpoints(program);
 		addTargetSoftwareBreakpoint(target1, text1);
 		addTargetSoftwareBreakpoint(target3, text3);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
-		});
+		assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
 
-		expectMappingChange(() -> programManager.closeProgram(program, true));
+		programManager.closeProgram(program, true);
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace1, 0x55550123, 2);
 		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace3, 0x55551123, 2);
@@ -965,38 +964,34 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addTextMapping(target1, text1, program);
 		addTextMapping(target3, text3, program);
-		waitForSwing();
-		waitForPass(() -> {
-			assertEquals(2,
-				mappingService
-						.getOpenMappedLocations(
-							new ProgramLocation(program, addr(program, 0x00400123)))
-						.size());
-		});
-		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(2, mappingService
+				.getOpenMappedLocations(new ProgramLocation(program, addr(program, 0x00400123)))
+				.size());
 
 		addProgramBreakpoints(program);
 		addTargetSoftwareBreakpoint(target1, text1);
 		addTargetSoftwareBreakpoint(target3, text3);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
-		});
+		assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
 
-		expectMappingChange(() -> programManager.closeProgram(program, true));
+		programManager.closeProgram(program, true);
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace1, 0x55550123, 2);
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace3, 0x55551123, 2);
-		});
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace1, 0x55550123, 2);
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace3, 0x55551123, 2);
 
-		expectMappingChange(() -> programManager.openProgram(program));
-		waitForSwing();
+		programManager.openProgram(program);
+		waitForDomainObject(program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
-		});
+		assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
 	}
 
 	@Test
@@ -1019,36 +1014,34 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addTextMapping(target1, text1, program);
 		addTextMapping(target3, text3, program);
-		waitForSwing();
-		waitForPass(() -> {
-			assertEquals(2,
-				mappingService
-						.getOpenMappedLocations(
-							new ProgramLocation(program, addr(program, 0x00400123)))
-						.size());
-		});
-		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(2, mappingService
+				.getOpenMappedLocations(new ProgramLocation(program, addr(program, 0x00400123)))
+				.size());
 
 		addProgramBreakpoints(program);
 		addTargetSoftwareBreakpoint(target1, text1);
 		addTargetSoftwareBreakpoint(target3, text3);
-		waitForSwing();
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
-		});
+		assertLogicalBreakpointForMappedBookmarkAnd2TraceBreakpoints(trace1, trace3);
 
 		waitForLock(getTrace(target3));
-		expectMappingChange(() -> {
-			// If I don't close the trace here, the test will fail.
-			terminateTarget(target3);
-			// NB. Auto-close on stop is the default
-			//traceManager.closeTrace(trace3);
-		});
+		/**
+		 * NB. Relying on terminate to auto-close is causing some timing issue I don't yet
+		 * understand. So, I close it in the test code.
+		 */
+		terminateTarget(target3);
+		traceManager.closeTrace(trace3);
+		waitForPass(() -> !traceManager.getOpenTraces().contains(trace3));
 		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		// NB. Auto-close is possibly delayed because of auto-save
-		waitForPass(() -> assertLogicalBreakpointForMappedBookmarkAnd1TraceBreakpoint(trace1));
+		assertLogicalBreakpointForMappedBookmarkAnd1TraceBreakpoint(trace1);
 	}
 
 	@Test // Mappings are not write-behind cached
@@ -1064,10 +1057,10 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
-		});
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 		/**
 		 * NB. The target could still be mid transaction. If we open this transaction too soon, then
 		 * the breakpoint gets aborted as well.
@@ -1077,19 +1070,21 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		changeListener.assertAgreesWithService();
 
 		try (Transaction tx = trace.openTransaction("Will abort")) {
-			expectMappingChange(() -> addTextMapping(target1, text, program));
-			waitForSwing();
+			addTextMapping(target1, text, program);
+			waitOn(mappingService.changesSettled());
+			waitOn(breakpointService.changesSettled());
 
 			// Sanity
 			assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 
-			expectMappingChange(() -> tx.abort());
+			tx.abort();
 		}
+		waitForDomainObject(trace);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			// NB. The bookmark is left over, so total increases
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 2);
-		});
+		// NB. The bookmark is left over, so total increases
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 2);
 	}
 
 	// @Test // Not gonna with write-behind cache
@@ -1108,15 +1103,18 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		try (Transaction tx = trace.openTransaction("Will abort")) {
 			addTargetSoftwareBreakpoint(target1, text);
 
-			expectMappingChange(() -> addTextMapping(target1, text, program));
-			waitForSwing();
+			addTextMapping(target1, text, program);
+			waitOn(mappingService.changesSettled());
+			waitOn(breakpointService.changesSettled());
 
 			// Sanity
 			assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 
-			expectMappingChange(() -> tx.abort());
+			tx.abort();
 		}
-		waitForDomainObject(trace); // Duplicative, but for form's sake....
+		waitForDomainObject(trace);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		// Left over, because it was bookmarked automatically in program
 		// Still, there should be no trace breakpoint in it
@@ -1136,18 +1134,19 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		try (Transaction tx = program.openTransaction("Will abort")) {
 			addProgramBreakpoints(program);
-			waitForDomainObject(program);
 
 			// Sanity
 			assertLogicalBreakpointsForMappedBookmarks(trace);
 			tx.abort();
 		}
 		waitForDomainObject(program);
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
@@ -1167,18 +1166,16 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		try (Transaction tx = trace.openTransaction("Will undo")) {
 			addTargetSoftwareBreakpoint(target1, text);
-			expectMappingChange(() -> addTextMapping(target1, text, program));
+			addTextMapping(target1, text, program);
 		}
-		waitForDomainObject(trace);
-
+		waitForDomainObject(program);
 		waitOn(mappingService.changesSettled());
 		waitOn(breakpointService.changesSettled());
 
 		// Sanity
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 
-		expectMappingChange(() -> undo(trace));
-
+		undo(trace);
 		waitOn(mappingService.changesSettled());
 		waitOn(breakpointService.changesSettled());
 
@@ -1186,10 +1183,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		LogicalBreakpoint one = Unique.assertOne(breakpointService.getAllBreakpoints());
 		assertTrue(one.getTraceBreakpoints().isEmpty());
 
-		expectMappingChange(() -> redo(trace));
+		redo(trace);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		// Mapping, breakpoint may be processed in whatever order
-		waitForPass(() -> assertLogicalBreakpointForMappedSoftwareBreakpoint(trace));
+		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 	}
 
 	@Test
@@ -1204,22 +1203,27 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		addProgramTextBlock(program);
 		MR text = addTargetTextRegion(target1);
-		expectMappingChange(() -> addTextMapping(target1, text, program));
-		waitForSwing();
+		addTextMapping(target1, text, program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		try (Transaction tx = program.openTransaction("Will undo")) {
 			addProgramBreakpoints(program);
 		}
 		waitForDomainObject(program);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		// Sanity
 		assertLogicalBreakpointsForMappedBookmarks(trace);
 
 		undo(program);
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 
 		redo(program);
+		waitOn(breakpointService.changesSettled());
 
 		refetchProgramBreakpoints(program);
 		assertLogicalBreakpointsForMappedBookmarks(trace);
@@ -1234,18 +1238,20 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		MR text = addTargetTextRegion(target1);
 
 		addTargetSoftwareBreakpoint(target1, text);
-		waitForPass(() -> {
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
-		});
+		waitOn(breakpointService.changesSettled());
+
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
 		CompletableFuture<Void> disable = lb.disable();
-		handleToggleBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)), false);
+		handleToggleBreakpointInvocation(target1, Unique.assertOne(lb.getTraceBreakpoints(trace)),
+			false);
 		waitOn(disable);
-		waitForPass(() -> {
-			assertEquals(State.INCONSISTENT_DISABLED, lb.computeState());
-		});
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(State.INCONSISTENT_DISABLED, lb.computeState());
 
 		// Simulate a step, which should also cause snap advance in target
 		long oldSnap = getSnap(target1);
@@ -1256,11 +1262,13 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		});
 
 		CompletableFuture<Void> enable = lb.enable();
-		handleToggleBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)), true);
+		handleToggleBreakpointInvocation(target1, Unique.assertOne(lb.getTraceBreakpoints(trace)),
+			true);
 		waitOn(enable);
-		waitForPass(() -> {
-			assertEquals(State.INCONSISTENT_ENABLED, lb.computeState());
-		});
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
+
+		assertEquals(State.INCONSISTENT_ENABLED, lb.computeState());
 	}
 
 	@Test
@@ -1270,22 +1278,20 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		traceManager.openTrace(trace);
 
 		MR text = addTargetTextRegion(target1);
-
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
-		});
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
 		CompletableFuture<Void> delete = lb.delete();
-		handleDeleteBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)));
+		handleDeleteBreakpointInvocation(target1, Unique.assertOne(lb.getTraceBreakpoints(trace)));
 		waitOn(delete);
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertTrue(breakpointService.getAllBreakpoints().isEmpty());
-		});
+		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
 
 	@Test
@@ -1295,11 +1301,10 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		traceManager.openTrace(trace);
 
 		MR text = addTargetTextRegion(target1);
-
 		addTargetSoftwareBreakpoint(target1, text);
-		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1));
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
@@ -1307,12 +1312,12 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		simulateTargetStep(target1);
 
 		CompletableFuture<Void> delete = lb.delete();
-		handleDeleteBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)));
+		handleDeleteBreakpointInvocation(target1, Unique.assertOne(lb.getTraceBreakpoints(trace)));
 		waitOn(delete);
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertEquals(0, breakpointService.getAllBreakpoints().size());
-		});
+		assertEquals(0, breakpointService.getAllBreakpoints().size());
 	}
 
 	@Test
@@ -1324,14 +1329,14 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		MR text = addTargetTextRegion(target1);
 
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
-		});
+		assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 
 		// NOTE: Still recording in the background
 		traceManager.closeTraceNoConfirm(trace);
 		waitForSwing();
+		waitOn(breakpointService.changesSettled());
 
 		assertEquals(0, breakpointService.getAllBreakpoints().size());
 	}
@@ -1350,39 +1355,36 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		MR text = addTargetTextRegion(target1);
 
 		addTextMapping(target1, text, program);
-		waitForSwing();
 
 		addProgramBreakpoints(program);
 		addTargetSoftwareBreakpoint(target1, text);
 		addTargetSoftwareBreakpoint(target1, text);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertEquals(2, breakpointService.getAllBreakpoints().size());
+		assertEquals(2, breakpointService.getAllBreakpoints().size());
 
-			LogicalBreakpoint lb = Unique.assertOne(
-				breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
-			assertEquals(program, lb.getProgram());
-			assertEquals(Set.of(trace), lb.getMappedTraces());
+		LogicalBreakpoint lb = Unique.assertOne(
+			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
+		assertEquals(program, lb.getProgram());
+		assertEquals(Set.of(trace), lb.getMappedTraces());
 
-			assertEquals(2, lb.getTraceBreakpoints().size());
-		});
+		assertEquals(2, lb.getTraceBreakpoints().size());
 
-		LogicalBreakpoint lb = Unique
-				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
 		Set<TraceBreakpoint> locs = lb.getTraceBreakpoints();
 
 		TraceBreakpoint bpt0 = findLoc(locs, 0);
 		TraceBreakpoint bpt1 = findLoc(locs, 1);
 		CompletableFuture<Void> disable = breakpointService.disableLocs(Set.of(bpt0));
-		handleToggleBreakpointInvocation(bpt0, false);
+		handleToggleBreakpointInvocation(target1, bpt0, false);
 		waitOn(disable);
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertEquals(State.INCONSISTENT_ENABLED, lb.computeState());
-			assertEquals(State.INCONSISTENT_MIXED, lb.computeStateForTrace(trace));
-			assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForLocation(bpt0));
-			assertEquals(State.ENABLED, lb.computeStateForLocation(bpt1));
-		});
+		assertEquals(State.INCONSISTENT_ENABLED, lb.computeState());
+		assertEquals(State.INCONSISTENT_MIXED, lb.computeStateForTrace(trace));
+		assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForLocation(bpt0));
+		assertEquals(State.ENABLED, lb.computeStateForLocation(bpt1));
 	}
 
 	@Test
@@ -1399,29 +1401,26 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		MR text = addTargetTextRegion(target1);
 
 		addTextMapping(target1, text, program);
-		waitForSwing();
 
 		addProgramBreakpoints(program);
 		addTargetSoftwareBreakpoint(target1, text);
 		addTargetAccessBreakpoint(target1, text);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
-		waitForPass(() -> {
-			assertEquals(3, breakpointService.getAllBreakpoints().size());
+		assertEquals(3, breakpointService.getAllBreakpoints().size());
 
-			Set<LogicalBreakpoint> lbs =
-				breakpointService.getBreakpointsAt(program, addr(program, 0x00400123));
-			assertEquals(2, lbs.size());
-			lbs.stream()
-					.filter(l -> l.getKinds().contains(TraceBreakpointKind.SW_EXECUTE))
-					.findAny()
-					.orElseThrow();
-			lbs.stream()
-					.filter(l -> l.getKinds().contains(TraceBreakpointKind.READ))
-					.findAny()
-					.orElseThrow();
-		});
 		Set<LogicalBreakpoint> lbs =
 			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123));
+		assertEquals(2, lbs.size());
+		lbs.stream()
+				.filter(l -> l.getKinds().contains(TraceBreakpointKind.SW_EXECUTE))
+				.findAny()
+				.orElseThrow();
+		lbs.stream()
+				.filter(l -> l.getKinds().contains(TraceBreakpointKind.READ))
+				.findAny()
+				.orElseThrow();
 		LogicalBreakpoint lbEx = lbs.stream()
 				.filter(l -> l.getKinds().contains(TraceBreakpointKind.SW_EXECUTE))
 				.findAny()
@@ -1431,12 +1430,14 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 				.findAny()
 				.orElseThrow();
 		CompletableFuture<Void> disable = lbEx.disable();
-		handleToggleBreakpointInvocation(Unique.assertOne(lbEx.getTraceBreakpoints(trace)), false);
+		handleToggleBreakpointInvocation(target1, Unique.assertOne(lbEx.getTraceBreakpoints(trace)),
+			false);
 		waitOn(disable);
+		waitForDomainObject(trace);
+		waitOn(breakpointService.changesSettled());
 
 		// TODO: This is more a test for the marker plugin, no?
-		waitForPass(
-			() -> assertEquals(State.MIXED, lbEx.computeState().sameAdddress(lbRw.computeState())));
+		assertEquals(State.MIXED, lbEx.computeState().sameAdddress(lbRw.computeState()));
 	}
 
 	protected void addTextMappingDead(Program p, ToyDBTraceBuilder tb) throws Throwable {
@@ -1451,6 +1452,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 					textRegion.getMinAddress()),
 				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000, false);
 		}
+		waitForDomainObject(tb.trace);
 	}
 
 	protected void addEnabledProgramBreakpointWithSleigh(Program p) {
@@ -1459,6 +1461,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 					.setBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
 						"SW_EXECUTE;1", "{sleigh: 'r0=0xbeef;'}");
 		}
+		waitForDomainObject(p);
 	}
 
 	@Test
@@ -1471,16 +1474,18 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		programManager.openProgram(program);
 
 		addTextMappingDead(program, tb);
-		waitForSwing();
 
 		addEnabledProgramBreakpointWithSleigh(program);
-		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
-			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123))));
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		LogicalBreakpoint lb = Unique.assertAtMostOne(
+			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
 
 		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
 
 		waitOn(lb.enable());
-		waitForSwing();
+		waitForDomainObject(program);
+		waitOn(breakpointService.changesSettled());
 
 		TraceBreakpoint bpt = Unique.assertOne(
 			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
@@ -1497,21 +1502,22 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		programManager.openProgram(program);
 
 		addEnabledProgramBreakpointWithSleigh(program);
-		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
-			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123))));
+		waitOn(breakpointService.changesSettled());
+		LogicalBreakpoint lb = Unique.assertAtMostOne(
+			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
 
 		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
 
 		addTextMappingDead(program, tb);
-		lb = waitForPass(() -> {
-			LogicalBreakpoint newLb = Unique.assertOne(
-				breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
-			assertTrue(newLb.getMappedTraces().contains(tb.trace));
-			return newLb;
-		});
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		lb = Unique.assertOne(
+			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
+		assertTrue(lb.getMappedTraces().contains(tb.trace));
 
 		waitOn(lb.enable());
-		waitForSwing();
+		waitForDomainObject(program);
+		waitOn(breakpointService.changesSettled());
 
 		TraceBreakpoint bpt = Unique.assertOne(
 			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
@@ -1541,21 +1547,25 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 						false /* emuEnabled defaults to true */, "");
 			bpt.setEmuSleigh("r0=0xbeef;");
 		}
-		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
-			breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123))));
+		waitForDomainObject(tb.trace);
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		LogicalBreakpoint lb = Unique.assertAtMostOne(
+			breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123)));
 
 		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
 
 		addTextMappingDead(program, tb);
-		lb = waitForPass(() -> {
-			LogicalBreakpoint newLb = Unique.assertOne(
-				breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
-			assertTrue(newLb.getMappedTraces().contains(tb.trace));
-			return newLb;
-		});
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+
+		lb = Unique
+				.assertOne(breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
+		assertTrue(lb.getMappedTraces().contains(tb.trace));
 
 		lb.enableForProgram();
-		waitForSwing();
+		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
 
 		assertEquals("{\"sleigh\":\"r0\\u003d0xbeef;\"}", lb.getProgramBookmark().getComment());
 	}
@@ -1566,6 +1576,8 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 	 * 
 	 * <p>
 	 * With the addition of the write-behind cache, this test is no longer sane.
+	 * 
+	 * @throws Throwable who doesn't?
 	 */
 	// @Test
 	public void testAbortAddBreakpointSetSleigh() throws Throwable {
@@ -1595,6 +1607,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 			tid.abort();
 		}
 		waitForDomainObject(tb.trace);
+		waitOn(breakpointService.changesSettled());
 
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}

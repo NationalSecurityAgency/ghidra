@@ -32,7 +32,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 
 	private GhidraComboBox<String> comboBox;
 
-	private FindDialogSearcher searcher;
+	protected FindDialogSearcher searcher;
 	private JButton nextButton;
 	private JButton previousButton;
 	private JRadioButton stringRadioButton;
@@ -140,6 +140,10 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		doSearch(false);
 	}
 
+	protected boolean useRegex() {
+		return regexRadioButton.isSelected();
+	}
+
 	private void doSearch(boolean forward) {
 
 		if (!nextButton.isEnabled()) {
@@ -190,7 +194,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		notifyUser("Not found");
 	}
 
-	private void notifySearchHit(SearchLocation location) {
+	protected void notifySearchHit(SearchLocation location) {
 		searcher.setCursorPosition(location.getCursorPosition());
 		storeSearchText(location.getSearchText());
 		searcher.highlightSearchResults(location);
@@ -234,7 +238,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		history.forEach(comboBox::addToModel);
 	}
 
-	private void storeSearchText(String text) {
+	protected void storeSearchText(String text) {
 
 		MutableComboBoxModel<String> model = (MutableComboBoxModel<String>) comboBox.getModel();
 		model.insertElementAt(text, 0);

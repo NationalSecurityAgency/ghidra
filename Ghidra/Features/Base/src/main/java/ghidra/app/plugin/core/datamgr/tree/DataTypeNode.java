@@ -140,7 +140,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 			return;
 		}
 
-		int transactionID = dataType.getDataTypeManager().startTransaction("rename");
+		int transactionID = dataType.getDataTypeManager().startTransaction("Rename DataType");
 
 		try {
 			dataType.setName(newName);

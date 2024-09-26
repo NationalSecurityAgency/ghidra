@@ -310,6 +310,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 		if (instanceSettingsAdapter == null) {
 			throw new UnsupportedOperationException();
 		}
+		lock.acquire();
 		try {
 			Address dataAddr = getDataSettingsAddress(data);
 			return instanceSettingsAdapter
@@ -317,6 +318,9 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
+		}
+		finally {
+			lock.release();
 		}
 		return true;
 	}
@@ -427,14 +431,15 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 		}
 	}
 
-	private static Address getDataSettingsAddress(Data data) {
-		Data parent = data.getParent();
-		if (parent != null) {
+	public static Address getDataSettingsAddress(Data data) {
+		Address addr = data.getAddress();
+		for (Data parent = data.getParent(); parent != null; parent = parent.getParent()) {
 			DataType dataType = parent.getDataType();
-			if (dataType instanceof Array) {
-				return getDataSettingsAddress(parent);
+			if (!(dataType instanceof Array a)) {
+				break;
 			}
+			addr = parent.getAddress();
 		}
-		return data.getAddress();
+		return addr;
 	}
 }

@@ -2837,6 +2837,8 @@ void ScopeInternal::setCategory(Symbol *sym,int4 cat,int4 ind)
   while(category.size() <= sym->category)
     category.push_back(vector<Symbol *>());
   vector<Symbol *> &list(category[sym->category]);
+  if (cat > 0)
+    sym->catindex = list.size();
   while(list.size() <= sym->catindex)
     list.push_back((Symbol *)0);
   list[sym->catindex] = sym;

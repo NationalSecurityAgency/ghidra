@@ -42,6 +42,7 @@ import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.*;
 
 public class FieldPanel extends JPanel
@@ -127,6 +128,7 @@ public class FieldPanel extends JPanel
 		setFocusable(true);
 
 		hoverHandler = new HoverHandler(this);
+		initializeCursorBlinking();
 	}
 
 	@Override
@@ -393,6 +395,16 @@ public class FieldPanel extends JPanel
 	}
 
 	@Override
+	public void updateUI() {
+		super.updateUI();
+		initializeCursorBlinking();
+	}
+
+	private void initializeCursorBlinking() {
+		setBlinkCursor(Gui.isBlinkingCursors());
+	}
+
+	@Override
 	public Dimension getPreferredSize() {
 		if (viewport == null) {
 			viewport = getViewport();
@@ -423,7 +435,9 @@ public class FieldPanel extends JPanel
 	}
 
 	public void setBlinkCursor(Boolean blinkCursor) {
-		cursorHandler.setBlinkCursor(blinkCursor);
+		if (cursorHandler != null) {
+			cursorHandler.setBlinkCursor(blinkCursor);
+		}
 	}
 
 	public void enableSelection(boolean b) {
@@ -1397,6 +1411,7 @@ public class FieldPanel extends JPanel
 		return accessibleFieldPanel;
 	}
 
+	@Override
 	public void mouseWheelMoved(double preciseWheelRotation, boolean horizontal) {
 
 		Layout firstLayout = model.getLayout(BigInteger.ZERO);

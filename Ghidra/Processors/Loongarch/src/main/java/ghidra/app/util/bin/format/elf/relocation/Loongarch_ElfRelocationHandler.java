@@ -59,14 +59,59 @@ public class Loongarch_ElfRelocationHandler
 
 		long base = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 		int symbolIndex = relocation.getSymbolIndex();
-
+		
 		long value64 = 0;
 		int value32 = 0;
 		short value16 = 0;
 		byte value8 = 0;
-		byte[] bytes24 = new byte[3];
-
+		
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_LARCH_RELATIVE:
+				// Runtime fixup for load-address *(void **) PC = B + A
+				if (elf.is32Bit()) {
+					value32 = (int) (base + addend);
+					memory.setInt(relocationAddress, value32);
+				}
+				else {
+					value64 = base + addend;
+					memory.setLong(relocationAddress, value64);
+					byteLength = 8;
+				}
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_LARCH_IRELATIVE:
+				if (elf.is32Bit()) {
+					value32 =
+						(int) (addend + elfRelocationContext.getImageBaseWordAdjustmentOffset());
+					memory.setInt(relocationAddress, value32);
+				}
+				else {
+					byteLength = 8;
+					value64 = addend + elfRelocationContext.getImageBaseWordAdjustmentOffset();
+					memory.setLong(relocationAddress, value64);
+				}
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_LARCH_COPY:
+				// Runtime memory copy in executable memcpy (PC, RtAddr, sizeof (sym))
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}	
+
+		byte[] bytes24 = new byte[3];
 
 		switch (type) {
 			case R_LARCH_32:
@@ -96,25 +141,6 @@ public class Loongarch_ElfRelocationHandler
 				}
 				break;
 
-			case R_LARCH_RELATIVE:
-				// Runtime fixup for load-address *(void **) PC = B + A
-				if (elf.is32Bit()) {
-					value32 = (int) (base + addend);
-					memory.setInt(relocationAddress, value32);
-				}
-				else {
-					value64 = base + addend;
-					memory.setLong(relocationAddress, value64);
-					byteLength = 8;
-				}
-				break;
-
-			case R_LARCH_COPY:
-				// Runtime memory copy in executable memcpy (PC, RtAddr, sizeof (sym))
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-
 			case R_LARCH_JUMP_SLOT:
 				// Runtime PLT supporting (implementation-defined)
 				if (elf.is32Bit()) {
@@ -137,19 +163,7 @@ public class Loongarch_ElfRelocationHandler
 				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
 					"Thread Local Symbol relocation not supported", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
-
-			case R_LARCH_IRELATIVE:
-				if (elf.is32Bit()) {
-					value32 =
-						(int) (addend + elfRelocationContext.getImageBaseWordAdjustmentOffset());
-					memory.setInt(relocationAddress, value32);
-				}
-				else {
-					byteLength = 8;
-					value64 = addend + elfRelocationContext.getImageBaseWordAdjustmentOffset();
-					memory.setLong(relocationAddress, value64);
-				}
-				break;
+			
 
 //			case R_LARCH_MARK_LA:
 //			case R_LARCH_MARK_PCREL:

@@ -27,8 +27,6 @@ public class EnumMsType extends AbstractEnumMsType {
 
 	public static final int PDB_ID = 0x1507;
 
-	protected String mangledName;
-
 	/**
 	 * Constructor for this type.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
@@ -60,14 +58,6 @@ public class EnumMsType extends AbstractEnumMsType {
 	@Override
 	public int getPdbId() {
 		return PDB_ID;
-	}
-
-	/**
-	 * Returns the mangled name field
-	 * @return Mangled name.
-	 */
-	public String getMangledName() {
-		return mangledName;
 	}
 
 }

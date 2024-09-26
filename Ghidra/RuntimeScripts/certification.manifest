@@ -1,5 +1,7 @@
 ##VERSION: 2.0
+##MODULE IP: Apache License 2.0
 ##MODULE IP: Copyright Distribution Permitted
+##MODULE IP: Public Domain
 Common/server/jaas.conf||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
@@ -7,6 +9,8 @@ Common/support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|
 Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
 Common/support/debug.log4j.xml||GHIDRA||||END|
+Common/support/gradle/gradle-wrapper.jar||Apache License 2.0||||END|
+Common/support/gradle/gradle-wrapper.properties||Apache License 2.0||||END|
 Common/support/launch.properties||GHIDRA||||END|
 Linux/ghidraRun||GHIDRA||||END|
 Linux/server/ghidraSvr||GHIDRA||||END|
@@ -18,11 +22,11 @@ Linux/support/analyzeHeadless||GHIDRA||||END|
 Linux/support/bsim||GHIDRA||||END|
 Linux/support/bsim_ctl||GHIDRA||||END|
 Linux/support/buildGhidraJar||GHIDRA||||END|
-Linux/support/buildNatives||GHIDRA||||END|
 Linux/support/convertStorage||GHIDRA||||END|
 Linux/support/gdbGADPServerRun||GHIDRA||||END|
 Linux/support/ghidraClean||GHIDRA||||END|
 Linux/support/ghidraDebug||GHIDRA||||END|
+Linux/support/jshellRun||GHIDRA||||END|
 Linux/support/pythonRun||GHIDRA||||END|
 Linux/support/sleigh||GHIDRA||||END|
 Windows/ghidraRun.bat||GHIDRA||||END|
@@ -35,7 +39,6 @@ Windows/support/README_createPdbXmlFiles.txt||GHIDRA||||END|
 Windows/support/analyzeHeadless.bat||GHIDRA||||END|
 Windows/support/bsim.bat||GHIDRA||||END|
 Windows/support/buildGhidraJar.bat||GHIDRA||||END|
-Windows/support/buildNatives.bat||GHIDRA||||END|
 Windows/support/convertStorage.bat||GHIDRA||||END|
 Windows/support/createPdbXmlFiles.bat||GHIDRA||||END|
 Windows/support/dbgengGADPServerRun.bat||GHIDRA||||END|
@@ -43,6 +46,7 @@ Windows/support/dbgmodelGADPServerRun.bat||GHIDRA||||END|
 Windows/support/ghidra.ico||GHIDRA||||END|
 Windows/support/ghidraClean.bat||GHIDRA||||END|
 Windows/support/ghidraDebug.bat||GHIDRA||||END|
+Windows/support/jshellRun.bat||GHIDRA||||END|
 Windows/support/launch.bat||GHIDRA||||END|
 Windows/support/pythonRun.bat||GHIDRA||||END|
 Windows/support/sleigh.bat||GHIDRA||||END|

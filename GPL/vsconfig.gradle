@@ -60,8 +60,6 @@ def configureVisualStudio() {
 		def vcvarsPath = "${vsInstallDir}\\VC\\Auxiliary\\Build\\vcvarsall.bat"
 		def vcvarsCmd = "\"${vcvarsPath}\" x86_amd64"
 		def vcvarsEnvCmd = "cmd /v:ON /c ${vcvarsCmd} > nul && cmd /c echo"
-		def toolsVersion = "${vcvarsEnvCmd} !VCToolsVersion!".execute().text.trim()
-		println "  -> VCTools Version (default): ${toolsVersion}"
 		def sdkDir = "${vcvarsEnvCmd} !WindowsSdkDir!".execute().text.trim()
 		println "  -> SDK Directory (default): ${sdkDir}"
 		def sdkVersion = "${vcvarsEnvCmd} !WindowsSDKVersion!".execute().text.trim().replace('\\', '')
@@ -73,7 +71,6 @@ def configureVisualStudio() {
 		
 		// Save Visual Studio information so other projects can access it
 		rootProject.ext.VISUAL_STUDIO_INSTALL_DIR = vsInstallDir
-		rootProject.ext.VISUAL_STUDIO_TOOLS_VERSION_DEFAULT = toolsVersion
 		rootProject.ext.VISUAL_STUDIO_SDK_DIR_DEFAULT = sdkDir
 		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_DEFAULT = sdkVersion
 		rootProject.ext.VISUAL_STUDIO_SDK_VERSION_OVERRIDE = windowsTargetPlatformVersion

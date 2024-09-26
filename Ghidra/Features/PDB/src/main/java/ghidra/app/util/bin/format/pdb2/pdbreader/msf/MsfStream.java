@@ -72,8 +72,7 @@ public class MsfStream {
 	 *  inability to read required bytes
 	 * @throws CancelledException upon user cancellation
 	 */
-	public byte[] read(int streamOffset, int numToRead)
-			throws IOException, CancelledException {
+	public byte[] read(int streamOffset, int numToRead) throws IOException, CancelledException {
 		if (numToRead <= 0) {
 			return null;
 		}
@@ -231,12 +230,10 @@ public class MsfStream {
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	void deserializePageNumbers(PdbByteReader reader)
-			throws PdbException, CancelledException {
+	void deserializePageNumbers(PdbByteReader reader) throws PdbException, CancelledException {
 		// This calculations works fine for streamLength = 0
 		//  and even streamLength = -1 (0xffffffff).
-		int numPages =
-			Msf.floorDivisionWithLog2Divisor(streamLength, msf.getLog2PageSize());
+		int numPages = Msf.floorDivisionWithLog2Divisor(streamLength, msf.getLog2PageSize());
 		if (msf.getPageNumberSize() == 2) {
 			for (int i = 0; i < numPages; i++) {
 				msf.checkCancelled();
@@ -274,6 +271,29 @@ public class MsfStream {
 			throws IOException, PdbException, CancelledException {
 		deserializeStreamLengthAndMapTableAddress(reader);
 		deserializePageNumbers(reader);
+	}
+
+	/**
+	 * Developer mechanism to see if the stream hold the absolute file offset and what the
+	 *  corresponding stream offset is
+	 * @param fileOffset the absolute file offset that we are trying to locate
+	 * @return the offset in the stream of the file offset or {@code null} if not in the stream
+	 */
+	Integer getStreamOffsetForAbsoluteFileOffset(long fileOffset) {
+		long pageSize = msf.getPageSize();
+		for (int pageCount = 0; pageCount < pageList.size(); pageCount++) {
+			int page = pageList.get(pageCount);
+			long pageStart = page * pageSize;
+			long pageEndExclusive = pageStart + pageSize;
+			if (pageStart <= fileOffset && fileOffset < pageEndExclusive) {
+				// We must get the offset within page, but then must use the pageCount to determine
+				// the rest of the streamOffset
+				Long pageOffset = fileOffset - pageStart;
+				Long streamOffset = pageCount * pageSize + pageOffset;
+				return streamOffset.intValue();
+			}
+		}
+		return null;
 	}
 
 }

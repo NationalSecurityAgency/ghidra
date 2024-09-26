@@ -27,6 +27,7 @@ public class MemSearchResult implements Comparable<MemSearchResult> {
 
 	private Address address;
 	private int length;
+	private byte[] bytes;
 
 	public MemSearchResult(Address address, int length) {
 		this.address = Objects.requireNonNull(address);
@@ -37,12 +38,25 @@ public class MemSearchResult implements Comparable<MemSearchResult> {
 		this.length = length;
 	}
 
+	public MemSearchResult(Address address, byte[] bytes) {
+		if (bytes == null || bytes.length < 1) {
+			throw new IllegalArgumentException("Must provide at least 1 byte");
+		}
+		this.address = Objects.requireNonNull(address);
+		this.bytes = bytes;
+		this.length = bytes.length;
+	}
+
 	public Address getAddress() {
 		return address;
 	}
 
 	public int getLength() {
 		return length;
+	}
+
+	public byte[] getBytes() {
+		return bytes;
 	}
 
 	@Override

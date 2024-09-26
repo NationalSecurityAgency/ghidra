@@ -36,4 +36,6 @@ interface FunctionVariableData {
 	public String getName();
 
 	public DataType getFormalDataType();
+
+	public boolean hasStorageConflict();
 }

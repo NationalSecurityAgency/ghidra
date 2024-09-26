@@ -57,6 +57,11 @@ import resources.Icons;
 
 public class FunctionEditorDialog extends DialogComponentProvider implements ModelChangeListener {
 
+	private static final String COMMIT_FULL_SIGNATURE_WARNING =
+		"All signature details will be commited (see Commit checkbox above)";
+	private static final String SIGNATURE_LOSS_WARNING =
+		"Return/Parameter changes will not be applied (see Commit checkbox above)";
+
 	private FunctionEditorModel model;
 	private DocumentListener nameFieldDocumentListener;
 	private GTable parameterTable;
@@ -77,6 +82,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JCheckBox storageCheckBox;
 	private JScrollPane scroll;
 	private JPanel previewPanel;
+	private JCheckBox commitFullParamDetailsCheckBox; // optional: may be null
 
 	private FunctionSignatureTextField signatureTextField;
 	private UndoRedoKeeper signatureFieldUndoRedoKeeper;
@@ -84,11 +90,22 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private MyGlassPane glassPane;
 	private JPanel centerPanel;
 
+	/**
+	 * Construct Function Editor dialog for a specified Function and associated DataType service.
+	 * @param service DataType service
+	 * @param function Function to be modified
+	 */
 	public FunctionEditorDialog(DataTypeManagerService service, Function function) {
-		this(new FunctionEditorModel(service, function));
+		this(new FunctionEditorModel(service, function), true);
 	}
 
-	public FunctionEditorDialog(FunctionEditorModel model) {
+	/**
+	 * Construct Function Editor dialog using a specified model
+	 * @param model function detail model
+	 * @param hasOptionalSignatureCommit if true an optional control will be included which 
+	 * controls commit of parameter/return details, including Varargs and use of custom storage.
+	 */
+	public FunctionEditorDialog(FunctionEditorModel model, boolean hasOptionalSignatureCommit) {
 		super(createTitle(model.getFunction()));
 		this.service = model.getDataTypeManagerService();
 		setRememberLocation(true);
@@ -96,7 +113,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		setHelpLocation(new HelpLocation("FunctionPlugin", "Edit_Function"));
 		this.model = model;
 		model.setModelChangeListener(this);
-		addWorkPanel(buildMainPanel());
+		addWorkPanel(buildMainPanel(hasOptionalSignatureCommit));
 		addOKButton();
 		addCancelButton();
 		glassPane = new MyGlassPane();
@@ -157,7 +174,13 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				return;
 			}
 		}
-		if (model.apply()) {
+
+		boolean fullCommit = true;
+		if (commitFullParamDetailsCheckBox != null &&
+			!commitFullParamDetailsCheckBox.isSelected()) {
+			fullCommit = false;
+		}
+		if (model.apply(fullCommit)) {
 			close();
 		}
 	}
@@ -168,24 +191,24 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		super.close();
 	}
 
-	private JComponent buildMainPanel() {
+	private JComponent buildMainPanel(boolean hasOptionalSignatureCommit) {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildPreview(), BorderLayout.NORTH);
-		panel.add(buildCenterPanel(), BorderLayout.CENTER);
+		panel.add(buildCenterPanel(hasOptionalSignatureCommit), BorderLayout.CENTER);
 		return panel;
 	}
 
-	private JComponent buildCenterPanel() {
+	private JComponent buildCenterPanel(boolean hasOptionalSignatureCommit) {
 		centerPanel = new JPanel(new BorderLayout());
 		centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 		centerPanel.add(buildAttributePanel(), BorderLayout.NORTH);
 		centerPanel.add(buildTable(), BorderLayout.CENTER);
-		centerPanel.add(buildBottomPanel(), BorderLayout.SOUTH);
+		centerPanel.add(buildBottomPanel(hasOptionalSignatureCommit), BorderLayout.SOUTH);
 		return centerPanel;
 	}
 
-	private Component buildBottomPanel() {
+	private Component buildBottomPanel(boolean hasOptionalSignatureCommit) {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		Border b = BorderFactory.createEmptyBorder(0, 0, 0, 0);
@@ -203,6 +226,29 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		else {
 			panel.add(new JPanel(), BorderLayout.CENTER);
 		}
+
+		if (hasOptionalSignatureCommit) {
+			commitFullParamDetailsCheckBox = new JCheckBox("Commit all return/parameter details");
+			commitFullParamDetailsCheckBox.addActionListener(e -> {
+				if (!model.isValid()) {
+					return;
+				}
+				if (!commitFullParamDetailsCheckBox.isSelected()) {
+					if (model.hasSignificantParameterChanges()) {
+						setStatusText(SIGNATURE_LOSS_WARNING, MessageType.WARNING);
+					}
+					else {
+						clearStatusText();
+					}
+				}
+				else {
+					setStatusText(COMMIT_FULL_SIGNATURE_WARNING, MessageType.WARNING);
+					setOkEnabled(true);
+				}
+			});
+			panel.add(commitFullParamDetailsCheckBox, BorderLayout.SOUTH);
+		}
+
 		return panel;
 	}
 
@@ -250,7 +296,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		signatureTextField.setEscapeListener(e -> {
 
-			if (!model.hasChanges()) {
+			if (!model.hasSignatureTextChanges()) {
 				// no changes; user wish to close the dialog
 				cancelCallback();
 				return;
@@ -400,7 +446,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				callFixupComboBox.addItem(element);
 			}
 			callFixupComboBox.addItemListener(
-				e -> model.setCallFixupName((String) callFixupComboBox.getSelectedItem()));
+				e -> model.setCallFixupChoice((String) callFixupComboBox.getSelectedItem()));
 		}
 		else {
 			callFixupComboBox.setToolTipText("No call-fixups defined by compiler specification");
@@ -414,11 +460,11 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private Component buildTable() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
-			"Function Variables"));
+			"Function Return/Parameters"));
 
 		paramTableModel = new ParameterTableModel(model);
 		parameterTable = new ParameterTable(paramTableModel);
-		selectionListener = e -> model.setSelectedParameterRow(parameterTable.getSelectedRows());
+		selectionListener = e -> model.setSelectedParameterRows(parameterTable.getSelectedRows());
 
 		JScrollPane tableScroll = new JScrollPane(parameterTable);
 		panel.add(tableScroll, BorderLayout.CENTER);
@@ -497,11 +543,18 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			updateTableSelection();
 			updateTableButtonEnablement();
 			updateStorageEditingEnabled();
+			updateOptionalParamCommit();
+		}
+	}
+
+	private void updateOptionalParamCommit() {
+		if (commitFullParamDetailsCheckBox != null) {
+			commitFullParamDetailsCheckBox.setSelected(model.hasSignificantParameterChanges());
 		}
 	}
 
 	private void updateStorageEditingEnabled() {
-		boolean canCustomizeStorage = model.canCustomizeStorage();
+		boolean canCustomizeStorage = model.canUseCustomStorage();
 		if (storageCheckBox.isSelected() != canCustomizeStorage) {
 			storageCheckBox.setSelected(canCustomizeStorage);
 		}
@@ -522,7 +575,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			selectionModel.removeListSelectionListener(selectionListener);
 			parameterTable.clearSelection();
 			for (int i : selectedRows) {
-				parameterTable.addRowSelectionInterval(i, i);
+				if (i < parameterTable.getRowCount()) {
+					parameterTable.addRowSelectionInterval(i, i);
+				}
 			}
 			parameterTable.scrollToSelectedRow();
 			selectionModel.addListSelectionListener(selectionListener);
@@ -539,7 +594,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private void updateCallFixupCombo() {
-		String callFixupName = model.getCallFixupName();
+		String callFixupName = model.getCallFixupChoice();
 		if (!callFixupComboBox.getSelectedItem().equals(callFixupName)) {
 			callFixupComboBox.setSelectedItem(callFixupName);
 			if (!callFixupComboBox.getSelectedItem().equals(callFixupName)) {
@@ -574,7 +629,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private void updateOkButton() {
-		setOkEnabled(model.isValid());
+		setOkEnabled(model.isValid() && model.hasChanges());
 	}
 
 	private void updateStatusText() {
@@ -778,6 +833,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					setForeground(getErrorForegroundColor(isSelected));
 					setToolTipText("Invalid Parameter Storage");
 				}
+				else if (rowData.hasStorageConflict()) {
+					setForeground(getErrorForegroundColor(isSelected));
+					setToolTipText("Conflicting Parameter Storage");
+				}
 				else {
 					setForeground(isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
 					setToolTipText("");
@@ -889,6 +948,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	private class GlassPaneMouseListener implements MouseListener, MouseMotionListener {
 
+		private boolean armed = false;
+
 		@Override
 		public void mouseClicked(MouseEvent e) {
 			processEvent(e);
@@ -897,10 +958,16 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		@Override
 		public void mousePressed(MouseEvent e) {
 			processEvent(e);
+			armed = !isTextField(e);
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
+			if (!armed) {
+				return;
+			}
+			armed = false;
+
 			if (!processEvent(e)) {
 				try {
 					model.parseSignatureFieldText();
@@ -909,16 +976,24 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					handleParseException(ex);
 				}
 			}
+
 		}
 
 		@Override
 		public void mouseEntered(MouseEvent e) {
-//			processEvent(e);
+			// stub
 		}
 
 		@Override
 		public void mouseExited(MouseEvent e) {
-//			processEvent(e);
+			// stub
+		}
+
+		private boolean isTextField(MouseEvent e) {
+			JDialog window = (JDialog) WindowUtilities.windowForComponent(e.getComponent());
+			Component comp =
+				SwingUtilities.getDeepestComponentAt(window.getContentPane(), e.getX(), e.getY());
+			return comp == signatureTextField;
 		}
 
 		private boolean processEvent(MouseEvent e) {

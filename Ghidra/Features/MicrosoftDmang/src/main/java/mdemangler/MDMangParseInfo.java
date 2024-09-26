@@ -44,10 +44,19 @@ public class MDMangParseInfo extends MDMang {
 		}
 	}
 
-	private Stack<MDParseInfo> infoStack = new Stack<>();
-	private List<MDParseInfo> infoList = new ArrayList<>();
-	private int parseInfoMangledIndex = 0;
-	private StringBuilder parseInfoBuilder = new StringBuilder();
+	private Stack<MDParseInfo> infoStack;
+	private List<MDParseInfo> infoList;
+	private int parseInfoMangledIndex;
+	private StringBuilder parseInfoBuilder;
+
+	@Override
+	public void resetState() {
+		super.resetState();
+		infoStack = new Stack<>();
+		infoList = new ArrayList<>();
+		parseInfoMangledIndex = 0;
+		parseInfoBuilder = new StringBuilder();
+	}
 
 	@Override // Override might be temporary, depending on how we answer questions in MDMang
 	public void parseInfoPushPop(int startIndexOffset, String itemName) {

@@ -177,7 +177,7 @@ public:
   int4 getSymbolOffset(void) const { return symboloffset; }	///< Get the Symbol offset associated with \b this
   int4 numInstances(void) const { return inst.size(); }		///< Get the number of member Varnodes \b this has
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
-  void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
+  void finalizeDatatype(TypeFactory *typeFactory);		///< Set a final data-type matching the associated Symbol
   void groupWith(int4 off,HighVariable *hi2);		///< Put \b this and another HighVariable in the same intersection group
   void establishGroupSymbolOffset(void);	///< Transfer \b symbol offset of \b this to the VariableGroup
 

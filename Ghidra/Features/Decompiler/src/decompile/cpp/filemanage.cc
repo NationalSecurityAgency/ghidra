@@ -34,8 +34,10 @@ namespace ghidra {
 // Path name separator
 #ifdef _WINDOWS
 char FileManage::separator = '\\';
+char FileManage::separatorClass[] = "/\\";
 #else
 char FileManage::separator = '/';
+char FileManage::separatorClass[] = "/";
 #endif
 
 void FileManage::addDir2Path(const string &path)
@@ -43,7 +45,7 @@ void FileManage::addDir2Path(const string &path)
 {
   if (path.size()>0) {
     pathlist.push_back(path);
-    if (path[path.size()-1] != separator)
+    if (!isSeparator(path[path.size()-1]))
       pathlist.back() += separator;
   }
 }
@@ -53,7 +55,7 @@ void FileManage::findFile(string &res,const string &name) const
 {				// Search through paths to find file with given name
   vector<string>::const_iterator iter;
 
-  if (name[0] == separator) {
+  if (isSeparator(name[0])) {
     res = name;
     ifstream s(res.c_str());
     if (s) {
@@ -123,6 +125,22 @@ bool FileManage::isDirectory(const string &path)
 #endif
 
 #ifdef _WINDOWS
+bool FileManage::isSeparator(char c)
+
+{
+  return (c == '/' || c == '\\');
+}
+
+#else
+bool FileManage::isSeparator(char c)
+
+{
+  return c == separator;
+}
+
+#endif
+
+#ifdef _WINDOWS
 void FileManage::matchListDir(vector<string> &res,const string &match,bool isSuffix,const string &dirname,bool allowdot)
 
 {
@@ -131,7 +149,7 @@ void FileManage::matchListDir(vector<string> &res,const string &match,bool isSuf
   string dirfinal;
 
   dirfinal = dirname;
-  if (dirfinal[dirfinal.size()-1] != separator)
+  if (!isSeparator(dirfinal[dirfinal.size()-1]))
     dirfinal += separator;
   string regex = dirfinal + '*';
 
@@ -162,7 +180,7 @@ void FileManage::matchListDir(vector<string> &res,const string &match,bool isSuf
   DIR *dir;
   struct dirent *entry;
   string dirfinal = dirname;
-  if (dirfinal[dirfinal.size()-1] != separator)
+  if (!isSeparator(dirfinal[dirfinal.size()-1]))
     dirfinal += separator;
 
   dir = opendir(dirfinal.c_str());
@@ -205,7 +223,7 @@ void FileManage::directoryList(vector<string> &res,const string &dirname,bool al
   WIN32_FIND_DATAA FindFileData;
   HANDLE hFind;
   string dirfinal = dirname;
-  if (dirfinal[dirfinal.size()-1] != separator)
+  if (!isSeparator(dirfinal[dirfinal.size()-1]))
     dirfinal += separator;
   string regex = dirfinal + "*";
   const char *s = regex.c_str();
@@ -232,7 +250,7 @@ void FileManage::directoryList(vector<string> &res,const string &dirname,bool al
   string dirfinal;
 
   dirfinal = dirname;
-  if (dirfinal[dirfinal.size()-1] != separator)
+  if (!isSeparator(dirfinal[dirfinal.size()-1]))
     dirfinal += separator;
 
   dir = opendir(dirfinal.c_str());
@@ -262,7 +280,7 @@ void FileManage::scanDirectoryRecursive(vector<string> &res,const string &matchn
   vector<string>::const_iterator iter;
   for(iter = subdir.begin();iter!=subdir.end();++iter) {
     const string &curpath( *iter );
-    string::size_type pos = curpath.rfind(separator);
+    string::size_type pos = curpath.find_last_of(separatorClass);
     if (pos == string::npos)
       pos = 0;
     else
@@ -280,9 +298,9 @@ void FileManage::splitPath(const string &full,string &path,string &base)
   // If there is no path, i.e. only a basename in full, then -path- will return as an empty string
   // otherwise -path- will be non-empty and end in a separator character
   string::size_type end = full.size()-1;
-  if (full[full.size()-1] == separator) // Take into account terminating separator
+  if (isSeparator(full[full.size()-1])) // Take into account terminating separator
     end = full.size()-2;
-  string::size_type pos = full.rfind(separator,end);
+  string::size_type pos = full.find_last_of(separatorClass,end);
   if (pos == string::npos) {	// Didn't find any separator
     base = full;
     path.clear();

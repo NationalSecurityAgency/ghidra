@@ -22,7 +22,7 @@ import ghidra.program.model.symbol.Symbol;
 
 /**
  * <code>SymbolRowObject</code> provides a lightweight {@link Symbol}
- * table row object which may be used to reacquire an associated symbol.
+ * table row object which may be used to acquire an associated symbol.
  */
 public class SymbolRowObject implements Comparable<SymbolRowObject> {
 
@@ -50,7 +50,7 @@ public class SymbolRowObject implements Comparable<SymbolRowObject> {
 	}
 
 	/**
-	 * Get symbol id used to reacquire symbol from program
+	 * Get symbol id used to acquire symbol from program
 	 * @return symbol id
 	 */
 	public long getID() {

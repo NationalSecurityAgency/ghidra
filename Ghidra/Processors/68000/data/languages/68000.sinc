@@ -1529,9 +1529,9 @@ subdiv: regdr:regdq		is regdq & regdr & divsz=1 & divsgn=1 {
 :exg reg9an,regan		is op=12 & reg9an & op8=1 & op37=9 & regan			{ local tmp = reg9an; reg9an=regan; regan=tmp; }
 :exg reg9dn,regan		is op=12 & reg9dn & op8=1 & op37=17 & regan			{ local tmp = reg9dn; reg9dn=regan; regan=tmp; }
 
-:ext.w regdnw			is op=4 & reg9dn=4 & op68=2 & op35=0 & regdnw		{ local tmp = regdnw:1; regdnw = sext(tmp); }
-:ext.l regdn			is op=4 & reg9dn=4 & op68=3 & op35=0 & regdn		{ local tmp = regdn:2; regdn = sext(tmp); }
-:extb.l regdn			is op=4 & reg9dn=4 & op68=7 & op35=0 & regdn		{ local tmp = regdn:1; regdn = sext(tmp); }
+:ext.w regdnw			is op=4 & reg9dn=4 & op68=2 & op35=0 & regdnw		{ local tmp = regdnw:1; regdnw = sext(tmp); resflags(regdnw); logflags(); }
+:ext.l regdn			is op=4 & reg9dn=4 & op68=3 & op35=0 & regdn		{ local tmp = regdn:2; regdn = sext(tmp); resflags(regdn); logflags(); }
+:extb.l regdn			is op=4 & reg9dn=4 & op68=7 & op35=0 & regdn		{ local tmp = regdn:1; regdn = sext(tmp); resflags(regdn); logflags(); }
 
 @ifdef COLDFIRE
 :halt			is d16=0x4ac8							unimpl
@@ -2687,7 +2687,7 @@ m2fpC2:   FPCR				is FPCR & f12=1				{ FPCR = *movemptr; movemptr = movemptr + 1
 m2fpC2:   					is f12=0					{ }
 m2fpC1:   m2fpC2" "FPSR		is FPSR & f11=1 & m2fpC2	{ FPSR = *movemptr; movemptr = movemptr + 12; }
 m2fpC1:   m2fpC2			is f11=0 & m2fpC2			{ }
-m2fpC0: { m2fpC1" "FPCR }	is FPCR & f10=1 & m2fpC1	{ FPCR = *movemptr; movemptr = movemptr + 12; }
+m2fpC0: { m2fpC1" "FPIAR }	is FPIAR & f10=1 & m2fpC1	{ FPIAR = *movemptr; movemptr = movemptr + 12; }
 m2fpC0: { m2fpC1 }			is f10=0 & m2fpC1			{ }
 
 # Floating point control register to Memory

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.app.util.bin.format.pe.debug.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.DataConverter;
@@ -64,11 +63,11 @@ public class DebugDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader)
+			NTHeader nt)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
 		monitor.setMessage(program.getName()+": debug...");
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -81,7 +80,7 @@ public class DebugDataDirectory extends DataDirectory {
 			PeUtils.createData(program, addr, dd.toDataType(), log);
 			addr = addr.add(DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY);
 
-			Address dataAddr = getDataAddress(dd, isBinary, space, ntHeader);
+			Address dataAddr = getDataAddress(dd, isBinary, space, nt);
 			if (dataAddr != null) {
 				boolean success = createFragment(program, "Debug Data", dataAddr, dataAddr.add(dd.getSizeOfData()));
 				if (!success) {
@@ -94,8 +93,8 @@ public class DebugDataDirectory extends DataDirectory {
 		markupDebugCodeView(program, isBinary, log, space);
 	}
 
-	private void markupDebugCodeView(Program program, boolean isBinary,
-			MessageLog log, AddressSpace space) throws DuplicateNameException, IOException {
+	private void markupDebugCodeView(Program program, boolean isBinary, MessageLog log,
+			AddressSpace space) {
 		DebugCodeView dcv = parser.getDebugCodeView();
 		if (dcv != null) {
 			Address dataAddr = getDataAddress(dcv.getDebugDirectory(), isBinary, space, ntHeader);
@@ -126,13 +125,13 @@ public class DebugDataDirectory extends DataDirectory {
 		}
 	}
 
-    private Address getDataAddress(DebugDirectory dd, boolean isBinary,
-						AddressSpace space, NTHeader ntHeader) {
+	private Address getDataAddress(DebugDirectory dd, boolean isBinary, AddressSpace space,
+			NTHeader nt) {
 
 		long ptr = 0;
 		if (isBinary) {
 			ptr = dd.getPointerToRawData();
-	        if (ptr != 0 && !ntHeader.checkPointer(ptr)) {
+			if (ptr != 0 && !nt.checkPointer(ptr)) {
 	        	Msg.error(this, "Invalid pointer "+Long.toHexString(ptr));
 	        	return null;
 	        }
@@ -144,7 +143,7 @@ public class DebugDataDirectory extends DataDirectory {
 			if (isBinary) {
 				return space.getAddress(ptr);
 			}
-			return space.getAddress(ptr + ntHeader.getOptionalHeader().getImageBase());
+			return space.getAddress(ptr + nt.getOptionalHeader().getImageBase());
 		}
 		return null;
 	}
@@ -156,20 +155,6 @@ public class DebugDataDirectory extends DataDirectory {
 	public DebugDirectoryParser getParser() {
 		return parser;
 	}
-
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
-    @Override
-    public DataType toDataType() throws DuplicateNameException, IOException {
-        StructureDataType struct = new StructureDataType(NAME, 0);
-        DebugDirectory [] ddArr = parser.getDebugDirectories();
-        for (DebugDirectory sc : ddArr) {
-            struct.add(sc.toDataType(),sc.getDescription(),null );
-        }
-        struct.setCategoryPath(new CategoryPath("/PE"));
-        return struct;
-    }
 
 	/**
 	 * @see ghidra.app.util.bin.format.pe.DataDirectory#writeBytes(java.io.RandomAccessFile, ghidra.util.DataConverter, ghidra.app.util.bin.format.pe.PortableExecutable)

@@ -189,7 +189,7 @@ public class GoBuildInfo implements ElfInfoItem {
 		return version;
 	}
 
-	public GoVer getVerEnum() {
+	public GoVer getGoVer() {
 		return GoVer.parse(version);
 	}
 

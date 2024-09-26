@@ -36,7 +36,7 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 	public static final Icon CLOSED_FOLDER_FUNCTIONS_ICON =
 		new GIcon("icon.plugin.symboltree.node.category.function.closed");
 
-	FunctionCategoryNode(Program program) {
+	public FunctionCategoryNode(Program program) {
 		super(SymbolCategory.FUNCTION_CATEGORY, program);
 	}
 

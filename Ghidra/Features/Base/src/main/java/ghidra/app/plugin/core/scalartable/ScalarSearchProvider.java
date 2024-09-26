@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,8 @@ import help.HelpService;
 /**
  * Displays the results of a query from the {@link ScalarSearchPlugin}. Consists of 2 components:
  * <ul>
- * <li>The scalar table that is displayed to the user
- * <li>The range filter that allows the user to filter the scalar table via a min and max value.
+ * <li>The scalar table that is displayed to the user</li>
+ * <li>The range filter that allows the user to filter the scalar table via a min and max value.</li>
  * </ul>
  */
 public class ScalarSearchProvider extends ComponentProviderAdapter {
@@ -117,8 +117,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 			buffy.append(" [filter: ")
 					.append(minValueText)
 					.append(" - ")
-					.append(
-						maxValueText)
+					.append(maxValueText)
 					.append(']');
 		}
 
@@ -179,10 +178,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 		closeComponent();
 		threadedTablePanel.dispose();
 		filter.dispose();
-	}
-
-	ProgramSelection getSelection() {
-		return scalarTable.getProgramSelection();
 	}
 
 	void reload() {

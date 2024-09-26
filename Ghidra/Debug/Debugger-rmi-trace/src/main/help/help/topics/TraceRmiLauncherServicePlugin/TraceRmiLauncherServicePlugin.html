@@ -83,6 +83,13 @@
     <B>CTRL-SHIFT-H</B> or <B>CTRL-SHIFT-G</B>, respectively. They repeat the last search in the
     forward or backward direction.</P>
 
+    <H3><A name="select_all"></A>Select All</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-A</B>. It
+    selects all text in the terminal, including its scrollback buffer. If all the text is already
+    selected, then this selects nothing, so that pressing the keystroke twice is effectively
+    "Select None."</P>
+
     <H3><A name="terminate"></A>Terminate</H3>
 
     <P>This action is accessed using the local drop-down menu. It will terminate the Terminal's
@@ -726,6 +733,94 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
     Alternatively, if you are trying to quit, but typed "<TT>.exit</TT>", just type
     "<TT>quit()</TT>" to terminate the session.</P>
 
+	<H3><A name="dbgeng_ext"></A>dbgeng-ext</H3>
+
+	<P>This launcher extends the base dbgeng launcher adding extra options (a la IDebugClient's CreateProcess2).</P>
+
+
+	<H4>Options</H4>
+
+	<UL>
+	    <LI><B>Dir</B>: This is the starting directory for the process.</LI>
+
+	    <LI><B>Env</B>: This is a composite string containg Environment Variable entries
+	    delineated by '/0' separators.  For example, you could redefine USERNAME and USERPROFILE 
+		with the entry 'USERNAME=SomeUser/0USERPROFILE=C:\Users\SomeUser'.</LI>
+
+		<LI><B>CreateFlags</B>: Flags used when creating the process, typically either DEBUG_PROCESS(1) or
+		DEBUG_ONLY_THIS_PROCESS(2) if you do not wish to follow spawned processes.  Other possible values
+		are defined by processes.h's CreateProcessCreationFlags.</LI>
+
+		<LI><B>CreateFlags (Engine)</B>: Engine-specific flags used when creating the process (defined in dbgeng.h).
+		Typically, these are set to 0.</LI>
+
+		<LI><B>VerifierFlags (Engine)</B>: Flags used by the Application Verifier. Typically unused, but, if desired,
+		CreateEngineFlags must include DEBUG_ECREATE_PROCESS_USE_VERIFIER_FLAGS(2).</LI>
+	  </UL>
+
+	  
+	<H3><A name="dbgeng_attach"></A>dbgeng-attach</H3>
+
+	<P>This launcher allows the user to attach to a local running process. Options are the same as those for the base dbgeng, except for ProcessId and AttachFlags</P>
+
+
+	<H4>Options</H4>
+
+	<UL>
+	    <LI><B>ProcessId</B>: The pid of the process you wish to attach to.</LI>
+
+		<LI><B>AttachFlags</B>: Flags used when attaching to the target process, typically DEBUG_ATTACH_PROCESS(0).  Other possible values
+		are defined in dbgeng.h and determine whether the attach should be invasive or not
+		and the status of the process after attaching.</LI>
+
+	  </UL>
+
+	  
+	  <H3><A name="dbgeng_remote"></A>dbgeng-remote</H3>
+
+	  <P>This launcher extends the base dbgeng launcher adding an option for connecting through a remote process server.
+	  </P>
+
+
+	  <H4>Options</H4>
+
+	  <UL>
+		<LI><B>Connection</B>: This is the connection string specifying the transport options for
+		communicating with the remote server. A typical example might be 'tcp:port=12345,server=192.168.0.2''
+		for a process server launched on the machine at 192.168.0.2 using:
+<PRE>
+dbgsrv -t tcp:port=12345
+</PRE>
+		</LI>
+	  </UL>
+
+	    
+	  <H3><A name="dbgeng_kernel"></A>dbgeng-kernel</H3>
+
+	  <P>This version of the dbgeng should be used for kernel-debugging of a remote machine. Options are the
+		same as the base dbgeng, except for the connection-string arguments. For remote
+		debugging, the target machine should be booted with the appropriate options, set using BCDEDIT or the
+		equivalent, such as:
+	  </P>
+	  <UL style='list-style-type: none'><LI>
+<PRE>
+bcdedit /debug ON
+bdcedit /dbgsettings NET HOSTIP:IP PORT:54321 KEY:1.1.1.1
+</PRE>
+	  </LI></UL>
+	  <P>
+		where IP= the address of the machine runing Ghidra.
+	  </P>
+
+	  <H4>Options</H4>
+
+	  <UL>
+	    <LI><B>Arguments</B>: This is the connection string specifying the transport options for
+		communicating with the remote target. A typical example might be 'net:port=54321,key=1.1.1.1'.'
+		</LI>
+	  </UL>
+
+	    
     <H3><A name="dbgeng_ttd"></A>TTD (Time-Travel Debugging)</H3>
 
     <P>This is a nascent extension to our launcher for the Windows Debugger. The launcher itself

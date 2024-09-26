@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -152,7 +152,7 @@ configurations {
 }
 
 dependencies {
-	jsondoc project('JsonDoclet')
+	jsondoc project('Doclets')
 }
 
  
@@ -165,8 +165,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	destinationDir file(ROOT_PROJECT_DIR + "/build/tmp/jsondoc")
 	
 	failOnError false
-		
-	
+
 	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
 	// find referenced classes.
 	classpath =  rootProject.ext.ghidraPath
@@ -178,7 +177,6 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	//	apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 	//
 	
-
 	// Generate at package level because user may try to get help directly on an object they have 
 	// rather than its public interface.
 	options.addBooleanOption("package", true)
@@ -190,7 +188,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Some internal packages are not public and need to be exported.
 	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
 
-	options.doclet = "JsonDoclet"
+	options.doclet = "ghidra.doclets.json.JsonDoclet"
 	doFirst {
 		options.docletpath = new ArrayList(configurations.jsondoc.files)
 	}
@@ -347,14 +345,6 @@ task assembleDistribution (type: Copy) {
 	}
 	
 	/////////////////////////////////
-	// Distro native build support
-	/////////////////////////////////
-	from (ROOT_PROJECT_DIR + "/GPL") {
-		include "settings.gradle"
-		into "Ghidra"
-	}
-	
-	/////////////////////////////////
 	// Eclipse formatters
 	/////////////////////////////////
 	from (ROOT_PROJECT_DIR + "/eclipse") {
@@ -400,7 +390,6 @@ project.PLATFORMS.each { platform ->
 		// Make sure that we don't try to copy the same file with the same path into the
 		// zip (this can happen!)
 		duplicatesStrategy 'exclude'
-			
 	}
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -480,32 +480,23 @@ public abstract class TypeProgramInterface implements TPI {
 
 		/**
 		 * Dumps the this {@link TypeProgramInterfaceHash}.  This method is for debugging only
-		 * @return {@link String} of pretty output
+		 * @param writer the writer
+		 * @throws IOException upon issue with writing to the writer
 		 */
-		protected String dump() {
-			StringBuilder builder = new StringBuilder();
-			builder.append("Hash--------------------------------------------------------");
-			builder.append("\nhashStreamNumber: ");
-			builder.append(hashStreamNumber);
-			builder.append("\nhashStreamNumberAuxiliary: ");
-			builder.append(hashStreamNumberAuxiliary);
-			builder.append("\nhashKeySize: ");
-			builder.append(hashKeySize);
-			builder.append("\nnumHashBins: ");
-			builder.append(numHashBins);
-			builder.append("\noffsetHashVals: ");
-			builder.append(offsetHashVals);
-			builder.append("\nlengthHashVals: ");
-			builder.append(lengthHashVals);
-			builder.append("\noffsetTypeIndexOffsetPairs: ");
-			builder.append(offsetTypeIndexOffsetPairs);
-			builder.append("\nlengthTypeIndexOffsetPairs: ");
-			builder.append(lengthTypeIndexOffsetPairs);
-			builder.append("\noffsetHashAdjustment: ");
-			builder.append(offsetHashAdjustment);
-			builder.append("\nlengthHashAdjustment: ");
-			builder.append(lengthHashAdjustment);
-			return builder.toString();
+		void dump(Writer writer) throws IOException {
+			PdbReaderUtils.dumpHead(writer, this);
+			writer.write("\nhashStreamNumber: " + hashStreamNumber);
+			writer.write("\nhashStreamNumberAuxiliary: " + hashStreamNumberAuxiliary);
+			writer.write("\nhashKeySize: " + hashKeySize);
+			writer.write("\nnumHashBins: " + numHashBins);
+			writer.write("\noffsetHashVals: " + offsetHashVals);
+			writer.write("\nlengthHashVals: " + lengthHashVals);
+			writer.write("\noffsetTypeIndexOffsetPairs: " + offsetTypeIndexOffsetPairs);
+			writer.write("\nlengthTypeIndexOffsetPairs: " + lengthTypeIndexOffsetPairs);
+			writer.write("\noffsetHashAdjustment: " + offsetHashAdjustment);
+			writer.write("\nlengthHashAdjustment: " + lengthHashAdjustment);
+			writer.write("\n");
+			PdbReaderUtils.dumpTail(writer, this);
 		}
 	}
 

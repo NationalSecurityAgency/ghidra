@@ -16,6 +16,7 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.File;
+import java.util.Objects;
 
 /**
  * {@link GFile} implementation that refers to a real java.io.File on the local
@@ -85,11 +86,6 @@ public class GFileLocal implements GFile {
 		return f.length();
 	}
 
-	@Override
-	public long getLastModified() {
-		return f.lastModified();
-	}
-
 	public File getLocalFile() {
 		return f;
 	}
@@ -97,6 +93,25 @@ public class GFileLocal implements GFile {
 	@Override
 	public String toString() {
 		return "Local " + f.toString() + " with path " + path;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(f, fs, fsrl, parent, path);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof GFileLocal)) {
+			return false;
+		}
+		GFileLocal other = (GFileLocal) obj;
+		return Objects.equals(f, other.f) && Objects.equals(fs, other.fs) &&
+			Objects.equals(fsrl, other.fsrl) && Objects.equals(parent, other.parent) &&
+			Objects.equals(path, other.path);
 	}
 
 }

@@ -40,8 +40,7 @@ import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.filter.FilterTextField;
-import docking.widgets.table.GDynamicColumnTableModel;
-import docking.widgets.table.RowObjectTableModel;
+import docking.widgets.table.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -78,7 +77,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected ConsoleService console;
 
 	protected Program program;
-	protected DraggableScriptTable scriptTable;
+	protected GTable scriptTable;
 	protected JTextPane consoleTextPane;
 	protected GhidraScriptEditorComponentProvider editor;
 	protected JTextArea editorTextArea;
@@ -125,8 +124,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			(JTextPane) findComponentByName(consoleProvider.getComponent(), "Console Text Pane");
 		assertNotNull(consoleTextPane);
 
-		scriptTable =
-			(DraggableScriptTable) findComponentByName(provider.getComponent(), "Scripts Table");
+		scriptTable = (GTable) findComponentByName(provider.getComponent(), "Scripts Table");
 		assertNotNull(scriptTable);
 
 		clearConsole();

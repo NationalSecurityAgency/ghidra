@@ -16,8 +16,6 @@
 package ghidra.app.util.dialog;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
@@ -31,6 +29,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.remote.User;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 
 /**
  * 
@@ -50,22 +49,16 @@ public class CheckoutDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "FileNotCheckedOut"));
 
 		JButton checkoutButton = new JButton("Yes");
-		checkoutButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				actionID = CHECKOUT;
-				close();
-			}
+		checkoutButton.addActionListener(e -> {
+			actionID = CHECKOUT;
+			close();
 		});
 		addButton(checkoutButton);
 
 		JButton noCheckoutButton = new JButton("No");
-		noCheckoutButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				actionID = DO_NOT_CHECKOUT;
-				close();
-			}
+		noCheckoutButton.addActionListener(e -> {
+			actionID = DO_NOT_CHECKOUT;
+			close();
 		});
 		addButton(noCheckoutButton);
 
@@ -76,21 +69,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 	 * @return OK, or CANCEL
 	 */
 	public int showDialog() {
-		if (SwingUtilities.isEventDispatchThread()) {
-			DockingWindowManager.showDialog(null, CheckoutDialog.this);
-		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(new Runnable() {
-					@Override
-					public void run() {
-						DockingWindowManager.showDialog(null, CheckoutDialog.this);
-					}
-				});
-			}
-			catch (Exception e) {
-			}
-		}
+		Swing.runNow(() -> DockingWindowManager.showDialog(null, CheckoutDialog.this));
 		return actionID;
 	}
 
@@ -123,12 +102,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 			if (user.hasWritePermission()) {
 				final JCheckBox exclusiveCB = new GCheckBox("Request exclusive check out");
 				exclusiveCB.setSelected(false);
-				exclusiveCB.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						exclusiveCheckout = exclusiveCB.isSelected();
-					}
-				});
+				exclusiveCB.addActionListener(e -> exclusiveCheckout = exclusiveCB.isSelected());
 				JPanel cbPanel = new JPanel(new BorderLayout());
 				cbPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 				cbPanel.add(exclusiveCB);

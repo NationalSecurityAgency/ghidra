@@ -26,6 +26,7 @@ import javax.swing.border.TitledBorder;
 
 import org.junit.*;
 
+import docking.widgets.TitledPanel;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import generic.test.TestUtils;
 import generic.theme.GThemeDefaults.Colors.Palette;
@@ -34,7 +35,6 @@ import ghidra.app.merge.*;
 import ghidra.app.merge.listing.*;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.app.util.viewer.util.TitledPanel;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;

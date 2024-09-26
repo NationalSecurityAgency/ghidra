@@ -51,6 +51,19 @@ public enum LafType {
 	}
 
 	/**
+	 * Gets the preferred display string for this type.
+	 * @return the preferred display string.
+	 */
+	public String getDisplayString() {
+		if (this == MOTIF) {
+			// The name is "CDE/Motif"; Update to be consistent with other dialogs, like the theme
+			// switcher dialog
+			return "Motif";
+		}
+		return name;
+	}
+
+	/**
 	 * Returns the name of this LafType.
 	 * @return the name of this LafType.
 	 */
@@ -154,6 +167,6 @@ public enum LafType {
 
 	@Override
 	public String toString() {
-		return getName();
+		return getDisplayString();
 	}
 }

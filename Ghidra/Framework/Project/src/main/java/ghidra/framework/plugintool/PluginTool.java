@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1197,13 +1197,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Closes this tool, possibly with input from the user. The following conditions are checked
 	 * and can prompt the user for more info and allow them to cancel the close.
 	 * <OL>
-	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.
+	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.</LI>
 	 *  <LI>Plugins get asked if they can be closed. They may prompt the user to resolve
-	 *  some plugin specific state.
-	 * 	<LI>The user is prompted to save any data changes.
+	 *  some plugin specific state.</LI>
+	 * 	<LI>The user is prompted to save any data changes.</LI>
 	 * 	<LI>Tools are saved, possibly asking the user to resolve any conflicts caused by
-	 *  changing multiple instances of the same tool in different ways.
-	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.
+	 *  changing multiple instances of the same tool in different ways.</LI>
+	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.</LI>
 	 * </OL>
 	 */
 	@Override
@@ -1462,22 +1462,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	void removeEventListener(String className) {
 		eventMgr.removeEventListener(className);
-	}
-
-	/**
-	 * Display an text edit box on top of the specified component.
-	 * @param defaultText initial text to be displayed in edit box
-	 * @param comp component over which the edit box will be placed
-	 * @param rect specifies the bounds of the edit box relative to the
-	 * component.  The height is ignored.  The default text field height
-	 * is used as the preferred height.
-	 * @param listener when the edit is complete, this listener is notified
-	 * with the new text.  The edit box is dismissed prior to notifying
-	 * the listener.
-	 */
-	public void showEditWindow(String defaultText, Component comp, Rectangle rect,
-			EditListener listener) {
-		winMgr.showEditWindow(defaultText, comp, rect, listener);
 	}
 
 	/**

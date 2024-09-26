@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +63,14 @@ public class GhidraModuleUtils {
 	}
 
 	/**
+	 * Stores a source folder and its corresponding output folder
+	 * 
+	 * @param sourceFolder The source folder
+	 * @param outputFolder The output folder
+	 */
+	private record SourceFolderInfo(IFolder sourceFolder, IFolder outputFolder) {}
+
+	/**
 	 * Creates a new Ghidra module project with the given name.
 	 * 
 	 * @param projectName The name of the project to create.
@@ -90,20 +98,27 @@ public class GhidraModuleUtils {
 		IProject project = javaProject.getProject();
 
 		// Create source directories
-		List<IFolder> sourceFolders = new ArrayList<>();
-		sourceFolders.add(project.getFolder("src/main/java"));
-		sourceFolders.add(project.getFolder("src/main/help"));
-		sourceFolders.add(project.getFolder("src/main/resources"));
-		sourceFolders.add(project.getFolder("src/test/java"));
-		sourceFolders.add(project.getFolder("ghidra_scripts"));
-		for (IFolder sourceFolder : sourceFolders) {
-			GhidraProjectUtils.createFolder(sourceFolder, monitor);
+		List<SourceFolderInfo> sourceFolderInfos = new ArrayList<>();
+		sourceFolderInfos.add(new SourceFolderInfo(project.getFolder("src/main/java"),
+			project.getFolder("bin/main")));
+		sourceFolderInfos.add(new SourceFolderInfo(project.getFolder("src/main/help"),
+			project.getFolder("bin/main")));
+		sourceFolderInfos.add(new SourceFolderInfo(project.getFolder("src/main/resources"),
+			project.getFolder("bin/main")));
+		sourceFolderInfos.add(new SourceFolderInfo(project.getFolder("src/test/java"),
+			project.getFolder("bin/test")));
+		sourceFolderInfos.add(new SourceFolderInfo(project.getFolder("ghidra_scripts"),
+			project.getFolder("bin/scripts")));
+		for (SourceFolderInfo sourceFolderInfo : sourceFolderInfos) {
+			GhidraProjectUtils.createFolder(sourceFolderInfo.sourceFolder(), monitor);
 		}
 
 		// Put the source directories in the project's classpath
 		List<IClasspathEntry> classpathEntries = new LinkedList<>();
-		for (IFolder sourceFolder : sourceFolders) {
-			classpathEntries.add(JavaCore.newSourceEntry(sourceFolder.getFullPath()));
+		for (SourceFolderInfo sourceFolderInfo : sourceFolderInfos) {
+			classpathEntries
+					.add(JavaCore.newSourceEntry(sourceFolderInfo.sourceFolder().getFullPath(),
+						new IPath[0], sourceFolderInfo.outputFolder().getFullPath()));
 		}
 		GhidraProjectUtils.addToClasspath(javaProject, classpathEntries, monitor);
 
@@ -162,6 +177,11 @@ public class GhidraModuleUtils {
 				return excludeRegexes.stream().map(r -> Pattern.compile(r)).noneMatch(
 					p -> p.matcher(f.getName()).matches());
 			}, null);
+			File buildTemplateGradleFile = new File(projectDir, "buildTemplate.gradle");
+			File buildGradleFile = new File(projectDir, "build.gradle");
+			if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
+				throw new IOException("Failed to rename: " + buildTemplateGradleFile);
+			}
 		}
 		catch (CancelledException | IOException e) {
 			throw new IOException("Failed to copy skeleton directory: " + projectDir);

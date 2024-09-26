@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,22 +25,30 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ghidra.net.HttpClients;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
+import pdb.symbolserver.SymbolServer.MutableTrust;
 
 /**
  * A {@link SymbolServer} that is accessed via HTTP.
  * <p>
  * 
  */
-public class HttpSymbolServer extends AbstractSymbolServer {
+public class HttpSymbolServer extends AbstractSymbolServer implements MutableTrust {
 	private static final String GHIDRA_USER_AGENT = "Ghidra_HttpSymbolServer_client";
 	private static final int HTTP_STATUS_OK = HttpURLConnection.HTTP_OK;
 	private static final int HTTP_REQUEST_TIMEOUT_MS = 10 * 1000; // 10 seconds
+
+	/**
+	 * pattern to match an optional "!" in front of a typical url string
+	 */
+	private static final Pattern NAMEPAT = Pattern.compile("(\\!?)(http(s?)://.*)");
 
 	/**
 	 * Predicate that tests if the location string is an instance of a HttpSymbolServer location.
@@ -49,10 +57,48 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 	 * @return boolean true if the string should be handled by the HttpSymbolServer class 
 	 */
 	public static boolean isHttpSymbolServerLocation(String locationString) {
-		return locationString.startsWith("http://") || locationString.startsWith("https://");
+		return NAMEPAT.matcher(locationString).matches();
+	}
+
+	/**
+	 * Creates a new HttpSymbolServer instance from a locationString.
+	 * 
+	 * @param locationString string previously returned by {@link #getName()}
+	 * @param context {@link SymbolServerInstanceCreatorContext} 
+	 * @return new instance
+	 */
+	public static SymbolServer createInstance(String locationString,
+			SymbolServerInstanceCreatorContext context) {
+		Matcher m = NAMEPAT.matcher(locationString);
+		if (!m.matches()) {
+			return null;
+		}
+		boolean isTrusted = "!".equals(m.group(1));
+		String url = m.group(2);
+		return new HttpSymbolServer(URI.create(url), isTrusted);
+	}
+
+	/**
+	 * Create a trusted http symbol server
+	 * 
+	 * @param url string url
+	 * @return new {@link HttpSymbolServer} instance
+	 */
+	public static HttpSymbolServer createTrusted(String url) {
+		return new HttpSymbolServer(URI.create(url), true);
+	}
+
+	/**
+	 * Create an untrusted http symbol server
+	 * @param url string url
+	 * @return new {@link HttpSymbolServer} instance
+	 */
+	public static HttpSymbolServer createUntrusted(String url) {
+		return new HttpSymbolServer(URI.create(url), false);
 	}
 
 	private final URI serverURI;
+	private boolean trusted;
 
 	/**
 	 * Creates a new instance of a HttpSymbolServer.
@@ -60,13 +106,29 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 	 * @param serverURI URI / URL of the symbol server 
 	 */
 	public HttpSymbolServer(URI serverURI) {
+		this(serverURI, false);
+	}
+
+	/**
+	 * Creates a new instance of a HttpSymbolServer.
+	 * 
+	 * @param serverURI URI / URL of the symbol server 
+	 * @param isTrusted flag, if true the the http server can be trusted when querying and downloading
+	 */
+	public HttpSymbolServer(URI serverURI, boolean isTrusted) {
 		String path = serverURI.getPath();
 		this.serverURI =
 			path.endsWith("/") ? serverURI : serverURI.resolve(serverURI.getPath() + "/");
+		this.trusted = isTrusted;
 	}
 
 	@Override
 	public String getName() {
+		return (trusted ? "!" : "") + serverURI.toString();
+	}
+
+	@Override
+	public String getDescriptiveName() {
 		return serverURI.toString();
 	}
 
@@ -170,14 +232,19 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 	}
 
 	@Override
-	public boolean isLocal() {
-		return false;
+	public boolean isTrusted() {
+		return trusted;
+	}
+
+	@Override
+	public void setTrusted(boolean isTrusted) {
+		this.trusted = isTrusted;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("HttpSymbolServer: [ url: %s, storageLevel: %d]", serverURI.toString(),
-			storageLevel);
+		return String.format("HttpSymbolServer: [ url: %s, trusted: %b, storageLevel: %d]",
+			serverURI.toString(), trusted, storageLevel);
 	}
 
 	private String logPrefix() {

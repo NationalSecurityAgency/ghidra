@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,11 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.*;
+import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
@@ -27,6 +30,8 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class CompEditorModel extends CompositeEditorModel {
+
+	private volatile boolean consideringReplacedDataType = false;
 
 	/**
 	 * Creates a model for editing a composite data type.
@@ -38,8 +43,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	@Override
 	public boolean hasChanges() {
-		DataTypeManager originalDTM = getOriginalDataTypeManager();
-		if ((originalDTM != null) && !originalDTM.contains(originalComposite)) {
+		if (originalDTM != null && !originalDTM.contains(originalComposite)) {
 			return true;
 		}
 		return super.hasChanges();
@@ -54,20 +58,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		super.load(dataType);
 		fixSelection();
 		selectionChanged();
-	}
-
-	/**
-	 *  Returns the current dataType name (Structure or Union) as a string.
-	 */
-	@Override
-	protected String getTypeName() {
-		if (viewComposite instanceof Structure) {
-			return "Structure";
-		}
-		else if (viewComposite instanceof Union) {
-			return "Union";
-		}
-		return super.getTypeName();
 	}
 
 	/**
@@ -87,19 +77,27 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		FieldSelection saveSelection = new FieldSelection(selection);
 		Composite originalDt = getOriginalComposite();
-		DataTypeManager originalDTM = getOriginalDataTypeManager();
 		if (originalDt == null || originalDTM == null) {
 			throw new IllegalStateException(
 				"Can't apply edits without a data type or data type manager.");
 		}
-		int transactionID = originalDTM.startTransaction("Edit " + getCompositeName());
+		boolean originalDtExists = originalDTM.contains(originalDt);
+		boolean renamed = false;
+		if (originalDtExists) {
+			String origName = originalDt.getName();
+			String editName = getCompositeName();
+			renamed = !origName.equals(editName);
+		}
+		String action = originalDtExists ? "Edit" : "Create";
+		if (renamed) {
+			action += "/Rename";
+		}
+		int transactionID = originalDTM.startTransaction(action + " " + getTypeName());
 		try {
-			if (originalDTM.contains(originalDt)) {
-
+			if (originalDtExists) {
 				// Update the original structure.
-				String origName = originalDt.getName();
-				String editName = getCompositeName();
-				if (!origName.equals(editName)) {
+				if (renamed) {
+					String editName = getCompositeName();
 					try {
 						originalDt.setName(editName);
 					}
@@ -127,7 +125,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		finally {
 			provider.updateTitle();
-//			selection = saveSelection;
 			setSelection(saveSelection);
 			originalDTM.endTransaction(transactionID, true);
 		}
@@ -250,15 +247,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		return true;
 	}
 
-	protected void setDataType(int rowIndex, DataType dt, int length) throws UsrException {
-		if (rowIndex < getNumComponents()) {
-			replace(rowIndex, dt, length);
-		}
-		else {
-			insert(rowIndex, dt, length);
-		}
-	}
-
 	@Override
 	public DataTypeInstance validateComponentDataType(int rowIndex, String dtString)
 			throws UsrException {
@@ -283,11 +271,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public boolean isClearAllowed() {
 		return (getNumSelectedRows() > 0) && !isBlankLastLineSelected();
-	}
-
-	@Override
-	public boolean isCycleAllowed(CycleGroup cycleGroup) {
-		return (getNumSelectedRows() == 1);
 	}
 
 	public boolean isInsertAllowed(DataType dataType) {
@@ -333,9 +316,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	private void doDelete(int componentOrdinal) {
-		viewComposite.delete(componentOrdinal);
-		if (componentOrdinal < row) {
-			row--;
+		viewDTM.withTransaction("Delete Component", () -> {
+			viewComposite.delete(componentOrdinal);
+		});
+		if (componentOrdinal < currentEditRow) {
+			currentEditRow--;
 		}
 	}
 
@@ -358,13 +343,13 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		for (int i = n - 1; i >= 0; i--) {
 			int rowIndex = rows[i];
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
-			if (componentOrdinal < row) {
-				row--;
+			if (componentOrdinal < currentEditRow) {
+				currentEditRow--;
 			}
 			rowSet.add(componentOrdinal);
 		}
 
-		viewComposite.delete(rowSet);
+		viewDTM.withTransaction("Delete Components", () -> viewComposite.delete(rowSet));
 
 		// Not sure if this is the right behavior.  Assuming the deleted rows were selected,
 		// restore the selection to be the first row that was deleted so that the UI leaves the
@@ -417,14 +402,14 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			monitor.checkCancelled();
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
 			ordinals.add(componentOrdinal);
-			if (componentOrdinal < row) {
-				row--;
+			if (componentOrdinal < currentEditRow) {
+				currentEditRow--;
 			}
 			selection.removeRange(componentOrdinal, componentOrdinal + 1);
 			adjustSelection(componentOrdinal + 1, -1);
 			monitor.incrementProgress(1);
 		}
-		viewComposite.delete(ordinals);
+		viewDTM.withTransaction("Delete Components", () -> viewComposite.delete(ordinals));
 		fixSelection();
 		componentEdited();
 		notifyCompositeChanged();
@@ -602,14 +587,22 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	@Override
 	public DataTypeComponent add(int rowIndex, DataType dt) throws UsrException {
-		dt = viewDTM.resolve(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-		try {
-			DataTypeInstance dti = getDropDataType(rowIndex, dt);
-			return add(rowIndex, dti.getDataType(), dti.getLength());
-		}
-		catch (CancelledException e) {
-			return null;
-		}
+		String descr = rowIndex < getNumComponents() ? "Replace Component" : "Add Component";
+		DataTypeComponent dtc = viewDTM.withTransaction(descr, () -> {
+			DataType resolvedDt = viewDTM.resolve(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
+			try {
+				DataTypeInstance dti = getDropDataType(rowIndex, resolvedDt);
+				return add(rowIndex, dti.getDataType(), dti.getLength()); // add or replace
+			}
+			catch (CancelledException e) {
+				return null;
+			}
+		});
+		
+		fixSelection();
+		componentEdited();
+		selectionChanged();
+		return dtc;
 	}
 
 	/**
@@ -619,28 +612,32 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @param rowIndex the index of the row where the data type should be added.
 	 * @param dt the data type to add
-	 *
-	 * @return true if the component is added, false if it doesn't.
+	 * @param dtLength datatype instance length
+	 * @return the component is added, null if it doesn't.
 	 * @throws UsrException if add fails
 	 */
 	@Override
 	public DataTypeComponent add(int rowIndex, DataType dt, int dtLength) throws UsrException {
 		DataTypeComponent dtc = null;
 		if (rowIndex < getNumComponents()) {
-			FieldRange range = getSelectedRangeContaining(rowIndex);
-			if ((range == null) ||
-				(range.getStart().getIndex().intValue() == range.getEnd().getIndex().intValue() -
-					1)) {
-				dtc = replace(rowIndex, dt, dtLength);
-			}
-			else {
-				dtc = replaceComponentRange(range.getStart().getIndex().intValue(),
+			dtc = viewDTM.withTransaction("Replace Component", () -> {
+				FieldRange range = getSelectedRangeContaining(rowIndex);
+				if ((range == null) || (range.getStart()
+						.getIndex()
+						.intValue() == range.getEnd().getIndex().intValue() - 1)) {
+					return replace(rowIndex, dt, dtLength);
+				}
+				return replaceComponentRange(range.getStart().getIndex().intValue(),
 					range.getEnd().getIndex().intValue() - 1, dt, dtLength);
-			}
+			});
 		}
 		else {
-			dtc = insert(rowIndex, dt, dtLength);
+			dtc = viewDTM.withTransaction("Add Component", () -> insert(rowIndex, dt, dtLength));
 		}
+
+		fixSelection();
+		componentEdited();
+		selectionChanged();
 		return dtc;
 	}
 
@@ -659,29 +656,28 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param rowIndex the index of row where the data type should be replaced.
 	 * @param dt the new data type
 	 *
-	 * @return true if the component is added, false if it doesn't.
-	 * @throws UsrException if add fails
+	 * @return component added, null or exception if it does not
+	 * @throws UsrException if add error occurs
 	 */
 	public DataTypeComponent replace(int rowIndex, DataType dt) throws UsrException {
-		DataTypeInstance dti =
-			DataTypeHelper.getFixedLength(this, rowIndex, dt, usesAlignedLengthComponents());
-		if (dti == null) {
-			return null; // User cancelled from size dialog.
-		}
-		DataTypeComponent dtc = null;
-		if (rowIndex < getNumComponents()) {
-			FieldRange range = getSelectedRangeContaining(rowIndex);
-			if ((range == null) ||
-				(range.getStart().getIndex().intValue() == range.getEnd().getIndex().intValue() -
-					1)) {
-				dtc = replace(rowIndex, dti.getDataType(), dti.getLength());
+		return viewDTM.withTransaction("Replace Component", () -> {
+			DataTypeInstance dti =
+				DataTypeHelper.getFixedLength(this, rowIndex, dt, usesAlignedLengthComponents());
+			if (dti == null) {
+				return null; // User cancelled from size dialog.
 			}
-			else {
-				dtc = replaceComponentRange(range.getStart().getIndex().intValue(),
+			if (rowIndex < getNumComponents()) {
+				FieldRange range = getSelectedRangeContaining(rowIndex);
+				if ((range == null) || (range.getStart()
+						.getIndex()
+						.intValue() == range.getEnd().getIndex().intValue() - 1)) {
+					return replace(rowIndex, dti.getDataType(), dti.getLength());
+				}
+				return replaceComponentRange(range.getStart().getIndex().intValue(),
 					range.getEnd().getIndex().intValue() - 1, dti.getDataType(), dti.getLength());
 			}
-		}
-		return dtc;
+			return null;
+		});
 	}
 
 	/**
@@ -737,7 +733,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		// Get the current data type at the index.
 		DataTypeComponent oldDtc = getComponent(rowIndex);
 		if (oldDtc == null) {
-			// TODO should this throw exception instead?
 			return null;
 		}
 
@@ -748,10 +743,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int sizeDiff = newCompSize - oldCompSize;
 
 		// New one is larger so check to make sure it will fit.
-		if (sizeDiff > 0) {
-			if (!checkForReplace(rowIndex, datatype)) {
-				throw new InvalidDataTypeException(datatype.getDisplayName() + " doesn't fit.");
-			}
+		if (!isAtEnd(rowIndex) && sizeDiff > 0) {
+			checkForReplace(rowIndex, datatype, newCompSize);
 		}
 
 		// Replace the component at index.
@@ -826,39 +819,82 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @param rowIndex index of the row (component).
 	 * @param datatype the type
-	 * @return true if the replace is allowed
+	 * @param length component length
+	 * @throws InvalidDataTypeException if check fails
 	 */
-	boolean checkForReplace(int rowIndex, DataType datatype) {
+	private void checkForReplace(int rowIndex, DataType datatype, int length) throws InvalidDataTypeException {
 		DataTypeComponent dtc = getComponent(rowIndex);
 		if (dtc == null) {
-			return false;
+			throw new InvalidDataTypeException("Invalid component selection");
 		}
-		if (!isShowingUndefinedBytes()) {
-			return true;
+		if (!(viewComposite instanceof Structure struct)) {
+			return;
 		}
+		if (struct.isPackingEnabled()) {
+			return;
+		}
+		if (isAtEnd(rowIndex)) {
+			return;
+		}
+
 		// Does the new data type fit by replacing the component at index.
 
 		// Get the current data type at the index.
-		DataTypeComponent comp = getComponent(rowIndex);
-		int currentCompSize = comp.getLength();
-		int newCompSize = datatype.getLength();
+		int currentCompSize = dtc.getLength();
+		int newCompSize = length;
 		int sizeDiff = newCompSize - currentCompSize;
-		int numUndefs = 0;
-
-		// New one is larger.
-		if (sizeDiff > 0) {
-			if (isAtEnd(rowIndex) || onlyUndefinedsUntilEnd(rowIndex + 1)) {
-				return true;
-			}
-			// structure needs to have enough undefined bytes or replace fails.
-			numUndefs = getNumUndefinedBytesAt(rowIndex + 1);
+		
+		if (sizeDiff <= 0) {
+			return;
 		}
-
-		return (sizeDiff <= numUndefs);
+		
+		int undefinedSpaceAvail = getNumUndefinedBytesAfter(dtc);
+		if (sizeDiff > undefinedSpaceAvail) {
+			int spaceNeeded = sizeDiff - undefinedSpaceAvail;
+			String msg = newCompSize + " byte replacement at 0x" + Integer.toHexString(dtc.getOffset());
+			if (struct.getDefinedComponentAtOrAfterOffset(dtc.getOffset() + 1) == null) {
+				// suggest growing structure
+				int suggestedSize = getLength() + spaceNeeded;
+				throw new InvalidDataTypeException(msg + " requires structure length of " + suggestedSize + "-bytes.");
+			}
+			// suggest insert bytes (NOTE: in the future a conflict removal/grow could be offered)
+			throw new InvalidDataTypeException(msg + " requires " + spaceNeeded + " additional undefined bytes.");
+		}
+	}
+	
+	/**
+	 * Get the number of undefined bytes after the specified component.
+	 * The viewComposite must be a non-packed structure.
+	 * @param dtc datatype component
+	 * @return number of undefined bytes after non-packed structure component or -1 if no additional
+	 * defined components exist which will impead component growth or placement. 
+	 */
+	protected final int getNumUndefinedBytesAfter(DataTypeComponent dtc) {
+		if (!isShowingUndefinedBytes()) {
+			throw new UnsupportedOperationException();
+		}
+		if (!(viewComposite instanceof Structure struct)) {
+			throw new UnsupportedOperationException();
+		}
+		if (struct.isPackingEnabled()) {
+			throw new UnsupportedOperationException();
+		}
+		
+		// TODO: May  need special logic if dtc is zero-length component
+		int length = getLength();
+		int nextCompOffset = dtc.getEndOffset() + 1;
+		if (nextCompOffset >= length) {
+			return 0;
+		}
+		DataTypeComponent nextDefinedDtc = struct.getDefinedComponentAtOrAfterOffset(nextCompOffset);
+		int nextDefinedOffset = (nextDefinedDtc == null) ? length : nextDefinedDtc.getOffset();
+		return Math.max(0,  nextDefinedOffset - nextCompOffset); // prevent negative return value
 	}
 
 	/**
 	 * Replaces the components of the original structure with those of the edited one.
+	 * Transaction must already be started on the {@link #getOriginalDataTypeManager()
+	 * original datatype manager}.
 	 */
 	protected abstract void replaceOriginalComponents();
 
@@ -997,9 +1033,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public abstract void clearComponents(int[] rows) throws UsrException;
-
-	@Override
 	protected void createArray(int numElements) throws InvalidDataTypeException, UsrException {
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create arrays on a contiguous selection.");
@@ -1017,43 +1050,16 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		DataType dt = comp.getDataType();
 
 		ArrayDataType array = new ArrayDataType(dt, numElements, comp.getLength(), viewDTM);
-
-		if (getNumSelectedComponentRows() > 1) {
-			replaceComponentRange(rowIndex,
-				selection.getFieldRange(0).getEnd().getIndex().intValue() - 1, array,
-				array.getLength());
-		}
-		else {
-			replace(rowIndex, array, array.getLength()); // Can throw UsrException.
-		}
-	}
-
-	/**
-	 * Returns the number of undefined bytes that are available in the structure
-	 * beginning at the specified row index.
-	 *
-	 * @param rowIndex the index of the row
-	 * @return the number of bytes
-	 */
-	protected int getNumUndefinedBytesAt(int rowIndex) {
-		int numRowComponents = getNumComponents();
-		if (rowIndex < 0 || rowIndex >= numRowComponents) {
-			return 0;
-		}
-		DataTypeComponent startComponent = getComponent(rowIndex);
-		int previousOffset = (startComponent != null) ? startComponent.getOffset() : 0;
-		for (int currentRowIndex =
-			rowIndex; currentRowIndex < numRowComponents; currentRowIndex++) {
-			// Get the current data type at the index.
-			DataTypeComponent comp = getComponent(currentRowIndex);
-			DataType dt = comp.getDataType();
-			int currentOffset = comp.getOffset();
-			if (!dt.equals(DataType.DEFAULT)) {
-				return currentOffset - previousOffset; // Ran into data type other than undefined byte.
+		viewDTM.withTransaction("Create Array", () -> {
+			if (getNumSelectedComponentRows() > 1) {
+				replaceComponentRange(rowIndex,
+					selection.getFieldRange(0).getEnd().getIndex().intValue() - 1, array,
+					array.getLength());
 			}
-		}
-
-		return viewComposite.getLength() - previousOffset;
+			else {
+				replace(rowIndex, array, array.getLength()); // Can throw UsrException.
+			}
+		});
 	}
 
 	/**
@@ -1078,36 +1084,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Determine whether or not there are only undefined data types from the indicated rowIndex
-	 * until the end of the composite. There must be at least one undefined data type to return true.
-	 *
-	 * @param rowIndex the index of the row to begin checking for undefined data types.
-	 * @return true if an undefined data type is at the indicated row index and all components
-	 * from there to the end of the composite are undefined data types.
-	 */
-	protected boolean onlyUndefinedsUntilEnd(int rowIndex) {
-		if (!isShowingUndefinedBytes()) {
-			return false;
-		}
-		int numRowComponents = getNumComponents();
-		if (rowIndex < 0) {
-			return false;
-		}
-		if (rowIndex >= numRowComponents) {
-			return false; // Beyond last component.
-		}
-		for (int i = rowIndex; i < numRowComponents; i++) {
-			// Get the current data type at the index.
-			DataTypeComponent comp = getComponent(i);
-			DataType dt = comp.getDataType();
-			if (!dt.equals(DataType.DEFAULT)) {
-				return false; // Ran into data type other than undefined byte.
-			}
-		}
-		return true;
-	}
-
-	/**
 	 * Cause the component at the specified index to consume undefined bytes
 	 * that follow it.
 	 * Note: this method adjusts the selection.
@@ -1116,7 +1092,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @return the number of Undefined bytes consumed.
 	 */
 	protected int consumeByComponent(int rowIndex) {
-		// TODO FIXME
 		int numComps = viewComposite.getNumComponents();
 		if (rowIndex >= 0 && rowIndex < numComps) {
 			DataTypeComponent comp = viewComposite.getComponent(rowIndex);
@@ -1139,72 +1114,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			}
 		}
 		return 0;
-	}
-
-	/**
-	 *  Consumes the number of undefined bytes requested if they are available.
-	 *
-	 * @param rowIndex index of the row (component).
-	 * @param numDesired the number of Undefined bytes desired.
-	 * @return the number of components removed from the structure when the
-	 * bytes were consumed.
-	 * @throws java.util.NoSuchElementException if the index is invalid.
-	 * @throws InvalidDataTypeException if there aren't enough bytes.
-	 */
-	protected int consumeUndefinedBytes(int rowIndex, int numDesired)
-			throws NoSuchElementException, InvalidDataTypeException {
-		// TODO FIXME
-		if (numDesired <= 0) {
-			return 0;
-		}
-		int numRowComponents = getNumComponents();
-		int numAvailable = getNumUndefinedBytesAt(rowIndex);
-		int numIndicesRemoved = 0;
-		if (numDesired > numAvailable) {
-			throw new InvalidDataTypeException("Not enough undefined bytes."); // don't have enough undefined bytes there.
-		}
-
-		int numBytesNeeded = numDesired;
-		if (rowIndex >= numRowComponents) {
-			throw new NoSuchElementException();
-		}
-
-		for (int i = rowIndex; i < numRowComponents; i++) {
-			// Get the current data type at the index.
-			DataTypeComponent comp = viewComposite.getComponent(rowIndex);
-			DataType dt = comp.getDataType();
-			int compLength = 0;
-			// A single undefined byte.
-			if (dt == DataType.DEFAULT) {
-				compLength = comp.getLength();
-			}
-			else {
-				throw new InvalidDataTypeException("Not enough undefined bytes."); // Ran into data type other than undefined byte.
-			}
-			if (compLength < numBytesNeeded) {
-				// consume all of this undefined bytes data type.
-				numBytesNeeded -= compLength;
-				deleteComponent(rowIndex);
-				numIndicesRemoved++;
-			}
-			else {
-				// Determine number of bytes left over.
-				int leftOverBytes = compLength - numBytesNeeded;
-				deleteComponent(rowIndex);
-				numIndicesRemoved++;
-				if (leftOverBytes == 1) {
-					insert(rowIndex, DataType.DEFAULT, 1, null, null);
-					numIndicesRemoved--;
-				}
-				else if (leftOverBytes > 1) {
-					DataType newDt = new ArrayDataType(DataType.DEFAULT, leftOverBytes, 1, viewDTM);
-					insert(rowIndex, newDt, leftOverBytes, null, null);
-					numIndicesRemoved--;
-				}
-				break; // We're done.
-			}
-		}
-		return numIndicesRemoved;
 	}
 
 	@Override
@@ -1265,13 +1174,15 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if (nameExistsElsewhere(name, rowIndex)) {
 			throw new InvalidNameException("Name \"" + name + "\" already exists.");
 		}
-		try {
-			getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
-			return true;
-		}
-		catch (DuplicateNameException exc) {
-			throw new InvalidNameException(exc.getMessage());
-		}
+		return viewDTM.withTransaction("Set Component Name", () -> {
+			try {
+				getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
+				return true;
+			}
+			catch (DuplicateNameException exc) {
+				throw new InvalidNameException(exc.getMessage());
+			}
+		});
 	}
 
 	@Override
@@ -1287,7 +1198,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return false;
 		}
 
-		getComponent(rowIndex).setComment(newComment);
+		viewDTM.withTransaction("Set Component Comment",
+			() -> getComponent(rowIndex).setComment(comment));
+
 		fireTableCellUpdated(rowIndex, getCommentColumn());
 		componentDataChanged();
 		return true;
@@ -1314,17 +1227,237 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			(selection.getFieldRange(0).getEnd().getIndex().intValue() < getNumComponents()));
 	}
 
+	@Override
+	public void restored(DataTypeManager dataTypeManager) {
+
+		if (originalDTM == null) {
+			// editor unloaded
+			return;
+		}
+
+		if (!originalCompositeExists()) {
+
+			if (originalCompositeId != DataTypeManager.NULL_DATATYPE_ID && !hasChanges) {
+				provider.dispose(); // Close editor
+				return;
+			}
+
+			// NOTE: Removed types will remain if used directly by edited components.
+			if (viewDTM.refreshDBTypesFromOriginal()) {
+				setStatus("Dependency datatypes have changed or been removed");
+			}
+
+			if (originalCompositeId != DataTypeManager.NULL_DATATYPE_ID) {
+				provider.show();
+				// The user has modified the structure so prompt for whether or
+				// not to close the structure.
+				String question = "The " + getOriginType() + " \"" + originalDTM.getName() +
+					"\" has changed and \n" + "\"" + currentName +
+					"\" no longer exists outside the editor.\n" + "Discard edits and close the " +
+					getTypeName() + " editor?";
+				String title = "Close " + getTypeName() + " Editor?";
+				int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
+					provider.getComponent(), title, question);
+				if (response == OptionDialog.YES_OPTION) {
+					provider.dispose(); // Close editor
+					return;
+				}
+
+				reloadFromView();
+
+				return;
+			}
+
+			fireTableDataChanged();
+			componentDataChanged();
+			return;
+		}
+
+		Composite composite = getOriginalComposite();
+		boolean reload = true;
+		if (hasChanges || !viewComposite.isEquivalent(composite)) {
+			hasChanges = true;
+			provider.show();
+			// The user has modified the structure so prompt for whether or
+			// not to reload the structure.
+			String question = "The " + getOriginType() + " \"" + originalDTM.getName() +
+				"\" has been restored.\n" + "\"" + currentName +
+				"\" may have changed outside the editor.\n" + "Discard edits and reload the " +
+				getTypeName() + "?";
+			String title = "Reload " + getTypeName() + " Editor?";
+			int response = OptionDialog
+					.showYesNoDialogWithNoAsDefaultButton(provider.getComponent(), title, question);
+			if (response != OptionDialog.YES_OPTION) {
+				reload = false;
+			}
+		}
+		if (reload) {
+			load(composite); // reload the structure
+			setStatus("Editor reloaded");
+			return;
+		}
+
+		if (viewDTM.refreshDBTypesFromOriginal()) {
+			setStatus("Dependency datatypes have changed or been removed");
+		}
+		fireTableDataChanged();
+		componentDataChanged();
+	}
+
 //==================================================================================================
 // Override CompositeViewerModel CategoryChangeListener methods
 //==================================================================================================
 
 	@Override
+	public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
+
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		DataType dataType = viewDTM.getDataType(path.getCategoryPath(), path.getDataTypeName());
+		if (dataType == null) {
+			return;
+		}
+
+		if (!path.equals(originalDataTypePath)) {
+			DataType dt = viewDTM.getDataType(path);
+			if (dt != null) {
+				if (hasSubDt(viewComposite, path)) {
+					String msg = "Removed sub-component data type \"" + path;
+					setStatus(msg, true);
+				}
+				viewDTM.withTransaction("Removed Dependency", () -> {
+					viewDTM.clearUndoOnChange();
+					viewDTM.remove(dt, TaskMonitor.DUMMY);
+				});
+				fireTableDataChanged();
+				componentDataChanged();
+			}
+			return;
+		}
+
+		if (originalCompositeId == DataTypeManager.NULL_DATATYPE_ID) {
+			return;
+		}
+
+		consideringReplacedDataType = true;
+		try {
+			provider.show();
+			// The user has modified the structure so prompt for whether or
+			// not to close the structure.
+			String question =
+				"The " + getOriginType() + " \"" + originalDTM.getName() + "\" has changed and \n" +
+					"\"" + getCompositeName() + "\" no longer exists outside the editor.\n" +
+					"Discard edits and close the " + getTypeName() + " editor?";
+			String title = "Close " + getTypeName() + " Editor?";
+			int response = OptionDialog
+					.showYesNoDialogWithNoAsDefaultButton(provider.getComponent(), title, question);
+			if (response == OptionDialog.YES_OPTION) {
+				provider.closeComponent(true); // Close editor
+				return;
+			}
+
+			reloadFromView();
+		}
+		finally {
+			consideringReplacedDataType = false;
+		}
+	}
+
+	@Override
+	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		if (!isLoaded()) {
+			return;
+		}
+
+		if (oldPath.getDataTypeName().equals(newPath.getDataTypeName())) {
+			return;
+		}
+
+		String newName = newPath.getDataTypeName();
+		String oldName = oldPath.getDataTypeName();
+
+		// Does the old name match our original name.
+		// Check originalCompositeId to ensure original type is managed
+		if (originalCompositeId != DataTypeManager.NULL_DATATYPE_ID &&
+			oldPath.equals(originalDataTypePath)) {
+			originalDataTypePath = newPath;
+			try {
+				if (viewComposite.getName().equals(oldName)) {
+					setName(newName);
+				}
+			}
+			catch (InvalidNameException | DuplicateNameException e) {
+				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+			}
+			return;
+		}
+
+		// Check for managed datatype changing
+		DataType dt = viewDTM.getDataType(oldPath);
+		if (dt == null) {
+			return;
+		}
+
+		viewDTM.withTransaction("Renamed Dependency", () -> {
+			viewDTM.clearUndoOnChange();
+			try {
+				dt.setName(newPath.getDataTypeName());
+			}
+			catch (InvalidNameException | DuplicateNameException e) {
+				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+			}
+		});
+
+		fireTableDataChanged();
+		componentDataChanged();
+	}
+
+	@Override
+	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		DataType dt = viewDTM.getDataType(oldPath);
+		if (dt == null) {
+			return;
+		}
+
+		try {
+			viewDTM.withTransaction("Moved " + oldPath, () -> {
+				viewDTM.clearUndoOnChange();
+				Category newDtCat = viewDTM.createCategory(newPath.getCategoryPath());
+				newDtCat.moveDataType(dt, null);
+			});
+		}
+		catch (DataTypeDependencyException e) {
+			throw new AssertException(e);
+		}
+
+		if (originalDataTypePath.getDataTypeName().equals(newPath.getDataTypeName()) &&
+			originalDataTypePath.getCategoryPath().equals(oldPath.getCategoryPath())) {
+			originalDataTypePath = newPath;
+			compositeInfoChanged();
+		}
+		else {
+			fireTableDataChanged();
+			componentDataChanged();
+		}
+	}
+
+	@Override
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
 		try {
 
-			DataTypeManager originalDTM = getOriginalDataTypeManager();
-			if (originalDTM == null) {
-				// editor unloaded
+			if (!isLoaded()) {
 				return;
 			}
 
@@ -1338,14 +1471,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				return; // Different DTM than the one for this data type.
 			}
 
-			if (!isLoaded()) {
-				return;
-			}
-
 			// If we don't currently have any modifications that need applying and
 			// the structure in the editor just changed, then show the changed
 			// structure.
-			String oldName = path.getDataTypeName();
 			if (path.equals(originalDataTypePath)) {
 				if (consideringReplacedDataType) {
 					return;
@@ -1359,10 +1487,12 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				}
 				originalIsChanging = true;
 				try {
-					if (hadChanges) {
-						String message = "<html>" + HTMLUtilities.escapeHTML(oldName) +
-							" has changed outside the editor.<br>" + "Discard edits & reload the " +
-							getTypeName() + "?";
+					if (hasChanges) {
+						provider.show();
+						String message = "<html>" +
+							HTMLUtilities.escapeHTML(originalDataTypePath.getDataTypeName()) +
+							" has changed outside the editor.<br>" +
+							"Discard edits and reload the " + getTypeName() + "?";
 						String title = "Reload " + getTypeName() + " Editor?";
 						int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
 							provider.getComponent(), title, message);
@@ -1385,28 +1515,32 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				}
 			}
 			else {
-				DataType viewDt = viewDTM.getDataType(path);
+				// NOTE: There is the risk of a cascade of change notifications resulting in multiple
+				// undo transactions for the viewDTM.  An editor save could generate quite a few with
+				// potentially many types getting changed by one change.
+				DataType changedDt = originalDTM.getDataType(path);
+				if (!(changedDt instanceof DatabaseObject)) {
+					// NOTE: viewDTM only maps view-to-original IDs for DataTypeDB
+					return;
+				}
+				long originalId = originalDTM.getID(changedDt);
+				DataType viewDt = viewDTM.findMyDataTypeFromOriginalID(originalId);
 				if (viewDt == null) {
 					return;
 				}
-				int origDtLen = viewDt.getLength();
-				DataType changedDt = dtm.getDataType(path);
-				if (changedDt != null) {
-					if ((viewDt instanceof Composite) && (changedDt instanceof Composite)) {
-						Composite comp = (Composite) changedDt;
-						Composite origDt = getOriginalComposite();
-						if ((origDt != null) && comp.isPartOf(origDt)) {
-							removeDtFromComponents(comp);
-						}
-
-						((Composite) viewDt)
-								.setDescription(((Composite) changedDt).getDescription());
-					}
-					viewDt = viewDTM.resolve(changedDt, DataTypeConflictHandler.REPLACE_HANDLER);
-					if (origDtLen != viewDt.getLength()) {
-						viewComposite.dataTypeSizeChanged(viewDt);
-					}
+				try {
+					viewDTM.withTransaction("Changed " + path, () -> {
+						viewDTM.clearUndoOnChange();
+						viewDTM.replaceDataType(viewDt, changedDt, true);
+					});
 				}
+				catch (DataTypeDependencyException e) {
+					throw new AssertException(e);
+				}
+
+				// Clear undo/redo stack to avoid inconsistency with originalDTM
+				viewDTM.clearUndo();
+
 				fireTableDataChanged();
 				componentDataChanged();
 			}
@@ -1416,13 +1550,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 	}
 
-	private volatile boolean consideringReplacedDataType = false;
-
 	@Override
 	public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath,
 			DataType newDataType) {
 
-		DataTypeManager originalDTM = getOriginalDataTypeManager();
 		if (dtm != originalDTM) {
 			return; // Different DTM than the one for this data type.
 		}
@@ -1431,64 +1562,64 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return;
 		}
 
-		String dtName = oldPath.getDataTypeName();
-		DataTypePath dtPath = new DataTypePath(newDataType.getCategoryPath(), dtName);
-		if (!dtPath.equals(originalDataTypePath)) {
-			DataType dt = viewDTM.getDataType(dtPath);
+		if (!oldPath.equals(originalDataTypePath)) {
+			// Check for type which may be referenced by viewComposite
+			DataType dt = viewDTM.getDataType(oldPath);
 			if (dt != null) {
-				if (hasSubDt(viewComposite, dtPath)) {
-					String msg = "Replaced data type \"" + dtPath +
+				if (hasSubDt(viewComposite, oldPath)) {
+					String msg = "Replaced data type \"" + oldPath +
 						"\", which is a sub-component of \"" + getOriginalDataTypeName() + "\".";
 					setStatus(msg, true);
 				}
 				// NOTE: depending upon event sequence and handling a
 				// re-load may have occurred and replacement may be unnecessary
 				try {
-					viewDTM.replaceDataType(dt, newDataType, true);
+					viewDTM.withTransaction("Replaced Dependency", () -> {
+						viewDTM.clearUndoOnChange();
+						viewDTM.replaceDataType(dt, newDataType, true);
+					});
 				}
 				catch (DataTypeDependencyException e) {
 					throw new AssertException(e);
 				}
+
+				// Clear undo/redo stack to avoid inconsistency with originalDTM
+				viewDTM.clearUndo();
+
 				fireTableDataChanged();
 				componentDataChanged();
 			}
+			return;
 		}
-		else {
-			if (this.hadChanges) {
-				if (originalDataTypePath.equals(oldPath)) {
-					if (hadChanges) {
-						consideringReplacedDataType = true;
-						try {
-							String message =
-								"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
-									" has changed outside the editor.<br>" +
-									"Discard edits & reload the " + getTypeName() + "?";
-							String title = "Reload " + getTypeName() + " Editor?";
-							int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
-								provider.getComponent(), title, message);
-							if (response == OptionDialog.OPTION_ONE) {
-								load(getOriginalComposite());
-							}
-						}
-						finally {
-							consideringReplacedDataType = false;
-						}
-					}
-					else {
-						load(getOriginalComposite());
-						setStatus(viewComposite.getPathName() + " changed outside the editor.",
-							false);
-					}
-				}
-				else {
-					String msg = "\"" + oldPath.getPath() + "\" was replaced with " +
-						newDataType.getPathName() + " in the data type manager.";
-					setStatus(msg, true);
+
+		consideringReplacedDataType = true;
+		try {
+			provider.show();
+
+			if (hasChanges) {
+				String message = "<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
+					" has been replaced outside the editor.<br>" +
+					"Discard edits and close?</html>";
+				String title = "Close " + getTypeName() + " Editor?";
+				int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
+					provider.getComponent(), title, message);
+				if (response != OptionDialog.OPTION_ONE) {
+					compositeInfoChanged();
+					return;
 				}
 			}
 			else {
-				load((Composite) newDataType);
+				String message = "<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
+					" has been replaced outside the editor.</html>";
+				Msg.showWarn(this, provider.getComponent(), "Closing " + getTypeName() + " Editor",
+					message);
 			}
+
+			// fast close, discard any changes
+			provider.closeComponent(true);
+		}
+		finally {
+			consideringReplacedDataType = false;
 		}
 	}
 
@@ -1530,16 +1661,17 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if ((rowIndex < 0) || (rowIndex >= numRowComponents)) {
 			return 0;
 		}
-		if (rowIndex + 1 == numRowComponents) {
-			return Integer.MAX_VALUE; // On last component.
+		DataTypeComponent dtc = getComponent(rowIndex);
+		DataType dt = dtc.getDataType();
+		int dtcLen = dt.getLength();
+		if (dtcLen < 0) {
+			dtcLen = dtc.getLength();
 		}
-		DataType dt = getComponent(rowIndex).getDataType();
-		int maxDups = Integer.MAX_VALUE;
-		// If editModel is showing undefined bytes (non-packed)
-		// then constrain by number of undefined bytes that follow.
-		if (isShowingUndefinedBytes() && (dt != DataType.DEFAULT)) {
-			int numBytes = getNumUndefinedBytesAt(rowIndex + 1);
-			maxDups = (numBytes / dt.getLength());
+		int maxDups = (Integer.MAX_VALUE - getLength()) / dtcLen;
+		if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
+			// If editModel is showing undefined bytes (non-packed)
+			// then constrain by number of undefined bytes that follow.
+			maxDups = getNumUndefinedBytesAfter(dtc) / dtcLen;
 		}
 		return maxDups;
 	}
@@ -1575,15 +1707,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				return numBytesInRange / len;
 			}
 			// single line selected.
-
-			// If editModel is locked then constrain by number of undefined bytes that follow.
-			if (!isShowingUndefinedBytes() || isAtEnd(rowIndex) ||
-				onlyUndefinedsUntilEnd(rowIndex + 1)) {
-				return Integer.MAX_VALUE;
-			}
-
-			int numBytes = getNumUndefinedBytesAt(rowIndex + 1);
-			return 1 + (numBytes / len);
+			return getMaxDuplicates(rowIndex) + 1;
 		}
 		return 0;
 	}
@@ -1625,20 +1749,20 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		Composite oldComposite = getOriginalComposite();
 		if (oldComposite == null) {
-			hadChanges = false;
-			return hadChanges;
+			hasChanges = false;
+			return hasChanges;
 		}
 
 		PackingType packingType = getPackingType();
 		AlignmentType alignmentType = getAlignmentType();
 
-		hadChanges = (packingType != oldComposite.getPackingType()) ||
+		hasChanges = (packingType != oldComposite.getPackingType()) ||
 			(alignmentType != oldComposite.getAlignmentType()) ||
 			(packingType == PackingType.EXPLICIT &&
 				getExplicitPackingValue() != oldComposite.getExplicitPackingValue()) ||
 			(alignmentType == AlignmentType.EXPLICIT &&
 				getExplicitMinimumAlignment() != oldComposite.getExplicitMinimumAlignment());
-		return hadChanges;
+		return hasChanges;
 	}
 
 	/**
@@ -1654,26 +1778,28 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	public void setAlignmentType(AlignmentType alignmentType, int explicitValue) {
-		AlignmentType currentAlignType = getAlignmentType();
-		if (alignmentType == AlignmentType.DEFAULT) {
-			if (currentAlignType == AlignmentType.DEFAULT) {
-				return;
+		viewDTM.withTransaction("Set Alignment", () -> {
+			AlignmentType currentAlignType = getAlignmentType();
+			if (alignmentType == AlignmentType.DEFAULT) {
+				if (currentAlignType == AlignmentType.DEFAULT) {
+					return;
+				}
+				viewComposite.setToDefaultAligned();
 			}
-			viewComposite.setToDefaultAligned();
-		}
-		else if (alignmentType == AlignmentType.MACHINE) {
-			if (currentAlignType == AlignmentType.MACHINE) {
-				return;
+			else if (alignmentType == AlignmentType.MACHINE) {
+				if (currentAlignType == AlignmentType.MACHINE) {
+					return;
+				}
+				viewComposite.setToMachineAligned();
 			}
-			viewComposite.setToMachineAligned();
-		}
-		else {
-			if (currentAlignType == AlignmentType.EXPLICIT &&
-				explicitValue == viewComposite.getExplicitMinimumAlignment()) {
-				return;
+			else {
+				if (currentAlignType == AlignmentType.EXPLICIT &&
+					explicitValue == viewComposite.getExplicitMinimumAlignment()) {
+					return;
+				}
+				viewComposite.setExplicitMinimumAlignment(explicitValue);
 			}
-			viewComposite.setExplicitMinimumAlignment(explicitValue);
-		}
+		});
 		if (fixSelection()) {
 			selectionChanged();
 		}
@@ -1693,26 +1819,28 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	public void setPackingType(PackingType packingType, int explicitValue) {
-		PackingType currentPacktype = getPackingType();
-		if (packingType == PackingType.DISABLED) {
-			if (currentPacktype == PackingType.DISABLED) {
-				return;
+		viewDTM.withTransaction("Set Packing", () -> {
+			PackingType currentPacktype = getPackingType();
+			if (packingType == PackingType.DISABLED) {
+				if (currentPacktype == PackingType.DISABLED) {
+					return;
+				}
+				viewComposite.setPackingEnabled(false);
 			}
-			viewComposite.setPackingEnabled(false);
-		}
-		else if (packingType == PackingType.DEFAULT) {
-			if (currentPacktype == PackingType.DEFAULT) {
-				return;
+			else if (packingType == PackingType.DEFAULT) {
+				if (currentPacktype == PackingType.DEFAULT) {
+					return;
+				}
+				viewComposite.setToDefaultPacking();
 			}
-			viewComposite.setToDefaultPacking();
-		}
-		else {
-			if (currentPacktype == PackingType.EXPLICIT &&
-				explicitValue == viewComposite.getExplicitPackingValue()) {
-				return;
+			else {
+				if (currentPacktype == PackingType.EXPLICIT &&
+					explicitValue == viewComposite.getExplicitPackingValue()) {
+					return;
+				}
+				viewComposite.setExplicitPackingValue(explicitValue);
 			}
-			viewComposite.setExplicitPackingValue(explicitValue);
-		}
+		});
 		if (fixSelection()) {
 			selectionChanged();
 		}

@@ -34,9 +34,9 @@ import java.lang.annotation.*;
  * In either case, various annotations on fields and methods will control how this structure
  * will be marked up in the Ghidra program.
  * <p>
- * The tagged class must be {@link DataTypeMapper#registerStructure(Class) registered} with
- * the {@link DataTypeMapper program context} to enable the suite of structure mapped classes
- * to work together when applied to a Ghidra binary.
+ * The tagged class must be {@link DataTypeMapper#registerStructure(Class, DataTypeMapperContext)
+ * registered} with the {@link DataTypeMapper program context} to enable the suite of structure 
+ * mapped classes to work together when applied to a Ghidra binary.
  * <p>
  * For variable length structure classes, when the struct mapping system creates a custom-fitted
  * structure to markup a specific location with its specific data, the new struct data type's name

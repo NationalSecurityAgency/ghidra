@@ -102,6 +102,7 @@ model {
 		                include "blockaction.cc"
 		                include "merge.cc"
 		                include "double.cc"
+		                include "constseq.cc"
 		                include "coreaction.cc"
 		                include "condexe.cc"
 		                include "override.cc"

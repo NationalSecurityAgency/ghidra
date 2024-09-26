@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string;
 
-import static ghidra.program.util.string.FoundString.DefinedState.DEFINED;
+import static ghidra.program.util.string.FoundString.DefinedState.*;
 
 import java.util.Iterator;
 
@@ -31,9 +31,9 @@ import ghidra.program.util.string.FoundString;
  * Basic Algorithm: Uses a defined data iterator to find all defined data in a program.  For
  * each defined data, strings are searched as follows:
  * <ol>
- *   <li> is it a string?  if so, add to the queue of results
- *   <li> is it an array?  if so, are they non-primitive elements?  if so, recursively search them for strings.
- *   <li> is it a composite (structure or union)? if so, recursively search each element of the structure.
+ *   <li> is it a string?  if so, add to the queue of results</li>
+ *   <li> is it an array?  if so, are they non-primitive elements?  if so, recursively search them for strings.</li>
+ *   <li> is it a composite (structure or union)? if so, recursively search each element of the structure.</li>
  * </ol>
  * <p>
  * This class maintains a queue of all strings found at any given top-level data element.  When

@@ -15,139 +15,182 @@
  */
 package ghidra.app.util.importer;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.*;
 
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.opinion.Loader;
+import ghidra.formats.gfilesystem.*;
 import ghidra.framework.Platform;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.model.Project;
+import ghidra.framework.options.SaveState;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * A simple class for managing the library search path
- * and avoiding duplicate directories.
+ * A simple class for managing the library search path and avoiding duplicate directories.
  */
 public class LibrarySearchPathManager {
-	private static List<String> pathList = createPathList();
 
-	private static boolean hasBeenRestored;
-
-	private static List<String> createPathList() {
-		pathList = new ArrayList<>();
-		loadJavaLibraryPath();
-		return pathList;
-	}
-
-	private static void loadJavaLibraryPath() {
-		List<String> paths = Platform.CURRENT_PLATFORM.getAdditionalLibraryPaths();
-		for (String path : paths) {
-			addPath(path);
-		}
-
-		String libpath = System.getProperty("java.library.path");
-		String libpathSep = System.getProperty("path.separator");
-
-		StringTokenizer nizer = new StringTokenizer(libpath, libpathSep);
-		while (nizer.hasMoreTokens()) {
-			String path = nizer.nextToken();
-			addPath(path);
-		}
-	}
+	private static final String LIBRARY_SEARCH_PATH_STATE_NAME = "Library Search Paths";
+	private static Set<String> pathSet = initialize();
 
 	/**
-	 * Returns an array of directories to search for libraries
-	 * @return an array of directories to search for libraries
+	 * Returns an array of library search paths
+	 * 
+	 * @return an array of library search paths
 	 */
-	public static String[] getLibraryPaths() {
-		String[] paths = new String[pathList.size()];
-		pathList.toArray(paths);
+	public static synchronized String[] getLibraryPaths() {
+		String[] paths = new String[pathSet.size()];
+		pathSet.toArray(paths);
 		return paths;
 	}
 
 	/**
-	 * Returns an array of directories to search for libraries
-	 * @return a list of directories to search for libraries
+	 * Returns a {@link List} of {@link FSRL}s to search for libraries
+	 * 
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param log The log
+	 * @param monitor A cancellable monitor
+	 * @return a {@link List} of {@link FSRL}s to search for libraries
+	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public static List<String> getLibraryPathsList() {
-		return new ArrayList<>(pathList);
+	public static synchronized List<FSRL> getLibraryFsrlList(ByteProvider provider, MessageLog log,
+			TaskMonitor monitor) throws CancelledException {
+		FileSystemService fsService = FileSystemService.getInstance();
+		List<FSRL> fsrlList = new ArrayList<>();
+		for (String path : pathSet) {
+			monitor.checkCancelled();
+			path = path.trim();
+			FSRL fsrl = null;
+			try {
+				if (path.equals(".")) {
+					FSRL providerFsrl = provider.getFSRL();
+					if (providerFsrl != null) {
+						try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
+							GFile parentFile = fileRef.file.getParentFile();
+							fsrl = parentFile.getFSRL();
+						}
+					}
+				}
+				else {
+					fsrl = FSRL.fromString(path);
+				}
+			}
+			catch (MalformedURLException e) {
+				try {
+					File f = new File(path);
+					if (f.exists() && f.isAbsolute()) {
+						fsrl = fsService.getLocalFSRL(f.getCanonicalFile());
+					}
+				}
+				catch (IOException e2) {
+					log.appendException(e2);
+				}
+			}
+			catch (IOException e) {
+				log.appendException(e);
+			}
+			if (fsrl != null) {
+				fsrlList.add(fsrl);
+			}
+		}
+		return fsrlList;
 	}
 
 	/**
-	 * Sets the directories to search for libraries
+	 * Sets the library search paths to the given array
+	 * 
 	 * @param paths the new library search paths
 	 */
-	public static void setLibraryPaths(String[] paths) {
-
-		pathList.clear();
-		for (String path : paths) {
-			addPath(path);
-		}
+	public static synchronized void setLibraryPaths(String[] paths) {
+		pathSet.clear();
+		pathSet.addAll(Arrays.asList(paths));
+		saveState();
 	}
 
 	/**
-	 * Call this to restore paths that were previously persisted.  If you really need to change
-	 * the paths <b>for the entire JVM</b>, then call {@link #setLibraryPaths(String[])}.
-	 *
-	 * @param paths the paths to restore
-	 */
-	public static void restoreLibraryPaths(String[] paths) {
-
-		if (hasBeenRestored) {
-			//
-			// We code that restores paths from tool config files.  It is a mistake to do this
-			// every time we load a tool, as the values can get out-of-sync if tools do not
-			// save properly.  Logically, we only need to restore once.
-			//
-			return;
-		}
-
-		setLibraryPaths(paths);
-	}
-
-	/**
-	 * Adds the specified path to the end of the path search list.
-	 * @param path the path to add
+	 * Adds the specified library search path path to the end of the path search list
+	 * 
+	 * @param path the library search path to add
 	 * @return true if the path was appended, false if the path was a duplicate
 	 */
-	public static boolean addPath(String path) {
-		if (pathList.indexOf(path) == -1) {
-			pathList.add(path);
-			return true;
+	public static synchronized boolean addPath(String path) {
+		if (pathSet.contains(path)) {
+			return false;
 		}
-		return false;
+		pathSet.add(path);
+		saveState();
+		return true;
 	}
 
 	/**
-	 * Adds the path at the specified index in path search list.
-	 * @param index The index
-	 * @param path the path to add
-	 * @return true if the path was appended, false if the path was a duplicate
+	 * Resets the library search path to the default values
 	 */
-	public static boolean addPathAt(int index, String path) {
-		if (pathList.indexOf(path) == -1) {
-			pathList.add(index, path);
-			return true;
+	public static synchronized void reset() {
+		pathSet = loadDefaultPaths();
+		saveState();
+	}
+
+	private LibrarySearchPathManager() {
+		// Prevent instantiation of utility class
+	}
+
+	private static synchronized Set<String> initialize() {
+		Set<String> set = loadFromSavedState();
+		if (set == null) {
+			set = loadDefaultPaths();
 		}
-		return false;
+		return set;
 	}
 
-	/**
-	 * Removes the path from the path search list.
-	 * @param path the path the remove
-	 * @return true if the path was removed, false if the path did not exist
-	 */
-	public static boolean removePath(String path) {
-		return pathList.remove(path);
+	private static synchronized Set<String> loadDefaultPaths() {
+		Set<String> set = new LinkedHashSet<>();
+
+		// Add program import location
+		set.add(".");
+
+		// Add platform specific locations
+		Platform.CURRENT_PLATFORM.getAdditionalLibraryPaths().forEach(p -> set.add(p));
+
+		// Add Java library path locations
+		String libpath = System.getProperty("java.library.path");
+		String libpathSep = System.getProperty("path.separator");
+		StringTokenizer nizer = new StringTokenizer(libpath, libpathSep);
+		while (nizer.hasMoreTokens()) {
+			String path = nizer.nextToken();
+			set.add(path);
+		}
+
+		return set;
 	}
 
-	/**
-	 * Resets the library search path to match the system search paths.
-	 */
-	public static void reset() {
-		pathList.clear();
-		loadJavaLibraryPath();
+	private static synchronized Set<String> loadFromSavedState() {
+		Project project = AppInfo.getActiveProject();
+		if (project != null) {
+			SaveState saveState = project.getSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY);
+			if (saveState != null) {
+				String[] paths = saveState.getStrings(LIBRARY_SEARCH_PATH_STATE_NAME, null);
+				if (paths != null) {
+					return new LinkedHashSet<String>(Arrays.asList(paths));
+				}
+			}
+		}
+		return null;
 	}
 
-	/**
-	 * Clears all paths.
-	 */
-	public static void clear() {
-		pathList.clear();
+	private static synchronized void saveState() {
+		Project project = AppInfo.getActiveProject();
+		if (project != null) {
+			SaveState saveState = project.getSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY);
+			if (saveState == null) {
+				saveState = new SaveState();
+				project.setSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, saveState);
+			}
+			saveState.putStrings(LIBRARY_SEARCH_PATH_STATE_NAME, pathSet.toArray(new String[0]));
+		}
 	}
 }

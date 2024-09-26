@@ -536,6 +536,7 @@ def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
 
 
 @REGISTRY.method
+@util.dbg.eng_thread
 def read_mem(process: sch.Schema('Process'), range: AddressRange):
     """Read memory."""
     # print("READ_MEM: process={}, range={}".format(process, range))

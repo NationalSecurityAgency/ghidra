@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.symboltree;
 
 import static generic.test.AbstractGTest.*;
 import static generic.test.AbstractGenericTest.*;
+import static generic.test.AbstractGuiTest.*;
 import static ghidra.test.AbstractGhidraHeadedIntegrationTest.*;
 import static org.junit.Assert.*;
 
@@ -102,7 +103,7 @@ class SymbolTreeTestUtils {
 
 	public static Program buildProgram() throws Exception {
 
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder("sample1", true);
 		Program program = builder.getProgram();
 
 		builder.createMemory("test", "0x1001000", 0x5500);
@@ -165,6 +166,49 @@ class SymbolTreeTestUtils {
 		builder.addFunctionVariable(function, var);
 		var = new LocalVariableImpl("formatCount", new IntegerDataType(), -0xc, program);
 		builder.addFunctionVariable(function, var);
+
+		return program;
+	}
+
+	public static Program buildProgram2() throws Exception {
+
+		// Note: the contents of this program are arbitrary and loosely based off of the program
+		// in buildProgram().
+
+		ToyProgramBuilder builder = new ToyProgramBuilder("sample2", true);
+		Program program = builder.getProgram();
+
+		builder.createMemory("test", "0x1001000", 0x5500);
+
+		// create an 'Exports' node
+		builder.createEntryPoint("0x1006420", "entry");
+		builder.createLabel("0x1006420", "entry");
+
+		// imports symbol tree node
+		builder.createExternalLibraries("ADVAPI32.dll", "comdlg32.dll", "GDI32.dll", "KERNEL32.dll",
+			"MSVCRT.dll", "SHELL32.dll", "USER32.dll", "WINSPOOL.DRV");
+		builder.createExternalReference("0x1001000", "ADVAPI32.dll", "IsTextUnicode", 0);
+		builder.createLabel("0x1001000", "ADVAPI32.dll_IsTextUnicode");
+		builder.createExternalReference("0x1001004", "ADVAPI32.dll", "RegCreateKeyW", 0);
+
+		ExternalManager externalManager = builder.getProgram().getExternalManager();
+		int tx = program.startTransaction("Test Transaction");
+		externalManager.setExternalPath("ADVAPI32.dll", "/path/to/ADVAPI32.DLL", true);
+		program.endTransaction(tx, true);
+
+		// functions
+		builder.createEmptyFunction("doStuff2", null, "0x10048a3", 19, new Undefined1DataType(),
+			new ParameterImpl("param_1", new IntegerDataType(), program),
+			new ParameterImpl("param_2", new IntegerDataType(), program));
+
+		//@formatter:off
+		ParameterImpl p = new ParameterImpl(null /*auto name*/, new IntegerDataType(), program);
+		builder.createEmptyFunction("ghidra2", null, "0x1002cf5", 121, new Undefined1DataType(),
+			p, p, p, p, p, p, p, p, p);
+		//@formatter:on
+
+		builder.createLabel("0x1002d2b", "AnotherLoca2l", "ghidra");
+		builder.createLabel("0x1002d1f", "MyLocal2", "ghidra");
 
 		return program;
 	}
@@ -359,8 +403,8 @@ class SymbolTreeTestUtils {
 	}
 
 	void closeProgram() throws Exception {
-		final ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
-		runSwing(() -> pm.closeProgram());
+		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
+		runSwing(() -> pm.closeProgram(program, true));
 	}
 
 	Program getProgram() {
@@ -370,6 +414,13 @@ class SymbolTreeTestUtils {
 	void openProgram() {
 		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
+	}
+
+	Program openProgram2() throws Exception {
+		Program p2 = buildProgram2();
+		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
+		pm.openProgram(p2.getDomainFile());
+		return p2;
 	}
 
 	void clearClipboard() {

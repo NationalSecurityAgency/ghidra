@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,8 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.rtti.types.GoMethod.GoMethodInfo;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
@@ -39,19 +40,19 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@ContextField
 	private StructureContext<GoFuncData> context;
 
-	@FieldMapping(optional = true, fieldName = { "entryoff", "entryOff" })
+	@FieldMapping(presentWhen = "1.18+", fieldName = { "entryoff", "entryOff" })
 	@EOLComment("getDescription")
 	@MarkupReference("getFuncAddress")
-	private long entryoff;	// valid in >=1.18, relative offset of function
+	private long entryoff;	// relative offset of function
 
-	@FieldMapping(optional = true)
+	@FieldMapping(presentWhen = "-1.17")
 	@EOLComment("getDescription")
 	@MarkupReference("getFuncAddress")
-	private long entry;	// valid in <=1.17, location of function
+	private long entry;	// absolute location of function
 
 	@FieldMapping(fieldName = { "nameoff", "nameOff" })
 	@MarkupReference("getNameAddress")
-	private long nameoff;
+	private long nameoff;	// uint32
 
 	//private long args; // size of arguments
 
@@ -64,14 +65,14 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@FieldMapping
 	private int npcdata; // number of elements in varlen pcdata array
 
-	@FieldMapping
-	private long cuOffset;
+	@FieldMapping(presentWhen = "1.16+")
+	private long cuOffset = -1;
 
 	@FieldMapping
 	@EOLComment("getFuncIDEnum")
 	private byte funcID;	// see GoFuncID enum
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.17+")
 	@EOLComment("flags")
 	private byte flag;	// runtime.funcFlag, see GoFuncFlag enum
 
@@ -130,13 +131,14 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 		// using the max pc value
 		try {
 			long max = new GoPcValueEvaluator(this, pcfile).getMaxPC() - 1;
-			return max > entry
-					? new AddressRangeImpl(funcAddress, funcAddress.getNewAddress(max))
-					: null;
+			if (max > entry) {
+				return new AddressRangeImpl(funcAddress, funcAddress.getNewAddress(max));
+			}
 		}
 		catch (IOException e) {
-			return new AddressRangeImpl(getFuncAddress(), getFuncAddress());
+			// fall thru, return 1-byte range
 		}
+		return new AddressRangeImpl(funcAddress, funcAddress);
 	}
 
 	/**
@@ -223,30 +225,18 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	 * <p>
 	 * The information that can be recovered about arguments is limited to:
 	 * <ul>
-	 * 	<li>the size of the argument
-	 * 	<li>general grouping (eg. grouping of arg values as a structure or array)
+	 * 	<li>the size of the argument</li>
+	 * 	<li>general grouping (eg. grouping of arg values as a structure or array)</li>
 	 * </ul>
 	 * Return value information is unknown and always represented as an "undefined" data type.
 	 * 
-	 * @return pseduo-function signature string, such as "undefined foo( 8, 8 )" which would
+	 * @return pseudo-function signature string, such as "undefined foo( 8, 8 )" which would
 	 * indicate the function had 2 8-byte arguments 
 	 * @throws IOException if error reading lookup data
 	 */
 	public String recoverFunctionSignature() throws IOException {
 		RecoveredSignature sig = RecoveredSignature.read(this, programContext);
 		return sig.toString();
-	}
-
-	/**
-	 * Attempts to return a {@link FunctionDefinition} for this function, based on this
-	 * function's inclusion in a golang interface as a method.
-	 * 
-	 * @return {@link FunctionDefinition}
-	 * @throws IOException if error
-	 */
-	public FunctionDefinition findMethodSignature() throws IOException {
-		MethodInfo methodInfo = findMethodInfo();
-		return methodInfo != null ? methodInfo.getSignature() : null;
 	}
 
 	/**
@@ -275,9 +265,14 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	 */
 	public Address getNameAddress() {
 		GoModuledata moduledata = getModuledata();
-		return moduledata != null
-				? moduledata.getFuncnametab().getArrayAddress().add(nameoff)
-				: null;
+		if (moduledata != null) {
+			GoSlice slice = moduledata.getFuncnametab();
+			if (slice == null) {
+				slice = moduledata.getPclntable();
+			}
+			return slice.getArrayAddress().add(nameoff);
+		}
+		return null;
 	}
 
 	/**
@@ -287,15 +282,17 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	 */
 	public String getName() {
 		GoModuledata moduledata = getModuledata();
-		try {
-			if (moduledata != null) {
-				return programContext
-						.getReader(moduledata.getFuncnametab().getArrayOffset() + nameoff)
-						.readNextUtf8String();
+		if (moduledata != null) {
+			try {
+				GoSlice slice = moduledata.getFuncnametab();
+				if (slice == null) {
+					slice = moduledata.getPclntable();
+				}
+				return slice.getElementReader(1, (int) nameoff).readNextUtf8String();
 			}
-		}
-		catch (IOException e) {
-			// fall thru
+			catch (IOException e) {
+				// fall thru
+			}
 		}
 		return "unknown_func_%x_%s".formatted(context.getStructureStart(),
 			funcAddress != null ? funcAddress : "missing_addr");
@@ -369,11 +366,25 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 		int fileno = new GoPcValueEvaluator(this, pcfile).eval(entry);
 		int lineNum = new GoPcValueEvaluator(this, pcln).eval(entry);
 
-		long fileoff = fileno >= 0
-				? moduledata.getCutab()
-						.readUIntElement(4 /*sizeof(uint32)*/, (int) cuOffset + fileno)
-				: -1;
-		String fileName = fileoff != -1 ? moduledata.getFilename(fileoff) : null;
+		if (fileno < 0) {
+			return null;
+		}
+
+		long fileoff;
+		GoSlice cutab = moduledata.getCutab();
+		GoSlice filetab = moduledata.getFiletab();
+		GoSlice nameSlice;
+		if (cutab == null) { // when <= 1.15
+			fileoff = filetab.readUIntElement(4 /*sizeof(uint32*/, fileno);
+			nameSlice = moduledata.getPclntable();
+		}
+		else { // when >= 1.16
+			fileoff = cutab.readUIntElement(4 /*sizeof(uint32)*/, (int) cuOffset + fileno);
+			nameSlice = filetab;
+		}
+		String fileName = fileoff >= 0 // -1 == no value 
+				? nameSlice.getElementReader(1, (int) fileoff).readNextUtf8String()
+				: null;
 		return fileName != null ? new GoSourceFileInfo(fileName, lineNum) : null;
 	}
 
@@ -579,25 +590,3 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 }
-/*
-struct runtime._func  
-Length: 40  Alignment: 4
-{ 
-  uint32                    entryoff         
-  int32                      nameoff         
-  int32                      args              
-  uint32                    deferreturn   
-  uint32                    pcsp              
-  uint32                    pcfile             
-  uint32                    pcln               
-  uint32                    npcdata        
-  uint32                    cuOffset        
-  runtime.funcID      funcID            
-  runtime.funcFlag  flag                
-  uint8[1]                _                    
-  uint8                      nfuncdata     
-} pack()
-
-int32[] pcdata
-int32[] funcdata
-*/

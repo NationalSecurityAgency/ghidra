@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,6 @@ package ghidra.app.util.demangler.gnu;
 
 import java.io.File;
 import java.io.IOException;
-
-import org.apache.commons.lang3.StringUtils;
 
 import generic.jar.ResourceFile;
 import ghidra.app.util.demangler.*;
@@ -113,13 +111,12 @@ public class GnuDemangler implements Demangler {
 				throw new DemangledException(false);
 			}
 			demangled = demangled.trim();
-			if (demangled.length() == 0 ||  mangled.equals(demangled)) {
+			if (demangled.length() == 0 || mangled.equals(demangled)) {
 				throw new DemangledException(true);
 			}
 
-			boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
 			DemangledObject demangledObject =
-				parse(originalMangled, process, demangled, onlyKnownPatterns);
+				parse(originalMangled, process, demangled, options);
 			if (demangledObject == null) {
 				return demangledObject;
 			}
@@ -228,14 +225,16 @@ public class GnuDemangler implements Demangler {
 	}
 
 	private DemangledObject parse(String mangled, GnuDemanglerNativeProcess process,
-			String demangled, boolean demangleOnlyKnownPatterns) {
+			String demangled, GnuDemanglerOptions options) {
 
-		if (demangleOnlyKnownPatterns && !isKnownMangledString(mangled, demangled)) {
+		boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
+		if (onlyKnownPatterns && !isKnownMangledString(mangled, demangled)) {
 			return null;
 		}
 
+		boolean replaceStdTypedefs = options.shouldUseStandardReplacements();
 		GnuDemanglerParser parser = new GnuDemanglerParser();
-		DemangledObject demangledObject = parser.parse(mangled, demangled);
+		DemangledObject demangledObject = parser.parse(mangled, demangled, replaceStdTypedefs);
 		return demangledObject;
 	}
 

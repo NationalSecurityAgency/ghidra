@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
 #include "condexe.hh"
 #include "double.hh"
 #include "subflow.hh"
+#include "constseq.hh"
 
 namespace ghidra {
 
@@ -562,7 +563,10 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
   if (mode < 2)
     collectLaneSizes(vn,lanedRegister,checkLanes);
   else {
-    checkLanes.addLaneSize(4);		// Default lane size
+    int4 defaultSize = data.getArch()->types->getSizeOfPointer();		// Default lane size
+    if (defaultSize != 4)
+      defaultSize = 8;
+    checkLanes.addLaneSize(defaultSize);
   }
   LanedRegister::const_iterator enditer = checkLanes.end();
   for(LanedRegister::const_iterator iter=checkLanes.begin();iter!=enditer;++iter) {
@@ -581,6 +585,7 @@ bool ActionLaneDivide::processVarnode(Funcdata &data,Varnode *vn,const LanedRegi
 int4 ActionLaneDivide::apply(Funcdata &data)
 
 {
+  data.setLanedRegGenerated();
   map<VarnodeData,const LanedRegister *>::const_iterator iter;
   for(int4 mode=0;mode<3;++mode) {
     bool allStorageProcessed = true;
@@ -593,6 +598,10 @@ int4 ActionLaneDivide::apply(Funcdata &data)
       bool allVarnodesProcessed = true;
       while(viter != venditer) {
 	Varnode *vn = *viter;
+	if (vn->hasNoDescend()) {
+	  ++viter;
+	  continue;
+	}
 	if (processVarnode(data, vn, *lanedReg, mode)) {
 	  viter = data.beginLoc(sz,addr);
 	  venditer = data.endLoc(sz, addr);	// Recalculate bounds
@@ -609,7 +618,6 @@ int4 ActionLaneDivide::apply(Funcdata &data)
     if (allStorageProcessed) break;
   }
   data.clearLanedAccessMap();
-  data.setLanedRegGenerated();
   return 0;
 }
 
@@ -1336,7 +1344,6 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
       }
     }
   }
-  data.setLanedRegGenerated();
   return 0;
 }
 
@@ -2277,28 +2284,17 @@ int4 ActionRestructureVarnode::apply(Funcdata &data)
   return 0;
 }
 
-int4 ActionRestructureHigh::apply(Funcdata &data)
+int4 ActionMappedLocalSync::apply(Funcdata &data)
 
 {
-  if (!data.isHighOn()) return 0;
   ScopeLocal *l1 = data.getScopeLocal();
 
-#ifdef OPACTION_DEBUG
-  if ((flags&rule_debug)!=0)
-    l1->turnOnDebug();
-#endif
-
-  l1->restructureHigh();
   if (data.syncVarnodesWithSymbols(l1,true,true))
     count += 1;
 
-#ifdef OPACTION_DEBUG
-  if ((flags&rule_debug)==0) return 0;
-  l1->turnOffDebug();
-  ostringstream s;
-  data.getScopeLocal()->printEntries(s);
-  data.getArch()->printDebug(s.str());
-#endif
+  if (l1->hasOverlapProbems())
+    data.warningHeader("Could not reconcile some variable overlaps");
+
   return 0;
 }
 
@@ -2645,7 +2641,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
 
 {
   Datatype *ct;
-  Varnode *vn,*vnout;
+  Varnode *vn,*vnout,*vnin;
   PcodeOp *newop;
 
   ct = op->getOpcode()->getInputCast(op,slot,castStrategy); // Input type expected by this operation
@@ -2657,13 +2653,20 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     return 0;
   }
 
-  vn = op->getIn(slot);
+  vnin = vn = op->getIn(slot);
   // Check to make sure we don't have a double cast
   if (vn->isWritten() && (vn->getDef()->code() == CPUI_CAST)) {
-    if (vn->isImplied() && (vn->loneDescend() == op)) {
-      vn->updateType(ct,false,false);
-      if (vn->getType()==ct)
+    if (vn->isImplied()) {
+      if (vn->loneDescend() == op) {
+	vn->updateType(ct,false,false);
+	if (vn->getType()==ct)
+	  return 1;
+      }
+      vnin = vn->getDef()->getIn(0);	// Cast directly from input of previous cast
+      if (ct == vnin->getType()) {	// If the earlier data-type is what the input expects
+	data.opSetInput(op, vnin, slot);	// Just use the earlier Varnode
 	return 1;
+      }
     }
   }
   else if (vn->isConstant()) {
@@ -2682,14 +2685,14 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     return 1;
   }
   newop = data.newOp(1,op->getAddr());
-  vnout = data.newUniqueOut(vn->getSize(),newop);
+  vnout = data.newUniqueOut(vnin->getSize(),newop);
   vnout->updateType(ct,false,false);
   vnout->setImplied();
 #ifdef CPUI_STATISTICS
   data.getArch()->stats->countCast();
 #endif
   data.opSetOpcode(newop,CPUI_CAST);
-  data.opSetInput(newop,vn,0);
+  data.opSetInput(newop,vnin,0);
   data.opSetInput(op,vnout,slot);
   data.opInsertBefore(newop,op); // Cast comes AFTER operation
   if (ct->needsResolution()) {
@@ -2726,7 +2729,7 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
-	if (!op->getIn(0)->getHighTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset())) {
+	if (!op->getIn(0)->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset(),0,1)) {
 	  if (op->getIn(1)->getOffset() == 0) {
 	    data.opRemoveInput(op, 1);
 	    data.opSetOpcode(op, CPUI_COPY);
@@ -2924,6 +2927,7 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
       linkSpacebaseSymbol(curvn, data, namerec);
   }
 
+  TypeFactory *typeFactory = data.getArch()->types;
   for(int4 i=0;i<manage->numSpaces();++i) { // Build a list of nameable highs
     spc = manage->getSpace(i);
     if (spc == (AddrSpace *)0) continue;
@@ -2948,6 +2952,8 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
 	  if (vn->getSize() == sym->getType()->getSize())
 	    sym->getScope()->overrideSizeLockType(sym,high->getType());
 	}
+	if (vn->isAddrTied() && !sym->getScope()->isGlobal())
+	  high->finalizeDatatype(typeFactory);
       }
     }
   }
@@ -3770,6 +3776,12 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
   case CPUI_CALL:
   case CPUI_CALLIND:
     break;		// Call output doesn't indicate consumption of inputs
+  case CPUI_FLOAT_INT2FLOAT:
+    a = 0;
+    if (outc != 0)
+      a = coveringmask(op->getIn(0)->getNZMask());
+    pushConsumed(a,op->getIn(0), worklist);
+    break;
   default:
     a = (outc==0) ? 0 : ~((uintb)0); // all or nothing
     for(int4 i=0;i<op->numInput();++i)
@@ -4398,12 +4410,8 @@ int4 ActionSwitchNorm::apply(Funcdata &data)
   for(int4 i=0;i<data.numJumpTables();++i) {
     JumpTable *jt = data.getJumpTable(i);
     if (!jt->isLabelled()) {
-      if (jt->recoverLabels(&data)) { // Recover case statement labels
-	// If this returns true, the jumptable was not fully recovered during flow analysis
-	// So we need to issue a restart
-	data.getOverride().insertMultistageJump(jt->getOpAddress());
-	data.setRestartPending(true);
-      }
+      jt->matchModel(&data);
+      jt->recoverLabels(&data);	// Recover case statement labels
       jt->foldInNormalization(&data);
       count += 1;
     }
@@ -4562,10 +4570,7 @@ int4 ActionInputPrototype::apply(Funcdata &data)
   ParamActive active(false);
   Varnode *vn;
 
-  // Clear any unlocked local variables because these are
-  // getting cleared anyway in the restructure and may be
-  // using symbol names that we want
-  data.getScopeLocal()->clearUnlockedCategory(-1);
+  data.getScopeLocal()->clearCategory(Symbol::fake_input);
   data.getFuncProto().clearUnlockedInput();
   if (!data.getFuncProto().isInputLocked()) {
     VarnodeDefSet::const_iterator iter,enditer;
@@ -5235,6 +5240,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
   if (localcount >= 7) {       // This constant arrived at empirically
     if (localcount == 7) {
       data.warningHeader("Type propagation algorithm not settling");
+      data.setTypeRecoveryExceeded();
       localcount += 1;
     }
     return 0;
@@ -5329,7 +5335,7 @@ void ActionDatabase::buildDefaultGroups(void)
 			    "deadcode", "typerecovery", "stackptrflow",
 			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
 			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
-			    "fixateglobals", "fixateproto",
+			    "fixateglobals", "fixateproto", "constsequence",
 			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
 			    "unreachable", "subvar", "floatprecision",
 			    "conditionalexe", "" };
@@ -5515,9 +5521,10 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePiece2Zext("analysis") );
 	actprop->addRule( new RulePiece2Sext("analysis") );
 	actprop->addRule( new RulePopcountBoolXor("analysis") );
-	actprop->addRule( new RuleOrMultiBool("analysis") );
 	actprop->addRule( new RuleXorSwap("analysis") );
 	actprop->addRule( new RuleLzcountShiftBool("analysis") );
+	actprop->addRule( new RuleFloatSign("analysis") );
+	actprop->addRule( new RuleOrCompare("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );
 	actprop->addRule( new RuleSubvarSubpiece("subvar") );
 	actprop->addRule( new RuleSplitFlow("subvar") );
@@ -5533,6 +5540,8 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleSubfloatConvert("floatprecision") );
 	actprop->addRule( new RuleFloatCast("floatprecision") );
 	actprop->addRule( new RuleIgnoreNan("floatprecision") );
+	actprop->addRule( new RuleUnsigned2Float("analysis") );
+	actprop->addRule( new RuleInt2FloatCollapse("analysis") );
 	actprop->addRule( new RulePtraddUndo("typerecovery") );
 	actprop->addRule( new RulePtrsubUndo("typerecovery") );
 	actprop->addRule( new RuleSegment("segment") );
@@ -5541,6 +5550,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleDoubleLoad("doubleload") );
 	actprop->addRule( new RuleDoubleStore("doubleprecis") );
 	actprop->addRule( new RuleDoubleIn("doubleprecis") );
+	actprop->addRule( new RuleDoubleOut("doubleprecis") );
 	for(iter=conf->extra_pool_rules.begin();iter!=conf->extra_pool_rules.end();++iter)
 	  actprop->addRule( *iter ); // Add CPU specific rules
 	conf->extra_pool_rules.clear(); // Rules are now absorbed into universal
@@ -5585,6 +5595,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actfullloop->addAction( new ActionActiveReturn("protorecovery") );
   }
   act->addAction( actfullloop );
+  act->addAction( new ActionMappedLocalSync("localrecovery") );
   act->addAction( new ActionStartCleanUp("cleanup") );
   {
     actcleanup = new ActionPool(Action::rule_repeatapply,"cleanup");
@@ -5593,12 +5604,15 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RuleAddUnsigned("cleanup") );
     actcleanup->addRule( new Rule2Comp2Sub("cleanup") );
     actcleanup->addRule( new RuleSubRight("cleanup") );
+    actcleanup->addRule( new RuleFloatSignCleanup("cleanup") );
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
     actcleanup->addRule( new RuleExtensionPush("cleanup") );
     actcleanup->addRule( new RulePieceStructure("cleanup") );
     actcleanup->addRule( new RuleSplitCopy("splitcopy") );
     actcleanup->addRule( new RuleSplitLoad("splitpointer") );
     actcleanup->addRule( new RuleSplitStore("splitpointer") );
+    actcleanup->addRule( new RuleStringCopy("constsequence"));
+    actcleanup->addRule( new RuleStringStore("constsequence"));
   }
   act->addAction( actcleanup );
 
@@ -5620,7 +5634,6 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( new ActionCopyMarker("merge") );
   act->addAction( new ActionOutputPrototype("localrecovery") );
   act->addAction( new ActionInputPrototype("fixateproto") );
-  act->addAction( new ActionRestructureHigh("localrecovery") );
   act->addAction( new ActionMapGlobals("fixateglobals") );
   act->addAction( new ActionDynamicSymbols("dynamic") );
   act->addAction( new ActionNameVars("merge") );

@@ -22,8 +22,7 @@ import javax.swing.tree.TreePath;
 
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManagerChangeListener;
+import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
 
 /**
@@ -88,13 +87,23 @@ public interface DataTypeManagerService extends DataTypeQueryService, DataTypeAr
 	public boolean isEditable(DataType dt);
 
 	/**
-	 * Pop up an editor dialog for the given data type.
+	 * Pop up an editor window for the given data type.
 	 * 
-	 * @param dt data type that either a Structure or a Union; built in types cannot be edited
+	 * @param dt the data type; built in types cannot be edited
 	 * @throws IllegalArgumentException if the given has not been resolved by a DataTypeManager;
-	 *         in other words, if {@link DataType#getDataTypeManager()} returns null.
+	 *         in other words, if {@link DataType#getDataTypeManager()} returns null
 	 */
 	public void edit(DataType dt);
+
+	/**
+	 * Pop up an editor window for the given structure.
+	 * 
+	 * @param structure the structure
+	 * @param fieldName the optional structure field name to select in the editor window
+	 * @throws IllegalArgumentException if the given has not been resolved by a DataTypeManager;
+	 *         in other words, if {@link DataType#getDataTypeManager()} returns null
+	 */
+	public void edit(Structure structure, String fieldName);
 
 	/**
 	 * Selects the given data type in the display of data types.  A null <code>dataType</code>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import mdemangler.*;
 import mdemangler.datatype.*;
 import mdemangler.datatype.complex.MDComplexType;
 import mdemangler.datatype.extended.MDExtendedType;
-import mdemangler.datatype.modifier.MDModifierType;
+import mdemangler.datatype.modifier.*;
 
 /**
  * This class represents the template arguments list portion of a
@@ -116,6 +116,12 @@ public class MDTemplateArgumentsList extends MDParsableItem {
 					if (dmang.peek(1) == '$') { // This is the same as the "default" case below
 						dt = MDDataTypeParser.parsePrimaryDataType(dmang, true);
 						dt.parse();
+						if (dt instanceof MDEmptyParameterType ||
+							dt instanceof MDEndParameterType) {
+							// These two do not get added to the arguments list and they don't
+							//  count as or change the indices of backreferences.
+							break;
+						}
 						commaDelimiter.add(needsComma);
 						needsComma = true;
 						args.add(dt);

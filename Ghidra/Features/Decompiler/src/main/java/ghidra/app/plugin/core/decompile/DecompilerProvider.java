@@ -1016,6 +1016,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			new RemoveAllSecondaryHighlightsAction();
 		setGroupInfo(removeAllSecondadryHighlightsAction, highlightGroup, subGroupPosition++);
 
+		PreviousHighlightedTokenAction previousHighlightedTokenAction =
+			new PreviousHighlightedTokenAction();
+		setGroupInfo(previousHighlightedTokenAction, highlightGroup, subGroupPosition++);
+
+		NextHighlightedTokenAction nextHighlightedTokenAction = new NextHighlightedTokenAction();
+		setGroupInfo(nextHighlightedTokenAction, highlightGroup, subGroupPosition++);
+
 		String convertGroup = "7 - Convert Group";
 		subGroupPosition = 0;
 		RemoveEquateAction removeEquateAction = new RemoveEquateAction();
@@ -1122,6 +1129,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(setSecondaryHighlightColorChooserAction);
 		addLocalAction(removeSecondaryHighlightAction);
 		addLocalAction(removeAllSecondadryHighlightsAction);
+		addLocalAction(nextHighlightedTokenAction);
+		addLocalAction(previousHighlightedTokenAction);
 		addLocalAction(convertBinaryAction);
 		addLocalAction(convertDecAction);
 		addLocalAction(convertFloatAction);
@@ -1165,7 +1174,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private void setGroupInfo(DockingAction action, String group, int subGroupPosition) {
 		MenuData popupMenuData = action.getPopupMenuData();
 		popupMenuData.setMenuGroup(group);
-		popupMenuData.setMenuSubGroup(Integer.toString(subGroupPosition));
+
+		// Some groups have numbers reach double-digits.  These will not compare correctly unless
+		// padded.  Ensure all string numbers are at least 2 digits.
+		String numberString = Integer.toString(subGroupPosition);
+		if (numberString.length() == 1) {
+			numberString = '0' + numberString;
+		}
+		popupMenuData.setMenuSubGroup(numberString);
 	}
 
 	private void graphServiceRemoved() {

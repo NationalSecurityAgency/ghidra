@@ -159,7 +159,9 @@ public class FormatManager implements OptionsChangeListener {
 	 * @param listener the listener to be added
 	 */
 	public void addFormatModelListener(FormatModelListener listener) {
-		formatListeners.add(listener);
+		if (listener != null) {
+			formatListeners.add(listener);
+		}
 	}
 
 	/**

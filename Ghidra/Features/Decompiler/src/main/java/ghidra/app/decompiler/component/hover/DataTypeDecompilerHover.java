@@ -17,6 +17,8 @@ package ghidra.app.decompiler.component.hover;
 
 import javax.swing.JComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
@@ -97,11 +99,20 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 		int offset = fieldToken.getOffset();
 		DataType fieldType = getFieldDataType(fieldToken);
 
+		String comment = null;
+		if (parentType instanceof Structure structure) {
+			DataTypeComponent dtc = structure.getComponentAt(offset);
+			if (dtc != null) {
+				comment = StringUtils.truncate(dtc.getComment(), 80); // arbitrary limit
+			}
+		}
+
 		//
 		// Parent:     BarBar
 		// Offset:     0x8
 		// Field Name: fooField
-		//
+		// Comment:    This is a comment
+		//		
 
 		StringBuilder buffy = new StringBuilder(HTMLUtilities.HTML);
 
@@ -113,6 +124,12 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 			row("Offset: ", NumericUtilities.toHexString(offset)));
 		buffy.append(
 			row("Field Name: ", HTMLUtilities.friendlyEncodeHTML(token.getText())));
+		
+		if (comment != null) {
+			buffy.append(
+				row("Comment: ", HTMLUtilities.friendlyEncodeHTML(comment)));
+		}
+		
 		buffy.append("</TABLE>");
 		//@formatter:on
 

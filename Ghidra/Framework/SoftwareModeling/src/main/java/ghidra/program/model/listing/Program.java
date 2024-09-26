@@ -202,17 +202,19 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public void setPreferredRootNamespaceCategoryPath(String categoryPath);
 
 	/**
-	 * Gets the path to the program's executable file.
-	 * For example, <code>C:\Temp\test.exe</code>.
+	 * Gets the path to the program's executable file. For example, {@code /home/user/foo.exe}.
 	 * This will allow plugins to execute the program.
-	 *
+	 * <p>
+	 * NOTE: The format of the path is not guaranteed to follow any standard naming conventions.
+	 * If used for anything other than display purpose, callers of this method should take extra
+	 * steps to ensure the path is in a form suitable for their needs.
+	 * 
 	 * @return String  path to program's exe file
 	 */
 	public String getExecutablePath();
 
 	/**
-	 * Sets the path to the program's executable file.
-	 * For example, <code>C:\Temp\test.exe</code>.
+	 * Sets the path to the program's executable file. For example, {@code /home/user/foo.exe}.
 	 *
 	 * @param path  the path to the program's exe
 	 */

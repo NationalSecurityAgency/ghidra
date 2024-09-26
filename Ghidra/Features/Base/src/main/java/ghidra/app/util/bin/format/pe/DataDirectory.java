@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,12 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.listing.*;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * An abstract base class to represent the
@@ -42,7 +39,7 @@ import ghidra.util.exception.DuplicateNameException;
  *
  *
  */
-public abstract class DataDirectory implements StructConverter, PeMarkupable {
+public abstract class DataDirectory implements PeMarkupable {
 	/**
 	 * The name to use when converting into a structure data type.
 	 */
@@ -59,25 +56,35 @@ public abstract class DataDirectory implements StructConverter, PeMarkupable {
 	protected int size;
 	protected boolean hasParsed = false;
 
-	protected void processDataDirectory(NTHeader ntHeader, BinaryReader reader)
-			throws IOException {
-		this.ntHeader = ntHeader;
-		this.reader = reader;
+	protected void processDataDirectory(NTHeader nt, BinaryReader rdr) throws IOException {
+		this.ntHeader = nt;
+		this.reader = rdr;
 
-		virtualAddress = reader.readNextInt();
-		size = reader.readNextInt();
+		virtualAddress = rdr.readNextInt();
+		size = rdr.readNextInt();
 
-		if (size < 0 || !ntHeader.checkRVA(virtualAddress)) {
-			if (size != 0) {
-				Msg.warn(this,
-					"DataDirectory RVA outside of image (RVA: 0x" +
-						Integer.toHexString(virtualAddress) + ", Size: 0x" +
-						Integer.toHexString(size) + ").  Could be a file-only data directory.");
-				size = 0;
-			}
+		if (virtualAddress == 0) {
 			return;
 		}
+
+		if (!nt.checkRVA(virtualAddress)) {
+			Msg.warn(this,
+				"Skipping DataDirectory '%s'. RVA outside of image (RVA: 0x%x, Size: 0x%x). Could be a file-only data directory."
+						.formatted(getDirectoryName(), virtualAddress, size));
+			return;
+		}
+
+		if (size < 0 && validateSize()) {
+			Msg.warn(this, "Skipping DataDirectory '%s'. Invalid size (Size: 0x%x)."
+					.formatted(getDirectoryName(), size));
+			return;
+		}
+
 		hasParsed = parse();
+	}
+
+	protected boolean validateSize() {
+		return true;
 	}
 
 	public abstract String getDirectoryName();
@@ -134,9 +141,15 @@ public abstract class DataDirectory implements StructConverter, PeMarkupable {
 	}
 
 	/**
-	 * Creates a fragment with the given name (if it does not already exist).
-	 * Move the address range into the fragment.
+	 * Creates a fragment with the given name (if it does not already exist) and moves the address 
+	 * range into the fragment.
+	 * <p>
 	 * Note: the end address is not inclusive!
+	 * @param program The program
+	 * @param fragmentName The fragment name
+	 * @param start The start address
+	 * @param end The end address
+	 * @return True on success; otherwise, false
 	 */
 	protected boolean createFragment(Program program, String fragmentName, Address start,
 			Address end) {
@@ -150,8 +163,8 @@ public abstract class DataDirectory implements StructConverter, PeMarkupable {
 			return true;
 		}
 		catch (Exception e) {
+			return false;
 		}
-		return false;
 	}
 
 	private ProgramFragment findFragment(ProgramModule module, String fragmentName) {
@@ -225,13 +238,6 @@ public abstract class DataDirectory implements StructConverter, PeMarkupable {
 	}
 
 	/**
-	 * This method should return a datatype representing the data stored
-	 * in this directory.
-	 */
-	@Override
-	public abstract DataType toDataType() throws DuplicateNameException, IOException;
-
-	/**
 	 * Directories that are not contained inside of sections
 	 * should override this method to write their bytes into the
 	 * specified file.
@@ -242,6 +248,7 @@ public abstract class DataDirectory implements StructConverter, PeMarkupable {
 	 */
 	public void writeBytes(RandomAccessFile raf, DataConverter dc, PortableExecutable template)
 			throws IOException {
+		// Do nothing
 	}
 
 	public boolean hasParsedCorrectly() {

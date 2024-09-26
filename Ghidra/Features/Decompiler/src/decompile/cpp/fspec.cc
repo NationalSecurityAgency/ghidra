@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -3105,6 +3105,8 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
 
   bool isindirect = (pieces.flags & ParameterPieces::indirectstorage) != 0;
   bool ishidden = (pieces.flags & ParameterPieces::hiddenretparm) != 0;
+  bool istypelock = (pieces.flags & ParameterPieces::typelock) != 0;
+  bool isnamelock = (pieces.flags & ParameterPieces::namelock) != 0;
   if (res->sym != (Symbol *)0) {
     entry = res->sym->getFirstWholeMap();
     if ((entry->getAddr() != pieces.addr)||(entry->getSize() != pieces.type->getSize())) {
@@ -3117,12 +3119,16 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
       usepoint = restricted_usepoint;
     res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,Symbol::function_parameter,i);
-    if (isindirect || ishidden) {
+    if (isindirect || ishidden || istypelock || isnamelock) {
       uint4 mirror = 0;
       if (isindirect)
 	mirror |= Varnode::indirectstorage;
       if (ishidden)
 	mirror |= Varnode::hiddenretparm;
+      if (istypelock)
+	mirror |= Varnode::typelock;
+      if (isnamelock)
+	mirror |= Varnode::namelock;
       scope->setAttribute(res->sym,mirror);
     }
     return res;
@@ -3138,6 +3144,18 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
       scope->setAttribute(res->sym,Varnode::hiddenretparm);
     else
       scope->clearAttribute(res->sym,Varnode::hiddenretparm);
+  }
+  if (res->sym->isTypeLocked() != istypelock) {
+    if (istypelock)
+      scope->setAttribute(res->sym,Varnode::typelock);
+    else
+      scope->clearAttribute(res->sym,Varnode::typelock);
+  }
+  if (res->sym->isNameLocked() != isnamelock) {
+    if (isnamelock)
+      scope->setAttribute(res->sym,Varnode::namelock);
+    else
+      scope->clearAttribute(res->sym,Varnode::namelock);
   }
   if ((nm.size()!=0)&&(nm!=res->sym->getName()))
     scope->renameSymbol(res->sym,nm);
@@ -5126,7 +5144,7 @@ void FuncCallSpecs::commitNewInputs(Funcdata &data,vector<Varnode *> &newinput)
 /// Any other intersecting outputs are updated to be either truncations or extensions of this.
 /// Any active trials are updated,
 /// \param data is the calling function
-/// \param newout is the list of intersecting outputs
+/// \param newoutput is the list of intersecting outputs
 void FuncCallSpecs::commitNewOutputs(Funcdata &data,vector<Varnode *> &newoutput)
 
 {

@@ -844,15 +844,15 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
-/// \brief Create symbols that map out the local stack-frame for the function.
+/// \brief Do final synchronization of symbols in the local scope with Varnodes
 ///
-/// This produces the final set of symbols on the stack.
-class ActionRestructureHigh : public Action {
+/// Push data-types from the last local scope restructuring onto Varnodes
+class ActionMappedLocalSync : public Action {
 public:
-  ActionRestructureHigh(const string &g) : Action(0,"restructure_high",g) {}	///< Constructor
+  ActionMappedLocalSync(const string &g) : Action(0,"mapped_local_sync",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionRestructureHigh(getGroup());
+    return new ActionMappedLocalSync(getGroup());
   }
   virtual int4 apply(Funcdata &data);
 };

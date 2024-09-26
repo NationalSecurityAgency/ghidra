@@ -19,137 +19,109 @@ import java.awt.Cursor;
 import java.awt.dnd.*;
 
 /**
- * Adapter class that receives notifications in order to
- * provide drag over effects.
- * <p> When the operation ends, this class receives a
- * <code>dragDropEnd</code> message, and is responsible for
- * checking the success of the operation. If the operation was
- * successful, and if it was a Move, then
- * this class will remove the source data.
+ * Adapter class that receives notifications in order to provide drag over effects.
+ * 
+ * <p>When the operation ends, this class receives a <code>dragDropEnd</code> message, and is 
+ * responsible for checking the success of the operation. If the operation was successful, and if it
+ * was a Move, then this class will remove the source data.
  */
 public class DragSrcAdapter implements DragSourceListener {
-    protected Draggable dragComponent;
 
-    private Cursor currentCursor;
-    private Cursor copyDropCursor=DragSource.DefaultCopyDrop;
-    private Cursor copyNoDropCursor=DragSource.DefaultCopyNoDrop;
-    private Cursor moveDropCursor =DragSource.DefaultMoveDrop;
-    private Cursor moveNoDropCursor=DragSource.DefaultMoveNoDrop;
-    private Cursor linkDropCursor =DragSource.DefaultLinkDrop;
-    private Cursor linkNoDropCursor = DragSource.DefaultLinkNoDrop;
+	private static final Cursor COPY_DROP_CURSOR = DragSource.DefaultCopyDrop;
+	private static final Cursor COPY_NO_DROP_CURSOR = DragSource.DefaultCopyNoDrop;
+	private static final Cursor MOVE_DROP_CURSOR = DragSource.DefaultMoveDrop;
+	private static final Cursor MOVE_NO_DROP_CURSOR = DragSource.DefaultMoveNoDrop;
+	private static final Cursor LINK_DROP_CURSOR = DragSource.DefaultLinkDrop;
+	private static final Cursor LINK_NO_DROP_CURSOR = DragSource.DefaultLinkNoDrop;
 
-    /**
-     * Constructor
-     * @param dragComponent component that can be dragged.
-     */
-    public DragSrcAdapter(Draggable dragComponent) {
-        this.dragComponent = dragComponent;
-    }
-    /**
-     * Called when the drag-drop operation completes.
-     * Calls the drag component's move() method if the action is a
-     * move operation.
-     */
-    public void dragDropEnd(DragSourceDropEvent e) {
+	private Cursor currentCursor;
+	protected Draggable dragComponent;
 
-        if (!e.getDropSuccess()) {
-            dragComponent.dragCanceled(e);
-//            DragGestureAdapter.clearTransferable();
-            return;
-        }
-        int dropOp = e.getDropAction();
-        int dragAction = dragComponent.getDragAction();
+	/**
+	 * Constructor
+	 * @param dragComponent component that can be dragged.
+	 */
+	public DragSrcAdapter(Draggable dragComponent) {
+		this.dragComponent = dragComponent;
+	}
 
-        if ((dropOp & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE &&
-            (dragAction & DnDConstants.ACTION_MOVE) != 0) {
-            dragComponent.move();
-//            DragGestureAdapter.clearTransferable();
-        }
-    }
-    /**
-     * Called as the hotspot enters a platform dependent drop site.
-     */
-    public void dragEnter(DragSourceDragEvent e) {
+	@Override
+	public void dragDropEnd(DragSourceDropEvent e) {
+		dragComponent.dragFinished(!e.getDropSuccess());
+	}
 
-        setDragOverFeedback(e);
-    }
-    /**
-     * Called as the hotspot moves over a platform dependent drop site.
-     */
-    public void dragOver(DragSourceDragEvent e) {
+	@Override
+	public void dragEnter(DragSourceDragEvent e) {
+		setDragOverFeedback(e);
+	}
 
-        setDragOverFeedback(e);
-    }
+	@Override
+	public void dragOver(DragSourceDragEvent e) {
+		setDragOverFeedback(e);
+	}
 
-    /**
-     * Called as the hotspot exits a platform dependent drop site.
-     */
-    public void dragExit(DragSourceEvent e) {
+	@Override
+	public void dragExit(DragSourceEvent e) {
 
-        DragSourceContext context = e.getDragSourceContext();
-        context.setCursor(null); // bug workaround
-        currentCursor = copyNoDropCursor;
-        context.setCursor(currentCursor);
-    }
-    /**
-     * Drop action changed, i.e., ctrl key pressed during drag to
-     * change to a copy operation.
-     */
-    public void dropActionChanged(DragSourceDragEvent e) {
-        setDragOverFeedback(e);
-    }
+		DragSourceContext context = e.getDragSourceContext();
+		context.setCursor(null); // bug workaround
+		currentCursor = COPY_NO_DROP_CURSOR;
+		context.setCursor(currentCursor);
+	}
 
-    //////////////////////////////////////////////////////////////////////
-    // *** private methods ***
-    //////////////////////////////////////////////////////////////////////
+	@Override
+	public void dropActionChanged(DragSourceDragEvent e) {
+		setDragOverFeedback(e);
+	}
 
-    /**
-     * Sets the cursor according to the actions that are legal.
-     */
-    protected void setDragOverFeedback(DragSourceDragEvent e) {
-        DragSourceContext context = e.getDragSourceContext();
-        int dropOp = e.getDropAction();
-        int targetAction = e.getTargetActions();
-        int action = dropOp & targetAction;
-        Cursor c = null;
+	/**
+	 * Sets the cursor according to the actions that are legal.
+	 * @param e the event
+	 */
+	protected void setDragOverFeedback(DragSourceDragEvent e) {
+		DragSourceContext context = e.getDragSourceContext();
+		int dropOp = e.getDropAction();
+		int targetAction = e.getTargetActions();
+		int action = dropOp & targetAction;
+		Cursor c = null;
 
-        if (action == DnDConstants.ACTION_NONE) {
-            // drop not possible
-            if ((dropOp & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK) {
-                c = linkNoDropCursor;
-            }
-            else if ((dropOp & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE) {
-                c = moveNoDropCursor;
-            }
-            else {
-                c = copyNoDropCursor;
-            }
-        }
-        else {
-            // drop is possible
-			c = getDropOkCursor(action);
-        }
-        context.setCursor(null); // bug workaround...
-        currentCursor = c;
-        context.setCursor(c);
-    }
-    
-    /**
-     * Get the cursor for an "OK" drop.
-     * @param action action for the drag operation (copy, move, link)
-     * @return cursor that is appropriate for the give action
-     */
-	protected Cursor getDropOkCursor(int action) {
-		Cursor c;
-		if ((action & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK) {
-		    c = linkDropCursor;
-		}
-		else if ((action & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE) {
-		    c = moveDropCursor;
+		if (action == DnDConstants.ACTION_NONE) {
+			// drop not possible
+			if ((dropOp & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK) {
+				c = LINK_NO_DROP_CURSOR;
+			}
+			else if ((dropOp & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE) {
+				c = MOVE_NO_DROP_CURSOR;
+			}
+			else {
+				c = COPY_NO_DROP_CURSOR;
+			}
 		}
 		else {
-		    c = copyDropCursor;
+			// drop is possible
+			c = getDropOkCursor(action);
 		}
-		return c;
+
+		context.setCursor(null); // bug workaround...
+		currentCursor = c;
+		context.setCursor(c);
+	}
+
+	/**
+	 * Get the cursor for an "OK" drop.
+	 * @param action action for the drag operation (copy, move, link)
+	 * @return cursor that is appropriate for the give action
+	 */
+	protected Cursor getDropOkCursor(int action) {
+
+		if ((action & DnDConstants.ACTION_LINK) == DnDConstants.ACTION_LINK) {
+			return LINK_DROP_CURSOR;
+		}
+		else if ((action & DnDConstants.ACTION_MOVE) == DnDConstants.ACTION_MOVE) {
+			return MOVE_DROP_CURSOR;
+		}
+		else {
+			return COPY_DROP_CURSOR;
+		}
 	}
 }

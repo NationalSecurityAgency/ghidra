@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 
+@Deprecated(forRemoval = true, since = "11.2")
 public interface TargetCmdLineLauncherEx extends TargetLauncher {
 	String CMDLINE_ARGS_NAME = "args";
 
@@ -38,13 +39,13 @@ public interface TargetCmdLineLauncherEx extends TargetLauncher {
 	TargetParameterMap PARAMETERS = TargetMethod.makeParameters(PARAMETER_CMDLINE_ARGS);
 
 	/**
-	 * Check if the given image path contains spaces, and surround it in double quotes
-	 * ({@code "}) if necessary.
+	 * Check if the given image path contains spaces, and surround it in double quotes ({@code "})
+	 * if necessary.
 	 * 
 	 * <p>
-	 * Without the quotes the launcher will likely confuse the spaces for separating arguments.
-	 * When constructing the command-line to launch a program, this method must be used, even if
-	 * the image is the only "argument."
+	 * Without the quotes the launcher will likely confuse the spaces for separating arguments. When
+	 * constructing the command-line to launch a program, this method must be used, even if the
+	 * image is the only "argument."
 	 * 
 	 * @param imagePath the path to the image on the target platform.
 	 * @return the path, possibly surrounded in quotes.
@@ -65,9 +66,9 @@ public interface TargetCmdLineLauncherEx extends TargetLauncher {
 	 * Launch a target using the given arguments
 	 * 
 	 * <p>
-	 * This is mostly applicable to user-space contexts, in which case, this usually means to
-	 * launch a new process with the given arguments, where the first argument is the path to
-	 * the executable image on the target host's file system.
+	 * This is mostly applicable to user-space contexts, in which case, this usually means to launch
+	 * a new process with the given arguments, where the first argument is the path to the
+	 * executable image on the target host's file system.
 	 * 
 	 * @param args the arguments
 	 * @return a future which completes when the command has been processed

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,6 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 
 import docking.action.*;
-import docking.widgets.table.GTable;
-import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -32,9 +30,14 @@ import ghidra.util.HelpLocation;
  * <p>
  * Note: Any new actions must be registered in the editor manager via the actions's name.
  */
-abstract public class CompositeEditorTableAction extends DockingAction implements EditorAction {
+abstract public class CompositeEditorTableAction extends DockingAction {
 
-	private static final String PREFIX = DataTypeEditorManager.EDIT_ACTION_PREFIX;
+	static final String MAIN_ACTION_GROUP = "0_MAIN_EDITOR_ACTION";
+	static final String UNDOREDO_ACTION_GROUP = "1_UNDOREDO_EDITOR_ACTION";
+	static final String BASIC_ACTION_GROUP = "2_BASIC_EDITOR_ACTION";
+	static final String DATA_ACTION_GROUP = "3_DATA_EDITOR_ACTION";
+	static final String COMPONENT_ACTION_GROUP = "4_COMPONENT_EDITOR_ACTION";
+	static final String BITFIELD_ACTION_GROUP = "5_COMPONENT_EDITOR_ACTION";
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
@@ -57,8 +60,7 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
 			String[] popupPath, String[] menuPath, Icon icon) {
-		super(PREFIX + name, provider.plugin.getName(),
-			KeyBindingType.SHARED);
+		super(name, provider.plugin.getName(), KeyBindingType.SHARED);
 		init(provider);
 		if (menuPath != null) {
 			setMenuBarData(new MenuData(menuPath, icon, group));
@@ -76,14 +78,12 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		this.model = provider.getModel();
 		this.plugin = provider.plugin;
 		this.tool = plugin.getTool();
-		model.addCompositeEditorModelListener(this);
 		String helpAnchor = provider.getHelpName() + "_" + getHelpName();
 		setHelpLocation(new HelpLocation(provider.getHelpTopic(), helpAnchor));
 	}
 
 	@Override
 	public void dispose() {
-		model.removeCompositeEditorModelListener(this);
 		super.dispose();
 		provider = null;
 		model = null;
@@ -91,73 +91,18 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		tool = null;
 	}
 
-	protected void requestTableFocus() {
-		if (provider == null) {
-			return; // must have been disposed
-		}
-
-		JTable table = ((CompositeEditorPanel) provider.getComponent()).getTable();
-		if (!table.isEditing()) {
-			table.requestFocus();
-			return;
-		}
-
-		if (table instanceof GTable gTable) {
-			gTable.requestTableEditorFocus();
-		}
-		else {
-			table.getEditorComponent().requestFocus();
-		}
+	protected boolean hasIncompleteFieldEntry() {
+		return provider.editorPanel.hasInvalidEntry() || provider.editorPanel.hasUncomittedEntry();
 	}
 
-	@Override
-	abstract public void adjustEnablement();
+	protected void requestTableFocus() {
+		if (provider != null) {
+			provider.requestTableFocus();
+		}
+	}
 
 	public String getHelpName() {
-		String actionName = getName();
-		if (actionName.startsWith(PREFIX)) {
-			actionName = actionName.substring(PREFIX.length());
-		}
-		return actionName;
-	}
-
-	@Override
-	public void selectionChanged() {
-		adjustEnablement();
-	}
-
-	public void editStateChanged(int i) {
-		adjustEnablement();
-	}
-
-	@Override
-	public void compositeEditStateChanged(int type) {
-		adjustEnablement();
-	}
-
-	@Override
-	public void endFieldEditing() {
-		adjustEnablement();
-	}
-
-	@Override
-	public void componentDataChanged() {
-		adjustEnablement();
-	}
-
-	@Override
-	public void compositeInfoChanged() {
-		adjustEnablement();
-	}
-
-	@Override
-	public void statusChanged(String message, boolean beep) {
-		// we are an action; don't care about status messages
-	}
-
-	@Override
-	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
-		adjustEnablement();
+		return getName();
 	}
 
 }

@@ -32,6 +32,8 @@ public abstract class AbstractComplexMsType extends AbstractMsType {
 	protected RecordNumber fieldDescriptorListRecordNumber;
 	protected MsProperty property;
 	protected String name;
+	// Used by MsType and 19MsType; maybe by StMsType; not by 16MsType
+	protected String mangledName;
 
 	/**
 	 * Constructor for this type.
@@ -46,7 +48,7 @@ public abstract class AbstractComplexMsType extends AbstractMsType {
 	 * Constructor for this type.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 * @param count number of field elements
-	 * @param fieldDescriptorListRecordNumber {@link RecordNumber} of field list 
+	 * @param fieldDescriptorListRecordNumber {@link RecordNumber} of field list
 	 * @param property {@link MsProperty} of this type
 	 * @param name the name of this type
 	 */
@@ -98,6 +100,14 @@ public abstract class AbstractComplexMsType extends AbstractMsType {
 	@Override
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * Returns the mangled name within this complex type
+	 * @return Mangled name
+	 */
+	public String getMangledName() {
+		return mangledName;
 	}
 
 	/**

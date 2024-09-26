@@ -15,11 +15,17 @@
  */
 package ghidra.app.util.bin.format.golang;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * Immutable information about registers, alignment sizes, etc needed to allocate storage
@@ -27,6 +33,8 @@ import ghidra.program.model.lang.Register;
  * <p>
  */
 public class GoRegisterInfo {
+
+	public enum RegType { INT, FLOAT }
 
 	private final List<Register> intRegisters;
 	private final List<Register> floatRegisters;
@@ -36,9 +44,14 @@ public class GoRegisterInfo {
 	private final Register zeroRegister;	// always contains a zero value
 	private final boolean zeroRegisterIsBuiltin;	// zero register is provided by cpu, or is manually set
 
+	private final Register duffzeroDestParam;
+	private final Register duffzeroZeroParam;	// if duffzero has 2nd param
+	private final RegType duffzeroZeroParamType;
+
 	GoRegisterInfo(List<Register> intRegisters, List<Register> floatRegisters,
 			int stackInitialOffset, int maxAlign, Register currentGoroutineRegister,
-			Register zeroRegister, boolean zeroRegisterIsBuiltin) {
+			Register zeroRegister, boolean zeroRegisterIsBuiltin, Register duffzeroDestParam,
+			Register duffzeroZeroParam, RegType duffzeroZeroParamType) {
 		this.intRegisters = intRegisters;
 		this.floatRegisters = floatRegisters;
 		this.stackInitialOffset = stackInitialOffset;
@@ -46,6 +59,10 @@ public class GoRegisterInfo {
 		this.currentGoroutineRegister = currentGoroutineRegister;
 		this.zeroRegister = zeroRegister;
 		this.zeroRegisterIsBuiltin = zeroRegisterIsBuiltin;
+
+		this.duffzeroDestParam = duffzeroDestParam;
+		this.duffzeroZeroParam = duffzeroZeroParam;
+		this.duffzeroZeroParamType = duffzeroZeroParamType;
 	}
 
 	public int getIntRegisterSize() {
@@ -78,6 +95,45 @@ public class GoRegisterInfo {
 
 	public int getStackInitialOffset() {
 		return stackInitialOffset;
+	}
+
+	public List<Variable> getDuffzeroParams(Program program) {
+		if (duffzeroDestParam == null) {
+			return List.of();
+		}
+		try {
+			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+			DataType voidPtr = dtm.getPointer(VoidDataType.dataType);
+
+			List<Variable> params = new ArrayList<>();
+
+			params.add(new ParameterImpl("dest", Parameter.UNASSIGNED_ORDINAL, voidPtr,
+				getStorageForReg(program, duffzeroDestParam, voidPtr.getLength()), true, program,
+				SourceType.ANALYSIS));
+			if (duffzeroZeroParam != null && duffzeroZeroParamType != null) {
+				int regSize = duffzeroZeroParam.getMinimumByteSize();
+				DataType dt = switch (duffzeroZeroParamType) {
+					case FLOAT -> AbstractFloatDataType.getFloatDataType(regSize, dtm);
+					case INT -> AbstractIntegerDataType.getUnsignedDataType(regSize, dtm);
+				};
+				params.add(new ParameterImpl("zeroValue", Parameter.UNASSIGNED_ORDINAL, dt,
+					getStorageForReg(program, duffzeroZeroParam, regSize), true, program,
+					SourceType.ANALYSIS));
+			}
+
+			return params;
+		}
+		catch (InvalidInputException e) {
+			return List.of();
+		}
+
+	}
+
+	private VariableStorage getStorageForReg(Program program, Register reg, int len)
+			throws InvalidInputException {
+		return new VariableStorage(program,
+			DWARFUtil.convertRegisterListToVarnodeStorage(List.of(reg), len)
+					.toArray(Varnode[]::new));
 	}
 
 	public int getAlignmentForType(DataType dt) {

@@ -71,13 +71,11 @@ public class GlobalSymbolInformation extends AbstractSymbolInformation {
 	 */
 	@Override
 	void dump(Writer writer) throws IOException, CancelledException, PdbException {
-		StringBuilder builder = new StringBuilder();
-		builder.append("GlobalSymbolInformation-------------------------------------\n");
-		dumpHashHeader(builder);
-		dumpHashBasics(builder);
-		dumpHashRecords(builder);
-		builder.append("\nEnd GlobalSymbolInformation---------------------------------\n");
-		writer.write(builder.toString());
+		writer.write("GlobalSymbolInformation-------------------------------------\n");
+		dumpHashHeader(writer);
+		dumpHashBasics(writer);
+		dumpHashRecords(writer);
+		writer.write("\nEnd GlobalSymbolInformation---------------------------------\n");
 	}
 
 }

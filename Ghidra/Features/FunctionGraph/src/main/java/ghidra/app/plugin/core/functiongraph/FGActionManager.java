@@ -662,7 +662,7 @@ class FGActionManager {
 		Icon image = new GIcon("icon.plugin.functiongraph.action.viewer.clone");
 		cloneAction.setToolBarData(new ToolBarData(image, toolbarEndGroup));
 		cloneAction.setDescription(
-			"Create a snapshot (disconnected) copy of this Function Graph window ");
+			"Create a snapshot (disconnected) copy of this Function Graph window");
 		cloneAction.setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
 		cloneAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Snapshot"));

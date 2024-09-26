@@ -49,29 +49,19 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	private void renameGlobalVariable(HighSymbol highSymbol, ClangToken tokenAtCursor,
 			String newName) {
 		Address addr = highSymbol.getStorage().getMinAddress();
-		RenameLabelCmd cmd =
-			new RenameLabelCmd(addr, highSymbol.getName(), newName, SourceType.USER_DEFINED);
-
-		modifyProgram(p -> {
-			cmd.applyTo(highSymbol.getProgram());
-		});
+		applyCmd(program,
+			new RenameLabelCmd(addr, highSymbol.getName(), newName, SourceType.USER_DEFINED));
 		waitForDecompiler();
 	}
 
 	private void deleteFunction(String address) {
-		modifyProgram(p -> {
-			Address addr = p.getAddressFactory().getAddress(address);
-			DeleteFunctionCmd deleteCmd = new DeleteFunctionCmd(addr);
-			deleteCmd.applyTo(p);
-		});
+		Address addr = program.getAddressFactory().getAddress(address);
+		applyCmd(program, new DeleteFunctionCmd(addr));
 	}
 
 	private void createFunction(String address) {
-		modifyProgram(p -> {
-			Address addr = p.getAddressFactory().getAddress(address);
-			CreateFunctionCmd createCmd = new CreateFunctionCmd(addr);
-			createCmd.applyTo(p);
-		});
+		Address addr = program.getAddressFactory().getAddress(address);
+		applyCmd(program, new CreateFunctionCmd(addr));
 	}
 
 	private void turnOffAnalysis() {
@@ -103,10 +93,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	}
 
 	private void applyEquate(String equateName, Address addr, long equateValue) {
-		modifyProgram(p -> {
-			SetEquateCmd cmd = new SetEquateCmd(equateName, addr, 0, equateValue);
-			cmd.applyTo(program);
-		});
+		applyCmd(program, new SetEquateCmd(equateName, addr, 0, equateValue));
 	}
 
 	private void renameExisting(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
@@ -324,21 +311,26 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		turnOffAnalysis();
 		createFunction("10015a6");
 		decompile("10015a6");
+
 		ClangTextField line = getLineContaining("param_4 +");
 		FieldLocation loc = loc(line.getLineNumber(), 23);
 		ClangToken token = line.getToken(loc);
 		assertTrue(token instanceof ClangVariableToken);
+
 		HighSymbol highSymbol = token.getHighVariable().getSymbol();
 		renameVariable(highSymbol, token, "newParam");
 		line = getLineContaining("newParam +");
 		token = line.getToken(loc);
 		assertTrue(token instanceof ClangVariableToken);
+
 		HighVariable variable = token.getHighVariable();
 		assertTrue(variable instanceof HighParam);
 		assertEquals(((HighParam) variable).getSlot(), 3);
+
 		highSymbol = variable.getSymbol();
 		assertTrue(highSymbol.isNameLocked());
 		assertFalse(highSymbol.isTypeLocked());
+
 		Function function = highSymbol.getHighFunction().getFunction();
 		Parameter[] parameters = function.getParameters();
 		assertEquals(parameters.length, 4);

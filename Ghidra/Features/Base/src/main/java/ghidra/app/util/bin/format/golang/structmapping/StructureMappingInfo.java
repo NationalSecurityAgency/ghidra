@@ -39,18 +39,19 @@ public class StructureMappingInfo<T> {
 	 * @param targetClass structure mapped class
 	 * @param structDataType Ghidra {@link DataType} that defines the binary layout of the mapped
 	 * fields of the class, or null if this is a self-reading {@link StructureReader} class  
+	 * @param context {@link DataTypeMapperContext}
 	 * @return new {@link StructureMappingInfo} for the specified class
 	 * @throws IllegalArgumentException if targetClass isn't tagged as a structure mapped class
 	 */
 	public static <T> StructureMappingInfo<T> fromClass(Class<T> targetClass,
-			Structure structDataType) {
+			Structure structDataType, DataTypeMapperContext context) {
 		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
 		if (sma == null) {
 			throw new IllegalArgumentException(
 				"Missing @StructureMapping annotation on " + targetClass.getSimpleName());
 		}
 
-		return new StructureMappingInfo<>(targetClass, structDataType, sma);
+		return new StructureMappingInfo<>(targetClass, structDataType, sma, context);
 	}
 
 	private final Class<T> targetClass;
@@ -69,17 +70,17 @@ public class StructureMappingInfo<T> {
 	private Field structureContextField;
 
 	private StructureMappingInfo(Class<T> targetClass, Structure structDataType,
-			StructureMapping sma) {
+			StructureMapping sma, DataTypeMapperContext context) {
 		this.targetClass = targetClass;
 		this.structureDataType = structDataType;
 		this.structureName = structureDataType != null
 				? structureDataType.getName()
 				: sma.structureName()[0];
-		this.fieldNameLookup = indexStructFields(structDataType);
+		this.fieldNameLookup = indexStructFields();
 		this.useFieldMappingInfo = !StructureReader.class.isAssignableFrom(targetClass);
 		this.instanceCreator = findInstanceCreator();
 
-		readFieldInfo(targetClass);
+		readFieldInfo(targetClass, context);
 		Collections.sort(outputFields,
 			(foi1, foi2) -> Integer.compare(foi1.getOrdinal(), foi2.getOrdinal()));
 
@@ -249,10 +250,10 @@ public class StructureMappingInfo<T> {
 		}
 	}
 
-	private void readFieldInfo(Class<?> clazz) {
+	private void readFieldInfo(Class<?> clazz, DataTypeMapperContext context) {
 		Class<?> superclass = clazz.getSuperclass();
 		if (superclass != null) {
-			readFieldInfo(superclass);
+			readFieldInfo(superclass, context);
 		}
 
 		for (Field field : clazz.getDeclaredFields()) {
@@ -260,7 +261,7 @@ public class StructureMappingInfo<T> {
 			FieldMapping fma = field.getAnnotation(FieldMapping.class);
 			FieldOutput foa = field.getAnnotation(FieldOutput.class);
 			if (fma != null || foa != null) {
-				FieldMappingInfo<T> fmi = readFieldMappingInfo(field, fma);
+				FieldMappingInfo<T> fmi = readFieldMappingInfo(field, fma, context);
 				if (fmi == null) {
 					// was marked optional field, just skip
 					continue;
@@ -287,7 +288,14 @@ public class StructureMappingInfo<T> {
 		}
 	}
 
-	private FieldMappingInfo<T> readFieldMappingInfo(Field field, FieldMapping fma) {
+	private FieldMappingInfo<T> readFieldMappingInfo(Field field, FieldMapping fma,
+			DataTypeMapperContext context) {
+
+		if (fma != null && !context.isFieldPresent(fma.presentWhen())) {
+			// skip if this field was marked as not present
+			return null;
+		}
+
 		String[] fieldNames = getFieldNamesToSearchFor(field, fma);
 		DataTypeComponent dtc = getFirstMatchingField(fieldNames);
 		if (useFieldMappingInfo && dtc == null) {
@@ -379,12 +387,12 @@ public class StructureMappingInfo<T> {
 		return struct.isZeroLength() ? 0 : struct.getLength();
 	}
 
-	private static Map<String, DataTypeComponent> indexStructFields(Structure struct) {
-		if (struct == null) {
+	private Map<String, DataTypeComponent> indexStructFields() {
+		if (structureDataType == null) {
 			return Map.of();
 		}
 		Map<String, DataTypeComponent> result = new HashMap<>();
-		for (DataTypeComponent dtc : struct.getDefinedComponents()) {
+		for (DataTypeComponent dtc : structureDataType.getDefinedComponents()) {
 			String fieldName = dtc.getFieldName();
 			if (fieldName != null) {
 				result.put(fieldName.toLowerCase(), dtc);

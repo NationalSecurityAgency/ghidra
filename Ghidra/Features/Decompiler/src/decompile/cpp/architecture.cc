@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ using std::sqrt;
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 6;
-const uint4 ArchitectureCapability::minorversion = 0;
+const uint4 ArchitectureCapability::minorversion = 1;
 
 AttributeId ATTRIB_ADDRESS = AttributeId("address",148);
 AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
@@ -924,23 +924,47 @@ void Architecture::decodeIncidentalCopy(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
-/// Look for \<register> elements that have a \e vector_lane_size attribute.
-/// Record these so that the decompiler can split large registers into appropriate lane size pieces.
+/// Read \<register> elements to collect specific properties associated with the register storage.
 /// \param decoder is the stream decoder
-void Architecture::decodeLaneSizes(Decoder &decoder)
+void Architecture::decodeRegisterData(Decoder &decoder)
 
 {
   vector<uint4> maskList;
-  LanedRegister lanedRegister;		// Only allocate once
 
   uint4 elemId = decoder.openElement(ELEM_REGISTER_DATA);
   while(decoder.peekElement() != 0) {
-    if (lanedRegister.decode(decoder)) {
-      int4 sizeIndex = lanedRegister.getWholeSize();
-      while (maskList.size() <= sizeIndex)
-	maskList.push_back(0);
-      maskList[sizeIndex] |= lanedRegister.getSizeBitMask();
+    uint4 subId = decoder.openElement(ELEM_REGISTER);
+    bool isVolatile = false;
+    string laneSizes;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_VECTOR_LANE_SIZES) {
+        laneSizes = decoder.readString();
+      }
+      else if (attribId == ATTRIB_VOLATILE) {
+	isVolatile = decoder.readBool();
+      }
     }
+    if (!laneSizes.empty() || isVolatile) {
+      decoder.rewindAttributes();
+      VarnodeData storage;
+      storage.space = (AddrSpace *)0;
+      storage.decodeFromAttributes(decoder);
+      if (!laneSizes.empty()) {
+	LanedRegister lanedRegister;
+	lanedRegister.parseSizes(storage.size,laneSizes);
+	int4 sizeIndex = lanedRegister.getWholeSize();
+	while (maskList.size() <= sizeIndex)
+	  maskList.push_back(0);
+	maskList[sizeIndex] |= lanedRegister.getSizeBitMask();
+      }
+      if (isVolatile) {
+	Range range( storage.space, storage.offset, storage.offset+storage.size-1);
+	symboltab->setPropertyRange(Varnode::volatil,range);
+      }
+    }
+    decoder.closeElement(subId);
   }
   decoder.closeElement(elemId);
   lanerecords.clear();
@@ -1172,7 +1196,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (subId == ELEM_SEGMENTOP)
       userops.decodeSegmentOp(decoder,this);
     else if (subId == ELEM_REGISTER_DATA) {
-      decodeLaneSizes(decoder);
+      decodeRegisterData(decoder);
     }
     else if (subId == ELEM_DATA_SPACE) {
       uint4 elemId = decoder.openElement();
@@ -1321,7 +1345,6 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   if (miter == protoModels.end()) { // If __thiscall doesn't exist we clone it off of the default
     createModelAlias("__thiscall",defaultfp->getName());
   }
-  userops.setDefaults(this);
   initializeSegments();
   PreferSplitManager::initialize(splitrecords);
   types->setupSizes();		// If no data_organization was registered, set up default values

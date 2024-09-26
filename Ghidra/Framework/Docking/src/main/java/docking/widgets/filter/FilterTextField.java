@@ -68,6 +68,8 @@ public class FilterTextField extends JPanel {
 	private WeakSet<FilterListener> listeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
 	private WeakSet<Callback> enterListeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
+	private String accessibleNamePrefix;
+
 	/**
 	 * Constructs this text field with the given component.  <code>component</code> may be null, but
 	 * then this field will be unable to flash in response to focus events (see the header
@@ -302,6 +304,27 @@ public class FilterTextField extends JPanel {
 		}
 	}
 
+	/**
+	 * Sets the accessible name prefix for for the focusable components in the filter panel.
+	 * @param prefix the base name for these components. A suffix will be added to further
+	 * describe the sub component.
+	 */
+	public void setAccessibleNamePrefix(String prefix) {
+		this.accessibleNamePrefix = prefix;
+		String name = prefix + " filter text field";
+		textField.setName(name);
+		textField.getAccessibleContext().setAccessibleName(name);
+	}
+
+	/**
+	 * Returns the accessible name prefix set by a previous call to 
+	 * {@link #setAccessibleNamePrefix(String)}.  This will be null if not set.
+	 * @return the prefix
+	 */
+	public String getAccessibleNamePrefix() {
+		return accessibleNamePrefix;
+	}
+
 //==================================================================================================
 // Package Methods (these make testing easier)
 //==================================================================================================
@@ -374,6 +397,7 @@ public class FilterTextField extends JPanel {
 		});
 
 	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -463,17 +487,4 @@ public class FilterTextField extends JPanel {
 			flashCount = 0;
 		}
 	}
-
-	/**
-	 * Sets the accessible name prefix for for the focusable components in the filter panel.
-	 * @param prefix the base name for these components. A suffix will be added to further
-	 * describe the sub component.
-	 */
-	public void setAccessibleNamePrefix(String prefix) {
-		String name = prefix + " filter text field";
-		textField.setName(name);
-		textField.getAccessibleContext().setAccessibleName(name);
-
-	}
-
 }

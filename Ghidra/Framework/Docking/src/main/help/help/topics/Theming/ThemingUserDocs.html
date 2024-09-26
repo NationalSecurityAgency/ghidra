@@ -19,10 +19,14 @@
     in their home application directory</P>
 
     <P>Users can also edit and create their own themes using the Theme Editor. Custom themes are
-    stored in the user's <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code> directory. 
+    stored in the user's <code>&lt;user settings&gt;/themes</code> directory. 
     These theme files are simple text files that can
     easily be modified using any text editor. Also, users can share themes by exporting them to a
     file that can be given to other users who can them import them into their application.</P>
+	
+    <P><b>NOTE: </b> The <code>&lt;user settings&gt;</code> directory is platform/configuration
+    specific. Its value can be found in the Ghidra Front End GUI, under <code>Help -> 
+    Runtime Information -> Application Layout -> Settings Directory</code></P>
 
 	</BlOCKQUOTE>
     <H2>Theme Chooser Dialog<A name="Switch_Theme"></A></H2>
@@ -243,7 +247,7 @@
 
       <P>Theme Files are used to store saved custom themes. They are simple text files and are 
       stored in the user's home application directory under 
-      <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>. The first three properties 
+      <code>&lt;user settings&gt;/themes</code>. The first three properties 
       are always the theme name, the Look and Feel name, and whether the theme uses standard 
       defaults or dark defaults. Finally, there is a list of overridden property "name = value" 
       lines. The format is:</P>

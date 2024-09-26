@@ -276,29 +276,31 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Returns a list of all Ghidra script providers
+	 * Returns a list of all supported Ghidra script providers
 	 * 
-	 * @return a list of all Ghidra script providers
+	 * @return a list of all supported Ghidra script providers
 	 */
 	// Note: this method is synchronized so that two threads do not try to create the list when null
 	public static synchronized List<GhidraScriptProvider> getProviders() {
 		if (providers == null) {
-			List<GhidraScriptProvider> newProviders =
-				new ArrayList<>(ClassSearcher.getInstances(GhidraScriptProvider.class));
-			Collections.sort(newProviders);
-			providers = newProviders;
+			providers = ClassSearcher.getInstances(GhidraScriptProvider.class)
+					.stream()
+					.filter(p -> !(p instanceof UnsupportedScriptProvider))
+					.sorted()
+					.toList();
 		}
 		return providers;
 	}
 
 	/**
-	 * Returns the corresponding Ghidra script providers
-	 * for the specified script file.
+	 * Returns the corresponding Ghidra script provider for the specified script file.
+	 * 
 	 * @param scriptFile the script file
-	 * @return the Ghidra script provider
+	 * @return the Ghidra script provider or {@link UnsupportedScriptProvider} if the script file
+	 *   does not exist or no provider matches
 	 */
 	public static GhidraScriptProvider getProvider(ResourceFile scriptFile) {
-		return findProvider(scriptFile.getName());
+		return findProvider(scriptFile);
 	}
 
 	/**
@@ -308,11 +310,46 @@ public class GhidraScriptUtil {
 	 * @return true if a provider exists that can process the specified file
 	 */
 	public static boolean hasScriptProvider(ResourceFile scriptFile) {
-		return findProvider(scriptFile.getName()) != null;
+		return findProvider(scriptFile) != null;
 	}
 
 	/**
-	 * Find the provider whose extension matches the given filename extension.
+	 * Find the first provider whose extension matches the given file's extension and whose 
+	 * {@link ScriptInfo#AT_RUNTIME} matches 
+	 * 
+	 * @param scriptFile the script file (not guaranteed to exist if this method is called because
+	 *   the script manager is creating a new script and all it has to go off of initially is
+	 *   the desired file extension...in this case there will not be a @runtime tag yet)
+	 * @return the matching provider or null if no provider matches
+	 */
+	private static GhidraScriptProvider findProvider(ResourceFile scriptFile) {
+		GhidraScriptProvider baseProvider = null;
+		String fileName = scriptFile.getName().toLowerCase();
+		for (GhidraScriptProvider provider : getProviders()) {
+			String extension = provider.getExtension().toLowerCase();
+			if (fileName.endsWith(extension)) {
+				baseProvider = provider;
+				if (!scriptFile.exists()) {
+					// Use UnsupportedScriptProvider. The provider will be updated later when
+					// the file actually exists and we can properly look for an @runtime tag 
+					// (or confirm that one is not defined)
+					break;
+				}
+				String runtime = new ScriptInfo(provider, scriptFile).getRuntimeEnvironmentName();
+				if (runtime == null ||
+					runtime.equalsIgnoreCase(provider.getRuntimeEnvironmentName())) {
+					return provider;
+				}
+			}
+		}
+		if (baseProvider != null) {
+			return new UnsupportedScriptProvider(baseProvider);
+		}
+		return null;
+	}
+
+	/**
+	 * Find the first provider whose extension matches the given filename extension.
 	 * 
 	 * @param fileName name of script file
 	 * @return the first matching provider or null if no provider matches

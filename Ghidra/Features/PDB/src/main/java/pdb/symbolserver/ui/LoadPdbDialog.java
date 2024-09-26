@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,6 +72,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		ExtensionFileFilter.forExtensions("Microsoft Program Databases", "pdb", "pd_", "pdb.xml");
 
 	private static final SymbolFileInfo UNKNOWN_SYMFILE = makeUnknownSymbolFileInstance("");
+	private static final List<WellKnownSymbolServerLocation> knownSymbolServers =
+		WellKnownSymbolServerLocation.loadAll();
 
 	public static class LoadPdbResults {
 		public File pdbFile;
@@ -270,7 +272,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		return SymbolFileInfo.fromValues(pdbPath, uid, age);
 	}
 
-	private void searchForPdbs(boolean allowRemote) {
+	private void searchForPdbs(boolean allowUntrusted) {
 		if (pdbAgeTextField.getText().isBlank() ||
 			pdbAgeTextField.getValue() > NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG) {
 			Msg.showWarn(this, null, "Bad PDB Age", "Invalid PDB Age value");
@@ -282,8 +284,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			return;
 		}
 		Set<FindOption> findOptions = symbolFilePanel.getFindOptions();
-		if (allowRemote) {
-			findOptions.add(FindOption.ALLOW_REMOTE);
+		if (allowUntrusted) {
+			findOptions.add(FindOption.ALLOW_UNTRUSTED);
 		}
 		executeMonitoredRunnable("Search for PDBs", true, true, 0, monitor -> {
 			try {
@@ -316,10 +318,11 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "Load PDB File"));
 
 		addStatusTextSupplier(() -> lastSearchOptions != null && advancedToggleButton.isSelected()
-				? SymbolServerPanel.getSymbolServerWarnings(symbolServerService.getSymbolServers())
+				? WellKnownSymbolServerLocation.getWarningsFor(knownSymbolServers,
+					symbolServerService.getSymbolServers())
 				: null);
 		addStatusTextSupplier(this::getSelectedPdbNoticeText);
-		addStatusTextSupplier(this::getAllowRemoteWarning);
+		addStatusTextSupplier(this::getAllowUntrustedWarning);
 		addStatusTextSupplier(this::getFoundCountInfo);
 
 		addButtons();
@@ -600,12 +603,13 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		}
 	}
 
-	private StatusText getAllowRemoteWarning() {
-		int remoteSymbolServerCount = symbolServerService.getRemoteSymbolServerCount();
+	private StatusText getAllowUntrustedWarning() {
+		int untrustedSymbolServerCount =
+			SymbolServer.getUntrustedCount(symbolServerService.getSymbolServers());
 		return lastSearchOptions != null && advancedToggleButton.isSelected() &&
-			remoteSymbolServerCount != 0 && !lastSearchOptions.contains(FindOption.ALLOW_REMOTE)
+			untrustedSymbolServerCount != 0 && !lastSearchOptions.contains(FindOption.ALLOW_UNTRUSTED)
 					? new StatusText(
-						"Remote servers were excluded.  Use \"Search All\" button to also search remote servers.",
+						"Untrusted servers were excluded.  Use \"Search All\" button to also include untrusted servers.",
 						MessageType.INFO, false)
 					: null;
 	}

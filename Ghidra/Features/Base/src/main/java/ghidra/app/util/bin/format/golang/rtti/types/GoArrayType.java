@@ -20,8 +20,7 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 
 /**
  * {@link GoType} structure that defines an array.
@@ -72,7 +71,15 @@ public class GoArrayType extends GoType {
 		if (self != null) {
 			return self;
 		}
-		return new ArrayDataType(elementDt, (int) len, -1);
+		return isValidLength()
+				? new ArrayDataType(elementDt, (int) len, -1)
+				: new TypedefDataType(elementDt.getCategoryPath(),
+					".invalid_arraysize_%d_%s".formatted(len, elementDt.getName()),
+					new ArrayDataType(elementDt, 1, -1), elementDt.getDataTypeManager());
+	}
+
+	private boolean isValidLength() {
+		return 0 <= len && len <= Integer.MAX_VALUE;
 	}
 
 	@Override

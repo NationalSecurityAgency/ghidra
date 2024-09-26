@@ -50,6 +50,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private GlobalSymbolMap globalSymbols;
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
+	private Address entryPoint;
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
@@ -64,6 +65,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		this.language = language;
 		this.compilerSpec = compilerSpec;
 		AddressSpace stackSpace = function.getProgram().getAddressFactory().getStackSpace();
+		entryPoint = function.getEntryPoint();
 		localSymbols = new LocalSymbolMap(this, stackSpace);
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
@@ -87,7 +89,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		if (func instanceof FunctionDB) {
 			return func.getSymbol().getID();
 		}
-		return func.getProgram().getSymbolTable().getDynamicSymbolID(func.getEntryPoint());
+		return func.getProgram().getSymbolTable().getDynamicSymbolID(entryPoint);
 	}
 
 	/**
@@ -255,7 +257,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			}
 			if (subel == ELEM_ADDR.id()) {
 				Address addr = AddressXML.decode(decoder);
-				if (!func.getEntryPoint().equals(addr)) {
+				if (!entryPoint.equals(addr)) {
 					throw new DecoderException("Mismatched address in function tag");
 				}
 			}
@@ -300,7 +302,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private void decodeJumpTableList(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_JUMPTABLELIST);
 		while (decoder.peekElement() != 0) {
-			JumpTable table = new JumpTable(func.getEntryPoint().getAddressSpace());
+			JumpTable table = new JumpTable(entryPoint.getAddressSpace());
 			table.decode(decoder);
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {
@@ -318,10 +320,10 @@ public class HighFunction extends PcodeSyntaxTree {
 			pcaddr = rep.getPCAddress();
 			if (pcaddr == Address.NO_ADDRESS) {
 				try {
-					pcaddr = func.getEntryPoint().add(-1);
+					pcaddr = entryPoint.add(-1);
 				}
 				catch (AddressOutOfBoundsException e) {
-					pcaddr = func.getEntryPoint();
+					pcaddr = entryPoint;
 				}
 			}
 		}
@@ -446,7 +448,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			encoder.writeBool(ATTRIB_NORETURN, true);
 		}
 		if (entryPoint == null) {
-			AddressXML.encode(encoder, func.getEntryPoint());
+			AddressXML.encode(encoder, this.entryPoint);
 		}
 		else {
 			AddressXML.encode(encoder, entryPoint);		// Address is forced on XML

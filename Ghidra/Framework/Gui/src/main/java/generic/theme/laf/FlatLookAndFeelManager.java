@@ -16,6 +16,7 @@
 package generic.theme.laf;
 
 import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 
 import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
@@ -32,5 +33,15 @@ public class FlatLookAndFeelManager extends LookAndFeelManager {
 			return new FlatDarkUiDefaultsMapper(defaults);
 		}
 		return new FlatUiDefaultsMapper(defaults);
+	}
+
+	@Override
+	protected void fixupLookAndFeelIssues() {
+		super.fixupLookAndFeelIssues();
+		// 
+		// The FlatTreeUI class will remove default renderers inside the call to updateRenderer()
+		// if "Tree.showDefaultIcons" is false.  We want the tree to display folder icons.
+		//
+		UIManager.put("Tree.showDefaultIcons", Boolean.TRUE);
 	}
 }

@@ -62,6 +62,8 @@ public class MIPS_ElfRelocationHandler
 			ElfSymbol elfSymbol, Address symbolAddr, long symbolValue, String symbolName)
 			throws MemoryAccessException {
 
+		// TODO: May need to add support for when symbol is not resolved, see handleUnresolvedSymbol
+		
 		// Determine if result value should be saved as addend for next relocation
 		final boolean saveValue = elfRelocationContext.saveValueForNextReloc;
 
@@ -633,20 +635,19 @@ public class MIPS_ElfRelocationHandler
 			case R_MICROMIPS_JALR:
 
 				boolean success = false;
-				Address symAddr = elfRelocationContext.getSymbolAddress(elfSymbol);
-				if (symAddr != null) {
-					MemoryBlock block = memory.getBlock(symAddr);
+				if (symbolAddr != null) {
+					MemoryBlock block = memory.getBlock(symbolAddr);
 					if (block != null) {
 						if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 
 							success = elfRelocationContext.getLoadHelper()
-									.createExternalFunctionLinkage(symbolName, symAddr,
+									.createExternalFunctionLinkage(symbolName, symbolAddr,
 										null) != null;
 
 							if (success) {
 								// Inject appropriate JAL instruction
 								if (type == MIPS_ElfRelocationType.R_MICROMIPS_JALR) {
-									int offsetBits = (int) (symAddr.getOffset() >> 1) & 0x3ffffff;
+									int offsetBits = (int) (symbolValue >> 1) & 0x3ffffff;
 									// TODO: upper bits should really come from delay slot
 									int microJalrBits = 0xf4000000 | offsetBits;
 									memory.setShort(relocationAddress,
@@ -655,7 +656,7 @@ public class MIPS_ElfRelocationHandler
 										(short) microJalrBits);
 								}
 								else {
-									int offsetBits = (int) (symAddr.getOffset() >> 2) & 0x3ffffff;
+									int offsetBits = (int) (symbolValue >> 2) & 0x3ffffff;
 									// TODO: upper bits should really come from delay slot
 									int jalrBits = 0x0c000000 | offsetBits;
 									memory.setInt(relocationAddress, jalrBits);

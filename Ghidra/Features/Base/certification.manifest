@@ -1,6 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Copyright Distribution Permitted
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: MIT
@@ -12,6 +13,7 @@
 .launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
 .launch/Headless.launch||GHIDRA||||END|
+.launch/JShell.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
@@ -87,6 +89,8 @@ data/symbols/win64/mfc90u.exports||GHIDRA||||END|
 data/symbols/win64/msvcrt.hints||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.15_anybit_any.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.16_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.18_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.19_anybit_any.gdt||GHIDRA||||END|
@@ -505,8 +509,10 @@ src/main/help/help/topics/RuntimeInfoPlugin/RuntimeInfo.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/The_Scalar_Table.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Search/Instruction_Mnemonic_Search.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Query_Results_Dialog.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Regular_Expressions.htm||GHIDRA||||END|
+src/main/help/help/topics/Search/Search_Formats.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Instruction_Patterns.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Memory.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Program_Text.htm||GHIDRA||||END|
@@ -517,6 +523,9 @@ src/main/help/help/topics/Search/Searching.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/images/DirectReferences.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/EncodedStringsDialog_advancedoptions.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/EncodedStringsDialog_initial.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/MemorySearchProvider.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/MemorySearchProviderWithOptionsOn.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/MemorySearchProviderWithScanPanelOn.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/MultipleSelectionError.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/QueryResultsSearch.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchForAddressTables.png||GHIDRA||||END|
@@ -533,11 +542,7 @@ src/main/help/help/topics/Search/images/SearchInstructionsIncludeOperands.png||G
 src/main/help/help/topics/Search/images/SearchInstructionsIncludeOperandsNoConsts.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionsManualSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchLimitExceeded.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryBinary.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryDecimal.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryHex.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchMemoryRegex.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryString.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchText.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchResults.png||GHIDRA||||END|
@@ -563,6 +568,7 @@ src/main/help/help/topics/SymbolTablePlugin/images/Refs_To.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/images/Symbol_Table.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/symbol_references.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/symbol_table.htm||GHIDRA||||END|
+src/main/help/help/topics/SymbolTablePlugin/symbol_table_transient.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/SymbolTree.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/CreateExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/EditExternalLocation.png||GHIDRA||||END|
@@ -915,6 +921,11 @@ src/main/resources/images/unlock.gif||GHIDRA||||END|
 src/main/resources/images/verticalSplit.png||GHIDRA||||END|
 src/main/resources/images/view-sort-ascending.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/view-sort-descending.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/view_bottom.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/view_left_right.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/view_top_bottom.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/viewmag+.png||Crystal Clear Icons - LGPL 2.1||||END|
+src/main/resources/images/viewmag.png||GHIDRA||||END|
 src/main/resources/images/window.png||GHIDRA||||END|
 src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/x-office-document-template.png||Tango Icons - Public Domain|||tango icon set|END|

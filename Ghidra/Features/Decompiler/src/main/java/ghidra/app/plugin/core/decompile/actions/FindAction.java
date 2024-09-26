@@ -23,13 +23,14 @@ import org.apache.commons.lang3.StringUtils;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.FindDialog;
+import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 
 public class FindAction extends AbstractDecompilerAction {
-	private FindDialog findDialog;
+	private DecompilerFindDialog findDialog;
 
 	public FindAction() {
 		super("Find");
@@ -49,15 +50,7 @@ public class FindAction extends AbstractDecompilerAction {
 
 	protected FindDialog getFindDialog(DecompilerPanel decompilerPanel) {
 		if (findDialog == null) {
-			findDialog =
-				new FindDialog("Decompiler Find Text", new DecompilerSearcher(decompilerPanel)) {
-					@Override
-					protected void dialogClosed() {
-						// clear the search results when the dialog is closed
-						decompilerPanel.setSearchResults(null);
-					}
-				};
-			findDialog.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
+			findDialog = new DecompilerFindDialog(decompilerPanel);
 		}
 		return findDialog;
 	}

@@ -22,10 +22,13 @@ from comtypes.gen import DbgMod
 from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
 
+from comtypes import BSTR
 from comtypes.gen.DbgMod import *
 
 from .iiterableconcept import IterableConcept
+from .istringdisplayableconcept import StringDisplayableConcept
 from .ikeyenumerator import KeyEnumerator
+from .irawenumerator import RawEnumerator
 
 
 class ModelObjectKind(Enum):
@@ -45,6 +48,7 @@ class ModelObject(object):
     def __init__(self, obj):
         self._obj = obj
         self.concept = None
+        self.dconcept = None
         exception.wrap_comclass(self._obj)
 
     def Release(self):
@@ -96,12 +100,16 @@ class ModelObject(object):
         return RawEnumerator(keys, kind)
 
     def GetConcept(self, ref):
-        ifc = POINTER(IUnknown)()
-        metadata = POINTER(DbgMod.IKeyStore)()
-        hr = self._obj.GetConcept(ref._iid_, byref(ifc), byref(metadata))
-        if hr != S_OK:
+        try:
+            ifc = POINTER(IUnknown)()
+            metadata = POINTER(DbgMod.IKeyStore)()
+            hr = self._obj.GetConcept(ref._iid_, byref(ifc), byref(metadata))
+            if hr != S_OK:
+                return None
+            return cast(ifc, POINTER(ref))
+        except Exception as e:
+            print(f"GetConcept exception: {e}")
             return None
-        return cast(ifc, POINTER(ref))
 
     def GetContext(self, context):
         raise exception.E_NOTIMPL_Error
@@ -111,10 +119,14 @@ class ModelObject(object):
 
     def GetIntrinsicValue(self):
         var = VARIANT()
-        hr = self._obj.GetIntrinsicValue(var)
-        if hr != S_OK:
+        try:
+            hr = self._obj.GetIntrinsicValue(var)
+            if hr != S_OK:
+                return None
+            return var
+        except Exception as e:
+            print(f"GetIntrinsicValue exception: {e}")
             return None
-        return var
 
     def GetIntrinsicValueAs(self, vt):
         raise exception.E_NOTIMPL_Error
@@ -140,8 +152,31 @@ class ModelObject(object):
         exception.check_err(hr)
         return kind
 
-    def GetLocation(self, location):
-        raise exception.E_NOTIMPL_Error
+    # DOESN"T WORK YET
+    # def GetTypeKind(self):
+    #     typeKind = None
+    #     modelKind = self.GetKind()
+    #     if modelKind.value == ModelObjectKind.TARGET_OBJECT.value:
+    #         targetInfo = self.GetTargetInfo()
+    #         if targetInfo is not None:
+    #             typeKind = DbgMod.tagTYPEKIND()
+    #             hr = targetInfo._obj.GetTypeKind(byref(typeKind))
+    #             if hr != S_OK:
+    #                 return None
+    #     if modelKind.value == ModelObjectKind.INTRINSIC.value:
+    #         typeInfo = self.GetTypeInfo()
+    #         if typeInfo is not None:
+    #             typeKind = DbgMod.tagTYPEKIND()
+    #             hr = typeInfo._obj.GetTypeKind(byref(typeKind))
+    #             if hr != S_OK:
+    #                 return None
+    #     return typeKind
+
+    def GetLocation(self):
+        loc = DbgMod._Location()
+        hr = self._obj.GetLocation(loc)
+        exception.check_err(hr)
+        return loc
 
     def GetNumberOfParentModels(self, numModels):
         raise exception.E_NOTIMPL_Error
@@ -152,18 +187,55 @@ class ModelObject(object):
     def GetRawReference(self, kind, name, searchFlags, object):
         raise exception.E_NOTIMPL_Error
 
-    def GetRawValue(self, kind, name, searchFlags, object):
-        raise exception.E_NOTIMPL_Error
+    def GetRawValue(self, kind, name, searchFlags):
+        kbuf = cast(c_wchar_p(name), POINTER(c_ushort))
+        value = POINTER(DbgMod.IModelObject)()
+        hr = self._obj.GetRawValue(kind, kbuf, searchFlags, byref(value))
+        if hr != S_OK:
+            return None
+        return ModelObject(value)
 
     def GetTargetInfo(self):
-        location = POINTER(DbgMod._Location)()
+        location = DbgMod._Location()
         type = POINTER(DbgMod.IDebugHostType)()
         hr = self._obj.GetTargetInfo(location, byref(type))
         exception.check_err(hr)
-        return type
+        return ModelObject(type)
 
-    def GetTypeInfo(self, type):
-        raise exception.E_NOTIMPL_Error
+    def GetTypeInfo(self):
+        type = POINTER(DbgMod.IDebugHostType)()
+        hr = self._obj.GetTypeInfo(byref(type))
+        exception.check_err(hr)
+        return ModelObject(type)
+
+    def GetName(self):
+        name = BSTR()
+        hr = self._obj.GetName(name)
+        exception.check_err(hr)
+        return name
+
+    def ToDisplayString(self):
+        if self.dconcept is None:
+            dconcept = self.GetConcept(DbgMod.IStringDisplayableConcept)
+            if dconcept is None:
+                return None
+            self.dconcept = StringDisplayableConcept(dconcept)
+        return self.dconcept.ToDisplayString(self)
+    
+    # This does NOT work - returns a null pointer for value.  Why?
+    # One possibility: casting is not a valid way to obtain an IModelMethod
+    # 
+    # def ToDisplayString0(self):
+    #     map = self.GetAttributes()
+    #     method = map["ToDisplayString"]
+    #     mm = cast(method._obj, POINTER(DbgMod.IModelMethod))
+    #     context = self._obj
+    #     args = POINTER(DbgMod.IModelObject)()
+    #     value = POINTER(DbgMod.IModelObject)()
+    #     meta = POINTER(DbgMod.IKeyStore)()
+    #     hr = mm.Call(context, c_ulonglong(0), args, byref(value), byref(meta))
+    #     exception.check_err(hr)
+    #     return ModelObject(value)
 
     def IsEqualTo(self, other, equal):
         raise exception.E_NOTIMPL_Error
@@ -198,23 +270,28 @@ class ModelObject(object):
         return map
 
     def GetRawValueMap(self):
+        # print(f"GetRawValueMap: {self}")
         map = {}
         kind = self.GetKind()
-        keys = self.EnumerateRawValues(kind, c_long(0))
+        # TODO: forcing kind to 0 because we can't GetTypeKind
+        keys = self.EnumerateRawValues(c_long(0), 0)
         (k, v) = keys.GetNext()
         while k is not None:
             map[k.value] = v
             (k, v) = keys.GetNext()
+            # print(f"{k}:{v}")
         return map
 
     def GetAttributes(self):
         map = {}
         kind = self.GetKind()
-        if kind == ModelObjectKind.ERROR:
+        # print(f"GetAttributes: {kind}")
+        if kind is not None and kind.value == ModelObjectKind.ERROR.value:
+            print(f"ERROR from GetAttributes")
             return map
-        if kind == ModelObjectKind.INTRINSIC or \
-                kind == ModelObjectKind.TARGET_OBJECT or \
-                kind == ModelObjectKind.TARGET_OBJECT_REFERENCE:
+        if kind.value == ModelObjectKind.INTRINSIC.value or \
+                kind.value == ModelObjectKind.TARGET_OBJECT.value or \
+                kind.value == ModelObjectKind.TARGET_OBJECT_REFERENCE.value:
             return self.GetRawValueMap()
         return self.GetKeyValueMap()
 
@@ -245,6 +322,9 @@ class ModelObject(object):
     def GetOffspring(self, path):
         next = self
         for element in path:
+            if next is None:
+                return None
+            kind = next.GetKind()
             if element.startswith("["):
                 idx = element[1:len(element)-1]
                 if "x" not in idx:
@@ -252,11 +332,16 @@ class ModelObject(object):
                 else:
                     idx = int(idx, 16)
                 next = next.GetElement(idx)
+            # THIS IS RELATIVELY HORRIBLE - replace with GetRawValue?
+            elif kind is not None and kind.value == ModelObjectKind.TARGET_OBJECT.value:
+                map = next.GetAttributes()
+                next = map[element]
             else:
                 next = next.GetKeyValue(element)
-            if next is None:
-                print(f"{element} not found")
+            #if next is None:
+            #    print(f"{element} not found")
         return next
+
 
     def GetValue(self):
         value = self.GetIntrinsicValue()
@@ -266,9 +351,3 @@ class ModelObject(object):
             return None
         return value.value
 
-    def GetTypeKind(self):
-        kind = self.GetKind()
-        if kind == ModelObjectKind.TARGET_OBJECT or \
-           kind == ModelObjectKind.INTRINSIC:
-            return self.GetTargetInfo()
-        return None

@@ -21,6 +21,7 @@ import java.util.List;
 
 import mdemangler.MDContext.MDContextType;
 import mdemangler.datatype.MDDataType;
+import mdemangler.datatype.MDDataTypeParser;
 import mdemangler.datatype.modifier.MDCVMod;
 import mdemangler.naming.MDFragmentName;
 import mdemangler.naming.MDQualification;
@@ -39,16 +40,16 @@ public class MDMang {
 
 	protected String mangled;
 	protected MDCharacterIterator iter;
-	protected String errorMessage = "";
+	protected String errorMessage;
 	protected MDParsableItem item;
 
-	protected List<MDContext> contextStack = new ArrayList<>();
+	protected List<MDContext> contextStack;
 
 	public enum ProcessingMode {
 		DEFAULT_STANDARD, LLVM
 	}
 
-	private ProcessingMode processingMode = ProcessingMode.DEFAULT_STANDARD;
+	private ProcessingMode processingMode;
 
 	public void setProcessingMode(ProcessingMode processingMode) {
 		this.processingMode = processingMode;
@@ -58,14 +59,12 @@ public class MDMang {
 		return processingMode;
 	}
 
-	public boolean isProcessingModeActive(ProcessingMode mode) {
-		switch (mode) {
-			case LLVM:
-				return processingMode == mode && (getIndex() == 0);
-			default:
-				break;
-		}
-		return processingMode == mode;
+	public boolean isLlvmProcessingModeIndex0() {
+		return processingMode == ProcessingMode.LLVM && (getIndex() == 0);
+	}
+
+	public boolean isLlvmProcessingMode() {
+		return processingMode == ProcessingMode.LLVM;
 	}
 
 	/**
@@ -89,6 +88,28 @@ public class MDMang {
 	}
 
 	/**
+	 * Variables that get set at the very beginning.
+	 * @throws MDException if mangled name is not set
+	 */
+	protected void initState() throws MDException {
+		if (mangled == null) {
+			throw new MDException("MDMang: Mangled string is null.");
+		}
+		errorMessage = "";
+		processingMode = ProcessingMode.DEFAULT_STANDARD;
+		iter = new MDCharacterIterator(mangled);
+		resetState();
+	}
+
+	/**
+	 * Variables that can get reset for a second (or more?) passes with different modes.
+	 */
+	public void resetState() {
+		contextStack = new ArrayList<>();
+		setIndex(0);
+	}
+
+	/**
 	 * Demangles the string already stored and returns a parsed item.
 	 *
 	 * @param errorOnRemainingChars
@@ -98,22 +119,58 @@ public class MDMang {
 	 * @throws MDException upon error parsing item
 	 */
 	public MDParsableItem demangle(boolean errorOnRemainingChars) throws MDException {
-		if (mangled == null) {
-			throw new MDException("MDMang: Mangled string is null.");
-		}
-		pushContext();
+		initState();
 		item = MDMangObjectParser.determineItemAndParse(this);
 		if (item instanceof MDObjectCPP) {
 			// MDMANG SPECIALIZATION USED.
 			item = getEmbeddedObject((MDObjectCPP) item);
 		}
 		int numCharsRemaining = getNumCharsRemaining();
-		popContext();
 		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
 			throw new MDException(
 				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
 		}
 		return item;
+	}
+
+	/**
+	 * Demangles the mangled "type" name and returns a parsed MDDataType
+	 *
+	 * @param mangledIn the mangled "type" string to be demangled
+	 * @param errorOnRemainingChars
+	 *            boolean flag indicating whether remaining characters causes an
+	 *            error
+	 * @return the parsed MDDataType
+	 * @throws MDException upon parsing error
+	 */
+	public MDDataType demangleType(String mangledIn, boolean errorOnRemainingChars)
+			throws MDException {
+		if (mangledIn == null || mangledIn.isEmpty()) {
+			throw new MDException("Invalid mangled symbol.");
+		}
+		setMangledSymbol(mangledIn);
+		return demangleType(errorOnRemainingChars);
+	}
+
+	/**
+	 * Demangles the mangled "type" name already stored and returns a parsed MDDataType
+	 *
+	 * @param errorOnRemainingChars
+	 *            boolean flag indicating whether remaining characters causes an
+	 *            error
+	 * @return the parsed MDDataType
+	 * @throws MDException upon parsing error
+	 */
+	public MDDataType demangleType(boolean errorOnRemainingChars) throws MDException {
+		initState();
+		MDDataType mdDataType = MDDataTypeParser.determineAndParseDataType(this, false);
+		item = mdDataType;
+		int numCharsRemaining = getNumCharsRemaining();
+		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
+			throw new MDException(
+				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
+		}
+		return mdDataType;
 	}
 
 	/**
@@ -124,7 +181,6 @@ public class MDMang {
 	 */
 	public void setMangledSymbol(String mangledIn) {
 		this.mangled = mangledIn;
-		iter = new MDCharacterIterator(mangled);
 	}
 
 	/**
@@ -202,6 +258,14 @@ public class MDMang {
 	 */
 	public void setIndex(int index) {
 		iter.setIndex(index);
+	}
+
+	/**
+	 * Returns true if there are no more characters to iterate
+	 * @return {@code true} if done
+	 */
+	public boolean done() {
+		return peek() == DONE;
 	}
 
 	/**

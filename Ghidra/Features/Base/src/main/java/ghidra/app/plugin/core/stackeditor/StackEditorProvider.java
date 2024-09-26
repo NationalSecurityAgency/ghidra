@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,8 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataTypePath;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
@@ -144,14 +145,8 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return actionMgr.getAllActions();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		refreshName();
-		editorPanel.domainObjectRestored(domainObject);
-	}
-
 	private void refreshName() {
-		StackFrameDataType origDt = (StackFrameDataType) stackModel.getOriginalComposite();
+		StackFrameDataType origDt = stackModel.getOriginalComposite();
 		StackFrameDataType viewDt = stackModel.getViewComposite();
 		String oldName = origDt.getName();
 		String newName = function.getName();
@@ -187,11 +182,9 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 			DomainObjectChangeRecord rec = event.getChangeRecord(i);
 			EventType eventType = rec.getEventType();
 			if (eventType == DomainObjectEvent.RESTORED) {
-				Object source = event.getSource();
-				if (source instanceof Program) {
-					Program restoredProgram = (Program) source;
-					domainObjectRestored(restoredProgram);
-				}
+				refreshName();
+				// NOTE: editorPanel should be notified of restored datatype manager via the 
+				// CompositeViewerModel's DataTypeManagerChangeListener restored method
 				return;
 			}
 			if (eventType instanceof ProgramEvent type) {
@@ -226,12 +219,13 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 						}
 						break;
 					case SYMBOL_PRIMARY_STATE_CHANGED:
-						sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
+						sym = (Symbol) ((ProgramChangeRecord) rec).getNewValue();
 						symType = sym.getSymbolType();
 						if (symType == SymbolType.LABEL &&
 							sym.getAddress().equals(function.getEntryPoint())) {
 							refreshName();
 						}
+						break;
 					default:
 				}
 			}

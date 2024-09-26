@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,11 +83,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	// Test Undo / Redo of program.
 	@Test
 	public void testModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
 		Window dialog;
 		try {
 			init(complexUnion, pgmTestCat, false);
-			program.addListener(restoreListener);
 
 			// Change the union.
 			Swing.runLater(() -> {
@@ -138,47 +136,53 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		}
 		finally {
 			dialog = null;
-			program.removeListener(restoreListener);
 		}
 	}
 
 	// Test Undo / Redo of program.
 	@Test
 	public void testUnModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		try {
-			init(complexUnion, pgmTestCat, false);
-			program.addListener(restoreListener);
+		init(complexUnion, pgmTestCat, false);
 
-			// Change the union.
-			Swing.runLater(() -> {
-				delete(4, 5);
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
+		// Change the union.
+		Swing.runLater(() -> {
+			delete(4, 5);
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		});
 
-			waitForTasks();
-			assertFalse(complexUnion.isEquivalent(model.viewComposite));
+		waitForTasks();
+		assertFalse(complexUnion.isEquivalent(model.viewComposite));
 
-			// Apply the changes
-			invoke(applyAction);
-			assertTrue(complexUnion.isEquivalent(model.viewComposite));
+		// Apply the changes
+		invoke(applyAction);
+		waitForSwing();
 
-			// Undo the apply
-			undo(program);
-			assertTrue(complexUnion.isEquivalent(model.viewComposite));
+		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 
-			// Redo the apply
-			redo(program);
-			assertTrue(complexUnion.isEquivalent(model.viewComposite));
-		}
-		finally {
-			program.removeListener(restoreListener);
-		}
+		// Undo the apply
+		undo(program);
+
+		Window dialog = waitForWindow("Reload Union Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		assertTrue(complexUnion.isEquivalent(model.viewComposite));
+
+		// Redo the apply
+		redo(program);
+
+		dialog = waitForWindow("Reload Union Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 	}
 
 	@Test
@@ -200,8 +204,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	@Test
 	public void testCloseEditorProviderAndSave() throws Exception {
 		Window dialog;
+		DataType oldDt = complexUnion.clone(null);
+
 		init(complexUnion, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the union.
 		Swing.runLater(() -> {
@@ -236,8 +241,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	@Test
 	public void testCloseEditorAndNoSave() throws Exception {
 		Window dialog;
+		DataType oldDt = complexUnion.clone(null);
+
 		init(complexUnion, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the union.
 		Swing.runLater(() -> {
@@ -345,7 +351,7 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x57", model.getLengthAsString());
 
-		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
+		DockingActionIf action = getAction(plugin, "Show Numbers In Hex");
 		setToggleActionSelected((ToggleDockingActionIf) action, new DefaultActionContext(), false);
 
 		assertEquals(false, model.isShowingNumbersInHex());

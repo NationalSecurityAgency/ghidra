@@ -44,9 +44,27 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	@ContextField
 	private StructureContext<GoModuledata> structureContext;
 
-	@FieldMapping
+	@FieldMapping(presentWhen = "1.16+")
 	@MarkupReference
-	private long pcHeader;	// pointer to the GoPcHeader instance, useful for bootstrapping
+	private long pcHeader;	// pointer to the GoPcHeader instance, useful for bootstrapping.  when ver >= 1.16, this is first field
+
+	@FieldMapping(presentWhen = "1.16+")
+	private GoSlice funcnametab;	// []uint8 blob of null term strings
+
+	@FieldMapping(presentWhen = "1.16+")
+	private GoSlice cutab;	// []uint32
+
+	@FieldMapping
+	private GoSlice filetab; // []uint32 when ver <=1.15, []uint8 blob of null term strings when ver >= 1.16
+
+	@FieldMapping(presentWhen = "1.16+")
+	private GoSlice pctab;	// []uint8
+
+	@FieldMapping
+	private GoSlice pclntable;	// []uint8, shares footprint with ftab.  when ver <= 1.15, this is first field and happens to have a GoPcHeader
+
+	@FieldMapping
+	private GoSlice ftab;	// []runtime.functab, shares footprint with pclntable
 
 	@FieldMapping
 	private long data;
@@ -83,24 +101,6 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	private GoSlice typeLinks;
 
 	@FieldMapping
-	private GoSlice funcnametab;	// []uint8 blob of null term strings
-
-	@FieldMapping
-	private GoSlice cutab;	// []uint32
-
-	@FieldMapping
-	private GoSlice filetab; // []uint8 blob of null term strings
-
-	@FieldMapping
-	private GoSlice pctab;	// []uint8
-
-	@FieldMapping
-	private GoSlice pclntable;	// []uint8, shares footprint with ftab
-
-	@FieldMapping
-	private GoSlice ftab;	// []runtime.functab, shares footprint with pclntable
-
-	@FieldMapping
 	private GoSlice itablinks; // []*runtime.itab (array of pointers to runtime.tab)
 
 	@FieldMapping
@@ -114,17 +114,25 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * Compares the data in this structure to fields in a GoPcHeader and returns true if they
 	 * match.
 	 * 
-	 * @param pclntab GoPcHeader instance
+	 * @param otherPcHeader GoPcHeader instance
 	 * @return boolean true if match, false if no match
 	 */
-	public boolean matchesPclntab(GoPcHeader pclntab) {
-		return (!pclntab.hasTextStart() || pclntab.getTextStart().equals(getText())) &&
-			pclntab.getFuncnameAddress().equals(funcnametab.getArrayAddress());
+	public boolean matchesPcHeader(GoPcHeader otherPcHeader) {
+		return (!otherPcHeader.hasTextStart() || otherPcHeader.getTextStart().equals(getText())) &&
+			otherPcHeader.getFuncnameAddress().equals(funcnametab.getArrayAddress());
 	}
 
 	@Markup
 	public GoPcHeader getPcHeader() throws IOException {
-		return programContext.readStructure(GoPcHeader.class, pcHeader);
+		return pcHeader != 0 // when ver >= 1.16 
+				? programContext.readStructure(GoPcHeader.class, pcHeader)
+				: programContext.readStructure(GoPcHeader.class, pclntable.getArrayAddress());
+	}
+
+	public Address getPcHeaderAddress() {
+		return pcHeader != 0
+				? programContext.getDataAddress(pcHeader)
+				: pclntable.getArrayAddress();
 	}
 
 	/**
@@ -236,8 +244,8 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		}
 
 		// all these static slices should be allocated with len == cap.  If not true, fail.
-		if (!typeLinks.isFull() || !filetab.isFull() || !pctab.isFull() || !pclntable.isFull() ||
-			!ftab.isFull()) {
+		if (!typeLinks.isFull() || !filetab.isFull() || (pctab != null && !pctab.isFull()) ||
+			!pclntable.isFull() || !ftab.isFull()) {
 			return false;
 		}
 
@@ -287,15 +295,8 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return filetab;
 	}
 
-	/**
-	 * Returns the filename at the specified offset.
-	 * 
-	 * @param fileoff offset in the filetab of the filename
-	 * @return filename
-	 * @throws IOException if error reading
-	 */
-	public String getFilename(long fileoff) throws IOException {
-		return programContext.getReader(filetab.getElementOffset(1, fileoff)).readNextUtf8String();
+	public GoSlice getPclntable() {
+		return pclntable;
 	}
 
 	/**
@@ -305,6 +306,10 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 */
 	public GoSlice getPctab() {
 		return pctab;
+	}
+
+	public GoSlice getPcValueTable() {
+		return pctab != null ? pctab : pclntable;
 	}
 
 	/**
@@ -329,7 +334,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 		itablinks.markupArray("moduledata.itablinks", null, GoItab.class, true, session);
 
-		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen(), session);
+		if (funcnametab != null) {
+			markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen(), session);
+		}
 		markupStringTable(filetab.getArrayAddress(), filetab.getLen(), session);
 
 		GoSlice subSlice = getFunctabEntriesSlice();
@@ -441,15 +448,15 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * Searches memory for a likely GoModuledata structure.
 	 * 
 	 * @param context already initialized {@link GoRttiMapper}
-	 * @param pclntabAddress address of an already found {@link GoPcHeader}
-	 * @param pclntab the {@link GoPcHeader}
+	 * @param pcHeaderAddress address of an already found {@link GoPcHeader}
+	 * @param pcHeader the {@link GoPcHeader}
 	 * @param range memory range to search.  Will be different for different types of binaries
 	 * @param monitor {@link TaskMonitor} 
 	 * @return new GoModuledata instance, or null if not found
 	 * @throws IOException if error reading found structure
 	 */
 	/* package */ static GoModuledata findFirstModule(GoRttiMapper context,
-			Address pclntabAddress, GoPcHeader pclntab, AddressRange range, TaskMonitor monitor)
+			Address pcHeaderAddress, GoPcHeader pcHeader, AddressRange range, TaskMonitor monitor)
 			throws IOException {
 		if (range == null) {
 			return null;
@@ -462,7 +469,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		// field of the GoModuledata structure.
 		int ptrSize = context.getPtrSize();
 		byte[] searchBytes = new byte[ptrSize];
-		context.getDataConverter().putValue(pclntabAddress.getOffset(), ptrSize, searchBytes, 0);
+		context.getDataConverter().putValue(pcHeaderAddress.getOffset(), ptrSize, searchBytes, 0);
 		Address moduleAddr = memory.findBytes(range.getMinAddress(), range.getMaxAddress(),
 			searchBytes, null, true, monitor);
 		if (moduleAddr == null) {
@@ -473,50 +480,6 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 		// Verify that we read a good GoModuledata struct by comparing some of its values to
 		// the pclntab structure.
-		return moduleData.matchesPclntab(pclntab) ? moduleData : null;
+		return moduleData.matchesPcHeader(pcHeader) ? moduleData : null;
 	}
 }
-
-/*
-struct runtime.moduledata Length:276 Alignment:4{
-  runtime.pcHeader*pcHeader
-  []uint8                                                  funcnametab      
-  []uint32                                                cutab                 
-  []uint8                                                  filetab                 
-  []uint8                                                  pctab                 
-  []uint8                                                  pclntable            
-  []runtime.functab                                ftab
-uintptr                                  findfunctab
-uintptr                                  minpc
-uintptr                                  maxpc
-uintptr                                  text
-uintptr                                  etext
-uintptr                                  noptrdata
-uintptr                                  enoptrdata
-uintptr                                  data
-uintptr                                  edata
-uintptr                                  bss
-uintptr                                  ebss
-uintptr                                  noptrbss
-uintptr                                  enoptrbss
-uintptr                                  end
-uintptr                                  gcdata
-uintptr                                  gcbss
-uintptr                                  types
-uintptr                                  etypes
-uintptr                                  rodata
-uintptr                                  gofunc                
-  []runtime.textsect                              textsectmap       
-  []int32                                                  typelinks             
-  []*runtime.itab                                    itablinks             
-  []
-runtime.ptabEntry ptab
-string                                                   pluginpath          
-  []runtime.modulehash                           pkghashes
-string                                                   modulename      
-  []runtime.modulehash                           modulehashes
-uint8                                     hasmain
-runtime.bitvector                                gcdatamask
-runtime.bitvector                                gcbssmask map[runtime.typeOff]*runtime._type  typemap
-bool                                                       bad runtime.moduledata*next
-}pack()*/

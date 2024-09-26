@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.functioncompare.actions;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
-import ghidra.app.util.viewer.util.CodeComparisonActionContext;
+import ghidra.features.base.codecompare.panel.CodeComparisonActionContext;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;

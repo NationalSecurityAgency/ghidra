@@ -107,6 +107,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		}
 		originalCategoryPath = categoryPath;
 		originalEnum = enumDT;
+
 		originalEnumName = enumDT.getDisplayName();
 		dataTypeManager = enumDTM;
 
@@ -214,25 +215,6 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-
-		if (originalEnumID == -1) {
-			return;
-		}
-
-		Enum enuum = (Enum) dataTypeManager.getDataType(originalEnumID);
-		if (enuum != null) {
-			EnumDataType dt = (EnumDataType) enuum.copy(dataTypeManager);
-			originalEnumName = dt.getDisplayName();
-			updateTitle(dt);
-			Category category = dataTypeManager.getCategory(enuum.getCategoryPath());
-			originalCategoryPath = category.getCategoryPath();
-			editorPanel.domainObjectRestored(domainObject, dt);
-		}
-		tool.setStatusInfo("");
-	}
-
-	@Override
 	public boolean isTransient() {
 		return true;
 	}
@@ -246,13 +228,21 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		tool.setStatusInfo(msg);
 	}
 
+	@Override
+	public DataTypeManager getDataTypeManager() {
+		return dataTypeManager;
+	}
+
 	String getCategoryText() {
 		return dataTypeManager.getName() + originalCategoryPath;
 	}
 
-	@Override
-	public DataTypeManager getDataTypeManager() {
-		return dataTypeManager;
+	Enum getEnum() {
+		return originalEnum;
+	}
+
+	String getSelectedFieldName() {
+		return editorPanel.getSelectedFieldName();
 	}
 
 //==================================================================================================
@@ -317,10 +307,14 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		showEnumAction.setToolBarData(
 			new ToolBarData(new GIcon("icon.plugin.enum.editor.home"), thirdGroup));
 
+		FindReferencesToEnumFieldAction findReferencesAction =
+			new FindReferencesToEnumFieldAction(plugin);
+
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);
 		tool.addLocalAction(this, deleteAction);
 		tool.addLocalAction(this, showEnumAction);
+		tool.addLocalAction(this, findReferencesAction);
 	}
 
 	private boolean applyChanges() {
@@ -336,11 +330,21 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			setStatusMessage("Empty enum is not allowed");
 			return false;
 		}
-		int txID = startTransaction();
 
+		boolean originalDtExists = dataTypeManager.contains(originalEnum);
+		boolean renamed = false;
+		if (originalDtExists) {
+			String editorName = editorPanel.getEnumName().trim();
+			renamed = !originalEnumName.equals(editorName);
+		}
+		String action = originalDtExists ? "Edit" : "Create";
+		if (renamed) {
+			action += "/Rename";
+		}
+		int txID = dataTypeManager.startTransaction(action + " Enum " + editedEnum.getName());
 		try {
-			DataTypeManager dtm = editedEnum.getDataTypeManager();
-			boolean userSaved = resolveEquateConflicts(editedEnum, dtm);
+
+			boolean userSaved = resolveEquateConflicts(editedEnum);
 			if (!userSaved) {
 				return false;
 			}
@@ -352,11 +356,12 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			newEnuum.replaceWith(editedEnum);
 
 			originalEnum = newEnuum;
+			originalEnumID = dataTypeManager.getID(newEnuum);
 			editorPanel.setEnum((EnumDataType) newEnuum.copy(dataTypeManager));
 			applyAction.setEnabled(hasChanges());
 		}
 		finally {
-			endTransaction(txID);
+			dataTypeManager.endTransaction(txID, true);
 		}
 		return true;
 	}
@@ -369,10 +374,9 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Checks to see if the new changes to the enum will affect equates based off of it.
 	 * @param editedEnum the enum to check for conflicts with
-	 * @param dtm the data type manager that this enum lies within
 	 * @return true if the enum should save its changes; otherwise, false
 	 */
-	private boolean resolveEquateConflicts(Enum editedEnum, DataTypeManager dtm) {
+	private boolean resolveEquateConflicts(Enum editedEnum) {
 
 		Program program = plugin.getProgram();
 		if (program == null) {
@@ -486,14 +490,6 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		if (rows.length > 0) {
 			deleteAction.setEnabled(true);
 		}
-	}
-
-	private int startTransaction() {
-		return dataTypeManager.startTransaction("Edit Enum");
-	}
-
-	private void endTransaction(int transID) {
-		dataTypeManager.endTransaction(transID, true);
 	}
 
 	/**
@@ -680,6 +676,36 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			dispose();
 		}
 
+		@Override
+		public void restored(DataTypeManager dtm) {
+			if (originalEnumID <= 0) {
+				return;
+			}
+
+			DataTypeManager originalDTM = originalEnum.getDataTypeManager();
+			DataType dt = originalDTM.getDataType(originalEnumID);
+
+			boolean exists = false;
+			if (dt instanceof Enum) {
+				originalEnum = (Enum) dt;
+				exists = true;
+			}
+			else {
+				// original enum no longer exists
+				originalEnumID = -1;
+				EnumDataType enuum = editorPanel.getEnum();
+				originalEnum = new EnumDataType(enuum.getCategoryPath(), enuum.getName(),
+					enuum.getLength(), originalDTM);
+			}
+
+			originalEnumName = originalEnum.getDisplayName();
+			updateTitle(originalEnum);
+			originalCategoryPath = originalEnum.getCategoryPath();
+
+			editorPanel.domainObjectRestored((EnumDataType) originalEnum.copy(originalDTM), exists);
+			tool.setStatusInfo("");
+		}
+
 		private boolean isMyCategory(DataTypePath path) {
 			CategoryPath parentPath = path.getCategoryPath();
 			return parentPath.equals(originalCategoryPath);
@@ -715,8 +741,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		private ActionListener listener;
 
 		EnumPluginAction(String name, ActionListener listener) {
-			super(DataTypeEditorManager.EDIT_ACTION_PREFIX + name, plugin.getName(),
-				KeyBindingType.SHARED);
+			super(name, plugin.getName(), KeyBindingType.SHARED);
 			this.listener = listener;
 			setHelpLocation(new HelpLocation(HELP_TOPIC, name));
 		}

@@ -262,7 +262,7 @@ public class GTabPanel<T> extends JPanel {
 	 * @return a list of all tab values that are not visible
 	 */
 	public List<T> getHiddenTabs() {
-		Set<T> hiddenValues = new LinkedHashSet<T>(allValues);
+		Set<T> hiddenValues = new LinkedHashSet<>(allValues);
 		hiddenValues.removeAll(getVisibleTabs());
 		return new ArrayList<>(hiddenValues);
 	}
@@ -405,7 +405,7 @@ public class GTabPanel<T> extends JPanel {
 			return;
 		}
 		JComponent c = hasHiddenTabs() ? hiddenValuesControl : allTabs.get(allTabs.size() - 1);
-		tabList = new TabListPopup<T>(this, c, tabTypeName);
+		tabList = new TabListPopup<>(this, c, tabTypeName);
 		tabList.setVisible(true);
 	}
 
@@ -492,16 +492,19 @@ public class GTabPanel<T> extends JPanel {
 		closeTabList();
 		setBorder(null);
 		if (!shouldShowTabs()) {
+			setFocusable(false);
 			revalidate();
 			repaint();
 			return;
 		}
+
+		setFocusable(true);
 		setBorder(new GTabPanelBorder());
 
 		GTab<T> selectedTab = null;
 		int availableWidth = getPanelWidth();
 		if (selectedValue != null) {
-			selectedTab = new GTab<T>(this, selectedValue, true);
+			selectedTab = new GTab<>(this, selectedValue, true);
 			availableWidth -= getTabWidth(selectedTab);
 		}
 		createNonSelectedTabsForWidth(availableWidth);
@@ -579,7 +582,7 @@ public class GTabPanel<T> extends JPanel {
 			if (value == selectedValue) {
 				continue;
 			}
-			GTab<T> tab = new GTab<T>(this, value, false);
+			GTab<T> tab = new GTab<>(this, value, false);
 
 			int tabWidth = getTabWidth(tab);
 			if (tabWidth > availableWidth) {

@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from contextlib import contextmanager
 import inspect
@@ -595,6 +595,7 @@ def putreg(frame, reg_descs):
     cobj.insert()
     mapper = STATE.trace.register_mapper
     values = []
+    # NB: This command will fail if the process is running
     endian = arch.get_endian()
     for desc in reg_descs:
         v = frame.read_register(desc.name)
@@ -616,7 +617,7 @@ def ghidra_trace_putreg(group='all', *, is_mi, **kwargs):
     """
 
     STATE.require_tx()
-    frame = gdb.selected_frame()
+    frame = util.selected_frame()
     with STATE.client.batch() as b:
         return putreg(frame, util.get_register_descs(frame.architecture(), group))
 
@@ -631,7 +632,7 @@ def ghidra_trace_delreg(group='all', *, is_mi, **kwargs):
 
     STATE.require_tx()
     inf = gdb.selected_inferior()
-    frame = gdb.selected_frame()
+    frame = util.selected_frame()
     space = 'Inferiors[{}].Threads[{}].Stack[{}].Registers'.format(
         inf.num, gdb.selected_thread().num, util.get_level(frame)
     )
@@ -957,9 +958,10 @@ def activate(path=None):
         if t is None:
             path = INFERIOR_PATTERN.format(infnum=inf.num)
         else:
-            frame = gdb.selected_frame()
-            path = FRAME_PATTERN.format(
-                infnum=inf.num, tnum=t.num, level=util.get_level(frame))
+            frame = util.selected_frame()
+            if frame is not None:
+                path = FRAME_PATTERN.format(
+                    infnum=inf.num, tnum=t.num, level=util.get_level(frame))
     trace.proxy_object_path(path).activate()
 
 
@@ -1198,12 +1200,13 @@ def ghidra_trace_put_environment(*, is_mi, **kwargs):
         put_environment()
 
 
-def put_regions():
+def put_regions(regions=None):
     inf = gdb.selected_inferior()
-    try:
-        regions = util.REGION_INFO_READER.get_regions()
-    except Exception:
-        regions = []
+    if regions is None:
+        try:
+            regions = util.REGION_INFO_READER.get_regions()
+        except Exception:
+            regions = []
     if len(regions) == 0 and gdb.selected_thread() is not None:
         regions = [util.REGION_INFO_READER.full_mem()]
     mapper = STATE.trace.memory_mapper
@@ -1227,6 +1230,7 @@ def put_regions():
         regobj.insert()
     STATE.trace.proxy_object_path(
         MEMORY_PATTERN.format(infnum=inf.num)).retain_values(keys)
+    return regions
 
 
 @cmd('ghidra trace put-regions', '-ghidra-trace-put-regions', gdb.COMMAND_DATA,
@@ -1329,7 +1333,7 @@ def convert_tid(t):
 
 @contextmanager
 def restore_frame():
-    f = gdb.selected_frame()
+    f = util.selected_frame()
     yield
     f.select()
 
@@ -1400,8 +1404,12 @@ def put_frames():
     t = gdb.selected_thread()
     if t is None:
         return
+    # NB: This command will fail if the process is running
     bt = gdb.execute('bt', to_string=True).strip().split('\n')
-    f = newest_frame(gdb.selected_frame())
+    f = util.selected_frame()
+    if f is None:
+        return
+    f = newest_frame(f)
     keys = []
     level = 0
     while f is not None:

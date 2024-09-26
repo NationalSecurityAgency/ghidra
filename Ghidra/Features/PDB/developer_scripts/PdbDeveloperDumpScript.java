@@ -23,10 +23,12 @@ import docking.widgets.values.GValuesMap;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.features.base.values.GhidraValuesMap;
-import ghidra.util.*;
+import ghidra.util.MessageType;
+import ghidra.util.StatusListener;
 
 public class PdbDeveloperDumpScript extends GhidraScript {
 
+	private static final String TITLE = "PDB Dump";
 	private static final String PDB_PROMPT = "Choose a PDB file";
 	private static final String OUTPUT_PROMPT = "Choose an output file";
 
@@ -73,7 +75,7 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		values.setValidator((valueMap, status) -> {
 			return validatePdb(valueMap, status);
 		});
-		values = askValues("Enter Values", null, values);
+		values = askValues(TITLE, null, values);
 		File pdbFile = values.getFile(PDB_PROMPT);
 		String pdbFileName = pdbFile.getAbsolutePath();
 
@@ -82,26 +84,24 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		String outputFileName = pdbFileName + ".txt";
 		values.defineFile(OUTPUT_PROMPT, new File(outputFileName));
 		values.setValidator((valueMap, status) -> {
-			if (!validatePdb(valueMap, status)) {
-				return false;
-			}
-			return validateOutput(valueMap, status);
+			return validatePdb(valueMap, status) && validateOutput(valueMap, status);
 		});
-		values = askValues("Enter Values", null, values);
+		setReusePreviousChoices(false); // false for second pass... want our default output
+		values = askValues(TITLE, null, values);
 		pdbFile = values.getFile(PDB_PROMPT); // might have changed
 		pdbFileName = pdbFile.getAbsolutePath(); // might have changed
 		File dumpFile = values.getFile(OUTPUT_PROMPT);
 
 		if (dumpFile.exists()) {
 			if (!askYesNo("Confirm Overwrite", "Overwrite file: " + dumpFile.getName())) {
-				Msg.info(this, "Operation canceled");
+				println("Operation canceled");
 				return;
 			}
 		}
 
 		String message = "Processing PDB Dump of: " + pdbFileName;
 		monitor.setMessage(message);
-		Msg.info(this, message);
+		println(message);
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile, new PdbReaderOptions(), monitor)) {
 			pdb.deserialize();
 			FileWriter fileWriter = new FileWriter(dumpFile);
@@ -112,12 +112,12 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 			bufferedWriter.close();
 		}
 		catch (IOException ioe) {
-			Msg.info(this, ioe.getMessage());
+			println(ioe.getMessage());
 			popup(ioe.getMessage());
 		}
 		message = "Results located in: " + dumpFile.getAbsoluteFile();
 		monitor.setMessage(message);
-		Msg.info(this, message);
+		println(message);
 	}
 
 	private void outputHeaderMessage(BufferedWriter bufferedWriter, String name) throws Exception {

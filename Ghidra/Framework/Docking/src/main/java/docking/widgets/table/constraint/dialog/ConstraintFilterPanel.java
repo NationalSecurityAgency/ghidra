@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GComboBox;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import docking.widgets.table.constraint.ColumnConstraint;
 import resources.Icons;
 
@@ -119,17 +119,11 @@ public class ConstraintFilterPanel extends JPanel {
 		constraintComboBox.addActionListener(constraintComboBoxListener);
 	}
 
-	private class ConstraintComboBoxCellRenderer extends GListCellRenderer<ColumnConstraint<?>> {
-
+	private class ConstraintComboBoxCellRenderer
+			extends GComboBoxCellRenderer<ColumnConstraint<?>> {
 		@Override
 		protected String getItemText(ColumnConstraint<?> value) {
 			return value.getName();
-		}
-
-		@Override
-		public boolean shouldAlternateRowBackgroundColor() {
-			// alternating colors look odd in this combo box
-			return false;
 		}
 	}
 }

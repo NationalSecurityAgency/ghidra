@@ -60,6 +60,33 @@ public class Tricore_ElfRelocationHandler
 
 		long rv = 0;
 		int byteLength = -1;
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_TRICORE_RELATIVE:
+				long base = program.getImageBase().getOffset();
+				rv = (int) (base + addend);
+				byteLength = relocate_word32(memory, relocationAddress, rv);
+				return new RelocationResult(Status.APPLIED, byteLength);
+
+			case R_TRICORE_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+
+			case R_TRICORE_BITPOS:
+				// This reads as a pseudo relocation, possibly do RelocationResult.PARTIAL instead?
+				return RelocationResult.SKIPPED;
+				
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
 
 		/**
 		 * Key S indicates the final value assigned to the symbol referenced in the
@@ -273,21 +300,6 @@ public class Tricore_ElfRelocationHandler
 			case R_TRICORE_JMP_SLOT:
 				memory.setInt(relocationAddress, (int) symbolValue);
 				break;
-
-			case R_TRICORE_RELATIVE:
-				long base = program.getImageBase().getOffset();
-				rv = (int) (base + addend);
-				byteLength = relocate_word32(memory, relocationAddress, rv);
-				break;
-
-			case R_TRICORE_COPY:
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-
-			case R_TRICORE_BITPOS:
-				// This reads as a pseudo relocation, possibly do RelocationResult.PARTIAL instead?
-				return RelocationResult.SKIPPED;
 
 			/**
 			case R_TRICORE_SBREG_S2:

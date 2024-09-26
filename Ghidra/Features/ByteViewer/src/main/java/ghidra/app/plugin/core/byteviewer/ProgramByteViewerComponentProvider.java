@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +62,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	protected Program program;
 	protected ProgramSelection currentSelection;
+	protected ProgramSelection liveSelection;
 	protected ProgramSelection currentHighlight;
 	protected ProgramLocation currentLocation;
 
@@ -179,7 +180,9 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	protected void setSelection(ProgramSelection selection, boolean notify) {
+		liveSelection = null;
 		currentSelection = selection;
+		updateTitle();
 		if (selection == null) {
 			return;
 		}
@@ -258,8 +261,26 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (!isConnected()) {
 			title = "[" + title + "]";
 		}
-
 		setTitle(title);
+		updateSubTitle();
+	}
+
+	private void updateSubTitle() {
+		// Note: the Listing has similar code
+		ProgramSelection selection = liveSelection != null ? liveSelection : currentSelection;
+		String selectionInfo = null;
+		if (selection != null && !selection.isEmpty()) {
+			long n = selection.getNumAddresses();
+			String nString = Long.toString(n);
+			if (n == 1) {
+				selectionInfo = "(1 byte selected)";
+			}
+			else {
+				selectionInfo = '(' + nString + " bytes selected)";
+			}
+		}
+
+		setSubTitle(selectionInfo);
 	}
 
 //==================================================================================================
@@ -366,7 +387,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public boolean isVisible() {
 		return tool.isVisible(this);
 	}
-	
+
 //==================================================================================================
 // End Navigatable interface methods */
 //==================================================================================================
@@ -583,10 +604,19 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	protected void updateSelection(ByteBlockSelection selection) {
 		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
+		liveSelection = null;
 		currentSelection = event.getSelection();
 		plugin.updateSelection(this, event, program);
 		clipboardProvider.setSelection(currentSelection);
+		updateTitle();
 		contextChanged();
+	}
+
+	@Override
+	protected void updateLiveSelection(ByteBlockSelection selection) {
+		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
+		liveSelection = event.getSelection();
+		updateTitle();
 	}
 
 	@Override

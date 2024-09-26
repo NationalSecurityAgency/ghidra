@@ -73,7 +73,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private JPanel component;
 	private RootNode scriptRoot;
 	private GTree scriptCategoryTree;
-	private DraggableScriptTable scriptTable;
+	private GTable scriptTable;
 	private final GhidraScriptInfoManager infoManager;
 	private GhidraScriptTableModel tableModel;
 	private BundleStatusComponentProvider bundleStatusComponentProvider;
@@ -185,7 +185,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		tableModel = new GhidraScriptTableModel(this, infoManager);
 
-		scriptTable = new DraggableScriptTable(this, tableModel);
+		scriptTable = new GTable(tableModel);
 		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
 		scriptTable.setRowSelectionAllowed(true);
 		scriptTable.setAutoCreateColumnsFromModel(false);
@@ -370,7 +370,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(script);
-		SaveDialog dialog = new SaveDialog(getComponent(), "Rename Script", this, script,
+		SaveDialog dialog = new SaveDialog(getComponent(), "Rename Script", this, script, provider,
 			actionManager.getRenameHelpLocation());
 		if (dialog.isCancelled()) {
 			plugin.getTool().setStatusInfo("User cancelled rename.");
@@ -461,11 +461,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		setSelectedScript(renameFile);
 	}
 
-	JTable getTable() {
+	public GTable getTable() {
 		return scriptTable;
 	}
 
-	GTree getTree() {
+	public GTree getTree() {
 		return scriptCategoryTree;
 	}
 
@@ -580,7 +580,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			ResourceFile newFile = GhidraScriptUtil.createNewScript(provider,
 				new ResourceFile(userScriptsDir), getScriptDirectories());
 			SaveDialog dialog = new SaveNewScriptDialog(getComponent(), "New Script", this, newFile,
-				actionManager.getNewHelpLocation());
+				provider, actionManager.getNewHelpLocation());
 			if (dialog.isCancelled()) {
 				plugin.getTool().setStatusInfo("User cancelled creating a new script.");
 				return;
@@ -676,6 +676,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private GhidraScript getScriptInstance(ResourceFile scriptFile, ConsoleService console) {
 		String scriptName = scriptFile.getName();
 		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptFile);
+		if (provider == null) {
+			console.addErrorMessage("",
+				"Could not find a compatible script provider for: " + scriptName);
+			return null;
+		}
 		try {
 			return provider.getScriptInstance(scriptFile, console.getStdErr());
 		}

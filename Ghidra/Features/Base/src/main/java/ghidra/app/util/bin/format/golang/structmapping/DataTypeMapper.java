@@ -31,11 +31,11 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Information about {@link StructureMapping} classes and their metadata.
  * <p>
- * To use the full might and majesty of StructureMapping(tm), a DataTypeMapper must be created. It
+ * To use the full might and majesty of StructureMapping&trade;, a DataTypeMapper must be created. It
  * must be able to {@link #addArchiveSearchCategoryPath(CategoryPath...) find} 
  * ({@link #addProgramSearchCategoryPath(CategoryPath...) more find}) the Ghidra structure data
- * types being used, and it must {@link #registerStructure(Class) know} about all classes that are
- * going to participate during deserialization and markup.
+ * types being used, and it must {@link #registerStructure(Class, DataTypeMapperContext) know} about
+ * all classes that are going to participate during deserialization and markup.
  * <p>
  * Structure mapped classes can receive a reference to the specific DataTypeMapper type that 
  * created them by declaring a {@code DataTypeMapper} field, and tagging it with 
@@ -166,9 +166,11 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param <T> structure mapped class type
 	 * @param clazz class that represents a structure, marked with {@link StructureMapping} 
 	 * annotation
+	 * @param context {@link DataTypeMapperContext}
 	 * @throws IOException if the class's Ghidra structure data type could not be found
 	 */
-	public <T> void registerStructure(Class<T> clazz) throws IOException {
+	public <T> void registerStructure(Class<T> clazz, DataTypeMapperContext context)
+			throws IOException {
 		StructureMapping sma = clazz.getAnnotation(StructureMapping.class);
 		List<String> structNames = sma != null ? Arrays.asList(sma.structureName()) : List.of();
 		Structure structDT = getType(structNames, Structure.class);
@@ -187,7 +189,7 @@ public class DataTypeMapper implements AutoCloseable {
 
 		try {
 			StructureMappingInfo<T> structMappingInfo =
-				StructureMappingInfo.fromClass(clazz, structDT);
+				StructureMappingInfo.fromClass(clazz, structDT, context);
 			mappingInfo.put(clazz, structMappingInfo);
 		}
 		catch (IllegalArgumentException e) {
@@ -199,11 +201,13 @@ public class DataTypeMapper implements AutoCloseable {
 	 * Registers the specified {@link StructureMapping structure mapping} classes.
 	 *  
 	 * @param classes list of classes to register
+	 * @param context {@link DataTypeMapperContext}
 	 * @throws IOException if a class's Ghidra structure data type could not be found
 	 */
-	public void registerStructures(List<Class<?>> classes) throws IOException {
+	public void registerStructures(List<Class<?>> classes, DataTypeMapperContext context)
+			throws IOException {
 		for (Class<?> clazz : classes) {
-			registerStructure(clazz);
+			registerStructure(clazz, context);
 		}
 	}
 
@@ -213,7 +217,7 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param <T> structure mapped class type
 	 * @param clazz the class
 	 * @return {@link StructureMappingInfo} for the specified class, or null if the class was
-	 * not previously {@link #registerStructure(Class) registered}
+	 * not previously {@link #registerStructure(Class, DataTypeMapperContext) registered}
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> StructureMappingInfo<T> getStructureMappingInfo(Class<T> clazz) {
@@ -228,7 +232,7 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param structureInstance an instance of a previously registered 
 	 * {@link StructureMapping structure mapping} class, or null
 	 * @return {@link StructureMappingInfo} for the instance, or null if the class was
-	 * not previously {@link #registerStructure(Class) registered}
+	 * not previously {@link #registerStructure(Class, DataTypeMapperContext) registered}
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> StructureMappingInfo<T> getStructureMappingInfo(T structureInstance) {
@@ -544,5 +548,4 @@ public class DataTypeMapper implements AutoCloseable {
 		}
 		return new StructureContext<>(this, smi, null);
 	}
-
 }

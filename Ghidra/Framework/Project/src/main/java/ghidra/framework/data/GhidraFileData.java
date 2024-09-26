@@ -1169,7 +1169,7 @@ public class GhidraFileData {
 							projectLocator.isTransient()));
 					folderItem.setCheckout(checkout.getCheckoutId(), exclusive,
 						checkout.getCheckoutVersion(), folderItem.getCurrentVersion());
-					
+
 					if (inUseDomainObj != null) {
 						// Reset source file and change-sets for open database
 						getContentHandler().resetDBSourceFile(folderItem, inUseDomainObj);
@@ -1185,11 +1185,11 @@ public class GhidraFileData {
 						// Ignore - should result in Hijacked file
 					}
 				}
-				
+
 			} // end of synchronized block
 
 			if (inUseDomainObj != null) {
-				inUseDomainObj.invalidate();
+				inUseDomainObj.domainObjectRestored();
 			}
 		}
 		finally {
@@ -1537,7 +1537,7 @@ public class GhidraFileData {
 							}
 						}
 					}
-					
+
 					if (inUseDomainObj != null) {
 						// Reset source file and change-sets for open database
 						contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
@@ -1550,7 +1550,7 @@ public class GhidraFileData {
 			} // end of synchronized block
 
 			if (inUseDomainObj != null) {
-				inUseDomainObj.invalidate();
+				inUseDomainObj.domainObjectRestored();
 			}
 		}
 		finally {
@@ -1919,7 +1919,7 @@ public class GhidraFileData {
 			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("merge");
 
 			ContentHandler<?> contentHandler = getContentHandler();
-			
+
 			if (!modifiedSinceCheckout()) {
 				// Quick merge
 				folderItem.updateCheckout(versionedFolderItem, true, monitor);
@@ -1999,13 +1999,13 @@ public class GhidraFileData {
 					ClientUtil.getUserName());
 				tmpItem = null;
 			}
-			
+
 			Msg.info(this, "Updated checkout completed for " + name);
 
 			if (inUseDomainObj != null) {
 				// Reset source file and change-sets for open database
 				contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
-				inUseDomainObj.invalidate();
+				inUseDomainObj.domainObjectRestored();
 			}
 		}
 		finally {

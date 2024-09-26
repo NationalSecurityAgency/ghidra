@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +17,13 @@ package ghidra.feature.vt.gui.filters;
 
 public interface FilterDialogModel<T> {
 
-    public void addFilter( Filter<T> filter );
-    
-    public void forceRefilter();
-    
-    /**
-     * Will be called when the visibility of the dialog using this model has changed
-     */
-    public void dialogVisibilityChanged( boolean isVisible );
+	public void addFilter(Filter<T> filter);
+
+	public void forceRefilter();
+
+	/**
+	 * Will be called when the visibility of the dialog using this model has changed
+	 * @param isVisible true if visible
+	 */
+	public void dialogVisibilityChanged(boolean isVisible);
 }

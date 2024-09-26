@@ -22,6 +22,8 @@ import java.util.*;
 import javax.swing.text.*;
 
 import generic.theme.GColor;
+import ghidra.docking.settings.EnumSettingsDefinition;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.properties.UnsupportedMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -972,8 +974,8 @@ public class ProgramDiffDetails {
 		Address max = cu.getMaxAddress();
 		String addrRangeStr = min + ((min.equals(max)) ? "" : " - " + max);
 		String cuRep;
-		if (cu instanceof Data) {
-			cuRep = ((Data) cu).getDataType().getPathName();
+		if (cu instanceof Data data) {
+			cuRep = data.getDataType().getPathName();
 		}
 		else if (cu instanceof Instruction) {
 			Instruction inst = (Instruction) cu;
@@ -1018,6 +1020,35 @@ public class ProgramDiffDetails {
 			cuRep = cu.toString();
 		}
 		buf.append(indent + addrRangeStr + "    " + cuRep + newLine);
+
+		if (cu instanceof Data data) {
+			// NOTE: Diff operates on the outmost code-unit only and not data components
+			String[] settingNames = data.getNames();
+			if (settingNames.length != 0) {
+				Map<String, SettingsDefinition> defMap = new HashMap<>();
+				for (SettingsDefinition settingsDef : data.getDataType().getSettingsDefinitions()) {
+					defMap.put(settingsDef.getStorageKey(), settingsDef);
+				}
+				buf.append(indent + indent + "Data Settings: ");
+				int count = 0;
+				Arrays.sort(settingNames);
+				for (String settingName : settingNames) {
+					Object value = data.getValue(settingName);
+					SettingsDefinition def = defMap.get(settingName);
+					if (def != null) {
+						settingName = def.getName();
+					}
+					if (value instanceof Long && def instanceof EnumSettingsDefinition eDef) {
+						value = eDef.getValueString(data);
+					}
+					if (count++ != 0) {
+						buf.append(", ");
+					}
+					buf.append(settingName + "=" + value);
+				}
+				buf.append(newLine);
+			}
+		}
 		return min;
 	}
 
@@ -2362,6 +2393,30 @@ public class ProgramDiffDetails {
 		// Detect that data type name or path differs?
 		if (!dt1.getPathName().equals(dt2.getPathName())) {
 			return false;
+		}
+
+		// assume only top-level data code units are compared
+		// we should not be a DataComponent (i.e., no parent)
+		if (d1.getParent() != null || d2.getParent() != null) {
+			throw new UnsupportedOperationException("Expecting top-level Data only");
+		}
+
+		// Only top-level Data instance Settings are supported 
+
+		String[] settingNames1 = d1.getNames();
+		Arrays.sort(settingNames1);
+		String[] settingNames2 = d2.getNames();
+		Arrays.sort(settingNames2);
+		if (!Arrays.equals(settingNames1, settingNames2)) {
+			return false;
+		}
+
+		for (int i = 0; i < settingNames1.length; i++) {
+			Object v1 = d1.getValue(settingNames1[i]);
+			Object v2 = d2.getValue(settingNames2[i]);
+			if (!Objects.equals(v1, v2)) {
+				return false;
+			}
 		}
 
 		return true;

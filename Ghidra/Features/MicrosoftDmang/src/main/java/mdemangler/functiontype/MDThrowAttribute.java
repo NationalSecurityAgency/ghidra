@@ -23,6 +23,8 @@ import mdemangler.*;
  */
 public class MDThrowAttribute extends MDParsableItem {
 	private MDArgumentsList argsList;
+	// TODO: consider whether the following two can be consolidated down to one variable
+	private boolean isNoExcept = false;
 	private boolean hasThrow = true;
 
 	public MDThrowAttribute(MDMang dmang) {
@@ -32,7 +34,12 @@ public class MDThrowAttribute extends MDParsableItem {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		if (dmang.peek() == 'Z') {
+		if (dmang.peek() == '_' && dmang.peek(1) == 'E') {
+			dmang.increment(2);
+			isNoExcept = true;
+			hasThrow = false;
+		}
+		else if (dmang.peek() == 'Z') {
 			dmang.increment();
 			hasThrow = false;
 		}
@@ -43,7 +50,10 @@ public class MDThrowAttribute extends MDParsableItem {
 
 	@Override
 	public void insert(StringBuilder builder) {
-		if (hasThrow) {
+		if (isNoExcept) {
+			dmang.appendString(builder, "noexcept");
+		}
+		else if (hasThrow) {
 			dmang.appendString(builder, "throw(");
 			argsList.insert(builder);
 			dmang.appendString(builder, ")");

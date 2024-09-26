@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,13 @@ import static ghidra.program.util.ProgramEvent.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ToggleActionBuilder;
 import docking.resources.icons.NumberIcon;
 import docking.widgets.dialogs.NumberInputDialog;
 import docking.widgets.label.GLabel;
@@ -41,8 +41,8 @@ import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.preferences.Preferences;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
@@ -67,9 +67,6 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	private static Icon REFRESH_NOT_NEEDED_ICON =
 		new GIcon("icon.plugin.calltree.refresh.not.needed");
 
-	private static final String RECURSE_DEPTH_PROPERTY_NAME = "call.tree.recurse.depth";
-	private static final String DEFAULT_RECURSE_DEPTH = "5";
-
 	private final CallTreePlugin plugin;
 
 	private JComponent component;
@@ -84,16 +81,19 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	private Function currentFunction;
 	private DockingAction recurseDepthAction;
 	private ToggleDockingAction filterDuplicates;
+	private ToggleDockingAction filterThunksAction;
+	private ToggleDockingAction showNamespaceAction;
 	private ToggleDockingAction navigationOutgoingAction;
 	private ToggleDockingAction navigateIncomingToggleAction;
 	private DockingAction refreshAction;
+
+	private CallTreeOptions callTreeOptions = new CallTreeOptions();
 
 	private boolean isFiringNavigationEvent;
 
 	/**
 	 * A variable used to restrict open-ended operations, like expanding all nodes or filtering.
 	 */
-	private AtomicInteger recurseDepth = new AtomicInteger();
 	private NumberIcon recurseIcon;
 	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
@@ -120,7 +120,6 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Plugin"));
 
 		addToTool();
-		loadRecurseDepthPreference();
 		createActions();
 	}
 
@@ -148,7 +147,8 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 					TreePath[] paths = gTree.getSelectionPaths();
 					for (TreePath treePath : paths) {
 						GTreeNode node = (GTreeNode) treePath.getLastPathComponent();
-						gTree.runTask(new ExpandToDepthTask(gTree, node, recurseDepth.get()));
+						int recurseDepth = callTreeOptions.getRecurseDepth();
+						gTree.runTask(new ExpandToDepthTask(gTree, node, recurseDepth));
 					}
 				}
 
@@ -366,6 +366,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		filterDuplicates = new ToggleDockingAction("Filter Duplicates", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
+				callTreeOptions = callTreeOptions.withFilterDuplicates(isSelected());
 				doUpdate();
 			}
 		};
@@ -382,8 +383,9 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		recurseDepthAction = new DockingAction("Recurse Depth", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
+				int recurseDepth = callTreeOptions.getRecurseDepth();
 				NumberInputDialog dialog =
-					new NumberInputDialog("", "", recurseDepth.get(), 0, Integer.MAX_VALUE, false);
+					new NumberInputDialog("", "", recurseDepth, 0, Integer.MAX_VALUE, false);
 				if (!dialog.show()) {
 					return;
 				}
@@ -395,7 +397,9 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		recurseDepthAction.setDescription(
 			"<html>Recurse Depth<br><br>Limits the depth to " + "which recursing tree operations" +
 				"<br> will go.  Example operations include <b>Expand All</b> and filtering");
-		recurseIcon = new NumberIcon(recurseDepth.get());
+
+		int recurseDepth = callTreeOptions.getRecurseDepth();
+		recurseIcon = new NumberIcon(recurseDepth);
 		recurseDepthAction
 				.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
 		recurseDepthAction.setHelpLocation(
@@ -676,6 +680,35 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		newCallTree.setDescription(
 			"Show the Function Call Tree window for the function " + "selected in the call tree");
 		tool.addLocalAction(this, newCallTree);
+
+		//
+		// Provider menu actions
+		//
+		//@formatter:off
+		filterThunksAction = new ToggleActionBuilder("Filter Thunks", plugin.getName())
+			.selected(false)
+			.description("Thunk functions will not be shown in the tree when selected")
+			.helpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter_Thunks"))
+			.menuPath("Filter Thunks")
+			.onAction(c -> {
+				callTreeOptions = callTreeOptions.withFilterThunks(filterThunksAction.isSelected());
+				doUpdate();
+			})
+			.buildAndInstallLocal(this);
+		//@formatter:on
+
+		//@formatter:off
+		showNamespaceAction = new ToggleActionBuilder("Show Namespace", plugin.getName())
+			.selected(false)
+			.description("Function nodes will include the funtion namespace when selected")
+			.helpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Show_Namespaces"))
+			.menuPath("Show Namespace")
+			.onAction(c -> {
+				callTreeOptions = callTreeOptions.withShowNamespace(showNamespaceAction.isSelected());
+				doUpdate();
+			})
+			.buildAndInstallLocal(this);
+		//@formatter:on
 	}
 
 	private void makeSelectionFromPaths(TreePath[] paths, boolean selectSource) {
@@ -827,6 +860,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			}
 		};
 		tree.setPaintHandlesForLeafNodes(false);
+		tree.setDoubleClickExpansionEnabled(false); // reserve double-click for navigation
 //		tree.setFilterVisible(false);
 		return tree;
 	}
@@ -919,7 +953,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		resetTrees();
+		setTreesPending();
 		updateTitle();
 		reloadUpdateManager.update();
 	}
@@ -939,7 +973,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		outgoingTree.setRootNode(new EmptyRootNode());
 	}
 
-	private void resetTrees() {
+	private void setTreesPending() {
 		incomingTree.setRootNode(new PendingRootNode());
 		outgoingTree.setRootNode(new PendingRootNode());
 	}
@@ -957,7 +991,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		}
 		else {
 			rootNode = new IncomingCallsRootNode(currentProgram, function, function.getEntryPoint(),
-				filterDuplicates.isSelected(), recurseDepth);
+				callTreeOptions);
 		}
 		incomingTree.setRootNode(rootNode);
 	}
@@ -969,7 +1003,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		}
 		else {
 			rootNode = new OutgoingCallsRootNode(currentProgram, function, function.getEntryPoint(),
-				filterDuplicates.isSelected(), recurseDepth);
+				callTreeOptions);
 		}
 
 		outgoingTree.setRootNode(rootNode);
@@ -1027,6 +1061,23 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		clearState();
 
 		currentProgram = null;
+	}
+
+	CallTreeOptions getCallTreeOptions() {
+		return callTreeOptions;
+	}
+
+	void setCallTreeOptions(CallTreeOptions callTreeOptions) {
+		this.callTreeOptions = callTreeOptions;
+		recurseIcon.setNumber(callTreeOptions.getRecurseDepth());
+	}
+
+	void readConfigState(SaveState saveState) {
+		setCallTreeOptions(new CallTreeOptions(saveState));
+	}
+
+	void writeConfigState(SaveState saveState) {
+		callTreeOptions.save(saveState);
 	}
 
 	private void clearState() {
@@ -1087,7 +1138,6 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	private boolean updateRootNodes(Function function) {
 		GTreeNode root = incomingTree.getModelRoot();
 		// root might be a "PendingRootNode"
-		//TODO do we need to use a PendingRootNode?
 		if (root instanceof CallNode) {
 			CallNode callNode = (CallNode) root;
 			Function nodeFunction = callNode.getRemoteFunction();
@@ -1098,46 +1148,6 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		}
 
 		return false;
-	}
-
-	private class UpdateFunctionNodeTask extends GTreeTask {
-
-		private Function function;
-
-		protected UpdateFunctionNodeTask(GTree tree, Function function) {
-			super(tree);
-			this.function = function;
-		}
-
-		@Override
-		public void run(TaskMonitor monitor) throws CancelledException {
-			CallNode rootNode = (CallNode) tree.getModelRoot();
-			List<GTreeNode> children = rootNode.getChildren();
-			for (GTreeNode node : children) {
-				updateFunction((CallNode) node);
-			}
-		}
-
-		private void updateFunction(CallNode node) {
-			if (!node.isLoaded()) {
-				// children not loaded, don't force a load by asking for them
-				return;
-			}
-
-			// first, if the given node represents the function we have, then we don't need to
-			// go any further
-			if (function.equals(node.getRemoteFunction())) {
-				GTreeNode parent = node.getParent();
-				parent.removeNode(node);
-				parent.addNode(node.recreate());
-				return;
-			}
-
-			List<GTreeNode> children = node.getChildren();
-			for (GTreeNode child : children) {
-				updateFunction((CallNode) child);
-			}
-		}
 	}
 
 	private void setStale(boolean stale) {
@@ -1183,56 +1193,19 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			return; // always have at least one level showing
 		}
 
-		if (recurseDepth.get() == depth) {
+		int recurseDepth = callTreeOptions.getRecurseDepth();
+		if (recurseDepth == depth) {
 			return;
 		}
 
-		this.recurseDepth.set(depth);
-		this.recurseIcon.setNumber(depth);
+		callTreeOptions = callTreeOptions.withRecurseDepth(depth);
+		recurseIcon.setNumber(depth);
 
-		removeFilterCache();
-		incomingTree.refilterLater();
-		outgoingTree.refilterLater();
-
-		saveRecurseDepth();
-	}
-
-	/**
-	 * The nodes will cache filtered values, which are restricted by the recurse depth.  We
-	 * have to remove this cache to get the nodes to reload children to the new depth.
-	 */
-	private void removeFilterCache() {
-		//
-		// I don't like this, BTW.  The problem with this approach is that you lose any loading
-		// you have done.  Normally this is not that big of a problem.  However, if the loading
-		// takes a long time, then you lose some work.
-		//
-		GTreeNode rootNode = incomingTree.getModelRoot();
-		rootNode.removeAll();
-		rootNode = outgoingTree.getModelRoot();
-		rootNode.removeAll();
-	}
-
-	private void saveRecurseDepth() {
-		Preferences.setProperty(RECURSE_DEPTH_PROPERTY_NAME, Integer.toString(recurseDepth.get()));
-		Preferences.store();
-	}
-
-	private void loadRecurseDepthPreference() {
-		String value = Preferences.getProperty(RECURSE_DEPTH_PROPERTY_NAME, DEFAULT_RECURSE_DEPTH);
-		int intValue;
-		try {
-			intValue = Integer.parseInt(value);
-		}
-		catch (NumberFormatException nfe) {
-			intValue = Integer.parseInt(DEFAULT_RECURSE_DEPTH);
-		}
-
-		recurseDepth.set(intValue);
+		doUpdate();
 	}
 
 	public int getRecurseDepth() {
-		return recurseDepth.get();
+		return callTreeOptions.getRecurseDepth();
 	}
 
 	public void setIncomingFilter(String text) {
@@ -1325,6 +1298,49 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		@Override
 		public boolean isLeaf() {
 			return true;
+		}
+	}
+
+	/*
+	 * Finds the node in the tree for the given function and replaces that node with a new version.
+	 */
+	private class UpdateFunctionNodeTask extends GTreeTask {
+
+		private Function function;
+
+		protected UpdateFunctionNodeTask(GTree tree, Function function) {
+			super(tree);
+			this.function = function;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			CallNode rootNode = (CallNode) tree.getModelRoot();
+			List<GTreeNode> children = rootNode.getChildren();
+			for (GTreeNode node : children) {
+				updateFunction((CallNode) node);
+			}
+		}
+
+		private void updateFunction(CallNode node) {
+			if (!node.isLoaded()) {
+				// children not loaded, don't force a load by asking for them
+				return;
+			}
+
+			// first, if the given node represents the function we have, then we don't need to
+			// go any further
+			if (function.equals(node.getRemoteFunction())) {
+				GTreeNode parent = node.getParent();
+				parent.removeNode(node);
+				parent.addNode(node.recreate());
+				return;
+			}
+
+			List<GTreeNode> children = node.getChildren();
+			for (GTreeNode child : children) {
+				updateFunction((CallNode) child);
+			}
 		}
 	}
 }

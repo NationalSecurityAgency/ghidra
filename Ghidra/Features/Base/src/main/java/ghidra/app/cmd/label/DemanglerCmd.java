@@ -90,7 +90,7 @@ public class DemanglerCmd extends BackgroundCommand<Program> {
 			// tell a mangled from a non-mangled symbol.
 			// Msg.debug(this, "Unable to demangle name: " + mangled);
 		}
-		catch (Exception e) { e.printStackTrace();
+		catch (Exception e) {
 			// Demangler IndexOutOfBoundsException that we're not sure how to fix 
 			setStatusMsg("Unable to demangle symbol: " + mangled + " at " + addr + ". Message: " +
 				e.getMessage());

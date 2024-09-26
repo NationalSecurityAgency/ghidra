@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,8 +139,7 @@ public class GTree extends JPanel implements BusyListener {
 		init();
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager,
-				uniquePreferenceKey));
+			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
 		Gui.addThemeListener(themeListener);
@@ -251,9 +250,9 @@ public class GTree extends JPanel implements BusyListener {
 	/**
 	 * Sets an accessible name on the GTree. This prefix will be used to assign
 	 * meaningful accessible names to the tree, filter text field and the filter options button such
-	 * that screen readers will properly describe them. 
+	 * that screen readers will properly describe them.
 	 * <P>
-	 * This prefix should be the base name that describes the type of items in the tree. 
+	 * This prefix should be the base name that describes the type of items in the tree.
 	 * This method will then append the necessary information to name the text field and the button.
 	 *
 	 * @param namePrefix the accessible name prefix to assign to the filter component. For
@@ -386,6 +385,17 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
+	 * Sets the filter restore state.  This method is a way to override the tree's filtering
+	 * behavior, which is usually set by a call to {@link #saveFilterRestoreState()}.  Most clients
+	 * will never need to call this method.
+	 * 
+	 * @param state the state to set
+	 */
+	protected void setFilterRestoreState(GTreeState state) {
+		this.filterRestoreTreeState = state;
+	}
+
+	/**
 	 * Signal to the tree that it should record its expanded and selected state when a new filter is
 	 * applied
 	 */
@@ -402,6 +412,14 @@ public class GTree extends JPanel implements BusyListener {
 
 	void clearFilterRestoreState() {
 		filterRestoreTreeState = null;
+	}
+
+	/**
+	 * Returns the key that this tree uses to store preferences.
+	 * @return the key that this tree uses to store preferences.
+	 */
+	public String getPreferenceKey() {
+		return uniquePreferenceKey;
 	}
 
 	/**
@@ -689,7 +707,8 @@ public class GTree extends JPanel implements BusyListener {
 			return node; // this node is a valid child of the given root
 		}
 
-		GTreeNode parentNode = getNodeForPath(root, path.getParentPath());
+		TreePath parentPath = path.getParentPath();
+		GTreeNode parentNode = getNodeForPath(root, parentPath);
 		if (parentNode == null) {
 			return null; // must be a path we don't have
 		}
@@ -846,7 +865,7 @@ public class GTree extends JPanel implements BusyListener {
 	void swingRestoreNonFilteredRootNode() {
 		realViewRootNode = realModelRootNode;
 		GTreeNode currentRoot = swingSetModelRootNode(realModelRootNode);
-		if (currentRoot != realModelRootNode) {
+		if (currentRoot != realModelRootNode && currentRoot != null) {
 			currentRoot.disposeClones();
 		}
 	}
@@ -1424,6 +1443,14 @@ public class GTree extends JPanel implements BusyListener {
 	 */
 	protected boolean supportsPopupActions() {
 		return true;
+	}
+
+	/**
+	 * Enable or disable using double-click to open and close tree nodes.  The default is true.
+	 * @param b true to enable
+	 */
+	public void setDoubleClickExpansionEnabled(boolean b) {
+		tree.setToggleClickCount(b ? 2 : 0);
 	}
 
 //==================================================================================================

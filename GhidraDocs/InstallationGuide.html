@@ -19,7 +19,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 11.1.2 and is subject to change with
+The installation information provided is effective as of Ghidra 11.2 and is subject to change with
 future releases.
 </p>
 
@@ -84,21 +84,21 @@ Ghidra team if you have a specific need.</p></blockquote>
 </ul>
 <h3>Software</h3>
 <ul>
-  <li>Java 17 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
+  <li>Java 21 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
   <ul>
-    <li>Free long term support (LTS) versions of JDK 17 are provided by:</li>
+    <li>Free long term support (LTS) versions of JDK 21 are provided by:</li>
     <ul>
       <li>
         <a href="https://adoptium.net/temurin/releases">
         Adoptium Temurin</a>
       </li>
       <li>
-        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html">
+        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html">
         Amazon Corretto</a>
       </li>
     </ul>
   </ul>
-  <li>Python3 (3.7 to 3.12; for Debugger support)</li>
+  <li>Python3 (3.9 to 3.12; for Debugger support)</li>
   <ul>
     <li>This is available from <a href="https://python.org">Python.org</a> or most operating system's
      app stores or software repositories.  For Linux it is recommended that the system's package
@@ -112,6 +112,7 @@ Ghidra team if you have a specific need.</p></blockquote>
 <h2><a name="Install"></a>Installing Ghidra</h2>
 <p>To install Ghidra, simply extract the Ghidra distribution file to the desired filesystem
 destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc)</p>
+
 <h3><a name="InstallationNotes"></a>Installation Notes</h3>
 <ul>
   <li>
@@ -122,6 +123,22 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
     Windows, removing Ghidra is as simple as deleting the Ghidra installation directory.  On the
     down side, Ghidra will not automatically create a shortcut on the desktop or appear in
     application start menus.
+  </li>
+  <li>
+    When launching Ghidra for the first time on macOS, the macOS Gatekeeper feature may attempt
+    to quarantine the pre-built unsigned Ghidra native components. Two techniques can be used to 
+    prevent this from happening:
+    <ul>
+      <li>
+        Prior to extracting the Ghidra distribution file, running 
+        <i>xattr -d com.apple.quarantine ghidra_&lt;version&gt;_&lt;date&gt;.zip</i>
+        from a terminal.
+      </li>
+      <li>
+        Prior to first launch, following the instructions in the 
+        <a href="#Build">Building Native Components</a> section.
+      </li>
+    </ul>
   </li>
   <li>
     Administrative privilege may be required to extract Ghidra to certain filesystem destinations
@@ -174,15 +191,7 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
           <li>
             <p>Open Environment Variables window:</p>
             <ol>
-              <li>
-                <p>
-                  <i>Windows 10:</i> Right-click on Windows start button, and click <b>System</b>
-                </p>
-                <p>
-                  <i>Windows 7:</i> Click Windows start button, right-click on Computer, and click 
-                  <b>Properties</b>
-                </p>
-              </li>
+              <li>Right-click on Windows start button, and click <b>System</b></li>
               <li>Click <b>Advanced system settings</b></li>
               <li>Click <b>Environment variables...</b></li>
             </ol>
@@ -336,7 +345,10 @@ In order to build native binaries for your platform, you will need the following
 system:</p>
 <ul>
   <li>A <a href="#Requirements">supported</a> version of a Java Development Kit</li>
-  <li><a href="https://gradle.org/releases/">Gradle 7.3+</a></li>
+  <li><a href="https://gradle.org/releases/">Gradle 8.5+</a> (or supplied Gradle wrapper with 
+    Internet connection)
+  </li>
+  
   <li>Software C/C++ build tools and library packages</li>
   <ul>
   	<li>macOS: <I>Xcode</I> or the abbreviated <I>Command Line Tools for Xcode</I> will supply the 
@@ -363,16 +375,28 @@ system:</p>
     </li>
   </ul>
 </ul>
-<p>To build the native binaries for your current platform, execute the following script:</p>
-<pre><blockquote><i>&lt;GhidraInstallDir&gt;</i>/support/buildNatives(.bat)</i></blockquote></pre>
-<p>When this script successfully completes, Ghidra will contain newly built native binaries in
+<p>To build the native binaries for your current platform, execute the following commands:</p>
+<blockquote>
+  <pre>
+    <i>cd &lt;GhidraInstallDir&gt;</i>/support/gradle/
+    gradle buildNatives
+  </pre>
+</blockquote>
+<p>If you are connected to the Internet and do not have Gradle installed, execute:</p>
+<blockquote>
+  <pre>
+    <i>cd &lt;GhidraInstallDir&gt;</i>/support/gradle/
+    ./gradlew(.bat) buildNatives
+  </pre>
+</blockquote>
+<p>When the commands successfully complete, Ghidra will contain newly built native binaries in
 the relevant modules' <i>build/os/&lt;platform&gt;/</i> subdirectories, which will override any
 existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirectories.</p> 
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="DebuggerPython"></a>Installing the Debugger's Python Dependencies</h2>
 <p>The Debugger now uses Python to connect to the host platform's native debuggers. This requires
-Python3 (3.7 to 3.12) and some additional packages. These packages are included in the distribution,
+Python3 (3.9 to 3.12) and some additional packages. These packages are included in the distribution,
 but you may still install them from PyPI if you prefer:</p>
 <ul>
 <li>psutil</li>
@@ -457,7 +481,9 @@ can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions directory.</p>
   </li>
   <li>
     Extensions installed from the Ghidra front-end GUI get installed at 
-    <i>&lt;UserDir&gt;</i>/.ghidra/.ghidra-[version]/Extensions.
+    <i>&lt;UserSettings&gt;</i>/Extensions, where <i>&lt;UserSettings&gt;</i> can be looked up in
+    the Ghidra front-end GUI under <i>Help -> Runtime Information -> Application Layout ->
+    Settings Directory.
   </li>
   <li>
     <p>It is possible to install Ghidra extensions directly into the Ghidra installation directory.

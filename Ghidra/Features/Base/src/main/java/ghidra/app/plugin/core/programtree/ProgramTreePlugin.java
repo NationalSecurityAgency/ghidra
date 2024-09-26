@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,14 +83,15 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	private final static Icon NAVIGATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 
-	private HashMap<String, TreeViewProvider> providerMap;// map of view providers, key is the name
+	private ViewManagerComponentProvider componentProvider;
+	private ProgramTreeActionManager actionManager;
+	private TreeViewProvider defaultProvider;
+	private TreeViewProvider currentProvider;
+	private Map<String, TreeViewProvider> providerMap;// map of view providers, key is the name
 	private GoToService goToService;
 	private ViewManagerService viewManagerService;
-	private ProgramTreeActionManager actionManager;
-	private TreeViewProvider currentProvider;
-	private ViewManagerComponentProvider viewProvider;
+
 	private ProgramListener programListener;
-	private TreeViewProvider defaultProvider;
 	private boolean firingGoTo;
 	private RunManager runManager;
 	private DockingAction createAction;
@@ -99,31 +100,30 @@ public class ProgramTreePlugin extends ProgramPlugin
 	private JPopupMenu popup;
 
 	/**
-	 * Tree signals that a user double-click will replace the view with the
-	 * current node
+	 * Tree signals that a user double-click will replace the view with the current node
 	 */
-	private boolean isReplaceViewMode = true;
+	private boolean isReplaceViewMode = false;
 
 	public ProgramTreePlugin(PluginTool tool) {
 		super(tool);
 
-		viewProvider = new ViewManagerComponentProvider(tool, getName());
-		registerServiceProvided(ViewManagerService.class, viewProvider);
+		componentProvider = new ViewManagerComponentProvider(tool, getName());
+		registerServiceProvided(ViewManagerService.class, componentProvider);
 
 		providerMap = new HashMap<>();
 
 		actionManager = new ProgramTreeActionManager(this);
-		registerActions();
+		registerProviderActions();
+
 		programListener = new ProgramListener(this);
 		runManager = new RunManager();
 		runManager.showProgressBar(false);
-		createActions();
+		createPluginActions();
 
 		// show default provider
 		defaultProvider = addTreeView(DEFAULT_TREE_NAME);
 
 		initOptions(tool.getOptions(PROGRAM_TREE_OPTION_NAME));
-
 	}
 
 	@Override
@@ -131,7 +131,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 		if (interfaceClass != ViewProviderService.class) {
 			return;
 		}
-		viewProvider.serviceAdded((ViewProviderService) service);
+		componentProvider.serviceAdded((ViewProviderService) service);
 	}
 
 	/**
@@ -142,13 +142,13 @@ public class ProgramTreePlugin extends ProgramPlugin
 		if (interfaceClass != ViewProviderService.class) {
 			return;
 		}
-		viewProvider.serviceRemoved((ViewProviderService) service);
+		componentProvider.serviceRemoved((ViewProviderService) service);
 	}
 
 	private void initOptions(ToolOptions options) {
 		isReplaceViewMode = options.getBoolean(REPLACE_VIEW_OPTION_NAME, isReplaceViewMode);
 		options.registerOption(REPLACE_VIEW_OPTION_NAME, isReplaceViewMode,
-			new HelpLocation(getName(), "Replace_View"), REPLACE_VIEW_OPTION_DESCRIPTION);
+			new HelpLocation(getName(), "Set_View"), REPLACE_VIEW_OPTION_DESCRIPTION);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -202,9 +202,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 */
 	@Override
 	public void dispose() {
-		Iterator<String> iter = providerMap.keySet().iterator();
-		while (iter.hasNext()) {
-			String treeName = iter.next();
+		for (String treeName : providerMap.keySet()) {
 			TreeViewProvider provider = providerMap.get(treeName);
 			deregisterService(ViewProviderService.class, provider);
 			provider.dispose();
@@ -220,7 +218,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 			programListener.dispose();
 		}
 
-		viewProvider.dispose();
+		componentProvider.dispose();
 		super.dispose();
 	}
 
@@ -248,13 +246,11 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 */
 	@Override
 	public void writeDataState(SaveState saveState) {
-		viewProvider.writeDataState(saveState);
+		componentProvider.writeDataState(saveState);
 
 		saveState.putInt(NUMBER_OF_VIEWS, providerMap.size());
-		Iterator<String> iter = providerMap.keySet().iterator();
 		int idx = 0;
-		while (iter.hasNext()) {
-			String treeName = iter.next();
+		for (String treeName : providerMap.keySet()) {
 			saveState.putString(TREE_NAME + "-" + idx, treeName);
 			TreeViewProvider provider = providerMap.get(treeName);
 			provider.writeDataState(saveState);
@@ -269,7 +265,6 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 */
 	@Override
 	public void readDataState(SaveState saveState) {
-		viewProvider.readDataState(saveState);
 
 		int numberOfViews = saveState.getInt(NUMBER_OF_VIEWS, 0);
 
@@ -279,7 +274,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 		for (int i = 0; i < numberOfViews; i++) {
 			treeNames[i] = saveState.getString(TREE_NAME + "-" + i, null);
 		}
-		ArrayList<TreeViewProvider> providerList = new ArrayList<>();
+
+		List<TreeViewProvider> providerList = new ArrayList<>();
 		for (String element : treeNames) {
 			TreeViewProvider provider = providerMap.get(element);
 			if (provider != null) {
@@ -313,6 +309,30 @@ public class ProgramTreePlugin extends ProgramPlugin
 		}
 
 		selectionToggleAction.setSelected(saveState.getBoolean(TOGGLE_STATE, true));
+
+		restoreTreeViews();
+
+		componentProvider.readDataState(saveState);
+	}
+
+	private void restoreTreeViews() {
+		if (currentProgram == null) {
+			return;
+		}
+
+		//
+		// Update low-level component cache.  We want to maintain the order of the tree views so 
+		// that the UI does not move around on the user.  Use the view names as they are stored in 
+		// the program to provide a consistent order.
+		//		
+		List<TreeViewProvider> list = new ArrayList<>();
+		String[] orderedTreeNames = currentProgram.getListing().getTreeNames();
+		for (String treeName : orderedTreeNames) {
+			TreeViewProvider provider = providerMap.get(treeName);
+			list.add(provider);
+		}
+
+		componentProvider.treeViewsRestored(list);
 	}
 
 	@Override
@@ -349,16 +369,12 @@ public class ProgramTreePlugin extends ProgramPlugin
 	protected void programActivated(Program program) {
 		program.addListener(programListener);
 		setProgram(program);
-		viewProvider.setCurrentProgram(program);
+		componentProvider.setCurrentProgram(program);
 	}
 
 	private void removeStaleProviders(ArrayList<TreeViewProvider> providerList) {
-		HashMap<String, TreeViewProvider> map = new HashMap<>(providerMap);
-
-		// remove views from the map that are not in the providerList
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String treeName = iter.next();
+		Map<String, TreeViewProvider> map = new HashMap<>(providerMap);
+		for (String treeName : map.keySet()) {
 			TreeViewProvider provider = map.get(treeName);
 			if (!providerList.contains(provider)) {
 				deregisterService(ViewProviderService.class, provider);
@@ -367,9 +383,6 @@ public class ProgramTreePlugin extends ProgramPlugin
 		}
 	}
 
-	/**
-	 * Initialization method: Get the services we need.
-	 */
 	@Override
 	protected void init() {
 		goToService = tool.getService(GoToService.class);
@@ -397,6 +410,10 @@ public class ProgramTreePlugin extends ProgramPlugin
 		}
 	}
 
+	void contextChanged() {
+		tool.contextChanged(componentProvider);
+	}
+
 	void treeViewAdded(String treeName) {
 		TreeViewProvider provider = providerMap.get(treeName);
 		if (provider == null) {
@@ -413,10 +430,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 			currentProvider.replaceView(node);
 		}
 
-		// If the node is NOT the root node, just go to the location
-		// of the first address in the fragment.  If it's root, we
-		// need to get the lowest address of any item in the
-		// current view.
+		// If the node is NOT the root node, just go to the location of the first address in the 
+		// fragment.  If it's the root, we need to get the lowest address in the current view.
 		if (node.isFragment()) {
 			goTo(node.getFragment());
 		}
@@ -428,7 +443,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 		}
 	}
 
-	void goTo(ProgramFragment fragment) {
+	private void goTo(ProgramFragment fragment) {
 
 		Address minAddress = fragment.getMinAddress();
 
@@ -610,9 +625,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 * fragment was moved; update all the view maps.
 	 */
 	void fragmentMoved() {
-		Iterator<String> iter = providerMap.keySet().iterator();
-		while (iter.hasNext()) {
-			String treeName = iter.next();
+		for (String treeName : providerMap.keySet()) {
 			TreeViewProvider provider = providerMap.get(treeName);
 			provider.notifyListeners();
 		}
@@ -654,6 +667,10 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	void reloadTree(ProgramDnDTree tree) {
 		reloadTree(tree, false);
+	}
+
+	void repaintProvider() {
+		componentProvider.getComponent().repaint();
 	}
 
 	/**
@@ -766,10 +783,10 @@ public class ProgramTreePlugin extends ProgramPlugin
 		return currentProgram.getListing().getRootModule(treeName) != null;
 	}
 
-	private void registerActions() {
+	private void registerProviderActions() {
 		DockingAction[] actions = actionManager.getActions();
-		for (DockingAction element : actions) {
-			tool.addAction(element);
+		for (DockingAction action : actions) {
+			tool.addLocalAction(componentProvider, action);
 		}
 	}
 
@@ -921,7 +938,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	/**
 	 * Create the local actions that are shared among all the providers.
 	 */
-	private void createActions() {
+	private void createPluginActions() {
 
 		openAction = new DockingAction("Open Tree View", getName()) {
 			@Override
@@ -973,5 +990,4 @@ public class ProgramTreePlugin extends ProgramPlugin
 			currentProvider.selectPathsForLocation(currentLocation);
 		}
 	}
-
 }

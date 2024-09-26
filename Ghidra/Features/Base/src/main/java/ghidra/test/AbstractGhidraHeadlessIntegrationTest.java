@@ -179,7 +179,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @return result of command applyTo method
 	 * @throws RollbackException thrown if thrown by command applyTo method
 	 */
-	public static boolean applyCmd(Program program, Command cmd) throws RollbackException {
+	public static boolean applyCmd(Program program, Command<Program> cmd) throws RollbackException {
 		int txId = program.startTransaction(cmd.getName());
 		boolean commit = true;
 		try {
@@ -431,6 +431,13 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		return null;
 	}
 
+	public AddressSet toAddressSet(Program p, String from, String to) {
+		AddressFactory af = p.getAddressFactory();
+		Address a1 = af.getAddress(from);
+		Address a2 = af.getAddress(to);
+		return af.getAddressSet(a1, a2);
+	}
+
 	public AddressSet toAddressSet(List<Address> addrs) {
 		AddressSet set = new AddressSet();
 		for (Address addr : addrs) {
@@ -495,6 +502,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		ProgramSelection selection = new ProgramSelection(addresses);
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, p));
 		waitForSwing();
+	}
+
+	public void clearSelection(PluginTool tool, Program p) {
+		AddressSet set = new AddressSet();
+		makeSelection(tool, p, set);
 	}
 
 	/**

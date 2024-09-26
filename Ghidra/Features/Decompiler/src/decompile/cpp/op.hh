@@ -284,7 +284,7 @@ public:
   Varnode *getVarnode(void) const { return pieceOp->getIn(slot); }	///< Get the Varnode representing \b this piece
   static bool isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset);
   static Varnode *findRoot(Varnode *vn);
-  static void gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset);
+  static void gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset,int4 rootOffset);
 };
 
 /// A map from sequence number (SeqNum) to PcodeOp

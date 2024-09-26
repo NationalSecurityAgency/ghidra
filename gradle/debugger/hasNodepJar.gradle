@@ -50,12 +50,12 @@ task configureNodepJar {
 }
 
 task nodepJar(type: Jar) {
-	inputs.file(file(jar.archivePath))
+	inputs.file(jar.archiveFile)
 	dependsOn(configureNodepJar)
 	dependsOn(jar)
 
 	archiveAppendix = 'nodep'
 
-	from(zipTree(jar.archivePath))
+	from(zipTree(jar.archiveFile))
 	duplicatesStrategy = 'exclude'
 }

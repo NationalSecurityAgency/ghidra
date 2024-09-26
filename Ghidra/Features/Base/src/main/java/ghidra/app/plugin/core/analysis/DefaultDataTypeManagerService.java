@@ -55,6 +55,11 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 	}
 
 	@Override
+	public void edit(Structure structure, String fieldName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataType getDataType(String filterText) {
 		throw new UnsupportedOperationException();
 	}

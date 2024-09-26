@@ -46,6 +46,7 @@ import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.util.AddEditDialog;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.util.Msg;
 
 public class DecompilerClangTest extends AbstractDecompilerTest {
 
@@ -383,29 +384,32 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		setDecompilerLocation(line, charPosition);
 
 		ClangToken token = getToken();
-		String text = token.getText();
-		assertEquals("_printf", text);
+		String printfText = token.getText();
+		assertEquals("_printf", printfText);
 
-		highlight();
+		highlight(); // "printf" is secondary highlighted
 
 		// 5:30 "a->name"
 		line = 5;
 		charPosition = 38;
 		setDecompilerLocation(line, charPosition);
 		ClangToken token2 = getToken();
-		String text2 = token2.getText();
-		assertEquals("name", text2);
+		String nameText = token2.getText();
+		assertEquals("name", nameText);
 
-		Color color2 = highlight();
+		Color color2 = highlight();  // "name" is secondary highlighted
 
 		// 5:2 "_printf"
 		line = 5;
 		charPosition = 2;
 		setDecompilerLocation(line, charPosition);
-		removeSecondaryHighlight();
 
-		assertNoFieldsSecondaryHighlighted(text);
-		assertAllFieldsHighlighted(text2, color2);
+		Msg.debug(this, "test - remove");
+
+		removeSecondaryHighlight(); // remove "printf" highlight
+
+		assertNoFieldsSecondaryHighlighted(printfText);
+		assertAllFieldsHighlighted(nameText, color2);
 	}
 
 	@Test
@@ -812,7 +816,106 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	}
 
 	@Test
-	public void testSecondaryHighlighting_MiddleMouseDoesNotClearSecondaryHighlight() {
+	public void testSecondaryHighlighting_MiddleMouse_SecondaryHighlight() {
+
+		/*
+		
+		 The middle mouse is a secondary highlight so that it persists as the user clicks around.
+		 
+		 Middle mousing on an already middle moused highlight should clear the highlight.  Middle
+		 mousing on a new token should clear the original highlight and highlight the new token.
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String tokenText = token.getText();
+		assertEquals("_printf", tokenText);
+
+		middleMouse();
+		assertCombinedHighlightColor(token);
+
+		middleMouse();
+		assertNoFieldsSecondaryHighlighted(tokenText);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_MiddleMouse_SecondaryHighlight_NewToken() {
+
+		/*
+		
+		 The middle mouse is a secondary highlight so that it persists as the user clicks around.
+		 
+		 Middle mousing on an already middle moused highlight should clear the highlight.  Middle
+		 mousing on a new token should clear the original highlight and highlight the new token.
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String tokenText = token.getText();
+		assertEquals("_printf", tokenText);
+
+		middleMouse();
+		assertCombinedHighlightColor(token);
+
+		// 5:30 "a->name"
+		line = 5;
+		charPosition = 38;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token2 = getToken();
+		String text2 = token2.getText();
+		assertEquals("name", text2);
+
+		middleMouse();
+		assertNoFieldsSecondaryHighlighted(tokenText);
+		assertCombinedHighlightColor(token2);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_MiddleMouseDoesNotClearSecondaryHighlight_ExistingHighlight() {
 
 		/*
 		
@@ -850,7 +953,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertCombinedHighlightColor(token);
 
 		middleMouse();
-		assertAllFieldsHighlighted(tokenText, color);
+		ClangToken cursorToken = getToken(provider);
+		Predicate<ClangToken> ignores = t -> t == cursorToken;
+		assertAllFieldsHighlighted(tokenText, color, ignores);
 	}
 
 	@Test

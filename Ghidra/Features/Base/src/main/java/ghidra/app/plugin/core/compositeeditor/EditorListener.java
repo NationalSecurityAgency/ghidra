@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-
 /**
  * 
  * Interface used for notification when an edit session is ending. 
  */
 public interface EditorListener {
-	
+
 	/**
 	 * Notification that the editor is closed.
+	 * @param editor the editor
 	 */
 	public void closed(EditorProvider editor);
 }

@@ -100,6 +100,16 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	}
 
 	@Override
+	public synchronized boolean canUndo() {
+		return false;
+	}
+
+	@Override
+	public synchronized boolean canRedo() {
+		return false;
+	}
+
+	@Override
 	public Category createCategory(CategoryPath path) {
 		if (path != CategoryPath.ROOT) {
 			throw new UnsupportedOperationException(

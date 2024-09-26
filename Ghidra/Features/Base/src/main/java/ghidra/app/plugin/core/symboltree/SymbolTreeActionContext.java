@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.tree.TreePath;
 
 import ghidra.app.context.ProgramSymbolActionContext;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 
@@ -54,9 +54,43 @@ public class SymbolTreeActionContext extends ProgramSymbolActionContext {
 		return null;
 	}
 
+	/**
+	 * Returns a symbol tree node if there is a single node selected and it is a symbol tree node.
+	 * Otherwise, null is returned.
+	 * @return the selected node or null
+	 */
+	public SymbolTreeNode getSelectedNode() {
+		if (selectionPaths != null && selectionPaths.length == 1) {
+			Object object = selectionPaths[0].getLastPathComponent();
+			if (object instanceof SymbolTreeNode node) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns all selected {@link SymbolNode}s or an empty list.
+	 * @return all selected {@link SymbolNode}s or an empty list.
+	 */
+	public List<SymbolNode> getSelectedSymbolNodes() {
+		if (selectionPaths == null) {
+			return List.of();
+		}
+
+		List<SymbolNode> symbols = new ArrayList<>();
+		for (TreePath treePath : selectionPaths) {
+			Object object = treePath.getLastPathComponent();
+			if (object instanceof SymbolNode) {
+				symbols.add((SymbolNode) object);
+			}
+		}
+		return symbols;
+	}
+
 	private static List<Symbol> getSymbols(TreePath[] selectionPaths) {
 		if (selectionPaths == null) {
-			return null;
+			return Collections.emptyList();
 		}
 
 		List<Symbol> symbols = new ArrayList<>();
@@ -65,10 +99,6 @@ public class SymbolTreeActionContext extends ProgramSymbolActionContext {
 			if (object instanceof SymbolNode) {
 				SymbolNode symbolNode = (SymbolNode) object;
 				symbols.add(symbolNode.getSymbol());
-			}
-			else {
-				// Do not return symbols if selection contains non-symbolNodes
-				return null;
 			}
 		}
 		return symbols;

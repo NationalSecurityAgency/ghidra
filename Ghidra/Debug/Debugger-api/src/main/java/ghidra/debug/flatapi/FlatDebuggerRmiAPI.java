@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,10 @@
 package ghidra.debug.flatapi;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.app.services.TraceRmiLauncherService;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
 import ghidra.program.model.listing.Program;
@@ -116,13 +118,15 @@ public interface FlatDebuggerRmiAPI extends FlatDebuggerAPI {
 			TaskMonitor monitor) {
 		return offer.launchProgram(monitor, new LaunchConfigurator() {
 			@Override
-			public Map<String, ?> configureLauncher(TraceRmiLaunchOffer offer,
-					Map<String, ?> arguments, RelPrompt relPrompt) {
+			public Map<String, ValStr<?>> configureLauncher(TraceRmiLaunchOffer offer,
+					Map<String, ValStr<?>> arguments, RelPrompt relPrompt) {
 				if (arguments.isEmpty()) {
 					return arguments;
 				}
-				Map<String, Object> args = new HashMap<>(arguments);
-				args.putAll(overrideArgs);
+				Map<String, ValStr<?>> args = new HashMap<>(arguments);
+				for (Entry<String, ?> ent : overrideArgs.entrySet()) {
+					args.put(ent.getKey(), ValStr.from(ent.getValue()));
+				}
 				return args;
 			}
 		});

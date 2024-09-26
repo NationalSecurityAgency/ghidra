@@ -19,7 +19,8 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -106,7 +107,7 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 			throws IOException, CancelledException {
 
 		// If the current file is a symlink, try to follow it
-		file = followSymLink(file, 0);
+		file = fsIndex.resolveSymlinks(file);
 
 		SquashedFile squashedFile = fsIndex.getMetadata(file);
 
@@ -139,106 +140,6 @@ public class SquashFileSystem extends AbstractFileSystem<SquashedFile> {
 
 		// Monitor should be 100% at this point
 		monitor.setProgress(totalUncompressedBytes);
-	}
-
-	/**
-	 * Given a GFile representing a symlink, return the destination GFile, recursing into referenced
-	 * symlinks as needed. If the given file is not a symlink, it will be returned
-	 * @param symLinkFile The file representing a symlink containing the target
-	 * @param depth The current recursion depth to prevent recursing too far
-	 * @return The destination file
-	 * @throws IOException Issues relating to locating a symlink target
-	 */
-	private GFile followSymLink(GFile symLinkFile, int depth) throws IOException {
-
-		// Check if a file was supplied properly
-		if (symLinkFile == null) {
-			return null;
-		}
-
-		// Get the path associated with the given symlink
-		String path = getSymLinkPath(symLinkFile);
-
-		// If path is null, then the given file is not a symlink and should be returned as the destination
-		if (path == null) {
-			return symLinkFile;
-		}
-
-		// Make sure to not follow symlinks too far
-		if (depth > SquashConstants.MAX_SYMLINK_DEPTH) {
-			throw new IOException("Did not find symlink destination after max traversal");
-		}
-
-		// Start with the parent at the root of the archive, as all paths will be absolute
-		GFile currentFile = symLinkFile.getParentFile();
-
-		// Split up the path into its parts
-		List<String> pathParts = new ArrayList<String>(Arrays.asList(path.split("/")));
-
-		// Future references to "." are redundant, so remove them along with any blank parts
-		pathParts.removeIf(part -> part.contentEquals(".") || part.isBlank());
-
-		// Iterate over all parts of the input path, removing portions as ".." appears
-		ListIterator<String> iterator = pathParts.listIterator();
-		while (iterator.hasNext()) {
-
-			// Get the next portion of the path
-			String currentPart = iterator.next();
-
-			// If the link references up a directory
-			if (currentPart.equals("..")) {
-
-				// Move up a directory
-				currentFile = currentFile.getParentFile();
-
-			}
-			else {
-
-				// Get the file representing the next portion of the path
-				currentFile = fsIndex.lookup(currentFile, currentPart, null);
-
-				// Determine if the current file is a symlink and follow it if so
-				currentFile = followSymLink(currentFile, depth + 1);
-			}
-
-			// Check if the lookup failed
-			if (currentFile == null) {
-				throw new IOException("Could not find file within the given parent directory");
-			}
-
-			// Keep track of the depth
-			depth++;
-		}
-
-		// Return GFile representing the destination of the symlink
-		return currentFile;
-	}
-
-	/**
-	 * If the given file is a symlink, return the path it points to (null if file is not a symlink)
-	 * @param file The file to check
-	 * @return The symlink path
-	 * @throws IOException There was no SquashedFile for the given file
-	 */
-	private String getSymLinkPath(GFile file) throws IOException {
-
-		// Get the associated SquashedFile and make sure it is not null
-		SquashedFile possibleSymLinkFile = fsIndex.getMetadata(file);
-		if (possibleSymLinkFile == null) {
-			throw new IOException("Cannot retrieve SquashedFile associated with the given file");
-		}
-
-		// Check if the current part is a symlink
-		if (possibleSymLinkFile.getInode().isSymLink()) {
-			// Get and convert the associated inode
-			SquashSymlinkInode symLinkInode = (SquashSymlinkInode) possibleSymLinkFile.getInode();
-
-			// Get the target path
-			return symLinkInode.getPath();
-		}
-
-		// If the file is not a symlink, return null
-		return null;
 	}
 
 	/**

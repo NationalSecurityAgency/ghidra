@@ -59,7 +59,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 	public void setUp() throws Exception {
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		// enable edits, add to bottom, ordered
-		panel = new PathnameTablePanel(tablePaths, () -> reset(), true, false, true);
+		panel = new PathnameTablePanel(tablePaths, () -> reset(), true, false, true, false);
 		table = panel.getTable();
 		frame = new JFrame("Test");
 		frame.getContentPane().add(panel);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,16 +32,15 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.services.*;
+import ghidra.app.services.FileSystemBrowserService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndService;
-import ghidra.framework.model.Project;
-import ghidra.framework.model.ProjectListener;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugin.importer.ImporterUtilities;
-import ghidra.plugin.importer.ProgramMappingService;
+import ghidra.plugin.importer.ProjectIndexService;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -63,20 +62,21 @@ import utilities.util.FileUtilities;
 	shortDescription = "Browse Filesystems in containers",
 	description = "This plugin allows users to browse and use the contents of containers (zips, tars, filesystems, etc)",
 	servicesProvided = { FileSystemBrowserService.class },
-	servicesRequired = { TextEditorService.class },
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
 public class FileSystemBrowserPlugin extends Plugin
-		implements ApplicationLevelPlugin, ProjectListener,
-		FileSystemBrowserService {
+		implements ApplicationLevelPlugin, ProjectListener, FileSystemBrowserService {
+
+	private static final String LAST_FS_DIR = "LastFileSystemDirectory";
 
 	/* package */ DockingAction openFilesystemAction;
 	/* package */ DockingAction showFileSystemImplsAction;
 	private GhidraFileChooser chooserOpen;
 	private FrontEndService frontEndService;
-	private Map<FSRL, FileSystemBrowserComponentProvider> currentBrowsers = new HashMap<>();
+	private Map<FSRL, FSBComponentProvider> currentBrowsers = new HashMap<>();
 	private FileSystemService fsService; // don't use this directly, use fsService() instead
+	private File lastExportDirectory;
 
 	public FileSystemBrowserPlugin(PluginTool tool) {
 		super(tool);
@@ -89,9 +89,6 @@ public class FileSystemBrowserPlugin extends Plugin
 		frontEndService = tool.getService(FrontEndService.class);
 		if (frontEndService != null) {
 			frontEndService.addProjectListener(this);
-		}
-		else {
-			FSBUtils.getProgramManager(tool, false);
 		}
 
 		setupActions();
@@ -123,7 +120,7 @@ public class FileSystemBrowserPlugin extends Plugin
 			chooserOpen.dispose();
 		}
 
-		for (FileSystemBrowserComponentProvider provider : currentBrowsers.values()) {
+		for (FSBComponentProvider provider : currentBrowsers.values()) {
 			provider.dispose();
 		}
 		currentBrowsers.clear();
@@ -144,19 +141,19 @@ public class FileSystemBrowserPlugin extends Plugin
 	 * @param fsRef {@link FileSystemRef} of open {@link GFileSystem}
 	 * @param show boolean true if the new browser component should be shown
 	 */
-	/* package */ void createNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
+	public void createNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
 		Swing.runIfSwingOrRunLater(() -> doCreateNewFileSystemBrowser(fsRef, show));
 	}
 
 	private void doCreateNewFileSystemBrowser(FileSystemRef fsRef, boolean show) {
 		FSRLRoot fsFSRL = fsRef.getFilesystem().getFSRL();
-		FileSystemBrowserComponentProvider provider = currentBrowsers.get(fsFSRL);
+		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
 		if (provider != null) {
 			Msg.info(this, "Filesystem browser already open for " + fsFSRL);
 			fsRef.close();
 		}
 		else {
-			provider = new FileSystemBrowserComponentProvider(this, fsRef);
+			provider = new FSBComponentProvider(this, fsRef);
 			currentBrowsers.put(fsFSRL, provider);
 			getTool().addComponentProvider(provider, false);
 			provider.afterAddedToTool();
@@ -169,7 +166,7 @@ public class FileSystemBrowserPlugin extends Plugin
 		}
 	}
 
-	void removeFileSystemBrowserComponent(FileSystemBrowserComponentProvider componentProvider) {
+	void removeFileSystemBrowserComponent(FSBComponentProvider componentProvider) {
 		if (componentProvider != null) {
 			Swing.runIfSwingOrRunLater(() -> currentBrowsers.remove(componentProvider.getFSRL()));
 		}
@@ -180,35 +177,12 @@ public class FileSystemBrowserPlugin extends Plugin
 	 */
 	private void removeAllFileSystemBrowsers() {
 		Swing.runIfSwingOrRunLater(() -> {
-			for (FileSystemBrowserComponentProvider fsbcp : new ArrayList<>(
+			for (FSBComponentProvider fsbcp : new ArrayList<>(
 				currentBrowsers.values())) {
 				fsbcp.dispose();
 			}
 			currentBrowsers.clear();
 		});
-	}
-
-	@Override
-	public void processEvent(PluginEvent event) {
-		super.processEvent(event);
-
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent pape = (ProgramActivatedPluginEvent) event;
-			ProgramMappingService.createAutoAssocation(pape.getActiveProgram());
-		}
-	}
-
-	@Override
-	public void projectClosed(Project project) {
-		removeAllFileSystemBrowsers();
-		if (FileSystemService.isInitialized()) {
-			fsService().closeUnusedFileSystems();
-		}
-	}
-
-	@Override
-	public void projectOpened(Project project) {
-		// nada
 	}
 
 	private void openChooser(String title, String buttonText, boolean multiSelect) {
@@ -222,6 +196,7 @@ public class FileSystemBrowserPlugin extends Plugin
 		chooserOpen.setMultiSelectionEnabled(multiSelect);
 		chooserOpen.setTitle(title);
 		chooserOpen.setApproveButtonText(buttonText);
+		chooserOpen.setLastDirectoryPreference(LAST_FS_DIR);
 	}
 
 	/**
@@ -254,7 +229,7 @@ public class FileSystemBrowserPlugin extends Plugin
 	 * Prompts the user to pick a file system container file to open using a local
 	 * filesystem browser and then displays that filesystem in a new fsb browser.
 	 */
-	/* package */ void openFileSystem() {
+	public void openFileSystem() {
 		Swing.runLater(this::doOpenFileSystem);
 	}
 
@@ -293,27 +268,60 @@ public class FileSystemBrowserPlugin extends Plugin
 	}
 
 	/**
-	 * Returns true if there is a {@link ProgramManager} associated with this FSB.
-	 *
-	 * @return boolean true if there is a ProgramManager.
-	 */
-	/* package */ boolean hasProgramManager() {
-		return tool.getService(ProgramManager.class) != null ||
-			FSBUtils.getRunningProgramManagerTools(getTool()).size() == 1;
-	}
-
-	/**
 	 * For testing access only.
 	 *
 	 * @param fsFSRL {@link FSRLRoot} of browser component to fetch.
 	 * @return provider or null if not found.
 	 */
-	/* package */ FileSystemBrowserComponentProvider getProviderFor(FSRLRoot fsFSRL) {
-		FileSystemBrowserComponentProvider provider = currentBrowsers.get(fsFSRL);
+	/* package */ FSBComponentProvider getProviderFor(FSRLRoot fsFSRL) {
+		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
 		if (provider == null) {
 			Msg.info(this, "Could not find browser for " + fsFSRL);
 			return null;
 		}
 		return provider;
 	}
+
+	//--------------------------------------------------------------------------------------------
+	@Override
+	public void processEvent(PluginEvent event) {
+		super.processEvent(event);
+	}
+
+	@Override
+	public void projectClosed(Project project) {
+		removeAllFileSystemBrowsers();
+		if (FileSystemService.isInitialized()) {
+			fsService().closeUnusedFileSystems();
+		}
+		ProjectIndexService.getInstance().clearProject();
+	}
+
+	@Override
+	public void projectOpened(Project project) {
+		// there shouldn't be any fsb components open because the previous projectClosed would have
+		// removed all fsb trees, therefore, we don't need to update any of the components
+		// to tell them about the new project
+	}
+
+	public boolean isOpen(DomainFile df) {
+		Object tmp = new Object();
+		DomainObject openDF = df.getOpenedDomainObject(tmp);
+		if (openDF != null) {
+			openDF.release(tmp);
+			return true;
+		}
+		return false;
+	}
+
+	public File getLastExportDirectory() {
+		return lastExportDirectory != null
+				? lastExportDirectory
+				: new File(System.getProperty("user.home"));
+	}
+
+	public void setLastExportDirectory(File lastExportDirectory) {
+		this.lastExportDirectory = lastExportDirectory;
+	}
+
 }

@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.*;
+
 /**
  * Image Function Entry data seems to be the main data PData record of the {@link DebugData}.
  */
@@ -61,21 +63,27 @@ public class ImageFunctionEntry {
 
 	@Override
 	public String toString() {
-		return dump();
+		StringWriter writer = new StringWriter();
+		try {
+			dump(writer);
+			return writer.toString();
+		}
+		catch (IOException e) {
+			return "Issue in " + getClass().getSimpleName() + " toString(): " + e.getMessage();
+		}
 	}
 
 	/**
-	 * Dumps this class.  This package-protected method is for debugging only.
-	 * @return the {@link String} output.
+	 * Dumps this class to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("ImageFunctionEntry------------------------------------------\n");
-		builder.append(String.format("startingAddress: 0X%08X\n", startingAddress));
-		builder.append(String.format("endingAddress: 0X%08X\n", endingAddress));
-		builder.append(String.format("endOfPrologueAddress: 0X%08X\n", endOfPrologueAddress));
-		builder.append("End ImageFunctionEntry--------------------------------------\n");
-		return builder.toString();
+	void dump(Writer writer) throws IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		writer.write(String.format("startingAddress: 0X%08X\n", startingAddress));
+		writer.write(String.format("endingAddress: 0X%08X\n", endingAddress));
+		writer.write(String.format("endOfPrologueAddress: 0X%08X\n", endOfPrologueAddress));
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 }

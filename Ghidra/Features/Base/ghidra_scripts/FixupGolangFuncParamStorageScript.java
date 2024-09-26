@@ -18,11 +18,10 @@
 // specified for the arch.
 //@category Functions
 //@menupath Tools.Fix Golang Function Param Storage 
-import java.util.List;
-
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.golang.GoFunctionFixup;
 import ghidra.app.util.bin.format.golang.GoVer;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.listing.Function;
 
 public class FixupGolangFuncParamStorageScript extends GhidraScript {
@@ -34,10 +33,9 @@ public class FixupGolangFuncParamStorageScript extends GhidraScript {
 			return;
 		}
 		GoVer goVersion = GoVer.fromProgramProperties(currentProgram);
-		if ( goVersion == GoVer.UNKNOWN ) {
-			List<GoVer> versions = List.of(GoVer.values());
-			goVersion =
-				askChoice("Golang Version", "What is the golang version?", versions, GoVer.UNKNOWN);
+		if (goVersion == GoVer.INVALID) {
+			goVersion = askChoice("Golang Version", "What is the golang version?",
+				GoRttiMapper.getAllSupportedVersions(), GoVer.INVALID);
 		}
 		println("Fixing param storage for function %s@%s".formatted(func.getName(),
 			func.getEntryPoint()));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -169,28 +169,15 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 			});
 		}
 
-		// Examine the classpath to look for modules outside of the application root directories.
-		// These might exist if Ghidra was launched from an Eclipse project that resides
-		// external to the Ghidra installation.
-		for (String entry : System.getProperty("java.class.path", "").split(File.pathSeparator)) {
-			ResourceFile classpathEntry = new ResourceFile(entry);
-
-			// We only care about directories (skip jars)
-			if (!classpathEntry.isDirectory()) {
-				continue;
-			}
-
-			// Skip extensions in an application root directory... already found those.
-			if (FileUtilities.isPathContainedWithin(applicationRootDirs, classpathEntry)) {
-				continue;
-			}
-
-			// We are going to assume that the classpath entry is in a subdirectory of the module
-			// directory (i.e., bin/), so only check parent directory for the module.
-			ResourceFile classpathEntryParent = classpathEntry.getParentFile();
-			if (classpathEntryParent != null &&
-				ModuleUtilities.isModuleDirectory(classpathEntryParent)) {
-				moduleRootDirectories.add(classpathEntryParent);
+		// Add external modules defined via a system property. This will typically be used by
+		// user's developing 3rd party modules from something like Eclipse.
+		String externalModules = System.getProperty("ghidra.external.modules", "");
+		if (!externalModules.isBlank()) {
+			for (String path : externalModules.split(File.pathSeparator)) {
+				ResourceFile eclipseProjectDir = new ResourceFile(path);
+				if (ModuleUtilities.isModuleDirectory(eclipseProjectDir)) {
+					moduleRootDirectories.add(eclipseProjectDir);
+				}
 			}
 		}
 

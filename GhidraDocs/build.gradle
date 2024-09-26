@@ -17,8 +17,10 @@ apply plugin: 'java-library'
 apply plugin: 'eclipse'
 eclipse.project.name = '_GhidraDocs'
 
-sourceCompatibility = "${rootProject.JAVA_COMPILER}"
-targetCompatibility = "${rootProject.JAVA_COMPILER}"
+java {
+	sourceCompatibility = "${rootProject.JAVA_COMPILER}"
+	targetCompatibility = "${rootProject.JAVA_COMPILER}"
+}
 
 sourceSets {
 	ghidraClass {

@@ -19,14 +19,15 @@ import java.awt.Component;
 import java.io.File;
 
 import generic.jar.ResourceFile;
+import ghidra.app.script.GhidraScriptProvider;
 import ghidra.util.HelpLocation;
 
 class SaveNewScriptDialog extends SaveDialog {
 
 	SaveNewScriptDialog(Component parent, String title,
 			GhidraScriptComponentProvider componentProvider, ResourceFile scriptFile,
-			HelpLocation help) {
-		super(parent, title, componentProvider, scriptFile, help);
+			GhidraScriptProvider scriptProvider, HelpLocation help) {
+		super(parent, title, componentProvider, scriptFile, scriptProvider, help);
 	}
 
 	/**

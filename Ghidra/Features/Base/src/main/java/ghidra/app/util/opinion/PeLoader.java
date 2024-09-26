@@ -433,7 +433,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		log.appendMsg("Delay imports detected...");
+		log.appendMsg("Delay imports detected");
 
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 		Listing listing = program.getListing();

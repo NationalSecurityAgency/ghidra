@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,14 @@
  * NOTE: Supported Python3 command is established by root project build.gradle
  */
 
+// Enable the Python Nature in the Eclipse project
+eclipse.project {
+	natures 'org.python.pydev.pythonNature'
+}
+
 ext.findPyDep = { name ->
     File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
-    File inRepo = file("${BIN_REPO}/${getGhidraRelativePath(project)}/${name}")
+    File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
     if (inDeps.exists()) {
         return inDeps
     }
@@ -37,6 +42,7 @@ task assemblePyPackage(type: Copy) {
 }
 
 task buildPyPackage {
+	dependsOn assemblePyPackage
 	ext.dist = { file("build/pypkg/dist") }
 	inputs.files(assemblePyPackage)
 	outputs.dir(dist)
@@ -71,6 +77,7 @@ rootProject.assembleDistribution {
 
 ext.distributePyDep = { name ->
     File dep = findPyDep(name)
+    PYTHON_DEPS.add(dep)
     def zipPath = getZipPath(project) 
     rootProject.assembleDistribution {
         into ("${zipPath}/pypkg/dist") {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class ImporterUtilities {
 	 * TODO: will be refactored to use file_extension_icon.xml file info.
 	 */
 	public static final GhidraFileFilter LOADABLE_FILES_FILTER = ExtensionFileFilter.forExtensions(
-		"Loadable files", "exe", "dll", "obj", "drv", "bin", "o", "a", "so", "class", "lib");
+		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib");
 
 	/**
 	 * File extension filter for well known 'container' files for GhidraFileChoosers.
@@ -151,8 +151,8 @@ public class ImporterUtilities {
 
 			if (!isFSContainer) {
 				// normal file; do a single-file import
-				importSingleFile(fullFsrl, destinationFolder, suggestedPath, tool, programManager,
-					monitor);
+				showImportSingleFileDialog(fullFsrl, destinationFolder, suggestedPath, tool,
+					programManager, monitor);
 				return;
 			}
 
@@ -213,11 +213,11 @@ public class ImporterUtilities {
 		}
 
 		if (choice == 1) {
-			importSingleFile(fullFsrl, destinationFolder, suggestedPath, tool, programManager,
-				monitor);
+			showImportSingleFileDialog(fullFsrl, destinationFolder, suggestedPath, tool,
+				programManager, monitor);
 		}
 		else if (choice == 2) {
-			BatchImportDialog.showAndImport(tool, null, Arrays.asList(fullFsrl), destinationFolder,
+			BatchImportDialog.showAndImport(tool, null, List.of(fullFsrl), destinationFolder,
 				programManager);
 		}
 		else if (choice == 3) {
@@ -276,8 +276,9 @@ public class ImporterUtilities {
 	 * 			to the destination filename
 	 * @param tool the parent UI component
 	 * @param programManager optional {@link ProgramManager} instance to open the imported file in
+	 * @param monitor {@link TaskMonitor}
 	 */
-	private static void importSingleFile(FSRL fsrl, DomainFolder destinationFolder,
+	public static void showImportSingleFileDialog(FSRL fsrl, DomainFolder destinationFolder,
 			String suggestedPath, PluginTool tool, ProgramManager programManager,
 			TaskMonitor monitor) {
 
@@ -420,8 +421,6 @@ public class ImporterUtilities {
 			monitor.checkCancelled();
 
 			if (loaded.getDomainObject() instanceof Program program) {
-				ProgramMappingService.createAssociation(fsrl, program);
-
 				if (programManager != null) {
 					int openState = firstProgram
 							? ProgramManager.OPEN_CURRENT

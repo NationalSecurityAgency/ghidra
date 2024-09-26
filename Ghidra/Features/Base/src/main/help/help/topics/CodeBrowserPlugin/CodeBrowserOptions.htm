@@ -584,15 +584,61 @@
       <BLOCKQUOTE>
         <P>The File Offset field shows the filename and file offset of the original imported byte
         value for the given address.  If the address's byte was not derived from an imported binary 
-        file, or file offset tracking is not supported by the binary file's importer, a value of 
-        "N/A" is shown.</P>
-        <P><B>Show Filename -</B> Option to prefix the file offset with the source filename.  This
+        file, or file offset tracking is not supported by the binary file's importer, no offset is
+        shown.</P>
+        <P><B>Show Name -</B> Option to prefix the file offset with the source filename.  This
         is useful if more than one binary file has been imported into a program.</P>
-        <P><B>Show Numbers In Hex -</B> Option to display the file offset in hexadecimal rather than
+        <P><B>Use Hex -</B> Option to display the file offset in hexadecimal rather than 
         decimal.</P>
         <P><IMG src="help/shared/note.png" border="0">The File Offset field is disabled by default.
         To enable the field, see the <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field
         </A> section.
+        </P>
+        
+      </BLOCKQUOTE>
+      
+      <H3><A name="Function_Offset_Field"></A>Function Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The Function Offset field shows the function name and function offset of the
+        the given address.  If the address is not in a function, no offset is shown.</P>
+        <P><B>Show Name -</B> Option to prefix the function offset with the function name.</P>
+        <P><B>Use Hex -</B> Option to display the function offset in hexadecimal rather than 
+        decimal.</P>
+        <P><IMG src="help/shared/note.png" border="0">The Function Offset field is disabled by 
+        default. To enable the field, see the
+        <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field</A> section.
+        </P>
+        
+      </BLOCKQUOTE>
+      
+      <H3><A name="Imagebase_Offset_Field"></A>Imagebase Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The Imagebase Offset field shows the imagebase offset of the given address. If the 
+        address and the imagebase are in different address spaces, no offset is shown.</P>
+        <P><B>Show Name -</B> Option to prefix the imagebase offset with "imagebase".</P>
+        <P><B>Use Hex -</B> Option to display the imagebase offset in hexadecimal rather than 
+        decimal.</P>
+        <P><IMG src="help/shared/note.png" border="0">The Imagebase Offset field is disabled by 
+        default. To enable the field, see the
+        <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field</A> section.
+        </P>
+        
+      </BLOCKQUOTE>
+      
+      <H3><A name="MemoryBlock_Offset_Field"></A>MemoryBlock Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The MemoryBlock Offset field shows the memory block name and memory block offset of the
+        given address.</P>
+        <P><B>Show Name -</B> Option to prefix the memory block offset with the memory block 
+        name.</P>
+        <P><B>Use Hex -</B> Option to display the memory block offset in hexadecimal rather than 
+        decimal.</P>
+        <P><IMG src="help/shared/note.png" border="0">The MemoryBlock Offset field is disabled by 
+        default. To enable the field, see the
+        <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field</A> section.
         </P>
         
       </BLOCKQUOTE>

@@ -43,7 +43,7 @@ typewriter {
     <LI><a href="#windows_install">Install as Automatic Service</a></LI>
 	<LI><a href="#windows_uninstall">Uninstall Service</a></LI>
   </UL>
-  <LI><a href="#running_linux_mac">Running Ghidra Server on Linux or Mac OS</a></LI>
+  <LI><a href="#running_linux_mac">Running Ghidra Server on Linux or macOS</a></LI>
   <UL>
 	<LI><a href="#linux_mac_scripts">Server Scripts</a></LI>
   	<LI><a href="#linux_mac_console">Running Server in Console Window</a></LI>
@@ -65,7 +65,7 @@ typewriter {
 	or svrUninstall.bat Error</a></LI>
 	<LI><a href="#selinuxDisabled">Linux - SELinux must be disabled</a></LI>
 	<LI><a href="#randomHang">Linux - Potential hang from /dev/random depletion</a></LI>
-	<LI><a href="#macDiskAccess">Mac OS - Service fails to start (macOS 10.14 Mojave and later)</a></LI>
+	<LI><a href="#macDiskAccess">macOS - Service fails to start</a></LI>
   </UL>
 </UL>
 
@@ -502,10 +502,9 @@ are not currently supported.
 
 (<a href="#top">Back to Top</a>)
 <div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
-<h2><a name="running_linux_mac">Running Ghidra Server on Linux or Mac OS</a></h2>
+<h2><a name="running_linux_mac">Running Ghidra Server on Linux or macOS</a></h2>
 
-<B>NOTE:</B> Mac OS has limited support.  The latest supported version is macOS 10.13.x High Sierra 
-(see <a href="#macDiskAccess">Mac OS - Service fails to start</a>).</u>
+<B>NOTE:</B> macOS has limited support (see <a href="#macDiskAccess">macOS - Service fails to start</a>).</u>
 
 <a name="linux_mac_scripts"><h3><u>Server Scripts (located within the server subdirectory)</u></h3></a>
 
@@ -930,7 +929,7 @@ Please note that the Ghidra Server does not currently support Certificate Revoca
     <br>
     <LI>Uninstall an installed Ghidra Server Service by following the <typewriter>Uninstall Service</typewriter> 
     instructions corresponding to your operating system (<a href="#windows_uninstall">Windows</a> 
-    or <a href="#linux_mac_uninstall">Linux/Mac OS</a>).</LI>
+    or <a href="#linux_mac_uninstall">Linux/macOS</a>).</LI>
     <br>
     <LI>Unzip the new Ghidra distribution to a new installation directory (general unpacking and installation 
     guidelines may be found in <typewriter>ghidra_<I>x.x</I>/docs/InstallationGuide.html</typewriter>).</LI>
@@ -951,7 +950,7 @@ Please note that the Ghidra Server does not currently support Certificate Revoca
 	<br>
 	<LI>If desired, install the Ghidra Server Service from the new installation server 
 	subdirectory by following the instructions corresponding to your operating system 
-	(<a href="#windows_install">Windows</a> or <a href="#linux_mac_install">Linux/Mac-OSX</a>).</LI>
+	(<a href="#windows_install">Windows</a> or <a href="#linux_mac_install">Linux/macOS</a>).</LI>
 </OL>
 
 <P>
@@ -1064,14 +1063,14 @@ Expansion Daemon) which will satisfy the entropy demand needed by /dev/random.
 </P>
 
 <br>
-<a name="macDiskAccess"><h3><u>Mac OS - Service fails to start (macOS 10.14 Mojave and later)</u></h3></a>
+<a name="macDiskAccess"><h3><u>macOS - Service fails to start</u></h3></a>
 <P>
-The installed service may fail to start with Mac OS Majave (10.14) and later due
-to changes in the Mac OS system protection feature.  When the service fails to start it does not
+The installed service may fail to start with macOS Mojave (10.14) to macOS Monterey (12.0) due
+to changes in the macOS system protection feature.  When the service fails to start it does not
 provide any error or logging to help determine the cause.  Although granting <i>Full Disk Access</i> 
 to <i>Java</i> can be a workaround, this is rather drastic and is not considered desirable 
-since it will allow any Java application to run as root.  For this reason, installation
-of the Ghidra Server as a service on Mac OS is discouraged.
+since it will allow any Java application to run as root.  Newer versions of macOS (Ventura 13.0 and
+later) do not exhibit this issue.
 </P>
 
 (<a href="#top">Back to Top</a>)

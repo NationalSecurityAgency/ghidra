@@ -26,7 +26,6 @@ import javax.swing.event.TableModelListener;
 
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.*;
 
 /**
@@ -71,10 +70,6 @@ public class LocationReferencesPanel extends JPanel {
 
 	GhidraTable getTable() {
 		return table;
-	}
-
-	ProgramSelection getSelection() {
-		return table.getProgramSelection();
 	}
 
 	/**

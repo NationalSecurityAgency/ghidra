@@ -15,29 +15,38 @@
  */
 package ghidra.app.util.bin.format.golang;
 
+import java.util.Objects;
+
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 
 /**
  * Golang version numbers
  */
-public enum GoVer {
-	UNKNOWN(0, 0),
-	V1_2(1, 2),
-	V1_16(1, 16),
-	V1_17(1, 17),
-	V1_18(1, 18),
-	V1_19(1, 19),
-	V1_20(1, 20),
-	V1_21(1, 21),
-	V1_22(1, 22);
+public class GoVer implements Comparable<GoVer> {
+	public static final GoVer INVALID = new GoVer(0, 0);
+	public static final GoVer ANY = new GoVer(-1, -1);
+
+	// a couple of well-known versions that are re-used in a few places
+	public static final GoVer V1_2 = new GoVer(1, 2);
+	public static final GoVer V1_16 = new GoVer(1, 16);
+	public static final GoVer V1_17 = new GoVer(1, 17);
+	public static final GoVer V1_18 = new GoVer(1, 18);
 
 	private final int major;
 	private final int minor;
 
-	GoVer(int major, int minor) {
+	public GoVer(int major, int minor) {
 		this.major = major;
 		this.minor = minor;
+	}
+
+	public boolean isInvalid() {
+		return major == 0 && minor == 0;
+	}
+
+	public boolean isWildcard() {
+		return major == -1 && minor == -1;
 	}
 
 	/**
@@ -58,6 +67,15 @@ public enum GoVer {
 		return minor;
 	}
 
+	@Override
+	public int compareTo(GoVer o) {
+		int result = Integer.compare(major, o.major);
+		if (result == 0) {
+			result = Integer.compare(minor, o.minor);
+		}
+		return result;
+	}
+
 	/**
 	 * Compares this version to the specified other version and returns true if this version
 	 * is greater than or equal to the other version.
@@ -66,45 +84,75 @@ public enum GoVer {
 	 * @return true if this version is gte other version
 	 */
 	public boolean isAtLeast(GoVer otherVersion) {
-		return this.ordinal() >= otherVersion.ordinal();
+		return compareTo(otherVersion) >= 0;
 	}
 
 	/**
-	 * Parses a version string ("1.2") and returns the matching GoVer enum instance, or
-	 * UNKNOWN if no matching version or bad data.
+	 * Returns true if this version is between the specified min and max versions (inclusive).
+	 * 
+	 * @param min minimum version to allow (inclusive)
+	 * @param max maximum version to allow (inclusive)
+	 * @return boolean true if this version is between the specified min and max versions
+	 */
+	public boolean inRange(GoVer min, GoVer max) {
+		return min.compareTo(this) <= 0 && this.compareTo(max) <= 0;
+	}
+
+	/**
+	 * Parses a version string ("1.2") and returns a GoVer instance, or
+	 * INVALID if no matching version or bad data.
 	 *  
 	 * @param s string to parse
-	 * @return GoVer enum instance, or UNKNOWN
+	 * @return GoVer instance, or INVALID
 	 */
 	public static GoVer parse(String s) {
-		String[] parts = s.split("\\.");
+		String[] parts = Objects.requireNonNullElse(s, "").split("\\.");
 		if (parts.length < 2) {
-			return UNKNOWN;
+			return INVALID;
 		}
 		try {
 			int major = Integer.parseInt(parts[0]);
 			int minor = Integer.parseInt(parts[1]);
-			for (GoVer ver : values()) {
-				if (ver.major == major && ver.minor == minor) {
-					return ver;
-				}
-			}
+			//don't care about patch level right now
+			return new GoVer(major, minor);
 		}
 		catch (NumberFormatException e) {
 			// fall thru, return unknown
 		}
-		return UNKNOWN;
+		return INVALID;
 	}
 
 	public static final String GOLANG_VERSION_PROPERTY_NAME = "Golang go version";
 	public static GoVer fromProgramProperties(Program program) {
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		String verStr = props.getString(GOLANG_VERSION_PROPERTY_NAME, null);
-		return verStr != null ? parse(verStr) : UNKNOWN;
+		return parse(verStr);
 	}
 
 	public static void setProgramPropertiesWithOriginalVersionString(Options props, String s) {
 		props.setString(GOLANG_VERSION_PROPERTY_NAME, s);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(major, minor);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof GoVer)) {
+			return false;
+		}
+		GoVer other = (GoVer) obj;
+		return major == other.major && minor == other.minor;
+	}
+
+	@Override
+	public String toString() {
+		return "%d.%d".formatted(major, minor);
 	}
 
 }

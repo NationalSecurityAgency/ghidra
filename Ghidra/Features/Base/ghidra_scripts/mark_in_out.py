@@ -15,6 +15,7 @@
 ##
 # Sets up IOPORT IN/OUT references for the Program
 #@category Instructions
+#@runtime Jython
 # Before running this script, you should have created an OVERLAY memory
 # space called IOMEM, starting at address 0, size 0x10000.
 #

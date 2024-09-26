@@ -22,6 +22,7 @@ import gdb
 language_map = {
     'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
     'aarch64:ilp32': ['AARCH64:BE:32:ilp32', 'AARCH64:LE:32:ilp32', 'AARCH64:LE:64:AppleSilicon'],
+    'arm': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
     'arm_any': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
     'armv2': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],
     'armv2a': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],

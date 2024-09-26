@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -350,8 +350,15 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
-					int offset = resource.getFileOffsetShifted();
-					int length = resource.getFileLengthShifted();
+					long offset = Integer.toUnsignedLong(resource.getFileOffsetShifted());
+					long length = Integer.toUnsignedLong(resource.getFileLengthShifted());
+					long extra = offset + length - fileBytes.getSize();
+					if (extra > 0) {
+						log.appendMsg(
+							"Resource at 0x%x exceeds file length by 0x%x bytes...truncating"
+									.formatted(offset, extra));
+						length -= extra;
+					}
 					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
 							addr, fileBytes, offset, length, "", "", true, false, false, log);

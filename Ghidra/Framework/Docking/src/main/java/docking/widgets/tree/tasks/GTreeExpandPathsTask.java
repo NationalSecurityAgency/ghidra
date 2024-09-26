@@ -52,17 +52,18 @@ public class GTreeExpandPathsTask extends GTreeTask {
 		if (nodeList.length < 2) {
 			return;  // only the root is in the path
 		}
+
 		List<GTreeNode> allChildren = parent.getChildren();
 		for (int i = 1; i < nodeList.length; i++) {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			GTreeNode node = findNode(allChildren, (GTreeNode) nodeList[i]);
-			if (node == null) {
+
+			GTreeNode nextParent = findNode(allChildren, (GTreeNode) nodeList[i]);
+			if (nextParent == null) {
 				return;
 			}
-			allChildren = node.getChildren();
-			parent = node;
+			allChildren = nextParent.getChildren();
 		}
 	}
 

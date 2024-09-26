@@ -150,14 +150,14 @@ public class VTPlugin extends Plugin {
 
 	private void addCustomPlugins() {
 
-		List<String> names = new ArrayList<>(
-			List.of("ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin"));
+		List<String> names =
+			new ArrayList<>(List.of("ghidra.features.codecompare.plugin.FunctionComparisonPlugin"));
 		List<Plugin> plugins = tool.getManagedPlugins();
 		Set<String> existingNames =
 			plugins.stream().map(c -> c.getName()).collect(Collectors.toSet());
 
 		// Note: we check to see if the plugins we want to add have already been added to the tool.
-		// We should not needed to do this, but once the tool has been saved with the plugins added,
+		// We should not need to do this, but once the tool has been saved with the plugins added,
 		// they will get added again the next time the tool is loaded.  Adding this check here seems
 		// easier than modifying the default to file to load the plugins, since the amount of xml
 		// required for that is non-trivial.

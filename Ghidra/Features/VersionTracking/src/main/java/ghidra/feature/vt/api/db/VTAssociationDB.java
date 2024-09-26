@@ -296,4 +296,8 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 	public boolean hasAppliedMarkupItems() {
 		return markupManager.hasAppliedMarkupItems();
 	}
+
+	void removeMarkupItems() {
+		markupManager.removeMarkupItems();
+	}
 }

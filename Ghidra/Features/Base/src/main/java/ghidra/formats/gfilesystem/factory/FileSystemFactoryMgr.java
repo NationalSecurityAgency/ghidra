@@ -15,7 +15,6 @@
  */
 package ghidra.formats.gfilesystem.factory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -212,18 +211,13 @@ public class FileSystemFactoryMgr {
 		byte[] startBytes = byteProvider.readBytes(0, pboByteCount);
 		for (FileSystemInfoRec fsir : sortedFactories) {
 			try {
-				if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly) {
-					GFileSystemProbeBytesOnly factoryProbe =
-						(GFileSystemProbeBytesOnly) fsir.getFactory();
-					if (factoryProbe.getBytesRequired() <= startBytes.length) {
-						if (factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
-							return true;
-						}
+				if (fsir.getFactory() instanceof GFileSystemProbeBytesOnly factoryProbe) {
+					if (factoryProbe.getBytesRequired() <= startBytes.length &&
+						factoryProbe.probeStartBytes(containerFSRL, startBytes)) {
+						return true;
 					}
 				}
-				if (fsir.getFactory() instanceof GFileSystemProbeByteProvider) {
-					GFileSystemProbeByteProvider factoryProbe =
-						(GFileSystemProbeByteProvider) fsir.getFactory();
+				if (fsir.getFactory() instanceof GFileSystemProbeByteProvider factoryProbe) {
 					if (factoryProbe.probe(byteProvider, fsService, monitor)) {
 						return true;
 					}

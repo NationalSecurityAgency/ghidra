@@ -42,6 +42,7 @@ import docking.util.AnimationUtils;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
@@ -91,6 +92,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
 	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
+	private static final String BLINKING_CURSORS_OPTION_NAME = "Allow Blinking Cursors";
 
 	// TODO: Experimental Option !!
 	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
@@ -353,6 +355,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
 
+		options.registerOption(BLINKING_CURSORS_OPTION_NAME, true, help, "This controls whether" +
+			" text cursors blink when focused");
+
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
 
@@ -372,6 +377,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
 
 		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
+
+		boolean blink = options.getBoolean(BLINKING_CURSORS_OPTION_NAME, true);
+		Gui.setBlinkingCursors(blink);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -396,6 +404,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		}
 		else if (RESTORE_PREVIOUS_PROJECT_NAME.equals(optionName)) {
 			shouldRestorePreviousProject = (Boolean) newValue;
+		}
+		else if (BLINKING_CURSORS_OPTION_NAME.equals(optionName)) {
+			Gui.setBlinkingCursors((Boolean) newValue);
 		}
 	}
 

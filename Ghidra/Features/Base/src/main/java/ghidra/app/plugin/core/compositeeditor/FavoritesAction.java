@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,6 @@ public class FavoritesAction extends CompositeEditorTableAction {
 			new MenuData(new String[] { "Favorite", dt.getDisplayName() }, null, GROUP_NAME));
 
 		getPopupMenuData().setParentMenuGroup(GROUP_NAME);
-		adjustEnablement();
 	}
 
 	public DataType getDataType() {
@@ -54,6 +53,9 @@ public class FavoritesAction extends CompositeEditorTableAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		try {
 			model.add(dataType);
 		}
@@ -64,19 +66,13 @@ public class FavoritesAction extends CompositeEditorTableAction {
 	}
 
 	@Override
-	public void adjustEnablement() {
-		// we always want it enabled so the user gets a "doesn't fit" message.
-		setEnabled(true);
-	}
-
-	@Override
 	public String getHelpName() {
 		return "Favorite";
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		return model.isAddAllowed(dataType);
+		return !hasIncompleteFieldEntry() && model.isAddAllowed(dataType);
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.*;
+import docking.widgets.list.GComboBoxCellRenderer;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.spinner.IntegerSpinner;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
@@ -365,7 +366,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		tableModel = new EncodedStringsTableModel(program, selectedAddresses);
 		tableModel.addTableModelListener(e -> {
 			Integer rowNum = rowToSelect.getAndSet(null);
-			if (rowNum != null) {
+			if (rowNum != null && rowNum < tableModel.getRowCount()) {
 				table.selectRow(rowNum);
 				table.requestFocusInWindow();
 			}
@@ -664,7 +665,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			translateComboBox.setSelectedItem(defaultSTS);
 		}
 
-		translateComboBox.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
+		translateComboBox.setRenderer(GComboBoxCellRenderer.createDefaultTextRenderer(
 			sts -> sts != null ? sts.getTranslationServiceName() : ""));
 	}
 
@@ -847,7 +848,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		int rowCount = table.getRowCount();
 		int selectedRowCount = table.getSelectedRowCount();
 		setCreateButtonInfo(rowCount, selectedRowCount);
-		if (selectedRowCount == 1) {
+		if (selectedRowCount == 1 && tableModel.getProgram() != null) {
 			int[] selectedRows = table.getSelectedRows();
 			table.navigate(selectedRows[0], 0 /* location col */);
 		}
@@ -1153,7 +1154,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 				return "%s%s (%d)".formatted(name, example, count);
 			};
 
-			setRenderer(GListCellRenderer.createDefaultCellTextRenderer(cellToTextMappingFunction));
+			setRenderer(GListCellRenderer.createDefaultTextRenderer(cellToTextMappingFunction));
 		}
 	}
 

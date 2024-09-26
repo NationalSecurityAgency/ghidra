@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.terminal;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -32,6 +33,7 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
+import docking.widgets.EventTrigger;
 import docking.widgets.OkDialog;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GColor;
@@ -163,6 +165,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	protected DockingAction actionFind;
 	protected DockingAction actionFindNext;
 	protected DockingAction actionFindPrevious;
+	protected DockingAction actionSelectAll;
 	protected DockingAction actionTerminate;
 
 	private boolean terminated = false;
@@ -251,6 +254,14 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindPrevious)
 				.buildAndInstallLocal(this);
+		actionSelectAll = new ActionBuilder("Select All", plugin.getName())
+				.menuPath("Select All")
+				.menuGroup("Select")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_A,
+					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "select_all"))
+				.onAction(this::activatedSelectAll)
+				.buildAndInstallLocal(this);
 	}
 
 	protected void activatedFind(ActionContext ctx) {
@@ -298,6 +309,24 @@ public class TerminalProvider extends ComponentProviderAdapter {
 
 	protected void activatedFindPrevious(ActionContext ctx) {
 		doFind(false);
+	}
+
+	protected void activatedSelectAll(ActionContext ctx) {
+		FieldSelection sel = new FieldSelection();
+		BigInteger numIndexes = panel.model.getNumIndexes();
+		if (numIndexes.equals(BigInteger.ZERO)) {
+			return;
+		}
+		BigInteger lastIndex = numIndexes.subtract(BigInteger.ONE);
+		TerminalLayout layout = panel.model.getLayout(lastIndex);
+		int lastCol = layout.line.length();
+		sel.addRange(
+			new FieldLocation(BigInteger.ZERO, 0, 0, 0),
+			new FieldLocation(lastIndex, 0, 0, lastCol));
+		if (panel.getFieldPanel().getSelection().equals(sel)) {
+			sel.clear();
+		}
+		panel.getFieldPanel().setSelection(sel, EventTrigger.GUI_ACTION);
 	}
 
 	/**

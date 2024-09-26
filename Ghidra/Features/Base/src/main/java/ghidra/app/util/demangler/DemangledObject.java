@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,38 +45,38 @@ public abstract class DemangledObject implements Demangled {
 	 	The following names probably need to be refactored.   Until then, this is how the following
 	 	fields are used.
 	 	
-	 		mangled - 
+	 		mangled -
 	 			Source: The original mangled string as seen in the program
 	 		    Usage: Can be used to see if a program symbol has already been demangled
 	 		          
-	 		originalDemangled - 
+	 		originalDemangled -
 	 			Source: The raw demangled string returned from the demangler
 	 		    Usage: for display
 	 		    
-	 		demangledName - 
-	 			Source: The name as created by the parser which may transform or even replace the 
+	 		demangledName -
+	 			Source: The name as created by the parser which may transform or even replace the
 	 			        string returned from the demangler
 	 		    Usage: for display
 	 		                
-	 		name - 
-	 			Source: This is derived from the 'demangledName' This is updated to be suitable 
-	 		            for use as a symbol name.  This may be null while building, but is 
-	 		            expected to be non-null when applyTo() is called	 		 		       
-	 		    Usage: The name that will be applied when applyTo() is called.  
+	 		name -
+	 			Source: This is derived from the 'demangledName' This is updated to be suitable
+	 		            for use as a symbol name.  This may be null while building, but is
+	 		            expected to be non-null when applyTo() is called
+	 		    Usage: The name that will be applied when applyTo() is called.
 	 		    
 	 		    
 	 		    
-	 	Future: These variables should be refactored and renamed to be clearer and more cohesive, 
-	 	        something like: 
+	 	Future: These variables should be refactored and renamed to be clearer and more cohesive,
+	 	        something like:
 	 	        
 	 	        mangled
 	 	        rawDemangled
 	 	        escapedDemangled
-	 	        symbolName 
+	 	        symbolName
 	 	
 	 */
 	protected final String mangled; // original mangled string
-	protected final String originalDemangled; // raw demangled string
+	protected String originalDemangled; // raw demangled string
 	private String demangledName; // updated demangled string
 	private String name; // version of demangled name suitable for symbols
 
@@ -240,6 +240,17 @@ public abstract class DemangledObject implements Demangled {
 		return originalDemangled;
 	}
 
+	/**
+	 * Sets the original demangled string.  This is useful for clients that reuse constructed
+	 * demangled objects for special case constructs.
+	 * <p>
+	 * Note: this method is not on the interface
+	 * @param originalDemangled the new original demangled string
+	 */
+	public void setOriginalDemangled(String originalDemangled) {
+		this.originalDemangled = originalDemangled;
+	}
+
 	@Override
 	public Demangled getNamespace() {
 		return namespace;
@@ -364,7 +375,7 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	/**
-	 * Apply this demangled object detail to the specified program.  
+	 * Apply this demangled object detail to the specified program.
 	 * <br>
 	 * NOTE: An open Program transaction must be established prior to invoking this method.
 	 * 

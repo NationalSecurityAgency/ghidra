@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,8 @@ import javax.swing.border.Border;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GDLabel;
+import docking.widgets.numberformat.IntegerFormatterFactory;
+import docking.widgets.textfield.GFormattedTextField;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.filters.*;
 import ghidra.framework.options.SaveState;
@@ -39,7 +41,7 @@ public class LengthFilter extends Filter<VTMatch> {
 	private static final Integer DEFAULT_FILTER_VALUE = 0;
 
 	private JComponent component;
-	private FilterFormattedTextField textField;
+	private GFormattedTextField textField;
 
 	public LengthFilter() {
 		component = createComponent();
@@ -49,7 +51,7 @@ public class LengthFilter extends Filter<VTMatch> {
 		final JLabel label = new GDLabel("Length Filter: ");
 
 		Integer defaultValue = DEFAULT_FILTER_VALUE;
-		textField = new FilterFormattedTextField(new IntegerFormatterFactory(false), defaultValue);
+		textField = new GFormattedTextField(new IntegerFormatterFactory(false), defaultValue);
 		textField.setName("Length Filter Field"); // for debugging
 		textField.setInputVerifier(new IntegerInputVerifier());
 		textField.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -67,8 +69,11 @@ public class LengthFilter extends Filter<VTMatch> {
 		final JLayeredPane layeredPane = new JLayeredPane();
 
 		StatusLabel statusLabel = new StatusLabel(textField, defaultValue);
-		textField.addFilterStatusListener(statusLabel);
-		textField.addFilterStatusListener(status -> fireStatusChanged(status));
+		textField.addTextEntryStatusListener(statusLabel);
+		textField.addTextEntryStatusListener(s -> {
+			FilterEditingStatus status = FilterEditingStatus.getFilterStatus(s);
+			fireStatusChanged(status);
+		});
 		layeredPane.add(panel, BASE_COMPONENT_LAYER);
 		layeredPane.add(statusLabel, HOVER_COMPONENT_LAYER);
 		layeredPane.setPreferredSize(panel.getPreferredSize());
@@ -90,13 +95,8 @@ public class LengthFilter extends Filter<VTMatch> {
 	}
 
 	@Override
-	public void clearFilter() {
-		textField.setText(DEFAULT_FILTER_VALUE.toString());
-	}
-
-	@Override
 	public FilterEditingStatus getFilterStatus() {
-		return textField.getFilterStatus();
+		return FilterEditingStatus.getFilterStatus(textField);
 	}
 
 	@Override

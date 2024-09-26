@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,8 +61,8 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		return !Boolean.getBoolean(DISABLE_ALTERNATING_ROW_COLORS_PROPERTY);
 	}
 
-	protected final Border focusBorder;
-	protected final Border noFocusBorder;
+	protected Border focusBorder;
+	protected Border noFocusBorder;
 	protected Font defaultFont;
 	protected Font fixedWidthFont;
 	protected Font boldFont;
@@ -141,6 +141,8 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		boldFont = f.deriveFont(Font.BOLD);
 		italicFont = f.deriveFont(Font.ITALIC);
 
+		// Gui does not allow registering the same component multiple times, so unregister first
+		Gui.unRegisterFont(this, fontId);
 		Gui.registerFont(this, fontId);
 	}
 
@@ -151,7 +153,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		checkForInvalidSetFont(f);
 	}
 
-	private void checkForInvalidSetFont(Font f) {
+	protected void checkForInvalidSetFont(Font f) {
 		//
 		// Due to the nature of how setFont() is typically used (external client setup vs internal
 		// rendering), we created setBaseFontId() to allow external clients to set the base font in

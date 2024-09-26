@@ -29,7 +29,7 @@ public class ProjectArchive implements DomainFileArchive {
 
 	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.project.closed");
 	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.project.open");
-	
+
 	private DataTypeArchive dataTypeArchive;
 	private DomainFile sourceDomainFile;
 	private DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
@@ -67,6 +67,7 @@ public class ProjectArchive implements DomainFileArchive {
 		return -1; // Project Archives appear between the ProgramArchive and FileArchives.
 	}
 
+	@Override
 	public boolean hasExclusiveAccess() {
 		return dataTypeArchive.hasExclusiveAccess();
 	}
@@ -200,6 +201,11 @@ public class ProjectArchive implements DomainFileArchive {
 
 		@Override
 		public void programArchitectureChanged(DataTypeManager dtm) {
+			fireStateChanged();
+		}
+
+		@Override
+		public void restored(DataTypeManager dtm) {
 			fireStateChanged();
 		}
 	}

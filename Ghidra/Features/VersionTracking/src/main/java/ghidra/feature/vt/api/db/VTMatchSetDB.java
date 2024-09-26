@@ -25,8 +25,6 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 import db.*;
-import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
-import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.framework.data.OpenMode;
@@ -186,37 +184,47 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 
 	@Override
 	public boolean removeMatch(VTMatch match) {
-		if (!(match instanceof VTMatchDB)) {
-			return false;
-		}
-		if (!match.getMatchSet().hasRemovableMatches()) {
-			return false;
-		}
 
-		VTMatchDB matchDB = (VTMatchDB) match;
+		if (!(match instanceof VTMatchDB matchDb)) {
+			// this should not be possible from the UI
+			throw new IllegalArgumentException("Can only remove matches saved to the database");
+		}
 
 		VTAssociation association = match.getAssociation();
-
-		// Remove the association if it was the only remaining match for that association.
-		AssociationDatabaseManager associationManager = session.getAssociationManagerDBM();
 		List<VTMatch> matches = session.getMatches(association);
 		if (matches.size() == 1 && association.getStatus() == VTAssociationStatus.ACCEPTED) {
-			return false; // can't remove the last match if the association is accepted
+			// This method prevents deleting the association if it is accepted, as it would cause  
+			// the user to lose potentially valuable information without realizing it.  To work 
+			// around that issue when calling this method, the user can first un-accept the match.
+			return false;
 		}
 
-		// Remove the match record
+		deleteMatch(matchDb);
+		return true;
+	}
+
+	@Override
+	public void deleteMatch(VTMatch match) {
+		if (!(match instanceof VTMatchDB matchDb)) {
+			// this should not be possible from the UI
+			throw new IllegalArgumentException("Can only remove matches saved to the database");
+		}
+
+		VTAssociation association = match.getAssociation();
 		Address sourceAddress = association.getSourceAddress();
 		Address destinationAddress = association.getDestinationAddress();
 		try {
 			lock.acquire();
-			long matchKey = matchDB.getKey();
+			long matchKey = matchDb.getKey();
 			boolean deleted = matchTableAdapter.deleteRecord(matchKey);
 			if (deleted) {
 				matchCache.delete(matchKey);
 
-				if (matches.size() == 1) {
+				List<VTMatch> matches = session.getMatches(association);
+				if (matches.isEmpty()) {
 					// if last match, remove association
-					associationManager.removeAssociation(association);
+					AssociationDatabaseManager manager = session.getAssociationManagerDBM();
+					manager.removeAssociation(association);
 				}
 			}
 		}
@@ -229,7 +237,6 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 
 		DeletedMatch deletedMatch = new DeletedMatch(sourceAddress, destinationAddress);
 		session.setObjectChanged(VTEvent.MATCH_DELETED, match, deletedMatch, null);
-		return true;
 	}
 
 	@Override
@@ -347,14 +354,6 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		finally {
 			lock.release();
 		}
-	}
-
-	@Override
-	public boolean hasRemovableMatches() {
-		VTProgramCorrelatorInfo info = getProgramCorrelatorInfo();
-		String correlatorClassName = info.getCorrelatorClassName();
-		return correlatorClassName.equals(ManualMatchProgramCorrelator.class.getName()) ||
-			correlatorClassName.equals(ImpliedMatchProgramCorrelator.class.getName());
 	}
 
 	@Override

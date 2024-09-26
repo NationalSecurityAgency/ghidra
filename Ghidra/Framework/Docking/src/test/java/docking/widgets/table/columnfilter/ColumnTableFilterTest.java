@@ -86,8 +86,7 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 		testTableModel.addColumn("Name",
 			new String[] { "Hello World\n", "\nHello World", "Hello\nWorld", "Hello World" });
 
-		testTableModel.addColumn("Long ID",
-			new Long[] { 1000l, 2000l, 3000l });
+		testTableModel.addColumn("Long ID", new Long[] { 1000l, 2000l, 3000l });
 
 		return new TableModelWrapper<>(testTableModel);
 	}
@@ -775,18 +774,22 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 
 	private void addFilter(String columnName, String constraintName, String constraintValue,
 			LogicOperation logicOperation, boolean first) {
-		DialogFilterRow filterRow = createFilterRow(logicOperation, first);
-		ColumnFilterData<?> columnData = getColumnFilterData(columnName);
-		filterRow.setColumnData(columnData);
-		List<DialogFilterCondition<?>> conditions = filterRow.getFilterConditions();
-		DialogFilterCondition<?> condition = conditions.get(0);
-		condition.setSelectedConstraint(constraintName);
-		condition.setValue(constraintValue, null);
 
-		// Many of the hasValidValue() implementations compare against a GUI component that
-		// doesn't get built without these calls.
-		condition.getInlineEditorComponent();
-		condition.getDetailEditorComponent();
+		runSwing(() -> {
+			DialogFilterRow filterRow = createFilterRow(logicOperation, first);
+			ColumnFilterData<?> columnData = getColumnFilterData(columnName);
+			filterRow.setColumnData(columnData);
+			List<DialogFilterCondition<?>> conditions = filterRow.getFilterConditions();
+			DialogFilterCondition<?> condition = conditions.get(0);
+			condition.setSelectedConstraint(constraintName);
+			condition.setValue(constraintValue, null);
+
+			// Many of the hasValidValue() implementations compare against a GUI component that
+			// doesn't get built without these calls.
+			condition.getInlineEditorComponent();
+			condition.getDetailEditorComponent();
+		});
+
 	}
 
 	private DialogFilterRow createFilterRow(LogicOperation logicalOp, boolean first) {
@@ -799,8 +802,10 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 	}
 
 	private void applyFilter() {
-		ColumnBasedTableFilter<Integer> tableColumnFilter = filterModel.getTableColumnFilter();
-		tableModel.setTableFilter(tableColumnFilter);
+		runSwing(() -> {
+			ColumnBasedTableFilter<Integer> tableColumnFilter = filterModel.getTableColumnFilter();
+			tableModel.setTableFilter(tableColumnFilter);
+		});
 	}
 
 	private ColumnFilterData<?> getColumnFilterData(String columnName) {
@@ -816,31 +821,34 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 	private void addConstraints(String columnName, String[] constraintNames,
 			String[] constraintValues, boolean first) {
 
-		DialogFilterRow filterRow = createFilterRow(LogicOperation.AND, first);
-		ColumnFilterData<?> columnData = getColumnFilterData(columnName);
-		filterRow.setColumnData(columnData);
+		runSwing(() -> {
+			DialogFilterRow filterRow = createFilterRow(LogicOperation.AND, first);
+			ColumnFilterData<?> columnData = getColumnFilterData(columnName);
+			filterRow.setColumnData(columnData);
 
-		// set the first one
-		List<DialogFilterCondition<?>> conditions = filterRow.getFilterConditions();
-		DialogFilterCondition<?> condition = conditions.get(0);
-		condition.setSelectedConstraint(constraintNames[0]);
-		condition.setValue(constraintValues[0], null);
-
-		// Many of the hasValidValue() implementations compare against a GUI component that
-		// doesn't get built without these calls.
-		condition.getInlineEditorComponent();
-		condition.getDetailEditorComponent();
-
-		for (int i = 1; i < constraintNames.length; i++) {
-			DialogFilterCondition<?> c = filterRow.addFilterCondition();
-			c.setSelectedConstraint(constraintNames[i]);
-			c.setValue(constraintValues[i], null);
+			// set the first one
+			List<DialogFilterCondition<?>> conditions = filterRow.getFilterConditions();
+			DialogFilterCondition<?> condition = conditions.get(0);
+			condition.setSelectedConstraint(constraintNames[0]);
+			condition.setValue(constraintValues[0], null);
 
 			// Many of the hasValidValue() implementations compare against a GUI component that
 			// doesn't get built without these calls.
-			c.getInlineEditorComponent();
-			c.getDetailEditorComponent();
-		}
+			condition.getInlineEditorComponent();
+			condition.getDetailEditorComponent();
+
+			for (int i = 1; i < constraintNames.length; i++) {
+				DialogFilterCondition<?> c = filterRow.addFilterCondition();
+				c.setSelectedConstraint(constraintNames[i]);
+				c.setValue(constraintValues[i], null);
+
+				// Many of the hasValidValue() implementations compare against a GUI component that
+				// doesn't get built without these calls.
+				c.getInlineEditorComponent();
+				c.getDetailEditorComponent();
+			}
+
+		});
 	}
 
 }

@@ -39,7 +39,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 
 	private JButton saveButton;
 	private GhidraComboBox<LafType> combo;
-	private ItemListener comboListener = this::themeComboChanged;
+	private ItemListener comboListener = this::lafTypeComboChanged;
 	private ThemeListener listener = new DialogThemeListener();
 	private JTabbedPane tabbedPane;
 
@@ -176,9 +176,16 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 
 	private void resetSelectedLookAndFeel() {
 		Swing.runLater(() -> {
+
+			LafType lafType = themeManager.getLookAndFeelType();
+			Object currentItem = combo.getSelectedItem();
+			if (lafType == currentItem) {
+				return;
+			}
+
 			try {
 				combo.removeItemListener(comboListener);
-				combo.setSelectedItem(themeManager.getActiveTheme().getLookAndFeelType());
+				combo.setSelectedItem(lafType);
 			}
 			finally {
 				combo.addItemListener(comboListener);
@@ -186,14 +193,21 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		});
 	}
 
-	private void themeComboChanged(ItemEvent e) {
+	private void lafTypeComboChanged(ItemEvent e) {
 
 		if (e.getStateChange() != ItemEvent.SELECTED) {
 			return;
 		}
 
 		LafType lafType = (LafType) e.getItem();
+		LafType currentLafType = themeManager.getLookAndFeelType();
+		if (currentLafType == lafType) {
+			return;
+		}
+
 		if (!themeManager.hasThemeValueChanges()) {
+			// This allows the user to toggle the them lafType repeatedly without having to save, as
+			// long as they have not changed any other theme values.
 			setLookAndFeel(lafType);
 			return;
 		}
@@ -257,7 +271,6 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 	private Component buildThemeCombo() {
 		JPanel panel = new JPanel();
 		List<LafType> lafs = getSupportedLookAndFeels();
-
 		combo = new GhidraComboBox<>(lafs);
 		combo.setSelectedItem(themeManager.getActiveTheme().getLookAndFeelType());
 		combo.addItemListener(comboListener);
@@ -270,7 +283,8 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 
 	private List<LafType> getSupportedLookAndFeels() {
 		LafType[] lafTypes = LafType.values();
-		Comparator<LafType> comparator = (a, b) -> a.getName().compareTo(b.getName());
+		Comparator<LafType> comparator =
+			(a, b) -> a.getDisplayString().compareTo(b.getDisplayString());
 		return Arrays.stream(lafTypes).filter(laf -> laf.isSupported()).sorted(comparator).toList();
 	}
 
@@ -334,6 +348,10 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		return contextProvider.getActionContext(event);
 	}
 
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
 	private class DialogThemeListener implements ThemeListener {
 		@Override
 		public void themeChanged(ThemeEvent event) {
@@ -355,7 +373,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			}
 
 			updateButtons();
+			resetSelectedLookAndFeel();
 		}
 	}
-
 }

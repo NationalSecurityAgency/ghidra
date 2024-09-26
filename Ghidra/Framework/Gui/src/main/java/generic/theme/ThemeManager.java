@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.Icon;
-import javax.swing.LookAndFeel;
+import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 
 import generic.theme.builtin.*;
@@ -42,13 +41,13 @@ import utility.function.Callback;
  * The basic idea is that all the colors, fonts, and icons used in an application should be
  * accessed indirectly via an "id" string. Then the actual color, font, or icon can be changed
  * without changing the source code. The default mapping of the id strings to a value is defined
- * in <name>.theme.properties files which are dynamically discovered by searching the module's
+ * in {@code <name>.theme.properties} files which are dynamically discovered by searching the module's
  * data directory. Also, these files can optionally define a dark default value for an id which
  * would replace the standard default value in the event that the current theme specifies that it
  * is a dark theme. Themes are used to specify the application's {@link LookAndFeel}, whether or
  * not it is dark, and any customized values for colors, fonts, or icons. There are several
  * "built-in" themes, one for each supported {@link LookAndFeel}, but additional themes can
- * be defined and stored in the users application home directory as a <name>.theme file.
+ * be defined and stored in the users application home directory as a {@code <name>.theme} file.
  * <P>
  * Clients that just need to access the colors, fonts, and icons from the theme can use the
  * convenience methods in the {@link Gui} class.  Clients that need to directly manipulate the
@@ -594,6 +593,16 @@ public abstract class ThemeManager {
 	}
 
 	/**
+	 * Removes the component and font id binding made in a previous call to 
+	 * {@link #registerFont(Component, String)}.
+	 * @param component the component to remove
+	 * @param fontId the id of the font previously registered
+	 */
+	public void unRegisterFont(JComponent component, String fontId) {
+		// do nothing
+	}
+
+	/**
 	 * Returns true if the current theme use dark default values.
 	 * @return true if the current theme use dark default values.
 	 */
@@ -667,6 +676,29 @@ public abstract class ThemeManager {
 			int newSize = Math.max(MIN_FONT_SIZE, currentSize += amount);
 			setFont(fontValue.getId(), directFont.deriveFont((float) newSize));
 		}
+	}
 
+	/**
+	 * Sets application's blinking cursor state. This will affect all JTextFields, JTextAreas, 
+	 * JTextPanes via {@link UIDefaults}. Custom components can also respect this setting by
+	 * either adding a {@link ThemeListener} or overriding {@link JComponent#updateUI()}
+	 * <P> NOTE: This method is a bit odd here as it doesn't really apply to a theme. But it
+	 * requires manipulation of the look and feel which is managed by the theme. If other 
+	 * application level properties  come along and also require changing the UIDefaults, 
+	 * perhaps a more general solution might be to add a way for clients to register a callback
+	 * so that they get a chance to change the UIDefaults map as the look and feel is loaded.
+	 * @param b true for blinking text cursors, false for non-blinking text cursors
+	 */
+	protected void setBlinkingCursors(boolean b) {
+		// do nothing
+	}
+
+	/**
+	 * Returns true if the application should allow blinking cursors, false otherwise. Custom
+	 * components can use this method to determine if they should have a blinking cursor or not.
+	 * @return true if the application should allow blinking cursors, false otherwise.
+	 */
+	protected boolean isBlinkingCursors() {
+		return true;
 	}
 }

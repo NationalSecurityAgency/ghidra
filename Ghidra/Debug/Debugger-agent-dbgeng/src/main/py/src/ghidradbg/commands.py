@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 import code
 from contextlib import contextmanager
@@ -22,6 +22,7 @@ import socket
 import sys
 import time
 
+from comtypes import c_ulong
 from ghidratrace import sch
 from ghidratrace.client import Client, Address, AddressRange, TraceObject
 from pybag import pydbg, userdbg, kerneldbg
@@ -31,7 +32,6 @@ from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
-
 
 PAGE_SIZE = 4096
 
@@ -68,10 +68,11 @@ GENERIC_KEY_PATTERN = '[{key}]'
 
 
 class ErrorWithCode(Exception):
+
     def __init__(self, code):
         self.code = code
 
-    def __str__(self)->str:
+    def __str__(self) -> str:
         return repr(self.code)
 
 
@@ -216,6 +217,8 @@ def start_trace(name):
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'DbgRoot')
         root.set_value('_display', util.DBG_VERSION.full + ' via pybag' + variant)
+        if util.dbg.use_generics:
+            put_generic(root)
     util.set_convenience_variable('_ghidra_tracing', "true")
 
 
@@ -259,6 +262,84 @@ def ghidra_trace_create(command=None, initial_break=True, timeout=DbgEng.WAIT_IN
             dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
     if start_trace:
         ghidra_trace_start(command)
+
+
+@util.dbg.eng_thread
+def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0\0", create_flags=1, create_flags_eng=0, verifier_flags=0, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+    """
+    Create a session.
+    """
+
+    dbg = util.dbg._base
+    if command != None:
+        if create_flags == "":
+            create_flags = 1
+        if create_flags_eng == "":
+            create_flags_eng = 0
+        if verifier_flags == "":
+            verifier_flags = 0
+        options = DbgEng._DEBUG_CREATE_PROCESS_OPTIONS()
+        options.CreateFlags = c_ulong(int(create_flags))
+        options.EngCreateFlags = c_ulong(int(create_flags_eng))
+        options.VerifierFlags = c_ulong(int(verifier_flags))
+        options.Reserved = c_ulong(int(0))
+        if initialDirectory == "":
+            initialDirectory = None
+        if envVariables == "":
+            envVariables = None
+        if envVariables is not None and envVariables.endswith("/0/0") is False:
+            envVariables += "/0/0"
+        dbg._client.CreateProcess2(command, options, initialDirectory, envVariables)
+        if initial_break:
+            dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
+    if start_trace:
+        ghidra_trace_start(command)
+
+
+@util.dbg.eng_thread
+def ghidra_trace_attach(pid=None, attach_flags='0', initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+    """
+    Create a session by attaching.
+    """
+
+    dbg = util.dbg._base
+    if initial_break:
+        dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
+    if attach_flags == None:
+        attach_flags = '0'
+    if pid != None:
+        dbg._client.AttachProcess(int(pid,0), int(attach_flags,0))
+    if start_trace:
+        ghidra_trace_start("pid_"+pid)
+
+
+@util.dbg.eng_thread
+def ghidra_trace_attach_kernel(command=None, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+    """
+    Create a session.
+    """
+
+    dbg = util.dbg._base
+    util.set_kernel(True)
+    if initial_break:
+        dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
+    if command != None:
+        dbg._client.AttachKernel(command)
+    if start_trace:
+        ghidra_trace_start(command)
+
+
+@util.dbg.eng_thread
+def ghidra_trace_connect_server(options=None):
+    """
+    Connect to a process server session.
+    """
+
+    dbg = util.dbg._base
+    if options != None:
+        if isinstance(options, str):
+            enc_options = options.encode()
+        dbg._client.ConnectProcessServer(enc_options)
 
 
 @util.dbg.eng_thread
@@ -370,7 +451,7 @@ def ghidra_trace_set_snap(snap=None):
 
 
 def quantize_pages(start, end):
-    return (start // PAGE_SIZE * PAGE_SIZE, (end+PAGE_SIZE-1) // PAGE_SIZE*PAGE_SIZE)
+    return (start // PAGE_SIZE * PAGE_SIZE, (end + PAGE_SIZE - 1) // PAGE_SIZE * PAGE_SIZE)
 
 
 @util.dbg.eng_thread
@@ -453,7 +534,7 @@ def putmem_state(address, length, state, pages=True):
     nproc = util.selected_process()
     base, addr = STATE.trace.memory_mapper.map(nproc, start)
     if base != addr.space and state != 'unknown':
-        trace.create_overlay_space(base, addr.space)
+        STATE.trace.create_overlay_space(base, addr.space)
     STATE.trace.set_memory_state(addr.extend(end - start), state)
 
 
@@ -718,6 +799,7 @@ def ghidra_trace_get_obj(path):
 
 
 class TableColumn(object):
+
     def __init__(self, head):
         self.head = head
         self.contents = [head]
@@ -735,6 +817,7 @@ class TableColumn(object):
 
 
 class Tabular(object):
+
     def __init__(self, heads):
         self.columns = [TableColumn(h) for h in heads]
         self.columns[-1].is_last = True
@@ -925,7 +1008,7 @@ def put_available():
         ppath = AVAILABLE_PATTERN.format(pid=id)
         procobj = STATE.trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=id))
-        pidstr = ('0x{:x}' if radix ==
+        pidstr = ('0x{:x}' if radix == 
                   16 else '0{:o}' if radix == 8 else '{}').format(id)
         procobj.set_value('PID', id)
         procobj.set_value('Name', name)
@@ -1077,6 +1160,8 @@ def put_regions():
         regions = util.dbg._base.memory_list()
     except Exception:
         regions = []
+    if len(regions) == 0:
+        regions = util.full_mem()
 
     mapper = STATE.trace.memory_mapper
     keys = []
@@ -1087,15 +1172,17 @@ def put_regions():
         regobj = STATE.trace.create_object(rpath)
         (start_base, start_addr) = map_address(r.BaseAddress)
         regobj.set_value('Range', start_addr.extend(r.RegionSize))
-        regobj.set_value('_readable', r.Protect ==
+        regobj.set_value('_readable', r.Protect == 
                          None or r.Protect & 0x66 != 0)
-        regobj.set_value('_writable', r.Protect ==
+        regobj.set_value('_writable', r.Protect == 
                          None or r.Protect & 0xCC != 0)
-        regobj.set_value('_executable', r.Protect ==
+        regobj.set_value('_executable', r.Protect == 
                          None or r.Protect & 0xF0 != 0)
         regobj.set_value('AllocationBase', hex(r.AllocationBase))
         regobj.set_value('Protect', hex(r.Protect))
         regobj.set_value('Type', hex(r.Type))
+        if hasattr(r, 'Name') and  r.Name is not None:
+            regobj.set_value('_display', r.Name)
         regobj.insert()
     STATE.trace.proxy_object_path(
         MEMORY_PATTERN.format(procnum=nproc)).retain_values(keys)
@@ -1296,37 +1383,44 @@ def ghidra_trace_put_frames():
         put_frames()
 
 
-def update_by_container(np, index, obj):
+def update_by_container(np, keyval, obj):
+    index = keyval[0]
+    key = ''
     if np.endswith("Processes") or np.endswith("Threads"):
         istate = compute_proc_state(index)
         obj.set_value('State', istate)
+    if np.endswith("Sessions"):
+        key = '[{:x}]'.format(index)
     if np.endswith("Processes"):
         create_generic(obj.path)
-        id = util.get_proc_id(index)
         obj.set_value('PID', index)
-        obj.set_value('_display', '{:x} {:x}'.format(id, index))
+        create_generic(obj.path + ".Memory")
+        if util.is_kernel():
+            key = '[{:x}]'.format(index)
+        else:
+            id = util.get_proc_id(index)
+            key = '{:x} [{:x}]'.format(id, index)
     if np.endswith("Breakpoints"):
         create_generic(obj.path)
-        #id = util.get_thread_id(index)
-        #obj.set_value('TID', index)
-        #obj.set_value('_display','{:x} {:x}'.format(id, index))
     if np.endswith("Threads"):
         create_generic(obj.path)
-        id = util.get_thread_id(index)
         obj.set_value('TID', index)
-        obj.set_value('_display', '{:x} {:x}'.format(id, index))
+        if util.is_kernel():
+            key = '[{:x}]'.format(index)
+        else:
+            id = util.get_thread_id(index)
+            key = '{:x} [{:x}]'.format(id, index)
     if np.endswith("Frames"):
         mo = util.get_object(obj.path)
         map = util.get_attributes(mo)
-        attr = map["Attributes"]
-        if attr is None:
-            return
-        create_generic(obj.path+".Attributes")
-        map = util.get_attributes(attr)
-        pc = util.get_value(map["InstructionOffset"])
-        (pc_base, pc_addr) = map_address(pc)
-        obj.set_value('Instruction Offset', pc_addr)
-        obj.set_value('_display', '#{:x} 0x{:x}'.format(index, pc))
+        if 'Attributes' in map:
+            attr = map["Attributes"]
+            if attr is not None:
+                map = util.get_attributes(attr)        
+                pc = util.get_value(map["InstructionOffset"])
+                (pc_base, pc_addr) = map_address(pc)
+                obj.set_value('Instruction Offset', pc_addr)
+                key = '#{:x} 0x{:x}'.format(index, pc)
     if np.endswith("Modules"):
         create_generic(obj.path)
         mo = util.get_object(obj.path)
@@ -1337,7 +1431,12 @@ def update_by_container(np, index, obj):
         obj.set_value('Name', '{}'.format(name))
         (base_base, base_addr) = map_address(base)
         obj.set_value('Range', base_addr.extend(size))
-        obj.set_value('_display', '{:x} {:x} {}'.format(index, base, name))
+        key = '{:x} {:x} {}'.format(index, base, name)
+    disp = util.to_display_string(keyval[1])
+    if disp is not None:
+        key += " " + disp
+    if key is not None and key != "":
+        obj.set_value('_display', key)
 
 
 def create_generic(path):
@@ -1348,56 +1447,79 @@ def create_generic(path):
 
 
 def put_generic(node):
-    #print(f"put_generic: {node}")
+    # print(f"put_generic: {node}")
     nproc = util.selected_process()
     if nproc is None:
         return
     nthrd = util.selected_thread()
 
-    mapper = STATE.trace.memory_mapper
     mo = util.get_object(node.path)
-    kind = util.get_kind(mo)
-    type = util.get_type(mo)
-    vstr = util.get_value(mo)
-    # print(f"MO={mo}")
+    mapper = STATE.trace.register_mapper
+    
     attributes = util.get_attributes(mo)
     # print(f"ATTR={attributes}")
-    mapper = STATE.trace.register_mapper
     values = []
-    for key, value in attributes.items():
-        if value is None:
-            continue
-        kind = util.get_kind(value)
-        vstr = util.get_value(value)
-        #print(f"key={key} kind={kind} value={vstr} type={type}")
-        if kind == ModelObjectKind.PROPERTY_ACCESSOR.value or  \
-           kind == ModelObjectKind.SYNTHETIC.value or \
-           kind == ModelObjectKind.METHOD.value:
-            if vstr is not None:
-                key += " : " + vstr
-            apath = node.path+'.'+key
-            aobj = STATE.trace.create_object(apath)
-            aobj.insert()
-        else:
-            try:
-                if node.path.endswith('.User'):
-                    values.append(mapper.map_value(nproc, key, vstr))
-                node.set_value(key, hex(vstr))
-            except Exception as e:
-                pass  # Error is printed by another mechanism
+    if attributes is not None:
+        for key, value in attributes.items():
+            kind = util.get_kind(value)
+            if kind == ModelObjectKind.METHOD.value:
+                continue
+            # print(f"key={key} kind={kind}")
+            if kind != ModelObjectKind.INTRINSIC.value:
+                apath = node.path + '.' + key
+                aobj = STATE.trace.create_object(apath)
+                set_display(key, value, aobj)
+                aobj.insert()
+            else:
+                val = util.get_value(value)
+                try:
+                    if node.path.endswith('.User'):
+                        # print(f"PUT_REG: {key} {val}")
+                        values.append(mapper.map_value(nproc, key, val))
+                        node.set_value(key, hex(val))
+                    elif isinstance(val, int):
+                        (v_base, v_addr) = map_address(val)
+                        node.set_value(key, v_addr, schema="ADDRESS")
+                    else:
+                        node.set_value(key, val)
+                except Exception as e:
+                    print(f"Attribute exception for {key} {type(val)}: {e}")
     elements = util.get_elements(mo)
     # print(f"ELEM={elements}")
     keys = []
-    for el in elements:
-        index = el[0]
-        key = GENERIC_KEY_PATTERN.format(key=index)
-        lpath = node.path+key
-        lobj = STATE.trace.create_object(lpath)
-        update_by_container(node.path, index, lobj)
-        lobj.insert()
-        keys.append(key)
-    node.retain_values(keys)
+    if elements is not None:
+        for el in elements:
+            index = el[0]
+            key = GENERIC_KEY_PATTERN.format(key=index)
+            lpath = node.path + key
+            lobj = STATE.trace.create_object(lpath)
+            update_by_container(node.path, el, lobj)
+            lobj.insert()
+            keys.append(key)
+        node.retain_values(keys)
     return (values, keys)
+
+
+def set_display(key, value, obj):
+    kind = util.get_kind(value)
+    vstr = util.get_value(value)
+    # istr = util.get_intrinsic_value(value)
+    if kind == ModelObjectKind.TARGET_OBJECT.value:
+        hloc = util.get_location(value)
+        ti = util.get_type_info(value)
+        if ti is not None:
+            name = util.get_name(ti)
+            if name is not None:
+                key += " : " + name
+                obj.set_value('_display', key)
+        if hloc is not None:
+            key += " @ " + str(hloc)
+            obj.set_value('_display', key)
+            (hloc_base, hloc_addr) = map_address(int(hloc,0))
+            obj.set_value('_address', hloc_addr, schema=Address)
+    if vstr is not None:
+        key += " : " + str(vstr)
+        obj.set_value('_display', key)
 
 
 def map_address(address):

@@ -15,7 +15,7 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		String functionNamespaceTruth = "public: static int __cdecl Foo2b::Bar3(void)";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDParsableItem item = demangler.demangle(mangled, true);
+		MDParsableItem item = demangler.demangle(mangled, true, true);
 
 		String demangled = item.toString();
 		assertEquals(wholeTruth, demangled);
@@ -54,7 +54,7 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		String mangledFunctionNamespace = obj.getNamespace().getNamespace().getMangledString();
 		assertEquals(functionNamespaceMangledTruth, mangledFunctionNamespace);
 
-		item = demangler.demangle(mangledFunctionNamespace, true);
+		item = demangler.demangle(mangledFunctionNamespace, true, true);
 		demangled = item.toString();
 		assertEquals(functionNamespaceTruth, demangled);
 	}
@@ -66,7 +66,7 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		String truth = "const b::a::`vftable'{for `e::d::c's `h::g::f's `k::j::i'}";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDParsableItem item = demangler.demangle(mangled, true);
+		MDParsableItem item = demangler.demangle(mangled, true, true);
 
 		String demangled = item.toString();
 		assertEquals(truth, demangled);
@@ -78,6 +78,20 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals("e::d::c", qualifications.get(0).toString());
 		assertEquals("h::g::f", qualifications.get(1).toString());
 		assertEquals("k::j::i", qualifications.get(2).toString());
+	}
+
+	// Need to test the demangleType() method to make sure it does the retry with LLVM mode
+	@Test
+	public void testDemangleTypeWithRetry() throws Exception {
+		// Test string taken from MDMangBaseTest
+		String mangled = ".?AW4name0@?name1@name2@@YAX_N@Z@";
+		String truth = "enum `void __cdecl name2::name1(bool)'::name0";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		MDParsableItem item = demangler.demangleType(mangled, true); // note demangleType()
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
 	}
 
 }

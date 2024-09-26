@@ -300,6 +300,12 @@ public class FileArchive implements Archive {
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 			setChanged(true);
 		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
+			archiveManager.dataTypeManagerChanged(FileArchive.this, dataTypeManager,
+				dataTypeManager);
+		}
 	}
 
 	@Override

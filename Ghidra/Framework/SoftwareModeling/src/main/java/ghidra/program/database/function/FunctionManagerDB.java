@@ -220,10 +220,13 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 	}
 
-	static void checkSingleAddressSpaceOnly(AddressSetView set) {
-		if (set.getMinAddress().getAddressSpace() != set.getMaxAddress().getAddressSpace()) {
-			throw new IllegalArgumentException(
-				"Function body must contain single address space only");
+	static void checkSingleAddressSpaceOnly(AddressSetView set) throws IllegalArgumentException {
+		AddressSpace addressSpace = set.getMinAddress().getAddressSpace();
+		for (AddressRange range : set.getAddressRanges()) {
+			if (range.getMinAddress().getAddressSpace() != addressSpace) {
+				throw new IllegalArgumentException(
+					"Function body must contain single address space only");
+			}
 		}
 	}
 

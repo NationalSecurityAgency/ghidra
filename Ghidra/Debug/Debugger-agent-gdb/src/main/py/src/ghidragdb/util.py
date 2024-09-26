@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from collections import namedtuple
 import bisect
@@ -245,6 +245,14 @@ class RegionInfoReader(object):
         sizeptr = int(gdb.parse_and_eval('sizeof(void*)')) * 8
         return Region(0, 1 << sizeptr, 0, None, 'full memory')
 
+    def have_changed(self, regions):
+        if len(regions) == 1 and regions[0].objfile == 'full memory':
+            return False, None
+        new_regions = self.get_regions()
+        if new_regions == regions:
+            return False, None
+        return True, new_regions
+
 
 class RegionInfoReaderV8(RegionInfoReader):
     cmd = REGIONS_CMD
@@ -383,14 +391,26 @@ def get_register_descs(arch, group='all'):
     if hasattr(arch, "registers"):
         try:
             return arch.registers(group)
-        except ValueError: # No such group, or version too old
+        except ValueError:  # No such group, or version too old
             return arch.registers()
     else:
         descs = []
-        regset = gdb.execute(
-            f"info registers {group}", to_string=True).strip().split('\n')
+        try:
+            regset = gdb.execute(
+                f"info registers {group}", to_string=True).strip().split('\n')
+        except Exception as e:
+            regset = gdb.execute(
+                f"info registers", to_string=True).strip().split('\n')
         for line in regset:
             if not line.startswith(" "):
                 tokens = line.strip().split()
                 descs.append(RegisterDesc(tokens[0]))
         return descs
+
+
+def selected_frame():
+    try:
+        return gdb.selected_frame()
+    except Exception as e:
+        print("No selected frame")
+        return None

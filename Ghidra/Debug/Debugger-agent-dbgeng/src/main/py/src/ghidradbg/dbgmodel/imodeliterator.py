@@ -40,8 +40,10 @@ class ModelIterator(object):
         except COMError as ce:
             return None
         index = mo.ModelObject(indexer)
-        id = index.GetIntrinsicValue().value
-        return (id, mo.ModelObject(object))
+        ival = index.GetIntrinsicValue()
+        if ival is None:
+            return (0, mo.ModelObject(object))
+        return (ival.value, mo.ModelObject(object))
 
     def Reset(self):
         hr = self._keys.Reset()

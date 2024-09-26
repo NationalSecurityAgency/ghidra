@@ -140,8 +140,8 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 		listingProvider.requestFocus();
 		waitForSwing();
 
-		listingProvider.setSelection(
-			new ProgramSelection(tb.trace.getMemoryManager().getRegionsAddressSet(snap)));
+		runSwing(() -> listingProvider.setSelection(
+			new ProgramSelection(tb.trace.getMemoryManager().getRegionsAddressSet(snap))));
 
 		waitForCondition(() -> copyPlugin.actionCopyIntoCurrentProgram.isEnabled());
 		performAction(copyPlugin.actionCopyIntoCurrentProgram, false);

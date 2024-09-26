@@ -238,7 +238,7 @@ public class SymbolTablePlugin extends Plugin {
 	}
 
 	private void codeAddedRemoved(ProgramChangeRecord rec) {
-		if (rec.getNewValue() instanceof Data data) {
+		if (rec.getNewValue() instanceof Data) {
 			domainObjectWorker.schedule(new CodeAddedRemoveJob(currentProgram, rec.getStart()));
 		}
 	}
@@ -411,6 +411,10 @@ public class SymbolTablePlugin extends Plugin {
 
 		DockingAction clearPinnedAction = new ClearPinSymbolAction(getName(), pinnedPopupGroup);
 		tool.addAction(clearPinnedAction);
+
+		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(this);
+		tableAction.getPopupMenuData().setMenuGroup(popupGroup);
+		tool.addLocalAction(symProvider, tableAction);
 	}
 
 	private void createRefActions() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,10 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -32,11 +30,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.*;
 import javax.swing.text.JTextComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
-import docking.dnd.*;
+import docking.dnd.DropTgtAdapter;
+import docking.dnd.Droppable;
 import docking.widgets.DropDownSelectionTextField;
-import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.label.GDLabel;
@@ -51,8 +51,6 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
-import ghidra.program.model.listing.DataTypeArchive;
-import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.UsrException;
@@ -68,14 +66,9 @@ import help.HelpService;
  * composite data type. To add your own info panel override the createInfoPanel() method.
  */
 public abstract class CompositeEditorPanel extends JPanel
-		implements CompositeEditorModelListener, ComponentCellEditorListener, Draggable, Droppable {
-
-	// Normal color for selecting components in the table.
-	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
+		implements CompositeEditorModelListener, ComponentCellEditorListener, Droppable {
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
-
-	protected static final HelpService helpManager = Help.getHelpService();
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
@@ -90,35 +83,57 @@ public abstract class CompositeEditorPanel extends JPanel
 	/** The table cell renderer for drag-n-drop. */
 	protected DndTableCellRenderer dndTableCellRenderer;
 	protected DndTableCellRenderer dndDtiCellRenderer;
-	private DragSource dragSource;
-	private DragGestureAdapter dragGestureAdapter;
-	private DragSrcAdapter dragSourceAdapter;
-	private int dragAction = DnDConstants.ACTION_MOVE;
 	private DropTarget dropTarget;
 	private DropTgtAdapter dropTargetAdapter;
 	private DataFlavor[] acceptableFlavors; // data flavors that are valid.
 	protected int lastDndAction = DnDConstants.ACTION_NONE;
 
+	protected SearchControlPanel searchPanel;
+
 	public CompositeEditorPanel(CompositeEditorModel model, CompositeEditorProvider provider) {
 		super(new BorderLayout());
-		JPanel lowerPanel = new JPanel(new VerticalLayout(5));
 		this.provider = provider;
 		this.model = model;
+
 		createTable();
+
+		JPanel lowerPanel = new JPanel(new VerticalLayout(5));
 		JPanel bitViewerPanel = createBitViewerPanel();
 		if (bitViewerPanel != null) {
 			lowerPanel.add(bitViewerPanel);
 		}
+
 		JPanel infoPanel = createInfoPanel();
 		if (infoPanel != null) {
 			adjustCompositeInfo();
 			lowerPanel.add(infoPanel);
 		}
+
 		lowerPanel.add(createStatusPanel());
 		add(lowerPanel, BorderLayout.SOUTH);
 		model.addCompositeEditorModelListener(this);
 		setUpDragDrop();
+
+		// These 2 methods allow us to specify the order of component navigation when Tab and 
+		// Shift-Tab are pressed
+		setFocusTraversalPolicy(new CompFocusTraversalPolicy());
+		setFocusTraversalPolicyProvider(true);
 	}
+
+	abstract protected boolean hasUncomittedEntry();
+
+	abstract protected boolean hasInvalidEntry();
+
+	abstract protected void comitEntryChanges();
+
+	/**
+	 * Returns a list of focus traversal components.  This list will be used to navigate forward
+	 * and backward when the Tab and Shift-Tab keys are pressed.  The components will be traversed
+	 * in the order they are contained in the list.
+	 * 
+	 * @return the list
+	 */
+	protected abstract List<Component> getFocusComponents();
 
 	protected Composite getOriginalComposite() {
 		return model.getOriginalComposite();
@@ -151,24 +166,27 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private boolean launchBitFieldEditor(int modelRow, int modelColumn) {
-		if (model.viewComposite instanceof Structure &&
-			!model.viewComposite.isPackingEnabled() &&
+		if (model.viewComposite instanceof Structure && !model.viewComposite.isPackingEnabled() &&
 			model.getDataTypeColumn() == modelColumn && modelRow < model.getNumComponents()) {
 			// check if we are attempting to edit a bitfield
 			DataTypeComponent dtComponent = model.getComponent(modelRow);
 			if (dtComponent.isBitFieldComponent()) {
 				table.getCellEditor().cancelCellEditing();
-
+				CompEditorModel editorModel = (CompEditorModel) model;
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
-					provider.dtmService, modelRow, model.showHexNumbers, ordinal -> {
-						model.notifyCompositeChanged();
-					});
+					provider.dtmService, modelRow, model.showHexNumbers,
+					ordinal -> refreshTableAndSelection(editorModel, ordinal));
 				Component c = provider.getComponent();
 				DockingWindowManager.showDialog(c, dlg);
 				return true;
 			}
 		}
 		return false;
+	}
+
+	private void refreshTableAndSelection(CompEditorModel editorModel, int ordinal) {
+		editorModel.notifyCompositeChanged();
+		editorModel.setSelection(new int[] { ordinal, ordinal });
 	}
 
 	private void setupTableCellEditor() {
@@ -226,11 +244,53 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
+	/**
+	 * Select the field by the given name in this panel's table.
+	 * 
+	 * @param fieldName the field name
+	 */
+	public void selectField(String fieldName) {
+
+		if (!model.isLoaded()) {
+			return; // disposed; not sure if this can happen
+		}
+
+		// Find the given field by name in the current editor, which, if edited, may not match the
+		// original data type.  If the user has renamed the field, but not saved the editor, then
+		// we may not find the field.
+		int row = findRowForFieldName(fieldName);
+		if (row == -1) {
+			return;
+		}
+
+		table.getSelectionModel().setSelectionInterval(row, row);
+	}
+
+	private int findRowForFieldName(String fieldName) {
+		int n = model.getRowCount();
+		for (int row = 0; row < n; row++) {
+
+			DataTypeComponent dtc = model.getComponent(row);
+			if (dtc != null) {
+				String dtcFieldName = dtc.getFieldName();
+				if (Objects.equals(fieldName, dtcFieldName)) {
+					return row;
+				}
+				String defaultName = dtc.getDefaultFieldName();
+				if (Objects.equals(fieldName, defaultName)) {
+					return row;
+				}
+			}
+		}
+		return -1;
+	}
+
 	protected void cancelCellEditing() {
 		TableCellEditor cellEditor = table.getCellEditor();
 		if (cellEditor != null) {
 			cellEditor.cancelCellEditing();
 		}
+		provider.closeDependentEditors();
 	}
 
 	protected void stopCellEditing() {
@@ -426,8 +486,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (index >= 0) {
 			row = index;
 			table.setRowSelectionInterval(row, row);
-			if (model.isCellEditable(index, modelColumn)) {
-				return beginEditField(model.getRow(), model.getColumn());
+			if (model.isCellEditable(row, modelColumn)) {
+				return beginEditField(row, modelColumn);
 			}
 		}
 		return false;
@@ -440,6 +500,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	protected boolean editBelowField() {
 		int row = model.getRow();
 		int modelColumn = model.getColumn();
+
 		// Get the current row (index) and column (fieldNum).
 		int index = row;
 		index++;
@@ -448,8 +509,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (index < numComps) {
 			row = index;
 			table.setRowSelectionInterval(row, row);
-			if (model.isCellEditable(index, modelColumn)) {
-				return beginEditField(model.getRow(), model.getColumn());
+			if (model.isCellEditable(row, modelColumn)) {
+				return beginEditField(row, modelColumn);
 			}
 		}
 		return false;
@@ -492,63 +553,6 @@ public abstract class CompositeEditorPanel extends JPanel
 			if (cellRect != null) {
 				table.scrollRectToVisible(cellRect);
 			}
-		}
-	}
-
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		DataTypeManager originalDTM = model.getOriginalDataTypeManager();
-		if (originalDTM == null) {
-			// editor unloaded
-			return;
-		}
-		boolean reload = true;
-		String objectType = "domain object";
-		if (domainObject instanceof Program) {
-			objectType = "program";
-		}
-		else if (domainObject instanceof DataTypeArchive) {
-			objectType = "data type archive";
-		}
-		DataType dt = originalDTM.getDataType(model.getCompositeID());
-		if (dt instanceof Composite) {
-			Composite composite = (Composite) dt;
-			String origDtPath = composite.getPathName();
-			if (!origDtPath.equals(model.getOriginalDataTypePath().getPath())) {
-				model.fixupOriginalPath(composite);
-			}
-		}
-		Composite originalDt = model.getOriginalComposite();
-		if (originalDt == null) {
-			provider.show();
-			String info =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may no longer exist outside the editor.";
-			Msg.showWarn(this, this, "Program Restored", info);
-			return;
-		}
-		else if (originalDt.isDeleted()) {
-			cancelCellEditing(); // Make sure a field isn't being edited.
-			provider.dispose(); // Close the editor.
-			return;
-		}
-		else if (model.hasChanges()) {
-			provider.show();
-			// The user has modified the structure so prompt for whether or
-			// not to reload the structure.
-			String question =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may have changed outside the editor.\n" +
-					"Discard edits & reload the " + model.getTypeName() + "?";
-			String title = "Reload " + model.getTypeName() + " Editor?";
-			int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);
-			if (response != 1) {
-				reload = false;
-			}
-		}
-		if (reload) {
-			cancelCellEditing(); // Make sure a field isn't being edited.
-			model.load(originalDt); // reload the structure
-			model.updateAndCheckChangeState();
 		}
 	}
 
@@ -599,7 +603,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				model.setColumn(modelIndex);
 			}
 			else {
-				model.setColumn(-1);
+				model.setColumn(e.getFirstIndex());
 			}
 		});
 
@@ -608,12 +612,11 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.setPreferredScrollableViewportSize(new Dimension(model.getWidth(), 250));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		tablePanel.add(sp, BorderLayout.CENTER);
-		SearchControlPanel searchPanel = new SearchControlPanel(this);
+		searchPanel = new SearchControlPanel(this);
 
-		if (helpManager != null) {
-			helpManager.registerHelp(searchPanel,
-				new HelpLocation("DataTypeEditors", "Searching_In_Editor"));
-		}
+		HelpService help = Help.getHelpService();
+		help.registerHelp(searchPanel, new HelpLocation("DataTypeEditors", "Searching_In_Editor"));
+
 		tablePanel.add(searchPanel, BorderLayout.SOUTH);
 
 		add(tablePanel, BorderLayout.CENTER);
@@ -686,6 +689,14 @@ public abstract class CompositeEditorPanel extends JPanel
 	 * @param status non-html message string to be displayed.
 	 */
 	public void setStatus(String status) {
+
+		if (StringUtils.isEmpty(status)) {
+			// Setting the text to null causes the label's preferred height to drop to 0, causing 
+			// the UI to change size, depending on whether there was an existing status or not.  
+			// Using the empty string prevents the UI layout from changing as the status changes.
+			status = " ";
+		}
+
 		if (statusLabel != null) {
 			statusLabel.setText(status);
 			updateStatusToolTip();
@@ -725,10 +736,8 @@ public abstract class CompositeEditorPanel extends JPanel
 		panel.add(label);
 		panel.add(Box.createHorizontalStrut(2));
 		panel.add(textField);
-		if (helpManager != null) {
-			helpManager.registerHelp(textField,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + name));
-		}
+
+		provider.registerHelp(textField, name);
 		return panel;
 	}
 
@@ -788,99 +797,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		dropTarget =
 			new DropTarget(table, DnDConstants.ACTION_COPY_OR_MOVE, dropTargetAdapter, true);
 		dropTarget.setActive(true);
-
-		// set up the component area as a drag site that provides Data Types.
-		dragSource = DragSource.getDefaultDragSource();
-		dragGestureAdapter = new DragGestureAdapter(this);
-		dragSourceAdapter = new DragSrcAdapter(this);
-		dragSource.createDefaultDragGestureRecognizer(table, dragAction, dragGestureAdapter);
-	}
-
-	/**
-	 * Return true if the object at the location in the DragGesture
-	 * event is draggable.
-	 *
-	 * @param e event passed to a DragGestureListener via its
-	 * dragGestureRecognized() method when a particular DragGestureRecognizer
-	 * detects a platform dependent Drag and Drop action initiating
-	 * gesture has occurred on the Component it is tracking.
-	 * @see docking.dnd.DragGestureAdapter
-	 */
-	@Override
-	public boolean isStartDragOk(DragGestureEvent e) {
-		return false;
-//            boolean dragOk = false;
-//            // Need to check that the location is on a component.
-//            Point point = e.getDragOrigin();
-//          int index = table.rowAtPoint(point);
-//            // If we are on a component then drag is allowed.
-//            if ((index >= 0) && (index < model.getNumComponents())) {
-//                dragOk = true;
-//            }
-//            return dragOk;
-	}
-
-	/**
-	 * Called by the DragGestureAdapter to start the drag.
-	 */
-	@Override
-	public DragSourceListener getDragSourceListener() {
-		return dragSourceAdapter;
-	}
-
-	/**
-	 * Do the move operation; called when the drag and drop operation
-	 * completes.
-	 * @see docking.dnd.DragSrcAdapter#dragDropEnd
-	 */
-	@Override
-	public void move() {
-		// no-op
-	}
-
-	/**
-	 * Method called when the drag operation exits the drop target
-	 * without dropping.
-	 */
-	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		// no-op
-	}
-
-	/**
-	 * Get the drag actions supported by this drag source:
-	 * <ul>
-	 * <li>DnDConstants.ACTION_MOVE
-	 * <li>DnDConstants.ACTION_COPY
-	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </ul>
-	 *
-	 * @return the drag actions
-	 */
-	@Override
-	public int getDragAction() {
-		return dragAction;
-	}
-
-	/**
-	 * Get the object to transfer.
-	 *
-	 * @param p location of object to transfer
-	 * @return object to transfer
-	 */
-	@Override
-	public Transferable getTransferable(Point p) {
-		int index = table.rowAtPoint(p);
-		int numRows = model.getRowCount();
-		if (index >= numRows) {
-			index = numRows;
-		}
-		DataType dt = DefaultDataType.dataType;
-		// If we are on a component then get the data type.
-		if ((index >= 0)) {
-			dt = model.getComponent(index).getDataType();
-		}
-		return new DataTypeTransferable(dt);
 	}
 
 	@Override
@@ -888,15 +804,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		return true;
 	}
 
-	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
-	 * drop() method.
-	 *
-	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
-	 * @param f represents the opaque concept of a data format as
-	 * would appear on a clipboard, during drag and drop.
-	 */
 	@Override
 	public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
 		if (!(obj instanceof DataType)) {
@@ -952,6 +859,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		catch (UsrException e) {
 			model.setStatus(e.getMessage(), true);
 		}
+		provider.contextChanged();
 	}
 
 	/**
@@ -1010,9 +918,11 @@ public abstract class CompositeEditorPanel extends JPanel
 		switch (type) {
 			case COMPOSITE_LOADED:
 				cancelCellEditing(); // Make sure a field isn't being edited.
+				provider.updateTitle();
 				break;
 			case NO_COMPOSITE_LOADED:
 				cancelCellEditing(); // Make sure a field isn't being edited.
+				provider.updateTitle();
 				break;
 			case COMPOSITE_MODIFIED:
 			case COMPOSITE_UNMODIFIED:
@@ -1381,7 +1291,7 @@ public abstract class CompositeEditorPanel extends JPanel
 					fireEditingCanceled(); // user picked the same datatype
 				}
 				else {
-					dt = model.resolve(dataType);
+					dt = dataType;
 					fireEditingStopped();
 				}
 			}
@@ -1491,8 +1401,8 @@ public abstract class CompositeEditorPanel extends JPanel
 			String status = columnName + " field is not editable";
 
 			boolean isValidRow = row >= 0 && row < model.getNumComponents();
-			boolean isStringColumn = modelColumn == model.getNameColumn() ||
-				modelColumn == model.getCommentColumn();
+			boolean isStringColumn =
+				modelColumn == model.getNameColumn() || modelColumn == model.getCommentColumn();
 			if (isValidRow && isStringColumn) {
 				DataType dt = model.getComponent(row).getDataType();
 				if (dt == DataType.DEFAULT) {
@@ -1525,6 +1435,148 @@ public abstract class CompositeEditorPanel extends JPanel
 			KeyStroke keyStroke = KeyStroke.getKeyStroke("pressed F2");
 			KeyBindingUtils.clearKeyBinding(this, keyStroke);
 		}
+	}
+
+	/**
+	 * A simple traversal policy that allows this editor panel to control the order that components
+	 * get focused when pressing Tab and Shift-Tab.
+	 * <P>
+	 * Note: We typically do not use traversal policies in the application.  We do so here due to 
+	 * the complicated nature of this widget.  It seemed easier to specify the policy than to 
+	 * change the order of the widgets in the UI to get the expected traversal order.
+	 * <P>
+	 * Note: This widget is a bit unusual in that not all focusable components are traversable using
+	 * Tab and Shift-Tab.  Specifically, the radio button groups will only have one entry in the 
+	 * list of traversal components.  Once one of the radio buttons is focused, the up and down 
+	 * arrow keys can be used to navigate the radio buttons.  With this traversal policy, pressing 
+	 * Tab when on these buttons will move to the next traversal component.
+	 * <P>
+	 * @see #getFocusComponents()
+	 */
+	private class CompFocusTraversalPolicy extends FocusTraversalPolicy {
+
+		@Override
+		public Component getComponentAfter(Container aContainer, Component aComponent) {
+
+			List<Component> list = getFocusComponents();
+			return getNext(aComponent, list);
+		}
+
+		private Component getNext(Component component, List<Component> list) {
+			int currentIndex = list.indexOf(component);
+			if (currentIndex < 0) {
+				// The given component is not in the list of traversal components.  This can happen
+				// when some widget in the panel has focus but is not part of the focus traversal.
+				// Assume the component is part of a group of components that can be traversed.  Get
+				// the next component after this group.
+				return getNextGroupComponent(component, list);
+			}
+
+			int nextIndex = currentIndex + 1;
+			if (nextIndex == list.size()) {
+				nextIndex = 0; // wrap
+			}
+
+			Component next = list.get(nextIndex);
+			if (!next.isFocusable() || !next.isEnabled()) {
+				return getNext(next, list);
+			}
+			return next;
+		}
+
+		/**
+		 * Find a sibling of the given component and get the component after the sibling.  We can do
+		 * this since we have guilty knowledge that the few focusable components not in the 
+		 * traversal list have siblings that are.  In that case, all siblings represent the focused
+		 * group.  This will move to the next component after that group.
+		 * 
+		 * @param component the component used to find the next component
+		 * @param list the list of traversal components
+		 * @return the next component
+		 */
+		private Component getNextGroupComponent(Component component, List<Component> list) {
+			Component sibling = findSibling(component, list);
+			if (sibling == null) {
+				return list.get(0);
+			}
+			return getNext(sibling, list);
+		}
+
+		// see the description for getNextGroupComponent()
+		private Component getPreviousGroupComponent(Component component, List<Component> list) {
+			Component sibling = findSibling(component, list);
+			if (sibling == null) {
+				return list.get(0);
+			}
+			return getPrevious(sibling, list);
+		}
+
+		/**
+		 * Finds the first sibling of the given component in the given list.  
+		 * 
+		 * @param component the component that is not in the list, but has a sibling in the list
+		 * @param list the list of focus traversal components
+		 * @return the sibling or null
+		 */
+		private Component findSibling(Component component, List<Component> list) {
+
+			Container parent = component.getParent();
+			Component[] siblings = parent.getComponents();
+			for (Component sibling : siblings) {
+				if (list.contains(sibling)) {
+					return sibling;
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public Component getComponentBefore(Container aContainer, Component aComponent) {
+
+			List<Component> list = getFocusComponents();
+			return getPrevious(aComponent, list);
+		}
+
+		private Component getPrevious(Component aComponent, List<Component> list) {
+			int currentIndex = list.indexOf(aComponent);
+			if (currentIndex < 0) {
+				// The given component is not in the list of traversal components.  This can happen
+				// when some widget in the panel has focus but is not part of the focus traversal.
+				// Assume the component is part of a group of components that can be traversed.  Get
+				// the previous component before this group.
+				return getPreviousGroupComponent(aComponent, list);
+			}
+
+			int previousIndex = currentIndex - 1;
+			if (previousIndex == -1) {
+				previousIndex = list.size() - 1; // wrap
+			}
+
+			Component previous = list.get(previousIndex);
+			if (!previous.isFocusable() || !previous.isEnabled()) {
+				return getPrevious(previous, list);
+			}
+			return previous;
+		}
+
+		@Override
+		public Component getFirstComponent(Container aContainer) {
+			List<Component> list = getFocusComponents();
+			return list.get(0);
+		}
+
+		@Override
+		public Component getLastComponent(Container aContainer) {
+			List<Component> list = getFocusComponents();
+			return list.get(list.size() - 1);
+		}
+
+		@Override
+		public Component getDefaultComponent(Container aContainer) {
+			List<Component> list = getFocusComponents();
+			return list.get(0);
+		}
+
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 	@Override
 	protected void init(Structure dt, final Category cat, final boolean showInHex) {
-		boolean commit = true;
 		startTransaction("Structure Editor Test Initialization");
 		try {
 			DataTypeManager dataTypeManager = cat.getDataTypeManager();
@@ -49,13 +48,12 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 					dt.setCategoryPath(categoryPath);
 				}
 				catch (DuplicateNameException e) {
-					commit = false;
 					Assert.fail(e.getMessage());
 				}
 			}
 		}
 		finally {
-			endTransaction(commit);
+			endTransaction(true);
 		}
 		final Structure structDt = dt;
 		runSwing(() -> {
@@ -67,416 +65,294 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		getActions();
 	}
 
-	@Test
-	public void testDataTypeChanged() throws Exception {
-		try {
-			txId = program.startTransaction("Grow DataType");
-			complexStructure.insert(22, DataType.DEFAULT);
-			complexStructure.insert(22, DataType.DEFAULT);
-			complexStructure.insert(22, DataType.DEFAULT);
-			complexStructure.insert(22, DataType.DEFAULT);
-			complexStructure.insert(22, DataType.DEFAULT);
-			complexStructure.insert(22, DataType.DEFAULT);
-			assertEquals(87, complexStructure.getComponent(16).getDataType().getLength());
-			assertEquals(29, complexStructure.getComponent(19).getDataType().getLength());
-			assertEquals(29, complexStructure.getComponent(21).getDataType().getLength());
-			assertEquals(87, complexStructure.getComponent(16).getLength());
-			assertEquals(29, complexStructure.getComponent(19).getLength());
-			assertEquals(29, complexStructure.getComponent(21).getLength());
-			assertEquals(1, complexStructure.getComponent(22).getLength());
-			assertEquals(4, complexStructure.getComponent(28).getLength());
-			assertEquals(331, complexStructure.getLength());
-			assertEquals(29, complexStructure.getNumComponents());
-			// Change the struct.  simpleStructure was 29 bytes.
-			simpleStructure.add(new DWordDataType());
-			assertEquals(331, complexStructure.getLength());
-			assertEquals(25, complexStructure.getNumComponents());
-			assertEquals(99, complexStructure.getComponent(16).getDataType().getLength());
-			assertEquals(33, complexStructure.getComponent(19).getDataType().getLength());
-			assertEquals(33, complexStructure.getComponent(21).getDataType().getLength());
-			assertEquals(87, complexStructure.getComponent(16).getLength());
-			assertEquals(29, complexStructure.getComponent(19).getLength());
-			assertEquals(33, complexStructure.getComponent(21).getLength());
-			assertEquals(1, complexStructure.getComponent(22).getLength());
-			assertEquals(4, complexStructure.getComponent(24).getLength());
-		}
-		finally {
-			program.endTransaction(txId, true);
-		}
-	}
-
 	// Test Undo / Redo of program.
 	@Test
 	public void testModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		Window dialog;
-		try {
-			init(complexStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
+		init(complexStructure, pgmTestCat, false);
 
-			// Change the structure
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new DefaultActionContext());
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
-			waitForSwing();
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
+		// Change the structure
+		runSwingLater(() -> {
+			getTable().requestFocus();
+			setSelection(new int[] { 4, 5 });
+			deleteAction.actionPerformed(new DefaultActionContext());
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		});
+		waitForSwing();
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
-			// Apply the changes
-			invoke(applyAction);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
+		// Apply the changes
+		invoke(applyAction);
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 
-			// Change the structure again.
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				setSelection(new int[] { 1 });
-				clearAction.actionPerformed(new DefaultActionContext());
-				deleteAction.actionPerformed(new DefaultActionContext());// Must be undefined before it can delete.
-			});
-			waitForSwing();
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
+		// Change the structure again.
+		runSwingLater(() -> {
+			getTable().requestFocus();
+			setSelection(new int[] { 1 });
+			clearAction.actionPerformed(new DefaultActionContext());
+			deleteAction.actionPerformed(new DefaultActionContext());// Must be undefined before it can delete.
+		});
+		waitForSwing();
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
-			// Undo the apply
-			undo(program, false);
-			// Verify the Reload Structure Editor? dialog is displayed.
-			dialog = waitForWindow("Reload Structure Editor?");
-			assertNotNull(dialog);
-			pressButton(dialog, "No");
-			dialog.dispose();
-			dialog = null;
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
+		// Undo the apply
+		undo(program, false);
+		// Verify the Reload Structure Editor? dialog is displayed.
+		Window dialog = waitForWindow("Reload Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "No");
+		waitForSwing();
 
-			// Redo the apply
-			redo(program, false);
-			// Verify the Reload Structure Editor? dialog is displayed.
-			dialog = waitForWindow("Reload Structure Editor?");
-			assertNotNull(dialog);
-			pressButton(dialog, "No");
-			dialog.dispose();
-			dialog = null;
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
-		}
-		finally {
-			dialog = null;
-			program.removeListener(restoreListener);
-		}
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
+
+		// Redo the apply
+		redo(program, false);
+
+		// Verify the Reload Structure Editor? dialog is displayed.
+		dialog = waitForWindow("Reload Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "No");
+		waitForSwing();
+
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 	}
 
 	// Test add a structure, start to edit it, and then undo the program so it goes away.
-	// This should close the edit session.
 	@Test
 	public void testProgramRestoreRemovesEditedDt() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		Window dialog;
+
+		Structure s1 = new StructureDataType("s1", 0);
+		s1.add(new ByteDataType());
+		Structure s2 = new StructureDataType("s2", 0);
+		s2.add(new WordDataType());
+		s1.add(s2);
+
+		// Add the s1 data type so that we can undo its add.
+		Structure s1Struct = null;
+		startTransaction("Structure Editor Test Initialization");
 		try {
-			Structure s1 = new StructureDataType("s1", 0);
-			s1.add(new ByteDataType());
-			Structure s2 = new StructureDataType("s2", 0);
-			s2.add(new WordDataType());
-			s1.add(s2);
-
-			// Add the s1 data type so that we can undo its add.
-			boolean commit = true;
-			Structure s1Struct = null;
-			startTransaction("Structure Editor Test Initialization");
-			try {
-				s1Struct =
-					(Structure) pgmTestCat.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
-			}
-			finally {
-				endTransaction(commit);
-			}
-			assertNotNull(s1Struct);
-			final Structure myS1Structure = s1Struct;
-
-			init(myS1Structure, pgmTestCat, false);
-			program.addListener(restoreListener);
-
-			// Change the structure.
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				// Select blank line after components.
-				setSelection(new int[] { myS1Structure.getNumComponents() });
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
-			waitForSwing();
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
-
-			// Verify the editor provider is displayed.
-			String mySubTitle = getProviderSubTitle(myS1Structure);
-			assertTrue("Couldn't find editor = " + mySubTitle,
-				isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
-
-			// Undo the apply
-			undo(program, false);
-			waitForSwing();
-
-			// Verify the "Reload Structure Editor?" dialog is NOT displayed.
-			dialog = getWindow("Reload Structure Editor?");
-			assertNull(dialog);
-
-			// Verify the editor provider is gone.
-			assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+			s1Struct =
+				(Structure) pgmTestCat.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		finally {
-			dialog = null;
-			program.removeListener(restoreListener);
+			endTransaction(true);
 		}
+		assertNotNull(s1Struct);
+		final Structure myS1Structure = s1Struct;
+
+		init(myS1Structure, pgmTestCat, false);
+
+		// Change the structure.
+		runSwingLater(() -> {
+			getTable().requestFocus();
+			// Select blank line after components.
+			setSelection(new int[] { myS1Structure.getNumComponents() });
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		});
+		waitForSwing();
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
+
+		// Verify the editor provider is displayed.
+		String mySubTitle = getProviderSubTitle(myS1Structure);
+		assertTrue("Couldn't find editor = " + mySubTitle,
+			isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+
+		// Undo the apply
+		undo(program, false);
+
+		Window dialog = waitForWindow("Close Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		// Verify the editor provider is gone.
+		assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
 	}
 
 	// Test add a structure containing inner struct, start to edit inner struct, and then undo the
-	// program so it goes away. This should close the edit session.
+	// program so it goes away.
 	@Test
 	public void testProgramRestoreRemovesEditedDtComp() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		Window dialog;
+		Structure s1 = new StructureDataType("s1", 0);
+		s1.setCategoryPath(pgmTestCat.getCategoryPath());
+		s1.add(new ByteDataType());
+		Structure s2 = new StructureDataType("s2", 0);
+		s2.setCategoryPath(pgmTestCat.getCategoryPath());
+		s2.add(new WordDataType());
+		s1.add(s2);
+
+		// Add the s1 data type so that we can undo its add.
+		Structure s1Struct = null;
+		startTransaction("Resolve s1");
 		try {
-			Structure s1 = new StructureDataType("s1", 0);
-			s1.setCategoryPath(pgmTestCat.getCategoryPath());
-			s1.add(new ByteDataType());
-			Structure s2 = new StructureDataType("s2", 0);
-			s2.setCategoryPath(pgmTestCat.getCategoryPath());
-			s2.add(new WordDataType());
-			s1.add(s2);
-
-			// Add the s1 data type so that we can undo its add.
-			boolean commit = true;
-			Structure s1Struct = null;
-			startTransaction("Structure Editor Test Initialization");
-			try {
-				s1Struct =
-					(Structure) pgmTestCat.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
-			}
-			finally {
-				endTransaction(commit);
-			}
-			assertNotNull(s1Struct);
-			final Structure myS2Structure = (Structure) s1Struct.getComponent(1).getDataType();
-			assertNotNull(myS2Structure);
-			assertTrue(s2.isEquivalent(myS2Structure));
-
-			init(myS2Structure, pgmTestCat, false);
-			program.addListener(restoreListener);
-
-			// Change the structure.
-			runSwing(() -> {
-				getTable().requestFocus();
-				// Select blank line after components.
-				setSelection(new int[] { myS2Structure.getNumComponents() });
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			}, false);
-			waitForSwing();
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
-
-			// Verify the editor provider is displayed.
-			String mySubTitle = getProviderSubTitle(myS2Structure);
-			assertTrue("Couldn't find editor = " + mySubTitle,
-				isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
-
-			// Undo the apply
-			undo(program, false);
-			waitForSwing();
-
-			// Verify the "Reload Structure Editor?" dialog is NOT displayed.
-			dialog = getWindow("Reload Structure Editor?");
-			assertNull(dialog);
-
-			// Verify the editor provider is gone.
-			assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+			s1Struct =
+				(Structure) pgmTestCat.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		finally {
-			dialog = null;
-			program.removeListener(restoreListener);
+			endTransaction(true);
 		}
+		assertNotNull(s1Struct);
+		final Structure myS2Structure = (Structure) s1Struct.getComponent(1).getDataType();
+		assertNotNull(myS2Structure);
+		assertTrue(s2.isEquivalent(myS2Structure));
+
+		Structure editStruct = s1Struct;
+		init(editStruct, pgmTestCat, false);
+
+		// Change the structure.
+
+		runSwing(() -> {
+			getTable().requestFocus();
+			// Select blank line after components.
+			setSelection(new int[] { editStruct.getNumComponents() });
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		}, false);
+		waitForSwing();
+		assertFalse(s1.isEquivalent(model.viewComposite));
+
+		// Verify the editor provider is displayed.
+		String mySubTitle = getProviderSubTitle(editStruct);
+		assertTrue("Couldn't find editor = " + mySubTitle,
+			isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+
+		// Undo the apply
+		undo(program, false);
+		waitForSwing();
+
+		Window dialog = waitForWindow("Close Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		// Verify the editor provider is gone.
+		assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
 	}
 
 	// Test add a structure, start to edit a structure that contains it, and then undo the program
-	// so it goes away. The editor stays since the structure existed previously, but editor reloads.
+	// so it goes away. The editor stays since the structure existed previously and has been modified.
 	@Test
-	public void testProgramRestoreRemovesEditedComponentDtYes() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		Window dialog;
+	public void testProgramRestoreRemovesEditedComponentDt() throws Exception {
+
+		Structure myStruct = new StructureDataType("myStruct", 0);
+		myStruct.add(new WordDataType());
+
+		init(emptyStructure, pgmTestCat, false);
+
+		// Add the data type so that we can undo its add.
+		Structure pgmMyStruct = null;
+		startTransaction("Structure Editor Test Initialization");
 		try {
-			Structure myStruct = new StructureDataType("myStruct", 0);
-			myStruct.add(new WordDataType());
-
-			init(emptyStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
-
-			// Add the data type so that we can undo its add.
-			boolean commit = true;
-			Structure pgmMyStruct = null;
-			startTransaction("Structure Editor Test Initialization");
-			try {
-				pgmMyStruct = (Structure) pgmTestCat.addDataType(myStruct,
-					DataTypeConflictHandler.DEFAULT_HANDLER);
-			}
-			finally {
-				endTransaction(commit);
-			}
-			assertNotNull(pgmMyStruct);
-			final Structure myStructure = pgmMyStruct;
-
-			// Change the structure.
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				// Select blank line after components.
-				setSelection(new int[] { emptyStructure.getNumComponents() });
-				try {
-					model.add(myStructure);
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
-			waitForSwing();
-			assertFalse(emptyStructure.isEquivalent(model.viewComposite));
-
-			// Verify the editor provider is displayed.
-			String mySubTitle = getProviderSubTitle(emptyStructure);
-			assertTrue("Couldn't find editor = " + mySubTitle,
-				isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
-
-			// Undo the apply
-			undo(program, false);
-
-			// Verify the Reload Structure Editor? dialog is displayed.
-			dialog = waitForWindow("Reload Structure Editor?");
-			assertNotNull(dialog);
-			pressButton(dialog, "Yes");
-			dialog.dispose();
-			dialog = null;
-			assertTrue(emptyStructure.isEquivalent(model.viewComposite));
-
-			// Verify the editor provider is reloaded.
-			assertTrue(
-				isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
+			pgmMyStruct = (Structure) pgmTestCat.addDataType(myStruct,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		finally {
-			dialog = null;
-			program.removeListener(restoreListener);
+			endTransaction(true);
 		}
-	}
+		assertNotNull(pgmMyStruct);
+		final Structure myStructure = pgmMyStruct;
 
-	// Test add a structure, start to edit a structure that contains it, and then undo the program
-	// so it goes away. The editor stays since the structure existed previously, but doesn't reload.
-	@Test
-	public void testProgramRestoreRemovesEditedComponentDtNo() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		Window dialog;
-		try {
-			Structure myStruct = new StructureDataType("myStruct", 0);
-			myStruct.add(new WordDataType());
-
-			init(emptyStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
-
-			// Add the data type so that we can undo its add.
-			boolean commit = true;
-			Structure pgmMyStruct = null;
-			startTransaction("Structure Editor Test Initialization");
+		// Change the structure.
+		runSwingLater(() -> {
+			getTable().requestFocus();
+			// Select blank line after components.
+			setSelection(new int[] { emptyStructure.getNumComponents() });
 			try {
-				pgmMyStruct = (Structure) pgmTestCat.addDataType(myStruct,
-					DataTypeConflictHandler.DEFAULT_HANDLER);
+				model.add(myStructure);
 			}
-			finally {
-				endTransaction(commit);
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
 			}
-			assertNotNull(pgmMyStruct);
-			final Structure myStructure = pgmMyStruct;
+		});
+		waitForSwing();
+		assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
-			// Change the structure.
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				// Select blank line after components.
-				setSelection(new int[] { emptyStructure.getNumComponents() });
-				try {
-					model.add(myStructure);
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
-			waitForSwing();
-			assertFalse(emptyStructure.isEquivalent(model.viewComposite));
+		// Verify the editor provider is displayed.
+		String mySubTitle = getProviderSubTitle(emptyStructure);
+		assertTrue("Couldn't find editor = " + mySubTitle,
+			isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
 
-			// Verify the editor provider is displayed.
-			String mySubTitle = getProviderSubTitle(emptyStructure);
-			assertTrue("Couldn't find editor = " + mySubTitle,
-				isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
+		DataType dtCopy = model.viewComposite.copy(model.viewDTM);
 
-			// Undo the apply
-			undo(program, false);
-			// Verify the Reload Structure Editor? dialog is displayed.
-			dialog = waitForWindow("Reload Structure Editor?");
-			assertNotNull(dialog);
-			pressButton(dialog, "No");
-			dialog.dispose();
-			dialog = null;
-			assertFalse(emptyStructure.isEquivalent(model.viewComposite));
+		// Undo the apply
+		undo(program, false);
+		waitForSwing();
 
-			// Verify the editor provider is still on screen.
-			assertTrue(
-				isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
-		}
-		finally {
-			dialog = null;
-			program.removeListener(restoreListener);
-		}
+		assertTrue(pgmMyStruct.isDeleted());
+
+		// Verify the a reload/close dialog is not displayed.
+		Window dialog = getWindow("Reload Structure Editor?");
+		assertNull(dialog);
+		dialog = getWindow("Close Structure Editor?");
+		assertNull(dialog);
+
+		assertTrue(
+			isProviderShown(tool.getToolFrame(), "Structure Editor", "emptyStructure (Test)"));
+
+		// Verify the editor provider remains visible with myStructure use cleared.
+		assertFalse(emptyStructure.isEquivalent(model.viewComposite));
+		assertFalse(dtCopy.isEquivalent(model.viewComposite));
+		assertEquals(dtCopy.getLength(), model.viewComposite.getLength());
+		assertEquals(2, model.viewComposite.getNumComponents());
+		assertEquals(0, model.viewComposite.getNumDefinedComponents());
 	}
 
 	// Test Undo / Redo of program.
 	@Test
 	public void testUnModifiedDtAndProgramRestored() throws Exception {
-		RestoreListener restoreListener = new RestoreListener();
-		try {
-			init(complexStructure, pgmTestCat, false);
-			program.addListener(restoreListener);
+		init(complexStructure, pgmTestCat, false);
 
-			// Change the structure
-			runSwingLater(() -> {
-				getTable().requestFocus();
-				setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new DefaultActionContext());
-				try {
-					model.add(new WordDataType());
-				}
-				catch (UsrException e) {
-					Assert.fail(e.getMessage());
-				}
-			});
-			waitForSwing();
-			assertFalse(complexStructure.isEquivalent(model.viewComposite));
-			// Apply the changes
-			invoke(applyAction);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
-			// Undo the apply
-			undo(program);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
-			// Redo the apply
-			redo(program);
-			assertTrue(complexStructure.isEquivalent(model.viewComposite));
-		}
-		finally {
-			program.removeListener(restoreListener);
-		}
+		// Change the structure
+		runSwingLater(() -> {
+			getTable().requestFocus();
+			setSelection(new int[] { 4, 5 });
+			deleteAction.actionPerformed(new DefaultActionContext());
+			try {
+				model.add(new WordDataType());
+			}
+			catch (UsrException e) {
+				Assert.fail(e.getMessage());
+			}
+		});
+		waitForSwing();
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
+
+		// Apply the changes
+		invoke(applyAction);
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
+
+		// Undo the apply
+		undo(program);
+
+		Window dialog = waitForWindow("Reload Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
+
+		// Redo the apply
+		redo(program);
+
+		dialog = waitForWindow("Reload Structure Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 	}
 
 	@Test
@@ -502,8 +378,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	@Test
 	public void testCloseEditorProviderAndSave() throws Exception {
 		Window dialog;
+		DataType oldDt = complexStructure.clone(null);
+
 		init(complexStructure, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the structure
 		runSwingLater(() -> {
@@ -538,8 +415,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	@Test
 	public void testCloseEditorAndNoSave() throws Exception {
 
+		DataType oldDt = complexStructure.clone(null);
+
 		init(complexStructure, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
 
 		// Change the structure
 		runSwing(() -> {
@@ -589,8 +467,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		dialog = waitForWindow("Save Structure Editor Changes?");
 		assertNotNull(dialog);
 		pressButton(dialog, "Cancel");
-		dialog.dispose();
-		dialog = null;
+
 		assertTrue(tool.isVisible(provider));
 		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 		assertTrue(newDt.isEquivalent(model.viewComposite));
@@ -704,7 +581,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x145", model.getLengthAsString());
 
-		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
+		DockingActionIf action = getAction(plugin, "Show Numbers In Hex");
 		setToggleActionSelected((ToggleDockingActionIf) action, new DefaultActionContext(), false);
 
 		assertEquals(false, model.isShowingNumbersInHex());
@@ -726,8 +603,6 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertTrue(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 
-		Composite dt = model.viewComposite;
-
 		// set selected row
 		int row = 2;
 		setSelection(new int[] { row });
@@ -736,7 +611,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		int editRow = 4; // offset 8; 'simpleUnion'
 		String newFieldName = "newFieldName";
 		tx(program, () -> {
-			DataTypeComponent dtc = dt.getComponent(editRow);
+			DataTypeComponent dtc = complexStructure.getComponent(editRow);
 			dtc.setFieldName(newFieldName);
 		});
 
@@ -748,7 +623,8 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertEquals(1, rows.length);
 		assertEquals(row, rows[0]);
 
-		closeProviderIgnoringChanges();
+		// External change should not register as unsved change to model
+		assertFalse(model.hasChanges());
 	}
 
 	private void closeProviderIgnoringChanges() {

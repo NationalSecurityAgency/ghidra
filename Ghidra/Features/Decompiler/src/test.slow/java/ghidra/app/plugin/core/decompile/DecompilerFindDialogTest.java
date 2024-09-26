@@ -17,21 +17,28 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
-import docking.widgets.FindDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.table.GTable;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.DecompilerFindDialog;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
+import ghidra.app.plugin.core.decompile.actions.DecompilerSearchLocation;
+import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
+import ghidra.util.table.GhidraProgramTableModel;
+import ghidra.util.table.GhidraThreadedTablePanel;
 
 public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 
-	private FindDialog findDialog;
+	private DecompilerFindDialog findDialog;
 
 	@Override
 	@After
@@ -243,9 +250,77 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		assertSearchHit(line, column, length);
 	}
 
+	@Test
+	public void testSearchAll() {
+
+		/*
+		 
+		 	bool FUN_01002239(int param_1)
+		
+			{
+			  undefined4 uVar1;
+			  int iVar2;
+			  undefined4 *puVar3;
+			  bool bVar4;
+			  undefined *puVar5;
+			  undefined2 local_210;
+			  undefined4 local_20e [129];
+			  int local_8;
+			  
+			  local_210 = 0;
+			  puVar3 = local_20e;
+			  ...
+			  ...
+			  ...
+		 */
+
+		decompile("1002239");
+
+		String text = "puVar";
+		showFind(text);
+
+		searchAll();
+
+		GTable table = getResultsTable();
+		List<DecompilerSearchLocation> results = getResults(table);
+		assertEquals(10, results.size());
+
+		// click some rows and verify the cursor location
+		for (int i = 0; i < results.size(); i++) {
+			clickAndVerify(i, table, results);
+		}
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void clickAndVerify(int row, GTable table, List<DecompilerSearchLocation> results) {
+
+		runSwing(() -> table.selectRow(row));
+		DecompilerSearchLocation searchLocation = results.get(row);
+		FieldLocation fieldLocation = searchLocation.getFieldLocation();
+		ClangToken expectedToken = getToken(fieldLocation);
+		ClangToken cursorToken = getToken();
+		assertEquals(expectedToken, cursorToken);
+	}
+
+	private GTable getResultsTable() {
+		@SuppressWarnings("unchecked")
+		TableComponentProvider<DecompilerSearchLocation> tableProvider =
+			waitForComponentProvider(TableComponentProvider.class);
+		GhidraThreadedTablePanel<DecompilerSearchLocation> panel =
+			tableProvider.getThreadedTablePanel();
+		return panel.getTable();
+	}
+
+	private List<DecompilerSearchLocation> getResults(GTable table) {
+		@SuppressWarnings("unchecked")
+		GhidraProgramTableModel<DecompilerSearchLocation> model =
+			(GhidraProgramTableModel<DecompilerSearchLocation>) table.getModel();
+		waitForTableModel(model);
+		return model.getModelData();
+	}
 
 	private void next() {
 		runSwing(() -> findDialog.next());
@@ -255,13 +330,17 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		runSwing(() -> findDialog.previous());
 	}
 
+	private void searchAll() {
+		pressButtonByText(findDialog, "Search All");
+	}
+
 	private void assertSearchHit(int line, int column, int length) {
 
 		waitForSwing();
 		assertCurrentLocation(line, column);
 
 		DecompilerPanel panel = getDecompilerPanel();
-		FieldBasedSearchLocation searchResults = panel.getSearchResults();
+		DecompilerSearchLocation searchResults = panel.getSearchResults();
 		FieldLocation searchCursorLocation = searchResults.getFieldLocation();
 		int searchLineNumber = searchCursorLocation.getIndex().intValue() + 1;
 		assertEquals("Search result is on the wrong line", line, searchLineNumber);
@@ -285,7 +364,7 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 	private void showFind(String text) {
 		DockingActionIf findAction = getAction(decompiler, "Find");
 		performAction(findAction, provider, true);
-		findDialog = waitForDialogComponent(FindDialog.class);
+		findDialog = waitForDialogComponent(DecompilerFindDialog.class);
 		runSwing(() -> findDialog.setSearchText(text));
 	}
 

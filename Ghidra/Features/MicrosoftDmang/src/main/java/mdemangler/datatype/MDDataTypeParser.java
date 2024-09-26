@@ -17,6 +17,7 @@ package mdemangler.datatype;
 
 import mdemangler.MDException;
 import mdemangler.MDMang;
+import mdemangler.MDMang.ProcessingMode;
 import mdemangler.datatype.complex.*;
 import mdemangler.datatype.extended.*;
 import mdemangler.datatype.modifier.*;
@@ -31,6 +32,52 @@ import mdemangler.object.MDObjectCPP;
  *  by calling the appropriate parser at the appropriate place in the code.
  */
 public class MDDataTypeParser {
+	/**
+	 * This method is only to be used by MDMang itself for the highest level type parsing where
+	 * there is not already a multi-retry. This method checks for the '.' starting character,
+	 * determines the type by calling the {@link #parseDataType(MDMang, boolean)}, parses the type,
+	 * and does the multi-mode retry if there is an exception on the first pass as
+	 * MDMangObjectParser does for generic mangled objects
+	 * @param dmang - the MDMang driver
+	 * @param isHighest - boolean indicating whether something else modifies or names the data
+	 *  type to be parsed, which impacts when certain overloaded CV modifiers can be applied.
+	 * @return - a type derived from MDDataType
+	 * @throws MDException on parsing error
+	 */
+	public static MDDataType determineAndParseDataType(MDMang dmang, boolean isHighest)
+			throws MDException {
+
+		MDDataType dt = null;
+		if (dmang.peek() != '.') {
+			throw new MDException("MDMang: Mangled string is not that of a type.");
+		}
+
+		dmang.setProcessingMode(ProcessingMode.DEFAULT_STANDARD);
+		try {
+			dmang.pushContext();
+			dmang.increment(); // skip the '.'
+			dt = parseDataType(dmang, isHighest);
+			dt.parse();
+			dmang.popContext();
+		}
+		catch (MDException e1) {
+			dmang.resetState();
+			dmang.setProcessingMode(ProcessingMode.LLVM);
+			try {
+				dmang.pushContext();
+				dmang.increment(); // skip the '.'
+				dt = parseDataType(dmang, isHighest);
+				dt.parse();
+				dmang.popContext();
+			}
+			catch (MDException e2) {
+				throw new MDException(
+					"Reason1: " + e1.getMessage().trim() + "; Reason2: " + e2.getMessage().trim());
+			}
+		}
+		return dt;
+	}
+
 	/**
 	 * This method parses all data types.  Specifically, it parses void, data indirect types,
 	 * function indirect types, and all types parsed by parsePrimaryDataType().
@@ -79,10 +126,6 @@ public class MDDataTypeParser {
 		MDDataType dt;
 		char code = dmang.peek();
 		switch (code) {
-			case '$':
-				dmang.increment();
-				dt = parseSpecialExtendedType(dmang, isHighest);
-				break;
 			case 'A':
 				dmang.increment();
 				dt = new MDReferenceType(dmang, isHighest, false, false);
@@ -139,9 +182,15 @@ public class MDDataTypeParser {
 				break;
 			case 'Y': // UINFO: QualifiedName only (no type)
 				// TODO: implementation. Try symbol like "?var@@3$$Yabc@@"
-			case 'S': // invalid (UINFO)
+				dt = new MDNamedUnspecifiedType(dmang);
+				break;
 			case 'V': // Empty type parameter pack?
+				dt = new MDEmptyParameterType(dmang);
+				break;
 			case 'Z': // End template parameter pack?
+				dt = new MDEndParameterType(dmang);
+				break;
+			case 'S': // invalid (UINFO)
 			case 'F': // Investigate $$F in CVMod processing... does it belong here?
 			default:
 				throw new MDException("SpecialDataType: unrecognized code: " + code);
@@ -162,6 +211,14 @@ public class MDDataTypeParser {
 		MDDataType dt;
 		char code = dmang.getAndIncrement();
 		switch (code) {
+			case '?':
+				// Not sure if this should be here or other place.  I suppose could have a
+				//  reference to one of these, so wouldn't want it in "Primary" data types
+				dt = new MDCustomType(dmang);
+				break;
+			case '$':
+				dt = parseSpecialExtendedType(dmang, isHighest);
+				break;
 			case 'C':
 				dt = new MDCharDataType(dmang);
 				dt.setSigned();

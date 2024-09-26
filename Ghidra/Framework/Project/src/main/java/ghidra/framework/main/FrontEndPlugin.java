@@ -85,7 +85,6 @@ public class FrontEndPlugin extends Plugin
 	private ProjectToolBar toolBar;
 	private ProjectDataTreePanel dataTreePanel;
 	private ProjectDataTablePanel dataTablePanel;
-	private ToolButtonTransferable toolButtonTransferable;
 	private WorkspacePanel workspacePanel;
 	private Project activeProject;
 	private ProjectManager projectManager;
@@ -611,17 +610,6 @@ public class FrontEndPlugin extends Plugin
 		}
 
 		return actionContext;
-	}
-
-	ToolButtonTransferable getToolButtonTransferable() {
-		return toolButtonTransferable;
-	}
-
-	void setToolButtonTransferable(ToolButtonTransferable t) {
-		if (t == null && toolButtonTransferable != null) {
-			toolButtonTransferable.clearTransferData();
-		}
-		toolButtonTransferable = t;
 	}
 
 	void updateToolConnectionDialog() {

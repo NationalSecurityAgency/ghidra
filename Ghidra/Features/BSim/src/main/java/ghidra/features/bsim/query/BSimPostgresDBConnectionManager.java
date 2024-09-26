@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,8 @@ public class BSimPostgresDBConnectionManager {
 
 	private static HashMap<BSimServerInfo, BSimPostgresDataSource> dataSourceMap = new HashMap<>();
 
-	public static BSimPostgresDataSource getDataSource(BSimServerInfo postgresServerInfo) {
+	public static synchronized BSimPostgresDataSource getDataSource(
+			BSimServerInfo postgresServerInfo) {
 		if (postgresServerInfo.getDBType() != DBType.postgres) {
 			throw new IllegalArgumentException("expected postgres server info");
 		}
@@ -54,19 +55,20 @@ public class BSimPostgresDBConnectionManager {
 		return getDataSource(new BSimServerInfo(postgresUrl));
 	}
 
-	public static BSimPostgresDataSource getDataSourceIfExists(BSimServerInfo serverInfo) {
+	public static synchronized BSimPostgresDataSource getDataSourceIfExists(
+			BSimServerInfo serverInfo) {
 		return dataSourceMap.get(serverInfo);
 	}
 
-	private static synchronized void remove(BSimServerInfo serverInfo) {
+	private static synchronized void remove(BSimServerInfo serverInfo, boolean force) {
 		BSimPostgresDataSource ds = dataSourceMap.get(serverInfo);
 		if (ds == null) {
 			return;
 		}
 		int n = ds.bds.getNumActive();
-		if (n != 0) {
-			System.out
-					.println("Unable to remove data source which has " + n + " active connections");
+		if (n != 0 && !force) {
+			Msg.error(BSimPostgresDBConnectionManager.class,
+				"Unable to remove data source which has " + n + " active connections");
 			return;
 		}
 		ds.close();
@@ -113,8 +115,9 @@ public class BSimPostgresDBConnectionManager {
 			bds.setUsername(userName);
 		}
 
+		@Override
 		public void dispose() {
-			remove(serverInfo);
+			remove(serverInfo, true);
 		}
 
 		private void close() {
@@ -141,6 +144,11 @@ public class BSimPostgresDBConnectionManager {
 		@Override
 		public int getActiveConnections() {
 			return bds.getNumActive();
+		}
+
+		@Override
+		public int getIdleConnections() {
+			return bds.getNumIdle();
 		}
 
 		/**

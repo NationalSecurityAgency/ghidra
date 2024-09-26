@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra;
 import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.net.*;
+import java.util.*;
 
 import ghidra.util.Msg;
 
@@ -50,6 +51,30 @@ public class GhidraClassLoader extends URLClassLoader {
 	public static final String CP_EXT = "java.class.path.ext";
 
 	/**
+	 * Gets a {@link List} containing the current classpath referenced by the given property name
+	 * 
+	 * @param propertyName The property name of the classpath to get
+	 * @return A {@link List} containing the current classpath referenced by the given property name
+	 */
+	public static List<String> getClasspath(String propertyName) {
+		List<String> result = new ArrayList<>();
+
+		// StringTokenizer is better than split() here because our result list will stay empty if
+		// the classpath is empty
+		StringTokenizer st =
+			new StringTokenizer(System.getProperty(propertyName, ""), File.pathSeparator);
+		while (st.hasMoreTokens()) {
+			result.add(st.nextToken());
+		}
+		return result;
+	}
+
+	/**
+	 * Used to prevent duplicate URL's from being added to the classpath
+	 */
+	private Set<URL> alreadyAdded = new HashSet<>();
+
+	/**
 	 * This one-argument constructor is required for the JVM to successfully use this class loader
 	 * via the java.system.class.loader system property.
 	 * 
@@ -61,6 +86,9 @@ public class GhidraClassLoader extends URLClassLoader {
 
 	@Override
 	public void addURL(URL url) {
+		if (!alreadyAdded.add(url)) {
+			return;
+		}
 		super.addURL(url);
 		try {
 			System.setProperty(CP,

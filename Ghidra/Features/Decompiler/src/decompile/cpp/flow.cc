@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -330,8 +330,7 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
       break;
     case CPUI_CALLOTHER:
     {
-      InjectedUserOp *userop = dynamic_cast<InjectedUserOp *>(glb->userops.getOp(op->getIn(0)->getOffset()));
-      if (userop != (InjectedUserOp *)0)
+      if (glb->userops.getOp(op->getIn(0)->getOffset())->getType() == UserPcodeOp::injected)
 	injectlist.push_back(op);
       break;
     }
@@ -782,7 +781,6 @@ void FlowInfo::generateOps(void)
   if (hasInject())
     injectPcode();
   do {
-    bool collapsed_jumptable = false;
     while(!tablelist.empty()) {	// For each jumptable found
       vector<JumpTable *> newTables;
       recoverJumpTables(newTables, notreached);
@@ -794,16 +792,13 @@ void FlowInfo::generateOps(void)
 	int4 num = jt->numEntries();
 	for(int4 i=0;i<num;++i)
 	  newAddress(jt->getIndirectOp(),jt->getAddressByIndex(i));
-	if (jt->isPossibleMultistage())
-	  collapsed_jumptable = true;
 	while(!addrlist.empty())	// Try to fill in as much more as possible
 	  fallthru();
       }
     }
     
     checkContainedCall();	// Check for PIC constructions
-    if (collapsed_jumptable)
-      checkMultistageJumptables();
+    checkMultistageJumptables();
     while(notreachcnt < notreached.size()) {
       tablelist.push_back(notreached[notreachcnt]);
       notreachcnt += 1;
@@ -1436,13 +1431,17 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
     JumpTable::RecoveryMode mode;
     JumpTable *jt = data.recoverJumpTable(partial,op,this,mode); // Recover it
     if (jt == (JumpTable *)0) { // Could not recover jumptable
-      if ((mode == JumpTable::fail_noflow) && (tablelist.size() > 1) && (!isInArray(notreached,op))) {
-	// If the indirect op was not reachable with current flow AND there is more flow to generate,
-	//     AND we haven't tried to recover this table before
-	notreached.push_back(op); // Save this op so we can try to recovery table again later
-      }
-      else if (!isFlowForInline())	// Unless this flow is being inlined for something else
+      if (!isFlowForInline())	// Unless this flow is being inlined for something else
 	truncateIndirectJump(op,mode); // Treat the indirect jump as a call
+    }
+    else if (jt->isPartial()) {
+      if (tablelist.size() > 1 && !isInArray(notreached,op)) {
+	// If the recovery is incomplete with current flow AND there is more flow to generate,
+	//     AND we haven't tried to recover this table before
+	notreached.push_back(op); // Save this op so we can try to recover the table again later
+      }
+      else
+	jt->markComplete();	// If we aren't revisiting, mark the table as complete
     }
     newTables.push_back(jt);
   }

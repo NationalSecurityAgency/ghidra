@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,12 +165,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new DeleteArchiveAction(plugin));
 		addLocalAction(new RenameAction(plugin));
 		addLocalAction(new EditAction(plugin));
-		// NOTE: it make very little sense to blindly enable packing
-//		  addLocalAction(new PackDataTypeAction(plugin));
-//        addLocalAction( new PackDataTypeAction( plugin ));
-//        addLocalAction( new PackSizeDataTypeAction( plugin ));
-//		  addLocalAction(new PackAllDataTypesAction(plugin));
-//        addLocalAction( new DefineDataTypeAlignmentAction( plugin ));
 		addLocalAction(new CreateEnumFromSelectionAction(plugin));
 
 		// File group
@@ -181,6 +175,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// FileEdit group
 		addLocalAction(new LockArchiveAction(plugin)); // Archive
 		addLocalAction(new UnlockArchiveAction(plugin)); // Archive
+		addLocalAction(new UndoArchiveTransactionAction(plugin)); // Archive
+		addLocalAction(new RedoArchiveTransactionAction(plugin)); // Archive
 
 		// Arch group
 		addLocalAction(new SetArchiveArchitectureAction(plugin)); // Archive
@@ -212,7 +208,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		// ZVeryLast group
 		addLocalAction(new FindReferencesToDataTypeAction(plugin)); // DataType
-		addLocalAction(new FindReferencesToFieldAction(plugin)); // DataType
+		addLocalAction(new FindReferencesToFieldByNameOrOffsetAction(plugin)); // DataType
 		addLocalAction(new FindBaseDataTypeAction(plugin)); // DataType
 		addLocalAction(new DisplayTypeAsGraphAction(plugin));
 
@@ -221,12 +217,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(previousAction);
 		nextAction = new NextPreviousDataTypeAction(this, plugin.getName(), true);
 		addLocalAction(nextAction);
-		filterArraysAction = getFilterArraysAction();
-		addLocalAction(filterArraysAction);
-		filterPointersAction = getFilterPointersAction();
-		addLocalAction(filterPointersAction);
-		conflictHandlerModesAction = getConflictHandlerModesAction();
-		addLocalAction(conflictHandlerModesAction);
+		addLocalAction(getFilterArraysAction());
+		addLocalAction(getFilterPointersAction());
+		addLocalAction(getConflictHandlerModesAction());
 
 		// toolbar menu
 		addLocalAction(new OpenArchiveAction(plugin));
@@ -318,6 +311,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private ToggleDockingAction getFilterPointersAction() {
 		if (filterPointersAction == null) {
 			filterPointersAction = new FilterPointersAction(plugin);
+			archiveGTree.enablePointerFilter(filterPointersAction.isSelected());
 		}
 
 		return filterPointersAction;
@@ -326,6 +320,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private ToggleDockingAction getFilterArraysAction() {
 		if (filterArraysAction == null) {
 			filterArraysAction = new FilterArraysAction(plugin);
+			archiveGTree.enableArrayFilter(filterArraysAction.isSelected());
 		}
 
 		return filterArraysAction;

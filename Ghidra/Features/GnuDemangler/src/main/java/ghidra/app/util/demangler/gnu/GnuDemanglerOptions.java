@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 
 	private final GnuDemanglerFormat format;
 	private final boolean isDeprecated;
+	private boolean useStandardReplacements;
 
 	/**
 	 * Default constructor to use the modern demangler with auto-detect for the format.  This
@@ -76,6 +77,7 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	public GnuDemanglerOptions(GnuDemanglerFormat format, boolean isDeprecated) {
 		this.format = format;
 		this.isDeprecated = isDeprecated;
+		this.useStandardReplacements = true;
 		if (!format.isAvailable(isDeprecated)) {
 			throw new IllegalArgumentException(
 				format.name() + " is not available in the " + getDemanglerName());
@@ -98,13 +100,29 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 			format = GnuDemanglerFormat.AUTO;
 			isDeprecated = false;
 		}
+
+		this.useStandardReplacements = true;
 	}
 
 	private GnuDemanglerOptions(GnuDemanglerOptions copy, GnuDemanglerFormat format,
 			boolean deprecated) {
+		this(copy, format, deprecated, true);
+	}
+
+	private GnuDemanglerOptions(GnuDemanglerOptions copy, GnuDemanglerFormat format,
+			boolean deprecated, boolean useStandardReplacements) {
 		super(copy);
 		this.format = format;
 		this.isDeprecated = deprecated;
+		this.useStandardReplacements = useStandardReplacements;
+	}
+
+	/**
+	 * Changes this options value of {@link #shouldUseStandardReplacements()}
+	 * @param replace true to replace
+	 */
+	public void setUseStandardReplacements(boolean replace) {
+		this.useStandardReplacements = replace;
 	}
 
 	/**
@@ -158,12 +176,23 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 		return format;
 	}
 
+	/**
+	 * Returns whether the gnu demangler parser should replace demangler output with standard text
+	 * replacements defined in {@code GnuDemangler/data/default.gnu.demangler.replacements.txt}.
+	 * 
+	 * @return true to use replacements; false to not replace text
+	 */
+	public boolean shouldUseStandardReplacements() {
+		return useStandardReplacements;
+	}
+
 	@Override
 	public String toString() {
 		//@formatter:off
 		return "{\n" +
 			"\tdoDisassembly: " + doDisassembly() + ",\n" +
 			"\tapplySignature: " + applySignature() + ",\n" +
+			"\tuseStandardReplacements: " + useStandardReplacements + ",\n" +
 			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns() + ",\n" +
 			"\tdemanglerName: " + getDemanglerName() + ",\n" +
 			"\tdemanglerApplicationArguments: " + getDemanglerApplicationArguments() + ",\n" +

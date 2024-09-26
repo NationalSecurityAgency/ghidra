@@ -26,7 +26,6 @@ import docking.ActionContext;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -146,10 +145,6 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 
 	private void notifyContextChanged() {
 		tool.contextChanged(this);
-	}
-
-	ProgramSelection selectComment() {
-		return commentTable.getProgramSelection();
 	}
 
 	void reload() {

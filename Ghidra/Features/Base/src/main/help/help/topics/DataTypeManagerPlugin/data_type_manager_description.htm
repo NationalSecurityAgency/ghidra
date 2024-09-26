@@ -492,16 +492,17 @@
           changes, a dialog will appear providing an opportunity to save the changes.</P>
         </BLOCKQUOTE>
 
-        <H3><A name="Save"></A>Saving Changes to a File Data Type Archive</H3>
+        <H3><A name="Save"></A>Saving Changes to a Data Type Archive</H3>
 
         <BLOCKQUOTE>
-          <P>Whenever a data type archive has been <A href="#open_for_editing">opened for
-          editing</A> and has unsaved changes, the node will display its name with '*' attached.
+          <P>Whenever a data type archive has been opened for
+          editing and has unsaved changes, the node will display its name with '*' attached.
           For example the archive "MyArchive" will display as "MyArchive *". To save these changes,
           right-click on the unsaved archive and select the <I><B>Save Archive</B></I> action. The
           changes will be saved and the name will be updated to not show a '*'.</P>
         </BLOCKQUOTE>
 
+<!-- Unimplemented Action
         <H3><A name="Save_As"></A>Saving a File Data Type Archive to a New File<BR>
         </H3>
 
@@ -511,6 +512,37 @@
           and filename for the new archive that will be created. The tree will be updated to show
           the new name for the archive (the filename). The original archive file is unaffected.</P>
         </BLOCKQUOTE>
+-->
+
+	<H3><A name="Undo_Archive_Change"></A>Undo Unsaved Archive Change</H3>
+
+    <BLOCKQUOTE>
+      <P>The previous unsaved change made to an archive may be reverted by selecting the <B>Undo Change:...</B> 
+      popup menu action while that archive is selected in the data type tree.  
+      Each data type archive which is open for editing maintains a 
+      stack of unsaved changes.  The next change which may be reverted is described by the archive's
+      Undo Change popup menu item.  If this action is used and a change is reverted it may be re-applied by using the
+      <A href="#Redo_Archive_Change">Redo Change</A> action.  When the data type archive is 
+      <A href="#Save">saved</A> or <A href="#Lock_Archive">closed for editing</A> the undo/redo stack is 
+      cleared.
+      </P>
+
+    </BLOCKQUOTE>
+    
+    <H3><A name="Redo_Archive_Change"></A>Redo Unsaved Archive Change</H3>
+
+    <BLOCKQUOTE>
+      <P>The previous <A href="#Undo_Archive_Change">reverted</A> unsaved archive change may be 
+      re-applied by selecting the <B>Redo Change:...</B> popup menu action while that archive is selected in 
+      the data type tree.
+      The next reverted change which may be re-applied is described by the archive's
+      Redo Change popup menu item.  If this action is used and a change is re-applied it may again be reverted by using the
+      <A href="#Undo_Archive_Change">Undo Change</A> action.  When the data type archive is
+      <A href="#Save">saved</A> or <A href="#Lock_Archive">closed for editing</A> the undo/redo stack is 
+      cleared.
+      </P>
+
+    </BLOCKQUOTE>
 
         <H3><A name="Delete_Archive"></A>Deleting a Data Type Archive</H3>
 
@@ -524,23 +556,13 @@
 
         <H3><A name="Remove_Invalid_Archive"></A>Removing an Invalid Data Type Archive</H3>
 
-	        <BLOCKQUOTE>
+	     <BLOCKQUOTE>
         <P>When an archive file fails to open (when Ghidra can't find the file in the archive path
         or encounters a permission problem) it will be displayed with the <IMG alt="" src=
         "images/closedFolderInvalid.png"> icon. If you wish to permanently remove the file path
         from the tool configuration and the current program options, you may right-click on it and
-        select the <I><B>Remove Invalid
-        Archive</B></I> action.</P>
+        select the <I><B>Remove Invalid Archive</B></I> action.</P>
                 </BLOCKQUOTE>
-
-        <H3><A name="Pack_All_Data_Types"></A>Pack All Data Types In a Program or Archive</H3>
-
-        <BLOCKQUOTE>
-          <P>Right-click on the program or data type archive where structures and unions are to be packed,
-          and select the <I><B>Pack All...</B></I> action. A confirmation dialog will appear to
-          make sure you want to pack all composites in the program or data type
-          archive. If you continue, all non-packed composites will have default packing enabled.</P>
-        </BLOCKQUOTE>
 
         <H3><A name="synchronizing"></A> <A name="Update"></A> Updating an Archive From a Source
         Archive</H3>
@@ -901,6 +923,17 @@
           "../DataTypeEditors/StructureEditor.htm"><FONT color="#0000ff">structure
           editor</FONT></A> will appear, and for enums the <A href=
           "../DataTypeEditors/EnumEditor.htm">enum editor</A> will appear.</P>
+          
+          
+          <BLOCKQUOTE>
+	          <P><IMG border="0" src="help/shared/tip.png" alt="">To edit a data type from anywhere 
+	          in the tool, you can activate the global <B>Edit Data Type</B> action from the 
+	          keyboard by pressing <B><I>Ctrl-Shift-D</I></B>.  This will present you a 
+	          <A HREF="help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Chooser 
+	          Dialog</A> that you can use to choose a type to edit.
+	          </P>
+          </BLOCKQUOTE>
+          
         </BLOCKQUOTE>
 
         <H3><A name="CreateEnumFromSelection"></A>Creating a new Enum from a Selection of
@@ -989,14 +1022,7 @@
             </TBODY>
           </TABLE>
         </BLOCKQUOTE>
-<!-- disabled feature
-      <H3><A name="Align_Data_Type"></A>Aligning a Data Type</H3>
 
-      <BLOCKQUOTE>
-        <P>Right-click on the structure or union to be packed. Select the <I><B>Pack</B></I>
-        action. If the data type is non-packed it will be changed to be default packed.</P>
-      </BLOCKQUOTE>
--->
       <H3><A name="Commit_To_Archive"></A>Committing Changes To Source Archive</H3>
 
       <BLOCKQUOTE>

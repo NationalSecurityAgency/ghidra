@@ -15,10 +15,13 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * C11Lines information.  As best as we know, only one of C11Lines or C13Lines can be found after
@@ -34,14 +37,14 @@ public class C11Lines {
 	// array of (Windows C) unsigned long values (which is 32-bit int); we are limiting to java int.
 	// The value is used to move the PdbByteReader index, which takes an int.
 	private List<Integer> baseSrcFile;
-	private List<StartEnd> startEnd;
+	private List<C11LinesStartEnd> startEnd;
 	private List<Integer> seg; // array of unsigned shorts
 
 	private List<Integer> ccSegs;
 	// array of (Windows C) unsigned long values (which is 32-bit int); we are limiting to java int.
 	// The value is used to move the PdbByteReader index, which takes an int.
 	private List<List<Integer>> baseSrcLines;
-	private List<List<StartEnd>> startEnds;
+	private List<List<C11LinesStartEnd>> startEnds;
 	private List<String> names;
 
 	private List<List<Integer>> segmentNumbers; // unsigned short
@@ -52,6 +55,116 @@ public class C11Lines {
 			throws PdbException, CancelledException {
 		return new C11Lines(pdb, reader);
 	}
+
+	//==============================================================================================
+	// The below access methods might be temporary until it is decided if some work should
+	//  be done within the class with methods to access the work.
+
+	/**
+	 * Returns the number of source files
+	 * @return the number of source files
+	 */
+	public int getNumFiles() {
+		return cFile;
+	}
+
+	/**
+	 * Returns the number of segments.  This also is the number of start/end records.  This is
+	 * a high-level list whereas there is a per-file list later.  Not sure if this current list
+	 * is an encompassing list or something else
+	 * @return the number of segments
+	 */
+	public int getNumSegments() {
+		return cSeg;
+	}
+
+	/**
+	 * Returns the list of segment numbers.  This is a high-level list whereas there is a
+	 * per-file list later.  Not sure if this current list is an encompassing list or something
+	 * else
+	 * @return the segment numbers
+	 */
+	public List<Integer> getSegments() {
+		return seg;
+	}
+
+	/**
+	 * Returns the list of line start/end records.  This is a high-level list whereas there is
+	 * a per-file list of start-end records at a lower level.  Not sure if this current list is
+	 * an encompassing list or a list of something else
+	 * @return the list of start/end records
+	 */
+	public List<C11LinesStartEnd> getStartEnd() {
+		return startEnd;
+	}
+
+	/**
+	 * Returns the list of base source file indices?  This is our best guess at this time
+	 * @return the indices of the source files
+	 */
+	public List<Integer> getBaseSrcFiles() {
+		return baseSrcFile;
+	}
+
+	/**
+	 * Returns the list of the number of segments for each source file
+	 * @return the list of the number of segments
+	 */
+	public List<Integer> getPerFileNumSegments() {
+		return ccSegs;
+	}
+
+	/**
+	 * Returns the per-file list of base source lines, where the base is for the particular
+	 * segment
+	 * @return the per-file list of base source lines
+	 */
+	public List<List<Integer>> getPerFileBaseSrcLines() {
+		return baseSrcLines;
+	}
+
+	/**
+	 * Returns the per-file list of line start/end records, where the start/ends are for the
+	 * particular segment
+	 * @return the per-file list of segment start/ends
+	 */
+	public List<List<C11LinesStartEnd>> getPerFileStartEndRecords() {
+		return startEnds;
+	}
+
+	/**
+	 * The list of file names
+	 * @return the list of file names
+	 */
+	public List<String> getFileNames() {
+		return names;
+	}
+
+	/**
+	 * Returns the per-file list of segment numbers
+	 * @return the per-file list of segment numbers
+	 */
+	public List<List<Integer>> getPerFileSegmentNumbers() {
+		return segmentNumbers;
+	}
+
+	/**
+	 * Returns the per-file list of per-segment list of offsets
+	 * @return the offsets
+	 */
+	public List<List<List<Long>>> getPerFilePerSegmentOffsets() {
+		return offsets;
+	}
+
+	/**
+	 * Returns the per-file list of per-segment list of line numbers pertaining to the offsets
+	 * @return the line numbers
+	 */
+	public List<List<List<Integer>>> getPerFilePerSegmentLineNumbers() {
+		return lineNumbers;
+	}
+	// The above access methods... see note above.
+	//==============================================================================================
 
 	private C11Lines(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
@@ -74,7 +187,7 @@ public class C11Lines {
 		}
 		for (int i = 0; i < cSeg; i++) {
 			pdb.checkCancelled();
-			StartEnd se = new StartEnd();
+			C11LinesStartEnd se = new C11LinesStartEnd();
 			se.parse(reader);
 			startEnd.add(se);
 		}
@@ -101,9 +214,9 @@ public class C11Lines {
 				baseSrcLn.add(reader.parseInt());
 			}
 			baseSrcLines.add(baseSrcLn);
-			List<StartEnd> myStartEnd = new ArrayList<>();
+			List<C11LinesStartEnd> myStartEnd = new ArrayList<>();
 			for (int j = 0; j < ccSeg; j++) {
-				StartEnd se = new StartEnd();
+				C11LinesStartEnd se = new C11LinesStartEnd();
 				se.parse(reader);
 				myStartEnd.add(se);
 			}
@@ -140,41 +253,38 @@ public class C11Lines {
 
 	@Override
 	public String toString() {
-		try {
-			return dump();
-		}
-		catch (CancelledException e) {
-			return "";
-		}
+		return String.format("%s: numFiles = %d, numSegs = %d", getClass().getSimpleName(), cFile,
+			cSeg);
 	}
 
 	/**
-	 * Dumps this class.  This package-protected method is for debugging only.
-	 * @return the {@link String} output.
+	 * Dumps this class to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @param monitor the task monitor
 	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon issue writing to writer
 	 */
-	String dump() throws CancelledException {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Lines-------------------------------------------------------\n");
-		builder.append("cFile: " + cFile + " cSeg: " + cSeg + "\n");
+	void dump(Writer writer, TaskMonitor monitor) throws CancelledException, IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		writer.write("cFile: " + cFile + " cSeg: " + cSeg + "\n");
 		for (int i = 0; i < cFile; i++) {
 			pdb.checkCancelled();
-			builder.append("baseSrcFile[" + i + "]: " + baseSrcFile.get(i) + "\n");
+			writer.write("baseSrcFile[" + i + "]: " + baseSrcFile.get(i) + "\n");
 		}
 		for (int i = 0; i < cSeg; i++) {
 			pdb.checkCancelled();
-			builder.append(i + ": start:" + startEnd.get(i).getStart() + " end: " +
+			writer.write(i + ": start:" + startEnd.get(i).getStart() + " end: " +
 				startEnd.get(i).getEnd() + " seg: " + seg.get(i) + "\n");
 		}
 		for (int i = 0; i < cFile; i++) {
 			pdb.checkCancelled();
-			builder.append(
+			writer.write(
 				"  file[" + i + "]: cSeg: " + ccSegs.get(i) + " name: " + names.get(i) + "\n");
 			List<Integer> myBaseSrcLn = baseSrcLines.get(i);
-			List<StartEnd> myStartEnds = startEnds.get(i);
+			List<C11LinesStartEnd> myStartEnds = startEnds.get(i);
 			for (int j = 0; j < ccSegs.get(i); j++) {
-				StartEnd se = myStartEnds.get(j);
-				builder.append("  " + j + ": baseSrcLn: " + myBaseSrcLn.get(j) + " start: " +
+				C11LinesStartEnd se = myStartEnds.get(j);
+				writer.write("  " + j + ": baseSrcLn: " + myBaseSrcLn.get(j) + " start: " +
 					se.getStart() + " end: " + se.getEnd() + "\n");
 			}
 			List<Integer> segNums = segmentNumbers.get(i);
@@ -184,33 +294,14 @@ public class C11Lines {
 				pdb.checkCancelled();
 				List<Long> segOffsets = fileSegOffsets.get(j);
 				List<Integer> segLineNums = fileSegLineNums.get(j);
-				builder.append("  seg[" + j + "]: Seg: " + segNums.get(j) + " cPair: " +
+				writer.write("  seg[" + j + "]: Seg: " + segNums.get(j) + " cPair: " +
 					segOffsets.size() + "\n");
 				for (int k = 0; k < segOffsets.size(); k++) {
-					builder.append("  " + segLineNums.get(k) + ":" + segOffsets.get(k) + "\n");
+					writer.write("  " + segLineNums.get(k) + ":" + segOffsets.get(k) + "\n");
 				}
 			}
 		}
-		builder.append("End Lines---------------------------------------------------\n");
-		return builder.toString();
-	}
-
-	private class StartEnd {
-		private long start; // unsigned long
-		private long end; // unsigned long
-
-		public void parse(PdbByteReader reader) throws PdbException {
-			start = reader.parseUnsignedIntVal();
-			end = reader.parseUnsignedIntVal();
-		}
-
-		public long getStart() {
-			return start;
-		}
-
-		public long getEnd() {
-			return end;
-		}
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 }

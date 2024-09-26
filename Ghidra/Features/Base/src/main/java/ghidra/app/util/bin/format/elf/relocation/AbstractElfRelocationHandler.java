@@ -99,8 +99,8 @@ abstract public class AbstractElfRelocationHandler<T extends ElfRelocationType, 
 
 		int symbolIndex = relocation.getSymbolIndex();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // will never be null
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym); // may be null
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
@@ -122,12 +122,19 @@ abstract public class AbstractElfRelocationHandler<T extends ElfRelocationType, 
 
 	/**
 	 * Perform relocation fixup.
+	 * <br>
+	 * NOTE: This method will not be invoked if elfSymbol is null and 
+	 * {@link ElfRelocationContext#processRelocation(ElfRelocation, Address)} will report
+	 * relocation failure.
+	 * <br>
+	 * NOTE: This method will not be invoked for {@code type} == 0/NONE and will be marked as
+	 * skipped.
 	 *
 	 * @param elfRelocationContext relocation context
 	 * @param relocation ELF relocation
 	 * @param relocationType ELF relocation type enum value
 	 * @param relocationAddress relocation target address (fixup location)
-	 * @param elfSymbol relocation symbol (may be null)
+	 * @param elfSymbol relocation symbol
 	 * @param symbolAddr elfSymbol memory address (may be null)
 	 * @param symbolValue unadjusted elfSymbol value (0 if no symbol)
 	 * @param symbolName elfSymbol name (may be null)
@@ -141,6 +148,39 @@ abstract public class AbstractElfRelocationHandler<T extends ElfRelocationType, 
 	//
 	// Error and Warning markup methods
 	//
+	
+	/**
+	 * Check for unresolved relocation symbol.  If symbol has not been resolved the associated
+	 * symbol address will be null and the symbol value invalid.
+	 * @param elfRelocationContext relocation context
+	 * @param relocation ELF relocation
+	 * @param relocationAddress relocation target address (fixup location)
+	 * @return true if symbol was not resolved else false if symbol was resolved
+	 */
+	protected boolean handleUnresolvedSymbol(ElfRelocationContext<?> elfRelocationContext, ElfRelocation relocation,Address relocationAddress) {
+		
+		int symbolIndex = relocation.getSymbolIndex();
+
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // will never be null
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym); // may be null
+
+		if (symbolIndex != 0 && symbolAddr == null) { // symbolValue will also be invalid
+			
+			int typeId = relocation.getType();
+			T type = getRelocationType(typeId);
+			
+			String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
+			
+			Program program = elfRelocationContext.getProgram();
+			
+			markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
+				elfRelocationContext.getLog());
+			markAsError(program, relocationAddress, type, symbolName, symbolIndex, 
+				"Failed to resolve relocation symbol", elfRelocationContext.getLog());
+			return true;
+		}
+		return false;
+	}
 
 //	private String getRelocationTypeDetail(int typeId) {
 //		T relocationType = relocationTypesMap.get(typeId);

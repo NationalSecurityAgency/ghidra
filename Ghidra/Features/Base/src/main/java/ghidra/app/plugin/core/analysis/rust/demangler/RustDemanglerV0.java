@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,8 @@ import java.util.*;
 /**
  * A class that will demangle Rust symbols mangled according to the V0 format. This class
  * implements the grammar that will translate a mangled string into a demangled one.
- * Documentation is {@link "https://rust-lang.github.io/rfcs/2603-rust-symbol-name-mangling-v0.html"} here.
+ * 
+ * @see <a href="https://rust-lang.github.io/rfcs/2603-rust-symbol-name-mangling-v0.html">2603-rust-symbol-name-mangling-v0.html</a>
  */
 public class RustDemanglerV0 {
 

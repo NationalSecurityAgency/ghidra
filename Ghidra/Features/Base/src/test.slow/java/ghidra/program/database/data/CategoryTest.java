@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -685,6 +685,8 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		DataType byteDt = root.getDataType("byte");
 		DataType wordDt = root.getDataType("word");
 
+		assertEquals(4, getEventCount());
+
 		Event ev = getEvent(0);
 		assertEquals("Cat Added", ev.evName);
 		assertEquals(null, ev.dt);
@@ -701,21 +703,9 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(root.getCategoryPath(), ev.parent);
 
 		ev = getEvent(3);
-		assertEquals("DT Changed", ev.evName);
-		assertTrue(dt.isEquivalent(ev.dt));
-		assertEquals(null, ev.parent);
-
-//		ev = getEvent(4);  // eliminated size change event during creation
-//		assertEquals("DT Changed", ev.evName);
-//		assertTrue(dt.isEquivalent(ev.dt));
-//		assertEquals(null, ev.parent);
-
-		ev = getEvent(4);
 		assertEquals("DT Added", ev.evName);
 		assertTrue(dt.isEquivalent(ev.dt));
 		assertEquals(sub1.getCategoryPath(), ev.parent);
-
-		assertEquals(5, getEventCount());
 
 	}
 
@@ -807,8 +797,9 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		struct2 = (Structure) newDt.insert(3, struct2).getDataType();
 
-		assertEquals(4, getEventCount());
-		Event ev = getEvent(3);
+		assertEquals(3, getEventCount());
+
+		Event ev = getEvent(2);
 		assertEquals("DT Changed", ev.evName);
 		assertEquals(newDt, ev.dt);
 	}
@@ -908,6 +899,11 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			// don't care
+		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
 			// don't care
 		}
 	}

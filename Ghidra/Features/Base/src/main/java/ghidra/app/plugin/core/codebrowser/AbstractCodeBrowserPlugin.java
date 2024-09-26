@@ -63,7 +63,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	private static final String CURSOR_COLOR_OPTIONS_NAME = "Cursor.Cursor Color - Focused";
 	private static final String UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME =
 		"Cursor.Cursor Color - Unfocused";
-	private static final String BLINK_CURSOR_OPTIONS_NAME = "Cursor.Blink Cursor";
 	private static final String MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME =
 		"Mouse.Horizontal Scrolling";
 
@@ -417,10 +416,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 				Color color = ((Color) newValue);
 				fieldPanel.setNonFocusCursorColor(color);
 			}
-			else if (optionName.equals(BLINK_CURSOR_OPTIONS_NAME)) {
-				Boolean isBlinkCursor = ((Boolean) newValue);
-				fieldPanel.setBlinkCursor(isBlinkCursor);
-			}
 			else if (optionName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)) {
 				cursorHighlightColor = (Color) newValue;
 				if (currentCursorMarkers != null) {
@@ -562,8 +557,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		fieldOptions.registerThemeColorBinding(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME,
 			UNFOCUSED_CURSOR_COLOR.getId(), helpLocation,
 			"The color of the cursor in the browser when the browser does not have focus.");
-		fieldOptions.registerOption(BLINK_CURSOR_OPTIONS_NAME, true, helpLocation,
-			"When selected, the cursor will blink when the containing window is focused.");
 		fieldOptions.registerThemeColorBinding(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
 			CURRENT_LINE_HIGHLIGHT_COLOR.getId(), helpLocation,
 			"The background color of the line where the cursor is located");
@@ -598,9 +591,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME, UNFOCUSED_CURSOR_COLOR);
 		fieldPanel.setNonFocusCursorColor(color);
-
-		Boolean isBlinkCursor = fieldOptions.getBoolean(BLINK_CURSOR_OPTIONS_NAME, true);
-		fieldPanel.setBlinkCursor(isBlinkCursor);
 
 		boolean horizontalScrollingEnabled =
 			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME, true);
@@ -850,16 +840,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	Address getAddressTopOfScreen() {
 		BigInteger index = getFieldPanel().getViewerPosition().getIndex();
 		return getAddressIndexMap().getAddress(index);
-	}
-
-	@Override
-	public void formatModelAdded(FieldFormatModel model) {
-		// uninterested
-	}
-
-	@Override
-	public void formatModelRemoved(FieldFormatModel model) {
-		// uninterested
 	}
 
 	@Override

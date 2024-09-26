@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,25 +58,35 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * 	<li>Find the GoBuildInfo struct.  This struct is the easiest to locate, even when the binary
  * 	is stripped.  This gives us the go pointerSize (probably same as ghidra pointer size) and the
  * 	goVersion.  This struct does not rely on StructureMapping, allowing its use before a
- * 	DataTypeMapper is created.
- * 	<li>Create DataTypeMapper
- * 	<li>Find the runtime.firstmoduledata structure.
- * 		<ul>
- *			<li>If there are symbols, just use the symbol or named memory block.
- *			<li>If stripped:
+ * 	DataTypeMapper is created.</li>
+ * 	<li>Create DataTypeMapper</li>
+ * 	<li>Find the runtime.firstmoduledata structure.</li>
+ * 	<li>
+ *     <ul>
+ *			<li>If there are symbols, just use the symbol or named memory block.</li>
+ *			<li>If stripped:</li>
+ *			<li>
  *				<ul>
  * 					<li>Find the pclntab.  This has a magic signature, a pointerSize, and references
- * 					to a couple of tables that are also referenced in the moduledata structure.
+ * 					to a couple of tables that are also referenced in the moduledata structure.</li>
  * 					<li>Search memory for a pointer to the pclntab struct.  This should be the first
  * 					field of the moduledata structure.  The values that are duplicated between the
- * 					two structures can be compared to ensure validity.
+ * 					two structures can be compared to ensure validity.</li>
  * 					<li>Different binary formats (Elf vs PE) will determine which memory blocks to
- * 					search.
- * 				</ul>  
- * 		</ul>
+ * 					search.</li>
+ * 				</ul>
+ * 			</li>  
+ * 	   </ul>
+ *  </li>
  * </ul>
  */
-public class GoRttiMapper extends DataTypeMapper {
+public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContext {
+	public static final GoVer SUPPORTED_MIN_VER = new GoVer(1, 15);
+	public static final GoVer SUPPORTED_MAX_VER = new GoVer(1, 22);
+
+	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
+	private static final List<String> SECTION_PREFIXES =
+		List.of("." /* ELF */, "__" /* macho sections */);
 
 	private static final String FAILED_FLAG = "FAILED TO FIND GOLANG BINARY";
 
@@ -161,20 +171,24 @@ public class GoRttiMapper extends DataTypeMapper {
 			return null;
 		}
 
-		GoVer goVer = buildInfo.getVerEnum();
-		if (goVer == GoVer.UNKNOWN) {
+		GoVer goVer = buildInfo.getGoVer();
+		if (goVer.isInvalid()) {
 			throw new BootstrapInfoException(
-				"Unsupported Golang version, version info: '%s'".formatted(buildInfo.getVersion()));
+				"Invalid Golang version string [%s]".formatted(buildInfo.getVersion()));
+		}
+		if (!goVer.inRange(SUPPORTED_MIN_VER, SUPPORTED_MAX_VER)) {
+			Msg.error(GoRttiMapper.class, "Untested golang version [%s]".formatted(goVer));
 		}
 
 		ResourceFile gdtFile =
 			findGolangBootstrapGDT(goVer, buildInfo.getPointerSize(), getGolangOSString(program));
 		if (gdtFile == null) {
-			Msg.error(GoRttiMapper.class, "Missing golang gdt archive for " + goVer);
+			Msg.error(GoRttiMapper.class,
+				"Missing golang gdt archive for golang version [%s]".formatted(goVer));
 		}
 
-		return new GoRttiMapper(program, buildInfo.getPointerSize(), buildInfo.getEndian(),
-			buildInfo.getVerEnum(), gdtFile);
+		return new GoRttiMapper(program, buildInfo.getPointerSize(), buildInfo.getEndian(), goVer,
+			gdtFile);
 	}
 
 	/**
@@ -265,10 +279,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		return false;
 	}
 
-	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
-	private static final List<String> SECTION_PREFIXES =
-		List.of("." /* ELF */, "__" /* macho sections */);
-
 	/**
 	 * Returns a matching symbol from the specified program, using golang specific logic.
 	 * 
@@ -324,6 +334,16 @@ public class GoRttiMapper extends DataTypeMapper {
 				"Unable to find Golang runtime.zerobase, using " + zerobaseAddr);
 		}
 		return zerobaseAddr;
+	}
+
+	public static List<GoVer> getAllSupportedVersions() {
+		List<GoVer> result = new ArrayList<>();
+		for (int minor = SUPPORTED_MIN_VER.getMinor(); minor <= SUPPORTED_MAX_VER
+				.getMinor(); minor++) {
+			// TODO: a bit of a hack only supporting 1.x version number instances
+			result.add(new GoVer(1, minor));
+		}
+		return result;
 	}
 
 	public final static String ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME =
@@ -413,7 +433,7 @@ public class GoRttiMapper extends DataTypeMapper {
 		this.stringDT = getTypeOrDefault("string", Structure.class, null);
 
 		try {
-			registerStructures(GOLANG_STRUCTMAPPED_CLASSES);
+			registerStructures(GOLANG_STRUCTMAPPED_CLASSES, this);
 		}
 		catch (IOException e) {
 			if (archiveGDT == null) {
@@ -429,6 +449,19 @@ public class GoRttiMapper extends DataTypeMapper {
 					.formatted(archiveGDT.getAbsolutePath()),
 				e);
 		}
+	}
+
+	@Override
+	public <T extends DataType> T getType(String name, Class<T> clazz) {
+		T result = super.getType(name, clazz);
+		if (result == null && GoPcHeader.GO_STRUCTURE_NAME.equals(name) &&
+			Structure.class.isAssignableFrom(clazz)) {
+			// create an artificial runtime.pcHeader structure for <=1.15 to enable GoModuledata
+			// to have references to a GoPcHeader 
+			result = clazz.cast(GoPcHeader.createArtificialGoPcHeaderStructure(GOLANG_CP,
+				program.getDataTypeManager()));
+		}
+		return result;
 	}
 
 	/**
@@ -460,10 +493,12 @@ public class GoRttiMapper extends DataTypeMapper {
 		GoModuledata firstModule = findFirstModuledata(monitor);
 		if (firstModule != null) {
 			GoPcHeader pcHeader = firstModule.getPcHeader();
-			this.minLC = pcHeader.getMinLC();
-			if (pcHeader.getPtrSize() != ptrSize) {
-				throw new IOException(
-					"Mismatched ptrSize: %d vs %d".formatted(pcHeader.getPtrSize(), ptrSize));
+			if (pcHeader != null) {
+				this.minLC = pcHeader.getMinLC();
+				if (pcHeader.getPtrSize() != ptrSize) {
+					throw new IOException(
+						"Mismatched ptrSize: %d vs %d".formatted(pcHeader.getPtrSize(), ptrSize));
+				}
 			}
 			addModule(firstModule);
 		}
@@ -810,9 +845,8 @@ public class GoRttiMapper extends DataTypeMapper {
 		// gdt data base.  This method only leaves the target gdt filename + ".step1" in the db.
 		File tmpGDTFile = new File(gdtFile.getParentFile(), gdtFile.getName() + ".step1.gdt");
 		FileDataTypeManager tmpFdtm = FileDataTypeManager.createFileArchive(tmpGDTFile);
-		int tx = -1;
+		int tx = tmpFdtm.startTransaction("Import");
 		try {
-			tx = tmpFdtm.startTransaction("Import");
 			tmpFdtm.addDataTypes(registeredStructDTs, DataTypeConflictHandler.DEFAULT_HANDLER,
 				monitor);
 			if (runtimeFuncSnapshot) {
@@ -847,17 +881,14 @@ public class GoRttiMapper extends DataTypeMapper {
 			Msg.error(this, "Error when exporting types to file: %s".formatted(gdtFile), e);
 		}
 		finally {
-			if (tx != -1) {
-				tmpFdtm.endTransaction(tx, true);
-			}
+			tmpFdtm.endTransaction(tx, true);
 		}
 
 		tmpFdtm.save();
 
 		FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
-		tx = -1;
+		tx = fdtm.startTransaction("Import");
 		try {
-			tx = fdtm.startTransaction("Import");
 			tmpFdtm.getAllDataTypes()
 					.forEachRemaining(
 						dt -> fdtm.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER));
@@ -866,9 +897,7 @@ public class GoRttiMapper extends DataTypeMapper {
 			}
 		}
 		finally {
-			if (tx != -1) {
-				fdtm.endTransaction(tx, true);
-			}
+			fdtm.endTransaction(tx, true);
 		}
 
 		fdtm.save();
@@ -893,7 +922,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 		return existingDT;
 	}
-
 
 	private List<DataType> createBootstrapFuncDefs(DataTypeManager destDTM, CategoryPath destCP,
 			TaskMonitor monitor) throws CancelledException {
@@ -926,7 +954,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 		return results;
 	}
-
 
 	private void moveAllDataTypesTo(DataTypeManager dtm, CategoryPath srcCP, CategoryPath destCP)
 			throws DuplicateNameException, DataTypeDependencyException, InvalidNameException {
@@ -1150,7 +1177,7 @@ public class GoRttiMapper extends DataTypeMapper {
 				.map(Entry::getKey)
 				.collect(toSet());
 		typeDupCount.clear();
-		
+
 		for (GoType goType : goTypes.values()) {
 			String typeName = goType.getNameWithPackageString();
 			if (dupedTypeNames.contains(typeName)) {
@@ -1238,10 +1265,11 @@ public class GoRttiMapper extends DataTypeMapper {
 
 		StructureContext<T> structContext = getStructureContextOfInstance(structInstance);
 		String fallbackName = defaultValue;
-		fallbackName = fallbackName == null && structContext != null
-				? "%s_%x".formatted(structContext.getMappingInfo().getStructureName(),
-					structContext.getStructureStart())
-				: "invalid_object";
+		fallbackName =
+			fallbackName == null && structContext != null
+					? "%s_%x".formatted(structContext.getMappingInfo().getStructureName(),
+						structContext.getStructureStart())
+					: "invalid_object";
 		return GoName.createFakeInstance(fallbackName);
 	}
 
@@ -1263,7 +1291,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 		return "unknown_type_%x".formatted(offset);
 	}
-
 
 	/**
 	 * Returns the {@link GoType} corresponding to an offset that is relative to the controlling
@@ -1384,22 +1411,22 @@ public class GoRttiMapper extends DataTypeMapper {
 
 	private GoModuledata findFirstModuledata(TaskMonitor monitor) throws IOException {
 		GoModuledata result = GoModuledata.getFirstModuledata(this);
-		if (result == null) {
-			monitor.setMessage("Searching for Golang pclntab");
-			monitor.initialize(0);
-			Address pclntabAddress = GoPcHeader.getPclntabAddress(program);
-			if (pclntabAddress == null) {
-				pclntabAddress =
-					GoPcHeader.findPclntabAddress(this, getPclntabSearchRange(), monitor);
-			}
-			if (pclntabAddress != null) {
-				monitor.setMessage("Searching for Golang firstmoduledata");
-				monitor.initialize(0);
-				GoPcHeader pclntab = readStructure(GoPcHeader.class, pclntabAddress);
-				result = GoModuledata.findFirstModule(this, pclntabAddress, pclntab,
-					getModuledataSearchRange(), monitor);
-			}
+		Address pcHeaderAddress =
+			result != null ? result.getPcHeaderAddress() : GoPcHeader.getPcHeaderAddress(program);
+		if (pcHeaderAddress == null) {
+			monitor.initialize(0, "Searching for Golang pclntab");
+			pcHeaderAddress =
+				GoPcHeader.findPcHeaderAddress(this, getPclntabSearchRange(), monitor);
 		}
+		if (result == null && pcHeaderAddress != null) {
+			// find the moduledata struct by searching for a pointer to the pclntab/pcHeader,
+			// which should be the first field in the moduledata struct.
+			monitor.initialize(0, "Searching for Golang firstmoduledata");
+			GoPcHeader pcHeader = readStructure(GoPcHeader.class, pcHeaderAddress);
+			result = GoModuledata.findFirstModule(this, pcHeaderAddress, pcHeader,
+				getModuledataSearchRange(), monitor);
+		}
+
 		if (result != null && !result.isValid()) {
 			throw new IOException("Invalid Golang moduledata at %s"
 					.formatted(result.getStructureContext().getStructureAddress()));
@@ -1409,15 +1436,13 @@ public class GoRttiMapper extends DataTypeMapper {
 
 	private AddressRange getPclntabSearchRange() {
 		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "rdata");
-		return memBlock != null
-				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
+		return memBlock != null ? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
 	}
 
 	private AddressRange getModuledataSearchRange() {
 		MemoryBlock memBlock = getFirstGoSection(program, "noptrdata", "data");
-		return memBlock != null
-				? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
+		return memBlock != null ? new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd())
 				: null;
 	}
 
@@ -1456,7 +1481,6 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 		return result;
 	}
-
 
 	public Symbol getGoSymbol(String symbolName) {
 		return getGoSymbol(program, symbolName);
@@ -1537,4 +1561,25 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 
 	}
+
+	@Override
+	public boolean isFieldPresent(String presentWhen) {
+		presentWhen = presentWhen.strip();
+		if (presentWhen.isEmpty()) {
+			return true;
+		}
+		String[] verNums = presentWhen.split("[+-]", -1); // "1.2-1.5" or "1.2+" or "-1.2"
+		if (verNums.length != 2) {
+			throw new IllegalArgumentException(
+				"Invalid 'presentWhen' value [%s]".formatted(presentWhen));
+		}
+		GoVer startVer = verNums[0].isBlank() ? new GoVer(1, 0) : GoVer.parse(verNums[0]);
+		GoVer endVer = verNums[1].isBlank() ? new GoVer(99, 99) : GoVer.parse(verNums[1]);
+		if (startVer.isInvalid() || endVer.isInvalid()) {
+			throw new IllegalArgumentException(
+				"Invalid 'presentWhen' value [%s]".formatted(presentWhen));
+		}
+		return startVer.compareTo(goVersion) <= 0 && goVersion.compareTo(endVer) <= 0;
+	}
+
 }

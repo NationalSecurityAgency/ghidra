@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 /**
@@ -193,10 +195,11 @@ public abstract class ModuleInformation {
 	protected abstract void parseAdditionals(PdbByteReader reader) throws PdbException;
 
 	/**
-	 * Dumps the Additionals.  This method is for debugging only
-	 * @return {@link String} of pretty output
+	 * Dumps the Additionals to Writer.  This method is for debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issues writing to the writer
 	 */
-	protected abstract String dumpAdditionals();
+	protected abstract void dumpAdditionals(Writer writer) throws IOException;
 
 	//==============================================================================================
 	// Package-Protected Internals
@@ -211,46 +214,34 @@ public abstract class ModuleInformation {
 	}
 
 	/**
-	 * Dumps this module.  This method is for debugging only
-	 * @return {@link String} of pretty output
+	 * Dumps this module to the Writer.  This method is for debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("ModuleInformation-------------------------------------------\n");
-		builder.append("modulePointer: ");
-		builder.append(modulePointer);
-		builder.append("\n");
-		builder.append(sectionContribution.dump());
-		builder.append("\nwrittenSinceOpen: ");
-		builder.append(writtenSinceOpen);
+	void dump(Writer writer) throws IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		writer.write("modulePointer: " + modulePointer);
+		writer.write("\n");
+		sectionContribution.dump(writer);
+		writer.write("\nwrittenSinceOpen: " + writtenSinceOpen);
 
-		builder.append("\necSymbolicInformationEnabled: ");
-		builder.append(ecSymbolicInformationEnabled);
+		writer.write("\necSymbolicInformationEnabled: " + ecSymbolicInformationEnabled);
 
-		builder.append("\nspare: ");
-		builder.append(spare);
-		builder.append("\nindexToTSMList: ");
-		builder.append(indexToTSMList);
-		builder.append("\nstreamNumberDebugInformation: ");
-		builder.append(streamNumberDebugInformation);
-		builder.append("\nsizeLocalSymbolsDebugInformation: ");
-		builder.append(sizeLocalSymbolsDebugInformation);
-		builder.append("\nsizeLineNumberDebugInformation: ");
-		builder.append(sizeLineNumberDebugInformation);
-		builder.append("\nsizeC13StyleLineNumberInformation: ");
-		builder.append(sizeC13StyleLineNumberInformation);
-		builder.append("\nnumFilesContributing: ");
-		builder.append(numFilesContributing);
+		writer.write("\nspare: " + spare);
+		writer.write("\nindexToTSMList: " + indexToTSMList);
+		writer.write("\nstreamNumberDebugInformation: " + streamNumberDebugInformation);
+		writer.write("\nsizeLocalSymbolsDebugInformation: " + sizeLocalSymbolsDebugInformation);
+		writer.write("\nsizeLineNumberDebugInformation: " + sizeLineNumberDebugInformation);
+		writer.write("\nsizeC13StyleLineNumberInformation: " + sizeC13StyleLineNumberInformation);
+		writer.write("\nnumFilesContributing: " + numFilesContributing);
 
-		builder.append(dumpAdditionals());
+		dumpAdditionals(writer);
 
-		builder.append("\nmoduleName: ");
-		builder.append(moduleName);
-		builder.append("\nobjectFileName: ");
-		builder.append(objectFileName);
+		writer.write("\nmoduleName: " + moduleName);
+		writer.write("\nobjectFileName: " + objectFileName);
+		writer.write("\n");
 
-		builder.append("\nEnd ModuleInformation---------------------------------------\n");
-		return builder.toString();
+		PdbReaderUtils.dumpTail(writer, this);
 	}
 
 }

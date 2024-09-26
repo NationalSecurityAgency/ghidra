@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import java.util.concurrent.*;
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
+import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.LaunchFailureDialog.ErrPromptResponse;
 import ghidra.app.plugin.core.debug.service.tracermi.DefaultTraceRmiAcceptor;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler;
@@ -36,10 +36,11 @@ import ghidra.app.plugin.core.terminal.TerminalListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
-import ghidra.debug.api.modules.*;
-import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.ValStr;
+import ghidra.debug.api.action.AutoMapSpec;
+import ghidra.debug.api.modules.DebuggerMissingProgramActionContext;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.*;
@@ -50,7 +51,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.pty.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
-import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
@@ -185,26 +185,40 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		return result;
 	}
 
-	protected Collection<ModuleMapEntry> invokeMapper(TaskMonitor monitor,
-			DebuggerStaticMappingService mappingService, Trace trace) throws CancelledException {
+	protected boolean invokeMapper(TaskMonitor monitor, DebuggerStaticMappingService mappingService,
+			TraceRmiConnection connection, Trace trace, AutoMapSpec spec)
+			throws CancelledException {
 		if (program == null) {
-			return List.of();
+			return false;
 		}
-		Map<TraceModule, ModuleMapProposal> map = mappingService
-				.proposeModuleMaps(trace.getModuleManager().getAllModules(), List.of(program));
-		Collection<ModuleMapEntry> proposal = MapProposal.flatten(map.values());
-		mappingService.addModuleMappings(proposal, monitor, true);
-		return proposal;
+
+		if (spec.performMapping(mappingService, trace, List.of(program), monitor)) {
+			return true;
+		}
+
+		try {
+			mappingService.changesSettled().get(1, TimeUnit.SECONDS);
+		}
+		catch (InterruptedException | ExecutionException | TimeoutException e) {
+			// Whatever, just check for the mapping
+		}
+
+		Address probeAddress = getMappingProbeAddress();
+		if (probeAddress == null) {
+			return true; // Probably shouldn't happen, but if it does, say "success"
+		}
+		ProgramLocation probe = new ProgramLocation(program, probeAddress);
+		long snap = connection.getLastSnapshot(trace);
+		return mappingService.getOpenMappedLocation(trace, probe, snap) != null;
 	}
 
-	protected SaveState saveLauncherArgsToState(Map<String, ?> args,
-			Map<String, ParameterDescription<?>> params) {
+	protected SaveState saveLauncherArgsToState(Map<String, ValStr<?>> args,
+			Map<String, LaunchParameter<?>> params) {
 		SaveState state = new SaveState();
-		for (ParameterDescription<?> param : params.values()) {
-			Object val = args.get(param.name);
+		for (LaunchParameter<?> param : params.values()) {
+			ValStr<?> val = args.get(param.name());
 			if (val != null) {
-				ConfigStateField.putState(state, param.type.asSubclass(Object.class),
-					"param_" + param.name, val);
+				state.putString("param_" + param.name(), val.str());
 			}
 		}
 		return state;
@@ -218,56 +232,56 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		plugin.writeProgramLaunchConfig(program, getConfigName(), state);
 	}
 
-	protected void saveLauncherArgs(Map<String, ?> args,
-			Map<String, ParameterDescription<?>> params) {
+	protected void saveLauncherArgs(Map<String, ValStr<?>> args,
+			Map<String, LaunchParameter<?>> params) {
 		saveState(saveLauncherArgsToState(args, params));
 	}
 
 	interface ImageParamSetter {
 		@SuppressWarnings("unchecked")
-		static ImageParamSetter get(ParameterDescription<?> param) {
-			if (param.type == String.class) {
-				return new StringImageParamSetter((ParameterDescription<String>) param);
+		static ImageParamSetter get(LaunchParameter<?> param) {
+			if (param.type() == String.class) {
+				return new StringImageParamSetter((LaunchParameter<String>) param);
 			}
-			if (param.type == PathIsFile.class) {
-				return new FileImageParamSetter((ParameterDescription<PathIsFile>) param);
+			if (param.type() == PathIsFile.class) {
+				return new FileImageParamSetter((LaunchParameter<PathIsFile>) param);
 			}
 			Msg.warn(ImageParamSetter.class,
-				"'Image' parameter has unsupported type: " + param.type);
+				"'Image' parameter has unsupported type: " + param.type());
 			return null;
 		}
 
-		void setImage(Map<String, Object> map, Program program);
+		void setImage(Map<String, ValStr<?>> map, Program program);
 	}
 
 	static class StringImageParamSetter implements ImageParamSetter {
-		private final ParameterDescription<String> param;
+		private final LaunchParameter<String> param;
 
-		public StringImageParamSetter(ParameterDescription<String> param) {
+		public StringImageParamSetter(LaunchParameter<String> param) {
 			this.param = param;
 		}
 
 		@Override
-		public void setImage(Map<String, Object> map, Program program) {
+		public void setImage(Map<String, ValStr<?>> map, Program program) {
 			// str-type Image is a hint that the launcher is remote
 			String value = TraceRmiLauncherServicePlugin.getProgramPath(program, false);
-			param.set(map, value);
+			param.set(map, ValStr.str(value));
 		}
 	}
 
 	static class FileImageParamSetter implements ImageParamSetter {
-		private final ParameterDescription<PathIsFile> param;
+		private final LaunchParameter<PathIsFile> param;
 
-		public FileImageParamSetter(ParameterDescription<PathIsFile> param) {
+		public FileImageParamSetter(LaunchParameter<PathIsFile> param) {
 			this.param = param;
 		}
 
 		@Override
-		public void setImage(Map<String, Object> map, Program program) {
+		public void setImage(Map<String, ValStr<?>> map, Program program) {
 			// file-type Image is a hint that the launcher is local
 			String str = TraceRmiLauncherServicePlugin.getProgramPath(program, true);
 			PathIsFile value = str == null ? null : new PathIsFile(Paths.get(str));
-			param.set(map, value);
+			param.set(map, new ValStr<>(value, str));
 		}
 	}
 
@@ -282,33 +296,34 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	 * @return the default arguments
 	 */
 	@SuppressWarnings("unchecked")
-	protected Map<String, ?> generateDefaultLauncherArgs(
-			Map<String, ParameterDescription<?>> params) {
-		Map<String, Object> map = new LinkedHashMap<String, Object>();
+	protected Map<String, ValStr<?>> generateDefaultLauncherArgs(
+			Map<String, LaunchParameter<?>> params) {
+		Map<String, ValStr<?>> map = new LinkedHashMap<>();
 		ImageParamSetter imageSetter = null;
-		for (Entry<String, ParameterDescription<?>> entry : params.entrySet()) {
-			ParameterDescription<?> param = entry.getValue();
-			map.put(entry.getKey(), param.defaultValue);
-			if (PARAM_DISPLAY_IMAGE.equals(param.display)) {
+		for (Entry<String, LaunchParameter<?>> entry : params.entrySet()) {
+			LaunchParameter<?> param = entry.getValue();
+			map.put(entry.getKey(), ValStr.cast(Object.class, param.defaultValue()));
+			if (PARAM_DISPLAY_IMAGE.equals(param.display())) {
 				imageSetter = ImageParamSetter.get(param);
 				// May still be null if type is not supported
 			}
-			else if (param.name.startsWith(PREFIX_PARAM_EXTTOOL)) {
-				String tool = param.name.substring(PREFIX_PARAM_EXTTOOL.length());
+			else if (param.name().startsWith(PREFIX_PARAM_EXTTOOL)) {
+				String tool = param.name().substring(PREFIX_PARAM_EXTTOOL.length());
 				List<String> names =
 					program.getLanguage().getLanguageDescription().getExternalNames(tool);
 				if (names != null && !names.isEmpty()) {
-					if (param.type == String.class) {
-						var paramStr = (ParameterDescription<String>) param;
-						paramStr.set(map, names.get(0));
+					String toolName = names.get(0);
+					if (param.type() == String.class) {
+						var paramStr = (LaunchParameter<String>) param;
+						paramStr.set(map, ValStr.str(toolName));
 					}
-					else if (param.type == PathIsFile.class) {
-						var paramPIF = (ParameterDescription<PathIsFile>) param;
-						paramPIF.set(map, PathIsFile.fromString(names.get(0)));
+					else if (param.type() == PathIsFile.class) {
+						var paramPIF = (LaunchParameter<PathIsFile>) param;
+						paramPIF.set(map, new ValStr<>(PathIsFile.fromString(toolName), toolName));
 					}
-					else if (param.type == PathIsDir.class) {
-						var paramPID = (ParameterDescription<PathIsDir>) param;
-						paramPID.set(map, PathIsDir.fromString(names.get(0)));
+					else if (param.type() == PathIsDir.class) {
+						var paramPID = (LaunchParameter<PathIsDir>) param;
+						paramPID.set(map, new ValStr<>(PathIsDir.fromString(toolName), toolName));
 					}
 				}
 			}
@@ -322,50 +337,33 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	/**
 	 * Prompt the user for arguments, showing those last used or defaults
 	 * 
-	 * @param lastExc
-	 * 
-	 * @param params the parameters of the model's launcher
+	 * @param configurator a thing to generate/modify the (default) arguments
 	 * @param lastExc if re-prompting, an error to display
 	 * @return the arguments given by the user, or null if cancelled
 	 */
-	protected Map<String, ?> promptLauncherArgs(LaunchConfigurator configurator,
+	protected Map<String, ValStr<?>> promptLauncherArgs(LaunchConfigurator configurator,
 			Throwable lastExc) {
-		Map<String, ParameterDescription<?>> params = getParameters();
-		DebuggerMethodInvocationDialog dialog =
-			new DebuggerMethodInvocationDialog(tool, getTitle(), "Launch", getIcon());
+		Map<String, LaunchParameter<?>> params = getParameters();
+		TraceRmiLaunchDialog dialog =
+			new TraceRmiLaunchDialog(tool, getTitle(), "Launch", getIcon());
 		dialog.setDescription(getDescription());
 		dialog.setHelpLocation(getHelpLocation());
+		if (lastExc != null) {
+			dialog.setStatusText(lastExc.toString(), MessageType.ERROR);
+		}
+		else {
+			dialog.setStatusText("");
+		}
+
 		// NB. Do not invoke read/writeConfigState
-		Map<String, ?> args;
-		boolean reset = false;
-		do {
-			args =
-				configurator.configureLauncher(this, loadLastLauncherArgs(true), RelPrompt.BEFORE);
-			for (ParameterDescription<?> param : params.values()) {
-				Object val = args.get(param.name);
-				if (val != null) {
-					dialog.setMemorizedArgument(param.name, param.type.asSubclass(Object.class),
-						val);
-				}
-			}
-			if (lastExc != null) {
-				dialog.setStatusText(lastExc.toString(), MessageType.ERROR);
-			}
-			else {
-				dialog.setStatusText("");
-			}
-			args = dialog.promptArguments(params);
-			if (args == null) {
-				// Cancelled
-				return null;
-			}
-			reset = dialog.isResetRequested();
-			if (reset) {
-				args = generateDefaultLauncherArgs(params);
-			}
+
+		Map<String, ValStr<?>> defaultArgs = generateDefaultLauncherArgs(params);
+		Map<String, ValStr<?>> lastArgs =
+			configurator.configureLauncher(this, loadLastLauncherArgs(true), RelPrompt.BEFORE);
+		Map<String, ValStr<?>> args = dialog.promptArguments(params, lastArgs, defaultArgs);
+		if (args != null) {
 			saveLauncherArgs(args, params);
 		}
-		while (reset);
 		return args;
 	}
 
@@ -383,31 +381,40 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	 * @param forPrompt true if the user will be confirming the arguments
 	 * @return the loaded arguments, or defaults
 	 */
-	protected Map<String, ?> loadLastLauncherArgs(boolean forPrompt) {
-		Map<String, ParameterDescription<?>> params = getParameters();
-		Map<String, ?> args = loadLauncherArgsFromState(loadState(forPrompt), params);
+	protected Map<String, ValStr<?>> loadLastLauncherArgs(boolean forPrompt) {
+		Map<String, LaunchParameter<?>> params = getParameters();
+		Map<String, ValStr<?>> args = loadLauncherArgsFromState(loadState(forPrompt), params);
 		saveLauncherArgs(args, params);
 		return args;
 	}
 
-	protected Map<String, ?> loadLauncherArgsFromState(SaveState state,
-			Map<String, ParameterDescription<?>> params) {
-		Map<String, ?> defaultArgs = generateDefaultLauncherArgs(params);
+	protected Map<String, ValStr<?>> loadLauncherArgsFromState(SaveState state,
+			Map<String, LaunchParameter<?>> params) {
+		Map<String, ValStr<?>> defaultArgs = generateDefaultLauncherArgs(params);
 		if (state == null) {
 			return defaultArgs;
 		}
-		List<String> names = List.of(state.getNames());
-		Map<String, Object> args = new LinkedHashMap<>();
-		for (ParameterDescription<?> param : params.values()) {
-			String key = "param_" + param.name;
-			Object configState =
-				names.contains(key) ? ConfigStateField.getState(state, param.type, key) : null;
-			if (configState != null) {
-				args.put(param.name, configState);
+		Map<String, ValStr<?>> args = new LinkedHashMap<>();
+		Set<String> names = Set.of(state.getNames());
+		for (LaunchParameter<?> param : params.values()) {
+			String key = "param_" + param.name();
+			if (!names.contains(key)) {
+				args.put(param.name(), defaultArgs.get(param.name()));
+				continue;
 			}
-			else {
-				args.put(param.name, defaultArgs.get(param.name));
+			String str = state.getString(key, null);
+			if (str != null) {
+				args.put(param.name(), param.decode(str));
+				continue;
 			}
+			// Perhaps wrong type; was saved in older version.
+			Object fallback = ConfigStateField.getState(state, param.type(), param.name());
+			if (fallback != null) {
+				args.put(param.name(), ValStr.from(fallback));
+				continue;
+			}
+			Msg.warn(this, "Could not load saved launcher arg '%s' (%s)".formatted(param.name(),
+				param.display()));
 		}
 		return args;
 	}
@@ -420,7 +427,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	/**
-	 * Obtain the launcher args
+	 * Obtain the launcher arguments
 	 * 
 	 * <p>
 	 * This should either call {@link #promptLauncherArgs(LaunchConfigurator, Throwable)} or
@@ -432,7 +439,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	 * @param lastExc if retrying, the last exception to display as an error message
 	 * @return the chosen arguments, or null if the user cancels at the prompt
 	 */
-	public Map<String, ?> getLauncherArgs(boolean prompt, LaunchConfigurator configurator,
+	public Map<String, ValStr<?>> getLauncherArgs(boolean prompt, LaunchConfigurator configurator,
 			Throwable lastExc) {
 		return prompt
 				? configurator.configureLauncher(this, promptLauncherArgs(configurator, lastExc),
@@ -528,8 +535,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected abstract void launchBackEnd(TaskMonitor monitor,
-			Map<String, TerminalSession> sessions, Map<String, ?> args, SocketAddress address)
-			throws Exception;
+			Map<String, TerminalSession> sessions, Map<String, ValStr<?>> args,
+			SocketAddress address) throws Exception;
 
 	static class NoStaticMappingException extends Exception {
 		public NoStaticMappingException(String message) {
@@ -542,8 +549,19 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		}
 	}
 
+	protected AutoMapSpec getAutoMapSpec() {
+		DebuggerAutoMappingService auto = tool.getService(DebuggerAutoMappingService.class);
+		return auto == null ? ByModuleAutoMapSpec.instance() : auto.getAutoMapSpec();
+	}
+
+	protected AutoMapSpec getAutoMapSpec(Trace trace) {
+		DebuggerAutoMappingService auto = tool.getService(DebuggerAutoMappingService.class);
+		return auto == null ? ByModuleAutoMapSpec.instance() : auto.getAutoMapSpec(trace);
+	}
+
 	protected void initializeMonitor(TaskMonitor monitor) {
-		if (requiresImage()) {
+		AutoMapSpec spec = getAutoMapSpec();
+		if (requiresImage() && spec.hasTask()) {
 			monitor.setMaximum(6);
 		}
 		else {
@@ -557,6 +575,10 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		if (!requiresImage()) {
 			return;
 		}
+		AutoMapSpec spec = getAutoMapSpec(trace);
+		if (!spec.hasTask()) {
+			return;
+		}
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		monitor.setMessage("Waiting for module mapping");
@@ -567,14 +589,14 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		catch (TimeoutException e) {
 			monitor.setMessage(
 				"Timed out waiting for module mapping. Invoking the mapper.");
-			Collection<ModuleMapEntry> mapped;
+			boolean mapped;
 			try {
-				mapped = invokeMapper(monitor, mappingService, trace);
+				mapped = invokeMapper(monitor, mappingService, connection, trace, spec);
 			}
 			catch (CancelledException ce) {
 				throw new CancellationException(e.getMessage());
 			}
-			if (mapped.isEmpty()) {
+			if (!mapped) {
 				throw new NoStaticMappingException(
 					"The resulting target process has no mapping to the static image.");
 			}
@@ -603,7 +625,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		while (true) {
 			try {
 				monitor.setMessage("Gathering arguments");
-				Map<String, ?> args = getLauncherArgs(prompt, configurator, lastExc);
+				Map<String, ValStr<?>> args = getLauncherArgs(prompt, configurator, lastExc);
 				if (args == null) {
 					if (lastExc == null) {
 						lastExc = new CancelledException();

@@ -72,7 +72,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		setText(text);
 		setToolTipText(node.getToolTip());
 
-		Icon icon = node.getIcon(expanded);
+		Icon icon = getNodeIcon(node, expanded);
 		if (icon == null) {
 			icon = getIcon();
 		}
@@ -88,6 +88,10 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		boolean isBold = (filter != null) && filter.showFilterMatches() && filter.acceptsNode(node);
 		setFont(getFont(isBold));
 		return this;
+	}
+
+	protected Icon getNodeIcon(GTreeNode node, boolean expanded) {
+		return node.getIcon(expanded);
 	}
 
 	/**

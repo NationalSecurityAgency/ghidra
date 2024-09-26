@@ -26,6 +26,9 @@ language_map = {
     'x86': ['x86:LE:32:default'],
     'x86_64': ['x86:LE:64:default'],
     'EFI': ['x86:LE:64:default'],
+    'MIPS': ['MIPS:LE:64:default'],
+    'MIPS-BE': ['MIPS:BE:64:default'],
+    'SH4': ['SuperH4:LE:32:default'],
 }
 
 data64_compiler_map = {
@@ -37,11 +40,11 @@ x86_compiler_map = {
     'Cygwin': 'windows',
 }
 
-aarch64_compiler_map = {
+default_compiler_map = {
     'windows': 'default',
 }
 
-arm_compiler_map = {
+windows_compiler_map = {
     'windows': 'windows',
 }
 
@@ -50,8 +53,11 @@ compiler_map = {
     'DATA:LE:64:default': data64_compiler_map,
     'x86:LE:32:default': x86_compiler_map,
     'x86:LE:64:default': x86_compiler_map,
-    'AARCH64:LE:64:AppleSilicon': aarch64_compiler_map,
-    'ARM:LE:32:v8': arm_compiler_map,
+    'AARCH64:LE:64:AppleSilicon': default_compiler_map,
+    'ARM:LE:32:v8': windows_compiler_map,
+    'MIPS:BE:64:default': default_compiler_map,
+    'MIPS:LE:64:default': windows_compiler_map,
+    'SuperH4:LE:32:default': windows_compiler_map,
 }
 
 
@@ -69,12 +75,56 @@ def get_arch():
         return "AARCH64"
     if type == 0x014c:
         return "x86"
-    if type == 0x01c0:
+    if type == 0x0160: # R3000 BE
+        return "MIPS-BE"
+    if type == 0x0162: # R3000 LE
+        return "MIPS"
+    if type == 0x0166: # R4000 LE
+        return "MIPS"
+    if type == 0x0168: # R10000 LE
+        return "MIPS"
+    if type == 0x0169: # WCE v2 LE
+        return "MIPS"
+    if type == 0x0266: # MIPS 16
+        return "MIPS"
+    if type == 0x0366: # MIPS FPU
+        return "MIPS"
+    if type == 0x0466: # MIPS FPU16
+        return "MIPS"
+    if type == 0x0184: # Alpha AXP
+        return "Alpha"
+    if type == 0x0284: # Aplha 64
+        return "Alpha"
+    if type >= 0x01a2 and type < 0x01a6:
+        return "SH"
+    if type == 0x01a6:
+        return "SH4"
+    if type == 0x01a6:
+        return "SH5"
+    if type == 0x01c0: # ARM LE
         return "ARM"
-    if type == 0x0200:
+    if type == 0x01c2: # ARM Thumb/Thumb-2 LE
+        return "ARM"
+    if type == 0x01c4: # ARM Thumb-2 LE
+        return "ARM"
+    if type == 0x01d3: # AM33
+        return "ARM"
+    if type == 0x01f0 or type == 0x1f1: # PPC
+        return "PPC"
+    if type == 0x0200: 
         return "Itanium"
+    if type == 0x0520:
+        return "Infineon"
+    if type == 0x0CEF:
+        return "CEF"
     if type == 0x0EBC:
         return "EFI"
+    if type == 0x8664: # AMD64 (K8)
+        return "x86_64"
+    if type == 0x9041: # M32R
+        return "M32R"
+    if type == 0xC0EE:
+        return "CEE"
     return "Unknown"
 
 
@@ -154,14 +204,18 @@ class DefaultMemoryMapper(object):
         self.defaultSpace = defaultSpace
 
     def map(self, proc: int, offset: int):
-        space = self.defaultSpace
+        if proc == 0:
+            space = self.defaultSpace
+        else:
+            space = f'{self.defaultSpace}{proc}'
         return self.defaultSpace, Address(space, offset)
 
     def map_back(self, proc: int, address: Address) -> int:
-        if address.space == self.defaultSpace:
+        if address.space == self.defaultSpace and proc == 0:
             return address.offset
-        raise ValueError(
-            f"Address {address} is not in process {proc.GetProcessID()}")
+        if address.space == f'{self.defaultSpace}{proc}':
+            return address.offset
+        raise ValueError(f"Address {address} is not in process {proc}")
 
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')

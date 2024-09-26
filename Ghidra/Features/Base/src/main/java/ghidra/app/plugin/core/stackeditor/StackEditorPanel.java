@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,14 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import java.awt.Component;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 
-import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.compositeeditor.CompositeEditorPanel;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Program;
 import ghidra.util.exception.UsrException;
 
 /**
@@ -36,9 +35,31 @@ public class StackEditorPanel extends CompositeEditorPanel {
 	private JTextField paramSizeField;
 	private JTextField paramOffsetField;
 	private JTextField returnAddrOffsetField;
+	private List<Component> focusList;
 
 	public StackEditorPanel(Program program, StackEditorModel model, StackEditorProvider provider) {
 		super(model, provider);
+	}
+
+	private StackEditorModel getStackModel() {
+		return (StackEditorModel) model;
+	}
+
+	@Override
+	protected boolean hasUncomittedEntry() {
+		// Stack editor has not yet been modified to use GFormattedTextField
+		return false;
+	}
+
+	@Override
+	protected boolean hasInvalidEntry() {
+		// Stack editor has not yet been modified to use GFormattedTextField
+		return false;
+	}
+
+	@Override
+	protected void comitEntryChanges() {
+		// do nothing
 	}
 
 	int getFrameSize() {
@@ -61,10 +82,21 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		return Integer.decode(returnAddrOffsetField.getText()).intValue();
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorPanel#createInfoPanel()
-	 */
+	@Override
+	protected List<Component> getFocusComponents() {
+		if (focusList == null) {
+			//@formatter:off
+			focusList = List.of(				
+				table,
+				searchPanel.getTextField(),				
+				localSizeField,
+				paramSizeField		
+			);
+			//@formatter:on
+		}
+		return focusList;
+	}
+
 	@Override
 	protected JPanel createInfoPanel() {
 
@@ -83,11 +115,10 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		JPanel returnAddrOffsetPanel =
 			createNamedTextPanel(returnAddrOffsetField, "Return Address Offset");
 
-		JPanel[] hPanels =
-			new JPanel[] {
-				createHorizontalPanel(new JPanel[] { frameSizePanel, returnAddrOffsetPanel,
-					localSizePanel }),
-				createHorizontalPanel(new JPanel[] { paramOffsetPanel, paramSizePanel }) };
+		JPanel[] hPanels = new JPanel[] {
+			createHorizontalPanel(
+				new JPanel[] { frameSizePanel, returnAddrOffsetPanel, localSizePanel }),
+			createHorizontalPanel(new JPanel[] { paramOffsetPanel, paramSizePanel }) };
 		JPanel outerPanel = createVerticalPanel(hPanels);
 		outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -98,6 +129,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		frameSizeField = new JTextField(20);
 		frameSizeField.setName("Frame Size");
 		frameSizeField.setEditable(false);
+		frameSizeField.setEnabled(false);
 	}
 
 	private void setupLocalSize() {
@@ -134,7 +166,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 			}
 			else {
 				try {
-					((StackEditorModel) model).setLocalSize(localSize);
+					getStackModel().setLocalSize(localSize);
 				}
 				catch (UsrException ue) {
 					model.setStatus("Invalid local size \"" + valueStr + "\". " + ue.getMessage(),
@@ -178,7 +210,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 			value = Integer.decode(valueStr);
 			int paramSize = value.intValue();
 			try {
-				((StackEditorModel) model).setParameterSize(paramSize);
+				getStackModel().setParameterSize(paramSize);
 			}
 			catch (UsrException ue) {
 				model.setStatus("Invalid parameter size \"" + valueStr + "\". " + ue.getMessage(),
@@ -195,17 +227,16 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		paramOffsetField = new JTextField(20);
 		paramOffsetField.setName("Parameter Offset");
 		paramOffsetField.setEditable(false);
+		paramOffsetField.setEnabled(false);
 	}
 
 	private void setupReturnAddrOffset() {
 		returnAddrOffsetField = new JTextField(20);
 		returnAddrOffsetField.setName("Return Address Offset");
 		returnAddrOffsetField.setEditable(false);
+		returnAddrOffsetField.setEnabled(false);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeModelDataListener#compositeInfoChanged()
-	 */
 	@Override
 	public void compositeInfoChanged() {
 		adjustStackInfo();
@@ -216,11 +247,8 @@ public class StackEditorPanel extends CompositeEditorPanel {
 				: Integer.toString(value);
 	}
 
-	/**
-	 * 
-	 */
 	private void adjustStackInfo() {
-		StackFrameDataType editorStack = ((StackEditorModel) model).getEditorStack();
+		StackFrameDataType editorStack = getStackModel().getEditorStack();
 
 		String frameSize = getNumberString(editorStack.getFrameSize());
 		if (!frameSizeField.getText().trim().equals(frameSize)) {
@@ -248,73 +276,11 @@ public class StackEditorPanel extends CompositeEditorPanel {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeViewerModelListener#componentDataChanged()
-	 */
 	@Override
 	public void componentDataChanged() {
-		// Don't need to update other than table when component data changes.
+		provider.contextChanged();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		boolean reload = true;
-		String objectType = "domain object";
-		if (domainObject instanceof Program) {
-			objectType = "program";
-		}
-		else if (domainObject instanceof DataTypeArchive) {
-			objectType = "data type archive";
-		}
-		DataTypeManager dtm = ((StackEditorModel) model).getOriginalDataTypeManager();
-		Composite originalDt = ((StackEditorModel) model).getOriginalComposite();
-		if (originalDt instanceof StackFrameDataType) {
-			StackFrameDataType sfdt = (StackFrameDataType) originalDt;
-			Function function = sfdt.getFunction();
-			if (function.isDeleted()) {
-				// Cancel Editor.
-				provider.dispose();
-				PluginTool tool = ((StackEditorProvider) provider).getPlugin().getTool();
-				tool.setStatusInfo("Stack Editor was closed for " + provider.getName());
-				return;
-			}
-			StackFrame stack = function.getStackFrame();
-			StackFrameDataType newSfdt = new StackFrameDataType(stack, dtm);
-			if (!newSfdt.equals(((StackEditorModel) model).getViewComposite())) {
-				originalDt = newSfdt;
-			}
-		}
-		((StackEditorModel) model).updateAndCheckChangeState();
-		if (model.hasChanges()) {
-			String name = ((StackEditorModel) model).getTypeName();
-			// The user has modified the structure so prompt for whether or
-			// not to reload the structure.
-			String question =
-				"The " + objectType + " \"" + domainObject.getName() + "\" has been restored.\n" +
-					"\"" + model.getCompositeName() + "\" may have changed outside the editor.\n" +
-					"Discard edits & reload the " + name + " Editor?";
-			String title = "Reload " + name + " Editor?";
-			int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);
-			if (response != 1) {
-				reload = false;
-			}
-		}
-		if (reload) {
-			cancelCellEditing();
-			// TODO
-//			boolean lockState = model.isLocked(); // save the lock state
-			model.load(originalDt); // reload the structure
-//			model.setLocked(lockState); // restore the lock state
-			model.updateAndCheckChangeState();
-		}
-		else {
-			((StackEditorModel) model).refresh();
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorPanel#dispose()
-	 */
 	@Override
 	public void dispose() {
 		removeFocusListeners(localSizeField);

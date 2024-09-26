@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,28 +15,32 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
+import static docking.widgets.textfield.GFormattedTextField.Status.*;
+
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.event.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.Document;
+import javax.swing.text.DefaultFormatterFactory;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.label.GDLabel;
+import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.GThemeDefaults.Colors.Viewport;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
-import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Swing;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
@@ -48,42 +52,33 @@ import ghidra.util.layout.VerticalLayout;
 public class CompEditorPanel extends CompositeEditorPanel {
 
 	protected final static Insets LEFT_INSETS = new Insets(2, 3, 1, 0);
-	protected final static Insets VERTICAL_INSETS = new Insets(2, 0, 1, 0);
+	protected final static Insets VERTICAL_INSETS = new Insets(2, 2, 1, 0);
 
 	// GUI components for displaying composite data type information.
 	private GridBagLayout gridBagLayout;
 	private JPanel infoPanel;
-	private JLabel nameLabel;
-	protected JTextField nameTextField;
-	private JLabel descriptionLabel;
-	private JTextField descriptionTextField;
-	private JLabel categoryLabel;
-	private JTextField categoryStatusTextField;
-	private JLabel sizeLabel;
-	private JTextField sizeTextField;
+	private JLabel categoryNameLabel;
+	GFormattedTextField nameTextField; // exposed to package for testing only
+	private GFormattedTextField descriptionTextField;
+	private GFormattedTextField sizeTextField;
 
 	private JPanel alignPanel;
 	private JRadioButton defaultAlignButton;
 	private JRadioButton machineAlignButton;
 	private JRadioButton explicitAlignButton;
-	private JTextField explicitAlignTextField;
+	private GFormattedTextField explicitAlignTextField;
 
 	private JPanel packingPanel;
 	private JCheckBox packingEnablementButton;
 	private JRadioButton defaultPackingButton;
 	private JRadioButton explicitPackingButton;
-	private JTextField explicitPackingTextField;
+	private GFormattedTextField explicitPackingTextField;
 
-	private JLabel actualAlignmentLabel;
-	private JTextField actualAlignmentValueTextField;
+	private JLabel actualAlignmentValueLabel;
+
+	private List<Component> focusList;
 
 	private BitFieldPlacementComponent bitViewComponent;
-
-	private DocumentListener fieldDocListener;
-
-	private ActionListener fieldActionListener;
-
-	private FocusListener fieldFocusListener;
 
 	private boolean updatingSize;
 
@@ -98,12 +93,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 */
 	public CompEditorPanel(CompEditorModel model, CompositeEditorProvider provider) {
 		super(model, provider);
-	}
-
-	@Override
-	public void dispose() {
-		removeFieldListeners();
-		super.dispose();
 	}
 
 	@Override
@@ -234,6 +223,30 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		return bitViewPanel;
 	}
 
+	@Override
+	protected List<Component> getFocusComponents() {
+		if (focusList == null) {
+			//@formatter:off
+			focusList = List.of(
+				
+				table,
+				searchPanel.getTextField(),
+				nameTextField,
+				descriptionTextField,
+				sizeTextField,
+				
+				// add the first radio button; the rest are reachable via arrow keys
+				defaultAlignButton, 
+				packingEnablementButton,
+				
+				// add the first radio button; the rest are reachable via arrow keys
+				defaultPackingButton
+			);
+			//@formatter:on
+		}
+		return focusList;
+	}
+
 	/**
 	 * Create the Info Panel that is horizontally resizable. The panel contains
 	 * the name, category, data type, size, and edit mode for the current
@@ -249,104 +262,167 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		this.setBorder(BEVELED_BORDER);
 
+		setupCategory();
 		setupName();
 		setupDescription();
-		setupCategory();
 		setupSize();
 		setupActualAlignment();
 		setupMinimumAlignment();
 		setupPacking();
-
-		addFieldListeners();
 
 		infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		return infoPanel;
 	}
 
-	private void setupName() {
+	private void setupCategory() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		nameLabel = new GDLabel("Name:");
+		JLabel categoryLabel = new GDLabel("Category:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.weightx = 0;
 		gridBagConstraints.gridx = 0;
 		gridBagConstraints.gridy = 0;
-		infoPanel.add(nameLabel, gridBagConstraints);
+		infoPanel.add(categoryLabel, gridBagConstraints);
 
-		nameTextField = new JTextField("");
-		nameTextField.setToolTipText("Structure Name");
-		nameTextField.setEditable(true);
-		gridBagConstraints.insets = VERTICAL_INSETS;
+		categoryNameLabel = new JLabel(" ");
+		categoryNameLabel.setToolTipText("Category of this composite data type.");
+		gridBagConstraints.insets = new Insets(2, 4, 1, 2);
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.weightx = 1;
 		gridBagConstraints.gridx = 1;
 		gridBagConstraints.gridy = 0;
 		gridBagConstraints.gridwidth = 4;
+		infoPanel.add(categoryNameLabel, gridBagConstraints);
+	}
+
+	private void setupName() {
+		GridBagConstraints gridBagConstraints = new GridBagConstraints();
+
+		JLabel nameLabel = new GDLabel("Name:");
+		gridBagConstraints.insets = LEFT_INSETS;
+		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+		gridBagConstraints.fill = GridBagConstraints.NONE;
+		gridBagConstraints.weightx = 0;
+		gridBagConstraints.gridx = 0;
+		gridBagConstraints.gridy = 1;
+		infoPanel.add(nameLabel, gridBagConstraints);
+
+		nameTextField = new GFormattedTextField(new DefaultFormatterFactory(), "");
+		nameTextField.setToolTipText("Structure Name");
+		nameTextField.setEditable(true);
+
+		gridBagConstraints.insets = VERTICAL_INSETS;
+		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+		gridBagConstraints.weightx = 1;
+		gridBagConstraints.gridx = 1;
+		gridBagConstraints.gridy = 1;
+		gridBagConstraints.gridwidth = 4;
 		infoPanel.add(nameTextField, gridBagConstraints);
 
-		if (helpManager != null) {
-			helpManager.registerHelp(nameTextField,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Name"));
-		}
+		provider.registerHelp(nameTextField, "Name");
+
+		nameTextField.setInputVerifier(new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				model.clearStatus();
+				String newName = nameTextField.getText().trim();
+				if (!DataUtilities.isValidDataTypeName(newName)) {
+					if (newName.length() == 0) {
+						model.setStatus("Name is required.");
+					}
+					else {
+						model.setStatus(newName + " is not a valid name.");
+					}
+					return false;
+				}
+				if (!newName.equals(model.getOriginalDataTypeName()) &&
+					model.getOriginalDataTypeManager()
+							.getDataType(model.originalDataTypePath.getCategoryPath(),
+								newName) != null) {
+					model.setStatus("A data type named " + newName + " already exists.");
+					return false;
+				}
+				updateEntryAcceptanceStatus();
+				return true;
+			}
+		});
+
+		nameTextField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					// revert to model state when escape is hit
+					setCompositeName(model.getCompositeName());
+				}
+			}
+		});
+
+		nameTextField.addTextEntryStatusListener(c -> provider.contextChanged());
+
+		nameTextField.addActionListener(e -> updatedName());
+
+		nameTextField.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				updatedName();
+			}
+		});
 	}
 
 	private void setupDescription() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		descriptionLabel = new GDLabel("Description:");
+		JLabel descriptionLabel = new GDLabel("Description:");
 		gridBagConstraints.insets = LEFT_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.weightx = 0;
 		gridBagConstraints.gridx = 0;
-		gridBagConstraints.gridy = 1;
+		gridBagConstraints.gridy = 2;
 		infoPanel.add(descriptionLabel, gridBagConstraints);
 
-		descriptionTextField = new JTextField("");
+		descriptionTextField = new GFormattedTextField(new DefaultFormatterFactory(), "");
 		descriptionTextField.setToolTipText("Structure Description");
 		descriptionTextField.setEditable(true);
+
 		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.weightx = 1;
 		gridBagConstraints.gridx = 1;
-		gridBagConstraints.gridy = 1;
+		gridBagConstraints.gridy = 2;
 		gridBagConstraints.gridwidth = 4;
 		infoPanel.add(descriptionTextField, gridBagConstraints);
 
-		if (helpManager != null) {
-			helpManager.registerHelp(descriptionTextField, new HelpLocation(provider.getHelpTopic(),
-				provider.getHelpName() + "_" + "Description"));
-		}
-	}
+		provider.registerHelp(descriptionTextField, "Description");
 
-	private void setupCategory() {
-		GridBagConstraints gridBagConstraints = new GridBagConstraints();
+		descriptionTextField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					// revert to model state when escape is hit
+					setDescription(model.getDescription());
+				}
+			}
+		});
 
-		categoryLabel = new GDLabel("Category:");
-		gridBagConstraints.insets = LEFT_INSETS;
-		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-		gridBagConstraints.fill = GridBagConstraints.NONE;
-		gridBagConstraints.weightx = 0;
-		gridBagConstraints.gridx = 0;
-		gridBagConstraints.gridy = 2;
-		infoPanel.add(categoryLabel, gridBagConstraints);
+		descriptionTextField.addTextEntryStatusListener(c -> provider.contextChanged());
 
-		categoryStatusTextField = new JTextField(" ");
-		categoryStatusTextField.setEditable(false);
-		categoryStatusTextField.setToolTipText("Category of this composite data type.");
-		gridBagConstraints.insets = VERTICAL_INSETS;
-		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
-		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-		gridBagConstraints.weightx = 1;
-		gridBagConstraints.gridx = 1;
-		gridBagConstraints.gridy = 2;
-		gridBagConstraints.gridwidth = 4;
-		infoPanel.add(categoryStatusTextField, gridBagConstraints);
+		descriptionTextField.addActionListener(e -> updatedDescription());
+
+		descriptionTextField.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				updatedDescription();
+			}
+		});
 	}
 
 	@Override
@@ -369,17 +445,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	private void setupMinimumAlignment() {
 
-		DataOrganization dataOrganization =
-			((CompEditorModel) model).viewComposite.getDataOrganization();
-		int machineAlignment = dataOrganization.getMachineAlignment();
-
-		defaultAlignButton = new GRadioButton("default           ");
-		explicitAlignButton = new GRadioButton();
-		explicitAlignTextField = new JTextField();
-		machineAlignButton = new GRadioButton("machine: " + machineAlignment);
-		setupDefaultMinAlignButton();
-		setupExplicitAlignButton();
+		setupDefaultAlignButton();
+		setupExplicitAlignButtonAndTextField();
 		setupMachineMinAlignButton();
+
 		ButtonGroup minAlignGroup = new ButtonGroup();
 		minAlignGroup.add(defaultAlignButton);
 		minAlignGroup.add(explicitAlignButton);
@@ -387,12 +456,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 		alignPanel = new JPanel(new GridBagLayout());
 		TitledBorder border = BorderFactory.createTitledBorder("align (minimum)");
-//		border.setTitlePosition(TitledBorder.ABOVE_TOP);
+
 		alignPanel.setBorder(border);
-		if (helpManager != null) {
-			helpManager.registerHelp(alignPanel,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Align"));
-		}
+		provider.registerHelp(alignPanel, "Align");
+
 		String alignmentToolTip =
 			"<html>The <B>align</B> control allows the overall minimum alignment of this<BR>" +
 				"data type to be specified.  The actual computed alignment<BR>" +
@@ -412,7 +479,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(alignPanel, gridBagConstraints);
 		infoPanel.invalidate();
 
-		refreshGUIActualAlignmentValue();
+		refreshGUIMinimumAlignmentValue(); // Display the initial value.
 	}
 
 	private void addMinimumAlignmentComponents() {
@@ -447,7 +514,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		alignPanel.add(machineAlignButton, gridBagConstraints);
 	}
 
-	private void setupDefaultMinAlignButton() {
+	private void setupDefaultAlignButton() {
+		defaultAlignButton = new GRadioButton("default           ");
+
 		defaultAlignButton.setName("Default Alignment");
 		String alignmentToolTip = "<html>Sets this data type to use <B>default</B> alignment.<BR>" +
 			"If packing is disabled, the default will be 1 byte.  If packing<BR>" +
@@ -459,13 +528,16 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		});
 
 		defaultAlignButton.setToolTipText(alignmentToolTip);
-		if (helpManager != null) {
-			helpManager.registerHelp(defaultAlignButton,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Align"));
-		}
+		provider.registerHelp(defaultAlignButton, "Align");
 	}
 
 	private void setupMachineMinAlignButton() {
+		DataOrganization dataOrganization =
+			((CompEditorModel) model).viewComposite.getDataOrganization();
+		int machineAlignment = dataOrganization.getMachineAlignment();
+
+		machineAlignButton = new GRadioButton("machine: " + machineAlignment);
+
 		machineAlignButton.setName("Machine Alignment");
 		String alignmentToolTip =
 			"<html>Sets this data type to use the <B>machine</B> alignment<BR>" +
@@ -478,31 +550,61 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			((CompEditorModel) model).setAlignmentType(AlignmentType.MACHINE, -1);
 		});
 
-		if (helpManager != null) {
-			helpManager.registerHelp(machineAlignButton,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Align"));
-		}
+		provider.registerHelp(machineAlignButton, "Align");
 	}
 
-	private void setupExplicitAlignButton() {
+	private void setupExplicitAlignButtonAndTextField() {
+		explicitAlignButton = new GRadioButton();
 		explicitAlignButton.setName("Explicit Alignment");
+
+		explicitAlignTextField = new GFormattedTextField(new DefaultFormatterFactory(), "");
+		explicitAlignTextField.setName("Explicit Alignment Value");
+		explicitAlignTextField.setEditable(true);
+
 		String alignmentToolTip =
 			"<html>Sets this data type to use the <B>explicit</B> alignment value<BR>" +
 				"specified.  If packing is enabled, the computed alignment of<BR>" +
 				"this composite may be any multiple of this value.</html>";
 		explicitAlignButton.setToolTipText(alignmentToolTip);
+		explicitAlignTextField.setToolTipText(alignmentToolTip);
 
-		explicitAlignButton.addActionListener(e -> {
-			chooseExplicitAlign();
+		provider.registerHelp(explicitAlignButton, "Align");
+		provider.registerHelp(explicitAlignTextField, "Align");
+
+		// As a convenience, when this radio button is focused, change focus to the editor field
+		explicitAlignButton.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				explicitAlignTextField.requestFocus();
+			}
 		});
 
-		if (helpManager != null) {
-			helpManager.registerHelp(explicitAlignButton,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Align"));
-		}
+		explicitAlignButton.addActionListener(e -> chooseExplicitAlign());
 
-		explicitAlignTextField.setName("Explicit Alignment Value");
-		explicitAlignTextField.setEditable(true);
+		explicitAlignTextField.setInputVerifier(new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				return decodeUnsignedIntEntry(explicitAlignTextField, "minimum alignment",
+					false) > 0;
+			}
+		});
+
+		explicitAlignTextField
+				.addKeyListener(new UpAndDownKeyListener(defaultAlignButton, machineAlignButton));
+
+		explicitAlignTextField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					// revert to model state when escape is hit
+					refreshGUIMinimumAlignmentValue();
+				}
+			}
+		});
+
+		explicitAlignTextField.addTextEntryStatusListener(c -> provider.contextChanged());
+
 		explicitAlignTextField.addActionListener(e -> adjustExplicitMinimumAlignmentValue());
 
 		explicitAlignTextField.addFocusListener(new FocusListener() {
@@ -521,33 +623,24 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		explicitAlignTextField.setToolTipText(alignmentToolTip);
-		if (helpManager != null) {
-			helpManager.registerHelp(explicitAlignTextField,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Align"));
-		}
-
-		refreshGUIMinimumAlignmentValue(); // Display the initial value.
 	}
 
 	private void adjustExplicitMinimumAlignmentValue() {
-		setStatus(null);
-		String value = explicitAlignTextField.getText();
-		try {
-			int minAlignment = Integer.decode(value.trim());
-			try {
-				((CompEditorModel) model).setAlignmentType(AlignmentType.EXPLICIT, minAlignment);
-				adjustCompositeInfo();
-			}
-			catch (IllegalArgumentException e1) {
-				refreshGUIMinimumAlignmentValue();
-				String message = "\"" + value + "\" is not a valid alignment value.";
-				setStatus(message);
-			}
+		if (explicitAlignTextField.getTextEntryStatus() != CHANGED) {
+			return;
 		}
-		catch (NumberFormatException e1) {
+		int minAlignment =
+			decodeUnsignedIntEntry(explicitAlignTextField, "minimum alignment", false);
+		if (minAlignment <= 0) {
+			return;
+		}
+		try {
+			((CompEditorModel) model).setAlignmentType(AlignmentType.EXPLICIT, minAlignment);
+			adjustCompositeInfo();
+		}
+		catch (IllegalArgumentException e1) {
 			refreshGUIMinimumAlignmentValue();
-			String message = "\"" + value + "\" is not a valid alignment value.";
+			String message = "\"" + minAlignment + "\" is not a valid alignment value.";
 			setStatus(message);
 		}
 	}
@@ -561,8 +654,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				"to compute the actual alignment of this datatype.</html>";
 
 		JPanel actualAlignmentPanel = new JPanel(new BorderLayout());
-		actualAlignmentLabel = new GDLabel("Alignment:");
-		gridBagConstraints.insets = new Insets(2, 7, 2, 2);
+		JLabel actualAlignmentLabel = new GDLabel("Alignment:");
+		gridBagConstraints.insets = new Insets(2, 10, 2, 2);
 		gridBagConstraints.anchor = GridBagConstraints.EAST;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
 		gridBagConstraints.gridx = 2;
@@ -571,25 +664,24 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		actualAlignmentPanel.add(actualAlignmentLabel, BorderLayout.EAST);
 		infoPanel.add(actualAlignmentPanel, gridBagConstraints);
 
-		actualAlignmentValueTextField = new JTextField(8);
-		actualAlignmentValueTextField
-				.setText(Integer.toString(((CompEditorModel) model).getActualAlignment()));
-		actualAlignmentValueTextField.setToolTipText(actualAlignmentToolTip);
-		actualAlignmentValueTextField.setEditable(false);
-		if (helpManager != null) {
-			helpManager.registerHelp(actualAlignmentValueTextField, new HelpLocation(
-				provider.getHelpTopic(), provider.getHelpName() + "_" + "ActualAlignment"));
-		}
-		actualAlignmentValueTextField.setName("Actual Alignment Value");
+		actualAlignmentValueLabel = new JLabel();
+		int actualAlignment = ((CompEditorModel) model).getActualAlignment();
+		actualAlignmentValueLabel.setText(Integer.toString(actualAlignment));
+		actualAlignmentValueLabel.setToolTipText(actualAlignmentToolTip);
+		actualAlignmentValueLabel.setBackground(getBackground());
+		actualAlignmentValueLabel.setName("Actual Alignment Value");
 
-		gridBagConstraints.insets = VERTICAL_INSETS;
+		provider.registerHelp(actualAlignmentValueLabel, "ActualAlignment");
+
+		gridBagConstraints.insets = new Insets(2, 4, 1, 2);
 		gridBagConstraints.anchor = GridBagConstraints.LINE_START;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.ipadx = 50;
 		gridBagConstraints.gridx = 3;
 		gridBagConstraints.gridy = 3;
-		infoPanel.add(actualAlignmentValueTextField, gridBagConstraints);
-		actualAlignmentValueTextField.setBackground(getBackground());
+		infoPanel.add(actualAlignmentValueLabel, gridBagConstraints);
+
+		refreshGUIActualAlignmentValue();
 	}
 
 	private void setupPacking() {
@@ -606,22 +698,15 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		innerPanel.setBorder(UIManager.getBorder("TitledBorder.border"));
 		packingPanel.add(innerPanel);
 
-		defaultPackingButton = new GRadioButton("default           ");
-		explicitPackingButton = new GRadioButton();
-		explicitPackingTextField = new JTextField();
-
 		setupDefaultPackingButton();
-		setupExplicitPackingButton();
+		setupExplicitPackingButtonAndTextField();
 		setupPackingEnablementButton();
 
 		ButtonGroup packingGroup = new ButtonGroup();
 		packingGroup.add(defaultPackingButton);
 		packingGroup.add(explicitPackingButton);
 
-		if (helpManager != null) {
-			helpManager.registerHelp(packingPanel,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Pack"));
-		}
+		provider.registerHelp(packingPanel, "Pack");
 
 		addPackingComponents(innerPanel);
 
@@ -661,12 +746,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		gridBagConstraints.gridwidth = 1;
 		gridPanel.add(explicitPackingTextField, gridBagConstraints);
 
-		gridBagConstraints.anchor = GridBagConstraints.WEST;
-		gridBagConstraints.fill = GridBagConstraints.NONE;
-		gridBagConstraints.gridx = 0;
-		gridBagConstraints.gridy = 2;
-		gridBagConstraints.gridwidth = 2;
-//		gridPanel.add(disabledPackingButton, gridBagConstraints);
 	}
 
 	private void setupPackingEnablementButton() {
@@ -683,13 +762,13 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		});
 
 		packingEnablementButton.setToolTipText(packingToolTipText);
-		if (helpManager != null) {
-			helpManager.registerHelp(packingEnablementButton,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Pack"));
-		}
+
+		provider.registerHelp(packingEnablementButton, "Pack");
 	}
 
 	private void setupDefaultPackingButton() {
+		defaultPackingButton = new GRadioButton("default           ");
+
 		defaultPackingButton.setName("Default Packing");
 		String packingToolTipText =
 			"<html>Indicates <B>default</B> compiler packing rules should be applied.</html>";
@@ -699,26 +778,58 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		});
 
 		defaultPackingButton.setToolTipText(packingToolTipText);
-		if (helpManager != null) {
-			helpManager.registerHelp(defaultPackingButton,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Pack"));
-		}
+		provider.registerHelp(defaultPackingButton, "Pack");
 	}
 
-	private void setupExplicitPackingButton() {
+	private void setupExplicitPackingButtonAndTextField() {
+		explicitPackingButton = new GRadioButton();
 		explicitPackingButton.setName("Explicit Packing");
-		String packingToolTipText =
-			"<html>Indicates an explicit pack size should be applied.</html>";
 
-		explicitPackingButton.addActionListener(e -> chooseByValuePacking());
-		explicitPackingButton.setToolTipText(packingToolTipText);
-		if (helpManager != null) {
-			helpManager.registerHelp(explicitPackingButton,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Pack"));
-		}
-
+		explicitPackingTextField = new GFormattedTextField(new DefaultFormatterFactory(), "");
 		explicitPackingTextField.setName("Packing Value");
 		explicitPackingTextField.setEditable(true);
+
+		String packingToolTipText =
+			"<html>Indicates an explicit pack size should be applied.</html>";
+		explicitPackingButton.setToolTipText(packingToolTipText);
+		explicitPackingTextField.setToolTipText(packingToolTipText);
+
+		provider.registerHelp(explicitPackingButton, "Pack");
+		provider.registerHelp(explicitPackingTextField, "Pack");
+
+		// As a convenience, when this radio button is focused, change focus to the editor field
+		explicitPackingButton.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				explicitPackingTextField.requestFocus();
+			}
+		});
+
+		explicitPackingButton.addActionListener(e -> chooseByValuePacking());
+
+		explicitPackingTextField.setInputVerifier(new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				return decodeUnsignedIntEntry(explicitPackingTextField, "pack value", false) > 0;
+			}
+		});
+
+		explicitPackingTextField.addKeyListener(
+			new UpAndDownKeyListener(defaultPackingButton, defaultPackingButton));
+
+		explicitPackingTextField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					// revert to model state when escape is hit
+					refreshGUIPackingValue();
+				}
+			}
+		});
+
+		explicitPackingTextField.addTextEntryStatusListener(c -> provider.contextChanged());
+
 		explicitPackingTextField.addActionListener(e -> adjustPackingValue());
 
 		explicitPackingTextField.addFocusListener(new FocusListener() {
@@ -737,11 +848,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			}
 		});
 
-		explicitPackingTextField.setToolTipText(packingToolTipText);
-		if (helpManager != null) {
-			helpManager.registerHelp(explicitPackingTextField,
-				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Pack"));
-		}
 	}
 
 	private void chooseByValuePacking() {
@@ -751,17 +857,15 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	}
 
 	private void adjustPackingValue() {
-		setStatus(null);
-		String value = explicitPackingTextField.getText();
-		try {
-			int explicitPacking = Integer.decode(value.trim());
-			((CompEditorModel) model).setPackingType(PackingType.EXPLICIT, explicitPacking);
-			adjustCompositeInfo();
+		if (explicitPackingTextField.getTextEntryStatus() != CHANGED) {
+			return;
 		}
-		catch (NumberFormatException e1) {
-			refreshGUIPackingValue();
-			setStatus(value + " is not a valid packing value.");
+		int explicitPacking = decodeUnsignedIntEntry(explicitPackingTextField, "pack value", false);
+		if (explicitPacking <= 0) {
+			return;
 		}
+		((CompEditorModel) model).setPackingType(PackingType.EXPLICIT, explicitPacking);
+		adjustCompositeInfo();
 	}
 
 	/**
@@ -789,12 +893,14 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			explicitPackingButton.setSelected(true);
 		}
 		explicitPackingTextField.setText(packingString);
+		explicitPackingTextField.setDefaultValue(packingString);
+		explicitPackingTextField.setIsError(false);
 	}
 
 	protected void setupSize() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-		sizeLabel = new GDLabel("Size:");
+		JLabel sizeLabel = new GDLabel("Size:");
 		sizeLabel.setToolTipText("The current size in bytes.");
 		gridBagConstraints.anchor = GridBagConstraints.LINE_END;
 		gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -802,23 +908,43 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		gridBagConstraints.gridy = 3;
 		infoPanel.add(sizeLabel, gridBagConstraints);
 
-		sizeTextField = new JTextField(10);
+		sizeTextField = new GFormattedTextField(new DefaultFormatterFactory(), "");
 		sizeTextField.setName("Total Length");
 		sizeTextField.setToolTipText("The current size in bytes.");
 		setSizeEditable(false);
+
 		gridBagConstraints.ipadx = 60;
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+		gridBagConstraints.insets = VERTICAL_INSETS;
 		gridBagConstraints.gridx = 1;
 		gridBagConstraints.gridy = 3;
 		infoPanel.add(sizeTextField, gridBagConstraints);
 
-		sizeTextField.addActionListener(e -> updatedStructureSize());
-		sizeTextField.addFocusListener(new FocusListener() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				// don't care
-			}
+		provider.registerHelp(sizeTextField, "Size");
 
+		sizeTextField.setInputVerifier(new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				return decodeUnsignedIntEntry(sizeTextField, "structure size", true) >= 0;
+			}
+		});
+
+		sizeTextField.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					// revert to model state when escape is hit
+					setCompositeSize(model.getLength());
+				}
+			}
+		});
+
+		sizeTextField.addTextEntryStatusListener(c -> provider.contextChanged());
+
+		sizeTextField.addActionListener(e -> updatedStructureSize());
+
+		sizeTextField.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
 				if (sizeTextField.isEditable()) {
@@ -830,8 +956,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	protected void setSizeEditable(boolean editable) {
 		sizeTextField.setEditable(editable);
+		sizeTextField.setEnabled(editable);
 		if (editable) {
-			// editable - use same background as category field
+			// editable - use same background as description field
 			sizeTextField.setBackground(descriptionTextField.getBackground());
 		}
 		else {
@@ -853,120 +980,36 @@ public class CompEditorPanel extends CompositeEditorPanel {
 			return;
 		}
 
-		String valueStr = sizeTextField.getText();
-		Integer value;
-		try {
-			updatingSize = true;
-			value = Integer.decode(valueStr);
-			int structureSize = value.intValue();
-			if (structureSize < 0) {
-				model.setStatus("Structure size cannot be negative.", true);
-			}
-			else {
-				if (structureSize < model.getLength()) {
-					// Decreasing structure length.
-					// Verify that user really wants this.
-					String question =
-						"The size field was changed to " + structureSize + " bytes.\n" +
-							"Do you really want to truncate " + model.getCompositeName() + "?";
-					String title = "Truncate " + model.getTypeName() + " In Editor?";
-					int response =
-						OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);
-					if (response != OptionDialog.YES_OPTION) {
-						compositeInfoChanged();
-						return;
-					}
-				}
-				((StructureEditorModel) model).setStructureSize(structureSize);
-				model.setStatus(null);
-			}
+		if (sizeTextField.getTextEntryStatus() != CHANGED) {
+			return;
 		}
-		catch (NumberFormatException e1) {
-			model.setStatus("Invalid structure size \"" + valueStr + "\".", true);
+
+		int size = decodeUnsignedIntEntry(sizeTextField, "structure size", true);
+		if (size < 0) {
+			return;
+		}
+
+		updatingSize = true;
+		try {
+			if (size < model.getLength()) {
+				// Decreasing structure length.
+				// Verify that user really wants this.
+				String question = "The size field was changed to " + size + " bytes.\n" +
+					"Do you really want to truncate " + model.getCompositeName() + "?";
+				String title = "Truncate " + model.getTypeName() + " In Editor?";
+				int response =
+					OptionDialog.showYesNoDialogWithNoAsDefaultButton(this, title, question);
+				if (response != OptionDialog.YES_OPTION) {
+					compositeInfoChanged();
+					return;
+				}
+			}
+			((StructureEditorModel) model).setStructureSize(size);
 		}
 		finally {
 			updatingSize = false;
 		}
 		compositeInfoChanged();
-	}
-
-	private void addFieldListeners() {
-		fieldDocListener = new DocumentListener() {
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				changed(e);
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				changed(e);
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				changed(e);
-			}
-
-			private void changed(DocumentEvent e) {
-				Document doc = e.getDocument();
-				if (doc.equals(nameTextField.getDocument())) {
-					model.clearStatus();
-					String name = nameTextField.getText().trim();
-					if (name.length() == 0) {
-						return;
-					}
-					try {
-
-						model.setName(name);
-					}
-					catch (DuplicateNameException dne) {
-						model.setStatus("A data type named " + name + " already exists.");
-					}
-					catch (InvalidNameException ine) {
-						model.setStatus(name + " is not a valid name.");
-					}
-				}
-				else if (doc.equals(descriptionTextField.getDocument())) {
-					model.clearStatus();
-					model.setDescription(descriptionTextField.getText().trim());
-				}
-			}
-		};
-		nameTextField.getDocument().addDocumentListener(fieldDocListener);
-		descriptionTextField.getDocument().addDocumentListener(fieldDocListener);
-
-		// Set the description so it can be edited.
-		fieldActionListener = e -> {
-			Object source = e.getSource();
-			if (source == nameTextField) {
-				updatedName();
-			}
-			else if (source == descriptionTextField) {
-				updatedDescription();
-			}
-		};
-		nameTextField.addActionListener(fieldActionListener);
-		descriptionTextField.addActionListener(fieldActionListener);
-
-		fieldFocusListener = new FocusListener() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				// ignore
-			}
-
-			@Override
-			public void focusLost(FocusEvent e) {
-				Object source = e.getSource();
-				if (source == nameTextField) {
-					updatedName();
-				}
-				else if (source == descriptionTextField) {
-					updatedDescription();
-				}
-			}
-		};
-		nameTextField.addFocusListener(fieldFocusListener);
-		descriptionTextField.addFocusListener(fieldFocusListener);
 	}
 
 	private void chooseExplicitAlign() {
@@ -982,35 +1025,92 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		explicitAlignTextField.requestFocus();
 	}
 
-	private void removeFieldListeners() {
-		nameTextField.getDocument().removeDocumentListener(fieldDocListener);
-		nameTextField.removeActionListener(fieldActionListener);
-		nameTextField.removeFocusListener(fieldFocusListener);
+	private int decodeUnsignedIntEntry(JTextField textField, String type, boolean zeroAllowed) {
+		model.clearStatus();
+		String valueStr = textField.getText().trim();
+		if (StringUtils.isEmpty(valueStr)) {
+			model.setStatus("Missing " + type + ".", false);
+			return -1;
+		}
+		try {
+			int value = Integer.decode(valueStr);
+			if (value < 0) {
+				model.setStatus("Negative " + type + " not permitted.", true);
+				return -1;
+			}
+			if (value == 0 && !zeroAllowed) {
+				model.setStatus("Zero " + type + " not permitted.", true);
+				return -1;
+			}
+			model.setStatus(null);
+			return value;
+		}
+		catch (NumberFormatException e1) {
+			model.setStatus("Invalid " + type + " \"" + valueStr + "\".", true);
+			return -1;
+		}
+	}
 
-		descriptionTextField.getDocument().removeDocumentListener(fieldDocListener);
-		descriptionTextField.removeActionListener(fieldActionListener);
-		descriptionTextField.removeFocusListener(fieldFocusListener);
+	private void updateEntryAcceptanceStatus() {
+		Swing.runLater(() -> {
+			if (!hasInvalidEntry() && hasUncomittedEntry()) {
+				setStatus("Hit <Enter> key in edit field to accept entry");
+			}
+		});
+	}
 
-		defaultAlignButton.addActionListener(fieldActionListener);
+	@Override
+	protected boolean hasUncomittedEntry() {
+		return nameTextField.getTextEntryStatus() == CHANGED ||
+			descriptionTextField.getTextEntryStatus() == CHANGED ||
+			sizeTextField.getTextEntryStatus() == CHANGED ||
+			explicitAlignTextField.getTextEntryStatus() == CHANGED ||
+			explicitPackingTextField.getTextEntryStatus() == CHANGED;
+	}
 
-		machineAlignButton.addActionListener(fieldActionListener);
+	@Override
+	protected boolean hasInvalidEntry() {
+		return nameTextField.getTextEntryStatus() == INVALID ||
+			descriptionTextField.getTextEntryStatus() == INVALID ||
+			sizeTextField.getTextEntryStatus() == INVALID ||
+			explicitAlignTextField.getTextEntryStatus() == INVALID ||
+			explicitPackingTextField.getTextEntryStatus() == INVALID;
+	}
 
-		explicitAlignButton.addActionListener(fieldActionListener);
-
-		explicitAlignTextField.addActionListener(fieldActionListener);
-		explicitAlignTextField.removeFocusListener(fieldFocusListener);
+	@Override
+	protected void comitEntryChanges() {
+		if (nameTextField.getTextEntryStatus() == CHANGED) {
+			updatedName();
+		}
+		else if (descriptionTextField.getTextEntryStatus() == CHANGED) {
+			updatedDescription();
+		}
+		else if (sizeTextField.getTextEntryStatus() == CHANGED) {
+			updatedStructureSize();
+		}
+		else if (explicitAlignTextField.getTextEntryStatus() == CHANGED) {
+			adjustExplicitMinimumAlignmentValue();
+		}
+		else if (explicitPackingTextField.getTextEntryStatus() == CHANGED) {
+			adjustPackingValue();
+		}
 	}
 
 	/**
 	 * Gets called when the user updates the name.
 	 */
 	protected void updatedName() {
+
 		if (!nameTextField.isShowing()) {
 			return;
 		}
+
+		if (nameTextField.getTextEntryStatus() != CHANGED) {
+			return;
+		}
+
 		// Adjust the value.
-		String nameText = this.nameTextField.getText();
-		String newName = nameText.trim();
+		String newName = nameTextField.getText().trim();
 		if (!DataUtilities.isValidDataTypeName(newName)) {
 			if (newName.length() == 0) {
 				model.setStatus("Name is required.");
@@ -1022,14 +1122,12 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		}
 		String originalDtName = model.getOriginalDataTypeName();
 		if (!newName.equals(originalDtName) && newName.length() == 0) {
-			nameTextField.setText(originalDtName);
+			setCompositeName(originalDtName);
 			model.setStatus("Name is required. So original name has been restored.");
 			return;
 		}
 
-		if (!newName.equals(nameText)) {
-			nameTextField.setText(newName);
-		}
+		setCompositeName(newName);
 
 		if (!newName.equals(model.getCompositeName())) {
 			try {
@@ -1051,10 +1149,15 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		if (!descriptionTextField.isShowing()) {
 			return;
 		}
-		// Adjust the value.
+
+		if (descriptionTextField.getTextEntryStatus() != CHANGED) {
+			return;
+		}
+
 		String newValue = this.descriptionTextField.getText().trim();
 		if (!newValue.equals(model.getDescription())) {
 			model.setDescription(newValue);
+			setDescription(newValue);
 		}
 	}
 
@@ -1063,7 +1166,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * @return the name
 	 */
 	public String getCategoryName() {
-		return categoryStatusTextField.getText();
+		return categoryNameLabel.getText();
 	}
 
 	/**
@@ -1073,50 +1176,31 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 *            the new category name
 	 */
 	public void setCategoryName(String name) {
-		categoryStatusTextField.setText(name);
+		categoryNameLabel.setText(name);
 	}
 
 	/**
-	 * Returns the currently displayed structure name in the edit area.
-	 * @return the name
-	 */
-	public String getCompositeName() {
-		return nameTextField.getText().trim();
-	}
-
-	/**
-	 * Sets the currently displayed structure name in the edit area.
+	 * Sets the currently displayed structure name which matches the model state
 	 *
-	 * @param name
-	 *            the new name
+	 * @param name the new name
 	 */
-	public void setCompositeName(String name) {
-		String original = getCompositeName();
-		if (name.equals(original)) {
-			return;
-		}
-		Document doc = nameTextField.getDocument();
-		doc.removeDocumentListener(fieldDocListener);
+	private void setCompositeName(String name) {
 		nameTextField.setText(name);
-		doc.addDocumentListener(fieldDocListener);
+		nameTextField.setDefaultValue(name);
+		nameTextField.setIsError(false);
+		setStatus("");
 	}
 
 	/**
-	 * Returns the currently displayed structure description.
-	 * @return the description
-	 */
-	public String getDescription() {
-		return descriptionTextField.getText().trim();
-	}
-
-	/**
-	 * Sets the currently displayed structure description.
+	 * Sets the currently displayed structure description which matches the model state
 	 *
-	 * @param description
-	 *            the new description
+	 * @param description the new description
 	 */
-	public void setDescription(String description) {
+	private void setDescription(String description) {
 		descriptionTextField.setText(description);
+		descriptionTextField.setDefaultValue(description);
+		descriptionTextField.setIsError(false);
+		setStatus("");
 	}
 
 	public void refreshGUIMinimumAlignmentValue() {
@@ -1137,6 +1221,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 						: Integer.toString(minimumAlignment);
 		}
 		explicitAlignTextField.setText(minimumAlignmentStr);
+		explicitAlignTextField.setDefaultValue(minimumAlignmentStr);
+		explicitAlignTextField.setIsError(false);
 	}
 
 	/**
@@ -1147,7 +1233,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String alignmentStr =
 			model.showHexNumbers ? CompositeViewerModel.getHexString(actualAlignment, true)
 					: Integer.toString(actualAlignment);
-		actualAlignmentValueTextField.setText(alignmentStr);
+		actualAlignmentValueLabel.setText(alignmentStr);
 	}
 
 	/**
@@ -1163,7 +1249,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 *
 	 * @param size the new size
 	 */
-	public void setCompositeSize(int size) {
+	private void setCompositeSize(int size) {
 		boolean sizeIsEditable = ((CompEditorModel) model).isSizeEditable();
 		if (sizeTextField.isEditable() != sizeIsEditable) {
 			setSizeEditable(sizeIsEditable);
@@ -1171,6 +1257,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String sizeStr = model.showHexNumbers ? CompositeViewerModel.getHexString(size, true)
 				: Integer.toString(size);
 		sizeTextField.setText(sizeStr);
+		sizeTextField.setDefaultValue(sizeStr);
 	}
 
 	@Override
@@ -1216,8 +1303,46 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	@Override
 	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
-		// TODO Auto-generated method stub
+		// stub
+	}
 
+	/**
+	 * A simple class that allows clients to focus other components when the up or down arrows keys
+	 * are pressed
+	 */
+	private class UpAndDownKeyListener extends KeyAdapter {
+
+		private JRadioButton previousComponent;
+		private JRadioButton nextComponent;
+
+		UpAndDownKeyListener(JRadioButton previousComponent, JRadioButton nextComponent) {
+			this.previousComponent = previousComponent;
+			this.nextComponent = nextComponent;
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+
+			if (e.isConsumed()) {
+				return;
+			}
+
+			int code = e.getKeyCode();
+			if (code == KeyEvent.VK_UP) {
+				// We need to run later due to focusLost() listener on the text field that will 
+				// interfere with the selected state of our newly selected button
+				previousComponent.requestFocusInWindow();
+				Swing.runLater(() -> previousComponent.setSelected(true));
+				e.consume();
+			}
+			else if (code == KeyEvent.VK_DOWN) {
+				// We need to run later due to focusLost() listener on the text field that will 
+				// interfere with the selected state of our newly selected button
+				nextComponent.requestFocusInWindow();
+				Swing.runLater(() -> nextComponent.setSelected(true));
+				e.consume();
+			}
+		}
 	}
 
 }

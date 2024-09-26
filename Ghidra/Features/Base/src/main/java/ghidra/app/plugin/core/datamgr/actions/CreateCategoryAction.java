@@ -26,8 +26,7 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.program.model.data.Category;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 
 public class CreateCategoryAction extends DockingAction {
@@ -90,10 +89,10 @@ public class CreateCategoryAction extends DockingAction {
 		Archive archive = archiveNode.getArchive();
 		DataTypeManager dataTypeManager = archive.getDataTypeManager();
 
-		String newNodeName = null;
-		int transactionID = dataTypeManager.startTransaction("Create Category");
+		String newNodeName = getUniqueCategoryName(category);
+		String path = category.toString() + newNodeName;
+		int transactionID = dataTypeManager.startTransaction("Create " + path);
 		try {
-			newNodeName = getUniqueCategoryName(category);
 			category.createCategory(newNodeName);
 		}
 		catch (InvalidNameException ie) {

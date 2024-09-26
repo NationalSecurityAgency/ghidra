@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,14 +89,30 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 	}
 
 	@Override
+	Set<Long> getChildIds(long parentID) throws IOException {
+		Field[] ids = table.findRecords(new LongField(parentID), PARENT_COL);
+		Set<Long> childIds = new HashSet<>(ids.length);
+		for (Field id : ids) {
+			DBRecord rec = table.getRecord(id);
+			childIds.add(rec.getLongValue(CHILD_COL));
+		}
+		return childIds;
+	}
+
+	@Override
 	Set<Long> getParentIds(long childID) throws IOException {
 		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
 		Set<Long> parentIds = new HashSet<>(ids.length);
-		for (int i = 0; i < ids.length; i++) {
-			DBRecord rec = table.getRecord(ids[i]);
+		for (Field id : ids) {
+			DBRecord rec = table.getRecord(id);
 			parentIds.add(rec.getLongValue(PARENT_COL));
 		}
 		return parentIds;
+	}
+
+	@Override
+	boolean hasParent(long childID) throws IOException {
+		return table.hasRecord(new LongField(childID), CHILD_COL);
 	}
 
 	public void setNeedsInitializing() {

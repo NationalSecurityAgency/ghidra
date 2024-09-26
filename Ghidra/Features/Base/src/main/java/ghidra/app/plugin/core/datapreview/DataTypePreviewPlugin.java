@@ -182,7 +182,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 
 		DataTypeManager newDtm = createLayeredDataTypeManager();
 
-		int transactionId = newDtm.startTransaction("add datatypes");
+		int transactionId = newDtm.startTransaction("Add Datatypes");
 		try {
 			Iterator<DataType> allDataTypes = dataTypeManager.getAllDataTypes();
 			while (allDataTypes.hasNext()) {
@@ -343,7 +343,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			return;
 		}
 
-		int transactionID = dataTypeManager.startTransaction("Add dataType");
+		int transactionID = dataTypeManager.startTransaction("Add " + dt.getName());
 		try {
 			DataType resolvedDt = dataTypeManager.resolve(dt, null);
 			model.add(resolvedDt);
@@ -354,7 +354,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	}
 
 	private void removeDataType(DataType dt) {
-		int transactionID = dataTypeManager.startTransaction("Remove dataType");
+		int transactionID = dataTypeManager.startTransaction("Remove " + dt.getName());
 		try {
 			model.removeAll(dt);
 
@@ -420,16 +420,6 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		@Override
 		public boolean isDropOk(DropTargetDragEvent e) {
 			return true;
-		}
-
-		@Override
-		public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-			// don't care
-		}
-
-		@Override
-		public void undoDragUnderFeedback() {
-			// don't care
 		}
 
 		@Override
@@ -608,9 +598,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		}
 
 		private boolean contains(DataType dt) {
-			Iterator<Preview> iter = data.iterator();
-			while (iter.hasNext()) {
-				Preview p = iter.next();
+			for (Preview p : data) {
 				if (p.getDataType().equals(dt) || p.getDataType().isEquivalent(dt)) {
 					return true;
 				}

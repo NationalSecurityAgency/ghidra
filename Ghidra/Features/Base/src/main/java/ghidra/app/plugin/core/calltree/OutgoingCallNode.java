@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -37,35 +36,34 @@ import resources.Icons;
 import resources.MultiIcon;
 import resources.icons.TranslateIcon;
 
-public abstract class OutgoingCallNode extends CallNode {
+public class OutgoingCallNode extends CallNode {
 
 	private static final Icon OUTGOING_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
-	private final Icon OUTGOING_FUNCTION_ICON;
+	private final Icon outgoingFunctionIcon;
 
 	private Icon icon = null;
 	protected final Program program;
 	protected final Function function;
 	protected String name;
 	private final Address sourceAddress;
-	protected final boolean filterDuplicates;
-	private final Icon baseIcon;
 
-	OutgoingCallNode(Program program, Function function, Address sourceAddress, Icon baseIcon,
-			boolean filterDuplicates, AtomicInteger filterDepth) {
-		super(filterDepth);
+	OutgoingCallNode(Program program, Function function, Address sourceAddress,
+			CallTreeOptions callTreeOptions) {
+		super(callTreeOptions);
 		this.program = program;
 		this.function = function;
-		this.name = function.getName();
+		this.name = function.getName(callTreeOptions.showNamespace());
 		this.sourceAddress = sourceAddress;
-		this.baseIcon = baseIcon;
-		this.filterDuplicates = filterDuplicates;
 
-		MultiIcon outgoingFunctionIcon = new MultiIcon(OUTGOING_ICON, false, 32, 16);
-		TranslateIcon translateIcon = new TranslateIcon(baseIcon, 16, 0);
-		outgoingFunctionIcon.addIcon(translateIcon);
-		OUTGOING_FUNCTION_ICON = outgoingFunctionIcon;
+		MultiIcon multiIcon = new MultiIcon(OUTGOING_ICON, false, 32, 16);
+		TranslateIcon translateIcon = new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0);
+		multiIcon.addIcon(translateIcon);
+		outgoingFunctionIcon = multiIcon;
+	}
 
-		setAllowsDuplicates(!filterDuplicates);
+	@Override
+	CallNode recreate() {
+		return new OutgoingCallNode(program, function, sourceAddress, callTreeOptions);
 	}
 
 	@Override
@@ -75,8 +73,23 @@ public abstract class OutgoingCallNode extends CallNode {
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		AddressSetView functionBody = function.getBody();
-		Address entryPoint = function.getEntryPoint();
+
+		List<GTreeNode> children = new ArrayList<>();
+		Address calledEntry = function.getEntryPoint();
+		doGenerateChildren(calledEntry, children, monitor);
+
+		Collections.sort(children, new CallNodeComparator());
+
+		return children;
+	}
+
+	private void doGenerateChildren(Address address, List<GTreeNode> results, TaskMonitor monitor)
+			throws CancelledException {
+
+		FunctionManager fm = program.getFunctionManager();
+		Function currentFunction = fm.getFunctionContaining(address);
+		AddressSetView functionBody = currentFunction.getBody();
+		Address entryPoint = currentFunction.getEntryPoint();
 		Set<Reference> references = getReferencesFrom(program, functionBody, monitor);
 		LazyMap<Function, List<GTreeNode>> nodesByFunction =
 			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
@@ -85,50 +98,57 @@ public abstract class OutgoingCallNode extends CallNode {
 			monitor.checkCancelled();
 			Address toAddress = reference.getToAddress();
 			if (toAddress.equals(entryPoint)) {
-				continue;
+				continue; // recursive
 			}
 
 			Function calledFunction = functionManager.getFunctionAt(toAddress);
+			if (calledFunction == null) {
+				createNode(nodesByFunction, reference, calledFunction);
+				continue;
+			}
+
+			// If we are not showing thunks, then replace the thunk with the thunked function
+			if (calledFunction.isThunk() && !callTreeOptions.allowsThunks()) {
+				Function thunkedFunction = calledFunction.getThunkedFunction(true);
+				createNode(nodesByFunction, reference, thunkedFunction);
+				continue;
+			}
+
 			createNode(nodesByFunction, reference, calledFunction);
 		}
 
-		List<GTreeNode> children =
-			nodesByFunction.values()
-					.stream()
-					.flatMap(list -> list.stream())
-					.collect(Collectors.toList());
-		Collections.sort(children, new CallNodeComparator());
-
-		return children;
+		List<GTreeNode> children = nodesByFunction.values()
+				.stream()
+				.flatMap(list -> list.stream())
+				.collect(Collectors.toList());
+		results.addAll(children);
 	}
 
 	private void createNode(LazyMap<Function, List<GTreeNode>> nodes, Reference reference,
 			Function calledFunction) {
+		Address fromAddress = reference.getFromAddress();
 		if (calledFunction != null) {
 			if (isExternalCall(calledFunction)) {
-				CallNode node =
-					new ExternalCallNode(calledFunction, reference.getFromAddress(), baseIcon);
-				node.setAllowsDuplicates(!filterDuplicates);
+				CallNode node = new ExternalCallNode(calledFunction, fromAddress,
+					CallTreePlugin.FUNCTION_ICON, callTreeOptions);
 				addNode(nodes, node);
 			}
 			else {
-				addNode(nodes, new OutgoingFunctionCallNode(program, calledFunction,
-					reference.getFromAddress(), filterDuplicates, filterDepth));
+				addNode(nodes,
+					new OutgoingCallNode(program, calledFunction, fromAddress, callTreeOptions));
 			}
 		}
 		else if (isCallReference(reference)) {
 
 			Function externalFunction = getExternalFunctionTempHackWorkaround(reference);
 			if (externalFunction != null) {
-				CallNode node =
-					new ExternalCallNode(externalFunction, reference.getFromAddress(), baseIcon);
-				node.setAllowsDuplicates(!filterDuplicates);
+				CallNode node = new ExternalCallNode(externalFunction, fromAddress,
+					CallTreePlugin.FUNCTION_ICON, callTreeOptions);
 				addNode(nodes, node);
 			}
 			else {
 				// we have a call reference, but no function
-				CallNode node = new DeadEndNode(program, reference);
-				node.setAllowsDuplicates(!filterDuplicates);
+				CallNode node = new DeadEndNode(program, reference, callTreeOptions);
 				addNode(nodes, node);
 			}
 		}
@@ -209,7 +229,7 @@ public abstract class OutgoingCallNode extends CallNode {
 	@Override
 	public Icon getIcon(boolean expanded) {
 		if (icon == null) {
-			icon = OUTGOING_FUNCTION_ICON;
+			icon = outgoingFunctionIcon;
 			if (functionIsInPath()) {
 				icon = CallTreePlugin.RECURSIVE_ICON;
 			}

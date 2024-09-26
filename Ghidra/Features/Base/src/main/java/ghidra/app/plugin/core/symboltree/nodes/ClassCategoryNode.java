@@ -36,7 +36,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 	public static final Icon CLOSED_FOLDER_CLASSES_ICON =
 		new GIcon("icon.plugin.symboltree.node.category.classes.closed");
 
-	ClassCategoryNode(Program program) {
+	public ClassCategoryNode(Program program) {
 		super(SymbolCategory.CLASS_CATEGORY, program);
 	}
 

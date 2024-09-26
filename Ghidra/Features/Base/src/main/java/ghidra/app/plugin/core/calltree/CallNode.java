@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.tree.TreePath;
 
@@ -35,20 +34,19 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class CallNode extends GTreeSlowLoadingNode {
 
-	private boolean allowDuplicates;
-	protected AtomicInteger filterDepth;
+	protected CallTreeOptions callTreeOptions;
 	private int depth = -1;
 
 	/** Used to signal that this node has been marked for replacement */
 	protected boolean invalid = false;
 
-	public CallNode(AtomicInteger filterDepth) {
-		this.filterDepth = filterDepth;
+	public CallNode(CallTreeOptions callTreeOptions) {
+		this.callTreeOptions = Objects.requireNonNull(callTreeOptions);
 	}
 
 	/**
-	 * Returns this node's remote function, where remote is the source function for 
-	 * an incoming call or a destination function for an outgoing call.   May return 
+	 * Returns this node's remote function, where remote is the source function for
+	 * an incoming call or a destination function for an outgoing call.   May return
 	 * null for nodes that do not have functions.
 	 * @return the function or null
 	 */
@@ -67,8 +65,8 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	public abstract Address getSourceAddress();
 
 	/**
-	 * Called when this node needs to be reconstructed due to external changes, such as when 
-	 * functions are renamed. 
+	 * Called when this node needs to be reconstructed due to external changes, such as when
+	 * functions are renamed.
 	 * 
 	 * @return a new node that is the same type as 'this' node.
 	 */
@@ -92,17 +90,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		return set;
 	}
 
-	/**
-	 * True allows this node to contains children with the same name
-	 * 
-	 * @param allowDuplicates true to allow duplicate nodes
-	 */
-	protected void setAllowsDuplicates(boolean allowDuplicates) {
-		this.allowDuplicates = allowDuplicates;
-	}
-
-	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction,
-			CallNode node) {
+	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction, CallNode node) {
 
 		Function function = node.getRemoteFunction();
 		List<GTreeNode> nodes = nodesByFunction.get(function);
@@ -110,12 +98,12 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 			return; // never add equal() nodes
 		}
 
-		if (allowDuplicates) {
+		if (callTreeOptions.allowsDuplicates()) {
 			nodes.add(node); // ok to add multiple nodes for this function with different addresses
 		}
 
 		if (nodes.isEmpty()) {
-			nodes.add(node); // no duplicates allow; only add if this is the only node
+			nodes.add(node); // no duplicates allowed; only add if this is the only node
 			return;
 		}
 
@@ -130,7 +118,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 
 	@Override
 	public int loadAll(TaskMonitor monitor) throws CancelledException {
-		if (depth() > filterDepth.get()) {
+		if (depth() > callTreeOptions.getRecurseDepth()) {
 			return 1;
 		}
 		return super.loadAll(monitor);

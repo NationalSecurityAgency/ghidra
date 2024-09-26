@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,12 @@
 package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import docking.ActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
@@ -38,6 +40,7 @@ import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.model.*;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -237,26 +240,12 @@ public class TraceRecorderTarget extends AbstractTarget {
 	}
 
 	private Map<String, ?> promptArgs(TargetMethod method, Map<String, ?> defaults) {
+		Map<String, ValStr<?>> defs = ValStr.fromPlainMap(defaults);
 		DebuggerMethodInvocationDialog dialog = new DebuggerMethodInvocationDialog(tool,
 			method.getDisplay(), method.getDisplay(), null);
-		while (true) {
-			for (ParameterDescription<?> param : method.getParameters().values()) {
-				Object val = defaults.get(param.name);
-				if (val != null) {
-					dialog.setMemorizedArgument(param.name, param.type.asSubclass(Object.class),
-						val);
-				}
-			}
-			Map<String, ?> args = dialog.promptArguments(method.getParameters());
-			if (args == null) {
-				// Cancelled
-				return null;
-			}
-			if (dialog.isResetRequested()) {
-				continue;
-			}
-			return args;
-		}
+
+		Map<String, ValStr<?>> args = dialog.promptArguments(method.getParameters(), defs, defs);
+		return args == null ? null : ValStr.toPlainMap(args);
 	}
 
 	private CompletableFuture<?> invokeMethod(boolean prompt, TargetMethod method,

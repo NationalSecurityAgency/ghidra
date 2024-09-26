@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,9 +51,8 @@ public class MDMangGhidra extends MDMang {
 		return dataTypeResult;
 	}
 
-	@Override
-	public MDParsableItem demangle(String mangledArg, boolean demangleOnlyKnownPatterns)
-			throws MDException {
+	public MDParsableItem demangle(String mangledArg, boolean errorOnRemainingChars,
+			boolean demangleOnlyKnownPatterns) throws MDException {
 		// TODO: Could possibly just ignore "demangleOnlyKnownpatterns"
 		if (demangleOnlyKnownPatterns) {
 			if (!(mangledArg.startsWith("?") || mangledArg.startsWith(".") ||
@@ -63,6 +62,13 @@ public class MDMangGhidra extends MDMang {
 				return null;
 			}
 		}
+
+		return demangle(mangledArg, errorOnRemainingChars);
+	}
+
+	@Override
+	public MDParsableItem demangle(String mangledArg, boolean errorOnRemainingChars)
+			throws MDException {
 
 		this.mangledSource = mangledArg;
 
@@ -74,33 +80,97 @@ public class MDMangGhidra extends MDMang {
 		return returnedItem;
 	}
 
-	public DemangledType processNamespace(MDQualifiedName qualifiedName) {
+	@Override
+	public MDDataType demangleType(String mangledArg, boolean errorOnRemainingChars)
+			throws MDException {
+
+		this.mangledSource = mangledArg;
+
+		MDDataType returnedType = super.demangleType(mangledArg, errorOnRemainingChars);
+
+		this.demangledSource = returnedType.toString();
+
+		dataTypeResult = processDataType(null, returnedType);
+		return returnedType;
+	}
+
+	public Demangled processNamespace(MDQualifiedName qualifiedName) {
 		return processNamespace(qualifiedName.getQualification());
 	}
 
-	private DemangledType processNamespace(MDQualification qualification) {
+	private Demangled processNamespace(MDQualification qualification) {
 		Iterator<MDQualifier> it = qualification.iterator();
 		if (!it.hasNext()) {
 			return null;
 		}
 
 		MDQualifier qual = it.next();
-		DemangledType type = new DemangledType(mangledSource, demangledSource, qual.toString());
-		DemangledType parentType = type;
+		Demangled type = getDemangled(qual);
+		Demangled current = type;
+		// Note that qualifiers come in reverse order, from most refined to root being the last
 		while (it.hasNext()) {
 			qual = it.next();
-			DemangledType newType;
-			if (qual.isNested()) {
-				String subMangled = qual.getNested().getMangled();
-				newType = new DemangledType(subMangled, demangledSource, qual.toString());
-			}
-			else {
-				newType = new DemangledType(mangledSource, demangledSource, qual.toString());
-			}
-			parentType.setNamespace(newType);
-			parentType = newType;
+			Demangled parent = getDemangled(qual);
+			current.setNamespace(parent);
+			current = parent;
 		}
 		return type;
+	}
+
+	private Demangled getDemangled(MDQualifier qual) {
+		Demangled demangled;
+		if (qual.isNested()) {
+			String subMangled = qual.getNested().getMangled();
+			MDObjectCPP obj = qual.getNested().getNestedObject();
+			MDTypeInfo typeInfo = obj.getTypeInfo();
+			MDType type = typeInfo.getMDType();
+			if (type instanceof MDDataType dt) {
+				demangled = new DemangledType(subMangled, qual.toString(), qual.toString());
+			}
+			else if (type instanceof MDFunctionType ft) {
+				// We currently cannot handle functions as part of a namespace, so we will just
+				// treat the demangled function namespace string as a plain namespace.
+				//demangled = new DemangledFunction(subMangled, qual.toString(), qual.toString());
+				demangled =
+					new DemangledNamespaceNode(subMangled, qual.toString(), qual.toString());
+			}
+			else {
+				demangled =
+					new DemangledNamespaceNode(subMangled, qual.toString(), qual.toString());
+			}
+		}
+		else if (qual.isAnon()) {
+			// Instead of using the standard qual.toString() method, which returns
+			// "`anonymous namespace'" for anonymous qualifiers, we use qual.getAnonymousName()
+			// which will have the underlying anonymous name of the form "A0xfedcba98" to create
+			// a standardized anonymous name that is distinguishable from other anonymous names.
+			// The standardized name comes from createStandardAnonymousNamespaceNode().  This
+			// is especially important when there are sibling anonymous names.
+			String anon = MDMangUtils.createStandardAnonymousNamespaceNode(qual.getAnonymousName());
+			demangled = new DemangledNamespaceNode(mangledSource, qual.toString(), anon);
+		}
+		else if (qual.isInterface()) {
+			// TODO: need to do better; setting namespace for now
+			demangled = new DemangledNamespaceNode(mangledSource, qual.toString(), qual.toString());
+		}
+		else if (qual.isNameQ()) {
+			// TODO: need to do better; setting namespace for now, as it looks like interface
+			demangled = new DemangledNamespaceNode(mangledSource, qual.toString(), qual.toString());
+		}
+		else if (qual.isNameC()) {
+			// TODO: need to do better; setting type for now, but not processed yet and not sure
+			//  what it is
+			demangled = new DemangledType(mangledSource, qual.toString(), qual.toString());
+		}
+		else if (qual.isLocalNamespace()) {
+			String local =
+				MDMangUtils.createStandardLocalNamespaceNode(qual.getLocalNamespaceNumber());
+			demangled = new DemangledNamespaceNode(mangledSource, qual.toString(), local);
+		}
+		else {
+			demangled = new DemangledNamespaceNode(mangledSource, qual.toString(), qual.toString());
+		}
+		return demangled;
 	}
 
 	private DemangledObject processItem() {
@@ -108,24 +178,24 @@ public class MDMangGhidra extends MDMang {
 		if (item instanceof MDObjectReserved) {
 			objectResult = processObjectReserved((MDObjectReserved) item);
 		}
-		else if (item instanceof MDObjectCodeView) {
-			objectResult = processObjectCPP((MDObjectCPP) item);
-			objectResult.setSpecialPrefix(((MDObjectCodeView) item).getPrefix());
+		else if (item instanceof MDObjectCodeView codeView) {
+			objectResult = processObjectCPP(codeView);
+			objectResult.setSpecialPrefix(codeView.getPrefix());
 		}
-		else if (item instanceof MDObjectCPP) { // Base class of MDObjectBracket/MDObjectCodeView.
-			objectResult = processObjectCPP((MDObjectCPP) item);
+		else if (item instanceof MDObjectCPP objCpp) { // Base class of MDObjectBracket/MDObjectCodeView.
+			objectResult = processObjectCPP(objCpp);
 		}
-		else if (item instanceof MDObjectC) {
-			objectResult = processObjectC((MDObjectC) item);
+		else if (item instanceof MDObjectC objC) {
+			objectResult = processObjectC(objC);
 		}
-		else if (item instanceof MDDataType) {
+		else if (item instanceof MDDataType dataType) {
 			// TODO: how do we fix this? DemangledDataType extends DemangledType, but not
 			// DemangleObject...
-			dataTypeResult = processDataType(null, (MDDataType) item);
+			dataTypeResult = processDataType(null, dataType);
 			// object = getDemangledDataType();
 		}
-		else if (item instanceof MDTemplateNameAndArguments) {
-			objectResult = processTemplate((MDTemplateNameAndArguments) item);
+		else if (item instanceof MDTemplateNameAndArguments templateNameAndArgs) {
+			objectResult = processTemplate(templateNameAndArgs);
 		}
 		return objectResult;
 	}

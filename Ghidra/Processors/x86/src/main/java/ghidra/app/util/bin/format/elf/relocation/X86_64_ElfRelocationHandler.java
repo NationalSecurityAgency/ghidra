@@ -66,12 +66,56 @@ public class X86_64_ElfRelocationHandler extends
 		int symbolIndex = relocation.getSymbolIndex();
 		int byteLength = 8; // most relocations affect 8-bytes (change if different)
 		long value;
-
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
 		switch (type) {
+			case R_X86_64_RELATIVE:
+				// word64 for LP64 and specifies word32 for ILP32,
+				// we assume LP64 only.  We probably need a hybrid
+				// variant to handle the ILP32 case.
+			case R_X86_64_RELATIVE64:
+				// dl_machine.h
+				// value = (Elf64_64Addr) map->l_addr + reloc->r_addend
+				long imageBaseAdjustment = elfRelocationContext.getImageBaseWordAdjustmentOffset();
+				if (elfRelocationContext.getElfHeader().isPreLinked()) {
+					// adjust prelinked value that is already in memory
+					value = memory.getLong(relocationAddress) + imageBaseAdjustment;
+				}
+				else {
+					value = addend + imageBaseAdjustment;
+				}
+				memory.setLong(relocationAddress, value);
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_X86_64_IRELATIVE:
+				value = addend + elfRelocationContext.getImageBaseWordAdjustmentOffset();
+				memory.setLong(relocationAddress, value);
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			// Thread Local Symbol relocations (unimplemented concept)
+			case R_X86_64_DTPMOD64:
+			case R_X86_64_DTPOFF64:
+			case R_X86_64_TPOFF64:
+			case R_X86_64_TLSDESC:
+				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
+					"Thread Local Symbol relocation not supported", elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+								
 			case R_X86_64_COPY:
 				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
 					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}
+
+		switch (type) {
+			
 			case R_X86_64_64:
 				value = symbolValue + addend;
 				memory.setLong(relocationAddress, value);
@@ -155,15 +199,6 @@ public class X86_64_ElfRelocationHandler extends
 				value = sym.getSize() + addend;
 				memory.setLong(relocationAddress, value);
 				break;
-
-			// Thread Local Symbol relocations (unimplemented concept)
-			case R_X86_64_DTPMOD64:
-			case R_X86_64_DTPOFF64:
-			case R_X86_64_TPOFF64:
-			case R_X86_64_TLSDESC:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Thread Local Symbol relocation not supported", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
 
 			// cases which do not use symbol value
 
@@ -281,28 +316,6 @@ public class X86_64_ElfRelocationHandler extends
 					return RelocationResult.FAILURE;
 				}
 				value = symbolValue - dotgot + addend;
-				memory.setLong(relocationAddress, value);
-				break;
-
-			case R_X86_64_RELATIVE:
-				// word64 for LP64 and specifies word32 for ILP32,
-				// we assume LP64 only.  We probably need a hybrid
-				// variant to handle the ILP32 case.
-			case R_X86_64_RELATIVE64:
-				// dl_machine.h
-				// value = (Elf64_64Addr) map->l_addr + reloc->r_addend
-				long imageBaseAdjustment = elfRelocationContext.getImageBaseWordAdjustmentOffset();
-				if (elfRelocationContext.getElfHeader().isPreLinked()) {
-					// adjust prelinked value that is already in memory
-					value = memory.getLong(relocationAddress) + imageBaseAdjustment;
-				}
-				else {
-					value = addend + imageBaseAdjustment;
-				}
-				memory.setLong(relocationAddress, value);
-				break;
-			case R_X86_64_IRELATIVE:
-				value = addend + elfRelocationContext.getImageBaseWordAdjustmentOffset();
 				memory.setLong(relocationAddress, value);
 				break;
 

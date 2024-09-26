@@ -129,7 +129,7 @@ public abstract class GhidraURLQuery {
 				content = wrappedContent.getContent(resultHandler);
 			}
 			catch (IOException e) {
-				resultHandler.handleError("Content Not Found", e.getMessage(), null, e);
+				resultHandler.handleError("Content Not Found", e.getMessage(), ghidraUrl, e);
 				return;
 			}
 

@@ -19,8 +19,10 @@ eclipse.project.name = '_LaunchSupport'
 
 // This should run in the oldest version of Java possible to maximize the odds of it running on a 
 // user's system.
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+}
 
 jar {
     manifest {

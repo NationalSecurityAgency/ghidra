@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.reachability;
 
 import java.util.*;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
-import docking.widgets.table.TableColumnDescriptor;
+import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -38,6 +37,8 @@ public class FRPathsModel extends AddressBasedTableModel<FRVertex> {
 
 	protected FRPathsModel(ServiceProvider serviceProvider, Program program) {
 		super("Function Reachability Paths Model", serviceProvider, program, null);
+
+		setDefaultTableSortState(TableSortState.createUnsortedSortState());
 	}
 
 	@Override

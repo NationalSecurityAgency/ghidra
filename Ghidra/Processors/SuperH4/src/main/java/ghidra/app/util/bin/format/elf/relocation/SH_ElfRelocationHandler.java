@@ -54,6 +54,31 @@ public class SH_ElfRelocationHandler
 		int newValue = 0;
 		int oldValue;
 		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+		
+		// Handle relative relocations that do not require symbolAddr or symbolValue 
+		switch (type) {
+
+			case R_SH_RELATIVE:
+				if (elfRelocationContext.extractAddend()) {
+					addend = memory.getInt(relocationAddress);
+				}
+				newValue = (int) (elfRelocationContext.getImageBaseWordAdjustmentOffset()) + addend;
+				memory.setInt(relocationAddress, newValue);
+				return new RelocationResult(Status.APPLIED, byteLength);
+				
+			case R_SH_COPY:
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
+			
+			default:
+				break;
+		}
+		
+		// Check for unresolved symbolAddr and symbolValue required by remaining relocation types handled below
+		if (handleUnresolvedSymbol(elfRelocationContext, relocation, relocationAddress)) {
+			return RelocationResult.FAILURE;
+		}	
 
 		switch (type) {
 			case R_SH_DIR32:
@@ -121,19 +146,6 @@ public class SH_ElfRelocationHandler
 				newValue = (oldValue & 0xff00) | (newValue & 0xff);
 				memory.setShort(relocationAddress, (short) newValue);
 				byteLength = 2;
-				break;
-
-			case R_SH_COPY:
-				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
-					sym.getSize(), elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-
-			case R_SH_RELATIVE:
-				if (elfRelocationContext.extractAddend()) {
-					addend = memory.getInt(relocationAddress);
-				}
-				newValue = (int) (elfRelocationContext.getImageBaseWordAdjustmentOffset()) + addend;
-				memory.setInt(relocationAddress, newValue);
 				break;
 
 			default:

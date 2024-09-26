@@ -1384,7 +1384,7 @@ void Merge::groupPartialRoot(Varnode *vn)
     baseOffset = entry->getOffset();
   }
 
-  PieceNode::gatherPieces(pieces, vn, vn->getDef(), baseOffset);
+  PieceNode::gatherPieces(pieces, vn, vn->getDef(), baseOffset, baseOffset);
   bool throwOut = false;
   for(int4 i=0;i<pieces.size();++i) {
     Varnode *nodeVn = pieces[i].getVarnode();
@@ -1496,6 +1496,14 @@ void Merge::markInternalCopies(void)
 	if (p2->getOffset() != p1->getOffset() + v3->getSize()) break;
       }
       data.opMarkNonPrinting(op);
+      if (v2->isImplied()) {
+	v2->clearImplied();
+	v2->setExplicit();
+      }
+      if (v3->isImplied()) {
+	v3->clearImplied();
+	v3->setExplicit();
+      }
       break;
     case CPUI_SUBPIECE:
       v1 = op->getOut();
@@ -1513,6 +1521,10 @@ void Merge::markInternalCopies(void)
 	if (p2->getOffset() + val != p1->getOffset()) break;
       }
       data.opMarkNonPrinting(op);
+      if (v2->isImplied()) {
+	v2->clearImplied();
+	v2->setExplicit();
+      }
       break;
     default:
       break;

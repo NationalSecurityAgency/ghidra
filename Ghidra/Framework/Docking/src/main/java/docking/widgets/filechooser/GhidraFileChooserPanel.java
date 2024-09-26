@@ -259,6 +259,20 @@ public class GhidraFileChooserPanel extends JPanel implements Droppable {
 		return file;
 	}
 
+	/**
+	 * Sets the <code>GhidraFileChooser</code> to allow the user to just
+	 * select files, just select
+	 * directories, or select both files and directories.  The default is
+	 * <code>GhidraFileChooserMode.FILES_ONLY</code>.
+	 *
+	 * @param mode the type of files to be displayed
+	 * @exception IllegalArgumentException  if <code>mode</code> is an
+	 *				illegal Dialog mode
+	 */
+	public void setFileSelectionMode(GhidraFileChooserMode mode) {
+		this.selectionMode = mode;
+	}
+
 	private void setupDragAndDrop() {
 		acceptableFlavors = new DataFlavor[] { DataFlavor.javaFileListFlavor, };
 
@@ -287,42 +301,8 @@ public class GhidraFileChooserPanel extends JPanel implements Droppable {
 		}
 	}
 
-	/**
-	 * Sets the <code>GhidraFileChooser</code> to allow the user to just
-	 * select files, just select
-	 * directories, or select both files and directories.  The default is
-	 * <code>GhidraFileChooserMode.FILES_ONLY</code>.
-	 *
-	 * @param mode the type of files to be displayed
-	 * @exception IllegalArgumentException  if <code>mode</code> is an
-	 *				illegal Dialog mode
-	 */
-	public void setFileSelectionMode(GhidraFileChooserMode mode) {
-		this.selectionMode = mode;
-	}
-
-	/**
-	 * @see docking.dnd.Droppable#dragUnderFeedback(boolean, java.awt.dnd.DropTargetDragEvent)
-	 */
-	@Override
-	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		// don't care
-	}
-
-	/**
-	 * @see docking.dnd.Droppable#isDropOk(java.awt.dnd.DropTargetDragEvent)
-	 */
 	@Override
 	public boolean isDropOk(DropTargetDragEvent e) {
 		return true;
 	}
-
-	/**
-	 * @see docking.dnd.Droppable#undoDragUnderFeedback()
-	 */
-	@Override
-	public void undoDragUnderFeedback() {
-		// don't care
-	}
-
 }

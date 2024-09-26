@@ -480,5 +480,13 @@ public class ArchiveNode extends CategoryNode {
 			unloadChildren();
 			nodeChangedUpdater.update();
 		}
+
+		@Override
+		public void restored(DataTypeManager manager) {
+			// need to force all cached datatype tooltips to be cleared 
+			// due to potential changes (e.g., undo/redo)
+			unloadChildren();
+			nodeChangedUpdater.update();
+		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.datamgr.editor;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -27,6 +28,8 @@ import org.junit.*;
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.*;
+import docking.widgets.table.ColumnSortState.SortDirection;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
@@ -469,8 +472,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testEditName() throws Exception {
-		Enum enummDt = editSampleEnum();
 
+		Enum enummDt = editSampleEnum();
 		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
 
 		runSwing(() -> {
@@ -480,6 +483,37 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		applyChanges(true);
 		assertEquals("MyColors", enummDt.getName());
+	}
+
+	@Test
+	public void testEditName_RowChanges_NavigationWithTab() throws Exception {
+
+		editSampleEnum();
+
+		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
+		JTable table = panel.getTable();
+
+		sortOnNameColumn();
+
+		int row = 0;
+		int col = 0;
+		clickTableCell(table, row, col, 2);
+		assertTrue(runSwing(() -> table.isEditing()));
+
+		// note: this new name will cause the enum entry at row 0 to get moved to row 1
+		String newName = "MyColors";
+		JTextField editorField = getCellEditorTextField();
+		assertNotNull(editorField);
+		setText(editorField, newName);
+
+		pressTab(editorField);
+
+		// get the row after the table has been sorted
+		int newRow = findRowByName(newName);
+		assertNotEquals(row, newRow);
+
+		int newColumn = col + 1;
+		assertEditing(newRow, newColumn);
 	}
 
 	@Test
@@ -545,7 +579,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			nameField.setText(newName);
 		});
 
-		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
+		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
 		performAction(applyAction);
@@ -566,7 +600,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			nameField.setText(newDescription);
 		});
 
-		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
+		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
 		performAction(applyAction);
@@ -668,113 +702,74 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	@Test
-	public void testUndoRedo() throws Exception {
-
-		Enum enumDt = editSampleEnum();
-
-		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
-		JTable table = panel.getTable();
-		EnumTableModel model = (EnumTableModel) table.getModel();
-
-		// delete a row
-		table.setRowSelectionInterval(0, 0);
-		runSwing(() -> {
-			DockingActionIf action = getDeleteAction();
-			action.actionPerformed(new DefaultActionContext());
-		});
-		applyChanges(true);
-		assertNull(enumDt.getName(0));
-		// undo
-		undo(program);
-		assertEquals("Red", model.getValueAt(0, EnumTableModel.NAME_COL));
-
-		//redo
-		redo(program);
-		assertEquals("Pink", model.getValueAt(0, EnumTableModel.NAME_COL));
-	}
-
-	@Test
-	public void testChangesBeforeUndoYes() throws Exception {
-
-		editSampleEnum();
-
-		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
-		JTable table = panel.getTable();
-		EnumTableModel model = (EnumTableModel) table.getModel();
-
-		int origRowCount = model.getRowCount();
-		runSwing(() -> {
-			DockingActionIf action = getAddAction();
-			action.actionPerformed(new DefaultActionContext());
-			action.actionPerformed(new DefaultActionContext());
-		});
-		waitForSwing();
-		applyChanges(true);
-		// make more changes
-		runSwing(() -> {
-			DockingActionIf action = getAddAction();
-			action.actionPerformed(new DefaultActionContext());
-			action.actionPerformed(new DefaultActionContext());
-		});
-		waitForSwing();
-		undo(false);
-		OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
-		// yes to reload the enum data type
-		JButton button = findButtonByText(d.getComponent(), "Yes");
-		assertNotNull(button);
-		runSwing(() -> button.getActionListeners()[0].actionPerformed(null));
-		waitForSwing();
-		assertEquals(origRowCount, model.getRowCount());
-	}
-
-	@Test
-	public void testChangesBeforeUndoNo() throws Exception {
-
-		editSampleEnum();
-
-		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
-		JTable table = panel.getTable();
-		EnumTableModel model = (EnumTableModel) table.getModel();
-
-		runSwing(() -> {
-			int lastRow = model.getRowCount() - 1;
-			if (lastRow >= 0) {
-				table.addRowSelectionInterval(lastRow, lastRow);
-			}
-			DockingActionIf action = getAddAction();
-			action.actionPerformed(new DefaultActionContext());
-			action.actionPerformed(new DefaultActionContext());
-		});
-		waitForSwing();
-		applyChanges(true);
-		// make more changes
-		runSwing(() -> {
-			int lastRow = model.getRowCount() - 1;
-			if (lastRow >= 0) {
-				table.addRowSelectionInterval(lastRow, lastRow);
-			}
-			DockingActionIf action = getAddAction();
-			action.actionPerformed(new DefaultActionContext());
-			action.actionPerformed(new DefaultActionContext());
-		});
-		waitForSwing();
-		int rowCount = model.getRowCount();
-		undo(false);
-		OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
-		// not to not reload the enum data type
-		JButton button = findButtonByText(d.getComponent(), "No");
-		assertNotNull(button);
-		runSwing(() -> button.getActionListeners()[0].actionPerformed(null));
-		waitForSwing();
-		assertEquals(rowCount, model.getRowCount());
-	}
-
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void sortOnNameColumn() {
+
+		JTable table = getTable();
+		SortedTableModel sortedModel = (SortedTableModel) table.getModel();
+		TableSortState sortState = getSortState(sortedModel);
+		ColumnSortState primarySortState = sortState.iterator().next();
+		SortDirection sortDirection = primarySortState.getSortDirection();
+		if (primarySortState.getColumnModelIndex() == EnumTableModel.NAME_COL) {
+			if (SortDirection.ASCENDING == sortDirection) {
+				return; // already sorted
+			}
+		}
+
+		TableSortState newSortState =
+			TableSortState.createDefaultSortState(EnumTableModel.NAME_COL, true);
+		runSwing(() -> sortedModel.setTableSortState(newSortState));
+	}
+
+	private TableSortState getSortState(SortedTableModel sortedModel) {
+		return runSwing(() -> sortedModel.getTableSortState());
+	}
+
+	private JTable getTable() {
+		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
+		return panel.getTable();
+	}
+
+	protected JTextField getCellEditorTextField() {
+		Object editorComponent = getTable().getEditorComponent();
+		if (editorComponent instanceof JTextField) {
+			return (JTextField) editorComponent;
+		}
+
+		fail("Either not editing, or editing a field that is a custom editor (not a text field)");
+		return null;
+	}
+
+	private void assertEditing(int row, int column) {
+		JTable table = getTable();
+		assertTrue(runSwing(table::isEditing));
+		assertEquals(row, (int) runSwing(table::getEditingRow));
+		assertEquals(row, (int) runSwing(table::getEditingColumn));
+	}
+
+	private int findRowByName(String name) {
+
+		JTable table = getTable();
+		return runSwing(() -> {
+			int col = 0; // Name column defaults to 0
+			int n = table.getRowCount();
+			for (int i = 0; i < n; i++) {
+				String value = table.getValueAt(i, col).toString();
+				if (name.equals(value)) {
+					return i;
+				}
+			}
+			return -1;
+		});
+	}
+
+	private void pressTab(JComponent component) {
+		triggerActionKey(component, 0, KeyEvent.VK_TAB);
+		waitForSwing();
+	}
 
 	private EnumEditorPanel findEditorPanel(Window w) {
 		Window[] windows = w.getOwnedWindows();
@@ -900,15 +895,15 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private DockingActionIf getAddAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Add Enum Value");
+		return getAction(plugin, "Add Enum Value");
 	}
 
 	private DockingActionIf getApplyAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Apply Enum Changes");
+		return getAction(plugin, "Apply Enum Changes");
 	}
 
 	private DockingActionIf getDeleteAction() {
-		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Delete Enum Value");
+		return getAction(plugin, "Delete Enum Value");
 	}
 
 	private Enum editSampleEnum() {
@@ -934,25 +929,6 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwingLater(() -> plugin.edit(enumDt));
 		waitForSwing();
 		return enumDt;
-	}
-
-	private void undo(boolean doWait) throws Exception {
-		Runnable r = () -> {
-			try {
-				program.undo();
-				program.flushEvents();
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		};
-		if (doWait) {
-			runSwing(r);
-		}
-		else {
-			runSwingLater(r);
-		}
-		waitForSwing();
 	}
 
 }

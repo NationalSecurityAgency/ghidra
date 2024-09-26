@@ -73,7 +73,7 @@ public class StackEditorScreenShots extends GhidraScreenShotGenerator {
 		selectTableRow(table, "param_3");
 		waitForSwing();
 
-		performAction("Editor: Create Array", "StackEditorManagerPlugin", stackEditor, false);
+		performAction("Create Array", "StackEditorManagerPlugin", stackEditor, false);
 		waitForSwing();
 		captureDialog();
 
