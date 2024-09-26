@@ -40,13 +40,6 @@ public class RustDemangler implements Demangler {
 	}
 
 	@Override
-	@Deprecated(since = "11.3", forRemoval = true)
-	public DemangledObject demangle(String mangled, DemanglerOptions options) {
-		MangledContext mangledContext = createMangledContext(mangled, options, null, null);
-		return demangle(mangledContext);
-	}
-
-	@Override
 	public DemangledObject demangle(MangledContext context) {
 		DemanglerOptions options = context.getOptions();
 		RustDemanglerOptions rustOptions = getRustOptions(options);

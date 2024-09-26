@@ -37,40 +37,47 @@ public interface Demangler extends ExtensionPoint {
 	 *  default options ({@link #createDefaultOptions()}.
 	 *
 	 * @param mangled the mangled string
-	 * @return the result
+	 * @return the result; {@code null} is possible if the mangled string is not supported
 	 * @throws DemangledException if the string cannot be demangled
 	 */
 	public default DemangledObject demangle(String mangled) throws DemangledException {
 		MangledContext mangledContext = createMangledContext(mangled, null, null, null);
+		DemangledObject demangledObject = demangle(mangledContext);
+		if (demangledObject != null && demangledObject.getMangledContext() == null) {
+			demangledObject.setMangledContext(mangledContext);
+		}
 		return demangle(mangledContext);
 	}
 
 	/**
-	 * Deprecated.  Use {@link #demangle(String)} or
-	 *  {@link #demangle(MangledContext)}.
-	 *
 	 * Attempts to demangle the given string using the given options
 	 *
 	 * @param mangled the mangled string
 	 * @param options the options
-	 * @return the result
+	 * @return the result; {@code null} is possible if the mangled string is not supported
 	 * @throws DemangledException if the string cannot be demangled
-	 * @deprecated see above
+	 * @deprecated Use {@link #demangle(String)} or {@link #demangle(MangledContext)}.
 	 */
 	@Deprecated(since = "11.3", forRemoval = true)
-	public DemangledObject demangle(String mangled, DemanglerOptions options)
-			throws DemangledException;
+	public default DemangledObject demangle(String mangled, DemanglerOptions options)
+			throws DemangledException {
+		MangledContext mangledContext = createMangledContext(mangled, options, null, null);
+		DemangledObject demangledObject = demangle(mangledContext);
+		if (demangledObject != null && demangledObject.getMangledContext() == null) {
+			demangledObject.setMangledContext(mangledContext);
+		}
+		return demangle(mangledContext);
+	}
 
 	/**
-	 * Attempts to demangle the string of the mangled context
+	 * Attempts to demangle the string of the mangled context and sets the mangled context on
+	 * the {@link DemangledObject}
 	 *
 	 * @param context the mangled context
-	 * @return the result
+	 * @return the result; {@code null} is possible if the mangled string is not supported
 	 * @throws DemangledException if the string cannot be demangled
 	 */
-	public default DemangledObject demangle(MangledContext context) throws DemangledException {
-		return demangle(context.getMangled(), context.getOptions());
-	}
+	public DemangledObject demangle(MangledContext context) throws DemangledException;
 
 	/**
 	 * Creates default options for this particular demangler

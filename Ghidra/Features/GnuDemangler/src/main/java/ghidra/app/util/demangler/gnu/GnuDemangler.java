@@ -66,14 +66,6 @@ public class GnuDemangler implements Demangler {
 	}
 
 	@Override
-	@Deprecated(since = "11.3", forRemoval = true)
-	public DemangledObject demangle(String mangled, DemanglerOptions demanglerOptions)
-			throws DemangledException {
-		MangledContext mangledContext = createMangledContext(mangled, demanglerOptions, null, null);
-		return demangle(mangledContext);
-	}
-
-	@Override
 	public DemangledObject demangle(MangledContext mangledContext)
 			throws DemangledException {
 		DemangledObject demangled = demangleInternal(mangledContext);

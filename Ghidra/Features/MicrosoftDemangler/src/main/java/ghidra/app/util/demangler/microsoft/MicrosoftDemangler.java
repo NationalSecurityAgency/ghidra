@@ -49,14 +49,6 @@ public class MicrosoftDemangler implements Demangler {
 	}
 
 	@Override
-	@Deprecated(since = "11.3", forRemoval = true)
-	public DemangledObject demangle(String mangled, DemanglerOptions options)
-			throws DemangledException {
-		MangledContext mangledContext = new MangledContext(null, options, mangled, null);
-		return demangle(mangledContext);
-	}
-
-	@Override
 	public DemangledObject demangle(MangledContext context) throws DemangledException {
 		if (!(context instanceof MicrosoftMangledContext mContext)) {
 			throw new DemangledException("Wrong context type");
