@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,6 +36,7 @@ public class Option {
 	private final Class<?> valueClass;
 	private final String commandLineArgument;
 	private final String stateKey;
+	private final boolean hidden;
 
 	private Object value;
 	private OptionListener listener;
@@ -93,7 +94,7 @@ public class Option {
 	 * @param group Name for group of options
 	 */
 	public Option(String name, Class<?> valueClass, Object value, String arg, String group) {
-		this(name, valueClass, value, arg, group, null);
+		this(name, valueClass, value, arg, group, null, false);
 	}
 
 	/**
@@ -105,15 +106,17 @@ public class Option {
 	 * @param arg the option's command line argument
 	 * @param group Name for group of options
 	 * @param stateKey state key name
+	 * @param hidden true if this option should be hidden from the user; otherwise, false
 	 */
 	public Option(String name, Class<?> valueClass, Object value, String arg, String group,
-			String stateKey) {
+			String stateKey, boolean hidden) {
 		this.name = name;
 		this.valueClass = valueClass;
 		this.commandLineArgument = arg;
 		this.group = group;
 		this.value = value;
 		this.stateKey = stateKey;
+		this.hidden = hidden;
 	}
 
 	public void setOptionListener(OptionListener listener) {
@@ -283,6 +286,13 @@ public class Option {
 		return state;
 	}
 
+	/**
+	 * {@return whether or not this option is hidden}
+	 */
+	public boolean isHidden() {
+		return hidden;
+	}
+
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
@@ -293,7 +303,7 @@ public class Option {
 	 * @return  a copy of this Option object.
 	 */
 	public Option copy() {
-		return new Option(name, valueClass, value, commandLineArgument, group, stateKey);
+		return new Option(name, valueClass, value, commandLineArgument, group, stateKey, hidden);
 	}
 
 	private static Class<?> getValueClass(Object v) {

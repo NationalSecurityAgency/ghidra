@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ public class Loaded<T extends DomainObject> {
 	private String projectFolderPath;
 
 	private DomainFile domainFile;
+	private boolean ignoreSave;
 
 	/**
 	 * Creates a new {@link Loaded} object
@@ -54,6 +55,19 @@ public class Loaded<T extends DomainObject> {
 		this.domainObject = domainObject;
 		this.name = name;
 		setProjectFolderPath(projectFolderPath);
+	}
+
+	/**
+	 * Creates a {@link Loaded} view on an existing {@link DomainFile}. This type of {@link Loaded}
+	 * object cannot be saved.
+	 * 
+	 * @param domainObject The loaded {@link DomainObject}
+	 * @param domainFile The {@link DomainFile} to be loaded
+	 */
+	public Loaded(T domainObject, DomainFile domainFile) {
+		this(domainObject, domainFile.getName(), domainFile.getParent().getPathname());
+		this.domainFile = domainFile;
+		this.ignoreSave = true;
 	}
 
 	/**
@@ -140,6 +154,10 @@ public class Loaded<T extends DomainObject> {
 	public DomainFile save(Project project, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, ClosedException, IOException {
 
+		if (ignoreSave) {
+			return domainFile;
+		}
+
 		if (domainObject.isClosed()) {
 			throw new ClosedException(
 				"Cannot saved closed DomainObject: " + domainObject.getName());
@@ -152,7 +170,7 @@ public class Loaded<T extends DomainObject> {
 		}
 		catch (FileNotFoundException e) {
 			// DomainFile was already saved, but no longer exists.
-			// Allow the save to proceeded.
+			// Allow the save to proceed.
 			domainFile = null;
 		}
 
