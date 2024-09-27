@@ -625,8 +625,42 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	@Override
+	public void setLength(int len) {
+		if (len < 0) {
+			throw new IllegalArgumentException("Invalid length: " + len);
+		}
+		if (len == structLength || isPackingEnabled()) {
+			return;
+		}
+		if (len < structLength) {
+			// identify index of first defined-component to be removed
+			int index = Collections.binarySearch(components, Integer.valueOf(len),
+				OffsetComparator.INSTANCE);
+			if (index < 0) {
+				index = -index - 1;
+			}
+			else {
+				index = backupToFirstComponentContainingOffset(index, len);
+			}
+			int definedComponentCount = components.size();
+			if (index >= 0 && index < definedComponentCount) {
+				components = components.subList(0, index);
+			}
+		}
+		else {
+			numComponents += len - structLength;
+		}
+		structLength = len;
+		repack(false);
+		notifySizeChanged();
+	}
+	
+	@Override
 	public void growStructure(int amount) {
-		if (isPackingEnabled()) {
+		if (amount < 0) {
+			throw new IllegalArgumentException("Invalid growth amount: " + amount);
+		}
+		if (amount == 0 || isPackingEnabled()) {
 			return;
 		}
 		doGrowStructure(amount);

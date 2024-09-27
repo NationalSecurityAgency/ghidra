@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.importer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
@@ -67,6 +68,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	public static final String LIBRARY_DEST_FOLDER_OPTION_NAME = "Library Destination Folder";
 	static final String LIBRARY_DEST_FOLDER_OPTION_DEFAULT = "";
 
+	public static final String LOAD_ONLY_LIBRARIES_OPTION_NAME = "Only Load Libraries"; // hidden
+	static final boolean LOAD_ONLY_LIBRARIES_OPTION_DEFAULT = false;
+
 	/**
 	 * Loads bytes in a particular format into the given {@link Program}.
 	 *
@@ -94,11 +98,31 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 		boolean success = false;
 		try {
-			// Load the primary program
-			Program program = doLoad(provider, loadedName, loadSpec, libraryNameList, options,
-				consumer, log, monitor);
-			loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));
-			log.appendMsg("------------------------------------------------\n");
+			// Load (or get) the primary program
+			Program program = null;
+			if (!shouldLoadOnlyLibraries(options)) {
+				if (provider instanceof FileBytesProvider) {
+					throw new LoadException("Cannot load an already loaded program");
+				}
+				program = doLoad(provider, loadedName, loadSpec, libraryNameList, options, consumer,
+					log, monitor);
+				loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));
+				log.appendMsg("------------------------------------------------\n");
+			}
+			else if (project != null) {
+				ProjectData projectData = project.getProjectData();
+				DomainFile domainFile = projectData.getFile(projectFolderPath + "/" + loadedName);
+				if (domainFile == null) {
+					throw new LoadException(
+						"Cannot load only libraries for a non-existant program");
+				}
+				program = (Program) domainFile.getOpenedDomainObject(consumer);
+				if (program == null) {
+					throw new LoadException("Failed to acquire a Program");
+				}
+				loadedProgramList.add(new Loaded<>(program, domainFile));
+				libraryNameList.addAll(getLibraryNames(provider, program));
+			}
 
 			// Load the libraries
 			List<Loaded<Program>> libraries = loadLibraries(provider, program, project,
@@ -186,6 +210,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			Loader.COMMAND_LINE_ARG_PREFIX + "-libraryLoadDepth"));
 		list.add(new DomainFolderOption(LIBRARY_DEST_FOLDER_OPTION_NAME,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-libraryDestinationFolder"));
+		list.add(new Option(LOAD_ONLY_LIBRARIES_OPTION_NAME, Boolean.class,
+			LOAD_ONLY_LIBRARIES_OPTION_DEFAULT,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-loadOnlyLibraries", null, null, true));
 
 		return list;
 	}
@@ -197,7 +224,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			for (Option option : options) {
 				String name = option.getName();
 				if (name.equals(LINK_EXISTING_OPTION_NAME) ||
-					name.equals(LOAD_LIBRARY_OPTION_NAME)) {
+					name.equals(LOAD_LIBRARY_OPTION_NAME) ||
+					name.equals(LOAD_ONLY_LIBRARIES_OPTION_NAME)) {
 					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
 						return "Invalid type for option: " + name + " - " + option.getValueClass();
 					}
@@ -276,6 +304,17 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	protected boolean isLoadLibraries(List<Option> options) {
 		return OptionUtils.getOption(LOAD_LIBRARY_OPTION_NAME, options,
 			LOAD_LIBRARY_OPTION_DEFAULT);
+	}
+
+	/**
+	 * Checks to see if only libraries should be loaded (i.e., not the main program)
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if only libraries should be loaded; otherwise, false
+	 */
+	protected boolean shouldLoadOnlyLibraries(List<Option> options) {
+		return OptionUtils.getOption(LOAD_ONLY_LIBRARIES_OPTION_NAME, options,
+			LOAD_ONLY_LIBRARIES_OPTION_DEFAULT);
 	}
 
 	/**
@@ -442,7 +481,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<FileSystemSearchPath> customSearchPaths =
 			getCustomLibrarySearchPaths(provider, options, log, monitor);
 		List<FileSystemSearchPath> searchPaths =
-			getLibrarySearchPaths(provider, options, log, monitor);
+			getLibrarySearchPaths(provider, program, options, log, monitor);
 		DomainFolder linkSearchFolder = getLinkSearchFolder(project, projectFolderPath, options);
 		String libraryDestFolderPath =
 			getLibraryDestinationFolderPath(project, projectFolderPath, options);
@@ -823,23 +862,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		try {
 			log.appendMsg("Loading %s...".formatted(provider.getFSRL()));
 			load(provider, loadSpec, options, program, monitor, log);
-
 			createDefaultMemoryBlocks(program, language, log);
-
-			ExternalManager extMgr = program.getExternalManager();
-			String[] externalNames = extMgr.getExternalLibraryNames();
-			Comparator<String> comparator = getLibraryNameComparator();
-			Arrays.sort(externalNames, comparator);
-			for (String name : externalNames) {
-				if (comparator.compare(name, provider.getName()) == 0 ||
-					comparator.compare(name, program.getName()) == 0 ||
-					Library.UNKNOWN.equals(name)) {
-					// skip self-references and UNKNOWN library...
-					continue;
-				}
-				libraryNameList.add(name);
-			}
-
+			libraryNameList.addAll(getLibraryNames(provider, program));
 			success = true;
 			return program;
 		}
@@ -849,6 +873,32 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				program.release(consumer);
 			}
 		}
+	}
+
+	/**
+	 * Gets a {@link List} of library names that the given {@link Program} imports from
+	 * 
+	 * @param provider The {@link ByteProvider} to get the library names from
+	 * @param program The {@link Program} to get the library names from
+	 * @return A {@link List} of library names that the given {@link Program} imports from
+	 * 
+	 */
+	private List<String> getLibraryNames(ByteProvider provider, Program program) {
+		List<String> libraryNames = new ArrayList<>();
+		ExternalManager extMgr = program.getExternalManager();
+		String[] externalNames = extMgr.getExternalLibraryNames();
+		Comparator<String> comparator = getLibraryNameComparator();
+		Arrays.sort(externalNames, comparator);
+		for (String name : externalNames) {
+			if (comparator.compare(name, provider.getName()) == 0 ||
+				comparator.compare(name, program.getName()) == 0 ||
+				Library.UNKNOWN.equals(name)) {
+				// skip self-references and UNKNOWN library...
+				continue;
+			}
+			libraryNames.add(name);
+		}
+		return libraryNames;
 	}
 
 	/**
@@ -1011,6 +1061,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * libraries
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param program The {@link Program} being loaded
 	 * @param options The options
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
@@ -1018,7 +1069,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 *   libraries
 	 * @throws CancelledException if the user cancelled the load
 	 */
-	private List<FileSystemSearchPath> getLibrarySearchPaths(ByteProvider provider,
+	private List<FileSystemSearchPath> getLibrarySearchPaths(ByteProvider provider, Program program,
 			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
 		if (!isLoadLibraries(options) && !shouldSearchAllPaths(options)) {
 			return List.of();
@@ -1028,7 +1079,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<FileSystemSearchPath> result = new ArrayList<>();
 		boolean success = false;
 		try {
-			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(provider, log, monitor)) {
+			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(provider, program, log,
+				monitor)) {
 				if (fsService.isLocal(fsrl)) {
 					try {
 						FileSystemRef fileRef =

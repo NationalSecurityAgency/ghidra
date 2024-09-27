@@ -526,17 +526,6 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Returns the number of undefined bytes that are available in the structure
-	 * beginning at the specified row index.
-	 *
-	 * @param rowIndex the index of the row
-	 */
-	@Override
-	protected int getNumUndefinedBytesAt(int rowIndex) {
-		return 0;
-	}
-
-	/**
 	 * ?????
 	 *
 	 * @param rowIndex the index of the row

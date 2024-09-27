@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,16 +40,11 @@ public class RustDemangler implements Demangler {
 	}
 
 	@Override
-	@Deprecated(since = "9.2", forRemoval = true)
-	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
-			throws DemangledException {
-		return null;
-	}
-
-	@Override
-	public DemangledObject demangle(String mangled, DemanglerOptions options) {
+	public DemangledObject demangle(MangledContext context) {
+		DemanglerOptions options = context.getOptions();
 		RustDemanglerOptions rustOptions = getRustOptions(options);
 
+		String mangled = context.getMangled();
 		if (skip(mangled, rustOptions)) {
 			return null;
 		}
@@ -74,6 +69,7 @@ public class RustDemangler implements Demangler {
 			demangledFunction.setCallingConvention(CompilerSpec.CALLING_CONVENTION_rustcall);
 		}
 
+		demangledObject.setMangledContext(context);
 		return demangledObject;
 	}
 
@@ -88,7 +84,7 @@ public class RustDemangler implements Demangler {
 	/**
 	 * Determines if the given mangled string should not be demangled, on the basis
 	 * of if it has a known start pattern
-	 * 
+	 *
 	 * @param mangled the mangled string
 	 * @param options the options
 	 * @return true if the string should not be demangled
@@ -106,7 +102,7 @@ public class RustDemangler implements Demangler {
 
 	/**
 	 * Return true if the string is a mangled rust string in a rust program
-	 * 
+	 *
 	 * @param mangled potential mangled string
 	 * @return true if the string could be a mangled string in a rust program
 	 */

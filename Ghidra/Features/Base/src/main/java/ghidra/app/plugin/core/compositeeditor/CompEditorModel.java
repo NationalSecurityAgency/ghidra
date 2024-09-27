@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.program.database.DatabaseObject;
@@ -586,7 +588,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public DataTypeComponent add(int rowIndex, DataType dt) throws UsrException {
 		String descr = rowIndex < getNumComponents() ? "Replace Component" : "Add Component";
-		return viewDTM.withTransaction(descr, () -> {
+		DataTypeComponent dtc = viewDTM.withTransaction(descr, () -> {
 			DataType resolvedDt = viewDTM.resolve(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
 			try {
 				DataTypeInstance dti = getDropDataType(rowIndex, resolvedDt);
@@ -596,7 +598,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				return null;
 			}
 		});
-
+		
+		fixSelection();
+		componentEdited();
+		selectionChanged();
+		return dtc;
 	}
 
 	/**
@@ -628,6 +634,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		else {
 			dtc = viewDTM.withTransaction("Add Component", () -> insert(rowIndex, dt, dtLength));
 		}
+
+		fixSelection();
+		componentEdited();
+		selectionChanged();
 		return dtc;
 	}
 
@@ -733,10 +743,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int sizeDiff = newCompSize - oldCompSize;
 
 		// New one is larger so check to make sure it will fit.
-		if (sizeDiff > 0) {
-			if (!checkForReplace(rowIndex, datatype)) {
-				throw new InvalidDataTypeException(datatype.getDisplayName() + " doesn't fit.");
-			}
+		if (!isAtEnd(rowIndex) && sizeDiff > 0) {
+			checkForReplace(rowIndex, datatype, newCompSize);
 		}
 
 		// Replace the component at index.
@@ -811,35 +819,76 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @param rowIndex index of the row (component).
 	 * @param datatype the type
-	 * @return true if the replace is allowed
+	 * @param length component length
+	 * @throws InvalidDataTypeException if check fails
 	 */
-	boolean checkForReplace(int rowIndex, DataType datatype) {
+	private void checkForReplace(int rowIndex, DataType datatype, int length) throws InvalidDataTypeException {
 		DataTypeComponent dtc = getComponent(rowIndex);
 		if (dtc == null) {
-			return false;
+			throw new InvalidDataTypeException("Invalid component selection");
 		}
-		if (!isShowingUndefinedBytes()) {
-			return true;
+		if (!(viewComposite instanceof Structure struct)) {
+			return;
 		}
+		if (struct.isPackingEnabled()) {
+			return;
+		}
+		if (isAtEnd(rowIndex)) {
+			return;
+		}
+
 		// Does the new data type fit by replacing the component at index.
 
 		// Get the current data type at the index.
-		DataTypeComponent comp = getComponent(rowIndex);
-		int currentCompSize = comp.getLength();
-		int newCompSize = datatype.getLength();
+		int currentCompSize = dtc.getLength();
+		int newCompSize = length;
 		int sizeDiff = newCompSize - currentCompSize;
-		int numUndefs = 0;
-
-		// New one is larger.
-		if (sizeDiff > 0) {
-			if (isAtEnd(rowIndex) || onlyUndefinedsUntilEnd(rowIndex + 1)) {
-				return true;
-			}
-			// structure needs to have enough undefined bytes or replace fails.
-			numUndefs = getNumUndefinedBytesAt(rowIndex + 1);
+		
+		if (sizeDiff <= 0) {
+			return;
 		}
-
-		return (sizeDiff <= numUndefs);
+		
+		int undefinedSpaceAvail = getNumUndefinedBytesAfter(dtc);
+		if (sizeDiff > undefinedSpaceAvail) {
+			int spaceNeeded = sizeDiff - undefinedSpaceAvail;
+			String msg = newCompSize + " byte replacement at 0x" + Integer.toHexString(dtc.getOffset());
+			if (struct.getDefinedComponentAtOrAfterOffset(dtc.getOffset() + 1) == null) {
+				// suggest growing structure
+				int suggestedSize = getLength() + spaceNeeded;
+				throw new InvalidDataTypeException(msg + " requires structure length of " + suggestedSize + "-bytes.");
+			}
+			// suggest insert bytes (NOTE: in the future a conflict removal/grow could be offered)
+			throw new InvalidDataTypeException(msg + " requires " + spaceNeeded + " additional undefined bytes.");
+		}
+	}
+	
+	/**
+	 * Get the number of undefined bytes after the specified component.
+	 * The viewComposite must be a non-packed structure.
+	 * @param dtc datatype component
+	 * @return number of undefined bytes after non-packed structure component or -1 if no additional
+	 * defined components exist which will impead component growth or placement. 
+	 */
+	protected final int getNumUndefinedBytesAfter(DataTypeComponent dtc) {
+		if (!isShowingUndefinedBytes()) {
+			throw new UnsupportedOperationException();
+		}
+		if (!(viewComposite instanceof Structure struct)) {
+			throw new UnsupportedOperationException();
+		}
+		if (struct.isPackingEnabled()) {
+			throw new UnsupportedOperationException();
+		}
+		
+		// TODO: May  need special logic if dtc is zero-length component
+		int length = getLength();
+		int nextCompOffset = dtc.getEndOffset() + 1;
+		if (nextCompOffset >= length) {
+			return 0;
+		}
+		DataTypeComponent nextDefinedDtc = struct.getDefinedComponentAtOrAfterOffset(nextCompOffset);
+		int nextDefinedOffset = (nextDefinedDtc == null) ? length : nextDefinedDtc.getOffset();
+		return Math.max(0,  nextDefinedOffset - nextCompOffset); // prevent negative return value
 	}
 
 	/**
@@ -1014,34 +1063,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Returns the number of undefined bytes that are available in the structure
-	 * beginning at the specified row index.
-	 *
-	 * @param rowIndex the index of the row
-	 * @return the number of bytes
-	 */
-	protected int getNumUndefinedBytesAt(int rowIndex) {
-		int numRowComponents = getNumComponents();
-		if (rowIndex < 0 || rowIndex >= numRowComponents) {
-			return 0;
-		}
-		DataTypeComponent startComponent = getComponent(rowIndex);
-		int previousOffset = (startComponent != null) ? startComponent.getOffset() : 0;
-		for (int currentRowIndex =
-			rowIndex; currentRowIndex < numRowComponents; currentRowIndex++) {
-			// Get the current data type at the index.
-			DataTypeComponent comp = getComponent(currentRowIndex);
-			DataType dt = comp.getDataType();
-			int currentOffset = comp.getOffset();
-			if (!dt.equals(DataType.DEFAULT)) {
-				return currentOffset - previousOffset; // Ran into data type other than undefined byte.
-			}
-		}
-
-		return viewComposite.getLength() - previousOffset;
-	}
-
-	/**
 	 * Determine if the indicated row index is at or beyond the last component in this composite.
 	 *
 	 * @param rowIndex the index of the row
@@ -1060,36 +1081,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Determine whether or not there are only undefined data types from the indicated rowIndex
-	 * until the end of the composite. There must be at least one undefined data type to return true.
-	 *
-	 * @param rowIndex the index of the row to begin checking for undefined data types.
-	 * @return true if an undefined data type is at the indicated row index and all components
-	 * from there to the end of the composite are undefined data types.
-	 */
-	protected boolean onlyUndefinedsUntilEnd(int rowIndex) {
-		if (!isShowingUndefinedBytes()) {
-			return false;
-		}
-		int numRowComponents = getNumComponents();
-		if (rowIndex < 0) {
-			return false;
-		}
-		if (rowIndex >= numRowComponents) {
-			return false; // Beyond last component.
-		}
-		for (int i = rowIndex; i < numRowComponents; i++) {
-			// Get the current data type at the index.
-			DataTypeComponent comp = getComponent(i);
-			DataType dt = comp.getDataType();
-			if (!dt.equals(DataType.DEFAULT)) {
-				return false; // Ran into data type other than undefined byte.
-			}
-		}
-		return true;
 	}
 
 	/**
@@ -1670,16 +1661,17 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if ((rowIndex < 0) || (rowIndex >= numRowComponents)) {
 			return 0;
 		}
-		if (rowIndex + 1 == numRowComponents) {
-			return Integer.MAX_VALUE; // On last component.
+		DataTypeComponent dtc = getComponent(rowIndex);
+		DataType dt = dtc.getDataType();
+		int dtcLen = dt.getLength();
+		if (dtcLen < 0) {
+			dtcLen = dtc.getLength();
 		}
-		DataType dt = getComponent(rowIndex).getDataType();
-		int maxDups = Integer.MAX_VALUE;
-		// If editModel is showing undefined bytes (non-packed)
-		// then constrain by number of undefined bytes that follow.
-		if (isShowingUndefinedBytes() && (dt != DataType.DEFAULT)) {
-			int numBytes = getNumUndefinedBytesAt(rowIndex + 1);
-			maxDups = (numBytes / dt.getLength());
+		int maxDups = (Integer.MAX_VALUE - getLength()) / dtcLen;
+		if (dt != DataType.DEFAULT && isShowingUndefinedBytes() && !isAtEnd(rowIndex)) {
+			// If editModel is showing undefined bytes (non-packed)
+			// then constrain by number of undefined bytes that follow.
+			maxDups = getNumUndefinedBytesAfter(dtc) / dtcLen;
 		}
 		return maxDups;
 	}
@@ -1715,15 +1707,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				return numBytesInRange / len;
 			}
 			// single line selected.
-
-			// If editModel is locked then constrain by number of undefined bytes that follow.
-			if (!isShowingUndefinedBytes() || isAtEnd(rowIndex) ||
-				onlyUndefinedsUntilEnd(rowIndex + 1)) {
-				return Integer.MAX_VALUE;
-			}
-
-			int numBytes = getNumUndefinedBytesAt(rowIndex + 1);
-			return 1 + (numBytes / len);
+			return getMaxDuplicates(rowIndex) + 1;
 		}
 		return 0;
 	}

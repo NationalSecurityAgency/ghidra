@@ -366,7 +366,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		tableModel = new EncodedStringsTableModel(program, selectedAddresses);
 		tableModel.addTableModelListener(e -> {
 			Integer rowNum = rowToSelect.getAndSet(null);
-			if (rowNum != null) {
+			if (rowNum != null && rowNum < tableModel.getRowCount()) {
 				table.selectRow(rowNum);
 				table.requestFocusInWindow();
 			}
@@ -848,7 +848,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		int rowCount = table.getRowCount();
 		int selectedRowCount = table.getSelectedRowCount();
 		setCreateButtonInfo(rowCount, selectedRowCount);
-		if (selectedRowCount == 1) {
+		if (selectedRowCount == 1 && tableModel.getProgram() != null) {
 			int[] selectedRows = table.getSelectedRows();
 			table.navigate(selectedRows[0], 0 /* location col */);
 		}

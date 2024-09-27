@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -259,15 +259,21 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 	}
 
 	private void demangle(Address address, String name, Program program) {
-		DemangledObject demangledObj = null;
+		StringBuilder builder = new StringBuilder();
 		try {
-			demangledObj = DemanglerUtil.demangle(program, name);
+			List<DemangledObject> demangledObjects = DemanglerUtil.demangle(program, name, address);
+			for (DemangledObject demangledObj : demangledObjects) {
+				if (builder.length() > 0) {
+					builder.append("\t");
+				}
+				builder.append(demangledObj.getSignature(true));
+			}
 		}
 		catch (Exception e) {
 			//log.appendMsg("Unable to demangle: "+name);
 		}
-		if (demangledObj != null) {
-			setComment(CodeUnit.PLATE_COMMENT, address, demangledObj.getSignature(true));
+		if (builder.length() > 0) {
+			setComment(CodeUnit.PLATE_COMMENT, address, builder.toString());
 		}
 	}
 
@@ -426,7 +432,7 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 			Symbol newSymbol =
 				program.getSymbolTable().createLabel(address, sym, SourceType.IMPORTED);
 
-			// Force non-section symbols to be primary.  We never want section symbols (.text, 
+			// Force non-section symbols to be primary.  We never want section symbols (.text,
 			// .text$func_name) to be primary because we don't want to use them for function names
 			// or demangling.
 			if (!sym.equals(section.getName()) && !sym.startsWith(section.getName() + "$")) {

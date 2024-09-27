@@ -834,31 +834,29 @@ public class CodeUnitFormat {
 		if (addr.isMemoryAddress()) {
 
 			// Include "offset" prefix since addrOffset does not match originalValue
-			if (options.includeScalarReferenceAdjustment) {
-				list.add("offset ");
-				
-				// Check for shift cases
-				for (int element : SHIFT_CASES) {
-					if ((addrOffset >>> element) == originalValue && originalValue != 0x0) {
-						list.add(opObj);
-						if (options.includeScalarReferenceAdjustment) {
-							list.add(" >>");
-							list.add(Integer.toString(element));
-						}
-						return list;
+			list.add("offset ");
+
+			// Check for shift cases
+			for (int element : SHIFT_CASES) {
+				if ((addrOffset >>> element) == originalValue && originalValue != 0x0) {
+					list.add(opObj);
+					if (options.includeScalarReferenceAdjustment) {
+						list.add(" >>");
+						list.add(Integer.toString(element));
 					}
+					return list;
 				}
-	
-				// Check for mask cases
-				for (long element : MASK_CASES) {
-					if ((addrOffset & element) == originalValue) {
-						list.add(opObj);
-						if (options.includeScalarReferenceAdjustment) {
-							list.add(" &");
-							list.add("0x" + Long.toHexString(element));
-						}
-						return list;
+			}
+
+			// Check for mask cases
+			for (long element : MASK_CASES) {
+				if ((addrOffset & element) == originalValue) {
+					list.add(opObj);
+					if (options.includeScalarReferenceAdjustment) {
+						list.add(" &");
+						list.add("0x" + Long.toHexString(element));
 					}
+					return list;
 				}
 			}
 

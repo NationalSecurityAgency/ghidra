@@ -412,7 +412,7 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 		assertTrue(getDataType(2).isEquivalent(new WordDataType()));
 		invoke(pointerAction);
 
-		assertEquals("pointer doesn't fit.", model.getStatus());
+		assertTrue(model.getStatus().contains("requires 2 additional"));
 		assertEquals(num, model.getNumComponents());
 		assertEquals("word", getDataType(2).getDisplayName());
 		assertTrue(getDataType(2).isEquivalent(new WordDataType()));
