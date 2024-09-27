@@ -243,6 +243,10 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		String name = symbol.getName();
 		Address address = applicator.getAddress(symbol);
 
+		// Save off the function length for lines processing
+		Long functionLength = symbol.getProcedureLength();
+		applicator.setFunctionLength(address, functionLength.intValue());
+
 		function = applicator.getExistingFunction(address);
 		if (function == null) {
 			// Skip all interim symbols records
