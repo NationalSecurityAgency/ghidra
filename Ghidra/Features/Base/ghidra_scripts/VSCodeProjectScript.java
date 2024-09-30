@@ -257,7 +257,7 @@ public class VSCodeProjectScript extends GhidraScript {
 	private void writeSampleModule(File installDir, File projectDir) throws IOException {
 		// Copy Skeleton and rename module
 		String skeleton = "Skeleton";
-		File skeletonDir = new File(installDir, "Extensions/Ghidra/skeleton");
+		File skeletonDir = new File(installDir, "Extensions/Ghidra/Skeleton");
 		FileUtils.copyDirectory(skeletonDir, projectDir);
 
 		// Rename package
