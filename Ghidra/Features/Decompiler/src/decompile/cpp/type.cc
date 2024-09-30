@@ -3026,6 +3026,10 @@ void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
 //  decoder.closeElement(elemId);
 }
 
+#ifdef TYPEPROP_DEBUG
+bool TypeFactory::propagatedbg_on = false;
+#endif
+
 /// Initialize an empty container
 /// \param g is the owning Architecture
 TypeFactory::TypeFactory(Architecture *g)
@@ -4358,7 +4362,7 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     break;
   case TYPE_SPACEBASE:
     {
-      TypeSpacebase tsb((AddrSpace *)0,Address(),glb);
+      TypeSpacebase tsb(glb);
       tsb.decode(decoder,*this);
       if (forcecore)
 	tsb.flags |= Datatype::coretype;

@@ -4825,6 +4825,7 @@ int4 ActionInternalStorage::apply(Funcdata &data)
 void ActionInferTypes::propagationDebug(Architecture *glb,Varnode *vn,const Datatype *newtype,PcodeOp *op,int4 slot,Varnode *ptralias)
 
 {
+  if (!TypeFactory::propagatedbg_on) return;
   ostringstream s;
 
   vn->printRaw(s);
@@ -5225,9 +5226,11 @@ int4 ActionInferTypes::apply(Funcdata &data)
   VarnodeLocSet::const_iterator iter;
 
 #ifdef TYPEPROP_DEBUG
-  ostringstream s;
-  s << "Type propagation pass - " << dec << localcount;
-  data.getArch()->printDebug(s.str());
+  if (TypeFactory::propagatedbg_on) {
+    ostringstream s;
+    s << "Type propagation pass - " << dec << localcount;
+    data.getArch()->printDebug(s.str());
+  }
 #endif
   if (localcount >= 7) {       // This constant arrived at empirically
     if (localcount == 7) {

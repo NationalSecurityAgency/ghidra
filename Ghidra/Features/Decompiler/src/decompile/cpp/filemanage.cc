@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -257,7 +257,16 @@ void FileManage::directoryList(vector<string> &res,const string &dirname,bool al
   if (dir == (DIR *)0) return;
   entry = readdir(dir);
   while(entry != (struct dirent *)0) {
-    if (entry->d_type == DT_DIR) {
+    bool isDirectory = false;
+    if (entry->d_type == DT_DIR)
+      isDirectory = true;
+    else if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
+      string path = dirfinal + entry->d_name;
+      struct stat stbuf;
+      stat(path.c_str(), &stbuf);
+      isDirectory = S_ISDIR(stbuf.st_mode);
+    }
+    if (isDirectory) {
       string fullname(entry->d_name);
       if ((fullname!=".")&&(fullname!="..")) {
 	if (allowdot || (fullname[0] != '.'))
