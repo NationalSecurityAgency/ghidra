@@ -397,36 +397,45 @@ void Funcdata::combineInputVarnodes(Varnode *vnHi,Varnode *vnLo)
   if (!isContiguous)
     throw LowlevelError("Input varnodes being combined are not contiguous");
   vector<PcodeOp *> pieceList;
-  bool otherOps = false;
+  bool otherOpsHi = false;
+  bool otherOpsLo = false;
   list<PcodeOp *>::const_iterator iter;
   for(iter=vnHi->beginDescend();iter!=vnHi->endDescend();++iter) {
     PcodeOp *op = *iter;
     if (op->code() == CPUI_PIECE && op->getIn(0) == vnHi && op->getIn(1) == vnLo)
       pieceList.push_back(op);
     else
-      otherOps = true;
+      otherOpsHi = true;
+  }
+  for(iter=vnLo->beginDescend();iter!=vnLo->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() != CPUI_PIECE || op->getIn(0) != vnHi || op->getIn(1) != vnLo)
+      otherOpsLo = true;
   }
   for(int4 i=0;i<pieceList.size();++i) {
     opRemoveInput(pieceList[i], 1);
     opUnsetInput(pieceList[i], 0);
   }
+  // If there are other PcodeOps besides PIECEs that are directly combining vnHi and vnLo
+  // create replacement Varnodes constructed as SUBPIECEs of the new combined Varnode
   PcodeOp *subHi = (PcodeOp *)0;
   PcodeOp *subLo = (PcodeOp *)0;
-  if (otherOps) {
-    // If there are other PcodeOps besides PIECEs that are directly combining vnHi and vnLo
-    // create replacement Varnodes constructed as SUBPIECEs of the new combined Varnode
+  if (otherOpsHi) {
     BlockBasic *bb = (BlockBasic *)bblocks.getBlock(0);
     subHi = newOp(2,bb->getStart());
     opSetOpcode(subHi, CPUI_SUBPIECE);
     opSetInput(subHi,newConstant(4, vnLo->getSize()),1);
     Varnode *newHi = newVarnodeOut(vnHi->getSize(),vnHi->getAddr(),subHi);
     opInsertBegin(subHi, bb);
+    totalReplace(vnHi, newHi);
+  }
+  if (otherOpsLo) {
+    BlockBasic *bb = (BlockBasic *)bblocks.getBlock(0);
     subLo = newOp(2,bb->getStart());
     opSetOpcode(subLo, CPUI_SUBPIECE);
     opSetInput(subLo,newConstant(4, 0),1);
     Varnode *newLo = newVarnodeOut(vnLo->getSize(),vnLo->getAddr(),subLo);
     opInsertBegin(subLo, bb);
-    totalReplace(vnHi, newHi);
     totalReplace(vnLo, newLo);
   }
   int4 outSize = vnHi->getSize() + vnLo->getSize();
@@ -438,10 +447,10 @@ void Funcdata::combineInputVarnodes(Varnode *vnHi,Varnode *vnLo)
     opSetInput(pieceList[i],inVn,0);
     opSetOpcode(pieceList[i], CPUI_COPY);
   }
-  if (otherOps) {
+  if (otherOpsHi)
     opSetInput(subHi,inVn,0);
+  if (otherOpsLo)
     opSetInput(subLo,inVn,0);
-  }
 }
 
 /// Construct a constant Varnode up to 128 bits,  using INT_ZEXT and PIECE if necessary.

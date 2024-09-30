@@ -1403,7 +1403,7 @@ void SplitVarnode::replaceCopyForce(Funcdata &data,const Address &addr,SplitVarn
 
 {
   Varnode *inVn = in.getWhole();
-  bool returnForm = copyhi->stopsCopyPropagation();
+  bool returnForm = copyhi->isReturnCopy();
   if (returnForm && inVn->getAddr() != addr) {
     // Placeholder for global propagation past a RETURN needs an additional COPY
     PcodeOp *otherPoint1 = copyhi->getIn(0)->getDef();
@@ -1423,7 +1423,7 @@ void SplitVarnode::replaceCopyForce(Funcdata &data,const Address &addr,SplitVarn
   Varnode *outVn = data.newVarnodeOut(in.getSize(), addr, wholeCopy);
   outVn->setAddrForce();
   if (returnForm)
-    wholeCopy->setStopCopyPropagation();
+    data.markReturnCopy(wholeCopy);
   data.opSetInput(wholeCopy,inVn,0);
   data.opInsertBefore(wholeCopy, copyhi);
   data.opDestroy(copyhi);	// Destroy the original COPYs.  Outputs have no descendants.
@@ -3156,7 +3156,7 @@ bool CopyForceForm::verify(Varnode *h,Varnode *l,Varnode *w,PcodeOp *cpy)
       continue;
     if (!SplitVarnode::isAddrTiedContiguous(reslo, reshi, addrOut))	// Output MUST be contiguous addresses
       continue;
-    if (copyhi->stopsCopyPropagation()) {	// Special form has additional requirements
+    if (copyhi->isReturnCopy()) {	// Special form has additional requirements
       if (h->loneDescend() == (PcodeOp *)0)
 	continue;
       if (l->loneDescend() == (PcodeOp *)0)
