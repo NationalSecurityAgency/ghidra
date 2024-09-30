@@ -2729,7 +2729,7 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
-	if (!op->getIn(0)->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset(),0,1)) {
+	if (!op->getIn(0)->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset(),0,0)) {
 	  if (op->getIn(1)->getOffset() == 0) {
 	    data.opRemoveInput(op, 1);
 	    data.opSetOpcode(op, CPUI_COPY);
