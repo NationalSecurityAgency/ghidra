@@ -188,7 +188,7 @@ ext.deps = [
 		name: "wheel-0.37.1-py2.py3-none-any.whl",
 		url: "https://files.pythonhosted.org/packages/27/d6/003e593296a85fd6ed616ed962795b2f87709c3eee2bca4f6d0fe55c6d00/wheel-0.37.1-py2.py3-none-any.whl",
 		sha256: "4bdcd7d840138086126cd09254dc6195fb4fc6f01c050a1d7236f2630db1d22a",
-		destination: file("${DEPS_DIR}/Debugger-rmi-trace/")
+		destination: [file("${DEPS_DIR}/Debugger-rmi-trace/"), file("${DEPS_DIR}/PyGhidra/")]
 	],
 	[
 		name: "Pybag-2.2.12-py3-none-any.whl",
