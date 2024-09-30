@@ -321,7 +321,7 @@ public class DescriptorDecoder {
 	 */
 	public static DataType getPointerType(String descriptor, DataTypeManager dtManager) {
 		int lastBracket = descriptor.lastIndexOf("[");
-		String baseTypeOfArray = descriptor.substring(lastBracket + 1, lastBracket + 2);
+		String baseTypeOfArray = descriptor.substring(lastBracket + 1);
 		DataType baseType = null;
 		switch (baseTypeOfArray.charAt(0)) {
 			case BASE_TYPE_BYTE:
@@ -349,7 +349,8 @@ public class DescriptorDecoder {
 				baseType = ArrayMethods.getArrayBaseType(JavaClassConstants.T_SHORT, dtManager);
 				break;
 			case BASE_TYPE_REFERENCE:
-				return dtManager.getPointer(DWordDataType.dataType);
+				baseType = getDataTypeOfDescriptor(baseTypeOfArray, dtManager);
+				break;
 
 			default:
 				throw new IllegalArgumentException(
