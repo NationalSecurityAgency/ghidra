@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -477,11 +477,22 @@ void Cover::merge(const Cover &op2)
 void Cover::rebuild(const Varnode *vn)
 
 {
-  list<PcodeOp *>::const_iterator iter;
+  vector<const Varnode *> path(1,vn);
+  int4 pos = 0;
 
   addDefPoint(vn);
-  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter)
-    addRefPoint(*iter,vn);
+  do {
+    const Varnode *curVn = path[pos];
+    pos += 1;
+    list<PcodeOp *>::const_iterator iter;
+    for(iter=curVn->beginDescend();iter!=curVn->endDescend();++iter) {
+      const PcodeOp *op = *iter;
+      addRefPoint(op,vn);
+      const Varnode *outVn = op->getOut();
+      if (outVn != (Varnode *)0 && outVn->isImplied())
+	path.push_back(outVn);
+    }
+  } while(pos < path.size());
 }
 
 /// Any previous cover is removed. Calling this with an
