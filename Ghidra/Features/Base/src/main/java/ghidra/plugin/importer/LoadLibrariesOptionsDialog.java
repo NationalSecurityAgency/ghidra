@@ -80,11 +80,16 @@ public class LoadLibrariesOptionsDialog extends OptionsDialog {
 				
 				// Display results
 				String importMessages = messageLog.toString();
-				if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
-					Msg.info(ImporterUtilities.class, TITLE + ":\n" + importMessages);
+				if (!importMessages.isEmpty()) {
+					if (!Loader.loggingDisabled) {
+						Msg.info(ImporterUtilities.class, TITLE + ":\n" + importMessages);
+					}
+					MultiLineMessageDialog.showModalMessageDialog(null, TITLE, "Results",
+						importMessages, MultiLineMessageDialog.INFORMATION_MESSAGE);
 				}
-				MultiLineMessageDialog.showModalMessageDialog(null, TITLE, "Results",
-					importMessages, MultiLineMessageDialog.INFORMATION_MESSAGE);
+				else {
+					Msg.showInfo(this, null, TITLE, "The program has no libraries.");
+				}
 
 				loadResults.release(consumer);
 			}
