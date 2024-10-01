@@ -3606,7 +3606,7 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *copyop;
   Varnode *vn,*invn;
 
-  if (op->stopsCopyPropagation()) return 0;
+  if (op->isReturnCopy()) return 0;
   for(i=0;i<op->numInput();++i) {
     vn = op->getIn(i);
     if (!vn->isWritten()) continue; // Varnode must be written to
