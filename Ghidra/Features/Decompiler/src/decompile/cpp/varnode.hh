@@ -137,6 +137,7 @@ private:
   uint4 create_index;		///< A unique one-up index assigned to Varnode at its creation
   int2 mergegroup;		///< Which group of forced merges does this Varnode belong to
   uint2 addlflags;		///< Additional flags
+  int4 enumShiftLength;          ///< (For constants of enum type only) This enum must be bitshifted right by this many bits before printing
   Address loc;			///< Storage location (or constant value) of the Varnode
 
 				// Heritage fields
@@ -261,6 +262,7 @@ public:
   bool hasNoLocalAlias(void) const { return ((flags&Varnode::nolocalalias)!=0); } ///< Are there (not) any local pointers that might affect \b this?
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); } ///< Has \b this been visited by the current algorithm?
   bool isActiveHeritage(void) const { return ((addlflags&Varnode::activeheritage)!=0); } ///< Is \b this currently being traced by the Heritage algorithm?
+  int getEnumShiftDistance(void) const { return enumShiftLength; } ///< (Only for constants of enum type) returns number of bits to bitshift right by before printing
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
   bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
   bool stopsUpPropagation(void) const { return ((addlflags&Varnode::stop_uppropagation)!=0); }	///< Is data-type propagation stopped
@@ -299,6 +301,8 @@ public:
   bool isNameLock(void) const { return ((flags&Varnode::namelock)!=0); } ///< Does \b this have a locked name?
   void setActiveHeritage(void) { addlflags |= Varnode::activeheritage; } ///< Mark \b this as currently being linked into the SSA tree
   void clearActiveHeritage(void) { addlflags &= ~Varnode::activeheritage; }	///< Mark \b this as not (actively) being linked into the SSA tree
+  ///< (Only for constants of enum type) specify by how many bits this needs to be shifted right before printing
+  void setEnumShiftDistance(int shiftDistance) { enumShiftLength = shiftDistance; }
   void setMark(void) const { flags |= Varnode::mark; } ///< Mark this Varnode for breadcrumb algorithms
   void clearMark(void) const { flags &= ~Varnode::mark; } ///< Clear the mark on this Varnode
   void setDirectWrite(void) { flags |= Varnode::directwrite; } ///< Mark \b this as directly affected by a legal input

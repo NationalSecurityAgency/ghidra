@@ -1320,7 +1320,6 @@ TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
 
 {
   namemap = op.namemap;
-  masklist = op.masklist;
   flags |= (op.flags&poweroftwo)|enumtype;
 }
 
@@ -1330,62 +1329,10 @@ TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
 void TypeEnum::setNameMap(const map<uintb,string> &nmap)
 
 {
-  map<uintb,string>::const_iterator iter;
-  uintb curmask,lastmask;
-  int4 maxbit;
-  int4 curmaxbit;
-  bool fieldisempty;
 
   namemap = nmap;
-  masklist.clear();
+  flags |= poweroftwo;
 
-  flags &= ~((uint4)poweroftwo);
-
-  maxbit = 8 * size - 1;
-
-  curmaxbit = 0;
-  while(curmaxbit <= maxbit) {
-    curmask = 1;
-    curmask <<= curmaxbit;
-    lastmask = 0;
-    fieldisempty = true;
-    while(curmask != lastmask) {	// Repeat until there is no change in the current mask
-      lastmask = curmask;		// Note changes from last time through
-
-      for(iter=namemap.begin();iter!=namemap.end();++iter) { // For every named enumeration value
-	uintb val = (*iter).first;
-	if ((val & curmask) != 0) {	// If the value shares ANY bits in common with the current mask
-	  curmask |= val;		// Absorb ALL defined bits of the value into the current mask
-	  fieldisempty = false;
-	}
-      }
-
-      // Fill in any holes in the mask (bit field must consist of contiguous bits
-      int4 lsb = leastsigbit_set(curmask);
-      int4 msb = mostsigbit_set(curmask);
-      if (msb > curmaxbit)
-	curmaxbit = msb;
-
-      uintb mask1 = 1;
-      mask1 = (mask1 << lsb) - 1;     // every bit below lsb is set to 1
-      uintb mask2 = 1;
-      mask2 <<= msb;
-      mask2 <<= 1;
-      mask2 -= 1;                  // every bit below or equal to msb is set to 1
-      curmask = mask1 ^ mask2;
-    }
-    if (fieldisempty) {		// If no value hits this bit
-      if (!masklist.empty())
-	masklist.back() |= curmask; // Include the bit with the previous mask
-      else
-	masklist.push_back(curmask);
-    }
-    else
-      masklist.push_back(curmask);
-    curmaxbit += 1;
-  }
-  if (masklist.size() > 1)
-    flags |= poweroftwo;
 }
 
 /// Given a specific value of the enumeration, calculate the named representation of that value.
@@ -1393,39 +1340,93 @@ void TypeEnum::setNameMap(const map<uintb,string> &nmap)
 /// If no representation is possible, no names will be returned.
 /// \param val is the value to find the representation for
 /// \param valnames will hold the returned list of names
+/// \param valSize is the size (in bits) of the varnode that was holding \b val or 0 if the size of the enum is implied
+/// \param shiftDistance \b number of bits by which you shifted \b val to the left prior to passing it to this function
 /// \return true if the representation needs to be complemented
-bool TypeEnum::getMatches(uintb val,vector<string> &valnames) const
+bool TypeEnum::getMatches(uintb val,vector<string> &valnames,int4 valSize,int shiftDistance) const
 
 {
   map<uintb,string>::const_iterator iter;
   int4 count;
+  vector<string> valnamesAttempt;
+  
+  uintb shiftDistanceMask = (1U << shiftDistance) - 1;
+  int sizeToUse = valSize == 0 ? size * 8 : valSize;
+  uintb sizeMask = sizeToUse >= sizeof(uintb) * 8 ? ~0ULL : (1ULL << sizeToUse) - 1;
+
+  map<uintb, string>::const_iterator iterEnd = namemap.end();
 
   for(count=0;count<2;++count) {
     bool allmatch = true;
-    if (val == 0) {	// Zero handled specially, it crosses all masks
-      iter = namemap.find(val);
-      if (iter != namemap.end())
-	valnames.push_back( (*iter).second );
-      else
-	allmatch = false;
-    }
-    else {
-      for(int4 i=0;i<masklist.size();++i) {
-	uintb maskedval = val & masklist[i];
-	if (maskedval == 0)	// No component of -val- in this mask
-	  continue;		// print nothing
-	iter = namemap.find(maskedval);
-	if (iter != namemap.end())
-	  valnames.push_back( (*iter).second );	// Found name for this component
-	else {					// If no name for this component
-	  allmatch = false;			// Give up on representation
-	  break;				// Stop searching for other components
+    iter = namemap.lower_bound(val);
+    if (iter != iterEnd && iter->first == val) {
+      valnames.push_back( (*iter).second );  // an exact match
+    } else if (val == 0) {
+      allmatch = false;  // if this is a zero value, we can't represent it, because all other enum elements would be non-zero
+      break;  // not allowing inverted representation for 0 by doing a ~(-1) if this enum has a -1 element
+    } else {
+      uintb valRemainingBits = val;
+      map<uintb, string>::const_iterator iterBegin = namemap.begin();
+      if (iter != iterBegin) {  // can't decrement begin iterator
+	for (--iter; ; ) {  // iterate backwards from end to start (from highest value to lowest)
+	  const uintb& key = iter->first;
+	  if (key == 0) break;                    // the zero is handled specially in the code above and this element is probably the last one in the enum so we just break
+	  const uintb& maskedKey = key & valRemainingBits;
+	  const uintb valRemainingBitsTemp = valRemainingBits - maskedKey;
+	  if (valRemainingBitsTemp >= key) {  // the valRemainingBits's most significant bit is not contained in the key.
+	    // None of the remaining enum elements are going to contain that bit, since they're lower than the key,
+	    // so we can exit now
+	    break;
+	  }
+	  if (maskedKey == key) {                     // if all bits of the enum value are contained in valRemainingBits
+	    valnames.push_back( (*iter).second );
+	    valRemainingBits = valRemainingBitsTemp;  // remove used bits and continue next search only for the bits that remain
+	    if (valRemainingBits == 0) {              // no more bits remain, we found all of them in the enum
+	      break;
+	    }
+	    iter = namemap.lower_bound(valRemainingBits); // this will return a non-end iterator, because
+	    // we removed the highest bit from the val
+	    // and the current key contained that bit, so at most
+	    // this should return the current key again
+	    if (iter->first == valRemainingBits) {  // the iterator->first matches valRemainingBits exactly
+	      valnames.push_back((*iter).second);
+	      valRemainingBits = 0;
+	      break;
+	    } else if (iter == iterBegin) {  // can't decrement begin iterator
+	      break;
+	    } else {
+	      --iter;
+	      continue;
+	    }
+	  }
+	  if (iter == iterBegin) break;
+	  --iter;
 	}
       }
+      allmatch = (valRemainingBits == 0);  // if not all bits were found then we can't make a representation
     }
-    if (allmatch)			// If we have a complete representation
+    if (count == 1 && !valnamesAttempt.empty() && (             // If we have a previous successful attempt doing a non-~ representation
+      allmatch && valnamesAttempt.size() < valnames.size()  // And this attempt is successful but yields more enum elements than the other one
+      || !allmatch)) {                                      // Or this attempt is just not successful
+      valnames.clear();                                         // Return the previous attempt
+      valnames.insert(valnames.begin(), valnamesAttempt.begin(), valnamesAttempt.end());
+      return false;                                             // Representing the non-complement (original) value
+    }
+    if (allmatch                                           // If we have a complete representation
+      && count == 0 && (valnames.size() >= size * 8 / 2    // But it seems to include most of the enum's elements (if each was a single bit flag)
+	                || shiftDistance > 0)) {           // Or when the val was <<32 before being passed, because when that happens
+      // it could include fewer flags than size * 8 / 2, so a double-check (with the complement of the val) is necessary
+      valnamesAttempt = valnames;
+      allmatch = false;                                   // Maybe a complement's (~) representation would've been better?
+    }
+    if (allmatch)                       // If we have a complete representation
       return (count==1);		// Return whether we represented original value or complement
-    val = val ^ calc_mask(size);	// Switch value we are trying to represent (to complement)
+    val = val ^ sizeMask;               // Switch value we are trying to represent (to complement)
+    val ^= shiftDistanceMask;           // If the val was for example 0xfffffffe and was <<32 before being passed to this function
+                                        // it would get padded with 0's and end up looking like 0xfffffffe00000000
+                                        // so when getting its complement we would get 0x00000001ffffffff
+					// and still not find the enum values we're looking for. The ^= shiftDistanceMask fixes that
+    
     valnames.clear();			// Clear out old attempt
   }
   return false;	// If we reach here, no representation was possible, -valnames- is empty

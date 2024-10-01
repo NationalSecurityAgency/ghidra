@@ -466,7 +466,6 @@ class TypeEnum : public TypeBase {
 protected:
   friend class TypeFactory;
   map<uintb,string> namemap;	///< Map from integer to name
-  vector<uintb> masklist;	///< Masks for each bitfield within the enum
   void setNameMap(const map<uintb,string> &nmap);	///< Establish the value -> name map
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this enum data-type from a stream
 public:
@@ -480,7 +479,7 @@ public:
     flags |= enumtype; submeta = (m==TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM; }
   map<uintb,string>::const_iterator beginEnum(void) const { return namemap.begin(); }	///< Beginning of name map
   map<uintb,string>::const_iterator endEnum(void) const { return namemap.end(); }	///< End of name map
-  bool getMatches(uintb val,vector<string> &matchname) const;	///< Recover the named representation
+  bool getMatches(uintb val,vector<string> &matchname,int4 valSize,int shiftDistance) const;	///< Recover the named representation
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeEnum(*this); }

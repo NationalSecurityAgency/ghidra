@@ -10924,4 +10924,284 @@ int4 RuleOrCompare::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+int4 ActionPropagateEnums::apply(Funcdata &data)
+
+{
+  if (!data.hasTypeRecoveryStarted()) return 0;
+
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *op;
+
+  const BlockGraph &basicblocks( data.getBasicBlocks() );
+  for(int4 j=0;j<basicblocks.getSize();++j) {
+    BlockBasic *bb = (BlockBasic *)basicblocks.getBlock(j);
+    for(iter=bb->beginOp();iter!=bb->endOp();++iter) {
+      op = *iter;
+      OpCode code = op->code();
+      if (code != CPUI_STORE
+	&& code != CPUI_INT_AND
+	&& code != CPUI_INT_OR
+	&& code != CPUI_INT_EQUAL         // for enums that are downcast to smaller types
+	&& code != CPUI_INT_NOTEQUAL) {   // for enums that are downcast to smaller types
+	continue;
+      }
+
+      Varnode* constant = op->getIn(1);
+      if (op->code() == CPUI_STORE) {
+	constant = op->getIn(2);
+      }
+      if (!constant->isConstant() || constant->getType()->isEnumType() || constant->isSpacebase() || constant->isTypeLock()) {
+	continue;
+      }
+      PcodeOp* def = op;
+      if (op->code() != CPUI_STORE) {
+	def = op->getIn(0)->getDef();
+	if (!def) {
+	  Varnode* opOut = op->getOut();
+	  if (opOut) {
+	    def = opOut->loneDescend();
+	  }
+	}
+      }
+      if (def && (def->code() == CPUI_INT_NEGATE || def->code() == CPUI_INT_2COMP))
+      {
+        def = def->getIn(0)->getDef();
+      }
+      if (!def) continue;
+
+      struct VarnodeToScan {
+	Varnode* varnode = nullptr;
+	int operationSize = 0;
+	bool subpieceUpper4Bytes = false;
+	int shiftLength = 0;
+	int slot = 0;
+      };
+
+      vector<VarnodeToScan> varnodes;
+
+      code = def->code();
+
+      if (code == CPUI_LOAD) {
+	if (def->getOut() == (Varnode *)0) {
+	  continue;
+	}
+	varnodes.emplace_back();
+	VarnodeToScan& newVnToScan = varnodes.back();
+	newVnToScan.varnode = def->getIn(1);
+	newVnToScan.operationSize = def->getOut()->getSize();
+	newVnToScan.slot = 1;
+
+      } else if (code == CPUI_SUBPIECE) {
+	varnodes.emplace_back();
+	VarnodeToScan& newVnToScan = varnodes.back();
+	newVnToScan.varnode = def->getIn(0);
+	newVnToScan.slot = 0;
+	Varnode* subpiece = def->getIn(1);
+	uintb subpieceOffset = subpiece->getOffset();
+	if (subpieceOffset != 0 && subpieceOffset != 4) {
+	  continue;
+	}
+	newVnToScan.subpieceUpper4Bytes = (subpieceOffset == 4);
+	newVnToScan.operationSize = subpiece->getSize();
+
+      } else if (code == CPUI_STORE) {
+	varnodes.emplace_back();
+	VarnodeToScan& newVnToScan = varnodes.back();
+	newVnToScan.varnode = def->getIn(1);
+	newVnToScan.slot = 1;
+	newVnToScan.operationSize = def->getIn(2)->getSize();
+
+      } else if (code == CPUI_INT_AND || code == CPUI_INT_OR) {
+	if (def->getOut() == (Varnode *)0) {
+	  continue;
+	}
+	int operationSize = def->getOut()->getSize();
+	for (int i = 0; i < def->numInput(); ++i) {
+	  varnodes.emplace_back();
+	  VarnodeToScan& newVnToScan = varnodes.back();
+	  newVnToScan.varnode = def->getIn(i);
+	  newVnToScan.slot = i;
+	  newVnToScan.operationSize = operationSize;
+	}
+
+      } else if (code == CPUI_INT_RIGHT) {
+        if (def->getOut() == (Varnode *)0) {
+          continue;
+        }
+        Varnode* constVn = def->getIn(1);
+        Varnode* nonConstVn = def->getIn(0);
+        if (constVn->isConstant() && !nonConstVn->isConstant()) {
+	  varnodes.emplace_back();
+	  VarnodeToScan& newVnToScan = varnodes.back();
+	  newVnToScan.varnode = nonConstVn;
+	  newVnToScan.shiftLength = constVn->getOffset();
+	  newVnToScan.slot = 0;
+	  newVnToScan.operationSize = def->getOut()->getSize();
+	}
+
+      } else if (code == CPUI_MULTIEQUAL
+	  || code == CPUI_CALL
+	  || code == CPUI_CALLIND) {
+	if (def->getOut() == (Varnode *)0) {
+	  continue;
+	}
+	varnodes.emplace_back();
+	VarnodeToScan& newVnToScan = varnodes.back();
+	newVnToScan.varnode = def->getOut();
+	newVnToScan.slot = -1;
+	newVnToScan.operationSize = def->getOut()->getSize();
+
+      }
+
+      for (VarnodeToScan& vn : varnodes) {
+	int shiftLength = vn.shiftLength;
+	Datatype* ct = vn.varnode->getTypeReadFacing(def);
+	bool ctIsPtr = ct->getMetatype() == TYPE_PTR;
+	bool subpieceUpper4Bytes = vn.subpieceUpper4Bytes;
+	if (ctIsPtr) {
+	  ct = ((TypePointer *)ct)->getPtrTo();
+	}
+	if (!ct->isEnumType()) {
+	  PcodeOp* vnDef = vn.varnode->getDef();
+	  if (vnDef && vnDef->code() == CPUI_CAST) {
+	    Datatype* vnPreCastType = vnDef->getIn(0)->getTypeReadFacing(vnDef);
+	    if (vnPreCastType->isEnumType()) {
+	      ct = vnPreCastType;
+	    }
+	  }
+	}
+	if (!ct->isEnumType()) {
+	  int4 off;
+	  Datatype *newct = getFinalDisplayedType(vn.varnode, def, vn.slot, off);
+	  if (newct && newct->isEnumType() && (off == 0 || off == 4)) {
+	    ct = newct;
+	    if (off == 4) {
+	      subpieceUpper4Bytes = true;
+	    }
+	  }
+	}
+	if (subpieceUpper4Bytes) shiftLength += 32;
+	if (ct->isEnumType() && (vn.operationSize != ct->getSize() || shiftLength > 0) && constant->getType() != ct) {
+	  updateTypeWithOptionalCast(data, constant, ct, op, shiftLength);
+	  ++count;
+	  break;
+	}
+	if (ctIsPtr) {
+	  PcodeOp* inDef = vn.varnode->getDef();
+	  if (inDef && inDef->code() == CPUI_INT_ADD) {
+	    Varnode* rightOperand = inDef->getIn(1);
+	    if (rightOperand->isConstant() && rightOperand->getOffset() == 4) {
+	      Varnode* leftOperand = inDef->getIn(0);
+	      Datatype* leftOperandType = leftOperand->getTypeReadFacing(inDef);
+	      if (leftOperandType->getMetatype() == TYPE_PTR) {
+		Datatype* leftOperandPointedToType = ((TypePointer*)leftOperandType)->getPtrTo();
+		if (leftOperandPointedToType->isEnumType()
+		    && leftOperandPointedToType->getSize() == 8) {
+		  updateTypeWithOptionalCast(data, constant, leftOperandPointedToType, op, 32 + shiftLength);
+		  ++count;
+		  break;
+		}
+	      }
+	    }
+	  }
+	}
+      }  // varnodes to scan loop
+    }  // block p-code operator loop
+  }  // block loop
+
+  return 0;
+}
+
+/// Dig through all structs/enums/unions until a base member pointed to by vn is found
+/// \param vn the varnode to dig into
+/// \param op the operation from which the \b vn was obtained
+/// \param slot in which \b vn can be found in the \op. -1 if \b vn is in the output slot of \b op
+/// \param off gets set to the offset at which \b vn points relative to the member found. Not set if no member found
+/// \return the data type of the member found or the original (\b vn's) type if no member found
+Datatype *ActionPropagateEnums::getFinalDisplayedType(Varnode *vn,PcodeOp *op,int4 slot,int4& off) {
+  Datatype *baseType = vn->getType();
+  int4 sz = vn->getSize();
+  HighVariable *high = vn->getHigh();
+  Symbol *sym = high->getSymbol();
+  if (sym == (Symbol *)0) {
+    return baseType;
+  }
+  off = high->getSymbolOffset();
+  if (off == -1) {  // perfect symbol match
+    off = 0;
+  }
+  if (off + vn->getSize() > sym->getType()->getSize()) {
+    return baseType;
+  }
+  Datatype *ct = sym->getType();
+  bool succeeded = true;
+  while(ct != (Datatype *)0 && succeeded) {
+    if (off == 0) {
+      if (sz == 0 || (sz == ct->getSize() && (!ct->needsResolution() || ct->getMetatype()==TYPE_PTR)))
+	break;
+    }
+    succeeded = false;
+    if (ct->getMetatype()==TYPE_STRUCT) {
+      if (ct->needsResolution() && ct->getSize() == sz) {
+	Datatype *outtype = ct->findResolve(op, slot);
+	if (outtype == ct)
+	  break;	// Turns out we don't resolve to the field
+      }
+      const TypeField *field;
+      int8 off_int8;
+      field = ct->findTruncation(off,sz,op,slot,off_int8);
+      if (field != (const TypeField *)0) {
+	ct = field->type;
+	off = (int4)off_int8;
+	succeeded = true;
+      }
+    }
+    else if (ct->getMetatype() == TYPE_ARRAY) {
+      int4 el;
+      Datatype *arrayof = ((TypeArray *)ct)->getSubEntry(off,sz,&off,&el);
+      if (arrayof != (Datatype *)0) {
+	ct = arrayof;
+	succeeded = true;
+      }
+    }
+    else if (ct->getMetatype() == TYPE_UNION) {
+      const TypeField *field;
+      int8 off_int8;
+      field = ct->findTruncation(off,sz,op,slot,off_int8);
+      if (field != (const TypeField*)0) {
+	off = (int4)off_int8;
+	ct = field->type;
+	succeeded = true;
+      }
+      else if (ct->getSize() == sz)
+	break;		// Turns out we don't need to resolve the field
+    }
+  }
+  if (!ct) return baseType;
+  return ct;
+}
+
+void ActionPropagateEnums::updateTypeWithOptionalCast(Funcdata &data, Varnode *constant, Datatype *newType, PcodeOp *op, int shiftLength) {
+  if (shiftLength >= newType->getSize() * 8) return;
+  int4 oldSize = constant->getSize();
+  int4 slot = op->getSlot(constant);
+  Datatype *oldType = constant->getType();
+
+  constant->updateType(newType, false, false);
+  constant->setEnumShiftDistance(shiftLength);
+
+  if (oldSize == newType->getSize()) {
+    return;
+  }
+
+  PcodeOp *newop = data.newOp(1,op->getAddr());
+  Varnode *vnout = data.newUniqueOut(constant->getSize(),newop);
+  vnout->updateType(oldType,false,false);
+  vnout->setImplied();
+  data.opSetOpcode(newop,CPUI_CAST);
+  data.opSetInput(newop,constant,0);
+  data.opSetInput(op,vnout,slot);
+  data.opInsertBefore(newop,op); // Cast comes BEFORE operation
+}
+
 } // End namespace ghidra

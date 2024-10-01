@@ -1362,11 +1362,14 @@ Datatype *TypeOpIntXor::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 Datatype *TypeOpIntXor::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				      int4 inslot,int4 outslot)
 {
-  if (!alttype->isPowerOfTwo()) {
+  if (!alttype->isEnumType()) {
     if (alttype->getMetatype() != TYPE_FLOAT)
       return (Datatype *)0;
     if (floatSignManipulation(op) == CPUI_MAX)
       return (Datatype *)0;
+  } else if (invn->isConstant() && !outvn->isConstant()) {
+  	return (Datatype *)0;  // propagating enum types set by ActionPropagateEnums may be bad if their size does not
+                           // match the size of the other operand
   }
   Datatype *newtype;
   if (invn->isSpacebase()) {
@@ -1395,11 +1398,14 @@ Datatype *TypeOpIntAnd::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 Datatype *TypeOpIntAnd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				      int4 inslot,int4 outslot)
 {
-  if (!alttype->isPowerOfTwo()) {
+  if (!alttype->isEnumType()) {
     if (alttype->getMetatype() != TYPE_FLOAT)
       return (Datatype *)0;
     if (floatSignManipulation(op) == CPUI_MAX)
       return (Datatype *)0;
+  } else if (invn->isConstant() && !outvn->isConstant()) {
+  	return (Datatype *)0;  // propagating enum types set by ActionPropagateEnums may be bad if their size does not
+                           // match the size of the other operand
   }
   Datatype *newtype;
   if (invn->isSpacebase()) {
@@ -1428,7 +1434,9 @@ Datatype *TypeOpIntOr::getOutputToken(const PcodeOp *op,CastStrategy *castStrate
 Datatype *TypeOpIntOr::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				     int4 inslot,int4 outslot)
 {
-  if (!alttype->isPowerOfTwo()) return (Datatype *)0; // Only propagate flag enums
+  if (alttype->isEnumType() && invn->isConstant() && !outvn->isConstant())
+    return (Datatype *)0;  // propagating enum types set by ActionPropagateEnums may be bad if their size does not
+                           // match the size of the other operand
   Datatype *newtype;
   if (invn->isSpacebase()) {
     AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
