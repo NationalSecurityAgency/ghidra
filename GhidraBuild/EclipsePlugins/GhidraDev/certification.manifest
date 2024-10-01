@@ -7,8 +7,8 @@ GhidraDevPlugin/.launch/GhidraDev.launch||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev.target||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev_README.html||GHIDRA||||END|
 GhidraDevPlugin/META-INF/MANIFEST.MF||GHIDRA||||END|
+GhidraDevPlugin/README.md||GHIDRA||||END|
 GhidraDevPlugin/build.properties||GHIDRA||||END|
-GhidraDevPlugin/build_README.txt||GHIDRA||||END|
 GhidraDevPlugin/icons/GhidraIcon16.png||GHIDRA||||END|
 GhidraDevPlugin/icons/GhidraIcon16_bw.png||GHIDRA||||END|
 GhidraDevPlugin/icons/brick_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
