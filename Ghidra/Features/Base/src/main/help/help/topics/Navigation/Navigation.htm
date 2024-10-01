@@ -2,6 +2,9 @@
 
 <HTML>
   <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
     <TITLE>Navigation</TITLE>
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
@@ -12,23 +15,23 @@
     <P>Often, users need to navigate to specific locations in a program.&nbsp; Ghidra provides
     several different ways to do this:&nbsp;</P>
 
-	<BLOCKQUOTE>
-    <UL>
-      <LI>&nbsp;&nbsp;&nbsp;Enter a particular address or label (<A href="#Go_To_Address_Label">Go
-      To</A>)</LI>
+    <BLOCKQUOTE>
+      <UL>
+        <LI>&nbsp;&nbsp;&nbsp;Enter a particular address or label (<A href=
+        "#Go_To_Address_Label">Go To</A>)</LI>
 
-      <LI>&nbsp;&nbsp;&nbsp;Double-click on any displayed label or address in the <A href=
-      "help/topics/CodeBrowserPlugin/CodeBrowser.htm#Navigation">Code Browser</A> tool</LI>
+        <LI>&nbsp;&nbsp;&nbsp;Double-click on any displayed label or address in the <A href=
+        "help/topics/CodeBrowserPlugin/CodeBrowser.htm#Navigation">Code Browser</A> tool</LI>
 
-      <LI>&nbsp;&nbsp;&nbsp;Jump directly to the <A href="#Next_Code_Unit">Next/Previous Code
-      Unit</A></LI>
+        <LI>&nbsp;&nbsp;&nbsp;Jump directly to the <A href="#Next_Code_Unit">Next/Previous Code
+        Unit</A></LI>
 
-      <LI>&nbsp;&nbsp; Use the <A href="#Navigation_History">Navigation History</A> to return to a
-      previously visited location</LI>
-      <LI>&nbsp;&nbsp; Specify a specific <A href="#Starting_Program_Location">Program Start 
-      Location</A> when 
-      opening a program</LI>
-    </UL>
+        <LI>&nbsp;&nbsp; Use the <A href="#Navigation_History">Navigation History</A> to return to
+        a previously visited location</LI>
+
+        <LI>&nbsp;&nbsp; Specify a specific <A href="#Starting_Program_Location">Program Start
+        Location</A> when opening a program</LI>
+      </UL>
     </BLOCKQUOTE>
 
     <H2><A name="Go_To_Address_Label"></A>Go To Address, Label, or Expression</H2>
@@ -37,19 +40,19 @@
       <H3>To Perform a Go To:&nbsp;</H3>
 
       <OL>
-        <LI>In the menu-bar of a tool, select <B>Navigation <IMG src="help/shared/arrow.gif"
+        <LI>In the menu-bar of a tool, select <B>Navigation <IMG alt="" src="help/shared/arrow.gif"
         border="0"> Go To...</B></LI>
 
         <LI>The <I>Go To</I> dialog will be displayed, as shown below:</LI>
 
         <LI>Enter either an <A href="#GoTo_Address">address</A>, <A href="#GoTo_Label">label</A>,
-        <A href="#GoTo_Expression">expression</A>, or <A href="#GoTo_File_Offset">file offset</A> 
+        <A href="#GoTo_Expression">expression</A>, or <A href="#GoTo_File_Offset">file offset</A>
         as specified below and press "OK"</LI>
 
-        <LI>If the address, label, expression, or file offset is valid, the Code Browser will be 
+        <LI>If the address, label, expression, or file offset is valid, the Code Browser will be
         repositioned to that location and the dialog will be dismissed</LI>
 
-        <LI>If the address, label, expression, or file offset is not valid, the dialog will display 
+        <LI>If the address, label, expression, or file offset is not valid, the dialog will display
         an error message</LI>
       </OL>
     </BLOCKQUOTE>
@@ -57,7 +60,7 @@
     <TABLE border="0" cellspacing="1" width="100%">
       <TBODY>
         <TR>
-          <TD width="100%">
+          <TD>
             <P align="center"><IMG alt="" src="images/GoToDialog.png"></P>
 
             <P align="center"><I><FONT size="3">Go To Address, Label, Expression, or File Offset
@@ -77,9 +80,9 @@
         <P>Enter an address into the text area of the dialog. The value entered will be assumed to
         be in hexadecimal. That is, "0x1000" and "1000" are the same value.</P>
 
-        <P><I><IMG src="help/shared/note.png" border="0">When the program has multiple address
-        spaces and the destination address is ambiguous (based on the current location), a query
-        results dialog will be displayed.</I></P>
+        <P><I><IMG alt="" src="help/shared/note.png" border="0">When the program has multiple
+        address spaces and the destination address is ambiguous (based on the current location), a
+        query results dialog will be displayed.</I></P>
 
         <P><B>Consider the following examples:</B></P>
 
@@ -87,7 +90,8 @@
           <P>Given:</P>
 
           <BLOCKQUOTE>
-            <P>A program with the following memory blocks <b>which reside in different address spaces</b>:</P>
+            <P>A program with the following memory blocks <B>which reside in different address
+            spaces</B>:</P>
 
             <TABLE border="1" bordercolor="#808080" cellspacing="0" width="41%">
               <TBODY>
@@ -145,8 +149,6 @@
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 
-  
-
     <BLOCKQUOTE>
       <BLOCKQUOTE>
         <BLOCKQUOTE>
@@ -173,22 +175,295 @@
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
-  <TABLE border="0" cellspacing="1" width="100%">
-      <TBODY>
-        <TR>
-          <TD width="100%">
-            <P align="center"><IMG src="images/Goto_Ambiguous.png" border="0"></P>
+      <TABLE border="0" cellspacing="1" width="100%">
+        <TBODY>
+          <TR>
+            <TD width="100%">
+              <P align="center"><IMG alt="" src="images/Goto_Ambiguous.png" border="0"></P>
 
-            <P align="center"><FONT size="3"><I>Ambiguous Destination Address</I></FONT></P>
-          </TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+              <P align="center"><FONT size="3"><I>Ambiguous Destination Address</I></FONT></P>
+            </TD>
+          </TR>
+        </TBODY>
+      </TABLE>
 
       <H3><A name="GoTo_Label"></A>Go To Label</H3>
 
       <BLOCKQUOTE>
-        <P>Enter the name of an existing label into the text area of the dialog.&nbsp;</P>
+        <P>Enter the name or namespace path of an existing label into the text field of the dialog.
+        The name and/or path may contain wildcards (* ? **).</P>
+
+        <H4>Namespace Paths</H4>
+
+        <BLOCKQUOTE>
+          <P>A label name can be specified with or without namespace paths. Use the "::" delimiter
+          to separate namespace elements and the symbol name, with the symbol name always being the
+          last element.</P>
+
+          <P>Namespace paths do not have to be fully specified from the global namespace, so for
+          example, "a::b" will find the symbol "b" in a namespace "a", regardless of whether or not
+          the namespace "a" is global or in some other namespace. In other words, the namespace
+          path is relative to any namespace.</P>
+
+          <P>To require that the specified path be absolute (fully specified from the global
+          namespace), start the path with the "::" delimiter. So, for example, "::a::b" will only
+          match the symbol "b" if it is in a namespace "a" which is itself in the global
+          namespace.</P>
+        </BLOCKQUOTE>
+
+        <H4>Wildcards</H4>
+
+        <BLOCKQUOTE>
+          <P>Wildcard characters(* ** ?) can be used to match namespace names and/or symbol names.
+          If more than one match is found, the results are displayed in a <B>GoTo Query Results</B>
+          table</P>
+
+          <H5>Supported Wildcards</H5>
+
+          <BLOCKQUOTE>
+            <TABLE border="1" cellspacing="2" cellpadding="6">
+              <TBODY>
+                <TR>
+                  <TH valign="top" bgcolor="#c0c0c0" width="5%">Wildcard<BR>
+                  </TH>
+
+                  <TH valign="top" bgcolor="#c0c0c0" width="95%">Description<BR>
+                  </TH>
+                </TR>
+
+                <TR>
+                  <TD valign="top">*</TD>
+
+                  <TD valign="top">Matches zero or more characters within a single namespace or
+                  symbol name. Does not match across :: delimiters. Also, it must match something
+                  at that level. So, "::*::*::a" only matches symbols that are exactly two
+                  namespace levels deep.</TD>
+                </TR>
+
+                <TR>
+                  <TD valign="top">?</TD>
+
+                  <TD>Matches exactly one characters within a single namespace or symbol name.</TD>
+                </TR>
+
+                <TR>
+                  <TD valign="top">**</TD>
+
+                  <TD>Matches 0 or more path elements. The '**' must not be mixed with other
+                  characters. The only valid forms are '::**::', '**::', or '::**'. See the examples
+                  below for use of this syntax.</TD>
+                </TR>
+              </TBODY>
+            </TABLE>
+          </BLOCKQUOTE>
+
+          <H5>Wildcard Examples</H5>
+
+          <BLOCKQUOTE>
+            <TABLE border="1" cellspacing="2" cellpadding="6">
+              <TR>
+                <TH valign="top" bgcolor="#c0c0c0" width="10%">Input<BR>
+                </TH>
+
+                <TH valign="top" bgcolor="#c0c0c0" width="90%">Descriptions<BR>
+                </TH>
+              </TR>
+
+              <TR>
+                <TD valign="top">abc*</TD>
+
+                <TD>Matches any symbol whose name starts with "abc"</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">abc*xyz</TD>
+
+                <TD>Matches any symbol whose name starts with "abc" and ends with "xyz"</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">abc?xyz</TD>
+
+                <TD>Matches any symbol whose name starts with "abc" and ends with "xyz" and has
+                exactly 1 char between them</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::b</TD>
+
+                <TD>Matches any symbol named "b" whose immediate parent namespace is named "a"</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">::a</TD>
+
+                <TD>Matches any global symbol named "a"</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">::a::b</TD>
+
+                <TD>Matches any symbol named "b" whose immediate parent namespace is named "a" and
+                "a" is in the global namespace</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::*</TD>
+
+                <TD>Matches any symbol whose immediate parent namespace is named "a"</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::*::z</TD>
+
+                <TD>Matches any symbol named "z" whose namespace two levels up is named "a"</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">*::*::z</TD>
+
+                <TD>Matches any symbol named "z" that is at least two levels below the global
+                namespace</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::**::z</TD>
+
+                <TD>Matches any symbol named "z" that has a namespace named "a" anywhere in it's
+                namespace ancestry</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::**</TD>
+
+                <TD>Matches any symbol that has a namespace named "a" anywhere in it's namespace
+                ancestry</TD>
+              </TR>
+            </TABLE>
+          </BLOCKQUOTE>
+
+          <H5>Wildcard Examples (With sample full symbol paths of matching and not matching
+          symbols)</H5>
+
+          <BLOCKQUOTE>
+            <TABLE border="1" cellspacing="2" cellpadding="6">
+              <TR>
+                <TH valign="top" bgcolor="#c0c0c0" width="10%">Input<BR>
+                </TH>
+
+                <TH valign="top" bgcolor="#c0c0c0" width="45%">Matches<BR>
+                </TH>
+
+                <TH valign="top" bgcolor="#c0c0c0" width="45%">Does Not Match<BR>
+                </TH>
+              </TR>
+
+              <TR>
+                <TD valign="top">abc*</TD>
+
+                <TD>abc, abcdef</TD>
+
+                <TD>bcd, bc</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">abc*xyz</TD>
+
+                <TD>abcxyz, abc12xyz</TD>
+
+                <TD>abcz</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">abc?xyz</TD>
+
+                <TD>abcdxyz, abcexyz</TD>
+
+                <TD>abcxyz, abc12xyz</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::b</TD>
+
+                <TD>a::b, x::a::b, x::y::a::b</TD>
+
+                <TD>a::x::b</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">::a</TD>
+
+                <TD>a</TD>
+
+                <TD>x::a, a::b</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">::a::b</TD>
+
+                <TD>a::b</TD>
+
+                <TD>x::a::b</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::*</TD>
+
+                <TD>a::b, a::c, x::a::d</TD>
+
+                <TD>x::b, x::a</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::*::z</TD>
+
+                <TD>a::b::z, a::c::z, x::a::b::z</TD>
+
+                <TD>a::b::c::z</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">*::*::z</TD>
+
+                <TD>a::b::z, x::a::b::z</TD>
+
+                <TD>a::z</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">**::*::z</TD>
+
+                <TD>a::b::z, x::a::b::z, a::z</TD>
+
+                <TD>z</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">::**::z</TD>
+
+                <TD>a::b::z, x::a::b::z, a::z</TD>
+
+                <TD>z</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::**::z</TD>
+
+                <TD>a::z, a::b::z, a::b::c::z</TD>
+
+                <TD>b::z, a::z::x</TD>
+              </TR>
+
+              <TR>
+                <TD valign="top">a::**</TD>
+
+                <TD>a::z, a::b::z, a::b::c::z, a::z::x</TD>
+
+                <TD>b::z, x::z</TD>
+              </TR>
+            </TABLE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
 
         <H4>Case Sensitive</H4>
 
@@ -197,157 +472,78 @@
           same as "lab1000."&nbsp; If you want to find both of these labels, turn off the case
           sensitive option.&nbsp; If more than one match is found, they are displayed in a Query
           Results dialog.</P>
-
-          <P><IMG src="help/shared/note.png" border="0">Even if the case sensitive option is off,
-          if a label has an exact match, no other labels will be found.<BR>
-          </P>
         </BLOCKQUOTE>
-        
+
         <H4>Dynamic Labels</H4>
-        <BLOCKQUOTE>
-          <P>This option only affects queries that could potentially result in multiple results, i.e
-          when a search must be performed versus a lookup.  This occurs when either the case sensitive 
-          is turned off or a wildcard is used. Specifically, this option tells Ghidra, when doing
-          a search versus a direct lookup, to consider all the <I>Dynamic</I> symbols (symbols that are not 
-          stored, but are generated on the fly because of a reference to that location.) If
-          this option is off, only defined labels are searched. 
 
-          <P><IMG src="help/shared/note.png" border="0"> Turning off this option can result in
-           significantly faster results in larger programs.</P><BR>
-          </P>
-          
+        <BLOCKQUOTE>
+          <P>This option determines if the query includes generic dynamically generated labels
+          (LAB*, DAT*, FUN*, etc.). If this option is off, only defined labels are searched.</P>
+
+          <P><IMG alt="" src="help/shared/note.png" border="0"> Turning off this option can result
+          in significantly faster results in larger programs.</P>
+          <BR>
+          <BR>
+          <BR>
         </BLOCKQUOTE>
-        
       </BLOCKQUOTE>
-      
+
       <H3><A name="GoTo_File_Offset"></A>Go To File Offset<BR>
       </H3>
-      
+
       <BLOCKQUOTE>
-        <P>Enter <B>file(n)</B>, where <B>n</b> is a file offset of the program's source file bytes 
-        (at time of import), into the text area of the dialog.  The file offset entered will be 
-        assumed to be in decimal unless it is preceeded by <B>0x</B>. That is, "file(0x1000)" and 
+        <P>Enter <B>file(n)</B>, where <B>n</B> is a file offset of the program's source file bytes
+        (at time of import), into the text area of the dialog. The file offset entered will be
+        assumed to be in decimal unless it is preceeded by <B>0x</B>. That is, "file(0x1000)" and
         "file(1000)" are different values.</P>
 
-        <P><I><IMG src="help/shared/note.png" border="0">Ghidra does not support storing source 
-        file bytes for all file formats. Searching for a file offset in these programs will always 
-        yield no results.</I></P>
-        
-        <P><I><IMG src="help/shared/note.png" border="0">When the program has multiple file byte
-        sources and the destination address is ambiguous, a query results dialog will be displayed.
-        </I></P>
+        <P><I><IMG alt="" src="help/shared/note.png" border="0">Ghidra does not support storing
+        source file bytes for all file formats. Searching for a file offset in these programs will
+        always yield no results.</I></P>
+
+        <P><I><IMG alt="" src="help/shared/note.png" border="0">When the program has multiple file
+        byte sources and the destination address is ambiguous, a query results dialog will be
+        displayed.</I></P>
       </BLOCKQUOTE>
 
       <H3><A name="GoTo_Expression"></A>Go To Expression<BR>
       </H3>
 
-	      <BLOCKQUOTE>
-	        <P>Enter an arithmetic expression that can include addresses, symbols, or can be relative
-	        to the current location. All numbers are assumed to be hexadecimal. Supported operator are
-	        "+ - * / &lt;&lt; &gt;&gt;".&nbsp; Also, parentheses are supported to control order of
-	        expression evaluation.<BR>
-	         For example:<BR>
-	        </P>
-
-	
-	
-			<TABLE BORDER="1">
-				<TR>
-					<TD WIDTH="35%">
-						<B>ENTRY+10</B>
-					</TD>
-					<TD>Positions
-	        			the cursor at the address 0x10 addresses past the symbol ENTRY
-					</TD>
-				</TR>
-				<TR>
-					<TD><B>0x100000+30</B>
-					</TD>
-					<TD>Positions the cursor at address 0x100030
-					</TD>					
-				</TR>
-				<TR>
-					<TD><B>0x100000+(2*10)</B>
-					</TD>
-					<TD>Positions the cursor at address 0x100020
-					</TD>					
-				</TR>
-				<TR>
-					<TD><B>+20</B>
-					</TD>
-					<TD>Positions the cursor at an address that is 0x20 past the current location
-					</TD>					
-				</TR>
-			</TABLE>
-	      </BLOCKQUOTE>
-    </BLOCKQUOTE>
-
-
-    <BLOCKQUOTE>
-      <H3>Executing a Query</H3>
-
       <BLOCKQUOTE>
-        <P>A Query performs a case-insensitive search for all labels that match the criteria. A
-        Query is specified using wildcards.</P>
+        <P>Enter an arithmetic expression that can include addresses, symbols, or can be relative
+        to the current location. All numbers are assumed to be hexadecimal. Supported operator are
+        "+ - * / &lt;&lt; &gt;&gt;".&nbsp; Also, parentheses are supported to control order of
+        expression evaluation.<BR>
+         For example:<BR>
+        </P>
 
-        <H4>Using Wildcards</H4>
+        <TABLE border="1">
+          <TR>
+            <TD width="35%"><B>ENTRY+10</B></TD>
 
-        <BLOCKQUOTE>
-          <P>Wildcard characters ("?" or "*") can be used when searching for labels.&nbsp;
-          Wildcards are useful if you don't know the full label name or don't want to type the
-          entire name.</P>
-        </BLOCKQUOTE>
+            <TD>Positions the cursor at the address 0x10 addresses past the symbol ENTRY</TD>
+          </TR>
 
-        <H4>Asterisk (*)</H4>
+          <TR>
+            <TD><B>0x100000+30</B></TD>
 
-        <BLOCKQUOTE>
-          <P>You can use the asterisk as a substitute for zero or more characters.&nbsp;</P>
+            <TD>Positions the cursor at address 0x100030</TD>
+          </TR>
 
-          <H4>Example&nbsp;&nbsp;</H4>
+          <TR>
+            <TD><B>0x100000+(2*10)</B></TD>
 
-          <P>If you're looking for a label that you know starts with "gloss", type the
-          following:</P>
+            <TD>Positions the cursor at address 0x100020</TD>
+          </TR>
 
-          <BLOCKQUOTE>
-            <P><B>gloss*</B></P>
-          </BLOCKQUOTE>
+          <TR>
+            <TD><B>+20</B></TD>
 
-          <P>The <I>Go To Address or Label</I> dialog will locate all labels that begin with
-          "gloss" including <B>Glossary.txt</B>, <B>Glossary.doc</B>, and <B>Glossy.doc</B>. To
-          narrow the search to a specific extension, type:</P>
-
-          <BLOCKQUOTE>
-            <P><B>gloss*.doc</B></P>
-          </BLOCKQUOTE>
-
-          <P>In this case, the <I>Go To Address or Label</I> dialog will find all labels that begin
-          with <B>gloss</B> but have the extension <B>.doc</B>, such as <B>Glossary.doc</B> and
-          <B>Glossy.doc</B>.</P>
-        </BLOCKQUOTE>
-
-        <H4>Question Mark (?)</H4>
-
-        <BLOCKQUOTE>
-          <P>Use the question mark as a substitute for a single character in a name.&nbsp;</P>
-
-          <H4>Example 1</H4>
-
-          <P>If you typed <B>gloss?.doc</B>, the <I>Go To Address or Label</I> dialog would locate
-          the label <B>Glossy.doc</B> or <B>Gloss1.doc</B>, but not <B>Glossary.doc</B>.</P>
-
-          <H4>Example 2</H4>
-
-          <P>Suppose that two of the labels in a program were <B>FUN_0040816d</B> and
-          <B>FUN_004081bd</B>. A possible query string to match these two labels would be
-          <B>FUN_004081?d</B>. The results of the query are displayed in a <I>Query Results</I>
-          dialog, as shown below.</P>
-        </BLOCKQUOTE>
+            <TD>Positions the cursor at an address that is 0x20 past the current location</TD>
+          </TR>
+        </TABLE>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
-
-    <P align="center"><IMG src="images/Goto_Wildcard.png" border="0"></P>
-
-    <P align="center"><I><FONT size="3">Query Results Dialog</FONT></I></P>
 
     <BLOCKQUOTE>
       <H3>Repeating a Previous Go To</H3>
@@ -362,7 +558,7 @@
       <TBODY>
         <TR>
           <TD width="100%">
-            <P align="center"><IMG src="images/Goto_PreviousList.png" border="0"></P>
+            <P align="center"><IMG alt="" src="images/Goto_PreviousList.png" border="0"></P>
 
             <P align="center"><I><FONT size="3">Previous Go to List</FONT></I></P>
           </TD>
@@ -417,13 +613,13 @@
       previous Instruction, Data, Undefined, Function or Non Function. The search starts at the
       current cursor location and proceeds either forward (next) or backwards (previous).</P>
 
-	  <BLOCKQUOTE>
-      <P><IMG src="help/shared/note.png" border="0">When searching for Instructions, Data or
-      Undefined items, Ghidra will skip all contiguous items of the same type. For example, if the
-      cursor is on an address with an Instruction, and you go to the next Instruction, then all
-      Instructions immediately following the current one will be skipped until a non-Instruction is
-      found. Once that non-instruction is found, then Ghidra will take you to the next Instruction
-      after the address of that non-Instruction.</P>
+      <BLOCKQUOTE>
+        <P><IMG alt="" src="help/shared/note.png" border="0">When searching for Instructions, Data
+        or Undefined items, Ghidra will skip all contiguous items of the same type. For example, if
+        the cursor is on an address with an Instruction, and you go to the next Instruction, then
+        all Instructions immediately following the current one will be skipped until a
+        non-Instruction is found. Once that non-instruction is found, then Ghidra will take you to
+        the next Instruction after the address of that non-Instruction.</P>
       </BLOCKQUOTE>
 
       <H3><A name="Toggle_Code_Unit_Search_Direction"></A>Search Direction</H3>
@@ -434,18 +630,18 @@
         "up_arrow" border="0"> icon indicates the search will be performed in the backward
         (previous) direction. To change the direction of the code unit search, toggle the arrow
         icon on the toolbar.</P>
-        <P>Alternatively, holding the <b>SHIFT</b> key when clicking a navigation button will 
+
+        <P>Alternatively, holding the <B>SHIFT</B> key when clicking a navigation button will
         temporarily invert the direction of the search.</P>
       </BLOCKQUOTE>
-      
+
       <H3><A name="Invert_Search_Logic"></A>Invert Search Logic</H3>
 
       <BLOCKQUOTE>
-        <P>The <IMG src="images/dialog-cancel.png" alt="down_arrow" border="0"> icon indicates the 
-        search logic will be inverted / negated.  The exact meaning of this depends upon the type
-        of search performed, as described below.
+        <P>The <IMG src="images/dialog-cancel.png" alt="down_arrow" border="0"> icon indicates the
+        search logic will be inverted / negated. The exact meaning of this depends upon the type of
+        search performed, as described below.</P>
       </BLOCKQUOTE>
-      
 
       <H3><A name="Next_Instruction"></A>Navigate to Instruction</H3>
 
@@ -453,12 +649,10 @@
         <P>To move the cursor to the next instruction click on the Navigate by Instruction icon,
         <IMG src="images/I.gif" alt="I" border="0">. This icon is disabled when no more
         instructions exist in the current search direction.</P>
-        
-      <P>When inverted, this task, if on an instruction, will attempt to navigate to
-         the next data or undefined data.  If not on an instruction, then this task
-         will find the next instruction and then find the data or undefined data after that.
-        </P>
-        
+
+        <P>When inverted, this task, if on an instruction, will attempt to navigate to the next
+        data or undefined data. If not on an instruction, then this task will find the next
+        instruction and then find the data or undefined data after that.</P>
       </BLOCKQUOTE>
 
       <H3><A name="Next_Data"></A>Navigate to Data</H3>
@@ -467,12 +661,10 @@
         <P>To move the cursor to the next data code unit, click on the Navigate by Data icon, <IMG
         src="images/D.gif" alt="D" border="0">. This icon is disabled when no more data code units
         exist in the current search direction.</P>
-        
-         <P>When inverted, this task, if on a data code unit, will attempt to navigate to
-         the next instruction or undefined data.  If not on a data, then this task
-         will find the next defined data and then find the instruction or undefined data after that.
-        </P>
-        
+
+        <P>When inverted, this task, if on a data code unit, will attempt to navigate to the next
+        instruction or undefined data. If not on a data, then this task will find the next defined
+        data and then find the instruction or undefined data after that.</P>
       </BLOCKQUOTE>
 
       <H3><A name="Next_Undefined"></A>Navigate to Undefined</H3>
@@ -481,131 +673,113 @@
         <P>To move the cursor to the next undefined code unit, click on the Navigate by Data icon,
         <IMG src="images/U.gif" alt="U" border="0">. This icon is disabled when no more undefined
         code units exist in the current search direction.</P>
-        
-         <P>When inverted, this task, if on an undefined code unit, will attempt to navigate to
-         the next instruction or data.  If not on an undefined, then this task
-         will find the next undefined and then find the instruction or data after that.
-        </P>
-        
+
+        <P>When inverted, this task, if on an undefined code unit, will attempt to navigate to the
+        next instruction or data. If not on an undefined, then this task will find the next
+        undefined and then find the instruction or data after that.</P>
       </BLOCKQUOTE>
 
-	  <H3><A name="Next_Label"></A>Navigate to Label</H3>
+      <H3><A name="Next_Label"></A>Navigate to Label</H3>
 
       <BLOCKQUOTE>
-        <P>To move the cursor to the next Label, click on the Navigate by Label icon,
-        <IMG src="images/L.gif" alt="L" border="0">.</P>
-         
-         <P>When inverted, this task, if on an address with a label, will attempt to navigate to
-         the next code unit without a label.  If not on an address with a label, then this task
-         will find the next label and then find the next code unit after that without a label.
-        </P>
-         
+        <P>To move the cursor to the next Label, click on the Navigate by Label icon, <IMG src=
+        "images/L.gif" alt="L" border="0">.</P>
+
+        <P>When inverted, this task, if on an address with a label, will attempt to navigate to the
+        next code unit without a label. If not on an address with a label, then this task will find
+        the next label and then find the next code unit after that without a label.</P>
       </BLOCKQUOTE>
 
       <H3><A name="Next_Function"></A>Navigate to Function</H3>
 
       <BLOCKQUOTE>
-        <P>This (<IMG src="images/F.gif" alt="F" border="0">) action will move the cursor to the 
-        next function in the current direction.  If inside a function and the direction is towards 
+        <P>This (<IMG src="images/F.gif" alt="F" border="0">) action will move the cursor to the
+        next function in the current direction. If inside a function and the direction is towards
         lower addresses, then this action will go to the current function's entry point.</P>
 
-		<P>When inverted, this task (<IMG src="images/notF.gif" alt="F">) will attempt to
-      	the navigate to the next instruction block not contained in a function. 
-      	This can be useful when manually creating functions and
-      	stepping over them to identify potential function candidates.</P>
-        </P>
-
+        <P>When inverted, this task (<IMG src="images/notF.gif" alt="F">) will attempt to the
+        navigate to the next instruction block not contained in a function. This can be useful when
+        manually creating functions and stepping over them to identify potential function
+        candidates.</P>
       </BLOCKQUOTE>
 
+      <H3><A name="Next_Matching_Byte_Values"></A>Navigate to Matching Byte Values</H3>
 
-     <H3><A name="Next_Matching_Byte_Values"></A>Navigate to Matching Byte Values</H3>
+      <BLOCKQUOTE>
+        <P>This task (<IMG src="images/V.png" alt="V">) will attempt to navigate to the next
+        matching byte pattern of the code unit under the cursor.</P>
 
-	  <BLOCKQUOTE>
-	  
-	  <P>This task  (<IMG src="images/V.png" alt="V">) will attempt to navigate to the next matching
-	  byte pattern of the code unit under the cursor.
-	  </P>
-	  
-      <P>When inverted, this task will attempt to
-      the navigate to the first code-unit where the byte value is different from the byte value
-      of the first byte of the current code unit. This can be useful when trying to navigate 
-      past a series of 0s or FFs</P>
-      
+        <P>When inverted, this task will attempt to the navigate to the first code-unit where the
+        byte value is different from the byte value of the first byte of the current code unit.
+        This can be useful when trying to navigate past a series of 0s or FFs</P>
       </BLOCKQUOTE>
-      
+
       <H3><A name="Next_Bookmark"></A>Navigate to Bookmark</H3>
 
       <BLOCKQUOTE>
-        <P>To move the cursor to the next bookmark, click on the Navigate by Bookmark icon, 
-        <IMG src="images/B.gif" alt="B" border="0">. You may use the pull-down menu to choose a 
-        specific type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">,  
-        <IMG src="images/edit-delete.png" alt="B" border="0">, 
-        <IMG src="images/information.png" alt="B" border="0">,
-        <IMG src="images/notes.gif" alt="B" border="0">,
-        <IMG src="images/warning.png" alt="B" border="0">,
-        <IMG src="images/unknown.gif" alt="B" border="0">)
-        to navigate to as opposed to all types. </P>
-        
+        <P>To move the cursor to the next bookmark, click on the Navigate by Bookmark icon, <IMG
+        src="images/B.gif" alt="B" border="0">. You may use the pull-down menu to choose a specific
+        type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">, <IMG src=
+        "images/edit-delete.png" alt="B" border="0">, <IMG src="images/information.png" alt="B"
+        border="0">, <IMG src="images/notes.gif" alt="B" border="0">, <IMG src="images/warning.png"
+        alt="B" border="0">, <IMG src="images/unknown.gif" alt="B" border="0">) to navigate to as
+        opposed to all types.</P>
+
         <P>When inverted, this task will attempt to navigate to then next address with a bookmark
-        different than what is selected in the pull-down menu of the icon.  If the 'all bookmarks'
-        state is selected, then this task will simply navigate to the next address that has no 
-        bookmark.
-        </P>
-        
+        different than what is selected in the pull-down menu of the icon. If the 'all bookmarks'
+        state is selected, then this task will simply navigate to the next address that has no
+        bookmark.</P>
       </BLOCKQUOTE>
-      
 
       <P class="providedbyplugin">&nbsp;</P>
 
       <P class="providedbyplugin">Provided by: <I>Go To Next-Previous Code Unit</I> plugin</P>
-    </BLOCKQUOTE>
-    
-	<!-- 
-		This file is different than most, since it has multiple plugins contributing to the
-	    content.  Add some space at the bottom of the file to separate this last contribution
-	 -->
-	<BR>
+    </BLOCKQUOTE><!-- 
+                        This file is different than most, since it has multiple plugins contributing to the
+                    content.  Add some space at the bottom of the file to separate this last contribution
+                 -->
     <BR>
-    <BR>
-    <BR>
-    <BR>
-    <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     
 
     <H2><A name="Next_Previous_Function"></A>Next/Previous Function</H2>
 
     <BLOCKQUOTE>
-    	  <P>Navigating to the next or previous function is a commonly used feature.  As such, separate
-    	  actions have been created so that keybindings can be assigned for each direction.
-	 </P>
+      <P>Navigating to the next or previous function is a commonly used feature. As such, separate
+      actions have been created so that keybindings can be assigned for each direction.</P>
 
       <H3>Next Function</H3>
 
       <BLOCKQUOTE>
-      <P> This action navigates the cursor to the closest function entry point that is at an
-      address greater than the current address. The default keybinding is <TT><B>Control-Down&nbsp;Arrow</B></TT>.</P>
+        <P>This action navigates the cursor to the closest function entry point that is at an
+        address greater than the current address. The default keybinding is
+        <TT><B>Control-Down&nbsp;Arrow</B></TT>.</P>
       </BLOCKQUOTE>
 
       <H3>Previous Function</H3>
 
       <BLOCKQUOTE>
-     <P> This action navigates the cursor to the closest function entry point that is at an
-      address less than the current address. The default keybinding is <TT><B>Control-Up&nbsp;Arrow</B></TT>.</P>
+        <P>This action navigates the cursor to the closest function entry point that is at an
+        address less than the current address. The default keybinding is
+        <TT><B>Control-Up&nbsp;Arrow</B></TT>.</P>
       </BLOCKQUOTE>
-    
-   		<P class="providedbyplugin">Provided by: <I>CodeBrowser</I> plugin</P>
-       </BLOCKQUOTE>
 
-
-	<!-- 
-		This file is different than most, since it has multiple plugins contributing to the
-	    content.  Add some space at the bottom of the file to separate this last contribution
-	 -->
-	<BR>
+      <P class="providedbyplugin">Provided by: <I>CodeBrowser</I> plugin</P>
+    </BLOCKQUOTE><!-- 
+                        This file is different than most, since it has multiple plugins contributing to the
+                    content.  Add some space at the bottom of the file to separate this last contribution
+                 -->
     <BR>
-    <BR>
-    <BR>
-    <BR>
-    <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     
 
     <H2><A name="Navigation_History"></A>Navigation History</H2>
 
@@ -614,16 +788,16 @@
       navigation history stack.&nbsp; The navigation history feature allows the user to revisit
       previous locations.</P>
 
-      <H3><A name="Next_Location_in_History"></A> <A name=
-      "Previous_Location_in_History"></A> Go To Next/Previous Location</H3>
+      <H3><A name="Next_Location_in_History"></A> <A name="Previous_Location_in_History"></A> Go To
+      Next/Previous Location</H3>
 
       <BLOCKQUOTE>
         <P>To traverse the history stack:</P>
 
         <OL>
-          <LI>In the tool-bar, click either the <B>Go to previous location</B> (<IMG src=
-          "images/left.png" border="0"> ) button or the <B>Go to next location</B> (<IMG src=
-          "images/right.png" border="0">) button</LI>
+          <LI>In the tool-bar, click either the <B>Go to previous location</B> (<IMG alt="" src=
+          "images/left.png" border="0"> ) button or the <B>Go to next location</B> (<IMG alt=""
+          src="images/right.png" border="0">) button</LI>
 
           <LI>The Code Browser will be repositioned to the saved location</LI>
         </OL>
@@ -648,207 +822,174 @@
           href="help/topics/Search/Search_Program_Text.htm">Program Text</A>, etc)</LI>
         </UL>
 
-        <P><IMG src="help/shared/note.png" border="0">The <IMG src="images/left.png" border="0">
-        button is only enabled after performing a <IMG src="images/right.png" border="0"></P>
+        <P><IMG alt="" src="help/shared/note.png" border="0">The <IMG alt="" src="images/left.png"
+        border="0"> button is only enabled after performing a <IMG alt="" src="images/right.png"
+        border="0"></P>
       </BLOCKQUOTE>
 
-	  <H3><A name="Next_Function_in_History"></A> <A name=
-      "Previous_Function_in_History"></A> Go To Next/Previous <b>Function</b> in History</H3>
+      <H3><A name="Next_Function_in_History"></A> <A name="Previous_Function_in_History"></A> Go To
+      Next/Previous <B>Function</B> in History</H3>
 
       <BLOCKQUOTE>
-        <P>
-        	These actions allow you to navigate to the next/previous functions in the history
-        	list, skipping over any locations that are not in functions or are in the current
-        	function.
-        </P>
-        
-      		<BLOCKQUOTE>
-        	<P>
-        	<IMG src="help/shared/note.png" border="0">The behavior of the previous action will
-        	vary slightly depending upon what component is focused.  It is possible for a 
-        	non-Listing view to be showing a function that is not the current function in the 
-        	Listing.  In this case, if the Listing has focus, then the previously visited function
-        	will be the navigation destination.  <B>Alternatively, if a non-Listing widget
-        	(e.g., the Decompiler) has focus and is showing a function, then that function
-        	being displayed will be ignored when navigating to the previous function.</B> 
-        	</P>
-        	</BLOCKQUOTE>
+        <P>These actions allow you to navigate to the next/previous functions in the history list,
+        skipping over any locations that are not in functions or are in the current function.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG alt="" src="help/shared/note.png" border="0">The behavior of the previous action
+          will vary slightly depending upon what component is focused. It is possible for a
+          non-Listing view to be showing a function that is not the current function in the
+          Listing. In this case, if the Listing has focus, then the previously visited function
+          will be the navigation destination. <B>Alternatively, if a non-Listing widget (e.g., the
+          Decompiler) has focus and is showing a function, then that function being displayed will
+          be ignored when navigating to the previous function.</B></P>
+        </BLOCKQUOTE>
       </BLOCKQUOTE>
 
       <H3><A name="Clear_History_Buffer"></A>Clear History</H3>
 
       <BLOCKQUOTE>
-        <P>To clear the navigation history stack, select <B>Navigation <IMG src=
+        <P>To clear the navigation history stack, select <B>Navigation <IMG alt="" src=
         "help/shared/arrow.gif" border="0"> Clear History</B></P>
 
-        <P>After clearing the history, the <IMG src="images/left.png" border="0">&nbsp;and <IMG
-        src="images/right.png" border="0"> buttons are disabled</P>
-      </BLOCKQUOTE>
-    
-    	<P class="providedbyplugin">Provided by: <I>Next/Previous</I> plugin</P>
+        <P>After clearing the history, the <IMG alt="" src="images/left.png" border="0">&nbsp;and
+        <IMG alt="" src="images/right.png" border="0"> buttons are disabled</P>
       </BLOCKQUOTE>
 
-	<!-- 
-		This file is different than most, since it has multiple plugins contributing to the
-	    content.  Add some space at the bottom of the file to separate this contribution.
-	 -->
-	<BR>
+      <P class="providedbyplugin">Provided by: <I>Next/Previous</I> plugin</P>
+    </BLOCKQUOTE><!-- 
+                        This file is different than most, since it has multiple plugins contributing to the
+                    content.  Add some space at the bottom of the file to separate this contribution.
+                 -->
     <BR>
-    <BR>
-    <BR>
-    <BR>
-    <BR>
-
-
-
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     
 
     <H2>Component Provider Navigation</H2>
 
     <BLOCKQUOTE>
-      <P>
-      This section lists actions that allow the user to navigate between component providers.
-      </P>
+      <P>This section lists actions that allow the user to navigate between component
+      providers.</P>
 
       <H3><A name="Navigation_Previous_Provider"></A>Go To Last Active Component</H3>
 
       <BLOCKQUOTE>
-        <P>
-        	Allows the user to switch focus back to the previously focused component provider.
-        </P>
+        <P>Allows the user to switch focus back to the previously focused component provider.</P>
       </BLOCKQUOTE>
-	
-		<P class="providedbyplugin">Provided by: <I>ProviderNavigation</I> plugin</P>
-	</BLOCKQUOTE>
 
-	<!-- 
-		This file is different than most, since it has multiple plugins contributing to the
-	    content.  Add some space at the bottom of the file to separate this contribution.
-	 -->
-	<BR>
+      <P class="providedbyplugin">Provided by: <I>ProviderNavigation</I> plugin</P>
+    </BLOCKQUOTE><!-- 
+                        This file is different than most, since it has multiple plugins contributing to the
+                    content.  Add some space at the bottom of the file to separate this contribution.
+                 -->
     <BR>
-    <BR>
-    <BR>
-    <BR>
-    <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     
+    <HR width="80%">
 
-	
-	<HR WIDTH="80%">
-	
-	<H2><A NAME="Navigation_Options"></A>Navigation Options</H2>
-	
-	<BLOCKQUOTE>
+    <H2><A name="Navigation_Options"></A>Navigation Options</H2>
 
-	    <P>
-		<B>'Go To' in Current Program Only</B> -
-		'Go To' service will only search for and navigate to locations in the current program. 
-		If this option is off and the search location is not found in the current program, the
-		'Go To' action will search other open programs,
-		possibly resulting in the listing view switching to a different open program tab. 
-		By default, this option is on, thereby guaranteeing that the listing view will not
-		change to a different program when performing a <A HREF="#Go_To_Address_Label">
-		'Go To' action</A>.
-		</P>
-	    
-	    <P>
-		<B>External Navigation</B> -
-		Determines the behavior for navigation to external symbols and references. 
-		By default, navigating to an external will attempt to navigate within the 
-		current program to the first linkage reference (pointer or thunk). 
-		Alternatively, if an external program has been associated with an 
-		import Library, then that program will be opened and positioned to the selected
-		external location if found.
-		</P>
-		
-		<P>
-		<B>Follow Indirection</B> -
-		Determines the behavior for navigation on indirect flow references. 
-		By default, this option is disabled providing navigation to the 
-		referenced pointer data.  If enabled, the pointer will be followed 
-		to its referenced destination if contained within the program's memory.
-		</P>
-	    
-		<P>
-		<B>Prefer Current Address Space</B> - 
-		Determines if the 'Go To' action prefers the current address space when entering address offsets.
-		For example, if your program has multiple address spaces such as 'RAM' or 'DATA' and you
-		enter 1000 into the 'Go To' field, you could mean RAM:1000 or DATA:1000.  If this option 
-		is on, then it will go to the address with the address space that matches the current 
-		cursor location.  Otherwise, it will show a list of possible addresses for the given offset.
-		The default is on for this option.
-		</P>
-		
-		<P>
-		<B>Range Navigation</B> -
-		Determines how <A HREF="help/topics/Selection/Selecting.htm#NavigateOverSelection">
-		navigation of ranges</A> 
-		(i.e., selection ranges and highlight ranges) takes place.  By default, navigating 
-		to ranges will place the cursor at the top of the 
-		next range.  You may use this option to navigate to both the top and the bottom of each
-		range being navigated.
-		</P>
-		
- 		<H3><A name="Starting_Program_Location"></A>Starting Program Location Options</H3>
- 		<P>The starting location for newly opened programs can be configured using the following 
- 		options:</P>
- 		<BLOCKQUOTE>
- 		    <P><B>Start At</B> - Choose a starting program location option:
- 		    <UL>
- 		    	<LI>Lowest Address - The program will open at the lowest address.</LI>
- 		    	<LI>Lowest Code Block Address - The program will open at the first executable
- 		    	 memory block. If no executable block found, it will go to lowest address.</LI>
- 		    	<LI>Preferred Symbol Name - The program will open at the first symbol name it
- 		    	finds that matches a name in the "Start Symbols" option. If no symbol is found,
- 		    	it will try the lowest code block, and finally the lowest address.</LI>
- 		    	<LI>Location When Last Closed - The program will open to the location it was at the 
- 		    	last time the program was closed. If this is the first time the program 
- 		    	has been opened, it will try to find a preferred symbol, then it will look for the 
- 		    	lowest code block, and finally lowest overall address</LI>
- 		    </UL>
+    <BLOCKQUOTE>
+      <P><B>'Go To' in Current Program Only</B> - 'Go To' service will only search for and navigate
+      to locations in the current program. If this option is off and the search location is not
+      found in the current program, the 'Go To' action will search other open programs, possibly
+      resulting in the listing view switching to a different open program tab. By default, this
+      option is on, thereby guaranteeing that the listing view will not change to a different
+      program when performing a <A href="#Go_To_Address_Label">'Go To' action</A>.</P>
 
- 		    <P><B><A name="Start_Symbols"></A>Start Symbols</B> - A comma separated list of symbol names to be be used as the
- 		    starting location for the program if the "Preferred Symbol Name" option is selected 
- 		    above. The first matching symbol found will be used as the starting location for
- 		    newly opened programs.</P>
+      <P><B>External Navigation</B> - Determines the behavior for navigation to external symbols
+      and references. By default, navigating to an external will attempt to navigate within the
+      current program to the first linkage reference (pointer or thunk). Alternatively, if an
+      external program has been associated with an import Library, then that program will be opened
+      and positioned to the selected external location if found.</P>
 
- 		    <P><B>Use Underscores</B> - If selected, each of the preferred symbols listed above
- 		    will also be searched for with either one or two underscores prepended to the name. For 
- 		    example, if selected, it will search for "_main" and "__main" in addition to "main" 
- 		    when trying to find a starting symbol.</P>
-			
- 		</BLOCKQUOTE>
- 		<H3><A name="After_Initial_Analysis"></A>Initial Analysis Navigation Options</H3>
- 		<P>These options control the behavior of the tool after the initial analysis has
- 		completed.</P>
- 		<BLOCKQUOTE>
-  		    <P><B>Ask To Reposition Program</B> - If selected, the user will be prompted if they
-  		    would like the program to be positioned to any newly discovered starting symbols as
-  		    specified in the <A href="#Start_Symbols">Start Symbols</A> option.</P>
+      <P><B>Follow Indirection</B> - Determines the behavior for navigation on indirect flow
+      references. By default, this option is disabled providing navigation to the referenced
+      pointer data. If enabled, the pointer will be followed to its referenced destination if
+      contained within the program's memory.</P>
 
- 		    <P><B>Auto Reposition If Not Moved</B> - If selected, the program will automatically
- 		    be reposition to any newly discovered starting symbols as specified in the 
- 		     <A href="#Start_Symbols">Start Symbols</A> option, provided the user has
- 		    not manually moved the cursor off the starting location address. If they have manually
- 		    moved the cursor, then the behavior will revert to the setting of the "Ask To
- 		    Reposition Program" option above.</P>
-			
- 		</BLOCKQUOTE>
-		
- 		
-		
-	</BLOCKQUOTE>
-	
+      <P><B>Prefer Current Address Space</B> - Determines if the 'Go To' action prefers the current
+      address space when entering address offsets. For example, if your program has multiple
+      address spaces such as 'RAM' or 'DATA' and you enter 1000 into the 'Go To' field, you could
+      mean RAM:1000 or DATA:1000. If this option is on, then it will go to the address with the
+      address space that matches the current cursor location. Otherwise, it will show a list of
+      possible addresses for the given offset. The default is on for this option.</P>
 
-	<!-- 
-		This file is different than most, since it has multiple plugins contributing to the
-	    content.  Add some space at the bottom of the file to separate this contribution.
-	 -->
-	<BR>
+      <P><B>Range Navigation</B> - Determines how <A href=
+      "help/topics/Selection/Selecting.htm#NavigateOverSelection">navigation of ranges</A> (i.e.,
+      selection ranges and highlight ranges) takes place. By default, navigating to ranges will
+      place the cursor at the top of the next range. You may use this option to navigate to both
+      the top and the bottom of each range being navigated.</P>
+
+      <H3><A name="Starting_Program_Location"></A>Starting Program Location Options</H3>
+
+      <P>The starting location for newly opened programs can be configured using the following
+      options:</P>
+
+      <BLOCKQUOTE>
+        <P><B>Start At</B> - Choose a starting program location option:</P>
+
+        <UL>
+          <LI>Lowest Address - The program will open at the lowest address.</LI>
+
+          <LI>Lowest Code Block Address - The program will open at the first executable memory
+          block. If no executable block found, it will go to lowest address.</LI>
+
+          <LI>Preferred Symbol Name - The program will open at the first symbol name it finds that
+          matches a name in the "Start Symbols" option. If no symbol is found, it will try the
+          lowest code block, and finally the lowest address.</LI>
+
+          <LI>Location When Last Closed - The program will open to the location it was at the last
+          time the program was closed. If this is the first time the program has been opened, it
+          will try to find a preferred symbol, then it will look for the lowest code block, and
+          finally lowest overall address</LI>
+        </UL>
+
+        <P><B><A name="Start_Symbols"></A>Start Symbols</B> - A comma separated list of symbol
+        names to be be used as the starting location for the program if the "Preferred Symbol Name"
+        option is selected above. The first matching symbol found will be used as the starting
+        location for newly opened programs.</P>
+
+        <P><B>Use Underscores</B> - If selected, each of the preferred symbols listed above will
+        also be searched for with either one or two underscores prepended to the name. For example,
+        if selected, it will search for "_main" and "__main" in addition to "main" when trying to
+        find a starting symbol.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="After_Initial_Analysis"></A>Initial Analysis Navigation Options</H3>
+
+      <P>These options control the behavior of the tool after the initial analysis has
+      completed.</P>
+
+      <BLOCKQUOTE>
+        <P><B>Ask To Reposition Program</B> - If selected, the user will be prompted if they would
+        like the program to be positioned to any newly discovered starting symbols as specified in
+        the <A href="#Start_Symbols">Start Symbols</A> option.</P>
+
+        <P><B>Auto Reposition If Not Moved</B> - If selected, the program will automatically be
+        reposition to any newly discovered starting symbols as specified in the <A href=
+        "#Start_Symbols">Start Symbols</A> option, provided the user has not manually moved the
+        cursor off the starting location address. If they have manually moved the cursor, then the
+        behavior will revert to the setting of the "Ask To Reposition Program" option above.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE><!-- 
+                        This file is different than most, since it has multiple plugins contributing to the
+                    content.  Add some space at the bottom of the file to separate this contribution.
+                 -->
     <BR>
-    <BR>
-    <BR>
-    <BR>
-    <BR>
-
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     <BR>
+     
 
     <P class="relatedtopic">Related Topics:</P>
 

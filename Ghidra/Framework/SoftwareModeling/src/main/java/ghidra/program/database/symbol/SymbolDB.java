@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -238,9 +238,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	private void fillListWithNamespacePath(Namespace namespace, ArrayList<String> list) {
+	private void fillListWithNamespacePath(Namespace namespace, List<String> list) {
+		if (namespace == null || namespace.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
+			// we don't include the global namespace name in the path
+			return;
+		}
 		Namespace parentNamespace = namespace.getParentNamespace();
-		if (parentNamespace != null && parentNamespace.getID() != Namespace.GLOBAL_NAMESPACE_ID) {
+		if (parentNamespace != null) {
 			fillListWithNamespacePath(parentNamespace, list);
 		}
 		list.add(namespace.getName());
