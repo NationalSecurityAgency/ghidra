@@ -2574,9 +2574,16 @@ bool BlockBasic::isDoNothing(void) const
   if (sizeIn() == 0) return false; // A block that does nothing but
 				// is a starting block, may need to be a
 				// placeholder for global(persistent) vars
-  if ((sizeIn()==1)&&(getIn(0)->isSwitchOut())) {
-    if (getOut(0)->sizeIn() > 1)
-      return false;		// Don't remove switch targets
+  for(int4 i=0;i<sizeIn();++i) {
+    const FlowBlock *switchbl = getIn(i);
+    if (!switchbl->isSwitchOut()) continue;
+    if (switchbl->sizeOut() > 1) {
+      // This block is a switch target
+      if (getOut(0)->sizeIn() > 1) {	// Multiple edges coming together
+					// Switch edge may still be propagating a unique value
+	return false;			// Don't remove it
+      }
+    }
   }
   PcodeOp *lastop = lastOp();
   if ((lastop != (PcodeOp *)0)&&(lastop->code()==CPUI_BRANCHIND))

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,8 +117,8 @@ class Merge {
 public:
   Merge(Funcdata &fd) : data(fd), stackAffectingOps(fd), testCache(stackAffectingOps) {} ///< Construct given a specific function
   void clear(void);
+  static void markImplied(Varnode *vn);
   bool inflateTest(Varnode *a,HighVariable *high);
-  void inflate(Varnode *a,HighVariable *high);
   bool mergeTest(HighVariable *high,vector<HighVariable *> &tmplist);
 
   void mergeOpcode(OpCode opc);
