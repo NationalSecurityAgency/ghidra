@@ -2335,8 +2335,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		if (!existingSymbol.getParentNamespace().equals(program.getGlobalNamespace())) {
-			// existing symbol has a non-global namespace
-			return doCreateSymbol(address, symbolPath, false, plateAddition);
+			// Existing symbol has a non-global namespace
+			if (!preferNewSymbolOverExistingNamespacedSymbol(symbolPath)) {
+				return doCreateSymbol(address, symbolPath, false, plateAddition);
+			}
 		}
 
 		if (symbolPath.getParent() != null) {
@@ -2351,6 +2353,22 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		return doCreateSymbol(address, symbolPath, false, plateAddition);
+	}
+
+	// We've found that a mangled version of vxtables can present more detailed information
+	//  than a non-mangled vxtable symbol that has a namespace (the information is not
+	//  as descriptive regarding vxtables owned by the child for a parent).  So do not
+	//  accept these existing symbol with namespace to maintain their primary status.
+	//
+	// Kludge... this mechanism might go away later if/when instead we evaluate all symbols at
+	// an address to do the right thing or if/when we process the tables in some place other
+	// than or besides the Demangler.
+	private boolean preferNewSymbolOverExistingNamespacedSymbol(SymbolPath symbolPath) {
+		String name = symbolPath.getName();
+		if (name.startsWith("??_7") || name.startsWith("??_8")) {
+			return true;
+		}
+		return false;
 	}
 
 	private Symbol doCreateSymbol(Address address, SymbolPath symbolPath, boolean makePrimary,
