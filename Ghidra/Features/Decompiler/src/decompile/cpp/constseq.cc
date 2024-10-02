@@ -112,7 +112,7 @@ int4 ArraySequence::formByteArray(int4 sz,int4 slot,uint8 rootOff,bool bigEndian
   int4 elSize = charType->getSize();
   for(int4 i=0;i<moveOps.size();++i) {
     int4 bytePos = moveOps[i].offset - rootOff;
-    if (bytePos + elSize > sz) continue;
+    if (bytePos < 0 || bytePos + elSize > sz) continue;
     uint8 val = moveOps[i].op->getIn(slot)->getOffset();
     used[bytePos] = (val == 0) ? 2 : 1;		// Mark byte as used, a 2 indicates a null terminator
     if (bigEndian) {
