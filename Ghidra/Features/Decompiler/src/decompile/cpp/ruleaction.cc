@@ -1840,6 +1840,7 @@ int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
   OpCode opc1,opc2;
   int4 sa1,sa2,size;
   uintb mask;
+  uintb shift;
 
   if (!op->getIn(1)->isConstant()) return 0;
   secvn = op->getIn(0);
@@ -1897,6 +1898,51 @@ int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetOpcode(op,CPUI_INT_AND);
     data.opSetInput(op,secop->getIn(0),0);
     data.opSetInput(op,newvn,1);
+  }
+  else if (size <= sizeof(uintb)) {	// FIXME:  precision
+    // 2 opposite shifts - first 'sa2' bits to 'opc2', then 'sa1' bits to 'opc1'
+    // opc1 != opc2 && sa1 != sa2
+
+    // This can be transformed into an INT_AND with a mask, followed by a shift.
+    // While this doesn't necessarily make the expression simpler, it does make
+    // it more obvious to human readers of the final C code what bits are
+    // extracted.
+
+    // What the precise values of the mask and shift depend on (i) the original
+    // shifts order (i.e. what shift comes first, 'opc2') and (ii) which shift
+    // operand is larger. The values are summarised in the table below. Note
+    // that 'a' means 'sa2', 'b' means '8*size' and 'c' means 'sa1'.
+
+    // opc2   consts | opc1  shift     mask
+    // --------------|----------------------------------
+    // <<     a > c  | <<    (a-c)  mask(b - a)
+    // <<     a < c  | >>    (c-a)  mask(b - c) << (c-a)
+    // >>     a > c  | >>    (a-c)  mask(b - a) << c
+    // >>     a < c  | <<    (c-a)  mask(b - c) << a
+    opc1 = (opc2 == CPUI_INT_RIGHT) == (sa2 < sa1) ? CPUI_INT_LEFT : CPUI_INT_RIGHT;
+    shift = abs(sa1 - sa2);
+
+    mask = 0;
+    if ((opc2 == CPUI_INT_LEFT) && (sa2 > sa1))
+      mask = (((uintb) 1) << (8*size - sa2)) - 1;
+    else if ((opc2 == CPUI_INT_LEFT) && (sa2 < sa1))
+      mask = ((((uintb) 1) << (8*size - sa1)) - 1) << (sa1-sa2);
+    else if (sa2 > sa1)
+      mask = ((((uintb) 1) << (8*size - sa2)) - 1) << sa1;
+    else
+      mask = ((((uintb) 1) << (8*size - sa1)) - 1) << sa2;
+
+    // Create INT_AND(V, mask)
+    PcodeOp* and_op = data.newOp(2, op->getAddr());
+    data.opSetOpcode(and_op, CPUI_INT_AND);
+    data.opSetInput(and_op, secop->getIn(0), 0);
+    data.opSetInput(and_op, data.newConstant(size, mask), 1);
+    data.opInsertBefore(and_op, op);
+
+    // Create INT_[LEFT/RIGHT](<INT_AND out>, shift)
+    data.opSetOpcode(op,opc1);
+    data.opSetInput(op,data.newUniqueOut(size, and_op),0);
+    data.opSetInput(op,data.newConstant(size, shift),1);
   }
   else
     return 0;
