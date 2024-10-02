@@ -6159,13 +6159,12 @@ bool AddTreeState::apply(void)
       clear();
       preventDistribution = true;
       spanAddTree(baseOp,1);
-      if (!valid) return false;
-      calcSubtype();
-      if (!valid) return false;
-    } else {
-      return false;
+      if (valid) {
+        calcSubtype();
+      }
     }
   }
+  if (!valid) return false;
   while(valid && distributeOp != (PcodeOp *)0) {
     if (!data.distributeIntMultAdd(distributeOp)) {
       valid = false;
