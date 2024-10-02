@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1046,9 +1046,11 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
     sublist.emplace_back(0,-1,decl->getIdentifier(),decl->buildType(glb));
   }
 
-  TypeStruct::assignFieldOffsets(sublist);
   try {
-    glb->types->setFields(sublist,res,-1,-1,0);
+    int4 newSize;
+    int4 newAlign;
+    TypeStruct::assignFieldOffsets(sublist,newSize,newAlign);
+    glb->types->setFields(sublist,res,newSize,newAlign,0);
   }
   catch (LowlevelError &err) {
     setError(err.explain);
@@ -1084,7 +1086,10 @@ Datatype *CParse::newUnion(const string &ident,vector<TypeDeclarator *> *declist
   }
 
   try {
-    glb->types->setFields(sublist,res,-1,-1,0);
+    int4 newSize;
+    int4 newAlign;
+    TypeUnion::assignFieldOffsets(sublist,newSize,newAlign,res);
+    glb->types->setFields(sublist,res,newSize,newAlign,0);
   }
   catch (LowlevelError &err) {
     setError(err.explain);
@@ -1140,8 +1145,13 @@ Datatype *CParse::newEnum(const string &ident,vector<Enumerator *> *vecenum)
     vallist.push_back(enumer->value);
     assignlist.push_back(enumer->constantassigned);
   }
-  if (!glb->types->setEnumValues(namelist,vallist,assignlist,res)) {
-    setError("Bad enumeration values");
+  try {
+    map<uintb,string> namemap;
+    TypeEnum::assignValues(namemap,namelist,vallist,assignlist,res);
+    glb->types->setEnumValues(namemap, res);
+  }
+  catch (LowlevelError &err) {
+    setError(err.explain);
     glb->types->destroyType(res);
     return (Datatype *)0;
   }
