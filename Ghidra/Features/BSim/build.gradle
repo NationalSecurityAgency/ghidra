@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ def installPoint = "../help/help"
 
 /**
  * Build the pdf docs for BSim and place into the '$installPoint' directory.
- * A build (ex: 'gradle buildLocalTSSI_Release') will place the pdf in the distribution.
+ * A build (ex: 'gradle buildLocalPublic_Release') will place the pdf in the distribution.
  * There is an associated, auto-generated clean task.
  **/
 task buildBSimHelpPdf(type: Exec) {
@@ -136,7 +136,7 @@ task buildBSimHelpPdf(type: Exec) {
 
 /**
  * Build the html docs for BSim and place into the '$installPoint' directory.
- * A build (ex: 'gradle buildLocalTSSI_Release') will place the html files in the distribution.
+ * A build (ex: 'gradle buildLocalPublic_Release') will place the html files in the distribution.
  **/
 task buildBSimHelpHtml(type: Exec) {
 
