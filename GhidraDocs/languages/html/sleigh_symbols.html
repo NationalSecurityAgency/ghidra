@@ -194,10 +194,10 @@ We list all of the symbols that are predefined by SLEIGH.
 <p>
 The most important of these to be aware of
 are <span class="emphasis"><em>inst_start</em></span>
-and <span class="emphasis"><em>inst_next</em></span>. These are family symbols which map
-in the context of particular instruction to the integer offset of
-either the address of the instruction or the address of the next
-instruction respectively. These are used in any relative branching
+and <span class="emphasis"><em>inst_next</em></span>. These are family
+symbols that map to the integer offset of either the instruction's
+address or the next instruction's address, depending on the context
+of a particular instruction. These are used in any relative branching
 situation. The <span class="emphasis"><em>inst_next2</em></span> is intended for conditional
 skip instruction situations.  The remaining symbols are rarely
 used. The <span class="emphasis"><em>const</em></span> and <span class="emphasis"><em>unique</em></span>
