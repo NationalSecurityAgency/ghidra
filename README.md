@@ -137,4 +137,4 @@ source project.
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
-[ghidradev]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/GhidraDev_README.html
+[ghidradev]: GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md

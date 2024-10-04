@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,11 +133,28 @@ public abstract class ModuleInformation {
 	}
 
 	/**
+	 * Returns the name of the  object file
+	 * @return name of the object file
+	 */
+	public String getObjectFileName() {
+		return objectFileName;
+	}
+
+	/**
 	 * Returns {@link SectionContribution} of the module
 	 * @return {@link SectionContribution} of the module
 	 */
 	public SectionContribution getSectionContribution() {
 		return sectionContribution;
+	}
+
+	/**
+	 * Returns the filename for the index
+	 * @param index the index for which the filename was stored
+	 * @return the filename
+	 */
+	public String getFilenameByIndex(int index) {
+		return filenamesArray.get(index);
 	}
 
 	/**
@@ -205,11 +222,12 @@ public abstract class ModuleInformation {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Stores the filename for the offset given
+	 * Stores the filename for the offset given.  Also adds name to array, so order of call matters
 	 * @param offset the offset for which to store the filename
 	 * @param filename the filename to store
 	 */
 	protected void addFilenameByOffset(int offset, String filename) {
+		filenamesArray.add(filename);
 		filenameByOffset.put(offset, filename);
 	}
 

@@ -122,7 +122,7 @@ Import the newly generated GhidraDev projects into an Eclipse that supports this
 __Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's 
 preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
 
-See [GhidraDevPlugin/build_README.txt](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt)
+See [Building GhidraDev](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md#building)
 for instructions on how to build the GhidraDev plugin.
 
 ## Running tests

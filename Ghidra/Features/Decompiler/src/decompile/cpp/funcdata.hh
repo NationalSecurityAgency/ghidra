@@ -445,6 +445,7 @@ public:
   PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 sz,uint4 extraFlags);
   PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 sz,bool possibleout);
   void markIndirectCreation(PcodeOp *indop,bool possibleOutput);	///< Convert CPUI_INDIRECT into an \e indirect \e creation
+  void markReturnCopy(PcodeOp *op) { op->flags |= PcodeOp::return_copy; }	///< Mark COPY as returning a global value
   PcodeOp *findOp(const SeqNum &sq) { return obank.findOp(sq); }	///< Find PcodeOp with given sequence number
   void opInsertBefore(PcodeOp *op,PcodeOp *follow);		///< Insert given PcodeOp before a specific op
   void opInsertAfter(PcodeOp *op,PcodeOp *prev);		///< Insert given PcodeOp after a specific op

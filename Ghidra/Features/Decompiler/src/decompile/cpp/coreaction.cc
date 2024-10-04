@@ -2729,7 +2729,7 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
-	if (!op->getIn(0)->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset(),0,1)) {
+	if (!op->getIn(0)->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset(),0,0)) {
 	  if (op->getIn(1)->getOffset() == 0) {
 	    data.opRemoveInput(op, 1);
 	    data.opSetOpcode(op, CPUI_COPY);
@@ -3402,8 +3402,7 @@ int4 ActionMarkImplied::apply(Funcdata &data)
 {
   VarnodeLocSet::const_iterator viter;
   list<PcodeOp *>::const_iterator oiter;
-  Varnode *vn,*vncur,*defvn,*outvn;
-  PcodeOp *op;
+  Varnode *vn,*vncur,*outvn;
   vector<DescTreeElement> varstack; // Depth first varnode traversal stack
 
   for(viter=data.beginLoc();viter!=data.endLoc();++viter) {
@@ -3420,16 +3419,9 @@ int4 ActionMarkImplied::apply(Funcdata &data)
 	if (!checkImpliedCover(data,vncur)) // Can this variable be implied
 	  vncur->setExplicit();	// if not, mark explicit
 	else {
-	  vncur->setImplied();	// Mark as implied
-	  op = vncur->getDef();
+	  Merge::markImplied(vncur);
 	  // setting the implied type is now taken care of by ActionSetCasts
 	  //    vn->updatetype(op->outputtype_token(),false,false); // implied must have parsed type
-	  // Back propagate varnode's cover to inputs of defining op
-	  for(int4 i=0;i<op->numInput();++i) {
-	    defvn = op->getIn(i);
-	    if (!defvn->hasCover()) continue;
-	    data.getMerge().inflate(defvn,vncur->getHigh());
-	  }
 	}
 	varstack.pop_back();
       }
