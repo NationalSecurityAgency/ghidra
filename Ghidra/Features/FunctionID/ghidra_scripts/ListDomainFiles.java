@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Lets user choose a specific FID database and output file, then dumps all domain paths.
+//@category FunctionID
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
