@@ -49,6 +49,9 @@ public class FieldPanel extends JPanel
 		implements IndexedScrollable, LayoutModelListener, ChangeListener {
 	public static final int MOUSEWHEEL_LINES_TO_SCROLL = 3;
 
+	public static final int MOUSEWHEEL_SCROLL_LEFT_BTN = 4;
+	public static final int MOUSEWHEEL_SCROLL_RIGHT_BTN = 5;
+
 	private LayoutModel model;
 
 	private boolean repaintPosted;
@@ -1352,6 +1355,21 @@ public class FieldPanel extends JPanel
 				l.buttonPressed(loc, field, ev);
 			}
 		});
+		if ((ev.getButton() == MOUSEWHEEL_SCROLL_LEFT_BTN || ev.getButton() == MOUSEWHEEL_SCROLL_RIGHT_BTN)
+				&& horizontalScrollingEnabled) {
+			int wheelRotation = (ev.getButton() == MOUSEWHEEL_SCROLL_LEFT_BTN ? -1 : 1);
+			Layout firstLayout = model.getLayout(BigInteger.ZERO);
+			int layoutScrollHt = firstLayout != null //
+					? firstLayout.getScrollableUnitIncrement(0, 1)
+					: 0;
+			int scrollAmount = wheelRotation * layoutScrollHt * MOUSEWHEEL_LINES_TO_SCROLL;
+			MouseWheelEvent wev = new MouseWheelEvent(ev.getComponent(),ev.getID(), ev.getWhen(),
+					InputEvent.SHIFT_DOWN_MASK, ev.getX(), ev.getY(), ev.getClickCount(), ev.isPopupTrigger(),
+					MouseWheelEvent.WHEEL_UNIT_SCROLL, scrollAmount, wheelRotation);
+			for (int i = 0; i < getMouseWheelListeners().length; i++) {
+				getMouseWheelListeners()[i].mouseWheelMoved(wev);
+			}
+		}
 	}
 
 	private JViewport getViewport() {
