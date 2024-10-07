@@ -178,10 +178,14 @@ public class ClearPlugin extends Plugin {
 	 * Create the actions.
 	 */
 	private void createActions() {
+		// Parent menu name for the submenu
+		String CLEAR_MENU_NAME = "Clear ...";
+		
+		// Create the submenu under a common 'Clear' menu
 		new ActionBuilder(CLEAR_CODE_BYTES_NAME, getName())
-				.menuPath(ToolConstants.MENU_EDIT, CLEAR_CODE_BYTES_NAME)
+				.menuPath(ToolConstants.MENU_EDIT, CLEAR_MENU_NAME, CLEAR_CODE_BYTES_NAME)
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "1")
-				.popupMenuPath(CLEAR_CODE_BYTES_NAME)
+				.popupMenuPath(CLEAR_MENU_NAME, CLEAR_CODE_BYTES_NAME)
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "1")
 				.keyBinding("C")
 				.withContext(ListingActionContext.class)
@@ -191,9 +195,9 @@ public class ClearPlugin extends Plugin {
 				.buildAndInstall(tool);
 
 		new ActionBuilder(CLEAR_WITH_OPTIONS_NAME, getName())
-				.menuPath(ToolConstants.MENU_EDIT, CLEAR_WITH_OPTIONS_NAME + "...")
+				.menuPath(ToolConstants.MENU_EDIT, CLEAR_MENU_NAME, CLEAR_WITH_OPTIONS_NAME + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "2")
-				.popupMenuPath(CLEAR_WITH_OPTIONS_NAME + "...")
+				.popupMenuPath(CLEAR_MENU_NAME, CLEAR_WITH_OPTIONS_NAME + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "2")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
@@ -201,9 +205,9 @@ public class ClearPlugin extends Plugin {
 				.buildAndInstall(tool);
 
 		new ActionBuilder(CLEAR_FLOW_AND_REPAIR, getName())
-				.menuPath(ToolConstants.MENU_EDIT, CLEAR_FLOW_AND_REPAIR + "...")
+				.menuPath(ToolConstants.MENU_EDIT, CLEAR_MENU_NAME, CLEAR_FLOW_AND_REPAIR + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "3")
-				.popupMenuPath(CLEAR_FLOW_AND_REPAIR + "...")
+				.popupMenuPath(CLEAR_MENU_NAME, CLEAR_FLOW_AND_REPAIR + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "3")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
