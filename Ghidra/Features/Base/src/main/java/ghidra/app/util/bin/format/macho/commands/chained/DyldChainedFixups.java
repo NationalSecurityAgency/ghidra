@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -164,8 +164,14 @@ public class DyldChainedFixups {
 							fixup.symbol() != null ? fixup.symbol().getName() : null);
 			}
 			if (fixup.symbol() != null && fixup.libOrdinal() != null) {
-				fixupExternalLibrary(program, libraryPaths, fixup.libOrdinal(), fixup.symbol(), log,
-					monitor);
+				try {
+					fixupExternalLibrary(program, libraryPaths, fixup.libOrdinal(), fixup.symbol(),
+						log, monitor);
+				}
+				catch (Exception e) {
+					log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
+							.formatted(fixup.symbol().getName(), e.getMessage()));
+				}
 			}
 		}
 		log.appendMsg("Fixed up " + fixedAddrs.size() + " chained pointers.");
@@ -182,22 +188,31 @@ public class DyldChainedFixups {
 	 * @param symbol The {@link Symbol}
 	 * @param log The log
 	 * @param monitor A cancellable monitor
+	 * @throws Exception if an unexpected problem occurs
 	 */
 	private static void fixupExternalLibrary(Program program, List<String> libraryPaths,
-			int libraryOrdinal, Symbol symbol, MessageLog log, TaskMonitor monitor) {
+			int libraryOrdinal, Symbol symbol, MessageLog log, TaskMonitor monitor)
+			throws Exception {
 		ExternalManager extManager = program.getExternalManager();
 		int libraryIndex = libraryOrdinal - 1;
-		if (libraryIndex >= 0 && libraryIndex < libraryPaths.size()) {
-			Library library = extManager.getExternalLibrary(libraryPaths.get(libraryIndex));
-			ExternalLocation loc =
-				extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
-			if (loc != null) {
-				try {
-					loc.setName(library, symbol.getName(), SourceType.IMPORTED);
-				}
-				catch (InvalidInputException e) {
-					log.appendException(e);
-				}
+		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {
+			throw new Exception(
+				"Library ordinal '%d' outside of expected range".formatted(libraryOrdinal));
+		}
+		String libraryName = libraryPaths.get(libraryIndex);
+		Library library = extManager.getExternalLibrary(libraryName);
+		if (library == null) {
+			throw new Exception(
+				"Library '%s' not found in external program list".formatted(libraryName));
+		}
+		ExternalLocation loc =
+			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
+		if (loc != null) {
+			try {
+				loc.setName(library, symbol.getName(), SourceType.IMPORTED);
+			}
+			catch (InvalidInputException e) {
+				throw new Exception("Symbol name contains illegal characters");
 			}
 		}
 	}
