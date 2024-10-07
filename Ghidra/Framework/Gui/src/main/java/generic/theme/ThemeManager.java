@@ -616,16 +616,11 @@ public abstract class ThemeManager {
 	 */
 	public static GTheme getDefaultTheme() {
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
-		switch (OS) {
-			case MAC_OS_X:
-				return new MacTheme();
-			case WINDOWS:
-				return new WindowsTheme();
-			case LINUX:
-			case UNSUPPORTED:
-			default:
-				return new NimbusTheme();
-		}
+		return switch (OS) {
+			case MAC_OS_X -> new MacTheme();
+			case WINDOWS -> new WindowsTheme(); 
+			default -> new FlatLightTheme();
+		};
 	}
 
 	/**
