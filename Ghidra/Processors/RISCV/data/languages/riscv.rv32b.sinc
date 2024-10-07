@@ -1,131 +1,149 @@
 # RV32 Bitmanip Extension
+imm2024: op2024 is op2024 {local tmp:$(XLEN) = op2024; export tmp;}
+imm2025: op2025 is op2025 {local tmp:$(XLEN) = op2025; export tmp;}
+imm2026: op2026 is op2026 {local tmp:$(XLEN) = op2026; export tmp;}
 
-:andn rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x20 & rd & rs1 & rs2 unimpl
+define pcodeop add_uw;
+:zext.w rd, rs1      is op0006=0x3b & op1214=0x0 & op1519=0x0 & op2531=0x04 & rd & rs1       {rd=zext(rs1:4);}
+:add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x0              & op2531=0x04 & rd & rs1 & rs2 {rd=zext(rs1:4)+rs2;}
 
-:bdep rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x24 & rd & rs1 & rs2 unimpl
+:andn rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x20 & rd & rs1 & rs2 {rd=rs1 & ~rs2;}
 
-:bext rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x4 & rd & rs1 & rs2 unimpl
+:bext rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x24 & rd & rs1 & rs2 {rd=(rs1 >> rs2) & 1;}
 
-:bfp rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x24 & rd & rs1 & rs2 unimpl
+define pcodeop clmul;
+:clmul  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x5 & rd & rs1 & rs2 {rd=clmul(rs1,rs2);}
 
-:clmul  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop clmulh;
+:clmulh rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x5 & rd & rs1 & rs2 {rd=clmulh(rs1,rs2);}
 
-:clmulh rd, rs1, rs2 is op0006=0x33 & op1214=0x3 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop clmulr;
+:clmulr rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x5 & rd & rs1 & rs2 {rd=clmulr(rs1,rs2);}
 
-:clmulr rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop clz;
+:clz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x0 & op2531=0x30 & rd & rs1 {rd=clz(rs1);}
 
-:clz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x0 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop clzw;
+:clzw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x0 & op2531=0x30 & rd & rs1 {rd=clzw(rs1);}
 
-:cmix rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x1 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
+define pcodeop ctz;
+:ctz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1 & op2531=0x30 & rd & rs1 {rd=ctz(rs1);}
 
-:cmov rd, rs2, rs1, rs3 is op0006=0x33 & op1214=0x5 & op2526=0x3 & rd & rs1 & rs2 & rs3 unimpl
+define pcodeop ctzw;
+:ctzw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x1 & op2531=0x30 & rd & rs1 {rd=ctzw(rs1);}
 
-:crc32.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x10 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop orc_b;
+:orc.b rd, rs1 is op0006=0x13 & rd & op1214=0x5 & rs1 & op2025=0x07 & op2631=0x0a {rd=orc_b(rs1);}
 
-:crc32.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x11 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop rev8;
+define pcodeop rev_b;
+#define pcodeop grevi;
+#                   rev8 has different encodings for 32 and 64 bit CPUs
+:rev.b rd, rs1         is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026=0x7  & rd & rs1 {rd=rev_b(rs1);}
+:rev8  rd, rs1         is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026=0x18 & rd & rs1 {rd=rev8(rs1);}
+:rev8  rd, rs1         is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026=0x38 & rd & rs1 {rd=rev8(rs1);}
 
-:crc32.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x12 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop minu;
+:minu  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x5 & rd & rs1 & rs2 {rd=minu(rs1,rs2);}
 
-:crc32c.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x18 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop maxu;
+:maxu rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x5 & rd & rs1 & rs2 {rd=maxu(rs1,rs2);}
 
-:crc32c.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x19 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop min;
+:min  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x5 & rd & rs1 & rs2 {rd=min(rs1,rs2);}
 
-:crc32c.w rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1a & op2531=0x30 & rd & rs1 unimpl
+define pcodeop max;
+:max rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x5 & rd & rs1 & rs2 {rd=max(rs1,rs2);}
 
-:ctz rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1 & op2531=0x30 & rd & rs1 unimpl
+:orn  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x20 & rd & rs1 & rs2 {rd=rs1 | ~rs2;}
 
-:fsl  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x1 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
+define pcodeop pack;
+:pack  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 {rd=pack(rs1,rs2);}
 
-:fsr  rd, rs1, rs3, rs2 is op0006=0x33 & op1214=0x5 & op2526=0x2 & rd & rs1 & rs2 & rs3 unimpl
+define pcodeop packh;
+:packh rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x4 & rd & rs1 & rs2 {rd=packh(rs1,rs2);}
 
-#TODO  fix op2025
-#TODO  this looks like a typo in 0.92
-:fsri rd, rs1, rs3, op2025 is op0006=0x33 & op1214=0x5 & op2626=0x1 & op2025 & rd & rs1 & rs3 unimpl
+define pcodeop packw;
+:packw rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x04 & rd & rs1 & rs2 {rd=packw(rs1,rs2);}
 
-:gorc  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x14 & rd & rs1 & rs2 unimpl
+define pcodeop zext_h;
+:zext.h rd, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x04 & rd & op2024=0 & rs2 {rd=zext_h(rs2);}
 
-#TODO  fix op2026
-:gorci rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x5 & op2026 & rd & rs1 unimpl
+define pcodeop cpop;
+:cpop rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 {rd=cpop(rs1);}
 
-:grev  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x34 & rd & rs1 & rs2 unimpl
+define pcodeop cpopw;
+:cpopw rd, rs1 is op0006=0x1b & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 {rd=cpopw(rs1);}
 
-#TODO  fix op2026
-:grevi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xd & op2026 & rd & rs1 unimpl
+define pcodeop rol;
+:rol  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 {rd=rol(rs1,rs2);}
 
-:max  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop rolw;
+:rolw  rd, rs1, rs2 is op0006=0x3b & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 {rd=rolw(rs1,rs2);}
 
-:maxu rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop ror;
+:ror  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 {rd=ror(rs1,rs2);}
 
-:min  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop rorw;
+:rorw  rd, rs1, rs2 is op0006=0x3b & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 {rd=rorw(rs1,rs2);}
 
-:minu rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x5 & rd & rs1 & rs2 unimpl
+define pcodeop rori;
+:rori rd, rs1, imm2026 is op0006=0x13 & op1214=0x5 & op2731=0x0c & imm2026 & rd & rs1 {rd=rori(rs1,imm2026);}
 
-:orn  rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x20 & rd & rs1 & rs2 unimpl
+define pcodeop roriw;
+:roriw rd, rs1, imm2024 is op0006=0x1b & op1214=0x5 & op2531=0x30 & imm2024 & rd & rs1 {rd=roriw(rs1,imm2024);}
 
-:pack  rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x4 & rd & rs1 & rs2 unimpl
+define pcodeop bclr;
+:bclr  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x24 & rd & rs1 & rs2 {rd=bclr(rs1,rs2);}
 
-:packh rd, rs1, rs2 is op0006=0x33 & op1214=0x7 & op2531=0x4 & rd & rs1 & rs2 unimpl
+define pcodeop bclri;
+:bclri rd, rs1, imm2026 is op0006=0x13 & op1214=0x1 & op2731=0x9 & imm2026 & rd & rs1 {rd=bclri(rs1,imm2026);}
 
-:packu rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x24 & rd & rs1 & rs2 unimpl
+define pcodeop bexti;
+:bexti rd, rs1, imm2026 is op0006=0x13 & op1214=0x5 & op2731=0x9 & imm2026 & rd & rs1 {rd=bexti(rs1,imm2026);}
 
-:pcnt rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x2 & op2531=0x30 & rd & rs1 unimpl
+define pcodeop binv;
+:binv  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x34 & rd & rs1 & rs2 {rd=binv(rs1,rs2);}
 
-:rol  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x30 & rd & rs1 & rs2 unimpl
+define pcodeop binvi;
+:binvi rd, rs1, imm2026 is op0006=0x13 & op1214=0x1 & op2731=0xd & imm2026 & rd & rs1 {rd=binvi(rs1,imm2026);}
 
-:ror  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x30 & rd & rs1 & rs2 unimpl
+define pcodeop bset;
+:bset  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 {rd=bset(rs1,rs2);}
 
-#TODO  fix op2026
-:rori rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0xc & op2026 & rd & rs1 unimpl
+define pcodeop bseti;
+:bseti rd, rs1, imm2026 is op0006=0x13 & op1214=0x1 & op2731=0x5 & imm2026 & rd & rs1 {rd=bseti(rs1,imm2026);}
 
-:sbclr  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x24 & rd & rs1 & rs2 unimpl
+define pcodeop sext_b;
+:sext.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x4 & op2531=0x30 & rd & rs1 {rd=sext_b(rs1);}
 
-#TODO  fix op2026
-:sbclri rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x9 & op2026 & rd & rs1 unimpl
+define pcodeop sext_h;
+:sext.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x5 & op2531=0x30 & rd & rs1 {rd=sext_h(rs1);}
 
-:sbext  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x24 & rd & rs1 & rs2 unimpl
+:sh1add rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 {rd=rs2+rs1<<1;}
 
-#TODO  fix op2026
-:sbexti rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x9 & op2026 & rd & rs1 unimpl
+:sh1add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 {rd=rs2+zext(rs1<<1);}
 
-:sbinv  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x34 & rd & rs1 & rs2 unimpl
+:sh2add rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 {rd=rs2+(rs1<<2);}
 
-#TODO  fix op2026
-:sbinvi rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0xd & op2026 & rd & rs1 unimpl
+:sh2add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 {rd=rs2+zext(rs1<<2);}
 
-:sbset  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x14 & rd & rs1 & rs2 unimpl
+:sh3add rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 {rd=rs2+(rs1<<3);}
 
-#TODO  fix op2026
-:sbseti rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x5 & op2026 & rd & rs1 unimpl
+:sh3add.uw rd, rs1, rs2 is op0006=0x3b & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 {rd=rs2+zext(rs1<<3);}
 
-:sext.b rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x4 & op2531=0x30 & rd & rs1 unimpl
+:slli.uw rd, rs1, imm2025 is op0006=0x1b & op1214=0x1 & op2631=0x2 & imm2025 & rd & rs1 {rd=zext(rs1:4)<<imm2025;}
 
-:sext.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x5 & op2531=0x30 & rd & rs1 unimpl
+:xnor rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x20 & rd & rs1 & rs2 {rd=~(rs1^rs2);}
 
-:sh1add rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
+define pcodeop unzip;
+:unzip rd, rs1 is op0006=0x13 & op1214=0x5 & op2024=0x1f & rd & rs1 & op2531=0x04 {rd=unzip(rs1);}
 
-:sh2add rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
+define pcodeop zip;
+:zip rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x1e & rd & rs1 & op2531=0x04 {rd=zip(rs1);}
 
-:sh3add rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
+define pcodeop xperm_b;
+:xperm.b rd, rs1, rs2 is op0006=0x33 & rd & op1214=0x4 & rs1 & rs2 & op2531=0x14 {rd=xperm_b(rs1,rs2);}
 
-:shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2025
-:shfli   rd, rs1, op2025 is op0006=0x13 & op1214=0x1 & op2631=0x2 & op2025 & rd & rs1 unimpl
-
-:slo  rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sloi rd, rs1, op2026 is op0006=0x13 & op1214=0x1 & op2731=0x4 & op2026 & rd & rs1 unimpl
-
-:sro  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x10 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2026
-:sroi rd, rs1, op2026 is op0006=0x13 & op1214=0x5 & op2731=0x4 & op2026 & rd & rs1 unimpl
-
-:unshfl  rd, rs1, rs2 is op0006=0x33 & op1214=0x5 & op2531=0x4 & rd & rs1 & rs2 unimpl
-
-#TODO  fix op2025
-:unshfli rd, rs1, op2025 is op0006=0x13 & op1214=0x5 & op2631=0x2 & op2025 & rd & rs1 unimpl
-
-:xnor rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x20 & rd & rs1 & rs2 unimpl
-
+define pcodeop xperm_n;
+:xperm.nf rd, rs1, rs2 is op0006=0x33 & rd & op1214=0x2 & rs1 & rs2 & op2531=0x14 {rd=xperm_n(rs1,rs2);}
