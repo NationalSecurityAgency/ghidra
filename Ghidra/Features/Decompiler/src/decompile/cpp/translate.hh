@@ -266,8 +266,8 @@ public:
   int4 numSpaces(void) const; ///< Get the number of address spaces for this processor
   AddrSpace *getSpace(int4 i) const; ///< Get an address space via its index
   AddrSpace *getNextSpaceInOrder(AddrSpace *spc) const; ///< Get the next \e contiguous address space
-  JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
-  JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
+  virtual JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
+  virtual JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
   void setDeadcodeDelay(AddrSpace *spc,int4 delaydelta); ///< Set the deadcodedelay for a specific space
   void truncateSpace(const TruncationTag &tag);	///< Mark a space as truncated from its original size
 
@@ -278,7 +278,7 @@ public:
   Address constructJoinAddress(const Translate *translate,const Address &hiaddr,int4 hisz,const Address &loaddr,int4 losz);
 
   /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
-  void renormalizeJoinAddress(Address &addr,int4 size);
+  virtual void renormalizeJoinAddress(Address &addr,int4 size);
 
   /// \brief Parse a string with just an \e address \e space name and a hex offset
   Address parseAddressSimple(const string &val);
