@@ -57,8 +57,8 @@ public class Omf51ModuleHeader extends OmfRecord {
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		struct.add(moduleName.toDataType(), "name", null);
-		struct.add(BYTE, "padding", null);
 		struct.add(BYTE, "TRN ID", null);
+		struct.add(BYTE, "padding", null);
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
