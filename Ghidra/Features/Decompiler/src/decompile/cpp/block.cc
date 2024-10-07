@@ -2591,6 +2591,34 @@ bool BlockBasic::isDoNothing(void) const
   return hasOnlyMarkers();
 }
 
+/// Determine if there is any other substantive operation 
+/// going on in the block. If there is, the block is deemed 
+/// too complicated to split.
+/// \param b is the given BasicBlock
+/// \return \b true if the block can be split
+bool BlockBasic::isSplittable(void) const
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *op;
+
+  for(iter=beginOp();iter!=endOp();++iter) {
+    op = *iter;
+    OpCode opc = op->code();
+    if (opc == CPUI_MULTIEQUAL) continue;
+    if ((opc == CPUI_COPY)||(opc == CPUI_RETURN)) {
+      for(int4 i=0;i<op->numInput();++i) {
+	if (op->getIn(i)->isConstant()) continue;
+	if (op->getIn(i)->isAnnotation()) continue;
+	if (op->getIn(i)->isFree()) return false;
+      }
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
 /// In terms of machine instructions, a basic block always covers a range of addresses,
 /// from its first instruction to its last. This method establishes that range.
 /// \param beg is the address of the first instruction in the block
