@@ -70,7 +70,7 @@ task installEditablePyGhidra(type: Exec) {
 	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
 }
 
-if (findPython3(false)) {
+if (findPython3(false, false)) {
 	rootProject.prepDev.dependsOn installEditablePyGhidra
 }
 
