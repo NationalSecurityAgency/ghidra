@@ -25,9 +25,10 @@ task createPythonVirtualEnvironment(type: Exec) {
 	project.ext.PYTHON3_VENV = "${rootProject.projectDir}/${venvDir}/${binDir}/python${suffix}"
 	project.ext.PIP3_VENV = "${rootProject.projectDir}/${venvDir}/${binDir}/pip${suffix}"
 
-	commandLine	rootProject.PYTHON3, "-m", "venv", venvDir, "--copies"
+	commandLine rootProject.PYTHON3
+	args "-m", "venv", venvDir, "--copies"
 }
 
-if (findPython3(false)) {
+if (findPython3(false, false)) {
 	rootProject.prepDev.dependsOn createPythonVirtualEnvironment
 }
