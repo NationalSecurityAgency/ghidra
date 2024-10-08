@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import docking.widgets.table.FocusableEditor;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.MessageType;
 import ghidra.util.data.DataTypeParser;
 
@@ -43,19 +44,21 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 	private JPanel editorPanel;
 	private DataTypeManagerService service;
 	private DialogComponentProvider dialog;
+	private DataTypeManager dtm;
 
-	ParameterDataTypeCellEditor(DialogComponentProvider dialog, DataTypeManagerService service) {
+	ParameterDataTypeCellEditor(DialogComponentProvider dialog, DataTypeManagerService service,
+			DataTypeManager dtm) {
 		this.dialog = dialog;
 		this.service = service;
-
+		this.dtm = dtm;
 	}
 
 	@Override
 	public Component getTableCellEditorComponent(JTable table1, Object value, boolean isSelected,
 			int row, int column) {
-		init();
-
 		dt = (DataType) value;
+
+		init();
 
 		editor.setCellEditorValue(dt);
 
@@ -63,7 +66,7 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 	}
 
 	private void init() {
-		editor = new DataTypeSelectionEditor(service, DataTypeParser.AllowedDataTypes.ALL);
+		editor = new DataTypeSelectionEditor(dtm, service, DataTypeParser.AllowedDataTypes.ALL);
 		editor.setTabCommitsEdit(true);
 		editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
