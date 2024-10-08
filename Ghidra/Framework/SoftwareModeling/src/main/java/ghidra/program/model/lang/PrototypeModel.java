@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,7 @@ public class PrototypeModel {
 	private InputListType inputListType = InputListType.STANDARD;
 	private boolean hasThis;		// Convention has a this (auto-parameter)
 	private boolean isConstruct;		// Convention is used for object construction
+	private boolean isRightToLeft;	// Parameter stacking convention
 	private boolean hasUponEntry;	// Does this have an uponentry injection
 	private boolean hasUponReturn;	// Does this have an uponreturn injection
 
@@ -86,8 +87,9 @@ public class PrototypeModel {
 		compatModel = model;
 		localRange = new AddressSet(model.localRange);
 		paramRange = new AddressSet(model.paramRange);
-		hasThis = model.hasThis || name.equals(CompilerSpec.CALLING_CONVENTION_thiscall);
+		hasThis = model.hasThis || name.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall);
 		isConstruct = model.isConstruct;
+		isRightToLeft = model.isRightToLeft;
 		hasUponEntry = model.hasUponEntry;
 		hasUponReturn = model.hasUponReturn;
 	}
@@ -109,6 +111,7 @@ public class PrototypeModel {
 		paramRange = null;
 		hasThis = false;
 		isConstruct = false;
+		isRightToLeft = true;	// the default
 		hasUponEntry = false;
 		hasUponReturn = false;
 	}
@@ -188,7 +191,7 @@ public class PrototypeModel {
 	 * Returns the number of extra bytes popped from the stack when a function that uses
 	 * this model returns to its caller. This is usually just the number of bytes used to
 	 * store the return value, but some conventions may do additional clean up of stack parameters.
-	 * A special value of UNKNOWN_EXTRAPOP indicates that the number of bytes is unknown.  
+	 * A special value of UNKNOWN_EXTRAPOP indicates that the number of bytes is unknown.
 	 * @return the number of extra bytes popped
 	 */
 	public int getExtrapop() {
@@ -217,6 +220,12 @@ public class PrototypeModel {
 	}
 
 	/**
+	 * @return true if this model uses right-to-left parameter stacking
+	 */
+	public boolean isRightToLeft() {
+		return isRightToLeft;
+	}
+	/**
 	 * @return the allocation strategy for this model
 	 */
 	public InputListType getInputListType() {
@@ -226,7 +235,7 @@ public class PrototypeModel {
 	/**
 	 * Return true if this model has specific p-code injections associated with it
 	 * (either an "uponentry" or "uponreturn" payload),
-	 * which are used to decompile functions with this model. 
+	 * which are used to decompile functions with this model.
 	 * @return true if this model uses p-code injections
 	 */
 	public boolean hasInjection() {
@@ -253,6 +262,22 @@ public class PrototypeModel {
 			return res.get(0).getVariableStorage(program);
 		}
 		return null;
+	}
+
+	/**
+	 * Used to return the size of a pointer for this model prototype.
+	 * @param space is the default AddressSpace
+	 * @return size of pointer
+	 */
+	public int getPointerSize(AddressSpace space) {
+		int pointerSize = (space == null) ? -1 : space.getPointerSize();
+		if (name.endsWith("16near")) {
+			pointerSize = 2;
+		}
+		else if (name.endsWith("16far")) {
+			pointerSize = 4;
+		}
+		return pointerSize;
 	}
 
 	/**
@@ -290,7 +315,7 @@ public class PrototypeModel {
 
 		if (dataType != null) {
 			dataType = dataType.clone(program.getDataTypeManager());
-			// Identify next arg index based upon number of storage varnodes 
+			// Identify next arg index based upon number of storage varnodes
 			// already assigned to parameters - this may not work well if
 			// customized storage has been used
 		}
@@ -328,8 +353,35 @@ public class PrototypeModel {
 	 */
 	public void assignParameterStorage(PrototypePieces proto, DataTypeManager dtManager,
 			ArrayList<ParameterPieces> res, boolean addAutoParams) {
+		
 		outputParams.assignMap(proto, dtManager, res, addAutoParams);
+		
+		// Deal with left-to-right (PASCAL convention) parameter ordering
+		if (!isRightToLeft) {
+			// swap around the datatypes to map variable storage high-to-low
+			for (int i = 0; i < proto.intypes.size() / 2; i++) {
+				DataType tmp = proto.intypes.get(proto.intypes.size()-1 - i);
+				proto.intypes.set(proto.intypes.size()-1 - i, proto.intypes.get(i));
+				proto.intypes.set(i, tmp);
+			}
+		}
+		
 		inputParams.assignMap(proto, dtManager, res, addAutoParams);
+
+		// Deal with left-to-right (PASCAL convention) parameter ordering
+		if (!isRightToLeft) {
+			int inputOffset = (res.size() - proto.intypes.size());
+			for (int i = 0; i < proto.intypes.size() / 2; i++) {
+				// swap back the input datatypes
+				DataType tmpDt = proto.intypes.get(proto.intypes.size()-1 - i);
+				proto.intypes.set(proto.intypes.size()-1 - i, proto.intypes.get(i));
+				proto.intypes.set(i, tmpDt);
+				// swap back the resulting input only storage to be ordered correctly
+				ParameterPieces tmpPiece = res.get(res.size()-1 - i);
+				res.set(res.size()-1 - i, res.get(inputOffset+i));
+				res.set(inputOffset+i, tmpPiece);
+			}
+		}
 
 		if (hasThis && addAutoParams && res.size() > 1) {
 			int thisIndex = 1;
@@ -354,21 +406,23 @@ public class PrototypeModel {
 	 * these parameters.  If addAutoParams is false, the dataTypes array is assumed to already contain explicit
 	 * entries for any of these parameters.
 	 * @param program is the Program
-	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
+	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
 	 * i.e., minimum array length is 1)
 	 * @param addAutoParams true if auto-parameter storage locations can be generated
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
-	 * return storage. The returned array may also include additional auto-parameter storage 
-	 * locations. 
+	 * return storage. The returned array may also include additional auto-parameter storage
+	 * locations.
 	 */
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
+
+		int pointerSize = getPointerSize(program.getAddressFactory().getDefaultAddressSpace());
 
 		DataType injectedThis = null;
 		if (addAutoParams && hasThis) {
 			// explicit support for auto 'this' parameter
 			// must inject pointer arg to obtain storage assignment
-			injectedThis = new PointerDataType(program.getDataTypeManager());
+			injectedThis = new PointerDataType(null, pointerSize, program.getDataTypeManager());
 		}
 		PrototypePieces proto = new PrototypePieces(this, dataTypes, injectedThis);
 
@@ -379,6 +433,7 @@ public class PrototypeModel {
 		for (int i = 0; i < finalres.length; ++i) {
 			finalres[i] = res.get(i).getVariableStorage(program);
 		}
+
 		return finalres;
 	}
 
@@ -443,6 +498,9 @@ public class PrototypeModel {
 		}
 		if (isConstruct) {
 			encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
+		}
+		if (isRightToLeft) {
+			encoder.writeBool(ATTRIB_ISRIGHTTOLEFT, true);
 		}
 		if (inputListType != InputListType.STANDARD) {
 			encoder.writeString(ATTRIB_STRATEGY, "register");
@@ -604,6 +662,7 @@ public class PrototypeModel {
 		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute("stackshift"));
 		hasThis = false;
 		isConstruct = false;
+		isRightToLeft = true;
 		String thisString = protoElement.getAttribute("hasthis");
 		if (thisString != null) {
 			hasThis = SpecXmlUtils.decodeBoolean(thisString);
@@ -614,6 +673,10 @@ public class PrototypeModel {
 		String constructString = protoElement.getAttribute("constructor");
 		if (constructString != null) {
 			isConstruct = SpecXmlUtils.decodeBoolean(constructString);
+		}
+		String isrighttoleftString = protoElement.getAttribute("isrighttoleft");
+		if (isrighttoleftString != null) {
+			isRightToLeft = SpecXmlUtils.decodeBoolean(isrighttoleftString);
 		}
 
 		buildParamList(protoElement.getAttribute("strategy"));
@@ -715,7 +778,7 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Get a list of all input storage locations consisting of a single register 
+	 * Get a list of all input storage locations consisting of a single register
 	 * @param prog is the current Program
 	 * @return a VariableStorage ojbect for each register
 	 */
@@ -736,6 +799,9 @@ public class PrototypeModel {
 			return false;
 		}
 		if (extrapop != obj.extrapop || stackshift != obj.stackshift) {
+			return false;
+		}
+		if (isRightToLeft != obj.isRightToLeft) {
 			return false;
 		}
 		if (hasThis != obj.hasThis || isConstruct != obj.isConstruct) {
