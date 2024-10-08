@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Repack FID database file to eliminate unused blocks and possibly make indices more efficient
+// Repack FID database file to eliminate unused blocks and possibly make indices more efficient.
+// This script can be executed in both GUI and headless modes.
 //@category FunctionID
 import java.io.File;
 import java.io.IOException;
@@ -55,11 +56,22 @@ public class RepackFid extends GhidraScript {
 
 	@Override
 	protected void run() throws Exception {
-		File file = askFile("Select FID database file to repack","OK");
+		File file;
+		File saveFile;
+		// headless mode: `askFile()` cannot be used to specify the output file in headless mode
+		// because the file does not exist yet and `IllegalArgumentException` will be raised
+		if (getScriptArgs().length == 2) {
+			file = new File(getScriptArgs()[0]);
+			saveFile = new File(getScriptArgs()[1]);
+		}
+		// GUI mode
+		else {
+			file = askFile("Select FID database file to repack","OK");
+			saveFile = askFile("Select name for copy","OK");
+		}
 		PackedDatabase pdb;
 		pdb = PackedDatabase.getPackedDatabase(file, false, TaskMonitor.DUMMY);
 		DBHandle handle = pdb.open(TaskMonitor.DUMMY);
-		File saveFile = askFile("Select name for copy","OK");
 		PackedDBHandle newHandle = new PackedDBHandle(pdb.getContentType());
 
 		Table[] tables = handle.getTables();
