@@ -1106,6 +1106,21 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
   // address, we don't touch unprocessed, addrlist, or visited
 }
 
+/// Checks whether the function has already been inlined
+/// \param inlinefd is the function being in-lined into \b this flow
+/// \param op is CALL instruction at the site of the in-line
+bool FlowInfo::testAlreadyInlined(Funcdata *inlinefd, PcodeOp *op)
+{
+  if (inline_recursion->find( inlinefd->getAddress() ) != inline_recursion->end()) {
+    // This function has already been included with current inlining
+    inline_head->warning("Could not inline here",op->getAddr());
+    return false;
+  }
+
+  inline_recursion->insert(inlinefd->getAddress());
+  return true;
+}
+
 /// \brief For in-lining using the \e hard model, make sure some restrictions are met
 ///
 ///   - Can only in-line the function once.
@@ -1120,12 +1135,6 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
 bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr)
 
 {
-  if (inline_recursion->find( inlinefd->getAddress() ) != inline_recursion->end()) {
-    // This function has already been included with current inlining
-    inline_head->warning("Could not inline here",op->getAddr());
-    return false;
-  }
-  
   if (!inlinefd->getFuncProto().isNoReturn()) {
     list<PcodeOp *>::iterator iter = op->getInsertIter();
     ++iter;
@@ -1143,7 +1152,6 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     data.opMarkStartBasic(nextop);
   }
 
-  inline_recursion->insert(inlinefd->getAddress());
   return true;
 }
 
