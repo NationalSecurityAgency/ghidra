@@ -273,10 +273,8 @@ task createGhidraStubsWheel {
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		exec {
 			workingDir { cwd.toString() }
-			commandLine	rootProject.PYTHON3, "-m", "pip"
-			args "wheel", "-w", destinationDir.toString(), "--no-index"
-			args "-f", setuptools
-			args "."
+			commandLine rootProject.PYTHON3
+			args "-m", "pip", "wheel", "-w", destinationDir.toString(), "--no-index", "-f", setuptools, "."
 		}
 	}
 }
