@@ -465,17 +465,17 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 	private boolean isValidSymType(byte symType) {
 		switch (symType) {
-			case 0: // Undefined Symbol
+			case 0:    // Undefined Symbol
 				return false;
-			case 2: // Local Absolute
-			case 3: // Global Absolute
-			case 6: // Local Data
-			case 7: // Global Data
-			case 8: // Local BSS
-			case 9: // Global BSS
-			case 4: // Local .text
-			case 5: // Global .text
-			case 0x11: // External ref -- ignore
+			case 2:    // Local Absolute
+			case 3:    // Global Absolute
+			case 6:    // Local Data
+			case 7:    // Global Data
+			case 8:    // Local BSS
+			case 9:    // Global BSS
+			case 4:    // Local .text
+			case 5:    // Global .text
+			case 0x11: // External ref
 				return true;
 			default:
 				return false;
@@ -818,18 +818,21 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					println("NULL symType!");
 					break;
 
-				case 2: // Local Absolute 
-				case 3: // Global Absolute
-				case 6: // Local Data
-				case 7: // Global Data
-				case 8: // Local BSS
-				case 9: // Global BSS
+				case 2:    // Local Absolute 
+				case 3:    // Global Absolute
+				case 6:    // Local Data
+				case 7:    // Global Data
+				case 8:    // Local BSS
+				case 9:    // Global BSS
+				case 0x11: // External ref
+
 					createLabel(symLoc, symName, true);
 					applyDemangled(symLoc, symName, symDemangledName);
 					break;
 
 				case 4: // Local .text
 				case 5: // Global .text  
+					
 					doLocalDisassemble(symLoc);
 					createFunction(symLoc, symName);
 					if (getFunctionAt(symLoc) != null) {
@@ -843,11 +846,8 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					}
 					break;
 
-				case 0x11: // External ref -- ignore
-					break;
-
 				default:
-					println("Invalid symType!");
+					println("Invalid symType " + symType + " !");
 					break;
 			}
 		}
