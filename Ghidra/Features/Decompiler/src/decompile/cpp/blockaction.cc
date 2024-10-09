@@ -2034,6 +2034,7 @@ void ConditionalJoin::setupMultiequals(void)
     Varnode *outvn = data.newUniqueOut(vn1->getSize(),multi);
     data.opSetInput(multi,vn1,0);
     data.opSetInput(multi,vn2,1);
+    outvn->updateType(vn1->getType(), false, false);  // protect work done by RulePtrArith from being undone by RulePtraddUndo
     (*iter).second = outvn;
     data.opInsertEnd(multi,joinblock);
   }
