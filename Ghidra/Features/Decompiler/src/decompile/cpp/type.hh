@@ -690,6 +690,8 @@ public:
   TypeSpacebase(const TypeSpacebase &op) : Datatype(op) {
     spaceid = op.spaceid; localframe=op.localframe; glb=op.glb;
   }
+  /// Constructor for use with decode
+  TypeSpacebase(Architecture *g) : Datatype(0,1,TYPE_SPACEBASE) { spaceid = (AddrSpace *)0; glb = g; }
   /// Construct given an address space, scope, and architecture
   TypeSpacebase(AddrSpace *id,const Address &frame,Architecture *g)
     : Datatype(0,1,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
@@ -820,6 +822,9 @@ public:
   void cacheCoreTypes(void);				///< Cache common types
   list<DatatypeWarning>::const_iterator beginWarnings(void) const { return warnings.begin(); }	///< Start of data-type warnings
   list<DatatypeWarning>::const_iterator endWarnings(void) const { return warnings.end(); }	///< End of data-type warnings
+#ifdef TYPEPROP_DEBUG
+  static bool propagatedbg_on;		///< If \b true, display data-type propagation trace
+#endif
 };
 
 /// The display format for the data-type is changed based on the given format.  A value of
