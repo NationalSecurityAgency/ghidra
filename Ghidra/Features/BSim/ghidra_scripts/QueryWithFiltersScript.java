@@ -30,6 +30,7 @@ import ghidra.features.bsim.query.protocol.BSimFilter;
 import ghidra.features.bsim.query.protocol.PreFilter;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
@@ -272,9 +273,11 @@ public class QueryWithFiltersScript extends GhidraScript {
 	 * @return true if the symbol is NOT an analysis source type
 	 */
 	public static boolean isNotAnalysisSourceType(Program program, FunctionDescription funcDesc) {
-		Address address =
-			program.getAddressFactory().getDefaultAddressSpace().getAddress(funcDesc.getAddress());
-
+		AddressSpace space = program.getAddressFactory().getAddressSpace(funcDesc.getSpaceID());
+		if (space == null) {
+			space = program.getAddressFactory().getDefaultAddressSpace();
+		}
+		Address address = space.getAddress(funcDesc.getAddress());
 		Function function = program.getFunctionManager().getFunctionAt(address);
 		if (function == null || !function.getName().equals(funcDesc.getFunctionName())) {
 			return false;

@@ -307,6 +307,7 @@ public class GenSignatures {
 		}
 		if (hasbody) {	// Internal call
 			callRecord.exerec = exerec;		// Within the same executable
+			callRecord.spaceid = rootAddr.getAddressSpace().getSpaceID();
 			callRecord.address = rootAddr.getOffset();
 			callRecord.funcname = rootSymbol.getName(true);
 		}
@@ -413,9 +414,11 @@ public class GenSignatures {
 
 	private synchronized void writeToManager(Function func, int[] hash, List<CallRecord> callrecs,
 			int flags) {
+
+        Address entryPoint = func.getEntryPoint();
 		FunctionDescription fdesc = manager.newFunctionDescription(func.getName(true),
-			func.getEntryPoint().getOffset(), exerec);
-		manager.setFunctionDescriptionFlags(fdesc, flags);
+				entryPoint.getAddressSpace().getSpaceID(), entryPoint.getOffset(), exerec);
+        manager.setFunctionDescriptionFlags(fdesc, flags);
 		if (hash != null) {
 			LSHVector vec = vectorFactory.buildVector(hash);
 			SignatureRecord sigrec = manager.newSignature(vec, 0);
@@ -423,7 +426,7 @@ public class GenSignatures {
 		}
 		for (CallRecord callRecord : callrecs) {
 			FunctionDescription destfunc = manager.newFunctionDescription(callRecord.funcname,
-				callRecord.address, callRecord.exerec);
+				callRecord.spaceid, callRecord.address, callRecord.exerec);
 			manager.makeCallgraphLink(fdesc, destfunc, 0);
 		}
 	}
@@ -439,8 +442,9 @@ public class GenSignatures {
 			Function func = functions.next();
 			String name = func.getName(true);
 			long address = func.getEntryPoint().getOffset();
+			int spaceid = func.getEntryPoint().getAddressSpace().getSpaceID();
 			try {
-				desc = manager.findFunction(name, address, exerec);
+				desc = manager.findFunction(name, spaceid, address, exerec);
 			}
 			catch (LSHException e) {		// This exception is thrown if the manager does not contain a function of this name
 				continue;					// Basically we skip the function in this case
@@ -524,9 +528,11 @@ public class GenSignatures {
 				continue;
 			}
 			int flags = recoverAttributes(func);
+			Address entryPoint = func.getEntryPoint();
 			FunctionDescription fdesc = manager.newFunctionDescription(func.getName(true),
-				func.getEntryPoint().getOffset(), exerec);
+				entryPoint.getAddressSpace().getSpaceID(), entryPoint.getOffset(), exerec);
 			manager.setFunctionDescriptionFlags(fdesc, flags);
+
 		}
 	}
 
@@ -629,13 +635,14 @@ public class GenSignatures {
 
 	/**
 	 * Info for resolving a call to a unique function in the database.
-	 * For normal functions you need the triple (executable, function name, address)
+	 * For normal functions you need the triple (executable, function name, spaceid, address)
 	 * For calls to library (external) functions, only the library executable
 	 * and the function name are needed, and the address is filled in with -1
 	 */
 	private static class CallRecord {
 		public ExecutableRecord exerec;
 		public String funcname;
+		public int spaceid;
 		public long address;
 	}
 
@@ -685,7 +692,7 @@ public class GenSignatures {
 				return;
 			}
 			FunctionDescription fdesc =
-				manager.containsDescription(func.getName(true), entryPoint.getOffset(), exerec);
+				manager.containsDescription(func.getName(true), entryPoint, exerec);
 			if (fdesc != null && fdesc.getSignatureRecord() != null) {	// Is signature for this function already present
 				return;
 			}
