@@ -178,6 +178,11 @@ public class LinkDatabase {
 	}
 
 	public String getIDForLink(String target) {
+
+		if (target.startsWith(JavaHelpValidator.EXTERNAL_PREFIX)) {
+			return null; // the validator handles this later
+		}
+
 		Path path = Paths.get(target);
 		Path file = Paths.get(target.split("#")[0]);
 
