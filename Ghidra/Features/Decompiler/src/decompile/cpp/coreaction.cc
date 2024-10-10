@@ -4370,6 +4370,14 @@ int4 ActionConditionalConst::apply(Funcdata &data)
       compOp = boolVn->getDef();
       opc = compOp->code();
     }
+
+    // Propagate (boolVn=true) to IF block and (boolVn=false) to ELSE block. Inverted if (flipEdge)
+    for (int4 edge = 0; edge < 2; edge++) {
+      FlowBlock *outBlock = bl->getOut(edge);
+      if (outBlock->restrictedByConditional(bl))
+        propagateConstant(boolVn, data.newConstant(1, flipEdge ? (1 - edge) : edge), outBlock, data);
+    }
+
     int4 constEdge;			// Out edge where value is constant
     if (opc == CPUI_INT_EQUAL)
       constEdge = 1;
