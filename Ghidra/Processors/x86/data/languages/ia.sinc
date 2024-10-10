@@ -3768,8 +3768,8 @@ define pcodeop swap_bytes;
 :POPFD          is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x9d            { pop24(eflags); unpackflags(eflags); unpackeflags(eflags); }
 :POPFD          is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x9d            { pop44(eflags); unpackflags(eflags); unpackeflags(eflags); }
 @ifdef IA64
-:POPF           is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0x9d            { pop82(flags); unpackflags(flags); }
-:POPFQ          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 &            byte=0x9d            { pop88(rflags); unpackflags(rflags); unpackeflags(rflags); }
+:POPF           is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x9d            { pop82(flags); unpackflags(flags); }
+:POPFQ          is $(LONGMODE_ON) & vexMode=0 &            byte=0x9d            { pop88(rflags); unpackflags(rflags); unpackeflags(rflags); }
 @endif
 
 :PREFETCH     m8  is vexMode=0 & byte=0x0f; byte=0x0d; m8 & reg_opcode=0 ... { }
@@ -3851,8 +3851,8 @@ define pcodeop ptwrite;
 :PUSHFD         is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x9c            { packflags(eflags); packeflags(eflags); push24(eflags); }
 :PUSHFD         is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x9c            { packflags(eflags); packeflags(eflags); push44(eflags); }
 @ifdef IA64
-:PUSHF          is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & opsize=0 & byte=0x9c            { packflags(flags); push82(flags); }
-:PUSHFQ         is $(LONGMODE_ON) & vexMode=0 &                         byte=0x9c            { packflags(rflags); packeflags(rflags); push88(rflags); }
+:PUSHF          is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x9c            { packflags(flags); push82(flags); }
+:PUSHFQ         is $(LONGMODE_ON) & vexMode=0 &            byte=0x9c            { packflags(rflags); packeflags(rflags); push88(rflags); }
 @endif
 
 :RCL  rm8,n1        is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=2 ...           { local tmpCF = CF; CF = rm8 s< 0; rm8 = (rm8 << 1) | tmpCF; OF = CF ^ (rm8 s< 0); }
