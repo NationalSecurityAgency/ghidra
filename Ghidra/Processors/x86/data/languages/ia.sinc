@@ -1088,6 +1088,13 @@ Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide; addr32       		{ 
 @endif
 Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide & highseg=1; addr32 	{ tmp:$(SIZE) = segWide + zext(addr32); export tmp; }
 
+EffectiveAddress: addr16    is                   addrsize=0 & addr16 { local tmp:$(SIZE) = zext(addr16); export tmp; }
+EffectiveAddress: addr32    is $(LONGMODE_OFF) & addrsize=1 & addr32 { local tmp:$(SIZE) = zext(addr32); export tmp; }
+@ifdef IA64
+EffectiveAddress: Addr32_64 is $(LONGMODE_ON)  & addrsize=1 & Addr32_64 { export Addr32_64; }
+EffectiveAddress: addr64    is                   addrsize=2 & addr64    { export addr64; }
+@endif
+
 rel8: reloc is simm8        [ reloc=inst_next+simm8; ] { export *[ram]:$(SIZE) reloc; }
 rel16: reloc is simm16      [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ] { export *[ram]:$(SIZE) reloc; }
 rel32: reloc is simm32      [ reloc=inst_next+simm32; ] { export *[ram]:$(SIZE) reloc; }
@@ -3306,24 +3313,10 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :LGS Reg64,Mem      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0F; byte=0xB5; Mem & Reg64 ... { tmp:10 = *Mem; GS = tmp(8); Reg64 = tmp(0); }
 @endif
 
-#in 64-bit mode address size of 16 is not encodable
-:LEA Reg16,addr16  is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & addrsize=0 & byte=0x8D; addr16 & Reg16 ...  { Reg16 = addr16; }
-:LEA Reg32,addr16  is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & addrsize=0 & byte=0x8D; addr16 & Reg32 ...  { Reg32 = zext(addr16); }
-
-:LEA Reg16,addr32  is vexMode=0 & opsize=0 & addrsize=1 & byte=0x8D; addr32 & Reg16 ...  { Reg16 = addr32(0); }
-:LEA Reg32,addr32  is vexMode=0 & opsize=1 & addrsize=1 & byte=0x8D; addr32 & Reg32 ...  & check_Reg32_dest ... {
-    Reg32 = addr32;
-	build check_Reg32_dest;
-}
-
+:LEA Reg16,EffectiveAddress is vexMode=0 & opsize=0 & byte=0x8D; EffectiveAddress & Reg16 ...                         { Reg16 = EffectiveAddress:2; }
+:LEA Reg32,EffectiveAddress is vexMode=0 & opsize=1 & byte=0x8D; EffectiveAddress & Reg32 ... & check_Reg32_dest ...  { Reg32 = EffectiveAddress:4; build check_Reg32_dest; }
 @ifdef IA64
-:LEA Reg16,addr64   is $(LONGMODE_ON) & vexMode=0 & opsize=0 & addrsize=2 & byte=0x8D; addr64 & Reg16 ... { Reg16 = addr64(0); }
-:LEA Reg32,addr64   is $(LONGMODE_ON) & vexMode=0 & opsize=1 & addrsize=2 & byte=0x8D; addr64 & Reg32 ... & check_Reg32_dest ... { 
-   Reg32 = addr64(0);
-   build check_Reg32_dest;
-}
-:LEA Reg64,addr32   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & addrsize=1 & byte=0x8D; addr32 & Reg64 ... { Reg64 = zext(addr32); }
-:LEA Reg64,addr64   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & addrsize=2 & byte=0x8D; addr64 & Reg64 ... { Reg64 = addr64; }
+:LEA Reg64,EffectiveAddress is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x8D; EffectiveAddress & Reg64 ...         { Reg64 = EffectiveAddress; }
 @endif
 
 :LEAVE          is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0xc9         { SP = BP; pop22(BP); }
