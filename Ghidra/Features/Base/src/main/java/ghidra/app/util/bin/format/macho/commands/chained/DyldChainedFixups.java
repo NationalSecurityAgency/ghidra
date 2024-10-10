@@ -24,15 +24,15 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.MachoProgramBuilder;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class DyldChainedFixups {
@@ -165,8 +165,8 @@ public class DyldChainedFixups {
 			}
 			if (fixup.symbol() != null && fixup.libOrdinal() != null) {
 				try {
-					fixupExternalLibrary(program, libraryPaths, fixup.libOrdinal(), fixup.symbol(),
-						log, monitor);
+					MachoProgramBuilder.fixupExternalLibrary(program, libraryPaths,
+						fixup.libOrdinal(), fixup.symbol());
 				}
 				catch (Exception e) {
 					log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
@@ -176,45 +176,6 @@ public class DyldChainedFixups {
 		}
 		log.appendMsg("Fixed up " + fixedAddrs.size() + " chained pointers.");
 		return fixedAddrs;
-	}
-
-	/**
-	 * Associates the given {@link Symbol} with the correct external {@link Library} (fixing
-	 * the <EXTERNAL> association)
-	 * 
-	 * @param program The {@link Program}
-	 * @param libraryPaths A {@link List} of library paths
-	 * @param libraryOrdinal The library ordinal
-	 * @param symbol The {@link Symbol}
-	 * @param log The log
-	 * @param monitor A cancellable monitor
-	 * @throws Exception if an unexpected problem occurs
-	 */
-	private static void fixupExternalLibrary(Program program, List<String> libraryPaths,
-			int libraryOrdinal, Symbol symbol, MessageLog log, TaskMonitor monitor)
-			throws Exception {
-		ExternalManager extManager = program.getExternalManager();
-		int libraryIndex = libraryOrdinal - 1;
-		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {
-			throw new Exception(
-				"Library ordinal '%d' outside of expected range".formatted(libraryOrdinal));
-		}
-		String libraryName = libraryPaths.get(libraryIndex);
-		Library library = extManager.getExternalLibrary(libraryName);
-		if (library == null) {
-			throw new Exception(
-				"Library '%s' not found in external program list".formatted(libraryName));
-		}
-		ExternalLocation loc =
-			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
-		if (loc != null) {
-			try {
-				loc.setName(library, symbol.getName(), SourceType.IMPORTED);
-			}
-			catch (InvalidInputException e) {
-				throw new Exception("Symbol name contains illegal characters");
-			}
-		}
 	}
 
 	//---------------------Below are used only by handled __thread_starts-------------------------
