@@ -794,10 +794,9 @@ Reg64:  reg64_x     is rexRprefix=1 & reg64_x                           { export
 Rmr8:   r8          is rexprefix=0 & r8                                 { export r8; }
 Rmr8:   r8_x0       is rexprefix=1 & rexBprefix=0 & r8_x0               { export r8_x0; }
 Rmr8:   r8_x1       is rexprefix=1 & rexBprefix=1 & r8_x1               { export r8_x1; }
-CRmr8:  r8          is rexBprefix=0 & r8	                            { export r8; }
-CRmr8:  r8          is addrsize=2 & rexBprefix=0 & r8                   { export r8; }
-CRmr8:  r8_x0       is addrsize=2 & rexprefix=1 & rexBprefix=0 & r8_x0  { export r8_x0; }
-CRmr8:  r8_x1       is addrsize=2 & rexprefix=1 & rexBprefix=1 & r8_x1  { export r8_x1; }
+CRmr8:  r8          is rexBprefix=0 & r8                                { export r8; }
+CRmr8:  r8_x0       is rexprefix=1 & rexBprefix=0 & r8_x0               { export r8_x0; }
+CRmr8:  r8_x1       is rexprefix=1 & rexBprefix=1 & r8_x1               { export r8_x1; }
 Rmr16:  r16         is rexBprefix=0 & r16                               { export r16; }
 Rmr16:  r16_x       is rexBprefix=1 & r16_x                             { export r16_x; }
 CRmr16: r16         is rexBprefix=0 & r16                               { export r16; }
