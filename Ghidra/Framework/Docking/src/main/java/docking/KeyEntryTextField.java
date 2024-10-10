@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,9 +82,12 @@ public class KeyEntryTextField extends HintTextField {
 	}
 
 	public void clearField() {
-		ksName = null;
+		if (currentKeyStroke == null) {
+			return;
+		}
+
 		setText("");
-		currentKeyStroke = null;
+		processKeyStroke(null, true);
 	}
 
 	private void processKeyStroke(KeyStroke ks, boolean notify) {
@@ -128,15 +131,11 @@ public class KeyEntryTextField extends HintTextField {
 		public void keyPressed(KeyEvent e) {
 			int keyCode = e.getKeyCode();
 			KeyStroke keyStroke = null;
-			if (!isClearKey(keyCode) && !isModifiersOnly(e)) {
+			if (!isModifiersOnly(e)) {
 				keyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiersEx());
 			}
 			processKeyStroke(keyStroke, true);
 			e.consume();
-		}
-
-		private boolean isClearKey(int keyCode) {
-			return keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_ENTER;
 		}
 
 		private boolean isModifiersOnly(KeyEvent event) {
