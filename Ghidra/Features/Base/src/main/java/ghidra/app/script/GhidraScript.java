@@ -1871,11 +1871,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param s The string to parse.
 	 * @return The file that was parsed from the string.
-	 * @throws IllegalArgumentException if the parsed value is not a valid file.
+	 * @throws IllegalArgumentException if running in GUI mode and the parsed value is not a valid file.
 	 */
 	public File parseFile(String s) {
+		boolean isHeadless = isRunningHeadless();
 		File f = new File(s);
-		if (!f.isFile()) {
+		if (!f.isFile() && !isHeadless) {
 			throw new IllegalArgumentException("Invalid file: " + f);
 		}
 		return f;
@@ -2038,7 +2039,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			or when using .properties file)
 	 * @return the selected file or null if no tool was available
 	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
-	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid file
+	 * @throws IllegalArgumentException if in headless mode, there was a missing file
 	 * 			name specified in the .properties file
 	 */
 	public File askFile(final String title, final String approveButtonText)
@@ -2074,11 +2075,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param val The string to parse.
 	 * @return The directory that was parsed from the string.
-	 * @throws IllegalArgumentException if the parsed value is not a valid directory.
+	 * @throws IllegalArgumentException if running in GUI mode and the parsed value is not a valid directory.
 	 */
 	public File parseDirectory(String val) {
+		boolean isHeadless = isRunningHeadless();
 		File dir = new File(val);
-		if (!dir.isDirectory()) {
+		if (!dir.isDirectory() && !isHeadless) {
 			throw new IllegalArgumentException("Invalid directory: " + dir);
 		}
 		return dir;
@@ -2115,7 +2117,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			when using .properties file)
 	 * @return the selected directory or null if no tool was available
 	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
-	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid
+	 * @throws IllegalArgumentException if in headless mode, there was a missing
 	 * 				directory name specified in the .properties file
 	 */
 	public File askDirectory(final String title, final String approveButtonText)
