@@ -6185,7 +6185,7 @@ define pcodeop movmskps;
     XmmReg2 = zext(XmmReg1[0,64]);
 }
 
-:MOVQ2DQ      XmmReg, mmxreg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xD6; XmmReg & mmxreg2
+:MOVQ2DQ      XmmReg, mmxreg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xD6; xmmmod = 3 & XmmReg & mmxreg2
 {
     XmmReg = zext(mmxreg2);
 # may need to model x87 FPU state changes too ?????
@@ -7145,13 +7145,13 @@ define pcodeop pavgw;
     XmmReg1[96,32] = zext(XmmReg1[96,32] s> XmmReg2[96,32]) * 0xFFFFFFFF;
 }
 
-:PEXTRW        Reg32, mmxreg2, imm8 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC5; Reg32 & mmxreg2; imm8
+:PEXTRW        Reg32, mmxreg2, imm8 is vexMode=0 &  mandover=0 & byte=0x0F; byte=0xC5; xmmmod = 3 & Reg32 & mmxreg2; imm8
 {
     temp:8 = mmxreg2 >> ( (imm8 & 0x03) * 16 );
     Reg32 = zext(temp:2);
 }
 
-:PEXTRW        Reg32, XmmReg2, imm8 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC5; Reg32 & XmmReg2 & check_Reg32_dest; imm8
+:PEXTRW        Reg32, XmmReg2, imm8 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0xC5; xmmmod = 3 & Reg32 & XmmReg2 & check_Reg32_dest; imm8
 {
     local shift:1 = (imm8 & 0x7) * 16:1;
     local low:1 = shift < 64:1;
