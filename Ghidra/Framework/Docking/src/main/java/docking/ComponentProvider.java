@@ -248,6 +248,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return;
 		}
 
+		// this call is needed to bring tabbed providers to the front
+		toFront();
 		if (defaultFocusComponent != null) {
 			DockingWindowManager.requestFocus(defaultFocusComponent);
 			return;
