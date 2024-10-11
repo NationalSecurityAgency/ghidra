@@ -50,7 +50,7 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
  * Identify supported Python command
  ***************************************************************************************/
 project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9']
-project.ext.PYTHON3 = findPython3(true, true)
+project.ext.PYTHON3 = findPython3(true)
 project.ext.PYTHON_DEPS = new HashSet<String>()
 
 /*********************************************************************************
@@ -204,7 +204,7 @@ def checkPip(List<String> pyCmd, boolean shouldPrint) {
 	}
 }
 
-def findPython3(boolean useDefault, boolean shouldPrint) {
+def findPython3(boolean shouldPrint) {
 	def pyCmds = [['py'], ['python3'], ['python']]
 	pyCmds += SUPPORTED_PY_VERSIONS.collectMany { [["python$it"], ["py", "-$it"]] }
 	for (pyCmd in pyCmds) {	
@@ -218,14 +218,12 @@ def findPython3(boolean useDefault, boolean shouldPrint) {
 		}
 	}
 
-	// Don't fail until task execution. Just let "python3" fail.
-	// Force use of non-existent python3.9 instead of unsupported python version
-	// which should fail if a python build is performed.
 	if (shouldPrint) {
 		println("Warning: Supported Python ${SUPPORTED_PY_VERSIONS} not found (required for build)")
 	}
 	
-	return useDefault ? 'python3.9' : null
+	// Don't fail until task execution. Just retun null, which can be gracefully handled later.
+	return null
 }
 
 /******************************************************************************************

@@ -271,6 +271,11 @@ task createGhidraStubsWheel {
 
 	doLast {
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
+		
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python ${SUPPORTED_PY_VERSIONS} was not found!")
+		}
+		
 		exec {
 			workingDir { cwd.toString() }
 			commandLine rootProject.PYTHON3

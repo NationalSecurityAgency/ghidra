@@ -56,7 +56,9 @@ task installJPype(type: Exec) {
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 	
-	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "$dir", "JPype1"
+	doFirst {
+		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "$dir", "JPype1"
+	}
 }
 
 // Install PyGhidra in editable mode to the development virtual environment
@@ -67,10 +69,12 @@ task installEditablePyGhidra(type: Exec) {
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 
-	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
+	doFirst {
+		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
+	}
 }
 
-if (findPython3(false, false)) {
+if (findPython3(false)) {
 	rootProject.prepDev.dependsOn installEditablePyGhidra
 }
 
