@@ -1,0 +1,289 @@
+# 16 bit floating point support
+# Ref: https://drive.google.com/file/d/1z3tQQLm5ALsAD77PM0l0CHnapxWCeVzP/view
+# Note:
+#    Many of these  halfword instructions are identical to their full-word equivalents (see riscv.rv32f.sinc)
+#    except that funct3=0x1 instead of 0x2 or funct7 |= 0x02
+
+# 16 bit floats loaded into FP registers have their high order bits set to '1'
+# so that they appear as NaNs and will not be mistaken as floats or doubles
+
+# Optimize output for emulation and RTL fidelity if EMULATION == 1
+#  Note: Ghidra currently has no intrinsic half-precision floating point support, so
+#        emulation will give misleading results
+# Optimize output for decompilation and C-like implicit type conversion if EMULATION == 0
+@define EMULATION 0
+
+# Half precision FP registers with values in the low order 16 bits and
+# NaNboxed to fill the register
+frs1H: fr1519 is fr1519 { local tmp = fr1519:$(HFLEN); export tmp; }
+frs2H: fr2024 is fr2024 { local tmp = fr2024:$(HFLEN); export tmp; }
+frs3H: fr2731 is fr2731 { local tmp = fr2731:$(HFLEN); export tmp; }
+
+macro nanboxH(dest, src){
+@if EMULATION
+@if FPSIZE == "32"
+	dest = 0xFFFF0000 | zext(src[0,16]);
+@else
+	dest = 0xFFFFFFFFFFFF0000 | zext(src[0,16]);
+@endif
+@else
+	dest = sext(src);
+@endif
+}
+
+define pcodeop copybitsH;
+
+# Half-Precision Load Instruction
+:flh frd,immI(rs1) is immI & frd & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x0 & funct3=0x1
+{
+    local ea:$(XLEN) = immI + rs1;
+	local tmp:$(HFLEN) = *[ram]:$(HFLEN) ea;
+    nanboxH(frd, tmp);
+}
+
+# Half-Precision Store Instruction
+:fsh frs2H,immS(rs1) is frs2H & immS & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x1 & funct3=0x1
+{
+	local ea:$(XLEN) = immS + rs1;
+	*[ram]:2 ea = frs2H;
+}
+
+# Half-Precision Computational Instructions
+:fadd.h frd,frs1H,frs2H,FRM is frs1H & frd & frs2H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x02
+{
+	local tmp:2 = frs1H f+ frs2H;
+	nanboxH(frd, tmp);
+}
+
+:fsub.h frd,frs1H,frs2H,FRM is frs1H & frd & frs2H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6
+{
+	local tmp:2 = frs1H f- frs2H;
+	nanboxH(frd, tmp);
+}
+
+:fmul.h frd,frs1H,frs2H,FRM is frs1H & frd & frs2H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0xa
+{
+	local tmp:2 = frs1H f* frs2H;
+	nanboxH(frd, tmp);
+}
+
+:fdiv.h frd,frs1H,frs2H,FRM is frs1H & frd & frs2H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0xe
+{
+	local tmp:2 = frs1H f/ frs2H;
+	nanboxH(frd, tmp);
+}
+
+:fmin.h frd,frs1H,frs2H is frs1H & frd & frs2H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x16
+{
+	#TODO  redo this
+	local tmpfrs1 = frs1H;
+	local tmpfrs2 = frs2H;
+	nanboxH(frd, tmpfrs1);
+	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
+	if (nan(tmpfrs2)) goto inst_next;
+	nanboxH(frd, tmpfrs2);
+	if (nan(tmpfrs1)) goto inst_next;
+	if (tmpfrs2 f<= tmpfrs1) goto inst_next;
+	nanboxH(frd, tmpfrs1);
+}
+
+:fmax.h frd,frs1H,frs2H is frs1H & frd & frs2H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x16
+{
+	#TODO  redo this
+	local tmpfrs1 = frs1H;
+	local tmpfrs2 = frs2H;
+	nanboxH(frd, tmpfrs1);
+	if (nan(tmpfrs1) && nan(tmpfrs2)) goto inst_next;
+	if (nan(tmpfrs2)) goto inst_next;
+	nanboxH(frd, tmpfrs2);
+	if (nan(tmpfrs1)) goto inst_next;
+	if (tmpfrs2 f>= tmpfrs1) goto inst_next;
+	nanboxH(frd, tmpfrs1);
+}
+
+:fsqrt.h frd,frs1H,FRM is frs1H & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x2e & op2024=0x0
+{
+	local tmp:2 = sqrt(frs1H);
+	nanboxH(frd, tmp);
+}
+
+:fsgnj.h frd,frs1H,frs2H is frs1H & frd & frs2H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x12
+{
+	local tmp:$(HFLEN) = frs1H;
+	tmp[15,1] = frs2H[15,1];
+	nanboxH(frd, tmp);
+}
+
+:fsgnjn.h frd,frs1H,frs2H is frs1H & frd & frs2H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x12
+{
+	local tmp:$(HFLEN) = frs1H;
+	tmp[15,1] = !frs2H[15,1];
+	nanboxH(frd, tmp);
+}
+
+:fsgnjx.h frd,frs1H,frs2H is frs1H & frd & frs2H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x12
+{
+	local tmp:$(HFLEN) = frs1H;
+	tmp[15,1] = tmp[15,1] ^ frs2H[15,1];
+	nanboxH(frd, tmp);
+}
+
+:fmv.h frd,frs1H is frd & frs1H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x12 & fr1519=fr2024
+{
+	frd = copybitsH(frs1H);
+}
+
+:fneg.h frd,frs1H is frs1H & frd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x12 & op1519=op2024
+{
+	local tmp:2 = f- frs1H;
+	nanboxH(frd, tmp);
+}
+
+:fabs.h frd,frs1H is frd & frs1H & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x12 & op1519=op2024
+{
+	local tmp:2 = abs(frs1H);
+	nanboxH(frd, tmp);
+}
+
+:fmadd.h frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x0 & op0506=0x2 & op2526=0x2
+{
+	local tmp:4 = (frs1S f* frs2S) f+ frs3S;
+	nanboxH(frd, tmp);
+}
+
+:fnmadd.h frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x3 & op0506=0x2 & op2526=0x2
+{
+	local tmp:4 = (f- (frs1S f* frs2S)) f- frs3S;
+	nanboxH(frd, tmp);
+}
+
+:fmsub.h frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x1 & op0506=0x2 & op2526=0x2
+{
+	local tmp:4 = (frs1S f* frs2S) f- frs3S;
+	nanboxH(frd, tmp);
+}
+
+:fnmsub.h frd,frs1S,frs2S,frs3S,FRM is frs1S & frd & frs2S & FRM & frs3S & op0001=0x3 & op0204=0x2 & op0506=0x2 & op2526=0x2
+{
+	local tmp:4 = (f- (frs1S f* frs2S)) f+ frs3S;
+	nanboxH(frd, tmp);
+}
+
+:fcvt.w.h rd,frs1H,FRM is frs1H & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x62 & op2024=0x0
+{
+	local tmp:$(WXLEN) = trunc(frs1H);
+	rd = sext(tmp);
+}
+
+:fcvt.wu.h rd,frs1H,FRM is frs1H & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x62 & op2024=0x1
+{
+	local tmp:$(WXLEN) = trunc(frs1H);
+	rd = sext(tmp);
+}
+
+define pcodeop trunc_h;
+:fcvt.h.w frd,rs1,FRM is rs1 & FRM & frd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6a & op2024=0x0
+{
+	frd = trunc_h(rs1);
+}
+
+define pcodeop trunc_hu;
+:fcvt.h.wu frd,rs1,FRM is rs1 & FRM & frd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6a & op2024=0x1
+{
+	frd = trunc_hu(rs1);
+}
+
+:fcvt.l.h rd,frs1H,FRM is frs1H & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x62 & op2024=0x02
+{
+	local tmp:$(WXLEN) = trunc(frs1H);
+	rd = sext(tmp);
+}
+
+:fcvt.lu.h rd,frs1H,FRM is frs1H & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x62 & op2024=0x03
+{
+	local tmp:$(WXLEN) = trunc(frs1H);
+	rd = sext(tmp);
+}
+
+:fcvt.h.l rd,frs1H,FRM is frs1H & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6a & op2024=0x02
+{
+	local tmp:$(WXLEN) = trunc(frs1H);
+	rd = sext(tmp);
+}
+
+:fcvt.h.lu rd,frs1H,FRM is frs1H & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6a & op2024=0x03
+{
+	local tmp:$(WXLEN) = trunc(frs1H);
+	rd = sext(tmp);
+}
+
+# the fmv instructions copy bits unchanged, without integer to float conversion
+define pcodeop fmv_x_h;
+:fmv.x.h rd,frs1H is frs1H & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x0 & funct3=0x0 & funct7=0x72 {
+    rd=copybitsH(frs1H);
+}
+
+define pcodeop fmv_h_x;
+:fmv.h.x frd,rs1 is rs1 & frd & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x0 & funct3=0x0 & funct7=0x7a {
+    frd=copybitsH(rs1);
+}
+
+#TODO: figure out the right way to test assignments like this.
+:fcvt.s.h frd,frs1H is frd & frs1H & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x2 & funct7=0x20 {
+	fassignS(frd, frs1H);
+}
+
+:fcvt.d.h frd,frs1H is frd & frs1H & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x2 & funct7=0x21 {
+	fassignS(frd, frs1H);
+}
+
+:fcvt.q.h frd,frs1H is frd & frs1H & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x2 & funct7=0x23 {
+	fassignS(frd, frs1H);
+}
+
+:fcvt.h.s frd,frs1H,FRM is frd & frs1H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x0 & funct7=0x22 {
+    fassignS(frd, frs1H);
+}
+
+:fcvt.h.d frd,frs1H,FRM is frd & frs1H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x1 & funct7=0x22 {
+    nanboxH(frd, frs1H);
+}
+
+:fcvt.h.q frd,frs1H,FRM is frd & frs1H & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & op2024=0x3 & funct7=0x22 {
+    fassignS(frd, frs1H);
+}
+
+# TODO: fcvt.q.h and fcvt.h.q
+
+define pcodeop fclass_h;
+:fclass.h rd,frs1H is frs1H & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x72 & op2024=0x0
+{
+	#TODO
+	# rd = 0;
+	# rd[0, 1] = 0; #TODO  - inf
+	# rd[1, 1] = 0; #TODO  - norm num
+	# rd[2, 1] = 0; #TODO  - subnorm num
+	# rd[3, 1] = 0; #TODO  - 0
+	# rd[4, 1] = 0; #TODO  + 0
+	# rd[5, 1] = 0; #TODO  + norm num
+	# rd[6, 1] = 0; #TODO  + subnorm num
+	# rd[7, 1] = 0; #TODO  + inf
+	# rd[8, 1] = 0; #TODO  snan
+	# rd[9, 1] = 0; #TODO  qnan
+	rd = fclass_h(frs1H);
+}
+
+:feq.h rd,frs1H,frs2H is frs2H & frs1H & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x52
+{
+	rd = zext(frs1H f== frs2H);
+}
+
+:fle.h rd,frs1H,frs2H is frs2H & frs1H & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x52
+{
+	rd = zext(frs1H f<= frs2H);
+}
+
+:flt.h rd,frs1H,frs2H is frs2H & frs1H & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x52
+{
+	rd = zext(frs1H f< frs2H);
+}
