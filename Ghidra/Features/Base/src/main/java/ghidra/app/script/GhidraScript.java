@@ -938,12 +938,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * Returns a demangled version of the mangled string.
 	 *
 	 * @param mangled the mangled string to demangled
-	 * @return a demangled version of the mangled string
+	 * @return a demangled version of the mangled string, or null if it could not be demangled
 	 */
 	public String getDemangled(String mangled) {
-		DemangledObject demangledObj = DemanglerUtil.demangle(mangled);
-		if (demangledObj != null) {
-			return demangledObj.getSignature(false);
+		List<DemangledObject> demangledObjs = DemanglerUtil.demangle(currentProgram, mangled, null);
+		if (!demangledObjs.isEmpty()) {
+			return demangledObjs.getFirst().getSignature(false);
 		}
 		return null;
 	}
