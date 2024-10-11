@@ -961,6 +961,16 @@ TypeOpIntSless::TypeOpIntSless(TypeFactory *t)
   behave = new OpBehaviorIntSless();
 }
 
+void TypeOpIntSless::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " s< ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 Datatype *TypeOpIntSless::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
@@ -985,6 +995,16 @@ TypeOpIntSlessEqual::TypeOpIntSlessEqual(TypeFactory *t)
   opflags = PcodeOp::binary | PcodeOp::booloutput;
   addlflags = inherits_sign;
   behave = new OpBehaviorIntSlessEqual();
+}
+
+void TypeOpIntSlessEqual::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " s<= ";
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 Datatype *TypeOpIntSlessEqual::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
@@ -1608,6 +1628,16 @@ Datatype *TypeOpIntSdiv::getInputCast(const PcodeOp *op,int4 slot,const CastStra
   return castStrategy->castStandard(reqtype,curtype,true,true);
 }
 
+void TypeOpIntSdiv::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " s/ ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 TypeOpIntRem::TypeOpIntRem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_REM,"%",TYPE_UINT,TYPE_UINT)
 {
@@ -1634,6 +1664,16 @@ TypeOpIntSrem::TypeOpIntSrem(TypeFactory *t)
   opflags = PcodeOp::binary;
   addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntSrem();
+}
+
+void TypeOpIntSrem::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " s% ";
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 Datatype *TypeOpIntSrem::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
@@ -1688,12 +1728,32 @@ TypeOpFloatEqual::TypeOpFloatEqual(TypeFactory *t,const Translate *trans)
   behave = new OpBehaviorFloatEqual(trans);
 }
 
+void TypeOpFloatEqual::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f== ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 TypeOpFloatNotEqual::TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_NOTEQUAL,"!=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
   addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNotEqual(trans);
+}
+
+void TypeOpFloatNotEqual::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f!= ";
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
@@ -1704,12 +1764,32 @@ TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
   behave = new OpBehaviorFloatLess(trans);
 }
 
+void TypeOpFloatLess::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f< ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 TypeOpFloatLessEqual::TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESSEQUAL,"<=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
   addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLessEqual(trans);
+}
+
+void TypeOpFloatLessEqual::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f<= ";
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 TypeOpFloatNan::TypeOpFloatNan(TypeFactory *t,const Translate *trans)
@@ -1728,12 +1808,32 @@ TypeOpFloatAdd::TypeOpFloatAdd(TypeFactory *t,const Translate *trans)
   behave = new OpBehaviorFloatAdd(trans);
 }
 
+void TypeOpFloatAdd::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f+ ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 TypeOpFloatDiv::TypeOpFloatDiv(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_DIV,"/",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
   addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatDiv(trans);
+}
+
+void TypeOpFloatDiv::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f/ ";
+  Varnode::printRaw(s,op->getIn(1));
 }
 
 TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
@@ -1744,6 +1844,16 @@ TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
   behave = new OpBehaviorFloatMult(trans);
 }
 
+void TypeOpFloatMult::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f* ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_SUB,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
@@ -1752,12 +1862,30 @@ TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   behave = new OpBehaviorFloatSub(trans);
 }
 
+void TypeOpFloatSub::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = ";
+  Varnode::printRaw(s,op->getIn(0));
+  s << " f- ";
+  Varnode::printRaw(s,op->getIn(1));
+}
+
 TypeOpFloatNeg::TypeOpFloatNeg(TypeFactory *t,const Translate *trans)
   : TypeOpUnary(t,CPUI_FLOAT_NEG,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
   addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNeg(trans);
+}
+
+void TypeOpFloatNeg::printRaw(ostream &s,const PcodeOp *op)
+
+{
+  Varnode::printRaw(s,op->getOut());
+  s << " = f- ";
+  Varnode::printRaw(s,op->getIn(0));
 }
 
 TypeOpFloatAbs::TypeOpFloatAbs(TypeFactory *t,const Translate *trans)
