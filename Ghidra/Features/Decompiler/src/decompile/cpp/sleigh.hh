@@ -166,6 +166,7 @@ class Sleigh : public SleighBase {
   mutable DisassemblyCache *discache;	///< Cache of recently parsed instructions
   mutable PcodeCacher pcode_cache;	///< Cache of p-code data just prior to emitting
   void clearForDelete(void);		///< Delete the context and disassembly caches
+  void initializeDisassemblyCache();    ///< Initializes the disassembly cache for a new program
 protected:
   ParserContext *obtainContext(const Address &addr,int4 state) const;
   void resolve(ParserContext &pos) const;	///< Generate a parse tree suitable for disassembly

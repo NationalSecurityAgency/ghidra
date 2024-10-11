@@ -547,7 +547,19 @@ void Sleigh::reset(LoadImage *ld,ContextDatabase *c_db)
   loader = ld;
   context_db = c_db;
   cache = new ContextCache(c_db);
-  discache = (DisassemblyCache *)0;
+  initializeDisassemblyCache();
+}
+
+/// Initializes the disassembly cache when sleigh is initialized
+/// or when it is reset for a new image.
+void Sleigh::initializeDisassemblyCache(){
+    uint4 parser_cachesize = 2;
+    uint4 parser_windowsize = 32;
+    if ((maxdelayslotbytes > 1)||(unique_allocatemask != 0)) {
+        parser_cachesize = 8;
+        parser_windowsize = 256;
+    }
+    discache = new DisassemblyCache(this,cache,getConstantSpace(),parser_cachesize,parser_windowsize);
 }
 
 /// The .sla file from the document store is loaded and cache objects are prepared
@@ -569,13 +581,7 @@ void Sleigh::initialize(DocumentStorage &store)
   }
   else
     reregisterContext();
-  uint4 parser_cachesize = 2;
-  uint4 parser_windowsize = 32;
-  if ((maxdelayslotbytes > 1)||(unique_allocatemask != 0)) {
-    parser_cachesize = 8;
-    parser_windowsize = 256;
-  }
-  discache = new DisassemblyCache(this,cache,getConstantSpace(),parser_cachesize,parser_windowsize);
+  initializeDisassemblyCache();
 }
 
 /// \brief Obtain a parse tree for the instruction at the given address
