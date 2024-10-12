@@ -42,12 +42,20 @@ public class KeyEntryPanel extends JPanel {
 
 		keyEntryField = new KeyEntryTextField(columns, listener);
 		clearButton = new EmptyBorderButton(Icons.DELETE_ICON);
-		clearButton.setToolTipText("Clear the current key binding");
-		clearButton.addActionListener(e -> keyEntryField.clearField());
+		clearButton.setName("Clear Key Binding");
+		clearButton.addActionListener(e -> keyEntryField.clearKeyStroke());
 
 		add(keyEntryField);
 		add(Box.createHorizontalStrut(2));
 		add(clearButton);
+	}
+
+	/**
+	 * Returns the text field used by this class
+	 * @return the text field
+	 */
+	public JTextField getTextField() {
+		return keyEntryField;
 	}
 
 	/**
