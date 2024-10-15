@@ -1558,9 +1558,9 @@ macro push88(x) {
 }
 
 macro pushseg88(x) {
-  mysave:2 = x;
+  mysave:8 = zext(x);
   $(STACKPTR) = $(STACKPTR) - 8;
-  *:2 $(STACKPTR) = mysave;
+  *:8 $(STACKPTR) = mysave;
 }
 @endif
 
@@ -3833,12 +3833,14 @@ define pcodeop ptwrite;
 :PUSH FS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xf; byte=0xa0 & FS        { push22(FS); }
 :PUSH FS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xf; byte=0xa0 & FS        { pushseg44(FS); }
 @ifdef IA64
-:PUSH FS        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa0 & FS        { pushseg88(FS); }
+:PUSH FS        is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xf; byte=0xa0 & FS        { push82(FS); }
+:PUSH FS        is $(LONGMODE_ON) & vexMode=0 &            byte=0xf; byte=0xa0 & FS        { pushseg88(FS); }
 @endif
 :PUSH GS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0xf; byte=0xa8 & GS        { push22(GS); }
 :PUSH GS        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & byte=0xf; byte=0xa8 & GS        { pushseg44(GS); }
 @ifdef IA64
-:PUSH GS        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0xa8 & GS        { pushseg88(GS); }
+:PUSH GS        is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0xf; byte=0xa8 & GS        { push82(GS); }
+:PUSH GS        is $(LONGMODE_ON) & vexMode=0 &            byte=0xf; byte=0xa8 & GS        { pushseg88(GS); }
 @endif
 
 :PUSHA          is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x60            { local tmp=SP; push22(AX); push22(CX); push22(DX); push22(BX); push22(tmp); push22(BP); push22(SI); push22(DI); }
