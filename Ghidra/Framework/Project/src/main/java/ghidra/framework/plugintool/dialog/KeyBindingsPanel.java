@@ -455,8 +455,8 @@ public class KeyBindingsPanel extends JPanel {
 		ToolActions toolActions = (ToolActions) tool.getToolActions();
 		String errorMessage = toolActions.validateActionKeyBinding(action, ks);
 		if (errorMessage != null) {
-			statusLabel.setText(errorMessage);
 			actionBindingPanel.clearKeyStroke();
+			statusLabel.setText(errorMessage);
 			return;
 		}
 

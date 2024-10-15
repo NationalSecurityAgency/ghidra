@@ -81,7 +81,21 @@ public class KeyEntryTextField extends HintTextField {
 		setText(KeyBindingUtils.parseKeyStroke(ks));
 	}
 
+	/**
+	 * Clears the state of this class, but does not notify listeners.  This allows clients to 
+	 * control the state of the field without having a callback change the client state.
+	 */
 	public void clearField() {
+		ksName = null;
+		setText("");
+		currentKeyStroke = null;
+	}
+
+	/**
+	 * Clears the state of this class and notifies this client.  This effectively allows for the
+	 * programmatic setting of the keystroke in use to be null, or in the 'no keystroke set' state.
+	 */
+	public void clearKeyStroke() {
 		if (currentKeyStroke == null) {
 			return;
 		}
