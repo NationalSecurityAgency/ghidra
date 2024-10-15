@@ -1695,5 +1695,17 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class ActionPropagateEnums : public Action {
+public:
+  ActionPropagateEnums(const string& g) : Action(0, "propagateenums", g) {}	///< Constructor
+  virtual Action* clone(const ActionGroupList& grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action*)0;
+    return new ActionPropagateEnums(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+  static Datatype *getFinalDisplayedType(Varnode *vn,PcodeOp *op,int4 slot,int4& off); ///< Dig through all structs/enums/unions until a base member pointed to by vn is found
+  static void updateTypeWithOptionalCast(Funcdata &data, Varnode *constant, Datatype *newType, PcodeOp *op, int shiftLength);
+};
+
 } // End namespace ghidra
 #endif
