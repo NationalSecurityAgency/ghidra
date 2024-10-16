@@ -48,13 +48,16 @@
 
   TODO:
 
-    Insert the appropiate code to enable C source trees from this grammar.
+    Insert the appropriate code to enable C source trees from this grammar.
 
   */
 
 
 
 options {
+//    DEBUG_LOOKAHEAD=true;
+//    DEBUG_PARSER=true;
+
     // Methods and class variables should not be static to allow multiple parsers to be in use.
     // This is at the expense of some speed.
     STATIC= false;
@@ -128,12 +131,12 @@ public class CParser {
     private final static String ANONYMOUS_UNION_PREFIX = "_union_";
     private final static String ANONYMOUS_FUNC_PREFIX = "_func_";
         
-    // Stack for determining when the parser is parsing a typdef definition.
+    // Stack for determining when the parser is parsing a typedef definition.
     private Stack<Boolean> typedefParsingStack = new Stack<Boolean>();
 
     // Stack for putting defined data types on
     private Stack<DataType> dataTypeStack = new Stack<DataType>();
-
+    
     private StringBuilder parseMessages = new StringBuilder();
 
     // true if parse was successful
@@ -155,7 +158,7 @@ public class CParser {
     private CategoryPath getCurrentCategoryPath() {
         return getCategory(currentCategoryName);
     }
-    
+
     private CategoryPath getCurrentCategoryPath(String subCatName) {
         return getCategory(currentCategoryName).extend(subCatName);
     }
@@ -260,11 +263,11 @@ public class CParser {
                 return (DataType) obj;
             }
         }
-
-        DataType dt = findDataType(type);
+            
+            DataType dt = findDataType(type);
         if (dt != null && (functionsOK || !(dt instanceof FunctionDefinition))) {
-            return dt;
-        }    
+                return dt;
+            }
         
         // check the BuiltinTypeManager
         BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
@@ -340,7 +343,7 @@ public class CParser {
         table.put(name, dt);
         
         lastDataType = dt;
-
+        
         return dt;
     }
 
@@ -360,7 +363,7 @@ public class CParser {
             // look for the data type by category
             //    equivalent, return it
             subDTMgrs[i].findDataTypes(name, list);
-
+            
             Iterator<DataType> iter = list.iterator();
             while (iter.hasNext()) {
                 DataType dataType = iter.next();
@@ -428,13 +431,13 @@ public class CParser {
             String nameStr = name.image;
 
             DataType dt = findAnyComposite(nameStr);
-
+    
             // if existing composite is found
             boolean hasNoComponents = false;
             boolean hasSameSourceArchive = true;
             if (dt != null) {
                     Composite dtComp = (Composite) dt;
-
+    
                     hasNoComponents = (dtComp.getNumDefinedComponents() == 0 ? true : false);
 
                     hasSameSourceArchive = Objects.equals(dt.getSourceArchive(), dtMgr.getLocalSourceArchive());
@@ -448,7 +451,7 @@ public class CParser {
                     dtcomp.replaceWith(comp);
                     comp = dtcomp;
             } else {
-
+        
                     // check if a parent name was specified, and if so insert it
                     // only single parent supported currently
                     if (parentName != null) {
@@ -461,7 +464,7 @@ public class CParser {
                             }
                     }
                     try {
-                        comp.setName(nameStr);
+                    comp.setName(nameStr);
                     } catch (InvalidNameException e) {
                         // This should not happen
                         e.printStackTrace();
@@ -470,7 +473,7 @@ public class CParser {
                         e.printStackTrace();
                     }
                     comp = (Composite) addDef(composites, nameStr, comp);
-            }
+    }
 
             return comp;
     }
@@ -511,7 +514,7 @@ public class CParser {
                 }
             }
         }
-
+        
         return null;
     }
     
@@ -613,7 +616,7 @@ public class CParser {
             throw new ParseException("'"+retDT.getName()+"'" + " is not fixed length.  Function return must be fixed length data type or void.");
         }
     }
-
+    
   /**
    * Add a definition to the correct category for funcDT, and replace any use of funcDT in Declaration
    * 
@@ -665,6 +668,9 @@ public class CParser {
                 switch (qualifier) {
                     case CDECL:
                             funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
+                            break;
+                    case PASCAL:
+                            funcDT.setGenericCallingConvention(GenericCallingConvention.pascal);
                             break;
                     case STDCALL:
                             funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
@@ -976,25 +982,31 @@ public class CParser {
 
         // Run the parser
     public static void main(String args[]) {
-            CParser parser = new CParser();
+        CParser parser = new CParser();
 
         try {
             if (args.length == 0) {
                 System.out.println("C Parser:  Reading from standard input . . .");
                 parser.parse(System.in);
-            } else if (args.length == 1) {
-                System.out.println("C Parser:  Reading from file " + args[0] + " . . .");
+            } else if (args.length >= 1) {
+                int i = 0;
+                if (args.length >= 2) {
+                    i = Integer.parseInt(args[0]);
+                }
+                System.out.println("C Parser:  Reading from file " + args[i] + " . . .");
                 try {
-                        parser.parse(new java.io.FileInputStream(args[0]));
+                        parser.parse(new java.io.FileInputStream(args[i]));
                 } catch (java.io.FileNotFoundException e) {
-                        System.out.println("C Parser:  File " + args[0] + " not found.");
-                        return;
+                        System.out.println("C Parser:  File " + args[i] + " not found.");
+                    return;
                 }
             } else {
                 System.out.println("C Parser:  Usage is one of:");
                 System.out.println("         java CParser < inputfile");
                 System.out.println("OR");
                 System.out.println("         java CParser inputfile");
+                System.out.println("OR");
+                System.out.println("         java CParser whichfile inputfile ...");
                 return;
             }
 
@@ -1166,6 +1178,14 @@ TOKEN :
     |
     <CDECL : ( [ "_" ] )+ "cdecl"> 
     |
+    <BASEDSPEC : ( [ "_" ] )+ "based"> 
+    |
+    <SEGNAMESPEC : ( [ "_" ] )+ "segname">
+    |
+    <SEGMENT : ( [ "_" ] )+ "segment">
+    |
+    <OFFSET : ( [ "_" ] )+ "offset">
+    |
     <DECLSPEC : "__declspec">
     |
     <PRAGMA : "#" "pragma"> {parenNesting=-1; SwitchTo(PRAGMALINE); }
@@ -1174,9 +1194,11 @@ TOKEN :
     | 
     <READABLETO : "__readableTo">
     |
-    <STDCALL : ( [ "_" ] )+ "stdcall"> 
+    <PASCAL : ( [ "_" ] )+ "pascal">
     |
-    <FASTCALL : ( [ "_" ] )+ "fastcall"> 
+    <STDCALL : ( [ "_" ] )+ "stdcall">
+    |
+    <FASTCALL : ( [ "_" ] )+ "fastcall">
     |
     <NORETURN : "_Noreturn" >
     |
@@ -1236,9 +1258,11 @@ TOKEN :
     |
     <GOTO : "goto"> 
     |
-    <NEAR : "__near"> 
+    <NEAR : ( [ "_" ] )* "near"> 
     |
-    <FAR : "__far"> 
+    <FAR : ( [ "_" ] )* "far">
+    | 
+    <HUGE : ( [ "_" ] )* "huge">
     |
     <FOR : "for"> 
     |
@@ -1259,7 +1283,7 @@ TOKEN :
 
 TOKEN :
 {
-    <IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
+    <IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> | "::")*> 
     |
     <#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
     |
@@ -1466,6 +1490,7 @@ void TranslationUnit() : {}
     < EOF >
     {
         //jjt         return jjtThis;
+        printTypes();
     }
 }
 
@@ -1585,7 +1610,7 @@ Declaration DeclarationSpecifiers(Declaration specDT) : {
 //            LOOKAHEAD(DeclarationSpecifiers()
 //                     , { (typeDT == null ||
 //                         (!typeDT.getName().equals(getToken(1).image) && !isType(getToken(1).image))) }
- //                     )
+//                     )
             specDT = DeclarationSpecifiers(specDT)
         ]
         |
@@ -1613,7 +1638,7 @@ Declaration StorageClassSpecifier(Declaration specDT) : {}
         |
         <REGISTER> 
         |
-        <STATIC>
+        <STATIC> 
         |
         <CONST> 
         |
@@ -1638,6 +1663,10 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 }
 {
     (
+        <SEGMENT>    { dec.setDataType(SegmentCodePointerDataType.dataType); }
+        |
+        <OFFSET>    { dec.setDataType(OffsetCodePointerDataType.dataType); }
+        |
         <VOID>                 { dec.setDataType(resolveInternal(VoidDataType.dataType)); }
         |
         <CHAR>                 {   dt = dec.getDataType();
@@ -1795,8 +1824,12 @@ Declaration TypeQualifier(Declaration dec) : {}
       <CONST>  { dec.addQualifier(CONST); } |
       <VOLATILE> |
       <CDECL> { dec.addQualifier(CDECL); } |
-      <NEAR> |
-      <FAR> |
+      <NEAR> { dec.setNear(true); } |
+      <FAR> { dec.setFar(true); } |
+      <HUGE> { dec.setHuge(true); } |
+      <SEGMENT> |
+      <OFFSET> |
+      <PASCAL> { dec.addQualifier(PASCAL); } |
       <STDCALL> { dec.addQualifier(STDCALL); } |
       <FASTCALL> { dec.addQualifier(FASTCALL); } |
       <NORETURN> { dec.addQualifier(NORETURN); } |
@@ -1807,6 +1840,7 @@ Declaration TypeQualifier(Declaration dec) : {}
       <RESTRICT> |
       <EXTENSION> |
       <STATIC> |
+      ( BasedSpec() ) |
       <PACKED> |
       <UNALIGNED> |
       ( DeclSpec(dec) )
@@ -1867,6 +1901,25 @@ void SubIdent(Declaration dec) : {
             }
         }
     }
+}
+
+void BasedSpec() : {
+}
+{
+  ( ( <BASEDSPEC> ) "(" BasedSpecifier() ")" )
+}
+
+void BasedSpecifier() : {
+}
+{
+  <VOID> |
+  ( SegnameSpec() )
+}
+
+void SegnameSpec() : {
+}
+{
+  ( ( <SEGNAMESPEC> ) "(" "\"" <IDENTIFIER> "\"" ")" )
 }
 
 void DeclSpec(Declaration dec) : {
@@ -2037,11 +2090,11 @@ DataType StructOrUnionSpecifier() : {
         sname= <IDENTIFIER> 
     )
     {
-        if (t != null) {
-            comp = defineNamedComposite(t, parent, comp);
-        } else if (sname != null) {
-            comp = defineForwardDeclaredComposite(sname, comp);
-        }
+            if (t != null) {
+                comp = defineNamedComposite(t, parent, comp);
+            } else if (sname != null) {
+                comp = defineForwardDeclaredComposite(sname, comp);
+                    }
         typedefParsingStack.pop();
         return comp;
     }
@@ -2057,25 +2110,25 @@ Composite StructOrUnion() : {
         {
             comp =  new StructureDataType(getCurrentCategoryPath(), ANONYMOUS_STRUCT_PREFIX + cnt++, 0, dtMgr);
 
-            // Always set the packing, because by default structures should be aligned
-            if (packSize > 0) {
-                comp.setExplicitPackingValue(packSize);
-            }
-            else {
-                comp.setPackingEnabled(true); // ensure default packing enabled
-            }
+                                        // Always set the packing, because by default structures should be aligned
+                                      if (packSize > 0) {
+                                          comp.setExplicitPackingValue(packSize);
+                                      }
+                                      else {
+                                          comp.setPackingEnabled(true); // ensure default packing enabled
+                                      }
                                    
-        }
+                                }
         |
         <UNION>  ( DeclSpec(dec) )* {
             comp = new UnionDataType(getCurrentCategoryPath(), ANONYMOUS_UNION_PREFIX  + cnt++, dtMgr); 
         
-            // Always set the packing, because by default structures should be aligned
-            if (packSize > 0) {
-                comp.setExplicitPackingValue(packSize);
+                                  // Always set the packing, because by default structures should be aligned
+                                  if (packSize > 0) {
+                                      comp.setExplicitPackingValue(packSize);
             } else {
-                comp.setPackingEnabled(true); // ensure default packing enabled
-            }
+                                      comp.setPackingEnabled(true); // ensure default packing enabled
+                                  }
         }
     )
     {
@@ -2319,7 +2372,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
     [ PragmaSpec() ]
     (
         (
-            t= <IDENTIFIER>        { dec= new Declaration(dt, t.image); }
+          t= <IDENTIFIER>        { dec= new Declaration(dt, t.image); }
             |
             "(" dec= Declarator(new Declaration(funcDT=newAnonymousFunction(funcDT)), null) ")" 
             {
@@ -2329,27 +2382,27 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
         { lastDataType = dec.getDataType(); }
         (
             (
-                "[" [ obj = ConditionalExpression() ] "]" 
-                {
-                    // make a new array given value on constant expression
-                    Integer size = getConstantValue(obj, 0);
-                    if (size == null) {
-                        System.out.println("BAD ARRAY SIZE! " + obj);
-                        size = 0;
-                    }
-                    list.add(0,size);
+            "[" [ obj = ConditionalExpression() ] "]" 
+            {
+                // make a new array given value on constant expression
+                Integer size = getConstantValue(obj, 0);
+                if (size == null) {
+                    System.out.println("BAD ARRAY SIZE! " + obj);
+                    size = 0;
+                }
+                list.add(0,size);
                 }
             )*
         )
         {
             if (list.size() > 0) {
-            dec.setDataType(dt.getDataType());
-            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-                Integer iSize = (Integer) iterator.next();
-                DataType decDt = dec.getDataType();
-                dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
-            }
-            //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
+                dec.setDataType(dt.getDataType());
+                for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                    Integer iSize = (Integer) iterator.next();
+                    DataType decDt = dec.getDataType();
+                    dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
+                }
+                //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
             }
         }
         
@@ -2401,7 +2454,18 @@ Declaration Pointer(Declaration dec) : {}
     ("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ] 
     {
         // TODO: is this right?
-        dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+        if (dec.isNear() && (dec.isFar() || dec.isHuge())) {
+            Msg.info(this, "Mmm, can't be NEAR and (FAR or HUGE)");
+            dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+        } else if (dec.isNear()) {
+            dec.setDataType(dtMgr.getPointer(dec.getDataType(), 2));
+        } else if (dec.isFar()) {
+            dec.setDataType(dtMgr.getPointer(dec.getDataType(), 4));
+        } else if (dec.isHuge()) {
+            dec.setDataType(dtMgr.getPointer(dec.getDataType(), 4));
+        } else {
+            dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+        }
         return dec;
     }
 }
@@ -2592,7 +2656,7 @@ Declaration DirectAbstractDeclarator(Declaration dt) : {
           dec.setDataType(dtMgr.getPointer(funcDT));
         }
     )
-
+    
     (
         (
             "[" [ constObj = ConstantExpression() ] "]"

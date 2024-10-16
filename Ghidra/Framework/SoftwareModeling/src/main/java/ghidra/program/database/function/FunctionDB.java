@@ -1385,7 +1385,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 				if (updateType == FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS &&
 					!thisParamRemoved &&
-					CompilerSpec.CALLING_CONVENTION_thiscall.equals(callingConvention) &&
+					callingConvention.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall) &&
 					newParams.size() != 0) {
 					// Attempt to remove inferred unnamed 'this' parameter
 					// WARNING! This is a bit of a hack - not sure how to account for what may be auto-params
@@ -2240,7 +2240,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 */
 	private static boolean removeExplicitThisParameter(List<? extends Variable> params,
 			String callingConventionName) {
-		if (CompilerSpec.CALLING_CONVENTION_thiscall.equals(callingConventionName)) {
+		if (callingConventionName.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			int thisIndex = findExplicitThisParameter(params);
 			if (thisIndex >= 0) {
 				params.remove(thisIndex); // remove explicit 'this' parameter
@@ -2256,7 +2256,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 * @return true if 'this' parameter removed
 	 */
 	private boolean removeExplicitThisParameter() {
-		if (CompilerSpec.CALLING_CONVENTION_thiscall.equals(getCallingConventionName())) {
+		if (getCallingConventionName().startsWith(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			int thisIndex = findExplicitThisParameter(params);
 			if (thisIndex >= 0) {
 				removeParameter(thisIndex); // remove explicit 'this' parameter

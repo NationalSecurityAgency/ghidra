@@ -57,6 +57,7 @@ data/symbols/win16/toolhelp.exports||GHIDRA||||END|
 data/symbols/win16/user.exports||GHIDRA||||END|
 data/symbols/win16/ver.exports||GHIDRA||||END|
 data/symbols/win16/win87em.exports||GHIDRA||||END|
+data/FunctionNames.properties||GHIDRA||||END|
 data/symbols/win32/kernel32.hints||GHIDRA||||END|
 data/symbols/win32/mfc100.exports||GHIDRA||||END|
 data/symbols/win32/mfc100u.exports||GHIDRA||||END|
