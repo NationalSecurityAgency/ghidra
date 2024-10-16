@@ -373,7 +373,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 
 :JMP ADDRI	is (op=0xDC | op=0xEC | op=0xFC) ... & ADDRI
 {
-	goto [ADDRI];
+	goto ADDRI;
 }
 
 
@@ -387,7 +387,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 {
 	*:2 (SP-1) = inst_next;
 	SP=SP-2; 
-	call [ADDRI];
+	call ADDRI;
 }
 
 :LDA OP1     is (op=0xA6 | op=0xB6 | op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
