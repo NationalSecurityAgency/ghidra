@@ -39,6 +39,8 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributeType;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -192,8 +194,20 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					overlays.add(FSBIcons.MISSING_PASSWORD_OVERLAY_ICON);
 				}
 
-				Icon icon = fsbIcons.getIcon(filename, overlays);
-				setIcon(icon);
+				GFile gf = node.getGFile();
+				GFileSystem fs = gf.getFilesystem();
+				// TODO is it OK to pass a null monitor?
+				FileAttributes fa = fs.getFileAttributes(gf, null/*monitor*/);
+
+				String ext = fa.get("typeExt", String.class, "");
+				Msg.info(this, "Name: '" + filename + "'\nExt: '" + ext + "'");
+				if (!ext.isEmpty()) {
+					Icon icon = fsbIcons.getIconByExt(ext, overlays);
+					setIcon(icon);
+				} else {
+					Icon icon = fsbIcons.getIcon(filename, overlays);
+					setIcon(icon);
+				}
 
 			}
 		});

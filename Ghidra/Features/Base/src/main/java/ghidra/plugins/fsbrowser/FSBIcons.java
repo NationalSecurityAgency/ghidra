@@ -139,6 +139,29 @@ public class FSBIcons {
 		return buildIcon(DEFAULT_ICON, overlays);
 	}
 
+	/**
+	 * Returns an {@link Icon} that represents a file's content based on a
+	 * filename extension.
+	 * @param ext filename extension known to be used for files of this type.
+	 * @param overlays optional list of overlay icons that
+	 *            should be overlaid on top of the base icon. These icons represent a
+	 *            status or feature independent of the file's base icon.
+	 * @return {@link Icon} instance that best represents the file type, never
+	 *         null.
+	 */
+	public Icon getIconByExt(String ext, List<Icon> overlays) {
+		if (ext != null) {
+			String iconId = EXTENSION_ICON_PREFIX + ext;
+			if (Gui.hasIcon(iconId)) {
+				Icon base = new GIcon(iconId);
+				return buildIcon(base, overlays);
+			}
+		}
+
+		// return default icon for generic file
+		return buildIcon(DEFAULT_ICON, overlays);
+	}
+
 	private Icon buildIcon(Icon base, List<Icon> overlays) {
 		if (overlays == null || overlays.isEmpty()) {
 			return base;
