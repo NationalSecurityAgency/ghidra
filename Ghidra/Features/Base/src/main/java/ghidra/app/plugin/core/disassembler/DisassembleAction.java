@@ -33,7 +33,8 @@ class DisassembleAction extends ListingContextAction {
 		
 		this.plugin = plugin;
 		
-		setPopupMenuData( new MenuData( new String[]{"Disassemble" }, null, groupName ) );
+		// Set the same menu path to group it with other disassemble actions
+		setPopupMenuData( new MenuData( new String[]{ "Disassemble ...", "Disassemble" }, null, groupName ) );
 		setKeyBindingData( new KeyBindingData( KeyEvent.VK_D, 0 ) );
 	}
 	
