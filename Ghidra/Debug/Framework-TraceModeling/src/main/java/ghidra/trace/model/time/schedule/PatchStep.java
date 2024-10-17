@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -233,6 +233,11 @@ public class PatchStep implements Step {
 	}
 
 	@Override
+	public long getSkipCount() {
+		return 0;
+	}
+
+	@Override
 	public boolean isNop() {
 		// TODO: If parsing beforehand, base on number of ops
 		return sleigh.length() == 0;
@@ -307,7 +312,7 @@ public class PatchStep implements Step {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
+	public void execute(PcodeThread<?> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		emuThread.stepPatch(sleigh);
 	}
