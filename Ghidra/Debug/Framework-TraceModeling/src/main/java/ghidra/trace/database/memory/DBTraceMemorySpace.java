@@ -406,11 +406,17 @@ public class DBTraceMemorySpace
 	@Override
 	public Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			Address address) {
+		return getViewMostRecentStateEntry(snap, new AddressRangeImpl(address, address), s -> true);
+	}
+
+	@Override
+	public Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
+			AddressRange range, Predicate<TraceMemoryState> predicate) {
+		assertInSpace(range);
 		for (Lifespan span : viewport.getOrderedSpans(snap)) {
-			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
-				stateMapSpace.reduce(TraceAddressSnapRangeQuery.mostRecent(address, span))
-						.firstEntry();
-			if (entry != null) {
+			var entry = stateMapSpace.reduce(TraceAddressSnapRangeQuery.mostRecent(range, span))
+					.firstEntry();
+			if (entry != null && predicate.test(entry.getValue())) {
 				return entry;
 			}
 		}
