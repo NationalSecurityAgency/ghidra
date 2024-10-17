@@ -194,21 +194,17 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					overlays.add(FSBIcons.MISSING_PASSWORD_OVERLAY_ICON);
 				}
 
-				GFile gf = node.getGFile();
-				GFileSystem fs = gf.getFilesystem();
-				// TODO is it OK to pass a null monitor?
-				FileAttributes fa = fs.getFileAttributes(gf, null/*monitor*/);
-
-				String ext = fa.get("typeExt", String.class, "");
-				Msg.info(this, "Name: '" + filename + "'\nExt: '" + ext + "'");
+				String ext = node.filenameExtOverride;
 				if (!ext.isEmpty()) {
-					Icon icon = fsbIcons.getIconByExt(ext, overlays);
-					setIcon(icon);
-				} else {
-					Icon icon = fsbIcons.getIcon(filename, overlays);
-					setIcon(icon);
+					if (!ext.startsWith(".")) {
+						Msg.error(this, "Extension override '" + ext + "' does not begin with a dot");
+					} else {
+						filename += ext;
+					}
 				}
 
+				Icon icon = fsbIcons.getIcon(filename, overlays);
+				setIcon(icon);
 			}
 		});
 	}

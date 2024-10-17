@@ -125,28 +125,6 @@ public class FileAttributes {
 		}
 		return defaultValue;
 	}
-	
-	/**
-	 * Gets the value of the attribute specified by name rather than by type
-	 * 
-	 * @param <T> expected class of the attribute value
-	 * @param name name of attribute to search for
-	 * @param valueClass java class of the value
-	 * @param defaultValue value to return if attribute is not present
-	 * @return value of requested attribute, or defaultValue if not present
-	 */
-	public <T> T get(String name, Class<T> valueClass, T defaultValue) {
-		for (FileAttribute<?> attr : attributes) {
-			if (attr.getAttributeDisplayName() == name) {
-				Object val = attr.getAttributeValue();
-				if (valueClass.isAssignableFrom(val.getClass())) {
-					return valueClass.cast(val);
-				}
-				break;
-			}
-		}
-		return defaultValue;
-	}
 
 	/**
 	 * Return a list of all the attributes added to this instance.
