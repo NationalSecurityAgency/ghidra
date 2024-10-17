@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.trace.database.listing;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -29,9 +30,13 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.guest.InternalTracePlatform;
+import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
+import ghidra.trace.model.memory.TraceMemoryOperations;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
@@ -92,7 +97,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 
 		protected void truncateOrDelete(TraceInstruction exists) {
 			if (exists.getStartSnap() < lifespan.lmin()) {
-				exists.setEndSnap(lifespan.lmin());
+				exists.setEndSnap(lifespan.lmin() - 1);
 			}
 			else {
 				exists.delete();
@@ -471,6 +476,15 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			conflict, conflictCodeUnit, overwrite);
 	}
 
+	protected boolean isKnown(DBTraceMemorySpace ms, long snap, CodeUnit cu) {
+		if (ms == null) {
+			return false;
+		}
+		AddressRange range = new AddressRangeImpl(cu.getMinAddress(), cu.getMaxAddress());
+		var states = ms.getStates(snap, range);
+		return TraceMemoryOperations.isStateEntirely(range, states, TraceMemoryState.KNOWN);
+	}
+
 	/**
 	 * Checks the intended locations for conflicts with existing units.
 	 * 
@@ -486,6 +500,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			Set<Address> skipDelaySlots) {
 		// NOTE: Partly derived from CodeManager#checkInstructionSet()
 		// Attempted to factor more fluently
+		DBTraceMemoryManager mm = space.trace.getMemoryManager();
 		for (InstructionBlock block : instructionSet) {
 			// If block contains a known error, record its address, and do not proceed beyond it
 			Address errorAddress = null;
@@ -519,6 +534,12 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 					lastProtoInstr = protoInstr;
 				}
 				CodeUnit existsCu = overlap.getRight();
+				DBTraceMemorySpace ms =
+					mm.getMemorySpace(existsCu.getAddress().getAddressSpace(), false);
+				if (!isKnown(ms, startSnap, existsCu) && existsCu instanceof TraceCodeUnit tcu) {
+					tcu.delete();
+					continue;
+				}
 				int cmp = existsCu.getMinAddress().compareTo(protoInstr.getMinAddress());
 				boolean existsIsInstruction = (existsCu instanceof TraceInstruction);
 				if (cmp == 0 && existsIsInstruction) {
@@ -552,7 +573,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				}
 				// NOTE: existsIsInstruction implies cmp != 0, so record as off-cut conflict
 				block.setCodeUnitConflict(existsCu.getAddress(), protoInstr.getAddress(),
-					flowFromAddress, existsIsInstruction, existsIsInstruction);
+					flowFromAddress, existsIsInstruction, true);
 			}
 		}
 	}
