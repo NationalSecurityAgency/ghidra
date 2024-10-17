@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,8 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.emulation.*;
+import ghidra.debug.api.emulation.DebuggerPcodeEmulatorFactory;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -781,7 +782,12 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			TraceThread eventThread = key.time.getEventThread(key.trace);
 			be.ce.emulator().setSoftwareInterruptMode(SwiMode.IGNORE_STEP);
 			RunResult result = scheduler.run(key.trace, eventThread, be.ce.emulator(), monitor);
-			key = new CacheKey(key.platform, key.time.advanced(result.schedule()));
+			if (result.schedule().hasSteps()) {
+				key = new CacheKey(key.platform, key.time.dropPSteps().advanced(result.schedule()));
+			}
+			else {
+				key = new CacheKey(key.platform, key.time.advanced(result.schedule()));
+			}
 			Msg.info(this, "Stopped emulation at " + key.time);
 			TraceSnapshot destSnap = writeToScratch(key, be.ce);
 			cacheEmulator(key, be.ce);
