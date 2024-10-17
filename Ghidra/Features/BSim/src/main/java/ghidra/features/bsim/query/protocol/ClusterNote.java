@@ -50,6 +50,7 @@ public class ClusterNote {
 		buf.append("<note");
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", func.getExecutableRecord().getXrefIndex());
 		SpecXmlUtils.xmlEscapeAttribute(buf, "name", func.getFunctionName());
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "spaceid", func.getSpaceID());
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "addr", func.getAddress());
 		buf.append(">\n");
 		buf.append(" <setsize>").append(SpecXmlUtils.encodeSignedInteger(setsize)).append("</setsize>\n");
@@ -63,8 +64,9 @@ public class ClusterNote {
 		XmlElement el = parser.start("note");
 		int id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
 		ExecutableRecord exe = xrefMap.get(id);
+		int spaceid = SpecXmlUtils.decodeInt(el.getAttribute("spaceid"));
 		long address = SpecXmlUtils.decodeLong(el.getAttribute("addr"));
-		func = manage.findFunction(el.getAttribute("name"), address, exe);
+		func = manage.findFunction(el.getAttribute("name"), spaceid, address, exe);
 		parser.start("setsize");
 		setsize = SpecXmlUtils.decodeInt(parser.end().getText());
 		parser.start("sim");

@@ -262,13 +262,13 @@ public class BSimSearchPluginScreenShots extends GhidraScreenShotGenerator {
 		// create some canned data
 		ResponseNearest response = new ResponseNearest(null);
 		response.result.add(new TestSimilarityResult("queryFunction", "exec1", "matchFunction1",
-			0x01001100, 0.9d, 15.0d));
+			0, 0x01001100, 0.9d, 15.0d));
 		response.result.add(new TestSimilarityResult("queryFunction", "exec2", "matchFunction2",
-			0x01001100, 0.9d, 15.0d));
+			0, 0x01001100, 0.9d, 15.0d));
 		response.result.add(new TestSimilarityResult("queryFunction", "exec1", "matchFunction3",
-			0x01001100, 0.9d, 15.0d));
+			0, 0x01001100, 0.9d, 15.0d));
 		response.result.add(new TestSimilarityResult("queryFunction", "exec1", "matchFunction4",
-			0x01001100, 0.9d, 15.0d));
+			0, 0x01001100, 0.9d, 15.0d));
 
 		database.setQueryResponse(response); // set a valid response to be returned on query
 		database.setCanInitialize(true); // initialize may be called--this is OK

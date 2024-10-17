@@ -247,7 +247,7 @@ public class ExecutableComparison {
 		ExecutableRecord exeRecord = query.manage.newExecutableRecord(
 			"bbbbaaaabbbbaaaabbbbaaaabbbbaaaa", null, null, null, null, null, null, null);
 		FunctionDescription function =
-			query.manage.newFunctionDescription("tmp", 0x1000L, exeRecord);
+			query.manage.newFunctionDescription("tmp", 344, 0x1000L, exeRecord);
 		SignatureRecord signature = query.manage.newSignature(vector, 1);
 		query.manage.attachSignature(function, signature);
 
