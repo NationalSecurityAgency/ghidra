@@ -14,3 +14,7 @@ data/languages/6x09_pull.sinc||GHIDRA||||END|
 data/languages/6x09_push.sinc||GHIDRA||||END|
 data/languages/H6309.slaspec||GHIDRA||||END|
 data/manuals/6809.idx||GHIDRA||||END|
+data/languages/mc6800.cspec||GHIDRA||||END|
+data/languages/mc6800.ldefs||GHIDRA||||END|
+data/languages/mc6800.pspec||GHIDRA||||END|
+data/languages/mc6800.slaspec||GHIDRA||||END|
