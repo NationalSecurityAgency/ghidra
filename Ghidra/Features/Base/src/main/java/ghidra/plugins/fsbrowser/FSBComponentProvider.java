@@ -39,8 +39,6 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
-import ghidra.formats.gfilesystem.fileinfo.FileAttributeType;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
