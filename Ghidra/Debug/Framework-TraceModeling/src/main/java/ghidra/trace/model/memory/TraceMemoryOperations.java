@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +62,38 @@ import ghidra.util.task.TaskMonitor;
  * accidentally rely on implied temporal relationships in scratch space.
  */
 public interface TraceMemoryOperations {
+	/**
+	 * Check if the return value of {@link #getStates(long, AddressRange)} or similar represents a
+	 * single entry of the given state.
+	 * 
+	 * <p>
+	 * This method returns false if there is not exactly one entry of the given state whose range
+	 * covers the given range. As a special case, an empty collection will cause this method to
+	 * return true iff state is {@link TraceMemoryState#UNKNOWN}.
+	 * 
+	 * @param range the range to check, usually that passed to
+	 *            {@link #getStates(long, AddressRange)}.
+	 * @param stateEntries the collection returned by {@link #getStates(long, AddressRange)}.
+	 * @param state the expected state
+	 * @return true if the state matches
+	 */
+	static boolean isStateEntirely(AddressRange range,
+			Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> stateEntries,
+			TraceMemoryState state) {
+		if (stateEntries.isEmpty()) {
+			return state == TraceMemoryState.UNKNOWN;
+		}
+		if (stateEntries.size() != 1) {
+			return false;
+		}
+		Entry<TraceAddressSnapRange, TraceMemoryState> ent = stateEntries.iterator().next();
+		if (ent.getValue() != state) {
+			return false;
+		}
+		AddressRange entRange = ent.getKey().getRange();
+		return entRange.contains(range.getMinAddress()) && entRange.contains(range.getMaxAddress());
+	}
+
 	/**
 	 * Get the trace to which the memory manager belongs
 	 * 
@@ -261,12 +293,24 @@ public interface TraceMemoryOperations {
 	 * Get the entry recording the most recent state at the given snap and address, following
 	 * schedule forks
 	 * 
-	 * @param snap the time
-	 * @param address the location
-	 * @return the state
+	 * @param snap the latest time to consider
+	 * @param address the address
+	 * @return the most-recent entry
 	 */
 	Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			Address address);
+
+	/**
+	 * Get the entry recording the most recent state since the given snap within the given range
+	 * that satisfies a given predicate, following schedule forks
+	 * 
+	 * @param snap the latest time to consider
+	 * @param range the range of addresses
+	 * @param predicate a predicate on the state
+	 * @return the most-recent entry
+	 */
+	Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
+			AddressRange range, Predicate<TraceMemoryState> predicate);
 
 	/**
 	 * Get at least the subset of addresses having state satisfying the given predicate
