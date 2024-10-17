@@ -195,7 +195,7 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 				}
 
 				String ext = node.filenameExtOverride;
-				if (!ext.isEmpty()) {
+				if (ext != null && !ext.isEmpty()) {
 					if (!ext.startsWith(".")) {
 						Msg.error(this, "Extension override '" + ext + "' does not begin with a dot");
 					} else {
