@@ -503,6 +503,31 @@ task assembleSource (type: Copy) {
 	
 }
 
+/************************************************************************************
+ *
+ * Copies a markdown file and a generaterated html file into the distribution folder.
+ *
+ ************************************************************************************/
+task assembleMarkdownToHtml (type: Copy) {
+	group 'private'
+	description "Copies a markdown file and a generaterated html file into the distribution folder"
+	
+	dependsOn ':MarkdownSupport:classes'
+	outputs.upToDateWhen {false}
+	destinationDir file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
+	
+	eachFile { f ->
+		def htmlName = f.sourceName[0..-3] + "html"
+		def htmlPath = f.relativePath.replaceLastName(htmlName).pathString 
+		
+		javaexec {		
+			classpath = project(':MarkdownSupport').sourceSets.main.runtimeClasspath
+			mainClass = 'ghidra.markdown.MarkdownToHtml'
+			args f.file
+			args file("${destinationDir.path}/${htmlPath}")
+		}
+	}
+}
 
 /*********************************************************************************
  * 
@@ -584,6 +609,7 @@ task assembleAll() {
 
 	dependsOn assembleDistribution
 	dependsOn assembleSource
+	dependsOn assembleMarkdownToHtml
 	dependsOn "assembleDistribution_$currentPlatform"
 
 	if (project.hasProperty("allPlatforms")) {
