@@ -1258,7 +1258,7 @@ macro Push2(operand) {
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :JMP ADDRI               is (op=0xDC | op=0xEC | op=0xFC) ... & ADDRI
 {
-	goto [ADDRI];
+	goto ADDRI;
 }
 @endif
 
@@ -1278,7 +1278,7 @@ macro Push2(operand) {
 	tmp:2 = inst_next;
 	Push2( tmp );
 	 
-	call [ADDRI];
+	call ADDRI;
 }
 @endif
 
