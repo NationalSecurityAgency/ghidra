@@ -197,7 +197,7 @@ void %(main)s(TestInfo* not_used) {
         self.c_write('')
         #for l in extern_lines:
         #    self.c_write(l)
-        self.c_write('void main(void) {')
+        self.c_write('int main(int argc, char **argv) {')
         self.c_write('\tTestInfo info;')
         #for l in main_lines:
         #    self.c_write(l)
