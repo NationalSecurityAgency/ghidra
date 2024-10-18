@@ -56,6 +56,7 @@ public enum FileAttributeType {
 
 	SYMLINK_DEST_ATTR("Symbolic link destination", MISC_INFO, String.class),
 	COMMENT_ATTR("Comment", MISC_INFO, String.class),
+	FILENAME_EXT_OVERRIDE("Extension override", MISC_INFO, String.class),
 
 	UNKNOWN_ATTRIBUTE("Other attribute", ADDITIONAL_INFO, Object.class);
 
