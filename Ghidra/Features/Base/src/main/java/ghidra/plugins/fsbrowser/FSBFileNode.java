@@ -38,6 +38,7 @@ public class FSBFileNode extends FSBNode {
 	protected boolean hasPassword;
 	protected String symlinkDest;
 	protected long lastModified;
+	protected String filenameExtOverride;
 
 	FSBFileNode(GFile file) {
 		this.file = file;
@@ -83,6 +84,10 @@ public class FSBFileNode extends FSBNode {
 		return symlinkDest != null;
 	}
 
+	public String getFilenameExtOverride() {
+		return filenameExtOverride;
+	}
+
 	@Override
 	public int hashCode() {
 		return file.hashCode();
@@ -95,6 +100,7 @@ public class FSBFileNode extends FSBNode {
 		symlinkDest = fattrs.get(SYMLINK_DEST_ATTR, String.class, null);
 		Date lastModDate = fattrs.get(MODIFIED_DATE_ATTR, Date.class, null);
 		lastModified = lastModDate != null ? lastModDate.getTime() : 0;
+		filenameExtOverride = fattrs.get(FILENAME_EXT_OVERRIDE, String.class, null);
 	}
 
 	@Override
