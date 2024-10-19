@@ -485,6 +485,7 @@ public:
   bool unblockedMulti(int4 outslot) const;		///< Check if \b this block can be removed without introducing inconsistencies
   bool hasOnlyMarkers(void) const;		///< Does \b this block contain only MULTIEQUAL and INDIRECT ops
   bool isDoNothing(void) const;			///< Should \b this block should be removed
+  bool isSplittable(void) const; ///< Does \b this block contain complex ops so it cannot be split
   list<PcodeOp *>::iterator beginOp(void) { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
   list<PcodeOp *>::iterator endOp(void) { return op.end(); }		///< Return an iterator to the end of the PcodeOps
   list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
