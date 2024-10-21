@@ -87,7 +87,6 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 			"java.lang.Short", "int",
 			"java.lang.String", "str"));
 
-	private final PythonTypeStubType parent;
 	private final boolean filterSelf;
 	List<String> typevars;
 	Set<TypeElement> imports;
@@ -111,7 +110,6 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 	 */
 	PythonTypeStubMethod(PythonTypeStubType parent, ExecutableElement el, boolean filterSelf) {
 		super(parent.doclet, el);
-		this.parent = parent;
 		this.filterSelf = filterSelf;
 	}
 
@@ -193,20 +191,14 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 			return imports;
 		}
 
-		List<? extends VariableElement> parameters = el.getParameters();
-		TypeMirror resType = el.getReturnType();
+		List<? extends TypeMirror> parameters = getParameterTypes();
 
 		// make the set big enough for all paramters and the return type
 		imports = new HashSet<>(parameters.size() + 1);
 
-		if (resType instanceof DeclaredType dt) {
-			imports.add((TypeElement) dt.asElement());
-		}
-
-		for (VariableElement param : parameters) {
-			if (param.asType() instanceof DeclaredType dt) {
-				imports.add((TypeElement) dt.asElement());
-			}
+		addNeededTypes(imports, getReturnType());
+		for (TypeMirror param : parameters) {
+			addNeededTypes(imports, param);
 		}
 
 		return imports;
@@ -329,7 +321,7 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 				printer.print(convertedType);
 			}
 			else {
-				printer.print(getTypeString(parent.el, res));
+				printer.print(sanitizeQualifiedName(res));
 			}
 		}
 	}
@@ -398,7 +390,7 @@ final class PythonTypeStubMethod extends PythonTypeStubElement<ExecutableElement
 		if (convertedType != null) {
 			return name + ": " + convertedType;
 		}
-		return name + ": " + getTypeString(parent.el, type);
+		return name + ": " + sanitizeQualifiedName(type);
 	}
 
 	/**

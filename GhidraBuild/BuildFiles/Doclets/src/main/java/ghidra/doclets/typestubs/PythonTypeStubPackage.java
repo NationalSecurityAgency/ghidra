@@ -147,6 +147,7 @@ final class PythonTypeStubPackage extends PythonTypeStubElement<PackageElement> 
 	 */
 	private void process(PrintWriter printer, String indent) {
 		writeJavaDoc(printer, indent, "");
+		printer.println("from __future__ import annotations");
 		printer.println("import collections.abc");
 		printer.println("import datetime");
 		printer.println("import typing");
