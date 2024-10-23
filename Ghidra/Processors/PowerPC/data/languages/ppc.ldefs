@@ -136,6 +136,21 @@
   <language processor="PowerPC"
             endian="big"
             size="32"
+            variant="e200"
+            version="1.5"
+            slafile="ppc_32_e200.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:VLE-e200">
+    <description>Power ISA Embedded e200 32-bit big endian w/VLE</description>
+    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e200"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
             variant="MPC8270"
             version="1.6"
             slafile="ppc_32_quicciii_be.sla"
