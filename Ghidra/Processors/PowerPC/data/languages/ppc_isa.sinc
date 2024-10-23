@@ -1609,8 +1609,8 @@ define pcodeop stdcixOp;
 # ISA-info: lq - Form "DQ" Page 751 Category "LSQ"
 # binutils: power4.d:  +0:	e0 83 00 00 	lq      r4,0\(r3\)
 # binutils: power4.d:  +4:	e0 83 00 00 	lq      r4,0\(r3\)
-:lq RT,A,DQ is $(NOTVLE) & OP=56 & RT & Dp & A & DQ & BITS_0_3=0 & regp [regpset = Dp+1;] { 
-	ea:$(REGISTER_SIZE) = A + sext(DQ:2 << 4);
+:lq RT,dqPlusRaOrZeroAddress, BITS_0_3 is $(NOTVLE) & OP=56 & RT & Dp & RA & DQs & dqPlusRaOrZeroAddress & BITS_0_3 & regp [regpset = Dp+1;] {  
+	ea:$(REGISTER_SIZE) = RA + sext(DQs:2 << 4);
 @if ENDIAN == "big"
 	RT = *:$(REGISTER_SIZE) ea;
 	regp = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
