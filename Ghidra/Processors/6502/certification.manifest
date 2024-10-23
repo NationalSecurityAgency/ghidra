@@ -5,5 +5,7 @@ data/languages/6502.ldefs||GHIDRA||||END|
 data/languages/6502.pspec||GHIDRA||||END|
 data/languages/6502.slaspec||GHIDRA||||END|
 data/languages/65c02.slaspec||GHIDRA||||END|
+data/languages/melps740.pspec||GHIDRA||||END|
+data/languages/melps740.slaspec||GHIDRA||||END|
 data/manuals/6502.idx||GHIDRA||||END|
 data/manuals/65c02.idx||GHIDRA||||END|
