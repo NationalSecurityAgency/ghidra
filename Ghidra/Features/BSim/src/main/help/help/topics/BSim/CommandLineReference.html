@@ -47,6 +47,8 @@
     bsim_ctl resetpassword   &lt;username&gt;
     bsim_ctl changeauth      &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
     bsim_ctl changeprivilege &lt;username&gt; admin|user
+    bsim_ctl dumpall         &lt;/dumpfile-path&gt;
+    bsim_ctl restore         &lt;/dumpfile-path&gt;
     
     Global Options:
         --port|-p&nbsp;&lt;portnum&gt;
@@ -222,6 +224,22 @@
                 "command"><STRONG>user</STRONG></SPAN>, and the PostgreSQL server must be
                 running.</P>
               </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+                "bold"><STRONG>dumpall</STRONG></SPAN></SPAN></DT>
+  
+                <DD>
+                  <P>Dumps all PostgreSQL databases into a specified file. A dump file must be
+                  specified, and the PostgreSQL server must be running.</P>
+                </DD>
+
+              <DT><SPAN class="term"><SPAN class=
+                "bold"><STRONG>restore</STRONG></SPAN></SPAN></DT>
+  
+                <DD>
+                  <P>Restores all PostgreSQL databases from a specified file. A dump file must be
+                  specified, and the PostgreSQL server must be running.</P>
+                </DD>
 
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>--Global
               Options--</STRONG></SPAN></SPAN></DT>
