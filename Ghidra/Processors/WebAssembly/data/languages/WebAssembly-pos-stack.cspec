@@ -1,0 +1,836 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/compiler_spec.rxg -->
+
+<compiler_spec>
+   <data_organization>
+    <char_type signed="true" />
+    <char_size value="1" />
+    <short_size value="2" />
+    <pointer_size value="4"/>
+    <integer_size value = "4"/>
+    <float_size value="4" />
+    <long_size value="4" />
+    <double_size value="8" />
+  </data_organization>
+  <global>
+    <range space="global"/>
+    <range space="table"/>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="SP" space="ram" growth="positive"/>
+  <default_proto>
+    <prototype name="__wasm" extrapop="0" stackshift="0" strategy="register">
+      <input>
+        <!-- With the positive stack direction, Ghidra will allocate
+        starting at the highest addresses in any <addr> pentry, which is
+        not what we want. Instead, fall back to manually specifying the
+        registers in the correct order. -->
+        <pentry minsize="1" maxsize="16">
+          <register name="i0o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i1o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i2o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i3o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i4o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i5o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i6o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i7o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i8o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i9o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i10o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i11o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i12o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i13o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i14o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i15o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i16o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i17o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i18o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i19o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i20o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i21o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i22o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i23o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i24o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i25o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i26o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i27o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i28o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i29o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i30o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i31o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i32o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i33o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i34o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i35o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i36o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i37o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i38o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i39o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i40o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i41o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i42o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i43o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i44o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i45o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i46o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i47o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i48o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i49o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i50o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i51o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i52o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i53o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i54o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i55o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i56o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i57o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i58o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i59o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i60o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i61o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i62o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i63o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i64o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i65o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i66o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i67o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i68o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i69o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i70o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i71o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i72o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i73o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i74o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i75o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i76o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i77o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i78o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i79o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i80o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i81o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i82o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i83o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i84o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i85o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i86o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i87o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i88o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i89o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i90o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i91o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i92o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i93o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i94o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i95o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i96o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i97o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i98o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i99o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i100o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i101o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i102o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i103o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i104o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i105o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i106o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i107o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i108o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i109o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i110o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i111o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i112o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i113o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i114o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i115o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i116o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i117o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i118o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i119o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i120o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i121o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i122o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i123o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i124o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i125o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i126o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i127o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i128o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i129o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i130o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i131o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i132o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i133o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i134o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i135o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i136o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i137o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i138o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i139o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i140o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i141o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i142o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i143o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i144o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i145o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i146o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i147o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i148o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i149o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i150o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i151o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i152o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i153o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i154o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i155o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i156o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i157o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i158o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i159o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i160o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i161o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i162o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i163o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i164o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i165o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i166o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i167o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i168o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i169o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i170o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i171o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i172o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i173o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i174o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i175o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i176o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i177o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i178o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i179o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i180o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i181o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i182o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i183o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i184o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i185o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i186o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i187o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i188o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i189o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i190o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i191o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i192o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i193o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i194o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i195o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i196o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i197o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i198o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i199o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i200o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i201o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i202o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i203o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i204o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i205o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i206o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i207o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i208o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i209o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i210o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i211o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i212o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i213o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i214o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i215o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i216o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i217o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i218o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i219o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i220o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i221o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i222o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i223o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i224o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i225o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i226o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i227o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i228o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i229o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i230o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i231o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i232o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i233o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i234o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i235o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i236o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i237o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i238o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i239o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i240o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i241o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i242o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i243o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i244o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i245o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i246o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i247o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i248o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i249o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i250o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i251o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i252o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i253o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i254o"/>
+        </pentry>
+        <pentry minsize="1" maxsize="16">
+          <register name="i255o"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="16">
+          <register name="o0o"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="register" offset="0x10000000" size="0x10000000"/>
+        <varnode space="register" offset="0x50000000" size="0x10000000"/>
+        <register name="SP"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  <callotherfixup targetop="funcEntryCallOther">
+    <pcode dynamic="true">
+      <input name="in_offset" />
+      <input name="locals_offset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="popCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="pushCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="callPrologueCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="callEpilogueCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+</compiler_spec>
