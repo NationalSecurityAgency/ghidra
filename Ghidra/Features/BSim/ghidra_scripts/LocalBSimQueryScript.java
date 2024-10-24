@@ -31,6 +31,7 @@ import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.client.Configuration;
 import ghidra.features.bsim.query.description.FunctionDescription;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
 
 //TODO: docs
@@ -176,17 +177,18 @@ public class LocalBSimQueryScript extends GhidraScript {
 
 		//...but use sourceFuncAddrs to ensure that source functions are in the
 		//funcs set 
-		Set<Long> sourceFuncAddrs = new HashSet<>();
+		Set<Address> sourceFuncAddrs = new HashSet<>();
 		for (Function func : funcs) {
-			sourceFuncAddrs.add(func.getEntryPoint().getOffset());
+			sourceFuncAddrs.add(func.getEntryPoint());
 		}
 		Iterator<FunctionDescription> sourceDescripts =
 			gensig.getDescriptionManager().listAllFunctions();
 		VectorCompare vecCompare = new VectorCompare();
 		while (sourceDescripts.hasNext()) {
 			FunctionDescription srcDesc = sourceDescripts.next();
+			Address srcAddress = getAddress(currentProgram, srcDesc.getSpaceID(), srcDesc.getAddress());
 			//skip if not in selection
-			if (!sourceFuncAddrs.contains(srcDesc.getAddress())) {
+			if (!sourceFuncAddrs.contains(srcAddress)) {
 				continue;
 			}
 			//skip if self-significance too small
@@ -196,14 +198,17 @@ public class LocalBSimQueryScript extends GhidraScript {
 			}
 			Iterator<FunctionDescription> targetDescripts =
 				gensig.getDescriptionManager().listAllFunctions();
-			Function srcFunc = getFunction(currentProgram, srcDesc.getAddress());
+			Function srcFunc = getFunction(currentProgram, srcDesc.getSpaceID(), srcDesc.getAddress());
 			while (targetDescripts.hasNext()) {
-				//skip if target before srcFunc in address order
-				//AND target is one of the source functions (i.e., in funcs)
-				FunctionDescription targetDesc = targetDescripts.next();
-				long targetAddress = targetDesc.getAddress();
+				//skip if target is one of the source functions (i.e., in funcs)
+				//AND src and target functions reside in the same Address Space
+				//AND target before srcFunc in address order
+				FunctionDescription targetDesc = targetDescripts.next();;
+				Address targetAddress = getAddress(currentProgram, targetDesc.getSpaceID(), targetDesc.getAddress());
+
 				if (sourceFuncAddrs.contains(targetAddress) &&
-					targetAddress <= srcDesc.getAddress()) {
+					targetDesc.getSpaceID() == srcDesc.getSpaceID() &&
+					targetDesc.getAddress() <= srcDesc.getAddress()) {
 					continue;
 				}
 				//skip if self-significance too small
@@ -215,7 +220,7 @@ public class LocalBSimQueryScript extends GhidraScript {
 				double sig = vectorFactory.calculateSignificance(vecCompare);
 				if (sig >= MATCH_CONFIDENCE_LOWER_BOUND && MATCH_SIMILARITY_LOWER_BOUND <= sim &&
 					sim <= MATCH_SIMILARITY_UPPER_BOUND) {
-					Function targetFunc = getFunction(currentProgram, targetDesc.getAddress());
+					Function targetFunc = getFunction(currentProgram, targetDesc.getSpaceID(), targetDesc.getAddress());
 					bsimMatches.add(new LocalBSimMatch(srcFunc, targetFunc, sim, sig));
 				}
 			}
@@ -245,7 +250,7 @@ public class LocalBSimQueryScript extends GhidraScript {
 			}
 			Iterator<FunctionDescription> targetDescripts =
 				targetSigs.getDescriptionManager().listAllFunctions();
-			Function srcFunc = getFunction(sourceProgram, srcDesc.getAddress());
+			Function srcFunc = getFunction(sourceProgram, srcDesc.getSpaceID(), srcDesc.getAddress());
 			while (targetDescripts.hasNext()) {
 				FunctionDescription targetDesc = targetDescripts.next();
 				//skip if self-significance too small
@@ -257,7 +262,7 @@ public class LocalBSimQueryScript extends GhidraScript {
 				double sig = vectorFactory.calculateSignificance(vecCompare);
 				if (sig >= MATCH_CONFIDENCE_LOWER_BOUND && MATCH_SIMILARITY_LOWER_BOUND <= sim &&
 					sim <= MATCH_SIMILARITY_UPPER_BOUND) {
-					Function targetFunc = getFunction(targetProgram, targetDesc.getAddress());
+					Function targetFunc = getFunction(targetProgram, targetDesc.getSpaceID(), targetDesc.getAddress());
 					bsimMatches.add(new LocalBSimMatch(srcFunc, targetFunc, sim, sig));
 				}
 			}
@@ -265,8 +270,13 @@ public class LocalBSimQueryScript extends GhidraScript {
 		return bsimMatches;
 	}
 
-	private Function getFunction(Program program, long offset) {
-		Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+	private Address getAddress(Program program, int spaceid, long offset) {
+		Address addr = program.getAddressFactory().getAddress(spaceid, offset);
+		return addr;
+	}
+
+	private Function getFunction(Program program, int spaceid, long offset) {
+		Address addr = getAddress(program, spaceid, offset);
 		return program.getFunctionManager().getFunctionAt(addr);
 	}
 
