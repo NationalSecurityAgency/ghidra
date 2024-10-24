@@ -691,8 +691,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		Process process = processBuilder.start();
 
 		new IOThread(process.getInputStream(), true).start();
-		IOThread errThread = new IOThread(process.getErrorStream(), true);
+		IOThread errThread = new IOThread(process.getErrorStream(), false);
 		errThread.start();
+		errThread.join(); // Ensure all stderr output is processed to avoid mixed-up console output
 
 		int retval = process.waitFor();
 		return retval;
