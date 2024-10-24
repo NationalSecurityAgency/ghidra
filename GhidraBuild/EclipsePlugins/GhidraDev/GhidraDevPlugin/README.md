@@ -54,7 +54,7 @@ __3.0.2:__
 * GhidraDev now prevents unsupported versions of PyDev from being used.
 
 __3.0.1:__
-* Exporting a Ghidra Module Extension produces an intermediate `build<` directory within the 
+* Exporting a Ghidra Module Extension produces an intermediate `build` directory within the 
   project. This `build` directory now gets automatically cleaned up to avoid Ghidra 
   runtime/debugging issues.
 * GhidraDev now prevents unsupported Ghidra source repositories from being added as a Ghidra
