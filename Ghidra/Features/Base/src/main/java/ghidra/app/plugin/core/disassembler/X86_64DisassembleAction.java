@@ -32,20 +32,20 @@ public class X86_64DisassembleAction extends ListingContextAction {
 	private final DisassemblerPlugin plugin;
 	private final boolean disassemble32Bit;
 
-	public X86_64DisassembleAction(DisassemblerPlugin plugin, String groupName,
-			boolean disassemble32Bit) {
+	public X86_64DisassembleAction(DisassemblerPlugin plugin, String groupName, boolean disassemble32Bit) {
 		super("Disassemble " + (disassemble32Bit ? "32" : "64") + "-bit x86", plugin.getName());
 
 		this.plugin = plugin;
 		this.disassemble32Bit = disassemble32Bit;
 
-		setPopupMenuData(new MenuData(new String[] { getName() }, null, groupName));
+		// Set the same menu path to group it with other disassemble actions
+		setPopupMenuData(new MenuData(new String[] { "Disassemble ...", (disassemble32Bit ? "Disassemble 32-bit x86" : "Disassemble 64-bit x86") }, null, groupName));
 
+		// Set key bindings for 32-bit (F12) and 64-bit (F11)
 		int keyEvent = (disassemble32Bit ? KeyEvent.VK_F12 : KeyEvent.VK_F11);
 		setKeyBindingData(new KeyBindingData(keyEvent, 0));
 
-		// Need to override the default help location since this action doesn't have its own
-		// section in the help.
+		// Override help location since this action doesn't have its own section in the help
 		HelpLocation location = new HelpLocation("DisassemblerPlugin", "Disassemble");
 		this.setHelpLocation(location);
 	}
@@ -70,10 +70,7 @@ public class X86_64DisassembleAction extends ListingContextAction {
 		Program program = context.getProgram();
 		Language lang = program.getLanguage();
 		Processor proc = lang.getProcessor();
-		/*
-		 * Action only intended for use where 64-bit x86 is available. I'm just going to check for
-		 * x86 with size 64.
-		 */
+		// Action is only for x86 processors and requires the x86 language description
 		if (!"x86".equals(proc.toString())) {
 			return false;
 		}
