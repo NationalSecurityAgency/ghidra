@@ -192,6 +192,15 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					overlays.add(FSBIcons.MISSING_PASSWORD_OVERLAY_ICON);
 				}
 
+				String ext = node.getFilenameExtOverride();
+				if (ext != null && !ext.isEmpty()) {
+					if (!ext.startsWith(".")) {
+						Msg.error(this, "Extension override '" + ext + "' does not begin with a dot");
+					} else {
+						filename += ext;
+					}
+				}
+
 				Icon icon = fsbIcons.getIcon(filename, overlays);
 				setIcon(icon);
 
