@@ -1002,17 +1002,17 @@ addr32: [Rmr32 + imm32]					is mod=2 & Rmr32; imm32                      { local
 addr32: [Rmr32]							is mod=2 & r_m!=4 & Rmr32; imm32=0           { export Rmr32; }
 addr32: [imm32]							is mod=0 & r_m=5; imm32                      { export *[const]:4 imm32; }
 addr32: [Base + Index*ss]				is mod=0 & r_m=4; Index & Base & ss          { local tmp=Base+Index*ss; export tmp; }
-addr32: [Base]							is mod=0 & r_m=4; index=4 & Base             { export Base; }
+addr32: [Base]							is mod=0 & r_m=4; rexXprefix=0 & index=4 & Base             { export Base; }
 addr32: [Index*ss + imm32]				is mod=0 & r_m=4; Index & base=5 & ss; imm32 { local tmp=imm32+Index*ss; export tmp; }
-addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:4 imm32; }
+addr32: [imm32]							is mod=0 & r_m=4; rexXprefix=0 & index=4 & base=5; imm32    { export *[const]:4 imm32; }
 addr32: [Base + Index*ss + simm8_32]	is mod=1 & r_m=4; Index & Base & ss; simm8_32    { local tmp=simm8_32+Base+Index*ss; export tmp; }
-addr32: [Base + simm8_32]				is mod=1 & r_m=4; index=4 & Base; simm8_32   { local tmp=simm8_32+Base; export tmp; }
+addr32: [Base + simm8_32]				is mod=1 & r_m=4; rexXprefix=0 & index=4 & Base; simm8_32   { local tmp=simm8_32+Base; export tmp; }
 addr32: [Base + Index*ss]				is mod=1 & r_m=4; Index & Base & ss; simm8=0 { local tmp=Base+Index*ss; export tmp; }
-addr32: [Base]							is mod=1 & r_m=4; index=4 & Base; simm8=0    { export Base; }
+addr32: [Base]							is mod=1 & r_m=4; rexXprefix=0 & index=4 & Base; simm8=0    { export Base; }
 addr32: [Base + Index*ss + imm32]		is mod=2 & r_m=4; Index & Base & ss; imm32   { local tmp=imm32+Base+Index*ss; export tmp; }
-addr32: [Base + imm32]					is mod=2 & r_m=4; index=4 & Base; imm32      { local tmp=imm32+Base; export tmp; }
+addr32: [Base + imm32]					is mod=2 & r_m=4; rexXprefix=0 & index=4 & Base; imm32      { local tmp=imm32+Base; export tmp; }
 addr32: [Base + Index*ss]				is mod=2 & r_m=4; Index & Base & ss; imm32=0 { local tmp=Base+Index*ss; export tmp; }
-addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0    { export Base; }
+addr32: [Base]							is mod=2 & r_m=4; rexXprefix=0 & index=4 & Base; imm32=0    { export Base; }
 @ifdef IA64
 addr32: [pcRelSimm32]					is bit64=1 & mod=0 & r_m=4; index=4 & base=5; pcRelSimm32 { export *[const]:4 pcRelSimm32; }
 
