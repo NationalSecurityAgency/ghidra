@@ -55,4 +55,8 @@ rootProject.assembleMarkdownToHtml {
 	from ("${this.projectDir}/InstallationGuide.md") {
 		into "docs"
 	}
+	from ("${this.projectDir}/GhidraClass/BSim") {
+		include "*.md"
+		into "docs/GhidraClass/BSim"
+	}
 }
