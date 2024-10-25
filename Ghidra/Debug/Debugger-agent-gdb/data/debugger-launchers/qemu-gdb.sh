@@ -52,9 +52,9 @@ target_image="$1"
 
 if [ -z "$TTY_TARGET" ]
 then
-  "$GHIDRA_LANG_EXTTOOL_qemu" -gdb tcp::$QEMU_GDB -S $OPT_EXTRA_QEMU_ARGS $@ &
+  "$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS $@ &
 else
-  "$GHIDRA_LANG_EXTTOOL_qemu" -gdb tcp::$QEMU_GDB -S $OPT_EXTRA_QEMU_ARGS $@ <$TTY_TARGET >$TTY_TARGET 2>&1 &
+  "$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS $@ <$TTY_TARGET >$TTY_TARGET 2>&1 &
 fi
 
 # Give QEMU a moment to open the socket
