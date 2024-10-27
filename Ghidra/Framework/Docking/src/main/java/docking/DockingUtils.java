@@ -299,7 +299,7 @@ public class DockingUtils {
 	}
 
 	/**
-	 * Perform some operation on a component and all of its descendents, recursively.
+	 * Perform some operation on a component and all of its descendants, recursively.
 	 *
 	 * This applies the operation to all components in the tree, children first.
 	 *

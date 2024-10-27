@@ -152,7 +152,7 @@ public class GroupPath implements Serializable {
     }
 
     /**
-     * Return true if the indicated group path is a descendent of this group path.
+     * Return true if the indicated group path is a descendant of this group path.
      * @param grpPath the group path
      */
     public boolean isDescendant(GroupPath grpPath) {

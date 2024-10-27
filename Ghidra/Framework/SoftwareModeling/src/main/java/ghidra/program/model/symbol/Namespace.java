@@ -110,7 +110,7 @@ public interface Namespace {
 	 * this namespace.
 	 * @throws DuplicateNameException if another symbol exists in the parent namespace with
 	 * the same name as this namespace
-	 * @throws CircularDependencyException if the parent namespace is a descendent of this
+	 * @throws CircularDependencyException if the parent namespace is a descendant of this
 	 * namespace.
 	 */
 	public void setParentNamespace(Namespace parentNamespace)

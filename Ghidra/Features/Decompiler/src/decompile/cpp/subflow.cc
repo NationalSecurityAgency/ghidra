@@ -2795,7 +2795,7 @@ TransformVar *SubfloatFlow::setReplacement(Varnode *vn)
 
 /// \brief Try to trace logical variable through descendant Varnodes
 ///
-/// Given a Varnode placeholder, look at all descendent PcodeOps and create
+/// Given a Varnode placeholder, look at all descendant PcodeOps and create
 /// placeholders for the op and its output Varnode.  If appropriate add the
 /// output placeholder to the worklist.
 /// \param rvn is the given Varnode placeholder

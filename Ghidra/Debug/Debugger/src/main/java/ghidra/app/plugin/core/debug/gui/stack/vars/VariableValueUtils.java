@@ -556,7 +556,7 @@ public enum VariableValueUtils {
 	}
 
 	/**
-	 * Find the descendent that dereferences this given varnode
+	 * Find the descendant that dereferences this given varnode
 	 * 
 	 * <p>
 	 * This searches only one hop for a {@link PcodeOp#LOAD} or {@link PcodeOp#STORE}. If it find a

@@ -223,7 +223,7 @@ public interface FileSystem {
 	 * @param newParentPath path to where the folder is to be moved.
 	 * @throws FileNotFoundException if the moved folder does not exist.
 	 * @throws DuplicateFileException if folder with the same name exists within the new parent folder
-	 * @throws FileInUseException if any file within this folder or its decendents are in-use or checked-out
+	 * @throws FileInUseException if any file within this folder or its descendants are in-use or checked-out
 	 * @throws IOException if an IO error occurs.
 	 * @throws InvalidNameException if the new FolderPath contains an illegal file name.
 	 * @throws IllegalArgumentException if new Parent is invalid.
@@ -238,7 +238,7 @@ public interface FileSystem {
 	 * @param newFolderName the name the folder to be renamed to.
 	 * @throws FileNotFoundException if the folder to be renamed does not exist.
 	 * @throws DuplicateFileException if folder with the new name already exists.
-	 * @throws FileInUseException if any file within this folder or its decendents are in-use or checked-out
+	 * @throws FileInUseException if any file within this folder or its descendants are in-use or checked-out
 	 * @throws IOException if an IO error occurs.
 	 * @throws InvalidNameException if the new FolderName contains an illegal file name.
 	 */

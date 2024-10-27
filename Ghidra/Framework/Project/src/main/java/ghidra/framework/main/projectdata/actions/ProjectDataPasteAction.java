@@ -133,7 +133,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 			return;
 		}
 
-		boolean listChanged = removeDecendantsFromList(list);
+		boolean listChanged = removeDescendantsFromList(list);
 
 		boolean resetClipboard = false;
 		StringBuffer sb = new StringBuffer();
@@ -188,7 +188,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 	 * Remove descendant nodes from the list; having the parent node
 	 * is enough when folders are getting pasted.
 	 */
-	private boolean removeDecendantsFromList(List<GTreeNode> list) {
+	private boolean removeDescendantsFromList(List<GTreeNode> list) {
 		List<GTreeNode> newList = new ArrayList<>();
 		for (int i = 0; i < list.size(); i++) {
 			GTreeNode destNode = list.get(i);

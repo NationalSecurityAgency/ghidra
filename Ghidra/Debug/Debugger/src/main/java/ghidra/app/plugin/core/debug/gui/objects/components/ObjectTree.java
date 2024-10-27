@@ -90,7 +90,7 @@ public class ObjectTree implements ObjectPane {
 						if (selectionPaths != null && selectionPaths.length > 0) {
 							TreePath currentPath = currentSelectionPaths[0];
 							TreePath selectedPath = selectionPaths[0];
-							// NB. isDescendant == has a descendent
+							// NB. isDescendant == has a descendant
 							if (selectedPath.isDescendant(currentPath)) {
 								return;
 							}

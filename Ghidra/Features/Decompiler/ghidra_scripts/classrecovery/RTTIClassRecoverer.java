@@ -203,7 +203,7 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting function return
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void figureOutClassDataMembers(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, DuplicateNameException, InvalidInputException,

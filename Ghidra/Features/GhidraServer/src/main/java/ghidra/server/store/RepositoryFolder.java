@@ -313,7 +313,7 @@ public class RepositoryFolder {
 
 	/**
 	 * Returns true if any file/item contained within this folder
-	 * or its descendents is checked-out.
+	 * or its descendants is checked-out.
 	 */
 	private boolean containsCheckout() throws IOException {
 
@@ -376,8 +376,8 @@ public class RepositoryFolder {
 				if (parent == null) {
 					throw new IOException("Root folder may not be moved");
 				}
-				if (newParent.isDescendentOf(this)) {
-					throw new IOException("New folder must not be decendent");
+				if (newParent.isDescendantOf(this)) {
+					throw new IOException("New folder must not be descendant");
 				}
 				if (containsCheckout()) {
 					throw new FileInUseException(
@@ -426,9 +426,9 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns true if this folder is a descendent of the specified folder
+	 * Returns true if this folder is a descendant of the specified folder
 	 */
-	private boolean isDescendentOf(RepositoryFolder folder) {
+	private boolean isDescendantOf(RepositoryFolder folder) {
 		RepositoryFolder rf = parent;
 		while (rf != null) {
 			if (rf == folder) {
