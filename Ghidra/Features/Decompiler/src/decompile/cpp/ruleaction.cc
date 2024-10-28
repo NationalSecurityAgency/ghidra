@@ -6303,7 +6303,7 @@ int4 RulePtrArith::evaluatePointerExpression(PcodeOp *op,int4 slot)
     return 0;
   if (count > 1) {
     if (outVn->isSpacebase())
-      return 0;		// For the RESULT to be a spacebase pointer it must have only 1 descendent
+      return 0;		// For the RESULT to be a spacebase pointer it must have only 1 descendant
 //    res = 2;		// Uncommenting this line will not let pointers get pushed to multiple descendants
   }
   return res;

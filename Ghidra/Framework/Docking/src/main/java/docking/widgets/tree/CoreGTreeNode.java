@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.SystemUtilities;
  * that this will allow direct thread-safe access to the children without having to worry about
  * {@link ConcurrentModificationException}s while iterating the children.  Also, the assumption
  * is that accessing the children will occur much more frequently than modifying the children.  
- * This should only be a problem if a direct descendent of GTreeNode creates its children by calling
+ * This should only be a problem if a direct descendant of GTreeNode creates its children by calling
  * addNode many times. But in that case, the tree should be using Lazy or 
  * SlowLoading nodes which always load into another list first and all the children will be set 
  * on a node in a single operation.
