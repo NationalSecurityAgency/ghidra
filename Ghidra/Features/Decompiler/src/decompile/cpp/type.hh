@@ -28,7 +28,7 @@ extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
 extern AttributeId ATTRIB_CHAR;		///< Marshaling attribute "char"
 extern AttributeId ATTRIB_CORE;		///< Marshaling attribute "core"
 extern AttributeId ATTRIB_ENUM;		///< Marshaling attribute "enum"
-//extern AttributeId ATTRIB_ENUMSIGNED;	///< Marshaling attribute "enumsigned" deprecated
+extern AttributeId ATTRIB_INCOMPLETE;	///< Marshaling attribute "incomplete"
 //extern AttributeId ATTRIB_ENUMSIZE;	///< Marshaling attribute "enumsize" deprecated
 //extern AttributeId ATTRIB_INTSIZE;	///< Marshaling attribute "intsize"  deprecated
 //extern AttributeId ATTRIB_LONGSIZE;	///< Marshaling attribute "longsize" deprecated
@@ -738,6 +738,7 @@ class TypeFactory {
   Datatype *type_nochar;	///< Same dimensions as char but acts and displays as an INT
   Datatype *charcache[5];	///< Cached character data-types
   list<DatatypeWarning> warnings;	///< Warnings for the user about data-types in \b this factory
+  list<Datatype *> incompleteTypedef;	///< Incomplete data-types defined as a \e typedef
   Datatype *findNoName(Datatype &ct);	///< Find data-type (in this container) by function
   void insert(Datatype *newtype);	///< Insert pointer into the cross-reference sets
   Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
@@ -757,6 +758,7 @@ class TypeFactory {
   void recalcPointerSubmeta(Datatype *base,sub_metatype sub);	///< Recalculate submeta for pointers to given base data-type
   void insertWarning(Datatype *dt,string warn);	///< Register a new data-type warning with \b this factory
   void removeWarning(Datatype *dt);		///< Remove the warning associated with the given data-type
+  void resolveIncompleteTypedefs(void);		///< Redefine incomplete typedefs of data-types that are now complete
 protected:
   Architecture *glb;		///< The Architecture object that owns this TypeFactory
   Datatype *findByIdLocal(const string &nm,uint8 id) const;	///< Search locally by name and id

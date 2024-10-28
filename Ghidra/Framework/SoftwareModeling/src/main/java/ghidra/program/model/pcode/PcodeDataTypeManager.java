@@ -799,12 +799,12 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode a Structure to the stream that has its size reported as zero.
+	 * Encode a Structure/Union to the stream without listing its fields
 	 * @param encoder is the stream encoder
 	 * @param type data type to encode
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encodeCompositeZeroSizePlaceholder(Encoder encoder, DataType type)
+	public void encodeCompositePlaceholder(Encoder encoder, DataType type)
 			throws IOException {
 		String metaString;
 		if (type instanceof Structure) {
@@ -820,7 +820,9 @@ public class PcodeDataTypeManager {
 		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
 		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
 		encoder.writeString(ATTRIB_METATYPE, metaString);
-		encoder.writeSignedInteger(ATTRIB_SIZE, 0);
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
+		encoder.writeBool(ATTRIB_INCOMPLETE, true);
 		encoder.closeElement(ELEM_TYPE);
 	}
 
