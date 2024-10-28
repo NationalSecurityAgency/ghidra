@@ -58,10 +58,7 @@ public class TraceJdiMethods implements RmiMethods {
 //		
 //	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh VM",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh VM", schema = "VirtualMachine")
 	public void refresh_vm(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshVM")) {
 			String path = obj.getPath();
@@ -70,10 +67,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh process",
-		schema = "ProcessRef")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh process", schema = "ProcessRef")
 	public void refresh_process(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshProcess")) {
 			String path = obj.getPath();
@@ -82,10 +76,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh thread groups",
-		schema = "ThreadGroupReferenceContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh thread groups", schema = "ThreadGroupReferenceContainer")
 	public void refresh_thread_groups(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshThreadGroups")) {
 			String path = obj.getPath();
@@ -100,10 +91,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh thread group",
-		schema = "ThreadGroupReferenceProxy")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh thread group", schema = "ThreadGroupReferenceProxy")
 	public void refresh_thread_group_proxy(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshThreadGroup")) {
 			String path = obj.getPath();
@@ -118,10 +106,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh thread group",
-		schema = "ThreadGroupReference")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh thread group", schema = "ThreadGroupReference")
 	public void refresh_thread_group(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshThreadGroup")) {
 			String path = obj.getPath();
@@ -130,10 +115,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh threads",
-		schema = "ThreadContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh threads", schema = "ThreadContainer")
 	public void refresh_threads(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshThreads")) {
 			String path = obj.getPath();
@@ -143,10 +125,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh threads",
-		schema = "ThreadReferenceContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh threads", schema = "ThreadReferenceContainer")
 	public void refresh_threadrefs(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshThreads")) {
 			String path = obj.getPath();
@@ -166,10 +145,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh Thread",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh Thread", schema = "Thread")
 	public void refresh_thread(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshThread")) {
 			String path = obj.getPath();
@@ -185,30 +161,21 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh registers",
-		schema = "RegisterContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh registers", schema = "RegisterContainer")
 	public void refresh_registers(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshRegisters")) {
 			cmds.ghidraTracePutFrames();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh modules",
-		schema = "ModuleReferenceContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh modules", schema = "ModuleReferenceContainer")
 	public void refresh_modules(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshModules")) {
 			cmds.putModuleReferenceContainer();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh module",
-		schema = "ModuleReference")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh module", schema = "ModuleReference")
 	public void refresh_module(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshModule")) {
 			String path = obj.getPath();
@@ -217,10 +184,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh monitor info",
-		schema = "MonitorInfoContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh monitor info", schema = "MonitorInfoContainer")
 	public void refresh_monitors(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshMonitorInfo")) {
 			String path = obj.getPath();
@@ -233,10 +197,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh monitor info",
-		schema = "MonitorInfo")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh monitor info", schema = "MonitorInfo")
 	public void refresh_monitor_info(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshMonitorInfo")) {
 			String path = obj.getPath();
@@ -245,10 +206,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh fields",
-		schema = "FieldContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh fields", schema = "FieldContainer")
 	public void refresh_fields(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshFields")) {
 			String path = obj.getPath();
@@ -272,10 +230,7 @@ public class TraceJdiMethods implements RmiMethods {
 //		}
 //	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh objects",
-		schema = "ObjectReferenceContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh objects", schema = "ObjectReferenceContainer")
 	public void refresh_objects(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshObjects")) {
 			String path = obj.getPath();
@@ -300,10 +255,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh object",
-		schema = "ObjectReferenceProxy")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh object", schema = "ObjectReferenceProxy")
 	public void refresh_object_proxy(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshObject")) {
 			String path = obj.getPath();
@@ -324,10 +276,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh object",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh object", schema = "ObjectReference")
 	public void refresh_object(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshInstance")) {
 			String path = obj.getPath();
@@ -336,10 +285,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh methods",
-		schema = "MethodContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh methods", schema = "MethodContainer")
 	public void refresh_methods(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshMethods")) {
 			String path = obj.getPath();
@@ -349,10 +295,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh method",
-		schema = "Method")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh method", schema = "Method")
 	public void refresh_method(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshMethod")) {
 			String path = obj.getPath();
@@ -361,10 +304,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh arguments",
-		schema = "ArgumentContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh arguments", schema = "ArgumentContainer")
 	public void refresh_arguments(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshArguments")) {
 			String path = obj.getPath();
@@ -374,15 +314,9 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "load_class",
-		display = "Load class",
-		schema = "ReferenceTypeContainer")
+	@RmiMethodRegistry.TraceMethod(action = "load_class", display = "Load class", schema = "ReferenceTypeContainer")
 	public void find_class(RmiTraceObject obj,
-			@TargetMethod.Param(
-				description = "Class to open",
-				display = "Class",
-				name = "find") String targetClass) {
+			@TargetMethod.Param(description = "Class to open", display = "Class", name = "find") String targetClass) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("FindClass")) {
 			String path = obj.getPath();
 			String ppath = cmds.getParentPath(path);
@@ -393,18 +327,12 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh_memory",
-		display = "Refresh memory",
-		schema = "Memory")
+	@RmiMethodRegistry.TraceMethod(action = "refresh_memory", display = "Refresh memory", schema = "Memory")
 	public void refresh_memory(RmiTraceObject obj) {
 		refresh_reference_types(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh_types",
-		display = "Refresh reference types",
-		schema = "ReferenceTypeContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh_types", display = "Refresh reference types", schema = "ReferenceTypeContainer")
 	public void refresh_reference_types(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshReferenceTypes")) {
 			String path = obj.getPath();
@@ -446,10 +374,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh reference type",
-		schema = "ReferenceTypeProxy")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh reference type", schema = "ReferenceTypeProxy")
 	public void refresh_reference_type_proxy(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshReferenceType")) {
 			String path = obj.getPath();
@@ -470,10 +395,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh reference type",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh reference type", schema = "ReferenceType")
 	public void refresh_reference_type(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshReferenceType")) {
 			String path = obj.getPath();
@@ -482,10 +404,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "load",
-		display = "Load reference",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "load", display = "Load reference", schema = "ReferenceType")
 	public void load_reftype(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshReferenceType")) {
 			VirtualMachine vm = manager.getJdi().getCurrentVM();
@@ -496,10 +415,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh variables",
-		schema = "VariableContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh variables", schema = "VariableContainer")
 	public void refresh_variables(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshVariables")) {
 			String path = obj.getPath();
@@ -525,10 +441,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh variable",
-		schema = "Variable")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh variable", schema = "Variable")
 	public void refresh_variable(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshVariable")) {
 			String path = obj.getPath();
@@ -539,10 +452,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh locations",
-		schema = "LocationContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh locations", schema = "LocationContainer")
 	public void refresh_locations(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshLocations")) {
 			String path = obj.getPath();
@@ -559,10 +469,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh location",
-		schema = "Location")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh location", schema = "Location")
 	public void refresh_location(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshLocation")) {
 			String path = obj.getPath();
@@ -571,30 +478,21 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh breakpoints",
-		schema = "BreakpointContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh breakpoints", schema = "BreakpointContainer")
 	public void refresh_breakpoints(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshBreakpoints")) {
 			cmds.putBreakpoints();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh events",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh events", schema = "EventContainer")
 	public void refresh_events(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshEvents")) {
 			cmds.putEvents();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh values",
-		schema = "ValueContainer")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh values", schema = "ValueContainer")
 	public void refresh_values(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshValues")) {
 			String path = obj.getPath();
@@ -606,10 +504,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "refresh",
-		display = "Refresh value",
-		schema = "Value")
+	@RmiMethodRegistry.TraceMethod(action = "refresh", display = "Refresh value", schema = "Value")
 	public void refresh_value(RmiTraceObject obj) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshLocation")) {
 			String path = obj.getPath();
@@ -618,10 +513,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "set",
-		display = "Set value",
-		schema = "Variable")
+	@RmiMethodRegistry.TraceMethod(action = "set", display = "Set value", schema = "Variable")
 	public void set_value_lvar(RmiTraceObject obj, String value) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshLocation")) {
 			String path = obj.getPath();
@@ -630,10 +522,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "set",
-		display = "Set value",
-		schema = "Field")
+	@RmiMethodRegistry.TraceMethod(action = "set", display = "Set value", schema = "Field")
 	public void set_value_field(RmiTraceObject obj, String value) {
 		try (RmiTransaction tx = cmds.state.trace.openTx("RefreshLocation")) {
 			String path = obj.getPath();
@@ -674,10 +563,7 @@ public class TraceJdiMethods implements RmiMethods {
 		manager.getHooks().setState(thread.virtualMachine());
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "suspend",
-		display = "Suspend",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "suspend", display = "Suspend", schema = "VirtualMachine")
 	public void suspend(RmiTraceObject obj) {
 		Object object = getObjectFromPath(obj.getPath());
 		if (object instanceof ThreadReference thread) {
@@ -691,28 +577,21 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "interrupt",
-		display = "Interrupt",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "interrupt", display = "Interrupt", schema = "VirtualMachine")
 	public void interrupt(RmiTraceObject obj) {
 		suspend(obj);
 	}
 
 	// NB: For the VirtualMachine, the step methods add requests for break-on-step for all threads.
 	//  These requests will remain pending until the VM is resumed.
-	@RmiMethodRegistry.TraceMethod(
-		action = "step_into",
-		display = "Step into",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "step_into", display = "Step into", schema = "VirtualMachine")
 	public void step_vm_into(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		List<ThreadReference> threads = getThreadsFromValue(obj);
 		for (ThreadReference thread : threads) {
 			try {
 				StepRequest stepReq = vm.eventRequestManager()
-						.createStepRequest(thread, StepRequest.STEP_MIN,
-							StepRequest.STEP_INTO);
+						.createStepRequest(thread, StepRequest.STEP_MIN, StepRequest.STEP_INTO);
 				stepReq.enable();
 			}
 			catch (DuplicateRequestException dre) {
@@ -722,18 +601,14 @@ public class TraceJdiMethods implements RmiMethods {
 		vm.resume();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "step_over",
-		display = "Step over",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "step_over", display = "Step over", schema = "VirtualMachine")
 	public void step_vm_over(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		List<ThreadReference> threads = getThreadsFromValue(obj);
 		for (ThreadReference thread : threads) {
 			try {
 				StepRequest stepReq = vm.eventRequestManager()
-						.createStepRequest(thread, StepRequest.STEP_MIN,
-							StepRequest.STEP_OVER);
+						.createStepRequest(thread, StepRequest.STEP_MIN, StepRequest.STEP_OVER);
 				stepReq.enable();
 			}
 			catch (DuplicateRequestException dre) {
@@ -743,18 +618,14 @@ public class TraceJdiMethods implements RmiMethods {
 		vm.resume();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "step_out",
-		display = "Step out",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "step_out", display = "Step out", schema = "VirtualMachine")
 	public void step_vm_out(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		List<ThreadReference> threads = getThreadsFromValue(obj);
 		for (ThreadReference thread : threads) {
 			try {
 				StepRequest stepReq = vm.eventRequestManager()
-						.createStepRequest(thread, StepRequest.STEP_MIN,
-							StepRequest.STEP_OUT);
+						.createStepRequest(thread, StepRequest.STEP_MIN, StepRequest.STEP_OUT);
 				stepReq.enable();
 			}
 			catch (DuplicateRequestException dre) {
@@ -769,8 +640,7 @@ public class TraceJdiMethods implements RmiMethods {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		ThreadReference thread = (ThreadReference) getObjectFromPath(obj.getPath());
 		StepRequest stepReq = vm.eventRequestManager()
-				.createStepRequest(thread, StepRequest.STEP_MIN,
-					StepRequest.STEP_INTO);
+				.createStepRequest(thread, StepRequest.STEP_MIN, StepRequest.STEP_INTO);
 		stepReq.enable();
 		vm.resume();
 	}
@@ -780,8 +650,7 @@ public class TraceJdiMethods implements RmiMethods {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		ThreadReference thread = (ThreadReference) getObjectFromPath(obj.getPath());
 		StepRequest stepReq = vm.eventRequestManager()
-				.createStepRequest(thread, StepRequest.STEP_OVER,
-					StepRequest.STEP_INTO);
+				.createStepRequest(thread, StepRequest.STEP_OVER, StepRequest.STEP_INTO);
 		stepReq.enable();
 		vm.resume();
 	}
@@ -791,8 +660,7 @@ public class TraceJdiMethods implements RmiMethods {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		ThreadReference thread = (ThreadReference) getObjectFromPath(obj.getPath());
 		StepRequest stepReq = vm.eventRequestManager()
-				.createStepRequest(thread, StepRequest.STEP_OUT,
-					StepRequest.STEP_INTO);
+				.createStepRequest(thread, StepRequest.STEP_OUT, StepRequest.STEP_INTO);
 		stepReq.enable();
 		vm.resume();
 	}
@@ -800,10 +668,7 @@ public class TraceJdiMethods implements RmiMethods {
 //	public void step_advance(Object obj) {}
 //  public void step_return(Object obj) {}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "thread_interrupt",
-		display = "Thread Interrupt",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "thread_interrupt", display = "Thread Interrupt", schema = "Thread")
 	public void thread_interrupt(RmiTraceObject obj) {
 		Object object = getObjectFromPath(obj.getPath());
 		if (object instanceof ThreadReference thread) {
@@ -812,10 +677,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "pop_stack",
-		display = "Pop stack",
-		schema = "StackFrame")
+	@RmiMethodRegistry.TraceMethod(action = "pop_stack", display = "Pop stack", schema = "StackFrame")
 	public void pop_stack(RmiTraceObject obj) {
 		StackFrame frame = (StackFrame) getObjectFromPath(obj.getPath());
 		ThreadReference thread = frame.thread();
@@ -823,68 +685,49 @@ public class TraceJdiMethods implements RmiMethods {
 			thread.popFrames(frame);
 		}
 		catch (IncompatibleThreadStateException e) {
-			Msg.out("Incompatible thread state for pop");
+			Msg.error(this, "Incompatible thread state for pop");
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_location",
-		display = "Break on execute",
-		schema = "Location")
+	@RmiMethodRegistry.TraceMethod(action = "break_location", display = "Break on execute", schema = "Location")
 	public void break_location(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof Location loc) {
-			BreakpointRequest brkReq = vm.eventRequestManager()
-					.createBreakpointRequest(loc);
+			BreakpointRequest brkReq = vm.eventRequestManager().createBreakpointRequest(loc);
 			brkReq.enable();
 			cmds.putBreakpoints();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_field_access",
-		display = "Break on access",
-		schema = "Field")
+	@RmiMethodRegistry.TraceMethod(action = "break_field_access", display = "Break on access", schema = "Field")
 	public void break_access(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof Field field) {
-			AccessWatchpointRequest brkReq = vm.eventRequestManager()
-					.createAccessWatchpointRequest(field);
+			AccessWatchpointRequest brkReq =
+				vm.eventRequestManager().createAccessWatchpointRequest(field);
 			brkReq.enable();
 			cmds.putBreakpoints();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_field_modified",
-		display = "Break on modify",
-		schema = "Field")
+	@RmiMethodRegistry.TraceMethod(action = "break_field_modified", display = "Break on modify", schema = "Field")
 	public void break_modify(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof Field field) {
-			ModificationWatchpointRequest brkReq = vm.eventRequestManager()
-					.createModificationWatchpointRequest(field);
+			ModificationWatchpointRequest brkReq =
+				vm.eventRequestManager().createModificationWatchpointRequest(field);
 			brkReq.enable();
 			cmds.putBreakpoints();
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_exception",
-		display = "Break on exception",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_exception", display = "Break on exception", schema = "ReferenceType")
 	public void break_exception(RmiTraceObject obj,
-			@TargetMethod.Param(
-				description = "Caught exceptions will be notified",
-				display = "NotifyCaught",
-				name = "notifyC") Boolean notifyCaught,
-			@TargetMethod.Param(
-				description = "Uncaught exceptions will be notified",
-				display = "NotifyUncaught",
-				name = "notifyU") Boolean notifyUncaught) {
+			@TargetMethod.Param(description = "Caught exceptions will be notified", display = "NotifyCaught", name = "notifyC") Boolean notifyCaught,
+			@TargetMethod.Param(description = "Uncaught exceptions will be notified", display = "NotifyUncaught", name = "notifyU") Boolean notifyUncaught) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
@@ -897,8 +740,7 @@ public class TraceJdiMethods implements RmiMethods {
 
 	private void break_started(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		ThreadStartRequest brkReq = vm.eventRequestManager()
-				.createThreadStartRequest();
+		ThreadStartRequest brkReq = vm.eventRequestManager().createThreadStartRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ThreadReference ref) {
 			brkReq.putProperty("Thread", ref);
@@ -908,26 +750,19 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_started",
-		display = "Break on thread start",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_started", display = "Break on thread start", schema = "EventContainer")
 	public void break_started_container(RmiTraceObject obj) {
 		break_started(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_started",
-		display = "Break on thread start",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_started", display = "Break on thread start", schema = "Thread")
 	public void break_started_thread(RmiTraceObject obj) {
 		break_started(obj);
 	}
 
 	private void break_death(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		ThreadDeathRequest brkReq = vm.eventRequestManager()
-				.createThreadDeathRequest();
+		ThreadDeathRequest brkReq = vm.eventRequestManager().createThreadDeathRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ThreadReference ref) {
 			brkReq.putProperty("Thread", ref);
@@ -937,38 +772,27 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_death",
-		display = "Break on thread exit",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_death", display = "Break on thread exit", schema = "EventContainer")
 	public void break_death_container(RmiTraceObject obj) {
 		break_death(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_death",
-		display = "Break on thread exit",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_death", display = "Break on thread exit", schema = "Thread")
 	public void break_death_thread(RmiTraceObject obj) {
 		break_death(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_vm_death",
-		display = "Break on VM death",
-		schema = "VirtualMachine")
+	@RmiMethodRegistry.TraceMethod(action = "break_vm_death", display = "Break on VM death", schema = "VirtualMachine")
 	public void break_vm_death(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		VMDeathRequest brkReq = vm.eventRequestManager()
-				.createVMDeathRequest();
+		VMDeathRequest brkReq = vm.eventRequestManager().createVMDeathRequest();
 		brkReq.enable();
 		cmds.putEvents();
 	}
 
 	private void break_enter(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		MethodEntryRequest brkReq = vm.eventRequestManager()
-				.createMethodEntryRequest();
+		MethodEntryRequest brkReq = vm.eventRequestManager().createMethodEntryRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -986,42 +810,29 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_enter",
-		display = "Break on method enter",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_enter", display = "Break on method enter", schema = "EventContainer")
 	public void break_enter_container(RmiTraceObject obj) {
 		break_enter(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_enter",
-		display = "Break on method enter",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_enter", display = "Break on method enter", schema = "ReferenceType")
 	public void break_enter_reftype(RmiTraceObject obj) {
 		break_enter(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_enter_instance",
-		display = "Break on method enter",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "break_enter_instance", display = "Break on method enter", schema = "ObjectReference")
 	public void break_enter_instance(RmiTraceObject obj) {
 		break_enter(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_enter_thread",
-		display = "Break on method enter",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_enter_thread", display = "Break on method enter", schema = "Thread")
 	public void break_enter_thread(RmiTraceObject obj) {
 		break_enter(obj);
 	}
 
 	private void break_exit(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		MethodExitRequest brkReq = vm.eventRequestManager()
-				.createMethodExitRequest();
+		MethodExitRequest brkReq = vm.eventRequestManager().createMethodExitRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -1039,42 +850,29 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_exit",
-		display = "Break on method exit",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_exit", display = "Break on method exit", schema = "EventContainer")
 	public void break_exit_container(RmiTraceObject obj) {
 		break_exit(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_exit",
-		display = "Break on method exit",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_exit", display = "Break on method exit", schema = "ReferenceType")
 	public void break_exit_reftype(RmiTraceObject obj) {
 		break_exit(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_exit",
-		display = "Break on method exit",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "break_exit", display = "Break on method exit", schema = "ObjectReference")
 	public void break_exit_instance(RmiTraceObject obj) {
 		break_exit(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_exit",
-		display = "Break on method exit",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_exit", display = "Break on method exit", schema = "Thread")
 	public void break_exit_thread(RmiTraceObject obj) {
 		break_exit(obj);
 	}
 
 	private void break_load(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		ClassPrepareRequest brkReq = vm.eventRequestManager()
-				.createClassPrepareRequest();
+		ClassPrepareRequest brkReq = vm.eventRequestManager().createClassPrepareRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -1084,42 +882,32 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_load",
-		display = "Break on class load",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_load", display = "Break on class load", schema = "EventContainer")
 	public void break_load_container(RmiTraceObject obj) {
 		break_load(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_load",
-		display = "Break on class load",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_load", display = "Break on class load", schema = "ReferenceType")
 	public void break_load_reftype(RmiTraceObject obj) {
 		break_load(obj);
 	}
 
 	private void break_unload(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		ClassUnloadRequest brkReq = vm.eventRequestManager()
-				.createClassUnloadRequest();
+		ClassUnloadRequest brkReq = vm.eventRequestManager().createClassUnloadRequest();
 		brkReq.enable();
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_unload",
-		display = "Break on class unload",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_unload", display = "Break on class unload", schema = "EventContainer")
 	public void break_unload_container(RmiTraceObject obj) {
 		break_unload(obj);
 	}
 
 	private void break_mon_enter_contention(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		MonitorContendedEnterRequest brkReq = vm.eventRequestManager()
-				.createMonitorContendedEnterRequest();
+		MonitorContendedEnterRequest brkReq =
+			vm.eventRequestManager().createMonitorContendedEnterRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -1137,42 +925,30 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_enter_contention",
-		display = "Break on monitor contended enter",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_enter_contention", display = "Break on monitor contended enter", schema = "EventContainer")
 	public void break_mon_enter_contention_container(RmiTraceObject obj) {
 		break_mon_enter_contention(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_enter_contention",
-		display = "Break on monitor contended enter",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_enter_contention", display = "Break on monitor contended enter", schema = "ReferenceType")
 	public void break_mon_enter_contention_reftype(RmiTraceObject obj) {
 		break_mon_enter_contention(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_enter_contention",
-		display = "Break on monitor contended enter",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_enter_contention", display = "Break on monitor contended enter", schema = "ObjectReference")
 	public void break_mon_enter_contention_instance(RmiTraceObject obj) {
 		break_mon_enter_contention(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_enter_contention",
-		display = "Break on monitor contended enter",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_enter_contention", display = "Break on monitor contended enter", schema = "Thread")
 	public void break_mon_enter_contention_thread(RmiTraceObject obj) {
 		break_mon_enter_contention(obj);
 	}
 
 	private void break_mon_entered_contention(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		MonitorContendedEnteredRequest brkReq = vm.eventRequestManager()
-				.createMonitorContendedEnteredRequest();
+		MonitorContendedEnteredRequest brkReq =
+			vm.eventRequestManager().createMonitorContendedEnteredRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -1190,42 +966,29 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_entered_contention",
-		display = "Break on monitor contented entered",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_entered_contention", display = "Break on monitor contented entered", schema = "EventContainer")
 	public void break_mon_entered_contention_container(RmiTraceObject obj) {
 		break_mon_entered_contention(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_entered_contention",
-		display = "Break on monitor contented entered",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_entered_contention", display = "Break on monitor contented entered", schema = "ReferenceType")
 	public void break_mon_entered_contention_reftype(RmiTraceObject obj) {
 		break_mon_entered_contention(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_entered_contention",
-		display = "Break on monitor contented entered",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_entered_contention", display = "Break on monitor contented entered", schema = "ObjectReference")
 	public void break_mon_entered_contention_instance(RmiTraceObject obj) {
 		break_mon_entered_contention(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_entered_contention",
-		display = "Break on monitor contented entered",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_entered_contention", display = "Break on monitor contented entered", schema = "Thread")
 	public void break_mon_entered_contention_thread(RmiTraceObject obj) {
 		break_mon_entered_contention(obj);
 	}
 
 	private void break_mon_wait(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		MonitorWaitRequest brkReq = vm.eventRequestManager()
-				.createMonitorWaitRequest();
+		MonitorWaitRequest brkReq = vm.eventRequestManager().createMonitorWaitRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -1243,42 +1006,29 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_wait",
-		display = "Break on monitor wait",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_wait", display = "Break on monitor wait", schema = "EventContainer")
 	public void break_mon_wait_container(RmiTraceObject obj) {
 		break_mon_wait(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_wait",
-		display = "Break on monitor wait",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_wait", display = "Break on monitor wait", schema = "ReferenceType")
 	public void break_mon_wait_reftype(RmiTraceObject obj) {
 		break_mon_wait(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_wait",
-		display = "Break on monitor wait",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_wait", display = "Break on monitor wait", schema = "ObjectReference")
 	public void break_mon_wait_instance(RmiTraceObject obj) {
 		break_mon_wait(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_wait",
-		display = "Break on monitor wait",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_wait", display = "Break on monitor wait", schema = "Thread")
 	public void break_mon_wait_thread(RmiTraceObject obj) {
 		break_mon_wait(obj);
 	}
 
 	private void break_mon_waited(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		MonitorWaitedRequest brkReq = vm.eventRequestManager()
-				.createMonitorWaitedRequest();
+		MonitorWaitedRequest brkReq = vm.eventRequestManager().createMonitorWaitedRequest();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ReferenceType reftype) {
 			brkReq.putProperty("Class", reftype);
@@ -1296,47 +1046,29 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_waited",
-		display = "Break on monitor waited",
-		schema = "EventContainer")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_waited", display = "Break on monitor waited", schema = "EventContainer")
 	public void break_mon_waited_container(RmiTraceObject obj) {
 		break_mon_waited(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_waited",
-		display = "Break on monitor waited",
-		schema = "ReferenceType")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_waited", display = "Break on monitor waited", schema = "ReferenceType")
 	public void break_mon_waited_reftype(RmiTraceObject obj) {
 		break_mon_waited(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_waited",
-		display = "Break on monitor waited",
-		schema = "ObjectReference")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_waited", display = "Break on monitor waited", schema = "ObjectReference")
 	public void break_mon_waited_instance(RmiTraceObject obj) {
 		break_mon_waited(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "break_mon_waited",
-		display = "Break on monitor waited",
-		schema = "Thread")
+	@RmiMethodRegistry.TraceMethod(action = "break_mon_waited", display = "Break on monitor waited", schema = "Thread")
 	public void break_mon_waited_thread(RmiTraceObject obj) {
 		break_mon_waited(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "add_count_filter",
-		display = "Add count filter",
-		schema = "Event")
+	@RmiMethodRegistry.TraceMethod(action = "add_count_filter", display = "Add count filter", schema = "Event")
 	public void add_count_filter(RmiTraceObject obj,
-			@TargetMethod.Param(
-				description = "Count",
-				display = "MaxCount",
-				name = "count") Integer count) {
+			@TargetMethod.Param(description = "Count", display = "MaxCount", name = "count") Integer count) {
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof EventRequest req) {
 			req.disable();
@@ -1347,19 +1079,10 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "set_class_filter",
-		display = "Set class filter",
-		schema = "Event")
+	@RmiMethodRegistry.TraceMethod(action = "set_class_filter", display = "Set class filter", schema = "Event")
 	public void set_class_filter(RmiTraceObject obj,
-			@TargetMethod.Param(
-				description = "Filter Pattern",
-				display = "Filter",
-				name = "filter") String filter,
-			@TargetMethod.Param(
-				description = "Exclude",
-				display = "Exclude",
-				name = "exclude") String exclude) {
+			@TargetMethod.Param(description = "Filter Pattern", display = "Filter", name = "filter") String filter,
+			@TargetMethod.Param(description = "Exclude", display = "Exclude", name = "exclude") String exclude) {
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof MethodEntryRequest req) {
 			req.disable();
@@ -1460,15 +1183,9 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "set_source_filter",
-		display = "Set source filter",
-		schema = "Event")
+	@RmiMethodRegistry.TraceMethod(action = "set_source_filter", display = "Set source filter", schema = "Event")
 	public void set_source_filter(RmiTraceObject obj,
-			@TargetMethod.Param(
-				description = "Source Name Pattern",
-				display = "SourceName",
-				name = "srcname") String srcname) {
+			@TargetMethod.Param(description = "Source Name Pattern", display = "SourceName", name = "srcname") String srcname) {
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ClassPrepareRequest req) {
 			req.disable();
@@ -1479,10 +1196,7 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "set_platform_filter",
-		display = "Set platform filter",
-		schema = "Event")
+	@RmiMethodRegistry.TraceMethod(action = "set_platform_filter", display = "Set platform filter", schema = "Event")
 	public void set_platform_filter(RmiTraceObject obj) {
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof ThreadStartRequest req) {
@@ -1500,16 +1214,13 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putEvents();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "toggle_breakpoint",
-		display = "Toggle breakpoint",
-		schema = "BreakpointSpec")
+	@RmiMethodRegistry.TraceMethod(action = "toggle_breakpoint", display = "Toggle breakpoint", schema = "BreakpointSpec")
 	public void toggle_breakpoint(RmiTraceObject obj) {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof Field field) {
-			ModificationWatchpointRequest brkReq = vm.eventRequestManager()
-					.createModificationWatchpointRequest(field);
+			ModificationWatchpointRequest brkReq =
+				vm.eventRequestManager().createModificationWatchpointRequest(field);
 			brkReq.enable();
 		}
 		if (ctxt instanceof EventRequest req) {
@@ -1523,10 +1234,7 @@ public class TraceJdiMethods implements RmiMethods {
 		cmds.putBreakpoints();
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "toggle_event",
-		display = "Toggle event",
-		schema = "Event")
+	@RmiMethodRegistry.TraceMethod(action = "toggle_event", display = "Toggle event", schema = "Event")
 	public void toggle_event(RmiTraceObject obj) {
 		Object ctxt = getObjectFromPath(obj.getPath());
 		if (ctxt instanceof EventRequest req) {
@@ -1540,10 +1248,7 @@ public class TraceJdiMethods implements RmiMethods {
 		}
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "toggle_scope",
-		display = "Toggle scope",
-		schema = "MethodContainer")
+	@RmiMethodRegistry.TraceMethod(action = "toggle_scope", display = "Toggle scope", schema = "MethodContainer")
 	public void toggle_scope_methods(RmiTraceObject obj) {
 		String ppath = cmds.getParentPath(obj.getPath());
 		Object parent = getObjectFromPath(ppath);
@@ -1551,10 +1256,7 @@ public class TraceJdiMethods implements RmiMethods {
 		refresh_methods(obj);
 	}
 
-	@RmiMethodRegistry.TraceMethod(
-		action = "toggle_scope",
-		display = "Toggle scope",
-		schema = "FieldContainer")
+	@RmiMethodRegistry.TraceMethod(action = "toggle_scope", display = "Toggle scope", schema = "FieldContainer")
 	public void toggle_scope_fields(RmiTraceObject obj) {
 		String ppath = cmds.getParentPath(obj.getPath());
 		Object parent = getObjectFromPath(ppath);
