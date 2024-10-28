@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2135,9 +2135,9 @@ int4 ActionNormalizeBranches::apply(Funcdata &data)
     if (cbranch == (PcodeOp *)0) continue;
     if (cbranch->code() != CPUI_CBRANCH) continue;
     fliplist.clear();
-    if (opFlipInPlaceTest(cbranch,fliplist) != 0)
+    if (Funcdata::opFlipInPlaceTest(cbranch,fliplist) != 0)
       continue;
-    opFlipInPlaceExecute(data,fliplist);
+    data.opFlipInPlaceExecute(fliplist);
     bb->flipInPlaceExecute();
     count += 1;			// Indicate a change was made
   }

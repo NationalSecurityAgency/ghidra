@@ -492,6 +492,7 @@ public:
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
   bool noInterveningStatement(void) const;
   PcodeOp *findMultiequal(const vector<Varnode *> &varArray);		///< Find MULTIEQUAL with given inputs
+  PcodeOp *earliestUse(Varnode *vn);
   static bool liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot);	///< Verify given Varnodes are defined with same PcodeOp
 };
 
