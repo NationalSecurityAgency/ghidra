@@ -459,7 +459,7 @@ bool StringSequence::transform(void)
   return true;
 }
 
-/// From a starting pointer, backtrack through PTRADDs to a putative root Varnode pointer.
+/// From a starting pointer, backtrack through PTRADDs and COPYs to a putative root Varnode pointer.
 /// \param initPtr is pointer Varnode into the root STORE
 void HeapSequence::findBasePointer(Varnode *initPtr)
 
@@ -467,10 +467,73 @@ void HeapSequence::findBasePointer(Varnode *initPtr)
   basePointer = initPtr;
   while(basePointer->isWritten()) {
     PcodeOp *op = basePointer->getDef();
-    if (op->code() != CPUI_PTRADD) break;
-    int8 sz = op->getIn(2)->getOffset();
-    if (sz != charType->getAlignSize()) break;
+    OpCode opc = op->code();
+    if (opc == CPUI_PTRADD) {
+      int8 sz = op->getIn(2)->getOffset();
+      if (sz != charType->getAlignSize()) break;
+    }
+    else if (opc != CPUI_COPY)
+      break;
     basePointer = op->getIn(0);
+  }
+}
+
+/// Back-track from \b basePointer through PTRSUBs, PTRADDs, and INT_ADDs to an earlier root, keeping track
+/// of any offsets.  If an earlier root exists, trace forward, through ops trying to match the offsets.
+/// For trace of ops whose offsets match exactly, the resulting Varnode is added to the list of duplicates.
+/// \param duplist will hold the list of duplicate Varnodes (including \b basePointer)
+void HeapSequence::findDuplicateBases(vector<Varnode *> &duplist)
+
+{
+  if (!basePointer->isWritten()) {
+    duplist.push_back(basePointer);
+    return;
+  }
+  PcodeOp *op = basePointer->getDef();
+  OpCode opc = op->code();
+  if ((opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRADD) || !op->getIn(1)->isConstant()) {
+    duplist.push_back(basePointer);
+    return;
+  }
+  Varnode *copyRoot = basePointer;
+  vector<uintb> offset;
+  do {
+    uintb off = op->getIn(1)->getOffset();
+    if (opc == CPUI_PTRADD)
+      off *= op->getIn(2)->getOffset();
+    offset.push_back(off);
+    copyRoot = op->getIn(0);
+    if (!copyRoot->isWritten()) break;
+    op = copyRoot->getDef();
+    opc = op->code();
+    if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRSUB)
+      break;
+  } while(op->getIn(1)->isConstant());
+
+  duplist.push_back(copyRoot);
+  vector<Varnode *> midlist;
+  for(int4 i=offset.size()-1;i>=0;--i) {
+    duplist.swap(midlist);
+    duplist.clear();
+    for(int4 j=0;j<midlist.size();++j) {
+      Varnode *vn = midlist[j];
+      list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+      while(iter != vn->endDescend()) {
+	op = *iter;
+	++iter;
+	opc = op->code();
+	if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRSUB)
+	  continue;
+	if (op->getIn(0) != vn || !op->getIn(1)->isConstant())
+	  continue;
+	uintb off = op->getIn(1)->getOffset();
+	if (opc == CPUI_PTRADD)
+	  off *= op->getIn(2)->getOffset();
+	if (off != offset[i])
+	  continue;
+	duplist.push_back(op->getOut());
+      }
+    }
   }
 }
 
@@ -480,9 +543,8 @@ void HeapSequence::findBasePointer(Varnode *initPtr)
 void HeapSequence::findInitialStores(vector<PcodeOp *> &stores)
 
 {
-  Datatype *ptrType = rootOp->getIn(1)->getTypeReadFacing(rootOp);
   vector<Varnode *> ptradds;
-  ptradds.push_back(basePointer);
+  findDuplicateBases(ptradds);
   int4 pos = 0;
   int4 alignSize = charType->getAlignSize();
   while(pos < ptradds.size()) {
@@ -494,8 +556,12 @@ void HeapSequence::findInitialStores(vector<PcodeOp *> &stores)
       OpCode opc = op->code();
       if (opc == CPUI_PTRADD) {
 	if (op->getIn(0) != vn) continue;
-	if (op->getOut()->getTypeDefFacing() != ptrType) continue;
+	// We only check array element size here, if we checked the data-type, we would
+	// need to take into account different pointer styles to the same element data-type
 	if (op->getIn(2)->getOffset() != alignSize) continue;
+	ptradds.push_back(op->getOut());
+      }
+      else if (opc == CPUI_COPY) {
 	ptradds.push_back(op->getOut());
       }
       else if (opc == CPUI_STORE && op->getParent() == block && op != rootOp) {
@@ -530,7 +596,7 @@ uint8 HeapSequence::calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4
 
 /// \brief Calculate the offset and any non-constant additive elements between the given Varnode and the \b basePointer
 ///
-/// Walk backward from the given Varnode thru PTRADDs and ADDs, summing any offsets encountered.
+/// Walk backward from the given Varnode thru PTRADDs and COPYs, summing any offsets encountered.
 /// Any non-constant Varnodes encountered in the path, that are not themselves a pointer, are passed back in a list.
 /// \param vn is the given Varnode to trace back to the \b basePointer
 /// \param nonConst will hold the list of non-constant Varnodes being passed back
@@ -539,12 +605,23 @@ uint8 HeapSequence::calcPtraddOffset(Varnode *vn,vector<Varnode *> &nonConst)
 
 {
   uint8 res = 0;
-  while(vn != basePointer) {
-    PcodeOp *ptradd = vn->getDef();
-    uint8 off = calcAddElements(ptradd->getIn(1),nonConst,3);
-    off *= (uint8)ptradd->getIn(2)->getOffset();
-    res += off;
-    vn = ptradd->getIn(0);
+  while(vn->isWritten()) {
+    PcodeOp *op = vn->getDef();
+    OpCode opc = op->code();
+    if (opc == CPUI_PTRADD) {
+      uint8 mult = op->getIn(2)->getOffset();
+      if (mult != charType->getAlignSize())
+	break;
+      uint8 off = calcAddElements(op->getIn(1),nonConst,3);
+      off *= mult;
+      res += off;
+      vn = op->getIn(0);
+    }
+    else if (opc == CPUI_COPY) {
+      vn = op->getIn(0);
+    }
+    else
+      break;
   }
   return res;
 }
