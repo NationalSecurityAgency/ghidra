@@ -381,6 +381,7 @@ src/main/help/help/topics/LanguageProviderPlugin/Languages.htm||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/Languages.png||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/PCodeDisplay.png||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/Warning.png||GHIDRA||||END|
+src/main/help/help/topics/LibreTranslatePlugin/LibreTranslatePlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/Location_References.html||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/images/LabelReferencesSample.png||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/images/ReferencesToDialog.png||GHIDRA||||END|
