@@ -564,6 +564,7 @@ public:
   TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
   int4 getOffset(void) const { return offset; }		///< Get the byte offset into the containing data-type
   Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
+  Datatype *getComponentForPtr(void) const;	///< Get (initial) component of array represented by \b this
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 getHoleSize(int4 off) const;
@@ -792,7 +793,6 @@ public:
   TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws,const string &n);	///< Construct a named pointer data-type
-  TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
   TypePartialStruct *getTypePartialStruct(Datatype *contain,int4 off,int4 sz);	///< Create a partial structure

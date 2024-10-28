@@ -2282,6 +2282,19 @@ TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype
   offset = off;
 }
 
+/// If the parent is an array, return the element data-type. Otherwise return the \b stripped data-type.
+/// \return the array element data-type or the \b stripped data-type.
+Datatype *TypePartialStruct::getComponentForPtr(void) const
+
+{
+  if (container->getMetatype() == TYPE_ARRAY) {
+    Datatype *eltype = ((TypeArray *)container)->getBase();
+    if (eltype->getMetatype() != TYPE_UNKNOWN && (offset % eltype->getAlignSize()) == 0)
+      return eltype;
+  }
+  return stripped;
+}
+
 void TypePartialStruct::printRaw(ostream &s) const
 
 {
@@ -3778,21 +3791,6 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
   TypePointer *res = (TypePointer *) findAdd(tmp);
   res->calcTruncate(*this);
   return res;
-}
-
-/// Don't create more than a depth of 1, i.e. ptr->ptr
-/// \param s is the size of the pointer
-/// \param pt is the pointed-to data-type
-/// \param ws is the wordsize associated with the pointer
-/// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
-
-{
-  if (pt->getMetatype()==TYPE_PTR) {
-    // Make sure that at least we return a pointer to something the size of -pt-
-    pt = getBase(pt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
-  }
-  return getTypePointer(s,pt,ws);
 }
 
 /// \param as is the number of elements in the desired array
