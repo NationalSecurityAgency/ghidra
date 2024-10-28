@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,27 +65,30 @@ public class DataTypeSymbol {
 		}
 		// Create the name and the category
 		CategoryPath path = new CategoryPath(category);
-		String hash = generateHash(datatype);
-		String type_hashname = "dt_" + hash;
-		try {
-			datatype.setNameAndCategory(path, type_hashname);
-		}
-		catch (InvalidNameException e) {
-			return null;
-		}
-		catch (DuplicateNameException e) {
-			return null;
-		}
-		DataType preexists = dtmanage.getDataType(path, type_hashname);
-		if (preexists != null) {		// Named datatype already exists
+		int hash = generateHash(datatype);
+		for (int i = 0; i < 256; ++i) {						// Try multiple slots
+			String hashString = Integer.toHexString(hash + i);		// Slot near original hash
+			String type_hashname = "dt_" + hashString;
+			try {
+				datatype.setNameAndCategory(path, type_hashname);
+			}
+			catch (InvalidNameException e) {
+				return null;
+			}
+			catch (DuplicateNameException e) {
+				return null;
+			}
+			DataType preexists = dtmanage.getDataType(path, type_hashname);
+			if (preexists == null) {		// Found empty slot, store signature here
+				datatype = dtmanage.addDataType(datatype, DataTypeConflictHandler.KEEP_HANDLER);
+				return hashString;
+			}
 			if (preexists.isEquivalent(datatype)) {		// If this is the right type
 				datatype = preexists;
-				return hash;							// We are done
+				return hashString;							// We are done
 			}
-			return null;								// Otherwise we can't proceed
 		}
-		datatype = dtmanage.addDataType(datatype, DataTypeConflictHandler.KEEP_HANDLER);
-		return hash;
+		return null;
 	}
 
 	private String buildSymbolName(String hash, Address addr) {
@@ -174,7 +177,7 @@ public class DataTypeSymbol {
 		return res;
 	}
 
-	public static String generateHash(DataType dt) {
+	public static int generateHash(DataType dt) {
 		String material;
 		if (dt instanceof FunctionSignature)
 			material = ((FunctionSignature) dt).getPrototypeString(true);
@@ -191,7 +194,7 @@ public class DataTypeSymbol {
 				hash = SimpleCRC32.hashOneByte(hash, material.charAt(i));
 			}
 		}
-		return Integer.toHexString(hash);
+		return hash;
 	}
 
 	public static String extractHash(String symname) {
