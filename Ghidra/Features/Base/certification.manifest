@@ -381,6 +381,7 @@ src/main/help/help/topics/LanguageProviderPlugin/Languages.htm||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/Languages.png||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/PCodeDisplay.png||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/Warning.png||GHIDRA||||END|
+src/main/help/help/topics/LibreTranslatePlugin/LibreTranslatePlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/Location_References.html||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/images/LabelReferencesSample.png||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/images/ReferencesToDialog.png||GHIDRA||||END|
@@ -864,9 +865,12 @@ src/main/resources/images/openFolderInView.png||Modified Nuvola Icons - LGPL 2.1
 src/main/resources/images/openFolderLabels.png||Modified Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/openFolderNamespaces.dark.png||GHIDRA||||END|
 src/main/resources/images/openFolderNamespaces.png||Modified Nuvola Icons - LGPL 2.1||||END|
+src/main/resources/images/oxygen/16x16/application-javascript.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-pdf.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/application-x-bzip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/application-x-desktop.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-x-java-archive.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/application-x-shellscript.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-x-subrip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/bookmarks.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/games-config-background.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
@@ -878,6 +882,7 @@ src/main/resources/images/oxygen/16x16/text-x-c++src.png||Oxygen Icons - LGPL 3.
 src/main/resources/images/oxygen/16x16/text-x-chdr.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/text-x-csharp.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/text-x-pascal.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/text-x-python.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/package.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/package_development.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/package_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

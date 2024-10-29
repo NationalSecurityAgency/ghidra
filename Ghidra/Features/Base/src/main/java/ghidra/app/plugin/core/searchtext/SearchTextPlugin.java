@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,6 @@ import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import generic.theme.GIcon;
-import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.nav.Navigatable;
@@ -423,7 +422,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		if (optionName.equals(GhidraOptions.OPTION_SEARCH_LIMIT)) {
+		if (optionName.equals(SearchConstants.SEARCH_LIMIT_NAME)) {
 			int newSearchLimit = ((Integer) newValue).intValue();
 			if (newSearchLimit <= 0) {
 				throw new OptionsVetoException("Search limit must be greater than 0");
@@ -450,7 +449,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			"The search result highlight color for the currently selected match");
 
 		searchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(SearchConstants.SEARCH_LIMIT_NAME, SearchConstants.DEFAULT_SEARCH_LIMIT);
 
 		doHighlight = opt.getBoolean(SearchConstants.SEARCH_HIGHLIGHT_NAME, true);
 

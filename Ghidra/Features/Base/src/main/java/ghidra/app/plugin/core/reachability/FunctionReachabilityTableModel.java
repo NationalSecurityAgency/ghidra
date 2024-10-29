@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -200,14 +200,28 @@ public class FunctionReachabilityTableModel
 	}
 
 	@Override
-	public ProgramLocation getProgramLocation(int row, int column) {
-		FunctionReachabilityResult result = getRowObject(row);
-		if (column == FROM_FUNCTION_COLUMN) {
+	public Address getAddress(int modelRow, int modelColumn) {
+		FunctionReachabilityResult result = getRowObject(modelColumn);
+		if (modelColumn == FROM_FUNCTION_COLUMN) {
+			Function function = result.getFromFunction();
+			return function.getEntryPoint();
+		}
+		else if (modelColumn == TO_FUNCTION_COLUMN) {
+			Function function = result.getToFunction();
+			return function.getEntryPoint();
+		}
+		return null;
+	}
+
+	@Override
+	public ProgramLocation getProgramLocation(int modelRow, int modelColumn) {
+		FunctionReachabilityResult result = getRowObject(modelRow);
+		if (modelColumn == FROM_FUNCTION_COLUMN) {
 			Function function = result.getFromFunction();
 			Address address = function.getEntryPoint();
 			return new ProgramLocation(getProgram(), address);
 		}
-		else if (column == TO_FUNCTION_COLUMN) {
+		else if (modelColumn == TO_FUNCTION_COLUMN) {
 			Function function = result.getToFunction();
 			Address address = function.getEntryPoint();
 			return new ProgramLocation(getProgram(), address);

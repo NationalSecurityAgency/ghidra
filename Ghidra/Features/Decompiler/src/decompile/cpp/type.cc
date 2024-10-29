@@ -30,7 +30,7 @@ AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",48);
 AttributeId ATTRIB_CHAR = AttributeId("char",49);
 AttributeId ATTRIB_CORE = AttributeId("core",50);
 AttributeId ATTRIB_ENUM = AttributeId("enum",51);
-//AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);  // deprecated
+AttributeId ATTRIB_INCOMPLETE = AttributeId("incomplete",52);
 //AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);  // deprecated
 //AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);  // deprecated
 //AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);  // deprecated
@@ -646,6 +646,10 @@ void Datatype::decodeBasic(Decoder &decoder)
     }
     else if (attrib == ATTRIB_LABEL) {
       displayName = decoder.readString();
+    }
+    else if (attrib == ATTRIB_INCOMPLETE) {
+      if (decoder.readBool())
+	flags |= type_incomplete;
     }
   }
   if (size < 0)
@@ -1885,10 +1889,10 @@ string TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (curAlign > calcAlign)
       calcAlign = curAlign;
   }
-  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
-    flags |=  type_incomplete;
-  else
-    markComplete();		// Otherwise the structure is complete
+  if (size == 0)		// Old way to indicate an incomplete structure
+    flags |= type_incomplete;
+  if (field.size() > 0)
+    markComplete();		// If we have fields, mark as complete
   if (field.size() == 1) {			// A single field
     if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special resolution
@@ -2043,10 +2047,10 @@ void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (curAlign > calcAlign)
       calcAlign = curAlign;
   }
-  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
-    flags |=  type_incomplete;
-  else
-    markComplete();		// Otherwise the union is complete
+  if (size == 0)		// Old way to indicate union is incomplete
+    flags |= type_incomplete;
+  if (field.size() > 0)
+    markComplete();		// If we have fields, the union is complete
   if (alignment < 1)
     alignment = calcAlign;
   alignSize = calcAlignSize(size,alignment);
@@ -2280,6 +2284,19 @@ TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype
   stripped = strip;
   container = contain;
   offset = off;
+}
+
+/// If the parent is an array, return the element data-type. Otherwise return the \b stripped data-type.
+/// \return the array element data-type or the \b stripped data-type.
+Datatype *TypePartialStruct::getComponentForPtr(void) const
+
+{
+  if (container->getMetatype() == TYPE_ARRAY) {
+    Datatype *eltype = ((TypeArray *)container)->getBase();
+    if (eltype->getMetatype() != TYPE_UNKNOWN && (offset % eltype->getAlignSize()) == 0)
+      return eltype;
+  }
+  return stripped;
 }
 
 void TypePartialStruct::printRaw(ostream &s) const
@@ -3188,6 +3205,7 @@ void TypeFactory::clear(void)
   nametree.clear();
   clearCache();
   warnings.clear();
+  incompleteTypedef.clear();
 }
 
 /// Delete anything that isn't a core type
@@ -3209,6 +3227,7 @@ void TypeFactory::clearNoncore(void)
     delete ct;
   }
   warnings.clear();
+  incompleteTypedef.clear();
 }
 
 TypeFactory::~TypeFactory(void)
@@ -3698,6 +3717,42 @@ void TypeFactory::removeWarning(Datatype *dt)
   }
 }
 
+/// Run through typedefs that were initially defined on incomplete data-types.  If the data-type is now complete,
+/// copy the fields or prototype into the typedef and remove it from the list.
+void TypeFactory::resolveIncompleteTypedefs(void)
+
+{
+  list<Datatype *>::iterator iter = incompleteTypedef.begin();
+  while(iter != incompleteTypedef.end()) {
+    Datatype *dt = *iter;
+    Datatype *defedType = dt->getTypedef();
+    if (!defedType->isIncomplete()) {
+      if (dt->getMetatype() == TYPE_STRUCT) {
+  	TypeStruct *prevStruct = (TypeStruct *)dt;
+  	TypeStruct *defedStruct = (TypeStruct *)defedType;
+  	setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->alignment,defedStruct->flags);
+  	iter = incompleteTypedef.erase(iter);
+      }
+      else if (dt->getMetatype() == TYPE_UNION) {
+  	TypeUnion *prevUnion = (TypeUnion *)dt;
+  	TypeUnion *defedUnion = (TypeUnion *)defedType;
+  	setFields(defedUnion->field,prevUnion,defedUnion->size,defedUnion->alignment,defedUnion->flags);
+  	iter = incompleteTypedef.erase(iter);
+      }
+      else if (dt->getMetatype() == TYPE_CODE) {
+	TypeCode *prevCode = (TypeCode *)dt;
+	TypeCode *defedCode = (TypeCode *)defedType;
+	setPrototype(defedCode->proto, prevCode, defedCode->flags);
+	iter = incompleteTypedef.erase(iter);
+      }
+      else
+	++iter;
+    }
+    else
+      ++iter;
+  }
+}
+
 /// Find or create a data-type identical to the given data-type except for its name and id.
 /// If the name and id already describe an incompatible data-type, an exception is thrown.
 /// \param ct is the given data-type to clone
@@ -3724,6 +3779,8 @@ Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id,uint4
   res->typedefImm = ct;
   res->setDisplayFormat(format);
   insert(res);
+  if (res->isIncomplete())
+    incompleteTypedef.push_back(res);
   return res;
 }
 
@@ -3782,21 +3839,6 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
   TypePointer *res = (TypePointer *) findAdd(tmp);
   res->calcTruncate(*this);
   return res;
-}
-
-/// Don't create more than a depth of 1, i.e. ptr->ptr
-/// \param s is the size of the pointer
-/// \param pt is the pointed-to data-type
-/// \param ws is the wordsize associated with the pointer
-/// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
-
-{
-  if (pt->getMetatype()==TYPE_PTR) {
-    // Make sure that at least we return a pointer to something the size of -pt-
-    pt = getBase(pt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
-  }
-  return getTypePointer(s,pt,ws);
 }
 
 /// \param as is the number of elements in the desired array
@@ -4234,6 +4276,7 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
   }
   if (!warning.empty())
     insertWarning(ct, warning);
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4264,6 +4307,7 @@ Datatype* TypeFactory::decodeUnion(Decoder &decoder,bool forcecore)
   else {		// If structure is a placeholder stub
     setFields(tu.field,(TypeUnion*)ct,tu.size,tu.alignment,tu.flags);	// Define structure now by copying fields
   }
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4299,6 +4343,7 @@ Datatype *TypeFactory::decodeCode(Decoder &decoder,bool isConstructor,bool isDes
   else {	// If there was a placeholder stub
     setPrototype(tc.proto, (TypeCode *)ct, tc.flags);
   }
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }

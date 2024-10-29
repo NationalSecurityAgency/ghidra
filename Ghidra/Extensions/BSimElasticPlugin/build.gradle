@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,6 +66,11 @@ task copyPropertiesFile(type: Copy) {
 	into 'build/ziplayout'
 }
 
+task copyElasticJar(type: Copy) {
+	from 'build/libs/lsh.jar'
+	into 'build/ziplayout'
+}
+
 task elasticPluginJar(type: Jar) {
 	from sourceSets.elasticPlugin.output
 	archiveBaseName = 'lsh'
@@ -87,11 +92,15 @@ task elasticPluginZip(type: Zip) {
 	destinationDirectory =  file("build/data")	
 }
 
+// Currently targeting elasticsearch-8.8.1 which by default runs with java 20
+compileElasticPluginJava.options.release = 20
+
 compileElasticPluginJava.dependsOn copyGenericTask
 compileElasticPluginJava.dependsOn copyUtilityTask
 compileElasticPluginJava.dependsOn copyBSimTask
 
-elasticPluginZip.dependsOn elasticPluginJar
+copyElasticJar.dependsOn elasticPluginJar
+elasticPluginZip.dependsOn copyElasticJar
 elasticPluginZip.dependsOn copyPropertiesFile
 
 jar.dependsOn elasticPluginZip

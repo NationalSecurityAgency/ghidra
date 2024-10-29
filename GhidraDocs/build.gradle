@@ -48,6 +48,11 @@ rootProject.assembleDistribution {
 		exclude "**/build/**"
 		exclude "**/bin/**"
 		into "docs"
-	
+	}
+}
+
+rootProject.assembleMarkdownToHtml {
+	from ("${this.projectDir}/InstallationGuide.md") {
+		into "docs"
 	}
 }

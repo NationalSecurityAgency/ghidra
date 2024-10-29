@@ -334,13 +334,13 @@ public class TraceRmiTarget extends AbstractTarget {
 			ActionName.STEP_OUT.equals(name) ||
 			ActionName.STEP_OVER.equals(name) ||
 			ActionName.STEP_SKIP.equals(name)) {
-			return () -> whenState(obj, state -> state != null && state.isStopped());
+			return () -> whenState(obj, state -> state != null && (state.isStopped() || state.isUnknown()));
 		}
 		else if (ActionName.INTERRUPT.equals(name)) {
-			return () -> whenState(obj, state -> state == null || state.isRunning());
+			return () -> whenState(obj, state -> state == null || state.isRunning() || state.isUnknown());
 		}
 		else if (ActionName.KILL.equals(name)) {
-			return () -> whenState(obj, state -> state == null || state.isAlive());
+			return () -> whenState(obj, state -> state == null || !state.isTerminated());
 		}
 		return () -> true;
 	}

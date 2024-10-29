@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,6 +139,7 @@ public class InstructionTable extends AbstractInstructionTable {
 		createMaskAddressesBtn(toolbar1);
 		toolbar1.addSeparator();
 		createReloadBtn(toolbar1);
+		createAddBtn(toolbar1);
 		toolbar1.addSeparator();
 		createManualEditBtn(toolbar1);
 		toolbar1.addSeparator();
@@ -301,6 +302,14 @@ public class InstructionTable extends AbstractInstructionTable {
 		createToolbarButton(buttonToolbar, icon, action, "reload");
 	}
 
+	private void createAddBtn(JToolBar buttonToolbar) {
+		Icon icon = Icons.ADD_ICON;
+		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
+		Action action =
+			new AddAction("undefined", scaledIcon, "Add selected instructions from listing");
+		createToolbarButton(buttonToolbar, icon, action, "add");
+	}
+
 	private void createManualEditBtn(JToolBar buttonToolbar) {
 		Icon icon = new GIcon("icon.plugin.instructiontable.manual.entry");
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
@@ -407,6 +416,19 @@ public class InstructionTable extends AbstractInstructionTable {
 			catch (InvalidInputException e1) {
 				Msg.error(this, "Error loading instructions: " + e);
 			}
+		}
+	}
+
+	private class AddAction extends AbstractAction {
+
+		public AddAction(String text, Icon icon, String desc) {
+			super(text, icon);
+			putValue(SHORT_DESCRIPTION, desc);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			dialog.addToInstructions(plugin.getProgramSelection(), plugin);
 		}
 	}
 

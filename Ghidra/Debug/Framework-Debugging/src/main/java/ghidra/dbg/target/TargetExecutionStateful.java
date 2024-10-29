@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,7 +40,7 @@ public interface TargetExecutionStateful extends TargetObject {
 		 * This may apply, e.g., to a GDB "Inferior," which has no yet been used to launch or attach
 		 * to a process.
 		 */
-		INACTIVE(false, false, false),
+		INACTIVE(false, false, false, false),
 
 		/**
 		 * The object is alive, but its execution state is unspecified
@@ -52,12 +52,12 @@ public interface TargetExecutionStateful extends TargetObject {
 		 * when <em>all</em> of its threads are stopped. For the clients' sakes, all models should
 		 * implement these conventions internally.
 		 */
-		ALIVE(true, false, false),
+		ALIVE(true, false, false, false),
 
 		/**
 		 * The object is alive, but not executing
 		 */
-		STOPPED(true, false, true),
+		STOPPED(true, false, true, false),
 
 		/**
 		 * The object is alive and executing
@@ -67,7 +67,7 @@ public interface TargetExecutionStateful extends TargetObject {
 		 * thread is currently executing, waiting on an event, or scheduled for execution. It does
 		 * not necessarily mean it is executing on a CPU at this exact moment.
 		 */
-		RUNNING(true, true, false),
+		RUNNING(true, true, false, false),
 
 		/**
 		 * The object is no longer alive
@@ -77,16 +77,18 @@ public interface TargetExecutionStateful extends TargetObject {
 		 * stale handles to objects which may still be queried (e.g., for a process exit code), or
 		 * e.g., a GDB "Inferior," which could be re-used to launch or attach to another process.
 		 */
-		TERMINATED(false, false, false);
+		TERMINATED(false, false, false, true);
 
 		private final boolean alive;
 		private final boolean running;
 		private final boolean stopped;
+		private final boolean terminated;
 
-		private TargetExecutionState(boolean alive, boolean running, boolean stopped) {
+		private TargetExecutionState(boolean alive, boolean running, boolean stopped, boolean terminated) {
 			this.alive = alive;
 			this.running = running;
 			this.stopped = stopped;
+			this.terminated = terminated;
 		}
 
 		/**
@@ -114,6 +116,24 @@ public interface TargetExecutionStateful extends TargetObject {
 		 */
 		public boolean isStopped() {
 			return stopped;
+		}
+
+		/**
+		 * Check if this state implies the object was terminated
+		 * 
+		 * @return true if terminated
+		 */
+		public boolean isTerminated() {
+			return terminated;
+		}
+
+		/**
+		 * Check if this state is ambiguous
+		 * 
+		 * @return true if terminated
+		 */
+		public boolean isUnknown() {
+			return !stopped && !running && !terminated;
 		}
 	}
 
