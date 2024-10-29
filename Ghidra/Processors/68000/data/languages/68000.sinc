@@ -86,6 +86,7 @@ define token instr (16)
   op02 = (0,2)
   op03 = (0,3)
   op08 = (0,8)
+  op011 = (0,11)
   op015 = (0,15)
   op34 = (3,4)
   op35 = (3,5)
@@ -881,6 +882,13 @@ macro rotateRightExtended(count, register, width) {
 # Here are the instructions
 
 with : extGUARD=1 {
+
+@ifdef LISATRAP
+:atrapl "#"t is op=10 & op011; opx015 [ t = op011 * 65536 + opx015; ] unimpl
+@endif # LISATRAP
+@ifdef MACTRAP
+:atrap "#"op011 is op=10 & op011 unimpl
+@endif # MACTRAP
 
 :abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb {
 	CF = carry(Txb,carry(Tyb,XF));
