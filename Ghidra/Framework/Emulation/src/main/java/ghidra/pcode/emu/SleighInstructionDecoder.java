@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.emu;
 
+import java.util.Objects;
+
 import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emulate.InstructionDecodeException;
 import ghidra.pcode.exec.DecodePcodeExecutionException;
@@ -73,14 +75,18 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 			Disassembler.getDisassembler(language, addrFactory, TaskMonitor.DUMMY, listener);
 	}
 
-	@Override
-	public Instruction decodeInstruction(Address address, RegisterValue context) {
-		lastMsg = DEFAULT_ERROR;
-		if (block != null &&
-			(instruction = (PseudoInstruction) block.getInstructionAt(address)) != null) {
-			return instruction;
+	protected boolean useCachedInstruction(Address address, RegisterValue context) {
+		if (block == null) {
+			return false;
 		}
-		/*
+		// Always use instruction within last block decoded assuming we flowed from another
+		// instruction within the same block.  The block should be null is starting a new flow.
+		instruction = (PseudoInstruction) block.getInstructionAt(address);
+		return instruction != null;
+	}
+
+	protected void parseNewBlock(Address address, RegisterValue context) {
+		/**
 		 * Parse as few instructions as possible. If more are returned, it's because they form a
 		 * parallel instruction group. In that case, I should not have to worry self-modifying code
 		 * within that group, so no need to re-disassemble after each is executed.
@@ -91,17 +97,28 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 			throw new DecodePcodeExecutionException(lastMsg, address);
 		}
 		instruction = (PseudoInstruction) block.getInstructionAt(address);
+	}
+
+	@Override
+	public Instruction decodeInstruction(Address address, RegisterValue context) {
+		lastMsg = DEFAULT_ERROR;
+		if (!useCachedInstruction(address, context)) {
+			parseNewBlock(address, context);
+		}
 		lengthWithDelays = computeLength();
 		return instruction;
 	}
 
 	@Override
 	public void branched(Address address) {
-		/*
-		 * This shouldn't happen in the middle of a parallel instruction group, but in case the
-		 * group modifies itself and jumps back to itself, this will ensure it is re-disassembled.
+		/**
+		 * There may be internal branching within a decoded block. Those shouldn't clear the block.
+		 * However, if the cached instruction's context does not match the desired one, assume we're
+		 * starting a new block. That check will have to wait for the decode call, though.
 		 */
-		block = null;
+		if (block.getInstructionAt(address) == null) {
+			block = null;
+		}
 	}
 
 	/**

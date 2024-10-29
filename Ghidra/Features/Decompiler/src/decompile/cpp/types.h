@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,8 +88,8 @@ CPUI_DEBUG        --    This is the ONE debug switch that should be passed in
 #ifdef CPUI_DEBUG
 # define OPACTION_DEBUG
 # define PRETTY_DEBUG
+# define TYPEPROP_DEBUG
 //# define __REMOTE_SOCKET__
-//# define TYPEPROP_DEBUG
 //# define DFSVERIFY_DEBUG
 //# define BLOCKCONSISTENT_DEBUG
 //# define MERGEMULTI_DEBUG

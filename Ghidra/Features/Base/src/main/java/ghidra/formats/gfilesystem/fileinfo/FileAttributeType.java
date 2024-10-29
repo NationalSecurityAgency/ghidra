@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,7 @@ public enum FileAttributeType {
 
 	SYMLINK_DEST_ATTR("Symbolic link destination", MISC_INFO, String.class),
 	COMMENT_ATTR("Comment", MISC_INFO, String.class),
+	FILENAME_EXT_OVERRIDE("Extension override", MISC_INFO, String.class), // no leading '.'
 
 	UNKNOWN_ATTRIBUTE("Other attribute", ADDITIONAL_INFO, Object.class);
 
@@ -63,7 +64,7 @@ public enum FileAttributeType {
 	private final FileAttributeTypeGroup group;
 	private final Class<?> valueType;
 
-	private FileAttributeType(String displayName, FileAttributeTypeGroup group,
+	FileAttributeType(String displayName, FileAttributeTypeGroup group,
 			Class<?> valueType) {
 		this.displayName = displayName;
 		this.group = group;

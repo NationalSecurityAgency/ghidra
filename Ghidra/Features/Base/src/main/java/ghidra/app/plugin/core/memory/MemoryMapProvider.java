@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -122,10 +122,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		arrangeTable();
 	}
 
-	MemoryMapManager getMemoryMapManager() {
-		return memManager;
-	}
-
 	private JPanel buildMainPanel() {
 		JPanel memPanel = new JPanel(new BorderLayout());
 		tableModel = new MemoryMapModel(this, null);
@@ -153,16 +149,17 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		column = table.getColumn(MemoryMapModel.LENGTH_COL);
 		column.setCellRenderer(monoRenderer);
 
+		GBooleanCellRenderer booleanRenderer = new GBooleanCellRenderer();
 		column = table.getColumn(MemoryMapModel.READ_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.WRITE_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 		column = table.getColumn(MemoryMapModel.INIT_COL);
-		column.setCellRenderer(new GBooleanCellRenderer());
+		column.setCellRenderer(booleanRenderer);
 
 		table.setDefaultEditor(String.class,
 			new GTableTextCellEditor(new MaxLengthField(MAX_SIZE)));
@@ -453,60 +450,65 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		updateTitle();
 	}
 
-	/**
-	 * Set up the table so it looks well arranged.
-	 */
 	private void arrangeTable() {
-		// memTable.setRowHeight(20);
-		TableColumn column;
+		// 
+		// Table column resize behavior is tough to control.  When setting the column size here, we
+		// use the max width to keep the columns from being resizable.  The effect of this is that
+		// the table will layout the columns by giving all extra space to the resizable columns.  
+		// Any columns not marked resizable will be the exact requested size.  This allows us to 
+		// force small columns to take up the minimum amount of space.  The downside of locking the
+		// columns is that users cannot change the size.  So, we will set the size for the initial 
+		// layout to get the size we desire, and then we will set the size again to make the columns
+		// resizable after the layout has taken place. 
+		// 
+		setColumnSizes(true);
 
-		column = table.getColumn(MemoryMapModel.READ_COL);
-		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
-		}
+		// call again after the sizes have been updated from the previous call
+		setColumnSizes(false);
+	}
+
+	private void setColumnSizes(boolean lock) {
+
+		boolean resizable = !lock;
+		TableColumn column = table.getColumn(MemoryMapModel.READ_COL);
+		int width = 25;
+		int maxWidth = resizable ? Integer.MAX_VALUE : width;
+		column.setMaxWidth(maxWidth);
+		column.setMinWidth(width);
+		column.setResizable(resizable);
 
 		column = table.getColumn(MemoryMapModel.WRITE_COL);
-		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
-		}
+		column.setMaxWidth(maxWidth);
+		column.setMinWidth(width);
+		column.setResizable(resizable);
 
 		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
-		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
-		}
+		column.setMaxWidth(maxWidth);
+		column.setMinWidth(width);
+		column.setResizable(resizable);
 
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
-		if (column != null) {
-			column.setMaxWidth(65);
-			column.setMinWidth(65);
-			column.setResizable(false);
-		}
+		width = 65;
+		maxWidth = resizable ? Integer.MAX_VALUE : width;
+		column.setMaxWidth(maxWidth);
+		column.setMinWidth(width);
+		column.setResizable(resizable);
 
 		column = table.getColumn(MemoryMapModel.ARTIFICIAL_COL);
-		if (column != null) {
-			column.setMaxWidth(65);
-			column.setMinWidth(65);
-			column.setResizable(false);
-		}
+		column.setMaxWidth(maxWidth);
+		column.setMinWidth(width);
+		column.setResizable(resizable);
 
 		column = table.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
-		if (column != null) {
-			column.setMinWidth(25);
-//			column.setResizable(true);
-		}
+		width = 25;
+		maxWidth = resizable ? Integer.MAX_VALUE : width;
+		column.setMinWidth(width);
 
 		column = table.getColumn(MemoryMapModel.INIT_COL);
-		if (column != null) {
-			column.setMaxWidth(25);
-			column.setMinWidth(25);
-			column.setResizable(false);
-		}
+		column.setMaxWidth(maxWidth);
+		column.setMinWidth(width);
+		column.setResizable(resizable);
+
 	}
 
 	/**
@@ -545,24 +547,26 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private void navigateToAddress() {
-		int viewRow = table.getSelectedRow();
-		int viewColumn = table.getSelectedColumn();
-		int modelColumn = table.convertColumnIndexToModel(viewColumn);
-		MemoryBlock block = tableModel.getBlockAt(viewRow);
-		if (block != null && (modelColumn == 1 || modelColumn == 2)) {
-			Address addr = (modelColumn == 1 ? block.getStart() : block.getEnd());
-			plugin.blockSelected(block, addr);
-			table.setRowSelectionInterval(viewRow, viewRow);
-		}
-	}
-
 	private MemoryBlock getSelectedBlock() {
 		int row = table.getSelectedRow();
 		if (row < 0) {
 			return null;
 		}
-		return tableModel.getBlockAt(row);
+		int viewRow = table.getSelectedRow();
+		int modelRow = filterPanel.getModelRow(viewRow);
+		return tableModel.getBlockAt(modelRow);
+	}
+
+	private void navigateToAddress() {
+		int viewRow = table.getSelectedRow();
+		int viewColumn = table.getSelectedColumn();
+		int modelColumn = table.convertColumnIndexToModel(viewColumn);
+		MemoryBlock block = getSelectedBlock();
+		if (block != null && (modelColumn == 1 || modelColumn == 2)) {
+			Address addr = (modelColumn == 1 ? block.getStart() : block.getEnd());
+			plugin.blockSelected(block, addr);
+			table.setRowSelectionInterval(viewRow, viewRow);
+		}
 	}
 
 	private void renameOverlaySpace(ActionContext c) {

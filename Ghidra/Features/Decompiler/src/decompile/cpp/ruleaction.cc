@@ -204,7 +204,7 @@ int4 RuleSelectCse::applyOp(PcodeOp *op,Funcdata &data)
     list.push_back(pair<uintm,PcodeOp *>(hash,otherop));
   }
   if (list.size()<=1) return 0;
-  cseEliminateList(data,list,vlist);
+  data.cseEliminateList(list,vlist);
   if (vlist.empty()) return 0;
   return 1;
 }
@@ -1048,7 +1048,7 @@ PcodeOp *RulePushMulti::findSubstitute(Varnode *in1,Varnode *in2,BlockBasic *bb,
     Varnode *vn = op1->getIn(i);
     if (vn->isConstant()) continue;
     if (vn == op2->getIn(i))	// Find matching inputs to op1 and op2,
-      return cseFindInBlock(op1,vn,bb,earliest); // search for cse of op1 in bb
+      return Funcdata::cseFindInBlock(op1,vn,bb,earliest); // search for cse of op1 in bb
   }
 
   return (PcodeOp *)0;
@@ -1087,7 +1087,7 @@ int4 RulePushMulti::applyOp(PcodeOp *op,Funcdata &data)
   if (op1->code() == CPUI_SUBPIECE) return 0; // SUBPIECE is pulled not pushed
 
   BlockBasic *bl = op->getParent();
-  PcodeOp *earliest = earliestUseInBlock(op->getOut(),bl);
+  PcodeOp *earliest = bl->earliestUse(op->getOut());
   if (op1->code() == CPUI_COPY) { // Special case of MERGE of 2 shadowing varnodes
     if (res==0) return 0;
     PcodeOp *substitute = findSubstitute(buf1[0],buf2[0],bl,earliest);
@@ -3036,13 +3036,13 @@ int4 RuleMultiCollapse::applyOp(PcodeOp *op,Funcdata &data)
       copyr->clearMark();
       op = copyr->getDef();
       if (func_eq) {		// We have only functional equality
-	PcodeOp *earliest = earliestUseInBlock(op->getOut(),op->getParent());
+	PcodeOp *earliest = op->getParent()->earliestUse(op->getOut());
 	newop = defcopyr->getDef();	// We must copy newop (defcopyr)
 	PcodeOp *substitute = (PcodeOp *)0;
 	for(int4 i=0;i<newop->numInput();++i) {
 	  Varnode *invn = newop->getIn(i);
 	  if (!invn->isConstant()) {
-	    substitute = cseFindInBlock(newop,invn,op->getParent(),earliest); // Has newop already been copied in this block
+	    substitute = Funcdata::cseFindInBlock(newop,invn,op->getParent(),earliest); // Has newop already been copied in this block
 	    break;
 	  }
 	}
@@ -6303,7 +6303,7 @@ int4 RulePtrArith::evaluatePointerExpression(PcodeOp *op,int4 slot)
     return 0;
   if (count > 1) {
     if (outVn->isSpacebase())
-      return 0;		// For the RESULT to be a spacebase pointer it must have only 1 descendent
+      return 0;		// For the RESULT to be a spacebase pointer it must have only 1 descendant
 //    res = 2;		// Uncommenting this line will not let pointers get pushed to multiple descendants
   }
   return res;

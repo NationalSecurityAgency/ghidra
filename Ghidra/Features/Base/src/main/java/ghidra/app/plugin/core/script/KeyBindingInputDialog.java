@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.*;
-import docking.actions.KeyBindingUtils;
 import docking.actions.ToolActions;
 import docking.widgets.label.GLabel;
 import ghidra.framework.plugintool.Plugin;
@@ -29,7 +28,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 
 class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryListener {
-	private KeyEntryTextField kbField;
+	private KeyEntryPanel kbPanel;
 	private KeyStroke ks;
 	private boolean isCancelled;
 	private Plugin plugin;
@@ -39,15 +38,15 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 		super("Assign Script Key Binding", true, true, true, false);
 		this.plugin = plugin;
 
-		kbField = new KeyEntryTextField(20, this);
-		kbField.setName("KEY_BINDING");
-		kbField.setText(
-			currentKeyStroke == null ? "" : KeyBindingUtils.parseKeyStroke(currentKeyStroke));
+		kbPanel = new KeyEntryPanel(20, this);
+		if (currentKeyStroke != null) {
+			kbPanel.setKeyStroke(currentKeyStroke);
+		}
 
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(new GLabel(scriptName), BorderLayout.NORTH);
-		panel.add(kbField, BorderLayout.CENTER);
+		panel.add(kbPanel, BorderLayout.CENTER);
 
 		addWorkPanel(panel);
 		addOKButton();
@@ -91,6 +90,6 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 
 	void setKeyStroke(KeyStroke ks) {
 		this.ks = ks;
-		kbField.setKeyStroke(ks);
+		kbPanel.setKeyStroke(ks);
 	}
 }

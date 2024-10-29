@@ -1797,21 +1797,33 @@ bool SplitFlow::doTrace(void)
   return true;
 }
 
-/// If \b pointer Varnode is written by an INT_ADD, PTRSUB, or PTRADD from a another pointer
-/// to a structure or array, update \b pointer Varnode, \b baseOffset, and \b ptrType to this.
+/// If \b pointer Varnode is written by a COPY, INT_ADD, PTRSUB, or PTRADD from another pointer to a
+///   - structure
+///   - array OR
+///   - to an implied array with the given base type
+///
+/// then update \b pointer Varnode, \b baseOffset, and \b ptrType to this.
+/// \param impliedBase if non-null is the allowed element data-type for an implied array
 /// \return \b true if \b pointer was successfully updated
 bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
 
 {
   if (!pointer->isWritten())
     return false;
+  int4 off;
   PcodeOp *addOp = pointer->getDef();
   OpCode opc = addOp->code();
-  if (opc != CPUI_PTRSUB && opc != CPUI_INT_ADD && opc != CPUI_PTRADD)
+  if (opc == CPUI_PTRSUB || opc == CPUI_INT_ADD || opc == CPUI_PTRADD) {
+    Varnode *cvn = addOp->getIn(1);
+    if (!cvn->isConstant())
+      return false;
+    off = (int4)cvn->getOffset();
+  }
+  else if (opc == CPUI_COPY)
+    off = 0;
+  else {
     return false;
-  Varnode *cvn = addOp->getIn(1);
-  if (!cvn->isConstant())
-    return false;
+  }
   Varnode *tmpPointer = addOp->getIn(0);
   Datatype *ct = tmpPointer->getTypeReadFacing(addOp);
   if (ct->getMetatype() != TYPE_PTR)
@@ -1819,11 +1831,10 @@ bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
   Datatype *parent = ((TypePointer *)ct)->getPtrTo();
   type_metatype meta = parent->getMetatype();
   if (meta != TYPE_STRUCT && meta != TYPE_ARRAY) {
-    if (opc != CPUI_PTRADD || parent != impliedBase)
+    if ((opc != CPUI_PTRADD && opc != CPUI_COPY) || parent != impliedBase)
       return false;
   }
   ptrType = (TypePointer *)ct;
-  int4 off = (int4)cvn->getOffset();
   if (opc == CPUI_PTRADD)
     off *= (int4)addOp->getIn(2)->getOffset();
   off = AddrSpace::addressToByteInt(off, ptrType->getWordSize());
@@ -1832,10 +1843,11 @@ bool SplitDatatype::RootPointer::backUpPointer(Datatype *impliedBase)
   return true;
 }
 
-/// The LOAD or STORE pointer Varnode is examined. If it is a pointer to the given data-type, the
-/// root \b pointer is returned.  If not, we try to recursively walk back through either PTRSUB or INT_ADD instructions,
-/// until a pointer Varnode matching the data-type is found.  Any accumulated offset, relative to the original
-/// LOAD or STORE pointer is recorded in the \b baseOffset.  If a matching pointer is not found, \b false is returned.
+/// We search for a pointer to the specified data-type starting with the LOAD/STORE. If we don't immediately
+/// find it, we back up one level (through a PTRSUB, PTRADD, or INT_ADD). If it isn't found after 1 hop,
+/// \b false is returned.  Once this pointer is found, we back up through any single path of nested TYPE_STRUCT
+/// and TYPE_ARRAY offsets to establish the final root \b pointer, and \b true is returned. Any accumulated offset,
+/// relative to the original LOAD or STORE pointer is recorded in the \b baseOffset.
 /// \param op is the LOAD or STORE
 /// \param valueType is the specific data-type to match
 /// \return \b true if the root pointer is found
@@ -1843,11 +1855,11 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
 
 {
   Datatype *impliedBase = (Datatype *)0;
-  if (valueType->getMetatype() == TYPE_PARTIALSTRUCT)
+  if (valueType->getMetatype() == TYPE_PARTIALSTRUCT)		// Strip off partial to get containing struct or array
     valueType = ((TypePartialStruct *)valueType)->getParent();
-  else if (valueType->getMetatype() == TYPE_ARRAY) {
+  if (valueType->getMetatype() == TYPE_ARRAY) {		// If the data-type is an array
     valueType = ((TypeArray *)valueType)->getBase();
-    impliedBase = valueType;
+    impliedBase = valueType;				// we allow an implied array (pointer to element) as a match
   }
   loadStore = op;
   baseOffset = 0;
@@ -1864,12 +1876,26 @@ bool SplitDatatype::RootPointer::find(PcodeOp *op,Datatype *valueType)
     if (ptrType->getPtrTo() != valueType)
       return false;
   }
+  // The required pointer is found.  We try to back up to pointers to containing structures or arrays
   for(int4 i=0;i<3;++i) {
     if (pointer->isAddrTied() || pointer->loneDescend() == (PcodeOp *)0) break;
     if (!backUpPointer(impliedBase))
       break;
   }
   return true;
+}
+
+/// Add a COPY op from the \b pointer Varnode to temporary register and make it the new root \b pointer.
+/// This guarantees that the \b pointer Varnode will not be modified by subsequent STOREs and
+/// can be implicit in the expressions.
+/// \param data is the containing function
+/// \param followOp is the point where the COPY should be inserted
+void SplitDatatype::RootPointer::duplicateToTemp(Funcdata &data,PcodeOp *followOp)
+
+{
+  Varnode *newRoot = data.buildCopyTemp(pointer, followOp);
+  newRoot->updateType(ptrType, false, false);
+  pointer = newRoot;
 }
 
 /// If the pointer Varnode is no longer used, recursively check and remove the op producing it,
@@ -1920,8 +1946,9 @@ Datatype *SplitDatatype::getComponent(Datatype *ct,int4 offset,bool &isHole)
 
 /// For the given data-type, taking into account configuration options, return:
 ///   - -1 for not splittable
-///   - 0 for data-type that needs to be split
-///   - 1 for data-type that can be split multiple ways
+///   - 0 for struct based data-type that needs to be split
+///   - 1 for array based data-type that needs to be split
+///   - 2 for primitive data-type that can be split multiple ways
 /// \param ct is the given data-type
 /// \return the categorization
 int4 SplitDatatype::categorizeDatatype(Datatype *ct)
@@ -1933,18 +1960,18 @@ int4 SplitDatatype::categorizeDatatype(Datatype *ct)
       if (!splitArrays) break;
       subType = ((TypeArray *)ct)->getBase();
       if (subType->getMetatype() != TYPE_UNKNOWN || subType->getSize() != 1)
-	return 0;
+	return 1;
       else
-	return 1;	// unknown1 array does not need splitting and acts as (large) primitive
+	return 2;	// unknown1 array does not need splitting and acts as (large) primitive
     case TYPE_PARTIALSTRUCT:
       subType = ((TypePartialStruct *)ct)->getParent();
       if (subType->getMetatype() == TYPE_ARRAY) {
 	if (!splitArrays) break;
 	subType = ((TypeArray *)subType)->getBase();
 	if (subType->getMetatype() != TYPE_UNKNOWN || subType->getSize() != 1)
-	  return 0;
+	  return 1;
 	else
-	  return 1;	// unknown1 array does not need splitting and acts as (large) primitive
+	  return 2;	// unknown1 array does not need splitting and acts as (large) primitive
       }
       else if (subType->getMetatype() == TYPE_STRUCT) {
 	if (!splitStructures) break;
@@ -1959,7 +1986,7 @@ int4 SplitDatatype::categorizeDatatype(Datatype *ct)
     case TYPE_INT:
     case TYPE_UINT:
     case TYPE_UNKNOWN:
-      return 1;
+      return 2;
     default:
       break;
   }
@@ -1985,22 +2012,21 @@ bool SplitDatatype::testDatatypeCompatibility(Datatype *inBase,Datatype *outBase
   int4 outCategory = categorizeDatatype(outBase);
   if (outCategory < 0)
     return false;
-  if (outCategory != 0 && inCategory != 0)
+  if (outCategory == 2 && inCategory == 2)
     return false;
   if (!inConstant && inBase == outBase && inBase->getMetatype() == TYPE_STRUCT)
     return false;	// Don't split a whole structure unless it is getting initialized from a constant
-  if (isLoadStore && outCategory == 1 && inBase->getMetatype() == TYPE_ARRAY)
+  if (isLoadStore && outCategory == 2 && inCategory == 1)
     return false;	// Don't split array pointer writing into primitive
-  if (isLoadStore && inCategory == 1 && !inConstant && outBase->getMetatype() == TYPE_ARRAY)
+  if (isLoadStore && inCategory == 2 && !inConstant && outCategory == 1)
     return false;	// Don't split primitive into an array pointer, TODO: We could check if primitive is defined by PIECE
-  if (isLoadStore && inCategory == 0 && outCategory == 0 && !inConstant &&
-      inBase->getMetatype() == TYPE_ARRAY && outBase->getMetatype() == TYPE_ARRAY)
+  if (isLoadStore && inCategory == 1 && outCategory == 1 && !inConstant)
     return false;	// Don't split copies between arrays
   bool inHole;
   bool outHole;
   int4 curOff = 0;
   int4 sizeLeft = inBase->getSize();
-  if (inCategory == 1) {
+  if (inCategory == 2) {		// If input is primitive
     while(sizeLeft > 0) {
       Datatype *curOut = getComponent(outBase,curOff,outHole);
       if (curOut == (Datatype *)0) return false;
@@ -2017,7 +2043,7 @@ bool SplitDatatype::testDatatypeCompatibility(Datatype *inBase,Datatype *outBase
       }
     }
   }
-  else if (outCategory == 1) {
+  else if (outCategory == 2) {		// If output is primitive
     while(sizeLeft > 0) {
       Datatype *curIn = getComponent(inBase,curOff,inHole);
       if (curIn == (Datatype *)0) return false;
@@ -2555,6 +2581,8 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
     buildInSubpieces(inVn,storeOp,inVarnodes);
 
   vector<Varnode *> storePtrs;
+  if (storeRoot.pointer->isAddrTied())
+    storeRoot.duplicateToTemp(data, storeOp);
   buildPointers(storeRoot.pointer, storeRoot.ptrType, storeRoot.baseOffset, storeOp, storePtrs, false);
   // Preserve original STORE object, so that INDIRECT references are still valid
   // but convert it into the first of the smaller STOREs
@@ -2795,7 +2823,7 @@ TransformVar *SubfloatFlow::setReplacement(Varnode *vn)
 
 /// \brief Try to trace logical variable through descendant Varnodes
 ///
-/// Given a Varnode placeholder, look at all descendent PcodeOps and create
+/// Given a Varnode placeholder, look at all descendant PcodeOps and create
 /// placeholders for the op and its output Varnode.  If appropriate add the
 /// output placeholder to the worklist.
 /// \param rvn is the given Varnode placeholder

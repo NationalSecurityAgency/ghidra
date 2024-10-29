@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		KeyBindingInputDialog kbid = pressKeyBindingAction();
 
 		KeyEntryTextField keyField =
-			(KeyEntryTextField) findComponentByName(kbid.getComponent(), "KEY_BINDING");
+			(KeyEntryTextField) findComponentByName(kbid.getComponent(), "Key Entry Text Field");
 		triggerActionKey(keyField, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK,
 			KeyEvent.VK_H);
 		pressButtonByText(kbid, "OK");
@@ -292,7 +292,8 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		SaveDialog saveDialog = waitForDialogComponent(SaveDialog.class);
 
-		final ListPanel listPanel = (ListPanel) findComponentByName(saveDialog.getComponent(), "PATH_LIST");
+		final ListPanel listPanel =
+			(ListPanel) findComponentByName(saveDialog.getComponent(), "PATH_LIST");
 		assertNotNull(listPanel);
 		assertTrue(listPanel.isVisible());
 		assertEquals(2, listPanel.getListModel().getSize());

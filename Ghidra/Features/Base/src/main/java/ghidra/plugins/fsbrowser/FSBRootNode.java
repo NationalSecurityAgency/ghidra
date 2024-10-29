@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -192,16 +192,18 @@ public class FSBRootNode extends FSBNode {
 	}
 
 	public FSRL getProgramProviderFSRL(FSRL fsrl) {
-		GFileSystem fs = fsRef.getFilesystem();
-		if (fs instanceof GFileSystemProgramProvider programProviderFS) {
-			try {
-				GFile gfile = fs.lookup(fsrl.getPath());
-				if (gfile != null && programProviderFS.canProvideProgram(gfile)) {
-					return fsrl;
+		if (fsRef != null) {
+			GFileSystem fs = fsRef.getFilesystem();
+			if (fs instanceof GFileSystemProgramProvider programProviderFS) {
+				try {
+					GFile gfile = fs.lookup(fsrl.getPath());
+					if (gfile != null && programProviderFS.canProvideProgram(gfile)) {
+						return fsrl;
+					}
 				}
-			}
-			catch (IOException e) {
-				// ignore error and fall thru
+				catch (IOException e) {
+					// ignore error and fall thru
+				}
 			}
 		}
 		return null;

@@ -29,6 +29,7 @@ import ghidra.features.base.codecompare.model.FunctionComparisonModelListener;
 import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.util.datastruct.Duo;
 import ghidra.util.datastruct.Duo.Side;
@@ -228,7 +229,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel
 
 			String functionName = f.getName();
 			String functionPathToProgram = f.getProgram().getDomainFile().getPathname();
-			String functionAddress = f.getBody().getMinAddress().toString();
+			Address functionAddress = f.getEntryPoint();
 			String text = functionName + "@" + functionAddress + " (" + functionPathToProgram + ")";
 
 			return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);

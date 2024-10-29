@@ -59,7 +59,7 @@ import ghidra.util.task.TaskMonitor;
  *   
  *   // Setup up the actual decompiler process for a
  *   // particular program, using all the above initialization
- *   ifc.openProgram(program,language);
+ *   ifc.openProgram(program);
  *   
  *   // Make calls to the decompiler:
  *   DecompileResults res = ifc.decompileFunction(func,0,taskmonitor);

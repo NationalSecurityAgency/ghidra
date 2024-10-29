@@ -122,11 +122,13 @@ rootProject.assembleDistribution {
 		include 'GhidraDev*.zip'
 		into "Extensions/Eclipse/GhidraDev/"
 	}
+}
+
+rootProject.assembleMarkdownToHtml {
 	from ("${this.projectDir}/README.md") {
 		into "Extensions/Eclipse/GhidraDev/"
-		rename 'README.md', 'GhidraDev_README.md'
 	}
-} 
+}
 
 // PrepDev dependencies
 rootProject.prepDev.dependsOn utilityJar

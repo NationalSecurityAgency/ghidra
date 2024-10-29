@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -192,9 +192,18 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					overlays.add(FSBIcons.MISSING_PASSWORD_OVERLAY_ICON);
 				}
 
+				String ext = node.getFilenameExtOverride();
+				if (ext != null && !ext.isEmpty()) {
+					if (ext.startsWith(".")) {
+						Msg.error(this,
+							"Extension override '" + ext + "' should not begin with a dot");
+					} else {
+						filename += "." + ext;
+					}
+				}
+
 				Icon icon = fsbIcons.getIcon(filename, overlays);
 				setIcon(icon);
-
 			}
 		});
 	}

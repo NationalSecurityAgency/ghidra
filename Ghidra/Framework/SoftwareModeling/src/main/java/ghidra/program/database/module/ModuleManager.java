@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -522,9 +522,9 @@ class ModuleManager {
 	}
 
 	/**
-	 * Perform recursive check to determine if specified id is a child or decendant
+	 * Perform recursive check to determine if specified id is a child or descendant
 	 * of the specified module.
-	 * @param id descendent child id (positive for module, negative for fragment)
+	 * @param id descendant child id (positive for module, negative for fragment)
 	 * @param moduleID module id (positive)
 	 * @return true if specified id is a descendant of moduleID.
 	 * @throws IOException if database IO error occurs

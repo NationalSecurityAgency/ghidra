@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -203,7 +203,7 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting function return
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void figureOutClassDataMembers(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, DuplicateNameException, InvalidInputException,
