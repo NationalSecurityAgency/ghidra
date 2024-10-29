@@ -80,6 +80,19 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	}
 
 	@Override
+	public File getDownloadsDirectory() {
+		String userHomeProp = System.getProperty("user.home");
+		if (userHomeProp == null) {
+			return null;
+		}
+
+		File home = new File(userHomeProp);
+		File downloads = new File(home, "Downloads");
+
+		return downloads.isDirectory() ? downloads : null;
+	}
+
+	@Override
 	public List<File> getRoots(boolean forceUpdate) {
 		if (FS_ROOT_INFO.isEmpty() || forceUpdate) {
 			FS_ROOT_INFO.updateRootInfo(callback);

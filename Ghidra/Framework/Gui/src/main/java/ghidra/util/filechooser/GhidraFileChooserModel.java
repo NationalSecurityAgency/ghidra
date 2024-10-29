@@ -54,6 +54,15 @@ public interface GhidraFileChooserModel {
 	public File getDesktopDirectory();
 
 	/**
+	 * Returns the user's downloads directory, as defined by their operating system and/or their windowing environment, or
+	 * null if there is no downloads directory.<p>
+	 * Example: "/home/the_user/Downloads" or "c:/Users/the_user/Downloads"
+	 * 
+	 * @return downloads directory
+	 */
+	public File getDownloadsDirectory();
+
+	/**
 	 * Returns a list of the root drives/directories.
 	 * <p>
 	 * On windows, "C:\", "D:\", etc.
