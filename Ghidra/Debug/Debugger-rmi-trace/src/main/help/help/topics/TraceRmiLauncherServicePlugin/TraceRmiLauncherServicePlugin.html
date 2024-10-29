@@ -373,6 +373,13 @@ target remote | ssh user@host gdbserver - /path/to/image
 
       <LI><B>QEMU TTY</B>: This works similarly as in GDB, but just runs QEMU in the second
       Terminal window.</LI>
+
+      <LI><B>Pull all section mappings</B>: For some targets the memory mappings for the target
+      are not correctly relayed to Ghidra. This setting forces gdb to send the mappings to Ghidra.
+      This option is disabled by default because for large targets the action could be expensive,
+      so it should only be enabled if required (e.g. unable to correctly place breakpoints).
+      <I>Auto-Map by Section</I> must be enabled in the Modules debugger window for this to work.
+      </LI>
     </UL>
 
     <H3><A name="gdb_wine"></A>Wine + GDB</H3>
