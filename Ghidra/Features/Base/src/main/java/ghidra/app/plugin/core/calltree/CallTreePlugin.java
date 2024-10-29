@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.FunctionSupplierContext;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -145,7 +146,15 @@ public class CallTreePlugin extends ProgramPlugin {
 
 			@Override
 			public boolean isAddToPopup(ActionContext context) {
-				return (context instanceof ListingActionContext);
+				if (context instanceof ListingActionContext) {
+					return true;
+				}
+
+				if (context instanceof FunctionSupplierContext functionContext) {
+					return functionContext.hasFunctions();
+				}
+
+				return false;
 			}
 		};
 

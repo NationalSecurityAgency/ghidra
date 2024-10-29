@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,12 +59,33 @@ public class LocationReferenceContextBuilder {
 	}
 
 	/**
+	 * Adds a newline character to the previously added text. 
+	 * @return this builder
+	 */
+	public LocationReferenceContextBuilder newline() {
+		if (parts.isEmpty()) {
+			throw new IllegalStateException("Cannot add a newline without first appending text");
+		}
+		Part last = parts.get(parts.size() - 1);
+		last.text += '\n';
+		return this;
+	}
+
+	/**
 	 * Builds a {@link LocationReferenceContext} using the text supplied via the {@code append}
 	 * methods.
 	 * @return the context
 	 */
 	public LocationReferenceContext build() {
 		return new LocationReferenceContext(parts);
+	}
+
+	/**
+	 * Returns true if no text has been added to this builder.
+	 * @return true if no text has been added to this builder
+	 */
+	public boolean isEmpty() {
+		return parts.isEmpty();
 	}
 
 	@Override

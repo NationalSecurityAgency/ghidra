@@ -305,10 +305,11 @@ public class UserSearchUtils {
 	 */
 	private static String convertUserInputToRegex(String input, boolean allowGlobbing) {
 
-		// Note: Order is important! (due to how escape characters added and checked)
-		String escaped = escapeEscapeCharacters(input);
-
+		String escaped = input;
 		if (allowGlobbing) {
+
+			// Note: Order is important! (due to how escape characters added and checked)
+			escaped = escapeEscapeCharacters(input);
 			escaped = escapeNonGlobbingRegexCharacters(input);
 			escaped = convertGlobbingCharactersToRegex(escaped);
 		}

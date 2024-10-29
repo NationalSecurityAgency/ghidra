@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
-apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
-apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
-apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
-apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
-apply plugin: 'eclipse'
+package ghidra.app.plugin.core.search;
 
-eclipse.project.name = 'Features DecompilerDependent'
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
+import ghidra.util.table.ProgramLocationTableRowMapper;
 
+public class TextMatchToAddressTableRowMapper
+		extends ProgramLocationTableRowMapper<TextMatch, Address> {
 
-dependencies {
-	api project(':Base')
-	api project(':Decompiler')
+	@Override
+	public Address map(TextMatch rowObject, Program data, ServiceProvider serviceProvider) {
+		return rowObject.getAddress();
+	}
 }
-
-
