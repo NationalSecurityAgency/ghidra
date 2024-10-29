@@ -1643,7 +1643,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			procSymNew(iter);
-			monitor.incrementProgress(1);
 		}
 	}
 
@@ -2033,22 +2032,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 
-		int totalCount = 0;
 		int num = debugInfo.getNumModules();
-		for (int index = 1; index <= num; index++) {
-			monitor.checkCancelled();
-			if (index == linkerModuleNumber) {
-				continue;
-			}
-			SymbolGroup symbolGroup = getSymbolGroupForModule(index);
-			if (symbolGroup == null) {
-				continue; // should not happen
-			}
-			//totalCount += symbolGroup.size();
-			totalCount++;
-		}
 		monitor.setMessage("PDB: Processing module thunks...");
-		monitor.initialize(totalCount);
+		monitor.initialize(num);
 
 		// Process symbols list for each module
 		for (int index = 1; index <= num; index++) {
@@ -2070,7 +2056,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				else {
 					iter.next();
 				}
-				//monitor.incrementProgress(1);
 			}
 			monitor.incrementProgress(1);
 		}
