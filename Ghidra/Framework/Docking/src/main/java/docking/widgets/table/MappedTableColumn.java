@@ -125,6 +125,9 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 
 		EXPECTED_ROW_TYPE mappedRowObject = map(rowObject, data, serviceProvider);
+		if (mappedRowObject == null) {
+			return null;
+		}
 		return tableColumn.getValue(mappedRowObject, settings, data, serviceProvider);
 	}
 
