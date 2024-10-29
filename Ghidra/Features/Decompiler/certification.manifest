@@ -38,6 +38,7 @@ src/decompile/datatests/ifswitch.xml||GHIDRA||||END|
 src/decompile/datatests/impliedfield.xml||GHIDRA||||END|
 src/decompile/datatests/indproto.xml||GHIDRA||||END|
 src/decompile/datatests/injectoverride.xml||GHIDRA||||END|
+src/decompile/datatests/inline.xml||GHIDRA||||END|
 src/decompile/datatests/longdouble.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
 src/decompile/datatests/lzcount.xml||GHIDRA||||END|
