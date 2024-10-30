@@ -104,7 +104,7 @@
               extension, provided as part of the Ghidra installation. Prebuilt servers, like those
               provided as OS distribution packages, will not work as is with BSim. For users on Linux
               and macOS, the Ghidra installation provides a script, <CODE>make-postgres.sh</CODE>,
-              in the module directory <CODE>Ghidra/Features/BSim</CODE> that builds both the PostgreSQL
+              in the module directory <CODE>Ghidra/Features/BSim/support</CODE> that builds both the PostgreSQL
               server and the BSim extension from source and prepares the installation for use with
               Ghidra.  If not already included in the Ghidra installation, the source distribution
               file, currently <CODE>postgresql-15.3.tar.gz</CODE>, can be obtained from the PostgreSQL
@@ -127,7 +127,7 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/postgresql-15.3.tar.gz
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/support/postgresql-15.3.tar.gz
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -138,7 +138,7 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">cd $(ROOT)/Ghidra/Features/BSim
+                  <TD><CODE class="computeroutput">cd $(ROOT)/Ghidra/Features/BSim/support
 		  </CODE></TD>
                 </TR>
                 <TR>

@@ -78,15 +78,3 @@ task installEditablePyGhidra(type: Exec) {
 if (findPython3(false)) {
 	rootProject.prepDev.dependsOn installEditablePyGhidra
 }
-
-// Add pyghidra_launcher.py to the release
-rootProject.assembleDistribution {
-	dependsOn(buildPyPackage)
-	def p = this.project
-	def zipPath = getZipPath(p)
-    from (this.project.projectDir.toString()) {
-		include "pyghidra_launcher.py"
-		into  { zipPath }
-    }
-}
-

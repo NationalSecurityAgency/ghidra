@@ -26,9 +26,9 @@ VMARG_LIST="-XX:ParallelGCThreads=2 -XX:CICompilerCount=2 "
 # fallback, which doesn't attempt to do anything with links.
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
-SUPPORT_DIR="${SCRIPT_DIR}/../../../support"
+SUPPORT_DIR="${SCRIPT_DIR}/../../../../support"
 if ! [ -f "${SUPPORT_DIR}/launch.properties" ]; then
-    SUPPORT_DIR="${SCRIPT_DIR}/../../RuntimeScripts/Linux/support"
+    SUPPORT_DIR="${SCRIPT_DIR}/../../../RuntimeScripts/Linux/support"
 fi
 
 # Launch ISF Server.

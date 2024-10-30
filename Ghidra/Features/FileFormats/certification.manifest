@@ -10,6 +10,7 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/android/eclipse-classpath||GHIDRA||reviewed||END|
 data/android/eclipse-project||GHIDRA||reviewed||END|

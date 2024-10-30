@@ -15,6 +15,7 @@
 .launch/Headless.launch||GHIDRA||||END|
 .launch/JShell.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/GolangFunctionsThatDoNotReturn||GHIDRA||||END|

@@ -6,6 +6,7 @@
 ##MODULE IP: Tango Icons - Public Domain
 ##MODULE IP: zlib License
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/decompiler.theme.properties||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
 src/decompile/cpp/.gitignore||GHIDRA||||END|
