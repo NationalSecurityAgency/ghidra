@@ -553,7 +553,7 @@ public class JavadocConverter extends DocConverter {
 	private static String sanitizeQualifiedName(ExecutableElement el, TypeMirror type) {
 		Element self = el.getEnclosingElement();
 		PackageElement pkg = PythonTypeStubElement.getPackage(self);
-		return PythonTypeStubElement.sanitizeQualifiedName(self, type, pkg);
+		return PythonTypeStubElement.sanitizeQualifiedName(type, pkg);
 	}
 
 	/**

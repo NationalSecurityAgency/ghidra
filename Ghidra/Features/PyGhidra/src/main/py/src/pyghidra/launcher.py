@@ -28,12 +28,13 @@ import subprocess
 import sys
 import tempfile
 import threading
+from importlib.machinery import ModuleSpec
 from pathlib import Path
 from typing import List, NoReturn, Tuple, Union
 
 import jpype
 from jpype import imports, _jpype
-from importlib.machinery import ModuleSpec
+from packaging.version import Version
 
 from .javac import java_compile
 from .script import PyGhidraScript
@@ -199,7 +200,7 @@ class PyGhidraLauncher:
             msg = "Cannot launch from repo because Ghidra has not been compiled " \
                   "with Eclipse or Gradle."
             self._report_fatal_error("Ghidra not built", msg, ValueError(msg))
-        
+
         self.class_path = [str(classpath)]
         if not self._java_home:
             self._launch_support = launch_support
@@ -225,10 +226,10 @@ class PyGhidraLauncher:
         properties = []
 
         root = self._install_dir
-        
+
         if self._dev_mode:
             root = root / "Ghidra" / "RuntimeScripts" / "Common"
-        
+
         launch_properties = root / "support" / "launch.properties"
 
         for line in Path(launch_properties).read_text().splitlines():
@@ -349,7 +350,7 @@ class PyGhidraLauncher:
         Checks if the currently installed Ghidra version is supported.
         The launcher will report the problem and terminate if it is not supported.
         """
-        if self.app_info.version < MINIMUM_GHIDRA_VERSION:
+        if Version(self.app_info.version) < Version(MINIMUM_GHIDRA_VERSION):
             msg = f"Ghidra version {self.app_info.version} is not supported" + os.linesep + \
                   f"The minimum required version is {MINIMUM_GHIDRA_VERSION}"
             self._report_fatal_error("Unsupported Version", msg, ValueError(msg))
@@ -677,15 +678,15 @@ def _run_mac_app():
     # this runs the event loop
     # it is required for the GUI to show up
     from ctypes import c_void_p, c_double, c_uint64, c_int64, c_int32, c_bool, CFUNCTYPE
-    
+
     CoreFoundation = ctypes.cdll.LoadLibrary(ctypes.util.find_library("CoreFoundation"))
-    
+
     def get_function(name, restype, *argtypes):
         res = getattr(CoreFoundation, name)
         res.argtypes = [arg for arg in argtypes]
         res.restype = restype
         return res
-    
+
     CFRunLoopTimerCallback = CFUNCTYPE(None, c_void_p, c_void_p)
     kCFRunLoopDefaultMode = c_void_p.in_dll(CoreFoundation, "kCFRunLoopDefaultMode")
     kCFRunLoopRunFinished = c_int32(1)
@@ -693,10 +694,10 @@ def _run_mac_app():
     INF_TIME = c_double(1.0e20)
     FIRE_ONCE = c_double(0)
     kCFAllocatorDefault = NULL
-    
+
     CFRunLoopGetCurrent = get_function("CFRunLoopGetCurrent", c_void_p)
     CFRelease = get_function("CFRelease", None, c_void_p)
-    
+
     CFRunLoopTimerCreate = get_function(
         "CFRunLoopTimerCreate",
         c_void_p,
@@ -708,19 +709,19 @@ def _run_mac_app():
         CFRunLoopTimerCallback,
         c_void_p
     )
-    
+
     CFRunLoopAddTimer = get_function("CFRunLoopAddTimer", None, c_void_p, c_void_p, c_void_p)
     CFRunLoopRunInMode = get_function("CFRunLoopRunInMode", c_int32, c_void_p, c_double, c_bool)
-    
+
     @CFRunLoopTimerCallback
     def dummy_timer(timer, info):
         # this doesn't need to do anything
         # CFRunLoopTimerCreate just needs a valid callback
         return
-    
+
     timer = CFRunLoopTimerCreate(kCFAllocatorDefault, INF_TIME, FIRE_ONCE, 0, 0, dummy_timer, NULL)
     CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopDefaultMode)
     CFRelease(timer)
-    
+
     while CFRunLoopRunInMode(kCFRunLoopDefaultMode, INF_TIME, False) != kCFRunLoopRunFinished:
         pass
