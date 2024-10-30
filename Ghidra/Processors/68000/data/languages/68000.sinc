@@ -883,12 +883,11 @@ macro rotateRightExtended(count, register, width) {
 
 with : extGUARD=1 {
 
-@ifdef LISATRAP
+@ifdef MACTRAP
+:atrapm "#"op011 is op=10 & op011 unimpl
+@elif defined(LISATRAP)
 :atrapl "#"t is op=10 & op011; opx015 [ t = op011 * 65536 + opx015; ] unimpl
 @endif # LISATRAP
-@ifdef MACTRAP
-:atrap "#"op011 is op=10 & op011 unimpl
-@endif # MACTRAP
 
 :abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb {
 	CF = carry(Txb,carry(Tyb,XF));
