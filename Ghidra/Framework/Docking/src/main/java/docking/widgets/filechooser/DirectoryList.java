@@ -133,6 +133,11 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					e.consume();
 					handleEnterKey();
+				} else if (e.getKeyCode() == KeyEvent.VK_UP) {
+					if (e.getModifiersEx() == KeyEvent.META_DOWN_MASK) {
+						e.consume();
+						chooser.goUpOneDirectoryLevel();
+					}
 				}
 			}
 		});
