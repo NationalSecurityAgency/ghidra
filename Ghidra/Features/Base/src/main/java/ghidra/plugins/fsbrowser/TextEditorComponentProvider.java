@@ -17,6 +17,7 @@ package ghidra.plugins.fsbrowser;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.*;
 
@@ -339,7 +340,30 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 				redoStack.clear();
 				contextChanged();
 			});
+			this.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if (e.getModifiersEx() == DockingUtils.CONTROL_KEY_MODIFIER_MASK) {
+						int keyCode = e.getKeyCode();
+						if (keyCode == KeyEvent.VK_MINUS) {
+							changeFontSize(-1);
+						} else if (keyCode == KeyEvent.VK_EQUALS) {
+							changeFontSize(1);
+						}
+					}
+				}
+			});
 			setCaretPosition(0);
+		}
+
+		// font size range in FontPropertyEditor/buildSizePanel is 1-72
+		private void changeFontSize(int change) {
+			Font font = getFont();
+			int oldSize = font.getSize();
+			int newSize = Math.min(Math.max(oldSize + change, 1), 72);
+			if (newSize != oldSize) {
+				ThemeManager.getInstance().setFont(FONT_ID, font.deriveFont((float) newSize));
+			}
 		}
 
 		/**
