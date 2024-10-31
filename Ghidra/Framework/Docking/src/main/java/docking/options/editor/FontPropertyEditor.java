@@ -158,7 +158,6 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			sizeCombo =
 				new GComboBox<>(IntStream.rangeClosed(1, 72).boxed().toArray(Integer[]::new));
 			sizeCombo.setMaximumRowCount(9);
-			sizeCombo.setMaximumRowCount(9);
 			sizeCombo.addActionListener(actionListener);
 			panel.add(sizeCombo);
 
