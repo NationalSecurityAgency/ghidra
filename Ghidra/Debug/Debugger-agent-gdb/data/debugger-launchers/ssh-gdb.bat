@@ -1,5 +1,6 @@
 ::@timeout 60000
 ::@title gdb via ssh
+::@image-opt env:OPT_TARGET_IMG
 ::@desc <html><body width="300px">
 ::@desc   <h3>Launch with <tt>gdb</tt> via <tt>ssh</tt></h3>
 ::@desc   <p>
@@ -19,21 +20,39 @@
 ::@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 ::@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb on the remote system. Omit the full path to resolve using the system PATH."
 ::@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
+::@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 
 @echo off
-set cmd=TERM='%TERM%' '%OPT_GDB_PATH%' ^
-  -q ^
-  -ex 'set pagination off' ^
-  -ex 'set confirm off' ^
-  -ex 'show version' ^
-  -ex 'python import ghidragdb' ^
-  -ex 'file \"%OPT_TARGET_IMG%\"' ^
-  -ex 'set args %OPT_TARGET_ARGS%' ^
-  -ex 'ghidra trace connect \"localhost:%OPT_REMOTE_PORT%\"' ^
-  -ex 'ghidra trace start' ^
-  -ex 'ghidra trace sync-enable' ^
-  -ex '%OPT_START_CMD%' ^
-  -ex 'set confirm on' ^
-  -ex 'set pagination on'
+
+IF "%OPT_TARGET_IMG%" == "" (
+  set cmd=TERM='%TERM%' '%OPT_GDB_PATH%' ^
+    -q ^
+    -ex 'set pagination off' ^
+    -ex 'set confirm off' ^
+    -ex 'show version' ^
+    -ex 'python import ghidragdb' ^
+    -ex 'set architecture %OPT_ARCH%' ^
+    -ex 'ghidra trace connect \"localhost:%OPT_REMOTE_PORT%\"' ^
+    -ex 'ghidra trace start' ^
+    -ex 'ghidra trace sync-enable' ^
+    -ex 'set confirm on' ^
+    -ex 'set pagination on'
+) ELSE (
+  set cmd=TERM='%TERM%' '%OPT_GDB_PATH%' ^
+    -q ^
+    -ex 'set pagination off' ^
+    -ex 'set confirm off' ^
+    -ex 'show version' ^
+    -ex 'python import ghidragdb' ^
+    -ex 'set architecture %OPT_ARCH%' ^
+    -ex 'file \"%OPT_TARGET_IMG%\"' ^
+    -ex 'set args %OPT_TARGET_ARGS%' ^
+    -ex 'ghidra trace connect \"localhost:%OPT_REMOTE_PORT%\"' ^
+    -ex 'ghidra trace start' ^
+    -ex 'ghidra trace sync-enable' ^
+    -ex '%OPT_START_CMD%' ^
+    -ex 'set confirm on' ^
+    -ex 'set pagination on'
+)
 
 "%OPT_SSH_PATH%" "-R%OPT_REMOTE_PORT%:%GHIDRA_TRACE_RMI_ADDR%" -t %OPT_EXTRA_SSH_ARGS% "%OPT_HOST%" "%cmd%"

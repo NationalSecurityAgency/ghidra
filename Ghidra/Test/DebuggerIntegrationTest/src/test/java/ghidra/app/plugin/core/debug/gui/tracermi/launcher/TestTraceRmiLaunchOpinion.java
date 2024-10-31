@@ -30,8 +30,8 @@ public class TestTraceRmiLaunchOpinion implements TraceRmiLaunchOpinion {
 
 	public static class TestTraceRmiLaunchOffer extends AbstractTraceRmiLaunchOffer {
 		private static final LaunchParameter<String> PARAM_IMAGE =
-			LaunchParameter.create(String.class, "image", PARAM_DISPLAY_IMAGE, "Image to execute",
-				true, ValStr.str(""), str -> str);
+			LaunchParameter.create(String.class, "image", "Image", "Image to execute",
+				false, ValStr.str(""), str -> str);
 
 		public TestTraceRmiLaunchOffer(TraceRmiLauncherServicePlugin plugin, Program program) {
 			super(plugin, program);
@@ -62,8 +62,8 @@ public class TestTraceRmiLaunchOpinion implements TraceRmiLaunchOpinion {
 		}
 
 		@Override
-		public boolean requiresImage() {
-			return false;
+		public LaunchParameter<?> imageParameter() {
+			return PARAM_IMAGE;
 		}
 
 		@Override

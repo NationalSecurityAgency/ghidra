@@ -124,7 +124,7 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 	}
 
 	@Override
-	public boolean requiresImage() {
-		return !attrs.noImage();
+	public LaunchParameter<?> imageParameter() {
+		return attrs.imageOpt();
 	}
 }

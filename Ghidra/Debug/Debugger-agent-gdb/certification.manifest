@@ -3,7 +3,6 @@
 Module.manifest||GHIDRA||||END|
 data/debugger-launchers/local-gdb.bat||GHIDRA||||END|
 data/debugger-launchers/qemu-gdb.bat||GHIDRA||||END|
-data/debugger-launchers/raw-gdb.bat||GHIDRA||||END|
 data/debugger-launchers/remote-gdb.bat||GHIDRA||||END|
 data/debugger-launchers/ssh-gdb.bat||GHIDRA||||END|
 data/debugger-launchers/ssh-gdbserver.bat||GHIDRA||||END|

@@ -15,7 +15,6 @@
 # limitations under the License.
 ##
 #@title remote gdb
-#@no-image
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
 #@desc   <p>
@@ -30,7 +29,7 @@
 #@env OPT_TARGET_TYPE:TargetType="remote" "Target" "The type of remote target"
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:int=9999 "Port" "The host's listening port"
-#@env OPT_ARCH:str="" "Architecture (optional)" "Target architecture override"
+#@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
@@ -46,20 +45,13 @@ else
   export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
 fi
 
-if [ -z "$OPT_ARCH" ]
-then
-  archcmd=
-else
-  archcmd=-ex "set arch $OPT_ARCH" 
-fi
-
 "$OPT_GDB_PATH" \
   -q \
   -ex "set pagination off" \
   -ex "set confirm off" \
   -ex "show version" \
   -ex "python import ghidragdb" \
-  $archcmd \
+  -ex "set arch $OPT_ARCH" \
   -ex "echo Connecting to $OPT_HOST:$OPT_PORT... " \
   -ex "target $OPT_TARGET_TYPE $OPT_HOST:$OPT_PORT" \
   -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
