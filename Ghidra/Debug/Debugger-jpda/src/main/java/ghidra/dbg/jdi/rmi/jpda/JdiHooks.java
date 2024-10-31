@@ -15,47 +15,35 @@
  */
 package ghidra.dbg.jdi.rmi.jpda;
 
+import static ghidra.dbg.jdi.rmi.jpda.JdiManager.*;
+
 import java.util.*;
 
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
-import ghidra.app.plugin.core.debug.client.tracermi.RmiTrace;
-import ghidra.app.plugin.core.debug.client.tracermi.RmiTransaction;
+import ghidra.app.plugin.core.debug.client.tracermi.*;
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 
 class HookState {
 
-	private TraceJdiCommands cmds;
-	private Object batch;
+	private JdiCommands cmds;
 
-	public HookState(TraceJdiCommands cmds) {
+	public HookState(JdiCommands cmds) {
 		this.cmds = cmds;
-		this.batch = null;
 	}
 
-	public void ensureBatch() {
-		if (batch == null) {
-			batch = cmds.state.client.startBatch();
-		}
+	public RmiBatch batch() {
+		return cmds.state.client.startBatch();
 	}
-
-	public void endBatch() {
-		if (batch == null) {
-			return;
-		}
-		batch = null;
-		cmds.state.client.endBatch();
-	}
-
 }
 
 class VmState {
 
-	private TraceJdiManager manager;
-	private TraceJdiCommands cmds;
+	private JdiManager manager;
+	private JdiCommands cmds;
 	private boolean firstPass;
 	boolean classes;
 	boolean modules;
@@ -65,7 +53,7 @@ class VmState {
 	boolean events;
 	Set<Object> visited;
 
-	public VmState(TraceJdiManager manager) {
+	public VmState(JdiManager manager) {
 		this.manager = manager;
 		this.cmds = manager.getCommands();
 		this.firstPass = true;
@@ -109,9 +97,14 @@ class VmState {
 			}
 			StackFrame frame = manager.getJdi().getCurrentFrame();
 			if (frame != null) {
-				if (first || !visited.contains(frame)) {
-					cmds.putReg(frame);
-					visited.add(frame);
+				try {
+					if (first || !visited.contains(frame)) {
+						cmds.putReg(frame);
+						visited.add(frame);
+					}
+				}
+				catch (InvalidStackFrameException e) {
+					manager.getJdi().setCurrentFrame(null);
 				}
 			}
 		}
@@ -154,7 +147,7 @@ class VmState {
 		Process proc = vm.process();
 		String path = cmds.getPath(proc);
 		if (path != null) {
-			cmds.setValue(path, "Alive", proc.isAlive());
+			cmds.setValue(path, ATTR_ALIVE, proc.isAlive());
 		}
 		setState(vm);
 	}
@@ -168,8 +161,8 @@ class VmState {
 			if (process != null) {
 				exitCode = process.exitValue();
 				String procpath = cmds.getPath(vm.process());
-				cmds.setValue(procpath, "ExitCode", exitCode);
-				cmds.setValue(procpath, TraceJdiManager.STATE_ATTRIBUTE_NAME, "TERMINATED");
+				cmds.setValue(procpath, ATTR_EXIT_CODE, exitCode);
+				cmds.setValue(procpath, ATTR_STATE, "TERMINATED");
 			}
 		}
 		catch (IllegalThreadStateException e) {
@@ -178,25 +171,25 @@ class VmState {
 		if (description != null) {
 			cmds.state.trace.snapshot(description, "", null);
 		}
-		cmds.setValue(path, "ExitCode", exitCode);
-		cmds.setValue(path, TraceJdiManager.STATE_ATTRIBUTE_NAME, "TERMINATED");
+		cmds.setValue(path, ATTR_EXIT_CODE, exitCode);
+		cmds.setValue(path, ATTR_STATE, "TERMINATED");
 	}
 
 }
 
-public class TraceJdiHooks implements JdiEventsListenerAdapter {
+public class JdiHooks implements JdiEventsListenerAdapter {
 
-	private TraceJdiManager manager;
-	private TraceJdiCommands cmds;
+	private JdiManager manager;
+	private JdiCommands cmds;
 	private HookState hookState;
 	private Map<VirtualMachine, VmState> vmStates = new HashMap<>();
 
-	public TraceJdiHooks(TraceJdiManager manager) {
+	public JdiHooks(JdiManager manager, JdiCommands cmds) {
 		this.manager = manager;
-		this.cmds = manager.getCommands();
+		this.cmds = cmds;
 	}
 
-	private void setCommands(TraceJdiCommands commands) {
+	private void setCommands(JdiCommands commands) {
 		this.cmds = commands;
 		hookState = new HookState(commands);
 	}
@@ -204,17 +197,19 @@ public class TraceJdiHooks implements JdiEventsListenerAdapter {
 	@Override
 	public DebugStatus vmStarted(VMStartEvent event, JdiCause cause) {
 		setCommands(manager.getCommands());
-		hookState.ensureBatch();
-		RmiTrace trace = cmds.state.trace;
 		JdiManagerImpl jdi = manager.getJdi();
 		VirtualMachine vm = event == null ? jdi.getCurrentVM() : event.virtualMachine();
-		try (RmiTransaction tx = trace.openTx("New VM " + vm.description())) {
-			jdi.setCurrentVM(vm);
-			jdi.addVM(vm);
+		jdi.setCurrentVM(vm);
+		jdi.addVM(vm);
+		RmiTrace trace = cmds.state.trace;
+		if (trace == null) {
+			return DebugStatus.NO_CHANGE;
+		}
+		try (RmiBatch batch = hookState.batch();
+				RmiTransaction tx = trace.openTx("New VM " + vm.description())) {
 			cmds.putVMs();
 			enableCurrentVM();
 		}
-		hookState.endBatch();
 		return DebugStatus.NO_CHANGE;
 	}
 
@@ -417,12 +412,11 @@ public class TraceJdiHooks implements JdiEventsListenerAdapter {
 		}
 		VmState state = vmStates.get(vm);
 		state.visited.clear();
-		hookState.ensureBatch();
-		try (RmiTransaction tx = trace.openTx("Stopped")) {
+		try (RmiBatch batch = hookState.batch();
+				RmiTransaction tx = trace.openTx("Stopped")) {
 			state.recordState("Stopped");
 			cmds.activate(null);
 		}
-		hookState.endBatch();
 	}
 
 	private void setCurrent(Event event) {
@@ -446,12 +440,11 @@ public class TraceJdiHooks implements JdiEventsListenerAdapter {
 	void onContinue() {
 		VirtualMachine currentVM = manager.getJdi().getCurrentVM();
 		VmState state = vmStates.get(currentVM);
-		hookState.ensureBatch();
-		try (RmiTransaction tx = cmds.state.trace.openTx("Continue")) {
+		try (RmiBatch batch = hookState.batch();
+				RmiTransaction tx = cmds.state.trace.openTx("Continue")) {
 			state.recordStateContinued(currentVM);
 			cmds.activate(null);
 		}
-		hookState.endBatch();
 	}
 
 	public void installHooks() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.services.*;
 import ghidra.debug.api.progress.CloseableTaskMonitor;
+import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracermi.*;
 import ghidra.debug.api.tracermi.TraceRmiServiceListener.ConnectMode;
 import ghidra.framework.plugintool.*;
@@ -71,8 +72,8 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 		}
 	}
 
-	@AutoServiceConsumed
-	private DebuggerTargetService targetService;
+	// @AutoServiceConsumed // via method
+	private volatile DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private ProgressService progressService;
 	@SuppressWarnings("unused")
@@ -92,6 +93,25 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 	public TraceRmiPlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
+	}
+
+	@AutoServiceConsumed
+	public void setTargetService(DebuggerTargetService targetService) {
+		this.targetService = targetService;
+		record ConnAndTarget(TraceRmiConnection conn, Target target) {}
+		List<ConnAndTarget> targets = new ArrayList<>();
+		synchronized (handlers) {
+			for (TraceRmiConnection conn : getAllConnections()) {
+				for (Target target : conn.getTargets()) {
+					targets.add(new ConnAndTarget(conn, target));
+				}
+			}
+		}
+
+		for (ConnAndTarget cat : targets) {
+			targetService.publishTarget(cat.target);
+			listeners.invoke().targetPublished(cat.conn, cat.target);
+		}
 	}
 
 	protected CloseableTaskMonitor createMonitor() {
@@ -201,6 +221,15 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 
 	void publishTarget(TraceRmiHandler handler, TraceRmiTarget target) {
 		Swing.runIfSwingOrRunLater(() -> {
+			if (targetService == null) {
+				/**
+				 * I have no idea how this is happening, given targetService is a required service,
+				 * and I don't see any way the rmi server can be started before the services are
+				 * wired in. Whatever. I'll have to publish all the targets when the service
+				 * appears, I guess.
+				 */
+				return;
+			}
 			targetService.publishTarget(target);
 			listeners.invoke().targetPublished(handler, target);
 		});
@@ -208,6 +237,10 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 
 	void withdrawTarget(TraceRmiTarget target) {
 		Swing.runIfSwingOrRunLater(() -> {
+			if (targetService == null) {
+				// This can happen during tear down.
+				return;
+			}
 			targetService.withdrawTarget(target);
 		});
 	}
