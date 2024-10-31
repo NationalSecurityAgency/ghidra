@@ -192,7 +192,7 @@ public:
 
   void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
-  bool inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
+  int4 inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
   void overrideFlow(const Address &addr,uint4 type);
   void doLiveInject(InjectPayload *payload,const Address &addr,BlockBasic *bl,list<PcodeOp *>::iterator pos);
   

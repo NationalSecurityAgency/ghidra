@@ -125,18 +125,13 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 			imports.add((TypeElement) dt.asElement());
 		}
 		for (TypeMirror iface : el.getInterfaces()) {
-			if (iface instanceof DeclaredType dt) {
-				imports.add((TypeElement) dt.asElement());
-			}
+			addNeededTypes(imports, iface);
 		}
 		for (PythonTypeStubNestedType nested : getNestedTypes()) {
 			imports.addAll(nested.getImportedTypes());
 		}
 		for (VariableElement field : getFields()) {
-			TypeMirror fieldType = field.asType();
-			if (fieldType instanceof DeclaredType dt) {
-				imports.add((TypeElement) dt.asElement());
-			}
+			addNeededTypes(imports, field.asType());
 		}
 		for (PythonTypeStubMethod method : getMethods()) {
 			imports.addAll(method.getImportedTypes());
@@ -327,7 +322,7 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 		else {
 			TypeMirror type = field.asType();
 			printer.print(": ");
-			String sanitizedType = getTypeString(el, type);
+			String sanitizedType = sanitizeQualifiedName(type);
 
 			// only one of these may be applied
 			// prefer Final over ClassVar
@@ -648,11 +643,7 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 			}
 			return OBJECT_NAME;
 		}
-		return sanitizeQualifiedName(el, base);
-	}
-
-	private String sanitizeQualifiedName(TypeMirror type) {
-		return sanitizeQualifiedName(el, type);
+		return sanitizeQualifiedName(base);
 	}
 
 	/**

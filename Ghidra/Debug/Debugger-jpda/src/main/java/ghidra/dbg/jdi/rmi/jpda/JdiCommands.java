@@ -15,7 +15,10 @@
  */
 package ghidra.dbg.jdi.rmi.jpda;
 
+import static ghidra.dbg.jdi.rmi.jpda.JdiManager.*;
+
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.ProcessHandle.Info;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
@@ -23,6 +26,9 @@ import java.nio.channels.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.sun.jdi.*;
 import com.sun.jdi.Method;
@@ -36,6 +42,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.Language;
 import ghidra.rmi.trace.TraceRmi.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.util.Msg;
 
 /*
@@ -49,7 +56,7 @@ import ghidra.util.Msg;
 
 class State {
 
-	RmiClient client;
+	public RmiClient client;
 	public RmiTrace trace;
 	RmiTransaction tx;
 
@@ -109,25 +116,16 @@ class State {
 
 }
 
-public class TraceJdiCommands {
+public class JdiCommands {
 
-	private TraceJdiManager manager;
+	private JdiManager manager;
 	private JdiManagerImpl jdi;
 
 	public State state;
 	private String[] regNames = { "PC", "return_address" };
 	public long MAX_REFS = 100;
 
-//	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-//		TargetStepKind.FINISH, //
-//		TargetStepKind.LINE, //
-//		TargetStepKind.OVER, //
-//		TargetStepKind.OVER_LINE, //
-//		TargetStepKind.RETURN, //
-//		TargetStepKind.UNTIL, //
-//		TargetStepKind.EXTENDED);
-
-	public TraceJdiCommands(TraceJdiManager manager) {
+	public JdiCommands(JdiManager manager) {
 		this.manager = manager;
 		this.jdi = manager.getJdi();
 		state = new State();
@@ -145,7 +143,7 @@ public class TraceJdiCommands {
 			state.client = new RmiClient(channel, "jdi");
 			state.client.setRegistry(manager.remoteMethodRegistry);
 			state.client.negotiate("Connect");
-			Msg.info(this, "Connected to " + state.client.getDescription() + " at " + address);
+			Msg.out("Connected to " + state.client.getDescription());
 		}
 		catch (NumberFormatException e) {
 			throw new RuntimeException("Port must be numeric");
@@ -187,8 +185,7 @@ public class TraceJdiCommands {
 						state.client = new RmiClient(client, "jdi");
 						state.client.setRegistry(manager.remoteMethodRegistry);
 						client.configureBlocking(false);
-						Msg.info(this, "Connected from " + state.client.getDescription() + " at " +
-							client.getLocalAddress());
+						Msg.out("Connected from " + state.client.getDescription());
 					}
 				}
 				keyIterator.remove();
@@ -219,7 +216,7 @@ public class TraceJdiCommands {
 	}
 
 	public void startTrace(String name) {
-		TraceJdiArch arch = manager.getArch();
+		JdiArch arch = manager.getArch();
 		LanguageID language = arch.computeGhidraLanguage();
 		CompilerSpecID compiler = arch.computeGhidraCompiler(language);
 		state.trace = state.client.createTrace(name, language, compiler);
@@ -245,6 +242,9 @@ public class TraceJdiCommands {
 		if (name == null) {
 			name = computeName();
 		}
+		else if (name.contains("/")) {
+			name = name.substring(name.lastIndexOf("/"));
+		}
 		state.requireNoTrace();
 		startTrace(name);
 	}
@@ -266,19 +266,26 @@ public class TraceJdiCommands {
 		startTrace(name);
 	}
 
+	public VirtualMachine ghidraTraceCreate(Map<String, String> env) {
+		return manager.getJdi().createVM(env);
+	}
+
 	public void ghidraTraceInfo() {
 		if (state.client == null) {
 			Msg.error(this, "Not connected to Ghidra");
+			return;
 		}
-		Msg.info(this, "Connected to" + state.client.getDescription());
+		Msg.info(this, "Connected to " + state.client.getDescription());
 		if (state.trace == null) {
 			Msg.error(this, "No trace");
 		}
-		Msg.info(this, "Trace active");
+		else {
+			Msg.info(this, "Trace active");
+		}
 	}
 
 	public void ghidraTraceInfoLcsp() {
-		TraceJdiArch arch = manager.getArch();
+		JdiArch arch = manager.getArch();
 		LanguageID language = arch.computeGhidraLanguage();
 		CompilerSpecID compiler = arch.computeGhidraCompiler(language);
 		Msg.info(this, "Selected Ghidra language: " + language);
@@ -286,7 +293,7 @@ public class TraceJdiCommands {
 	}
 
 	public void ghidraTraceTxStart(String description) {
-		state.requireTx();
+		state.requireNoTx();
 		state.tx = state.requireTrace().startTx(description, false);
 	}
 
@@ -332,7 +339,6 @@ public class TraceJdiCommands {
 	public void ghidraTraceDelMem(Address address, long length) {
 		state.requireTrace();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceDelMem", false)) {
-			VirtualMachine currentVM = manager.getJdi().getCurrentVM();
 			Address mapped = state.trace.memoryMapper.map(address);
 			AddressRangeImpl range = new AddressRangeImpl(mapped, mapped.add(length - 1));
 			state.trace.deleteBytes(range, state.trace.getSnap());
@@ -369,19 +375,26 @@ public class TraceJdiCommands {
 	public void ghidraTraceInsertObj(String path) {
 		state.requireTx();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceInsertObj", false)) {
-			state.trace.proxyObjectPath(path).insert(state.trace.getSnap(), Resolution.CR_ADJUST);
+			Lifespan span = state.trace.proxyObjectPath(path)
+					.insert(state.trace.getSnap(), Resolution.CR_ADJUST);
+			System.out.println("Inserted object: lifespan=" + span);
 		}
 	}
 
 	public void ghidraTraceRemoveObj(String path) {
 		state.requireTx();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceRemoveObj", false)) {
-			state.trace.proxyObjectPath(path).remove(state.trace.getSnap(), false);
+			Lifespan span = state.trace.proxyObjectPath(path).remove(state.trace.getSnap(), false);
+			System.out.println("Removed object: lifespan=" + span);
 		}
 	}
 
-//	public void ghidraTraceSetValue(String path, String key, Object value, TargetObjectSchema schema) {
-//	}
+	public void ghidraTraceSetValue(String path, String key, Object value) {
+		state.requireTx();
+		try (RmiTransaction tx = state.trace.startTx("ghidraTraceSetValue", false)) {
+			setValue(path, key, value);
+		}
+	}
 
 	public void ghidraTraceRetainValues(String kind, String path, Set<String> keys) {
 		state.requireTx();
@@ -405,11 +418,77 @@ public class TraceJdiCommands {
 		return state.trace.proxyObjectPath(path);
 	}
 
-//	public void ghidraTraceGetValues(String pattern) {
-//	}
-//
-//	public void ghidraTraceGetValuesRng() {
-//	}
+	public static class Tabulator {
+		static class Column {
+			int width;
+
+			public void measure(String string) {
+				width = Math.max(width, string.length());
+			}
+
+			public void print(PrintStream out, String string) {
+				out.print(pad(string));
+			}
+
+			private String pad(String string) {
+				return StringUtils.rightPad(string, width);
+			}
+		}
+
+		private final PrintStream out;
+		private final List<Column> columns;
+
+		public Tabulator(PrintStream out, int colCount) {
+			this.out = out;
+			this.columns = IntStream.range(0, colCount).mapToObj(i -> new Column()).toList();
+		}
+
+		public void measure(Object... row) {
+			if (row.length != columns.size()) {
+				throw new IllegalArgumentException("Column count mismatch");
+			}
+			for (int i = 0; i < row.length; i++) {
+				columns.get(i).measure(row[i].toString());
+			}
+		}
+
+		public void print(Object... row) {
+			if (row.length != columns.size()) {
+				throw new IllegalArgumentException("Column count mismatch");
+			}
+			for (int i = 0; i < row.length; i++) {
+				if (i != 0) {
+					out.print(" ");
+				}
+				columns.get(i).print(out, row[i].toString());
+			}
+			out.println();
+		}
+	}
+
+	public void printValues(List<RmiTraceObjectValue> values) {
+		Tabulator tab = new Tabulator(System.out, 5);
+		tab.measure("Parent", "Key", "Span", "Value", "Type");
+		for (RmiTraceObjectValue d : values) {
+			tab.measure(d.parent().getPath(), d.span(), d.key(), d.value(), d.schema());
+		}
+		tab.print("Parent", "Key", "Span", "Value", "Type");
+		for (RmiTraceObjectValue d : values) {
+			tab.print(d.parent().getPath(), d.span(), d.key(), d.value(), d.schema());
+		}
+	}
+
+	public void ghidraTraceGetValues(String pattern) {
+		state.requireTrace();
+		List<RmiTraceObjectValue> values = state.trace.getValues(pattern);
+		printValues(values);
+	}
+
+	public void ghidraTraceGetValuesRng(Address addr, long sz) {
+		state.requireTrace();
+		List<RmiTraceObjectValue> values = state.trace.getValuesRng(addr, sz);
+		printValues(values);
+	}
 
 	public void ghidraTracePutVMs() {
 		state.requireTrace();
@@ -467,7 +546,6 @@ public class TraceJdiCommands {
 
 	public void ghidraTraceDisassemble(Address address) {
 		state.requireTrace();
-		VirtualMachine currentVM = manager.getJdi().getCurrentVM();
 		MemoryMapper mapper = state.trace.memoryMapper;
 		Address mappedAddress = mapper.map(address);
 		AddressSpace addressSpace = mappedAddress.getAddressSpace();
@@ -480,7 +558,6 @@ public class TraceJdiCommands {
 	// STATE //
 
 	public void putMemState(Address start, long length, MemoryState memState, boolean usePages) {
-		VirtualMachine currentVM = manager.getJdi().getCurrentVM();
 		Address mapped = state.trace.memoryMapper.map(start);
 		if (mapped.getAddressSpace() != start.getAddressSpace() &&
 			!memState.equals(MemoryState.MS_UNKNOWN)) {
@@ -503,7 +580,7 @@ public class TraceJdiCommands {
 	}
 
 	public RegisterValue[] putRegisters(StackFrame frame, String ppath) {
-		TraceJdiArch arch = manager.getArch();
+		JdiArch arch = manager.getArch();
 		Language lang = arch.getLanguage();
 		Set<String> keys = new HashSet<>();
 		RegisterValue[] rvs = new RegisterValue[regNames.length];
@@ -568,7 +645,7 @@ public class TraceJdiCommands {
 		Address addr = manager.getAddressFromLocation(loc);
 		RegisterMapper mapper = state.trace.registerMapper;
 		String regName = mapper.mapName(name);
-		TraceJdiArch arch = manager.getArch();
+		JdiArch arch = manager.getArch();
 		Language lang = arch.getLanguage();
 		Register register = lang.getRegister(name);
 		RegisterValue rv = new RegisterValue(register, addr.getOffsetAsBigInteger());
@@ -584,7 +661,6 @@ public class TraceJdiCommands {
 	}
 
 	public void putMem(Address address, long length, boolean create) {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		MemoryMapper mapper = state.trace.memoryMapper;
 		Address mappedAddress = mapper.map(address);
 		AddressSpace addressSpace = mappedAddress.getAddressSpace();
@@ -636,8 +712,8 @@ public class TraceJdiCommands {
 	}
 
 	public void putTypeDetails(String path, Type type) {
-		setValue(path, "_display", "Type: " + type.name());
-		setValue(path, "Signature", type.signature());
+		setValue(path, ATTR_DISPLAY, "Type: " + type.name());
+		setValue(path, ATTR_SIGNATURE, type.signature());
 	}
 
 	public void putReferenceTypeContainer(String ppath, List<ReferenceType> reftypes) {
@@ -666,17 +742,28 @@ public class TraceJdiCommands {
 		if (name.indexOf(".") > 0) {
 			name = name.substring(name.lastIndexOf(".") + 1);
 		}
-		setValue(path, TraceJdiManager.MODULE_NAME_ATTRIBUTE_NAME, name + ".class");
+		setValue(path, ATTR_MODULE_NAME, name + ".class");
 		putRefTypeAttributes(path, reftype);
-		createObject(path + ".Fields");
-		createObject(path + ".Instances");
-		createObject(path + ".Locations");
-		//createObject(path + ".Methods");
+		String fpath = createObject(path + ".Fields");
+		String ipath = createObject(path + ".Instances");
+		String lpath = createObject(path + ".Locations");
+		insertObject(fpath);
+		insertObject(ipath);
+		insertObject(lpath);
 		putMethodContainer(path + ".Methods", reftype);
 
 		String rpath = createObject(path + ".Relations");
+		insertObject(rpath);
 		ModuleReference module = reftype.module();
-		createObject(module, module.name(), rpath + ".ModuleRef");
+		String moduleName = module.name();
+		if (moduleName == null) {
+			moduleName = "<unnamed>";
+		}
+		if (moduleName.contains(".")) {
+			moduleName = "\"" + moduleName + "\"";
+		}
+		String mrpath = createObject(module, moduleName, rpath + ".ModuleRef");
+		insertObject(mrpath);
 		if (reftype instanceof ArrayType at) {
 			putArrayTypeDetails(rpath, at);
 		}
@@ -713,6 +800,7 @@ public class TraceJdiCommands {
 		setValue(path, "defaultStratum", reftype.defaultStratum());
 		setValue(path, "availableStata", reftype.availableStrata());
 		setValue(path, "failedToInitialize", reftype.failedToInitialize());
+		insertObject(path);
 	}
 
 	private void registerMemory(String path, ReferenceType reftype) {
@@ -727,17 +815,17 @@ public class TraceJdiCommands {
 					bounds.add(range);
 
 					String mpath = createObject(mempath + manager.key(m.toString()));
-					setValue(mpath, "Range", range);
-					insertObject(path);
+					setValue(mpath, ATTR_RANGE, range);
+					insertObject(mpath);
 				}
 			}
 		}
 		AddressRange range = manager.putAddressRange(reftype, bounds);
-		setValue(path, "Range", range);
+		setValue(path, ATTR_RANGE, range);
 
-		setValue(path, "Count", reftype.constantPoolCount());
+		setValue(path, ATTR_COUNT, reftype.constantPoolCount());
 		range = manager.getPoolAddressRange(reftype, getSize(reftype) - 1);
-		setValue(path, "RangeCP", range);
+		setValue(path, ATTR_RANGE_CP, range);
 		try {
 			putMem(range.getMinAddress(), range.getLength(), true);
 		}
@@ -755,19 +843,24 @@ public class TraceJdiCommands {
 		}
 	}
 
-	public void loadReferenceType(String ppath, List<ReferenceType> reftypes, String targetClass) {
+	public boolean loadReferenceType(String ppath, List<ReferenceType> reftypes,
+			String targetClass) {
+		boolean result = false;
 		List<ReferenceType> classes = reftypes;
 		for (ReferenceType ref : classes) {
 			if (ref.name().contains(targetClass)) {
 				putReferenceType(ppath, ref, true);
+				result = true;
 			}
 		}
+		return result;
 	}
 
 	public void putArrayTypeDetails(String path, ArrayType type) {
+		String cpath = createObject(path + ".ComponentType");
 		setValue(path, "ComponentSignature", type.componentSignature());
 		setValue(path, "ComponentTypeName", type.componentTypeName());
-		createObject(path + ".ComponentType");
+		insertObject(cpath);
 	}
 
 	public void putClassTypes(String ppath, List<ClassType> reftypes) {
@@ -781,10 +874,14 @@ public class TraceJdiCommands {
 
 	public void putClassTypeDetails(String path, ClassType type) {
 		setValue(path, "IsEnum", type.isEnum());
-		createObject(path + ".AllInterfaces");
-		createObject(path + ".Interfaces");
-		createObject(path + ".SubClasses");
-		createObject(path + ".ClassType");
+		String aipath = createObject(path + ".AllInterfaces");
+		String ipath = createObject(path + ".Interfaces");
+		String scpath = createObject(path + ".SubClasses");
+		String cpath = createObject(path + ".ClassType");
+		insertObject(aipath);
+		insertObject(ipath);
+		insertObject(scpath);
+		insertObject(cpath);
 	}
 
 	public void putInterfaceTypes(String ppath, List<InterfaceType> reftypes) {
@@ -797,9 +894,12 @@ public class TraceJdiCommands {
 	}
 
 	public void putInterfaceTypeDetails(String path, InterfaceType type) {
-		createObject(path + ".Implementors");
-		createObject(path + ".SubInterfaces");
-		createObject(path + ".SuperInterfaces");
+		String impath = createObject(path + ".Implementors");
+		String sbpath = createObject(path + ".SubInterfaces");
+		String sppath = createObject(path + ".SuperInterfaces");
+		insertObject(impath);
+		insertObject(sbpath);
+		insertObject(sppath);
 	}
 
 	// VALUES //
@@ -812,7 +912,7 @@ public class TraceJdiCommands {
 
 	public void putValue(String ppath, String key, Value value) {
 		String path = createObject(value, key, ppath);
-		setValue(path, "_display", "Value: " + value.toString());
+		setValue(path, ATTR_DISPLAY, "Value: " + value.toString());
 		//putValueDetailsByType(path, value);
 		insertObject(path);
 	}
@@ -848,35 +948,35 @@ public class TraceJdiCommands {
 	}
 
 	public void putValueDetails(String path, Value value) {
-		putType(path, "Type", value.type());
+		putType(path, ATTR_TYPE, value.type());
 	}
 
 	public void putPrimitiveValue(String ppath, PrimitiveValue value) {
 		String path = createObject(value, value.toString(), ppath);
 		putValueDetails(path, value);
 		if (value instanceof BooleanValue v) {
-			setValue(path, "Value", v.booleanValue());
+			setValue(path, ATTR_VALUE, v.booleanValue());
 		}
 		if (value instanceof ByteValue b) {
-			setValue(path, "Value", b.byteValue());
+			setValue(path, ATTR_VALUE, b.byteValue());
 		}
 		if (value instanceof CharValue v) {
-			setValue(path, "Value", v.charValue());
+			setValue(path, ATTR_VALUE, v.charValue());
 		}
 		if (value instanceof ShortValue v) {
-			setValue(path, "Value", v.shortValue());
+			setValue(path, ATTR_VALUE, v.shortValue());
 		}
 		if (value instanceof IntegerValue v) {
-			setValue(path, "Value", v.intValue());
+			setValue(path, ATTR_VALUE, v.intValue());
 		}
 		if (value instanceof LongValue v) {
-			setValue(path, "Value", v.longValue());
+			setValue(path, ATTR_VALUE, v.longValue());
 		}
 		if (value instanceof FloatValue v) {
-			setValue(path, "Value", v.floatValue());
+			setValue(path, ATTR_VALUE, v.floatValue());
 		}
 		if (value instanceof DoubleValue v) {
-			setValue(path, "Value", v.doubleValue());
+			setValue(path, ATTR_VALUE, v.doubleValue());
 		}
 		insertObject(path);
 	}
@@ -962,7 +1062,8 @@ public class TraceJdiCommands {
 
 	public void putObjectContainer(String path, List<ObjectReference> objects) {
 		for (ObjectReference obj : objects) {
-			createObject(obj, obj.toString(), path);
+			String opath = createObject(obj, obj.toString(), path);
+			insertObject(opath);
 		}
 	}
 
@@ -983,27 +1084,34 @@ public class TraceJdiCommands {
 			// IGNORE
 		}
 		setValue(apath, "isCollected", ref.isCollected());
+		insertObject(apath);
 		String rpath = createObject(path + ".Relations");
 		try {
 			if (ref.owningThread() != null) {
-				createObject(rpath + ".OwningThread");
+				String otpath = createObject(rpath + ".OwningThread");
+				insertObject(otpath);
 			}
 			if (ref.waitingThreads() != null) {
-				createObject(rpath + ".WaitingThreads");
+				String wtpath = createObject(rpath + ".WaitingThreads");
+				insertObject(wtpath);
 			}
 		}
 		catch (IncompatibleThreadStateException e) {
 			// IGNORE
 		}
 		if (ref.referenceType() != null) {
-			createObject(rpath + ".ReferenceType");
+			String rtpath = createObject(rpath + ".ReferenceType");
+			insertObject(rtpath);
 		}
 		if (ref.referringObjects(MAX_REFS) != null) {
-			createObject(rpath + ".ReferringObjects");
+			String ropath = createObject(rpath + ".ReferringObjects");
+			insertObject(ropath);
 		}
 		if (!(ref instanceof ArrayReference)) {
-			createObject(path + ".Variables");
+			String vpath = createObject(path + ".Variables");
+			insertObject(vpath);
 		}
+		insertObject(rpath);
 	}
 
 	public void putArrayReference(String ppath, ArrayReference ref) {
@@ -1014,8 +1122,9 @@ public class TraceJdiCommands {
 
 	public void putArrayReferenceDetails(String path, ArrayReference ref) {
 		putObjectReferenceDetails(path, ref);
-		setValue(path, "Length", ref.length());
-		createObject(path + ".Values");
+		setValue(path, ATTR_LENGTH, ref.length());
+		String vpath = createObject(path + ".Values");
+		insertObject(vpath);
 	}
 
 	public void putClassLoaderReference(String ppath, ClassLoaderReference ref) {
@@ -1026,8 +1135,10 @@ public class TraceJdiCommands {
 
 	public void putClassLoaderReferenceDetails(String path, ClassLoaderReference ref) {
 		putObjectReferenceDetails(path, ref);
-		createObject(path + ".DefinedClasses");
-		createObject(path + ".VisibleClasses");
+		String dcpath = createObject(path + ".DefinedClasses");
+		String vcpath = createObject(path + ".VisibleClasses");
+		insertObject(dcpath);
+		insertObject(vcpath);
 	}
 
 	public void putClassObjectReference(String ppath, ClassObjectReference ref) {
@@ -1038,7 +1149,8 @@ public class TraceJdiCommands {
 
 	public void putClassObjectReferenceDetails(String path, ClassObjectReference ref) {
 		putObjectReferenceDetails(path, ref);
-		createObject(path + ".ReflectedType");
+		String rtpath = createObject(path + ".ReflectedType");
+		insertObject(rtpath);
 	}
 
 	public void putModuleReferenceContainer() {
@@ -1048,7 +1160,8 @@ public class TraceJdiCommands {
 		List<ModuleReference> modules = vm.allModules();
 		for (ModuleReference ref : modules) {
 			keys.add(manager.key(ref.name()));
-			createObject(ref, ref.name(), ppath);
+			String mpath = createObject(ref, ref.name(), ppath);
+			insertObject(mpath);
 		}
 		retainKeys(ppath, keys);
 	}
@@ -1061,7 +1174,8 @@ public class TraceJdiCommands {
 
 	public void putModuleReferenceDetails(String path, ModuleReference ref) {
 		putObjectReferenceDetails(path, ref);
-		createObject(path + ".ClassLoader");
+		String clpath = createObject(path + ".ClassLoader");
+		insertObject(clpath);
 	}
 
 	public void putStringReference(String ppath, StringReference ref) {
@@ -1072,7 +1186,7 @@ public class TraceJdiCommands {
 
 	public void putStringReferenceDetails(String path, StringReference ref) {
 		putObjectReferenceDetails(path, ref);
-		setValue(path, "Value", ref.value());
+		setValue(path, ATTR_VALUE, ref.value());
 	}
 
 	public void putThreadGroupContainer(String refpath, List<ThreadGroupReference> refs) {
@@ -1094,10 +1208,13 @@ public class TraceJdiCommands {
 	public void putThreadGroupReferenceDetails(String path, ThreadGroupReference ref) {
 		putObjectReferenceDetails(path, ref);
 		if (ref.parent() != null) {
-			createObject(path + ".Parent");
+			String ppath = createObject(path + ".Parent");
+			insertObject(ppath);
 		}
-		createObject(path + ".ThreadGroups");
-		createObject(path + ".Threads");
+		String tgpath = createObject(path + ".ThreadGroups");
+		String tpath = createObject(path + ".Threads");
+		insertObject(tgpath);
+		insertObject(tpath);
 	}
 
 	public void putThreadContainer(String refpath, List<ThreadReference> refs, boolean asLink) {
@@ -1123,13 +1240,18 @@ public class TraceJdiCommands {
 
 	public void putThreadReferenceDetails(String path, ThreadReference ref) {
 		putObjectReferenceDetails(path, ref);
-		createObject(path + ".Stack");
+		String spath = createObject(path + ".Stack");
 		String rpath = createObject(path + ".Relations");
-		createObject(rpath + ".CurrentContendedMonitor");
-		createObject(rpath + ".OwnedMonitors");
-		createObject(rpath + ".OwnedMonitorsAndFrames");
-		createObject(rpath + ".ThreadGroup");
+		String ccpath = createObject(rpath + ".CurrentContendedMonitor");
+		String ompath = createObject(rpath + ".OwnedMonitors");
+		String omfpath = createObject(rpath + ".OwnedMonitorsAndFrames");
+		String tgpath = createObject(rpath + ".ThreadGroup");
 		putThreadAttributes(ref, path);
+		insertObject(spath);
+		insertObject(ccpath);
+		insertObject(ompath);
+		insertObject(omfpath);
+		insertObject(tgpath);
 	}
 
 	void putThreadAttributes(ThreadReference thread, String ppath) {
@@ -1152,18 +1274,22 @@ public class TraceJdiCommands {
 			// Ignore
 		}
 		setValue(path, "suspendCount", thread.suspendCount());
+		insertObject(path);
 	}
 
 	public void putMonitorInfoContainer(String path, List<MonitorInfo> info) {
 		for (MonitorInfo f : info) {
-			createObject(f, f.toString(), path);
+			String ipath = createObject(f, f.toString(), path);
+			insertObject(ipath);
 		}
 	}
 
 	public void putMonitorInfoDetails(String path, MonitorInfo info) {
 		setValue(path, "StackDepth", info.stackDepth());
-		createObject(path + ".Monitor");
-		createObject(path + ".Thread");
+		String mpath = createObject(path + ".Monitor");
+		String tpath = createObject(path + ".Thread");
+		insertObject(mpath);
+		insertObject(tpath);
 	}
 
 	// TYPE COMPONENTS
@@ -1183,6 +1309,7 @@ public class TraceJdiCommands {
 			catch (IllegalArgumentException iae) {
 				// IGNORE
 			}
+			keys.add(manager.key(f.name()));
 			putField(path, f, value);
 		}
 		retainKeys(path, keys);
@@ -1201,6 +1328,7 @@ public class TraceJdiCommands {
 			catch (IllegalArgumentException iae) {
 				// IGNORE
 			}
+			keys.add(manager.key(f.name()));
 			putField(path, f, value);
 		}
 		retainKeys(path, keys);
@@ -1210,23 +1338,23 @@ public class TraceJdiCommands {
 		String path = createObject(f, f.name(), ppath);
 		putFieldDetails(path, f);
 		if (value != null) {
-			putValue(path, "Value", value);
-			setValue(path, "_display", f.name() + " (" + f.typeName() + ") : " + value);
+			putValue(path, ATTR_VALUE, value);
+			setValue(path, ATTR_DISPLAY, f.name() + " (" + f.typeName() + ") : " + value);
 		}
 		else {
-			setValue(path, "_display", f.name() + " (" + f.typeName() + ")");
+			setValue(path, ATTR_DISPLAY, f.name() + " (" + f.typeName() + ")");
 		}
 		insertObject(path);
 	}
 
 	public void putFieldDetails(String path, Field f) {
-		setValue(path, TraceJdiManager.MODULE_NAME_ATTRIBUTE_NAME, f.declaringType().name());
+		setValue(path, ATTR_MODULE_NAME, f.declaringType().name());
 		if (f.genericSignature() != null) {
 			setValue(path, "GenericSignature", f.genericSignature());
 		}
 		putFieldAttributes(path, f);
 		try {
-			putType(path, "Type", f.type());
+			putType(path, ATTR_TYPE, f.type());
 		}
 		catch (ClassNotLoadedException e) {
 			// IGNORE
@@ -1247,6 +1375,7 @@ public class TraceJdiCommands {
 		setValue(path, "isSynthetic", f.isSynthetic());
 		setValue(path, "isTransient", f.isTransient());
 		setValue(path, "isVolatile", f.isVolatile());
+		insertObject(path);
 	}
 
 	public void putMethodContainer(String path, ReferenceType reftype) {
@@ -1268,24 +1397,27 @@ public class TraceJdiCommands {
 
 	public void putMethodDetails(String path, Method m, boolean partial) {
 		ReferenceType declaringType = m.declaringType();
-		setValue(path, TraceJdiManager.MODULE_NAME_ATTRIBUTE_NAME, declaringType.name());
+		setValue(path, ATTR_MODULE_NAME, declaringType.name());
 		createLink(m, "DeclaringType", declaringType);
 		if (!partial) {
-			createObject(path + ".Arguments");
+			String apath = createObject(path + ".Arguments");
 			if (m.genericSignature() != null) {
 				setValue(path, "GenericSignature", m.genericSignature());
 			}
-			createObject(path + ".Locations");
+			String lpath = createObject(path + ".Locations");
 			setValue(path, "Modifiers", m.modifiers());
 			setValue(path, "ReturnType", m.returnTypeName());
 			setValue(path, "Signature", m.signature());
-			createObject(path + ".Variables");
+			String vpath = createObject(path + ".Variables");
 			putMethodAttributes(path, m);
+			insertObject(apath);
+			insertObject(lpath);
+			insertObject(vpath);
 		}
 		if (m.location() != null) {
 			AddressRange range = manager.getAddressRange(m);
 			if (!range.equals(manager.defaultRange)) {
-				setValue(path, "Range", range);
+				setValue(path, ATTR_RANGE, range);
 			}
 		}
 		String bytes = "";
@@ -1308,6 +1440,12 @@ public class TraceJdiCommands {
 		setValue(path, "isPrivate", m.isPrivate());
 		setValue(path, "isProtected", m.isProtected());
 		setValue(path, "isPublic", m.isPublic());
+		setValue(path, "isStatic", m.isStatic());
+		setValue(path, "isStaticInitializer", m.isStaticInitializer());
+		setValue(path, "isSynchronized", m.isSynchronized());
+		setValue(path, "isSynthetic", m.isSynthetic());
+		setValue(path, "isVarArgs", m.isVarArgs());
+		insertObject(path);
 	}
 
 	// OTHER OBJECTS //
@@ -1334,17 +1472,21 @@ public class TraceJdiCommands {
 	}
 
 	public void putVMDetails(String path, VirtualMachine vm) {
-		createObject(path + ".Classes");
-		createObject(path + ".Memory");
-		createObject(path + ".ThreadGroups");
-		createObject(path + ".Threads");
+		String cpath = createObject(path + ".Classes");
+		String mpath = createObject(path + ".Memory");
+		String tgpath = createObject(path + ".ThreadGroups");
+		String tpath = createObject(path + ".Threads");
 		Event currentEvent = jdi.getCurrentEvent();
 		String shortName = vm.name().substring(0, vm.name().indexOf(" "));
 		String display = currentEvent == null ? shortName : shortName + " [" + currentEvent + "]";
-		setValue(path, TraceJdiManager.DISPLAY_ATTRIBUTE_NAME, display);
-		setValue(path, TraceJdiManager.ARCH_ATTRIBUTE_NAME, vm.name());
-		setValue(path, TraceJdiManager.DEBUGGER_ATTRIBUTE_NAME, vm.description());
-		setValue(path, TraceJdiManager.OS_ATTRIBUTE_NAME, vm.version());
+		setValue(path, ATTR_DISPLAY, display);
+		setValue(path, ATTR_ARCH, vm.name());
+		setValue(path, ATTR_DEBUGGER, vm.description());
+		setValue(path, ATTR_OS, vm.version());
+		insertObject(cpath);
+		insertObject(mpath);
+		insertObject(tgpath);
+		insertObject(tpath);
 	}
 
 	public void putProcesses() {
@@ -1383,13 +1525,13 @@ public class TraceJdiCommands {
 		Info info = proc.info();
 		Optional<String> optional = info.command();
 		if (optional.isPresent()) {
-			setValue(path, "Executable", optional.get());
+			setValue(path, ATTR_EXECUTABLE, optional.get());
 		}
 		optional = info.commandLine();
 		if (optional.isPresent()) {
-			setValue(path, "CommandLine", optional.get());
+			setValue(path, ATTR_COMMAND_LINE, optional.get());
 		}
-		setValue(path, "Alive", proc.isAlive());
+		setValue(path, ATTR_ALIVE, proc.isAlive());
 	}
 
 	public void putFrames() {
@@ -1409,6 +1551,7 @@ public class TraceJdiCommands {
 			// IGNORE
 		}
 		retainKeys(ppath, keys);
+		insertObject(ppath);
 	}
 
 	private void putFrame(String ppath, StackFrame frame, String key) {
@@ -1419,17 +1562,20 @@ public class TraceJdiCommands {
 
 	private void putFrameDetails(String path, StackFrame frame, String key) {
 		Location location = frame.location();
-		setValue(path, "_display", "[" + key + "] " + location + ":" + location.method().name() +
+		setValue(path, ATTR_DISPLAY, "[" + key + "] " + location + ":" + location.method().name() +
 			":" + location.codeIndex());
-		putLocation(path, "Location", location);
+		putLocation(path, ATTR_LOCATION, location);
 		Address addr = manager.getAddressFromLocation(location);
-		setValue(path, "PC", addr);
+		setValue(path, ATTR_PC, addr);
 
 		String rpath = createObject(path + ".Registers");
 		putRegisters(frame, rpath);
-		createObject(path + ".Variables");
+		insertObject(rpath);
+		String vpath = createObject(path + ".Variables");
+		insertObject(vpath);
 		try {
-			createObject(frame.thisObject(), "This", path);
+			String thpath = createObject(frame.thisObject(), "This", path);
+			insertObject(thpath);
 		}
 		catch (Exception e) {
 			// Ignore
@@ -1439,7 +1585,8 @@ public class TraceJdiCommands {
 	public void putLocationContainer(String path, Method m) {
 		try {
 			for (Location loc : m.allLineLocations()) {
-				createObject(loc, loc.toString(), path);
+				String lpath = createObject(loc, loc.toString(), path);
+				insertObject(lpath);
 			}
 		}
 		catch (AbsentInformationException e) {
@@ -1450,7 +1597,8 @@ public class TraceJdiCommands {
 	public void putLocationContainer(String path, ReferenceType ref) {
 		try {
 			for (Location loc : ref.allLineLocations()) {
-				createObject(loc, loc.toString(), path);
+				String lpath = createObject(loc, loc.toString(), path);
+				insertObject(lpath);
 			}
 		}
 		catch (AbsentInformationException e) {
@@ -1467,29 +1615,32 @@ public class TraceJdiCommands {
 	public void putLocationDetails(String path, Location location) {
 		Address addr = manager.getAddressFromLocation(location);
 		if (isLoaded(location)) {
-			setValue(path, "_display", manager.key(location.toString()) + ": " + addr);
-			setValue(path, "Addr", addr);
+			setValue(path, ATTR_DISPLAY, manager.key(location.toString()) + ": " + addr);
+			setValue(path, ATTR_ADDRESS, addr);
 		}
-		setValue(path, "Index", location.codeIndex());
-		setValue(path, "Line#", location.lineNumber());
+		setValue(path, ATTR_INDEX, location.codeIndex());
+		setValue(path, ATTR_LINENO, location.lineNumber());
 		try {
-			setValue(path, "Name", location.sourceName());
+			setValue(path, ATTR_NAME, location.sourceName());
 		}
 		catch (AbsentInformationException e) {
-			// IGNORE
+			// sourceName is not available. IGNORE
 		}
 		try {
 			setValue(path, "Path", location.sourcePath());
 		}
 		catch (AbsentInformationException e) {
-			// IGNORE
+			// sourcePath is not available. IGNORE
 		}
 		Method method = location.method();
+		RmiTraceObject methodObject = proxyObject(method);
+		if (methodObject == null) {
+			String ppath = getVmPath(method.virtualMachine()) + ".Classes";
+			putReferenceType(ppath, method.declaringType(), true);
+		}
 		createLink(location, "Method", method);
 		createLink(location, "DeclaringType", location.declaringType());
 		createLink(location, "ModuleRef", location.declaringType().module());
-		//createObject(method, method.name(), path+".Method");
-		//putMethodDetails(path, method);
 	}
 
 	private boolean isLoaded(Location location) {
@@ -1513,15 +1664,15 @@ public class TraceJdiCommands {
 		String path = createObject(lv, lv.name(), ppath);
 		putLocalVariableDetails(path, lv);
 		if (value != null) {
-			putValue(path, "Value", value);
-			setValue(path, "_display", lv.name() + ": " + value);
+			putValue(path, ATTR_VALUE, value);
+			setValue(path, ATTR_DISPLAY, lv.name() + ": " + value);
 		}
 		insertObject(path);
 	}
 
 	public void putLocalVariableDetails(String path, LocalVariable lv) {
 		try {
-			putType(path, "Type", lv.type());
+			putType(path, ATTR_TYPE, lv.type());
 		}
 		catch (ClassNotLoadedException e) {
 			// IGNORE
@@ -1536,16 +1687,19 @@ public class TraceJdiCommands {
 			setValue(path, "GenericSignature", lv.genericSignature());
 		}
 		setValue(path, "Signature", lv.signature());
+		insertObject(path);
 	}
 
 	public void putMethodTypeContainer(String ppath, Method m) {
 		try {
 			for (Type type : m.argumentTypes()) {
-				createObject(type, type.name(), ppath);
+				String tpath = createObject(type, type.name(), ppath);
+				insertObject(tpath);
 			}
 		}
 		catch (ClassNotLoadedException e) {
-			createObject(ppath + "Class Not Loaded");
+			String epath = createObject(ppath + "Class Not Loaded");
+			insertObject(epath);
 		}
 	}
 
@@ -1553,7 +1707,7 @@ public class TraceJdiCommands {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		EventRequestManager requestManager = vm.eventRequestManager();
 		String ppath = getPath(vm) + ".Breakpoints";
-		createObject(ppath);
+		String path = createObject(ppath);
 		Set<String> keys = new HashSet<>();
 
 		List<BreakpointRequest> brkReqs = requestManager.breakpointRequests();
@@ -1579,13 +1733,14 @@ public class TraceJdiCommands {
 		}
 
 		retainKeys(ppath, keys);
+		insertObject(path);
 	}
 
 	public void putEvents() {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		EventRequestManager requestManager = vm.eventRequestManager();
 		String ppath = getPath(vm) + ".Events";
-		createObject(ppath);
+		String path = createObject(ppath);
 		Set<String> keys = new HashSet<>();
 
 		List<VMDeathRequest> deathReqs = requestManager.vmDeathRequests();
@@ -1669,6 +1824,7 @@ public class TraceJdiCommands {
 		}
 
 		retainKeys(ppath, keys);
+		insertObject(path);
 	}
 
 	// REQUESTS //
@@ -1711,13 +1867,14 @@ public class TraceJdiCommands {
 
 	private void putReqBreakpointDetails(String path, BreakpointRequest req, String key) {
 		Location location = req.location();
-		setValue(path, "_display", "[" + key + "] " + location + ":" + location.method().name() +
+		setValue(path, ATTR_DISPLAY, "[" + key + "] " + location + ":" + location.method().name() +
 			":" + location.codeIndex());
 		Address addr = manager.getAddressFromLocation(location);
 		AddressRangeImpl range = new AddressRangeImpl(addr, addr);
-		setValue(path, "Range", range);
-		createObject(location, location.toString(), path + ".Location");
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_RANGE, range);
+		String lpath = createObject(location, location.toString(), path + ".Location");
+		insertObject(lpath);
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1730,13 +1887,14 @@ public class TraceJdiCommands {
 	private void putReqAccessWatchpointDetails(String path, AccessWatchpointRequest req,
 			String key) {
 		Field field = req.field();
-		setValue(path, "_display", "[" + key + "] " + field + ":" + field.declaringType());
+		setValue(path, ATTR_DISPLAY, "[" + key + "] " + field + ":" + field.declaringType());
 		// NB: This isn't correct, but we need a range (any range)
 		AddressRange range =
 			manager.getPoolAddressRange(field.declaringType(), getSize(field.declaringType()));
-		setValue(path, "Range", range);
-		createObject(field, field.toString(), path + ".Field");
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_RANGE, range);
+		String fpath = createObject(field, field.toString(), path + ".Field");
+		insertObject(fpath);
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1750,13 +1908,14 @@ public class TraceJdiCommands {
 	private void putReqModificationWatchpointDetails(String path, ModificationWatchpointRequest req,
 			String key) {
 		Field field = req.field();
-		setValue(path, "_display", "[" + key + "] " + field + ":" + field.declaringType());
+		setValue(path, ATTR_DISPLAY, "[" + key + "] " + field + ":" + field.declaringType());
 		// NB: This isn't correct, but we need a range (any range)
 		AddressRange range =
 			manager.getPoolAddressRange(field.declaringType(), getSize(field.declaringType()));
-		setValue(path, "Range", range);
-		createObject(field, field.toString(), path + ".Field");
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_RANGE, range);
+		String fpath = createObject(field, field.toString(), path + ".Field");
+		insertObject(fpath);
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1767,7 +1926,7 @@ public class TraceJdiCommands {
 	}
 
 	private void putReqExceptionDetails(String path, ExceptionRequest req, String key) {
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 	}
 
 	private void putReqClassLoad(String ppath, ClassPrepareRequest req, String key) {
@@ -1777,7 +1936,7 @@ public class TraceJdiCommands {
 	}
 
 	private void putReqClassLoadDetails(String path, ClassPrepareRequest req, String key) {
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1788,7 +1947,7 @@ public class TraceJdiCommands {
 	}
 
 	private void putReqClassUnloadDetails(String path, ClassUnloadRequest req, String key) {
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1799,7 +1958,7 @@ public class TraceJdiCommands {
 	}
 
 	private void putReqMethodEntryDetails(String path, MethodEntryRequest req, String key) {
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1810,7 +1969,7 @@ public class TraceJdiCommands {
 	}
 
 	private void putReqMethodExitDetails(String path, MethodExitRequest req, String key) {
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1821,7 +1980,7 @@ public class TraceJdiCommands {
 	}
 
 	private void putReqStepRequestDetails(String path, StepRequest req, String key) {
-		setValue(path, "Enabled", req.isEnabled());
+		setValue(path, ATTR_ENABLED, req.isEnabled());
 		putFilterDetails(path, req);
 	}
 
@@ -1873,19 +2032,19 @@ public class TraceJdiCommands {
 		Object property = req.getProperty("Class");
 		if (property != null) {
 			if (property instanceof ReferenceType reftype) {
-				setValue(path, "Class", reftype.name());
+				setValue(path, ATTR_CLASS, reftype.name());
 			}
 		}
 		property = req.getProperty("Instance");
 		if (property != null) {
 			if (property instanceof ObjectReference ref) {
-				setValue(path, "Instance", ref.toString());
+				setValue(path, ATTR_INSTANCE, ref.toString());
 			}
 		}
 		property = req.getProperty("Thread");
 		if (property != null) {
 			if (property instanceof ThreadReference ref) {
-				setValue(path, "Thread", ref.name());
+				setValue(path, ATTR_THREAD, ref.name());
 			}
 		}
 	}
@@ -1946,7 +2105,7 @@ public class TraceJdiCommands {
 
 	public void ghidraTraceSyncEnable() {
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceSyncEnable", false)) {
-			TraceJdiHooks hooks = manager.getHooks();
+			JdiHooks hooks = manager.getHooks();
 			hooks.installHooks();
 			hooks.enableCurrentVM();
 		}
@@ -1981,6 +2140,28 @@ public class TraceJdiCommands {
 		}
 	}
 
+	public void execute(ClassType ct, ThreadReference thread, Method method, List<Value> args,
+			int options) {
+		try {
+			Value val = ct.invokeMethod(thread, method, args, options);
+			System.err.println(val);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
+
+	public void execute(ObjectReference ref, ThreadReference thread, Method method,
+			List<Value> args, int options) {
+		try {
+			Value val = ref.invokeMethod(thread, method, args, options);
+			System.out.println(val);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
+
 	private int getSize(ReferenceType reftype) {
 		byte[] cp = reftype.constantPool();
 		int sz = 1;
@@ -1998,7 +2179,7 @@ public class TraceJdiCommands {
 		return manager.pathForObj(obj);
 	}
 
-	RmiTraceObject proxyObject(Object obj) {
+	public RmiTraceObject proxyObject(Object obj) {
 		String path = getPath(obj);
 		return path == null ? null : RmiTraceObject.fromPath(state.trace, path);
 	}
@@ -2038,7 +2219,8 @@ public class TraceJdiCommands {
 			if (child instanceof Method m) {
 				key = m.name();
 			}
-			createObject(child, key, ppath + "." + label);
+			String lpath = createObject(child, key, ppath + "." + label);
+			insertObject(lpath);
 		}
 	}
 
@@ -2070,12 +2252,13 @@ public class TraceJdiCommands {
 			String shortName = vm.name().substring(0, vm.name().indexOf(" "));
 			name = currentEvent == null ? shortName : shortName + " [" + currentEvent + "]";
 		}
-		setValue(path, TraceJdiManager.ACCESSIBLE_ATTRIBUTE_NAME, suspended);
+		setValue(path, ATTR_ACCESSIBLE, suspended);
 		String annotation = suspended ? "(S)" : "(R)";
-		setValue(path, TraceJdiManager.DISPLAY_ATTRIBUTE_NAME, name + " " + annotation);
+		setValue(path, ATTR_DISPLAY, name + " " + annotation);
 		String tstate = suspended ? "STOPPED" : "RUNNING";
-		setValue(path, TraceJdiManager.STATE_ATTRIBUTE_NAME, tstate);
+		setValue(path, ATTR_STATE, tstate);
 		stopped |= suspended;
 		return stopped;
 	}
+
 }

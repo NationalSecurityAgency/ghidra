@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
@@ -104,24 +103,6 @@ abstract class PythonTypeStubElement<T extends Element> {
 			return pkg.equals(getPackage(dt.asElement()));
 		}
 		return false;
-	}
-
-	/**
-	 * Gets the type string for the provided type and quotes if necessary<p/>
-	 *
-	 * This string value is safe to be used as a parameter or return type
-	 * as well as for use in a generic type.
-	 *
-	 * @param self the type to become typing.Self if encountered
-	 * @param type the type to get the string for
-	 * @return the type string
-	 */
-	String getTypeString(Element self, TypeMirror type) {
-		String typeName = sanitizeQualifiedName(self, type);
-		if (isSamePackage(type) && !typeName.equals("typing.Self")) {
-			typeName = '"' + typeName + '"';
-		}
-		return typeName;
 	}
 
 	/**
@@ -248,18 +229,17 @@ abstract class PythonTypeStubElement<T extends Element> {
 	/**
 	 * Makes the provided type Python safe if necessary
 	 *
-	 * @param self the type to become typing.Self if encountered
 	 * @param type the type to make Python safe
 	 * @param pkg the current package
 	 * @return the Python safe type name
 	 */
-	static String sanitize(Element self, TypeMirror type, PackageElement pkg) {
+	static String sanitize(TypeMirror type, PackageElement pkg) {
 		return switch (type.getKind()) {
 			case DECLARED -> throw new RuntimeException(
 				"declared types should use the qualified name");
 			case ARRAY -> {
 				TypeMirror component = ((ArrayType) type).getComponentType();
-				yield "jpype.JArray[" + sanitizeQualifiedName(self, component, pkg) + "]";
+				yield "jpype.JArray[" + sanitizeQualifiedName(component, pkg) + "]";
 			}
 			case BOOLEAN -> "jpype.JBoolean";
 			case BYTE -> "jpype.JByte";
@@ -270,55 +250,31 @@ abstract class PythonTypeStubElement<T extends Element> {
 			case LONG -> "jpype.JLong";
 			case SHORT -> "jpype.JShort";
 			case TYPEVAR -> type.toString();
-			case WILDCARD -> getWildcardVarName(self, (WildcardType) type, pkg);
+			case WILDCARD -> getWildcardVarName((WildcardType) type, pkg);
 			default -> throw new RuntimeException("unexpected TypeKind " + type.getKind());
 		};
 	}
 
 	/**
-	 * Checks if the provided type is the same as the provided element
-	 *
-	 * @param self the element of the type to become typing.Self
-	 * @param type the type to check
-	 * @return true if the inputs represent the same type
-	 */
-	static final boolean isSelfType(Element self, TypeMirror type) {
-		if (self.getKind() == ElementKind.ENUM) {
-			// typing.Self is usually invalid here
-			return false;
-		}
-		if (type instanceof DeclaredType dt) {
-			return self.equals(dt.asElement());
-		}
-		return false;
-	}
-
-	/**
 	 * Makes the qualified name for the provided type Python safe if necessary
 	 *
-	 * @param self the type to become typing.Self if encountered
 	 * @param type the type to make Python safe
 	 * @return the Python safe qualified type name
 	 */
-	final String sanitizeQualifiedName(Element self, TypeMirror type) {
-		return sanitizeQualifiedName(self, type, pkg);
+	final String sanitizeQualifiedName(TypeMirror type) {
+		return sanitizeQualifiedName(type, pkg);
 	}
 
 	/**
 	 * Makes the qualified name for the provided type Python safe if necessary<p/>
 	 *
 	 * The provided package is used to check each type and generic components.
-	 * If they require a "forward declaration", it is handled accordingly.
 	 *
-	 * @param self the type to become typing.Self if encountered
 	 * @param type the type to make Python safe
 	 * @param pkg the current package
 	 * @return the Python safe qualified type name
 	 */
-	static final String sanitizeQualifiedName(Element self, TypeMirror type, PackageElement pkg) {
-		if (isSelfType(self, type)) {
-			return "typing.Self";
-		}
+	static final String sanitizeQualifiedName(TypeMirror type, PackageElement pkg) {
 		if (type instanceof DeclaredType dt) {
 			TypeElement el = (TypeElement) dt.asElement();
 			PackageElement typePkg = getPackage(el);
@@ -341,11 +297,41 @@ abstract class PythonTypeStubElement<T extends Element> {
 				return name;
 			}
 			Iterable<String> it = () -> args.stream()
-					.map(paramType -> sanitizeQualifiedName(self, paramType, pkg))
+					.map(paramType -> sanitizeQualifiedName(paramType, pkg))
 					.iterator();
 			return name + "[" + String.join(", ", it) + "]";
 		}
-		return sanitize(self, type, pkg);
+		return sanitize(type, pkg);
+	}
+
+	/**
+	 * Recursively adds the type and it's generic parameters to the provided imports set.
+	 *
+	 * @param imports the set of imported types
+	 * @param type the type to add to the imports
+	 */
+	static void addNeededTypes(Set<TypeElement> imports, TypeMirror type) {
+		switch (type.getKind()) {
+			case DECLARED:
+				DeclaredType dt = (DeclaredType) type;;
+				imports.add((TypeElement) dt.asElement());
+				for (TypeMirror genericType : dt.getTypeArguments()) {
+					addNeededTypes(imports, genericType);
+				}
+				break;
+			case WILDCARD:
+				WildcardType wt = (WildcardType) type;
+				TypeMirror base = wt.getExtendsBound();
+				if (base == null) {
+					base = wt.getSuperBound();
+				}
+				if (base != null) {
+					addNeededTypes(imports, base);
+				}
+				break;
+			default:
+				break;
+		}
 	}
 
 	/**
@@ -411,18 +397,17 @@ abstract class PythonTypeStubElement<T extends Element> {
 	/**
 	 * Gets the name for a wildcard type if possible
 	 *
-	 * @param self the type to become typing.Self if encountered
 	 * @param type the wildcard type
 	 * @param pkg the current package
 	 * @return the determined type name if possible otherwise typing.Any
 	 */
-	private static String getWildcardVarName(Element self, WildcardType type, PackageElement pkg) {
+	private static String getWildcardVarName(WildcardType type, PackageElement pkg) {
 		TypeMirror base = type.getExtendsBound();
 		if (base == null) {
 			base = type.getSuperBound();
 		}
 		if (base != null) {
-			return sanitizeQualifiedName(self, base, pkg);
+			return sanitizeQualifiedName(base, pkg);
 		}
 		return "typing.Any";
 	}

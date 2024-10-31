@@ -9,7 +9,7 @@
 ::@menu-group local
 ::@icon icon.debugger
 ::@help TraceRmiLauncherServicePlugin#dbgeng_kernel
-::@env OPT_PYTHON_EXE:file="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
+::@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 :: Use env instead of args, because "all args except first" is terrible to implement in batch
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Connection-string arguments (a la .server)"
 ::@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."

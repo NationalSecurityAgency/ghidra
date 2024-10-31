@@ -132,15 +132,15 @@ public class ShellUtils {
 		if (args.isEmpty()) {
 			return "";
 		}
-		StringBuilder line = new StringBuilder(genreateArgument(args.get(0)));
+		StringBuilder line = new StringBuilder(generateArgument(args.get(0)));
 		for (int i = 1; i < args.size(); i++) {
 			String a = args.get(i);
-			line.append(" " + genreateArgument(a));
+			line.append(" " + generateArgument(a));
 		}
 		return line.toString();
 	}
 
-	public static String genreateArgument(String a) {
+	public static String generateArgument(String a) {
 		if (a.contains(" ")) {
 			if (a.contains("\"")) {
 				if (a.contains("'")) {

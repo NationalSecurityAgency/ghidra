@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			waitForPass(() -> {
-				TraceObject proc = tb.objAny("Processes[]");
+				TraceObject proc = tb.objAny0("Processes[]");
 				assertNotNull(proc);
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -107,7 +107,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 
 			// Via method, go is asynchronous
 			RemoteMethod go = conn.conn.getMethod("go");
-			TraceObject proc = tb.objAny("Processes[]");
+			TraceObject proc = tb.objAny0("Processes[]");
 			go.invoke(Map.of("process", proc));
 
 			waitForPass(
@@ -273,7 +273,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 					""");
 			waitRunning("Missed running after go");
 
-			TraceObject proc = waitForValue(() -> tb.objAny("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
 			waitForPass(() -> {
 				assertEquals("RUNNING", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -285,7 +285,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			txPut(conn, "processes");
 
-			TraceObject proc = waitForValue(() -> tb.objAny("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
 			waitForPass(() -> {
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -307,7 +307,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 				assertNotNull(snapshot);
 				assertEquals("Exited with code 0", snapshot.getDescription());
 
-				TraceObject proc = tb.objAny("Processes[]");
+				TraceObject proc = tb.objAny0("Processes[]");
 				assertNotNull(proc);
 				Object val = tb.objValue(proc, lastSnap(conn), "_exit_code");
 				assertThat(val, instanceOf(Number.class));

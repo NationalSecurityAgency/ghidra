@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,11 @@
  */
 package generic.json;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.builder.*;
 
@@ -135,16 +138,14 @@ public class Json extends ToStringStyle {
 	 * @return the string
 	 */
 	public static String toStringExclude(Object o, String... excludedFields) {
-		ReflectionToStringBuilder builder = new ReflectionToStringBuilder(o,
-			Json.WITH_NEWLINES);
+		ReflectionToStringBuilder builder = new ReflectionToStringBuilder(o, Json.WITH_NEWLINES);
 		builder.setExcludeFieldNames(excludedFields);
 		return builder.toString();
 	}
 
-	// Future: update this class to use the order of the included fields to be the printed ordered
 	private static class InclusiveReflectionToStringBuilder extends ReflectionToStringBuilder {
 
-		private String[] includedNames;
+		private String[] includedNames = new String[0];
 
 		public InclusiveReflectionToStringBuilder(Object object) {
 			super(object, WITH_NEWLINES);
@@ -156,12 +157,60 @@ public class Json extends ToStringStyle {
 				return false;
 			}
 
-			if (this.includedNames != null &&
-				Arrays.binarySearch(this.includedNames, field.getName()) >= 0) {
-				return true;
+			if (includedNames.length == 0) {
+				return true; // this implies a programming error
+			}
+
+			String fieldName = field.getName();
+			for (String name : includedNames) {
+				if (fieldName.equals(name)) {
+					return true;
+				}
 			}
 
 			return false;
+		}
+
+		// Overridden to control the order the field are listed.  The parent class sorts by name; we
+		// want output in the order specified by the user.
+		@Override
+		protected void appendFieldsIn(final Class<?> clazz) {
+			if (clazz.isArray()) {
+				super.appendFieldsIn(clazz);
+				return;
+			}
+
+			if (includedNames.length == 0) {
+				super.appendFieldsIn(clazz);
+				return;
+			}
+
+			Field[] fields = clazz.getDeclaredFields();
+			AccessibleObject.setAccessible(fields, true);
+			Map<String, Field> fieldsByName =
+				Arrays.stream(fields).collect(Collectors.toMap(f -> f.getName(), f -> f));
+			for (String name : includedNames) {
+
+				Field field = fieldsByName.get(name);
+				if (field == null) {
+					continue;
+				}
+
+				if (accept(field)) {
+					try {
+						// Field.get(Object) creates wrappers objects for primitive types.
+						Object fieldValue = this.getValue(field);
+						if (!isExcludeNullValues() || fieldValue != null) {
+							this.append(name, fieldValue,
+								!field.isAnnotationPresent(ToStringSummary.class));
+						}
+					}
+					catch (IllegalAccessException ex) {
+						throw new InternalError(
+							"Unexpected IllegalAccessException: " + ex.getMessage());
+					}
+				}
+			}
 		}
 
 		/**
@@ -169,14 +218,12 @@ public class Json extends ToStringStyle {
 		 * @param includeFieldNamesParam the names
 		 * @return this builder
 		 */
-		public ReflectionToStringBuilder setIncludeFieldNames(
-				final String... includeFieldNamesParam) {
+		public ReflectionToStringBuilder setIncludeFieldNames(String... includeFieldNamesParam) {
 			if (includeFieldNamesParam == null) {
-				this.includedNames = null;
+				this.includedNames = new String[0];
 			}
 			else {
 				this.includedNames = includeFieldNamesParam;
-				Arrays.sort(this.includedNames);
 			}
 			return this;
 		}

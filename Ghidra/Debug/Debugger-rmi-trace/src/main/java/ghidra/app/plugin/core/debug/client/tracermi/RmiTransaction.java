@@ -57,8 +57,4 @@ public class RmiTransaction implements AutoCloseable {
 		commit();
 	}
 
-	public RmiTransaction startTx(String description, boolean b) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.commonmark.Extension;
+import org.commonmark.ext.footnotes.FootnotesExtension;
 import org.commonmark.ext.heading.anchor.HeadingAnchorExtension;
 import org.commonmark.node.Link;
 import org.commonmark.node.Node;
@@ -49,8 +50,9 @@ public class MarkdownToHtml {
 			throw new Exception("First argument doesn't not end with .md");
 		}
 
-		// Setup the CommonMark Library with the needed "anchor extension" library
-		List<Extension> extensions = List.of(HeadingAnchorExtension.create());
+		// Setup the CommonMark Library with the needed extension libraries
+		List<Extension> extensions =
+			List.of(HeadingAnchorExtension.create(), FootnotesExtension.create());
 		Parser parser = Parser.builder().extensions(extensions).build();
 		HtmlRenderer renderer = HtmlRenderer.builder()
 				.extensions(extensions)
