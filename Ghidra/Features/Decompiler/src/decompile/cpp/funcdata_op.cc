@@ -804,8 +804,8 @@ void Funcdata::truncatedFlow(const Funcdata *fd,const FlowInfo *flow)
 /// \param inlinefd is the function to in-line
 /// \param flow is the flow object being injected
 /// \param callop is the site of the injection
-/// \return \b true if the injection was successful
-bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
+/// \return 0 for a successful inlining with the easy model, 1 for the hard model, -1 if inlining was not successful
+int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
 {
   inlinefd->getArch()->clearAnalysis(inlinefd);
@@ -821,7 +821,9 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   inlineflow.forwardRecursion(flow);
   inlineflow.generateOps();
 
+  int4 res;
   if (inlineflow.checkEZModel()) {
+    res = 0;
     // With an EZ clone there are no jumptables to clone
     list<PcodeOp *>::const_iterator oiter = obank.endDead();
     --oiter;			// There is at least one op
@@ -843,7 +845,8 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   else {
     Address retaddr;
     if (!flow.testHardInlineRestrictions(inlinefd,callop,retaddr))
-      return false;
+      return -1;
+    res = 1;
     vector<JumpTable *>::const_iterator jiter; // Clone any jumptables from inline piece
     for(jiter=inlinefd->jumpvec.begin();jiter!=inlinefd->jumpvec.end();++jiter) {
       JumpTable *jtclone = new JumpTable(*jiter);
@@ -862,7 +865,7 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
   obank.setUniqId( inlinefd->obank.getUniqId() );
   
-  return true;
+  return res;
 }
 
 /// \brief Find the primary branch operation for an instruction
