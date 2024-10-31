@@ -1,4 +1,5 @@
 ::@title qemu + gdb
+::@image-opt env:OPT_TARGET_IMG
 ::@desc <html><body width="300px">
 ::@desc   <h3>Launch with <tt>qemu</tt> and connect with <tt>gdb</tt></h3>
 ::@desc   <p>
@@ -10,7 +11,7 @@
 ::@menu-group cross
 ::@icon icon.debugger
 ::@help TraceRmiLauncherServicePlugin#gdb_qemu
-::@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
+::@env OPT_TARGET_IMG:file!="" "Image" "The target binary executable image"
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 ::@env GHIDRA_LANG_EXTTOOL_qemu:file="" "QEMU command" "The path to qemu for the target architecture."
 ::@env QEMU_GDB:int=1234 "QEMU Port" "Port for gdb connection to qemu"
