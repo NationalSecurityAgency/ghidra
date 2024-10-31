@@ -2454,7 +2454,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		Map<RecoveredClass, Integer> parentOffsetMap = getBaseClassOffsetMap(recoveredClass);
 
-		return parentOffsetMap.get(virtualParentClasses.get(0));
+		if (parentOffsetMap != null) {
+			return parentOffsetMap.get(virtualParentClasses.get(0));
+		}
+
+		return null;
 
 	}
 
