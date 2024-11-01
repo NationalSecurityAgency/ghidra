@@ -278,6 +278,13 @@ public class PcodeDataTypeManager {
 			decoder.closeElement(el);
 			return new PartialUnion(progDataTypes, dt, offset, size);
 		}
+		else if (meta.equals("partenum")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+//			int offset = (int) decoder.readSignedInteger(ATTRIB_OFFSET);
+//			DataType dt = decodeDataType(decoder);
+			decoder.closeElementSkipping(el);
+			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
+		}
 		else {	// We typically reach here if the decompiler invents a new type
 				// probably an unknown with a non-standard size
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
@@ -541,11 +548,10 @@ public class PcodeDataTypeManager {
 	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		String metatype = type.isSigned() ? "int" : "uint";
+		String metatype = type.isSigned() ? "enum_int" : "enum_uint";
 		String[] names = type.getNames();
 		encoder.writeString(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
-		encoder.writeBool(ATTRIB_ENUM, true);
 		for (String name : names) {
 			encoder.openElement(ELEM_VAL);
 			encoder.writeString(ATTRIB_NAME, name);

@@ -5600,6 +5600,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new Rule2Comp2Sub("cleanup") );
     actcleanup->addRule( new RuleSubRight("cleanup") );
     actcleanup->addRule( new RuleFloatSignCleanup("cleanup") );
+    actcleanup->addRule( new RuleExpandLoad("cleanup") );
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
     actcleanup->addRule( new RuleExtensionPush("cleanup") );
     actcleanup->addRule( new RulePieceStructure("cleanup") );
