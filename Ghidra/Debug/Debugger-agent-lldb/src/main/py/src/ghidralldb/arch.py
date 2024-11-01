@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
 import lldb
@@ -226,14 +226,11 @@ def compute_ghidra_compiler(lang):
     )
     if len(matched_lang) == 0:
         return 'default'
+    
     comp_map = compiler_map[matched_lang[0]]
     osabi = get_osabi()
-    matched_osabi = sorted(
-        (l for l in comp_map if l in osabi),
-        key=lambda l: comp_map[l]
-    )
-    if len(matched_osabi) > 0:
-        return comp_map[matched_osabi[0]]
+    if osabi in comp_map:
+        return comp_map[osabi]
     if None in comp_map:
         return comp_map[None]
     return 'default'

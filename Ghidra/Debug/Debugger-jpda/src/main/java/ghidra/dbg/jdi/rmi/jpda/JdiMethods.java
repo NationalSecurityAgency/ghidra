@@ -331,6 +331,20 @@ public class JdiMethods implements RmiMethods {
 	}
 
 	@TraceMethod(display = "Load class")
+	public boolean find_canonical_class(
+			@Param(
+				schema = "CanonicalReferenceTypeContainer",
+				description = "Container",
+				display = "Container",
+				name = "container") RmiTraceObject obj,
+			@Param(
+				description = "Class to open",
+				display = "Class",
+				name = "find") String targetClass) {
+		return find_class(obj, targetClass);
+	}
+	
+	@TraceMethod(display = "Load class")
 	public boolean find_class(
 			@Param(
 				schema = "ReferenceTypeContainer",
@@ -1429,12 +1443,24 @@ public class JdiMethods implements RmiMethods {
 	}
 
 	@TraceMethod(action = "toggle", display = "Toggle scope")
+	public void toggle_scope_canonical_methods(
+			@Param(schema = "CanonicalMethodContainer", name = "container") RmiTraceObject obj) {
+		toggle_scope_methods(obj);
+	}
+
+	@TraceMethod(action = "toggle", display = "Toggle scope")
 	public void toggle_scope_methods(
 			@Param(schema = "MethodContainer", name = "container") RmiTraceObject obj) {
 		String ppath = cmds.getParentPath(obj.getPath());
 		Object parent = getObjectFromPath(ppath);
 		manager.toggleScope(parent);
 		refresh_methods(obj);
+	}
+
+	@TraceMethod(action = "toggle", display = "Toggle scope")
+	public void toggle_scope_canonical_fields(
+			@Param(schema = "CanonicalFieldContainer", name = "container") RmiTraceObject obj) {
+		toggle_scope_fields(obj);
 	}
 
 	@TraceMethod(action = "toggle", display = "Toggle scope")
