@@ -160,11 +160,12 @@ def checkGradleVersion() {
  * Although warnings may be produced no exception is thrown since python only required
  * for specific build tasks and is not required for prepdev
  *********************************************************************************/
-def checkPythonVersion(String pyCmd) {
+def checkPythonVersion(List<String> pyCmd) {
 	try {
 		def stdout = new ByteArrayOutputStream()
 		exec {
-			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
+			commandLine pyCmd
+			args "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
 			standardOutput = stdout
 			errorOutput = OutputStream.nullOutputStream()
 		}
@@ -176,51 +177,53 @@ def checkPythonVersion(String pyCmd) {
 	}
 }
 
-def checkPip(String pyCmd) {
+def checkPip(List<String> pyCmd, boolean shouldPrint) {
 	try {
 		def stdout = new ByteArrayOutputStream()
 		exec {
-			commandLine pyCmd, "-c", "import pip; print(pip.__version__)"
+			commandLine pyCmd
+			args "-c", "import pip; print(pip.__version__)"
 			standardOutput = stdout
 			errorOutput = OutputStream.nullOutputStream()
 		}
 		def version = "$stdout".strip();
-		if (version.length() == 0) {
-			println("Warning: Python3 pip not installed (required for build)")
-		}
-		else {
-			println("Python3 pip version: ${version}")
+		if (shouldPrint) {
+			if (version.length() == 0) {
+				println("Warning: Python3 pip not installed (required for build)")
+			}
+			else {
+				println("Python3 pip version: ${version}")
+			}
 		}
 		return version
 	}
 	catch (Exception e) {
-		println("Warning: Python3 pip not installed (required for build)")
+		if (shouldPrint) {
+			println("Warning: Python3 pip not installed (required for build)")
+		}
 	}
 }
 
-def findPython3(boolean useDefault) {
-	for (pyCmd in ['py', 'python3', 'python']) {
+def findPython3(boolean shouldPrint) {
+	def pyCmds = [['py'], ['python3'], ['python']]
+	pyCmds += SUPPORTED_PY_VERSIONS.collectMany { [["python$it"], ["py", "-$it"]] }
+	for (pyCmd in pyCmds) {	
 		def pyVer = checkPythonVersion(pyCmd)
 		if (pyVer in SUPPORTED_PY_VERSIONS) {
-			println("Python3 command:  ${pyCmd} (version ${pyVer})")
-			checkPip(pyCmd)
+			if (shouldPrint) {
+				println("Python3 command: ${pyCmd} (version ${pyVer})")
+			}
+			checkPip(pyCmd, shouldPrint)
 			return pyCmd
 		}
 	}
-	for (pyVer in SUPPORTED_PY_VERSIONS) {
-		def pyCmd = "python${pyVer}"
-		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
-			println("Python3 command:  ${pyCmd}")
-			checkPip(pyCmd)
-			return pyCmd
-		}
+
+	if (shouldPrint) {
+		println("Warning: Supported Python ${SUPPORTED_PY_VERSIONS} not found (required for build)")
 	}
-	// Don't fail until task execution. Just let "python3" fail.
-	// Force use of non-existent python3.9 instead of unsupported python version
-	// which should fail if a python build is performed.
-	println("Warning: Python3 command not found (required for build)")
 	
-	return useDefault ? 'python3.9' : null
+	// Don't fail until task execution. Just retun null, which can be gracefully handled later.
+	return null
 }
 
 /******************************************************************************************

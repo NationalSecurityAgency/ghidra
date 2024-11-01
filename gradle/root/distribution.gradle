@@ -271,12 +271,15 @@ task createGhidraStubsWheel {
 
 	doLast {
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
+		
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python ${SUPPORTED_PY_VERSIONS} was not found!")
+		}
+		
 		exec {
 			workingDir { cwd.toString() }
-			commandLine	rootProject.PYTHON3, "-m", "pip"
-			args "wheel", "-w", destinationDir.toString(), "--no-index"
-			args "-f", setuptools
-			args "."
+			commandLine rootProject.PYTHON3
+			args "-m", "pip", "wheel", "-w", destinationDir.toString(), "--no-index", "-f", setuptools, "."
 		}
 	}
 }
@@ -500,6 +503,31 @@ task assembleSource (type: Copy) {
 	
 }
 
+/************************************************************************************
+ *
+ * Copies a markdown file and a generaterated html file into the distribution folder.
+ *
+ ************************************************************************************/
+task assembleMarkdownToHtml (type: Copy) {
+	group 'private'
+	description "Copies a markdown file and a generaterated html file into the distribution folder"
+	
+	dependsOn ':MarkdownSupport:classes'
+	outputs.upToDateWhen {false}
+	destinationDir file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
+	
+	eachFile { f ->
+		def htmlName = f.sourceName[0..-3] + "html"
+		def htmlPath = f.relativePath.replaceLastName(htmlName).pathString 
+		
+		javaexec {		
+			classpath = project(':MarkdownSupport').sourceSets.main.runtimeClasspath
+			mainClass = 'ghidra.markdown.MarkdownToHtml'
+			args f.file
+			args file("${destinationDir.path}/${htmlPath}")
+		}
+	}
+}
 
 /*********************************************************************************
  * 
@@ -581,6 +609,7 @@ task assembleAll() {
 
 	dependsOn assembleDistribution
 	dependsOn assembleSource
+	dependsOn assembleMarkdownToHtml
 	dependsOn "assembleDistribution_$currentPlatform"
 
 	if (project.hasProperty("allPlatforms")) {

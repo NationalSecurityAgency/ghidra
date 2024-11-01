@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,7 +133,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 			return;
 		}
 
-		boolean listChanged = removeDecendantsFromList(list);
+		boolean listChanged = removeDescendantsFromList(list);
 
 		boolean resetClipboard = false;
 		StringBuffer sb = new StringBuffer();
@@ -188,7 +188,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 	 * Remove descendant nodes from the list; having the parent node
 	 * is enough when folders are getting pasted.
 	 */
-	private boolean removeDecendantsFromList(List<GTreeNode> list) {
+	private boolean removeDescendantsFromList(List<GTreeNode> list) {
 		List<GTreeNode> newList = new ArrayList<>();
 		for (int i = 0; i < list.size(); i++) {
 			GTreeNode destNode = list.get(i);

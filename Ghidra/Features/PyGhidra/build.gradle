@@ -47,6 +47,7 @@ distributePyDep("JPype1-1.5.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_
 distributePyDep("JPype1-1.5.0-cp39-cp39-win_amd64.whl")
 distributePyDep("packaging-23.2-py3-none-any.whl")
 distributePyDep("setuptools-68.0.0-py3-none-any.whl")
+distributePyDep("wheel-0.37.1-py2.py3-none-any.whl")
 
 // Install JPype into the development virtual environment
 task installJPype(type: Exec) {
@@ -56,7 +57,9 @@ task installJPype(type: Exec) {
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 	
-	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "$dir", "JPype1"
+	doFirst {
+		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "$dir", "JPype1"
+	}
 }
 
 // Install PyGhidra in editable mode to the development virtual environment
@@ -67,7 +70,9 @@ task installEditablePyGhidra(type: Exec) {
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
 	def dir = depsDir.exists() ? depsDir : binRepoDir
 
-	commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
+	doFirst {
+		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
+	}
 }
 
 if (findPython3(false)) {

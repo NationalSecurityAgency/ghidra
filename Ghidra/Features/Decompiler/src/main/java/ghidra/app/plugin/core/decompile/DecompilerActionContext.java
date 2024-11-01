@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.RestrictedAddressSetContext;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -123,8 +124,8 @@ public class DecompilerActionContext extends NavigatableActionContext
 		if (lineNumber != 0) {
 			return lineNumber;
 		}
-		getTokenAtCursor();
-		return tokenAtCursor == null ? 0 : tokenAtCursor.getLineParent().getLineNumber();
+		ClangToken token = getTokenAtCursor();
+		return token == null ? 0 : token.getLineParent().getLineNumber();
 	}
 
 	public DecompilerPanel getDecompilerPanel() {
@@ -150,6 +151,22 @@ public class DecompilerActionContext extends NavigatableActionContext
 
 	public void setStatusMessage(String msg) {
 		getComponentProvider().getController().setStatusMessage(msg);
+	}
+
+	// allows this Decompiler action context to signal the location is on a function
+	@Override
+	protected Function getFunctionForLocation() {
+		ClangToken token = getTokenAtCursor();
+		if (token == null) {
+			return null;
+		}
+
+		if (token instanceof ClangFuncNameToken functionToken) {
+			Function function = DecompilerUtils.getFunction(program, functionToken);
+			return function;
+		}
+
+		return null;
 	}
 
 	/**

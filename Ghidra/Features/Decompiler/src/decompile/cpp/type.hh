@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
 extern AttributeId ATTRIB_CHAR;		///< Marshaling attribute "char"
 extern AttributeId ATTRIB_CORE;		///< Marshaling attribute "core"
 extern AttributeId ATTRIB_ENUM;		///< Marshaling attribute "enum"
-//extern AttributeId ATTRIB_ENUMSIGNED;	///< Marshaling attribute "enumsigned" deprecated
+extern AttributeId ATTRIB_INCOMPLETE;	///< Marshaling attribute "incomplete"
 //extern AttributeId ATTRIB_ENUMSIZE;	///< Marshaling attribute "enumsize" deprecated
 //extern AttributeId ATTRIB_INTSIZE;	///< Marshaling attribute "intsize"  deprecated
 //extern AttributeId ATTRIB_LONGSIZE;	///< Marshaling attribute "longsize" deprecated
@@ -177,7 +177,8 @@ protected:
     needs_resolution = 0x800,	///< Datatype (union, pointer to union) needs resolution before propagation
     force_format = 0x7000,	///< 3-bits encoding display format, 0=none, 1=hex, 2=dec, 3=oct, 4=bin, 5=char
     truncate_bigendian = 0x8000,	///< Pointer can be truncated and is big endian
-    pointer_to_array = 0x10000	///< Data-type is a pointer to an array
+    pointer_to_array = 0x10000,	///< Data-type is a pointer to an array
+    warning_issued = 0x20000	///< Data-type has an associated \e warning string
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -196,10 +197,11 @@ protected:
   void encodeTypedef(Encoder &encoder) const;	///< Encode \b this as a \e typedef element to a stream
   void markComplete(void) { flags &= ~(uint4)type_incomplete; }		///< Mark \b this data-type as completely defined
   void setDisplayFormat(uint4 format);		///< Set a specific display format
-  void calcAlignSize(void);	///< Calculate aligned size, assuming alignment is known
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
+protected:
+  static int4 calcAlignSize(int4 sz,int4 align);	///< Calculate aligned size, given size and alignment of data-type
 public:
   /// Construct the base data-type copying low-level properties of another
   Datatype(const Datatype &op) { size = op.size; name=op.name; displayName=op.displayName; metatype=op.metatype;
@@ -224,6 +226,7 @@ public:
   bool hasStripped(void) const { return (flags & has_stripped)!=0; }	///< Return \b true if \b this has a stripped form
   bool isIncomplete(void) const { return (flags & type_incomplete)!=0; }	///< Is \b this an incompletely defined data-type
   bool needsResolution(void) const { return (flags & needs_resolution)!=0; }	///< Is \b this a union or a pointer to union
+  bool hasWarning(void) const { return (flags & warning_issued)!=0; }	///< Has a \e warning been issued about \b this data-type
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
   uint4 getDisplayFormat(void) const;				///< Get the display format for constants with \b this data-type
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
@@ -468,7 +471,7 @@ protected:
   map<uintb,string> namemap;	///< Map from integer to name
   vector<uintb> masklist;	///< Masks for each bitfield within the enum
   void setNameMap(const map<uintb,string> &nmap);	///< Establish the value -> name map
-  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this enum data-type from a stream
+  string decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this enum data-type from a stream
 public:
   /// Construct from another TypeEnum
   TypeEnum(const TypeEnum &op);
@@ -485,6 +488,8 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeEnum(*this); }
   virtual void encode(Encoder &encoder) const;
+  static void assignValues(map<uintb,string> &nmap,const vector<string> &namelist,vector<uintb> &vallist,
+			   const vector<bool> &assignlist,const TypeEnum *te);
 };
 
 /// \brief A composite Datatype object: A \b structure with component \b fields
@@ -495,7 +500,7 @@ protected:
   void setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
-  void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
+  string decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
   TypeStruct(void) : Datatype(0,-1,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
@@ -515,7 +520,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  static void assignFieldOffsets(vector<TypeField> &list);	///< Assign field offsets
+  static void assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign);	///< Assign field offsets
   static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
@@ -527,7 +532,7 @@ class TypeUnion : public Datatype {
 protected:
   friend class TypeFactory;
   vector<TypeField> field;			///< The list of fields
-  void setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign);	///< Establish fields for \b this
+  void setFields(const vector<TypeField> &fd,int4 newSize,int4 newAlign);	///< Establish fields for \b this
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
 public:
   TypeUnion(const TypeUnion &op);	///< Construct from another TypeUnion
@@ -545,6 +550,7 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   virtual const TypeField *resolveTruncation(int8 offset,PcodeOp *op,int4 slot,int8 &newoff);
+  static void assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,TypeUnion *tu);	///< Assign field offsets
 };
 
 /// \brief A data-type that holds \e part of a TypeStruct or TypeArray
@@ -558,6 +564,7 @@ public:
   TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
   int4 getOffset(void) const { return offset; }		///< Get the byte offset into the containing data-type
   Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
+  Datatype *getComponentForPtr(void) const;	///< Get (initial) component of array represented by \b this
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 getHoleSize(int4 off) const;
@@ -684,6 +691,8 @@ public:
   TypeSpacebase(const TypeSpacebase &op) : Datatype(op) {
     spaceid = op.spaceid; localframe=op.localframe; glb=op.glb;
   }
+  /// Constructor for use with decode
+  TypeSpacebase(Architecture *g) : Datatype(0,1,TYPE_SPACEBASE) { spaceid = (AddrSpace *)0; glb = g; }
   /// Construct given an address space, scope, and architecture
   TypeSpacebase(AddrSpace *id,const Address &frame,Architecture *g)
     : Datatype(0,1,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
@@ -696,6 +705,19 @@ public:
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
   virtual void encode(Encoder &encoder) const;
+};
+
+/// \brief A data-type associated with a \e warning string
+///
+/// The warning should be presented to the user whenever the data-type is used.  A warning is typically
+/// issued for ill-formed data-types that have been modified to facilitate decompiler analysis.
+class DatatypeWarning {
+  friend class TypeFactory;
+  Datatype *dataType;		///< Data-type associated with the warning
+  string warning;		///< An explanatory string which should be displayed to the user as a warning
+public:
+  DatatypeWarning(Datatype *dt,string warn) { dataType = dt; warning = warn; }	///< Constructor
+  const string &getWarning(void) const { return warning; }	///< Get the warning string
 };
 
 /// \brief Container class for all Datatype objects in an Architecture
@@ -716,6 +738,8 @@ class TypeFactory {
   Datatype *typecache16;	///< Specially cached 16-byte float type
   Datatype *type_nochar;	///< Same dimensions as char but acts and displays as an INT
   Datatype *charcache[5];	///< Cached character data-types
+  list<DatatypeWarning> warnings;	///< Warnings for the user about data-types in \b this factory
+  list<Datatype *> incompleteTypedef;	///< Incomplete data-types defined as a \e typedef
   Datatype *findNoName(Datatype &ct);	///< Find data-type (in this container) by function
   void insert(Datatype *newtype);	///< Insert pointer into the cross-reference sets
   Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
@@ -723,6 +747,7 @@ class TypeFactory {
   void decodeAlignmentMap(Decoder &decoder);		///< Parse a \<size_alignment_map> element
   void setDefaultAlignmentMap(void);			///< Provide default alignments for data-types
   Datatype *decodeTypedef(Decoder &decoder);		///< Restore a \<def> element describing a typedef
+  Datatype *decodeEnum(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing an enumeration
   Datatype *decodeStruct(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing a structure
   Datatype *decodeUnion(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing a union
   Datatype *decodeCode(Decoder &decoder,bool isConstructor,bool isDestructor,bool forcecore);	///< Restore an element describing a code object
@@ -732,6 +757,9 @@ class TypeFactory {
   TypeUnicode *getTypeUnicode(const string &nm,int4 sz,type_metatype m);	///< Create a default "unicode" type
   TypeCode *getTypeCode(const string &n);	///< Create a default "code" type
   void recalcPointerSubmeta(Datatype *base,sub_metatype sub);	///< Recalculate submeta for pointers to given base data-type
+  void insertWarning(Datatype *dt,string warn);	///< Register a new data-type warning with \b this factory
+  void removeWarning(Datatype *dt);		///< Remove the warning associated with the given data-type
+  void resolveIncompleteTypedefs(void);		///< Redefine incomplete typedefs of data-types that are now complete
 protected:
   Architecture *glb;		///< The Architecture object that owns this TypeFactory
   Datatype *findByIdLocal(const string &nm,uint8 id) const;	///< Search locally by name and id
@@ -754,13 +782,10 @@ public:
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
   void setDisplayFormat(Datatype *ct,uint4 format);	///< Set the display format associated with the given data-type
-  void setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeStruct
-  void setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeUnion
+  void setFields(const vector<TypeField> &fd,TypeStruct *ot,int4 newSize,int4 newAlign,uint4 flags);	///< Set fields on a TypeStruct
+  void setFields(const vector<TypeField> &fd,TypeUnion *ot,int4 newSize,int4 newAlign,uint4 flags);	///< Set fields on a TypeUnion
   void setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags);	///< Set the prototype on a TypeCode
-  bool setEnumValues(const vector<string> &namelist,
-		      const vector<uintb> &vallist,
-		      const vector<bool> &assignlist,
-		      TypeEnum *te);		///< Set named values for an enumeration
+  void setEnumValues(const map<uintb,string> &nmap,TypeEnum *te);	///< Set named values for an enumeration
   Datatype *decodeType(Decoder &decoder);	///< Restore Datatype from a stream
   Datatype *decodeTypeWithCodeFlags(Decoder &decoder,bool isConstructor,bool isDestructor);
   TypeVoid *getTypeVoid(void);					///< Get the "void" data-type
@@ -772,7 +797,6 @@ public:
   TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
   TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws,const string &n);	///< Construct a named pointer data-type
-  TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
   TypePartialStruct *getTypePartialStruct(Datatype *contain,int4 off,int4 sz);	///< Create a partial structure
@@ -798,6 +822,11 @@ public:
   void parseEnumConfig(Decoder &decoder);		///< Parse the \<enum> tag
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
+  list<DatatypeWarning>::const_iterator beginWarnings(void) const { return warnings.begin(); }	///< Start of data-type warnings
+  list<DatatypeWarning>::const_iterator endWarnings(void) const { return warnings.end(); }	///< End of data-type warnings
+#ifdef TYPEPROP_DEBUG
+  static bool propagatedbg_on;		///< If \b true, display data-type propagation trace
+#endif
 };
 
 /// The display format for the data-type is changed based on the given format.  A value of

@@ -407,7 +407,7 @@ public class ComponentPlaceholder {
 	 */
 	JComponent getProviderComponent() {
 		if (componentProvider != null) {
-			return componentProvider.getComponent();
+			return componentProvider.doGetComponent();
 		}
 		return new JPanel();
 	}

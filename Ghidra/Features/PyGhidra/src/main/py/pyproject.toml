@@ -30,6 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "Jpype1>=1.5.0",
+    "packaging"
 ]
 
 [project.optional-dependencies]

@@ -17,6 +17,7 @@ package ghidra.debug.api;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public record ValStr<T>(T val, String str) {
@@ -55,5 +56,19 @@ public record ValStr<T>(T val, String str) {
 		return map.entrySet()
 				.stream()
 				.collect(Collectors.toMap(Entry::getKey, e -> e.getValue().val()));
+	}
+
+	public static String normStr(ValStr<?> val) {
+		if (val == null) {
+			return "";
+		}
+		return val.normStr();
+	}
+
+	public String normStr() {
+		if (val == null) {
+			return "";
+		}
+		return Objects.toString(val);
 	}
 }

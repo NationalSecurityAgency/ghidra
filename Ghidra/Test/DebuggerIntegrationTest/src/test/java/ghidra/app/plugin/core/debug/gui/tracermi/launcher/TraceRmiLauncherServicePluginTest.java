@@ -26,13 +26,22 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
+import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.TraceRmiLauncherService;
+import ghidra.app.util.importer.AutoImporter;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.LoadResults;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
+import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.program.model.listing.Program;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebuggerTest {
@@ -66,6 +75,20 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 				return args;
 			}
 		};
+	}
+
+	@Test
+	public void testGetClassName() throws Exception {
+		ResourceFile rf = Application.getModuleDataFile("TestResources", "HelloWorld.class");
+		LoadResults<Program> results = AutoImporter.importByUsingBestGuess(rf.getFile(false),
+			env.getProject(), "/", this, new MessageLog(), monitor);
+		program = results.getPrimaryDomainObject();
+		AutoAnalysisManager analyzer = AutoAnalysisManager.getAnalysisManager(program);
+		analyzer.reAnalyzeAll(null);
+		Command<Program> cmd = new AnalysisBackgroundCommand(analyzer, false);
+		tool.execute(cmd, program);
+		waitForBusyTool(tool);
+		assertEquals("HelloWorld", TraceRmiLauncherServicePlugin.tryProgramJvmClass(program));
 	}
 
 	// @Test // This is currently hanging the test machine. The gdb process is left running
