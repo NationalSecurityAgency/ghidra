@@ -388,7 +388,7 @@ def refresh_sections(node: sch.Schema('Module')):
     switch_inferior(find_inf_by_mod_obj(node))
     with commands.open_tracked_tx('Refresh Module and Sections'):
         modname = find_module_name_by_mod_obj(node)
-        gdb.execute(f'ghidra trace put-sections {modname}')
+        gdb.execute(f'ghidra trace put-sections "{modname}"')
 
 
 @REGISTRY.method(action='activate')
