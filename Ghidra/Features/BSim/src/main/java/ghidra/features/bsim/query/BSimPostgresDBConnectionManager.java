@@ -18,6 +18,7 @@ package ghidra.features.bsim.query;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.security.auth.callback.NameCallback;
@@ -40,12 +41,14 @@ public class BSimPostgresDBConnectionManager {
 	private static final int CONN_POOL_MAX_IDLE = 2;
 
 	private static HashMap<BSimServerInfo, BSimPostgresDataSource> dataSourceMap = new HashMap<>();
+	private static boolean shutdownHookInstalled = false;
 
 	public static synchronized BSimPostgresDataSource getDataSource(
 			BSimServerInfo postgresServerInfo) {
 		if (postgresServerInfo.getDBType() != DBType.postgres) {
 			throw new IllegalArgumentException("expected postgres server info");
 		}
+		enableShutdownHook();
 		return dataSourceMap.computeIfAbsent(postgresServerInfo,
 			info -> new BSimPostgresDataSource(info));
 	}
@@ -73,6 +76,30 @@ public class BSimPostgresDBConnectionManager {
 		}
 		ds.close();
 		dataSourceMap.remove(serverInfo);
+	}
+
+	private static synchronized void enableShutdownHook() {
+		if (shutdownHookInstalled) {
+			return;
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Collection<BSimPostgresDataSource> dataSources = dataSourceMap.values();
+				for (BSimPostgresDataSource ds : dataSources) {
+					int activeConnections = ds.getActiveConnections();
+					if (activeConnections != 0) {
+						Msg.error(BSimPostgresDBConnectionManager.class,
+							activeConnections +
+								" BSim active Postgres connections were not properly closed: " +
+								ds.serverInfo);
+					}
+					ds.close();
+				}
+				dataSourceMap.clear();
+			}
+		});
+		shutdownHookInstalled = true;
 	}
 
 	public static class BSimPostgresDataSource implements BSimJDBCDataSource { // NOTE: can be renamed
