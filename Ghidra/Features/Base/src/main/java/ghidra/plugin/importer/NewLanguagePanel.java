@@ -34,6 +34,7 @@ import ghidra.util.table.*;
 public class NewLanguagePanel extends JPanel {
 	private static final String DEFAULT_DESCRIPTION_TEXT = " ";
 
+	private ImporterLanguageDialog importerLanguageDialog;
 	private LanguageSortedTableModel tableModel;
 	private GhidraTable table;
 	private GhidraTableFilterPanel<LanguageCompilerSpecPair> tableFilterPanel;
@@ -48,7 +49,8 @@ public class NewLanguagePanel extends JPanel {
 		descriptionLabel.setText(text);
 	}
 
-	public NewLanguagePanel() {
+	public NewLanguagePanel(ImporterLanguageDialog importerLanguageDialog) {
+		this.importerLanguageDialog = importerLanguageDialog;
 		constructEverything();
 		layoutEverything();
 		wireEverything();
@@ -145,6 +147,9 @@ public class NewLanguagePanel extends JPanel {
 			public void mouseReleased(MouseEvent e) {
 				if (e.getClickCount() == 2) {
 					// do the next action thingie
+					if (importerLanguageDialog != null) {
+						importerLanguageDialog.close();
+					}
 				}
 			}
 		});

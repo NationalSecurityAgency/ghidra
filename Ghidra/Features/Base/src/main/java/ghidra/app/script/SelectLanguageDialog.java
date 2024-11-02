@@ -30,7 +30,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 	public SelectLanguageDialog(String title, String approveButtonText) {
 		super(title, true);
 
-		languagePanel = new NewLanguagePanel();
+		languagePanel = new NewLanguagePanel(null);
 
 		setTransient(true);
 		addWorkPanel(languagePanel);

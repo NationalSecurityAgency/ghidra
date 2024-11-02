@@ -92,7 +92,7 @@ public class SetLanguageDialog extends DialogComponentProvider {
 		currentLCSPair = lcsPair;
 		this.tool = tool;
 
-		selectLangPanel = new NewLanguagePanel();
+		selectLangPanel = new NewLanguagePanel(null);
 
 		if (lcsPair != null) {
 			selectLangPanel.setSelectedLcsPair(lcsPair);

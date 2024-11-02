@@ -67,7 +67,7 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 	}
 
 	private void build() {
-		languagePanel = new NewLanguagePanel();
+		languagePanel = new NewLanguagePanel(this);
 		languagePanel.setRecommendedLcsPairsList(new ArrayList<LanguageCompilerSpecPair>());
 		languagePanel.setShowAllLcsPairs(false);
 		languagePanel.setBorder(
