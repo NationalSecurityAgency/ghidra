@@ -588,6 +588,9 @@ public class JdiCommands {
 		int ireg = 0;
 		String r = regNames[0];
 		Register register = lang.getRegister(r);
+		if (register == null) {
+			register = fabricatePcRegister(lang, r);
+		}
 		keys.add(manager.key(r));
 		Location loc = frame.location();
 		Address addr = putRegister(ppath, r, loc);
@@ -596,6 +599,9 @@ public class JdiCommands {
 
 		r = regNames[1];
 		register = lang.getRegister(r);
+		if (register == null) {
+			register = fabricatePcRegister(lang, r);
+		}
 		keys.add(manager.key(r));
 		ThreadReference thread = frame.thread();
 		Location ploc = null;
@@ -648,6 +654,9 @@ public class JdiCommands {
 		JdiArch arch = manager.getArch();
 		Language lang = arch.getLanguage();
 		Register register = lang.getRegister(name);
+		if (register == null) {
+			register = fabricatePcRegister(lang, name);
+		}
 		RegisterValue rv = new RegisterValue(register, addr.getOffsetAsBigInteger());
 		RegisterValue mapped = mapper.mapValue(name, rv);
 		Address regAddr = addr.getNewAddress(mapped.getUnsignedValue().longValue());
@@ -658,6 +667,11 @@ public class JdiCommands {
 		putMem(regAddr, codeIndex + 1, false);
 
 		return addr;
+	}
+
+	private Register fabricatePcRegister(Language lang, String name) {
+		int size = lang.getAddressFactory().getDefaultAddressSpace().getSize();
+		return new Register(name, name, null, size, lang.isBigEndian(), Register.TYPE_PC);
 	}
 
 	public void putMem(Address address, long length, boolean create) {
@@ -754,16 +768,22 @@ public class JdiCommands {
 
 		String rpath = createObject(path + ".Relations");
 		insertObject(rpath);
-		ModuleReference module = reftype.module();
-		String moduleName = module.name();
-		if (moduleName == null) {
-			moduleName = "<unnamed>";
+		try {
+			ModuleReference module = reftype.module();
+			String moduleName = module.name();
+			if (moduleName == null) {
+				moduleName = "<unnamed>";
+			}
+			if (moduleName.contains(".")) {
+				moduleName = "\"" + moduleName + "\"";
+			}
+			String mrpath = createObject(module, moduleName, rpath + ".ModuleRef");
+			insertObject(mrpath);
 		}
-		if (moduleName.contains(".")) {
-			moduleName = "\"" + moduleName + "\"";
+		catch (UnsupportedOperationException e) {
+			//Msg.info(this, e.getMessage());
 		}
-		String mrpath = createObject(module, moduleName, rpath + ".ModuleRef");
-		insertObject(mrpath);
+
 		if (reftype instanceof ArrayType at) {
 			putArrayTypeDetails(rpath, at);
 		}
@@ -823,9 +843,14 @@ public class JdiCommands {
 		AddressRange range = manager.putAddressRange(reftype, bounds);
 		setValue(path, ATTR_RANGE, range);
 
-		setValue(path, ATTR_COUNT, reftype.constantPoolCount());
-		range = manager.getPoolAddressRange(reftype, getSize(reftype) - 1);
-		setValue(path, ATTR_RANGE_CP, range);
+		try {
+			setValue(path, ATTR_COUNT, reftype.constantPoolCount());
+			range = manager.getPoolAddressRange(reftype, getSize(reftype) - 1);
+			setValue(path, ATTR_RANGE_CP, range);
+		}
+		catch (UnsupportedOperationException e) {
+			// Ignore
+		}
 		try {
 			putMem(range.getMinAddress(), range.getLength(), true);
 		}
@@ -1157,11 +1182,16 @@ public class JdiCommands {
 		VirtualMachine vm = manager.getJdi().getCurrentVM();
 		String ppath = getPath(vm) + ".ModuleRefs";
 		Set<String> keys = new HashSet<>();
-		List<ModuleReference> modules = vm.allModules();
-		for (ModuleReference ref : modules) {
-			keys.add(manager.key(ref.name()));
-			String mpath = createObject(ref, ref.name(), ppath);
-			insertObject(mpath);
+		try {
+			List<ModuleReference> modules = vm.allModules();
+			for (ModuleReference ref : modules) {
+				keys.add(manager.key(ref.name()));
+				String mpath = createObject(ref, ref.name(), ppath);
+				insertObject(mpath);
+			}
+		}
+		catch (UnsupportedOperationException e) {
+			// Msg.info(this,  e.getMessage());
 		}
 		retainKeys(ppath, keys);
 	}
@@ -1380,11 +1410,16 @@ public class JdiCommands {
 
 	public void putMethodContainer(String path, ReferenceType reftype) {
 		boolean scope = manager.getScope(reftype);
-		List<Method> methods = scope ? reftype.allMethods() : reftype.methods();
 		Set<String> keys = new HashSet<>();
-		for (Method m : methods) {
-			keys.add(manager.key(m.name()));
-			putMethod(path, m);
+		try {
+			List<Method> methods = scope ? reftype.allMethods() : reftype.methods();
+			for (Method m : methods) {
+				keys.add(manager.key(m.name()));
+				putMethod(path, m);
+			}
+		}
+		catch (Exception e) {
+			Msg.info(this, e.getMessage());
 		}
 		retainKeys(path, keys);
 	}
@@ -1477,7 +1512,10 @@ public class JdiCommands {
 		String tgpath = createObject(path + ".ThreadGroups");
 		String tpath = createObject(path + ".Threads");
 		Event currentEvent = jdi.getCurrentEvent();
-		String shortName = vm.name().substring(0, vm.name().indexOf(" "));
+		String shortName = vm.name();
+		if (shortName.contains(" ")) {
+			shortName = vm.name().substring(0, vm.name().indexOf(" "));
+		}
 		String display = currentEvent == null ? shortName : shortName + " [" + currentEvent + "]";
 		setValue(path, ATTR_DISPLAY, display);
 		setValue(path, ATTR_ARCH, vm.name());
@@ -1640,7 +1678,12 @@ public class JdiCommands {
 		}
 		createLink(location, "Method", method);
 		createLink(location, "DeclaringType", location.declaringType());
-		createLink(location, "ModuleRef", location.declaringType().module());
+		try {
+			createLink(location, "ModuleRef", location.declaringType().module());
+		}
+		catch (UnsupportedOperationException e) {
+			// IGNORE
+		}
 	}
 
 	private boolean isLoaded(Location location) {
@@ -2249,7 +2292,10 @@ public class JdiCommands {
 		}
 		if (obj instanceof VirtualMachine vm) {
 			Event currentEvent = jdi.getCurrentEvent();
-			String shortName = vm.name().substring(0, vm.name().indexOf(" "));
+			String shortName = vm.name();
+			if (shortName.contains(" ")) {
+				shortName = vm.name().substring(0, vm.name().indexOf(" "));
+			}
 			name = currentEvent == null ? shortName : shortName + " [" + currentEvent + "]";
 		}
 		setValue(path, ATTR_ACCESSIBLE, suspended);

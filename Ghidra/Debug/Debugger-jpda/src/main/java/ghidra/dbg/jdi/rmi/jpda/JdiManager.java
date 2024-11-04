@@ -93,9 +93,11 @@ public class JdiManager {
 
 	private final Map<String, DebugStatus> returnStatusMap = new HashMap<>();
 	final TargetObjectSchema rootSchema;
+	private Map<String, String> env;
 
 	public JdiManager(JdiManagerImpl manager, Map<String, String> env) {
 		this(manager);
+		this.env = env;
 		commands.ghidraTraceConnect(env.get("GHIDRA_TRACE_RMI_ADDR"));
 		commands.ghidraTraceStart(env.get("OPT_TARGET_CLASS"));
 	}
@@ -106,7 +108,7 @@ public class JdiManager {
 		defaultRange = new AddressRangeImpl(start, start.add(BLOCK_SIZE - 1));
 		rootSchema = RmiClient.loadSchema("jdi_schema.xml", "Debugger");
 
-		arch = new JdiArch();
+		arch = new JdiArch(this);
 		commands = new JdiCommands(this); // Must precede methods/hooks
 		methods = new JdiMethods(this, commands);
 		hooks = new JdiHooks(this, commands);
@@ -135,6 +137,10 @@ public class JdiManager {
 
 	public RmiClient getClient() {
 		return commands.state.client;
+	}
+
+	public Map<String, String> getEnv() {
+		return env;
 	}
 
 	public void registerRemoteMethod(JdiMethods methods, java.lang.reflect.Method m, String name) {
