@@ -5,6 +5,7 @@
 ##MODULE IP: Tango Icons - Public Domain
 .launch/Sleigh.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/charset_info.xml||GHIDRA||||END|
 data/languages/compiler_spec.rxg||GHIDRA||||END|
