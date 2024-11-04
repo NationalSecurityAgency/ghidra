@@ -225,14 +225,18 @@ def compute_ghidra_compiler(lang):
         key=lambda l: compiler_map[l]
     )
     if len(matched_lang) == 0:
+        print(f"{lang} not found in compiler map")
         return 'default'
     
     comp_map = compiler_map[matched_lang[0]]
+    if comp_map == data64_compiler_map:
+        print(f"Using the DATA64 compiler map")
     osabi = get_osabi()
     if osabi in comp_map:
         return comp_map[osabi]
     if None in comp_map:
         return comp_map[None]
+    print(f"{osabi} not found in compiler map")
     return 'default'
 
 
