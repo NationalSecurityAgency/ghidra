@@ -98,8 +98,18 @@ rootProject.assembleDistribution {
 	//
 	fileTree.each { File file ->
 		String filePath = getGlobalFilePathSubDirName(file)
-		from (file) {
-			into filePath
+		
+		if (file.name.toLowerCase().endsWith(".md")) {
+			rootProject.assembleMarkdownToHtml {
+				from (file) {
+					into filePath
+				}
+			}
+		}
+		else {
+			from (file) {
+				into filePath
+			}
 		}
 	}
 }
@@ -194,7 +204,7 @@ plugins.withType(JavaPlugin) {
 			into { zipPath + "/ghidra_scripts" }
 		}
 		
-			// External Libraries
+		// External Libraries
 		gradle.taskGraph.whenReady { taskGraph ->
 			List<String> externalPaths = getExternalRuntimeDependencies(p)
 			externalPaths.each { path ->
@@ -203,8 +213,6 @@ plugins.withType(JavaPlugin) {
 				}
 			}
 		}
-			
-	
 	}
 }	
 
