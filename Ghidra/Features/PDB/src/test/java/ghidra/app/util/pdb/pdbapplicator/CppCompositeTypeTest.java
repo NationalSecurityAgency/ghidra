@@ -49,8 +49,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static MessageLog log = new MessageLog();
 	private static TaskMonitor monitor = TaskMonitor.DUMMY;
 
-	private static DataTypeManager dtm32;
-	private static DataTypeManager dtm64;
+	private static MyTestDummyDataTypeManager dtm32;
+	private static MyTestDummyDataTypeManager dtm64;
 	// Didn't intend to modify this class to need these, but need them while modifying MsftVxtManager
 	// to use them
 	private static ClassTypeManager ctm32;
@@ -69,8 +69,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static MsftVxtManager msftVxtManager64;
 	private static VxtManager vxtManager32;
 	private static VxtManager vxtManager64;
-	// Note: Currently all test have expected results based on up the COMPLEX layout.
-	private static ObjectOrientedClassLayout classLayoutChoice = ObjectOrientedClassLayout.COMPLEX;
+	// Note: Currently all test have expected results based on up the CLASS_HIERARCHY layout.
+	private static ObjectOrientedClassLayout classLayoutChoice =
+		ObjectOrientedClassLayout.CLASS_HIERARCHY;
 
 	// Note that we would not normally want to share these attributes amongst classes and their
 	// members, as we might want to change one without changing all.  However, we are using this
@@ -91,83 +92,13 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		// The DataOrganizationImpl currently has defaults of a 32-bit windows cspec, but could
 		// change in the future.
 		DataOrganizationImpl dataOrg32 = DataOrganizationImpl.getDefaultOrganization(null);
+		dtm32 = new MyTestDummyDataTypeManager(dataOrg32);
 
-		dtm32 = new TestDummyDataTypeManager() {
-			HashMap<String, DataType> dataTypeMap = new HashMap<>();
-
-			@Override
-			public DataOrganization getDataOrganization() {
-				return dataOrg32;
-			}
-
-			@Override
-			public DataType addDataType(DataType dataType, DataTypeConflictHandler handler) {
-				// handler ignored - tests should not induce conflicts
-				String pathname = dataType.getPathName();
-				DataType myDt = dataTypeMap.get(pathname);
-				if (myDt != null) {
-					return myDt;
-				}
-				DataType dt = dataType.clone(this);
-				dataTypeMap.put(pathname, dt);
-				return dt;
-			}
-
-			@Override
-			public DataType findDataType(String dataTypePath) {
-				return dataTypeMap.get(dataTypePath);
-			}
-
-			@Override
-			public DataType getDataType(CategoryPath path, String name) {
-				return super.getDataType(new DataTypePath(path, name).getPath());
-			}
-
-			@Override
-			public DataType getDataType(String dataTypePath) {
-				return dataTypeMap.get(dataTypePath);
-			}
-		};
 		// DataOrganization based on x86-64-win.cspec
 		DataOrganizationImpl dataOrg64 = DataOrganizationImpl.getDefaultOrganization(null);
 		DataOrganizationTestUtils.initDataOrganizationWindows64BitX86(dataOrg64);
+		dtm64 = new MyTestDummyDataTypeManager(dataOrg64);
 
-		dtm64 = new TestDummyDataTypeManager() {
-			HashMap<String, DataType> dataTypeMap = new HashMap<>();
-
-			@Override
-			public DataOrganization getDataOrganization() {
-				return dataOrg64;
-			}
-
-			@Override
-			public DataType addDataType(DataType dataType, DataTypeConflictHandler handler) {
-				// handler ignored - tests should not induce conflicts
-				String pathname = dataType.getPathName();
-				DataType myDt = dataTypeMap.get(pathname);
-				if (myDt != null) {
-					return myDt;
-				}
-				DataType dt = dataType.clone(this);
-				dataTypeMap.put(pathname, dt);
-				return dt;
-			}
-
-			@Override
-			public DataType findDataType(String dataTypePath) {
-				return dataTypeMap.get(dataTypePath);
-			}
-
-			@Override
-			public DataType getDataType(CategoryPath path, String name) {
-				return super.getDataType(new DataTypePath(path, name).getPath());
-			}
-
-			@Override
-			public DataType getDataType(String dataTypePath) {
-				return dataTypeMap.get(dataTypePath);
-			}
-		};
 		// Didn't intend to modify this class to need these, but need them while modifying
 		//  MsftVxtManager to use them
 		ctm32 = new ClassTypeManager(dtm32);
@@ -549,7 +480,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	private static String convertCommentsToSpeculative(String original) {
-		return original.replace("(Virtual Base", "((Speculative Placement) Virtual Base");
+		return original.replace("Virtual Base", "Virtual Base - Speculative Placement");
 	}
 
 	private static CppCompositeType createStruct32(String name, int size) {
@@ -596,67 +527,76 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private final static DataType u4 = Undefined4DataType.dataType;
 	//private final static DataType u8 = Undefined8DataType.dataType;
 
-	// Note: the problem with using the following static variables is that the process of
-	//  processing any one requires the parents already be processed (the dependency issue)
-	//  We could use the static version for parents in the create<X>_struct32() methods.
-//	private static CppCompositeType A;
-//	private static CppCompositeType C;
-//	private static CppCompositeType CC1;
-//	private static CppCompositeType CC2;
-//	private static CppCompositeType CC3;
-//	private static CppCompositeType D;
-//	private static CppCompositeType E;
-//	private static CppCompositeType F;
-//	private static CppCompositeType G;
-//	private static CppCompositeType H;
-//	private static CppCompositeType G1;
-//	private static CppCompositeType H1;
-//	private static CppCompositeType GG1;
-//	private static CppCompositeType GG2;
-//	private static CppCompositeType GG3;
-//	private static CppCompositeType GG4;
-//	private static CppCompositeType I;
-//	private static CppCompositeType I1;
-//	private static CppCompositeType I2;
-//	private static CppCompositeType I3;
-//	private static CppCompositeType I4;
-//	private static CppCompositeType I5;
-//	private static CppCompositeType J1;
-//	private static CppCompositeType J2;
-//	private static CppCompositeType J3;
-//	private static CppCompositeType J4;
-//	private static CppCompositeType J5;
-//	private static CppCompositeType J6;
-//	static {
-//		A = createA_struct32();
-//		C = createC_struct32();
-//		CC1 = createCC1_struct32();
-//		CC2 = createCC2_struct32();
-//		CC3 = createCC3_struct32();
-//		D = createD_struct32(C);
-//		E = createE_struct32();
-//		F = createF_struct32(C, E);
-//		G = createG_struct32(C);
-//		H = createH_struct32(C);
-//		G1 = createG1_struct32(C, E);
-//		H1 = createH1_struct32(E, C);
-//		GG1 = createGG1_struct32(CC1);
-//		GG2 = createGG2_struct32(CC2);
-//		GG3 = createGG3_struct32(CC2);
-//		GG4 = createGG4_struct32(CC3);
-//		I = createI_struct32(G, H, C);
-//		I1 = createI1_struct32(G1, H, C, E);
-//		I2 = createI2_struct32(G, H1, C, E);
-//		I3 = createI3_struct32(G1, H1, E, C);
-//		I4 = createI4_struct32(G1, E, C);
-//		I5 = createI5_struct32(G1, E, C); // check this and I4...TODO
-//		J1 = createJ1_struct32(I1, I2, E, C);
-//		J2 = createJ2_struct32(I2, I1, C, E);
-//		J3 = createJ3_struct32(I2, I1, A, C, E);
-//		J4 = createJ4_struct32(I3, GG1, I, A, GG2, GG3, C, E, CC1, CC2);
-//		J5 = createJ5_struct32(I3, GG1, I, A, GG2, GG3, C, E, CC1, CC2);
-//		J6 = createJ6_struct32(A, GG4, GG3, CC2, CC3);
-//	}
+	//==============================================================================================
+	private static class MyTestDummyDataTypeManager extends TestDummyDataTypeManager {
+		HashMap<String, DataType> dataTypeMap = new HashMap<>();
+		DataOrganizationImpl dataOrg;
+
+		private MyTestDummyDataTypeManager(DataOrganizationImpl dataOrg) {
+			this.dataOrg = dataOrg;
+		}
+
+		/**
+		 * This is not part of the DataTypeManager API... it is only for testing when needing
+		 *  to clear results because of another run that creates the same-named types
+		 */
+		private void clearMap() {
+			dataTypeMap = new HashMap<>();
+		}
+
+		@Override
+		public DataOrganization getDataOrganization() {
+			return dataOrg;
+		}
+
+		@Override
+		public DataType resolve(DataType dataType, DataTypeConflictHandler handler) {
+			if (dataType instanceof Composite composite) {
+				String name = composite.getName();
+				for (DataTypeComponent component : composite.getComponents()) {
+					if (component.getDataType() instanceof Structure struct) {
+						// TODO:
+						// Need to fix the "!internal" to reference static value put into
+						//  ClassType helper class
+						if (struct.getCategoryPath().getName().equals("!internal") &&
+							struct.getName().equals(name)) {
+							addDataType(struct, null);
+						}
+					}
+				}
+			}
+			return addDataType(dataType, null);
+		}
+
+		@Override
+		public DataType addDataType(DataType dataType, DataTypeConflictHandler handler) {
+			// handler ignored - tests should not induce conflicts
+			String pathname = dataType.getPathName();
+			DataType myDt = dataTypeMap.get(pathname);
+			if (myDt != null) {
+				return myDt;
+			}
+			DataType dt = dataType.clone(this);
+			dataTypeMap.put(pathname, dt);
+			return dt;
+		}
+
+		@Override
+		public DataType findDataType(String dataTypePath) {
+			return dataTypeMap.get(dataTypePath);
+		}
+
+		@Override
+		public DataType getDataType(CategoryPath path, String name) {
+			return getDataType(new DataTypePath(path, name).getPath());
+		}
+
+		@Override
+		public DataType getDataType(String dataTypePath) {
+			return dataTypeMap.get(dataTypePath);
+		}
+
+	}
 
 	//==============================================================================================
 	/*
@@ -670,6 +610,10 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		A_struct.addMember("c", u1, false, 0);
 		A_struct.addMember("i", u4, false, 0);
 		return A_struct;
+	}
+
+	static CppCompositeType createA_struct(VxtManager vxtManager, boolean is64Bit) {
+		return is64Bit ? createA_struct64(vxtManager) : createA_struct32(vxtManager);
 	}
 
 	static CppCompositeType createA_struct32(VxtManager vxtManager) {
@@ -686,6 +630,74 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return A_struct;
 	}
 
+	//@formatter:off
+	/*
+	struct A {
+	  char c;
+	  int i;
+	};
+
+	class A	size(8):
+		+---
+	 0	| c
+	  	| <alignment member> (size=3)
+	 4	| i
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedA_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedA_32() {
+		return convertCommentsToSpeculative(getExpectedA_32());
+	}
+
+	//@formatter:off
+	/*
+	struct A {
+	  char c;
+	  int i;
+	};
+
+	class A	size(8):
+		+---
+	 0	| c
+	  	| <alignment member> (size=3)
+	 4	| i
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedA_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedA_64() {
+		return convertCommentsToSpeculative(getExpectedA_64());
+	}
+
 	//==============================================================================================
 	/*
 	 * struct C {
@@ -699,6 +711,10 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return C_struct;
 	}
 
+	static CppCompositeType createC_struct(VxtManager vxtManager, boolean is64Bit) {
+		return is64Bit ? createC_struct64(vxtManager) : createC_struct32(vxtManager);
+	}
+
 	static CppCompositeType createC_struct32(VxtManager vxtManager) {
 		CppCompositeType C_struct = createStruct32("C", 4);
 		C_struct.addMember("c1", u4, false, 0);
@@ -709,6 +725,69 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		CppCompositeType C_struct = createStruct64("C", 4);
 		C_struct.addMember("c1", u4, false, 0);
 		return C_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct C {
+	  int c1;
+	  void cf();
+	};
+
+	class C	size(4):
+		+---
+	 0	| c1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedC_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedC_32() {
+		return convertCommentsToSpeculative(getExpectedC_32());
+	}
+
+	//@formatter:off
+	/*
+	struct C {
+	  int c1;
+	  void cf();
+	};
+
+	class C	size(4):
+		+---
+	 0	| c1
+		+---
+	 */
+	//@formatter:on
+	//@formatter:on
+	private String getExpectedC_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedC_64() {
+		return convertCommentsToSpeculative(getExpectedC_64());
 	}
 
 	//==============================================================================================
@@ -724,6 +803,10 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return CC1_struct;
 	}
 
+	static CppCompositeType createCC1_struct(VxtManager vxtManager, boolean is64Bit) {
+		return is64Bit ? createCC1_struct64(vxtManager) : createCC1_struct32(vxtManager);
+	}
+
 	static CppCompositeType createCC1_struct32(VxtManager vxtManager) {
 		CppCompositeType CC1_struct = createStruct32("CC1", 4);
 		CC1_struct.addMember("cc11", u4, false, 0);
@@ -734,6 +817,68 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		CppCompositeType CC1_struct = createStruct64("CC1", 4);
 		CC1_struct.addMember("cc11", u4, false, 0);
 		return CC1_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct CC1 {
+	  int cc11;
+	  void cc1f();
+	};
+
+	class CC1	size(4):
+		+---
+ 	0	| cc11
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedCC1_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedCC1_32() {
+		return convertCommentsToSpeculative(getExpectedCC1_32());
+	}
+
+	//@formatter:off
+	/*
+	struct CC1 {
+	  int cc11;
+	  void cc1f();
+	};
+
+	class CC1	size(4):
+		+---
+ 	0	| cc11
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedCC1_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedCC1_64() {
+		return convertCommentsToSpeculative(getExpectedCC1_64());
 	}
 
 	//==============================================================================================
@@ -749,6 +894,10 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return CC2_struct;
 	}
 
+	static CppCompositeType createCC2_struct(VxtManager vxtManager, boolean is64Bit) {
+		return is64Bit ? createCC2_struct64(vxtManager) : createCC2_struct32(vxtManager);
+	}
+
 	static CppCompositeType createCC2_struct32(VxtManager vxtManager) {
 		CppCompositeType CC2_struct = createStruct32("CC2", 4);
 		CC2_struct.addMember("cc21", u4, false, 0);
@@ -761,12 +910,78 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return CC2_struct;
 	}
 
+	//@formatter:off
+	/*
+	struct CC2 {
+	  int cc21;
+	  void cc2f();
+	};
+
+	class CC2	size(4):
+		+---
+	 0	| cc21
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedCC2_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedCC2_32() {
+		return convertCommentsToSpeculative(getExpectedCC2_32());
+	}
+
+	//@formatter:off
+	/*
+	struct CC2 {
+	  int cc21;
+	  void cc2f();
+	};
+
+	class CC2	size(4):
+		+---
+	 0	| cc21
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedCC2_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedCC2_64() {
+		return convertCommentsToSpeculative(getExpectedCC2_64());
+	}
+
 	//==============================================================================================
 	/*
 	 * struct CC3 {
 	 *    void cc3f();
 	 * };
 	 */
+	static CppCompositeType createCC3_struct(VxtManager vxtManager, boolean is64Bit) {
+		return is64Bit ? createCC3_struct64(vxtManager) : createCC3_struct32(vxtManager);
+	}
+
 	static CppCompositeType createCC3_struct32(VxtManager vxtManager) {
 		CppCompositeType CC3_struct = createStruct32("CC3", 0); //TODO size 1 or 0?
 		return CC3_struct;
@@ -777,6 +992,62 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return CC3_struct;
 	}
 
+	//@formatter:off
+	/*
+	struct CC3 {
+	  void cc3f();
+	};
+
+	class CC3	size(1):
+		+---
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedCC3_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC3
+			pack(disabled)
+			Structure CC3 {
+			}
+			Length: 0 Alignment: 1""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedCC3_32() {
+		return convertCommentsToSpeculative(getExpectedCC3_32());
+	}
+
+	//@formatter:off
+	/*
+	struct CC3 {
+	  void cc3f();
+	};
+
+	class CC3	size(1):
+		+---
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedCC3_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/CC3
+			pack(disabled)
+			Structure CC3 {
+			}
+			Length: 0 Alignment: 1""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedCC3_64() {
+		return convertCommentsToSpeculative(getExpectedCC3_64());
+	}
+
 	//==============================================================================================
 	/*
 	 * struct D : C {
@@ -784,48 +1055,120 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 *    void df();
 	 * };
 	 */
-	static CppCompositeType createD_struct32(VxtManager vxtManager) {
-		return createD_struct32(vxtManager, null);
+	static CppCompositeType createD_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType C_struct) {
+		return is64Bit ? createD_struct64(vxtManager, C_struct)
+				: createD_struct32(vxtManager, C_struct);
 	}
 
 	static CppCompositeType createD_struct32(VxtManager vxtManager, CppCompositeType C_struct) {
-		CppCompositeType D_struct = createStruct32("D", 8);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType D_struct = createStruct32("D", 8);
 			D_struct.addDirectBaseClass(C_struct, 0);
 			D_struct.addMember("d1", u4, false, 4);
+			return D_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return D_struct;
-	}
-
-	static CppCompositeType createD_struct64(VxtManager vxtManager) {
-		return createD_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createD_struct64(VxtManager vxtManager, CppCompositeType C_struct) {
-		CppCompositeType D_struct = createStruct64("D", 8);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType D_struct = createStruct64("D", 8);
 			D_struct.addDirectBaseClass(C_struct, 0);
 			D_struct.addMember("d1", u4, false, 4);
+			return D_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return D_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct D : C {
+	  int d1;
+	  void df();
+	};
+
+	class D	size(8):
+		+---
+	 0	| +--- (base class C)
+	 0	| | c1
+		| +---
+	 4	| d1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedD_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/D
+			pack()
+			Structure D {
+			   0   C   4      "Base"
+			   4   undefined4   4   d1   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedD_32() {
+		return convertCommentsToSpeculative(getExpectedD_32());
+	}
+
+	//@formatter:off
+	/*
+	struct D : C {
+	  int d1;
+	  void df();
+	};
+
+	class D	size(8):
+		+---
+	 0	| +--- (base class C)
+	 0	| | c1
+		| +---
+	 4	| d1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedD_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/D
+			pack()
+			Structure D {
+			   0   C   4      "Base"
+			   4   undefined4   4   d1   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedD_64() {
+		return convertCommentsToSpeculative(getExpectedD_64());
 	}
 
 	//==============================================================================================
@@ -841,6 +1184,10 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return E_struct;
 	}
 
+	static CppCompositeType createE_struct(VxtManager vxtManager, boolean is64Bit) {
+		return is64Bit ? createE_struct64(vxtManager) : createE_struct32(vxtManager);
+	}
+
 	static CppCompositeType createE_struct32(VxtManager vxtManager) {
 		CppCompositeType E_struct = createStruct32("E", 4);
 		E_struct.addMember("e1", u4, false, 0);
@@ -853,6 +1200,68 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return E_struct;
 	}
 
+	//@formatter:off
+	/*
+	struct E {
+	  int e1;
+	  void ef();
+	};
+
+	class E	size(4):
+		+---
+	 0	| e1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedE_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedE_32() {
+		return convertCommentsToSpeculative(getExpectedE_32());
+	}
+
+	//@formatter:off
+	/*
+	struct E {
+	  int e1;
+	  void ef();
+	};
+
+	class E	size(4):
+		+---
+	 0	| e1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedE_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedE_64() {
+		return convertCommentsToSpeculative(getExpectedE_64());
+	}
+
 	//==============================================================================================
 	/*
 	 * struct F : C, E {
@@ -860,60 +1269,144 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 *	  void ff();
 	 *	};
 	 */
-	static CppCompositeType createF_struct32(VxtManager vxtManager) {
-		return createF_struct32(vxtManager, null, null);
+	static CppCompositeType createF_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType C_struct, CppCompositeType E_struct) {
+		return is64Bit ? createF_struct64(vxtManager, C_struct, E_struct)
+				: createF_struct32(vxtManager, C_struct, E_struct);
 	}
 
 	static CppCompositeType createF_struct32(VxtManager vxtManager, CppCompositeType C_struct,
 			CppCompositeType E_struct) {
-		CppCompositeType F_struct = createStruct32("F", 12);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType F_struct = createStruct32("F", 12);
 			F_struct.addDirectBaseClass(C_struct, 0);
 			F_struct.addDirectBaseClass(E_struct, 4);
 			F_struct.addMember("f1", u4, false, 8);
+			return F_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return F_struct;
-	}
-
-	static CppCompositeType createF_struct64(VxtManager vxtManager) {
-		return createF_struct64(vxtManager, null, null);
 	}
 
 	static CppCompositeType createF_struct64(VxtManager vxtManager, CppCompositeType C_struct,
 			CppCompositeType E_struct) {
-		CppCompositeType F_struct = createStruct64("F", 12);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType F_struct = createStruct64("F", 12);
 			F_struct.addDirectBaseClass(C_struct, 0);
 			F_struct.addDirectBaseClass(E_struct, 4);
 			F_struct.addMember("f1", u4, false, 8);
+			return F_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return F_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct F : C, E {
+	  int f1;
+	  void ff();
+	};
+
+	class F	size(12):
+		+---
+	 0	| +--- (base class C)
+	 0	| | c1
+		| +---
+	 4	| +--- (base class E)
+	 4	| | e1
+		| +---
+	 8	| f1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedF_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/F
+			pack()
+			Structure F {
+			   0   C   4      "Base"
+			   4   E   4      "Base"
+			   8   undefined4   4   f1   ""
+			}
+			Length: 12 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedF_32() {
+		return convertCommentsToSpeculative(getExpectedF_32());
+	}
+
+	//@formatter:off
+	/*
+	struct F : C, E {
+	  int f1;
+	  void ff();
+	};
+
+	class F	size(12):
+		+---
+	 0	| +--- (base class C)
+	 0	| | c1
+		| +---
+	 4	| +--- (base class E)
+	 4	| | e1
+		| +---
+	 8	| f1
+		+---
+	 */
+	//@formatter:on
+	private String getExpectedF_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/F
+			pack()
+			Structure F {
+			   0   C   4      "Base"
+			   4   E   4      "Base"
+			   8   undefined4   4   f1   ""
+			}
+			Length: 12 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedF_64() {
+		return convertCommentsToSpeculative(getExpectedF_64());
 	}
 
 	//==============================================================================================
@@ -945,48 +1438,149 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return G_struct;
 	}
 
-	static CppCompositeType createG_struct32(VxtManager vxtManager) {
-		return createG_struct32(vxtManager, null);
+	static CppCompositeType createG_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType C_struct) {
+		return is64Bit ? createG_struct64(vxtManager, C_struct)
+				: createG_struct32(vxtManager, C_struct);
 	}
 
 	static CppCompositeType createG_struct32(VxtManager vxtManager, CppCompositeType C_struct) {
-		CppCompositeType G_struct = createStruct32("G", 12);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType G_struct = createStruct32("G", 12);
 			G_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
 			G_struct.addMember("g1", u4, false, 4);
+			return G_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return G_struct;
-	}
-
-	static CppCompositeType createG_struct64(VxtManager vxtManager) {
-		return createG_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createG_struct64(VxtManager vxtManager, CppCompositeType C_struct) {
-		CppCompositeType G_struct = createStruct64("G", 20);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType G_struct = createStruct64("G", 20);
 			G_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
 			G_struct.addMember("g1", u4, false, 8);
+			return G_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return G_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct G : virtual C {
+	  int g1;
+	  void gf();
+	};
+
+	class G	size(12):
+		+---
+	 0	| {vbptr}
+	 4	| g1
+		+---
+		+--- (virtual base C)
+	 8	| c1
+		+---
+
+	G::$vbtable@:
+	 0	| 0
+	 1	| 8 (Gd(G+0)C)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               C       8       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedG_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/G
+			pack()
+			Structure G {
+			   0   G   8      "Self Base"
+			   8   C   4      "Virtual Base"
+			}
+			Length: 12 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedG_32() {
+		return convertCommentsToSpeculative(getExpectedG_32());
+	}
+
+	//@formatter:off
+	/*
+	struct G : virtual C {
+	  int g1;
+	  void gf();
+	};
+
+	class G	size(20):
+		+---
+	 0	| {vbptr}
+	 8	| g1
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base C)
+	16	| c1
+		+---
+
+	G::$vbtable@:
+	 0	| 0
+	 1	| 16 (Gd(G+0)C)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               C      16       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedG_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/G
+			pack()
+			Structure G {
+			   0   G   16      "Self Base"
+			   16   C   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedG_64() {
+		return convertCommentsToSpeculative(getExpectedG_64());
 	}
 
 	//==============================================================================================
@@ -1018,48 +1612,149 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return H_struct;
 	}
 
-	static CppCompositeType createH_struct32(VxtManager vxtManager) {
-		return createH_struct32(vxtManager, null);
+	static CppCompositeType createH_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType C_struct) {
+		return is64Bit ? createH_struct64(vxtManager, C_struct)
+				: createH_struct32(vxtManager, C_struct);
 	}
 
 	static CppCompositeType createH_struct32(VxtManager vxtManager, CppCompositeType C_struct) {
-		CppCompositeType H_struct = createStruct32("H", 12);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType H_struct = createStruct32("H", 12);
 			H_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
 			H_struct.addMember("h1", u4, false, 4);
+			return H_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return H_struct;
-	}
-
-	static CppCompositeType createH_struct64(VxtManager vxtManager) {
-		return createH_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createH_struct64(VxtManager vxtManager, CppCompositeType C_struct) {
-		CppCompositeType H_struct = createStruct64("H", 20);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType H_struct = createStruct64("H", 20);
 			H_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
 			H_struct.addMember("h1", u4, false, 8);
+			return H_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return H_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct H : virtual C {
+	  int h1;
+	  void hf();
+	};
+
+	class H	size(12):
+		+---
+	 0	| {vbptr}
+	 4	| h1
+		+---
+		+--- (virtual base C)
+	 8	| c1
+		+---
+
+	H::$vbtable@:
+	 0	| 0
+	 1	| 8 (Hd(H+0)C)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               C       8       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedH_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/H
+			pack()
+			Structure H {
+			   0   H   8      "Self Base"
+			   8   C   4      "Virtual Base"
+			}
+			Length: 12 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedH_32() {
+		return convertCommentsToSpeculative(getExpectedH_32());
+	}
+
+	//@formatter:off
+	/*
+	struct H : virtual C {
+	  int h1;
+	  void hf();
+	};
+
+	class H	size(20):
+		+---
+	 0	| {vbptr}
+	 8	| h1
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base C)
+	16	| c1
+		+---
+
+	H::$vbtable@:
+	 0	| 0
+	 1	| 16 (Hd(H+0)C)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               C      16       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedH_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/H
+			pack()
+			Structure H {
+			   0   H   16      "Self Base"
+			   16   C   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedH_64() {
+		return convertCommentsToSpeculative(getExpectedH_64());
 	}
 
 	//==============================================================================================
@@ -1095,60 +1790,177 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return G1_struct;
 	}
 
-	static CppCompositeType createG1_struct32(VxtManager vxtManager) {
-		return createG1_struct32(vxtManager, null, null);
+	static CppCompositeType createG1_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType C_struct, CppCompositeType E_struct) {
+		return is64Bit ? createG1_struct64(vxtManager, C_struct, E_struct)
+				: createG1_struct32(vxtManager, C_struct, E_struct);
 	}
 
 	static CppCompositeType createG1_struct32(VxtManager vxtManager, CppCompositeType C_struct,
 			CppCompositeType E_struct) {
-		CppCompositeType G1_struct = createStruct32("G1", 16);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType G1_struct = createStruct32("G1", 16);
 			G1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
 			G1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
 			G1_struct.addMember("g11", u4, false, 4);
+			return G1_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return G1_struct;
-	}
-
-	static CppCompositeType createG1_struct64(VxtManager vxtManager) {
-		return createG1_struct64(vxtManager, null, null);
 	}
 
 	static CppCompositeType createG1_struct64(VxtManager vxtManager, CppCompositeType C_struct,
 			CppCompositeType E_struct) {
-		CppCompositeType G1_struct = createStruct64("G1", 24);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType G1_struct = createStruct64("G1", 24);
 			G1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
 			G1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
 			G1_struct.addMember("g11", u4, false, 8);
+			return G1_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return G1_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct G1 : virtual C, virtual E {
+	  int g11;
+	  void g1f();
+	};
+
+	class G1	size(16):
+		+---
+	 0	| {vbptr}
+	 4	| g11
+		+---
+		+--- (virtual base C)
+	 8	| c1
+		+---
+		+--- (virtual base E)
+	12	| e1
+		+---
+
+	G1::$vbtable@:
+	 0	| 0
+	 1	| 8 (G1d(G1+0)C)
+	 2	| 12 (G1d(G1+0)E)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               C       8       0       4 0
+	               E      12       0       8 0
+	 */
+	//@formatter:on
+	private String getExpectedG1_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/G1
+			pack()
+			Structure G1 {
+			   0   G1   8      "Self Base"
+			   8   C   4      "Virtual Base"
+			   12   E   4      "Virtual Base"
+			}
+			Length: 16 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedG1_32() {
+		return convertCommentsToSpeculative(getExpectedG1_32());
+	}
+
+	//@formatter:off
+	/*
+	struct G1 : virtual C, virtual E {
+	  int g11;
+	  void g1f();
+	};
+
+	class G1	size(24):
+		+---
+	 0	| {vbptr}
+	 8	| g11
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base C)
+	16	| c1
+		+---
+		+--- (virtual base E)
+	20	| e1
+		+---
+
+	G1::$vbtable@:
+	 0	| 0
+	 1	| 16 (G1d(G1+0)C)
+	 2	| 20 (G1d(G1+0)E)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               C      16       0       4 0
+	               E      20       0       8 0
+	 */
+	//@formatter:on
+	private String getExpectedG1_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/G1
+			pack()
+			Structure G1 {
+			   0   G1   16      "Self Base"
+			   16   C   4      "Virtual Base"
+			   20   E   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedG1_64() {
+		return convertCommentsToSpeculative(getExpectedG1_64());
 	}
 
 	//==============================================================================================
@@ -1184,60 +1996,177 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return H1_struct;
 	}
 
-	static CppCompositeType createH1_struct32(VxtManager vxtManager) {
-		return createH1_struct32(vxtManager, null, null);
+	static CppCompositeType createH1_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType E_struct, CppCompositeType C_struct) {
+		return is64Bit ? createH1_struct64(vxtManager, E_struct, C_struct)
+				: createH1_struct32(vxtManager, E_struct, C_struct);
 	}
 
 	static CppCompositeType createH1_struct32(VxtManager vxtManager, CppCompositeType E_struct,
 			CppCompositeType C_struct) {
-		CppCompositeType H1_struct = createStruct32("H1", 16);
 		try {
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType H1_struct = createStruct32("H1", 16);
 			H1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 1);
 			H1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 2);
 			H1_struct.addMember("h11", u4, false, 4);
+			return H1_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return H1_struct;
-	}
-
-	static CppCompositeType createH1_struct64(VxtManager vxtManager) {
-		return createH1_struct64(vxtManager, null, null);
 	}
 
 	static CppCompositeType createH1_struct64(VxtManager vxtManager, CppCompositeType E_struct,
 			CppCompositeType C_struct) {
-		CppCompositeType H1_struct = createStruct64("H1", 24);
 		try {
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType H1_struct = createStruct64("H1", 24);
 			H1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 1);
 			H1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 2);
 			H1_struct.addMember("h11", u4, false, 8);
+			return H1_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return H1_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct H1 : virtual E, virtual C { //order reversed from G1
+	  int h11;
+	  void h1f();
+	};
+
+	class H1	size(16):
+		+---
+	 0	| {vbptr}
+	 4	| h11
+		+---
+		+--- (virtual base E)
+	 8	| e1
+		+---
+		+--- (virtual base C)
+	12	| c1
+		+---
+
+	H1::$vbtable@:
+	 0	| 0
+	 1	| 8 (H1d(H1+0)E)
+	 2	| 12 (H1d(H1+0)C)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               E       8       0       4 0
+	               C      12       0       8 0
+	 */
+	//@formatter:on
+	private String getExpectedH1_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/H1
+			pack()
+			Structure H1 {
+			   0   H1   8      "Self Base"
+			   8   E   4      "Virtual Base"
+			   12   C   4      "Virtual Base"
+			}
+			Length: 16 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedH1_32() {
+		return convertCommentsToSpeculative(getExpectedH1_32());
+	}
+
+	//@formatter:off
+	/*
+	struct H1 : virtual E, virtual C { //order reversed from G1
+	  int h11;
+	  void h1f();
+	};
+
+	class H1	size(24):
+		+---
+	 0	| {vbptr}
+	 8	| h11
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base E)
+	16	| e1
+		+---
+		+--- (virtual base C)
+	20	| c1
+		+---
+
+	H1::$vbtable@:
+	 0	| 0
+	 1	| 16 (H1d(H1+0)E)
+	 2	| 20 (H1d(H1+0)C)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	               E      16       0       4 0
+	               C      20       0       8 0
+	 */
+	//@formatter:on
+	private String getExpectedH1_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/H1
+			pack()
+			Structure H1 {
+			   0   H1   16      "Self Base"
+			   16   E   4      "Virtual Base"
+			   20   C   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedH1_64() {
+		return convertCommentsToSpeculative(getExpectedH1_64());
 	}
 
 	//==============================================================================================
@@ -1269,48 +2198,149 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return GG1_struct;
 	}
 
-	static CppCompositeType createGG1_struct32(VxtManager vxtManager) {
-		return createGG1_struct32(vxtManager, null);
+	static CppCompositeType createGG1_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType CC1_struct) {
+		return is64Bit ? createGG1_struct64(vxtManager, CC1_struct)
+				: createGG1_struct32(vxtManager, CC1_struct);
 	}
 
 	static CppCompositeType createGG1_struct32(VxtManager vxtManager, CppCompositeType CC1_struct) {
-		CppCompositeType GG1_struct = createStruct32("GG1", 12);
 		try {
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_struct32(vxtManager);
-				CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG1_struct = createStruct32("GG1", 12);
 			GG1_struct.addDirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 1);
 			GG1_struct.addMember("gg11", u4, false, 4);
+			return GG1_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG1_struct;
-	}
-
-	static CppCompositeType createGG1_struct64(VxtManager vxtManager) {
-		return createGG1_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createGG1_struct64(VxtManager vxtManager, CppCompositeType CC1_struct) {
-		CppCompositeType GG1_struct = createStruct64("GG1", 20);
 		try {
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_struct64(vxtManager);
-				CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG1_struct = createStruct64("GG1", 20);
 			GG1_struct.addDirectVirtualBaseClass(CC1_struct, 0, vbtptr64, 1);
 			GG1_struct.addMember("gg11", u4, false, 8);
+			return GG1_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG1_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct GG1 : virtual CC1 {
+	  int gg11;
+	  void gg1f();
+	};
+
+	class GG1	size(12):
+		+---
+	 0	| {vbptr}
+	 4	| gg11
+		+---
+		+--- (virtual base CC1)
+	 8	| cc11
+		+---
+
+	GG1::$vbtable@:
+	 0	| 0
+	 1	| 8 (GG1d(GG1+0)CC1)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC1       8       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedGG1_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG1
+			pack()
+			Structure GG1 {
+			   0   GG1   8      "Self Base"
+			   8   CC1   4      "Virtual Base"
+			}
+			Length: 12 Alignment: 4
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg11   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG1_32() {
+		return convertCommentsToSpeculative(getExpectedGG1_32());
+	}
+
+	//@formatter:off
+	/*
+	struct GG1 : virtual CC1 {
+	  int gg11;
+	  void gg1f();
+	};
+
+	class GG1	size(20):
+		+---
+	 0	| {vbptr}
+	 8	| gg11
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base CC1)
+	16	| cc11
+		+---
+
+	GG1::$vbtable@:
+	 0	| 0
+	 1	| 16 (GG1d(GG1+0)CC1)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC1      16       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedGG1_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG1
+			pack()
+			Structure GG1 {
+			   0   GG1   16      "Self Base"
+			   16   CC1   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg11   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG1_64() {
+		return convertCommentsToSpeculative(getExpectedGG1_64());
 	}
 
 	//==============================================================================================
@@ -1342,48 +2372,149 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return GG2_struct;
 	}
 
-	static CppCompositeType createGG2_struct32(VxtManager vxtManager) {
-		return createGG2_struct32(vxtManager, null);
+	static CppCompositeType createGG2_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType CC2_struct) {
+		return is64Bit ? createGG2_struct64(vxtManager, CC2_struct)
+				: createGG2_struct32(vxtManager, CC2_struct);
 	}
 
 	static CppCompositeType createGG2_struct32(VxtManager vxtManager, CppCompositeType CC2_struct) {
-		CppCompositeType GG2_struct = createStruct32("GG2", 12);
 		try {
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct32(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG2_struct = createStruct32("GG2", 12);
 			GG2_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 1);
 			GG2_struct.addMember("gg21", u4, false, 4);
+			return GG2_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG2_struct;
-	}
-
-	static CppCompositeType createGG2_struct64(VxtManager vxtManager) {
-		return createGG2_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createGG2_struct64(VxtManager vxtManager, CppCompositeType CC2_struct) {
-		CppCompositeType GG2_struct = createStruct64("GG2", 20);
 		try {
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct64(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG2_struct = createStruct64("GG2", 20);
 			GG2_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 1);
 			GG2_struct.addMember("gg21", u4, false, 8);
+			return GG2_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG2_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct GG2 : virtual CC2 {
+	  int gg21;
+	  void gg2f();
+	};
+
+	class GG2	size(12):
+		+---
+	 0	| {vbptr}
+	 4	| gg21
+		+---
+		+--- (virtual base CC2)
+	 8	| cc21
+		+---
+
+	GG2::$vbtable@:
+	 0	| 0
+	 1	| 8 (GG2d(GG2+0)CC2)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC2       8       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedGG2_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG2
+			pack()
+			Structure GG2 {
+			   0   GG2   8      "Self Base"
+			   8   CC2   4      "Virtual Base"
+			}
+			Length: 12 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg21   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG2_32() {
+		return convertCommentsToSpeculative(getExpectedGG2_32());
+	}
+
+	//@formatter:off
+	/*
+	struct GG2 : virtual CC2 {
+	  int gg21;
+	  void gg2f();
+	};
+
+	class GG2	size(20):
+		+---
+	 0	| {vbptr}
+	 8	| gg21
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base CC2)
+	16	| cc21
+		+---
+
+	GG2::$vbtable@:
+	 0	| 0
+	 1	| 16 (GG2d(GG2+0)CC2)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC2      16       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedGG2_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG2
+			pack()
+			Structure GG2 {
+			   0   GG2   16      "Self Base"
+			   16   CC2   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg21   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG2_64() {
+		return convertCommentsToSpeculative(getExpectedGG2_64());
 	}
 
 	//==============================================================================================
@@ -1415,48 +2546,149 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return GG3_struct;
 	}
 
-	static CppCompositeType createGG3_struct32(VxtManager vxtManager) {
-		return createGG3_struct32(vxtManager, null);
+	static CppCompositeType createGG3_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType CC2_struct) {
+		return is64Bit ? createGG3_struct64(vxtManager, CC2_struct)
+				: createGG3_struct32(vxtManager, CC2_struct);
 	}
 
 	static CppCompositeType createGG3_struct32(VxtManager vxtManager, CppCompositeType CC2_struct) {
-		CppCompositeType GG3_struct = createStruct32("GG3", 12);
 		try {
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct32(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG3_struct = createStruct32("GG3", 12);
 			GG3_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 1);
 			GG3_struct.addMember("gg31", u4, false, 4);
+			return GG3_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG3_struct;
-	}
-
-	static CppCompositeType createGG3_struct64(VxtManager vxtManager) {
-		return createGG3_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createGG3_struct64(VxtManager vxtManager, CppCompositeType CC2_struct) {
-		CppCompositeType GG3_struct = createStruct64("GG3", 20);
 		try {
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct64(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG3_struct = createStruct64("GG3", 20);
 			GG3_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 1);
 			GG3_struct.addMember("gg31", u4, false, 8);
+			return GG3_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG3_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct GG3 : virtual CC2 {
+	  int gg31;
+	  void gg3f();
+	};
+
+	class GG3	size(12):
+		+---
+	 0	| {vbptr}
+	 4	| gg31
+		+---
+		+--- (virtual base CC2)
+	 8	| cc21
+		+---
+
+	GG3::$vbtable@:
+	 0	| 0
+	 1	| 8 (GG3d(GG3+0)CC2)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC2       8       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedGG3_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG3
+			pack()
+			Structure GG3 {
+			   0   GG3   8      "Self Base"
+			   8   CC2   4      "Virtual Base"
+			}
+			Length: 12 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg31   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG3_32() {
+		return convertCommentsToSpeculative(getExpectedGG3_32());
+	}
+
+	//@formatter:off
+	/*
+	struct GG3 : virtual CC2 {
+	  int gg31;
+	  void gg3f();
+	};
+
+	class GG3	size(20):
+		+---
+	 0	| {vbptr}
+	 8	| gg31
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base CC2)
+	16	| cc21
+		+---
+
+	GG3::$vbtable@:
+	 0	| 0
+ 	1	| 16 (GG3d(GG3+0)CC2)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC2      16       0       4 0
+	 */
+	//@formatter:on
+	private String getExpectedGG3_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG3
+			pack()
+			Structure GG3 {
+			   0   GG3   16      "Self Base"
+			   16   CC2   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 8
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg31   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG3_64() {
+		return convertCommentsToSpeculative(getExpectedGG3_64());
 	}
 
 	//==============================================================================================
@@ -1466,48 +2698,141 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	 *	  void gg5f();
 	 *	};
 	 */
-	static CppCompositeType createGG4_struct32(VxtManager vxtManager) {
-		return createGG4_struct32(vxtManager, null);
+	static CppCompositeType createGG4_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType CC3_struct) {
+		return is64Bit ? createGG4_struct64(vxtManager, CC3_struct)
+				: createGG4_struct32(vxtManager, CC3_struct);
 	}
 
 	static CppCompositeType createGG4_struct32(VxtManager vxtManager, CppCompositeType CC3_struct) {
-		CppCompositeType GG4_struct = createStruct32("GG4", 8);
 		try {
-			if (CC3_struct == null) {
-				CC3_struct = createCC3_struct32(vxtManager);
-				CC3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG4_struct = createStruct32("GG4", 8);
 			GG4_struct.addDirectVirtualBaseClass(CC3_struct, 0, vbtptr32, 1);
 			GG4_struct.addMember("gg41", u4, false, 4);
+			return GG4_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG4_struct;
-	}
-
-	static CppCompositeType createGG4_struct64(VxtManager vxtManager) {
-		return createGG4_struct64(vxtManager, null);
 	}
 
 	static CppCompositeType createGG4_struct64(VxtManager vxtManager, CppCompositeType CC3_struct) {
-		CppCompositeType GG4_struct = createStruct64("GG4", 16);
 		try {
-			if (CC3_struct == null) {
-				CC3_struct = createCC3_struct64(vxtManager);
-				CC3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType GG4_struct = createStruct64("GG4", 16);
 			GG4_struct.addDirectVirtualBaseClass(CC3_struct, 0, vbtptr64, 1);
 			GG4_struct.addMember("gg41", u4, false, 8);
+			return GG4_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return GG4_struct;
+	}
+
+	//@formatter:off
+	/*
+	struct GG4 : virtual CC3 {
+	  int gg41;
+	  void gg4f();
+	};
+
+	class GG4	size(8):
+		+---
+	 0	| {vbptr}
+	 4	| gg41
+		+---
+		+--- (virtual base CC3)
+		+---
+
+	GG4::$vbtable@:
+	 0	| 0
+	 1	| 8 (GG4d(GG4+0)CC3)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC3       8       0       4 0
+	 */
+	//@formatter:on
+	// TODO: consider if we want to change the format on the output to provide information
+	//  about zero-sized virtual structure components trailing at the end.  We currently let
+	//  this information drop on the floor.  So in this case, our output does not show
+	//  the fact that CC3 is a zero-sized virtual parent.
+	private String getExpectedGG4_32() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG4
+			pack()
+			Structure GG4 {
+			   0   GG4   8      "Self Base"
+			}
+			Length: 8 Alignment: 4
+			/GG4/!internal/GG4
+			pack()
+			Structure GG4 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg41   ""
+			}
+			Length: 8 Alignment: 4""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG4_32() {
+		return convertCommentsToSpeculative(getExpectedGG4_32());
+	}
+
+	//@formatter:off
+	/*
+	struct GG4 : virtual CC3 {
+	  int gg41;
+	  void gg4f();
+	};
+
+	class GG4	size(16):
+		+---
+	 0	| {vbptr}
+	 8	| gg41
+	  	| <alignment member> (size=4)
+		+---
+		+--- (virtual base CC3)
+		+---
+
+	GG4::$vbtable@:
+	 0	| 0
+	 1	| 16 (GG4d(GG4+0)CC3)
+	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
+	             CC3      16       0       4 0
+	 */
+	//@formatter:on
+	// TODO: consider if we want to change the format on the output to provide information
+	//  about zero-sized virtual structure components trailing at the end.  We currently let
+	//  this information drop on the floor.  So in this case, our output does not show
+	//  the fact that CC3 is a zero-sized virtual parent.
+	private String getExpectedGG4_64() {
+		String expected =
+		//@formatter:off
+			"""
+			/GG4
+			pack()
+			Structure GG4 {
+			   0   GG4   16      "Self Base"
+			}
+			Length: 16 Alignment: 8
+			/GG4/!internal/GG4
+			pack()
+			Structure GG4 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg41   ""
+			}
+			Length: 16 Alignment: 8""";
+		//@formatter:on
+		return expected;
+	}
+
+	private String getSpeculatedGG4_64() {
+		return convertCommentsToSpeculative(getExpectedGG4_64());
 	}
 
 	//==============================================================================================
@@ -1547,3393 +2872,46 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return I_struct;
 	}
 
-	static CppCompositeType createI_struct32(VxtManager vxtManager) {
-		return createI_struct32(vxtManager, null, null, null);
+	static CppCompositeType createI_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType G_struct, CppCompositeType H_struct, CppCompositeType C_struct) {
+		return is64Bit ? createI_struct64(vxtManager, G_struct, H_struct, C_struct)
+				: createI_struct32(vxtManager, G_struct, H_struct, C_struct);
 	}
 
 	static CppCompositeType createI_struct32(VxtManager vxtManager, CppCompositeType G_struct,
 			CppCompositeType H_struct, CppCompositeType C_struct) {
-		CppCompositeType I_struct = createStruct32("I", 24);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			// Could be problem if only one of G or H is null: won't have same C.
-			if (G_struct == null) {
-				G_struct = createG_struct32(vxtManager, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H_struct == null) {
-				H_struct = createH_struct32(vxtManager, C_struct);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType I_struct = createStruct32("I", 24);
 			I_struct.addDirectBaseClass(G_struct, 0);
 			I_struct.addDirectBaseClass(H_struct, 8);
 			I_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
 			I_struct.addMember("i1", u4, false, 16);
+			return I_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return I_struct;
-	}
-
-	static CppCompositeType createI_struct64(VxtManager vxtManager) {
-		return createI_struct64(vxtManager, null, null, null);
 	}
 
 	static CppCompositeType createI_struct64(VxtManager vxtManager, CppCompositeType G_struct,
 			CppCompositeType H_struct, CppCompositeType C_struct) {
-		CppCompositeType I_struct = createStruct64("I", 44);
 		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			// Could be problem if only one of G or H is null: won't have same C.
-			if (G_struct == null) {
-				G_struct = createG_struct64(vxtManager, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H_struct == null) {
-				H_struct = createH_struct64(vxtManager, C_struct);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
+			CppCompositeType I_struct = createStruct64("I", 44);
 			I_struct.addDirectBaseClass(G_struct, 0);
 			I_struct.addDirectBaseClass(H_struct, 16);
 			I_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
 			I_struct.addMember("i1", u4, false, 32);
+			return I_struct;
 		}
 		catch (Exception e) {
 			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
-		return I_struct;
 	}
 
-	//==============================================================================================
-	/*
-	 * struct I1 : G1, H {
-	 *	  int i11;
-	 *	  void _i1f();
-	 *	};
-	 */
-	static CppCompositeType createI1_struct32(VxtManager vxtManager) {
-		return createI1_struct32(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI1_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType H_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
-		CppCompositeType I1_struct = createStruct32("I1", 28);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H_struct == null) {
-				H_struct = createH_struct32(vxtManager, C_struct);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I1_struct.addDirectBaseClass(G1_struct, 0);
-			I1_struct.addDirectBaseClass(H_struct, 8);
-			I1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			I1_struct.addMember("i11", u4, false, 16);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I1_struct;
-	}
-
-	static CppCompositeType createI1_struct64(VxtManager vxtManager) {
-		return createI1_struct64(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI1_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType H_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
-		CppCompositeType I1_struct = createStruct64("I1", 48);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H_struct == null) {
-				H_struct = createH_struct64(vxtManager, C_struct);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I1_struct.addDirectBaseClass(G1_struct, 0);
-			I1_struct.addDirectBaseClass(H_struct, 16);
-			I1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			I1_struct.addMember("i11", u4, false, 32);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I1_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct I2 : G, H1 {
-	 *	  int i21;
-	 *	  void _i2f();
-	 *	};
-	 */
-	static CppCompositeType createI2_struct32(VxtManager vxtManager) {
-		return createI2_struct32(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI2_struct32(VxtManager vxtManager, CppCompositeType G_struct,
-			CppCompositeType H1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
-		CppCompositeType I2_struct = createStruct32("I2", 28);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G_struct == null) {
-				G_struct = createG_struct32(vxtManager, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H1_struct == null) {
-				H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I2_struct.addDirectBaseClass(G_struct, 0);
-			I2_struct.addDirectBaseClass(H1_struct, 8);
-			I2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			I2_struct.addMember("i21", u4, false, 16);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I2_struct;
-	}
-
-	static CppCompositeType createI2_struct64(VxtManager vxtManager) {
-		return createI2_struct64(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI2_struct64(VxtManager vxtManager, CppCompositeType G_struct,
-			CppCompositeType H1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
-		CppCompositeType I2_struct = createStruct64("I2", 48);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G_struct == null) {
-				G_struct = createG_struct64(vxtManager, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H1_struct == null) {
-				H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I2_struct.addDirectBaseClass(G_struct, 0);
-			I2_struct.addDirectBaseClass(H1_struct, 16);
-			I2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			I2_struct.addMember("i21", u4, false, 32);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I2_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct I3 : G1, H1 {
-	 *	  int i31;
-	 *	  void _i3f();
-	 *	};
-	 */
-	static CppCompositeType createI3_syntactic_struct32(VxtManager vxtManager) {
-		return createI3_syntactic_struct32(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI3_syntactic_struct32(VxtManager vxtManager,
-			CppCompositeType G1_struct, CppCompositeType H1_struct, CppCompositeType E_struct,
-			CppCompositeType C_struct) {
-		CppCompositeType I3_struct = createStruct32("I3", 8);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-			}
-			if (H1_struct == null) {
-				H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-			}
-			I3_struct.addDirectSyntacticBaseClass(G1_struct);
-			I3_struct.addDirectSyntacticBaseClass(H1_struct);
-			I3_struct.addMember("i31", u4, false, 0);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I3_struct;
-	}
-
-	static CppCompositeType createI3_struct32(VxtManager vxtManager) {
-		return createI3_struct32(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI3_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType H1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
-		CppCompositeType I3_struct = createStruct32("I3", 28);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H1_struct == null) {
-				H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I3_struct.addDirectBaseClass(G1_struct, 0);
-			I3_struct.addDirectBaseClass(H1_struct, 8);
-			I3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			I3_struct.addMember("i31", u4, false, 16);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I3_struct;
-	}
-
-	static CppCompositeType createI3_struct64(VxtManager vxtManager) {
-		return createI3_struct64(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createI3_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType H1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
-		CppCompositeType I3_struct = createStruct64("I3", 48);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (H1_struct == null) {
-				H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I3_struct.addDirectBaseClass(G1_struct, 0);
-			I3_struct.addDirectBaseClass(H1_struct, 16);
-			I3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			I3_struct.addMember("i31", u4, false, 32);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I3_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct I4 : G1, virtual E, virtual C {
-	 *	  int i41;
-	 *	  void _i4f();
-	 *	};
-	 */
-	static CppCompositeType createI4_struct32(VxtManager vxtManager) {
-		return createI4_struct32(vxtManager, null, null, null);
-	}
-
-	static CppCompositeType createI4_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType E_struct, CppCompositeType C_struct) {
-		CppCompositeType I4_struct = createStruct32("I4", 20);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I4_struct.addDirectBaseClass(G1_struct, 0);
-			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			I4_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I4_struct.addMember("i41", u4, false, 8);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I4_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct I4 : G1, virtual E, virtual C {
-	 *	  int i41;
-	 *	  void _i4f();
-	 *	};
-	 */
-	static CppCompositeType createI4_struct64(VxtManager vxtManager) {
-		return createI4_struct64(vxtManager, null, null, null);
-	}
-
-	static CppCompositeType createI4_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType E_struct, CppCompositeType C_struct) {
-		CppCompositeType I4_struct = createStruct64("I4", 32);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I4_struct.addDirectBaseClass(G1_struct, 0);
-			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			I4_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I4_struct.addMember("i41", u4, false, 16);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I4_struct;
-	}
-
-	static CppCompositeType createI5_struct32(VxtManager vxtManager) {
-		return createI5_struct32(vxtManager, null, null, null);
-	}
-
-	static CppCompositeType createI5_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
-			CppCompositeType E_struct, CppCompositeType C_struct) {
-		CppCompositeType I5_struct = createStruct32("I5", 20);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I5_struct.addDirectBaseClass(G1_struct, 0);
-			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2); // check this and I4...TODO
-			I5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I5_struct.addMember("i51", u4, false, 8);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I5_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct I5 : virtual E, virtual C, G1 {
-	 *	  int i51;
-	 *	  void _i5f();
-	 *	};
-	 */
-	static CppCompositeType createI5_struct64(VxtManager vxtManager) {
-		return createI5_struct64(null, null, null, vxtManager);
-	}
-
-	static CppCompositeType createI5_struct64(CppCompositeType G1_struct, CppCompositeType E_struct,
-			CppCompositeType C_struct, VxtManager vxtManager) {
-		CppCompositeType I5_struct = createStruct64("I5", 32);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (G1_struct == null) {
-				G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			I5_struct.addDirectBaseClass(G1_struct, 0);
-			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2); // check this and I4...TODO
-			I5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I5_struct.addMember("i51", u4, false, 16);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return I5_struct;
-	}
-
-	static CppCompositeType createJ1_struct32(VxtManager vxtManager) {
-		return createJ1_struct32(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createJ1_struct32(VxtManager vxtManager, CppCompositeType I1_struct,
-			CppCompositeType I2_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
-		CppCompositeType J1_struct = createStruct32("J1", 52);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I1_struct == null) {
-				CppCompositeType G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				CppCompositeType H_struct = createH_struct32(vxtManager, C_struct);
-				I1_struct = createI1_struct32(vxtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I2_struct == null) {
-				CppCompositeType G_struct = createG_struct32(vxtManager, C_struct);
-				CppCompositeType H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				I2_struct = createI2_struct32(vxtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J1_struct.addDirectBaseClass(I1_struct, 0);
-			J1_struct.addDirectBaseClass(I2_struct, 20);
-			J1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J1_struct.addMember("j11", u4, false, 40);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J1_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct J1 : I1, I2 {
-	 *	  int j11;
-	 *	  void j1f();
-	 *	};
-	 */
-	static CppCompositeType createJ1_struct64(VxtManager vxtManager) {
-		return createJ1_struct64(null, null, null, null, vxtManager);
-	}
-
-	static CppCompositeType createJ1_struct64(CppCompositeType I1_struct,
-			CppCompositeType I2_struct, CppCompositeType E_struct, CppCompositeType C_struct,
-			VxtManager vxtManager) {
-		CppCompositeType J1_struct = createStruct64("J1", 96);
-		try {
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I1_struct == null) {
-				CppCompositeType G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				CppCompositeType H_struct = createH_struct64(vxtManager, C_struct);
-				I1_struct = createI1_struct64(vxtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I2_struct == null) {
-				CppCompositeType G_struct = createG_struct64(vxtManager, C_struct);
-				CppCompositeType H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				I2_struct = createI2_struct64(vxtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J1_struct.addDirectBaseClass(I1_struct, 0);
-			J1_struct.addDirectBaseClass(I2_struct, 40);
-			J1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			J1_struct.addMember("j11", u4, false, 80);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J1_struct;
-	}
-
-	static CppCompositeType createJ2_struct32(VxtManager vxtManager) {
-		return createJ2_struct32(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createJ2_struct32(VxtManager vxtManager, CppCompositeType I2_struct,
-			CppCompositeType I1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
-		CppCompositeType J2_struct = createStruct32("J2", 52);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I2_struct == null) {
-				CppCompositeType G_struct = createG_struct32(vxtManager, C_struct);
-				CppCompositeType H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				I2_struct = createI2_struct32(vxtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I1_struct == null) {
-				CppCompositeType G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				CppCompositeType H_struct = createH_struct32(vxtManager, C_struct);
-				I1_struct = createI1_struct32(vxtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J2_struct.addDirectBaseClass(I2_struct, 0);
-			J2_struct.addDirectBaseClass(I1_struct, 20);
-			J2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J2_struct.addMember("j21", u4, false, 40);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J2_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct J2 : I2, I1 {
-	 *	  int j21;
-	 *	  void j2f();
-	 *	};
-	 */
-	static CppCompositeType createJ2_struct64(VxtManager vxtManager) {
-		return createJ2_struct64(vxtManager, null, null, null, null);
-	}
-
-	static CppCompositeType createJ2_struct64(VxtManager vxtManager, CppCompositeType I2_struct,
-			CppCompositeType I1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
-		CppCompositeType J2_struct = createStruct64("J2", 96);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I2_struct == null) {
-				CppCompositeType G_struct = createG_struct64(vxtManager, C_struct);
-				CppCompositeType H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				I2_struct = createI2_struct64(vxtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I1_struct == null) {
-				CppCompositeType G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				CppCompositeType H_struct = createH_struct64(vxtManager, C_struct);
-				I1_struct = createI1_struct64(vxtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J2_struct.addDirectBaseClass(I2_struct, 0);
-			J2_struct.addDirectBaseClass(I1_struct, 40);
-			J2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			J2_struct.addMember("j21", u4, false, 80);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J2_struct;
-	}
-
-	static CppCompositeType createJ3_struct32(VxtManager vxtManager) {
-		return createJ3_struct32(vxtManager, null, null, null, null, null);
-	}
-
-	static CppCompositeType createJ3_struct32(VxtManager vxtManager, CppCompositeType I2_struct,
-			CppCompositeType I1_struct, CppCompositeType A_struct, CppCompositeType C_struct,
-			CppCompositeType E_struct) {
-		CppCompositeType J3_struct = createStruct32("J3", 60);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I2_struct == null) {
-				CppCompositeType G_struct = createG_struct32(vxtManager, C_struct);
-				CppCompositeType H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				I2_struct = createI2_struct32(vxtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I1_struct == null) {
-				CppCompositeType G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				CppCompositeType H_struct = createH_struct32(vxtManager, C_struct);
-				I1_struct = createI1_struct32(vxtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (A_struct == null) {
-				A_struct = createA_struct32(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J3_struct.addDirectBaseClass(I2_struct, 0);
-			J3_struct.addDirectBaseClass(I1_struct, 20);
-			J3_struct.addDirectBaseClass(A_struct, 40);
-			J3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J3_struct.addMember("j31", u4, false, 48);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J3_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct J3 : I2, I1, A {
-	 *	  int j31;
-	 *	  void j3f();
-	 *	};
-	 */
-	static CppCompositeType createJ3_struct64(VxtManager vxtManager) {
-		return createJ3_struct64(vxtManager, null, null, null, null, null);
-	}
-
-	static CppCompositeType createJ3_struct64(VxtManager vxtManager, CppCompositeType I2_struct,
-			CppCompositeType I1_struct, CppCompositeType A_struct, CppCompositeType C_struct,
-			CppCompositeType E_struct) {
-		CppCompositeType J3_struct = createStruct64("J3", 104);
-		try {
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I2_struct == null) {
-				CppCompositeType G_struct = createG_struct64(vxtManager, C_struct);
-				CppCompositeType H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				I2_struct = createI2_struct64(vxtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I1_struct == null) {
-				CppCompositeType G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				CppCompositeType H_struct = createH_struct64(vxtManager, C_struct);
-				I1_struct = createI1_struct64(vxtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (A_struct == null) {
-				A_struct = createA_struct64(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J3_struct.addDirectBaseClass(I2_struct, 0);
-			J3_struct.addDirectBaseClass(I1_struct, 40);
-			J3_struct.addDirectBaseClass(A_struct, 80);
-			J3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			J3_struct.addMember("j31", u4, false, 88);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J3_struct;
-	}
-
-	static CppCompositeType createJ4_struct32(VxtManager vxtManager) {
-		return createJ4_struct32(vxtManager, null, null, null, null, null, null, null, null, null,
-			null);
-	}
-
-	static CppCompositeType createJ4_struct32(VxtManager vxtManager, CppCompositeType I3_struct,
-			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
-			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
-			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
-		CppCompositeType J4_struct = createStruct32("J4", 92);
-		try {
-			if (A_struct == null) {
-				A_struct = createA_struct32(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_struct32(vxtManager);
-				CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct32(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I3_struct == null) {
-				CppCompositeType G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				CppCompositeType H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				I3_struct = createI3_struct32(vxtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG1_struct == null) {
-				GG1_struct = createGG1_struct32(vxtManager, CC1_struct);
-				GG1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I_struct == null) {
-				CppCompositeType G_struct = createG_struct32(vxtManager, C_struct);
-				CppCompositeType H_struct = createH_struct32(vxtManager, C_struct);
-				I_struct = createI_struct32(vxtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG2_struct == null) {
-				GG2_struct = createGG2_struct32(vxtManager, CC2_struct);
-				GG2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_struct32(vxtManager, CC2_struct);
-				GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J4_struct.addDirectBaseClass(I3_struct, 0);
-			J4_struct.addDirectBaseClass(GG1_struct, 20);
-			J4_struct.addDirectBaseClass(I_struct, 28);
-			J4_struct.addDirectBaseClass(A_struct, 48);
-			J4_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 5);
-			J4_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 6);
-			J4_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J4_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J4_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 3);
-			J4_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 4);
-			J4_struct.addMember("j41", u4, false, 56);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J4_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct J4 : I3, GG1, I, A, virtual GG2, virtual GG3 {
-	 *	  int j41;
-	 *	  void j4f();
-	 *	};
-	 */
-	static CppCompositeType createJ4_struct64(VxtManager vxtManager) {
-		return createJ4_struct64(vxtManager, null, null, null, null, null, null, null, null, null,
-			null);
-	}
-
-	static CppCompositeType createJ4_struct64(VxtManager vxtManager, CppCompositeType I3_struct,
-			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
-			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
-			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
-		CppCompositeType J4_struct = createStruct64("J4", 160);
-		try {
-			if (A_struct == null) {
-				A_struct = createA_struct64(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_struct64(vxtManager);
-				CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct64(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I3_struct == null) {
-				CppCompositeType G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				CppCompositeType H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				I3_struct = createI3_struct64(vxtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG1_struct == null) {
-				GG1_struct = createGG1_struct64(vxtManager, CC1_struct);
-				GG1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I_struct == null) {
-				CppCompositeType G_struct = createG_struct64(vxtManager, C_struct);
-				CppCompositeType H_struct = createH_struct64(vxtManager, C_struct);
-				I_struct = createI_struct64(vxtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG2_struct == null) {
-				GG2_struct = createGG2_struct64(vxtManager, CC2_struct);
-				GG2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_struct64(vxtManager, CC2_struct);
-				GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J4_struct.addDirectBaseClass(I3_struct, 0);
-			J4_struct.addDirectBaseClass(GG1_struct, 40);
-			J4_struct.addDirectBaseClass(I_struct, 56);
-			J4_struct.addDirectBaseClass(A_struct, 96);
-			J4_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr64, 5);
-			J4_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr64, 6);
-			J4_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J4_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			J4_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr64, 3);
-			J4_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 4);
-			J4_struct.addMember("j41", u4, false, 104);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J4_struct;
-	}
-
-	static CppCompositeType createJ5_syntactic_struct32(VxtManager vxtManager) {
-		return createJ5_syntactic_struct32(vxtManager, null, null, null, null, null, null, null,
-			null, null, null);
-	}
-
-	static CppCompositeType createJ5_syntactic_struct32(VxtManager vxtManager,
-			CppCompositeType I3_struct, CppCompositeType GG1_struct, CppCompositeType I_struct,
-			CppCompositeType A_struct, CppCompositeType GG2_struct, CppCompositeType GG3_struct,
-			CppCompositeType C_struct, CppCompositeType E_struct, CppCompositeType CC1_struct,
-			CppCompositeType CC2_struct) {
-		CppCompositeType J5_struct = createStruct32("J5", 0); // TODO need without size
-		try {
-			if (A_struct == null) {
-				A_struct = createA_syntactic_struct32(vxtManager);
-			}
-			if (C_struct == null) {
-				C_struct = createC_syntactic_struct32(vxtManager);
-			}
-			if (E_struct == null) {
-				E_struct = createE_syntactic_struct32(vxtManager);
-			}
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_syntactic_struct32(vxtManager);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_syntactic_struct32(vxtManager);
-			}
-			if (I3_struct == null) {
-				CppCompositeType G1_struct =
-					createG1_syntactic_struct32(vxtManager, C_struct, E_struct);
-				CppCompositeType H1_struct =
-					createH1_syntactic_struct32(vxtManager, E_struct, C_struct);
-				I3_struct = createI3_syntactic_struct32(vxtManager, G1_struct, H1_struct, E_struct,
-					C_struct);
-			}
-			if (GG1_struct == null) {
-				GG1_struct = createGG1_syntactic_struct32(vxtManager, CC1_struct);
-			}
-			if (I_struct == null) {
-				CppCompositeType G_struct = createG_syntactic_struct32(vxtManager, C_struct);
-				CppCompositeType H_struct = createH_syntactic_struct32(vxtManager, C_struct);
-				I_struct = createI_syntactic_struct32(vxtManager, G_struct, H_struct, C_struct);
-			}
-			if (GG2_struct == null) {
-				GG2_struct = createGG2_syntactic_struct32(vxtManager, CC2_struct);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_syntactic_struct32(vxtManager, CC2_struct);
-			}
-			J5_struct.addVirtualSyntacticBaseClass(GG2_struct);
-			J5_struct.addVirtualSyntacticBaseClass(GG3_struct);
-			J5_struct.addDirectSyntacticBaseClass(I3_struct);
-			J5_struct.addDirectSyntacticBaseClass(GG1_struct);
-			J5_struct.addDirectSyntacticBaseClass(I_struct);
-			J5_struct.addDirectSyntacticBaseClass(A_struct);
-			J5_struct.addMember("j51", u4, false, 0); // TODO nned syntactic without index
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J5_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct J5 : virtual GG2, virtual GG3, I3, GG1, I, A {
-	 *	  int j51;
-	 *	  void j5f();
-	 *	};
-	 */
-	static CppCompositeType createJ5_struct32(VxtManager vxtManager) {
-		return createJ5_struct32(vxtManager, null, null, null, null, null, null, null, null, null,
-			null);
-	}
-
-	static CppCompositeType createJ5_struct32(VxtManager vxtManager, CppCompositeType I3_struct,
-			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
-			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
-			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
-		CppCompositeType J5_struct = createStruct32("J5", 92);
-		try {
-			if (A_struct == null) {
-				A_struct = createA_struct32(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct32(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct32(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_struct32(vxtManager);
-				CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct32(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I3_struct == null) {
-				CppCompositeType G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
-				CppCompositeType H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
-				I3_struct = createI3_struct32(vxtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG1_struct == null) {
-				GG1_struct = createGG1_struct32(vxtManager, CC1_struct);
-				GG1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I_struct == null) {
-				CppCompositeType G_struct = createG_struct32(vxtManager, C_struct);
-				CppCompositeType H_struct = createH_struct32(vxtManager, C_struct);
-				I_struct = createI_struct32(vxtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG2_struct == null) {
-				GG2_struct = createGG2_struct32(vxtManager, CC2_struct);
-				GG2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_struct32(vxtManager, CC2_struct);
-				GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J5_struct.addDirectBaseClass(I3_struct, 0);
-			J5_struct.addDirectBaseClass(GG1_struct, 20);
-			J5_struct.addDirectBaseClass(I_struct, 28);
-			J5_struct.addDirectBaseClass(A_struct, 48);
-			J5_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 4);
-			J5_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 5);
-			J5_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 3);
-			J5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J5_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 6);
-			J5_struct.addMember("j51", u4, false, 56);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J5_struct;
-	}
-
-	static CppCompositeType createJ5_struct64(VxtManager vxtManager) {
-		return createJ5_struct64(vxtManager, null, null, null, null, null, null, null, null, null,
-			null);
-	}
-
-	static CppCompositeType createJ5_struct64(VxtManager vxtManager, CppCompositeType I3_struct,
-			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
-			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
-			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
-		CppCompositeType J5_struct = createStruct64("J5", 164);
-		try {
-			if (A_struct == null) {
-				A_struct = createA_struct64(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (C_struct == null) {
-				C_struct = createC_struct64(vxtManager);
-				C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (E_struct == null) {
-				E_struct = createE_struct64(vxtManager);
-				E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC1_struct == null) {
-				CC1_struct = createCC1_struct64(vxtManager);
-				CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct64(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I3_struct == null) {
-				CppCompositeType G1_struct = createG1_struct64(vxtManager, C_struct, E_struct);
-				CppCompositeType H1_struct = createH1_struct64(vxtManager, E_struct, C_struct);
-				I3_struct = createI3_struct64(vxtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG1_struct == null) {
-				GG1_struct = createGG1_struct64(vxtManager, CC1_struct);
-				GG1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (I_struct == null) {
-				CppCompositeType G_struct = createG_struct64(vxtManager, C_struct);
-				CppCompositeType H_struct = createH_struct64(vxtManager, C_struct);
-				I_struct = createI_struct64(vxtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-				I_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG2_struct == null) {
-				GG2_struct = createGG2_struct64(vxtManager, CC2_struct);
-				GG2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_struct64(vxtManager, CC2_struct);
-				GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J5_struct.addDirectBaseClass(I3_struct, 0);
-			J5_struct.addDirectBaseClass(GG1_struct, 40);
-			J5_struct.addDirectBaseClass(I_struct, 56);
-			J5_struct.addDirectBaseClass(A_struct, 96);
-			J5_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 4);
-			J5_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 5);
-			J5_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 3);
-			J5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J5_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 6);
-			J5_struct.addMember("j51", u4, false, 104);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J5_struct;
-	}
-
-	//==============================================================================================
-	/*
-	 * struct J6 : virtual GG4, virtual GG3, A { //GG4 has no members
-	 *    int j61;
-	 *	  void j6f();
-	 * };
-	 */
-	static CppCompositeType createJ6_struct32(VxtManager vxtManager) {
-		return createJ6_struct32(vxtManager, null, null, null, null, null);
-	}
-
-	static CppCompositeType createJ6_struct32(VxtManager vxtManager, CppCompositeType A_struct,
-			CppCompositeType GG4_struct, CppCompositeType GG3_struct, CppCompositeType CC2_struct,
-			CppCompositeType CC3_struct) {
-		CppCompositeType J6_struct = createStruct32("J6", 36);
-		try {
-			if (A_struct == null) {
-				A_struct = createA_struct32(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct32(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC3_struct == null) {
-				CC3_struct = createCC3_struct32(vxtManager);
-				CC3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG4_struct == null) {
-				GG4_struct = createGG4_struct32(vxtManager, CC3_struct);
-				GG4_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_struct32(vxtManager, CC2_struct);
-				GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J6_struct.addDirectBaseClass(A_struct, 0);
-			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbtptr32, 2);
-			J6_struct.addDirectVirtualBaseClass(GG3_struct, 8, vbtptr32, 4);
-			J6_struct.addIndirectVirtualBaseClass(CC3_struct, 8, vbtptr32, 1);
-			J6_struct.addIndirectVirtualBaseClass(CC2_struct, 8, vbtptr32, 3);
-			J6_struct.addMember("j61", u4, false, 12);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J6_struct;
-	}
-
-	static CppCompositeType createJ6_struct64(VxtManager vxtManager) {
-		return createJ6_struct64(vxtManager, null, null, null, null, null);
-	}
-
-	static CppCompositeType createJ6_struct64(VxtManager vxtManager, CppCompositeType A_struct,
-			CppCompositeType GG4_struct, CppCompositeType GG3_struct, CppCompositeType CC2_struct,
-			CppCompositeType CC3_struct) {
-		CppCompositeType J6_struct = createStruct64("J6", 64);
-		try {
-			if (A_struct == null) {
-				A_struct = createA_struct64(vxtManager);
-				A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC2_struct == null) {
-				CC2_struct = createCC2_struct64(vxtManager);
-				CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (CC3_struct == null) {
-				CC3_struct = createCC3_struct64(vxtManager);
-				CC3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG4_struct == null) {
-				GG4_struct = createGG4_struct64(vxtManager, CC3_struct);
-				GG4_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			if (GG3_struct == null) {
-				GG3_struct = createGG3_struct64(vxtManager, CC2_struct);
-				GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
-			}
-			J6_struct.addDirectBaseClass(A_struct, 0);
-			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbtptr64, 2);
-			J6_struct.addDirectVirtualBaseClass(GG3_struct, 8, vbtptr64, 4);
-			J6_struct.addIndirectVirtualBaseClass(CC3_struct, 8, vbtptr64, 1);
-			J6_struct.addIndirectVirtualBaseClass(CC2_struct, 8, vbtptr64, 3);
-			J6_struct.addMember("j61", u4, false, 16);
-		}
-		catch (Exception e) {
-			String msg = "Error in static initialization of test: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
-		}
-		return J6_struct;
-	}
-
-	//==============================================================================================
-	//==============================================================================================
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct A {
-	  char c;
-	  int i;
-	};
-
-	class A	size(8):
-		+---
-	 0	| c
-	  	| <alignment member> (size=3)
-	 4	| i
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testA_32_vbt() throws Exception {
-		CppCompositeType A_struct = createA_struct32(msftVxtManager32);
-		A_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = A_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedA_32(), composite, true);
-	}
-
-	@Test
-	public void testA_32_speculative() throws Exception {
-		CppCompositeType A_struct = createA_struct32(vxtManager32);
-		A_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = A_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedA_32(), composite, true);
-	}
-
-	private String getExpectedA_32() {
-		String expected =
-		//@formatter:off
-			"/A\n" +
-			"pack()\n" +
-			"Structure A {\n" +
-			"   0   A_direct   8      \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedA_32() {
-		return convertCommentsToSpeculative(getExpectedA_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct A {
-	  char c;
-	  int i;
-	};
-
-	class A	size(8):
-		+---
-	 0	| c
-	    | <alignment member> (size=3)
-	 4	| i
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testA_64_vbt() throws Exception {
-		CppCompositeType A_struct = createA_struct64(msftVxtManager64);
-		A_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = A_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedA_64(), composite, true);
-	}
-
-	@Test
-	public void testA_64_speculative() throws Exception {
-		CppCompositeType A_struct = createA_struct64(vxtManager64);
-		A_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = A_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedA_64(), composite, true);
-	}
-
-	private String getExpectedA_64() {
-		String expected =
-		//@formatter:off
-			"/A\n" +
-			"pack()\n" +
-			"Structure A {\n" +
-			"   0   A_direct   8      \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedA_64() {
-		return convertCommentsToSpeculative(getExpectedA_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct C {
-	  int c1;
-	  void cf();
-	};
-
-	class C	size(4):
-		+---
-	 0	| c1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testC_32_vbt() throws Exception {
-		CppCompositeType C_struct = createC_struct32(msftVxtManager32);
-		C_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = C_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedC_32(), composite, true);
-	}
-
-	@Test
-	public void testC_32_speculative() throws Exception {
-		CppCompositeType C_struct = createC_struct32(vxtManager32);
-		C_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = C_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedC_32(), composite, true);
-	}
-
-	private String getExpectedC_32() {
-		String expected =
-		//@formatter:off
-			"/C\n" +
-			"pack()\n" +
-			"Structure C {\n" +
-			"   0   C_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedC_32() {
-		return convertCommentsToSpeculative(getExpectedC_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct C {
-	  int c1;
-	  void cf();
-	};
-
-	class C	size(4):
-		+---
-	 0	| c1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testC_64_vbt() throws Exception {
-		CppCompositeType C_struct = createC_struct64(msftVxtManager64);
-		C_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = C_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedC_64(), composite, true);
-	}
-
-	@Test
-	public void testC_64_speculative() throws Exception {
-		CppCompositeType C_struct = createC_struct64(vxtManager64);
-		C_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = C_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedC_64(), composite, true);
-	}
-
-	private String getExpectedC_64() {
-		String expected =
-		//@formatter:off
-			"/C\n" +
-			"pack()\n" +
-			"Structure C {\n" +
-			"   0   C_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedC_64() {
-		return convertCommentsToSpeculative(getExpectedC_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct CC1 {
-	  int cc11;
-	  void cc1f();
-	};
-
-	class CC1	size(4):
-		+---
- 	0	| cc11
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testCC1_32_vbt() throws Exception {
-		CppCompositeType CC1_struct = createCC1_struct32(msftVxtManager32);
-		CC1_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = CC1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC1_32(), composite, true);
-	}
-
-	@Test
-	public void testCC1_32_speculative() throws Exception {
-		CppCompositeType CC1_struct = createCC1_struct32(vxtManager32);
-		CC1_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = CC1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC1_32(), composite, true);
-	}
-
-	private String getExpectedCC1_32() {
-		String expected =
-		//@formatter:off
-			"/CC1\n" +
-			"pack()\n" +
-			"Structure CC1 {\n" +
-			"   0   CC1_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedCC1_32() {
-		return convertCommentsToSpeculative(getExpectedCC1_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct CC1 {
-	  int cc11;
-	  void cc1f();
-	};
-
-	class CC1	size(4):
-		+---
- 	0	| cc11
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testCC1_64_vbt() throws Exception {
-		CppCompositeType CC1_struct = createCC1_struct64(msftVxtManager64);
-		CC1_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = CC1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC1_64(), composite, true);
-	}
-
-	@Test
-	public void testCC1_64_speculative() throws Exception {
-		CppCompositeType CC1_struct = createCC1_struct64(vxtManager64);
-		CC1_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = CC1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC1_64(), composite, true);
-	}
-
-	private String getExpectedCC1_64() {
-		String expected =
-		//@formatter:off
-			"/CC1\n" +
-			"pack()\n" +
-			"Structure CC1 {\n" +
-			"   0   CC1_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedCC1_64() {
-		return convertCommentsToSpeculative(getExpectedCC1_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct CC2 {
-	  int cc21;
-	  void cc2f();
-	};
-
-	class CC2	size(4):
-		+---
-	 0	| cc21
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testCC2_32_vbt() throws Exception {
-		CppCompositeType CC2_struct = createCC2_struct32(msftVxtManager32);
-		CC2_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = CC2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC2_32(), composite, true);
-	}
-
-	@Test
-	public void testCC2_32_speculative() throws Exception {
-		CppCompositeType CC2_struct = createCC2_struct32(vxtManager32);
-		CC2_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = CC2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC2_32(), composite, true);
-	}
-
-	private String getExpectedCC2_32() {
-		String expected =
-		//@formatter:off
-			"/CC2\n" +
-			"pack()\n" +
-			"Structure CC2 {\n" +
-			"   0   CC2_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedCC2_32() {
-		return convertCommentsToSpeculative(getExpectedCC2_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct CC2 {
-	  int cc21;
-	  void cc2f();
-	};
-
-	class CC2	size(4):
-		+---
-	 0	| cc21
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testCC2_64_vbt() throws Exception {
-		CppCompositeType CC2_struct = createCC2_struct64(msftVxtManager64);
-		CC2_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = CC2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC2_64(), composite, true);
-	}
-
-	@Test
-	public void testCC2_64_speculative() throws Exception {
-		CppCompositeType CC2_struct = createCC2_struct64(vxtManager64);
-		CC2_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = CC2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC2_64(), composite, true);
-	}
-
-	private String getExpectedCC2_64() {
-		String expected =
-		//@formatter:off
-			"/CC2\n" +
-			"pack()\n" +
-			"Structure CC2 {\n" +
-			"   0   CC2_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedCC2_64() {
-		return convertCommentsToSpeculative(getExpectedCC2_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct CC3 {
-	  void cc3f();
-	};
-
-	class CC3	size(1):
-		+---
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testCC3_32_vbt() throws Exception {
-		CppCompositeType CC3_struct = createCC3_struct32(msftVxtManager32);
-		CC3_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = CC3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC3_32(), composite, true);
-	}
-
-	@Test
-	public void testCC3_32_speculative() throws Exception {
-		CppCompositeType CC3_struct = createCC3_struct32(vxtManager32);
-		CC3_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = CC3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC3_32(), composite, true);
-	}
-
-	private String getExpectedCC3_32() {
-		String expected =
-		//@formatter:off
-			"/CC3\n" +
-			"pack(disabled)\n" +
-			"Structure CC3 {\n" +
-			"}\n" +
-			"Length: 0 Alignment: 1";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedCC3_32() {
-		return convertCommentsToSpeculative(getExpectedCC3_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct CC3 {
-	  void cc3f();
-	};
-
-	class CC3	size(1):
-		+---
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testCC3_64_vbt() throws Exception {
-		CppCompositeType CC3_struct = createCC3_struct64(msftVxtManager64);
-		CC3_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = CC3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC3_64(), composite, true);
-	}
-
-	@Test
-	public void testCC3_64_speculative() throws Exception {
-		CppCompositeType CC3_struct = createCC3_struct64(vxtManager64);
-		CC3_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = CC3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC3_64(), composite, true);
-	}
-
-	private String getExpectedCC3_64() {
-		String expected =
-		//@formatter:off
-			"/CC3\n" +
-			"pack(disabled)\n" +
-			"Structure CC3 {\n" +
-			"}\n" +
-			"Length: 0 Alignment: 1";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedCC3_64() {
-		return convertCommentsToSpeculative(getExpectedCC3_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct D : C {
-	  int d1;
-	  void df();
-	};
-
-	class D	size(8):
-		+---
-	 0	| +--- (base class C)
-	 0	| | c1
-		| +---
-	 4	| d1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testD_32_vbt() throws Exception {
-		CppCompositeType D_struct = createD_struct32(msftVxtManager32);
-		D_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = D_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedD_32(), composite, true);
-	}
-
-	@Test
-	public void testD_32_speculative() throws Exception {
-		CppCompositeType D_struct = createD_struct32(vxtManager32);
-		D_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = D_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedD_32(), composite, true);
-	}
-
-	private String getExpectedD_32() {
-		String expected =
-		//@formatter:off
-			"/D\n" +
-			"pack()\n" +
-			"Structure D {\n" +
-			"   0   D_direct   8      \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/D/D_direct\n" +
-			"pack()\n" +
-			"Structure D_direct {\n" +
-			"   0   C_direct   4      \"/D/BaseClass_C\"\n" +
-			"   4   undefined4   4   d1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedD_32() {
-		return convertCommentsToSpeculative(getExpectedD_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct D : C {
-	  int d1;
-	  void df();
-	};
-
-	class D	size(8):
-		+---
-	 0	| +--- (base class C)
-	 0	| | c1
-		| +---
-	 4	| d1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testD_64_vbt() throws Exception {
-		CppCompositeType D_struct = createD_struct64(msftVxtManager64);
-		D_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = D_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedD_64(), composite, true);
-	}
-
-	@Test
-	public void testD_64_speculative() throws Exception {
-		CppCompositeType D_struct = createD_struct64(vxtManager64);
-		D_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = D_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedD_64(), composite, true);
-	}
-
-	private String getExpectedD_64() {
-		String expected =
-		//@formatter:off
-			"/D\n" +
-			"pack()\n" +
-			"Structure D {\n" +
-			"   0   D_direct   8      \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/D/D_direct\n" +
-			"pack()\n" +
-			"Structure D_direct {\n" +
-			"   0   C_direct   4      \"/D/BaseClass_C\"\n" +
-			"   4   undefined4   4   d1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedD_64() {
-		return convertCommentsToSpeculative(getExpectedD_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct E {
-	  int e1;
-	  void ef();
-	};
-
-	class E	size(4):
-		+---
-	 0	| e1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testE_32_vbt() throws Exception {
-		CppCompositeType E_struct = createE_struct32(msftVxtManager32);
-		E_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = E_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedE_32(), composite, true);
-	}
-
-	@Test
-	public void testE_32_speculative() throws Exception {
-		CppCompositeType E_struct = createE_struct32(vxtManager32);
-		E_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = E_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedE_32(), composite, true);
-	}
-
-	private String getExpectedE_32() {
-		String expected =
-		//@formatter:off
-			"/E\n" +
-			"pack()\n" +
-			"Structure E {\n" +
-			"   0   E_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedE_32() {
-		return convertCommentsToSpeculative(getExpectedE_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct E {
-	  int e1;
-	  void ef();
-	};
-
-	class E	size(4):
-		+---
-	 0	| e1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testE_64_vbt() throws Exception {
-		CppCompositeType E_struct = createE_struct64(msftVxtManager64);
-		E_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = E_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedE_64(), composite, true);
-	}
-
-	@Test
-	public void testE_64_speculative() throws Exception {
-		CppCompositeType E_struct = createE_struct64(vxtManager64);
-		E_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = E_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedE_64(), composite, true);
-	}
-
-	private String getExpectedE_64() {
-		String expected =
-		//@formatter:off
-			"/E\n" +
-			"pack()\n" +
-			"Structure E {\n" +
-			"   0   E_direct   4      \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedE_64() {
-		return convertCommentsToSpeculative(getExpectedE_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct F : C, E {
-	  int f1;
-	  void ff();
-	};
-
-	class F	size(12):
-		+---
-	 0	| +--- (base class C)
-	 0	| | c1
-		| +---
-	 4	| +--- (base class E)
-	 4	| | e1
-		| +---
-	 8	| f1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testF_32_vbt() throws Exception {
-		CppCompositeType F_struct = createF_struct32(msftVxtManager32);
-		F_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = F_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedF_32(), composite, true);
-	}
-
-	@Test
-	public void testF_32_speculative() throws Exception {
-		CppCompositeType F_struct = createF_struct32(vxtManager32);
-		F_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = F_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedF_32(), composite, true);
-	}
-
-	private String getExpectedF_32() {
-		String expected =
-		//@formatter:off
-			"/F\n" +
-			"pack()\n" +
-			"Structure F {\n" +
-			"   0   F_direct   12      \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/F/F_direct\n" +
-			"pack()\n" +
-			"Structure F_direct {\n" +
-			"   0   C_direct   4      \"/F/BaseClass_C\"\n" +
-			"   4   E_direct   4      \"/F/BaseClass_E\"\n" +
-			"   8   undefined4   4   f1   \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedF_32() {
-		return convertCommentsToSpeculative(getExpectedF_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct F : C, E {
-	  int f1;
-	  void ff();
-	};
-
-	class F	size(12):
-		+---
-	 0	| +--- (base class C)
-	 0	| | c1
-		| +---
-	 4	| +--- (base class E)
-	 4	| | e1
-		| +---
-	 8	| f1
-		+---
-	 */
-	//@formatter:on
-	@Test
-	public void testF_64_vbt() throws Exception {
-		CppCompositeType F_struct = createF_struct64(msftVxtManager64);
-		F_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = F_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedF_64(), composite, true);
-	}
-
-	@Test
-	public void testF_64_speculative() throws Exception {
-		CppCompositeType F_struct = createF_struct64(vxtManager64);
-		F_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = F_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedF_64(), composite, true);
-	}
-
-	private String getExpectedF_64() {
-		String expected =
-		//@formatter:off
-			"/F\n" +
-			"pack()\n" +
-			"Structure F {\n" +
-			"   0   F_direct   12      \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/F/F_direct\n" +
-			"pack()\n" +
-			"Structure F_direct {\n" +
-			"   0   C_direct   4      \"/F/BaseClass_C\"\n" +
-			"   4   E_direct   4      \"/F/BaseClass_E\"\n" +
-			"   8   undefined4   4   f1   \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedF_64() {
-		return convertCommentsToSpeculative(getExpectedF_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct G : virtual C {
-	  int g1;
-	  void gf();
-	};
-
-	class G	size(12):
-		+---
-	 0	| {vbptr}
-	 4	| g1
-		+---
-		+--- (virtual base C)
-	 8	| c1
-		+---
-
-	G::$vbtable@:
-	 0	| 0
-	 1	| 8 (Gd(G+0)C)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               C       8       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testG_32_vbt() throws Exception {
-		CppCompositeType G_struct = createG_struct32(msftVxtManager32);
-		G_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = G_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedG_32(), composite, true);
-	}
-
-	@Test
-	public void testG_32_speculative() throws Exception {
-		CppCompositeType G_struct = createG_struct32(vxtManager32);
-		G_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = G_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG_32(), composite, true);
-	}
-
-	private String getExpectedG_32() {
-		String expected =
-		//@formatter:off
-			"/G\n" +
-			"pack()\n" +
-			"Structure G {\n" +
-			"   0   G_direct   8      \"\"\n" +
-			"   8   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedG_32() {
-		return convertCommentsToSpeculative(getExpectedG_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct G : virtual C {
-	  int g1;
-	  void gf();
-	};
-
-	class G	size(20):
-		+---
-	 0	| {vbptr}
-	 8	| g1
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base C)
-	16	| c1
-		+---
-
-	G::$vbtable@:
-	 0	| 0
-	 1	| 16 (Gd(G+0)C)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               C      16       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testG_64_vbt() throws Exception {
-		CppCompositeType G_struct = createG_struct64(msftVxtManager64);
-		G_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = G_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedG_64(), composite, true);
-	}
-
-	@Test
-	public void testG_64_speculative() throws Exception {
-		CppCompositeType G_struct = createG_struct64(vxtManager64);
-		G_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = G_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG_64(), composite, true);
-	}
-
-	private String getExpectedG_64() {
-		String expected =
-		//@formatter:off
-			"/G\n" +
-			"pack()\n" +
-			"Structure G {\n" +
-			"   0   G_direct   16      \"\"\n" +
-			"   16   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedG_64() {
-		return convertCommentsToSpeculative(getExpectedG_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct H : virtual C {
-	  int h1;
-	  void hf();
-	};
-
-	class H	size(12):
-		+---
-	 0	| {vbptr}
-	 4	| h1
-		+---
-		+--- (virtual base C)
-	 8	| c1
-		+---
-
-	H::$vbtable@:
-	 0	| 0
-	 1	| 8 (Hd(H+0)C)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               C       8       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testH_32_vbt() throws Exception {
-		CppCompositeType H_struct = createH_struct32(msftVxtManager32);
-		H_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = H_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedH_32(), composite, true);
-	}
-
-	@Test
-	public void testH_32_speculative() throws Exception {
-		CppCompositeType H_struct = createH_struct32(vxtManager32);
-		H_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = H_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH_32(), composite, true);
-	}
-
-	private String getExpectedH_32() {
-		String expected =
-		//@formatter:off
-			"/H\n" +
-			"pack()\n" +
-			"Structure H {\n" +
-			"   0   H_direct   8      \"\"\n" +
-			"   8   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedH_32() {
-		return convertCommentsToSpeculative(getExpectedH_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct H : virtual C {
-	  int h1;
-	  void hf();
-	};
-
-	class H	size(20):
-		+---
-	 0	| {vbptr}
-	 8	| h1
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base C)
-	16	| c1
-		+---
-
-	H::$vbtable@:
-	 0	| 0
-	 1	| 16 (Hd(H+0)C)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               C      16       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testH_64_vbt() throws Exception {
-		CppCompositeType H_struct = createH_struct64(msftVxtManager64);
-		H_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = H_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedH_64(), composite, true);
-	}
-
-	@Test
-	public void testH_64_speculative() throws Exception {
-		CppCompositeType H_struct = createH_struct64(vxtManager64);
-		H_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = H_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH_64(), composite, true);
-	}
-
-	private String getExpectedH_64() {
-		String expected =
-		//@formatter:off
-			"/H\n" +
-			"pack()\n" +
-			"Structure H {\n" +
-			"   0   H_direct   16      \"\"\n" +
-			"   16   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedH_64() {
-		return convertCommentsToSpeculative(getExpectedH_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct G1 : virtual C, virtual E {
-	  int g11;
-	  void g1f();
-	};
-
-	class G1	size(16):
-		+---
-	 0	| {vbptr}
-	 4	| g11
-		+---
-		+--- (virtual base C)
-	 8	| c1
-		+---
-		+--- (virtual base E)
-	12	| e1
-		+---
-
-	G1::$vbtable@:
-	 0	| 0
-	 1	| 8 (G1d(G1+0)C)
-	 2	| 12 (G1d(G1+0)E)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               C       8       0       4 0
-	               E      12       0       8 0
-	 */
-	//@formatter:on
-	@Test
-	public void testG1_32_vbt() throws Exception {
-		CppCompositeType G1_struct = createG1_struct32(msftVxtManager32);
-		G1_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = G1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedG1_32(), composite, true);
-	}
-
-	@Test
-	public void testG1_32_speculative() throws Exception {
-		CppCompositeType G1_struct = createG1_struct32(vxtManager32);
-		G1_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = G1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG1_32(), composite, true);
-	}
-
-	private String getExpectedG1_32() {
-		String expected =
-		//@formatter:off
-			"/G1\n" +
-			"pack()\n" +
-			"Structure G1 {\n" +
-			"   0   G1_direct   8      \"\"\n" +
-			"   8   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   12   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedG1_32() {
-		return convertCommentsToSpeculative(getExpectedG1_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct G1 : virtual C, virtual E {
-	  int g11;
-	  void g1f();
-	};
-
-	class G1	size(24):
-		+---
-	 0	| {vbptr}
-	 8	| g11
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base C)
-	16	| c1
-		+---
-		+--- (virtual base E)
-	20	| e1
-		+---
-
-	G1::$vbtable@:
-	 0	| 0
-	 1	| 16 (G1d(G1+0)C)
-	 2	| 20 (G1d(G1+0)E)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               C      16       0       4 0
-	               E      20       0       8 0
-	 */
-	//@formatter:on
-	@Test
-	public void testG1_64_vbt() throws Exception {
-		CppCompositeType G1_struct = createG1_struct64(msftVxtManager64);
-		G1_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = G1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedG1_64(), composite, true);
-	}
-
-	@Test
-	public void testG1_64_speculative() throws Exception {
-		CppCompositeType G1_struct = createG1_struct64(vxtManager64);
-		G1_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = G1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG1_64(), composite, true);
-	}
-
-	private String getExpectedG1_64() {
-		String expected =
-		//@formatter:off
-			"/G1\n" +
-			"pack()\n" +
-			"Structure G1 {\n" +
-			"   0   G1_direct   16      \"\"\n" +
-			"   16   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   20   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedG1_64() {
-		return convertCommentsToSpeculative(getExpectedG1_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct H1 : virtual E, virtual C { //order reversed from G1
-	  int h11;
-	  void h1f();
-	};
-
-	class H1	size(16):
-		+---
-	 0	| {vbptr}
-	 4	| h11
-		+---
-		+--- (virtual base E)
-	 8	| e1
-		+---
-		+--- (virtual base C)
-	12	| c1
-		+---
-
-	H1::$vbtable@:
-	 0	| 0
-	 1	| 8 (H1d(H1+0)E)
-	 2	| 12 (H1d(H1+0)C)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               E       8       0       4 0
-	               C      12       0       8 0
-	 */
-	//@formatter:on
-	@Test
-	public void testH1_32_vbt() throws Exception {
-		CppCompositeType H1_struct = createH1_struct32(msftVxtManager32);
-		H1_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = H1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedH1_32(), composite, true);
-	}
-
-	@Test
-	public void testH1_32_speculative() throws Exception {
-		CppCompositeType H1_struct = createH1_struct32(vxtManager32);
-		H1_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = H1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH1_32(), composite, true);
-	}
-
-	private String getExpectedH1_32() {
-		String expected =
-		//@formatter:off
-			"/H1\n" +
-			"pack()\n" +
-			"Structure H1 {\n" +
-			"   0   H1_direct   8      \"\"\n" +
-			"   8   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   12   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedH1_32() {
-		return convertCommentsToSpeculative(getExpectedH1_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct H1 : virtual E, virtual C { //order reversed from G1
-	  int h11;
-	  void h1f();
-	};
-
-	class H1	size(24):
-		+---
-	 0	| {vbptr}
-	 8	| h11
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base E)
-	16	| e1
-		+---
-		+--- (virtual base C)
-	20	| c1
-		+---
-
-	H1::$vbtable@:
-	 0	| 0
-	 1	| 16 (H1d(H1+0)E)
-	 2	| 20 (H1d(H1+0)C)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	               E      16       0       4 0
-	               C      20       0       8 0
-	 */
-	//@formatter:on
-	@Test
-	public void testH1_64_vbt() throws Exception {
-		CppCompositeType H1_struct = createH1_struct64(msftVxtManager64);
-		H1_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = H1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedH1_64(), composite, true);
-	}
-
-	@Test
-	public void testH1_64_speculative() throws Exception {
-		CppCompositeType H1_struct = createH1_struct64(vxtManager64);
-		H1_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = H1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH1_64(), composite, true);
-	}
-
-	private String getExpectedH1_64() {
-		String expected =
-		//@formatter:off
-			"/H1\n" +
-			"pack()\n" +
-			"Structure H1 {\n" +
-			"   0   H1_direct   16      \"\"\n" +
-			"   16   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   20   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedH1_64() {
-		return convertCommentsToSpeculative(getExpectedH1_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG1 : virtual CC1 {
-	  int gg11;
-	  void gg1f();
-	};
-
-	class GG1	size(12):
-		+---
-	 0	| {vbptr}
-	 4	| gg11
-		+---
-		+--- (virtual base CC1)
-	 8	| cc11
-		+---
-
-	GG1::$vbtable@:
-	 0	| 0
-	 1	| 8 (GG1d(GG1+0)CC1)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC1       8       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testGG1_32_vbt() throws Exception {
-		CppCompositeType GG1_struct = createGG1_struct32(msftVxtManager32);
-		GG1_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG1_32(), composite, true);
-	}
-
-	@Test
-	public void testGG1_32_speculative() throws Exception {
-		CppCompositeType GG1_struct = createGG1_struct32(vxtManager32);
-		GG1_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG1_32(), composite, true);
-	}
-
-	private String getExpectedGG1_32() {
-		String expected =
-		//@formatter:off
-			"/GG1\n" +
-			"pack()\n" +
-			"Structure GG1 {\n" +
-			"   0   GG1_direct   8      \"\"\n" +
-			"   8   CC1_direct   4      \"(Virtual Base CC1)\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG1/GG1_direct\n" +
-			"pack()\n" +
-			"Structure GG1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG1\"\n" +
-			"   4   undefined4   4   gg11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG1_32() {
-		return convertCommentsToSpeculative(getExpectedGG1_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG1 : virtual CC1 {
-	  int gg11;
-	  void gg1f();
-	};
-
-	class GG1	size(20):
-		+---
-	 0	| {vbptr}
-	 8	| gg11
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base CC1)
-	16	| cc11
-		+---
-
-	GG1::$vbtable@:
-	 0	| 0
-	 1	| 16 (GG1d(GG1+0)CC1)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC1      16       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testGG1_64_vbt() throws Exception {
-		CppCompositeType GG1_struct = createGG1_struct64(msftVxtManager64);
-		GG1_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG1_64(), composite, true);
-	}
-
-	@Test
-	public void testGG1_64_speculative() throws Exception {
-		CppCompositeType GG1_struct = createGG1_struct64(vxtManager64);
-		GG1_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG1_64(), composite, true);
-	}
-
-	private String getExpectedGG1_64() {
-		String expected =
-		//@formatter:off
-			"/GG1\n" +
-			"pack()\n" +
-			"Structure GG1 {\n" +
-			"   0   GG1_direct   16      \"\"\n" +
-			"   16   CC1_direct   4      \"(Virtual Base CC1)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG1/GG1_direct\n" +
-			"pack()\n" +
-			"Structure GG1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG1\"\n" +
-			"   8   undefined4   4   gg11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG1_64() {
-		return convertCommentsToSpeculative(getExpectedGG1_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG2 : virtual CC2 {
-	  int gg21;
-	  void gg2f();
-	};
-
-	class GG2	size(12):
-		+---
-	 0	| {vbptr}
-	 4	| gg21
-		+---
-		+--- (virtual base CC2)
-	 8	| cc21
-		+---
-
-	GG2::$vbtable@:
-	 0	| 0
-	 1	| 8 (GG2d(GG2+0)CC2)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC2       8       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testGG2_32_vbt() throws Exception {
-		CppCompositeType GG2_struct = createGG2_struct32(msftVxtManager32);
-		GG2_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG2_32(), composite, true);
-	}
-
-	@Test
-	public void testGG2_32_speculative() throws Exception {
-		CppCompositeType GG2_struct = createGG2_struct32(vxtManager32);
-		GG2_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG2_32(), composite, true);
-	}
-
-	private String getExpectedGG2_32() {
-		String expected =
-		//@formatter:off
-			"/GG2\n" +
-			"pack()\n" +
-			"Structure GG2 {\n" +
-			"   0   GG2_direct   8      \"\"\n" +
-			"   8   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG2/GG2_direct\n" +
-			"pack()\n" +
-			"Structure GG2_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG2\"\n" +
-			"   4   undefined4   4   gg21   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG2_32() {
-		return convertCommentsToSpeculative(getExpectedGG2_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG2 : virtual CC2 {
-	  int gg21;
-	  void gg2f();
-	};
-
-	class GG2	size(20):
-		+---
-	 0	| {vbptr}
-	 8	| gg21
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base CC2)
-	16	| cc21
-		+---
-
-	GG2::$vbtable@:
-	 0	| 0
-	 1	| 16 (GG2d(GG2+0)CC2)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC2      16       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testGG2_64_vbt() throws Exception {
-		CppCompositeType GG2_struct = createGG2_struct64(msftVxtManager64);
-		GG2_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG2_64(), composite, true);
-	}
-
-	@Test
-	public void testGG2_64_speculative() throws Exception {
-		CppCompositeType GG2_struct = createGG2_struct64(vxtManager64);
-		GG2_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG2_64(), composite, true);
-	}
-
-	private String getExpectedGG2_64() {
-		String expected =
-		//@formatter:off
-			"/GG2\n" +
-			"pack()\n" +
-			"Structure GG2 {\n" +
-			"   0   GG2_direct   16      \"\"\n" +
-			"   16   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG2/GG2_direct\n" +
-			"pack()\n" +
-			"Structure GG2_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG2\"\n" +
-			"   8   undefined4   4   gg21   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG2_64() {
-		return convertCommentsToSpeculative(getExpectedGG2_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG3 : virtual CC2 {
-	  int gg31;
-	  void gg3f();
-	};
-
-	class GG3	size(12):
-		+---
-	 0	| {vbptr}
-	 4	| gg31
-		+---
-		+--- (virtual base CC2)
-	 8	| cc21
-		+---
-
-	GG3::$vbtable@:
-	 0	| 0
-	 1	| 8 (GG3d(GG3+0)CC2)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC2       8       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testGG3_32_vbt() throws Exception {
-		CppCompositeType GG3_struct = createGG3_struct32(msftVxtManager32);
-		GG3_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG3_32(), composite, true);
-	}
-
-	@Test
-	public void testGG3_32_speculative() throws Exception {
-		CppCompositeType GG3_struct = createGG3_struct32(vxtManager32);
-		GG3_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG3_32(), composite, true);
-	}
-
-	private String getExpectedGG3_32() {
-		String expected =
-		//@formatter:off
-			"/GG3\n" +
-			"pack()\n" +
-			"Structure GG3 {\n" +
-			"   0   GG3_direct   8      \"\"\n" +
-			"   8   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   4   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG3_32() {
-		return convertCommentsToSpeculative(getExpectedGG3_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG3 : virtual CC2 {
-	  int gg31;
-	  void gg3f();
-	};
-
-	class GG3	size(20):
-		+---
-	 0	| {vbptr}
-	 8	| gg31
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base CC2)
-	16	| cc21
-		+---
-
-	GG3::$vbtable@:
-	 0	| 0
- 	1	| 16 (GG3d(GG3+0)CC2)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC2      16       0       4 0
-	 */
-	//@formatter:on
-	@Test
-	public void testGG3_64_vbt() throws Exception {
-		CppCompositeType GG3_struct = createGG3_struct64(msftVxtManager64);
-		GG3_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG3_64(), composite, true);
-	}
-
-	@Test
-	public void testGG3_64_speculative() throws Exception {
-		CppCompositeType GG3_struct = createGG3_struct64(vxtManager64);
-		GG3_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG3_64(), composite, true);
-	}
-
-	private String getExpectedGG3_64() {
-		String expected =
-		//@formatter:off
-			"/GG3\n" +
-			"pack()\n" +
-			"Structure GG3 {\n" +
-			"   0   GG3_direct   16      \"\"\n" +
-			"   16   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   8   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG3_64() {
-		return convertCommentsToSpeculative(getExpectedGG3_64());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG4 : virtual CC3 {
-	  int gg41;
-	  void gg4f();
-	};
-
-	class GG4	size(8):
-		+---
-	 0	| {vbptr}
-	 4	| gg41
-		+---
-		+--- (virtual base CC3)
-		+---
-
-	GG4::$vbtable@:
-	 0	| 0
-	 1	| 8 (GG4d(GG4+0)CC3)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC3       8       0       4 0
-	 */
-	//@formatter:on
-	// TODO: consider if we want to change the format on the output to provide information
-	//  about zero-sized virtual structure components trailing at the end.  We currently let
-	//  this information drop on the floor.  So in this case, our output does not show
-	//  the fact that CC3 is a zero-sized virtual parent.
-	@Test
-	public void testGG4_32_vbt() throws Exception {
-		CppCompositeType GG4_struct = createGG4_struct32(msftVxtManager32);
-		GG4_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG4_32(), composite, true);
-	}
-
-	@Test
-	public void testGG4_32_speculative() throws Exception {
-		CppCompositeType GG4_struct = createGG4_struct32(vxtManager32);
-		GG4_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = GG4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG4_32(), composite, true);
-	}
-
-	private String getExpectedGG4_32() {
-		String expected =
-		//@formatter:off
-			"/GG4\n" +
-			"pack()\n" +
-			"Structure GG4 {\n" +
-			"   0   GG4_direct   8      \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG4/GG4_direct\n" +
-			"pack()\n" +
-			"Structure GG4_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG4\"\n" +
-			"   4   undefined4   4   gg41   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4";
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG4_32() {
-		return convertCommentsToSpeculative(getExpectedGG4_32());
-	}
-
-	//==============================================================================================
-	//@formatter:off
-	/*
-	struct GG4 : virtual CC3 {
-	  int gg41;
-	  void gg4f();
-	};
-
-	class GG4	size(16):
-		+---
-	 0	| {vbptr}
-	 8	| gg41
-	  	| <alignment member> (size=4)
-		+---
-		+--- (virtual base CC3)
-		+---
-
-	GG4::$vbtable@:
-	 0	| 0
-	 1	| 16 (GG4d(GG4+0)CC3)
-	vbi:	   class  offset o.vbptr  o.vbte fVtorDisp
-	             CC3      16       0       4 0
-	 */
-	//@formatter:on
-	// TODO: consider if we want to change the format on the output to provide information
-	//  about zero-sized virtual structure components trailing at the end.  We currently let
-	//  this information drop on the floor.  So in this case, our output does not show
-	//  the fact that CC3 is a zero-sized virtual parent.
-	@Test
-	public void testGG4_64_vbt() throws Exception {
-		CppCompositeType GG4_struct = createGG4_struct64(msftVxtManager64);
-		GG4_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG4_64(), composite, true);
-	}
-
-	@Test
-	public void testGG4_64_speculative() throws Exception {
-		CppCompositeType GG4_struct = createGG4_struct64(vxtManager64);
-		GG4_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = GG4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG4_64(), composite, true);
-	}
-
-	private String getExpectedGG4_64() {
-		String expected =
-		//@formatter:off
-			"/GG4\n" +
-			"pack()\n" +
-			"Structure GG4 {\n" +
-			"   0   GG4_direct   16      \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG4/GG4_direct\n" +
-			"pack()\n" +
-			"Structure GG4_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG4\"\n" +
-			"   8   undefined4   4   gg41   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8";
-
-		//@formatter:on
-		return expected;
-	}
-
-	private String getSpeculatedGG4_64() {
-		return convertCommentsToSpeculative(getExpectedGG4_64());
-	}
-
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I : G, H {
@@ -4968,60 +2946,45 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               C      20       0       4 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI_32_vbt() throws Exception {
-		CppCompositeType I_struct = createI_struct32(msftVxtManager32);
-		I_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI_32(), composite, true);
-	}
-
-	@Test
-	public void testI_32_speculative() throws Exception {
-		CppCompositeType I_struct = createI_struct32(vxtManager32);
-		I_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI_32(), composite, true);
-	}
-
 	private String getExpectedI_32() {
 		String expected =
 		//@formatter:off
-			"/I\n" +
-			"pack()\n" +
-			"Structure I {\n" +
-			"   0   I_direct   20      \"\"\n" +
-			"   20   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I/I_direct\n" +
-			"pack()\n" +
-			"Structure I_direct {\n" +
-			"   0   G_direct   8      \"/I/BaseClass_G\"\n" +
-			"   8   H_direct   8      \"/I/BaseClass_H\"\n" +
-			"   16   undefined4   4   i1   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4";
+			"""
+			/I
+			pack()
+			Structure I {
+			   0   I   20      "Self Base"
+			   20   C   4      "Virtual Base"
+			}
+			Length: 24 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i1   ""
+			}
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5030,7 +2993,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedI_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I : G, H {
@@ -5070,60 +3032,45 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               C      40       0       4 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI_64_vbt() throws Exception {
-		CppCompositeType I_struct = createI_struct64(msftVxtManager64);
-		I_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI_64(), composite, true);
-	}
-
-	@Test
-	public void testI_64_speculative() throws Exception {
-		CppCompositeType I_struct = createI_struct64(vxtManager64);
-		I_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI_64(), composite, true);
-	}
-
 	private String getExpectedI_64() {
 		String expected =
 		//@formatter:off
-			"/I\n" +
-			"pack()\n" +
-			"Structure I {\n" +
-			"   0   I_direct   40      \"\"\n" +
-			"   40   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 48 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I/I_direct\n" +
-			"pack()\n" +
-			"Structure I_direct {\n" +
-			"   0   G_direct   16      \"/I/BaseClass_G\"\n" +
-			"   16   H_direct   16      \"/I/BaseClass_H\"\n" +
-			"   32   undefined4   4   i1   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8";
+			"""
+			/I
+			pack()
+			Structure I {
+			   0   I   40      "Self Base"
+			   40   C   4      "Virtual Base"
+			}
+			Length: 48 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i1   ""
+			}
+			Length: 40 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -5133,6 +3080,55 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct I1 : G1, H {
+	 *	  int i11;
+	 *	  void _i1f();
+	 *	};
+	 */
+	static CppCompositeType createI1_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType G1_struct, CppCompositeType H_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct) {
+		return is64Bit ? createI1_struct64(vxtManager, G1_struct, H_struct, C_struct, E_struct)
+				: createI1_struct32(vxtManager, G1_struct, H_struct, C_struct, E_struct);
+	}
+
+	static CppCompositeType createI1_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType H_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
+		try {
+			CppCompositeType I1_struct = createStruct32("I1", 28);
+			I1_struct.addDirectBaseClass(G1_struct, 0);
+			I1_struct.addDirectBaseClass(H_struct, 8);
+			I1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I1_struct.addMember("i11", u4, false, 16);
+			return I1_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createI1_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType H_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
+		try {
+			CppCompositeType I1_struct = createStruct64("I1", 48);
+			I1_struct.addDirectBaseClass(G1_struct, 0);
+			I1_struct.addDirectBaseClass(H_struct, 16);
+			I1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I1_struct.addMember("i11", u4, false, 32);
+			return I1_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct I1 : G1, H {
@@ -5172,67 +3168,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      24       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI1_32_vbt() throws Exception {
-		CppCompositeType I1_struct = createI1_struct32(msftVxtManager32);
-		I1_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI1_32(), composite, true);
-	}
-
-	@Test
-	public void testI1_32_speculative() throws Exception {
-		CppCompositeType I1_struct = createI1_struct32(vxtManager32);
-		I1_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI1_32(), composite, true);
-	}
-
 	private String getExpectedI1_32() {
 		String expected =
 		//@formatter:off
-			"/I1\n" +
-			"pack()\n" +
-			"Structure I1 {\n" +
-			"   0   I1_direct   20      \"\"\n" +
-			"   20   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   24   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 28 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   8      \"/I1/BaseClass_G1\"\n" +
-			"   8   H_direct   8      \"/I1/BaseClass_H\"\n" +
-			"   16   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4";
+			"""
+			/I1
+			pack()
+			Structure I1 {
+			   0   I1   20      "Self Base"
+			   20   C   4      "Virtual Base"
+			   24   E   4      "Virtual Base"
+			}
+			Length: 28 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i11   ""
+			}
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5241,7 +3222,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedI1_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I1 : G1, H {
@@ -5285,67 +3265,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      44       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI1_64_vbt() throws Exception {
-		CppCompositeType I1_struct = createI1_struct64(msftVxtManager64);
-		I1_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI1_64(), composite, true);
-	}
-
-	@Test
-	public void testI1_64_speculative() throws Exception {
-		CppCompositeType I1_struct = createI1_struct64(vxtManager64);
-		I1_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI1_64(), composite, true);
-	}
-
 	private String getExpectedI1_64() {
 		String expected =
 		//@formatter:off
-			"/I1\n" +
-			"pack()\n" +
-			"Structure I1 {\n" +
-			"   0   I1_direct   40      \"\"\n" +
-			"   40   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   44   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 48 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   16      \"/I1/BaseClass_G1\"\n" +
-			"   16   H_direct   16      \"/I1/BaseClass_H\"\n" +
-			"   32   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8";
+			"""
+			/I1
+			pack()
+			Structure I1 {
+			   0   I1   40      "Self Base"
+			   40   C   4      "Virtual Base"
+			   44   E   4      "Virtual Base"
+			}
+			Length: 48 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i11   ""
+			}
+			Length: 40 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -5355,6 +3320,55 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct I2 : G, H1 {
+	 *	  int i21;
+	 *	  void _i2f();
+	 *	};
+	 */
+	static CppCompositeType createI2_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType G_struct, CppCompositeType H1_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct) {
+		return is64Bit ? createI2_struct64(vxtManager, G_struct, H1_struct, C_struct, E_struct)
+				: createI2_struct32(vxtManager, G_struct, H1_struct, C_struct, E_struct);
+	}
+
+	static CppCompositeType createI2_struct32(VxtManager vxtManager, CppCompositeType G_struct,
+			CppCompositeType H1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
+		try {
+			CppCompositeType I2_struct = createStruct32("I2", 28);
+			I2_struct.addDirectBaseClass(G_struct, 0);
+			I2_struct.addDirectBaseClass(H1_struct, 8);
+			I2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I2_struct.addMember("i21", u4, false, 16);
+			return I2_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createI2_struct64(VxtManager vxtManager, CppCompositeType G_struct,
+			CppCompositeType H1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
+		try {
+			CppCompositeType I2_struct = createStruct64("I2", 48);
+			I2_struct.addDirectBaseClass(G_struct, 0);
+			I2_struct.addDirectBaseClass(H1_struct, 16);
+			I2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I2_struct.addMember("i21", u4, false, 32);
+			return I2_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct I2 : G, H1 {
@@ -5395,67 +3409,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      24       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI2_32_vbt() throws Exception {
-		CppCompositeType I2_struct = createI2_struct32(msftVxtManager32);
-		I2_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI2_32(), composite, true);
-	}
-
-	@Test
-	public void testI2_32_speculative() throws Exception {
-		CppCompositeType I2_struct = createI2_struct32(vxtManager32);
-		I2_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI2_32(), composite, true);
-	}
-
 	private String getExpectedI2_32() {
 		String expected =
 		//@formatter:off
-			"/I2\n" +
-			"pack()\n" +
-			"Structure I2 {\n" +
-			"   0   I2_direct   20      \"\"\n" +
-			"   20   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   24   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 28 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   8      \"/I2/BaseClass_G\"\n" +
-			"   8   H1_direct   8      \"/I2/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4";
+			"""
+			/I2
+			pack()
+			Structure I2 {
+			   0   I2   20      "Self Base"
+			   20   C   4      "Virtual Base"
+			   24   E   4      "Virtual Base"
+			}
+			Length: 28 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i21   ""
+			}
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5464,7 +3463,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedI2_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I2 : G, H1 {
@@ -5509,67 +3507,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      44       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI2_64_vbt() throws Exception {
-		CppCompositeType I2_struct = createI2_struct64(msftVxtManager64);
-		I2_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI2_64(), composite, true);
-	}
-
-	@Test
-	public void testI2_64_speculative() throws Exception {
-		CppCompositeType I2_struct = createI2_struct64(vxtManager64);
-		I2_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI2_64(), composite, true);
-	}
-
 	private String getExpectedI2_64() {
 		String expected =
 		//@formatter:off
-			"/I2\n" +
-			"pack()\n" +
-			"Structure I2 {\n" +
-			"   0   I2_direct   40      \"\"\n" +
-			"   40   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   44   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 48 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   16      \"/I2/BaseClass_G\"\n" +
-			"   16   H1_direct   16      \"/I2/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8";
+			"""
+			/I2
+			pack()
+			Structure I2 {
+			   0   I2   40      "Self Base"
+			   40   C   4      "Virtual Base"
+			   44   E   4      "Virtual Base"
+			}
+			Length: 48 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i21   ""
+			}
+			Length: 40 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -5579,6 +3562,88 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct I3 : G1, H1 {
+	 *	  int i31;
+	 *	  void _i3f();
+	 *	};
+	 */
+	static CppCompositeType createI3_syntactic_struct32(VxtManager vxtManager) {
+		return createI3_syntactic_struct32(vxtManager, null, null, null, null);
+	}
+
+	static CppCompositeType createI3_syntactic_struct32(VxtManager vxtManager,
+			CppCompositeType G1_struct, CppCompositeType H1_struct, CppCompositeType E_struct,
+			CppCompositeType C_struct) {
+		CppCompositeType I3_struct = createStruct32("I3", 8);
+		try {
+			if (E_struct == null) {
+				E_struct = createE_struct32(vxtManager);
+			}
+			if (C_struct == null) {
+				C_struct = createC_struct32(vxtManager);
+			}
+			if (G1_struct == null) {
+				G1_struct = createG1_struct32(vxtManager, C_struct, E_struct);
+			}
+			if (H1_struct == null) {
+				H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
+			}
+			I3_struct.addDirectSyntacticBaseClass(G1_struct);
+			I3_struct.addDirectSyntacticBaseClass(H1_struct);
+			I3_struct.addMember("i31", u4, false, 0);
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+		return I3_struct;
+	}
+
+	static CppCompositeType createI3_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType G1_struct, CppCompositeType H1_struct, CppCompositeType E_struct,
+			CppCompositeType C_struct) {
+		return is64Bit ? createI3_struct64(vxtManager, G1_struct, H1_struct, E_struct, C_struct)
+				: createI3_struct32(vxtManager, G1_struct, H1_struct, E_struct, C_struct);
+	}
+
+	static CppCompositeType createI3_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType H1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType I3_struct = createStruct32("I3", 28);
+			I3_struct.addDirectBaseClass(G1_struct, 0);
+			I3_struct.addDirectBaseClass(H1_struct, 8);
+			I3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I3_struct.addMember("i31", u4, false, 16);
+			return I3_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createI3_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType H1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType I3_struct = createStruct64("I3", 48);
+			I3_struct.addDirectBaseClass(G1_struct, 0);
+			I3_struct.addDirectBaseClass(H1_struct, 16);
+			I3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I3_struct.addMember("i31", u4, false, 32);
+			return I3_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct I3 : G1, H1 {
@@ -5619,67 +3684,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      24       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI3_32_vbt() throws Exception {
-		CppCompositeType I3_struct = createI3_struct32(msftVxtManager32);
-		I3_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI3_32(), composite, true);
-	}
-
-	@Test
-	public void testI3_32_speculative() throws Exception {
-		CppCompositeType I3_struct = createI3_struct32(vxtManager32);
-		I3_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI3_32(), composite, true);
-	}
-
 	private String getExpectedI3_32() {
 		String expected =
 		//@formatter:off
-			"/I3\n" +
-			"pack()\n" +
-			"Structure I3 {\n" +
-			"   0   I3_direct   20      \"\"\n" +
-			"   20   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   24   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 28 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I3/I3_direct\n" +
-			"pack()\n" +
-			"Structure I3_direct {\n" +
-			"   0   G1_direct   8      \"/I3/BaseClass_G1\"\n" +
-			"   8   H1_direct   8      \"/I3/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i31   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4";
+			"""
+			/I3
+			pack()
+			Structure I3 {
+			   0   I3   20      "Self Base"
+			   20   C   4      "Virtual Base"
+			   24   E   4      "Virtual Base"
+			}
+			Length: 28 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i31   ""
+			}
+			Length: 20 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5688,7 +3738,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedI3_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I3 : G1, H1 {
@@ -5732,67 +3781,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      44       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI3_64_vbt() throws Exception {
-		CppCompositeType I3_struct = createI3_struct64(msftVxtManager64);
-		I3_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI3_64(), composite, true);
-	}
-
-	@Test
-	public void testI3_64_speculative() throws Exception {
-		CppCompositeType I3_struct = createI3_struct64(vxtManager64);
-		I3_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI3_64(), composite, true);
-	}
-
 	private String getExpectedI3_64() {
 		String expected =
 		//@formatter:off
-			"/I3\n" +
-			"pack()\n" +
-			"Structure I3 {\n" +
-			"   0   I3_direct   40      \"\"\n" +
-			"   40   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   44   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 48 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I3/I3_direct\n" +
-			"pack()\n" +
-			"Structure I3_direct {\n" +
-			"   0   G1_direct   16      \"/I3/BaseClass_G1\"\n" +
-			"   16   H1_direct   16      \"/I3/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i31   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8";
+			"""
+			/I3
+			pack()
+			Structure I3 {
+			   0   I3   40      "Self Base"
+			   40   C   4      "Virtual Base"
+			   44   E   4      "Virtual Base"
+			}
+			Length: 48 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i31   ""
+			}
+			Length: 40 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -5802,6 +3836,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct I4 : G1, virtual E, virtual C {
+	 *	  int i41;
+	 *	  void _i4f();
+	 *	};
+	 */
+	static CppCompositeType createI4_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType G1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
+		return is64Bit ? createI4_struct64(vxtManager, G1_struct, E_struct, C_struct)
+				: createI4_struct32(vxtManager, G1_struct, E_struct, C_struct);
+	}
+
+	static CppCompositeType createI4_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType I4_struct = createStruct32("I4", 20);
+			I4_struct.addDirectBaseClass(G1_struct, 0);
+			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I4_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I4_struct.addMember("i41", u4, false, 8);
+			return I4_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createI4_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType E_struct, CppCompositeType C_struct) {
+		CppCompositeType I4_struct = createStruct64("I4", 32);
+		try {
+			I4_struct.addDirectBaseClass(G1_struct, 0);
+			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I4_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I4_struct.addMember("i41", u4, false, 16);
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+		return I4_struct;
+	}
+
 	//@formatter:off
 	/*
 	struct I4 : G1, virtual E, virtual C {
@@ -5833,60 +3913,44 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      16       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI4_32_vbt() throws Exception {
-		CppCompositeType I4_struct = createI4_struct32(msftVxtManager32);
-		I4_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI4_32(), composite, true);
-	}
-
-	@Test
-	public void testI4_32_speculative() throws Exception {
-		CppCompositeType I4_struct = createI4_struct32(vxtManager32);
-		I4_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI4_32(), composite, true);
-	}
-
 	private String getExpectedI4_32() {
 		String expected =
 		//@formatter:off
-			"/I4\n" +
-			"pack()\n" +
-			"Structure I4 {\n" +
-			"   0   I4_direct   12      \"\"\n" +
-			"   12   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   16   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I4/I4_direct\n" +
-			"pack()\n" +
-			"Structure I4_direct {\n" +
-			"   0   G1_direct   8      \"/I4/BaseClass_G1\"\n" +
-			"   8   undefined4   4   i41   \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4";
-
+			"""
+			/I4
+			pack()
+			Structure I4 {
+			   0   I4   12      "Self Base"
+			   12   C   4      "Virtual Base"
+			   16   E   4      "Virtual Base"
+			}
+			Length: 20 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/I4/!internal/I4
+			pack()
+			Structure I4 {
+			   0   G1   8      "Base"
+			   8   undefined4   4   i41   ""
+			}
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -5895,7 +3959,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedI4_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I4 : G1, virtual E, virtual C {
@@ -5928,59 +3991,44 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               C      24       0       4 0
 	               E      28       0       8 0	 */
 	//@formatter:on
-	@Test
-	public void testI4_64_vbt() throws Exception {
-		CppCompositeType I4_struct = createI4_struct64(msftVxtManager64);
-		I4_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI4_64(), composite, true);
-	}
-
-	@Test
-	public void testI4_64_speculative() throws Exception {
-		CppCompositeType I4_struct = createI4_struct64(vxtManager64);
-		I4_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI4_64(), composite, true);
-	}
-
 	private String getExpectedI4_64() {
 		String expected =
 		//@formatter:off
-			"/I4\n" +
-			"pack()\n" +
-			"Structure I4 {\n" +
-			"   0   I4_direct   24      \"\"\n" +
-			"   24   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   28   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 32 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I4/I4_direct\n" +
-			"pack()\n" +
-			"Structure I4_direct {\n" +
-			"   0   G1_direct   16      \"/I4/BaseClass_G1\"\n" +
-			"   16   undefined4   4   i41   \"\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8";
+			"""
+			/I4
+			pack()
+			Structure I4 {
+			   0   I4   24      "Self Base"
+			   24   C   4      "Virtual Base"
+			   28   E   4      "Virtual Base"
+			}
+			Length: 32 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/I4/!internal/I4
+			pack()
+			Structure I4 {
+			   0   G1   16      "Base"
+			   16   undefined4   4   i41   ""
+			}
+			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -5990,6 +4038,52 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct I5 : virtual E, virtual C, G1 {
+	 *	  int i51;
+	 *	  void _i5f();
+	 *	};
+	 */
+	static CppCompositeType createI5_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType G1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
+		return is64Bit ? createI5_struct64(vxtManager, G1_struct, E_struct, C_struct)
+				: createI5_struct32(vxtManager, G1_struct, E_struct, C_struct);
+	}
+
+	static CppCompositeType createI5_struct32(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType I5_struct = createStruct32("I5", 20);
+			I5_struct.addDirectBaseClass(G1_struct, 0);
+			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2); // check this and I4...TODO
+			I5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I5_struct.addMember("i51", u4, false, 8);
+			return I5_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createI5_struct64(VxtManager vxtManager, CppCompositeType G1_struct,
+			CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType I5_struct = createStruct64("I5", 32);
+			I5_struct.addDirectBaseClass(G1_struct, 0);
+			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2); // check this and I4...TODO
+			I5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I5_struct.addMember("i51", u4, false, 16);
+			return I5_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct I5 : virtual E, virtual C, G1 {
@@ -6021,110 +4115,102 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               C      16       0       4 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI5_32_vbt() throws Exception {
-		CppCompositeType I5_struct = createI5_struct32(msftVxtManager32);
-		I5_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedtI5_32(), composite, true);
-	}
-
-	@Test
-	public void testI5_32_speculative() throws Exception {
-		CppCompositeType I5_struct = createI5_struct32(vxtManager32);
-		I5_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = I5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedtI5_32(), composite, true);
-	}
-
-	private String getExpectedtI5_32() {
+	private String getExpectedI5_32() {
 		String expected =
 		//@formatter:off
-			"/I5\n" +
-			"pack()\n" +
-			"Structure I5 {\n" +
-			"   0   I5_direct   12      \"\"\n" +
-			"   12   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   16   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I5/I5_direct\n" +
-			"pack()\n" +
-			"Structure I5_direct {\n" +
-			"   0   G1_direct   8      \"/I5/BaseClass_G1\"\n" +
-			"   8   undefined4   4   i51   \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4";
+			"""
+			/I5
+			pack()
+			Structure I5 {
+			   0   I5   12      "Self Base"
+			   12   E   4      "Virtual Base"
+			   16   C   4      "Virtual Base"
+			}
+			Length: 20 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/I5/!internal/I5
+			pack()
+			Structure I5 {
+			   0   G1   8      "Base"
+			   8   undefined4   4   i51   ""
+			}
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
 
+	/**
+	 * Test struct I5 - 32 - speculative placement
+	 * <p> THIS TEST STILL HAS PROBLEMS...
+	 * <p> The expected output does not match what is the correct layout, but we do not have enough
+	 * information (without using vbtable) to create the correct output.  So we are testing our
+	 * incorrect result against the known incorrect expected result to cause the test to pass
+	 */
 	// NOTE: We know that this is an incorrect layout (it matches that of I4), but we are
 	//  measuring our result against the best we can determine (C and E virtual bases are
 	//  switched from the actual as the Base Class records in the PDB are given in the exact
 	//  same order as for I4.  Using the VBT-based algorithm can produce the correct layout, but
 	//  the speculative algorithm works without it.
-	private String getSpeculatedtI5_32() {
+	private String getSpeculatedI5_32() {
 		String expected =
 		//@formatter:off
-			"/I5\n" +
-			"pack()\n" +
-			"Structure I5 {\n" +
-			"   0   I5_direct   12      \"\"\n" +
-			"   12   C_direct   4      \"((Speculative Placement) Virtual Base C)\"\n" +
-			"   16   E_direct   4      \"((Speculative Placement) Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I5/I5_direct\n" +
-			"pack()\n" +
-			"Structure I5_direct {\n" +
-			"   0   G1_direct   8      \"/I5/BaseClass_G1\"\n" +
-			"   8   undefined4   4   i51   \"\"\n" +
-			"}\n" +
-			"Length: 12 Alignment: 4";
+			"""
+			/I5
+			pack()
+			Structure I5 {
+			   0   I5   12      "Self Base"
+			   12   C   4      \"Virtual Base - Speculative Placement\"
+			   16   E   4      \"Virtual Base - Speculative Placement\"
+			}
+			Length: 20 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/I5/!internal/I5
+			pack()
+			Structure I5 {
+			   0   G1   8      "Base"
+			   8   undefined4   4   i51   ""
+			}
+			Length: 12 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct I5 : virtual E, virtual C, G1 {
@@ -6158,63 +4244,55 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               C      28       0       4 0
 	 */
 	//@formatter:on
-	@Test
-	public void testI5_64_vbt() throws Exception {
-		CppCompositeType I5_struct = createI5_struct64(msftVxtManager64);
-		I5_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedI5_64(), composite, true);
-	}
-
-	@Test
-	public void testI5_64_speculative() throws Exception {
-		CppCompositeType I5_struct = createI5_struct64(vxtManager64);
-		I5_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = I5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI5_64(), composite, true);
-	}
-
 	private String getExpectedI5_64() {
 		String expected =
 		//@formatter:off
-			"/I5\n" +
-			"pack()\n" +
-			"Structure I5 {\n" +
-			"   0   I5_direct   24      \"\"\n" +
-			"   24   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   28   C_direct   4      \"(Virtual Base C)\"\n" +
-			"}\n" +
-			"Length: 32 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I5/I5_direct\n" +
-			"pack()\n" +
-			"Structure I5_direct {\n" +
-			"   0   G1_direct   16      \"/I5/BaseClass_G1\"\n" +
-			"   16   undefined4   4   i51   \"\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8";
+			"""
+			/I5
+			pack()
+			Structure I5 {
+			   0   I5   24      "Self Base"
+			   24   E   4      "Virtual Base"
+			   28   C   4      "Virtual Base"
+			}
+			Length: 32 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/I5/!internal/I5
+			pack()
+			Structure I5 {
+			   0   G1   16      "Base"
+			   16   undefined4   4   i51   ""
+			}
+			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
 
+	/**
+	 * Test struct I5 - 64 - speculative placement.
+	 * <p> THIS TEST STILL HAS PROBLEMS...
+	 * <p> The expected output does not match what is the correct layout, but we do not have enough
+	 * information (without using vbtable) to create the correct output.  So we are testing our
+	 * incorrect result against the known incorrect expected result to cause the test to pass
+	 */
 	// NOTE: We know that this is an incorrect layout (it matches that of I4), but we are
 	//  measuring our result against the best we can determine (C and E virtual bases are
 	//  switched from the actual as the Base Class records in the PDB are given in the exact
@@ -6223,45 +4301,95 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private String getSpeculatedI5_64() {
 		String expected =
 		//@formatter:off
-			"/I5\n" +
-			"pack()\n" +
-			"Structure I5 {\n" +
-			"   0   I5_direct   24      \"\"\n" +
-			"   24   C_direct   4      \"((Speculative Placement) Virtual Base C)\"\n" +
-			"   28   E_direct   4      \"((Speculative Placement) Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 32 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I5/I5_direct\n" +
-			"pack()\n" +
-			"Structure I5_direct {\n" +
-			"   0   G1_direct   16      \"/I5/BaseClass_G1\"\n" +
-			"   16   undefined4   4   i51   \"\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8";
+			"""
+			/I5
+			pack()
+			Structure I5 {
+			   0   I5   24      "Self Base"
+			   24   C   4      \"Virtual Base - Speculative Placement\"
+			   28   E   4      \"Virtual Base - Speculative Placement\"
+			}
+			Length: 32 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/I5/!internal/I5
+			pack()
+			Structure I5 {
+			   0   G1   16      "Base"
+			   16   undefined4   4   i51   ""
+			}
+			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
 
 	//==============================================================================================
+	/*
+	 * struct J1 : I1, I2 {
+	 *	  int j11;
+	 *	  void j1f();
+	 *	};
+	 */
+	static CppCompositeType createJ1_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType I1_struct, CppCompositeType I2_struct, CppCompositeType E_struct,
+			CppCompositeType C_struct) {
+		return is64Bit ? createJ1_struct64(vxtManager, I1_struct, I2_struct, E_struct, C_struct)
+				: createJ1_struct32(vxtManager, I1_struct, I2_struct, E_struct, C_struct);
+	}
+
+	static CppCompositeType createJ1_struct32(VxtManager vxtManager, CppCompositeType I1_struct,
+			CppCompositeType I2_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType J1_struct = createStruct32("J1", 52);
+			J1_struct.addDirectBaseClass(I1_struct, 0);
+			J1_struct.addDirectBaseClass(I2_struct, 20);
+			J1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			J1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J1_struct.addMember("j11", u4, false, 40);
+			return J1_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createJ1_struct64(VxtManager vxtManager, CppCompositeType I1_struct,
+			CppCompositeType I2_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
+		try {
+			CppCompositeType J1_struct = createStruct64("J1", 96);
+			J1_struct.addDirectBaseClass(I1_struct, 0);
+			J1_struct.addDirectBaseClass(I2_struct, 40);
+			J1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			J1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J1_struct.addMember("j11", u4, false, 80);
+			return J1_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct J1 : I1, I2 {
@@ -6325,97 +4453,82 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      48       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ1_32_vbt() throws Exception {
-		CppCompositeType J1_struct = createJ1_struct32(msftVxtManager32);
-		J1_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ1_32(), composite, true);
-	}
-
-	@Test
-	public void testJ1_32_speculative() throws Exception {
-		CppCompositeType J1_struct = createJ1_struct32(vxtManager32);
-		J1_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ1_32(), composite, true);
-	}
-
 	private String getExpectedJ1_32() {
 		String expected =
 		//@formatter:off
-			"/J1\n" +
-			"pack()\n" +
-			"Structure J1 {\n" +
-			"   0   J1_direct   44      \"\"\n" +
-			"   44   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   48   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 52 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   8      \"/I1/BaseClass_G1\"\n" +
-			"   8   H_direct   8      \"/I1/BaseClass_H\"\n" +
-			"   16   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   8      \"/I2/BaseClass_G\"\n" +
-			"   8   H1_direct   8      \"/I2/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/J1/J1_direct\n" +
-			"pack()\n" +
-			"Structure J1_direct {\n" +
-			"   0   I1_direct   20      \"/J1/BaseClass_I1\"\n" +
-			"   20   I2_direct   20      \"/J1/BaseClass_I2\"\n" +
-			"   40   undefined4   4   j11   \"\"\n" +
-			"}\n" +
-			"Length: 44 Alignment: 4";
+			"""
+			/J1
+			pack()
+			Structure J1 {
+			   0   J1   44      "Self Base"
+			   44   C   4      "Virtual Base"
+			   48   E   4      "Virtual Base"
+			}
+			Length: 52 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i11   ""
+			}
+			Length: 20 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i21   ""
+			}
+			Length: 20 Alignment: 4
+			/J1/!internal/J1
+			pack()
+			Structure J1 {
+			   0   I1   20      "Base"
+			   20   I2   20      "Base"
+			   40   undefined4   4   j11   ""
+			}
+			Length: 44 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6424,7 +4537,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedJ1_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct J1 : I1, I2 {
@@ -6497,97 +4609,82 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      92       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ1_64_vbt() throws Exception {
-		CppCompositeType J1_struct = createJ1_struct64(msftVxtManager64);
-		J1_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ1_64(), composite, true);
-	}
-
-	@Test
-	public void testJ1_64_speculative() throws Exception {
-		CppCompositeType J1_struct = createJ1_struct64(vxtManager64);
-		J1_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J1_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ1_64(), composite, true);
-	}
-
 	private String getExpectedJ1_64() {
 		String expected =
 		//@formatter:off
-			"/J1\n" +
-			"pack()\n" +
-			"Structure J1 {\n" +
-			"   0   J1_direct   88      \"\"\n" +
-			"   88   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   92   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 96 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   16      \"/I1/BaseClass_G1\"\n" +
-			"   16   H_direct   16      \"/I1/BaseClass_H\"\n" +
-			"   32   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   16      \"/I2/BaseClass_G\"\n" +
-			"   16   H1_direct   16      \"/I2/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/J1/J1_direct\n" +
-			"pack()\n" +
-			"Structure J1_direct {\n" +
-			"   0   I1_direct   40      \"/J1/BaseClass_I1\"\n" +
-			"   40   I2_direct   40      \"/J1/BaseClass_I2\"\n" +
-			"   80   undefined4   4   j11   \"\"\n" +
-			"}\n" +
-			"Length: 88 Alignment: 8";
+			"""
+			/J1
+			pack()
+			Structure J1 {
+			   0   J1   88      "Self Base"
+			   88   C   4      "Virtual Base"
+			   92   E   4      "Virtual Base"
+			}
+			Length: 96 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i11   ""
+			}
+			Length: 40 Alignment: 8
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i21   ""
+			}
+			Length: 40 Alignment: 8
+			/J1/!internal/J1
+			pack()
+			Structure J1 {
+			   0   I1   40      "Base"
+			   40   I2   40      "Base"
+			   80   undefined4   4   j11   ""
+			}
+			Length: 88 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -6597,6 +4694,55 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct J2 : I2, I1 {
+	 *	  int j21;
+	 *	  void j2f();
+	 *	};
+	 */
+	static CppCompositeType createJ2_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType I2_struct, CppCompositeType I1_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct) {
+		return is64Bit ? createJ2_struct64(vxtManager, I2_struct, I1_struct, C_struct, E_struct)
+				: createJ2_struct32(vxtManager, I2_struct, I1_struct, C_struct, E_struct);
+	}
+
+	static CppCompositeType createJ2_struct32(VxtManager vxtManager, CppCompositeType I2_struct,
+			CppCompositeType I1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
+		try {
+			CppCompositeType J2_struct = createStruct32("J2", 52);
+			J2_struct.addDirectBaseClass(I2_struct, 0);
+			J2_struct.addDirectBaseClass(I1_struct, 20);
+			J2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			J2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J2_struct.addMember("j21", u4, false, 40);
+			return J2_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createJ2_struct64(VxtManager vxtManager, CppCompositeType I2_struct,
+			CppCompositeType I1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
+		try {
+			CppCompositeType J2_struct = createStruct64("J2", 96);
+			J2_struct.addDirectBaseClass(I2_struct, 0);
+			J2_struct.addDirectBaseClass(I1_struct, 40);
+			J2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			J2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J2_struct.addMember("j21", u4, false, 80);
+			return J2_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct J2 : I2, I1 {
@@ -6660,97 +4806,82 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      48       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ2_32_vbt() throws Exception {
-		CppCompositeType J2_struct = createJ2_struct32(msftVxtManager32);
-		J2_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ2_32(), composite, true);
-	}
-
-	@Test
-	public void testJ2_32_speculative() throws Exception {
-		CppCompositeType J2_struct = createJ2_struct32(vxtManager32);
-		J2_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ2_32(), composite, true);
-	}
-
 	private String getExpectedJ2_32() {
 		String expected =
 		//@formatter:off
-			"/J2\n" +
-			"pack()\n" +
-			"Structure J2 {\n" +
-			"   0   J2_direct   44      \"\"\n" +
-			"   44   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   48   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 52 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   8      \"/I1/BaseClass_G1\"\n" +
-			"   8   H_direct   8      \"/I1/BaseClass_H\"\n" +
-			"   16   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   8      \"/I2/BaseClass_G\"\n" +
-			"   8   H1_direct   8      \"/I2/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/J2/J2_direct\n" +
-			"pack()\n" +
-			"Structure J2_direct {\n" +
-			"   0   I2_direct   20      \"/J2/BaseClass_I2\"\n" +
-			"   20   I1_direct   20      \"/J2/BaseClass_I1\"\n" +
-			"   40   undefined4   4   j21   \"\"\n" +
-			"}\n" +
-			"Length: 44 Alignment: 4";
+			"""
+			/J2
+			pack()
+			Structure J2 {
+			   0   J2   44      "Self Base"
+			   44   C   4      "Virtual Base"
+			   48   E   4      "Virtual Base"
+			}
+			Length: 52 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i11   ""
+			}
+			Length: 20 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i21   ""
+			}
+			Length: 20 Alignment: 4
+			/J2/!internal/J2
+			pack()
+			Structure J2 {
+			   0   I2   20      "Base"
+			   20   I1   20      "Base"
+			   40   undefined4   4   j21   ""
+			}
+			Length: 44 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -6759,7 +4890,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedJ2_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct J2 : I2, I1 {
@@ -6832,97 +4962,82 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      92       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ2_64_vbt() throws Exception {
-		CppCompositeType J2_struct = createJ2_struct64(msftVxtManager64);
-		J2_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ2_64(), composite, true);
-	}
-
-	@Test
-	public void testJ2_64_speculative() throws Exception {
-		CppCompositeType J2_struct = createJ2_struct64(vxtManager64);
-		J2_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J2_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ2_64(), composite, true);
-	}
-
 	private String getExpectedJ2_64() {
 		String expected =
 		//@formatter:off
-			"/J2\n" +
-			"pack()\n" +
-			"Structure J2 {\n" +
-			"   0   J2_direct   88      \"\"\n" +
-			"   88   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   92   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 96 Alignment: 8\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   16      \"/I1/BaseClass_G1\"\n" +
-			"   16   H_direct   16      \"/I1/BaseClass_H\"\n" +
-			"   32   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   16      \"/I2/BaseClass_G\"\n" +
-			"   16   H1_direct   16      \"/I2/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/J2/J2_direct\n" +
-			"pack()\n" +
-			"Structure J2_direct {\n" +
-			"   0   I2_direct   40      \"/J2/BaseClass_I2\"\n" +
-			"   40   I1_direct   40      \"/J2/BaseClass_I1\"\n" +
-			"   80   undefined4   4   j21   \"\"\n" +
-			"}\n" +
-			"Length: 88 Alignment: 8";
+			"""
+			/J2
+			pack()
+			Structure J2 {
+			   0   J2   88      "Self Base"
+			   88   C   4      "Virtual Base"
+			   92   E   4      "Virtual Base"
+			}
+			Length: 96 Alignment: 8
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i11   ""
+			}
+			Length: 40 Alignment: 8
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i21   ""
+			}
+			Length: 40 Alignment: 8
+			/J2/!internal/J2
+			pack()
+			Structure J2 {
+			   0   I2   40      "Base"
+			   40   I1   40      "Base"
+			   80   undefined4   4   j21   ""
+			}
+			Length: 88 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -6932,6 +5047,60 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct J3 : I2, I1, A {
+	 *	  int j31;
+	 *	  void j3f();
+	 *	};
+	 */
+	static CppCompositeType createJ3_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType I2_struct, CppCompositeType I1_struct, CppCompositeType A_struct,
+			CppCompositeType C_struct, CppCompositeType E_struct) {
+		return is64Bit
+				? createJ3_struct64(vxtManager, I2_struct, I1_struct, A_struct, C_struct, E_struct)
+				: createJ3_struct32(vxtManager, I2_struct, I1_struct, A_struct, C_struct, E_struct);
+	}
+
+	static CppCompositeType createJ3_struct32(VxtManager vxtManager, CppCompositeType I2_struct,
+			CppCompositeType I1_struct, CppCompositeType A_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct) {
+		try {
+			CppCompositeType J3_struct = createStruct32("J3", 60);
+			J3_struct.addDirectBaseClass(I2_struct, 0);
+			J3_struct.addDirectBaseClass(I1_struct, 20);
+			J3_struct.addDirectBaseClass(A_struct, 40);
+			J3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			J3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J3_struct.addMember("j31", u4, false, 48);
+			return J3_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createJ3_struct64(VxtManager vxtManager, CppCompositeType I2_struct,
+			CppCompositeType I1_struct, CppCompositeType A_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct) {
+		try {
+			CppCompositeType J3_struct = createStruct64("J3", 104);
+			J3_struct.addDirectBaseClass(I2_struct, 0);
+			J3_struct.addDirectBaseClass(I1_struct, 40);
+			J3_struct.addDirectBaseClass(A_struct, 80);
+			J3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			J3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J3_struct.addMember("j31", u4, false, 88);
+			return J3_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct J3 : I2, I1, A {
@@ -7000,105 +5169,90 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E      56       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ3_32_vbt() throws Exception {
-		CppCompositeType J3_struct = createJ3_struct32(msftVxtManager32);
-		J3_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ3_32(), composite, true);
-	}
-
-	@Test
-	public void testJ3_32_speculative() throws Exception {
-		CppCompositeType J3_struct = createJ3_struct32(vxtManager32);
-		J3_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ3_32(), composite, true);
-	}
-
 	private String getExpectedJ3_32() {
 		String expected =
 		//@formatter:off
-			"/J3\n" +
-			"pack()\n" +
-			"Structure J3 {\n" +
-			"   0   J3_direct   52      \"\"\n" +
-			"   52   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   56   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 60 Alignment: 4\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   8      \"/I1/BaseClass_G1\"\n" +
-			"   8   H_direct   8      \"/I1/BaseClass_H\"\n" +
-			"   16   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   8      \"/I2/BaseClass_G\"\n" +
-			"   8   H1_direct   8      \"/I2/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/J3/J3_direct\n" +
-			"pack()\n" +
-			"Structure J3_direct {\n" +
-			"   0   I2_direct   20      \"/J3/BaseClass_I2\"\n" +
-			"   20   I1_direct   20      \"/J3/BaseClass_I1\"\n" +
-			"   40   A_direct   8      \"/J3/BaseClass_A\"\n" +
-			"   48   undefined4   4   j31   \"\"\n" +
-			"}\n" +
-			"Length: 52 Alignment: 4";
+			"""
+			/J3
+			pack()
+			Structure J3 {
+			   0   J3   52      "Self Base"
+			   52   C   4      "Virtual Base"
+			   56   E   4      "Virtual Base"
+			}
+			Length: 60 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i11   ""
+			}
+			Length: 20 Alignment: 4
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i21   ""
+			}
+			Length: 20 Alignment: 4
+			/J3/!internal/J3
+			pack()
+			Structure J3 {
+			   0   I2   20      "Base"
+			   20   I1   20      "Base"
+			   40   A   8      "Base"
+			   48   undefined4   4   j31   ""
+			}
+			Length: 52 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -7107,7 +5261,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedJ3_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct J3 : I2, I1, A {
@@ -7185,105 +5338,90 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	               E     100       0       8 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ3_64_vbt() throws Exception {
-		CppCompositeType J3_struct = createJ3_struct64(msftVxtManager64);
-		J3_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ3_64(), composite, true);
-	}
-
-	@Test
-	public void testJ3_64_speculative() throws Exception {
-		CppCompositeType J3_struct = createJ3_struct64(vxtManager64);
-		J3_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J3_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ3_64(), composite, true);
-	}
-
 	private String getExpectedJ3_64() {
 		String expected =
 		//@formatter:off
-			"/J3\n" +
-			"pack()\n" +
-			"Structure J3 {\n" +
-			"   0   J3_direct   96      \"\"\n" +
-			"   96   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   100   E_direct   4      \"(Virtual Base E)\"\n" +
-			"}\n" +
-			"Length: 104 Alignment: 8\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I1/I1_direct\n" +
-			"pack()\n" +
-			"Structure I1_direct {\n" +
-			"   0   G1_direct   16      \"/I1/BaseClass_G1\"\n" +
-			"   16   H_direct   16      \"/I1/BaseClass_H\"\n" +
-			"   32   undefined4   4   i11   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/I2/I2_direct\n" +
-			"pack()\n" +
-			"Structure I2_direct {\n" +
-			"   0   G_direct   16      \"/I2/BaseClass_G\"\n" +
-			"   16   H1_direct   16      \"/I2/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i21   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/J3/J3_direct\n" +
-			"pack()\n" +
-			"Structure J3_direct {\n" +
-			"   0   I2_direct   40      \"/J3/BaseClass_I2\"\n" +
-			"   40   I1_direct   40      \"/J3/BaseClass_I1\"\n" +
-			"   80   A_direct   8      \"/J3/BaseClass_A\"\n" +
-			"   88   undefined4   4   j31   \"\"\n" +
-			"}\n" +
-			"Length: 96 Alignment: 8";
+			"""
+			/J3
+			pack()
+			Structure J3 {
+			   0   J3   96      "Self Base"
+			   96   C   4      "Virtual Base"
+			   100   E   4      "Virtual Base"
+			}
+			Length: 104 Alignment: 8
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I1/!internal/I1
+			pack()
+			Structure I1 {
+			   0   G1   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i11   ""
+			}
+			Length: 40 Alignment: 8
+			/I2/!internal/I2
+			pack()
+			Structure I2 {
+			   0   G   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i21   ""
+			}
+			Length: 40 Alignment: 8
+			/J3/!internal/J3
+			pack()
+			Structure J3 {
+			   0   I2   40      "Base"
+			   40   I1   40      "Base"
+			   80   A   8      "Base"
+			   88   undefined4   4   j31   ""
+			}
+			Length: 96 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -7293,6 +5431,76 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct J4 : I3, GG1, I, A, virtual GG2, virtual GG3 {
+	 *	  int j41;
+	 *	  void j4f();
+	 *	};
+	 */
+	static CppCompositeType createJ4_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType I3_struct, CppCompositeType GG1_struct, CppCompositeType I_struct,
+			CppCompositeType A_struct, CppCompositeType GG2_struct, CppCompositeType GG3_struct,
+			CppCompositeType C_struct, CppCompositeType E_struct, CppCompositeType CC1_struct,
+			CppCompositeType CC2_struct) {
+		return is64Bit
+				? createJ4_struct64(vxtManager, I3_struct, GG1_struct, I_struct, A_struct,
+					GG2_struct, GG3_struct, C_struct, E_struct, CC1_struct, CC2_struct)
+				: createJ4_struct32(vxtManager, I3_struct, GG1_struct, I_struct, A_struct,
+					GG2_struct, GG3_struct, C_struct, E_struct, CC1_struct, CC2_struct);
+	}
+
+	static CppCompositeType createJ4_struct32(VxtManager vxtManager, CppCompositeType I3_struct,
+			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
+			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
+		try {
+			CppCompositeType J4_struct = createStruct32("J4", 92);
+			J4_struct.addDirectBaseClass(I3_struct, 0);
+			J4_struct.addDirectBaseClass(GG1_struct, 20);
+			J4_struct.addDirectBaseClass(I_struct, 28);
+			J4_struct.addDirectBaseClass(A_struct, 48);
+			J4_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 5);
+			J4_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 6);
+			J4_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			J4_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J4_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 3);
+			J4_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 4);
+			J4_struct.addMember("j41", u4, false, 56);
+			return J4_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createJ4_struct64(VxtManager vxtManager, CppCompositeType I3_struct,
+			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
+			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
+		try {
+			CppCompositeType J4_struct = createStruct64("J4", 160);
+			J4_struct.addDirectBaseClass(I3_struct, 0);
+			J4_struct.addDirectBaseClass(GG1_struct, 40);
+			J4_struct.addDirectBaseClass(I_struct, 56);
+			J4_struct.addDirectBaseClass(A_struct, 96);
+			J4_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr64, 5);
+			J4_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr64, 6);
+			J4_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			J4_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J4_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr64, 3);
+			J4_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 4);
+			J4_struct.addMember("j41", u4, false, 104);
+			return J4_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct J4 : I3, GG1, I, A, virtual GG2, virtual GG3 {
@@ -7398,143 +5606,128 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	             GG3      84       0      24 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ4_32_vbt() throws Exception {
-		CppCompositeType J4_struct = createJ4_struct32(msftVxtManager32);
-		J4_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ4_32(), composite, true);
-	}
-
-	@Test
-	public void testJ4_32_speculative() throws Exception {
-		CppCompositeType J4_struct = createJ4_struct32(vxtManager32);
-		J4_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ4_32(), composite, true);
-	}
-
 	private String getExpectedJ4_32() {
 		String expected =
 		//@formatter:off
-			"/J4\n" +
-			"pack()\n" +
-			"Structure J4 {\n" +
-			"   0   J4_direct   60      \"\"\n" +
-			"   60   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   64   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   68   CC1_direct   4      \"(Virtual Base CC1)\"\n" +
-			"   72   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"   76   GG2_direct   8      \"(Virtual Base GG2)\"\n" +
-			"   84   GG3_direct   8      \"(Virtual Base GG3)\"\n" +
-			"}\n" +
-			"Length: 92 Alignment: 4\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG1/GG1_direct\n" +
-			"pack()\n" +
-			"Structure GG1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG1\"\n" +
-			"   4   undefined4   4   gg11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG2/GG2_direct\n" +
-			"pack()\n" +
-			"Structure GG2_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG2\"\n" +
-			"   4   undefined4   4   gg21   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   4   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I/I_direct\n" +
-			"pack()\n" +
-			"Structure I_direct {\n" +
-			"   0   G_direct   8      \"/I/BaseClass_G\"\n" +
-			"   8   H_direct   8      \"/I/BaseClass_H\"\n" +
-			"   16   undefined4   4   i1   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/I3/I3_direct\n" +
-			"pack()\n" +
-			"Structure I3_direct {\n" +
-			"   0   G1_direct   8      \"/I3/BaseClass_G1\"\n" +
-			"   8   H1_direct   8      \"/I3/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i31   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/J4/J4_direct\n" +
-			"pack()\n" +
-			"Structure J4_direct {\n" +
-			"   0   I3_direct   20      \"/J4/BaseClass_I3\"\n" +
-			"   20   GG1_direct   8      \"/J4/BaseClass_GG1\"\n" +
-			"   28   I_direct   20      \"/J4/BaseClass_I\"\n" +
-			"   48   A_direct   8      \"/J4/BaseClass_A\"\n" +
-			"   56   undefined4   4   j41   \"\"\n" +
-			"}\n" +
-			"Length: 60 Alignment: 4";
+			"""
+			/J4
+			pack()
+			Structure J4 {
+			   0   J4   60      "Self Base"
+			   60   C   4      "Virtual Base"
+			   64   E   4      "Virtual Base"
+			   68   CC1   4      "Virtual Base"
+			   72   CC2   4      "Virtual Base"
+			   76   GG2   8      "Virtual Base"
+			   84   GG3   8      "Virtual Base"
+			}
+			Length: 92 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg11   ""
+			}
+			Length: 8 Alignment: 4
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg21   ""
+			}
+			Length: 8 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg31   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i1   ""
+			}
+			Length: 20 Alignment: 4
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i31   ""
+			}
+			Length: 20 Alignment: 4
+			/J4/!internal/J4
+			pack()
+			Structure J4 {
+			   0   I3   20      "Base"
+			   20   GG1   8      "Base"
+			   28   I   20      "Base"
+			   48   A   8      "Base"
+			   56   undefined4   4   j41   ""
+			}
+			Length: 60 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
@@ -7543,7 +5736,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return convertCommentsToSpeculative(getExpectedJ4_32());
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct J4 : I3, GG1, I, A, virtual GG2, virtual GG3 {
@@ -7665,143 +5857,128 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	             GG3     144       0      24 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ4_64_vbt() throws Exception {
-		CppCompositeType J4_struct = createJ4_struct64(msftVxtManager64);
-		J4_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ4_64(), composite, true);
-	}
-
-	@Test
-	public void testJ4_64_speculative() throws Exception {
-		CppCompositeType J4_struct = createJ4_struct64(vxtManager64);
-		J4_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J4_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ4_64(), composite, true);
-	}
-
 	private String getExpectedJ4_64() {
 		String expected =
 		//@formatter:off
-			"/J4\n" +
-			"pack()\n" +
-			"Structure J4 {\n" +
-			"   0   J4_direct   112      \"\"\n" +
-			"   112   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   116   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   120   CC1_direct   4      \"(Virtual Base CC1)\"\n" +
-			"   124   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"   128   GG2_direct   16      \"(Virtual Base GG2)\"\n" +
-			"   144   GG3_direct   16      \"(Virtual Base GG3)\"\n" +
-			"}\n" +
-			"Length: 160 Alignment: 8\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG1/GG1_direct\n" +
-			"pack()\n" +
-			"Structure GG1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG1\"\n" +
-			"   8   undefined4   4   gg11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG2/GG2_direct\n" +
-			"pack()\n" +
-			"Structure GG2_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG2\"\n" +
-			"   8   undefined4   4   gg21   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   8   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I/I_direct\n" +
-			"pack()\n" +
-			"Structure I_direct {\n" +
-			"   0   G_direct   16      \"/I/BaseClass_G\"\n" +
-			"   16   H_direct   16      \"/I/BaseClass_H\"\n" +
-			"   32   undefined4   4   i1   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/I3/I3_direct\n" +
-			"pack()\n" +
-			"Structure I3_direct {\n" +
-			"   0   G1_direct   16      \"/I3/BaseClass_G1\"\n" +
-			"   16   H1_direct   16      \"/I3/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i31   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/J4/J4_direct\n" +
-			"pack()\n" +
-			"Structure J4_direct {\n" +
-			"   0   I3_direct   40      \"/J4/BaseClass_I3\"\n" +
-			"   40   GG1_direct   16      \"/J4/BaseClass_GG1\"\n" +
-			"   56   I_direct   40      \"/J4/BaseClass_I\"\n" +
-			"   96   A_direct   8      \"/J4/BaseClass_A\"\n" +
-			"   104   undefined4   4   j41   \"\"\n" +
-			"}\n" +
-			"Length: 112 Alignment: 8";
+			"""
+			/J4
+			pack()
+			Structure J4 {
+			   0   J4   112      "Self Base"
+			   112   C   4      "Virtual Base"
+			   116   E   4      "Virtual Base"
+			   120   CC1   4      "Virtual Base"
+			   124   CC2   4      "Virtual Base"
+			   128   GG2   16      "Virtual Base"
+			   144   GG3   16      "Virtual Base"
+			}
+			Length: 160 Alignment: 8
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg11   ""
+			}
+			Length: 16 Alignment: 8
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg21   ""
+			}
+			Length: 16 Alignment: 8
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg31   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i1   ""
+			}
+			Length: 40 Alignment: 8
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i31   ""
+			}
+			Length: 40 Alignment: 8
+			/J4/!internal/J4
+			pack()
+			Structure J4 {
+			   0   I3   40      "Base"
+			   40   GG1   16      "Base"
+			   56   I   40      "Base"
+			   96   A   8      "Base"
+			   104   undefined4   4   j41   ""
+			}
+			Length: 112 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
@@ -7811,6 +5988,141 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct J5 : virtual GG2, virtual GG3, I3, GG1, I, A {
+	 *	  int j51;
+	 *	  void j5f();
+	 *	};
+	 */
+	static CppCompositeType createJ5_syntactic_struct32(VxtManager vxtManager) {
+		return createJ5_syntactic_struct32(vxtManager, null, null, null, null, null, null, null,
+			null, null, null);
+	}
+
+	static CppCompositeType createJ5_syntactic_struct32(VxtManager vxtManager,
+			CppCompositeType I3_struct, CppCompositeType GG1_struct, CppCompositeType I_struct,
+			CppCompositeType A_struct, CppCompositeType GG2_struct, CppCompositeType GG3_struct,
+			CppCompositeType C_struct, CppCompositeType E_struct, CppCompositeType CC1_struct,
+			CppCompositeType CC2_struct) {
+		CppCompositeType J5_struct = createStruct32("J5", 0); // TODO need without size
+		try {
+			if (A_struct == null) {
+				A_struct = createA_syntactic_struct32(vxtManager);
+			}
+			if (C_struct == null) {
+				C_struct = createC_syntactic_struct32(vxtManager);
+			}
+			if (E_struct == null) {
+				E_struct = createE_syntactic_struct32(vxtManager);
+			}
+			if (CC1_struct == null) {
+				CC1_struct = createCC1_syntactic_struct32(vxtManager);
+			}
+			if (CC2_struct == null) {
+				CC2_struct = createCC2_syntactic_struct32(vxtManager);
+			}
+			if (I3_struct == null) {
+				CppCompositeType G1_struct =
+					createG1_syntactic_struct32(vxtManager, C_struct, E_struct);
+				CppCompositeType H1_struct =
+					createH1_syntactic_struct32(vxtManager, E_struct, C_struct);
+				I3_struct = createI3_syntactic_struct32(vxtManager, G1_struct, H1_struct, E_struct,
+					C_struct);
+			}
+			if (GG1_struct == null) {
+				GG1_struct = createGG1_syntactic_struct32(vxtManager, CC1_struct);
+			}
+			if (I_struct == null) {
+				CppCompositeType G_struct = createG_syntactic_struct32(vxtManager, C_struct);
+				CppCompositeType H_struct = createH_syntactic_struct32(vxtManager, C_struct);
+				I_struct = createI_syntactic_struct32(vxtManager, G_struct, H_struct, C_struct);
+			}
+			if (GG2_struct == null) {
+				GG2_struct = createGG2_syntactic_struct32(vxtManager, CC2_struct);
+			}
+			if (GG3_struct == null) {
+				GG3_struct = createGG3_syntactic_struct32(vxtManager, CC2_struct);
+			}
+			J5_struct.addVirtualSyntacticBaseClass(GG2_struct);
+			J5_struct.addVirtualSyntacticBaseClass(GG3_struct);
+			J5_struct.addDirectSyntacticBaseClass(I3_struct);
+			J5_struct.addDirectSyntacticBaseClass(GG1_struct);
+			J5_struct.addDirectSyntacticBaseClass(I_struct);
+			J5_struct.addDirectSyntacticBaseClass(A_struct);
+			J5_struct.addMember("j51", u4, false, 0); // TODO nned syntactic without index
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+		return J5_struct;
+	}
+
+	static CppCompositeType createJ5_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType I3_struct, CppCompositeType GG1_struct, CppCompositeType I_struct,
+			CppCompositeType A_struct, CppCompositeType GG2_struct, CppCompositeType GG3_struct,
+			CppCompositeType C_struct, CppCompositeType E_struct, CppCompositeType CC1_struct,
+			CppCompositeType CC2_struct) {
+		return is64Bit
+				? createJ5_struct64(vxtManager, I3_struct, GG1_struct, I_struct, A_struct,
+					GG2_struct, GG3_struct, C_struct, E_struct, CC1_struct, CC2_struct)
+				: createJ5_struct32(vxtManager, I3_struct, GG1_struct, I_struct, A_struct,
+					GG2_struct, GG3_struct, C_struct, E_struct, CC1_struct, CC2_struct);
+	}
+
+	static CppCompositeType createJ5_struct32(VxtManager vxtManager, CppCompositeType I3_struct,
+			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
+			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
+		try {
+			CppCompositeType J5_struct = createStruct32("J5", 92);
+			J5_struct.addDirectBaseClass(I3_struct, 0);
+			J5_struct.addDirectBaseClass(GG1_struct, 20);
+			J5_struct.addDirectBaseClass(I_struct, 28);
+			J5_struct.addDirectBaseClass(A_struct, 48);
+			J5_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 4);
+			J5_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 5);
+			J5_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 3);
+			J5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			J5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J5_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 6);
+			J5_struct.addMember("j51", u4, false, 56);
+			return J5_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createJ5_struct64(VxtManager vxtManager, CppCompositeType I3_struct,
+			CppCompositeType GG1_struct, CppCompositeType I_struct, CppCompositeType A_struct,
+			CppCompositeType GG2_struct, CppCompositeType GG3_struct, CppCompositeType C_struct,
+			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
+		try {
+			CppCompositeType J5_struct = createStruct64("J5", 164);
+			J5_struct.addDirectBaseClass(I3_struct, 0);
+			J5_struct.addDirectBaseClass(GG1_struct, 40);
+			J5_struct.addDirectBaseClass(I_struct, 56);
+			J5_struct.addDirectBaseClass(A_struct, 96);
+			J5_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 4);
+			J5_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 5);
+			J5_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 3);
+			J5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			J5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J5_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 6);
+			J5_struct.addMember("j51", u4, false, 104);
+			return J5_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct J5 : virtual GG2, virtual GG3, I3, GG1, I, A {
@@ -7916,150 +6228,134 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	             CC1      88       0      24 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ5_32_vbt() throws Exception {
-		CppCompositeType J5_struct = createJ5_struct32(msftVxtManager32);
-		J5_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ5_32(), composite, true);
-	}
-
-	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
-	//  a decision on the best speculative results yet.
-//	@Test
-	public void testJ5_32_speculative() throws Exception {
-		CppCompositeType J5_struct = createJ5_struct32(vxtManager32);
-		J5_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ5_32(), composite, true);
-	}
-
 	private String getExpectedJ5_32() {
 		String expected =
 		//@formatter:off
-			"/J5\n" +
-			"pack()\n" +
-			"Structure J5 {\n" +
-			"   0   J5_direct   60      \"\"\n" +
-			"   60   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"   64   GG2_direct   8      \"(Virtual Base GG2)\"\n" +
-			"   72   GG3_direct   8      \"(Virtual Base GG3)\"\n" +
-			"   80   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   84   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   88   CC1_direct   4      \"(Virtual Base CC1)\"\n" +
-			"}\n" +
-			"Length: 92 Alignment: 4\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G\"\n" +
-			"   4   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   4   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG1/GG1_direct\n" +
-			"pack()\n" +
-			"Structure GG1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG1\"\n" +
-			"   4   undefined4   4   gg11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG2/GG2_direct\n" +
-			"pack()\n" +
-			"Structure GG2_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG2\"\n" +
-			"   4   undefined4   4   gg21   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   4   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H\"\n" +
-			"   4   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   4   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/I/I_direct\n" +
-			"pack()\n" +
-			"Structure I_direct {\n" +
-			"   0   G_direct   8      \"/I/BaseClass_G\"\n" +
-			"   8   H_direct   8      \"/I/BaseClass_H\"\n" +
-			"   16   undefined4   4   i1   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/I3/I3_direct\n" +
-			"pack()\n" +
-			"Structure I3_direct {\n" +
-			"   0   G1_direct   8      \"/I3/BaseClass_G1\"\n" +
-			"   8   H1_direct   8      \"/I3/BaseClass_H1\"\n" +
-			"   16   undefined4   4   i31   \"\"\n" +
-			"}\n" +
-			"Length: 20 Alignment: 4\n" +
-			"/J5/J5_direct\n" +
-			"pack()\n" +
-			"Structure J5_direct {\n" +
-			"   0   I3_direct   20      \"/J5/BaseClass_I3\"\n" +
-			"   20   GG1_direct   8      \"/J5/BaseClass_GG1\"\n" +
-			"   28   I_direct   20      \"/J5/BaseClass_I\"\n" +
-			"   48   A_direct   8      \"/J5/BaseClass_A\"\n" +
-			"   56   undefined4   4   j51   \"\"\n" +
-			"}\n" +
-			"Length: 60 Alignment: 4";
-
+			"""
+			/J5
+			pack()
+			Structure J5 {
+			   0   J5   60      "Self Base"
+			   60   CC2   4      "Virtual Base"
+			   64   GG2   8      "Virtual Base"
+			   72   GG3   8      "Virtual Base"
+			   80   C   4      "Virtual Base"
+			   84   E   4      "Virtual Base"
+			   88   CC1   4      "Virtual Base"
+			}
+			Length: 92 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g1   ""
+			}
+			Length: 8 Alignment: 4
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   g11   ""
+			}
+			Length: 8 Alignment: 4
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg11   ""
+			}
+			Length: 8 Alignment: 4
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg21   ""
+			}
+			Length: 8 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg31   ""
+			}
+			Length: 8 Alignment: 4
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h1   ""
+			}
+			Length: 8 Alignment: 4
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   h11   ""
+			}
+			Length: 8 Alignment: 4
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   8      "Base"
+			   8   H   8      "Base"
+			   16   undefined4   4   i1   ""
+			}
+			Length: 20 Alignment: 4
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   8      "Base"
+			   8   H1   8      "Base"
+			   16   undefined4   4   i31   ""
+			}
+			Length: 20 Alignment: 4
+			/J5/!internal/J5
+			pack()
+			Structure J5 {
+			   0   I3   20      "Base"
+			   20   GG1   8      "Base"
+			   28   I   20      "Base"
+			   48   A   8      "Base"
+			   56   undefined4   4   j51   ""
+			}
+			Length: 60 Alignment: 4""";
 		//@formatter:on
 		return expected;
 	}
 
+	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
+	//  a decision on the best speculative results yet.
 	private String getSpeculatedJ5_32() {
 		String expected =
 		//@formatter:off
@@ -8068,7 +6364,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return expected;
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct J5 : virtual GG2, virtual GG3, I3, GG1, I, A {
@@ -8191,150 +6486,135 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	             CC1     160       0      24 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ5_64_vbt() throws Exception {
-		CppCompositeType J5_struct = createJ5_struct64(msftVxtManager64);
-		J5_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ5_64(), composite, true);
-	}
-
-	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
-	//  a decision on the best speculative results yet.
-//	@Test
-	public void testJ5_64_speculative() throws Exception {
-		CppCompositeType J5_struct = createJ5_struct64(vxtManager64);
-		J5_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J5_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ5_64(), composite, true);
-	}
-
 	private String getExpectedJ5_64() {
 		String expected =
 		//@formatter:off
-			"/J5\n" +
-			"pack()\n" +
-			"Structure J5 {\n" +
-			"   0   J5_direct   112      \"\"\n" +
-			"   112   CC2_direct   4      \"(Virtual Base CC2)\"\n" +
-			"   120   GG2_direct   16      \"(Virtual Base GG2)\"\n" +
-			"   136   GG3_direct   16      \"(Virtual Base GG3)\"\n" +
-			"   152   C_direct   4      \"(Virtual Base C)\"\n" +
-			"   156   E_direct   4      \"(Virtual Base E)\"\n" +
-			"   160   CC1_direct   4      \"(Virtual Base CC1)\"\n" +
-			"}\n" +
-			"Length: 168 Alignment: 8\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/C/C_direct\n" +
-			"pack()\n" +
-			"Structure C_direct {\n" +
-			"   0   undefined4   4   c1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC1/CC1_direct\n" +
-			"pack()\n" +
-			"Structure CC1_direct {\n" +
-			"   0   undefined4   4   cc11   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/E/E_direct\n" +
-			"pack()\n" +
-			"Structure E_direct {\n" +
-			"   0   undefined4   4   e1   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/G/G_direct\n" +
-			"pack()\n" +
-			"Structure G_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G\"\n" +
-			"   8   undefined4   4   g1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/G1/G1_direct\n" +
-			"pack()\n" +
-			"Structure G1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for G1\"\n" +
-			"   8   undefined4   4   g11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG1/GG1_direct\n" +
-			"pack()\n" +
-			"Structure GG1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG1\"\n" +
-			"   8   undefined4   4   gg11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG2/GG2_direct\n" +
-			"pack()\n" +
-			"Structure GG2_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG2\"\n" +
-			"   8   undefined4   4   gg21   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   8   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H/H_direct\n" +
-			"pack()\n" +
-			"Structure H_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H\"\n" +
-			"   8   undefined4   4   h1   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/H1/H1_direct\n" +
-			"pack()\n" +
-			"Structure H1_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for H1\"\n" +
-			"   8   undefined4   4   h11   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/I/I_direct\n" +
-			"pack()\n" +
-			"Structure I_direct {\n" +
-			"   0   G_direct   16      \"/I/BaseClass_G\"\n" +
-			"   16   H_direct   16      \"/I/BaseClass_H\"\n" +
-			"   32   undefined4   4   i1   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/I3/I3_direct\n" +
-			"pack()\n" +
-			"Structure I3_direct {\n" +
-			"   0   G1_direct   16      \"/I3/BaseClass_G1\"\n" +
-			"   16   H1_direct   16      \"/I3/BaseClass_H1\"\n" +
-			"   32   undefined4   4   i31   \"\"\n" +
-			"}\n" +
-			"Length: 40 Alignment: 8\n" +
-			"/J5/J5_direct\n" +
-			"pack()\n" +
-			"Structure J5_direct {\n" +
-			"   0   I3_direct   40      \"/J5/BaseClass_I3\"\n" +
-			"   40   GG1_direct   16      \"/J5/BaseClass_GG1\"\n" +
-			"   56   I_direct   40      \"/J5/BaseClass_I\"\n" +
-			"   96   A_direct   8      \"/J5/BaseClass_A\"\n" +
-			"   104   undefined4   4   j51   \"\"\n" +
-			"}\n" +
-			"Length: 112 Alignment: 8";
+			"""
+			/J5
+			pack()
+			Structure J5 {
+			   0   J5   112      "Self Base"
+			   112   CC2   4      "Virtual Base"
+			   120   GG2   16      "Virtual Base"
+			   136   GG3   16      "Virtual Base"
+			   152   C   4      "Virtual Base"
+			   156   E   4      "Virtual Base"
+			   160   CC1   4      "Virtual Base"
+			}
+			Length: 168 Alignment: 8
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/C
+			pack()
+			Structure C {
+			   0   undefined4   4   c1   ""
+			}
+			Length: 4 Alignment: 4
+			/CC1
+			pack()
+			Structure CC1 {
+			   0   undefined4   4   cc11   ""
+			}
+			Length: 4 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/E
+			pack()
+			Structure E {
+			   0   undefined4   4   e1   ""
+			}
+			Length: 4 Alignment: 4
+			/G/!internal/G
+			pack()
+			Structure G {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g1   ""
+			}
+			Length: 16 Alignment: 8
+			/G1/!internal/G1
+			pack()
+			Structure G1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   g11   ""
+			}
+			Length: 16 Alignment: 8
+			/GG1/!internal/GG1
+			pack()
+			Structure GG1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg11   ""
+			}
+			Length: 16 Alignment: 8
+			/GG2/!internal/GG2
+			pack()
+			Structure GG2 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg21   ""
+			}
+			Length: 16 Alignment: 8
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg31   ""
+			}
+			Length: 16 Alignment: 8
+			/H/!internal/H
+			pack()
+			Structure H {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h1   ""
+			}
+			Length: 16 Alignment: 8
+			/H1/!internal/H1
+			pack()
+			Structure H1 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   h11   ""
+			}
+			Length: 16 Alignment: 8
+			/I/!internal/I
+			pack()
+			Structure I {
+			   0   G   16      "Base"
+			   16   H   16      "Base"
+			   32   undefined4   4   i1   ""
+			}
+			Length: 40 Alignment: 8
+			/I3/!internal/I3
+			pack()
+			Structure I3 {
+			   0   G1   16      "Base"
+			   16   H1   16      "Base"
+			   32   undefined4   4   i31   ""
+			}
+			Length: 40 Alignment: 8
+			/J5/!internal/J5
+			pack()
+			Structure J5 {
+			   0   I3   40      "Base"
+			   40   GG1   16      "Base"
+			   56   I   40      "Base"
+			   96   A   8      "Base"
+			   104   undefined4   4   j51   ""
+			}
+			Length: 112 Alignment: 8""";
 
 		//@formatter:on
 		return expected;
 	}
 
+	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
+	//  a decision on the best speculative results yet.
 	private String getSpeculatedJ5_64() {
 		String expected =
 		//@formatter:off
@@ -8344,6 +6624,62 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	}
 
 	//==============================================================================================
+	/*
+	 * struct J6 : virtual GG4, virtual GG3, A { //GG4 has no members
+	 *    int j61;
+	 *	  void j6f();
+	 * };
+	 */
+	static CppCompositeType createJ6_struct(VxtManager vxtManager, boolean is64Bit,
+			CppCompositeType A_struct, CppCompositeType GG4_struct, CppCompositeType GG3_struct,
+			CppCompositeType CC2_struct, CppCompositeType CC3_struct) {
+		return is64Bit
+				? createJ6_struct64(vxtManager, A_struct, GG4_struct, GG3_struct, CC2_struct,
+					CC3_struct)
+				: createJ6_struct32(vxtManager, A_struct, GG4_struct, GG3_struct, CC2_struct,
+					CC3_struct);
+	}
+
+	static CppCompositeType createJ6_struct32(VxtManager vxtManager, CppCompositeType A_struct,
+			CppCompositeType GG4_struct, CppCompositeType GG3_struct, CppCompositeType CC2_struct,
+			CppCompositeType CC3_struct) {
+		try {
+			CppCompositeType J6_struct = createStruct32("J6", 36);
+			J6_struct.addDirectBaseClass(A_struct, 0);
+			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbtptr32, 2);
+			J6_struct.addDirectVirtualBaseClass(GG3_struct, 8, vbtptr32, 4);
+			J6_struct.addIndirectVirtualBaseClass(CC3_struct, 8, vbtptr32, 1);
+			J6_struct.addIndirectVirtualBaseClass(CC2_struct, 8, vbtptr32, 3);
+			J6_struct.addMember("j61", u4, false, 12);
+			return J6_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
+	static CppCompositeType createJ6_struct64(VxtManager vxtManager, CppCompositeType A_struct,
+			CppCompositeType GG4_struct, CppCompositeType GG3_struct, CppCompositeType CC2_struct,
+			CppCompositeType CC3_struct) {
+		try {
+			CppCompositeType J6_struct = createStruct64("J6", 64);
+			J6_struct.addDirectBaseClass(A_struct, 0);
+			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbtptr64, 2);
+			J6_struct.addDirectVirtualBaseClass(GG3_struct, 8, vbtptr64, 4);
+			J6_struct.addIndirectVirtualBaseClass(CC3_struct, 8, vbtptr64, 1);
+			J6_struct.addIndirectVirtualBaseClass(CC2_struct, 8, vbtptr64, 3);
+			J6_struct.addMember("j61", u4, false, 16);
+			return J6_struct;
+		}
+		catch (Exception e) {
+			String msg = "Error in static initialization of test: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
+		}
+	}
+
 	//@formatter:off
 	/*
 	struct J6 : virtual GG4, virtual GG3, A { //GG4 contains CC3, which has no members
@@ -8396,76 +6732,61 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	             GG3      28       8      16 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ6_32_vbt() throws Exception {
-		CppCompositeType J6_struct = createJ6_struct32(msftVxtManager32);
-		J6_struct.createLayout(classLayoutChoice, msftVxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J6_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ6_32(), composite, true);
-	}
-
-	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
-	//  a decision on the best speculative results yet.
-//	@Test
-	public void testJ6_32_speculative() throws Exception {
-		CppCompositeType J6_struct = createJ6_struct32(vxtManager32);
-		J6_struct.createLayout(classLayoutChoice, vxtManager32, TaskMonitor.DUMMY);
-		Composite composite = J6_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ6_32(), composite, true);
-	}
-
 	private String getExpectedJ6_32() {
 		String expected =
 		//@formatter:off
-			"/J6\n" +
-			"pack()\n" +
-			"Structure J6 {\n" +
-			"   0   J6_direct   16      \"\"\n" +
-			"   16   GG4_direct   8      \"(Virtual Base GG4)\"\n" +
-			"   24   CC2_direct   4      \"(Virtual Base (empty) CC3)(Virtual Base CC2)\"\n" +
-			"   28   GG3_direct   8      \"(Virtual Base GG3)\"\n" +
-			"}\n" +
-			"Length: 36 Alignment: 4\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   4   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/GG4/GG4_direct\n" +
-			"pack()\n" +
-			"Structure GG4_direct {\n" +
-			"   0   int *   4   {vbptr}   \"{vbptr} for GG4\"\n" +
-			"   4   undefined4   4   gg41   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/J6/J6_direct\n" +
-			"pack()\n" +
-			"Structure J6_direct {\n" +
-			"   0   A_direct   8      \"/J6/BaseClass_A\"\n" +
-			"   8   int *   4   {vbptr}   \"{vbptr} for J6\"\n" +
-			"   12   undefined4   4   j61   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 4";
+			"""
+			/J6
+			pack()
+			Structure J6 {
+			   0   J6   16      "Self Base"
+			   16   GG4   8      "Virtual Base"
+			   24   CC2   4      "Virtual Base and previous (Empty Virtual Base CC3)"
+			   28   GG3   8      "Virtual Base"
+			}
+			Length: 36 Alignment: 4
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg31   ""
+			}
+			Length: 8 Alignment: 4
+			/GG4/!internal/GG4
+			pack()
+			Structure GG4 {
+			   0   pointer   4   {vbptr}   ""
+			   4   undefined4   4   gg41   ""
+			}
+			Length: 8 Alignment: 4
+			/J6/!internal/J6
+			pack()
+			Structure J6 {
+			   0   A   8      "Base"
+			   8   pointer   4   {vbptr}   ""
+			   12   undefined4   4   j61   ""
+			}
+			Length: 16 Alignment: 4""";
 
 		//@formatter:on
 		return expected;
 	}
 
+	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
+	//  a decision on the best speculative results yet.
 	private String getSpeculatedJ6_32() {
 		String expected =
 		//@formatter:off
@@ -8474,7 +6795,6 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		return expected;
 	}
 
-	//==============================================================================================
 	//@formatter:off
 	/*
 	struct J6 : virtual GG4, virtual GG3, A { //GG4 contains CC3, which has no members
@@ -8532,76 +6852,60 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	             GG3      48       8      16 0
 	 */
 	//@formatter:on
-	@Test
-	public void testJ6_64_vbt() throws Exception {
-		CppCompositeType J6_struct = createJ6_struct64(msftVxtManager64);
-		J6_struct.createLayout(classLayoutChoice, msftVxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J6_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ6_64(), composite, true);
-	}
-
-	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
-	//  a decision on the best speculative results yet.
-//	@Test
-	public void testJ6_64_speculative() throws Exception {
-		CppCompositeType J6_struct = createJ6_struct64(vxtManager64);
-		J6_struct.createLayout(classLayoutChoice, vxtManager64, TaskMonitor.DUMMY);
-		Composite composite = J6_struct.getComposite();
-		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ6_64(), composite, true);
-	}
-
 	private String getExpectedJ6_64() {
 		String expected =
 		//@formatter:off
-			"/J6\n" +
-			"pack()\n" +
-			"Structure J6 {\n" +
-			"   0   J6_direct   24      \"\"\n" +
-			"   24   GG4_direct   16      \"(Virtual Base GG4)\"\n" +
-			"   40   CC2_direct   4      \"(Virtual Base (empty) CC3)(Virtual Base CC2)\"\n" +
-			"   48   GG3_direct   16      \"(Virtual Base GG3)\"\n" +
-			"}\n" +
-			"Length: 64 Alignment: 8\n" +
-			"/A/A_direct\n" +
-			"pack()\n" +
-			"Structure A_direct {\n" +
-			"   0   undefined1   1   c   \"\"\n" +
-			"   4   undefined4   4   i   \"\"\n" +
-			"}\n" +
-			"Length: 8 Alignment: 4\n" +
-			"/CC2/CC2_direct\n" +
-			"pack()\n" +
-			"Structure CC2_direct {\n" +
-			"   0   undefined4   4   cc21   \"\"\n" +
-			"}\n" +
-			"Length: 4 Alignment: 4\n" +
-			"/GG3/GG3_direct\n" +
-			"pack()\n" +
-			"Structure GG3_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG3\"\n" +
-			"   8   undefined4   4   gg31   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/GG4/GG4_direct\n" +
-			"pack()\n" +
-			"Structure GG4_direct {\n" +
-			"   0   int *   8   {vbptr}   \"{vbptr} for GG4\"\n" +
-			"   8   undefined4   4   gg41   \"\"\n" +
-			"}\n" +
-			"Length: 16 Alignment: 8\n" +
-			"/J6/J6_direct\n" +
-			"pack()\n" +
-			"Structure J6_direct {\n" +
-			"   0   A_direct   8      \"/J6/BaseClass_A\"\n" +
-			"   8   int *   8   {vbptr}   \"{vbptr} for J6\"\n" +
-			"   16   undefined4   4   j61   \"\"\n" +
-			"}\n" +
-			"Length: 24 Alignment: 8";
-
+			"""
+			/J6
+			pack()
+			Structure J6 {
+			   0   J6   24      "Self Base"
+			   24   GG4   16      "Virtual Base"
+			   40   CC2   4      "Virtual Base and previous (Empty Virtual Base CC3)"
+			   48   GG3   16      "Virtual Base"
+			}
+			Length: 64 Alignment: 8
+			/A
+			pack()
+			Structure A {
+			   0   undefined1   1   c   ""
+			   4   undefined4   4   i   ""
+			}
+			Length: 8 Alignment: 4
+			/CC2
+			pack()
+			Structure CC2 {
+			   0   undefined4   4   cc21   ""
+			}
+			Length: 4 Alignment: 4
+			/GG3/!internal/GG3
+			pack()
+			Structure GG3 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg31   ""
+			}
+			Length: 16 Alignment: 8
+			/GG4/!internal/GG4
+			pack()
+			Structure GG4 {
+			   0   pointer   8   {vbptr}   ""
+			   8   undefined4   4   gg41   ""
+			}
+			Length: 16 Alignment: 8
+			/J6/!internal/J6
+			pack()
+			Structure J6 {
+			   0   A   8      "Base"
+			   8   pointer   8   {vbptr}   ""
+			   16   undefined4   4   j61   ""
+			}
+			Length: 24 Alignment: 8""";
 		//@formatter:on
 		return expected;
 	}
 
+	// TODO: Need to work on layout algorithm... believe we can do better, but don't have
+	//  a decision on the best speculative results yet.
 	private String getSpeculatedJ6_64() {
 		String expected =
 		//@formatter:off
@@ -8614,6 +6918,379 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	//==============================================================================================
 	//==============================================================================================
 
+	/**
+	 * Test classes using 32-bit organization and in-memory vbt
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void test_32bit_vbt() throws Exception {
+		boolean is64Bit = false;
+		MyTestDummyDataTypeManager dtm = dtm32;
+		VxtManager vxtManager = msftVxtManager32;
+		List<String> expectedResults = new ArrayList<>();
+		expectedResults.add(getExpectedA_32());
+		expectedResults.add(getExpectedC_32());
+		expectedResults.add(getExpectedCC1_32());
+		expectedResults.add(getExpectedCC2_32());
+		expectedResults.add(getExpectedCC3_32());
+		expectedResults.add(getExpectedD_32());
+		expectedResults.add(getExpectedE_32());
+		expectedResults.add(getExpectedF_32());
+		expectedResults.add(getExpectedG_32());
+		expectedResults.add(getExpectedH_32());
+		expectedResults.add(getExpectedG1_32());
+		expectedResults.add(getExpectedH1_32());
+		expectedResults.add(getExpectedGG1_32());
+		expectedResults.add(getExpectedGG2_32());
+		expectedResults.add(getExpectedGG3_32());
+		expectedResults.add(getExpectedGG4_32());
+		expectedResults.add(getExpectedI_32());
+		expectedResults.add(getExpectedI1_32());
+		expectedResults.add(getExpectedI2_32());
+		expectedResults.add(getExpectedI3_32());
+		expectedResults.add(getExpectedI4_32());
+		expectedResults.add(getExpectedI5_32());
+		expectedResults.add(getExpectedJ1_32());
+		expectedResults.add(getExpectedJ2_32());
+		expectedResults.add(getExpectedJ3_32());
+		expectedResults.add(getExpectedJ4_32());
+		expectedResults.add(getExpectedJ5_32());
+		expectedResults.add(getExpectedJ6_32());
+
+		dtm.clearMap();
+		createAndTestStructures(is64Bit, dtm, vxtManager, expectedResults);
+	}
+
+	/**
+	 * Test classes using 32-bit organization and generic vbt (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void test_32bit_speculative() throws Exception {
+		boolean is64Bit = false;
+		MyTestDummyDataTypeManager dtm = dtm32;
+		VxtManager vxtManager = vxtManager32;
+		List<String> expectedResults = new ArrayList<>();
+		expectedResults.add(getSpeculatedA_32());
+		expectedResults.add(getSpeculatedC_32());
+		expectedResults.add(getSpeculatedCC1_32());
+		expectedResults.add(getSpeculatedCC2_32());
+		expectedResults.add(getSpeculatedCC3_32());
+		expectedResults.add(getSpeculatedD_32());
+		expectedResults.add(getSpeculatedE_32());
+		expectedResults.add(getSpeculatedF_32());
+		expectedResults.add(getSpeculatedG_32());
+		expectedResults.add(getSpeculatedH_32());
+		expectedResults.add(getSpeculatedG1_32());
+		expectedResults.add(getSpeculatedH1_32());
+		expectedResults.add(getSpeculatedGG1_32());
+		expectedResults.add(getSpeculatedGG2_32());
+		expectedResults.add(getSpeculatedGG3_32());
+		expectedResults.add(getSpeculatedGG4_32());
+		expectedResults.add(getSpeculatedI_32());
+		expectedResults.add(getSpeculatedI1_32());
+		expectedResults.add(getSpeculatedI2_32());
+		expectedResults.add(getSpeculatedI3_32());
+		expectedResults.add(getSpeculatedI4_32());
+		expectedResults.add(getSpeculatedI5_32());
+		expectedResults.add(getSpeculatedJ1_32());
+		expectedResults.add(getSpeculatedJ2_32());
+		expectedResults.add(getSpeculatedJ3_32());
+		expectedResults.add(getSpeculatedJ4_32());
+		expectedResults.add(getSpeculatedJ5_32());
+		expectedResults.add(getSpeculatedJ6_32());
+
+		dtm.clearMap();
+		createAndTestStructures(is64Bit, dtm, vxtManager, expectedResults);
+	}
+
+	/**
+	 * Test classes using 64-bit organization and in-memory vbt
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void test_64bit_vbt() throws Exception {
+		boolean is64Bit = true;
+		MyTestDummyDataTypeManager dtm = dtm64;
+		VxtManager vxtManager = msftVxtManager64;
+		List<String> expectedResults = new ArrayList<>();
+		expectedResults.add(getExpectedA_64());
+		expectedResults.add(getExpectedC_64());
+		expectedResults.add(getExpectedCC1_64());
+		expectedResults.add(getExpectedCC2_64());
+		expectedResults.add(getExpectedCC3_64());
+		expectedResults.add(getExpectedD_64());
+		expectedResults.add(getExpectedE_64());
+		expectedResults.add(getExpectedF_64());
+		expectedResults.add(getExpectedG_64());
+		expectedResults.add(getExpectedH_64());
+		expectedResults.add(getExpectedG1_64());
+		expectedResults.add(getExpectedH1_64());
+		expectedResults.add(getExpectedGG1_64());
+		expectedResults.add(getExpectedGG2_64());
+		expectedResults.add(getExpectedGG3_64());
+		expectedResults.add(getExpectedGG4_64());
+		expectedResults.add(getExpectedI_64());
+		expectedResults.add(getExpectedI1_64());
+		expectedResults.add(getExpectedI2_64());
+		expectedResults.add(getExpectedI3_64());
+		expectedResults.add(getExpectedI4_64());
+		expectedResults.add(getExpectedI5_64());
+		expectedResults.add(getExpectedJ1_64());
+		expectedResults.add(getExpectedJ2_64());
+		expectedResults.add(getExpectedJ3_64());
+		expectedResults.add(getExpectedJ4_64());
+		expectedResults.add(getExpectedJ5_64());
+		expectedResults.add(getExpectedJ6_64());
+
+		dtm.clearMap();
+		createAndTestStructures(is64Bit, dtm, vxtManager, expectedResults);
+	}
+
+	/**
+	 * Test classes using 64-bit organization and generic vbt (speculative)
+	 * @throws Exception upon error
+	 */
+	@Test
+	public void test_64bit_speculative() throws Exception {
+		boolean is64Bit = true;
+		MyTestDummyDataTypeManager dtm = dtm64;
+		VxtManager vxtManager = vxtManager64;
+		List<String> expectedResults = new ArrayList<>();
+		expectedResults.add(getSpeculatedA_64());
+		expectedResults.add(getSpeculatedC_64());
+		expectedResults.add(getSpeculatedCC1_64());
+		expectedResults.add(getSpeculatedCC2_64());
+		expectedResults.add(getSpeculatedCC3_64());
+		expectedResults.add(getSpeculatedD_64());
+		expectedResults.add(getSpeculatedE_64());
+		expectedResults.add(getSpeculatedF_64());
+		expectedResults.add(getSpeculatedG_64());
+		expectedResults.add(getSpeculatedH_64());
+		expectedResults.add(getSpeculatedG1_64());
+		expectedResults.add(getSpeculatedH1_64());
+		expectedResults.add(getSpeculatedGG1_64());
+		expectedResults.add(getSpeculatedGG2_64());
+		expectedResults.add(getSpeculatedGG3_64());
+		expectedResults.add(getSpeculatedGG4_64());
+		expectedResults.add(getSpeculatedI_64());
+		expectedResults.add(getSpeculatedI1_64());
+		expectedResults.add(getSpeculatedI2_64());
+		expectedResults.add(getSpeculatedI3_64());
+		expectedResults.add(getSpeculatedI4_64());
+		expectedResults.add(getSpeculatedI5_64());
+		expectedResults.add(getSpeculatedJ1_64());
+		expectedResults.add(getSpeculatedJ2_64());
+		expectedResults.add(getSpeculatedJ3_64());
+		expectedResults.add(getSpeculatedJ4_64());
+		expectedResults.add(getSpeculatedJ5_64());
+		expectedResults.add(getSpeculatedJ6_64());
+
+		dtm.clearMap();
+		createAndTestStructures(is64Bit, dtm, vxtManager, expectedResults);
+	}
+
+	private void createAndTestStructures(boolean is64Bit, DataTypeManager dtm,
+			VxtManager vxtManager, List<String> expectedResults) throws Exception {
+
+		Iterator<String> iter = expectedResults.iterator();
+		String expected;
+		Composite composite;
+
+		expected = iter.next();
+		CppCompositeType A_struct = createA_struct(vxtManager, is64Bit);
+		A_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(A_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType C_struct = createC_struct(vxtManager, is64Bit);
+		C_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(C_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType CC1_struct = createCC1_struct(vxtManager, is64Bit);
+		CC1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(CC1_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType CC2_struct = createCC2_struct(vxtManager, is64Bit);
+		CC2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(CC2_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType CC3_struct = createCC3_struct(vxtManager, is64Bit);
+		CC3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(CC3_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType D_struct = createD_struct(vxtManager, is64Bit, C_struct);
+		D_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(D_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType E_struct = createE_struct(vxtManager, is64Bit);
+		E_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(E_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType F_struct = createF_struct(vxtManager, is64Bit, C_struct, E_struct);
+		F_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(F_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType G_struct = createG_struct(vxtManager, is64Bit, C_struct);
+		G_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(G_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType H_struct = createH_struct(vxtManager, is64Bit, C_struct);
+		H_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(H_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType G1_struct = createG1_struct(vxtManager, is64Bit, C_struct, E_struct);
+		G1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(G1_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType H1_struct = createH1_struct(vxtManager, is64Bit, E_struct, C_struct);
+		H1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(H1_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType GG1_struct = createGG1_struct(vxtManager, is64Bit, CC1_struct);
+		GG1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(GG1_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType GG2_struct = createGG2_struct(vxtManager, is64Bit, CC2_struct);
+		GG2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(GG2_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType GG3_struct = createGG3_struct(vxtManager, is64Bit, CC2_struct);
+		GG3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(GG3_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType GG4_struct = createGG4_struct(vxtManager, is64Bit, CC3_struct);
+		GG4_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(GG4_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType I_struct =
+			createI_struct(vxtManager, is64Bit, G_struct, H_struct, C_struct);
+		I_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(I_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType I1_struct =
+			createI1_struct(vxtManager, is64Bit, G1_struct, H_struct, C_struct, E_struct);
+		I1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(I1_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType I2_struct =
+			createI2_struct(vxtManager, is64Bit, G_struct, H1_struct, C_struct, E_struct);
+		I2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(I2_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType I3_struct =
+			createI3_struct(vxtManager, is64Bit, G1_struct, H1_struct, E_struct, C_struct);
+		I3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(I3_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType I4_struct =
+			createI4_struct(vxtManager, is64Bit, G1_struct, E_struct, C_struct);
+		I4_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(I4_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType I5_struct =
+			createI5_struct(vxtManager, is64Bit, G1_struct, E_struct, C_struct);
+		I5_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(I5_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType J1_struct =
+			createJ1_struct(vxtManager, is64Bit, I1_struct, I2_struct, E_struct, C_struct);
+		J1_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(J1_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType J2_struct =
+			createJ2_struct(vxtManager, is64Bit, I2_struct, I1_struct, C_struct, E_struct);
+		J2_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(J2_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType J3_struct = createJ3_struct(vxtManager, is64Bit, I2_struct, I1_struct,
+			A_struct, C_struct, E_struct);
+		J3_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(J3_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		CppCompositeType J4_struct = createJ4_struct(vxtManager, is64Bit, I3_struct, GG1_struct,
+			I_struct, A_struct, GG2_struct, GG3_struct, C_struct, E_struct, CC1_struct, CC2_struct);
+		J4_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+		composite = (Composite) dtm.resolve(J4_struct.getComposite(), null);
+		CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+
+		expected = iter.next();
+		if (!expected.equals("NOT YET DETERMINED")) {
+			CppCompositeType J5_struct = createJ5_struct(vxtManager, is64Bit, I3_struct, GG1_struct,
+				I_struct, A_struct, GG2_struct, GG3_struct, C_struct, E_struct, CC1_struct,
+				CC2_struct);
+			J5_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+			composite = (Composite) dtm.resolve(J5_struct.getComposite(), null);
+			CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+		}
+
+		expected = iter.next();
+		if (!expected.equals("NOT YET DETERMINED")) {
+			CppCompositeType J6_struct = createJ6_struct(vxtManager, is64Bit, A_struct, GG4_struct,
+				GG3_struct, CC2_struct, CC3_struct);
+			J6_struct.createLayout(classLayoutChoice, vxtManager, TaskMonitor.DUMMY);
+			composite = (Composite) dtm.resolve(J6_struct.getComposite(), null);
+			CompositeTestUtils.assertExpectedComposite(this, expected, composite, true);
+		}
+
+	}
+
+	//==============================================================================================
+	//==============================================================================================
+
+	/**
+	 * Test struct J5 - 32 - syntactics
+	 * @throws Exception upon error
+	 */
 //	@Test
 	@Ignore
 	public void testJ5_32_syntactic_layout() throws Exception {
