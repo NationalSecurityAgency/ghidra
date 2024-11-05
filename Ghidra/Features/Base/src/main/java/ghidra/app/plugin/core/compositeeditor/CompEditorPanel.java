@@ -24,6 +24,7 @@ import java.awt.event.*;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.DefaultFormatterFactory;
 
@@ -36,6 +37,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.GThemeDefaults.Colors.Viewport;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
@@ -695,8 +697,18 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		packingPanel.add(packingEnablementButton);
 
 		JPanel innerPanel = new JPanel(new GridBagLayout());
-		innerPanel.setBorder(UIManager.getBorder("TitledBorder.border"));
+		Border titledBorder = UIManager.getBorder("TitledBorder.border");
+		innerPanel.setBorder(titledBorder);
 		packingPanel.add(innerPanel);
+
+		// Since we set the border manually, it does not get updated when switching LaFs.  Add a 
+		// theme listener to update the border ourselves.
+		Gui.addThemeListener(e -> {
+			if (e.isLookAndFeelChanged()) {
+				Border updatedTitledBorder = UIManager.getBorder("TitledBorder.border");
+				innerPanel.setBorder(updatedTitledBorder);
+			}
+		});
 
 		setupDefaultPackingButton();
 		setupExplicitPackingButtonAndTextField();

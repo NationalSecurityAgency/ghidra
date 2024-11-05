@@ -178,6 +178,7 @@ class SplitDatatype {
     bool backUpPointer(Datatype *impliedBase);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
   public:
     bool find(PcodeOp *op,Datatype *valueType);	///< Locate root pointer for underlying LOAD or STORE
+    void duplicateToTemp(Funcdata &data,PcodeOp *followOp);	///< COPY the root varnode into a temp register
     void freePointerChain(Funcdata &data);	///< Remove unused pointer calculations
   };
   Funcdata &data;			///< The containing function

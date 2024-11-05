@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,8 +94,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// look for the info panel
 		MultiLineLabel label = findComponent(panel, MultiLineLabel.class);
 		String str = "To add or change a key binding, select an action\n" +
-			"and type any key combination\n" + " \n" +
-			"To remove a key binding, select an action and\n" + "press <Enter> or <Backspace>";
+			"and type any key combination.";
 
 		assertEquals(str, label.getLabel());
 
@@ -239,18 +238,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action1);
 
-		typeKeyStroke(KeyEvent.VK_ENTER);
-		assertNoKeyStrokeText();
-
-		apply();
-		assertNull(getKeyStroke(action1));
-	}
-
-	@Test
-	public void testClearKeyBinding2() throws Exception {
-
-		selectRowForAction(action1);
-		typeBackspace();
+		pressButtonByName(panel, "Clear Key Binding");
 		assertNoKeyStrokeText();
 
 		apply();
@@ -290,7 +278,6 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action1);
 		typeKeyStroke(reservedKeystroke);
-
 		assertNoKeyStrokeText();
 		assertMessage("F4 in use by System action 'Set KeyBinding'");
 
@@ -313,7 +300,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		selectRowForAction(action1);
 		assertEquals(validKeyStroke, getKeyStroke(action1));
 
-		typeKeyStroke(reservedKeystroke.getKeyCode());
+		typeKeyStroke(reservedKeystroke);
 		assertNoKeyStrokeText();
 		assertMessage("F4 in use by System action 'Set KeyBinding'");
 
@@ -384,7 +371,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertMessage(systemKsText + " in use by System action 'Show Context Menu'");
 
 		selectRowForAction(systemAction);
-		typeBackspace();
+		pressButtonByName(panel, "Clear Key Binding");
 		apply();
 		assertEquals(null, getKeyStroke(systemAction));
 
@@ -420,11 +407,6 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertNoErrorMessage() {
 		assertMessage("");
-	}
-
-	private void typeBackspace() {
-		triggerBackspaceKey(keyField);
-		waitForSwing();
 	}
 
 	private void typeKeyStroke(KeyStroke ks) {

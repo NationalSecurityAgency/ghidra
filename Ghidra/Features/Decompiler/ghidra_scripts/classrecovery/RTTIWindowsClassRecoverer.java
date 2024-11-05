@@ -2009,16 +2009,16 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			for (RecoveredClass ancestor : ancestors) {
 				monitor.checkCancelled();
 
-				List<RecoveredClass> decendentList = ancestorToCommonChild.get(ancestor);
-				if (decendentList == null) {
-					List<RecoveredClass> newDecendentList = new ArrayList<RecoveredClass>();
-					newDecendentList.add(parentClass);
-					ancestorToCommonChild.put(ancestor, newDecendentList);
+				List<RecoveredClass> descendantList = ancestorToCommonChild.get(ancestor);
+				if (descendantList == null) {
+					List<RecoveredClass> newDescendantList = new ArrayList<RecoveredClass>();
+					newDescendantList.add(parentClass);
+					ancestorToCommonChild.put(ancestor, newDescendantList);
 				}
 				else {
-					if (!decendentList.contains(parentClass)) {
-						decendentList.add(parentClass);
-						ancestorToCommonChild.replace(ancestor, decendentList);
+					if (!descendantList.contains(parentClass)) {
+						descendantList.add(parentClass);
+						ancestorToCommonChild.replace(ancestor, descendantList);
 					}
 				}
 			}
@@ -2454,7 +2454,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		Map<RecoveredClass, Integer> parentOffsetMap = getBaseClassOffsetMap(recoveredClass);
 
-		return parentOffsetMap.get(virtualParentClasses.get(0));
+		if (parentOffsetMap != null) {
+			return parentOffsetMap.get(virtualParentClasses.get(0));
+		}
+
+		return null;
 
 	}
 

@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui;
 
+import java.awt.Component;
 import java.beans.PropertyEditor;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.test.AbstractDockingTest;
+import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.ValStr;
 import ghidra.framework.options.SaveState;
@@ -53,6 +55,11 @@ public class InvocationDialogHelper<P, D extends AbstractDebuggerParameterDialog
 	public void setArg(P param, Object value) {
 		PropertyEditor editor = dialog.getEditor(param);
 		runSwing(() -> editor.setValue(value));
+	}
+
+	public Component getEditorComponent(P param) {
+		PropertyEditor editor = dialog.getEditor(param);
+		return MiscellaneousUtils.getEditorComponent(editor);
 	}
 
 	protected void runSwing(Runnable r) {

@@ -9,6 +9,7 @@
 .launch/_PyGhidra GUI Debug.launch||GHIDRA||||END|
 .launch/_PyGhidra Interpreter Debug.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/python.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/PyGhidra/interpreter.html||GHIDRA||||END|

@@ -1,0 +1,63 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Functions that inline other functions
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+8d4732c3e8f7ffffff89c7e8f0ffffff
+c339f77c01c34883ec084889d7e8de0f
+00004883c408c35389fbba88001000be
+0a000000e8d8ffffffba8c001000be64
+00000089dfe8c7ffffff5bc34883ec08
+85f6751389f8c1e81f01c7d1ffe80b00
+00004883c408c38d7c7f01ebf089f883
+ff0174134883ec0889fe83e601e8caff
+ffff4883c408c3c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100088" readonly="true">
+  54454e0048554e4452454400
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="add50"/>
+<symbol space="ram" offset="0x100004" name="add100"/>
+<symbol space="ram" offset="0x100011" name="compare"/>
+<symbol space="ram" offset="0x100027" name="twohard"/>
+<symbol space="ram" offset="0x101000" name="puts"/>
+<symbol space="ram" offset="0x10004c" name="collatz1"/>
+<symbol space="ram" offset="0x10006d" name="collatz"/>
+</binaryimage>
+<script>
+  <com>parse line extern int4 add50(int4 a);</com>
+  <com>parse line extern int4 add100(int4 a);</com>
+  <com>parse line extern void compare(int4 a,int4 b,char *resp);</com>
+  <com>parse line extern void twohard(int4 x);</com>
+  <com>parse line extern void puts(char *msg);</com>
+  <com>parse line extern int4 collatz1(int4 a,int4 b);</com>
+  <com>parse line extern int4 collatz(int4 val);</com>
+  <com>option inline add50</com>
+  <com>option inline compare</com>
+  <com>option inline collatz1</com>
+  <com>option inline collatz</com>
+  <com>lo fu add100</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu twohard</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu collatz</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Inlining #1" min="1" max="1">return a \+ 100;</stringmatch>
+<stringmatch name="Inlining #2" min="1" max="1">if \(x &lt; 10\)</stringmatch>
+<stringmatch name="Inlining #3" min="1" max="1">puts\("TEN"\);</stringmatch>
+<stringmatch name="Inlining #4" min="1" max="1">compare\(x,100,"HUNDRED"\);</stringmatch>
+<stringmatch name="Inlining #5" min="1" max="1">if \(\(val &amp; 1U\)</stringmatch>
+<stringmatch name="Inlining #6" min="1" max="1">val = val / 2;</stringmatch>
+<stringmatch name="Inlining #7" min="1" max="1">val = val \* 3 \+ 1;</stringmatch>
+<stringmatch name="Inlining #8" min="1" max="1">= collatz\(val\);</stringmatch>
+<stringmatch name="Inlining #9" min="2" max="2">WARNING: Could not inline here</stringmatch>
+<stringmatch name="Inlining #10" min="1" max="1">WARNING: Inlined function: add50</stringmatch>
+<stringmatch name="Inlining #11" min="1" max="1">WARNING: Inlined function: compare</stringmatch>
+<stringmatch name="Inlining #12" min="1" max="1">WARNING: Inlined function: collatz1</stringmatch>
+</decompilertest>

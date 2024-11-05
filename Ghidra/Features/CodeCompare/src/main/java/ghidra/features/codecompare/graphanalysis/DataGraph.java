@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -325,13 +325,17 @@ public class DataGraph {
 	private void removeInEdge(DataVertex node, int inEdge) {
 		DataVertex inNode = node.sources.get(inEdge);
 		int outEdge;
-		for (outEdge = 0; outEdge < inNode.sinks.size(); ++outEdge) {
+		for (outEdge = 0; outEdge < inNode.sinks.size(); outEdge++) {
 			if (inNode.sinks.get(outEdge) == node) {
 				break;
 			}
 		}
 		node.sources.remove(inEdge);
-		inNode.sinks.remove(outEdge);
+
+		int n = inNode.sinks.size();
+		if (n != 0) {
+			inNode.sinks.remove(outEdge);
+		}
 	}
 
 	/**

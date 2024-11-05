@@ -2,6 +2,7 @@
 ##MODULE IP: Jython License
 ##MODULE IP: LGPL 2.1
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/jython.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/Jython/interpreter.html||GHIDRA||||END|

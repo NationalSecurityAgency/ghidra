@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 src/main/java/ghidra/framework/client/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/framework/store/db/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/framework/store/local/package.html||GHIDRA||reviewed||END|

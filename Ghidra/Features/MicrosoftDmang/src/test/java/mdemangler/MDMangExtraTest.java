@@ -56,6 +56,28 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals("k::j::i", qualifications.get(2).toString());
 	}
 
+	// Backref used in parentage
+	@Test
+	public void testVxTableNestedQualificationWithBackref() throws Exception {
+		String mangled = "??_7a@b@@6B01@@";
+		String truth = "const b::a::`vftable'{for `b::a'}";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setDemangleOnlyKnownPatterns(true);
+		MDParsableItem item = demangler.demangle();
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		MDObjectCPP cppItem = (MDObjectCPP) item;
+		MDVxTable vxTable = (MDVxTable) cppItem.getTypeInfo();
+		List<MDQualification> qualifications = vxTable.getNestedQualifications();
+		assertEquals(1, qualifications.size());
+		assertEquals("b::a", qualifications.get(0).toString());
+	}
+
 	// Need to test the demangleType() method to make sure it does the retry with LLVM mode
 	@Test
 	public void testDemangleTypeWithRetry() throws Exception {

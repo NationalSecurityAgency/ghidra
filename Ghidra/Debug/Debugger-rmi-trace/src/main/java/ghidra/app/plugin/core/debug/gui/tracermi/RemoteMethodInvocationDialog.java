@@ -130,10 +130,19 @@ public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialo
 			ConfigStateField.getState(state, parameterType(parameter), key));
 	}
 
+	protected ValStr<?> forMissingDefault(RemoteParameter param) {
+		Class<?> type = parameterType(param);
+		if (type == Boolean.class || type == boolean.class) {
+			return ValStr.from(false);
+		}
+		return new ValStr<>(null, "");
+	}
+
 	@Override
 	protected void setEditorValue(PropertyEditor editor, RemoteParameter param, ValStr<?> val) {
 		ValStr<?> v = switch (val.val()) {
-			case Missing __ -> new ValStr<>(null, "");
+			case null -> forMissingDefault(param);
+			case Missing __ -> forMissingDefault(param);
 			case TraceObject obj -> new ValStr<>(obj, obj.getCanonicalPath().toString());
 			default -> val;
 		};

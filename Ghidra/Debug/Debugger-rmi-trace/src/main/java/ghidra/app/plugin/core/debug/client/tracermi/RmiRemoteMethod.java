@@ -19,14 +19,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 import ghidra.dbg.target.TargetMethod;
+import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.rmi.trace.TraceRmi.Value;
 
 public class RmiRemoteMethod {
-	
+
 	private final SchemaContext schemaContext;
 	private String name;
 	private String action;
@@ -37,7 +35,8 @@ public class RmiRemoteMethod {
 	private RmiMethods instance;
 	private Method m;
 
-	public RmiRemoteMethod(SchemaContext schemaContext, String name, String action, String display, String description, TargetObjectSchema schema, RmiMethods instance, Method m) {
+	public RmiRemoteMethod(SchemaContext schemaContext, String name, String action, String display,
+			String description, TargetObjectSchema schema, RmiMethods instance, Method m) {
 		this.schemaContext = schemaContext;
 		this.name = name;
 		this.action = action;
@@ -46,52 +45,21 @@ public class RmiRemoteMethod {
 		this.params = new RmiRemoteMethodParameter[m.getParameterCount()];
 		this.schema = schema;
 		this.instance = instance;
-		this.m = m;		
-		
+		this.m = m;
+
 		int i = 0;
 		for (Parameter p : m.getParameters()) {
-			TargetObjectSchema pschema = getSchemaFromParameter(p);
-			String pname = p.getName(); // NB: don't change this unless yuou resolve the ordering issues
-			String pdesc = pname;
-			String pdisp = pname;
-			if (i == 0) {
-				RmiMethodRegistry.TraceMethod annot = m.getAnnotation(RmiMethodRegistry.TraceMethod.class);
-				if (annot != null) {
-					pschema = schemaContext.getSchema(new SchemaName(annot.schema()));
-				}
-				pdisp = "Object";
+			ParameterDescription<?> desc = TargetMethod.ParameterDescription.annotated(p);
+			TargetObjectSchema pschema;
+			if (desc.type != RmiTraceObject.class) {
+				pschema = EnumerableTargetObjectSchema.schemaForPrimitive(desc.type);
 			}
-			Value pdef = null;
-			TargetMethod.Param pannot = p.getAnnotation(TargetMethod.Param.class);
-			if (pannot != null) {
-				pdesc = pannot.description();
-				pdisp = pannot.display();
+			else {
+				pschema = schemaContext.getSchema(new SchemaName(desc.schema));
 			}
-			boolean required = i != 0;
-			params[i++] = new RmiRemoteMethodParameter(pname, pschema, required, pdef, pdisp, pdesc);
+			params[i++] = new RmiRemoteMethodParameter(desc.name, pschema, desc.required,
+				desc.defaultValue, desc.display, desc.description);
 		}
-	}
-
-	private TargetObjectSchema getSchemaFromParameter(Parameter p) {
-		if (p.getAnnotatedType().getType().equals(String.class)) {
-			 return EnumerableTargetObjectSchema.STRING;
-		}
-		if (p.getAnnotatedType().getType().equals(Boolean.class)) {
-			 return EnumerableTargetObjectSchema.BOOL;
-		}
-		if (p.getAnnotatedType().getType().equals(Integer.class)) {
-			 return EnumerableTargetObjectSchema.INT;
-		}
-		if (p.getAnnotatedType().getType().equals(Long.class)) {
-			 return EnumerableTargetObjectSchema.LONG;
-		}
-		if (p.getAnnotatedType().getType().equals(Address.class)) {
-			 return EnumerableTargetObjectSchema.ADDRESS;
-		}
-		if (p.getAnnotatedType().getType().equals(AddressRange.class)) {
-			 return EnumerableTargetObjectSchema.RANGE;
-		}
-		 return EnumerableTargetObjectSchema.ANY;
 	}
 
 	public String getName() {
@@ -125,5 +93,4 @@ public class RmiRemoteMethod {
 	public RmiMethods getContainer() {
 		return instance;
 	}
-
 }

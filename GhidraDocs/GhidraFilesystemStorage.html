@@ -101,7 +101,7 @@
 		
 		<H2>Indexed Filesystem (current)</H2>
 		
-		<P>This filesystem overcomes the project file-path length limitations inherent to the legacy Managled Filesystem and
+		<P>This filesystem overcomes the project file-path length limitations inherent to the legacy Mangled Filesystem and
 		utilizes an index file to store project file-paths and the corresponding 8-digit hexadecimal identifier for
 		each
 		(e.g., <I>00001234.prp</I> / <I>~00001234.db</I>).  The following files are used to manage the filesystem content
@@ -127,7 +127,7 @@
 		<P><B>Locating Project File Storage</B> - Locating individual project files on disk requires interpretation of
 		the index file (<I>~index.dat</I>) and traversing the numbered storage folders appropriately.  When locating a project
 		file within the index it is important to know both the full Ghidra project directory path and project filename.
-		If project filename are unique you can simply search for the filename within the index, otherwise you will have 
+		If the project filename is unique you can simply search for the filename within the index, otherwise you will have 
 		to search for project folder path first.  Sample <I>~index.dat</I> file:</P>
 		
 		<PRE>	
@@ -194,8 +194,8 @@ MD5:d41d8cd98f00b204e9800998ecf8427e
 		trouble ticket.<P> 
 		
 		<P>As discussed for each filesystem above, the specific <I>*.prp</I> file and <I>~*.db/</I> directory should be 
-		identified and copied for triage.  Keep a copy will enable triage and may enable restoring the file in the 
-		future if poossible.  Once this file and corresponding directory have been copied they may be removed from the filesystem.
+		identified and copied for triage.  Keeping a copy will enable triage and may enable restoring the file in the 
+		future if possible.  Once this file and corresponding directory have been copied they may be removed from the filesystem.
 		For the indexed filesystem case the index related files can be deleted which will trigger a rebuild of the index
 		(see Indexed Filesystem above).
 

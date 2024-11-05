@@ -175,6 +175,27 @@ OpCode TypeOp::floatSignManipulation(PcodeOp *op)
   return CPUI_MAX;
 }
 
+/// \brief Propagate a dereferenced data-type up to its pointer data-type
+///
+/// Don't create more than a depth of 1, i.e. ptr->ptr
+/// \param pt is the pointed-to data-type
+/// \param sz is the size of the pointer
+/// \param wordsz is the wordsize associated with the pointer
+/// \return the TypePointer object
+Datatype *TypeOp::propagateToPointer(TypeFactory *t,Datatype *dt,int4 sz,int4 wordsz)
+
+{
+  type_metatype meta = dt->getMetatype();
+  if (meta==TYPE_PTR) {
+    // Make sure that at least we return a pointer to something the size of -pt-
+    dt = t->getBase(dt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
+  }
+  else if (meta == TYPE_PARTIALSTRUCT) {
+    dt = ((TypePartialStruct *)dt)->getComponentForPtr();
+  }
+  return t->getTypePointer(sz,dt,wordsz);
+}
+
 /// \param t is the TypeFactory used to construct data-types
 /// \param opc is the op-code value the new object will represent
 /// \param n is the display name that will represent the op-code
@@ -440,7 +461,7 @@ Datatype *TypeOpLoad::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,
   Datatype *newtype;
   if (inslot == -1) {	 // Propagating output to input (value to ptr)
     AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
-    newtype = tlst->getTypePointerNoDepth(outvn->getSize(),alttype,spc->getWordSize());
+    newtype = propagateToPointer(tlst,alttype,outvn->getSize(),spc->getWordSize());
   }
   else if (alttype->getMetatype()==TYPE_PTR) {
     newtype = ((TypePointer *)alttype)->getPtrTo();
@@ -515,7 +536,7 @@ Datatype *TypeOpStore::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn
   Datatype *newtype;
   if (inslot==2) {		// Propagating value to ptr
     AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
-    newtype = tlst->getTypePointerNoDepth(outvn->getSize(),alttype,spc->getWordSize());
+    newtype = propagateToPointer(tlst,alttype,outvn->getSize(),spc->getWordSize());
   }
   else if (alttype->getMetatype()==TYPE_PTR) {
     newtype = ((TypePointer *)alttype)->getPtrTo();

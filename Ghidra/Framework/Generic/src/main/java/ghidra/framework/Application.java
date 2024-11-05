@@ -830,6 +830,7 @@ public class Application {
 	/**
 	 * Returns a collection of module library directories. Library directories are optional for a module.
 	 * @return a collection of module library directories.
+	 * @see ModuleUtilities#getModuleLibDirectories(Collection)
 	 */
 	public static Collection<ResourceFile> getLibraryDirectories() {
 		checkAppInitialized();

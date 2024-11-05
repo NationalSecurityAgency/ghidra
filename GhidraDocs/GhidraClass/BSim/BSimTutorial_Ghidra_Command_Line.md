@@ -18,7 +18,7 @@ To build the files, execute the following commands in a shell: [^1]
 ```bash
 cd <ghidra_install_dir>/Features/BSim
 export CFLAGS="-O2 -g"
-./make-postgres.sh
+./support/make-postgres.sh
 mkdir ~/postgres_object_files
 cd build
 find . -name p*o -size +100000c -size -700000c -exec cp {} ~/postgres_object_files/ \;

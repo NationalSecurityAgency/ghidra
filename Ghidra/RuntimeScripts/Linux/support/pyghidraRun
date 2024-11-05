@@ -28,6 +28,6 @@ if [ ! -d "${INSTALL_DIR}/Ghidra" ]; then
 	INSTALL_DIR="${SCRIPT_DIR}/../../../.."
 fi
 
-PYGHIDRA_LAUNCHER="${INSTALL_DIR}/Ghidra/Features/PyGhidra/pyghidra_launcher.py"
+PYGHIDRA_LAUNCHER="${INSTALL_DIR}/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py"
 
 python3 "${PYGHIDRA_LAUNCHER}" "${INSTALL_DIR}" ${DEV_ARG} ${VMARG_LIST} "$@"

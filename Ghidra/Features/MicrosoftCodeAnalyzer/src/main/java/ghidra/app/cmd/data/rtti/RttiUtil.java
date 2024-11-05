@@ -78,16 +78,21 @@ public class RttiUtil {
 		if (matchingSymbol != null) {
 			return false;
 		}
-		// Don't create it if a similar symbol already exists at the address of the data.
-		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
-		for (Symbol symbol : symbols) {
-			String name = symbol.getName();
-			if (name.contains(rttiSuffix)) {
-				return false; // Similar symbol already exists.
-			}
-		}
-		try {
 
+		// NOTE: This code was originally put here to skip applying labels the pdb put down if the
+		// above check failed but symbols were similar. This check has been removed because of
+		// cases where this check stopped the full namespace path  from being created. The code is 
+		// here commented out because we might want to use this to do extra checking and possibly 
+		// remove the similar symbol instead of leaving it as a secondary symbol. 
+		// Don't create it if a similar symbol already exists at the address of the data.
+//		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
+//		for (Symbol symbol : symbols) {
+//			String name = symbol.getName();
+//			if (name.contains(rttiSuffix)) {
+//				return false; // Similar symbol already exists.
+//			}
+//		}
+		try {
 			// Ignore imported mangled symbol because demangling would add tick marks into the name.  
 			// The name created here is better. Set the symbol to be primary so that the demangler 
 			// won't demangle.

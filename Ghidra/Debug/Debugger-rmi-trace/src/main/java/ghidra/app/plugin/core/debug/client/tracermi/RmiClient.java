@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.debug.client.tracermi;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Parameter;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.*;
 
 import org.jdom.JDOMException;
 
@@ -37,18 +37,51 @@ import ghidra.rmi.trace.TraceRmi.Language;
 import ghidra.rmi.trace.TraceRmi.Value.Builder;
 import ghidra.trace.model.Lifespan;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 public class RmiClient {
+
+	static class RequestResult extends CompletableFuture<Object> {
+		public final RootMessage request;
+
+		public RequestResult(RootMessage req) {
+			this.request = req;
+		}
+
+		@Override
+		public Object get() throws InterruptedException, ExecutionException {
+			if (Swing.isSwingThread()) {
+				throw new AssertionError("Refusing indefinite wait on Swing thread");
+			}
+			return super.get();
+		}
+
+		@Override
+		public Object get(long timeout, TimeUnit unit)
+				throws InterruptedException, ExecutionException, TimeoutException {
+			if (Swing.isSwingThread() && unit.toSeconds(timeout) > 1) {
+				throw new AssertionError("Refusing a timeout > 1 second on Swing thread");
+			}
+			return super.get(timeout, unit);
+		}
+	}
+
+	public static class RmiException extends RuntimeException {
+		public RmiException(String message) {
+			super(message);
+		}
+	}
+
 	private final ProtobufSocket<RootMessage> socket;
 	private final String description;
 	private int nextTraceId = 0;
-	private RmiBatch currentBatch = null;
+	private volatile RmiBatch currentBatch = null;
 
 	Map<Integer, RmiTrace> traces = new HashMap<>();
 	private SchemaContext schemaContext;
-	private RmiMethodHandlerThread handler;
+	private RmiReplyHandlerThread handler;
 	private static RmiMethodRegistry methodRegistry;
-	private Deque<RootMessage> requests = new LinkedList<>();
+	private Deque<RequestResult> requests = new LinkedList<>();
 
 	public static TargetObjectSchema loadSchema(String resourceName, String rootName) {
 		XmlSchemaContext schemaContext;
@@ -64,19 +97,10 @@ public class RmiClient {
 		}
 	}
 
-//	public static TargetObjectSchema getSchema(String name) {
-//		try {
-//			return SCHEMA_CTX.getSchema(new SchemaName(name));
-//		} catch (NullPointerException e) {
-//			System.err.println("Possibly non-existent schema: "+name);
-//			return SCHEMA_CTX.getSchema(new SchemaName("OBJECT"));
-//		}
-//	}
-
 	public static enum TraceRmiResolution {
-		RES_ADJUST("adjust", Resolution.CR_ADJUST), //
-		RES_DENY("deny", Resolution.CR_DENY), //
-		RES_TRUNCATE("truncate", Resolution.CR_TRUNCATE), //
+		RES_ADJUST("adjust", Resolution.CR_ADJUST),
+		RES_DENY("deny", Resolution.CR_DENY),
+		RES_TRUNCATE("truncate", Resolution.CR_TRUNCATE),
 		;
 
 		TraceRmiResolution(String val, TraceRmi.Resolution description) {
@@ -89,9 +113,9 @@ public class RmiClient {
 	}
 
 	public static enum TraceRmiValueKinds {
-		ATTRIBUTES("attributes", ValueKinds.VK_ATTRIBUTES), //
-		ELEMENTS("elements", ValueKinds.VK_ELEMENTS), //
-		BOTH("both", ValueKinds.VK_BOTH), //
+		ATTRIBUTES("attributes", ValueKinds.VK_ATTRIBUTES),
+		ELEMENTS("elements", ValueKinds.VK_ELEMENTS),
+		BOTH("both", ValueKinds.VK_BOTH),
 		;
 
 		TraceRmiValueKinds(String val, TraceRmi.ValueKinds description) {
@@ -106,16 +130,12 @@ public class RmiClient {
 	public RmiClient(SocketChannel channel, String description) {
 		this.socket = new ProtobufSocket<>(channel, RootMessage::parseFrom);
 		this.description = description;
-		this.handler = new RmiMethodHandlerThread(this, socket);
+		this.handler = new RmiReplyHandlerThread(this, socket);
 		handler.start();
 	}
 
-	public ProtobufSocket<RootMessage> getSocket() {
-		return socket;
-	}
-
 	public String getDescription() {
-		return description;
+		return description + " at " + socket.getRemoteAddress();
 	}
 
 	public void close() {
@@ -123,10 +143,18 @@ public class RmiClient {
 		socket.close();
 	}
 
-	private void send(RootMessage msg) {
+	private RequestResult send(RootMessage msg) {
 		try {
-			requests.push(msg);
-			socket.send(msg);
+			RequestResult result = new RequestResult(msg);
+			synchronized (requests) {
+				socket.send(msg);
+				requests.push(result);
+			}
+			RmiBatch cb = currentBatch;
+			if (cb != null) {
+				cb.append(result);
+			}
+			return result;
 		}
 		catch (IOException e) {
 			throw new RuntimeException(e);
@@ -137,12 +165,11 @@ public class RmiClient {
 		if (compiler == null) {
 			compiler = new CompilerSpecID("default");
 		}
-		RmiTrace trace = new RmiTrace(this, nextTraceId);
-		traces.put(nextTraceId, trace);
-		send(RootMessage.newBuilder()
+		int traceId = nextTraceId++;
+		RequestResult result = send(RootMessage.newBuilder()
 				.setRequestCreateTrace(RequestCreateTrace.newBuilder()
 						.setOid(DomObjId.newBuilder()
-								.setId(nextTraceId++))
+								.setId(traceId))
 						.setLanguage(Language.newBuilder()
 								.setId(language.getIdAsString()))
 						.setCompiler(Compiler.newBuilder()
@@ -150,6 +177,8 @@ public class RmiClient {
 						.setPath(FilePath.newBuilder()
 								.setPath(path)))
 				.build());
+		RmiTrace trace = new RmiTrace(this, traceId, result);
+		traces.put(traceId, trace);
 		return trace;
 	}
 
@@ -159,6 +188,7 @@ public class RmiClient {
 						.setOid(DomObjId.newBuilder()
 								.setId(id)))
 				.build());
+		traces.remove(id);
 	}
 
 	public void saveTrace(int id) {
@@ -248,7 +278,7 @@ public class RmiClient {
 						.setRange(AddrRange.newBuilder()
 								.setSpace(range.getAddressSpace().getName())
 								.setOffset(range.getMinAddress().getOffset())
-								.setExtend(range.getLength())))
+								.setExtend(range.getLength() - 1)))
 				.build());
 	}
 
@@ -279,7 +309,7 @@ public class RmiClient {
 				.setSpace(ppath);
 		for (int i = 0; i < names.length; i++) {
 			String name = names[i];
-			builder.setNames(i, name);
+			builder.addNames(name);
 		}
 		send(RootMessage.newBuilder()
 				.setRequestDeleteRegisterValue(builder)
@@ -298,9 +328,8 @@ public class RmiClient {
 				.build());
 	}
 
-	public void createObject(int traceId, String path) {
-		//System.err.println("createObject:"+path);
-		send(RootMessage.newBuilder()
+	RequestResult createObject(int traceId, String path) {
+		return send(RootMessage.newBuilder()
 				.setRequestCreateObject(RequestCreateObject.newBuilder()
 						.setOid(DomObjId.newBuilder()
 								.setId(traceId))
@@ -323,12 +352,13 @@ public class RmiClient {
 				.build());
 	}
 
-	public void insertObject(int traceId, ObjSpec object, Lifespan span, Resolution r) {
+	public void insertObject(int traceId, long id, Lifespan span, Resolution r) {
 		send(RootMessage.newBuilder()
 				.setRequestInsertObject(RequestInsertObject.newBuilder()
 						.setOid(DomObjId.newBuilder()
 								.setId(traceId))
-						.setObject(object)
+						.setObject(ObjSpec.newBuilder()
+								.setId(id))
 						.setSpan(Span.newBuilder()
 								.setMin(span.lmin())
 								.setMax(span.lmax()))
@@ -336,12 +366,28 @@ public class RmiClient {
 				.build());
 	}
 
-	public void removeObject(int traceId, ObjSpec object, Lifespan span, boolean tree) {
+	public void removeObject(int traceId, String path, Lifespan span, boolean tree) {
 		send(RootMessage.newBuilder()
 				.setRequestRemoveObject(RequestRemoveObject.newBuilder()
 						.setOid(DomObjId.newBuilder()
 								.setId(traceId))
-						.setObject(object)
+						.setObject(ObjSpec.newBuilder()
+								.setPath(ObjPath.newBuilder()
+										.setPath(path)))
+						.setSpan(Span.newBuilder()
+								.setMin(span.lmin())
+								.setMax(span.lmax()))
+						.setTree(tree))
+				.build());
+	}
+
+	public void removeObject(int traceId, long id, Lifespan span, boolean tree) {
+		send(RootMessage.newBuilder()
+				.setRequestRemoveObject(RequestRemoveObject.newBuilder()
+						.setOid(DomObjId.newBuilder()
+								.setId(traceId))
+						.setObject(ObjSpec.newBuilder()
+								.setId(id))
 						.setSpan(Span.newBuilder()
 								.setMin(span.lmin())
 								.setMax(span.lmax()))
@@ -389,19 +435,18 @@ public class RmiClient {
 	}
 
 	public void getObject(int traceId, String path) {
-		RequestGetObject.Builder builder = RequestGetObject.newBuilder()
-				.setOid(DomObjId.newBuilder()
-						.setId(traceId))
-				.setObject(ObjSpec.newBuilder()
-						.setPath(ObjPath.newBuilder()
-								.setPath(path)));
 		send(RootMessage.newBuilder()
-				.setRequestGetObject(builder)
+				.setRequestGetObject(RequestGetObject.newBuilder()
+						.setOid(DomObjId.newBuilder()
+								.setId(traceId))
+						.setObject(ObjSpec.newBuilder()
+								.setPath(ObjPath.newBuilder()
+										.setPath(path))))
 				.build());
 	}
 
-	public void getValues(int traceId, Lifespan span, String pattern) {
-		send(RootMessage.newBuilder()
+	RequestResult getValues(int traceId, Lifespan span, String pattern) {
+		return send(RootMessage.newBuilder()
 				.setRequestGetValues(RequestGetValues.newBuilder()
 						.setOid(DomObjId.newBuilder()
 								.setId(traceId))
@@ -412,9 +457,9 @@ public class RmiClient {
 				.build());
 	}
 
-	public void getValuesIntersecting(int traceId, Lifespan span, AddressRange range,
+	RequestResult getValuesIntersecting(int traceId, Lifespan span, AddressRange range,
 			String key) {
-		send(RootMessage.newBuilder()
+		return send(RootMessage.newBuilder()
 				.setRequestGetValuesIntersecting(RequestGetValuesIntersecting.newBuilder()
 						.setOid(DomObjId.newBuilder()
 								.setId(traceId))
@@ -445,6 +490,9 @@ public class RmiClient {
 	@SuppressWarnings("unchecked")
 	private Builder buildValue(Object value) {
 		Builder builder = Value.newBuilder();
+		if (value == null) {
+			return builder.setNullValue(Null.newBuilder());
+		}
 		if (value instanceof String str) {
 			return builder.setStringValue(str);
 		}
@@ -497,7 +545,11 @@ public class RmiClient {
 				return builder.setBoolArrValue(b.build());
 			}
 			if (list.get(0) instanceof Short) {
-				ShortArr.Builder b = ShortArr.newBuilder().addAllArr((List<Integer>) list);
+				List<Integer> newList = new ArrayList<>();
+				for (Object object : list) {
+					newList.add(((Short) object).intValue());
+				}
+				ShortArr.Builder b = ShortArr.newBuilder().addAllArr(newList);
 				return builder.setShortArrValue(b.build());
 			}
 			if (list.get(0) instanceof Integer) {
@@ -570,12 +622,12 @@ public class RmiClient {
 				.setDisplay(param.getDisplay())
 				.setDescription(param.getDescription())
 				.setType(param.getType())
-				.setDefaultValue(param.getDefaultValue())
+				.setDefaultValue(buildValue(param.getDefaultValue()))
 				.setRequired(param.isRequired())
 				.build();
 	}
 
-	public void handleInvokeMethod(int traceId, XRequestInvokeMethod req) {
+	public XReplyInvokeMethod handleInvokeMethod(int traceId, XRequestInvokeMethod req) {
 		RmiRemoteMethod rm = getMethod(req.getName());
 		Object[] arglist = new Object[req.getArgumentsCount()];
 		java.lang.reflect.Method m = rm.getMethod();
@@ -585,57 +637,50 @@ public class RmiClient {
 			argmap.put(arg.getName(), arg);
 		}
 		int i = 0;
-		for (Parameter p : m.getParameters()) {
+		for (RmiRemoteMethodParameter p : rm.getParameters()) {
 			MethodArgument arg = argmap.get(p.getName());
 			if (arg != null) {
-				Object obj = argToObject(traceId, arg);
+				Object obj = argToObject(traceId, arg.getValue());
 				arglist[i++] = obj;
 			}
 		}
 		try {
 			Object ret = m.invoke(rm.getContainer(), arglist);
 			if (ret != null) {
-				socket.send(RootMessage.newBuilder()
-						.setXreplyInvokeMethod(XReplyInvokeMethod.newBuilder()
-								.setReturnValue(buildValue(ret)))
-						.build());
+				return XReplyInvokeMethod.newBuilder()
+						.setReturnValue(buildValue(ret))
+						.build();
 			}
+			return XReplyInvokeMethod.newBuilder()
+					.setReturnValue(buildValue(true))
+					.build();
 		}
-		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| IOException e) {
+		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			String message = e.getMessage();
 			if (message != null) {
-				Msg.error(this, message);
-				try {
-					socket.send(RootMessage.newBuilder()
-							.setXreplyInvokeMethod(
-								XReplyInvokeMethod.newBuilder().setError(message))
-							.build());
-				}
-				catch (IOException e1) {
-					Msg.error(this, e1.getMessage());
-				}
+				Msg.error(this, "Error handling method invocation:" + message);
+				return XReplyInvokeMethod.newBuilder()
+						.setError(message)
+						.build();
 			}
+			return XReplyInvokeMethod.newBuilder()
+					.setError(e.toString())
+					.build();
 		}
-
 	}
 
-	private Object argToObject(int traceId, MethodArgument arg) {
-		if (arg == null) {
-			throw new RuntimeException("Null argument passed to argToObject");
-		}
-		Value value = arg.getValue();
+	Object argToObject(int traceId, Value value) {
 		if (value.hasStringValue()) {
 			return value.getStringValue();
 		}
 		if (value.hasStringArrValue()) {
-			return value.getStringArrValue();
+			return value.getStringArrValue().getArrList();
 		}
 		if (value.hasBoolValue()) {
 			return value.getBoolValue();
 		}
 		if (value.hasBoolArrValue()) {
-			return value.getBoolArrValue();
+			return value.getBoolArrValue().getArrList();
 		}
 		if (value.hasCharValue()) {
 			return value.getCharValue();
@@ -647,19 +692,19 @@ public class RmiClient {
 			return value.getShortValue();
 		}
 		if (value.hasShortArrValue()) {
-			return value.getShortArrValue();
+			return value.getShortArrValue().getArrList();
 		}
 		if (value.hasIntValue()) {
 			return value.getIntValue();
 		}
 		if (value.hasIntArrValue()) {
-			return value.getIntArrValue();
+			return value.getIntArrValue().getArrList();
 		}
 		if (value.hasLongValue()) {
 			return value.getLongValue();
 		}
 		if (value.hasLongArrValue()) {
-			return value.getLongArrValue();
+			return value.getLongArrValue().getArrList();
 		}
 		if (value.hasAddressValue()) {
 			return decodeAddr(traceId, value.getAddressValue());
@@ -681,6 +726,61 @@ public class RmiClient {
 		return proxyObjectPath(traceId, path);
 	}
 
+	String argToType(Value value) {
+		if (value.hasStringValue()) {
+			return "STRING";
+		}
+		if (value.hasStringArrValue()) {
+			return "STRING_ARR";
+		}
+		if (value.hasBoolValue()) {
+			return "BOOL";
+		}
+		if (value.hasBoolArrValue()) {
+			return "BOOL_ARR";
+		}
+		if (value.hasCharValue()) {
+			return "CHAR";
+		}
+		if (value.hasCharArrValue()) {
+			return "CHAR_ARR";
+		}
+		if (value.hasShortValue()) {
+			return "SHORT";
+		}
+		if (value.hasShortArrValue()) {
+			return "SHORT_ARR";
+		}
+		if (value.hasIntValue()) {
+			return "INT";
+		}
+		if (value.hasIntArrValue()) {
+			return "INT_ARR";
+		}
+		if (value.hasLongValue()) {
+			return "LONG";
+		}
+		if (value.hasLongArrValue()) {
+			return "LONG_ARR";
+		}
+		if (value.hasAddressValue()) {
+			return "ADDRESS";
+		}
+		if (value.hasRangeValue()) {
+			return "RANGE";
+		}
+		if (value.hasByteValue()) {
+			return "BYTE";
+		}
+		if (value.hasBytesValue()) {
+			return "BYTE_ARR";
+		}
+		if (value.hasNullValue()) {
+			return "NULL";
+		}
+		return "OBJECT";
+	}
+
 	private Address decodeAddr(int id, Addr addr) {
 		RmiTrace trace = traces.get(id);
 		return trace.memoryMapper.genAddr(addr.getSpace(), addr.getOffset());
@@ -700,32 +800,33 @@ public class RmiClient {
 		return methodRegistry.getMap().get(name);
 	}
 
-	public Object startBatch() {
+	public RmiBatch startBatch() {
 		if (currentBatch == null) {
-			currentBatch = new RmiBatch();
+			currentBatch = new RmiBatch(this);
 		}
 		currentBatch.inc();
 		return currentBatch;
 	}
 
-	public Object endBatch() {
-		RmiBatch cb = null;
-		if (0 == currentBatch.dec()) {
-			cb = currentBatch;
+	boolean hasBatch() {
+		return currentBatch != null;
+	}
+
+	void endBatch(RmiBatch batch) throws InterruptedException, ExecutionException {
+		if (currentBatch.dec() == 0) {
+			RmiBatch cb = currentBatch;
 			currentBatch = null;
+			cb.results();
 		}
-		if (cb != null) {
-			return cb.results();
-		}
-		return null;
 	}
 
 	public TargetObjectSchema getSchema(String schema) {
 		return schemaContext.getSchema(new SchemaName(schema));
 	}
 
-	public RootMessage getRequestsPoll() {
-		return requests.poll();
+	public RequestResult pollRequest() {
+		synchronized (requests) {
+			return requests.poll();
+		}
 	}
-
 }

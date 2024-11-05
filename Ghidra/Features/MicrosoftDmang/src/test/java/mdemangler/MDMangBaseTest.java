@@ -4655,6 +4655,15 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	// Backref used in parentage
+	@Test
+	public void testUnderscore7f() throws Exception {
+		mangled = "??_7a@b@@6B01@@";
+		msTruth = "const b::a::`vftable'{for `b::a'}";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
 	@Test
 	public void testSpecialNames_R() throws Exception {
 		mangled = "??_R0X@8";

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,6 +93,18 @@ public class LocationReferenceContext {
 	}
 
 	/**
+	 * Returns text that is helpful for debugging, such as printing to a console.
+	 * @return the text
+	 */
+	public String getDebugText() {
+		StringBuilder buffy = new StringBuilder();
+		for (Part part : parts) {
+			buffy.append(part.getDebugText());
+		}
+		return buffy.toString();
+	}
+
+	/**
 	 * Returns HTML text for this context.  Any matching items embedded in the returned string will
 	 * be bold.
 	 * @return the text
@@ -142,7 +154,7 @@ public class LocationReferenceContext {
 
 		abstract String getHtmlText();
 
-		abstract String getText(String start, String end);
+		abstract String getDebugText();
 
 		static String fixBreakingSpaces(String s) {
 			String updated = s.replaceAll("\\s", "&nbsp;");
@@ -165,8 +177,8 @@ public class LocationReferenceContext {
 		}
 
 		@Override
-		String getText(String start, String end) {
-			return text; // we don't decorate
+		String getDebugText() {
+			return text;
 		}
 
 		@Override
@@ -187,8 +199,8 @@ public class LocationReferenceContext {
 		}
 
 		@Override
-		String getText(String start, String end) {
-			return start + text + end;
+		String getDebugText() {
+			return " [[ " + text + " ]] ";
 		}
 
 		@Override
