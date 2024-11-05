@@ -207,8 +207,13 @@ public class HelpBuildUtils {
 
 		ResourceFile file = null;
 		if (SystemUtilities.isInDevelopmentMode()) {
-			// example: "docs/WhatsNew.html", which lives in a source dir in dev mode
+			// Look for HTML files that live in global docs dir, such as 'docs/README_PDB.html'.
 			file = findModuleFile("src/global/" + updatedPath);
+			if (file == null) {
+				// Look for HTML files that get built to the global docs dir (such as 
+				// 'docs/WhatsNew.md' -> 'WhatsNew.html')
+				file = findModuleFile("build/src/global/" + updatedPath);
+			}
 		}
 		else {
 			// 

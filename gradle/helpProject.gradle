@@ -235,6 +235,8 @@ tasks.register('indexHelp', JavaExec) {
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
 
+	onlyIf ("There is no help root directory") { helpRootDir.exists() }
+
 	inputs.dir helpRootDir
 	outputs.dir outputFile
 	
@@ -282,11 +284,37 @@ tasks.register('indexHelp', JavaExec) {
 	}
 }
 
+// Task for building Markdown in src/global/docs to HTML
+//      - the files generated will be placed in a build directory usable during development mode
+tasks.register('buildGlobalMarkdown') {
+	group "private"	
+	dependsOn ':MarkdownSupport:classes'
+	
+	FileTree markdownFiles = this.project.fileTree('src/global/docs') {
+		include '*.md'
+	}
+	
+	onlyIf ("There are no markdown files") { !markdownFiles.isEmpty() }
+	
+	inputs.files markdownFiles  
+	
+	doFirst {
+		markdownFiles.each { f ->
+			def htmlName = f.name[0..-3] + "html"
+			javaexec {
+				classpath = project(':MarkdownSupport').sourceSets.main.runtimeClasspath
+				mainClass = 'ghidra.markdown.MarkdownToHtml'
+				args f
+				args file("build/src/global/docs/${htmlName}")
+			}
+		}
+	}
+}
 
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
 //      - validates help
-//      - the files generated will be placed in a diretory usable during development mode and will
+//      - the files generated will be placed in a directory usable during development mode and will
 //        eventually be placed in:
 //				- the <Module>.jar file in production mode, or
 //				- the <Module>-help.jar file in development mode
@@ -305,7 +333,9 @@ tasks.register('buildHelpFiles', JavaExec) {
 
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
-
+	
+	onlyIf ("There is no help root directory") { helpRootDir.exists() }
+	
 	// 
 	// Inputs (used for incremental building):
 	//  1) Java files in the Help module used to build help 
@@ -397,6 +427,7 @@ tasks.register('buildHelp', Jar) {
 	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
 
 	dependsOn tasks.named('buildHelpFiles')
+	dependsOn tasks.named('buildGlobalMarkdown')
     duplicatesStrategy 'exclude'
     
 	from "build/help/main"		// include the generated help and index files
