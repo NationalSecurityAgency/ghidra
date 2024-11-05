@@ -6,6 +6,7 @@
 ##MODULE IP: Tango Icons - Public Domain
 ##MODULE IP: zlib License
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/decompiler.theme.properties||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
 src/decompile/cpp/.gitignore||GHIDRA||||END|
@@ -38,6 +39,7 @@ src/decompile/datatests/ifswitch.xml||GHIDRA||||END|
 src/decompile/datatests/impliedfield.xml||GHIDRA||||END|
 src/decompile/datatests/indproto.xml||GHIDRA||||END|
 src/decompile/datatests/injectoverride.xml||GHIDRA||||END|
+src/decompile/datatests/inline.xml||GHIDRA||||END|
 src/decompile/datatests/longdouble.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
 src/decompile/datatests/lzcount.xml||GHIDRA||||END|

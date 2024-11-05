@@ -31,7 +31,6 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.test.TestUtils;
-import ghidra.GhidraOptions;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
@@ -570,7 +569,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	public void testQueryResultsMaxHitsDynamicFound() throws Exception {
 		loadProgram("x86");
 		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
-		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
+		opt.setInt(SearchConstants.SEARCH_LIMIT_NAME, 20);
 
 		setText("L*");
 		performOkCallback();
@@ -582,7 +581,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	public void testQueryResultsMaxHitsDefinedFound() throws Exception {
 		loadProgram("x86");
 		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
-		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
+		opt.setInt(SearchConstants.SEARCH_LIMIT_NAME, 5);
 
 		createLabel("1006960", "abc1");
 		createLabel("1006961", "abc2");

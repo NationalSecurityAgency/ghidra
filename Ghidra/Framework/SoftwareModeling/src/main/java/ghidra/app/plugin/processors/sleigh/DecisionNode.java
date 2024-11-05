@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,7 +107,7 @@ public class DecisionNode {
 			(startbit + bitsize - 1) + "), value=0x" + Integer.toHexString(val) + ", context=");
 		debug.append(walker.getParserContext().getContextBytes(), startbit, bitsize);
 		debug.append("\n");
-		debugDumpDecendentConstructors(debug, children[val]);
+		debugDumpDescendantConstructors(debug, children[val]);
 	}
 
 	private void debugInstructionBitsDecision(SleighDebugLogger debug, ParserWalker walker,
@@ -135,15 +135,15 @@ public class DecisionNode {
 				(startbit + bitsize - 1) + "), value=0x" + Integer.toHexString(val) + ", bytes=");
 		debug.append(bytes, (offset * 8) + startbit, bitsize);
 		debug.append("\n");
-		debugDumpDecendentConstructors(debug, children[val]);
+		debugDumpDescendantConstructors(debug, children[val]);
 	}
 
-	private void debugDumpDecendentConstructors(SleighDebugLogger debug, DecisionNode child) {
+	private void debugDumpDescendantConstructors(SleighDebugLogger debug, DecisionNode child) {
 		debug.indent();
 		debug.append(
-			"decendent constructors for decision node (complete tree dump ordered by line number):\n");
+			"descendant constructors for decision node (complete tree dump ordered by line number):\n");
 		List<Constructor> clist = new ArrayList<>();
-		child.dumpDecendentConstructors(clist);
+		child.dumpDescendantConstructors(clist);
 		for (Constructor c : clist) {
 			debug.dumpConstructor(null, c);
 		}
@@ -158,7 +158,7 @@ public class DecisionNode {
 			}
 		};
 
-	private void dumpDecendentConstructors(List<Constructor> clist) {
+	private void dumpDescendantConstructors(List<Constructor> clist) {
 		if (bitsize == 0) { // The node is terminal
 			for (Constructor c : constructlist) {
 				int index = Collections.binarySearch(clist, c, debugInstructionComparator);
@@ -171,7 +171,7 @@ public class DecisionNode {
 		}
 		else {
 			for (DecisionNode child : children) {
-				child.dumpDecendentConstructors(clist);
+				child.dumpDescendantConstructors(clist);
 			}
 		}
 	}

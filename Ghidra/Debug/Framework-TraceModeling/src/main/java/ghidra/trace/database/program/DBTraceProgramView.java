@@ -1635,6 +1635,17 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	protected boolean isCodeVisible(TraceCodeUnit cu, Lifespan lifespan) {
+		try {
+			byte[] cubytes = cu.getBytes();
+			byte[] mmbytes = new byte[cubytes.length];
+			memory.getBytes(cu.getAddress(), mmbytes);
+			if (!Arrays.equals(cubytes, mmbytes)) {
+				return false;
+			}
+		}
+		catch (MemoryAccessException e) {
+			throw new AssertionError(e);
+		}
 		return viewport.isCompletelyVisible(cu.getRange(), lifespan, cu,
 			getCodeOcclusion(cu.getTraceSpace()));
 	}

@@ -2345,7 +2345,7 @@ int4 BlockBasic::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
   PcodeOp *lastop = op.back();
   if (lastop->code() != CPUI_CBRANCH)
     return 2;
-  return opFlipInPlaceTest(lastop,fliplist);
+  return Funcdata::opFlipInPlaceTest(lastop,fliplist);
 }
 
 void BlockBasic::flipInPlaceExecute(void)
@@ -2726,6 +2726,29 @@ PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
   return op;
 }
 
+/// \brief Get the earliest use/read of a Varnode in \b this basic block
+///
+/// \param vn is the Varnode to search for
+/// \return the earliest PcodeOp reading the Varnode or NULL
+PcodeOp *BlockBasic::earliestUse(Varnode *vn)
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *res = (PcodeOp *)0;
+
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->getParent() != this) continue;
+    if (res == (PcodeOp *)0)
+      res = op;
+    else {
+      if (op->getSeqNum().getOrder() < res->getSeqNum().getOrder())
+	res = op;
+    }
+  }
+  return res;
+}
+
 /// Each Varnode must be defined by a PcodeOp with the same OpCode.  The Varnode, within the array, is replaced
 /// with the input Varnode in the indicated slot.
 /// \param varArray is the given array of Varnodes
@@ -3035,7 +3058,7 @@ bool BlockIf::preferComplement(Funcdata &data)
   if (0 != split->flipInPlaceTest(fliplist))
     return false;
   split->flipInPlaceExecute();
-  opFlipInPlaceExecute(data,fliplist);
+  data.opFlipInPlaceExecute(fliplist);
   swapBlocks(1,2);
   return true;
 }

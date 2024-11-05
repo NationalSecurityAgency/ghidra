@@ -1,8 +1,8 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Apache License 2.0 with LLVM Exceptions
-FridaNotes.txt||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/scripts/onAccess.js||GHIDRA||||END|
 data/scripts/onAccessExt.js||GHIDRA||||END|

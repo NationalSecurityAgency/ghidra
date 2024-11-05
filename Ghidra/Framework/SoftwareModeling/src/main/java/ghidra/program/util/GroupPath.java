@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -152,7 +152,7 @@ public class GroupPath implements Serializable {
     }
 
     /**
-     * Return true if the indicated group path is a descendent of this group path.
+     * Return true if the indicated group path is a descendant of this group path.
      * @param grpPath the group path
      */
     public boolean isDescendant(GroupPath grpPath) {

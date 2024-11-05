@@ -89,6 +89,7 @@ class HeapSequence : public ArraySequence {
   uint8 baseOffset;			///< Offset relative to pointer to root STORE
   vector<Varnode *> nonConstAdds;	///< non-constant Varnodes being added into pointer calculation
   void findBasePointer(Varnode *initPtr);	///< Find the base pointer for the sequence
+  void findDuplicateBases(vector<Varnode *> &duplist);	///< Find any duplicates of \b basePointer
   void findInitialStores(vector<PcodeOp *> &stores);
   static uint8 calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4 maxDepth);
   uint8 calcPtraddOffset(Varnode *vn,vector<Varnode *> &nonConst);

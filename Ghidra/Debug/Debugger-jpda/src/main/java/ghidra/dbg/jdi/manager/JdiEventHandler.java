@@ -140,6 +140,7 @@ public class JdiEventHandler implements Runnable {
 		//System.err.println(event + ":" + vm);
 		return switch (event) {
 			case ExceptionEvent ev -> processException(ev);
+			case BreakpointEvent ev -> processBreakpoint(ev);
 			case AccessWatchpointEvent ev -> processAccessWatchpoint(ev);
 			case ModificationWatchpointEvent ev -> processWatchpointModification(ev);
 			case WatchpointEvent ev -> processWatchpoint(ev);

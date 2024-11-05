@@ -162,7 +162,7 @@
 		<attribute name="Threads" schema="ThreadContainer" required="yes" fixed="yes" />
 		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
 		<attribute name="Events" schema="EventContainer" required="yes" fixed="yes" />
-		<attribute name="Classes" schema="ReferenceTypeContainer" required="yes" fixed="yes" />
+		<attribute name="Classes" schema="CanonicalReferenceTypeContainer" required="yes" fixed="yes" />
 		<attribute name="Memory" schema="Memory" required="yes" fixed="yes" />
 		<attribute name="ModuleRefs" schema="ModuleReferenceContainer" required="yes" fixed="yes" />
 		<attribute schema="ANY" />
@@ -361,7 +361,7 @@
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="ANY" />
 	</schema>
-	<schema name="Event" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="Event" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Deletable" />
 		<element schema="OBJECT" />
 		<attribute name="_enabled" schema="BOOL" required="yes" hidden="yes" />
@@ -483,12 +483,31 @@
 		<attribute name="Virtual" schema="OBJECT" />
 		<attribute schema="ANY" />
 	</schema>
-	<schema name="ReferenceTypeContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="CanonicalReferenceTypeContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="CanonicalReferenceType" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="ReferenceTypeContainer" canonical="no" elementResync="NEVER" attributeResync="NEVER">
 		<element schema="ReferenceType" />
 		<attribute schema="ANY" />
 	</schema>
 	<schema name="ReferenceTypeProxy" elementResync="NEVER" attributeResync="NEVER">
 		<element schema="ReferenceType" />
+	</schema>
+	<schema name="CanonicalReferenceType" elementResync="NEVER" attributeResync="ALWAYS">
+		<interface name="Module" />
+		<interface name="Aggregate" />
+		<element schema="ANY" />
+		<attribute name="Fields" schema="CanonicalFieldContainer" fixed="yes" />
+		<attribute name="Instances" schema="ObjectReferenceContainer" fixed="yes" />
+		<attribute name="Locations" schema="LocationContainer" fixed="yes" />
+		<attribute name="Methods" schema="CanonicalMethodContainer" required="no" fixed="yes" />
+		<attribute name="Relations" schema="ReferenceTypeRelations" required="no" fixed="yes" />
+		<attribute name="_module_name" schema="STRING" hidden="yes" />
+		<attribute name="Range" schema="RANGE" />
+		<attribute name="RangeCP" schema="RANGE" />
+		<attribute-alias from="_range" to="Range" />
+		<attribute schema="ANY" />
 	</schema>
 	<schema name="ReferenceType" elementResync="NEVER" attributeResync="ALWAYS">
 		<interface name="Module" />
@@ -519,7 +538,11 @@
 		<attribute name="SuperInterfaces" schema="ReferenceTypeContainer" fixed="yes" />
 		<attribute schema="ANY" />
 	</schema>
-	<schema name="FieldContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="CanonicalFieldContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="Field" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="FieldContainer" canonical="no" elementResync="NEVER" attributeResync="NEVER">
 		<element schema="Field" />
 		<attribute schema="ANY" />
 	</schema>
@@ -529,7 +552,12 @@
 		<attribute name="Value" schema="Value" required="no" />
 		<attribute schema="ANY" />
 	</schema>
-	<schema name="MethodContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="CanonicalMethodContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="SectionContainer" />
+		<element schema="Method" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="MethodContainer" canonical="no" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="SectionContainer" />
 		<element schema="Method" />
 		<attribute schema="ANY" />
@@ -547,7 +575,7 @@
 		<attribute name="Locations" schema="LocationContainer" fixed="yes" />
 		<attribute name="Range" schema="RANGE" />
 		<attribute-alias from="_range" to="Range" />
-		<attribute name="Variables" schema="VariableContainer" fixed="yes" />
+		<attribute name="Variables" schema="CanonicalVariableContainer" fixed="yes" />
 		<attribute name="_display" schema="STRING" fixed="yes" hidden="yes" />
 		<attribute name="_return_type" schema="TYPE" fixed="yes" hidden="yes" />
 		<attribute name="_parameters" schema="MAP_PARAMETERS" fixed="yes" hidden="yes" />
@@ -557,7 +585,11 @@
 		<element schema="Type" />
 		<attribute schema="ANY" />
 	</schema>
-	<schema name="VariableContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="CanonicalVariableContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="Variable" />
+		<attribute schema="ANY" />
+	</schema>
+	<schema name="VariableContainer" canonical="no" elementResync="NEVER" attributeResync="NEVER">
 		<element schema="Variable" />
 		<attribute schema="ANY" />
 	</schema>

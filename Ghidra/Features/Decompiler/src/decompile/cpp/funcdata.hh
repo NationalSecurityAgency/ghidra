@@ -122,16 +122,17 @@ class Funcdata {
   JumpTable::RecoveryMode stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
-
-  void sortCallSpecs(void);			///< Sort calls using a dominance based order
-  void deleteCallSpecs(PcodeOp *op);		///< Remove the specification for a particular call
-  void clearCallSpecs(void);			///< Remove all call specifications
-
   BlockBasic *nodeSplitBlockEdge(BlockBasic *b,int4 inedge);
   PcodeOp *nodeSplitCloneOp(PcodeOp *op);
   void nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop);
   void nodeSplitRawDuplicate(BlockBasic *b,BlockBasic *bprime);
   void nodeSplitInputPatch(BlockBasic *b,BlockBasic *bprime,int4 inedge);
+
+  void sortCallSpecs(void);			///< Sort calls using a dominance based order
+  void deleteCallSpecs(PcodeOp *op);		///< Remove the specification for a particular call
+  void clearCallSpecs(void);			///< Remove all call specifications
+  void issueDatatypeWarnings(void);		///< Add warning headers for any data-types that have been modified
+
   static bool descendantsOutside(Varnode *vn);
   static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
   static bool checkIndirectUse(Varnode *vn);
@@ -191,7 +192,7 @@ public:
 
   void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
-  bool inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
+  int4 inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
   void overrideFlow(const Address &addr,uint4 type);
   void doLiveInject(InjectPayload *payload,const Address &addr,BlockBasic *bl,list<PcodeOp *>::iterator pos);
   
@@ -487,6 +488,8 @@ public:
   Varnode *opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Varnode *stackptr,bool insertafter);
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
   void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
+  static int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist);
+  void opFlipInPlaceExecute(vector<PcodeOp *> &fliplist);
 
   /// \brief Start of PcodeOp objects with the given op-code
   list<PcodeOp *>::const_iterator beginOp(OpCode opc) const { return obank.begin(opc); }
@@ -562,6 +565,11 @@ public:
   bool replaceLessequal(PcodeOp *op);		///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
   bool distributeIntMultAdd(PcodeOp *op);	///< Distribute constant coefficient to additive input
   bool collapseIntMultMult(Varnode *vn);	///< Collapse constant coefficients for two chained CPUI_INT_MULT
+  Varnode *buildCopyTemp(Varnode *vn,PcodeOp *point);	///< Create a COPY of given Varnode in a temporary register
+
+  static PcodeOp *cseFindInBlock(PcodeOp *op,Varnode *vn,BlockBasic *bl,PcodeOp *earliest);
+  PcodeOp *cseElimination(PcodeOp *op1,PcodeOp *op2);
+  void cseEliminateList(vector< pair<uintm,PcodeOp *> > &list,vector<Varnode *> &outlist);
   static bool compareCallspecs(const FuncCallSpecs *a,const FuncCallSpecs *b);
 
 #ifdef OPACTION_DEBUG
@@ -686,15 +694,6 @@ class AncestorRealistic {
 public:
   bool execute(PcodeOp *op,int4 slot,ParamTrial *t,bool allowFail);
 };
-
-extern int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist);
-extern void opFlipInPlaceExecute(Funcdata &data,vector<PcodeOp *> &fliplist);
-
-extern PcodeOp *earliestUseInBlock(Varnode *vn,BlockBasic *bl);
-extern PcodeOp *cseFindInBlock(PcodeOp *op,Varnode *vn,BlockBasic *bl,PcodeOp *earliest);
-extern PcodeOp *cseElimination(Funcdata &data,PcodeOp *op1,PcodeOp *op2);
-extern void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,
-			     vector<Varnode *> &outlist);
 
 } // End namespace ghidra
 #endif

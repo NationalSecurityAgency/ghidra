@@ -542,14 +542,14 @@ public class PcodeDataTypeManager {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
 		String metatype = type.isSigned() ? "int" : "uint";
-		long[] keys = type.getValues();
+		String[] names = type.getNames();
 		encoder.writeString(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
 		encoder.writeBool(ATTRIB_ENUM, true);
-		for (long key : keys) {
+		for (String name : names) {
 			encoder.openElement(ELEM_VAL);
-			encoder.writeString(ATTRIB_NAME, type.getName(key));
-			encoder.writeSignedInteger(ATTRIB_VALUE, key);
+			encoder.writeString(ATTRIB_NAME, name);
+			encoder.writeSignedInteger(ATTRIB_VALUE, type.getValue(name));
 			encoder.closeElement(ELEM_VAL);
 		}
 		encoder.closeElement(ELEM_TYPE);
@@ -799,12 +799,12 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode a Structure to the stream that has its size reported as zero.
+	 * Encode a Structure/Union to the stream without listing its fields
 	 * @param encoder is the stream encoder
 	 * @param type data type to encode
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encodeCompositeZeroSizePlaceholder(Encoder encoder, DataType type)
+	public void encodeCompositePlaceholder(Encoder encoder, DataType type)
 			throws IOException {
 		String metaString;
 		if (type instanceof Structure) {
@@ -820,7 +820,9 @@ public class PcodeDataTypeManager {
 		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
 		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
 		encoder.writeString(ATTRIB_METATYPE, metaString);
-		encoder.writeSignedInteger(ATTRIB_SIZE, 0);
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
+		encoder.writeBool(ATTRIB_INCOMPLETE, true);
 		encoder.closeElement(ELEM_TYPE);
 	}
 

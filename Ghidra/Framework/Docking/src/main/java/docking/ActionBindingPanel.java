@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class ActionBindingPanel extends JPanel {
 
 	private static final String DISABLED_HINT = "Select an action";
 
-	private KeyEntryTextField keyEntryField;
+	private KeyEntryPanel keyEntryPanel;
 	private JCheckBox useMouseBindingCheckBox;
 	private MouseEntryTextField mouseEntryField;
 	private JPanel textFieldPanel;
@@ -49,14 +49,14 @@ public class ActionBindingPanel extends JPanel {
 
 		textFieldPanel = new JPanel(new BorderLayout());
 
-		keyEntryField = new KeyEntryTextField(20, ks -> listener.keyStrokeChanged(ks));
-		keyEntryField.setDisabledHint(DISABLED_HINT);
-		keyEntryField.setEnabled(false); // enabled on action selection
+		keyEntryPanel = new KeyEntryPanel(20, ks -> listener.keyStrokeChanged(ks));
+		keyEntryPanel.setDisabledHint(DISABLED_HINT);
+		keyEntryPanel.setEnabled(false); // enabled on action selection
 		mouseEntryField = new MouseEntryTextField(20, mb -> listener.mouseBindingChanged(mb));
 		mouseEntryField.setDisabledHint(DISABLED_HINT);
 		mouseEntryField.setEnabled(false); // enabled on action selection
 
-		textFieldPanel.add(keyEntryField, BorderLayout.NORTH);
+		textFieldPanel.add(keyEntryPanel, BorderLayout.NORTH);
 
 		String checkBoxText = "Enter Mouse Binding";
 		useMouseBindingCheckBox = new GCheckBox(checkBoxText);
@@ -73,12 +73,12 @@ public class ActionBindingPanel extends JPanel {
 	private void updateTextField() {
 
 		if (useMouseBindingCheckBox.isSelected()) {
-			textFieldPanel.remove(keyEntryField);
+			textFieldPanel.remove(keyEntryPanel);
 			textFieldPanel.add(mouseEntryField, BorderLayout.NORTH);
 		}
 		else {
 			textFieldPanel.remove(mouseEntryField);
-			textFieldPanel.add(keyEntryField, BorderLayout.NORTH);
+			textFieldPanel.add(keyEntryPanel, BorderLayout.NORTH);
 		}
 
 		validate();
@@ -87,25 +87,25 @@ public class ActionBindingPanel extends JPanel {
 
 	public void setKeyBindingData(KeyStroke ks, MouseBinding mb) {
 
-		keyEntryField.setKeyStroke(ks);
+		keyEntryPanel.setKeyStroke(ks);
 		mouseEntryField.setMouseBinding(mb);
 	}
 
 	@Override
 	public void setEnabled(boolean enabled) {
-		keyEntryField.clearField();
+		keyEntryPanel.clearField();
 		mouseEntryField.clearField();
 
-		keyEntryField.setEnabled(enabled);
+		keyEntryPanel.setEnabled(enabled);
 		mouseEntryField.setEnabled(enabled);
 	}
 
 	public void clearKeyStroke() {
-		keyEntryField.clearField();
+		keyEntryPanel.clearField();
 	}
 
 	public KeyStroke getKeyStroke() {
-		return keyEntryField.getKeyStroke();
+		return keyEntryPanel.getKeyStroke();
 	}
 
 	public MouseBinding getMouseBinding() {

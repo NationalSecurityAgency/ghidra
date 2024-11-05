@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,6 +154,10 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcTraceClear(),"trace","clear");
   status->registerCom(new IfcTraceList(),"trace","list");
   status->registerCom(new IfcBreakjump(),"break","jumptable");
+#endif
+
+#ifdef TYPEPROP_DEBUG
+  status->registerCom(new IfcTracePropagation(),"trace","propagation");
 #endif
 }
 
@@ -1844,7 +1848,7 @@ void IfcProtooverride::execute(istream &s)
   s >> ws;
   Address callpoint(parse_machaddr(s,discard,*dcp->conf->types));
   int4 i;
-  for(i=0;dcp->fd->numCalls();++i)
+  for(i=0;i<dcp->fd->numCalls();++i)
     if (dcp->fd->getCallSpecs(i)->getOp()->getAddr() == callpoint) break;
   if (i == dcp->fd->numCalls())
     throw IfaceExecutionError("No call is made at this address");
@@ -3582,6 +3586,24 @@ void IfcBreakjump::execute(istream &s)
   *status->optr << "Jumptable debugging enabled" << endl;
   if (dcp->fd != (Funcdata *)0)
     dcp->fd->enableJTCallback(jump_callback);
+}
+
+#endif
+
+#ifdef TYPEPROP_DEBUG
+
+void IfcTracePropagation::execute(istream &s)
+
+{
+  string token;
+  s >> ws >> token;
+  if (token == "on")
+    TypeFactory::propagatedbg_on = true;
+  else if (token == "off")
+    TypeFactory::propagatedbg_on = false;
+  else
+    throw IfaceParseError("Must specific on/off");
+  *status->optr << "Data-type propagation trace set to: "<< token << endl;
 }
 
 #endif

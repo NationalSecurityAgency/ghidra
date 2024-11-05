@@ -114,6 +114,8 @@ public class VSCodeProjectScript extends GhidraScript {
 		json.addProperty("java.import.gradle.enabled", false);
 		json.addProperty("java.import.gradle.wrapper.enabled", false);
 		json.addProperty("java.import.gradle.version", gradleVersion);
+		json.addProperty("java.format.settings.url",
+			new File(installDir, "support/eclipse/GhidraEclipseFormatter.xml").getAbsolutePath());
 
 		JsonArray sourcePathArray = new JsonArray();
 		json.add("java.project.sourcePaths", sourcePathArray);

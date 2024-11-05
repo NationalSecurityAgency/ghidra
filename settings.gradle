@@ -35,6 +35,7 @@ includeProjects('GPL')
  *******************************************************************************************/
 includeProject('Doclets', 'GhidraBuild/BuildFiles', true)
 includeProject('LaunchSupport', 'GhidraBuild', true)
+includeProject('MarkdownSupport', 'GhidraBuild', true)
 includeProject('Skeleton', 'GhidraBuild', true)
 includeProject('BuildFiles', 'GhidraBuild', true)
 includeProject('decompile', 'Ghidra/Features/Decompiler/src', true)

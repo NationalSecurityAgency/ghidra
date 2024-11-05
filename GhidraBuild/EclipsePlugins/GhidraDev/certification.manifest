@@ -5,7 +5,6 @@ GhidraDevFeature/category.xml||GHIDRA||||END|
 GhidraDevFeature/feature.xml||GHIDRA||||END|
 GhidraDevPlugin/.launch/GhidraDev.launch||GHIDRA||||END|
 GhidraDevPlugin/GhidraDev.target||GHIDRA||||END|
-GhidraDevPlugin/GhidraDev_README.html||GHIDRA||||END|
 GhidraDevPlugin/META-INF/MANIFEST.MF||GHIDRA||||END|
 GhidraDevPlugin/README.md||GHIDRA||||END|
 GhidraDevPlugin/build.properties||GHIDRA||||END|

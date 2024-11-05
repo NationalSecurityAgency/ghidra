@@ -12,6 +12,7 @@
 .classpath||GHIDRA||||END|
 .gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/java/ghidra/util/datastruct/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/attributes/package.html||GHIDRA||||END|

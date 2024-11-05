@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -938,12 +938,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * Returns a demangled version of the mangled string.
 	 *
 	 * @param mangled the mangled string to demangled
-	 * @return a demangled version of the mangled string
+	 * @return a demangled version of the mangled string, or null if it could not be demangled
 	 */
 	public String getDemangled(String mangled) {
-		DemangledObject demangledObj = DemanglerUtil.demangle(mangled);
-		if (demangledObj != null) {
-			return demangledObj.getSignature(false);
+		List<DemangledObject> demangledObjs = DemanglerUtil.demangle(currentProgram, mangled, null);
+		if (!demangledObjs.isEmpty()) {
+			return demangledObjs.getFirst().getSignature(false);
 		}
 		return null;
 	}
@@ -1867,21 +1867,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * Parses a file from a string.
-	 *
-	 * @param s The string to parse.
-	 * @return The file that was parsed from the string.
-	 * @throws IllegalArgumentException if the parsed value is not a valid file.
-	 */
-	public File parseFile(String s) {
-		File f = new File(s);
-		if (!f.isFile()) {
-			throw new IllegalArgumentException("Invalid file: " + f);
-		}
-		return f;
-	}
-
-	/**
 	 * Attempts to locate a value from script arguments
 	 *  or a script properties file using
 	 * the given <code>keys</code> as the lookup key for the latter.  The given <code>parser</code> will
@@ -1929,7 +1914,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 			if (isHeadless && !hasDefault) { // require either a props file or a default value
 				throw new IllegalArgumentException("Error processing variable '" + propertyKey +
-					"' in headless mode -- it was not found in a .properties file.");
+					"' in headless mode -- it was not found in script arguments or a .properties file.");
 			}
 			return defaultValue; // may be null
 		}
@@ -1939,7 +1924,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 			if (isHeadless && !hasDefault) { // require either a props file or a default value
 				throw new IllegalArgumentException("Error processing variable '" + propertyKey +
-					"' in headless mode -- it was not found in a .properties file.");
+					"' in headless mode -- it was not found in script arguments or a .properties file.");
 			}
 			return defaultValue;
 		}
@@ -2026,8 +2011,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			exists).
 	 * 		</li>
 	 *		<li>In the headless environment, this method returns a File object representing	the
-	 *			.properties	String value (if it exists), or throws an Exception if there is an
-	 *			invalid or missing .properties value.
+	 *			.properties	String value, or throws an Exception if there is an invalid or missing 
+	 *			.properties value.
 	 *		</li>
 	 * </ol>
 	 *
@@ -2045,7 +2030,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			throws CancelledException {
 
 		String key = join(title, approveButtonText);
-		File existingValue = loadAskValue(this::parseFile, key);
+		File existingValue = loadAskValue(File::new, key);
 		if (isRunningHeadless()) {
 			return existingValue;
 		}

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -223,11 +223,13 @@ public interface TargetMethod extends TargetObject {
 			p -> new BytesValue.Val(p.defaultBytes()),
 			p -> new StringValue.Val(p.defaultString()));
 
-		String name();
+		String name() default "";
 
-		String display();
+		String display() default "";
 
-		String description();
+		String description() default "";
+
+		String schema() default "ANY";
 
 		// TODO: Something that hints at changes in activation?
 
@@ -269,12 +271,31 @@ public interface TargetMethod extends TargetObject {
 		 * @param defaultValue the default value of this parameter
 		 * @param display the human-readable name of this parameter
 		 * @param description the human-readable description of this parameter
+		 * @param schema the parameter's schema
+		 * @return the new parameter description
+		 */
+		public static <T> ParameterDescription<T> create(Class<T> type, String name,
+				boolean required, T defaultValue, String display, String description, String schema) {
+			return new ParameterDescription<>(type, name, required, defaultValue, display,
+				description, schema, List.of());
+		}
+
+		/**
+		 * Create a parameter
+		 * 
+		 * @param <T> the type of the parameter
+		 * @param type the class representing the type of the parameter
+		 * @param name the name of the parameter
+		 * @param required true if this parameter must be provided
+		 * @param defaultValue the default value of this parameter
+		 * @param display the human-readable name of this parameter
+		 * @param description the human-readable description of this parameter
 		 * @return the new parameter description
 		 */
 		public static <T> ParameterDescription<T> create(Class<T> type, String name,
 				boolean required, T defaultValue, String display, String description) {
 			return new ParameterDescription<>(type, name, required, defaultValue, display,
-				description, List.of());
+				description, "ANY", List.of());
 		}
 
 		/**
@@ -292,7 +313,7 @@ public interface TargetMethod extends TargetObject {
 				Collection<T> choices, String display, String description) {
 			T defaultValue = choices.iterator().next();
 			return new ParameterDescription<>(type, name, false, defaultValue, display, description,
-				choices);
+				"ANY", choices);
 		}
 
 		/**
@@ -313,7 +334,7 @@ public interface TargetMethod extends TargetObject {
 				throw new IllegalArgumentException("Default must be one of the choices.");
 			}
 			return new ParameterDescription<>(type, name, false, defaultValue, display, description,
-				choices);
+				"ANY", choices);
 		}
 
 		protected static boolean isRequired(Class<?> type, Param param) {
@@ -369,11 +390,11 @@ public interface TargetMethod extends TargetObject {
 			return type.cast(dv);
 		}
 
-		protected static <T> ParameterDescription<T> annotated(Class<T> type, Param annot) {
+		protected static <T> ParameterDescription<T> annotated(Class<T> type, Param annot, String name) {
 			boolean required = isRequired(type, annot);
 			T defaultValue = getDefault(type, annot);
-			return ParameterDescription.create(type, annot.name(),
-				required, defaultValue, annot.display(), annot.description());
+			return ParameterDescription.create(type, name,
+				required, defaultValue, annot.display(), annot.description(), annot.schema());
 		}
 
 		public static ParameterDescription<?> annotated(Parameter parameter) {
@@ -382,15 +403,16 @@ public interface TargetMethod extends TargetObject {
 				throw new IllegalArgumentException(
 					"Missing @" + Param.class.getSimpleName() + " on " + parameter);
 			}
+			String name = annot.name().equals("") ? parameter.getName() : annot.name();
 			if (annot.choicesString().specified()) {
 				if (parameter.getType() != String.class) {
 					throw new IllegalArgumentException(
 						"Can only specify choices for String parameter");
 				}
-				return ParameterDescription.choices(String.class, annot.name(),
-					List.of(annot.choicesString().value()), annot.display(), annot.description());
+				return ParameterDescription.choices(String.class, name,
+					List.of(annot.choicesString().value()), annot.display(), annot.description(), annot.schema());
 			}
-			return annotated(MethodType.methodType(parameter.getType()).wrap().returnType(), annot);
+			return annotated(MethodType.methodType(parameter.getType()).wrap().returnType(), annot, name);
 		}
 
 		public final Class<T> type;
@@ -399,16 +421,18 @@ public interface TargetMethod extends TargetObject {
 		public final boolean required;
 		public final String display;
 		public final String description;
+		public final String schema;
 		public final Set<T> choices;
 
 		private ParameterDescription(Class<T> type, String name, boolean required, T defaultValue,
-				String display, String description, Collection<T> choices) {
+				String display, String description, String schema, Collection<T> choices) {
 			this.type = type;
 			this.name = name;
 			this.defaultValue = defaultValue;
 			this.required = required;
 			this.display = display;
 			this.description = description;
+			this.schema = schema;
 			this.choices = Set.copyOf(choices);
 		}
 

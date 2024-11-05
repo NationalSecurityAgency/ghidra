@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,7 @@ import ghidra.program.util.*;
 )
 //@formatter:on
 public class ClearPlugin extends Plugin {
+	private static final String CLEAR_MENU = "Clear";
 	private static final String CLEAR_WITH_OPTIONS_NAME = "Clear With Options";
 	private static final String CLEAR_CODE_BYTES_NAME = "Clear Code Bytes";
 	private static final String CLEAR_FLOW_AND_REPAIR = "Clear Flow and Repair";
@@ -181,7 +182,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_CODE_BYTES_NAME, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_CODE_BYTES_NAME)
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "1")
-				.popupMenuPath(CLEAR_CODE_BYTES_NAME)
+				.popupMenuPath(CLEAR_MENU, CLEAR_CODE_BYTES_NAME)
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "1")
 				.keyBinding("C")
 				.withContext(ListingActionContext.class)
@@ -193,7 +194,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_WITH_OPTIONS_NAME, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_WITH_OPTIONS_NAME + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "2")
-				.popupMenuPath(CLEAR_WITH_OPTIONS_NAME + "...")
+				.popupMenuPath(CLEAR_MENU, CLEAR_WITH_OPTIONS_NAME + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "2")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
@@ -203,7 +204,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_FLOW_AND_REPAIR, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_FLOW_AND_REPAIR + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "3")
-				.popupMenuPath(CLEAR_FLOW_AND_REPAIR + "...")
+				.popupMenuPath(CLEAR_MENU, CLEAR_FLOW_AND_REPAIR + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "3")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)

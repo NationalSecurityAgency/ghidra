@@ -59,16 +59,13 @@ public class ImporterUtilities {
 
 	/**
 	 * File extension filter for well known 'loadable' files for GhidraFileChoosers.
-	 *
-	 * TODO: will be refactored to use file_extension_icon.xml file info.
 	 */
 	public static final GhidraFileFilter LOADABLE_FILES_FILTER = ExtensionFileFilter.forExtensions(
-		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib");
+		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib",
+		"dylib");
 
 	/**
 	 * File extension filter for well known 'container' files for GhidraFileChoosers.
-	 *
-	 * TODO: will be refactored to use file_extension_icon.xml file info.
 	 */
 	public static final GhidraFileFilter CONTAINER_FILES_FILTER =
 		ExtensionFileFilter.forExtensions("Container files", "zip", "tar", "tgz", "jar", "gz",
