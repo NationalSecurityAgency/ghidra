@@ -193,6 +193,11 @@ public class GhidraModuleUtils {
 		// Update language ant properties file
 		GhidraModuleUtils.writeAntProperties(project, ghidraLayout);
 
+		// Create a README
+		try (PrintWriter out = new PrintWriter(new File(projectDir, "README.md"))) {
+			out.println("# " + project.getName());
+		}
+
 		// Refactor/rename the source files, package, and help files
 		String packageName = project.getName().toLowerCase();
 		for (ModuleTemplateType moduleTemplateType : moduleTemplateTypes) {

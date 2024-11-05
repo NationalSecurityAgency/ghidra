@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/debugger-launchers/attach-java.jsh||GHIDRA||||END|
 data/debugger-launchers/bypid-java.jsh||GHIDRA||||END|
 data/debugger-launchers/local-java.jsh||GHIDRA||||END|

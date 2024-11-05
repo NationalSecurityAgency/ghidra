@@ -32,7 +32,7 @@ if not exist "%INSTALL_DIR%\Ghidra" (
 	set "INSTALL_DIR=%SCRIPT_DIR%\..\..\..\.."
 )
 
-set "PYGHIDRA_LAUNCHER=%INSTALL_DIR%\Ghidra\Features\PyGhidra\pyghidra_launcher.py
+set "PYGHIDRA_LAUNCHER=%INSTALL_DIR%\Ghidra\Features\PyGhidra\support\pyghidra_launcher.py
 
 %PYTHON% "%PYGHIDRA_LAUNCHER%" "%INSTALL_DIR%" %DEV_ARG% %VMARG_LIST% %*
 

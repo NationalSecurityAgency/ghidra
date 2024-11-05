@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.*;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.bin.format.omf.omf51.Omf51RecordFactory;
 import ghidra.app.util.importer.MessageLog;
@@ -28,6 +29,7 @@ import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.CancelledException;
@@ -95,8 +97,9 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 			Address start = headerBlock.getStart();
 
 			for (OmfRecord record : records) {
-				DataUtilities.createData(program, start.add(record.getRecordOffset()),
+				Data d = DataUtilities.createData(program, start.add(record.getRecordOffset()),
 					record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				StructConverter.setEndian(d, false);
 			}
 		}
 		catch (Exception e) {

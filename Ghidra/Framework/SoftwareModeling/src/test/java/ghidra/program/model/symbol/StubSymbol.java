@@ -37,6 +37,7 @@ public class StubSymbol implements Symbol {
 
 	public StubSymbol(String name) {
 		this.name = name;
+		id = nextId++;
 	}
 
 	public StubSymbol(String name, Address address) {

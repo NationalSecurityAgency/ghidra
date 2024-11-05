@@ -1120,12 +1120,6 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
 bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr)
 
 {
-  if (inline_recursion->find( inlinefd->getAddress() ) != inline_recursion->end()) {
-    // This function has already been included with current inlining
-    inline_head->warning("Could not inline here",op->getAddr());
-    return false;
-  }
-  
   if (!inlinefd->getFuncProto().isNoReturn()) {
     list<PcodeOp *>::iterator iter = op->getInsertIter();
     ++iter;
@@ -1142,8 +1136,6 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     // If the inlining "jumps back" this starts a new basic block
     data.opMarkStartBasic(nextop);
   }
-
-  inline_recursion->insert(inlinefd->getAddress());
   return true;
 }
 
@@ -1243,11 +1235,31 @@ bool FlowInfo::inlineSubFunction(FuncCallSpecs *fc)
 {
   Funcdata *fd = fc->getFuncdata();
   if (fd == (Funcdata *)0) return false;
-  PcodeOp *op = fc->getOp();
-  Address retaddr;
 
-  if (!data.inlineFlow( fd, *this, op))
+  if (inline_head == (Funcdata *)0) {
+    // This is the top level of inlining
+    inline_head = &data;	// Set up head of inlining
+    inline_recursion = &inline_base;
+  }
+  inline_recursion->insert(data.getAddress()); // Insert current function
+  if (inline_recursion->find( fd->getAddress() ) != inline_recursion->end()) {
+    // This function has already been included with current inlining
+    inline_head->warning("Could not inline here",fc->getOp()->getAddr());
     return false;
+  }
+
+  int4 res = data.inlineFlow( fd, *this, fc->getOp());
+  if (res < 0)
+    return false;
+  else if (res == 0) {	// easy model
+    // Remove inlined function from list so it can be inlined again, even if it also inlines
+    inline_recursion->erase(fd->getAddress());
+  }
+  else if (res == 1) {	// hard model
+    // Add inlined function to recursion list, even if it contains no inlined calls,
+    // to prevent parent from inlining it twice
+    inline_recursion->insert(fd->getAddress());
+  }
 
   // Changing CALL to JUMP may make some original code unreachable
   setPossibleUnreachable();
@@ -1306,17 +1318,6 @@ void FlowInfo::deleteCallSpec(FuncCallSpecs *fc)
 void FlowInfo::injectPcode(void)
 
 {
-  if (inline_head == (Funcdata *)0) {
-    // This is the top level of inlining
-    inline_head = &data;	// Set up head of inlining
-    inline_recursion = &inline_base;
-    inline_recursion->insert(data.getAddress()); // Insert ourselves
-    //    inline_head = (Funcdata *)0;
-  }
-  else {
-    inline_recursion->insert(data.getAddress()); // Insert ourselves
-  }
-
   for(int4 i=0;i<injectlist.size();++i) {
     PcodeOp *op = injectlist[i];
     if (op == (PcodeOp *)0) continue;

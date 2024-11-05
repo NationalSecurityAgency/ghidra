@@ -16,7 +16,7 @@
 package docking;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -123,6 +123,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private ThemeListener themeListener = this::themeChanged;
 
+	private HierarchyListener hierarchyListener;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -153,7 +155,24 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		recordInception();
 
 		Gui.addThemeListener(themeListener);
+
 	}
+
+	// gets this provider's component to install it into GUI hierarchy
+	JComponent doGetComponent() {
+		JComponent component = getComponent();
+		if (hierarchyListener == null) {
+			hierarchyListener = new ComponentProviderHierachyListener();
+			component.addHierarchyListener(hierarchyListener);
+		}
+		return component;
+	}
+
+	/**
+	 * Returns the component to be displayed
+	 * @return the component to be displayed
+	 */
+	public abstract JComponent getComponent();
 
 	/**
 	 * Returns the action used to show this provider
@@ -198,12 +217,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the component to be displayed
-	 * @return the component to be displayed
-	 */
-	public abstract JComponent getComponent();
-
-	/**
 	 * A method that allows children to set the <code>instanceID</code> to a desired value (useful for
 	 * restoring saved IDs).
 	 * <p>
@@ -235,6 +248,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return;
 		}
 
+		// this call is needed to bring tabbed providers to the front
+		toFront();
 		if (defaultFocusComponent != null) {
 			DockingWindowManager.requestFocus(defaultFocusComponent);
 			return;
@@ -393,6 +408,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Returns true if this provider is visible and is showing.  See {@link Component#isShowing()}.
+	 * @return true if this provider is visible and is showing.
+	 */
+	public boolean isShowing() {
+		return isVisible() && getComponent().isShowing();
+	}
+
+	/**
 	 * Convenience method to indicate if this provider is the active provider (has focus)
 	 * @return true if this provider is active.
 	 */
@@ -442,9 +465,23 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Notifies the provider that the component is being shown.
+	 * Notifies the provider that the component is being shown.   This method will be called as the
+	 * component hierarchy is being created, which means that this provider may not actually be 
+	 * visible to the user at the time of this call.
+	 * @see #componentMadeDisplayable()
 	 */
 	public void componentShown() {
+		// subclasses implement as needed
+	}
+
+	/**
+	 * Notifies the provider that the component has been made displayable.  When this method is 
+	 * called, the component is part of the visible GUI hierarchy.  This is in contrast to 
+	 * {@link #componentShown()}, which is called when the provider is part of the Docking 
+	 * framework's hierarchy, but not necessarily visible to the user.
+	 * @see #componentShown()
+	 */
+	public void componentMadeDisplayable() {
 		// subclasses implement as needed
 	}
 
@@ -1016,6 +1053,25 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private static String getKey(String oldOwner, String oldName) {
 		return "owner=" + oldOwner + "name=" + oldName;
+	}
+
+	private class ComponentProviderHierachyListener implements HierarchyListener {
+
+		@Override
+		public void hierarchyChanged(HierarchyEvent e) {
+			long changeFlags = e.getChangeFlags();
+			if (HierarchyEvent.DISPLAYABILITY_CHANGED != (changeFlags &
+				HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+				return;
+			}
+
+			// check for the first time we are put together
+			Component component = e.getChanged();
+			boolean isDisplayable = component.isDisplayable();
+			if (isDisplayable) {
+				componentMadeDisplayable();
+			}
+		}
 	}
 
 	private class ShowProviderAction extends DockingAction {

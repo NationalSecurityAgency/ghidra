@@ -24,8 +24,15 @@ task createPythonVirtualEnvironment(type: Exec) {
 	def suffix = isCurrentWindows() ? ".exe" : "3"
 	project.ext.PYTHON3_VENV = "${rootProject.projectDir}/${venvDir}/${binDir}/python${suffix}"
 	project.ext.PIP3_VENV = "${rootProject.projectDir}/${venvDir}/${binDir}/pip${suffix}"
-
-	commandLine	rootProject.PYTHON3, "-m", "venv", venvDir, "--copies"
+	
+	doFirst {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python ${SUPPORTED_PY_VERSIONS} was not found!")
+		}
+		
+		commandLine rootProject.PYTHON3
+		args "-m", "venv", venvDir, "--copies"
+	}
 }
 
 if (findPython3(false)) {

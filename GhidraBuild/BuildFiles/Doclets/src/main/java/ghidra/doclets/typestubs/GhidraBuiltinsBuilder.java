@@ -188,6 +188,7 @@ class GhidraBuiltinsBuilder {
 	 * @param printer the printer
 	 */
 	private void printScriptImports(PrintWriter printer) {
+		printer.println("from __future__ import annotations");
 		printer.println("import collections.abc");
 		printer.println("import typing");
 		printer.println("from warnings import deprecated # type: ignore");

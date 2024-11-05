@@ -230,7 +230,9 @@
             <tocdef id="Data" sortgroup="c" text="Data"  target="help/topics/DataPlugin/Data.htm" >
                 <tocdef id="Create Data" sortgroup="a" text="Create Data"  target="help/topics/DataPlugin/Data.htm" />
                 <tocdef id="Data Types" sortgroup="b" text="Data Types"  target="help/topics/DataPlugin/Data.htm#DataTypes" />
-                <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm" />
+                <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm">
+                    <tocdef id="LibreTranslate" sortgroup="e" text="LibreTranslate"  target="help/topics/LibreTranslatePlugin/LibreTranslatePlugin.htm" />
+                </tocdef>
                 <tocdef id="Save Image" sortgroup="e" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>
         
@@ -379,7 +381,7 @@
 	<tocdef id="Keyboard Navigation" sortgroup="gg" text="Keyboard Navigation" target="help/topics/KeyboardNavigation/KeyboardNavigation.html"/>
     <tocdef id="Undo/Redo" sortgroup="h" text="Undo/Redo"  target="help/topics/Tool/Undo_Redo.htm" />
     <tocdef id="Glossary" sortgroup="i" text="Glossary"  target="help/topics/Glossary/glossary.htm" />
-    <tocdef id="What's New" sortgroup="j" text="What's New" target="docs/WhatsNew.html" />
+    <tocdef id="What's New" sortgroup="j" text="What's New" target="external:docs/WhatsNew.html" />
     <tocdef id="Tips of the Day" sortgroup="k" text="Tips of the Day" target="help/topics/Misc/Tips.htm" />
     <tocdef id="Appendix" sortgroup="z" text="Appendix"  target="help/topics/Misc/Appendix.htm">
         <tocdef id="Block Models" sortgroup="a" text="Block Models"  target="help/topics/BlockModel/Block_Model.htm" />
